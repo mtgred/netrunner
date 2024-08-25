@@ -16,7 +16,7 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-bonus]]
-   [game.core.def-helpers :refer [choose-one-helper corp-recur defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn]]
+   [game.core.def-helpers :refer [choose-one-helper corp-recur cost-option defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -2176,23 +2176,15 @@
 
 
 (defcard "Public Trail"
-  {:on-play
-   {:req (req (last-turn? state :runner :successful-run))
-    :player :runner
-    :msg (msg (if (= target "Pay 8 [Credits]")
-                (str "force the runner to " (decapitalize target))
-                "give the runner 1 tag"))
-    :waiting-prompt true
-    :prompt "Choose one"
-    :choices (req ["Take 1 tag"
-                   (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card (:title card) (->c :credit 8))
-                     "Pay 8 [Credits]")])
-    :async true
-    :effect (req (if (= target "Pay 8 [Credits]")
-                   (wait-for (pay state :runner (make-eid state eid) card (->c :credit 8))
-                             (system-msg state :runner (:msg async-result))
-                             (effect-completed state side eid))
-                   (gain-tags state :corp eid 1)))}})
+  {:on-play (choose-one-helper
+              {:req (req (last-turn? state :runner :successful-run))
+               :player :runner}
+              [{:option "Take 1 tag"
+                :does {:async true
+                       :display-side :corp
+                       :msg "give the runner 1 tag"
+                       :effect (req (gain-tags state :corp eid 1))}}
+               (cost-option [(->c :credit 8)] :runner)])})
 
 (defcard "Punitive Counterstrike"
   {:on-play
