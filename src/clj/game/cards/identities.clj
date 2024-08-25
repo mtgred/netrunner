@@ -2188,14 +2188,16 @@
                                                 (str payment-str
                                                      " due to " (:title card)
                                                      " subroutine")))
-                                  (effect-completed state side eid))))}]
-    {:events [{:event :run-ends
-               :effect (req (let [cid (:cid card)
-                                  ices (get-in card [:special :thunderbolt-armaments])]
-                              (doseq [i ices]
-                                (when-let [ice (get-card state i)]
-                                  (remove-sub! state side ice #(= cid (:from-cid %))))))
-                            (update! state side (dissoc-in card [:special :thunderbolt-armaments])))}
+                                  (effect-completed state side eid))))}
+        unregister-sub-event
+        {:effect (req (let [cid (:cid card)
+                            ices (get-in card [:special :thunderbolt-armaments])]
+                        (doseq [i ices]
+                          (when-let [ice (get-card state i)]
+                            (remove-sub! state side ice #(= cid (:from-cid %))))))
+                      (update! state side (dissoc-in card [:special :thunderbolt-armaments])))}]
+    {:events [(assoc unregister-sub-event :event :run-ends)
+              (assoc unregister-sub-event :event :run) ;; protection for trick shot...
               {:event :rez
                :req (req (and run
                               (ice? (:card context))
