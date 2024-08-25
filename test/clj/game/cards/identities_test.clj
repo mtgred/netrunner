@@ -5146,6 +5146,23 @@
       (click-card state :runner "Smartware Distributor")
       (is (:run @state) "Run continues"))))
 
+(deftest thunderbolt-vs-trick-shot
+  (do-game
+    (new-game {:corp {:id "Thunderbolt Armaments: Peace Through Power"
+                      :deck ["Tithe"]}
+               :runner {:hand ["Trick Shot"]}})
+    (play-from-hand state :corp "Tithe" "New remote")
+    (let [tithe (get-ice state :remote1 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Trick Shot")
+      (rez state :corp tithe)
+      (is (= 2 (get-strength (refresh tithe))) "Tithe strength is buffed")
+      (is (= 3 (count (:subroutines (refresh tithe)))) "Tithe has 3 subroutines")
+      (run-continue state)
+      (click-prompt state :runner "Server 1")
+      (is (= 1 (get-strength (refresh tithe))) "Tithe strength is not buffed")
+      (is (= 2 (count (:subroutines (refresh tithe)))) "Tithe has 2 subroutines again"))))
+
 (deftest weyland-consortium-because-we-built-it-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
