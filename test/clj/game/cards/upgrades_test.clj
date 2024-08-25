@@ -69,6 +69,33 @@
     (click-prompt state :runner "0")
     (is (no-prompt? state :runner) "Runner cannot access anything!")))
 
+(deftest adrian-vs-breach-other-servers-cursed-interactions
+  (do-game
+    (new-game {:corp {:hand ["Adrian Seis" "PAD Campaign"]
+                      :deck ["Rashida Jaheem"]}
+               :runner {:hand ["Eru Ayase-Pessoa" "Pinhole Threading"]}})
+    (play-from-hand state :corp "Adrian Seis" "Archives")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (rez state :corp (get-content state :archives 0))
+    (play-from-hand state :runner "Eru Ayase-Pessoa")
+    (card-ability state :runner (get-resource state 0) 0)
+    (run-continue-until state :success)
+    (is (= :psi (prompt-type :corp)))
+    (click-prompt state :corp "1 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
+    (is (no-prompt? state :runner) "No prompt")
+    (is (not (:run @state)) "No run - ended when no candates existed for access")
+    (play-from-hand state :runner "Pinhole Threading")
+    (click-prompt state :runner "Archives")
+    (run-continue-until state :success)
+    (is (= :psi (prompt-type :corp)))
+    (click-prompt state :corp "1 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
+    (click-card state :runner "PAD Campaign")
+    (is (no-prompt? state :runner) "No prompt")
+    (is (not (:run @state)) "No run - ended when no candates existed for access")))
+
 (deftest akitaro-watanabe
   (do-game
     (new-game {:corp {:hand ["Akitaro Watanabe" (qty "Fire Wall" 2)]
