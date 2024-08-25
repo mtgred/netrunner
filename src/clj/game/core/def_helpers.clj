@@ -6,11 +6,12 @@
     [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard?]]
     [game.core.card-defs :as card-defs]
     [game.core.damage :refer [damage]]
-    [game.core.eid :refer [effect-completed]]
+    [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [resolve-ability trigger-event-sync]]
     [game.core.effects :refer [is-disabled-reg?]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.moving :refer [move trash]]
+    [game.core.payment :refer [build-cost-string can-pay?]]
     [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [clear-wait-prompt]]
     [game.core.props :refer [add-counter]]
@@ -254,6 +255,83 @@
     :effect (effect (move :corp target :hand))}))
 
 (def card-defs-cache (atom {}))
+
+(defn choose-one-helper
+  ;; keys unique to this function:
+  ;;   no-prune: can I select the same option more than once?
+  ;;   no-wait-msg: do we hide the wait message from the runner?
+  ;;   count: number of choices we're allowed to pick
+  ([xs] (choose-one-helper nil xs))
+  ([{:keys [prompt count optional no-prune no-wait-msg interactive require-meaningful-choice] :as args} xs]
+   ;; xs of the form {:option ... :req (req ...) :does ..}
+   (let [xs (if-not optional xs (conj xs {:option "Done"}))
+         base-map (select-keys args [:action :player :once :unregister-once-resolved :event :label :change-in-game-state :location :additional-cost])
+         ;; is a choice payable
+         payable? (fn [x state side eid card targets]
+                    (when (or (not (:cost x))
+                              (can-pay? state (or (:player args) side) eid card nil (:cost x)))
+                      x))
+         ;; cost->str for a choice
+         costed-str (fn [x]
+                      (if-not (:cost x)
+                        (:option x)
+                        (let [cs (build-cost-string (:cost x))]
+                          (if-not (:option x) cs (str cs ": " (:option x))))))
+         ;; converts options to choices
+         choices-fn (fn [x state side eid card targets]
+                      (when (payable? x state side eid card targets)
+                        (if-not (:req x)
+                          (costed-str x)
+                          (when ((:req x) state side eid card targets)
+                            (costed-str x)))))
+         ;; this lets us selectively skip the prompt if 'done' is the only choice
+         meaningful-req? (when require-meaningful-choice
+                           (req (and (let [cs (seq (remove nil? (map #(choices-fn
+                                                                        % state side
+                                                                        eid card targets) xs)))]
+                                       (and (not= cs '("Done"))
+                                            (or (nil? (:req args))
+                                                ((:req args) state side eid card targets)))))))]
+     ;; function for resolving choices: pick the matching choice, pay, resolve it, and continue
+     ;; when applicable
+     (letfn [(resolve-choices [xs full state side eid card target]
+               (if-not (seq xs)
+                 (effect-completed state side eid )
+                 (if (= target (costed-str (first xs)))
+                   ;; allow for resolving multiple options, like decues wild
+                   (wait-for
+                     (resolve-ability
+                       state side (make-eid state eid)
+                       (assoc (:does (first xs)) :cost (:cost (first xs)))
+                       card nil) ;; below is maybe superflous
+                     (if (and count (> count 1) (not= target "Done"))
+                       ;; the 'Done' is already there, so can dissoc optional
+                       (let [args (assoc args :count (dec count) :optional nil)
+                             xs (if no-prune full
+                                    (vec (remove #(= target (costed-str %)) full)))]
+                         (continue-ability state side (choose-one-helper args xs) card nil))
+                       (effect-completed state side eid)))
+                   (resolve-choices (rest xs) full state side eid card target))))]
+       (merge
+         base-map
+         {:choices (req (into [] (map #(choices-fn % state side eid card targets) xs)))
+          :waiting-prompt (not no-wait-msg)
+          :prompt (str (or (:prompt args) "Choose one")
+                       ;; if we are resolving multiple
+                       (when (and count (pos? count)) (str " (" count " remaining)")))
+          :req (or meaningful-req? (:req args))
+          ;; resolve-choices demands async
+          :async true
+          ;; interactive expects a 5-fn or nil
+          ;; but I want to just be able to say True or False
+          :interactive (when interactive (if-not (fn? interactive) (req interactive) interactive))
+          :effect (req (resolve-choices xs xs state side eid card target))})))))
+
+(defn cost-option
+  [cost side]
+  {:cost cost
+   :does {:display-side side
+          :msg :cost}})
 
 (defmacro defcard
   [title ability]
