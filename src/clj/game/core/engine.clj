@@ -310,10 +310,11 @@
                  :cost)
           cost-spend-msg (build-spend-msg payment-str "use")
           disp-side (or (:display-side ability) (to-keyword (:side card)))]
-      (if (= :cost desc)
+      (cond
+        (= :cost desc)
         (system-msg state disp-side (str payment-str " to satisfy " (get-title card)))
-        (when desc
-          (system-msg state disp-side (str cost-spend-msg (get-title card) (str " to " desc))))))))
+        desc
+        (system-msg state disp-side (str cost-spend-msg (get-title card) (str " to " desc)))))))
 
 (defn register-once
   "Register ability as having happened if :once specified"
