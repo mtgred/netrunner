@@ -297,12 +297,10 @@
                               (costed-str x)))))
            ;; this lets us selectively skip the prompt if 'done' is the only choice
            meaningful-req? (when require-meaningful-choice
-                             (req (and (let [cs (seq (remove nil? (map #(choices-fn
-                                                                          % state side
-                                                                          eid card targets) xs)))]
-                                         (and (not= cs ["Done"])
-                                              (or (nil? (:req args))
-                                                  ((:req args) state side eid card targets)))))))]
+                             (req (let [cs (keep #(choices-fn % state side eid card targets) xs)]
+                                    (and (not= cs ["Done"])
+                                         (or (nil? (:req args))
+                                             ((:req args) state side eid card targets))))))]
        ;; function for resolving choices: pick the matching choice, pay, resolve it, and continue
        ;; when applicable
        (letfn [(resolve-choices [xs full state side eid card target]
