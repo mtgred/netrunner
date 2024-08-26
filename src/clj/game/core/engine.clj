@@ -305,9 +305,9 @@
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets payment-str]
   (when-let [message (:msg ability)]
-    (let [desc (if-not (= :cost message)
-                 (if (string? message) message (message state side eid card targets))
-                 :cost)
+    (let [desc (if (or (= :cost message) (string? message))
+                 message
+                 (message state side eid card targets))
           cost-spend-msg (build-spend-msg payment-str "use")
           disp-side (or (:display-side ability) (to-keyword (:side card)))]
       (cond
