@@ -300,7 +300,7 @@
                              (req (and (let [cs (seq (remove nil? (map #(choices-fn
                                                                           % state side
                                                                           eid card targets) xs)))]
-                                         (and (not= cs '("Done"))
+                                         (and (not= cs ["Done"])
                                               (or (nil? (:req args))
                                                   ((:req args) state side eid card targets)))))))]
        ;; function for resolving choices: pick the matching choice, pay, resolve it, and continue
