@@ -4553,6 +4553,12 @@
       (is (= 13 (:credit (get-corp))) "Gained 6 credits from Liberated Account")
       (is (= "Loot Box" (-> (get-corp) :discard first :title)) "Loot Box trashed"))))
 
+(deftest loot-box-empty-stack
+  ;; Loot Box
+  (do-game
+    (subroutine-test "Loot Box" 1 {:runner {:deck 0}})
+    (is (last-log-contains? state "uses Loot Box to trash itself") "Loot box trashed itself")))
+
 (deftest lotus-field
   ;; Lotus Field strength cannot be lowered
   (do-game
