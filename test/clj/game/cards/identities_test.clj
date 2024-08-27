@@ -944,6 +944,15 @@
     (new-game {:runner {:id "Chaos Theory: Wünderkind"}})
     (is (= 5 (core/available-mu state)) "Chaos Theory starts the game with +1 MU")))
 
+(deftest chronos-protocol-haas-bioroid
+  (do-game
+    (new-game {:corp {:id "Chronos Protocol: Haas Bioroid" :hand []}
+               :runner {:hand ["Ika" "Street Peddler"] :deck [(qty "Ika" 5)] :discard ["Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Street Peddler")
+    (damage state :corp :brain 1)
+    (is (= 7 (count (get-in @state [:runner :rfg]))) "7 Ikas rfg'd")))
+
 (deftest chronos-protocol-selective-mind-mapping
   ;; Chronos Protocol - Choose Runner discard for first net damage of a turn
   (do-game
@@ -4973,6 +4982,14 @@
             (click-card state :runner (refresh palisade))
             (click-card state :runner (refresh iw)))
           "Available MU should not change"))))
+
+(deftest the-collective-williams-wu-et-al
+  (do-game
+    (new-game {:runner {:id "The Collective: Williams, Wu, et al."}})
+    (take-credits state :corp)
+    (dotimes [_ 3]
+      (click-credit state :runner))
+    (is (= 2 (:click (get-runner))) "gained [click]")))
 
 (deftest the-foundry-refining-the-process-interaction-with-accelerated-beta-test
     ;; interaction with Accelerated Beta Test
