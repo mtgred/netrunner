@@ -8,7 +8,7 @@
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? faceup? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
-                           ice? in-discard? in-hand? in-play-area? installed? is-type? operation? program?
+                           ice? in-discard? in-hand? in-play-area? in-rfg? installed? is-type? operation? program?
                            resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [charge-ability]]
    [game.core.cost-fns :refer [install-cost play-cost
@@ -495,13 +495,13 @@
   {:events [{:event :damage
              :req (req (= (:damage-type context) :brain))
              :msg (msg "remove all copies of " (enumerate-str (map :title (:cards-trashed context))) ", everywhere, from the game")
-             :effect (req (doseq [c (:cards-trashed context)]
-                            (let [all-candidates (filter #(and (not= (:zone %) [:rfg])
-                                                               (runner? %)
-                                                               (= (:title %) (:title c)))
-                                                         (get-all-cards state))]
-                              (doseq [candidate all-candidates]
-                                (move state :runner candidate :rfg)))))}]})
+             :effect (req (doseq [c (:cards-trashed context)
+                                  :let [all-candidates (filter #(and (not (in-rfg? %))
+                                                                     (runner? %)
+                                                                     (= (:title %) (:title c)))
+                                                               (get-all-cards state))]
+                                  candidate all-candidates]
+                            (move state :runner candidate :rfg)))}]})
 
 (defcard "Chronos Protocol: Selective Mind-mapping"
   {:req (req (empty? (filter #(= :net (:damage-type (first %))) (turn-events state :runner :damage))))
@@ -2125,19 +2125,22 @@
   (let [gain-click-abi {:label "Manually gain [Click]"
                         :once :per-turn
                         :msg (msg "gain [Click]")
-                        :effect (req (gain-clicks state side 1))}]
+                        :effect (req (gain-clicks state side 1))}
+        relevant-keys (fn [context] {:cid (get-in context [:card :cid])
+                                     :idx (:ability-idx context)})]
     {:events [{:event :action-resolved
                :req (req (= :runner side))
                :silent (req true)
-               :effect (req (let [current-queue (get-in card [:special :previous-actions])]
+               :effect (req (let [current-queue (get-in card [:special :previous-actions])
+                                  filtered-context (relevant-keys context)]
                               (if (and (seq current-queue)
-                                       (= (first current-queue) context))
-                                (let [new-queue (concat current-queue [context])]
+                                       (= (first current-queue) filtered-context))
+                                (let [new-queue (concat current-queue [filtered-context])]
                                   (update! state side (assoc-in card [:special :previous-actions] new-queue))
                                   (if (= 3 (count new-queue))
                                     (continue-ability state side gain-click-abi card nil)
                                     (effect-completed state side eid)))
-                                (update! state side (assoc-in card [:special :previous-actions] [context])))))}
+                                (update! state side (assoc-in card [:special :previous-actions] [filtered-context])))))}
               {:event :runner-turn-begins
                :silent (req true)
                :effect (req (update! state side (assoc-in card [:special :previous-actions] nil)))}]}))

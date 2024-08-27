@@ -3047,13 +3047,16 @@
 
 (defcard "Wage Workers"
   (let [payoff {:msg "gain [Click]"
-                :effect (effect (gain-clicks 1))}]
+                :effect (effect (gain-clicks 1))}
+        relevant-keys (fn [context] {:cid (get-in context [:card :cid])
+                                     :idx (:ability-idx context)})]
     {:events [{:event :action-resolved
                :req (req (= :corp side))
                :async true
                :effect (req (let [similar-actions
                                   (event-count state side :action-resolved
-                                               (fn [[ctx]] (= ctx context)))]
+                                               (fn [[ctx]] (= (relevant-keys ctx)
+                                                              (relevant-keys context))))]
                               (continue-ability
                                 state side
                                 (when (= 3 similar-actions) payoff)
