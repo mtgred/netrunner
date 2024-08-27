@@ -4,11 +4,11 @@
    [game.core.access :refer [access-bonus access-cost-bonus access-non-agenda]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed card->server
-                            get-remote-names get-remotes server->zone]]
+                            get-all-cards get-remote-names get-remotes server->zone]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? faceup? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
-                           ice? in-discard? in-hand? in-play-area? installed? is-type? operation? program?
+                           ice? in-discard? in-hand? in-play-area? in-rfg? installed? is-type? operation? program?
                            resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [charge-ability]]
    [game.core.cost-fns :refer [install-cost play-cost
@@ -490,6 +490,18 @@
 
 (defcard "Chaos Theory: Wünderkind"
   {:static-abilities [(mu+ 1)]})
+
+(defcard "Chronos Protocol: Haas-Bioroid"
+  {:events [{:event :damage
+             :req (req (= (:damage-type context) :brain))
+             :msg (msg "remove all copies of " (enumerate-str (map :title (:cards-trashed context))) ", everywhere, from the game")
+             :effect (req (doseq [c (:cards-trashed context)
+                                  :let [all-candidates (filter #(and (not (in-rfg? %))
+                                                                     (runner? %)
+                                                                     (= (:title %) (:title c)))
+                                                               (get-all-cards state))]
+                                  candidate all-candidates]
+                            (move state :runner candidate :rfg)))}]})
 
 (defcard "Chronos Protocol: Selective Mind-mapping"
   {:req (req (empty? (filter #(= :net (:damage-type (first %))) (turn-events state :runner :damage))))
@@ -2108,6 +2120,30 @@
 (defcard "The Catalyst: Convention Breaker"
   ;; No special implementation
   {})
+
+(defcard "The Collective: Williams, Wu, et al."
+  (let [gain-click-abi {:label "Manually gain [Click]"
+                        :once :per-turn
+                        :msg (msg "gain [Click]")
+                        :effect (req (gain-clicks state side 1))}
+        relevant-keys (fn [context] {:cid (get-in context [:card :cid])
+                                     :idx (:ability-idx context)})]
+    {:events [{:event :action-resolved
+               :req (req (= :runner side))
+               :silent (req true)
+               :effect (req (let [current-queue (get-in card [:special :previous-actions])
+                                  filtered-context (relevant-keys context)]
+                              (if (and (seq current-queue)
+                                       (= (first current-queue) filtered-context))
+                                (let [new-queue (concat current-queue [filtered-context])]
+                                  (update! state side (assoc-in card [:special :previous-actions] new-queue))
+                                  (if (= 3 (count new-queue))
+                                    (continue-ability state side gain-click-abi card nil)
+                                    (effect-completed state side eid)))
+                                (update! state side (assoc-in card [:special :previous-actions] [filtered-context])))))}
+              {:event :runner-turn-begins
+               :silent (req true)
+               :effect (req (update! state side (assoc-in card [:special :previous-actions] nil)))}]}))
 
 (defcard "The Foundry: Refining the Process"
   {:events [{:event :rez

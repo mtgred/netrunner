@@ -6399,6 +6399,23 @@
           (click-credit state :corp)))
         "Corp spent 2 clicks instead of 3")))
 
+(deftest wage-workers-vs-ob-interaction
+  (do-game
+    (new-game {:corp {:deck ["Wage Workers"]
+                      :id "Ob Superheavy Logistics: Extract. Export. Excel."
+                      :hand ["Hedge Fund" "Subliminal Messaging" "Extract" "Mavirus"]}})
+    (play-from-hand state :corp "Subliminal Messaging")
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Mavirus" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (is (changed? [(:click (get-corp)) 0]
+          (play-from-hand state :corp "Extract")
+          (click-card state :corp "Mavirus")
+          (click-prompt state :corp "Yes")
+          (click-prompt state :corp "Wage Workers")
+          (click-prompt state :corp "New remote"))
+        "Gained click from wage workers once the action finished resolving!")))
+
 (deftest wage-workers-multiple-triggers
   (do-game
     (new-game {:corp {:hand ["Wage Workers" (qty "Biotic Labor" 3)]
