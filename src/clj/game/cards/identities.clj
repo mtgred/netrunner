@@ -491,7 +491,7 @@
 (defcard "Chaos Theory: Wünderkind"
   {:static-abilities [(mu+ 1)]})
 
-(defcard "Chronos Protocol: Haas Bioroid"
+(defcard "Chronos Protocol: Haas-Bioroid"
   {:events [{:event :damage
              :req (req (= (:damage-type context) :brain))
              :msg (msg "remove all copies of " (enumerate-str (map :title (:cards-trashed context))) ", everywhere, from the game")

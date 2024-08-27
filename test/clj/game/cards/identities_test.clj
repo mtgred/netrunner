@@ -946,7 +946,7 @@
 
 (deftest chronos-protocol-haas-bioroid
   (do-game
-    (new-game {:corp {:id "Chronos Protocol: Haas Bioroid" :hand []}
+    (new-game {:corp {:id "Chronos Protocol: Haas-Bioroid" :hand []}
                :runner {:hand ["Ika" "Street Peddler"] :deck [(qty "Ika" 5)] :discard ["Ika"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Street Peddler")
