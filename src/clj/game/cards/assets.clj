@@ -3047,18 +3047,17 @@
 
 (defcard "Wage Workers"
   (let [payoff {:msg "gain [Click]"
-                :effect (effect (gain-clicks 1))}
-        three-of (fn [state side cid idx]
-                   (= 3 (event-count state side :corp-spent-click
-                                     (fn [[context]]
-                                       (and (= cid (:action context))
-                                            (= idx (:ability-idx context)))))))]
-    {:events [{:event :corp-spent-click
+                :effect (effect (gain-clicks 1))}]
+    {:events [{:event :action-resolved
+               :req (req (= :corp side))
                :async true
-               :effect (req (let [{:keys [action ability-idx]} context]
-                              (if (three-of state side action ability-idx)
-                                (continue-ability state side payoff card nil)
-                                (effect-completed state side eid))))}]}))
+               :effect (req (let [similar-actions
+                                  (event-count state side :action-resolved
+                                               (fn [[ctx]] (= ctx context)))]
+                              (continue-ability
+                                state side
+                                (when (= 3 similar-actions) payoff)
+                                card nil)))}]}))
 
 (defcard "Wall to Wall"
   (let [all [{:msg "gain 1 [Credits]"
