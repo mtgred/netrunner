@@ -1077,7 +1077,26 @@
                 (= :first sub) 0
                 (= :last sub) (dec (count (:subroutines (get-ice state server-key 0))))
                 :else sub)]
-     (card-subroutine state :corp (get-ice state server-key 0) sub)
+     (card-subroutine state :corp ice sub)
+     state)))
+
+(defn fire-all-subs-test
+  ([card] (fire-all-subs-test card nil))
+  ([card players] (fire-all-subs-test card players nil))
+  ([card players {:keys [server] :as args}]
+   "Create a game, install an ice, encounter it, then fire all subroutines.
+    Optionally specify: player map, target server, any number or type of counters,
+    if the card should be disabled while rezzed, tags, threat level,
+    cards installed in the runner rig"
+   (let [state (run-and-encounter-ice-test card players args)
+         server (or server "HQ")
+         server-key (cond
+                      (= server "New remote") :remote1
+                      (= server "HQ") :hq
+                      (= server "R&D") :rd
+                      (= server "Archives") :archives)
+         ice (get-ice state server-key 0)]
+     (fire-subs state ice)
      state)))
 
 (defn bad-usage [n]
