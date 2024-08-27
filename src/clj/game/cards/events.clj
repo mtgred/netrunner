@@ -4204,15 +4204,15 @@
   {:on-play (choose-one-helper
               {:player :corp}
               [{:option "Runner gains 6 [Credits]"
-                :does {:msg "force the Runner to gain 6 [Credits]"
-                       :display-side :corp
-                       :async true
-                       :effect (req (gain-credits state :runner eid 6))}}
+                :ability {:msg "force the Runner to gain 6 [Credits]"
+                          :display-side :corp
+                          :async true
+                          :effect (req (gain-credits state :runner eid 6))}}
                {:option "Runner draws 4 cards"
-                :does {:msg "force the Runner to draw 4 cards"
-                       :display-side :corp
-                       :async true
-                       :effect (req (draw state :runner eid 4))}}])})
+                :ability {:msg "force the Runner to draw 4 cards"
+                          :display-side :corp
+                          :async true
+                          :effect (req (draw state :runner eid 4))}}])})
 
 (defcard "Windfall"
   {:on-play

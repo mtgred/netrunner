@@ -526,9 +526,9 @@
                                                 (some #(pos? (get-counters % :virus)) (all-installed state :runner))))
                  :count (req (if (threat-level 3 state) 2 1))}
                 [{:option "Place 1 advancement counter on up to two cards you can advance"
-                  :does kaguya}
+                  :ability kaguya}
                  {:option "Remove all virus counters from 1 installed card"
-                  :does faux-purge}])}))
+                  :ability faux-purge}])}))
 
 (defcard "Casting Call"
   {:on-play {:choices {:card #(and (agenda? %)
@@ -2180,10 +2180,10 @@
               {:req (req (last-turn? state :runner :successful-run))
                :player :runner}
               [{:option "Take 1 tag"
-                :does {:async true
-                       :display-side :corp
-                       :msg "give the runner 1 tag"
-                       :effect (req (gain-tags state :corp eid 1))}}
+                :ability {:async true
+                          :display-side :corp
+                          :msg "give the runner 1 tag"
+                          :effect (req (gain-tags state :corp eid 1))}}
                (cost-option [(->c :credit 8)] :runner)])})
 
 (defcard "Punitive Counterstrike"

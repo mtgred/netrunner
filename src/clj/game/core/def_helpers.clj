@@ -271,7 +271,7 @@
                        state side
                        (choose-one-helper (assoc args :count new-count) xs)
                        card nil)))}
-     ;; xs of the form {:option ... :req (req ...) :cost ... :does ..}
+     ;; xs of the form {:option ... :req (req ...) :cost ... :ability ..}
      (let [next-optional (= optional :after-first)
            apply-optional (and optional (not next-optional))
            xs (if-not apply-optional xs (conj xs {:option "Done"}))
@@ -311,7 +311,7 @@
                      (wait-for
                        (resolve-ability
                          state side (make-eid state eid)
-                         (assoc (:does (first xs)) :cost (:cost (first xs)))
+                         (assoc (:ability (first xs)) :cost (:cost (first xs)))
                          card nil) ;; below is maybe superflous
                        (if (and count (> count 1) (not= target "Done"))
                          ;; the 'Done' is already there, so can dissoc optional
@@ -339,8 +339,8 @@
 (defn cost-option
   [cost side]
   {:cost cost
-   :does {:display-side side
-          :msg :cost}})
+   :ability {:display-side side
+             :msg :cost}})
 
 (defmacro defcard
   [title ability]
