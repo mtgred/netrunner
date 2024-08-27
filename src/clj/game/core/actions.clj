@@ -63,7 +63,13 @@
     (when (or (nil? cost)
               (can-pay? state side eid card (:title card) cost))
       (update-click-state state ability)
-      (resolve-ability state side eid ability card targets))))
+      (if (:action ability)
+        (let [stripped-card (select-keys card [:cid :type :title])]
+        (wait-for
+          (trigger-event-simult state side :action-played nil {:ability-idx ability-idx :card stripped-card})
+          (wait-for
+            (resolve-ability state side ability card targets)
+            (trigger-event-simult state side eid :action-resolved nil {:ability-idx ability-idx :card stripped-card}))))))))
 
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."
