@@ -1020,11 +1020,11 @@
                       (= server "Archives") :archives)]
      ;; adjust the threat level for threat: ... subs
      (when threat
-       (do (game.core.change-vals/change
-             ;; theoretically, either side is fine!
-             state (first (shuffle [:corp :runner])) {:key :agenda-point :delta threat})
-           (is (threat-level threat state) "Threat set")
-           (is (not (threat-level (inc threat) state)) "Threat is accurate")))
+       (game.core.change-vals/change
+         ;; theoretically, either side is fine!
+         state (first (shuffle [:corp :runner])) {:key :agenda-point :delta threat})
+       (is (threat-level threat state) "Threat set")
+       (is (not (threat-level (inc threat) state)) "Threat is accurate"))
      ;; place the card in the target server
      (play-from-hand state :corp card server)
      (let [ice (get-ice state server-key 0)]
@@ -1056,13 +1056,13 @@
        state))))
 
 (defn subroutine-test
-  ([card sub] (subroutine-test card sub nil))
-  ([card sub players] (subroutine-test card sub players nil))
-  ([card sub players {:keys [server] :as args}]
-   "Create a game, install an ice, encounter it, then fire a subroutine.
+  "Create a game, install an ice, encounter it, then fire a subroutine.
     Optionally specify: player map, target server, any number or type of counters,
     if the card should be disabled while rezzed, tags, threat level,
     cards installed in the runner rig"
+  ([card sub] (subroutine-test card sub nil))
+  ([card sub players] (subroutine-test card sub players nil))
+  ([card sub players {:keys [server] :as args}]
    (let [state (run-and-encounter-ice-test card players args)
          server (or server "HQ")
          server-key (cond
@@ -1081,13 +1081,13 @@
      state)))
 
 (defn fire-all-subs-test
-  ([card] (fire-all-subs-test card nil))
-  ([card players] (fire-all-subs-test card players nil))
-  ([card players {:keys [server] :as args}]
-   "Create a game, install an ice, encounter it, then fire all subroutines.
+  "Create a game, install an ice, encounter it, then fire all subroutines.
     Optionally specify: player map, target server, any number or type of counters,
     if the card should be disabled while rezzed, tags, threat level,
     cards installed in the runner rig"
+  ([card] (fire-all-subs-test card nil))
+  ([card players] (fire-all-subs-test card players nil))
+  ([card players {:keys [server] :as args}]
    (let [state (run-and-encounter-ice-test card players args)
          server (or server "HQ")
          server-key (cond
