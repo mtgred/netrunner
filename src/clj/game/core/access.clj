@@ -2,7 +2,7 @@
   (:require
     [game.core.agendas :refer [update-all-advancement-requirements update-all-agenda-points]]
     [game.core.board :refer [all-active]]
-    [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
+    [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-archives-root? in-deck? in-discard? in-hand? in-hq-root? in-remote-root? in-rd-root? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [card-ability-cost trash-cost steal-cost]]
     [game.core.effects :refer [any-effects register-static-abilities register-lingering-effect sum-effects unregister-lingering-effects]]
@@ -560,13 +560,12 @@
                                  (pos? (+ max-access total-mod))
                                  true)
                       pos-total-cards? (pos? (+ total-cards-count total-mod))]
-
                   (cond
                     ;; Only 1 card to access
                     (and pos-max?
                          pos-total-cards?
                          only-card)
-                    (if (= (second (get-zone only-card)) (first server))
+                    (if (in-remote-root? only-card (first server))
                       (access-card state side eid only-card)
                       (effect-completed state side eid))
 
@@ -753,7 +752,7 @@
                     (and pos-max?
                          pos-total-cards?
                          only-card)
-                    (if (= (second (get-zone only-card)) :rd)
+                    (if (or (in-deck? only-card) (in-rd-root? only-card))
                       (access-card state side eid only-card)
                       (effect-completed state side eid))
 
@@ -973,7 +972,7 @@
                               (and pos-max?
                                    pos-total-cards?
                                    only-card)
-                              (if (= (second (get-zone only-card)) :hq)
+                              (if (or (in-hand? only-card) (in-hq-root? only-card))
                                 (access-card state side eid only-card)
                                 (effect-completed state side eid))
 
@@ -1221,7 +1220,7 @@
                     (and pos-max?
                          pos-total-cards?
                          only-card)
-                    (if (= (second (get-zone only-card)) :archives)
+                    (if (or (in-discard? only-card) (in-archives-root? only-card))
                       (access-card state side eid only-card)
                       (effect-completed state side eid))
 
