@@ -609,7 +609,7 @@
    :on-rez {:req (req (and (threat-level 3 state)
                            run
                            this-server))
-            :prompt "Choose a card to install from Archives or HQ in another server"
+            :prompt "Choose a non-agenda card to install from Archives or HQ in another server"
             :waiting-prompt true
             :show-discard true
             :choices {:card #(and (corp? %)
