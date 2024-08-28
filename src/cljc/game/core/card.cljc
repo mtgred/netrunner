@@ -123,6 +123,13 @@
   (= (get-zone card) #?(:clj [:servers :rd :content]
                         :cljs ["servers" "rd" "content"])))
 
+(defn in-remote-root?
+  [card remote]
+  (let [remote-key (if (keyword? remote) remote (keyword remote))
+        remote-str (if (keyword? remote) (name remote) remote)]
+    (= (get-zone card) #?(:clj [:servers remote-key :content]
+                          :cljs ["servers" remote-str "content"]))))
+
 (defn in-root?
   [card]
   (or (in-archives-root? card)
