@@ -6511,6 +6511,7 @@
     (play-from-hand state :runner "Because I Can")
     (click-prompt state :runner "Server 1")
     (rez state :corp (get-ice state :remote1 0))
+    (rez state :corp (get-content state :remote1 0))
     (run-continue state)
     (is (changed? [(:click (get-runner)) -1]
           (card-subroutine state :corp (get-ice state :remote1 0) 0))
