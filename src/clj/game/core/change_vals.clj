@@ -14,7 +14,9 @@
 (defn- change-msg
   "Send a system message indicating the property change"
   [state side kw new-val delta]
-  (let [key (name kw)]
+  (let [key (cond
+              (= kw :brain-damage) "core damage"
+              :else (name kw))]
     (system-msg state side
                 (str "sets " (.replace key "-" " ") " to " new-val
                      " (" (if (pos? delta) (str "+" delta) delta) ")"))))
