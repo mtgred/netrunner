@@ -3989,6 +3989,7 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
     (play-and-score state "Sensor Net Activation")
+    (take-credits state :corp)
     (let [sna-scored (get-scored state :corp 1)
           ash (get-content state :remote2 0)]
       (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
@@ -3996,7 +3997,7 @@
       (card-ability state :corp (refresh sna-scored) 0)
       (click-card state :corp ash)
       (is (rezzed? (refresh ash)) "Ash should be rezzed")
-      (take-credits state :corp)
+      (take-credits state :runner)
       (is (not (rezzed? (refresh ash))) "Ash should be derezzed"))))
 
 (deftest sentinel-defense-program
