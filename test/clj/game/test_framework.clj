@@ -45,10 +45,25 @@
 (load-all-cards)
 
 (defn is-hand?
+  "Is the hand exactly equal to a given set of cards?"
   [state side expected-hand]
   (let [expected-hand (seq (sort (flatten expected-hand)))
         hand (seq (sort (map :title (get-in @state [side :hand]))))]
     (is (= expected-hand hand) (str "hand is not " expected-hand))))
+
+(defn is-deck?
+  "Is the discard exactly equal to a given set of cards?"
+  [state side expected-deck]
+  (let [expected-deck (seq (sort (flatten expected-deck)))
+        deck (seq (sort (map :title (get-in @state [side :deck]))))]
+    (is (= expected-deck deck) (str "deck is not " expected-deck))))
+
+(defn is-discard?
+  "Is the set of cards in the deck exactly equal to a given set of cards? (this is order agnostic)"
+  [state side expected-discard]
+  (let [expected-discard (seq (sort (flatten expected-discard)))
+        discard (seq (sort (map :title (get-in @state [side :discard]))))]
+    (is (= expected-discard discard) (str "discard is not " expected-discard))))
 
 ;;; helper functions for prompt interaction
 (defn get-prompt

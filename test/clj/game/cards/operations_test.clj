@@ -83,72 +83,106 @@
 (deftest accelerated-diagnostics
   ;; Accelerated Diagnostics - Interaction with prompt effects, like Shipment from SanSan
   (do-game
-      (new-game {:corp {:deck ["Accelerated Diagnostics" "Cerebral Overwriter" "Shipment from SanSan"
-                               "Hedge Fund" "Back Channels"]}})
-      (starting-hand state :corp ["Accelerated Diagnostics" "Cerebral Overwriter"])
-      (play-from-hand state :corp "Cerebral Overwriter" "New remote")
-      (core/gain state :corp :credit 1)
-      (play-from-hand state :corp "Accelerated Diagnostics")
-      (click-prompt state :corp "OK")
-      (let [co (get-content state :remote1 0)]
-        (click-prompt state :corp "Shipment from SanSan")
-        (click-prompt state :corp "2")
-        (click-card state :corp co)
-        (is (= 2 (get-counters (refresh co) :advancement)) "Cerebral Overwriter gained 2 advancements")
-        (click-prompt state :corp "Hedge Fund")
-        (is (= 9 (:credit (get-corp))) "Corp gained credits from Hedge Fund")
-        (click-prompt state :corp "Back Channels")
-        (click-card state :corp (refresh co))
-        (is (= 15 (:credit (get-corp))) "Corp gained 6 credits for Back Channels"))))
+    (new-game {:corp {:deck ["Accelerated Diagnostics" "Cerebral Overwriter" "Shipment from SanSan"
+                             "Hedge Fund" "Back Channels"]}})
+    (starting-hand state :corp ["Accelerated Diagnostics" "Cerebral Overwriter"])
+    (play-from-hand state :corp "Cerebral Overwriter" "New remote")
+    (core/gain state :corp :credit 1)
+    (play-from-hand state :corp "Accelerated Diagnostics")
+    (click-prompt state :corp "OK")
+    (let [co (get-content state :remote1 0)]
+      (click-prompt state :corp "Shipment from SanSan")
+      (click-prompt state :corp "2")
+      (click-card state :corp co)
+      (is (= 2 (get-counters (refresh co) :advancement)) "Cerebral Overwriter gained 2 advancements")
+      (click-prompt state :corp "Hedge Fund")
+      (is (= 9 (:credit (get-corp))) "Corp gained credits from Hedge Fund")
+      (click-prompt state :corp "Back Channels")
+      (click-card state :corp (refresh co))
+      (is (= 15 (:credit (get-corp))) "Corp gained 6 credits for Back Channels"))))
+
+(deftest accelerated-diagnostics-short-circuits-when-shuffled
+  (do-game
+    (new-game {:corp {:deck ["Distract the Masses" "Hedge Fund" "Hedge Fund"]
+                      :credits 7
+                      :hand ["Accelerated Diagnostics"]
+                      :discard ["Project Atlas"]}})
+    (play-from-hand state :corp "Accelerated Diagnostics")
+    (click-prompt state :corp "OK")
+    (click-prompt state :corp "Distract the Masses")
+    (click-prompt state :corp "Done")
+    (click-card state :corp "Project Atlas")
+    (click-prompt state :corp "Done")
+    (is-discard? state :corp ["Accelerated Diagnostics"])
+    (is-deck? state :corp ["Project Atlas" (qty "Hedge Fund" 2)])))
+
+(deftest accelerated-diagnostics-short-circuits-on-draw
+  (do-game
+    (new-game {:corp {:deck ["Green Level Clearance" "Hedge Fund" "Beanstalk Royalties"]
+                      :credits 7
+                      :hand ["Accelerated Diagnostics"]}})
+    (stack-deck state :corp ["Green Level Clearance" "Hedge Fund" "Beanstalk Royalties"])
+    (play-from-hand state :corp "Accelerated Diagnostics")
+    (click-prompt state :corp "OK")
+    (is (= ["Green Level Clearance" "Hedge Fund" "Beanstalk Royalties" "Cancel"] (prompt-titles :corp)))
+    (click-prompt state :corp "Green Level Clearance")
+    (is (= ["Beanstalk Royalties" "Cancel"] (prompt-titles :corp)) "Hedge not applicable after being drawn!")
+    (is (changed? [(:credit (get-corp)) 3]
+          (click-prompt state :corp "Beanstalk Royalties"))
+        "Played greenbeans")
+    (click-prompt state :corp "OK")
+    (is-discard? state :corp ["Accelerated Diagnostics" "Beanstalk Royalties" "Green Level Clearance"])
+    (is-hand? state :corp ["Hedge Fund"])
+    (is (no-prompt? state :corp))))
 
 (deftest accelerated-diagnostics-interaction-with-current
-    ;; Interaction with Current
-    (do-game
-      (new-game {:corp {:deck ["Accelerated Diagnostics" "Cerebral Overwriter"
-                               "Enhanced Login Protocol" "Shipment from SanSan"
-                               "Hedge Fund"]}})
-      (starting-hand state :corp ["Accelerated Diagnostics" "Cerebral Overwriter"])
-      (play-from-hand state :corp "Cerebral Overwriter" "New remote")
-      (core/gain state :corp :credit 3)
-      (play-from-hand state :corp "Accelerated Diagnostics")
-      (click-prompt state :corp "OK")
-      (let [co (get-content state :remote1 0)]
-        (click-prompt state :corp "Enhanced Login Protocol")
-        (is (= "Enhanced Login Protocol" (:title (first (get-in @state [:corp :current]))))
-            "Enhanced Login Protocol active in Current area")
-        (click-prompt state :corp "Shipment from SanSan")
-        (click-prompt state :corp "2")
-        (click-card state :corp co)
-        (is (= 2 (get-counters (refresh co) :advancement)) "Cerebral Overwriter gained 2 advancements")
-        (click-prompt state :corp "Hedge Fund")
-        (is (= 9 (:credit (get-corp))) "Corp gained credits from Hedge Fund"))))
+  ;; Interaction with Current
+  (do-game
+    (new-game {:corp {:deck ["Accelerated Diagnostics" "Cerebral Overwriter"
+                             "Enhanced Login Protocol" "Shipment from SanSan"
+                             "Hedge Fund"]}})
+    (starting-hand state :corp ["Accelerated Diagnostics" "Cerebral Overwriter"])
+    (play-from-hand state :corp "Cerebral Overwriter" "New remote")
+    (core/gain state :corp :credit 3)
+    (play-from-hand state :corp "Accelerated Diagnostics")
+    (click-prompt state :corp "OK")
+    (let [co (get-content state :remote1 0)]
+      (click-prompt state :corp "Enhanced Login Protocol")
+      (is (= "Enhanced Login Protocol" (:title (first (get-in @state [:corp :current]))))
+          "Enhanced Login Protocol active in Current area")
+      (click-prompt state :corp "Shipment from SanSan")
+      (click-prompt state :corp "2")
+      (click-card state :corp co)
+      (is (= 2 (get-counters (refresh co) :advancement)) "Cerebral Overwriter gained 2 advancements")
+      (click-prompt state :corp "Hedge Fund")
+      (is (= 9 (:credit (get-corp))) "Corp gained credits from Hedge Fund"))))
 
 (deftest accelerated-diagnostics-no-additional-costs
-    ;; No additional costs
-    (do-game
-      (new-game {:corp {:deck ["Accelerated Diagnostics" "Breaking News"
-                               "24/7 News Cycle" "BOOM!"]}})
-      (starting-hand state :corp ["Accelerated Diagnostics" "Breaking News"])
-      (play-and-score state "Breaking News")
-      (core/gain state :corp :credit 10)
-      (core/lose state :runner :tag 2)
-      (play-from-hand state :corp "Accelerated Diagnostics")
-      (click-prompt state :corp "OK")
-      (click-prompt state :corp "24/7 News Cycle")
-      (is (= "Choose an agenda in your score area" (:msg (prompt-map :corp))))
-      (click-card state :corp "Breaking News")
-      (click-prompt state :corp "BOOM!")))
+  ;; No additional costs
+  (do-game
+    (new-game {:corp {:deck ["Accelerated Diagnostics" "Breaking News"
+                             "24/7 News Cycle" "BOOM!"]}})
+    (starting-hand state :corp ["Accelerated Diagnostics" "Breaking News"])
+    (play-and-score state "Breaking News")
+    (core/gain state :corp :credit 10)
+    (core/lose state :runner :tag 2)
+    (play-from-hand state :corp "Accelerated Diagnostics")
+    (click-prompt state :corp "OK")
+    (click-prompt state :corp "24/7 News Cycle")
+    (is (= "Choose an agenda in your score area" (:msg (prompt-map :corp))))
+    (click-card state :corp "Breaking News")
+    (click-prompt state :corp "BOOM!")))
 
 (deftest accelerated-diagnostics-trashes-unplayed-cards
-    ;; No additional costs
-    (do-game
-      (new-game {:corp {:deck [(qty "Ice Wall" 4)]
-                        :hand ["Accelerated Diagnostics"]}})
-      (play-from-hand state :corp "Accelerated Diagnostics")
-      (click-prompt state :corp "OK")
-      (click-prompt state :corp "Cancel")
-      (is (= 4 (count (:discard (get-corp)))))
-      (is (= 3 (count (filter #(not (:seen %)) (:discard (get-corp))))) "3 face down cards in archives")))
+  ;; No additional costs
+  (do-game
+    (new-game {:corp {:deck [(qty "Ice Wall" 4)]
+                      :hand ["Accelerated Diagnostics"]}})
+    (play-from-hand state :corp "Accelerated Diagnostics")
+    (click-prompt state :corp "OK")
+    (click-prompt state :corp "OK")
+    (is (= 4 (count (:discard (get-corp)))))
+    (is (= 3 (count (filter #(not (:seen %)) (:discard (get-corp))))) "3 face down cards in archives")))
 
 (deftest active-policing
   (do-game

@@ -21,8 +21,7 @@
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
    [game.core.engine :refer [do-nothing pay register-events resolve-ability should-trigger?]]
-   [game.core.events :refer [first-event? last-turn? no-event? not-last-turn?
-                             turn-events]]
+   [game.core.events :refer [event-count first-event? last-turn? no-event? not-last-turn? turn-events ]]
    [game.core.flags :refer [can-score? clear-persistent-flag! in-corp-scored?
                             in-runner-scored? is-scored? prevent-jack-out
                             register-persistent-flag! register-turn-flag! when-scored? zone-locked?]]
@@ -93,25 +92,50 @@
                    card nil))}})
 
 (defcard "Accelerated Diagnostics"
-  (letfn [(ad [st si e c cards]
-            (when-let [choices (filterv #(and (operation? %)
-                                            (can-pay? st si (assoc e :source c :source-type :play)
-                                                      c nil [(->c :credit (play-cost st si %))]))
-                                      cards)]
-              {:async true
-               :prompt "Choose an operation to play"
-               :choices (cancellable choices)
-               :msg (msg "play " (:title target))
-               :effect (req (wait-for (play-instant state side target {:no-additional-cost true})
-                                      (let [remaining (filterv #(not (same-card? % target)) cards)]
-                                        (continue-ability state side (ad state side eid card remaining) card nil))))
-               :cancel-effect (effect (trash-cards eid cards {:unpreventable true :cause-card card}))}))]
-    {:on-play
-     {:prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title (take 3 (:deck corp)))))
-      :change-in-game-state (req (seq (:deck corp)))
-      :choices ["OK"]
-      :async true
-      :effect (effect (continue-ability (ad state side eid card (take 3 (:deck corp))) card nil))}}))
+  (letfn [(shuffle-count-fn [state]
+            (event-count state :corp :corp-shuffle-deck))
+          (is-top-x? [state card X]
+            (some #(same-card? % card) (take X (get-in @state [:corp :deck]))))
+          (ad [state eid card remaining-cards starting-shuffle-count]
+            ;; rules note: if R&D is shuffled, or the cards are no longer in the top 3 cards of R&D,
+            ;; (relative to when AD was played) then AD is short-circuited and cannot finish resolving
+            (let [playable-cards (filterv #(and (operation? %)
+                                                (is-top-x? state % (count remaining-cards))
+                                                (can-pay? state :corp (assoc eid :source card
+                                                                             :source-type :play)
+                                                          card nil [(->c :credit (play-cost state :corp %))]))
+                                          remaining-cards)]
+              (cond
+                (not (seq remaining-cards))
+                {}
+                (> (shuffle-count-fn state) starting-shuffle-count)
+                {:msg (str "is unable to continue resolving " (:title card))}
+                (seq playable-cards)
+                {:prompt "Choose an operation to play"
+                 :choices (cancellable playable-cards)
+                 :msg (msg "play " (:title target))
+                 :async true
+                 :effect (req (wait-for
+                                (play-instant state side target {:no-additional-cost true})
+                                (let [remaining (filterv #(not (same-card? % target)) remaining-cards)]
+                                  (continue-ability
+                                    state side
+                                    (ad state eid card remaining starting-shuffle-count)
+                                    card nil))))
+                 :cancel-effect (req (trash-cards state side eid remaining-cards {:unpreventable true :cause-card card}))}
+                :else
+                {:prompt "There are no playable cards"
+                 :choices ["OK"]
+                 :async true
+                 :effect (req (trash-cards state side eid remaining-cards {:unpreventable true :cause-card card}))})))]
+   {:prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title (take 3 (:deck corp)))))
+    :change-in-game-state (req (seq (:deck corp)))
+    :choices ["OK"]
+    :async true
+    :effect (req (continue-ability
+                   state side
+                   (ad state eid card (take 3 (:deck corp)) (shuffle-count-fn state))
+                   card nil))}))
 
 (defcard "Active Policing"
   (let [lose-click-abi
