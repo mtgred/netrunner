@@ -599,6 +599,7 @@
                             (do (when run
                                   (swap! state assoc-in [:run :did-trash] true))
                                 (swap! state assoc-in [:runner :register :trashed-card] true)
+                                (swap! state assoc-in [:runner :register :trashed-accessed-card] true)
                                 (system-msg state :runner
                                             (str "uses " (:title card) " to"
                                                  " trash " (:title target)

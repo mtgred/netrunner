@@ -145,6 +145,7 @@
                                         (when must-trash?
                                           (swap! state assoc-in [:run :did-access] true)))
                                       (swap! state assoc-in [:runner :register :trashed-card] true)
+                                      (swap! state assoc-in [:runner :register :trashed-accessed-card] true)
                                       (system-msg state side (str (:msg async-result) " to trash "
                                                                   (:title card) " from "
                                                                   (name-zone :corp (get-zone card))))
@@ -156,6 +157,8 @@
                           (let [ability-card (find-first #(same-card? % target) access-ab-cards)
                                 ability-eid (assoc eid :source ability-card :source-type :ability)
                                 ability (access-ab ability-card)]
+                            (when (:trash? ability true)
+                              (swap! state assoc-in [:runner :register :trashed-accessed-card] true))
                             (when (and (:breach @state)
                                        (:trash? ability true))
                               (swap! state assoc-in [:breach :did-trash] true))
