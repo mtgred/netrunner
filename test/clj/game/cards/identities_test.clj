@@ -3420,8 +3420,11 @@
     (play-from-hand state :corp "Hedge Fund")
     (play-from-hand state :corp "PAD Campaign" "New remote")
     (click-draw state :corp)
-    (is-hand? state :corp ["Beanstalk Royalties"])
-    (click-prompt state :corp "Gain 1 [Credits]")))
+    (is (is-hand? state :corp ["Beanstalk Royalties"])
+        "Drew card before mirrormorph ability resolved")
+    (is (changed? [(:credit (get-corp)) 1]
+          (click-prompt state :corp "Gain 1 [Credits]"))
+        "MM ability was triggered post-action")))
 
 (deftest mti-mwekundu-life-improved-no-ice
     ;; No ice
