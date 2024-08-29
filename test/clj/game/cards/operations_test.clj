@@ -2258,7 +2258,7 @@
     (take-credits state :corp)
     (play-from-hand state :corp "Hellion Beta Test")
     (is (is-hand? state :corp ["Hellion Beta Test"])
-        "Did not play because the restriction was not me")))
+        "Did not play because the restriction was not met")))
 
 (deftest heritage-committee
   ;; Hostile Takeover
