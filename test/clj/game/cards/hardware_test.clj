@@ -4801,6 +4801,21 @@
         (card-ability state :runner (get-hardware state 0) 0)
         (is (no-prompt? state :runner) "Simulchip prompt did not come up"))))
 
+(deftest simulchip-fire-multiple-in-one-turn
+  (do-game
+    (new-game {:runner {:hand [(qty "Simulchip" 2) "Rezeki"]
+                        :discard ["Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Simulchip")
+    (play-from-hand state :runner "Simulchip")
+    (play-from-hand state :runner "Rezeki")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-card state :runner "Rezeki")
+    (click-card state :runner "Ika")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-card state :runner "Rezeki")
+    (is (= ["Simulchip" "Simulchip"] (map :title (:discard (get-runner)))) "Both simulchips occupy trash")))
+
 (deftest simulchip-with-no-programs-in-the-heap
     ;; with no programs in the heap
     (testing "and a program trashed this turn"
