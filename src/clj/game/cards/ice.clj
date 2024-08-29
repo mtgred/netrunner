@@ -2011,6 +2011,7 @@
                              {:type :prevent-paid-ability
                               :duration :end-of-turn
                               :req (req (and (ice? target)
+                                             (= :runner side)
                                              (has-subtype? target "Bioroid")))
                               :value true}))}})
 
