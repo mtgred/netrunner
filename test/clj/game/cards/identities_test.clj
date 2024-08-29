@@ -3262,7 +3262,7 @@
         (click-draw state :corp)
         (click-credit state :corp)
         (play-from-hand state :corp "Hedge Fund")
-        (is (changed? [(:credit (get-corp)) 5]
+        (is (changed? [(:credit (get-corp)) 1]
               (click-prompt state :corp "Gain 1 [Credits]"))
             "Gained 1 credit from MM ability")))
 
@@ -3356,7 +3356,7 @@
         (click-credit state :corp)
         (click-draw state :corp)
         (play-from-hand state :corp "Blue Level Clearance")
-        (is (changed? [(:credit (get-corp)) 4]
+        (is (changed? [(:credit (get-corp)) 1]
               (click-prompt state :corp "Gain 1 [Credits]"))
             "Gained 1 credit from MM ability")))
 
@@ -3411,6 +3411,20 @@
         (play-from-hand state :corp "NASX" "New remote")
         (play-from-hand state :corp "Wall to Wall" "New remote")
         (is (no-prompt? state :corp) "No MM trigger")))
+
+(deftest mirrormorph-triggers-post-action
+  (do-game
+    (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                      :hand ["Hedge Fund" "PAD Campaign"]
+                      :deck ["Beanstalk Royalties"]}})
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (click-draw state :corp)
+    (is (is-hand? state :corp ["Beanstalk Royalties"])
+        "Drew card before mirrormorph ability resolved")
+    (is (changed? [(:credit (get-corp)) 1]
+          (click-prompt state :corp "Gain 1 [Credits]"))
+        "MM ability was triggered post-action")))
 
 (deftest mti-mwekundu-life-improved-no-ice
     ;; No ice

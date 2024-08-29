@@ -1301,7 +1301,9 @@
                               card nil)))}]})
 
 (defcard "MirrorMorph: Endless Iteration"
-  (let [mm-clear {:prompt "Manually fix Mirrormorph"
+  (let [relevant-keys (fn [context] {:cid (get-in context [:card :cid])
+                                     :idx (:ability-idx context)})
+        mm-clear {:prompt "Manually fix Mirrormorph"
                   :msg "manually clear Mirrormorph flags"
                   :label "Manually fix Mirrormorph"
                   :effect (effect
@@ -1320,19 +1322,12 @@
                                    (gain-credits state side eid 1)))}]
     {:implementation "Does not work with terminal Operations"
      :abilities [mm-ability mm-clear]
-     :events [{:event :corp-spent-click
+     :events [{:event :action-resolved
                :async true
-               :effect (req (let [{:keys [action ability-idx]} context
-                                  bac-cid (get-in @state [:corp :basic-action-card :cid])
-                                  cause (if (keyword? action)
-                                          (case action
-                                            :play-instant [bac-cid 3]
-                                            :corp-click-install [bac-cid 2]
-                                            ; else
-                                            [action ability-idx])
-                                          [action ability-idx])
+               :req (req (= :corp side))
+               :effect (req (let [ctx-keys (relevant-keys context)
                                   prev-actions (get-in card [:special :mm-actions] [])
-                                  actions (conj prev-actions cause)]
+                                  actions (conj prev-actions ctx-keys)]
                               (update! state side (assoc-in card [:special :mm-actions] actions))
                               (update! state side (assoc-in (get-card state card) [:special :mm-click] false))
                               (if (and (= 3 (count actions))
@@ -1349,11 +1344,10 @@
                         (update! (assoc-in (get-card state card) [:special :mm-click] false)))}]
      :static-abilities [{:type :prevent-paid-ability
                          :req (req (and (get-in card [:special :mm-click])
-                                        (let [cid (:cid target)
-                                              ability-idx (nth targets 2 nil)
-                                              cause [cid ability-idx]
+                                        (let [ctx {:cid (:cid target)
+                                                   :idx (nth targets 2 nil)}
                                               prev-actions (get-in card [:special :mm-actions] [])
-                                              actions (conj prev-actions cause)]
+                                              actions (conj prev-actions ctx)]
                                           (not (and (= 4 (count actions))
                                                     (= 4 (count (distinct actions))))))))
                          :value true}]}))
