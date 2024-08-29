@@ -2246,6 +2246,20 @@
       (click-prompt state :runner "2")
       (is (= 1 (count-bad-pub state)) "Corp should gain 1 bad publicity from losing Hellion Beta Test trace")))
 
+(deftest hellion-beta-test-enforce-restriction
+  (do-game
+    (new-game {:corp {:deck ["Vanilla"] :hand ["Hellion Beta Test"]}
+               :runner {:deck ["Stargate"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Stargate")
+    (card-ability state :runner (get-program state 0) 0)
+    (run-continue state)
+    (click-prompt state :runner "Vanilla")
+    (take-credits state :corp)
+    (play-from-hand state :corp "Hellion Beta Test")
+    (is (is-hand? state :corp ["Hellion Beta Test"])
+        "Did not play because the restriction was not me")))
+
 (deftest heritage-committee
   ;; Hostile Takeover
   (do-game
