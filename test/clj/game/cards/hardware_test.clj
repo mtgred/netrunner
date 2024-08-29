@@ -609,6 +609,29 @@
         (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
         (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
 
+(deftest boomerang-only-triggers-once-with-virtuoso-breach
+  (do-game
+    (new-game {:runner {:hand ["Boomerang" "Virtuoso"]
+                        :credits 10}
+               :corp {:hand ["Vanilla" "Ice Wall"]}})
+    (play-from-hand state :corp "Vanilla" "Archives")
+    (rez state :corp (get-ice state :archives 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virtuoso")
+    (core/command-parser state :runner {:user {:username "Runner"} :text "/set-mark Archives"})
+    (play-from-hand state :runner "Boomerang")
+    (click-card state :runner "Vanilla")
+    (run-on state :archives)
+    (run-continue state :encounter-ice)
+    (card-ability state :runner (get-hardware state 1) 0)
+    (click-prompt state :runner "End the run")
+    (run-continue-until state :success)
+    (is (= ["Boomerang" "Virtuoso"] (prompt-titles :runner)) "Boomerang only shows up once!")
+    (click-prompt state :runner "Virtuoso")
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Yes")
+    (is (no-prompt? state :runner) "Didn't get multiple prompts")))
+
 (deftest boomerang-does-not-trigger-on-following-successful-runs
     ;; Does not trigger on following successful runs
     (do-game
