@@ -125,10 +125,10 @@
 
 (defn in-remote-root?
   [card remote]
-  (let [remote-key (if (keyword? remote) remote (keyword remote))
-        remote-str (if (keyword? remote) (name remote) remote)]
-    (= (get-zone card) #?(:clj [:servers remote-key :content]
-                          :cljs ["servers" remote-str "content"]))))
+  (let [remote #?(:clj remote
+                  :cljs (if (keyword? remote) (name remote) remote))]
+    (= (get-zone card) #?(:clj [:servers remote :content]
+                          :cljs ["servers" remote "content"]))))
 
 (defn in-root?
   [card]
