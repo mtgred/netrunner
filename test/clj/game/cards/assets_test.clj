@@ -6501,6 +6501,24 @@
       (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 reverts")
       (is (= 3 (count (:subroutines (refresh ichi)))) "Ichi 2.0 reverts"))))
 
+(deftest warden-fatuma-issue-6193
+  (do-game
+    (new-game {:corp {:hand ["Warden Fatuma" "Eli 1.0"]}
+               :runner {:hand ["Because I Can"]}})
+    (play-from-hand state :corp "Warden Fatuma" "New remote")
+    (play-from-hand state :corp "Eli 1.0" "Server 1")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Because I Can")
+    (click-prompt state :runner "Server 1")
+    (rez state :corp (get-ice state :remote1 0))
+    (run-continue state)
+    (is (changed? [(:click (get-runner)) -1]
+          (card-subroutine state :corp (get-ice state :remote1 0) 0))
+        "Lost click to fatuma sub")
+    (run-continue-until state :success)
+    (click-prompt state :runner "Because I Can")
+    (is (= 2 (count (:subroutines (get-ice state :remote1 0)))) "Reset to 2 subs")))
+
 (deftest warm-reception
   (do-game
     (new-game {:corp {:hand ["Warm Reception" "Shipment from Tennin" "Hostile Takeover" "Vanilla"]}})
