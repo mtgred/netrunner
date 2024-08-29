@@ -161,6 +161,7 @@
         line-height: 1.5rem
         text-align: center
         margin: 2px
+        pointer-events: none
 
     .advance-counter
         background-color: alpha(blue-core, o-80)
@@ -874,6 +875,12 @@
                         margin: -7px 0
                         transform(rotate(90deg))
                         cursor: pointer
+
+                        .strength
+                            bottom: unset
+                            left: unset
+                            right: 3px
+                            top: 3px
 
                         &.host
                             margin-bottom: 15px
