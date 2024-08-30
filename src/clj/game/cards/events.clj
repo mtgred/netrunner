@@ -500,6 +500,7 @@
           :effect (req (wait-for (trash state side (assoc target :seen true) {:cause-card card
                                                                               :accessed true})
                                  (swap! state assoc-in [:runner :register :trashed-card] true)
+                                 (swap! state assoc-in [:runner :register :trashed-accessed-card] true)
                                  (damage state :runner eid :meat 1 {:unboostable true})))}]))}})
 
 (defcard "Calling in Favors"

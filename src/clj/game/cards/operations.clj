@@ -1368,7 +1368,7 @@
   {:on-play
    {:trace
     {:base 2
-     :req (req (last-turn? state :runner :trashed-card))
+     :req (req (:trashed-accessed-card runner-reg-last))
      :label "Trash 2 installed non-program cards or take 1 bad publicity"
      :successful {:choices {:max (req (min 2 (count (filter #(or (facedown? %)
                                                                  (not (program? %)))
