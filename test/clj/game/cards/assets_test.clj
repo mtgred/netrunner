@@ -780,6 +780,23 @@
       (end-phase-12 state :corp)
       (is (some #{"Charlotte Caçador" "La Costa Grid"} (mapv :title (prompt-buttons :corp)))))))
 
+(deftest charlotte-cacador-la-costa-unadvanced
+  (do-game
+    (new-game {:corp {:hand ["Charlotte Caçador" "La Costa Grid"]
+                      :deck [(qty "Hedge Fund" 5)]
+                      :credits 100}})
+    (play-from-hand state :corp "Charlotte Caçador" "New remote")
+    (play-from-hand state :corp "La Costa Grid" "Server 1")
+    (let [cc (get-content state :remote1 0)
+          lcg (get-content state :remote1 1)]
+      (rez state :corp cc)
+      (rez state :corp lcg)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp has opportunity to use Charlotte Caçador")
+      (end-phase-12 state :corp)
+      (is (some #{"Charlotte Caçador" "La Costa Grid"} (mapv :title (prompt-buttons :corp)))))))
+
 (deftest chekist-scion
   ;; Chekist Scion
   (do-game
