@@ -9,6 +9,7 @@
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [valid-email?]]
    [nr.avatar :refer [avatar]]
+   [nr.sounds :refer [play-sfx random-sound]]
    [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top]]
@@ -320,6 +321,7 @@
            [:div (tr [:settings.volume "Volume"])
             [:input {:type "range"
                      :min 1 :max 100 :step 1
+                     :on-mouse-up #(play-sfx [(random-sound)] (int (.. % -target -value)))
                      :on-change #(swap! s assoc-in [:volume] (.. % -target -value))
                      :value (or (:volume @s) 50)
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
