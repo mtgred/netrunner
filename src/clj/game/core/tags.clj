@@ -87,7 +87,8 @@
                                              "will not avoid tags")]
                            (system-msg state :runner prevent-msg)
                            (clear-wait-prompt state :corp)
-                           (resolve-tag state side eid (max 0 (- n (or prevent 0))))))))
+                           (resolve-tag state side eid (max 0 (- n (or prevent 0))))))
+                       {:prompt-type :prevent}))
                  (resolve-tag state side eid n))))))
 
 (defn lose-tags

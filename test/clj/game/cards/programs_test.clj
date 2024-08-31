@@ -8783,6 +8783,7 @@
     (dotimes [_ 3]
       (run-empty-server state "R&D"))
     (is (= 3 (get-counters (get-program state 0) :power)) "3 counters on Upya")
+    (take-credits state :runner)
     (take-credits state :corp)
     (dotimes [_ 3]
       (run-empty-server state "R&D"))

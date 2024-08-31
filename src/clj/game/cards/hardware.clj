@@ -714,7 +714,7 @@
              :hq 1
              {:req (req (and (= :hq target)
                              (first-event? state side :breach-server #(= :hq (first %)))))
-              :msg "access 1 additional cards from HQ"})]})
+              :msg "access 1 additional card from HQ"})]})
 
 (defcard "Doppelgänger"
   {:static-abilities [(mu+ 1)]
@@ -1344,10 +1344,9 @@
                       (runner-hand-size+ 3)]
    :on-install {:async true
                 :effect (effect (damage eid :brain 1 {:card card}))}
-   :events [{:event :agenda-scored
-             :async true
-             :interactive (req true)
-             :effect (effect (continue-ability (sabotage-ability 1) card nil))}]})
+   :events [(assoc (sabotage-ability 1)
+                   :event :agenda-scored
+                   :interactive (req true))]})
 
 (defcard "Masterwork (v37)"
   {:static-abilities [(mu+ 1)]

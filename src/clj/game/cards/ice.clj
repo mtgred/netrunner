@@ -609,7 +609,7 @@
    :on-rez {:req (req (and (threat-level 3 state)
                            run
                            this-server))
-            :prompt "Choose a card to install from Archives or HQ in another server"
+            :prompt "Choose a non-agenda card to install from Archives or HQ in another server"
             :waiting-prompt true
             :show-discard true
             :choices {:card #(and (corp? %)
@@ -1272,7 +1272,7 @@
                                               (= target "Suffer 3 net damage")
                                               {:msg (msg "force the Runner to " (decapitalize target))
                                                :effect (req (pay state :runner eid card [(->c :net 3)]))})
-                                            card nil))}
+                                            card targets))}
                                card nil))}]})
 
 (defcard "Cobra"
@@ -2014,6 +2014,7 @@
                              {:type :prevent-paid-ability
                               :duration :end-of-turn
                               :req (req (and (ice? target)
+                                             (= :runner side)
                                              (has-subtype? target "Bioroid")))
                               :value true}))}})
 
@@ -2703,25 +2704,30 @@
     {:subroutines [(end-the-run-unless-runner-pays (->c :credit 2))
                    {:label "Reveal the top 3 cards of the Stack"
                     :async true
-                    :effect (req (system-msg state side (str "uses " (:title card) " to reveal "
-                                                             (enumerate-str (top-3-names state))
-                                                             " from the top of the stack"))
-                              (wait-for
-                                (reveal state side (top-3 state))
-                                (continue-ability
-                                  state side
-                                  {:waiting-prompt true
-                                   :prompt "Choose a card to add to the Grip"
-                                   :choices (req (top-3 state))
-                                   :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
-                                             " [Credits], shuffle the Stack and trash itself")
-                                   :async true
-                                   :effect (req (move state :runner target :hand)
-                                                (wait-for (gain-credits state :corp (:cost target))
-                                                          (shuffle! state :runner :deck)
-                                                          (trash state :corp (make-eid state eid) card {:cause :subroutine})
-                                                          (encounter-ends state side eid)))}
-                                  card nil)))}]}))
+                    :effect (req (if (seq (:deck runner))
+                                   (do (system-msg state side (str "uses " (:title card) " to reveal "
+                                                                   (enumerate-str (top-3-names state))
+                                                                   " from the top of the stack"))
+                                       (wait-for
+                                         (reveal state side (top-3 state))
+                                         (continue-ability
+                                           state side
+                                           {:waiting-prompt true
+                                            :prompt "Choose a card to add to the Grip"
+                                            :choices (req (top-3 state))
+                                            :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
+                                                      " [Credits], shuffle the Stack and trash itself")
+                                            :async true
+                                            :effect (req (move state :runner target :hand)
+                                                         (wait-for (gain-credits state :corp (:cost target))
+                                                                   (shuffle! state :runner :deck)
+                                                                   (wait-for (trash state :corp  card {:cause :subroutine})
+                                                                             (encounter-ends state side eid))))}
+                                           card nil)))
+                                   (do (system-msg state side (str "uses " (:title card)
+                                                                   " to trash itself"))
+                                       (wait-for (trash state :corp card {:cause :subroutine})
+                                                 (encounter-ends state side eid)))))}]}))
 
 (defcard "Lotus Field"
   {:static-abilities [{:type :cannot-lower-strength

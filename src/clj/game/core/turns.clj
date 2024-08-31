@@ -52,45 +52,49 @@
 (defn start-turn
   "Start turn."
   [state side _]
-  ; Don't clear :turn-events until the player clicks "Start Turn"
-  ; Fix for Hayley triggers
-  (swap! state assoc :turn-events nil)
+  ;; note that it's possible for the front-end to send the "start-turn" command twice,
+  ;; before it can be updated with the fact that the turn has started.
+  (when-not (get-in @state [side :turn-started])
+    ;; Don't clear :turn-events until the player clicks "Start Turn"
+    ;; Fix for Hayley triggers
+    (swap! state assoc :turn-events nil)
+    (swap! state assoc-in [side :turn-started] true)
 
-  ; Functions to set up state for undo-turn functionality
-  (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
-  (swap! state assoc :click-states [])
-  (swap! state assoc :turn-state (dissoc @state :log :history :turn-state))
+    ;; Functions to set up state for undo-turn functionality
+    (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
+    (swap! state assoc :click-states [])
+    (swap! state assoc :turn-state (dissoc @state :log :history :turn-state))
 
-  (when (= side :corp)
-    (swap! state update-in [:turn] inc))
+    (when (= side :corp)
+      (swap! state update-in [:turn] inc))
 
-  (doseq [c (filter :new (concat (all-installed-and-scored state side) (get-in @state [side :discard])))]
-    (update! state side (dissoc c :new)))
+    (doseq [c (filter :new (concat (all-installed-and-scored state side) (get-in @state [side :discard])))]
+      (update! state side (dissoc c :new)))
 
-  (swap! state assoc :active-player side :per-turn nil :end-turn false)
-  (doseq [s [:runner :corp]]
-    (swap! state assoc-in [s :register] nil))
+    (swap! state assoc :active-player side :per-turn nil :end-turn false)
+    (doseq [s [:runner :corp]]
+      (swap! state assoc-in [s :register] nil))
 
-  (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
-        start-cards (filter #(card-flag-fn? state side % phase true)
-                            (distinct (concat (all-active state side)
-                                              (remove facedown? (all-installed state side)))))
-        extra-clicks (get-in @state [side :extra-click-temp] 0)]
-    (gain state side :click (get-in @state [side :click-per-turn]))
-    (cond
-      (neg? extra-clicks) (lose state side :click (abs extra-clicks))
-      (pos? extra-clicks) (gain state side :click extra-clicks))
-    (swap! state dissoc-in [side :extra-click-temp])
-    (swap! state assoc phase true)
-    (trigger-event state side phase nil)
-    (if (not-empty start-cards)
-      (toast state side
-             (str "You may use " (enumerate-str (map :title start-cards))
-                  (if (= side :corp)
-                    " between the start of your turn and your mandatory draw."
-                    " before taking your first click."))
-             "info")
-      (end-phase-12 state side _))))
+    (let [phase (if (= side :corp) :corp-phase-12 :runner-phase-12)
+          start-cards (filter #(card-flag-fn? state side % phase true)
+                              (distinct (concat (all-active state side)
+                                                (remove facedown? (all-installed state side)))))
+          extra-clicks (get-in @state [side :extra-click-temp] 0)]
+      (gain state side :click (get-in @state [side :click-per-turn]))
+      (cond
+        (neg? extra-clicks) (lose state side :click (abs extra-clicks))
+        (pos? extra-clicks) (gain state side :click extra-clicks))
+      (swap! state dissoc-in [side :extra-click-temp])
+      (swap! state assoc phase true)
+      (trigger-event state side phase nil)
+      (if (not-empty start-cards)
+        (toast state side
+               (str "You may use " (enumerate-str (map :title start-cards))
+                    (if (= side :corp)
+                      " between the start of your turn and your mandatory draw."
+                      " before taking your first click."))
+               "info")
+        (end-phase-12 state side _)))))
 
 (defn- handle-end-of-turn-discard
   [state side eid _]
@@ -156,8 +160,9 @@
                ;; Update strength of all ice every turn
                (update-all-ice state side)
                (swap! state assoc :end-turn true)
-               (swap! state update-in [side :register] dissoc :cannot-draw)
-               (swap! state update-in [side :register] dissoc :drawn-this-turn)
+               (swap! state dissoc-in [side :register :cannot-draw])
+               (swap! state dissoc-in [side :register :drawn-this-turn])
+               (swap! state dissoc-in [side :turn-started])
                (swap! state assoc :mark nil)
                (clear-turn-register! state)
                (when-let [extra-turns (get-in @state [side :extra-turns])]

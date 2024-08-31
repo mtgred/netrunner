@@ -14,6 +14,7 @@
    [medley.core :refer [find-first]]
    [web.app-state :as app-state]
    [web.lobby :as lobby]
+   [web.preconstructed :as preconstructed]
    [web.stats :as stats]
    [web.ws :as ws]))
 
@@ -122,9 +123,42 @@
       (update-in [:deck :_id] str)
       (update-in [:deck :identity] select-keys [:title :faction])))
 
+(defn- player-map-deck
+  [players uid deck]
+  (mapv (fn [p] (if (= uid (:uid p))
+                  (assoc p :deck deck)
+                  p))
+        players))
+
+(defn- side-player-uid
+  [game side]
+  (let [player (first (filter #(= (:side %) side) (:players game)))]
+    (:uid player)))
+
+(defn set-precon-deck
+  [game side decklist]
+  (if-let [uid (side-player-uid game side)]
+    (let [deck (lobby/process-deck decklist)]
+      (assoc game :players (player-map-deck (:players game) uid deck)))
+    game))
+
+(defn handle-precon-deck
+  [game]
+  (cond
+    (= (:gateway-type game) "Beginner")
+    (-> game
+        (set-precon-deck "Corp" preconstructed/gateway-beginner-corp)
+        (set-precon-deck "Runner" preconstructed/gateway-beginner-runner))
+    (= (:gateway-type game) "Intermediate")
+    (-> game
+        (set-precon-deck "Corp" preconstructed/gateway-intermediate-corp)
+        (set-precon-deck "Runner" preconstructed/gateway-intermediate-runner))
+    :else game))
+
 (defn handle-start-game [lobbies gameid players now]
   (if-let [lobby (get lobbies gameid)]
     (as-> lobby g
+      (handle-precon-deck g)
       (merge g {:started true
                 :original-players players
                 :ending-players players

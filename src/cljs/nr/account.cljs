@@ -343,7 +343,7 @@
                  (tr [(keyword (str "settings.bespoke-sounds." (name grouping))) (name grouping)])]]))]
 
           [:section
-           [:h3 (tr [:lobby.format "Format"])]
+           [:h3 (tr [:lobby.default-game-format "Default game format"])]
            [:select.format
             {:value (or (:default-format @s) "standard")
              :on-change #(swap! s assoc-in [:default-format] (.. % -target -value))}

@@ -176,10 +176,20 @@
         (let [c (count (:spectators game))]
           (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")"))))])
 
-(defn game-format [{fmt :format singleton? :singleton}]
+(defn- gateway-type-span [gateway-type]
+  (cond
+    (= gateway-type "Beginner")
+    [:span.format-precon (str " (" (tr [:lobby.gateway-format.beginner "Beginner"]) ")")]
+    (= gateway-type "Intermediate")
+    [:span.format-precon (str " (" (tr [:lobby.gateway-format.intermediate "Intermediate"]) ")")]
+    (= gateway-type "Constructed")
+    [:span.format-precon (str " (" (tr [:lobby.gateway-format.constructed "Constructed"]) ")")]))
+
+(defn game-format [{fmt :format singleton? :singleton gateway-type :gateway-type}]
   [:div {:class "game-format"}
-   [:span.format-label (tr [:lobby.default-game-format "Default game format"]) ":  "]
+   [:span.format-label (tr [:lobby.format "Format"]) ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
+   [gateway-type-span gateway-type]
    [:span.format-singleton (str (when singleton? (str " " (tr [:lobby.singleton-b "(singleton)"]))))]])
 
 (defn- time-since
@@ -198,7 +208,7 @@
   ;; it is of the correct type. IDK how to fix the problem, but this
   ;; is a workable temporary fix - NBKelly, Jul 2024
   (when (and (:started game) (= (type (:date game)) (type (inst/now))))
-    [:div.game-time (str (time-since (:date game)) "m")]))
+    [:div.game-time [:span.game-time-emoji "⏰"] (str " " (time-since (:date game)) "m")]))
 
 (defn players-row [{players :players :as game}]
   (into

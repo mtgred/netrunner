@@ -1669,6 +1669,7 @@
       (is (changed? [(count-tags state) 2]
                     (click-prompt state :runner "Take 2 tags"))
           "Runner got 2 tags")
+      (is (last-log-contains? state "Cloud Eater to force the Runner to take 2 tag") "Correctly logs choice")
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)
@@ -4523,34 +4524,24 @@
       (is (no-prompt? state :runner) "No lingering prompt (corp)"))))
 
 (deftest loot-box
+  (do-game
+    (fire-all-subs-test "Loot Box"
+                        {:runner {:deck ["Dirty Laundry" "Datasucker" "Liberated Account"]}})
+    (is (changed? [(:credit (get-runner)) -2]
+          (click-prompt state :runner "Pay 2 [Credits]"))
+        "Paid 2 credits to not ETR")
+    (is (changed? [(:credit (get-corp)) 6]
+          (click-prompt state :corp "Liberated Account")
+          (is (find-card "Liberated Account" (:hand (get-runner))))
+          (is (not (find-card "Liberated Account" (:deck (get-runner))))))
+        "Gained 6 credits from Liberated Account")
+    (is (= "Loot Box" (-> (get-corp) :discard first :title)) "Loot Box trashed")))
+
+(deftest loot-box-empty-stack
   ;; Loot Box
   (do-game
-    (new-game {:corp {:deck ["Loot Box"]}
-               :runner {:deck ["Dirty Laundry" "Datasucker" "Liberated Account"]
-                        :hand ["Sure Gamble"]}})
-    (play-from-hand state :corp "Loot Box" "R&D")
-    (take-credits state :corp)
-    (let [lootbox (get-ice state :rd 0)]
-      (run-on state "R&D")
-      (rez state :corp lootbox)
-      (run-continue state)
-      (card-subroutine state :corp lootbox 0)
-      (is (= 5 (:credit (get-runner))))
-      (click-prompt state :runner "Pay 2 [Credits]")
-      (is (= 3 (:credit (get-runner))))
-      (card-subroutine state :corp lootbox 1)
-      (is (find-card "Liberated Account" (:deck (get-runner))))
-      (is (not (find-card "Liberated Account" (:hand (get-runner)))))
-      (is (= 3 (count (:deck (get-runner)))))
-      (is (= 1 (count (:hand (get-runner)))))
-      (is (= 7 (:credit (get-corp))))
-      (click-prompt state :corp "Liberated Account")
-      (is (find-card "Liberated Account" (:hand (get-runner))))
-      (is (not (find-card "Liberated Account" (:deck (get-runner)))))
-      (is (= 2 (count (:deck (get-runner)))) "One card removed from Stack")
-      (is (= 2 (count (:hand (get-runner)))) "One card added to Grip")
-      (is (= 13 (:credit (get-corp))) "Gained 6 credits from Liberated Account")
-      (is (= "Loot Box" (-> (get-corp) :discard first :title)) "Loot Box trashed"))))
+    (subroutine-test "Loot Box" 1 {:runner {:deck 0}})
+    (is (last-log-contains? state "uses Loot Box to trash itself") "Loot box trashed itself")))
 
 (deftest lotus-field
   ;; Lotus Field strength cannot be lowered

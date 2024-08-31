@@ -291,6 +291,10 @@
      (fn [this]
        (-> js/document (.addEventListener "keydown" handle-keydown)))
 
+     :component-will-unmount
+     (fn [this]
+       (-> js/document (.removeEventListener "keydown" handle-keydown)))
+
      :reagent-render
      (fn []
        [:div.replay.panel.blue-shade
@@ -320,7 +324,7 @@
                       :draw [:div.symbol]
                       :credit (render-message "[credit]")
                       :advance "A"
-                      :purge "☣️"
+                      :purge "🚨"
                       :click (render-message "[click]")
                       "?")]]))]
         [:div.controls

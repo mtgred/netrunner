@@ -15,7 +15,7 @@
    [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
    [game.core.damage :refer [damage damage-prevent]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
+   [game.core.def-helpers :refer [breach-access-bonus choose-one-helper defcard offer-jack-out
                                   reorder-choice]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -500,6 +500,7 @@
           :effect (req (wait-for (trash state side (assoc target :seen true) {:cause-card card
                                                                               :accessed true})
                                  (swap! state assoc-in [:runner :register :trashed-card] true)
+                                 (swap! state assoc-in [:runner :register :trashed-accessed-card] true)
                                  (damage state :runner eid :meat 1 {:unboostable true})))}]))}})
 
 (defcard "Calling in Favors"
@@ -3110,6 +3111,7 @@
             {:event :run-ends
              :async true
              :req (req this-card-run)
+             :interactive (req true)
              :effect (req (let [cards-to-draw (get-counters (get-card state card) :power)]
                             (continue-ability
                               state side
@@ -4200,18 +4202,18 @@
                        (continue-ability state :runner (choose-cards (:hand corp) #{}) card nil)))}}}}))
 
 (defcard "Wildcat Strike"
-  {:on-play
-   {:player :corp
-    :waiting-prompt true
-    :prompt "Choose one"
-    :choices ["Runner gains 6 [Credits]" "Runner draws 4 cards"]
-    :msg (msg (if (= target "Runner gains 6 [Credits]")
-                "gain 6 [Credits]"
-                "draw 4 cards"))
-    :async true
-    :effect (req (if (= target "Runner gains 6 [Credits]")
-                   (gain-credits state :runner eid 6)
-                   (draw state :runner eid 4)))}})
+  {:on-play (choose-one-helper
+              {:player :corp}
+              [{:option "Runner gains 6 [Credits]"
+                :ability {:msg "force the Runner to gain 6 [Credits]"
+                          :display-side :corp
+                          :async true
+                          :effect (req (gain-credits state :runner eid 6))}}
+               {:option "Runner draws 4 cards"
+                :ability {:msg "force the Runner to draw 4 cards"
+                          :display-side :corp
+                          :async true
+                          :effect (req (draw state :runner eid 4))}}])})
 
 (defcard "Windfall"
   {:on-play

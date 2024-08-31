@@ -1953,10 +1953,11 @@
                 :msg (msg "rez " (card-str state target) ", ignoring all costs")
                 :async true
                 :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
-                                       (let [c (:card async-result)]
+                                       (let [c (:card async-result)
+                                             ev (if (= (:active-player @state) :corp) :corp-turn-ends :runner-turn-ends)]
                                          (register-events
                                            state side card
-                                           [{:event (if (= side :corp) :corp-turn-ends :runner-turn-ends)
+                                           [{:event ev
                                              :unregister-once-resolved true
                                              :duration :end-of-turn
                                              :effect (effect (derez c {:source-card card}))}])
@@ -2244,7 +2245,7 @@
 (defcard "Tomorrow's Headline"
   (let [ability
         {:interactive (req true)
-         :msg "give Runner 1 tag"
+         :msg "give the Runner 1 tag"
          :async true
          :effect (req (gain-tags state :corp eid 1))}]
     {:on-score ability

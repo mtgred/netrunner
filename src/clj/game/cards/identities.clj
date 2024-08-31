@@ -4,11 +4,11 @@
    [game.core.access :refer [access-bonus access-cost-bonus access-non-agenda]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed card->server
-                            get-remote-names get-remotes server->zone]]
+                            get-all-cards get-remote-names get-remotes server->zone]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? faceup? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
-                           ice? in-discard? in-hand? in-play-area? installed? is-type? operation? program?
+                           ice? in-discard? in-hand? in-play-area? in-rfg? installed? is-type? operation? program?
                            resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [charge-ability]]
    [game.core.cost-fns :refer [install-cost play-cost
@@ -491,6 +491,18 @@
 (defcard "Chaos Theory: Wünderkind"
   {:static-abilities [(mu+ 1)]})
 
+(defcard "Chronos Protocol: Haas-Bioroid"
+  {:events [{:event :damage
+             :req (req (= (:damage-type context) :brain))
+             :msg (msg "remove all copies of " (enumerate-str (map :title (:cards-trashed context))) ", everywhere, from the game")
+             :effect (req (doseq [c (:cards-trashed context)
+                                  :let [all-candidates (filter #(and (not (in-rfg? %))
+                                                                     (runner? %)
+                                                                     (= (:title %) (:title c)))
+                                                               (get-all-cards state))]
+                                  candidate all-candidates]
+                            (move state :runner candidate :rfg)))}]})
+
 (defcard "Chronos Protocol: Selective Mind-mapping"
   {:req (req (empty? (filter #(= :net (:damage-type (first %))) (turn-events state :runner :damage))))
    :effect (effect (enable-corp-damage-choice))
@@ -587,6 +599,7 @@
                             (do (when run
                                   (swap! state assoc-in [:run :did-trash] true))
                                 (swap! state assoc-in [:runner :register :trashed-card] true)
+                                (swap! state assoc-in [:runner :register :trashed-accessed-card] true)
                                 (system-msg state :runner
                                             (str "uses " (:title card) " to"
                                                  " trash " (:title target)
@@ -1289,7 +1302,9 @@
                               card nil)))}]})
 
 (defcard "MirrorMorph: Endless Iteration"
-  (let [mm-clear {:prompt "Manually fix Mirrormorph"
+  (let [relevant-keys (fn [context] {:cid (get-in context [:card :cid])
+                                     :idx (:ability-idx context)})
+        mm-clear {:prompt "Manually fix Mirrormorph"
                   :msg "manually clear Mirrormorph flags"
                   :label "Manually fix Mirrormorph"
                   :effect (effect
@@ -1308,19 +1323,12 @@
                                    (gain-credits state side eid 1)))}]
     {:implementation "Does not work with terminal Operations"
      :abilities [mm-ability mm-clear]
-     :events [{:event :corp-spent-click
+     :events [{:event :action-resolved
                :async true
-               :effect (req (let [{:keys [action ability-idx]} context
-                                  bac-cid (get-in @state [:corp :basic-action-card :cid])
-                                  cause (if (keyword? action)
-                                          (case action
-                                            :play-instant [bac-cid 3]
-                                            :corp-click-install [bac-cid 2]
-                                            ; else
-                                            [action ability-idx])
-                                          [action ability-idx])
+               :req (req (= :corp side))
+               :effect (req (let [ctx-keys (relevant-keys context)
                                   prev-actions (get-in card [:special :mm-actions] [])
-                                  actions (conj prev-actions cause)]
+                                  actions (conj prev-actions ctx-keys)]
                               (update! state side (assoc-in card [:special :mm-actions] actions))
                               (update! state side (assoc-in (get-card state card) [:special :mm-click] false))
                               (if (and (= 3 (count actions))
@@ -1337,11 +1345,10 @@
                         (update! (assoc-in (get-card state card) [:special :mm-click] false)))}]
      :static-abilities [{:type :prevent-paid-ability
                          :req (req (and (get-in card [:special :mm-click])
-                                        (let [cid (:cid target)
-                                              ability-idx (nth targets 2 nil)
-                                              cause [cid ability-idx]
+                                        (let [ctx {:cid (:cid target)
+                                                   :idx (nth targets 2 nil)}
                                               prev-actions (get-in card [:special :mm-actions] [])
-                                              actions (conj prev-actions cause)]
+                                              actions (conj prev-actions ctx)]
                                           (not (and (= 4 (count actions))
                                                     (= 4 (count (distinct actions))))))))
                          :value true}]}))
@@ -2109,6 +2116,30 @@
   ;; No special implementation
   {})
 
+(defcard "The Collective: Williams, Wu, et al."
+  (let [gain-click-abi {:label "Manually gain [Click]"
+                        :once :per-turn
+                        :msg (msg "gain [Click]")
+                        :effect (req (gain-clicks state side 1))}
+        relevant-keys (fn [context] {:cid (get-in context [:card :cid])
+                                     :idx (:ability-idx context)})]
+    {:events [{:event :action-resolved
+               :req (req (= :runner side))
+               :silent (req true)
+               :effect (req (let [current-queue (get-in card [:special :previous-actions])
+                                  filtered-context (relevant-keys context)]
+                              (if (and (seq current-queue)
+                                       (= (first current-queue) filtered-context))
+                                (let [new-queue (concat current-queue [filtered-context])]
+                                  (update! state side (assoc-in card [:special :previous-actions] new-queue))
+                                  (if (= 3 (count new-queue))
+                                    (continue-ability state side gain-click-abi card nil)
+                                    (effect-completed state side eid)))
+                                (update! state side (assoc-in card [:special :previous-actions] [filtered-context])))))}
+              {:event :runner-turn-begins
+               :silent (req true)
+               :effect (req (update! state side (assoc-in card [:special :previous-actions] nil)))}]}))
+
 (defcard "The Foundry: Refining the Process"
   {:events [{:event :rez
              :optional
@@ -2188,14 +2219,16 @@
                                                 (str payment-str
                                                      " due to " (:title card)
                                                      " subroutine")))
-                                  (effect-completed state side eid))))}]
-    {:events [{:event :run-ends
-               :effect (req (let [cid (:cid card)
-                                  ices (get-in card [:special :thunderbolt-armaments])]
-                              (doseq [i ices]
-                                (when-let [ice (get-card state i)]
-                                  (remove-sub! state side ice #(= cid (:from-cid %))))))
-                            (update! state side (dissoc-in card [:special :thunderbolt-armaments])))}
+                                  (effect-completed state side eid))))}
+        unregister-sub-event
+        {:effect (req (let [cid (:cid card)
+                            ices (get-in card [:special :thunderbolt-armaments])]
+                        (doseq [i ices]
+                          (when-let [ice (get-card state i)]
+                            (remove-sub! state side ice #(= cid (:from-cid %))))))
+                      (update! state side (dissoc-in card [:special :thunderbolt-armaments])))}]
+    {:events [(assoc unregister-sub-event :event :run-ends)
+              (assoc unregister-sub-event :event :run) ;; protection for trick shot...
               {:event :rez
                :req (req (and run
                               (ice? (:card context))

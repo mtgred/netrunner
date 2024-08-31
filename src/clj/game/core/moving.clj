@@ -301,7 +301,8 @@
                                      (swap! state update-in [:trash :trash-prevent] dissoc ktype)
                                      (effect-completed state side eid))
                                  (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                                     (complete-with-result state side eid card))))))
+                                     (complete-with-result state side eid card))))
+                             {:prompt-type :prevent}))
             ;; No prevention effects: add the card to the trash-list
             (complete-with-result state side eid card)))))
     (effect-completed state side eid)))
@@ -423,7 +424,7 @@
                                    []
                                    trashlist)]
                  (swap! state update-in [:trash :trash-list] dissoc eid)
-                 (when (seq (remove #{side} (map #(to-keyword (:side %)) trashlist)))
+                 (when (and side (seq (remove #{side} (map #(to-keyword (:side %)) trashlist))))
                    (swap! state assoc-in [side :register :trashed-card] true))
                  ;; Pseudo-shuffle archives. Keeps seen cards in play order and shuffles unseen cards.
                  (swap! state assoc-in [:corp :discard]

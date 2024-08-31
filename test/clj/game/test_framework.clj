@@ -11,6 +11,7 @@
    [game.core.eid :as eid]
    [game.core.ice :refer [active-ice?]]
    [game.core.initializing :refer [make-card]]
+   [game.core.threat :refer [threat-level]]
    [game.test-framework.asserts]
    [game.utils :as utils]
    [game.utils-test :refer [error-wrapper is']]
@@ -42,6 +43,27 @@
              '[game.cards.resources]
              '[game.cards.upgrades])))
 (load-all-cards)
+
+(defn is-hand?
+  "Is the hand exactly equal to a given set of cards?"
+  [state side expected-hand]
+  (let [expected-hand (seq (sort (flatten expected-hand)))
+        hand (seq (sort (map :title (get-in @state [side :hand]))))]
+    (is (= expected-hand hand) (str "hand is not " expected-hand))))
+
+(defn is-deck?
+  "Is the discard exactly equal to a given set of cards?"
+  [state side expected-deck]
+  (let [expected-deck (seq (sort (flatten expected-deck)))
+        deck (seq (sort (map :title (get-in @state [side :deck]))))]
+    (is (= expected-deck deck) (str "deck is not " expected-deck))))
+
+(defn is-discard?
+  "Is the set of cards in the deck exactly equal to a given set of cards? (this is order agnostic)"
+  [state side expected-discard]
+  (let [expected-discard (seq (sort (flatten expected-discard)))
+        discard (seq (sort (map :title (get-in @state [side :discard]))))]
+    (is (= expected-discard discard) (str "discard is not " expected-discard))))
 
 ;;; helper functions for prompt interaction
 (defn get-prompt
@@ -155,6 +177,10 @@
   [state side choice & args]
   `(error-wrapper (click-prompt-impl ~state ~side ~choice ~@args)))
 
+(defn do-trash-prompt
+  [state cost]
+  (click-prompt state :runner (str "Pay " cost " [Credits] to trash")))
+
 ;; General utilities necessary for starting a new game
 (defn find-card
   "Copied from core so we can check printed title too"
@@ -240,6 +266,7 @@
                                             (:score-area runner)
                                             (:score-area corp)
                                             (:discard corp)))
+                    (:deck corp)
                     (transform "Corp" (qty "Hedge Fund" 3)))
           :hand (when-let [hand (:hand corp)]
                   (flatten hand))
@@ -254,6 +281,7 @@
    :runner {:deck (or (transform "Runner" (conj (:deck runner)
                                                 (:hand runner)
                                                 (:discard runner)))
+                      (:deck runner)
                       (transform "Runner" (qty "Sure Gamble" 3)))
             :hand (when-let [hand (:hand runner)]
                     (flatten hand))
@@ -965,6 +993,126 @@
   (->> (-> @state :log reverse (nth n) :text)
        (re-find (re-pattern (escape-log-string content)))
        some?))
+
+(defn- make-zone
+  [zone replacement]
+  (if (and zone (int? zone))
+    ;; note: (qty 0 X) evaluates to nil, so we should guard against that
+    (let [wrapped [(qty replacement zone)]]
+      (if (= wrapped [nil]) [] wrapped))
+    zone))
+
+(defn- update-zones
+  [players updates]
+  (if-not (seq updates)
+    players
+    (let [zone-replacement (first updates)
+          remainder (rest updates)
+          target-zone (first zone-replacement)
+          replacement (second zone-replacement)
+          updated-zone (make-zone (get-in players target-zone) replacement)
+          updated-players (assoc-in players target-zone updated-zone)]
+      (update-zones updated-players remainder))))
+
+(defn run-and-encounter-ice-test
+  ([card] (run-and-encounter-ice-test card nil))
+  ([card players] (run-and-encounter-ice-test card players nil))
+  ([card players {:keys [counters disable rig server threat] :as args}]
+   (let [;; sometimes the number of cards are the only important things - this lets us do :hand X
+         ;; or :deck X on either side (so we can reduce noise when reading tests)
+         players (update-zones players [[[:corp :hand] "IPO"]
+                                        [[:corp :deck] "IPO"]
+                                        [[:runner :hand] "Inti"]
+                                        [[:runner :deck] "Inti"]])
+         players (update-in players [:corp :hand] conj card)
+         players (update-in players [:runner :hand] concat rig)
+         state (new-game players)
+         server (or server "HQ")
+         server-key (cond
+                      (= server "New remote") :remote1
+                      (= server "HQ") :hq
+                      (= server "R&D") :rd
+                      (= server "Archives") :archives)]
+     ;; adjust the threat level for threat: ... subs
+     (when threat
+       (game.core.change-vals/change
+         ;; theoretically, either side is fine!
+         state (first (shuffle [:corp :runner])) {:key :agenda-point :delta threat})
+       (is (threat-level threat state) "Threat set")
+       (is (not (threat-level (inc threat) state)) "Threat is accurate"))
+     ;; place the card in the target server
+     (play-from-hand state :corp card server)
+     (let [ice (get-ice state server-key 0)]
+       ;; rez the card in a disabled state to avoid addl costs, abilities, etc
+       (when disable (core/disable-card state :corp (get-ice state server-key 0)))
+       ;; refund the cost - our default credits should be five
+       (core/gain state :corp :credit (:cost ice))
+       (rez state :corp (get-ice state server-key 0))
+       (when disable (core/enable-card state :corp (get-ice state server-key 0)))
+       ;; adjust counters when needed
+       (when counters
+         ;; counters of the form :counter {:power x :credit x}
+         (doseq [[c-type c-count] counters]
+           (core/add-counter state :corp (get-ice state server-key 0) c-type c-count)))
+       ;; ensure we start with the specified credit count (default 5)
+       ;; by not actually clicking for creds
+       (core/lose state :corp :click 2)
+       (take-credits state :corp)
+       ;; install every listed card in the runner rig - should end with default creds and clicks
+       (doseq [r rig]
+         (let [target-card (first (filter #(= (:title %) r) (:hand (:runner @state))))
+               cost (:cost target-card)]
+           (core/gain state :runner :credit cost)
+           (core/gain state :runner :click 1)
+           (play-from-hand state :runner r)))
+       ;; runner should have the default click/credit count (- 1 click for the run)
+       (run-on state server-key)
+       (run-continue state :encounter-ice)
+       state))))
+
+(defn subroutine-test
+  "Create a game, install an ice, encounter it, then fire a subroutine.
+    Optionally specify: player map, target server, any number or type of counters,
+    if the card should be disabled while rezzed, tags, threat level,
+    cards installed in the runner rig"
+  ([card sub] (subroutine-test card sub nil))
+  ([card sub players] (subroutine-test card sub players nil))
+  ([card sub players {:keys [server] :as args}]
+   (let [state (run-and-encounter-ice-test card players args)
+         server (or server "HQ")
+         server-key (cond
+                      (= server "New remote") :remote1
+                      (= server "HQ") :hq
+                      (= server "R&D") :rd
+                      (= server "Archives") :archives)
+         ice (get-ice state server-key 0)
+         ;; :first and :last are useful for reasoning about variable-sub ice
+         sub (cond
+                (int? sub) sub
+                (= :first sub) 0
+                (= :last sub) (dec (count (:subroutines (get-ice state server-key 0))))
+                :else sub)]
+     (card-subroutine state :corp ice sub)
+     state)))
+
+(defn fire-all-subs-test
+  "Create a game, install an ice, encounter it, then fire all subroutines.
+    Optionally specify: player map, target server, any number or type of counters,
+    if the card should be disabled while rezzed, tags, threat level,
+    cards installed in the runner rig"
+  ([card] (fire-all-subs-test card nil))
+  ([card players] (fire-all-subs-test card players nil))
+  ([card players {:keys [server] :as args}]
+   (let [state (run-and-encounter-ice-test card players args)
+         server (or server "HQ")
+         server-key (cond
+                      (= server "New remote") :remote1
+                      (= server "HQ") :hq
+                      (= server "R&D") :rd
+                      (= server "Archives") :archives)
+         ice (get-ice state server-key 0)]
+     (fire-subs state ice)
+     state)))
 
 (defn bad-usage [n]
   `(throw (new IllegalArgumentException (str ~n " should only be used inside 'is'"))))
