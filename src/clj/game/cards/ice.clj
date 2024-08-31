@@ -781,6 +781,7 @@
 
 (defcard "Archer"
   {:additional-cost [(->c :forfeit)]
+   :rez-sound "archer"
    :subroutines [(gain-credits-sub 2)
                  trash-program-sub
                  trash-program-sub
@@ -1009,6 +1010,7 @@
 
 (defcard "Bloop"
   {:additional-cost [(->c :derez-other-harmonic)]
+   :rez-sound "bloop"
    :subroutines [(do-brain-damage 1)
                  trash-program-sub
                  trash-program-sub]})
@@ -1497,7 +1499,8 @@
                  (install-from-hq-or-archives-sub {:ignore-all-cost true})]})
 
 (defcard "Echo"
-  {:events [{:event :rez
+  {:rez-sound "echo"
+   :events [{:event :rez
              :req (req (and (has-subtype? (:card context) "Harmonic")
                             (ice? (:card context))))
              :effect (effect (add-counter card :power 1))}
@@ -3435,7 +3438,8 @@
    :subroutines [(end-the-run-unless-runner-pays (->c :credit 1))]})
 
 (defcard "Pulse"
-  {:on-rez {:req (req (and run this-server))
+  {:rez-sound "pulse"
+   :on-rez {:req (req (and run this-server))
             :msg "force the runner to lose [Click]"
             :effect (effect (lose-clicks :runner 1))}
    :subroutines [{:label "Runner loses 1 [Credits] for each rezzed piece of Harmonic ice"
@@ -4447,6 +4451,7 @@
                                                     (move state side target :hand)
                                                     (effect-completed state side eid)))}
                :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}
+   :rez-sound "wave"
    :subroutines [{:label (str "Gain 1 [Credits] for each rezzed piece of Harmonic ice")
                   :msg (msg "gain " (harmonic-ice-count corp) " [Credits]")
                   :async true

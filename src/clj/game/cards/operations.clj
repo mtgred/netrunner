@@ -893,7 +893,8 @@
                            (draw state side eid 5)))}})
 
 (defcard "End of the Line"
-  {:on-play
+  {:play-sound "end-of-the-line"
+   :on-play
    {:additional-cost [(->c :tag 1)]
     :msg "do 4 meat damage"
     :async true

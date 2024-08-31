@@ -453,7 +453,12 @@
               :ffg "FFG"
               :api-keys "API Keys"
               :delete-api-key "Delete"
-              :create-api-key "Create API Key"}
+              :create-api-key "Create API Key"
+              :bespoke-sounds-header "Card-Specific Sounds"
+              :bespoke-sounds
+              {:archer "Archer"
+               :harmonics "Harmonics Suite (Bloop, Echo, Pulse, Wave)"
+               :end-of-the-line "End of the Line"}}
    :ingame-settings {:card-stacking "Card settings"
                      :stack-cards "Stack cards"
                      :label-unrezzed-cards "Label unrezzed cards"
