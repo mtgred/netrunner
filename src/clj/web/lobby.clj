@@ -23,7 +23,7 @@
     user :user
     {:keys [gameid now
             allow-spectator api-access format mute-spectators password room save-replay
-            side singleton spectatorhands timer title]
+            gateway-type side singleton spectatorhands timer title]
      :or {gameid (random-uuid)
           now (inst/now)}} :options}]
   (let [player {:user user
@@ -38,6 +38,7 @@
      :runner-spectators []
      :messages []
      ;; options
+     :gateway-type (when (= (str format) "system-gateway") gateway-type)
      :allow-spectator allow-spectator
      :api-access api-access
      :format format
@@ -113,6 +114,7 @@
    :date
    :format
    :gameid
+   :gateway-type
    :messages
    :mute-spectators
    :original-players

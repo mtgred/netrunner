@@ -299,6 +299,11 @@
            :side "Side"
            :format "Format"
            :default-game-format "Default game format"
+           :gateway-format {:beginner "Beginner"
+                            :beginner-info "This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points."
+                            :intermediate "Intermediate"
+                            :intermediate-info "This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points."
+                            :constructed "Constructed"}
            :singleton "Singleton"
            :singleton-b "(singleton)"
            :singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."
