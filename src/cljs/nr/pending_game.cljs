@@ -15,6 +15,16 @@
    [reagent.core :as r]
    [taoensso.sente :as sente]))
 
+(defn is-constructed?
+  "Games using the starter decks are not constructed"
+  [current-game]
+  (or (not (:gateway-type @current-game))
+      (= (:gateway-type @current-game) "Constructed")))
+
+(defn is-preconstructed?
+  [current-game]
+  (not (is-constructed? current-game)))
+
 (defn select-deck [deck]
   (ws/ws-send! [:lobby/deck {:gameid (current-gameid app-state)
                              :deck-id (:_id deck)}]
@@ -62,10 +72,10 @@
   [players user]
   (= (-> players first :user :_id) (:_id user)))
 
-(defn start-button [user gameid players]
+(defn start-button [current-game user gameid players]
   (when (first-user? @players @user)
     [cond-button (tr [:lobby.start "Start"])
-     (every? :deck @players)
+     (or (every? :deck @players) (is-preconstructed? current-game))
      #(ws/ws-send! [:game/start {:gameid @gameid}])]))
 
 (defn leave-button [gameid]
@@ -78,6 +88,16 @@
                    #(when (sente/cb-success? %)
                       (swap! app-state assoc :editing false :current-game nil))))}
    (tr [:lobby.leave "Leave"])])
+
+(defn gateway-info-box [current-game]
+  (condp = (:gateway-type @current-game)
+    "Beginner"
+    [:div.infobox.blue-shade
+     [:p (tr [:lobby.gateway-beginner-info "This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points."])]]
+    "Intermediate"
+    [:div.infobox.blue-shade
+     [:p (tr [:lobby.gateway-intermediate-info "This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points."])]]
+    nil))
 
 (defn singleton-info-box [current-game]
   (when (:singleton @current-game)
@@ -104,9 +124,9 @@
                                                       :side side}])})
              [:li (tr-side side)]])))])))
 
-(defn button-bar [user gameid players]
+(defn button-bar [current-game user gameid players]
   [:div.button-bar
-   [start-button user gameid players]
+   [start-button current-game user gameid players]
    [leave-button gameid]
    [swap-sides-button user gameid players]])
 
@@ -123,7 +143,9 @@
            (tr [:lobby.deck-selected "Deck selected"]))]])
      (when-let [deck (:deck player)]
        [:div.float-right [deck-format-status-span deck (:format @current-game "standard") true]])
-     (when (and this-player (not (= (:side player) (tr-side "Any Side"))))
+     (when (and (is-constructed? current-game)
+                this-player
+                (not (= (:side player) (tr-side "Any Side"))))
        [:span.fake-link.deck-load
         {:on-click #(reagent-modals/modal! [select-deck-modal user current-game])}
         (tr [:lobby.select-deck "Select Deck"])])]))
@@ -183,11 +205,13 @@
                       (non-game-toast "Cannot select that deck" "error")))
       (swap! app-state dissoc :create-game-deck))
     [:div
-     [button-bar user gameid players]
+     [button-bar current-game user gameid players]
      [:div.content
       [:h2 (:title @current-game)]
+      [gateway-info-box current-game]
       [singleton-info-box current-game]
-      (when-not (every? :deck @players)
+      (when-not (or (every? :deck @players)
+                    (not (is-constructed? current-game)))
         [:div.flash-message
          (tr [:lobby.waiting "Waiting players deck selection"])])
       [player-list user current-game players]

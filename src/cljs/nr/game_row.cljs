@@ -176,10 +176,20 @@
         (let [c (count (:spectators game))]
           (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")"))))])
 
-(defn game-format [{fmt :format singleton? :singleton}]
+(defn- gateway-type-span [gateway-type]
+  (cond
+    (= gateway-type "Beginner")
+    [:span.format-precon (str " (" (tr [:lobby.gateway-format.beginner "Beginner"]) ")")]
+    (= gateway-type "Intermediate")
+    [:span.format-precon (str " (" (tr [:lobby.gateway-format.intermediate "Intermediate"]) ")")]
+    (= gateway-type "Constructed")
+    [:span.format-precon (str " (" (tr [:lobby.gateway-format.constructed "Constructed"]) ")")]))
+
+(defn game-format [{fmt :format singleton? :singleton gateway-type :gateway-type}]
   [:div {:class "game-format"}
-   [:span.format-label (tr [:lobby.default-game-format "Default game format"]) ":  "]
+   [:span.format-label (tr [:lobby.format "Format"]) ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
+   [gateway-type-span gateway-type]
    [:span.format-singleton (str (when singleton? (str " " (tr [:lobby.singleton-b "(singleton)"]))))]])
 
 (defn- time-since
