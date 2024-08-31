@@ -324,7 +324,7 @@
                       :draw [:div.symbol]
                       :credit (render-message "[credit]")
                       :advance "A"
-                      :purge "☣️"
+                      :purge "🚨"
                       :click (render-message "[click]")
                       "?")]]))]
         [:div.controls

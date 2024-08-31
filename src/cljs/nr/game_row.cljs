@@ -208,7 +208,7 @@
   ;; it is of the correct type. IDK how to fix the problem, but this
   ;; is a workable temporary fix - NBKelly, Jul 2024
   (when (and (:started game) (= (type (:date game)) (type (inst/now))))
-    [:div.game-time (str (time-since (:date game)) "m")]))
+    [:div.game-time [:span.game-time-emoji "⏰"] (str " " (time-since (:date game)) "m")]))
 
 (defn players-row [{players :players :as game}]
   (into
