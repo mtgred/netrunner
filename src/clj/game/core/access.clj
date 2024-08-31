@@ -2,7 +2,7 @@
   (:require
     [game.core.agendas :refer [update-all-advancement-requirements update-all-agenda-points]]
     [game.core.board :refer [all-active]]
-    [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-discard? in-hand? in-scored? operation? rezzed?]]
+    [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-archives-root? in-deck? in-discard? in-hand? in-hq-root? in-remote-root? in-rd-root? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [card-ability-cost trash-cost steal-cost]]
     [game.core.effects :refer [any-effects register-static-abilities register-lingering-effect sum-effects unregister-lingering-effects]]
@@ -436,29 +436,6 @@
       :else
       (access-trigger-events state side eid card title args))))
 
-(defn access-card
-  "Apply game rules for accessing the given card."
-  ([state side eid card] (access-card state side eid card (:title card) nil))
-  ([state side eid card title] (access-card state side eid card title nil))
-  ([state side eid card title args]
-   (when-not (in-discard? card)
-     (swap! state update-in [:stats :runner :access :unique-cards] (fnil #(vec (distinct (conj % (:cid card)))) [])))
-   ;; Indicate that we are in the access step.
-   (swap! state assoc :access card)
-   ;; Reset counters for increasing costs of trash, steal, and access.
-   (swap! state update :bonus dissoc :trash :steal-cost :access-cost)
-   (when (:breach @state)
-     (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
-                    (second (get-zone card)))]
-       (swap! state update-in [:breach :cards-accessed zone] (fnil inc 0))))
-   (when (:run @state)
-     (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
-                    (second (get-zone card)))]
-       (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
-   ;; First trigger pre-access-card, then move to determining if we can trash or steal.
-   (wait-for (trigger-event-sync state side :pre-access-card card)
-             (access-pay state side eid card title args))))
-
 (defn get-only-card-to-access
   [state]
   (get-card state (get-in @state [:run :only-card-to-access])))
@@ -473,6 +450,32 @@
              (not (same-card? card (get-only-card-to-access state))))
     (swap! state assoc-in [:run :max-access] 0))
   (swap! state assoc-in [:run :only-card-to-access] card))
+
+(defn access-card
+  "Apply game rules for accessing the given card."
+  ([state side eid card] (access-card state side eid card (:title card) nil))
+  ([state side eid card title] (access-card state side eid card title nil))
+  ([state side eid card title args]
+   (let [only-card (get-only-card-to-access state)]
+     (if (and only-card (not (same-card? only-card card)))
+       (effect-completed state side eid)
+       (do (when-not (in-discard? card)
+             (swap! state update-in [:stats :runner :access :unique-cards] (fnil #(vec (distinct (conj % (:cid card)))) [])))
+           ;; Indicate that we are in the access step.
+           (swap! state assoc :access card)
+           ;; Reset counters for increasing costs of trash, steal, and access.
+           (swap! state update :bonus dissoc :trash :steal-cost :access-cost)
+           (when (:breach @state)
+             (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
+                            (second (get-zone card)))]
+               (swap! state update-in [:breach :cards-accessed zone] (fnil inc 0))))
+           (when (:run @state)
+             (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
+                            (second (get-zone card)))]
+               (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
+           ;; First trigger pre-access-card, then move to determining if we can trash or steal.
+           (wait-for (trigger-event-sync state side :pre-access-card card)
+                     (access-pay state side eid card title args)))))))
 
 (defn get-all-hosted [hosts]
   (let [hosted-cards (mapcat :hosted hosts)]
@@ -560,13 +563,14 @@
                                  (pos? (+ max-access total-mod))
                                  true)
                       pos-total-cards? (pos? (+ total-cards-count total-mod))]
-
                   (cond
                     ;; Only 1 card to access
                     (and pos-max?
                          pos-total-cards?
                          only-card)
-                    (access-card state side eid only-card)
+                    (if (in-remote-root? only-card (first server))
+                      (access-card state side eid only-card)
+                      (effect-completed state side eid))
 
                     ;; Normal access
                     (and pos-max?
@@ -751,7 +755,9 @@
                     (and pos-max?
                          pos-total-cards?
                          only-card)
-                    (access-card state side eid (first total-cards))
+                    (if (or (in-deck? only-card) (in-rd-root? only-card))
+                      (access-card state side eid only-card)
+                      (effect-completed state side eid))
 
                     ;; Normal access
                     (and pos-max?
@@ -969,7 +975,9 @@
                               (and pos-max?
                                    pos-total-cards?
                                    only-card)
-                              (access-card state side eid (first total-cards))
+                              (if (or (in-hand? only-card) (in-hq-root? only-card))
+                                (access-card state side eid only-card)
+                                (effect-completed state side eid))
 
                               ;; Normal access
                               (and pos-max?
@@ -1215,7 +1223,9 @@
                     (and pos-max?
                          pos-total-cards?
                          only-card)
-                    (access-card state side eid (first total-cards))
+                    (if (or (in-discard? only-card) (in-archives-root? only-card))
+                      (access-card state side eid only-card)
+                      (effect-completed state side eid))
 
                     ;; At least 1 access
                     (and pos-max?
