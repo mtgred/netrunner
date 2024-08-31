@@ -16,13 +16,12 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-bonus]]
-   [game.core.def-helpers :refer [corp-recur defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn]]
+   [game.core.def-helpers :refer [choose-one-helper corp-recur cost-option defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
    [game.core.engine :refer [do-nothing pay register-events resolve-ability should-trigger?]]
-   [game.core.events :refer [first-event? last-turn? no-event? not-last-turn?
-                             turn-events]]
+   [game.core.events :refer [event-count first-event? last-turn? no-event? not-last-turn? turn-events ]]
    [game.core.flags :refer [can-score? clear-persistent-flag! in-corp-scored?
                             in-runner-scored? is-scored? prevent-jack-out
                             register-persistent-flag! register-turn-flag! when-scored? zone-locked?]]
@@ -32,8 +31,7 @@
    [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice]]
    [game.core.identities :refer [disable-identity enable-identity]]
    [game.core.initializing :refer [ability-init card-init]]
-   [game.core.installing :refer [corp-install corp-install-list
-                                 corp-install-msg install-as-condition-counter]]
+   [game.core.installing :refer [corp-install corp-install-msg install-as-condition-counter]]
    [game.core.memory :refer [mu+ update-mu]]
    [game.core.moving :refer [as-agenda mill move swap-agendas swap-ice trash
                              trash-cards]]
@@ -94,25 +92,50 @@
                    card nil))}})
 
 (defcard "Accelerated Diagnostics"
-  (letfn [(ad [st si e c cards]
-            (when-let [choices (filterv #(and (operation? %)
-                                            (can-pay? st si (assoc e :source c :source-type :play)
-                                                      c nil [(->c :credit (play-cost st si %))]))
-                                      cards)]
-              {:async true
-               :prompt "Choose an operation to play"
-               :choices (cancellable choices)
-               :msg (msg "play " (:title target))
-               :effect (req (wait-for (play-instant state side target {:no-additional-cost true})
-                                      (let [remaining (filterv #(not (same-card? % target)) cards)]
-                                        (continue-ability state side (ad state side eid card remaining) card nil))))
-               :cancel-effect (effect (trash-cards eid cards {:unpreventable true :cause-card card}))}))]
-    {:on-play
-     {:prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title (take 3 (:deck corp)))))
-      :change-in-game-state (req (seq (:deck corp)))
-      :choices ["OK"]
-      :async true
-      :effect (effect (continue-ability (ad state side eid card (take 3 (:deck corp))) card nil))}}))
+  (letfn [(shuffle-count-fn [state]
+            (event-count state :corp :corp-shuffle-deck))
+          (is-top-x? [state card X]
+            (some #(same-card? % card) (take X (get-in @state [:corp :deck]))))
+          (ad [state eid card remaining-cards starting-shuffle-count]
+            ;; rules note: if R&D is shuffled, or the cards are no longer in the top 3 cards of R&D,
+            ;; (relative to when AD was played) then AD is short-circuited and cannot finish resolving
+            (let [playable-cards (filterv #(and (operation? %)
+                                                (is-top-x? state % (count remaining-cards))
+                                                (can-pay? state :corp (assoc eid :source card
+                                                                             :source-type :play)
+                                                          card nil [(->c :credit (play-cost state :corp %))]))
+                                          remaining-cards)]
+              (cond
+                (not (seq remaining-cards))
+                {}
+                (> (shuffle-count-fn state) starting-shuffle-count)
+                {:msg (str "is unable to continue resolving " (:title card))}
+                (seq playable-cards)
+                {:prompt "Choose an operation to play"
+                 :choices (cancellable playable-cards)
+                 :msg (msg "play " (:title target))
+                 :async true
+                 :effect (req (wait-for
+                                (play-instant state side target {:no-additional-cost true})
+                                (let [remaining (filterv #(not (same-card? % target)) remaining-cards)]
+                                  (continue-ability
+                                    state side
+                                    (ad state eid card remaining starting-shuffle-count)
+                                    card nil))))
+                 :cancel-effect (req (trash-cards state side eid remaining-cards {:unpreventable true :cause-card card}))}
+                :else
+                {:prompt "There are no playable cards"
+                 :choices ["OK"]
+                 :async true
+                 :effect (req (trash-cards state side eid remaining-cards {:unpreventable true :cause-card card}))})))]
+   {:prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title (take 3 (:deck corp)))))
+    :change-in-game-state (req (seq (:deck corp)))
+    :choices ["OK"]
+    :async true
+    :effect (req (continue-ability
+                   state side
+                   (ad state eid card (take 3 (:deck corp)) (shuffle-count-fn state))
+                   card nil))}))
 
 (defcard "Active Policing"
   (let [lose-click-abi
@@ -437,7 +460,7 @@
              :effect (effect (system-msg :corp
                                          (str "derezzes " (:title (:ice context))
                                               " and trashes Bioroid Efficiency Research"))
-                             (derez :corp (:ice context))
+                             (derez :corp (:ice context) {:source-card card})
                              (trash :corp eid card {:unpreventable true :cause-card card}))}]})
 
 (defcard "Biotic Labor"
@@ -521,20 +544,15 @@
                 :msg (msg "place 1 advancement counter on " (quantify (count targets) "card"))
                 :effect (req (doseq [t targets]
                                (add-prop state :corp t :advance-counter 1 {:placed true})))}]
-  {:on-play
-   {:prompt "Choose one"
-    :change-in-game-state (req (or (something-can-be-advanced? state)
-                             (some #(pos? (get-counters % :virus)) (all-installed state :runner))))
-    :choices (req ["Place 1 advancement counter on each of up to 2 cards you can advance"
-                   (when (seq (get-all-installed state)) "Remove all virus counters from a card")
-                   (when (threat-level 3 state) "Do both")])
-    :async true
-    :effect (req (if (or (= target "Remove all virus counters from a card") (= target "Do both"))
-                   (wait-for (resolve-ability state side faux-purge card nil)
-                             (continue-ability
-                               state side (when (= target "Do both") kaguya)
-                               card nil))
-                   (continue-ability state side kaguya card nil)))}}))
+    {:on-play (choose-one-helper
+                {:optional :after-first
+                 :change-in-game-state (req (or (something-can-be-advanced? state)
+                                                (some #(pos? (get-counters % :virus)) (all-installed state :runner))))
+                 :count (req (if (threat-level 3 state) 2 1))}
+                [{:option "Place 1 advancement counter on up to two cards you can advance"
+                  :ability kaguya}
+                 {:option "Remove all virus counters from 1 installed card"
+                  :ability faux-purge}])}))
 
 (defcard "Casting Call"
   {:on-play {:choices {:card #(and (agenda? %)
@@ -704,9 +722,9 @@
 
 (defcard "Defective Brainchips"
   {:events [{:event :pre-damage
-             :req (req (= (:type context) :brain))
+             :req (req (and (= (:type context) :brain)
+                            (first-event? state side :pre-damage #(= :brain (:type (first %))))))
              :msg "do 1 additional core damage"
-             :once :per-turn
              :effect (effect (damage-bonus :brain 1))}]})
 
 (defcard "Digital Rights Management"
@@ -759,7 +777,7 @@
                                                  state side
                                                  (let [card-to-install target]
                                                    {:prompt "Choose a server"
-                                                    :choices (remove #{"HQ" "R&D" "Archives"} (corp-install-list state card-to-install))
+                                                    :choices (remove #{"HQ" "R&D" "Archives"} (installable-servers state card-to-install))
                                                     :async true
                                                     :effect (effect (corp-install eid card-to-install target {:msg-keys {:install-source card
                                                                                                                          :display-origin true}}))})
@@ -815,7 +833,7 @@
     :change-in-game-state (req (seq (all-installed state :corp)))
     :async true
     :effect (req (doseq [c targets]
-                   (derez state side c))
+                   (derez state side c {:source-card card}))
                  (let [discount (* -3 (count targets))]
                    (continue-ability
                      state side
@@ -875,7 +893,8 @@
                            (draw state side eid 5)))}})
 
 (defcard "End of the Line"
-  {:on-play
+  {:play-sound "end-of-the-line"
+   :on-play
    {:additional-cost [(->c :tag 1)]
     :msg "do 4 meat damage"
     :async true
@@ -968,7 +987,7 @@
                                   :choices {:card #(and (corp? %)
                                                         (not (operation? %))
                                                         (in-hand? %)
-                                                        (seq (filter (fn [c] (= server c)) (corp-install-list state %))))}
+                                                        (seq (filter (fn [c] (= server c)) (installable-servers state %))))}
                                   :effect (req (wait-for
                                                  (corp-install state side target server {:msg-keys {:install-source card
                                                                                                     :display-origin true}})
@@ -1345,7 +1364,7 @@
   {:on-play
    {:trace
     {:base 2
-     :req (req (last-turn? state :runner :trashed-card))
+     :req (req (:trashed-accessed-card runner-reg-last))
      :label "Trash 2 installed non-program cards or take 1 bad publicity"
      :successful {:choices {:max (req (min 2 (count (filter #(or (facedown? %)
                                                                  (not (program? %)))
@@ -1713,14 +1732,14 @@
                           card :can-rez
                           (fn [state _ card]
                             (if (same-card? card installed-card)
-                              ((constantly false) (toast state :corp "Cannot rez due to Mitosis." "Warning"))
+                              ((constantly false) (toast state :corp "Cannot rez due to Mitosis." "warning"))
                               true)))
                         (register-turn-flag!
                           state side
                           card :can-score
                           (fn [state _ card]
                             (if (same-card? card installed-card)
-                              ((constantly false) (toast state :corp "Cannot score due to Mitosis." "Warning"))
+                              ((constantly false) (toast state :corp "Cannot score due to Mitosis." "warning"))
                               true)))
                         (if (seq (rest target-cards))
                           (mitosis-ability state side card eid (rest target-cards))
@@ -2182,23 +2201,15 @@
 
 
 (defcard "Public Trail"
-  {:on-play
-   {:req (req (last-turn? state :runner :successful-run))
-    :player :runner
-    :msg (msg (if (= target "Pay 8 [Credits]")
-                (str "force the runner to " (decapitalize target))
-                "give the runner 1 tag"))
-    :waiting-prompt true
-    :prompt "Choose one"
-    :choices (req ["Take 1 tag"
-                   (when (can-pay? state :runner (assoc eid :source card :source-type :ability) card (:title card) (->c :credit 8))
-                     "Pay 8 [Credits]")])
-    :async true
-    :effect (req (if (= target "Pay 8 [Credits]")
-                   (wait-for (pay state :runner (make-eid state eid) card (->c :credit 8))
-                             (system-msg state :runner (:msg async-result))
-                             (effect-completed state side eid))
-                   (gain-tags state :corp eid 1)))}})
+  {:on-play (choose-one-helper
+              {:req (req (last-turn? state :runner :successful-run))
+               :player :runner}
+              [{:option "Take 1 tag"
+                :ability {:async true
+                          :display-side :corp
+                          :msg "give the runner 1 tag"
+                          :effect (req (gain-tags state :corp eid 1))}}
+               (cost-option [(->c :credit 8)] :runner)])})
 
 (defcard "Punitive Counterstrike"
   {:on-play
@@ -2474,7 +2485,7 @@
    :static-abilities [{:type :play-cost
                        :value 1}]
    :events [{:event :play-event
-             :once :per-turn
+             :req (req (first-event? state side :play-event))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})

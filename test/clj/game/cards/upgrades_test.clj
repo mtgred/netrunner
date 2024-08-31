@@ -69,6 +69,33 @@
     (click-prompt state :runner "0")
     (is (no-prompt? state :runner) "Runner cannot access anything!")))
 
+(deftest adrian-vs-breach-other-servers-cursed-interactions
+  (do-game
+    (new-game {:corp {:hand ["Adrian Seis" "PAD Campaign"]
+                      :deck ["Rashida Jaheem"]}
+               :runner {:hand ["Eru Ayase-Pessoa" "Pinhole Threading"]}})
+    (play-from-hand state :corp "Adrian Seis" "Archives")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (rez state :corp (get-content state :archives 0))
+    (play-from-hand state :runner "Eru Ayase-Pessoa")
+    (card-ability state :runner (get-resource state 0) 0)
+    (run-continue-until state :success)
+    (is (= :psi (prompt-type :corp)))
+    (click-prompt state :corp "1 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
+    (is (no-prompt? state :runner) "No prompt")
+    (is (not (:run @state)) "No run - ended when no candates existed for access")
+    (play-from-hand state :runner "Pinhole Threading")
+    (click-prompt state :runner "Archives")
+    (run-continue-until state :success)
+    (is (= :psi (prompt-type :corp)))
+    (click-prompt state :corp "1 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
+    (click-card state :runner "PAD Campaign")
+    (is (no-prompt? state :runner) "No prompt")
+    (is (not (:run @state)) "No run - ended when no candates existed for access")))
+
 (deftest akitaro-watanabe
   (do-game
     (new-game {:corp {:hand ["Akitaro Watanabe" (qty "Fire Wall" 2)]
@@ -655,26 +682,25 @@
       (play-from-hand state :runner "Interdiction")
       (is (find-card "Interdiction" (:current (get-runner))) "Interdiction is active Current")
       (is (find-card "Death and Taxes" (:rfg (get-corp))) "Death and Taxes removed from game")
-      ; (is (not= "Death and Taxes" (:title (first (:discard (get-corp))))) "Death and Taxes not moved to trash")
-      ; (take-credits state :runner)
-      ; (core/lose state :runner :credit 3)
-      ; (trash-from-hand state :corp "Paywall Implementation")
-      ; (card-ability state :corp (refresh bs) 0)
-      ; (click-prompt state :corp (find-card "Paywall Implementation" (:discard (get-corp))))
-      ; (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall Implementation is active Current")
-      ; (is (find-card "Interdiction" (:discard (get-runner))) "Interdiction is trashed")
-      ; (trash-from-hand state :corp "IPO")
-      ; (take-credits state :corp)
-      ; (run-empty-server state "HQ")
-      ; (click-prompt state :runner "Steal")
-      ; (is (find-card "Paywall Implementation" (:rfg (get-corp))) "Paywall Implementation removed from game")
-      ; (is (not= "Paywall Implementation" (:title (first (:discard (get-corp))))) "Paywall Implementation not moved to trash")
-      ; (take-credits state :runner)
-      ; (core/lose state :runner :credit 3)
-      ; (card-ability state :corp (refresh bs) 0)
-      ; (click-prompt state :corp (find-card "IPO" (:discard (get-corp))))
-      ; (is (find-card "IPO" (:rfg (get-corp))) "IPO is removed from game")
-      )))
+      (is (not= "Death and Taxes" (:title (first (:discard (get-corp))))) "Death and Taxes not moved to trash")
+      (take-credits state :runner)
+      (core/lose state :runner :credit 3)
+      (trash-from-hand state :corp "Paywall Implementation")
+      (card-ability state :corp (refresh bs) 0)
+      (click-prompt state :corp (find-card "Paywall Implementation" (:discard (get-corp))))
+      (is (find-card "Paywall Implementation" (:current (get-corp))) "Paywall Implementation is active Current")
+      (is (find-card "Interdiction" (:discard (get-runner))) "Interdiction is trashed")
+      (trash-from-hand state :corp "IPO")
+      (take-credits state :corp)
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (is (find-card "Paywall Implementation" (:rfg (get-corp))) "Paywall Implementation removed from game")
+      (is (not= "Paywall Implementation" (:title (first (:discard (get-corp))))) "Paywall Implementation not moved to trash")
+      (take-credits state :runner)
+      (core/lose state :runner :credit 3)
+      (card-ability state :corp (refresh bs) 0)
+      (click-prompt state :corp (find-card "IPO" (:discard (get-corp))))
+      (is (find-card "IPO" (:rfg (get-corp))) "IPO is removed from game"))))
 
 (deftest calibration-testing
   ;; Calibration Testing - advanceable / non-advanceable
@@ -1052,6 +1078,25 @@
        (is (= 3 (:click (get-runner))) "No extra cost to run HQ")
        (is (= 2 (:credit (get-runner))) "No extra cost to run HQ"))))
 
+(deftest cold-site-server-vs-undo-click
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Cold Site Server"]}
+               :runner {:deck ["Dirty Laundry"]}})
+     (core/gain state :corp :credit 10 :click 10)
+     (play-from-hand state :corp "Cold Site Server" "HQ")
+     (let [css (get-content state :hq 0)]
+       (rez state :corp (refresh css))
+       (card-ability state :corp css 0))
+     (take-credits state :corp)
+     (is (changed? [(:credit (get-runner)) 0
+                    (:click (get-runner)) 0]
+                   (play-from-hand state :runner "Dirty Laundry")
+                   (click-prompt state :runner "HQ")
+                   (is (second-last-log-contains? state "Runner spends [Click] and pays 2 [Credits] to play Dirty Laundry."))
+                   (core/command-undo-click state :runner))
+         "Undo click undid the CSS costs")))
+
 (deftest cold-site-server-run-event
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -1360,6 +1405,7 @@
     (play-from-hand state :corp "PAD Campaign" "HQ")
     (play-from-hand state :corp "PAD Campaign" "HQ")
     (click-prompt state :corp "OK")
+    (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "PAD Campaign" "HQ")
     (click-prompt state :corp "OK")
@@ -1623,6 +1669,82 @@
      (is (not (get-run)) "Run has been ended")
      (is (no-prompt? state :corp) "No more prompts")
      (is (no-prompt? state :runner) "No more prompts")))
+
+(deftest ganked-vs-fc3.0-run-actually-ends
+  (do-game
+    (new-game {:corp {:hand ["Fairchild 3.0" "Ganked!"]}
+               :runner {:credits 10}})
+    (play-from-hand state :corp "Fairchild 3.0" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue-until state :success)
+    (is (last-log-contains? state "Runner accesses Ganked!") "Ganked! message printed to log")
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Fairchild 3.0")
+    (let [fc3 (:ice (core/get-current-encounter state))]
+      (is (= "Fairchild 3.0" (:title fc3)) "Encountering fc3.0")
+      (fire-subs state fc3))
+    (click-prompt state :runner "Pay 3 [Credits]")
+    (click-prompt state :runner "Pay 3 [Credits]")
+    (click-prompt state :corp "End the run")
+    (is (not (:run @state)) "No more run")
+    (is (not (core/get-current-encounter state)) "No more encounter")
+    (is (no-prompt? state :corp) "No corp prompt")
+    (is (no-prompt? state :runner) "No runner prompt")
+    (take-credits state :runner)))
+
+(deftest ganked-vs-informant-or-maw-timing
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall" "Ganked!" "Hedge Fund"]}
+               :runner {:hand ["Aeneas Informant" "Maw"]
+                        :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Ganked!" "Server 1")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Maw")
+    (play-from-hand state :runner "Aeneas Informant")
+    (run-on state :remote1)
+    (rez state :corp (get-ice state :remote1 0))
+    (run-continue-until state :success)
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Ice Wall")
+    (is (= "Hedge Fund" (:title (second (:discard (get-corp))))) "Maw fired too")
+    (click-prompt state :runner "Yes")
+    (let [iwall (:ice (core/get-current-encounter state))]
+      (is (= "Ice Wall" (:title iwall)))
+      (is (:run @state))
+      (fire-subs state iwall)
+      (is (not (:run @state))))))
+
+(deftest ganked-vs-acme
+  (do-game
+    (new-game {:corp {:hand ["Ganked!" "Hedge Fund" "Ice Wall"]
+                      :score-area ["Dedicated Neural Net"]
+                      :id "Acme Consulting: The Truth You Need"}
+               :runner {:hand ["Jailbreak"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jailbreak")
+    (click-prompt state :runner "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (is (= 0 (count-tags state)) "Runner not consided tagged")
+    (run-continue state :encounter-ice)
+    (is (= 1 (count-tags state)) "Runner consided during encounter")
+    (run-continue-until state :success)
+    (is (= 0 (count-tags state)) "Runner not consided tagged anymore")
+    (click-prompt state :corp "0 [Credits]")
+    (click-prompt state :runner "1 [Credits]")
+    (click-card state :corp "Ganked!")
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Ice Wall")
+    (is (= 1 (count-tags state)) "Runner consided during forced encounter")
+    (run-continue state)
+    (is (= 0 (count-tags state)) "Runner not consided tagged anymore after forced encounter")
+    (click-card state :corp "Hedge Fund")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run ended")
+    (is (= 0 (count-tags state)) "Runner not consided tagged anymore after run")))
 
 (deftest georgia-emelyov
   ;; Georgia Emelyov

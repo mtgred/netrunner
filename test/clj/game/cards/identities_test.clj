@@ -944,6 +944,15 @@
     (new-game {:runner {:id "Chaos Theory: Wünderkind"}})
     (is (= 5 (core/available-mu state)) "Chaos Theory starts the game with +1 MU")))
 
+(deftest chronos-protocol-haas-bioroid
+  (do-game
+    (new-game {:corp {:id "Chronos Protocol: Haas-Bioroid" :hand []}
+               :runner {:hand ["Ika" "Street Peddler"] :deck [(qty "Ika" 5)] :discard ["Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Street Peddler")
+    (damage state :corp :brain 1)
+    (is (= 7 (count (get-in @state [:runner :rfg]))) "7 Ikas rfg'd")))
+
 (deftest chronos-protocol-selective-mind-mapping
   ;; Chronos Protocol - Choose Runner discard for first net damage of a turn
   (do-game
@@ -1094,7 +1103,8 @@
                         :deck [(qty "PAD Campaign" 2)]}})
       (card-ability state :corp (get-in @state [:corp :identity]) 0)
       (play-from-hand state :corp "PAD Campaign" "New remote")
-      (play-from-hand state :corp "PAD Campaign" "New remote")
+      (play-from-hand state :corp "PAD Campaign")
+      (is (= ["Server 1"] (prompt-buttons :corp)) "Can only install in server 1 (no new remote)")
       (is (= 1 (count (core/get-remotes state))) "Could not install second remote")))
 
 (deftest earth-station-sea-headquarters-creating-more-servers-while-the-identity-is-disabled
@@ -2589,6 +2599,7 @@
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
       (play-from-hand state :corp "Hedge Fund")
+      (take-credits state :corp)
       (take-credits state :runner)
       (is (= 3 (count (:discard (get-corp)))) "Archives started with 3 cards")
       (is (zero? (count (:deck (get-corp)))) "R&D started empty")
@@ -2640,6 +2651,25 @@
     (is (= 3 (count (:discard (get-runner)))))
     (play-from-hand state :corp "Neural EMP")
     (is (= 5 (count (:discard (get-runner)))))))
+
+(deftest jinteki-potential-unleashed-vs-tori-hanzo
+  ;; Potential Unleashed - when the runner takes at least one net damage, mill 1 from their deck
+  (do-game
+    (new-game {:corp {:id "Jinteki: Potential Unleashed"
+                      :deck ["Kakugo" "Tori Hanzō"]
+                      :credits 15}
+               :runner {:hand ["Sure Gamble"]
+                        :deck ["Easy Mark"]}})
+    (play-from-hand state :corp "Kakugo" "New remote")
+    (play-from-hand state :corp "Tori Hanzō" "Server 1")
+    (rez state :corp (get-ice state :remote1 0))
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-on state :remote1)
+    (run-continue-until state :movement)
+    (click-prompt state :corp "Yes")
+    (is (= ["Sure Gamble"] (map :title (:discard (get-runner)))) "Gamble trashed, easy mark not milled")
+    (is (= 1 (:brain-damage (get-runner))))))
 
 (deftest jinteki-replicating-perfection
   ;; Replicating Perfection - Prevent runner from running on remotes unless they first run on a central
@@ -3232,7 +3262,7 @@
         (click-draw state :corp)
         (click-credit state :corp)
         (play-from-hand state :corp "Hedge Fund")
-        (is (changed? [(:credit (get-corp)) 5]
+        (is (changed? [(:credit (get-corp)) 1]
               (click-prompt state :corp "Gain 1 [Credits]"))
             "Gained 1 credit from MM ability")))
 
@@ -3326,7 +3356,7 @@
         (click-credit state :corp)
         (click-draw state :corp)
         (play-from-hand state :corp "Blue Level Clearance")
-        (is (changed? [(:credit (get-corp)) 4]
+        (is (changed? [(:credit (get-corp)) 1]
               (click-prompt state :corp "Gain 1 [Credits]"))
             "Gained 1 credit from MM ability")))
 
@@ -3381,6 +3411,20 @@
         (play-from-hand state :corp "NASX" "New remote")
         (play-from-hand state :corp "Wall to Wall" "New remote")
         (is (no-prompt? state :corp) "No MM trigger")))
+
+(deftest mirrormorph-triggers-post-action
+  (do-game
+    (new-game {:corp {:id "MirrorMorph: Endless Iteration"
+                      :hand ["Hedge Fund" "PAD Campaign"]
+                      :deck ["Beanstalk Royalties"]}})
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (click-draw state :corp)
+    (is (is-hand? state :corp ["Beanstalk Royalties"])
+        "Drew card before mirrormorph ability resolved")
+    (is (changed? [(:credit (get-corp)) 1]
+          (click-prompt state :corp "Gain 1 [Credits]"))
+        "MM ability was triggered post-action")))
 
 (deftest mti-mwekundu-life-improved-no-ice
     ;; No ice
@@ -4954,6 +4998,14 @@
             (click-card state :runner (refresh iw)))
           "Available MU should not change"))))
 
+(deftest the-collective-williams-wu-et-al
+  (do-game
+    (new-game {:runner {:id "The Collective: Williams, Wu, et al."}})
+    (take-credits state :corp)
+    (dotimes [_ 3]
+      (click-credit state :runner))
+    (is (= 2 (:click (get-runner))) "gained [click]")))
+
 (deftest the-foundry-refining-the-process-interaction-with-accelerated-beta-test
     ;; interaction with Accelerated Beta Test
     (do-game
@@ -5125,6 +5177,23 @@
       (click-prompt state :runner "Trash 1 installed card")
       (click-card state :runner "Smartware Distributor")
       (is (:run @state) "Run continues"))))
+
+(deftest thunderbolt-vs-trick-shot
+  (do-game
+    (new-game {:corp {:id "Thunderbolt Armaments: Peace Through Power"
+                      :deck ["Tithe"]}
+               :runner {:hand ["Trick Shot"]}})
+    (play-from-hand state :corp "Tithe" "New remote")
+    (let [tithe (get-ice state :remote1 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Trick Shot")
+      (rez state :corp tithe)
+      (is (= 2 (get-strength (refresh tithe))) "Tithe strength is buffed")
+      (is (= 3 (count (:subroutines (refresh tithe)))) "Tithe has 3 subroutines")
+      (run-continue state)
+      (click-prompt state :runner "Server 1")
+      (is (= 1 (get-strength (refresh tithe))) "Tithe strength is not buffed")
+      (is (= 2 (count (:subroutines (refresh tithe)))) "Tithe has 2 subroutines again"))))
 
 (deftest weyland-consortium-because-we-built-it-pay-credits-prompt
     ;; Pay-credits prompt

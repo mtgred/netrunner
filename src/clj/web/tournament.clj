@@ -190,7 +190,9 @@
                           :single-sided? single-sided?})]
     (ws/broadcast-to! [uid] :tournament/created {:data {:created-rounds (count created-rounds)}})))
 
-(defmethod ws/-msg-handler :tournament/create [event]
+(defmethod ws/-msg-handler :tournament/create
+  tournament--create
+  [event]
   ((wrap-with-to-handler create-tables) event))
 
 (defn close-tournament-tables
@@ -203,7 +205,9 @@
       ; (map #(close-lobby % true) tables)
       )))
 
-(defmethod ws/-msg-handler :tournament/fetch [event]
+(defmethod ws/-msg-handler :tournament/fetch
+  tournament--fetch
+  [event]
   ((wrap-with-to-handler load-tournament) event))
 
 (defn- delete-tables
@@ -212,5 +216,7 @@
   (let [deleted-rounds (close-tournament-tables cobra-link)]
     (ws/broadcast-to! [uid] :tournament/deleted {:data {:deleted-rounds (count deleted-rounds)}})))
 
-(defmethod ws/-msg-handler :tournament/delete [event]
+(defmethod ws/-msg-handler :tournament/delete
+  tournament--delete
+  [event]
   ((wrap-with-to-handler delete-tables) event))

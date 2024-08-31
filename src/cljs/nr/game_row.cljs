@@ -43,19 +43,64 @@
       (and (:allow-spectator game)
            (not (or current-game editing)))))
 
+(defn- watch-game-button
+  [spectatorhands lobby-state game]
+  (if-not spectatorhands
+    [:button {:on-click #(do (join-game lobby-state game "watch")
+                             (resume-sound))}
+     (tr [:lobby.watch "Watch"])]
+    (letfn [(join-fn [side]
+              #(do (join-game lobby-state game "watch" side)
+                   (resume-sound)))]
+      [:div.split-button
+       [:button {:on-click (join-fn nil)}
+        (tr [:lobby.watch "Watch"])]
+       [:button.dropdown-toggle {:data-toggle "dropdown"}
+        [:b.caret]]
+       [:ul.dropdown-menu.blue-shade
+        [:a.block-link {:on-click (join-fn "Corp")}
+       (tr [:lobby.corp-perspective "Corp Perspective"])]
+      [:a.block-link {:on-click (join-fn "Runner")}
+       (tr [:lobby.runner-perspective "Runner Perspective"])]
+      [:a.block-link {:on-click (join-fn nil)}
+       (tr [:lobby.both-perspective "Both"])]]])))
+
+(defn- watch-protected-game-button
+  [spectatorhands lobby-state game]
+  (if-not spectatorhands
+    [:button {:on-click #(if (:password game)
+                           (authenticated
+                             (fn [_]
+                               (swap! lobby-state assoc :password-game {:game game :action "watch"})))
+                           (do (join-game lobby-state game "watch")
+                               (resume-sound)))}
+     (tr [:lobby.watch "Watch"])]
+    (letfn [(join-fn
+              [side]
+              #(if (:password game)
+                 (authenticated
+                   (fn [_]
+                     (swap! lobby-state assoc :password-game {:game game :action "watch" :request-side side})))
+                 (do (join-game lobby-state game "watch" side)
+                     (resume-sound))))]
+      [:div.split-button
+       [:button {:on-click (join-fn nil)}
+        (tr [:lobby.watch "Watch"])]
+       [:button.dropdown-toggle {:data-toggle "dropdown"}
+        [:b.caret]]
+       [:ul.dropdown-menu.blue-shade
+        [:a.block-link {:on-click (join-fn "Corp")}
+       (tr [:lobby.corp-perspective "Corp Perspective"])]
+      [:a.block-link {:on-click (join-fn "Runner")}
+       (tr [:lobby.runner-perspective "Runner Perspective"])]
+      [:a.block-link {:on-click (join-fn nil)}
+       (tr [:lobby.both-perspective "Both"])]]])))
+
 (defn watch-button [lobby-state user game current-game editing]
   (when (can-watch? user game current-game editing)
     (if (not (:password game))
-      [:button {:on-click #(do (join-game lobby-state game "watch")
-                               (resume-sound))}
-       (tr [:lobby.watch "Watch"])]
-      [:button {:on-click #(if (:password game)
-                             (authenticated
-                               (fn [_]
-                                 (swap! lobby-state assoc :password-game {:game game :action "watch"})))
-                             (do (join-game lobby-state game "watch")
-                                 (resume-sound)))}
-       (tr [:lobby.watch "Watch"])])))
+      [watch-game-button (:spectatorhands game) lobby-state game]
+      [watch-protected-game-button (:spectatorhands game) lobby-state game])))
 
 (defn can-join? [user {:keys [room started players]} current-game editing]
   (if (= "tournament" room)
@@ -131,11 +176,21 @@
         (let [c (count (:spectators game))]
           (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")"))))])
 
-(defn game-format [{fmt :format singleton? :singleton}]
+(defn- gateway-type-span [gateway-type]
+  (cond
+    (= gateway-type "Beginner")
+    [:span.format-precon (str " (" (tr [:lobby.gateway-format.beginner "Beginner"]) ")")]
+    (= gateway-type "Intermediate")
+    [:span.format-precon (str " (" (tr [:lobby.gateway-format.intermediate "Intermediate"]) ")")]
+    (= gateway-type "Constructed")
+    [:span.format-precon (str " (" (tr [:lobby.gateway-format.constructed "Constructed"]) ")")]))
+
+(defn game-format [{fmt :format singleton? :singleton gateway-type :gateway-type}]
   [:div {:class "game-format"}
    [:span.format-label (tr [:lobby.format "Format"]) ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
-   [:span.format-singleton (str (when singleton? " (singleton)"))]])
+   [gateway-type-span gateway-type]
+   [:span.format-singleton (str (when singleton? (str " " (tr [:lobby.singleton-b "(singleton)"]))))]])
 
 (defn- time-since
   "Helper method for game-time. Computes how many minutes since game start"
@@ -153,7 +208,7 @@
   ;; it is of the correct type. IDK how to fix the problem, but this
   ;; is a workable temporary fix - NBKelly, Jul 2024
   (when (and (:started game) (= (type (:date game)) (type (inst/now))))
-    [:div.game-time (str (time-since (:date game)) "m")]))
+    [:div.game-time [:span.game-time-emoji "⏰"] (str " " (time-since (:date game)) "m")]))
 
 (defn players-row [{players :players :as game}]
   (into

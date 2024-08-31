@@ -42,7 +42,8 @@
           username (:username api-record)]
       (if username
         (let [game (app-state/uid-player->lobby username)
-              allow-access (:api-access game)]
+              in-game-options (when (:state game) (:options @(:state game)))
+              allow-access (or (:api-access game) (:api-access in-game-options))]
           (if (and game allow-access)
             (action username game ctx)
             (response 403 {:message "No game for key or API Access not enabled"})))

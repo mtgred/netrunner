@@ -269,7 +269,7 @@
     (card-ability state :runner (get-resource state 0) 0)
     (click-prompt state :runner "Chatterjee University")
     (click-card state :runner "Vanity Project")
-    (is (last-n-log-contains? state 1 "forfeits 1 agenda .* to use Artist Colony to install Chatterjee University"))
+    (is (last-log-contains? state "forfeits 1 agenda .* to use Artist Colony to install Chatterjee University"))
     (is (= "Chatterjee University" (:title (get-resource state 1))))
     (is (empty? (:scored (get-runner))))))
 
@@ -336,6 +336,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Asmund Pudlat")
     (click-prompt state :runner "Cancel")
+    (take-credits state :runner)
     (take-credits state :corp)
     (click-prompt state :runner "Done")
     (is (= 1 (count (:discard (get-runner)))) "Asmund Pudlat was trashed")))
@@ -833,6 +834,7 @@
       (new-game {:runner {:deck ["Climactic Showdown"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Climactic Showdown")
+      (take-credits state :runner)
       (take-credits state :corp)
       (take-credits state :runner)
       (is (= "Climactic Showdown" (-> (get-runner) :rfg first :title)) "Climactic Showdown RFGed")
@@ -2102,6 +2104,8 @@
                             :deck [(qty "Sure Gamble" 5)]
                             :hand ["DreamNet"]}})
         (take-credits state :corp)
+        (end-phase-12 state :runner)
+        (click-prompt state :runner "Done")
         (play-from-hand state :runner "DreamNet")
         (is (changed? [(:credit (get-runner)) 1]
               (run-empty-server state :archives))
@@ -2368,11 +2372,9 @@
           (run-on state "Server 1")
           (card-ability state :runner ff 0)
           (is (= credits (:credit (get-runner))) "Can't use credits on Fencer before a successul run")
-          (run-continue state)
-          (card-ability state :runner ff 0)
-          (is (= (dec counters) (get-counters (refresh ff) :credit)) "Spent 1c from Fencer")
-          (is (= (inc credits) (:credit (get-runner))) "Used credits from Fencer for trash")
+          (run-continue state :success)
           (click-prompt state :runner "Pay 4 [Credits] to trash")
+          (click-card state :runner "Fencer Fueno")
           (click-prompt state :runner "Done")) ; pay-credits prompt
         (take-credits state :runner)
         (let [credits (:credit (get-runner))]
@@ -3470,16 +3472,36 @@
           juli (get-resource state 1)]
       (is (changed? [(get-counters (refresh juli) :power) -1
                      (:click (get-runner)) 0]
-                    (card-ability state :runner artist 0))
+            (card-ability state :runner artist 0))
           "Runner gained 1 click from Juli Moreira Lee")
       (is (changed? [(get-counters (refresh juli) :power) 0]
-                    (card-ability state :runner artist 1))
+            (card-ability state :runner artist 1))
           "No further Juli Moreira Lee trigger")
       (take-credits state :runner)
       (take-credits state :corp)
       (core/add-counter state :runner (refresh juli) :power -2)
       (card-ability state :runner artist 0)
       (is (= 1 (count (:discard (get-runner)))) "Juli Moreira Lee trashed"))))
+
+(deftest juli-when-resource-trashed
+  (do-game
+    (new-game {:runner {:hand [(qty "Juli Moreira Lee" 2) (qty "Telework Contract" 2)]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Juli Moreira Lee")
+    (play-from-hand state :runner "Telework Contract")
+    (is (changed? [(get-counters (get-resource state 0) :power) -1
+                   (:click (get-runner)) 0]
+          (card-ability state :runner (get-resource state 1) 0))
+        "Runner gained 1 click from Juli Moreira Lee")
+    (trash state :runner (get-resource state 1))
+    (trash state :runner (get-resource state 0))
+    (play-from-hand state :runner "Juli Moreira Lee")
+    (play-from-hand state :runner "Telework Contract")
+    (is (changed? [(get-counters (get-resource state 0) :power) 0
+                   (:click (get-runner)) -1]
+          (card-ability state :runner (get-resource state 1) 0))
+        "Runner did NOT gain 1 click from Juli Moreira Lee")))
 
 (deftest kasi-string
   ;; Kasi String
@@ -4152,6 +4174,7 @@
         (run-empty-server state "HQ")
         (click-prompt state :runner "Steal")
         (is (= 1 (get-counters (refresh mm) :credit)) "+1c from steal")
+        (take-credits state :runner)
         (take-credits state :corp)
         (is (= 2 (get-counters (refresh mm) :credit)) "+1c from start of turn")
         (take-credits state :runner)
@@ -4712,45 +4735,46 @@
 (deftest paladin-poemu
   ;; Paladin Poemu
   (do-game
-      (new-game {:corp {:deck ["Project Vitruvius"]}
-                 :runner {:hand ["Corroder" "Fan Site" "Dummy Box" "Sacrificial Construct" "Misdirection" "Hernando Cortez" "Paladin Poemu"]}})
+    (new-game {:corp {:deck ["Project Vitruvius"]}
+               :runner {:hand ["Corroder" "Fan Site" "Dummy Box" "Sacrificial Construct" "Misdirection" "Hernando Cortez" "Paladin Poemu"]}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 1)
+    (play-from-hand state :runner "Paladin Poemu")
+    (play-from-hand state :runner "Fan Site")
+    (play-from-hand state :runner "Dummy Box")
+    (play-from-hand state :runner "Sacrificial Construct")
+    (play-from-hand state :runner "Misdirection")
+    (take-credits state :runner)
+    (let [pp (get-resource state 0)
+          fs (get-resource state 1)
+          sac (get-resource state 3)
+          misd (get-program state 0)]
+      (is (= 0 (get-counters (refresh pp) :credit)) "No credits on Poemu yet")
       (take-credits state :corp)
-      (core/gain state :runner :click 1)
-      (play-from-hand state :runner "Paladin Poemu")
-      (play-from-hand state :runner "Fan Site")
-      (play-from-hand state :runner "Dummy Box")
-      (play-from-hand state :runner "Sacrificial Construct")
-      (play-from-hand state :runner "Misdirection")
-      (let [pp (get-resource state 0)
-            fs (get-resource state 1)
-            sac (get-resource state 3)
-            misd (get-program state 0)]
-        (is (= 0 (get-counters (refresh pp) :credit)) "No credits on Poemu yet")
-        (take-credits state :corp)
-        (is (= 1 (get-counters (refresh pp) :credit)) "+1c from start of turn")
-        (run-empty-server state "HQ")
-        (click-prompt state :runner "Steal")
-        (is (= 2 (get-counters (refresh pp) :credit)) "+1c from steal")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 3 (get-counters (refresh pp) :credit)) "+1c from start of turn")
-        (take-credits state :runner)
-        (click-card state :runner fs)
-        (is (no-prompt? state :runner) "No prompt to prevent trashing with Dummy Box")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (click-card state :runner (refresh misd))
-        (is (not (no-prompt? state :runner)) "Prompt to prevent trashing with Sacrificial Construct")
-        (card-ability state :runner sac 0)
-        (click-prompt state :runner "Done")
-        (take-credits state :corp)
-        (is (changed? [(:credit (get-runner)) 0]
-              (play-from-hand state :runner "Corroder")
-              (click-card state :runner pp)
-              (click-card state :runner pp))
-            "Used Poemu to install Corroder for free")
-        (play-from-hand state :runner "Hernando Cortez")
-        (is (no-prompt? state :runner) "No pay-credits prompt on the install of a Connection"))))
+      (is (= 1 (get-counters (refresh pp) :credit)) "+1c from start of turn")
+      (run-empty-server state "HQ")
+      (click-prompt state :runner "Steal")
+      (is (= 2 (get-counters (refresh pp) :credit)) "+1c from steal")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= 3 (get-counters (refresh pp) :credit)) "+1c from start of turn")
+      (take-credits state :runner)
+      (click-card state :runner fs)
+      (is (no-prompt? state :runner) "No prompt to prevent trashing with Dummy Box")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (click-card state :runner (refresh misd))
+      (is (not (no-prompt? state :runner)) "Prompt to prevent trashing with Sacrificial Construct")
+      (card-ability state :runner sac 0)
+      (click-prompt state :runner "Done")
+      (take-credits state :corp)
+      (is (changed? [(:credit (get-runner)) 0]
+            (play-from-hand state :runner "Corroder")
+            (click-card state :runner pp)
+            (click-card state :runner pp))
+          "Used Poemu to install Corroder for free")
+      (play-from-hand state :runner "Hernando Cortez")
+      (is (no-prompt? state :runner) "No pay-credits prompt on the install of a Connection"))))
 
 (deftest paladin-poemu-async-issues-are-handled-properly-issue-4784
     ;; Async issues are handled properly. Issue #4784
@@ -4868,21 +4892,18 @@
           (is (changed? [(:credit (get-runner)) -4]
                 (click-card state :runner mo))
               "Pay 4 for MOpus install (1+5-2)")
-          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 3 [Credits] to install Magnum Opus using Paule's Café\\.") "Correct message for MOpus install")
+          (is (last-log-contains? state "Runner pays 1 [Credits], and then pays 3 [Credits], to use Paule's Café to install hosted Magnum Opus.") "Correct message for Mopus install")
           (card-ability state :runner pau 1)
           (is (changed? [(:credit (get-runner)) -4]
                 (click-card state :runner des))
               "Pay 4 for Desperado install (1+3)")
-          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 3 [Credits] to install Desperado using Paule's Café\\.") "Correct message for Desperado install")
+          (is (last-log-contains? state "Runner pays 1 [Credits], and then pays 3 [Credits], to use Paule's Café to install hosted Desperado.") "Correct message for Desperado install")
           (take-credits state :runner)
           (card-ability state :runner pau 1)
           (is (changed? [(:credit (get-runner)) -3]
                 (click-card state :runner cor))
               "Pay 3 for Corroder install in Corp turn (1+2)")
-          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 2 [Credits] to install Corroder using Paule's Café\\.") "Correct message for Corroder install")))))
+          (is (last-log-contains? state "pays 1 [Credits], and then pays 2 [Credits], to use Paule's Café to install hosted Corroder") "Correct message for Corroder install")))))
 
 (deftest paule-s-cafe-can-t-lower-cost-below-1-issue-4816
     ;; Can't lower cost below 1. Issue #4816
@@ -4904,8 +4925,7 @@
                 (card-ability state :runner pau 1)
                 (click-card state :runner cor))
               "Pay 1 credit for Corroder (2 - 4 + 1 base)")
-          (is (second-last-log-contains? state "Runner pays 1 [Credits] to use Paule's Café to install hosted card\\.") "Correct message for Paule usage")
-          (is (last-log-contains? state "Runner pays 0 [Credits] to install Corroder using Paule's Café\\.") "Correct message for Corroder install")))))
+          (is (last-log-contains? state "Runner pays 1 [Credits], and then pays 0 [Credits], to use Paule's Café to install hosted Corroder ") "Correct message for Corroder install")))))
 
 (deftest penumbral-toolkit-install-cost-reduction-after-hq-run
     ;; install cost reduction after HQ run
@@ -5150,8 +5170,8 @@
       (click-prompt state :runner (find-card "Mimic" (:discard (get-runner))))
       (is (= 1 (count (get-program state))) "1 Program installed")
       (is (= 2 (:credit (get-runner))) "Runner paid install cost")
-      (is (last-n-log-contains? state 2 "Clone Chip"))
-      (is (second-last-log-contains? state "uses Reclaim to install Mimic"))))
+      (is (last-log-contains? state "Clone Chip"))
+      (is (last-log-contains? state "Reclaim to install Mimic"))))
 
 (deftest reclaim-no-cards-in-hand
     ;; No cards in hand
@@ -5246,6 +5266,24 @@
     (click-prompt state :runner "Red Team")
     (click-card state :runner "Red Team")
     (click-prompt state :runner "Liberated Account")))
+
+(deftest red-team-vs-undo-click
+  (do-game
+    (new-game {:runner {:hand ["Red Team"]
+                        :credits 6}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Red Team")
+    (let [rt (get-resource state 0)]
+      (card-ability state :runner (refresh rt) 0)
+      (click-prompt state :runner "R&D")
+      (run-jack-out state)
+      (card-ability state :runner (refresh rt) 0)
+      (is (= ["Archives" "HQ" "Cancel"] (prompt-buttons :runner)) "No option to run R&D")
+      (click-prompt state :runner "HQ")
+      (core/command-undo-click state :runner)
+      (core/command-undo-click state :runner)
+      (card-ability state :runner (refresh rt) 0)
+      (is (= ["Archives" "R&D" "HQ" "Cancel"] (prompt-buttons :runner)) "All three options are there after undoing clicks"))))
 
 (deftest rolodex
   ;; Rolodex - Full test
@@ -6891,6 +6929,7 @@
             (play-from-hand state :runner "Cache")
             (click-card state :runner "Sahasrara"))
           "no counter for second spend")
+      (take-credits state :runner)
       (take-credits state :corp)
       (core/add-counter state :runner (refresh twin) :power 3)
       (run-empty-server state :hq)
@@ -7078,7 +7117,7 @@
         (is (= 4 (get-counters (refresh tt) :credit)) "Taka counters added"))
       (let [tt (get-resource state 0)]
         (run-on state "Server 1")
-        (run-continue state)
+        ;;(run-continue state)
         (card-ability state :runner tt 0)
         (is (= "Choose one" (-> (prompt-map :runner) :msg))
             "Net Mercur fires as Taka credits are stealth")
@@ -7096,7 +7135,6 @@
       (let [refr (get-program state 0)]
         (is (changed? [(:credit (get-runner)) 0]
               (run-on state :hq)
-              (run-continue state)
               (card-ability state :runner refr 1)
               (click-card state :runner refr))
             "Used 1 credit from Trickster Taka"))))
@@ -7149,6 +7187,7 @@
               (click-card state :runner (first (:hosted (refresh iw1)))))
             "2 credits placed on Urban Art Vernissage")
         (is (= 1 (count (:hand (get-runner)))) "1 card added to the grip")
+        (end-phase-12 state :runner)
         (play-from-hand state :runner "Monkeywrench")
         (dotimes [_ 2]
           (click-card state :runner uav)))))
@@ -7254,10 +7293,10 @@
       (play-from-hand state :runner "Virus Breeding Ground")
       (let [vbg (get-resource state 0)]
         (is (zero? (get-counters vbg :virus)) "Virus Breeding Ground starts with 0 counters")
-        (take-credits state :runner 3)
+        (take-credits state :runner)
         (take-credits state :corp)
         (is (= 1 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground gains 1 counter per turn")
-        (take-credits state :runner 3)
+        (take-credits state :runner)
         (take-credits state :corp)
         (is (= 2 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground gains 1 counter per turn"))))
 

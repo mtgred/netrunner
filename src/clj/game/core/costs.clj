@@ -34,12 +34,21 @@
   (<= 0 (- (get-in @state [side :click]) (value cost))))
 (defmethod handler :click
   [cost state side eid _card]
-  (let [a (:action eid)]
+  (let [a (:action eid)
+        idx (get-in eid [:source-info :ability-idx])
+        source-abilities (get-in eid [:source :abilities])
+        is-game-action? (when (and (= :ability (:source-type eid))
+                                   (number? idx)
+                                   (seq source-abilities))
+                          (:action (nth source-abilities idx {})))
+        source (get-in eid [:source])]
     (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
     (deduct state side [:click (value cost)])
     (wait-for (trigger-event-sync state side (make-eid state eid)
                                   (if (= side :corp) :corp-spent-click :runner-spent-click)
                                   {:action a
+                                   :is-game-action? is-game-action?
+                                   :stripped-source-card (select-keys source [:cid :title :type])
                                    :value (value cost)
                                    :ability-idx (:ability-idx (:source-info eid))})
               ;; sending the idx is mandatory to make wage workers functional
@@ -887,7 +896,7 @@
                :all true
                :card (every-pred installed? (if (= :corp side) corp? runner?))}
      :async true
-     :effect (req (let [cards (keep #(move state side % :deck) targets)]
+     :effect (req (let [cards (keep #(move state side % :deck {:shuffled true}) targets)]
                     (shuffle! state side :deck)
                     (complete-with-result
                       state side eid

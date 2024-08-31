@@ -2,6 +2,7 @@
   (:require
     [clj-uuid :as uuid]
     [clojure.stacktrace :refer [print-stack-trace]]
+    [clojure.string :as string]
     [cond-plus.core :refer [cond+]]
     [game.core.board :refer [clear-empty-remotes get-all-cards all-installed all-installed-runner
                              all-installed-runner-type all-active-installed]]
@@ -304,11 +305,16 @@
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets payment-str]
   (when-let [message (:msg ability)]
-    (let [desc (if (string? message) message (message state side eid card targets))
-          cost-spend-msg (build-spend-msg payment-str "use")]
-      (when desc
-        (system-msg state (to-keyword (:side card))
-                    (str cost-spend-msg (get-title card) (str " to " desc)))))))
+    (let [desc (if (or (= :cost message) (string? message))
+                 message
+                 (message state side eid card targets))
+          cost-spend-msg (build-spend-msg payment-str "use")
+          disp-side (or (:display-side ability) (to-keyword (:side card)))]
+      (cond
+        (= :cost desc)
+        (system-msg state disp-side (str payment-str " to satisfy " (get-title card)))
+        desc
+        (system-msg state disp-side (str cost-spend-msg (get-title card) (str " to " desc)))))))
 
 (defn register-once
   "Register ability as having happened if :once specified"
@@ -357,6 +363,10 @@
   (let [payment-str (:msg async-result)
         cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))
         ability (assoc-in ability [:eid :cost-paid] cost-paid)
+        ;; this lets nested abilities access payment strs from outside the nesting
+        ;; which is admittedly a little cursed
+        last-payment-str (get-in ability [:eid :latest-payment-str])
+        ability (assoc-in ability [:eid :latest-payment-str] (if-not (string/blank? payment-str) payment-str last-payment-str))
         ;; After paying costs, counters will be removed, so fetch the latest version.
         ;; We still want the card if the card is trashed, so default to given
         ;; when the latest is gone.

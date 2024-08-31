@@ -23,7 +23,7 @@
     user :user
     {:keys [gameid now
             allow-spectator api-access format mute-spectators password room save-replay
-            side singleton spectatorhands timer title]
+            gateway-type side singleton spectatorhands timer title]
      :or {gameid (random-uuid)
           now (inst/now)}} :options}]
   (let [player {:user user
@@ -34,8 +34,11 @@
      :last-update now
      :players [player]
      :spectators []
+     :corp-spectators []
+     :runner-spectators []
      :messages []
      ;; options
+     :gateway-type (when (= (str format) "system-gateway") gateway-type)
      :allow-spectator allow-spectator
      :api-access api-access
      :format format
@@ -80,7 +83,7 @@
           deck (-> deck
                    (select-keys
                      (if (:started lobby)
-                       [:name :date :identity :hash]
+                       [:name :date :identity]
                        [:name :date]))
                    (assoc :_id (str _id) :status status))]
       (assoc player :deck deck))
@@ -111,6 +114,7 @@
    :date
    :format
    :gameid
+   :gateway-type
    :messages
    :mute-spectators
    :original-players
@@ -120,6 +124,8 @@
    :save-replay
    :singleton
    :spectators
+   :corp-spectators
+   :runner-spectators
    :spectatorhands
    :started
    :timer
@@ -133,6 +139,8 @@
        (update :password boolean)
        (update :players #(prepare-players lobby %))
        (update :spectators #(prepare-players lobby %))
+       (update :corp-spectators #(prepare-players lobby %))
+       (update :runner-spectators #(prepare-players lobby %))
        (update :original-players prepare-original-players)
        (update :messages #(when participating? %))
        (select-non-nil-keys lobby-keys))))
@@ -225,6 +233,7 @@
   (update lobby :messages conj message))
 
 (defmethod ws/-msg-handler :lobby/create
+  lobby--create
   [{{user :user} :ring-req
     uid :uid
     ?data :?data}]
@@ -252,6 +261,7 @@
       (clear-lobby-state uid))))
 
 (defmethod ws/-msg-handler :lobby/list
+  lobby--list
   [{uid :uid}]
   (send-lobby-list uid))
 
@@ -286,12 +296,16 @@
   (if-let [lobby (app-state/uid->lobby lobbies uid)]
     (let [gameid (:gameid lobby)
           players (remove #(= uid (:uid %)) (:players lobby))
-          spectators (remove #(= uid (:uid %)) (:spectators lobby))]
+          spectators (remove #(= uid (:uid %)) (:spectators lobby))
+          corp-spectators (remove #(= uid (:uid %)) (:corp-spectators lobby))
+          runner-spectators (remove #(= uid (:uid %)) (:runner-spectators lobby))]
       (if (pos? (count players))
         (-> lobbies
             (update gameid send-message leave-message)
             (assoc-in [gameid :players] players)
-            (assoc-in [gameid :spectators] spectators))
+            (assoc-in [gameid :spectators] spectators)
+            (assoc-in [gameid :runner-spectators] runner-spectators)
+            (assoc-in [gameid :corp-spectators] corp-spectators))
         (dissoc lobbies gameid)))
     lobbies))
 
@@ -328,6 +342,7 @@
       lobby?))
 
 (defmethod ws/-msg-handler :lobby/leave
+  lobby--leave
   [{{db :system/db user :user} :ring-req
     uid :uid
     {gameid :gameid} :?data
@@ -378,6 +393,7 @@
       lobbies)))
 
 (defmethod ws/-msg-handler :lobby/deck
+  lobby--deck
   [{{db :system/db user :user} :ring-req
     uid :uid
     {:keys [gameid deck-id]} :?data
@@ -404,6 +420,7 @@
     lobbies))
 
 (defmethod ws/-msg-handler :lobby/say
+  lobby--say
   [{{user :user} :ring-req
     uid :uid
     {:keys [gameid text]} :?data}]
@@ -493,6 +510,7 @@
       (when ?reply-fn (?reply-fn 404) nil))))
 
 (defmethod ws/-msg-handler :lobby/join
+  lobby--join
   [{{user :user} :ring-req
     uid :uid
     {gameid :gameid :as ?data} :?data
@@ -542,6 +560,7 @@
 
 
 (defmethod ws/-msg-handler :lobby/swap
+  lobby--swap
   [{{user :user} :ring-req
     uid :uid
     {:keys [gameid side]} :?data}]
@@ -559,6 +578,7 @@
         (broadcast-lobby-list)))))
 
 (defmethod ws/-msg-handler :lobby/rename-game
+  lobby--rename-game
   [{{db :system/db user :user} :ring-req
     {:keys [gameid]} :?data}]
   (when-let [lobby (app-state/get-lobby gameid)]
@@ -576,6 +596,7 @@
                     :date (inst/now)})))))
 
 (defmethod ws/-msg-handler :lobby/delete-game
+  lobby--delete-game
   [{{db :system/db user :user} :ring-req
     {:keys [gameid]} :?data}]
   (let [lobby (app-state/get-lobby gameid)
@@ -616,33 +637,40 @@
     (when @changed?
       (broadcast-lobby-list))))
 
-(defn watch-lobby [lobby uid user]
+(defn watch-lobby [lobby uid user request-side]
   (if (already-in-game? user lobby)
     lobby
-    (update lobby :spectators conj {:uid uid
-                                    :user user})))
+    (let [lobby (update lobby :spectators conj {:uid uid
+                                                :user user})]
+      (cond
+        (= request-side "Corp")
+        (update lobby :corp-spectators conj {:uid uid :user user})
+        (= request-side "Runner")
+        (update lobby :runner-spectators conj {:uid uid :user user})
+        :else lobby))))
 
-(defn handle-watch-lobby [lobbies gameid uid user correct-password? watch-message]
+(defn handle-watch-lobby [lobbies gameid uid user correct-password? watch-message request-side]
   (let [lobby (get lobbies gameid)]
     (if (and user lobby (allowed-in-lobby user lobby) correct-password?)
       (-> lobby
-          (watch-lobby uid user)
+          (watch-lobby uid user request-side)
           (send-message watch-message)
           (->> (assoc lobbies gameid)))
       lobbies)))
 
 (defmethod ws/-msg-handler :lobby/watch
+  lobby--watch
   [{{user :user} :ring-req
     uid :uid
-    {:keys [gameid password]} :?data
+    {:keys [gameid password request-side]} :?data
     ?reply-fn :?reply-fn}]
   (let [lobby (app-state/get-lobby gameid)]
     (when (and lobby (allowed-in-lobby user lobby))
       (let [correct-password? (check-password lobby user password)
-            watch-message (core/make-system-message (str (:username user) " joined the game as a spectator."))
+            watch-message (core/make-system-message (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) "."))
             new-app-state (swap! app-state/app-state
                                  update :lobbies #(-> %
-                                                      (handle-watch-lobby gameid uid user correct-password? watch-message)
+                                                      (handle-watch-lobby gameid uid user correct-password? watch-message request-side)
                                                       (handle-set-last-update gameid uid)))
             lobby? (get-in new-app-state [:lobbies gameid])]
         (cond
@@ -663,11 +691,13 @@
       lobbies)))
 
 (defmethod ws/-msg-handler :lobby/pause-updates
+  lobby--pause-updates
   [{{user :user} :ring-req
     uid :uid}]
   (app-state/pause-lobby-updates uid))
 
 (defmethod ws/-msg-handler :lobby/continue-updates
+  lobby--continue-updates
   [{{user :user} :ring-req
     uid :uid}]
   (app-state/continue-lobby-updates uid)

@@ -2,6 +2,7 @@
   (:require
    [nr.ajax :refer [?csrf-token]]
    [nr.appstate :refer [app-state current-gameid]]
+   [nr.translations :refer [tr]]
    [nr.utils :refer [non-game-toast]]
    [reagent.core :as r]
    [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
@@ -61,14 +62,14 @@
     (when (and (:open? old-state)
                (not (:open? new-state)))
       (reset! lock true)
-      (non-game-toast "Lost connection to server. Reconnecting." "error" {:time-out 0 :close-button true}))
+      (non-game-toast (tr [:game.lost-connection, "Lost connection to server. Reconnecting."]) "error" {:time-out 0 :close-button true}))
     (when (and (not (:open? old-state))
                (:open? new-state))
       (.clear js/toastr)
       (ws-send! [:lobby/list])
       (when (get-in @app-state [:current-game :started])
         (resync))
-      (non-game-toast "Reconnected to server" "success" nil))))
+      (non-game-toast (tr [:game.reconnected-to-server, "Reconnected to server"]) "success" nil))))
 
 (defonce router_ (atom nil))
 (defn stop-router! [] (when-let [stop-fn @router_] (stop-fn)))

@@ -8,57 +8,39 @@
 (deftest adonis-campaign
   ;; Adonis Campaign
   (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
-                        :hand ["Adonis Campaign"]}})
-      (play-from-hand state :corp "Adonis Campaign" "New remote")
-      (let [ac (get-content state :remote1 0)]
-        (rez state :corp ac)
-        (is (= 1 (:credit (get-corp))))
-        (is (= 12 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
+    (new-game {:corp {:deck ["Adonis Campaign"]}})
+    (play-from-hand state :corp "Adonis Campaign" "New remote")
+    (let [ac (get-content state :remote1 0)]
+      (rez state :corp ac)
+      (doseq [rem [12 9 6 3]]
+        (is (= rem (get-counters (refresh ac) :credit)) (str rem " counters on Adonis"))
         (take-credits state :corp)
-        (let [credits (:credit (get-corp))
-              counters (get-counters (refresh ac) :credit)]
-          (take-credits state :runner)
-          (is (= (+ credits 3) (:credit (get-corp))) "Gain 3 from Adonis")
-          (is (= (- counters 3) (get-counters (refresh ac) :credit)) "9 counter remaining on Adonis"))
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 6 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 3 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
-        (take-credits state :runner)
-        (is (nil? (refresh ac)) "Adonis Campaign should be trashed")
-        (is (= "Adonis Campaign" (->> (get-corp) :discard first :title))))))
+        (is (changed? [(:credit (get-corp)) 3]
+              (take-credits state :runner))
+            "Gained 3c from Adonis Campaign"))
+      (is (nil? (refresh ac)) "Adonis Campaign should be trashed")
+      (is (= "Adonis Campaign" (->> (get-corp) :discard first :title))))))
 
 (deftest adonis-campaign-with-gravedigger-async-issues
     ;; With Gravedigger, async issues
     (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
-                        :hand ["Adonis Campaign"]}
+      (new-game {:corp {:deck ["Adonis Campaign"]}
                  :runner {:hand ["Gravedigger"]}})
       (play-from-hand state :corp "Adonis Campaign" "New remote")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Gravedigger")
+      (take-credits state :runner)
       (let [ac (get-content state :remote1 0)]
-        (rez state :corp ac)
-        (is (= 1 (:credit (get-corp))))
-        (is (= 12 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
+      (rez state :corp ac)
+      (doseq [rem [12 9 6 3]]
+        (is (= rem (get-counters (refresh ac) :credit)) (str rem " counters on Adonis"))
         (take-credits state :corp)
-        (play-from-hand state :runner "Gravedigger")
-        (let [credits (:credit (get-corp))
-              counters (get-counters (refresh ac) :credit)]
-          (take-credits state :runner)
-          (is (= (+ credits 3) (:credit (get-corp))) "Gain 3 from Adonis")
-          (is (= (- counters 3) (get-counters (refresh ac) :credit)) "9 counter remaining on Adonis"))
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 6 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
-        (take-credits state :runner)
-        (take-credits state :corp)
-        (is (= 3 (get-counters (refresh ac) :credit)) "12 counters on Adonis")
-        (take-credits state :runner)
-        (is (nil? (refresh ac)) "Adonis Campaign should be trashed")
-        (is (= "Adonis Campaign" (->> (get-corp) :discard first :title)))
-        (is (= 1 (get-counters (get-program state 0) :virus))))))
+        (is (changed? [(:credit (get-corp)) 3]
+              (take-credits state :runner))
+            "Gained 3c from Adonis Campaign"))
+      (is (nil? (refresh ac)) "Adonis Campaign should be trashed")
+      (is (= "Adonis Campaign" (->> (get-corp) :discard first :title)))
+      (is (= 1 (get-counters (get-program state 0) :virus))))))
 
 (deftest advanced-assembly-lines
   ;; Advanced Assembly Lines
@@ -790,6 +772,23 @@
     (let [cc (get-content state :remote1 0)
           lcg (get-content state :remote1 1)]
       (advance state cc 2)
+      (rez state :corp cc)
+      (rez state :corp lcg)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (:corp-phase-12 @state) "Corp has opportunity to use Charlotte Caçador")
+      (end-phase-12 state :corp)
+      (is (some #{"Charlotte Caçador" "La Costa Grid"} (mapv :title (prompt-buttons :corp)))))))
+
+(deftest charlotte-cacador-la-costa-unadvanced
+  (do-game
+    (new-game {:corp {:hand ["Charlotte Caçador" "La Costa Grid"]
+                      :deck [(qty "Hedge Fund" 5)]
+                      :credits 100}})
+    (play-from-hand state :corp "Charlotte Caçador" "New remote")
+    (play-from-hand state :corp "La Costa Grid" "Server 1")
+    (let [cc (get-content state :remote1 0)
+          lcg (get-content state :remote1 1)]
       (rez state :corp cc)
       (rez state :corp lcg)
       (take-credits state :corp)
@@ -2236,6 +2235,22 @@
         (click-advance state :corp (last (:hosted (refresh fir))))
         (is (= 11 (:credit (get-corp))) "Gained 1cr from advancing Oaktown"))))
 
+(deftest full-immersion-rec-vs-ngo-front-issue-#5617
+  (do-game
+    (new-game {:corp {:hand ["Full Immersion RecStudio" "NGO Front"]}})
+    (play-from-hand state :corp "Full Immersion RecStudio" "New remote")
+    (let [rec (get-content state :remote1 0)]
+      (rez state :corp rec)
+      (card-ability state :corp (refresh rec) 0)
+      (click-card state :corp "NGO Front")
+      (let [ngo (first (:hosted (refresh rec)))]
+        (core/add-counter state :corp ngo :advancement 1)
+        (rez state :corp (refresh ngo))
+        (card-ability state :corp (refresh ngo) 0)
+        (is (not (refresh ngo)) "NGO gone"))
+      (is (not (seq (:hosted (refresh rec)))) "Rec Studio empty"))
+    (is (= ["NGO Front"] (map :title (:discard (get-corp)))) "Ngo Front is trashed")))
+
 (deftest fumiko-yamamori
   ;; Fumiko Yamamori
   (do-game
@@ -2496,6 +2511,10 @@
       (take-credits state :corp)
       (take-credits state :runner)
       (take-credits state :corp)
+      (card-ability state :runner (get-resource state 1) 0)
+      (card-ability state :runner (get-resource state 0) 0)
+      (end-phase-12 state :runner)
+      (is (= 5 (count (:discard (get-runner)))) "Both crowdfundings have expired")
       (is (= 1 (count (:hand (get-runner)))) "Labor Rights is in the grip")
       (play-from-hand state :runner "Labor Rights")
       (is (zero? (count (:hand (get-runner)))))
@@ -4129,29 +4148,30 @@
 (deftest prana-condenser
   ;; Prāna Condenser
   (do-game
-      (new-game {:corp {:hand ["Prāna Condenser" (qty "Neural EMP" 2)]}
-                 :runner {:hand [(qty "Sure Gamble" 5)]}})
-      (play-from-hand state :corp "Prāna Condenser" "New remote")
-      (let [pc (get-content state :remote1 0)]
-        (rez state :corp pc)
-        (take-credits state :corp)
-        (run-empty-server state :archives)
-        (take-credits state :runner)
+    (new-game {:corp {:hand ["Prāna Condenser" (qty "Neural EMP" 2)]}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Prāna Condenser" "New remote")
+    (let [pc (get-content state :remote1 0)]
+      (rez state :corp pc)
+      (take-credits state :corp)
+      (run-empty-server state :archives)
+      (take-credits state :runner)
+      (play-from-hand state :corp "Neural EMP")
+      (let [corp-credits (:credit (get-corp))]
+        (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
+        (card-ability state :corp (refresh pc) 0)
+        (is (= 1 (get-counters (refresh pc) :power)) "Added 1 power counter")
+        (is (= (+ 3 corp-credits) (:credit (get-corp))) "Gained 3 credits")
         (play-from-hand state :corp "Neural EMP")
-        (let [corp-credits (:credit (get-corp))]
-          (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-          (card-ability state :corp (refresh pc) 0)
-          (is (= 1 (get-counters (refresh pc) :power)) "Added 1 power counter")
-          (is (= (+ 3 corp-credits) (:credit (get-corp))) "Gained 3 credits")
-          (play-from-hand state :corp "Neural EMP")
-          (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-          (card-ability state :corp pc 0)
-          (is (= 2 (get-counters (refresh pc) :power)) "Added another power counter")
-          (is (= (+ 4 corp-credits) (:credit (get-corp))) "Gained another 3 credits (and paid 2 for EMP)")
-          (is (= 5 (count (:hand (get-runner)))) "No damage dealt"))
-        (take-credits state :runner)
-        (card-ability state :corp  pc 1)
-        (is (= 3 (count (:hand (get-runner)))) "2 damage dealt"))))
+        (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
+        (card-ability state :corp pc 0)
+        (is (= 2 (get-counters (refresh pc) :power)) "Added another power counter")
+        (is (= (+ 4 corp-credits) (:credit (get-corp))) "Gained another 3 credits (and paid 2 for EMP)")
+        (is (= 5 (count (:hand (get-runner)))) "No damage dealt"))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp  pc 1)
+      (is (= 3 (count (:hand (get-runner)))) "2 damage dealt"))))
 
 (deftest prana-condenser-refuse-to-prevent-damage
     ;; Refuse to prevent damage
@@ -6396,6 +6416,23 @@
           (click-credit state :corp)))
         "Corp spent 2 clicks instead of 3")))
 
+(deftest wage-workers-vs-ob-interaction
+  (do-game
+    (new-game {:corp {:deck ["Wage Workers"]
+                      :id "Ob Superheavy Logistics: Extract. Export. Excel."
+                      :hand ["Hedge Fund" "Subliminal Messaging" "Extract" "Mavirus"]}})
+    (play-from-hand state :corp "Subliminal Messaging")
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Mavirus" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (is (changed? [(:click (get-corp)) 0]
+          (play-from-hand state :corp "Extract")
+          (click-card state :corp "Mavirus")
+          (click-prompt state :corp "Yes")
+          (click-prompt state :corp "Wage Workers")
+          (click-prompt state :corp "New remote"))
+        "Gained click from wage workers once the action finished resolving!")))
+
 (deftest wage-workers-multiple-triggers
   (do-game
     (new-game {:corp {:hand ["Wage Workers" (qty "Biotic Labor" 3)]
@@ -6480,6 +6517,25 @@
       (is (= 1 (count (:subroutines (refresh kak)))) "Kakugo stays at 1 sub")
       (is (= 3 (count (:subroutines (refresh eli)))) "Eli 2.0 reverts")
       (is (= 3 (count (:subroutines (refresh ichi)))) "Ichi 2.0 reverts"))))
+
+(deftest warden-fatuma-issue-6193
+  (do-game
+    (new-game {:corp {:hand ["Warden Fatuma" "Eli 1.0"]}
+               :runner {:hand ["Because I Can"]}})
+    (play-from-hand state :corp "Warden Fatuma" "New remote")
+    (play-from-hand state :corp "Eli 1.0" "Server 1")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Because I Can")
+    (click-prompt state :runner "Server 1")
+    (rez state :corp (get-ice state :remote1 0))
+    (rez state :corp (get-content state :remote1 0))
+    (run-continue state)
+    (is (changed? [(:click (get-runner)) -1]
+          (card-subroutine state :corp (get-ice state :remote1 0) 0))
+        "Lost click to fatuma sub")
+    (run-continue-until state :success)
+    (click-prompt state :runner "Because I Can")
+    (is (= 2 (count (:subroutines (get-ice state :remote1 0)))) "Reset to 2 subs")))
 
 (deftest warm-reception
   (do-game

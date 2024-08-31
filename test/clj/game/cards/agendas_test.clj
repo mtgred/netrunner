@@ -995,6 +995,19 @@
       (click-card state :corp "Ice Wall")
       (click-prompt state :runner "No action")))
 
+(deftest dedicated-neural-net-first-time-each-turn
+  (do-game
+    (new-game {:corp {:score-area ["Dedicated Neural Net"]
+                      :hand ["Hedge Fund" "IPO"]}})
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :corp "0 [Credits]")
+    (click-prompt state :runner "0 [Credits]")
+    (click-prompt state :runner "No action")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner) "Neural net only works on the first event each turn")))
+
 (deftest degree-mill-basic-behavior
     ;; Basic behavior
     (do-game
@@ -2919,6 +2932,7 @@
     (let [psf-scored (get-scored state :corp 0)]
       (card-ability state :corp psf-scored 0)
       (is (= 1 (count (:discard (get-runner)))))
+      (take-credits state :corp)
       (take-credits state :runner)
       (dotimes [_ 3]
         (card-ability state :corp psf-scored 0))
@@ -3529,6 +3543,7 @@
       (is (= "Hedge Fund" (:title (last (:deck (get-corp))))))
       (is (= "Sweeps Week" (:title (last (butlast (:deck (get-corp)))))))
       (is (= "Self-modifying Code" (:title (first (:hand (get-runner))))))
+      (is (not (last-log-contains? state "Grip")) "Runner not mentioned in log")
       (is (= 2 (count (:hand (get-corp)))))
       (is (= 1 (count (:hand (get-runner)))))))
 
@@ -3974,6 +3989,7 @@
     (take-credits state :runner)
     (play-from-hand state :corp "Ash 2X3ZB9CY" "New remote")
     (play-and-score state "Sensor Net Activation")
+    (take-credits state :corp)
     (let [sna-scored (get-scored state :corp 1)
           ash (get-content state :remote2 0)]
       (is (= 1 (get-counters (refresh sna-scored) :agenda)) "Should start with 1 agenda counter")
@@ -3981,7 +3997,7 @@
       (card-ability state :corp (refresh sna-scored) 0)
       (click-card state :corp ash)
       (is (rezzed? (refresh ash)) "Ash should be rezzed")
-      (take-credits state :corp)
+      (take-credits state :runner)
       (is (not (rezzed? (refresh ash))) "Ash should be derezzed"))))
 
 (deftest sentinel-defense-program
@@ -4081,112 +4097,97 @@
       (is (= 1 (count (:discard (get-corp)))) "Slash and Burn Agriculture discarded as cost"))))
 
 (deftest ssl-endorsement-gain-credits-when-in-corp-score-area-before-turn-begins
-    ;; gain credits when in corp score area before turn begins
-    (do-game
-      (new-game {:corp {:deck ["SSL Endorsement"]}})
-      (play-and-score state "SSL Endorsement")
+  ;; gain credits when in corp score area before turn begins
+  (do-game
+    (new-game {:corp {:deck ["SSL Endorsement"]}})
+    (play-and-score state "SSL Endorsement")
+    (doseq [take? [:no :yes :no :no :yes :yes]]
+      (take-credits state :corp)
       (take-credits state :runner)
       (is (not (no-prompt? state :corp)) "Corp prompted to take credits")
-      (is (= 5 (:credit (get-corp))) "Corp starts with 5 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 8 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
-      (click-prompt state :corp "No")
-      (is (= 8 (:credit (get-corp))) "Corp doesn't gain 3 credits")
-      (take-credits state :runner)
-      (is (= 8 (:credit (get-corp))) "Corp starts with 8 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 11 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (= 11 (:credit (get-corp))) "Corp starts with 11 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 14 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (no-prompt? state :corp) "Not prompted when out of money")))
+      (if (= take? :no)
+        (is (changed? [(:credit (get-corp)) 0]
+              (click-prompt state :corp "No"))
+            "Corp does not gain 3 credits")
+        (is (changed? [(:credit (get-corp)) 3]
+              (click-prompt state :corp "Yes"))
+            "Corp gains 3 credits")))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (no-prompt? state :corp) "Not prompted when out of money")))
 
 (deftest ssl-endorsement-gain-credits-when-in-runner-score-area-before-turn-begins
-    ;; gain credits when in runner score area before turn begins
-    (do-game
-      (new-game {:corp {:deck ["SSL Endorsement"]}})
-      (play-from-hand state :corp "SSL Endorsement" "New remote")
-      (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "Steal")
-      (take-credits state :runner)
+  ;; gain credits when in runner score area before turn begins
+  (do-game
+    (new-game {:corp {:deck ["SSL Endorsement"]}})
+    (take-credits state :corp)
+    (run-empty-server state "HQ")
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (doseq [take? [:no :yes :no :no :yes :yes]]
       (is (not (no-prompt? state :corp)) "Corp prompted to take credits")
-      (is (= 7 (:credit (get-corp))) "Corp starts with 7 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 10 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
-      (click-prompt state :corp "No")
-      (is (= 10 (:credit (get-corp))) "Corp doesn't gain 3 credits")
-      (take-credits state :runner)
-      (is (= 10 (:credit (get-corp))) "Corp starts with 10 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 13 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (= 13 (:credit (get-corp))) "Corp starts with 13 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 16 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (no-prompt? state :corp) "Not prompted when out of money")))
+      (if (= take? :no)
+        (is (changed? [(:credit (get-corp)) 0]
+              (click-prompt state :corp "No"))
+            "Corp does not gain 3 credits")
+        (is (changed? [(:credit (get-corp)) 3]
+              (click-prompt state :corp "Yes"))
+            "Corp gains 3 credits"))
+      (take-credits state :corp)
+      (take-credits state :runner))
+    (is (no-prompt? state :corp) "Not prompted when out of money")))
 
 (deftest ssl-endorsement-register-event-when-agenda-swapped-with-turntable
-    ;; Regression test for #3114
-    ;; register event when agenda swapped with Turntable
-    (do-game
-      (new-game {:corp {:deck ["SSL Endorsement" "Breaking News"]}
-                 :runner {:deck ["Turntable"]}})
-      (play-from-hand state :corp "Breaking News" "New remote")
-      (play-and-score state "SSL Endorsement")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Turntable")
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "Steal")
-      (click-prompt state :runner "Yes")
-      (click-card state :runner (find-card "SSL Endorsement" (:scored (get-corp))))  ;; Swap BN with SSL
-      (take-credits state :runner)
-      (is (not (no-prompt? state :corp)) "Corp prompted to take credits")
-      (is (= 6 (:credit (get-corp))) "Corp starts with 7 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 9 (:credit (get-corp))) "Corp gains 3 credits from Turntable'd SSL Endorsement")))
+  ;; Regression test for #3114
+  ;; register event when agenda swapped with Turntable
+  (do-game
+    (new-game {:corp {:deck ["SSL Endorsement" "Breaking News"]}
+               :runner {:deck ["Turntable"]}})
+    (play-from-hand state :corp "Breaking News" "New remote")
+    (play-and-score state "SSL Endorsement")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Turntable")
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Steal")
+    (click-prompt state :runner "Yes")
+    (click-card state :runner (find-card "SSL Endorsement" (:scored (get-corp))))  ;; Swap BN with SSL
+    (take-credits state :runner)
+    (is (not (no-prompt? state :corp)) "Corp prompted to take credits")
+    (is (= 6 (:credit (get-corp))) "Corp starts with 7 credits")
+    (click-prompt state :corp "Yes")
+    (is (= 9 (:credit (get-corp))) "Corp gains 3 credits from Turntable'd SSL Endorsement")))
 
 (deftest ssl-endorsement-don-t-double-register-event-when-agenda-is-swapped
-    ;; don't double register event when agenda is swapped
-    (do-game
-      (new-game {:corp {:deck ["SSL Endorsement" "Breaking News"
-                               "Exchange of Information"]}})
-      (play-from-hand state :corp "SSL Endorsement" "New remote")
-      (play-and-score state "Breaking News")
+  ;; don't double register event when agenda is swapped
+  (do-game
+    (new-game {:corp {:deck ["SSL Endorsement" "Breaking News"
+                             "Exchange of Information"]}})
+    (play-from-hand state :corp "SSL Endorsement" "New remote")
+    (play-and-score state "Breaking News")
+    (take-credits state :corp)
+    (run-empty-server state "Server 1")
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (is (not (no-prompt? state :corp)) "Corp prompted to take credits")
+    (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
+    (click-prompt state :corp "Yes")
+    (is (= 9 (:credit (get-corp))) "Corp gains 3 credits")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Exchange of Information")
+    (click-card state :corp (find-card "SSL Endorsement" (:scored (get-runner))))
+    (click-card state :corp (find-card "Breaking News" (:scored (get-corp))))
+    (doseq [take? [:no :no :no :yes :no :yes]]
       (take-credits state :corp)
-      (run-empty-server state "Server 1")
-      (click-prompt state :runner "Steal")
       (take-credits state :runner)
       (is (not (no-prompt? state :corp)) "Corp prompted to take credits")
-      (is (= 6 (:credit (get-corp))) "Corp starts with 6 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 9 (:credit (get-corp))) "Corp gains 3 credits")
-      (gain-tags state :runner 1)
-      (play-from-hand state :corp "Exchange of Information")
-      (click-card state :corp (find-card "SSL Endorsement" (:scored (get-runner))))
-      (click-card state :corp (find-card "Breaking News" (:scored (get-corp))))
-      (take-credits state :runner)
-      (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
-      (click-prompt state :corp "No")
-      (is (no-prompt? state :corp) "Not double prompted for credits")
-      (is (= 9 (:credit (get-corp))) "Corp doesn't gain 3 credits")
-      (take-credits state :runner)
-      (is (= 9 (:credit (get-corp))) "Corp starts with 9 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 12 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (= 12 (:credit (get-corp))) "Corp starts with 12 credits")
-      (click-prompt state :corp "Yes")
-      (is (= 15 (:credit (get-corp))) "Corp gains 3 credits")
-      (take-credits state :runner)
-      (is (no-prompt? state :corp) "Not prompted when out of money")))
+      (if (= take? :no)
+        (is (changed? [(:credit (get-corp)) 0]
+              (click-prompt state :corp "No"))
+            "Corp does not gain 3 credits")
+        (is (changed? [(:credit (get-corp)) 3]
+              (click-prompt state :corp "Yes")
+              (is (no-prompt? state :corp) "Not double prompted for credits"))
+            "Corp gains 3 credits")))))
 
 (deftest standoff-runner-declines-first
     ;; Runner declines first

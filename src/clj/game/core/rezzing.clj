@@ -76,10 +76,11 @@
                       (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
                                          Please rez prior to clicking Start Turn in the future." "warning"
                              {:time-out 0 :close-button true}))
-                    (if (ice? card)
-                      (do (update-ice-strength state side card)
-                          (when-not (:silent args) (play-sfx state side "rez-ice")))
-                      (when-not (:silent args) (play-sfx state side "rez-other")))
+                    (let [rez-byte (:rez-sound (card-def card))]
+                      (if (ice? card)
+                        (do (update-ice-strength state side card)
+                            (when-not (:silent args) (play-sfx state side (or rez-byte "rez-ice"))))
+                      (when-not (:silent args) (play-sfx state side (or rez-byte "rez-other")))))
                     (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
                     (when-let [card-ability (:on-rez cdef)]
                       (register-pending-event state :rez card card-ability))
@@ -131,16 +132,21 @@
 ;; TODO: make async
 (defn derez
   "Derez a corp card."
-  [state side card]
-  (let [card (get-card state card)]
-    (system-msg state side (str "derezzes " (:title card)))
-    (unregister-events state side card)
-    (update! state :corp (deactivate state :corp card true))
-    (let [cdef (card-def card)]
-      (when-let [derez-effect (:derez-effect cdef)]
-        (resolve-ability state side derez-effect (get-card state card) nil))
-      (when-let [derezzed-events (:derezzed-events cdef)]
-        (register-events state side card (map #(assoc % :condition :derezzed) derezzed-events))))
-    (unregister-static-abilities state side card)
-    (update-disabled-cards state)
-    (trigger-event state side :derez {:card card :side side})))
+  ([state side card] (derez state side card nil))
+  ([state side card {:keys [source-card no-msg] :as args}]
+   (let [card (get-card state card)]
+     (when-not no-msg
+       (system-msg state side (str (if source-card
+                                     (str "uses " (:title source-card) " to derez ")
+                                     "derezzes ")
+                                   (:title card))))
+     (unregister-events state side card)
+     (update! state :corp (deactivate state :corp card true))
+     (let [cdef (card-def card)]
+       (when-let [derez-effect (:derez-effect cdef)]
+         (resolve-ability state side derez-effect (get-card state card) nil))
+       (when-let [derezzed-events (:derezzed-events cdef)]
+         (register-events state side card (map #(assoc % :condition :derezzed) derezzed-events))))
+     (unregister-static-abilities state side card)
+     (update-disabled-cards state)
+     (trigger-event state side :derez {:card card :side side}))))

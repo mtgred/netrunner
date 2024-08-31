@@ -11,13 +11,14 @@
   ^{:key (:name info)}
   [:li [:a {:href (:artist-link info "#")} (:name info)] ": " (:artist-about info)])
 
-(defn- make-artists []
-  (->> (:alt-info @app-state)
-       (filter #(contains? % :artist-about))
-       (map single-artist)))
+(defn- make-artists [alt-info]
+  [:<> (->> @alt-info
+            (filter #(contains? % :artist-about))
+            (map single-artist))])
 
 (defn about-content [state scroll-top]
-  (let [donors (r/cursor state [:donors])]
+  (r/with-let [donors (r/cursor state [:donors])
+               alt-info (r/cursor app-state [:alt-info])]
     (r/create-class
       {:display-name "about-content"
        :component-did-mount #(set-scroll-top % @scroll-top)
@@ -34,22 +35,27 @@
           [:ul.list.compact
            [:li "mtgred: Founder, original sole developer. Retired."]
            [:li "NoahTheDuke: Project maintainer, lead developer."]
-           [:li "lostgeek, pinsel, jwarwick, dkellner, Kubik161: Primary contributors."]
-           [:li "nealterrell, JoelCFC25, domtancredi, Zaroth, queueseven, erbridge, danhut, Saintis, presheaf, Msbeck, nicohasa and "
-            [:a {:href "https://github.com/mtgred/netrunner/graphs/contributors" :target "_blank"} "many more"]
-            ": Past contributors."]
-           ]
+           [:li "nbkelly, butzopower, francescopellegrini: Current active contributors."]
+           [:li [:a {:href "https://github.com/mtgred/netrunner/graphs/contributors" :target "_blank"} "Many past contributors"]]]
 
           [:h4 "Content Creators"]
           [:ul.list.compact
            [:li "0thmxma, Sanjay, quarg, znsolomon, hbarsquared, yankeeflatline, rumirumirumirumi: Corp and Runner quotes for start-of-game splash screen."]
-           [:li "bbbbbbbbba: Language translations."]
-           [:li "Seojun Park: Language translations."]
            [:li "PopTartNZ: High-resolution card images."]
            [:li "Rhahi: Labelling and other QoL functionality ported with permission from "
             [:a {:href "https://addons.mozilla.org/en-US/firefox/addon/cyberfeeder/" :target "_blank"} "Cyberfeeder"] " Firefox plugin"]
-           (make-artists)
-           ]
+           [make-artists alt-info]]
+
+          [:h4 "UI Translators"]
+          [:ul.list.compact
+           [:li "Chinese (Simplified): bbbbbbbbba, klingeling"]
+           [:li "French: canisinhorto"]
+           [:li "Japanese: csbisa"]
+           [:li "Korean: Seojun Park"]
+           [:li "Pig-Latin: jwarwick"]
+           [:li "Polish: vesperius"]
+           [:li "Portuguese: Vacilotto"]
+           [:li "Russian: xiaat"]]
 
           [:h4 "Tech Stack"]
           [:ul.list.compact

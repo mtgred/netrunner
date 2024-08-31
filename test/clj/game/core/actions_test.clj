@@ -5,6 +5,22 @@
    [game.core.card :refer :all]
    [game.test-framework :refer :all]))
 
+(deftest clearing-run-prompt-doesnt-brick-actions-later
+  (do-game
+    (new-game {:corp {:deck [] :hand [(qty "Hedge Fund" 5)]}})
+    (take-credits state :corp)
+    (run-on state :hq)
+    (core/command-parser state :runner {:user {:username "Runner"} :text "/close-prompt"})
+    (is (nil? (get-in @state [:runner :prompt-state])) "Cleared the dummy run prompt")
+    (is (get-in @state [:corp :prompt-state]) "The corp still has a dummy prompt though")
+    (run-jack-out state)
+    (is (not (:run @state)) "Run ended")
+    (take-credits state :runner)
+    (is (nil? (get-in @state [:corp :prompt-state])) "Cleared the dummy run prompt at the end of the run")
+    (is (changed? [(:credit (get-corp)) 4]
+                  (play-from-hand state :corp "Hedge Fund"))
+        "Was able to play hedge fund")))
+
 (deftest undo-turn
   (do-game
     (new-game)

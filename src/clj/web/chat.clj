@@ -62,6 +62,7 @@
     (< msg-cnt max-cnt)))
 
 (defmethod ws/-msg-handler :chat/say
+  chat--say
   [{{db :system/db
      chat-settings :system/chat
      user :user} :ring-req
@@ -90,6 +91,7 @@
           (ws/broadcast-to! [uid] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)}))))))
 
 (defmethod ws/-msg-handler :chat/delete-msg
+  chat--delete-msg
   [{{db :system/db
      {:keys [username isadmin ismoderator] :as user} :user} :ring-req
     {:keys [msg]} :?data}]
@@ -106,6 +108,7 @@
         (ws/broadcast-to! [uid] :chat/delete-msg msg)))))
 
 (defmethod ws/-msg-handler :chat/delete-all
+  chat--delete-all
   [{{db :system/db
      {:keys [username isadmin ismoderator]} :user :as user} :ring-req
     {:keys [sender]} :?data}]

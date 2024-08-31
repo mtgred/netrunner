@@ -3,7 +3,7 @@
     [clojure.string :as string]
     [game.core.agendas :refer [update-all-agenda-points]]
     [game.core.board :refer [all-active-installed]]
-    [game.core.card :refer [active? card-index condition-counter? convert-to-agenda corp? facedown? fake-identity? get-card get-title get-zone has-subtype? ice? in-hand? in-play-area? installed? program? resource? rezzed? runner?]]
+    [game.core.card :refer [active? agenda? asset? card-index condition-counter? convert-to-agenda corp? facedown? fake-identity? get-card get-title get-zone has-subtype? ice? in-hand? in-play-area? installed? program? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
@@ -16,7 +16,7 @@
     [game.core.memory :refer [init-mu-cost]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [enforce-msg system-msg]]
-    [game.core.servers :refer [is-remote? target-server type->rig-zone]]
+    [game.core.servers :refer [is-remote? same-server? target-server type->rig-zone]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [wait-for when-let*]]
@@ -181,7 +181,7 @@
 (defn move
   "Moves the given card to the given new zone."
   ([state side card to] (move state side card to nil))
-  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event swap]}]
+  ([state side {:keys [zone host] :as card} to {:keys [front index keep-server-alive force suppress-event shuffled swap]}]
    (let [zone (if host (map to-keyword (:zone host)) zone)]
      (if (fake-identity? card)
        ;; Make Fake-Identity cards "disappear"
@@ -194,7 +194,13 @@
                   (or force
                       (not (zone-locked? state (to-keyword (:side card)) (first (get-zone card))))))
          (let [dest (if (sequential? to) (vec to) [to])
-               moved-card (get-moved-card state side card to)]
+               dest-replacement-fn (:move-zone-replacement (card-def card))
+               dest-replacement (when dest-replacement-fn
+                                  (dest-replacement-fn state side (make-eid state) card [{:card card
+                                                                                          :target-zone dest
+                                                                                          :shuffled shuffled}]))
+               dest (or dest-replacement dest)
+               moved-card (get-moved-card state side card (or (last dest-replacement) to))]
            (update-effects state card moved-card)
            (remove-old-card state side card)
            (let [pos-to-move-to (cond index index
@@ -295,7 +301,8 @@
                                      (swap! state update-in [:trash :trash-prevent] dissoc ktype)
                                      (effect-completed state side eid))
                                  (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                                     (complete-with-result state side eid card))))))
+                                     (complete-with-result state side eid card))))
+                             {:prompt-type :prevent}))
             ;; No prevention effects: add the card to the trash-list
             (complete-with-result state side eid card)))))
     (effect-completed state side eid)))
@@ -417,7 +424,7 @@
                                    []
                                    trashlist)]
                  (swap! state update-in [:trash :trash-list] dissoc eid)
-                 (when (seq (remove #{side} (map #(to-keyword (:side %)) trashlist)))
+                 (when (and side (seq (remove #{side} (map #(to-keyword (:side %)) trashlist))))
                    (swap! state assoc-in [side :register :trashed-card] true))
                  ;; Pseudo-shuffle archives. Keeps seen cards in play order and shuffles unseen cards.
                  (swap! state assoc-in [:corp :discard]
@@ -457,12 +464,41 @@
   (let [cards (take n (shuffle (get-in @state [to-side :hand])))]
     (trash-cards state from-side eid cards {:unpreventable true})))
 
+(defn swap-legal?
+  "checks that swapping two installed corp cards is legal"
+  [state side a b]
+  (let [pred? (every-pred corp? installed?)
+        xor? (fn [a b f]
+               (or (and (f a) (not (f b)))
+                   (and (f b) (not (f a)))))]
+    (when (and (pred? a) (pred? b))
+      (cond
+        ;; we can't end up with two assets/agendas in the same server
+        (xor? a b #(or (asset? %) (agenda? %)))
+        (let [asset (if (asset? a) a b)
+              non-asset (if (asset? a) b a)
+              serv (cons :corp (:zone non-asset))]
+          (or (same-server? asset non-asset)
+              (not (some asset? (get-in @state serv)))))
+        ;; we can't end up with two regions in the same server
+        (xor? a b #(has-subtype? % "Region"))
+        (let [region (if (has-subtype? a "Region") a b)
+              non-region (if (has-subtype? a "Region") b a)
+              serv (cons :corp (:zone non-region))]
+          (or (same-server? region non-region)
+              (not (some #(has-subtype? % "Region") (get-in @state serv)))))
+        ;; we can't swap an ice with a non-ice card
+        (xor? a b ice?)
+        nil
+        :else true))))
+
 (defn swap-installed
   "Swaps two installed corp cards"
   [state side a b]
   (let [pred? (every-pred corp? installed?)]
     (when (and (pred? a)
-               (pred? b))
+               (pred? b)
+               (swap-legal? state side a b))
       (let [a-index (card-index state a)
             b-index (card-index state b)
             a-new (assoc a :zone (:zone b))

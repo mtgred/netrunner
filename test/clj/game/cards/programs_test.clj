@@ -132,7 +132,8 @@
 
 (defn- basic-program-test
   "tests a program which has simple boost and break functionality"
-  [{:keys [name boost break threat counters-modify-strength run-event-bonus subtypes tags]}]
+  [{:keys [name boost break threat counters-modify-strength run-event-bonus subtypes tags
+           click-prompt-on-install click-prompt-on-encounter]}]
   ;; set threat level like {:threat 3}
   ;; set str modify counters like {:counters-modify-strength {:type :power
   ;;                                                          :granularity x (default 1)
@@ -170,6 +171,8 @@
         (rez state :corp (get-ice state :hq 0))
         (take-credits state :corp)
         (play-from-hand state :runner name)
+        (when click-prompt-on-install
+          (click-prompt state :runner click-prompt-on-install))
         (let [card (get-program state 0)
               ice (get-ice state :hq 0)
               base-breaker-str (get-strength (refresh card))]
@@ -216,6 +219,8 @@
                 (str (:title card) "should have run-event bonus of " run-event-bonus)))
 
           (run-continue state :encounter-ice)
+          (when click-prompt-on-encounter
+            (click-prompt state :runner click-prompt-on-encounter))
           ;; for fixed strength breakers/cards with no boost fn, we set ice str = breaker str
           (if-not boost
             (pump-ice state :corp (refresh ice) (- (get-strength (refresh card)) (get-strength (refresh ice))))
@@ -302,6 +307,11 @@
     (is (= :movement (:phase (get-run))) "Run has bypassed Enigma")
     (is (find-card "Abagnale" (:discard (get-runner))) "Abagnale is trashed")))
 
+(deftest abagnale-automated-test
+  (basic-program-test {:name "Abagnale"
+                       :boost {:ab 1 :amount 2 :cost 2}
+                       :break {:ab 0 :amount 1 :cost 1 :type "Code Gate"}}))
+
 (deftest adept
   ;; Adept
   (do-game
@@ -357,7 +367,6 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (is (no-prompt? state :runner) "No bypass prompt")))
-      
 
 (deftest afterimage-can-only-be-used-once-per-turn-5032
     ;; Can only be used once per turn. #5032
@@ -573,6 +582,11 @@
       (card-ability state :runner (refresh alias) 0)
       (is (no-prompt? state :runner) "No break prompt because we're running a remote"))))
 
+(deftest alpha-automated-test
+  (basic-program-test {:name "Alpha"
+                       :boost {:ab 1 :amount 1 :cost 1}
+                       :break {:ab 0 :amount 1 :cost 1 :type "All"}}))
+
 (deftest amina
   ;; Amina ability
   (do-game
@@ -641,6 +655,11 @@
               (run-continue state))
             "No credit gain from Amina")
         (run-jack-out state))))
+
+(deftest amina-automated-test
+  (basic-program-test {:name "Amina"
+                       :boost {:ab 1 :amount 3 :cost 2}
+                       :break {:ab 0 :amount 3 :cost 2 :type "Code Gate"}}))
 
 (deftest analog-dreamers
   ;; Analog Dreamers
@@ -734,6 +753,36 @@
         (click-prompt state :runner "End the run")
         (is (find-card "Battlement" (:hand (get-corp))) "Battlement should be back in hand"))))
 
+(deftest ankusa-vs-chief-slee
+  (do-game
+    (new-game {:corp {:hand ["Battlement" "Chief Slee"]}
+               :runner {:hand ["Ankusa"] :credits 16}})
+    (play-from-hand state :corp "Battlement" "HQ")
+    (play-from-hand state :corp "Chief Slee" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ankusa")
+    (let [slee (get-content state :remote1 0)
+          ankusa (get-program state 0)]
+      (rez state :corp slee)
+      (run-on state "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state :encounter-ice)
+      (is (changed? [(get-counters (refresh slee) :power) 0]
+            (card-ability state :runner (refresh ankusa) 1)
+            (card-ability state :runner (refresh ankusa) 1)
+            (card-ability state :runner (refresh ankusa) 0)
+            (click-prompt state :runner "End the run")
+            (click-prompt state :runner "End the run")
+            (is (find-card "Battlement" (:hand (get-corp))) "Battlement should be back in hand")
+            (run-continue state))
+          "Slee did not gain counters for ankusa bounce"))))
+
+(deftest battering-ram-automated-test
+  (basic-program-test {:name "Atman"
+                       :click-prompt-on-install "0"
+                       :counters-modify-strength {:type :power}
+                       :break {:ab 0 :amount 1 :cost 1 :type "All"}}))
+
 (deftest atman-installing-with-0-power-counters
     ;; Installing with 0 power counters
     (do-game
@@ -809,6 +858,11 @@
     (is (= 2 (count (:discard (get-corp)))) "Vanilla Campaign trashed")
     (is (= 0 (get-counters (get-program state 0) :virus)) "No virus counter because not accessed")))
 
+(deftest aumakua-automated-test
+  (basic-program-test {:name "Aumakua"
+                       :counters-modify-strength {:type :virus}
+                       :break {:ab 0 :amount 1 :cost 1 :type "All"}}))
+
 (deftest aumakua-gain-counter-on-no-trash
     ;; Gain counter on no trash
     (do-game
@@ -879,6 +933,11 @@
    (is (= 1 (get-counters (get-program state 0) :virus)) "Aumakua gained a virus counter")
    (click-prompt state :runner "No action")
    (is (= 2 (get-counters (get-program state 0) :virus)) "Aumakua gained a virus counter")))
+
+(deftest aurora-automated-test
+  (basic-program-test {:name "Aurora"
+                       :boost {:ab 1 :amount 3 :cost 2}
+                       :break {:ab 0 :amount 1 :cost 2 :type "Barrier"}}))
 
 (deftest baba-yaga
   ;; Baba Yaga
@@ -982,6 +1041,11 @@
             (damage state :runner :brain 1))
           "Gained 1str from core damage")
       (is (= 6 (get-strength (refresh vege)))))))
+
+(deftest battering-ram-automated-test
+  (basic-program-test {:name "Battering Ram"
+                       :break {:ab 0 :amount 2 :cost 2 :type "Barrier"}
+                       :boost {:ab 1 :amount 1 :cost 1}}))
 
 (deftest berserker
   ;; Berserker
@@ -1324,6 +1388,18 @@
         (click-card state :runner par)
         (is (= 1 (count (:deck (get-runner)))) "Paricia on top of Stack now."))))
 
+(deftest brahman-automated-test
+  (basic-program-test {:name "Brahman"
+                       :break {:ab 0 :amount 2 :cost 1 :type "All"}
+                       :boost {:ab 1 :amount 1 :cost 2}}))
+
+(deftest breach-automated-test
+  (basic-program-test {:name "Breach"
+                       :server "HQ"
+                       :break {:ab 0 :amount 3 :cost 2 :type "Barrier"}
+                       :boost {:ab 1 :amount 4 :cost 2}}))
+
+
 (deftest bukhgalter-2c-for-breaking-subs-only-with-bukhgalter
     ;; 2c for breaking subs only with Bukhgalter
     (do-game
@@ -1529,6 +1605,11 @@
             "Break costs 1")
         (click-prompt state :runner "Do 1 net damage")
         (is (no-prompt? state :runner) "Only breaks 1 sub at a time"))))))
+
+(deftest cats-cradle-automated-test
+  (basic-program-test {:name "Cat's Cradle"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Code Gate"}
+                       :boost {:ab 1 :amount 1 :cost 1}}))
 
 (deftest cerberus-rex-h2
   ;; Cerberus "Rex" H2 - boost 1 for 1 cred, break for 1 counter
@@ -2219,6 +2300,11 @@
       (play-from-hand state :runner "Cache")
       (is (= strength (get-strength (refresh cradle))) (str "Cradle should be back to original strength")))))
 
+(deftest creeper-automated-test
+  (basic-program-test {:name "Creeper"
+                       :break {:ab 0 :amount 1 :cost 2 :type "Sentry"}
+                       :boost {:ab 1 :amount 1 :cost 1}}))
+
 (deftest crescentus
   ;; Crescentus should only work on rezzed ice
   (do-game
@@ -2628,6 +2714,11 @@
       (card-ability state :runner (refresh darwin) 1) ; add counter
       (is (= 1 (get-counters (refresh darwin) :virus)) "Darwin gains 1 virus counter")
       (is (= 1 (get-strength (refresh darwin))) "Darwin is at 1 strength"))))
+
+(deftest darwin-automated-test
+  (basic-program-test {:name "Darwin"
+                       :counters-modify-strength {:type :virus}
+                       :break {:ab 0 :amount 1 :cost 2 :type "All"}}))
 
 (deftest datasucker
   ;; Datasucker - Reduce strength of encountered piece of ice
@@ -3086,6 +3177,12 @@
         (is (no-prompt? state :corp))
         (is (no-prompt? state :runner)))))
 
+(deftest engolo-automated-test
+  (basic-program-test {:name "Engolo"
+                       :click-prompt-on-encounter "Yes"
+                       :break {:ab 0 :amount 1 :cost 1 :type "All"}
+                       :boost {:ab 1 :amount 4 :cost 2}}))
+
 (deftest equivocation
   ;; Equivocation - interactions with other successful-run events.
   (do-game
@@ -3350,6 +3447,12 @@
               (click-card state :runner cloak))
             "Strength increased correctly"))))
 
+(deftest femme-fatale-automated-test
+  (basic-program-test {:name "Femme Fatale"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Sentry"}
+                       :click-prompt-on-install "Done"
+                       :boost {:ab 1 :amount 1 :cost 2}}))
+
 (deftest femme-fatale-bypass-functionality
     ;; Bypass functionality
     (do-game
@@ -3531,6 +3634,16 @@
             (click-card state :runner hotel))
           "Charged Earthrise Hotel"))))
 
+(deftest force-of-nature-automated-test
+  (basic-program-test {:name "Force of Nature"
+                       :break {:ab 0 :amount 2 :cost 2 :type "Code Gate"}
+                       :boost {:ab 1 :amount 1 :cost 1}}))
+
+(deftest garrote-automated-test
+  (basic-program-test {:name "Garrote"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Sentry"}
+                       :boost {:ab 1 :amount 1 :cost 1}}))
+
 (deftest gauss-loses-strength-at-end-of-runner-s-turn
     ;; Loses strength at end of Runner's turn
     (do-game
@@ -3570,6 +3683,16 @@
       (card-ability state :runner gow 2)
       (is (= 1 (count-tags state)))
       (is (= 2 (get-counters (refresh gow) :virus)) "God of War has 2 virus counters"))))
+
+(deftest golden-automated-test
+  (basic-program-test {:name "Golden"
+                       :break {:ab 0 :amount 2 :cost 2 :type "Sentry"}
+                       :boost {:ab 1 :amount 4 :cost 2}}))
+
+(deftest gordian-blade-automated-test
+  (basic-program-test {:name "Gordian Blade"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Code Gate"}
+                       :boost {:ab 1 :amount 1 :cost 1}}))
 
 (deftest gorman-drip-v1
   (do-game
@@ -4192,7 +4315,6 @@
     (install-hush-and-run "Wraparound" {:hushed true})
     (is (= 0 (get-strength (get-ice state :hq 0))) "Hushed wrap is 0 str")))
 
-
 (deftest hyperdriver
   ;; Hyperdriver - Remove from game to gain 3 clicks
   (do-game
@@ -4206,6 +4328,23 @@
     (let [hyp (get-program state 0)]
       (card-ability state :runner hyp 0)
       (end-phase-12 state :runner)
+      (is (= 7 (:click (get-runner))) "Gained 3 clicks")
+      (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
+
+(deftest hyperdriver-can-end-the-turn-issue-6840
+  (do-game
+    (new-game {:runner {:deck ["Hyperdriver"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hyperdriver")
+    (is (= 1 (core/available-mu state)) "3 MU used")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (:runner-phase-12 @state) "Runner in Step 1.2")
+    (end-phase-12 state :runner)
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [hyp (get-program state 0)]
+      (card-ability state :runner hyp 0)
       (is (= 7 (:click (get-runner))) "Gained 3 clicks")
       (is (= 1 (count (:rfg (get-runner)))) "Hyperdriver removed from game"))))
 
@@ -4420,6 +4559,11 @@
       (is (= 1 (count (get-program state))))
       (is (= 1 (count (:discard (get-runner)))) "Incubator trashed")
       (is (= 3 (:click (get-runner)))))))
+
+(deftest inti-automated-test
+  (basic-program-test {:name "Inti"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Barrier"}
+                       :boost {:ab 1 :amount 1 :cost 2}}))
 
 (deftest inversificator-shouldn-t-hook-up-events-for-unrezzed-ice
     ;; Shouldn't hook up events for unrezzed ice
@@ -5017,6 +5161,11 @@
       (core/move state :runner (find-card "Imp" (:hosted (refresh lep))) :discard) ; trash Imp
       (is (= 3 (core/available-mu state)) "Imp 1 MU not added to available MU"))))
 
+(deftest leviathan-automated-test
+  (basic-program-test {:name "Leviathan"
+                       :break {:ab 0 :amount 3 :cost 3 :type "Code Gate"}
+                       :boost {:ab 1 :amount 5 :cost 3}}))
+
 (deftest living-mural
   (do-game
     (new-game {:corp {:hand ["Anansi" (qty "Tithe" 2)]
@@ -5114,6 +5263,11 @@
     (is (= :movement (:phase (get-run))) "Run has bypassed Rototurret")
     (is (find-card "Lustig" (:discard (get-runner))) "Lustig is trashed")))
 
+(deftest lustig-automated-test
+  (basic-program-test {:name "Lustig"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Sentry"}
+                       :boost {:ab 1 :amount 5 :cost 3}}))
+
 (deftest magnum-opus
   ;; Magnum Opus - Gain 2 cr
   (do-game
@@ -5154,6 +5308,22 @@
     (run-continue state)
     ;; No Malandragem prompt because it's once per turn
     (is (no-prompt? state :runner))))
+
+(deftest malandragem-once-per-turn
+  (do-game
+    (new-game {:runner {:hand ["Malandragem"]}
+               :corp {:hand [(qty "Vanilla" 2)]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Malandragem")
+    (run-on state :hq)
+    (run-continue state :encounter-ice)
+    (click-prompt state :runner "Yes")
+    (run-continue-until state :encounter-ice)
+    (is (no-prompt? state :runner) "Only triggers once per turn")))
 
 (deftest malandragem-rfg-when-empty
   (do-game
@@ -5692,6 +5862,11 @@
       (run-continue state)
       (is (no-prompt? state :runner) "MKUltra prompt did not come up")))
 
+(deftest mongoose-automated-test
+  (basic-program-test {:name "Mongoose"
+                       :break {:ab 0 :amount 2 :cost 1 :type "Sentry"}
+                       :boost {:ab 1 :amount 2 :cost 2}}))
+
 (deftest multithreader-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
@@ -5872,6 +6047,36 @@
       (click-card state :runner (get-program state 0))
       (is (= 3 (count (:rfg (get-runner)))) "Nanuq removed from the game when uninstalled")))
 
+(deftest nanuq-vs-keegan-lane
+  (do-game
+    (new-game {:corp {:hand ["Keegan Lane"]}
+               :runner {:hand ["Nanuq"]}})
+    (play-from-hand state :corp "Keegan Lane" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Nanuq")
+    (run-on state :hq)
+    (gain-tags state :runner 1)
+    (rez state :corp (get-content state :hq 0))
+    (card-ability state :corp (get-content state :hq 0) 0)
+    (click-card state :corp "Nanuq")
+    (is (= 1 (count (:rfg (get-runner)))) "Nanuq in rfg")
+    (is (= 0 (count (:discard (get-runner)))) "Nanuq not in discard")))
+
+(deftest nanuq-vs-degree-mill
+  ;; note - if they're shuffled in, they don't get rfg'd...
+  (do-game
+    (new-game {:corp {:hand ["Degree Mill"]}
+               :runner {:deck ["PAD Tap" "Nanuq"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Nanuq")
+    (play-from-hand state :runner "PAD Tap")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Pay to steal")
+    (click-card state :runner "Nanuq")
+    (click-card state :runner "PAD Tap")
+    (is (= 2 (count (:deck (get-runner)))) "Both cards in deck")
+    (is (= 0 (count (:rfg (get-runner)))) "Nanuq not rfg'd")))
+
 (deftest nfr
   ;; Nfr
   (do-game
@@ -6048,6 +6253,17 @@
     (is (= 7 (core/available-mu state)))
     (let [ov (get-program state 0)]
       (is (= 7 (get-counters (refresh ov) :power)) "Overmind has 5 counters"))))
+
+(deftest Passport-automated-test
+  (basic-program-test {:name "Passport"
+                       :server "HQ"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Code Gate"}
+                       :boost {:ab 1 :amount 2 :cost 2}}))
+
+(deftest peacock-automated-test
+  (basic-program-test {:name "Peacock"
+                       :break {:ab 0 :amount 1 :cost 2 :type "Code Gate"}
+                       :boost {:ab 1 :amount 3 :cost 2}}))
 
 (deftest paintbrush
   ;; Paintbrush - Give rezzed piece of ice a chosen subtype until the end of the next run
@@ -6552,31 +6768,35 @@
     ;; Happy Path
     (do-game
       (new-game {:corp   {:deck ["Enigma" "Blacklist" "Hedge Fund"]}
-                 :runner {:deck ["Pawn" "Knight"]}})
+                 :runner {:hand ["Pawn"] :discard ["Knight"]}})
       (play-from-hand state :corp "Enigma" "Archives")
       (take-credits state :corp)
-      (trash-from-hand state :runner "Knight")
       (play-from-hand state :runner "Pawn")
-      ;;currently Pawn successful run check is not implemented, nor is hosted location check
-      (card-ability state :runner (get-program state 0) 2)
+      (card-ability state :runner (get-program state 0) 0)
+      (click-card state :runner "Enigma")
+      (run-empty-server state :hq)
       (click-card state :runner (find-card "Knight" (:discard (get-runner))))
-      (is (not (nil? (find-card "Pawn" (:discard (get-runner))))))))
+      (is (= "Pawn" (:title (first (:discard (get-runner))))) "Pawn trashed")
+      (is (= "Knight" (:title (get-program state 0))) "Knight installed")))
 
 (deftest pawn-heap-locked
     ;; Heap locked
     (do-game
       (new-game {:corp   {:deck ["Enigma" "Blacklist" "Hedge Fund"]}
-                 :runner {:deck ["Pawn" "Knight"]}})
+                 :runner {:deck ["Pawn" "Bishop"] :discard ["Knight"]}})
       (play-from-hand state :corp "Enigma" "Archives")
       (play-from-hand state :corp "Blacklist" "New remote")
-      (rez state :corp (refresh (get-content state :remote1 0)))
+      (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
-      (trash-from-hand state :runner "Knight")
       (play-from-hand state :runner "Pawn")
-      (card-ability state :runner (get-program state 0) 2)
-      (is (no-prompt? state :runner) "Install prompt did not come up")
-      (is (nil? (find-card "Pawn" (:discard (get-runner)))))
-      (is (not (nil? (find-card "Knight" (:discard (get-runner))))))))
+      (card-ability state :runner (get-program state 0) 0)
+      (click-card state :runner "Enigma")
+      (run-empty-server state :hq)
+      (click-card state :runner (find-card "Knight" (:discard (get-runner))))
+      (is (not (no-prompt? state :runner)) "Invalid choice - heap is locked")
+      (click-card state :runner "Bishop")
+      (is (= ["Knight" "Pawn"] (map :title (:discard (get-runner)))) "Pawn trashed")
+      (is (= "Bishop" (:title (get-program state 0))) "Knight installed")))
 
 (deftest pelangi
   ;; Pelangi
@@ -6809,6 +7029,11 @@
       (is (changed? [(count (:hand (get-runner))) 1]
             (click-prompt state :runner "Yes"))
           "Pichação returned to the grip")))
+
+(deftest pipeline-automated-test
+  (basic-program-test {:name "Pipeline"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Sentry"}
+                       :boost {:ab 1 :amount 1 :cost 2}}))
 
 (deftest plague
   ;; Plague
@@ -7344,6 +7569,11 @@
               (click-card state :runner rara)
               (click-card state :runner rara))
             "Used 2 credits from Sahasrara"))))
+
+(deftest saker-automated-test
+  (basic-program-test {:name "Saker"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Barrier"}
+                       :boost {:ab 1 :amount 2 :cost 2}}))
 
 (deftest savant
   ;; Savant
@@ -8031,6 +8261,36 @@
             "Vanilla is innermost, Ice Wall is outermost again")
         (is (= [0 1] (map :index (get-ice state :hq)))))))
 
+(deftest surfer-vs-laamb
+  (do-game
+    (new-game {:runner {:hand ["Surfer" "Laamb"]
+                        :credits 20}
+               :corp {:hand ["Anansi" "Vanilla" "Enigma"]
+                      :credits 11}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Enigma" "HQ")
+    (play-from-hand state :corp "Anansi" "HQ")
+    (take-credits state :corp)
+    (let [anansi (get-ice state :hq 2)]
+      (play-from-hand state :runner "Surfer")
+      (play-from-hand state :runner "Laamb")
+      (let [laamb (get-program state 1)
+            surfer (get-program state 0)]
+        (run-on state :hq)
+        (rez state :corp anansi)
+        (run-continue-until state :encounter-ice)
+        (click-prompt state :runner "Yes")
+        (is (has-subtype? (refresh anansi) "Barrier") "Anansi painted")
+        (card-ability state :runner surfer 0)
+        (click-card state :runner (get-ice state :hq 1))
+        (is (has-subtype? (refresh anansi) "Barrier") "Anansi still painted")
+        (card-ability state :runner surfer 0)
+        (click-card state :runner (get-ice state :hq 0))
+        (is (has-subtype? (refresh anansi) "Barrier") "Anansi still painted (again)")
+        (card-ability state :runner laamb 1)
+        (card-ability state :runner (refresh laamb) 0)
+        (click-prompt state :runner "Do 1 net damage")))))
+
 (deftest switchblade
   ;; Switchblade
   (do-game
@@ -8310,6 +8570,11 @@
           (is (zero? (count (get-ice state :rd))) "Unrezzed Architect was trashed")
           (is (= 3 (count (:discard (get-runner)))) "Trypano went to discard")))))
 
+(deftest torch-automated-test
+  (basic-program-test {:name "Torch"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Code Gate"}
+                       :boost {:ab 1 :amount 1 :cost 1}}))
+
 (deftest tunnel-vision
     ;; Tunnel Vision
     (do-game
@@ -8518,6 +8783,7 @@
     (dotimes [_ 3]
       (run-empty-server state "R&D"))
     (is (= 3 (get-counters (get-program state 0) :power)) "3 counters on Upya")
+    (take-credits state :runner)
     (take-credits state :corp)
     (dotimes [_ 3]
       (run-empty-server state "R&D"))
@@ -8753,6 +9019,10 @@
       (card-ability state :runner wyrm 1)
       (is (= -1 (get-strength (refresh ice-wall))) "Strength of Ice Wall reduced to -1"))))
 
+(deftest yog-0-automated-test
+  (basic-program-test {:name "Yog.0"
+                       :break {:ab 0 :amount 1 :cost 0 :type "Code Gate"}}))
+
 (deftest yusuf
   ;; Yusuf gains virus counters on successful runs and can spend virus counters from any installed card
   (do-game
@@ -8784,3 +9054,8 @@
         (click-prompt state :runner "End the run")
         (click-card state :runner cache)
         (is (= 1 (get-counters (refresh cache) :virus)) "Cache lost its final virus counter"))))
+
+(deftest zule-key-master-automated-test
+  (basic-program-test {:name "ZU.13 Key Master"
+                       :break {:ab 0 :amount 1 :cost 1 :type "Code Gate"}
+                       :boost {:ab 1 :amount 1 :cost 1}}))

@@ -33,9 +33,22 @@
   "Update :click-states to hold latest 4 moments before performing actions."
   [state ability]
   (when (:action ability)
-    (let [state' (dissoc @state :log :history)
-          click-states (vec (take-last 4 (conj (:click-states state') state')))]
+    (let [state' (dissoc @state :log :history :click-states :turn-state)
+          click-states (vec (take-last 4 (conj (:click-states @state) state')))]
       (swap! state assoc :click-states click-states))))
+
+(defn- no-blocking-prompt?
+  [state side]
+  (let [prompt-type (get-in @state [side :prompt-state :prompt-type])]
+    (or (= nil prompt-type)
+        (= :run prompt-type)
+        (= :prevent prompt-type))))
+
+(defn- no-blocking-or-prevent-prompt?
+  [state side]
+  (let [prompt-type (get-in @state [side :prompt-state :prompt-type])]
+    (or (= nil prompt-type)
+        (= :run prompt-type))))
 
 ;;; Neutral actions
 (defn- do-play-ability [state side eid {:keys [card ability ability-idx targets ignore-cost]}]
@@ -50,7 +63,14 @@
     (when (or (nil? cost)
               (can-pay? state side eid card (:title card) cost))
       (update-click-state state ability)
-      (resolve-ability state side eid ability card targets))))
+      (if (:action ability)
+        (let [stripped-card (select-keys card [:cid :type :title])]
+          (wait-for
+            (trigger-event-simult state side :action-played nil {:ability-idx ability-idx :card stripped-card})
+            (wait-for
+              (resolve-ability state side ability card targets)
+              (trigger-event-simult state side eid :action-resolved nil {:ability-idx ability-idx :card stripped-card}))))
+        (resolve-ability state side eid ability card targets)))))
 
 (defn play-ability
   "Triggers a card's ability using its zero-based index into the card's card-def :abilities vector."
@@ -59,36 +79,48 @@
    (let [card (get-card state card)
          args (assoc args :card card)
          ability (nth (:abilities card) ability-idx)
+         blocking-prompt? (not (no-blocking-prompt? state side))
          cannot-play (or (:disabled card)
                          ;; cannot play actions during runs
                          (and (:action ability) (:run @state))
+                         ;; while resolving another ability or promppt
+                         blocking-prompt?
                          (not= side (to-keyword (:side card)))
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
+     (when blocking-prompt?
+       (toast state side (str "You cannot play abilities while other abilities are resolving.")
+              "warning"))
      (when-not cannot-play
        (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
 
 (defn expend-ability
   "Called when the player clicks a card from hand."
   [state side {:keys [card]}]
-  (let [card (get-card state card)
-        eid (make-eid state {:source card :source-type :ability})
-        expend-ab (expend (:expend card))]
-    (resolve-ability state side eid expend-ab card nil)))
+  (if (no-blocking-or-prevent-prompt? state side)
+    (let [card (get-card state card)
+          eid (make-eid state {:source card :source-type :ability})
+          expend-ab (expend (:expend card))]
+      (resolve-ability state side eid expend-ab card nil))
+    (toast state side (str "You cannot play abilities while other abilities are resolving.")
+              "warning")))
 
 (defn play
   "Called when the player clicks a card from hand."
   [state side {:keys [card] :as context}]
-  (when-let [card (when-not (get-in @state [side :prompt-state :prompt-type]) (get-card state card))]
-    (let [context (assoc context :card card)]
-      (case (:type card)
-        ("Event" "Operation")
-        (play-ability state side {:card (get-in @state [side :basic-action-card])
-                                  :ability 3
-                                  :targets [context]})
-        ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
-        (play-ability state side {:card (get-in @state [side :basic-action-card])
-                                  :ability 2
-                                  :targets [context]})))))
+  (when-let [card (get-card state card)]
+    (when (and (not (get-in @state [side :prompt-state :prompt-type]))
+               (not (and (= side :corp) (:corp-phase-12 @state)))
+               (not (and (= side :runner) (:runner-phase-12 @state))))
+      (let [context (assoc context :card card)]
+        (case (:type card)
+          ("Event" "Operation")
+          (play-ability state side {:card (get-in @state [side :basic-action-card])
+                                    :ability 3
+                                    :targets [context]})
+          ("Hardware" "Resource" "Program" "ICE" "Upgrade" "Asset" "Agenda")
+          (play-ability state side {:card (get-in @state [side :basic-action-card])
+                                    :ability 2
+                                    :targets [context]}))))))
 
 (defn click-draw
   "Click to draw."
@@ -481,7 +513,11 @@
   "Triggers an ability that was dynamically added to a card's data but is not necessarily present in its
   :abilities vector."
   [state side args]
-  ((dynamic-abilities (:dynamic args)) state (keyword side) args))
+  (if (no-blocking-or-prevent-prompt? state side)
+    ((dynamic-abilities (:dynamic args)) state (keyword side) args)
+    (toast state side (str "You cannot play abilities while other abilities are resolving.")
+           "warning")))
+
 
 (defn play-corp-ability
   "Triggers a runner card's corp-ability using its zero-based index into the card's card-def :corp-abilities vector."
@@ -510,17 +546,22 @@
 (defn play-subroutine
   "Triggers a card's subroutine using its zero-based index into the card's :subroutines vector."
   [state side {:keys [card subroutine]}]
-  (let [card (get-card state card)
-        sub (nth (:subroutines card) subroutine nil)]
-    (when card
-      (resolve-subroutine! state side card sub))))
+  (if (no-blocking-or-prevent-prompt? state side)
+    (let [card (get-card state card)
+          sub (nth (:subroutines card) subroutine nil)]
+      (when card
+        (resolve-subroutine! state side card sub)))
+    (toast state side (str "You cannot fire subroutines while abilities are being resolved.")
+           "warning")))
 
 (defn play-unbroken-subroutines
   "Triggers each unbroken subroutine on a card in order, waiting for each to complete"
   [state side {:keys [card]}]
-  (let [card (get-card state card)]
-    (when card
-      (resolve-unbroken-subs! state side card))))
+  (if (no-blocking-or-prevent-prompt? state side)
+    (when-let [card (get-card state card)]
+      (resolve-unbroken-subs! state side card))
+    (toast state side (str "You cannot fire subroutines while abilities are being resolved.")
+           "warning")))
 
 ;;; Corp actions
 (defn trash-resource
@@ -631,8 +672,8 @@
 (defn score
   "Score an agenda."
   ([state side eid card] (score state side eid card nil))
-  ([state side eid card {:keys [no-req]}]
-   (if-not (can-score? state side card {:no-req no-req})
+  ([state side eid card {:keys [no-req ignore-turn]}]
+   (if-not (can-score? state side card {:no-req no-req :ignore-turn ignore-turn})
      (effect-completed state side eid)
      (let [cost (score-additional-cost-bonus state side card)
            cost-strs (build-cost-string cost)

@@ -166,6 +166,31 @@
         "Costs 2 clicks")
     (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")))
 
+(deftest alarm-clock-vs-malandragem
+  (do-game
+    (new-game {:corp {:hand [(qty "Ice Wall" 2)]
+                      :score-area ["Vanity Project"]}
+               :runner {:hand ["Alarm Clock" "Malandragem"]
+                        :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Alarm Clock")
+    (play-from-hand state :runner "Malandragem")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (end-phase-12 state :runner)
+    (click-prompt state :runner "Yes")
+    (is (:run @state) "Run has started")
+    (run-continue state)
+    (click-prompt state :runner "Malandragem (rfg)")
+    (click-prompt state :runner "Yes")
+    (is (no-prompt? state :runner))
+    (run-continue-until state :encounter-ice)
+    (is (no-prompt? state :runner) "Already encountered an ice, can't bypass on the second enc")))
+
 (deftest amanuensis
   (do-game
     (new-game {:runner {:hand ["Amanuensis"]
@@ -583,6 +608,29 @@
         (click-prompt state :runner "Yes")
         (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
         (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
+
+(deftest boomerang-only-triggers-once-with-virtuoso-breach
+  (do-game
+    (new-game {:runner {:hand ["Boomerang" "Virtuoso"]
+                        :credits 10}
+               :corp {:hand ["Vanilla" "Ice Wall"]}})
+    (play-from-hand state :corp "Vanilla" "Archives")
+    (rez state :corp (get-ice state :archives 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Virtuoso")
+    (core/command-parser state :runner {:user {:username "Runner"} :text "/set-mark Archives"})
+    (play-from-hand state :runner "Boomerang")
+    (click-card state :runner "Vanilla")
+    (run-on state :archives)
+    (run-continue state :encounter-ice)
+    (card-ability state :runner (get-hardware state 1) 0)
+    (click-prompt state :runner "End the run")
+    (run-continue-until state :success)
+    (is (= ["Boomerang" "Virtuoso"] (prompt-titles :runner)) "Boomerang only shows up once!")
+    (click-prompt state :runner "Virtuoso")
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Yes")
+    (is (no-prompt? state :runner) "Didn't get multiple prompts")))
 
 (deftest boomerang-does-not-trigger-on-following-successful-runs
     ;; Does not trigger on following successful runs
@@ -1338,7 +1386,8 @@
 (deftest chop-bot-3000
   ;; Chop Bot 3000 - when your turn begins trash 1 card, then draw or remove tag
   (do-game
-    (new-game {:runner {:deck ["Sure Gamble"]
+    (new-game {:corp {:hand []}
+               :runner {:deck ["Sure Gamble"]
                         :hand ["Chop Bot 3000" (qty "Spy Camera" 4)]}})
     (core/gain state :runner :tag 2)
     (take-credits state :corp)
@@ -1349,11 +1398,15 @@
     (play-from-hand state :runner "Spy Camera")
     (take-credits state :runner)
     (take-credits state :corp)
-    (is (true? (:runner-phase-12 @state)) "Does trigger when one other card is installed")
+    (is (:runner-phase-12 @state) "Does trigger when one other card is installed")
+    (end-phase-12 state :runner)
+    (click-prompt state :runner "Done")
     (play-from-hand state :runner "Spy Camera")
     (take-credits state :runner)
     (take-credits state :corp)
-    (is (true? (:runner-phase-12 @state)) "Does trigger when two other cards are installed")
+    (is (:runner-phase-12 @state) "Does trigger when two other cards are installed")
+    (end-phase-12 state :runner)
+    (click-prompt state :runner "Done")
     (is (= 2 (count-tags state)) "Runner has 2 tags")
     (let [chop-bot (get-hardware state 0)]
       (is (empty? (:discard (get-runner))) "No cards in trash")
@@ -3038,6 +3091,33 @@
     (play-and-score state "Hostile Takeover")
     (is (last-log-contains? state "uses Marrow to sabotage 1") "Sabotage happened")))
 
+(deftest marrow-plays-nice-with-on-score-effects
+  (do-game
+    (new-game {:runner {:id "Esâ Afontov: Eco-Insurrectionist"
+                        :hand ["Marrow" "Easy Mark"]}
+               :corp {:hand ["Longevity Serum" "Regenesis" "Vanilla" "Ice Wall"]
+                      :discard ["Jumon"]
+                      :deck [(qty "IPO" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Marrow")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "Done")
+    (take-credits state :runner)
+    (play-and-score state "Regenesis")
+    (click-card state :corp "Jumon")
+    (is (= 3 (:agenda-point (get-corp))) "2+1 agenda points from jumon + regen")
+    (click-prompt state :corp "Done")
+    (play-and-score state "Longevity Serum")
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "Done")
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "Done")
+    (click-card state :corp "Ice Wall")
+    (is (= ["IPO" "IPO" "IPO" "Ice Wall"] (map :title (:discard (get-corp))))
+        "3 Ipos and Ice Wall sabotaged")
+    (is (= (sort ["Vanilla" "IPO"]) (sort (map :title (:deck (get-corp)))))
+        "Deck is Vanilla and IPO")))
+
 (deftest masterwork-v37
   ;; Masterwork (v37)
   (do-game
@@ -3558,8 +3638,9 @@
       (core/gain state :runner :credit 10)
       (play-from-hand state :runner "Obelus")
       (play-from-hand state :runner "Hades Shard")
-      (run-empty-server state "R&D")
+      (run-on state "R&D")
       (card-ability state :runner (get-resource state 0) 0)
+      (run-continue-until state :success)
       (click-prompt state :runner "No action")
       (is (= 3 (count (:hand (get-runner)))) "Obelus drew 3 cards")))
 
@@ -4317,14 +4398,8 @@
       (click-prompt state :runner "3")
       (click-prompt state :runner "No action")
       (is (= 5 (count (:hand (get-runner)))) "Runner took no net damage")
-      ; fire HOK while accessing Snare!
       (run-empty-server state "Server 2")
       (is (= :waiting (prompt-type :runner)) "Runner has prompt to wait for Snare!")
-      (card-ability state :corp hok 0)
-      ; Recon Drone ability won't fire as we are not accessing HOK
-      (card-ability state :runner rd2 0)
-      (is (nil? (:number (:choices (prompt-map :runner)))) "No choice to prevent damage from HOK")
-      (is (= 4 (count (:hand (get-runner)))) "Runner took 1 net damage from HOK")
       (click-prompt state :corp "No")
       (click-prompt state :runner "No action")
       (core/lose state :runner :credit :all)
@@ -4339,7 +4414,7 @@
       (click-prompt state :runner "1")
       (click-prompt state :runner "Done")
       (click-prompt state :runner "Pay 0 [Credits] to trash")
-      (is (= 2 (count (:hand (get-runner)))) "Runner took 2 net damage from Snare!")
+      (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Snare!")
       (core/gain state :runner :credit 100)
       (run-empty-server state "Server 3")
       (is (= :waiting (prompt-type :runner)) "Runner has prompt to wait for Prisec")
@@ -4349,13 +4424,13 @@
       (is (= 100 (:number (:choices (prompt-map :runner)))) "Recon Drone choice is not limited to 1 meat")
       (click-prompt state :runner "1")
       (click-prompt state :runner "Pay 3 [Credits] to trash")
-      (is (= 2 (count (:hand (get-runner)))) "Runner took no meat damage")
+      (is (= 3 (count (:hand (get-runner)))) "Runner took no meat damage")
       (run-empty-server state "Server 4")
       (is (= :waiting (prompt-type :runner)) "Runner has prompt to wait for Cerebral Overwriter")
       (click-prompt state :corp "Yes")
       (card-ability state :runner rd4 0)
       (click-prompt state :runner "1")
-      (is (= 2 (count (:hand (get-runner)))) "Runner took no core damage"))))
+      (is (= 3 (count (:hand (get-runner)))) "Runner took no core damage"))))
 
 (deftest record-reconstructor
   ;; Record Reconstructor
@@ -4458,6 +4533,25 @@
       (click-card state :runner "Acacia")
       (is (= ["Bankroll" "Cache"] (->> (get-runner) :hand (map :title)))
           "Acacia is on the bottom of the deck so Runner drew Cache")))
+
+(deftest respirocytes-vs-reeducation-and-djupstad-grid
+  (do-game
+    (new-game {:runner {:hand ["Respirocytes" "Easy Mark"] :deck ["Ika"]}
+               :corp {:hand ["Reeducation" "Djupstad Grid" "IPO"] :credits 20}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Respirocytes")
+    (is (= ["Ika"] (map :title (:hand (get-runner)))) "Ika drawn")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Djupstad Grid" "New remote")
+    (play-from-hand state :corp "Reeducation" "Server 1")
+    (rez state :corp (get-content state :remote1 0))
+    (score-agenda state :corp (get-content state :remote1 1))
+    (click-prompt state :corp "Reeducation")
+    (click-prompt state :corp "IPO")
+    (click-prompt state :corp "Done")
+    (click-prompt state :corp "Done")
+    (is (= 0 (count (:hand (get-runner)))))
+    (is (= ["Easy Mark" "Ika"] (map :title (:discard (get-runner)))))))
 
 (deftest rubicon-switch
   ;; Rubicon Switch
@@ -4706,6 +4800,21 @@
         (play-from-hand state :runner "Simulchip")
         (card-ability state :runner (get-hardware state 0) 0)
         (is (no-prompt? state :runner) "Simulchip prompt did not come up"))))
+
+(deftest simulchip-fire-multiple-in-one-turn
+  (do-game
+    (new-game {:runner {:hand [(qty "Simulchip" 2) "Rezeki"]
+                        :discard ["Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Simulchip")
+    (play-from-hand state :runner "Simulchip")
+    (play-from-hand state :runner "Rezeki")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-card state :runner "Rezeki")
+    (click-card state :runner "Ika")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-card state :runner "Rezeki")
+    (is (= ["Simulchip" "Simulchip"] (map :title (:discard (get-runner)))) "Both simulchips occupy trash")))
 
 (deftest simulchip-with-no-programs-in-the-heap
     ;; with no programs in the heap
@@ -5174,19 +5283,19 @@
 
 (deftest the-wizards-chest
   (do-game
-    (new-game {:runner {:hand ["The Wizard's Chest"]
-                        :discard ["Legwork" "Corroder" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Egret" "Earthrise Hotel"]}})
+    (new-game {:corp {:hand [] :deck []}
+               :runner {:hand ["The Wizard's Chest"]
+                        :deck ["Legwork" "Corroder" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Egret" "Earthrise Hotel"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "The Wizard's Chest")
     (let [chest (get-hardware state 0)]
-      ;; TODO: make this a helper or something for consistently ordered starting deck
-      (doseq [card-name ["Legwork" "Corroder" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Egret" "Earthrise Hotel"]]
-        (core/move state :runner (find-card card-name (get-in @state [:runner :discard])) :deck))
+      (stack-deck state :runner ["Legwork" "Corroder" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Egret" "Earthrise Hotel"])
       (card-ability state :runner chest 0)
       (is (no-prompt? state :runner) "Cannot trigger The Wizard's Chest until all centrals ran")
       (run-empty-server state "Archives")
       (run-empty-server state "R&D")
       (run-empty-server state "HQ")
+      (is (no-prompt? state :runner) "No prompts")
       (card-ability state :runner (refresh chest) 0)
       (is (= ["Hardware" "Program" "Resource" "Cancel"] (prompt-buttons :runner)))
       (click-prompt state :runner "Program")
@@ -5196,19 +5305,17 @@
           "Install at no cost")
       (is (= "Femme Fatale" (:title (get-program state 0))) "Femme Fatale is installed")
       (is (second-last-log-contains? state (str "Runner uses The Wizard's Chest"
-                                                " to reveal Legwork, Corroder, Ice Carver, Prepaid VoicePAD, Femme Fatale from the top of the stack"
-                                                " and install Femme Fatale, ignoring all costs."))))))
+                                                " to reveal Legwork, Corroder, Ice Carver, Prepaid VoicePAD, Femme Fatale from the top of the stack."))))))
 
 (deftest the-wizards-chest-single-card-selection
   (do-game
-    (new-game {:runner {:hand ["The Wizard's Chest"]
-                        :discard ["Legwork" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Earthrise Hotel"]}})
+    (new-game {:corp {:hand [] :deck []}
+               :runner {:hand ["The Wizard's Chest"]
+                        :deck ["Legwork" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Earthrise Hotel"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "The Wizard's Chest")
     (let [chest (get-hardware state 0)]
-      ;; TODO: make this a helper or something for consistently ordered starting deck
-      (doseq [card-name ["Legwork" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Earthrise Hotel"]]
-        (core/move state :runner (find-card card-name (get-in @state [:runner :discard])) :deck))
+      (stack-deck state :runner ["Legwork" "Ice Carver" "Prepaid VoicePAD" "Femme Fatale" "Earthrise Hotel"])
       (card-ability state :runner chest 0)
       (is (no-prompt? state :runner) "Cannot trigger The Wizard's Chest until all centrals ran")
       (run-empty-server state "Archives")
@@ -5223,8 +5330,7 @@
           "Install at no cost")
       (is (= "Femme Fatale" (:title (get-program state 0))) "Femme Fatale is installed")
       (is (second-last-log-contains? state (str "Runner uses The Wizard's Chest"
-                                                " to reveal Legwork, Ice Carver, Prepaid VoicePAD, Femme Fatale, Earthrise Hotel from the top of the stack"
-                                                " and install Femme Fatale, ignoring all costs."))))))
+                                                " to reveal Legwork, Ice Carver, Prepaid VoicePAD, Femme Fatale, Earthrise Hotel from the top of the stack."))))))
 
 (deftest time-bomb
   (do-game

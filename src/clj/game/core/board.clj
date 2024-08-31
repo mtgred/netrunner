@@ -162,7 +162,14 @@
 (defn installable-servers
   "Get list of servers the specified card can be installed in"
   [state card]
-  (let [base-list (concat (server-list state) ["New remote"])]
+  (let [max-servers (when-not (get (:disabled-card-reg @state) (get-in @state [:corp :identity :cid]))
+                      (get-in (card-def (get-in @state [:corp :identity])) [:flags :server-limit]))
+        at-remote-limit? (and max-servers (>= (count (get-remotes state)) max-servers))
+        hosts (filter #(when-let [can-host (:can-host (card-def %))]
+                         (and (rezzed? %)
+                              (can-host state :corp (make-eid state) % [card])))
+                      (all-installed state :corp))
+        base-list (concat hosts (server-list state) (when-not at-remote-limit? ["New remote"]))]
     (if-let [install-req (-> card card-def :install-req)]
       ;; Install req function overrides normal list of install locations
       (install-req state :corp card (make-eid state) base-list)
@@ -175,12 +182,14 @@
 (defn server->zone [state server]
   (if (sequential? server)
     (vec (cons :servers server))
-    (case server
-      "HQ" [:servers :hq]
-      "R&D" [:servers :rd]
-      "Archives" [:servers :archives]
-      "New remote" [:servers (keyword (str "remote" (:rid @state)))]
-      [:servers (->> (string/split server #" ") last (str "remote") keyword)])))
+    (if (:cid server)
+      [:onhost]
+      (case server
+        "HQ" [:servers :hq]
+        "R&D" [:servers :rd]
+        "Archives" [:servers :archives]
+        "New remote" [:servers (keyword (str "remote" (:rid @state)))]
+        [:servers (->> (string/split server #" ") last (str "remote") keyword)]))))
 
 (defn card->server
   "Returns the server map that this card is installed in or protecting."

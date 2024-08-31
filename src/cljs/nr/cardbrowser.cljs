@@ -10,7 +10,7 @@
    [nr.account :refer [alt-art-name]]
    [nr.ajax :refer [GET]]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr tr-faction tr-format tr-side tr-sort tr-type tr-data]]
+   [nr.translations :refer [tr tr-faction tr-format tr-set tr-side tr-sort tr-type tr-data]]
    [nr.utils :refer [banned-span deck-points-card-span faction-icon
                      format->slug get-image-path image-or-face influence-dots
                      non-game-toast render-icons restricted-span rotated-span set-scroll-top slug->format
@@ -148,7 +148,7 @@
 (defn- expand-one
   "Reducer function to create a previous card from a newer card definition."
   [acc {:keys [code set_code]} c]
-  (let [number (str->int (subs code 3))
+  (let [number (str->int (subs code 2))
         prev-set (find-first #(= set_code (:code %)) @cards/sets)
         prev (-> c
                  (assoc
@@ -304,7 +304,7 @@
   (let [title (tr-data :title card)
         icon (faction-icon (:faction card) title)
         uniq (when (:uniqueness card) "◇ ")
-        subtypes (or (when (seq (:subtypes card)) (s/join " - " (:subtypes card))) (:subtype card))
+        subtypes (or (tr-data :keywords card) (or (when (seq (:subtypes card)) (s/join " - " (tr-data :subtypes card))) (tr-data :subtype card)))
         impl (when (and (:implementation card) (not= (:implementation card) "full")) (:implementation card))]
     [:div
      [:h4 uniq title icon
@@ -354,7 +354,7 @@
                             (:points status) (deck-points-card-span (:points status)))])))]
 
          [:div.pack
-          (when-let [pack (:setname card)]
+          (when-let [pack (tr-set (:setname card))]
             (when-let [number (:number card)]
               (str pack " " number
                    (when-let [art (:art card)]
@@ -570,7 +570,7 @@
      (doall
        (for [[title state-key options translator]
              [[(tr [:card-browser.format "Format"]) :format-filter formats tr-format]
-              [(tr [:card-browser.set "Set"]) :set-filter sets-to-display identity]
+              [(tr [:card-browser.set "Set"]) :set-filter sets-to-display tr-set]
               [(tr [:card-browser.side "Side"]) :side-filter ["Corp" "Runner"] tr-side]
               [(tr [:card-browser.faction "Faction"]) :faction-filter (factions (:side-filter @state)) tr-faction]
               [(tr [:card-browser.type "Type"]) :type-filter (types (:side-filter @state)) tr-type]]]
@@ -600,10 +600,10 @@
             link (:artist-link info)]
         (when blurb
           [:div.panel.green-shade.artist-blurb
-           [:h4 "Artist Info"]
+           [:h4 (tr [:card-browser.artist-info "Artist Info"])]
            [:div blurb]
            (when link
-             [:a {:href link} "More Info"])])))))
+             [:a {:href link} (tr [:card-browser.more-info "More Info"])])])))))
 
 (defn card-browser []
   (let [state (r/atom {:search-query ""

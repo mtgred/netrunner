@@ -175,7 +175,8 @@
                                           " " (damage-name type) " damage")
                                      "will not prevent damage"))
                        (clear-wait-prompt state other-player)
-                       (effect-completed state side eid)))))
+                       (effect-completed state side eid)))
+             {:prompt-type :prevent}))
        (effect-completed state side eid)))))
 
 (defn damage

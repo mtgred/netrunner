@@ -205,10 +205,10 @@
 
 (defn clear-run-prompts
   [state]
-  (when-let* [runner-prompt (find-first #(= :run (:prompt-type %)) (-> @state :runner :prompt))
-              corp-prompt (find-first #(= :run (:prompt-type %)) (-> @state :corp :prompt))]
-             (remove-from-prompt-queue state :runner runner-prompt)
-             (remove-from-prompt-queue state :corp corp-prompt)))
+  (when-let* [runner-prompt (find-first #(= :run (:prompt-type %)) (-> @state :runner :prompt))]
+    (remove-from-prompt-queue state :runner runner-prompt))
+  (when-let* [corp-prompt (find-first #(= :run (:prompt-type %)) (-> @state :corp :prompt))]
+    (remove-from-prompt-queue state :corp corp-prompt)))
 
 (defn cancellable
   "Wraps a vector of prompt choices with a final 'Cancel' option. Optionally sorts the vector alphabetically,

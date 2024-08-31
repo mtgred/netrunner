@@ -9,6 +9,7 @@
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [valid-email?]]
    [nr.avatar :refer [avatar]]
+   [nr.sounds :refer [bespoke-sounds play-sfx random-sound select-random-from-grouping]]
    [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top]]
@@ -32,6 +33,7 @@
   (.preventDefault event)
   (swap! s assoc :flash-message (tr [:settings.updating "Updating profile..."]))
   (swap! app-state assoc-in [:options :pronouns] (:pronouns @s))
+  (swap! app-state assoc-in [:options :bespoke-sounds] (:bespoke-sounds @s))
   (swap! app-state assoc-in [:options :language] (:language @s))
   (swap! app-state assoc-in [:options :sounds] (:sounds @s))
   (swap! app-state assoc-in [:options :default-format] (:default-format @s))
@@ -320,19 +322,35 @@
            [:div (tr [:settings.volume "Volume"])
             [:input {:type "range"
                      :min 1 :max 100 :step 1
+                     :on-mouse-up #(play-sfx [(random-sound)] {:volume (int (.. % -target -value))})
                      :on-change #(swap! s assoc-in [:volume] (.. % -target -value))
                      :value (or (:volume @s) 50)
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
 
-        [:section
-         [:h3 (tr [:lobby.format "Default game format"])]
-         [:select.format
-          {:value (or (:default-format @s) "standard")
-           :on-change #(swap! s assoc-in [:default-format] (.. % -target -value))}
-          (doall
-           (for [[k v] slug->format]
-             ^{:key k}
-             [:option {:value k} (tr-format v)]))]]
+          [:section
+           [:h3 (tr [:settings.bespoke-sounds-header "Card-Specific Sounds"])]
+           (doall
+             (for [grouping (distinct (map :grouping (vals bespoke-sounds)))]
+               ^{:key grouping}
+               [:div
+                [:label [:input {:type "checkbox"
+                                 :value true
+                                 :checked (get-in @s [:bespoke-sounds grouping])
+                                 :on-change #(let [checked (.. % -target -checked)]
+                                               (when checked
+                                                 (play-sfx [(select-random-from-grouping grouping)] {:volume (or (:volume @s) 50) :force true}))
+                                               (swap! s assoc-in [:bespoke-sounds grouping] checked))}]
+                 (tr [(keyword (str "settings.bespoke-sounds." (name grouping))) (name grouping)])]]))]
+
+          [:section
+           [:h3 (tr [:lobby.default-game-format "Default game format"])]
+           [:select.format
+            {:value (or (:default-format @s) "standard")
+             :on-change #(swap! s assoc-in [:default-format] (.. % -target -value))}
+            (doall
+             (for [[k v] slug->format]
+               ^{:key k}
+               [:option {:value k} (tr-format v)]))]]
 
           [:section
            [:h3 (tr [:settings.layout-options "Layout options"])]
@@ -408,17 +426,17 @@
                 custom-bg-url (r/atom (:custom-bg-url @s))]
             [:section
              [:h3  (tr [:settings.background "Game board background"])]
-             (doall (for [option [{:name "The Root"        :ref "lobby-bg"}
-                                  {:name "Freelancer"      :ref "freelancer-bg"}
-                                  {:name "Mushin No Shin"  :ref "mushin-no-shin-bg"}
-                                  {:name "Traffic Jam"     :ref "traffic-jam-bg"}
-                                  {:name "Rumor Mill"      :ref "rumor-mill-bg"}
-                                  {:name "Find The Truth"  :ref "find-the-truth-bg"}
-                                  {:name "Push Your Luck"  :ref "push-your-luck-bg"}
-                                  {:name "Apex"            :ref "apex-bg"}
-                                  {:name "Worlds 2020"     :ref "worlds2020"}
-                                  {:name "Monochrome"      :ref "monochrome-bg"}
-                                  {:name (str "Custom BG" (when custom-bg-selected " (input URL below)"))
+             (doall (for [option [{:name (tr [:settings.the-root-bg "The Root"])              :ref "lobby-bg"}
+                                  {:name (tr [:settings.freelancer-bg "Freelancer"])          :ref "freelancer-bg"}
+                                  {:name (tr [:settings.mushin-no-shin-bg "Mushin No Shin"])  :ref "mushin-no-shin-bg"}
+                                  {:name (tr [:settings.traffic-jam-bg "Traffic Jam"])        :ref "traffic-jam-bg"}
+                                  {:name (tr [:settings.rumor-mill-bg "Rumor Mill"])          :ref "rumor-mill-bg"}
+                                  {:name (tr [:settings.find-the-truth-bg "Find The Truth"])  :ref "find-the-truth-bg"}
+                                  {:name (tr [:settings.push-your-luck-bg "Push Your Luck"])  :ref "push-your-luck-bg"}
+                                  {:name (tr [:settings.apex-bg "Apex"])                      :ref "apex-bg"}
+                                  {:name (tr [:settings.worlds2020-bg "Worlds 2020"])         :ref "worlds2020"}
+                                  {:name (tr [:settings.monochrome-bg "Monochrome"])          :ref "monochrome-bg"}
+                                  {:name (str (tr [:settings.custom-bg "Custom BG"]) (when custom-bg-selected (tr [:settings.input-url-below " (input URL below)"])))
                                    :ref "custom-bg"}]]
                       [:div.radio {:key (:name option)}
                        [:label [:input {:type "radio"
@@ -447,9 +465,9 @@
                       (:name option)]]))]
 
           [:section
-           [:h3  "Card preview zoom"]
-           (doall (for [option [{:name "Card Image" :ref "image"}
-                                {:name "Card Text" :ref "text"}]]
+           [:h3  (tr [:settings.card-preview-zoom "Card preview zoom"])]
+           (doall (for [option [{:name (tr [:settings.card-iamge "Card Image"]) :ref "image"}
+                                {:name (tr [:settings.card-text "Card Text"]) :ref "text"}]]
                     [:div.radio {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "card-zoom"
@@ -498,7 +516,7 @@
                              :name "use-high-res"
                              :checked (= "high" (:card-resolution @s))
                              :on-change #(swap! s assoc-in [:card-resolution] (if (.. % -target -checked) "high" "default"))}]
-             (tr [:settings.high-res "Enable high resolution card images"])]]]
+             (tr [:settings.high-res "Enable high-resolution card images"])]]]
 
           [:section {:id "alt-art"}
            [:h3 (tr [:settings.alt-art "Alt arts"])]
@@ -570,6 +588,7 @@
                        :card-zoom (get-in @app-state [:options :card-zoom])
                        :pin-zoom (get-in @app-state [:options :pin-zoom])
                        :pronouns (get-in @app-state [:options :pronouns])
+                       :bespoke-sounds (get-in @app-state [:options :bespoke-sounds])
                        :language (get-in @app-state [:options :language])
                        :sounds (get-in @app-state [:options :sounds])
                        :default-format (get-in @app-state [:options :default-format])

@@ -21,7 +21,7 @@
             deck (-> deck
                      (select-keys
                        (if started
-                         [:name :date :identity :hash]
+                         [:name :date :identity]
                          [:name :date]))
                      (assoc :_id (str _id) :status status))]
         (assoc p :deck deck))

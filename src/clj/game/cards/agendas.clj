@@ -21,7 +21,7 @@
    [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
-   [game.core.engine :refer [pay register-events resolve-ability
+   [game.core.engine :refer [checkpoint pay queue-event register-events resolve-ability
                              unregister-events]]
    [game.core.events :refer [first-event? first-run-event? no-event? run-events run-event-count turn-events]]
    [game.core.finding :refer [find-latest]]
@@ -33,8 +33,7 @@
    [game.core.hosting :refer [host]]
    [game.core.ice :refer [add-extra-sub! remove-sub! update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [card-init]]
-   [game.core.installing :refer [corp-install corp-install-list
-                                 corp-install-msg]]
+   [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-ice
                              trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
@@ -158,7 +157,6 @@
    [{:event :run
      :req (req (first-event? state side :run))
      :player :corp
-     :once :per-turn
      :async true
      :waiting-prompt true
      :prompt "Choose one"
@@ -431,7 +429,10 @@
                                                      " from the grip"
                                                      " to the bottom of the stack."
                                                      " The Runner draws 1 card"))
-                         (draw state :runner eid 1)))
+                         (queue-event state :runner-hand-changed?)
+                         (wait-for
+                           (checkpoint state side)
+                           (draw state :runner eid 1))))
                      (effect-completed state side eid)))}}}})
 
 (defcard "Braintrust"
@@ -537,7 +538,7 @@
                            {:async true
                             :prompt (str "Choose a server to install " (:title chosen-ice) " on")
                             :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
-                                             (corp-install-list state chosen-ice))
+                                             (installable-servers state chosen-ice))
                             :effect (effect (shuffle! :deck)
                                             (corp-install eid chosen-ice target
                                                           {:ignore-all-cost true
@@ -569,7 +570,7 @@
                            {:async true
                             :prompt (str "Choose a server to install " (:title chosen-ice) " on")
                             :choices (filter #(#{"HQ" "Archives" "R&D"} %)
-                                             (corp-install-list state chosen-ice))
+                                             (installable-servers state chosen-ice))
                             :effect (effect (shuffle! :deck)
                                             (corp-install eid chosen-ice target
                                                           {:ignore-all-cost true
@@ -619,7 +620,6 @@
                              :effect (effect (purge eid))}}}
    :events [{:event :purge
              :req (req (first-event? state :corp :purge))
-             :once :per-turn
              :msg "gain 4 [Credits]"
              :async true
              :effect (req (gain-credits state :corp eid 4))}]})
@@ -627,8 +627,9 @@
 (defcard "Dedicated Neural Net"
   {:events [{:event :successful-run
              :interactive (req true)
-             :psi {:req (req (= :hq (target-server context)))
-                   :once :per-turn
+             :psi {:req (req (= :hq (target-server context))
+                             (first-event? state side :successful-run
+                                           #(= :hq (target-server (first %)))))
                    :not-equal {:effect (effect (register-lingering-effect
                                                  card
                                                  {:type :corp-choose-hq-access
@@ -704,7 +705,7 @@
     :choices {:card #(rezzed? %)}
     :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
-    :effect (effect (derez target))}})
+    :effect (effect (derez target {:source-card card}))}})
 
 (defcard "Eden Fragment"
   {:static-abilities [{:type :ignore-install-cost
@@ -1217,7 +1218,7 @@
                                          :min derez-count}
                                :msg (msg "derez " (enumerate-str (map #(card-str state %) targets)))
                                :effect (req (doseq [t targets]
-                                              (derez state side t)))}
+                                              (derez state side t {:no-msg true})))}
                               card nil)))})
           (ice-free-rez [state side targets card zone eid]
             (if (zero? (count targets))
@@ -1744,16 +1745,20 @@
              :async true
              :msg (req (let [n (count chosen)]
                          (str "add " (quantify n "card") " from HQ to the bottom of R&D and draw " (quantify n "card")
-                              ". The Runner randomly adds " (quantify (min n (count (:hand runner))) "card")
-                              " from [runner-pronoun] Grip to the bottom of the Stack")))
+                              (when (<= n (count (:hand runner)))
+                                (str
+                                  ". The Runner randomly adds " (quantify n "card")
+                                  " from [runner-pronoun] Grip to the bottom of the Stack")))))
              :effect (req (let [n (count chosen)]
                             (if (= target "Done")
                               (do (doseq [c (reverse chosen)] (move state :corp c :deck))
                                   (wait-for (draw state :corp n)
                                             ; if corp chooses more cards than runner's hand, don't shuffle runner hand back into Stack
-                                            (when (<= n (count (:hand runner)))
-                                              (doseq [r (take n (shuffle (:hand runner)))] (move state :runner r :deck)))
-                                            (effect-completed state side eid)))
+                                            (if (<= n (count (:hand runner)))
+                                              (do (doseq [r (take n (shuffle (:hand runner)))] (move state :runner r :deck))
+                                                  (queue-event state :runner-hand-changed?)
+                                                  (checkpoint state side eid))
+                                              (effect-completed state side eid))))
                               (continue-ability state side (corp-choice original '() original) card nil))))})
           (corp-choice [remaining chosen original] ; Corp chooses cards until they press 'Done'
             {:prompt "Choose a card to move to bottom of R&D"
@@ -1839,7 +1844,7 @@
                                    {:async true
                                     :prompt (str "Choose a server to install " (:title chosen-ice) " on")
                                     :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
-                                                     (corp-install-list state chosen-ice))
+                                                     (installable-servers state chosen-ice))
                                     :effect (effect (shuffle! :deck)
                                                     (corp-install eid chosen-ice target
                                                                   {:install-state :rezzed-no-rez-cost
@@ -1948,13 +1953,14 @@
                 :msg (msg "rez " (card-str state target) ", ignoring all costs")
                 :async true
                 :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
-                                       (let [c (:card async-result)]
+                                       (let [c (:card async-result)
+                                             ev (if (= (:active-player @state) :corp) :corp-turn-ends :runner-turn-ends)]
                                          (register-events
                                            state side card
-                                           [{:event (if (= side :corp) :corp-turn-ends :runner-turn-ends)
+                                           [{:event ev
                                              :unregister-once-resolved true
                                              :duration :end-of-turn
-                                             :effect (effect (derez c))}])
+                                             :effect (effect (derez c {:source-card card}))}])
                                          (effect-completed state side eid))))}]})
 
 (defcard "Sentinel Defense Program"
@@ -2077,7 +2083,7 @@
                          :once :per-turn
                          :msg (msg "derez " (card-str state target) " to gain 1 [Credits]")
                          :async true
-                         :effect (effect (derez target)
+                         :effect (effect (derez target {:no-msg true})
                                          (gain-credits eid 1))})
                       card nil)))}
             {:event :derez
@@ -2239,7 +2245,7 @@
 (defcard "Tomorrow's Headline"
   (let [ability
         {:interactive (req true)
-         :msg "give Runner 1 tag"
+         :msg "give the Runner 1 tag"
          :async true
          :effect (req (gain-tags state :corp eid 1))}]
     {:on-score ability

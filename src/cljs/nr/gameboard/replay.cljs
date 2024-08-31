@@ -291,6 +291,10 @@
      (fn [this]
        (-> js/document (.addEventListener "keydown" handle-keydown)))
 
+     :component-will-unmount
+     (fn [this]
+       (-> js/document (.removeEventListener "keydown" handle-keydown)))
+
      :reagent-render
      (fn []
        [:div.replay.panel.blue-shade
@@ -320,7 +324,7 @@
                       :draw [:div.symbol]
                       :credit (render-message "[credit]")
                       :advance "A"
-                      :purge "☣️"
+                      :purge "🚨"
                       :click (render-message "[click]")
                       "?")]]))]
         [:div.controls
@@ -472,7 +476,7 @@
          [:button.small {:type "button"
                          :on-click #(get-remote-annotations (:gameid @game-state))} "⟳"]]
         (if (empty? (:remote-annotations @replay-status))
-          (tr [:annotations-no-published-annotations "No published annotations."])
+          (tr [:annotations.no-published-annotations "No published annotations."])
           [:ul
            (doall
              (for [[n anno] (map-indexed vector (:remote-annotations @replay-status))]
@@ -485,7 +489,7 @@
                                   :on-click #(delete-remote-annotations n)} "X"])]))])
         [:div.button-row
          [:button {:type "button"
-                   :on-click #(publish-annotations)} (tr [:log.notes.publish "Publish"])]]
+                   :on-click #(publish-annotations)} (tr [:annotations.publish "Publish"])]]
         [:hr]])
      [:h4 (tr [:annotations.import-local "Import local annotation file"])]
      [:input {:field :file
