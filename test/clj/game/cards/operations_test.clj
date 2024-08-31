@@ -686,34 +686,38 @@
     (take-credits state :runner)
     (is (changed? [(get-counters (get-program state 0) :virus) -3]
                   (play-from-hand state :corp "Business As Usual")
-                  (click-prompt state :corp "Remove all virus counters from a card")
+                  (click-prompt state :corp "Remove all virus counters from 1 installed card")
                   (click-card state :corp "Cache"))
         "Cache was purged")
     (is (changed? [(get-counters (get-content state :remote1 0) :advancement) 1
                    (get-counters (get-content state :remote2 0) :advancement) 1]
                   (play-from-hand state :corp "Business As Usual")
-                  (click-prompt state :corp "Place 1 advancement counter on each of up to 2 cards you can advance")
+                  (click-prompt state :corp "Place 1 advancement counter on up to two cards you can advance")
                   (click-card state :corp "NGO Front")
                   (click-card state :corp "Project Atlas"))
         "Placed 2 advancement counters on advanceable cards")))
 
 (deftest business-as-usual-threat
   (do-game
-    (new-game {:corp {:hand ["Business As Usual" "Project Atlas" "Bellona"]}
+    (new-game {:corp {:hand ["Business As Usual" "NGO Front" "Project Atlas"]
+                      :score-area ["Bellona"]}
                :runner {:hand ["Cache"]}})
+    (play-from-hand state :corp "NGO Front" "New remote")
     (play-from-hand state :corp "Project Atlas" "New remote")
-    (play-and-score state "Bellona")
     (take-credits state :corp)
     (play-from-hand state :runner "Cache")
     (take-credits state :runner)
-    (play-from-hand state :corp "Business As Usual")
-    (is (changed? [(get-counters (get-program state 0) :virus) -3
-                   (get-counters (get-content state :remote1 0) :advancement) 1]
-                  (click-prompt state :corp "Do both")
-                  (click-card state :corp "Cache")
-                  (click-card state :corp "Project Atlas")
-                  (click-prompt state :corp "Done"))
-        "Cache was purged and 1 advancement counters was placed")))
+    (is (changed? [(get-counters (get-program state 0) :virus) -3]
+                  (play-from-hand state :corp "Business As Usual")
+                  (click-prompt state :corp "Remove all virus counters from 1 installed card")
+                  (click-card state :corp "Cache"))
+        "Cache was purged")
+    (is (changed? [(get-counters (get-content state :remote1 0) :advancement) 1
+                   (get-counters (get-content state :remote2 0) :advancement) 1]
+                  (click-prompt state :corp "Place 1 advancement counter on up to two cards you can advance")
+                  (click-card state :corp "NGO Front")
+                  (click-card state :corp "Project Atlas"))
+        "Placed 2 advancement counters on advanceable cards")))
 
 (deftest casting-call
   ;; Casting Call - Only do card-init on the Public agendas.  Issue #1128

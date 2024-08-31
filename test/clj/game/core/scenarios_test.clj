@@ -241,7 +241,7 @@
       (play-from-hand state :corp "Artificial Cryptocrash" "Server 2")
       (play-from-hand state :corp "NGO Front" "New remote")
       (play-from-hand state :corp "Business As Usual")
-      (click-prompt state :corp "Place 1 advancement counter on each of up to 2 cards you can advance")
+      (click-prompt state :corp "Place 1 advancement counter on up to two cards you can advance")
       (click-card state :corp (get-content state :remote2 0))
       (click-card state :corp (get-content state :remote3 0))
       (end-turn state :corp)
