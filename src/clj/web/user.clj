@@ -36,7 +36,8 @@
      :lastConnection   registration-date
      :password         (password/encrypt password)
      :isadmin          (or isadmin false)
-     :options          {}}))
+     :options          {:default-format "standard"
+                        :pronouns "none"}}))
 
 (defn active-user?
   "Returns the given user if it exists and is not banned"
