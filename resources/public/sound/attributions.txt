@@ -5,3 +5,5 @@ Pulse: pulse 1.wav by cameronmusic -- https://freesound.org/s/138421/ -- License
 Wave: deep-bass-wave-130.mp3 by iscence -- https://freesound.org/s/65516/ -- License: Creative Commons 0
 
 Archer: archer by d/0 -- https://github.com/db0/Android-Netrunner-OCTGN -- used with permission from D/0
+
+Time-out: ok9.wav by ZenithInfinitiveStudios -- https://freesound.org/s/343008/ -- License: Creative Commons 0
