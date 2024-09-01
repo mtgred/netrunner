@@ -52,6 +52,7 @@
    "rez-other"
    "run-successful"
    "run-unsuccessful"
+   "time-out"
    "virus-purge"])
 
 (defn random-sound
