@@ -1,6 +1,7 @@
 (ns nr.pending-game
   (:require
    [jinteki.validator :refer [singleton-deck? trusted-deck-status]]
+   [jinteki.preconstructed :refer [matchup-by-key]]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.cardbrowser :refer [image-url] :as cb]
    [nr.deck-status :refer [deck-format-status-span]]
@@ -18,8 +19,8 @@
 (defn is-constructed?
   "Games using the starter decks are not constructed"
   [current-game]
-  (or (not (:gateway-type @current-game))
-      (= (:gateway-type @current-game) "Constructed")))
+  (or (not (:precon @current-game))
+      (= (:precon @current-game) :constructed)))
 
 (defn is-preconstructed?
   [current-game]
@@ -89,15 +90,10 @@
                       (swap! app-state assoc :editing false :current-game nil))))}
    (tr [:lobby.leave "Leave"])])
 
-(defn gateway-info-box [current-game]
-  (condp = (:gateway-type @current-game)
-    "Beginner"
+(defn precon-info-box [current-game]
+  (when-let [precon (:precon @current-game)]
     [:div.infobox.blue-shade
-     [:p (tr [:lobby.gateway-beginner-info "This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points."])]]
-    "Intermediate"
-    [:div.infobox.blue-shade
-     [:p (tr [:lobby.gateway-intermediate-info "This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points."])]]
-    nil))
+     [:p (tr (:tr-desc (matchup-by-key precon)))]]))
 
 (defn singleton-info-box [current-game]
   (when (:singleton @current-game)
@@ -208,7 +204,7 @@
      [button-bar current-game user gameid players]
      [:div.content
       [:h2 (:title @current-game)]
-      [gateway-info-box current-game]
+      [precon-info-box current-game]
       [singleton-info-box current-game]
       (when-not (or (every? :deck @players)
                     (not (is-constructed? current-game)))

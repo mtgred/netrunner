@@ -18,14 +18,23 @@
 
 (read-write/print-time-literals-clj!)
 
+(defn validate-precon
+  [format _precon]
+  (when-let [precon (and _precon (keyword (str/lower-case _precon)))]
+    (println precon)
+    (when (or (and (= format "system-gateway")
+                   (contains? #{:beginner :intermediate} precon)))
+      precon)))
+
 (defn create-new-lobby
   [{uid :uid
     user :user
     {:keys [gameid now
             allow-spectator api-access format mute-spectators password room save-replay
-            gateway-type side singleton spectatorhands timer title]
+            precon side singleton spectatorhands timer title]
      :or {gameid (random-uuid)
           now (inst/now)}} :options}]
+  (println precon)
   (let [player {:user user
                 :uid uid
                 :side side}]
@@ -38,7 +47,7 @@
      :runner-spectators []
      :messages []
      ;; options
-     :gateway-type (when (= (str format) "system-gateway") gateway-type)
+     :precon (validate-precon format precon)
      :allow-spectator allow-spectator
      :api-access api-access
      :format format
@@ -114,7 +123,7 @@
    :date
    :format
    :gameid
-   :gateway-type
+   :precon
    :messages
    :mute-spectators
    :original-players

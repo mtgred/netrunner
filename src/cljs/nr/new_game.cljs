@@ -18,7 +18,7 @@
    :side
    :singleton
    :spectatorhands
-   :gateway-type
+   :precon
    :timer
    :title])
 
@@ -76,7 +76,7 @@
             :on-change #(swap! options assoc :singleton (.. % -target -checked))}]
    (tr [:lobby.singleton "Singleton"])])
 
-(defn gateway-constructed-choice [fmt-state gateway-type]
+(defn gateway-constructed-choice [fmt-state precon]
   [:div
    {:style {:display (if (= @fmt-state "system-gateway") "block" "none")}}
    (doall
@@ -84,13 +84,13 @@
        ^{:key option}
        [:span [:label [:input
                        {:type "radio"
-                        :name "gateway-type"
+                        :name "precon"
                         :value option
-                        :on-change #(reset! gateway-type (.. % -target -value))
-                        :checked (= @gateway-type option)}]
+                        :on-change #(reset! precon (.. % -target -value))
+                        :checked (= @precon option)}]
               (str (tr-string "lobby.gateway-format" option) "    ")]]))])
 
-(defn format-section [fmt-state options gateway-type]
+(defn format-section [fmt-state options precon]
   [:section
    [:h3 (tr [:lobby.default-game-format "Default game format"])]
    [:select.format
@@ -101,7 +101,7 @@
         ^{:key k}
         [:option {:value k} (tr-format v)]))]
    [singleton-only options fmt-state]
-   [gateway-constructed-choice fmt-state gateway-type]
+   [gateway-constructed-choice fmt-state precon]
    [:div.infobox.blue-shade
     {:style {:display (if (:singleton @options) "block" "none")}}
     [:p (tr [:lobby.singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."])]
@@ -212,7 +212,7 @@
                               :format (or (get-in @app-state [:options :default-format]) "standard")
                               :room (:room @lobby-state)
                               :side "Any Side"
-                              :gateway-type "Beginner"
+                              :precon nil;;"Beginner"
                               :title (str (:username @user) "'s game")})
                options (r/atom {:allow-spectator true
                                 :api-access false
@@ -225,7 +225,7 @@
                                 :timer nil})
                title (r/cursor state [:title])
                side (r/cursor state [:side])
-               gateway-type (r/cursor state [:gateway-type])
+               precon-type (r/cursor state [:precon])
                fmt (r/cursor state [:format])
                flash-message (r/cursor state [:flash-message])]
     (fn [lobby-state user]
@@ -236,5 +236,5 @@
        [:div.content
         [title-section title]
         [side-section side]
-        [format-section fmt options gateway-type]
+        [format-section fmt options precon-type]
         [options-section options user]]])))
