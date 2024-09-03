@@ -1899,6 +1899,7 @@
                                    " and shuffle them into R&D")}
         draw-reveal-shuffle {:async true
                              :label "Draw cards, reveal and shuffle agendas"
+                             :waiting-prompt true
                              :effect (req (wait-for (draw-up-to state side card 3)
                                                     (continue-ability state side reveal-and-shuffle card nil)))}]
     {:static-abilities [(ice-strength-bonus (req (= :this-turn (:rezzed card))) 6)]
