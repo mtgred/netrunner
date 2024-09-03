@@ -138,28 +138,26 @@
     [:preconstructed.worlds-2012-b "Worlds 2012: Ben Marsh (C) vs. Jeremy Z (R)"]
     [:preconstructed.worlds-2012-b-tag "Ben Marsh (C) vs. Jeremy Z (R)"]
     [:preconstructed.worlds-2012-info "TODO"]
-    (precon "Ben Marsh - 2012: ETF"
-            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
-            [{:qty 3 :card "Enigma"}
-             {:qty 2 :card "Heimdall 1.0"}
-             {:qty 2 :card "Tollbooth"}
-             {:qty 3 :card "Victor 1.0"}
-             {:qty 2 :card "Ichi 1.0"}
-             {:qty 3 :card "Rototurret"}
-             {:qty 2 :card "Archer"}
-             {:qty 1 :card "Ice Wall"}
-             {:qty 3 :card "Wall of Static"}
-             {:qty 3 :card "Adonis Campaign"}
-             {:qty 3 :card "Pad Campaign"}
-             {:qty 2 :card "Project Junebug"}
-             {:qty 2 :card "Aggressive Secretary"}
-             {:qty 2 :card "Snare!"}
-             {:qty 1 :card "Experiential Data"}
-             {:qty 3 :card "Hedge Fund"}
-             {:qty 3 :card "Biotic Labor"}
+    (precon "Ben Marsh - 2012: Weyland"
+            {:title "Weyland Consortium: Building a Better World" :side "Corp" :code 1093}
+            [{:qty 3 :card "Priority Requisition"}
              {:qty 3 :card "Private Security Force"}
-             {:qty 3 :card "Accelerated Beta Test"}
-             {:qty 3 :card "Priority Requisition"}])
+             {:qty 3 :card "Hostile Takeover"}
+             {:qty 2 :card "Posted Bounty"}
+             {:qty 3 :card "Ice Wall"}
+             {:qty 3 :card "Wall of Static"}
+             {:qty 3 :card "Enigma"}
+             {:qty 3 :card "Shadow"}
+             {:qty 3 :card "Archer"}
+             {:qty 3 :card "Data Raven"}
+             {:qty 3 :card "Hadrian's Wall"}
+             {:qty 3 :card "Melange Mining Corp."}
+             {:qty 1 :card "Corporate Troubleshooter"}
+             {:qty 2 :card "Snare!"}
+             {:qty 2 :card "Archived Memories"}
+             {:qty 3 :card "Beanstalk Royalties"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Scorched Earth"}])
     (precon "Jeremy Z - 2012: Criminal"
             {:title "Gabriel Santiago: Consummate Professional" :side "Runner" :code 1017}
             [{:qty 2 :card "Corroder"}
@@ -187,26 +185,28 @@
     [:preconstructed.worlds-2012-a "Worlds 2012: Jeremy Z (C) vs. Ben Marsh (R)"]
     [:preconstructed.worlds-2012-a-tag "Jeremy Z (C) vs. Ben Marsh (R)"]
     [:preconstructed.worlds-2012-info "TODO"]
-    (precon "Jeremy Z - 2012: Weyland"
-            {:title "Weyland Consortium: Building a Better World" :side "Corp" :code 1093}
-            [{:qty 3 :card "Priority Requisition."}
-             {:qty 3 :card "Private Security Force"}
-             {:qty 3 :card "Hostile Takeover"}
-             {:qty 2 :card "Posted Bounty"}
-             {:qty 3 :card "Ice Wall"}
+    (precon "Jeremy Z - 2012: ETF"
+            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
+            [{:qty 3 :card "Enigma"}
+             {:qty 2 :card "Heimdall 1.0"}
+             {:qty 2 :card "Tollbooth"}
+             {:qty 3 :card "Viktor 1.0"}
+             {:qty 2 :card "Ichi 1.0"}
+             {:qty 3 :card "Rototurret"}
+             {:qty 2 :card "Archer"}
+             {:qty 1 :card "Ice Wall"}
              {:qty 3 :card "Wall of Static"}
-             {:qty 3 :card "Enigma"}
-             {:qty 3 :card "Shadow"}
-             {:qty 3 :card "Archer"}
-             {:qty 3 :card "Data Raven"}
-             {:qty 3 :card "Hadrian's Wall"}
-             {:qty 3 :card "Melange M. Corp"}
-             {:qty 1 :card "Corporate Troubleshooter"}
+             {:qty 3 :card "Adonis Campaign"}
+             {:qty 3 :card "PAD Campaign"}
+             {:qty 2 :card "Project Junebug"}
+             {:qty 2 :card "Aggressive Secretary"}
              {:qty 2 :card "Snare!"}
-             {:qty 2 :card "Archived Memories"}
-             {:qty 3 :card "Beanstalk Royalties"}
+             {:qty 1 :card "Experiential Data"}
              {:qty 3 :card "Hedge Fund"}
-             {:qty 3 :card "Scorched Earth"}])
+             {:qty 3 :card "Biotic Labor"}
+             {:qty 3 :card "Private Security Force"}
+             {:qty 3 :card "Accelerated Beta Test"}
+             {:qty 3 :card "Priority Requisition"}])
     (precon "Ben Marsh - 2012: Gabe"
             {:title "Gabriel Santiago: Consummate Professional" :side "Runner" :code 1017}
             [{:qty 3 :card "Sneakdoor Beta"}
@@ -225,11 +225,115 @@
              {:qty 3 :card "Account Siphon"}
              {:qty 3 :card "Inside Job"}
              {:qty 2 :card "Desperado"}
-             {:qty 2 :card "Lemuria Codecraker"}
+             {:qty 2 :card "Lemuria Codecracker"}
              {:qty 2 :card "Decoy"}
              {:qty 1 :card "Crashspace"}
              {:qty 3 :card "Armitage Codebusting"}
              {:qty 2 :card "Bank Job"}])))
+
+;; worlds 2013: Jens Erickson (1) vs. Andrew Veen (2)
+(def worlds-2013-jens-runs
+  (matchup
+    [:preconstructed.worlds-2013-a "Worlds 2013: Andrew Veen (C) vs. Jens Erickson (R)"]
+    [:preconstructed.worlds-2013-a-tag "Andrew Veen (C) vs. Jens Erickson (R)"]
+    [:preconstructed.worlds-2013-info "TODO"]
+    (precon "Andrew Veen - 2013: Making News"
+            {:title "NBN: Making News" :side "Corp" :code 25104}
+            [{:qty 3 :card "AstroScript Pilot Program"}
+             {:qty 3 :card "Project Beale"}
+             {:qty 3 :card "Breaking News"}
+             {:qty 3 :card "Character Assassination"}
+             {:qty 1 :card "Gila Hands Arcology"}
+             {:qty 3 :card "Jackson Howard"}
+             {:qty 2 :card "Bernice Mai"}
+             {:qty 3 :card "SanSan City Grid"}
+             {:qty 3 :card "Closed Accounts"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Green Level Clearance"}
+             {:qty 3 :card "Beanstalk Royalties"}
+             {:qty 2 :card "TMI"}
+             {:qty 1 :card "Wall of Static"}
+             {:qty 2 :card "Ice Wall"}
+             {:qty 3 :card "Pop-up Window"}
+             {:qty 3 :card "Enigma"}
+             {:qty 2 :card "Dracō"}
+             {:qty 1 :card "Rototurret"}
+             {:qty 3 :card "Caduceus"}])
+    (precon "Jens Erickson - 2013: Andromeda"
+            {:title "Andromeda: Dispossessed Ristie" :side "Runner" :code 2083}
+            [{:qty 3 :card "Account Siphon"}
+             {:qty 3 :card "Inside Job"}
+             {:qty 3 :card "Special Order"}
+             {:qty 3 :card "Emergency Shutdown"}
+             {:qty 2 :card "Forged Activation Orders"}
+             {:qty 2 :card "Easy Mark"}
+             {:qty 2 :card "Hostage"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 3 :card "Desperado"}
+             {:qty 2 :card "Plascrete Carapace"}
+             {:qty 2 :card "R&D Interface"}
+             {:qty 2 :card "Faerie"}
+             {:qty 1 :card "Femme Fatale"}
+             {:qty 1 :card "Crypsis"}
+             {:qty 2 :card "Corroder"}
+             {:qty 1 :card "Mimic"}
+             {:qty 1 :card "Yog.0"}
+             {:qty 3 :card "Datasucker"}
+             {:qty 1 :card "Kati Jones"}
+             {:qty 1 :card "John Masanori"}
+             {:qty 1 :card "Professional Contacts"}])))
+
+(def worlds-2013-jens-corps
+  (matchup
+    [:preconstructed.worlds-2013-b "Worlds 2013: Jens Erickson (C) vs. Andrew Veen (R)"]
+    [:preconstructed.worlds-2013-b-tag "Jens Erickson (C) vs. Andrew Veen (R)"]
+    [:preconstructed.worlds-2013-info "TODO"]
+    (precon "Jens Erickson - 2013: Engineering the Future"
+            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
+            [{:qty 3 :card "Accelerated Beta Test"}
+             {:qty 3 :card "Project Vitruvius"}
+             {:qty 3 :card "Efficiency Committee"}
+             {:qty 1 :card "Director Haas' Pet Project"}
+             {:qty 1 :card "Gila Hands Arcology"}
+             {:qty 3 :card "Adonis Campaign"}
+             {:qty 3 :card "Jackson Howard"}
+             {:qty 2 :card "Ash 2X3ZB9CY"}
+             {:qty 2 :card "SanSan City Grid"}
+             {:qty 3 :card "Biotic Labor"}
+             {:qty 2 :card "Green Level Clearance"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Eli 1.0"}
+             {:qty 1 :card "Heimdall 1.0"}
+             {:qty 2 :card "Wall of Static"}
+             {:qty 2 :card "Ice Wall"}
+             {:qty 1 :card "Viper"}
+             {:qty 1 :card "Viktor 2.0"}
+             {:qty 2 :card "Enigma"}
+             {:qty 2 :card "Pop-up Window"}
+             {:qty 1 :card "Tollbooth"}
+             {:qty 3 :card "Rototurret"}
+             {:qty 1 :card "Ichi 1.0"}
+             {:qty 1 :card "Grim"}])
+    (precon "Andrew Veen - 2013: Kate McCaffrey"
+            {:title "Kate \"Mac\" McCaffrey: Digital Tinker" :side "Runner" :code 01033}
+            [{:qty 3 :card "Modded"}
+             {:qty 3 :card "Test Run"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 3 :card "Clone Chip"}
+             {:qty 3 :card "R&D Interface"}
+             {:qty 3 :card "Plascrete Carapace"}
+             {:qty 3 :card "Desperado"}
+             {:qty 3 :card "Atman"}
+             {:qty 1 :card "Deus Ex"}
+             {:qty 1 :card "Femme Fetale"}
+             {:qty 3 :card "Self-modifying code"}
+             {:qty 3 :card "Datasucker"}
+             {:qty 1 :card "Parasite"}
+             {:qty 3 :card "Kati Jones"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Professional Contacts"}])))
 
 ;; Utility
 
@@ -241,9 +345,12 @@
     :intermediate system-gateway-intermediate
     ;; indexed
     :worlds-2012-a worlds-2012-ben-runs
-    :worlds-2012-b worlds-2012-ben-corps))
+    :worlds-2012-b worlds-2012-ben-corps
+    :worlds-2013-a worlds-2013-jens-runs
+    :worlds-2013-b worlds-2013-jens-corps))
 
 (def all-matchups
   "A set of all preconstructed matchups (by key).
   The frontend uses this to build a matchup table for play"
-  #{:worlds-2012-a :worlds-2012-b})
+  #{:worlds-2012-a :worlds-2012-b
+    :worlds-2013-a :worlds-2013-b})

@@ -101,7 +101,7 @@
      {:value (or @precon "worlds-2012-a")
       :on-change #(reset! precon (.. % -target -value))}
      (doall
-       (for [matchup all-matchups]
+       (for [matchup (sort all-matchups)]
          ^{:key (name matchup)}
          [:option {:value (name matchup)} (tr (:tr-inner (matchup-by-key matchup)))]))]]])
 
