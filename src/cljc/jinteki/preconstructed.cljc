@@ -335,6 +335,115 @@
              {:qty 3 :card "Daily Casts"}
              {:qty 3 :card "Professional Contacts"}])))
 
+;; worlds 2014: Dan D'Argenio vs. Spags
+(def worlds-2014-dan-d-corps
+  (matchup
+    [:preconstructed.worlds-2014-a "Worlds 2014: Dan D'Argenio (C) vs. spags (R)"]
+    [:preconstructed.worlds-2014-a-tag "Dan D'Argenio (C) vs. spags (R)"]
+    [:preconstructed.worlds-2014-info "TODO"]
+    (precon "Dan D'Argenio - 2014: Replicating Perfection"
+            {:title "Jinteki: Replicating Perfection" :side "Corp" :code 2031}
+            [{:qty 3 :card "NAPD Contract"}
+             {:qty 3 :card "Nisei MK II"}
+             {:qty 3 :card "The Future Perfect"}
+             {:qty 3 :card "Jackson Howard"}
+             {:qty 3 :card "Mental Health Clinic"}
+             {:qty 3 :card "Sundew"}
+             {:qty 3 :card "Celebrity Gift"}
+             {:qty 2 :card "Enhanced Login Protocol"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 1 :card "Interns"}
+             {:qty 1 :card "Ash 2X3ZB9CY"}
+             {:qty 3 :card "Caprice Nisei"}
+             {:qty 3 :card "Eli 1.0"}
+             {:qty 1 :card "Himitsu-Bako"}
+             {:qty 1 :card "Wall of Thorns"}
+             {:qty 1 :card "Wraparound"}
+             {:qty 1 :card "Lotus Field"}
+             {:qty 2 :card "Quandary"}
+             {:qty 1 :card "Tollbooth"}
+             {:qty 2 :card "Komainu"}
+             {:qty 3 :card "Pup"}
+             {:qty 3 :card "Tsurugi"}])
+    (precon "spags - 2014: Kate's Toolbox"
+            {:title "Kate \"Mac\" McCaffrey: Digital Tinker" :side "Runner" :code 01033}
+            [{:qty 3 :card "Diesel"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 2 :card "Legwork"}
+             {:qty 1 :card "Levy AR Lab Access"}
+             {:qty 3 :card "Lucky Find"}
+             {:qty 2 :card "Quality Time"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 1 :card "The Maker’s Eye"}
+             {:qty 2 :card "Astrolabe"}
+             {:qty 3 :card "Clone Chip"}
+             {:qty 1 :card "Dyson Mem Chip"}
+             {:qty 2 :card "Plascrete Carapace"}
+             {:qty 3 :card "Prepaid VoicePAD"}
+             {:qty 3 :card "R&D Interface"}
+             {:qty 1 :card "Same Old Thing"}
+             {:qty 1 :card "Atman"}
+             {:qty 1 :card "Deus X"}
+             {:qty 1 :card "Mimic"}
+             {:qty 1 :card "Sharpshooter"}
+             {:qty 1 :card "Snowball"}
+             {:qty 1 :card "ZU.13 Key Master"}
+             {:qty 2 :card "Datasucker"}
+             {:qty 1 :card "Parasite"}
+             {:qty 3 :card "Self-modifying Code"}])))
+
+(def worlds-2014-dan-d-runs
+  (matchup
+    [:preconstructed.worlds-2014-b "Worlds 2014: spags (C) vs. Dan D'Argenio (R)"]
+    [:preconstructed.worlds-2014-b-tag "spags (C) vs. Dan D'Argenio (R)"]
+    [:preconstructed.worlds-2014-info "TODO"]
+    (precon "spags - 2014: Broke A$$ Shite"
+            {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code 6005}
+            [{:qty 3 :card "AstroScript Pilot Program"}
+             {:qty 2 :card "Breaking News"}
+             {:qty 3 :card "NAPD Contract"}
+             {:qty 3 :card "Project Beale"}
+             {:qty 3 :card "Jackson Howard"}
+             {:qty 3 :card "Marked Accounts"}
+             {:qty 3 :card "PAD Campaign"}
+             {:qty 2 :card "Biotic Labor"}
+             {:qty 2 :card "Fast Track"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Sweeps Week"}
+             {:qty 3 :card "SanSan City Grid"}
+             {:qty 3 :card "Eli 1.0"}
+             {:qty 2 :card "Wraparound"}
+             {:qty 3 :card "Pop-up Window"}
+             {:qty 3 :card "Quandary"}
+             {:qty 2 :card "Tollbooth"}
+             {:qty 3 :card "Architect"}])
+    (precon "Dan D'Argenio - 2014: Andromeda"
+            {:title "Andromeda: Dispossessed Ristie" :side "Runner" :code 2083}
+            [{:qty 3 :card "Account Siphon"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 1 :card "Emergency Shutdown"}
+             {:qty 1 :card "Express Delivery"}
+             {:qty 1 :card "Infiltration"}
+             {:qty 1 :card "Inside Job"}
+             {:qty 2 :card "Legwork"}
+             {:qty 2 :card "Quality Time"}
+             {:qty 3 :card "Special Order"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 3 :card "Desperado"}
+             {:qty 1 :card "Plascrete Carapace"}
+             {:qty 2 :card "RAD Interface"}
+             {:qty 1 :card "Daily Casts"}
+             {:qty 2 :card "Kati Jones"}
+             {:qty 1 :card "Same Old Thing"}
+             {:qty 3 :card "Security Testing"}
+             {:qty 2 :card "Corroder"}
+             {:qty 3 :card "Faerie"}
+             {:qty 1 :card "Femme Fatale"}
+             {:qty 1 :card "Mimic"}
+             {:qty 1 :card "Passport"}
+             {:qty 1 :card "Yog.0"}
+             {:qty 3 :card "Datasucker"}])))
+
 ;; Utility
 
 (defn matchup-by-key
@@ -347,10 +456,13 @@
     :worlds-2012-a worlds-2012-ben-runs
     :worlds-2012-b worlds-2012-ben-corps
     :worlds-2013-a worlds-2013-jens-runs
-    :worlds-2013-b worlds-2013-jens-corps))
+    :worlds-2013-b worlds-2013-jens-corps
+    :worlds-2014-a worlds-2014-dan-d-runs
+    :worlds-2014-b worlds-2014-dan-d-corps))
 
 (def all-matchups
   "A set of all preconstructed matchups (by key).
   The frontend uses this to build a matchup table for play"
   #{:worlds-2012-a :worlds-2012-b
-    :worlds-2013-a :worlds-2013-b})
+    :worlds-2013-a :worlds-2013-b
+    :worlds-2014-a :worlds-2014-b})
