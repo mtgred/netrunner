@@ -578,7 +578,7 @@
       (is (accessing state "Merger"))
       (is (= ["No action"] (prompt-buttons :runner)))
       (click-prompt state :runner "No action")
-      (is (= :waiting (prompt-type :runner))
+      (is (waiting? state :runner)
           "Runner has prompt to wait for Corp to use Ganked!"))))
 
 (deftest anvil
@@ -2904,6 +2904,15 @@
           (click-card state :corp (find-card "Efficiency Committee" discard))
           (is (last-log-contains? state log-str)))))))
 
+(deftest gatekeeper-makes-runner-wait
+  (do-game
+    (subroutine-test "Gatekeeper" 0 {:corp {:deck 5}})
+    (is (waiting? state :runner) "Runner is waiting")
+    (click-prompt state :corp "3")
+    (is (waiting? state :runner) "Runner is still waiting")
+    (click-prompt state :corp "Done")
+    (is (not (waiting? state :runner)) "Runner is done waiting")))
+
 (deftest gemini
   ;; Gemini - Successfully trace to do 1 net damage; do 1 net damage if trace strength is 5 or more regardless of success
   (do-game
@@ -4152,7 +4161,7 @@
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Snare!" (:hand (get-corp))))
       ;; Runner access Snare! corp has prompt
-      (is (= :waiting (prompt-type :runner))
+      (is (waiting? state :runner)
           "Runner has prompt to wait for Corp to use Snare!")
       (click-prompt state :corp "Yes")
       (click-prompt state :runner "No action")
@@ -4172,7 +4181,7 @@
       (click-prompt state :corp "Yes")
       (click-card state :corp (find-card "Snare!" (:hand (get-corp))))
       ;; Runner access Snare! corp has prompt
-      (is (= :waiting (prompt-type :runner))
+      (is (waiting? state :runner)
           "Runner has prompt to wait for Corp to use Snare!")
       (click-prompt state :corp "Yes")
       (click-prompt state :runner "No action")
@@ -7755,7 +7764,7 @@
       (click-card state :corp "Inti")
       (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
       (card-subroutine state :corp treb 1)
-      (is (= :waiting (prompt-type :runner)) "Runner waits for Corp to boost first")
+      (is (waiting? state :runner) "Runner waits for Corp to boost first")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (run-continue state)
@@ -7780,7 +7789,7 @@
       (click-card state :corp "Inti")
       (is (= 1 (count (:discard (get-runner)))) "Inti trashed")
       (card-subroutine state :corp treb 1)
-      (is (= :waiting (prompt-type :runner)) "Runner waits for Corp to boost first")
+      (is (waiting? state :runner) "Runner waits for Corp to boost first")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (run-continue state)
@@ -7862,7 +7871,7 @@
       (rez state :corp troll)
       (run-on state "HQ")
       (run-continue state)
-      (is (= :waiting (prompt-type :runner)) "Runner waits for Corp to boost first")
+      (is (waiting? state :runner) "Runner waits for Corp to boost first")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (click-prompt state :runner "End the run")
@@ -7882,7 +7891,7 @@
       (run-continue state)
       (card-subroutine state :corp tsurugi 0)
       (is (not (no-prompt? state :corp)) "Corp is prompted to pay")
-      (is (= :waiting (prompt-type :runner))
+      (is (waiting? state :runner)
           "Runner has prompt to wait for Corp to use Tsurugi"))))
 
 (deftest turing-strength-boosted-when-protecting-a-remote-server

@@ -3824,13 +3824,13 @@
     (is (zero? (count (:hand (get-corp)))))
     (is (= 4 (count (:deck (get-corp)))))
     (play-from-hand state :runner "Insight")
-    (is (= :waiting (prompt-type :runner)) "Runner is waiting for Corp to reorder")
+    (is (waiting? state :runner) "Runner is waiting for Corp to reorder")
     (click-prompt state :corp (find-card "Director Haas" (:deck (get-corp))))
     (click-prompt state :corp (find-card "Elizabeth Mills" (:deck (get-corp))))
     (click-prompt state :corp (find-card "Jackson Howard" (:deck (get-corp))))
     (click-prompt state :corp (find-card "Caprice Nisei" (:deck (get-corp))))
     (click-prompt state :corp "Done")
-    (is (not= :waiting (prompt-type :runner)) "Waiting prompt done")
+    (is (not (waiting? state :runner)) "Waiting prompt done")
     (is (= "Caprice Nisei" (:title (nth (:deck (get-corp)) 0))))
     (is (= "Jackson Howard" (:title (nth (:deck (get-corp)) 1))))
     (is (= "Elizabeth Mills" (:title (nth (:deck (get-corp)) 2))))
@@ -6723,19 +6723,19 @@
     (new-game {:runner {:deck [(qty "Steelskin Scarring" 44)]
                         :hand [(qty "Steelskin Scarring" 2)]}})
     (damage state :corp :net 1)
-    (is (= :waiting (prompt-type :corp)) "Corp is waiting for the runner")
+    (is (waiting? state :corp) "Corp is waiting for the runner")
     (is (changed? [(count (:hand (get-runner))) 2]
           (click-prompt state :runner "Yes"))
         "Draw 2")
     (damage state :corp :net 1)
-    (is (= :waiting (prompt-type :corp)) "Corp is waiting for the runner")
+    (is (waiting? state :corp) "Corp is waiting for the runner")
     (is (changed? [(count (:hand (get-runner))) 0]
           (click-prompt state :runner "No"))
         "Draw none (decline)")
     (is (no-prompt? state :corp) "Corp is not waiting anymore")
     (is (= 2 (count (:hand (get-runner)))))
     (damage state :corp :meat 2)
-    (is (= :waiting (prompt-type :corp)) "Corp is waiting for the runner to pick a steelskin")))
+    (is (waiting? state :corp) "Corp is waiting for the runner to pick a steelskin")))
 
 
 (deftest stimhack
@@ -6764,7 +6764,7 @@
     (new-game {:runner {:hand ["Strike Fund" "Strike Fund"]}})
     (is (changed? [(:credit (get-runner)) 2]
           (damage state :runner :meat 1)
-          (is (= :waiting (prompt-type :corp)) "Corp is waiting for the runner")
+          (is (waiting? state :corp) "Corp is waiting for the runner")
           (click-prompt state :runner "Yes"))
         "Gained 2 credits from Strike Fund")
     (take-credits state :corp)
@@ -7486,7 +7486,7 @@
     (take-credits state :corp)
     (run-empty-server state :rd)
     (play-from-hand state :runner "White Hat")
-    (is (= :waiting (prompt-type :runner)) "Runner is waiting for Corp to boost")
+    (is (waiting? state :runner) "Runner is waiting for Corp to boost")
     (click-prompt state :corp "0")
     (click-prompt state :runner "4")
     (click-prompt state :runner (find-card "Ice Wall" (:hand (get-corp))))

@@ -534,7 +534,7 @@
     (core/continue state :runner nil)
     (rez state :corp (get-ice state :rd 0))
     (core/continue state :corp nil)
-    (is (prompt-is-type? state :corp :waiting) "Corp shouldn't get runner's prompts")))
+    (is (waiting? state :corp) "Corp shouldn't get runner's prompts")))
 
 (deftest multi-access-correct-handling-of-multi-accesses-with-draws-in-between-accesses
     ;; Correct handling of multi accesses with draws in between accesses
