@@ -7,6 +7,7 @@
    [game.core :as core]
    [game.utils :refer [server-card]]
    [jinteki.utils :refer [select-non-nil-keys side-from-str superuser?]]
+   [jinteki.preconstructed :refer [all-matchups]]
    [jinteki.validator :as validator]
    [medley.core :refer [find-first random-uuid]]
    [monger.collection :as mc]
@@ -19,11 +20,13 @@
 (read-write/print-time-literals-clj!)
 
 (defn validate-precon
-  [format _precon]
-  (when-let [precon (and _precon (keyword (str/lower-case _precon)))]
-    (println precon)
+  [format client-precon client-gateway-type]
+  (let [target (if (= format "system-gateway") client-gateway-type client-precon)
+        precon (and target (keyword (str/lower-case target)))]
     (when (or (and (= format "system-gateway")
-                   (contains? #{:beginner :intermediate} precon)))
+                   (contains? #{:beginner :intermediate} precon))
+              (and (= (str format) "preconstructed")
+                   (contains? all-matchups precon)))
       precon)))
 
 (defn create-new-lobby
@@ -31,10 +34,9 @@
     user :user
     {:keys [gameid now
             allow-spectator api-access format mute-spectators password room save-replay
-            precon side singleton spectatorhands timer title]
+            precon gateway-type side singleton spectatorhands timer title]
      :or {gameid (random-uuid)
           now (inst/now)}} :options}]
-  (println precon)
   (let [player {:user user
                 :uid uid
                 :side side}]
@@ -47,7 +49,7 @@
      :runner-spectators []
      :messages []
      ;; options
-     :precon (validate-precon format precon)
+     :precon (validate-precon format precon gateway-type)
      :allow-spectator allow-spectator
      :api-access api-access
      :format format

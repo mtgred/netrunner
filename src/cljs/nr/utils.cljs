@@ -128,6 +128,7 @@
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
    "neo" "Neo"
+   "preconstructed" "Preconstructed"
    "casual" "Casual"})
 
 (def format->slug
@@ -139,6 +140,7 @@
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"
    "Neo" "neo"
+   "Preconstructed" "preconstructed"
    "Casual" "casual"})
 
 (defn regex-escape

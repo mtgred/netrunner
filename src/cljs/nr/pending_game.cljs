@@ -19,8 +19,7 @@
 (defn is-constructed?
   "Games using the starter decks are not constructed"
   [current-game]
-  (or (not (:precon @current-game))
-      (= (:precon @current-game) :constructed)))
+  (not (:precon @current-game)))
 
 (defn is-preconstructed?
   [current-game]

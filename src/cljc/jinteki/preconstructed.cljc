@@ -8,8 +8,9 @@
    :cards deck})
 
 (defn matchup
-  [tr-inner tr-desc corp runner]
+  [tr-inner tr-tag tr-desc corp runner]
   {:tr-inner tr-inner
+   :tr-tag tr-tag
    :tr-desc tr-desc
    :corp corp
    :runner runner})
@@ -115,6 +116,7 @@
 (def system-gateway-beginner
   (matchup
     [:lobby.gateway-format.beginner "Beginner"]
+    [:lobby.gateway-format.beginner "Beginner"]
     [:lobby.gateway-format.beginner-info
      "This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points."]
     gateway-beginner-corp
@@ -122,6 +124,7 @@
 
 (def system-gateway-intermediate
   (matchup
+    [:lobby.gateway-format.intermediate "Intermediate"]
     [:lobby.gateway-format.intermediate "Intermediate"]
     [:lobby.gateway-format.intermediate-info
      "This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points."]
@@ -132,8 +135,9 @@
 
 (def worlds-2012-ben-corps
   (matchup
-    [:preconstructed.worlds-2012-b "Worlds 2012: Ben Marsh vs. Jeremy Z"]
-    [:preconstructed.worlds-2012-b-info "TODO: Fill this in"]
+    [:preconstructed.worlds-2012-b "Worlds 2012: Ben Marsh (C) vs. Jeremy Z (R)"]
+    [:preconstructed.worlds-2012-b-tag "Ben Marsh (C) vs. Jeremy Z (R)"]
+    [:preconstructed.worlds-2012-info "TODO"]
     (precon "Ben Marsh - 2012: ETF"
             {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
             [{:qty 3 :card "Enigma"}
@@ -149,7 +153,7 @@
              {:qty 3 :card "Pad Campaign"}
              {:qty 2 :card "Project Junebug"}
              {:qty 2 :card "Aggressive Secretary"}
-             {:qty 2 :card "Snare"}
+             {:qty 2 :card "Snare!"}
              {:qty 1 :card "Experiential Data"}
              {:qty 3 :card "Hedge Fund"}
              {:qty 3 :card "Biotic Labor"}
@@ -175,17 +179,18 @@
              {:qty 3 :card "Account Siphon"}
              {:qty 3 :card "Inside Job"}
              {:qty 3 :card "Special Order"}
-             {:qty 3 :card "Forged Act. Orders"}
+             {:qty 3 :card "Forged Activation Orders"}
              {:qty 1 :card "Stimhack"}])))
 
 (def worlds-2012-ben-runs
   (matchup
-    [:preconstructed.worlds-2012-a "Worlds 2012:Jeremy Z vs. Ben Marsh"]
-    [:preconstructed.worlds-2012-a-info "TODO: Fill this in"]
+    [:preconstructed.worlds-2012-a "Worlds 2012: Jeremy Z (C) vs. Ben Marsh (R)"]
+    [:preconstructed.worlds-2012-a-tag "Jeremy Z (C) vs. Ben Marsh (R)"]
+    [:preconstructed.worlds-2012-info "TODO"]
     (precon "Jeremy Z - 2012: Weyland"
             {:title "Weyland Consortium: Building a Better World" :side "Corp" :code 1093}
-            [{:qty 3 :card "Priority Req."}
-             {:qty 3 :card "PSF"}
+            [{:qty 3 :card "Priority Requisition."}
+             {:qty 3 :card "Private Security Force"}
              {:qty 3 :card "Hostile Takeover"}
              {:qty 2 :card "Posted Bounty"}
              {:qty 3 :card "Ice Wall"}
@@ -196,8 +201,8 @@
              {:qty 3 :card "Data Raven"}
              {:qty 3 :card "Hadrian's Wall"}
              {:qty 3 :card "Melange M. Corp"}
-             {:qty 1 :card "Corp. Troubleshooter"}
-             {:qty 2 :card "Snare"}
+             {:qty 1 :card "Corporate Troubleshooter"}
+             {:qty 2 :card "Snare!"}
              {:qty 2 :card "Archived Memories"}
              {:qty 3 :card "Beanstalk Royalties"}
              {:qty 3 :card "Hedge Fund"}
@@ -239,6 +244,6 @@
     :worlds-2012-b worlds-2012-ben-corps))
 
 (def all-matchups
-  "A list of all preconstructed matchups (by key).
+  "A set of all preconstructed matchups (by key).
   The frontend uses this to build a matchup table for play"
-  [:worlds-2012-a :worlds-2012-b])
+  #{:worlds-2012-a :worlds-2012-b})

@@ -1,6 +1,7 @@
 (ns nr.new-game
   (:require
    [jinteki.utils :refer [str->int]]
+   [jinteki.preconstructed :refer [all-matchups matchup-by-key]]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [authenticated] :as auth]
    [nr.translations :refer [tr tr-string tr-format tr-side]]
@@ -19,6 +20,7 @@
    :singleton
    :spectatorhands
    :precon
+   :gateway-type
    :timer
    :title])
 
@@ -76,7 +78,7 @@
             :on-change #(swap! options assoc :singleton (.. % -target -checked))}]
    (tr [:lobby.singleton "Singleton"])])
 
-(defn gateway-constructed-choice [fmt-state precon]
+(defn gateway-constructed-choice [fmt-state gateway-type]
   [:div
    {:style {:display (if (= @fmt-state "system-gateway") "block" "none")}}
    (doall
@@ -84,13 +86,26 @@
        ^{:key option}
        [:span [:label [:input
                        {:type "radio"
-                        :name "precon"
+                        :name "gateway-type"
                         :value option
-                        :on-change #(reset! precon (.. % -target -value))
-                        :checked (= @precon option)}]
+                        :on-change #(reset! gateway-type (.. % -target -value))
+                        :checked (= @gateway-type option)}]
               (str (tr-string "lobby.gateway-format" option) "    ")]]))])
 
-(defn format-section [fmt-state options precon]
+(defn precon-choice [fmt-state precon]
+  [:div
+   {:style {:display (if (= @fmt-state "preconstructed") "block" "none")}}
+   [:div
+    [:label "Matchup:    "]
+    [:select.precon
+     {:value (or @precon "worlds-2012-a")
+      :on-change #(reset! precon (.. % -target -value))}
+     (doall
+       (for [matchup all-matchups]
+         ^{:key (name matchup)}
+         [:option {:value (name matchup)} (tr (:tr-inner (matchup-by-key matchup)))]))]]])
+
+(defn format-section [fmt-state options gateway-type precon]
   [:section
    [:h3 (tr [:lobby.default-game-format "Default game format"])]
    [:select.format
@@ -101,7 +116,8 @@
         ^{:key k}
         [:option {:value k} (tr-format v)]))]
    [singleton-only options fmt-state]
-   [gateway-constructed-choice fmt-state precon]
+   [gateway-constructed-choice fmt-state gateway-type]
+   [precon-choice fmt-state precon]
    [:div.infobox.blue-shade
     {:style {:display (if (:singleton @options) "block" "none")}}
     [:p (tr [:lobby.singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."])]
@@ -212,7 +228,8 @@
                               :format (or (get-in @app-state [:options :default-format]) "standard")
                               :room (:room @lobby-state)
                               :side "Any Side"
-                              :precon nil;;"Beginner"
+                              :gateway-type "Beginner"
+                              :precon "worlds-2012-a"
                               :title (str (:username @user) "'s game")})
                options (r/atom {:allow-spectator true
                                 :api-access false
@@ -225,7 +242,8 @@
                                 :timer nil})
                title (r/cursor state [:title])
                side (r/cursor state [:side])
-               precon-type (r/cursor state [:precon])
+               precon (r/cursor state [:precon])
+               gateway-type (r/cursor state [:gateway-type])
                fmt (r/cursor state [:format])
                flash-message (r/cursor state [:flash-message])]
     (fn [lobby-state user]
@@ -236,5 +254,5 @@
        [:div.content
         [title-section title]
         [side-section side]
-        [format-section fmt options precon-type]
+        [format-section fmt options gateway-type precon]
         [options-section options user]]])))

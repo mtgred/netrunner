@@ -29,10 +29,16 @@
             :socr "SOCR"
             :sunset "Sunset"
             :neo "Neo"
+            :preconstructed "Preconstructed"
             :classic "Classic"
             :casual "Casual"
             :system-gateway "System Gateway"
             :startup "Startup"}
+   :preconstructed {:worlds-2012-a "Worlds 2012: Jeremy Zwirn (C) vs. Ben Marsh (R)"
+                    :worlds-2012-a-tag "Jeremy Zwirn (C) vs. Ben Marsh (R)"
+                    :worlds-2012-b "Worlds 2012: Ben Marsh (C) vs. Jeremy Zwirn (R)"
+                    :worlds-2012-b-tag "Ben Marsh (C) vs. Jeremy Zwirn (R)"
+                    :worlds-2012-info "Worlds 2012 was played with (up to 3 copies of) the Core Set as the only legal product. Jeremy (Building a Better World, Gabriel Santiago) took first place against Ben Marsh (Engineering the Future, Gabriel Santiago) in the first ever Netrunner World Championship."}
    :set {:all "All"
          :draft "Draft"
          :core-set "Core Set"
