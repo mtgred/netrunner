@@ -47,7 +47,7 @@
       (core/resolve-ability state :runner (eid/make-eid state)
                             (c/charge-ability state :runner)
                             (:identity (get-runner)) nil)
-      (is (prompt-is-type? state :corp :waiting))
+      (is (waiting? state :corp))
       (click-prompt state :runner "Done")
       (is (no-prompt? state :corp))
       (core/resolve-ability state :runner (eid/make-eid state)

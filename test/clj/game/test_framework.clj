@@ -88,6 +88,12 @@
     (or (empty? prompt)
         (= :run (:prompt-type prompt)))))
 
+(defn waiting?
+  "Is there a waiting-prompt for the given side?"
+  [state side]
+  (let [prompt (get-prompt state side)]
+    (= :waiting (:prompt-type prompt))))
+
 (defn expect-type
   [type-name choice]
   (str "Expected a " type-name ", received [ " choice

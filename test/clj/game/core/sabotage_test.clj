@@ -13,7 +13,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 15)]}})
       (core/resolve-ability state :runner (eid/make-eid state)
                             (s/sabotage-ability 3) (:identity (get-runner)) nil)
-      (is (prompt-is-type? state :runner :waiting))
+      (is (waiting? state :runner))
       (is (empty? (:discard (get-corp))) "Archives is empty")
       (let [prev-cards-in-rd (-> (get-corp) :deck count)
             prev-cards-in-hq (-> (get-corp) :hand count)]
@@ -34,7 +34,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 15)]}})
       (core/resolve-ability state :runner (eid/make-eid state)
                             (s/sabotage-ability 3) (:identity (get-runner)) nil)
-      (is (prompt-is-type? state :runner :waiting))
+      (is (waiting? state :runner))
       (is (empty? (:discard (get-corp))) "Archives is empty")
       (let [prev-cards-in-rd (-> (get-corp) :deck count)
             prev-cards-in-hq (-> (get-corp) :hand count)]
@@ -53,7 +53,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 15)]}})
       (core/resolve-ability state :runner (eid/make-eid state)
                             (s/sabotage-ability 3) (:identity (get-runner)) nil)
-      (is (prompt-is-type? state :runner :waiting))
+      (is (waiting? state :runner))
       (is (empty? (:discard (get-corp))) "Archives is empty")
       (let [prev-cards-in-rd (-> (get-corp) :deck count)
             prev-cards-in-hq (-> (get-corp) :hand count)]
@@ -74,7 +74,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 7)]}})
       (core/resolve-ability state :runner (eid/make-eid state)
                             (s/sabotage-ability 3) (:identity (get-runner)) nil)
-      (is (prompt-is-type? state :runner :waiting))
+      (is (waiting? state :runner))
       (is (empty? (:discard (get-corp))) "Archives is empty")
       (is (= "Choose at least 2 cards and up to 3 cards to trash from HQ. Remainder will be trashed from top of R&D." (:msg (prompt-map :corp))))
       (is (= "Done" (-> (prompt-map :corp) :choices first :value)) "Got Done choice in prompt")

@@ -35,7 +35,7 @@
     (is (changed? [(:credit (get-corp)) -1]
           (rez state :corp (get-content state :remote1 1)))
         "Corp pays 1 credit to rez AAL")
-    (is (= :waiting (prompt-type :runner)))
+    (is (waiting? state :runner))
     (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
     (is (= ["Advanced Assembly Lines" "Surat City Grid"] (sort (prompt-titles :corp))))
     (is (changed? [(:credit (get-corp)) 3]

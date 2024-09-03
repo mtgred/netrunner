@@ -369,7 +369,7 @@
                         :discard ["Cyberdex Virus Suite"]}})
       (take-credits state :corp)
       (run-empty-server state "Archives")
-      (is (prompt-is-type? state :runner :waiting))
+      (is (waiting? state :runner))
       (click-prompt state :corp "Yes")))
   (testing "contains multiple access abilities"
     (do-game
@@ -380,7 +380,7 @@
       (run-empty-server state "Archives")
       (is (= ["Cyberdex Virus Suite" "Shock!"] (prompt-buttons :runner)))
       (click-prompt state :runner "Shock!")
-      (is (prompt-is-type? state :runner :waiting) "Accessing CVS")
+      (is (waiting? state :runner) "Accessing CVS")
       (click-prompt state :corp "Yes")))
   (testing "contains agendas and access abilities"
     (do-game
@@ -391,7 +391,7 @@
       (run-empty-server state "Archives")
       (is (= ["Hostile Takeover" "Cyberdex Virus Suite"] (prompt-buttons :runner)))
       (click-prompt state :runner "Cyberdex Virus Suite")
-      (is (prompt-is-type? state :runner :waiting))
+      (is (waiting? state :runner))
       (click-prompt state :corp "Yes")
       (is (accessing state "Hostile Takeover"))
       (click-prompt state :runner "Steal")
@@ -405,7 +405,7 @@
       (run-empty-server state "Archives")
       (is (= ["Hostile Takeover" "Cyberdex Virus Suite" "Everything else"] (prompt-buttons :runner)))
       (click-prompt state :runner "Cyberdex Virus Suite")
-      (is (prompt-is-type? state :runner :waiting))
+      (is (waiting? state :runner))
       (click-prompt state :corp "Yes")
       (is (= ["Hostile Takeover" "Everything else"] (prompt-buttons :runner)))
       (click-prompt state :runner "Hostile Takeover")

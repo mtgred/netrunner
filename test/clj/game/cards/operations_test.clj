@@ -3658,7 +3658,7 @@
       (new-game {:corp {:deck [(qty "Beanstalk Royalties" 5)]
                         :hand ["Red Level Clearance"]}})
       (play-from-hand state :corp "Red Level Clearance")
-      (is (prompt-is-type? state :runner :waiting))
+      (is (waiting? state :runner))
       (is (= 4 (count (:choices (prompt-map :corp)))))
       (click-prompt state :corp "Gain 2 [Credits]")
       (is (= 3 (count (:choices (prompt-map :corp)))))
@@ -4541,7 +4541,7 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Subcontract")
       (click-card state :corp (find-card "Scorched Earth" (:hand (get-corp))))
-      (is (prompt-is-type? state :corp :waiting)
+      (is (waiting? state :corp)
           "Corp does not have Subcontract prompt until damage prevention completes")
       (click-prompt state :runner "Done")
       (is (not (no-prompt? state :corp)) "Corp can now play second Subcontract operation")))
@@ -4821,7 +4821,7 @@
       (play-and-score state "Restructured Datapool")
       (let [rd-scored (get-scored state :corp 0)]
         (card-ability state :corp rd-scored 0)
-        (is (not= :waiting (prompt-type :corp)) "Surveillance Sweep only works during a run")
+        (is (not (waiting? state :corp)) "Surveillance Sweep only works during a run")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (= 1 (count-tags state)) "Runner should gain a tag from Restructured Datapool ability"))
@@ -4835,7 +4835,7 @@
         (run-continue state)
         (click-prompt state :runner "Take 1 tag")
         (card-subroutine state :corp dr 0)
-        (is (prompt-is-type? state :corp :waiting) "During a run, Corp should wait on Runner first")
+        (is (waiting? state :corp) "During a run, Corp should wait on Runner first")
         (click-prompt state :runner "0")
         (click-prompt state :corp "0")
         (is (= 1 (get-counters (refresh dr) :power)) "Data Raven should gain a power counter from trace")
@@ -4846,7 +4846,7 @@
         (run-continue state)
         (click-prompt state :runner "Take 1 tag")
         (card-subroutine state :corp dr 0)
-        (is (prompt-is-type? state :runner :waiting) "Runner should now be waiting on Corp")
+        (is (waiting? state :runner) "Runner should now be waiting on Corp")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (= 2 (get-counters (refresh dr) :power)) "Data Raven should gain a power counter from trace"))))
@@ -4869,7 +4869,7 @@
         (run-continue state)
         (click-prompt state :runner "Take 1 tag")
         (card-subroutine state :corp dr 0)
-        (is (prompt-is-type? state :corp :waiting) "During a run, Corp should wait on Runner first")
+        (is (waiting? state :corp) "During a run, Corp should wait on Runner first")
         (click-prompt state :runner "0")
         (click-prompt state :corp "0")
         (is (= 1 (get-counters (refresh dr) :power)) "Data Raven should gain a power counter from trace")
@@ -4877,7 +4877,7 @@
         (run-continue state)
         (click-card state :runner bn)
         (click-prompt state :runner "Steal")
-        (is (prompt-is-type? state :runner :waiting) "After steal, Surveillance Sweep leaves play and Runner waits on Corp"))))
+        (is (waiting? state :runner) "After steal, Surveillance Sweep leaves play and Runner waits on Corp"))))
 
 (deftest surveillance-sweep-interaction-with-citadel-sanctuary-and-sol
     ;; Interaction with Citadel Sanctuary and Sol
@@ -4895,7 +4895,7 @@
       (click-prompt state :corp "Yes")
       (click-card state :corp "Surveillance Sweep")
       (end-turn state :runner)
-      (is (prompt-is-type? state :runner :waiting) "Runner is waiting on Corp")))
+      (is (waiting? state :runner) "Runner is waiting on Corp")))
 
 (deftest sweeps-week
   ;; Sweeps Week

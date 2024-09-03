@@ -405,7 +405,7 @@
     (new-game {:corp {:hand ["Behold!"]}})
     (take-credits state :corp)
     (run-empty-server state "HQ")
-    (is (= :waiting (prompt-type :runner))
+    (is (waiting? state :runner)
         "Runner has prompt to wait for Behold!")
     (is (changed? [(:credit (get-corp)) -4]
           (click-prompt state :corp "Yes"))
@@ -2553,7 +2553,7 @@
         (run-on state "Server 1")
         (rez state :corp drt)
         (run-continue state)
-        (is (prompt-is-type? state :runner :waiting) "Runner has prompt to wait for Ghost Branch")
+        (is (waiting? state :runner) "Runner has prompt to wait for Ghost Branch")
         (click-prompt state :corp "Yes")
         (is (= 2 (count-tags state)) "Runner has 2 tags")
         (click-prompt state :runner "Pay 0 [Credits] to trash")
@@ -4224,7 +4224,7 @@
         (take-credits state :runner)
         (play-from-hand state :corp "Neural EMP")
         (is (not (no-prompt? state :corp)) "Prana prompt for Corp")
-        (is (= :waiting (prompt-type :runner))))))
+        (is (waiting? state :runner)))))
 
 (deftest prana-condenser-runner-cards-and-costs-don-t-trigger-prana
       ;; Runner cards and costs don't trigger Prana
@@ -5097,7 +5097,7 @@
       (play-from-hand state :corp "Snare!" "New remote")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
-      (is (= :waiting (prompt-type :runner))
+      (is (waiting? state :runner)
           "Runner has prompt to wait for Snare!")
       (click-prompt state :corp "Yes")
       (is (= 3 (:credit (get-corp))) "Corp had 7 and paid 4 for Snare! 1 left")
@@ -5117,7 +5117,7 @@
         (run-on state "Server 1")
         (rez state :corp drt)
         (run-continue state)
-        (is (= :waiting (prompt-type :runner))
+        (is (waiting? state :runner)
             "Runner has prompt to wait for Snare!")
         (click-prompt state :corp "Yes")
         (is (= 1 (count-tags state)) "Runner has 1 tag")
@@ -5962,7 +5962,7 @@
       (take-credits state :corp)
       (is (= 2 (get-counters (refresh toshi) :advancement)) "Toshiyuki has 2 advancements")
       (run-empty-server state "Server 1")
-      (is (= :waiting (prompt-type :runner))
+      (is (waiting? state :runner)
           "Runner has prompt to wait for Toshiyuki")
       (click-prompt state :corp "Yes") ; choose to do a swap
       (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp))))
