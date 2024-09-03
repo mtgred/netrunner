@@ -1,6 +1,7 @@
 (ns nr.game-row
   (:require
    [jinteki.utils :refer [superuser?]]
+   [jinteki.preconstructed :refer [matchup-by-key]]
    [cljc.java-time.instant :as inst]
    [cljc.java-time.duration :as duration]
    [cljc.java-time.temporal.chrono-unit :as chrono]
