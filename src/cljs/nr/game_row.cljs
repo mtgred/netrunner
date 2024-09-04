@@ -181,6 +181,10 @@
   (when precon
     [:span.format-precon (str ": " (tr (:tr-tag (matchup-by-key precon))))]))
 
+(defn- precon-under-span [precon]
+  (when precon
+    [:span.format-precon-deck-names (tr (:tr-underline (matchup-by-key precon)))]))
+
 (defn game-format [{fmt :format singleton? :singleton precon :precon}]
   [:div {:class "game-format"}
    [:span.format-label (tr [:lobby.format "Format"]) ":  "]
@@ -225,5 +229,6 @@
      [game-title state user game]
      [mod-menu-popup state user game]
      [game-format game]
+     [precon-under-span (:precon game)]
      [game-time game]
      [players-row game]]))

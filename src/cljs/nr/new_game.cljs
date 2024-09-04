@@ -95,8 +95,9 @@
 (defn precon-choice [fmt-state precon]
   [:div
    {:style {:display (if (= @fmt-state "preconstructed") "block" "none")}}
+   [:span (str "Decks:     " (tr (:tr-underline (matchup-by-key (keyword @precon)))))]
    [:div
-    [:label "Matchup:    "]
+    [:label "Match:    "]
     [:select.precon
      {:value (or @precon "worlds-2012-a")
       :on-change #(reset! precon (.. % -target -value))}
