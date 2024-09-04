@@ -135,8 +135,8 @@
 
 (def worlds-2012-ben-corps
   (matchup
-    [:preconstructed.worlds-2012-b "Worlds 2012: Ben Marsh (C) vs. Jeremy Z (R)"]
-    [:preconstructed.worlds-2012-b-tag "Ben Marsh (C) vs. Jeremy Z (R)"]
+    [:preconstructed.worlds-2012-a "Worlds 2012: Ben Marsh (C) vs. Jeremy Z (R)"]
+    [:preconstructed.worlds-2012-a-tag "Ben Marsh (C) vs. Jeremy Z (R)"]
     [:preconstructed.worlds-2012-info "TODO"]
     (precon "Ben Marsh - 2012: Weyland"
             {:title "Weyland Consortium: Building a Better World" :side "Corp" :code 1093}
@@ -182,8 +182,8 @@
 
 (def worlds-2012-ben-runs
   (matchup
-    [:preconstructed.worlds-2012-a "Worlds 2012: Jeremy Z (C) vs. Ben Marsh (R)"]
-    [:preconstructed.worlds-2012-a-tag "Jeremy Z (C) vs. Ben Marsh (R)"]
+    [:preconstructed.worlds-2012-b "Worlds 2012: Jeremy Z (C) vs. Ben Marsh (R)"]
+    [:preconstructed.worlds-2012-b-tag "Jeremy Z (C) vs. Ben Marsh (R)"]
     [:preconstructed.worlds-2012-info "TODO"]
     (precon "Jeremy Z - 2012: ETF"
             {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
@@ -232,10 +232,61 @@
              {:qty 2 :card "Bank Job"}])))
 
 ;; worlds 2013: Jens Erickson (1) vs. Andrew Veen (2)
+(def worlds-2013-jens-corps
+  (matchup
+    [:preconstructed.worlds-2013-a "Worlds 2013: Jens Erickson (C) vs. Andrew Veen (R)"]
+    [:preconstructed.worlds-2013-a-tag "Jens Erickson (C) vs. Andrew Veen (R)"]
+    [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves."]
+    (precon "Jens Erickson - 2013: Engineering the Future"
+            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
+            [{:qty 3 :card "Accelerated Beta Test"}
+             {:qty 3 :card "Project Vitruvius"}
+             {:qty 3 :card "Efficiency Committee"}
+             {:qty 1 :card "Director Haas' Pet Project"}
+             {:qty 1 :card "Gila Hands Arcology"}
+             {:qty 3 :card "Adonis Campaign"}
+             {:qty 3 :card "Jackson Howard"}
+             {:qty 2 :card "Ash 2X3ZB9CY"}
+             {:qty 2 :card "SanSan City Grid"}
+             {:qty 3 :card "Biotic Labor"}
+             {:qty 2 :card "Green Level Clearance"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Eli 1.0"}
+             {:qty 1 :card "Heimdall 1.0"}
+             {:qty 2 :card "Wall of Static"}
+             {:qty 2 :card "Ice Wall"}
+             {:qty 1 :card "Viper"}
+             {:qty 1 :card "Viktor 2.0"}
+             {:qty 2 :card "Enigma"}
+             {:qty 2 :card "Pop-up Window"}
+             {:qty 1 :card "Tollbooth"}
+             {:qty 3 :card "Rototurret"}
+             {:qty 1 :card "Ichi 1.0"}
+             {:qty 1 :card "Grim"}])
+    (precon "Andrew Veen - 2013: Kate McCaffrey"
+            {:title "Kate \"Mac\" McCaffrey: Digital Tinker" :side "Runner" :code 01033}
+            [{:qty 3 :card "Modded"}
+             {:qty 3 :card "Test Run"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 3 :card "Clone Chip"}
+             {:qty 3 :card "R&D Interface"}
+             {:qty 3 :card "Plascrete Carapace"}
+             {:qty 3 :card "Desperado"}
+             {:qty 3 :card "Atman"}
+             {:qty 1 :card "Deus Ex"}
+             {:qty 1 :card "Femme Fetale"}
+             {:qty 3 :card "Self-modifying code"}
+             {:qty 3 :card "Datasucker"}
+             {:qty 1 :card "Parasite"}
+             {:qty 3 :card "Kati Jones"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Professional Contacts"}])))
+
 (def worlds-2013-jens-runs
   (matchup
-    [:preconstructed.worlds-2013-a "Worlds 2013: Andrew Veen (C) vs. Jens Erickson (R)"]
-    [:preconstructed.worlds-2013-a-tag "Andrew Veen (C) vs. Jens Erickson (R)"]
+    [:preconstructed.worlds-2013-b "Worlds 2013: Andrew Veen (C) vs. Jens Erickson (R)"]
+    [:preconstructed.worlds-2013-b-tag "Andrew Veen (C) vs. Jens Erickson (R)"]
     [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves."]
     (precon "Andrew Veen - 2013: Making News"
             {:title "NBN: Making News" :side "Corp" :code 25104}
@@ -283,57 +334,6 @@
              {:qty 1 :card "Kati Jones"}
              {:qty 1 :card "John Masanori"}
              {:qty 1 :card "Professional Contacts"}])))
-
-(def worlds-2013-jens-corps
-  (matchup
-    [:preconstructed.worlds-2013-b "Worlds 2013: Jens Erickson (C) vs. Andrew Veen (R)"]
-    [:preconstructed.worlds-2013-b-tag "Jens Erickson (C) vs. Andrew Veen (R)"]
-    [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves."]
-    (precon "Jens Erickson - 2013: Engineering the Future"
-            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
-            [{:qty 3 :card "Accelerated Beta Test"}
-             {:qty 3 :card "Project Vitruvius"}
-             {:qty 3 :card "Efficiency Committee"}
-             {:qty 1 :card "Director Haas' Pet Project"}
-             {:qty 1 :card "Gila Hands Arcology"}
-             {:qty 3 :card "Adonis Campaign"}
-             {:qty 3 :card "Jackson Howard"}
-             {:qty 2 :card "Ash 2X3ZB9CY"}
-             {:qty 2 :card "SanSan City Grid"}
-             {:qty 3 :card "Biotic Labor"}
-             {:qty 2 :card "Green Level Clearance"}
-             {:qty 3 :card "Hedge Fund"}
-             {:qty 3 :card "Eli 1.0"}
-             {:qty 1 :card "Heimdall 1.0"}
-             {:qty 2 :card "Wall of Static"}
-             {:qty 2 :card "Ice Wall"}
-             {:qty 1 :card "Viper"}
-             {:qty 1 :card "Viktor 2.0"}
-             {:qty 2 :card "Enigma"}
-             {:qty 2 :card "Pop-up Window"}
-             {:qty 1 :card "Tollbooth"}
-             {:qty 3 :card "Rototurret"}
-             {:qty 1 :card "Ichi 1.0"}
-             {:qty 1 :card "Grim"}])
-    (precon "Andrew Veen - 2013: Kate McCaffrey"
-            {:title "Kate \"Mac\" McCaffrey: Digital Tinker" :side "Runner" :code 01033}
-            [{:qty 3 :card "Modded"}
-             {:qty 3 :card "Test Run"}
-             {:qty 3 :card "Sure Gamble"}
-             {:qty 3 :card "Dirty Laundry"}
-             {:qty 3 :card "Clone Chip"}
-             {:qty 3 :card "R&D Interface"}
-             {:qty 3 :card "Plascrete Carapace"}
-             {:qty 3 :card "Desperado"}
-             {:qty 3 :card "Atman"}
-             {:qty 1 :card "Deus Ex"}
-             {:qty 1 :card "Femme Fetale"}
-             {:qty 3 :card "Self-modifying code"}
-             {:qty 3 :card "Datasucker"}
-             {:qty 1 :card "Parasite"}
-             {:qty 3 :card "Kati Jones"}
-             {:qty 3 :card "Daily Casts"}
-             {:qty 3 :card "Professional Contacts"}])))
 
 ;; worlds 2014: Dan D'Argenio vs. Minh Tran
 (def worlds-2014-dan-d-corps
@@ -669,10 +669,10 @@
              {:qty 3 :card "Temüjin Contract"}])))
 
 ;; Worlds 2017: ChaosJuggler vs. Gregory Tongue
-(def worlds-2017-chaosjuggler-corps
+(def worlds-2017-wilfy-corps
   (matchup
-    [:preconstructed.worlds-2017-a "Worlds 2017: ChaosJuggler (C) vs. Gregory Tongue (R)"]
-    [:preconstructed.worlds-2017-a-tag "ChaosJuggler (C) vs. Gregory Tongue (R)"]
+    [:preconstructed.worlds-2017-a "Worlds 2017: Wilfy Horig (C) vs. Gregory Tongue (R)"]
+    [:preconstructed.worlds-2017-a-tag "Wilfy Horig (C) vs. Gregory Tongue (R)"]
     [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
     (precon "ChaosJuggler - 2017: Sinson Reversed CI"
             {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code 3001}
@@ -727,10 +727,10 @@
              {:qty 3 :card "Self-modifying Code"}
              {:qty 1 :card "Trope"}])))
 
-(def worlds-2017-chaosjuggler-runs
+(def worlds-2017-wilfy-runs
   (matchup
-    [:preconstructed.worlds-2017-b "Worlds 2017: Gregory Tongue (C) vs. ChaosJuggler (R)"]
-    [:preconstructed.worlds-2017-b-tag "Gregory Tongue (C) vs. ChaosJuggler (R)"]
+    [:preconstructed.worlds-2017-b "Worlds 2017: Gregory Tongue (C) vs. Wilfy Horig (R)"]
+    [:preconstructed.worlds-2017-b-tag "Gregory Tongue (C) vs. Wilfy Horig (R)"]
     [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
     (precon "Gregory Tongue - 2017: No-Show Rewiring CI"
             {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code 3001}
@@ -788,6 +788,115 @@
              {:qty 2 :card "Self-modifying Code"}
              {:qty 2 :card "Tapwrm"}])))
 
+;; Worlds 2018: Joe Schupp vs. Chris Dyer
+(def worlds-2018-joe-corps
+  (matchup
+    [:preconstructed.worlds-2018-a "Worlds 2018: Joe Schupp (C) vs. Chris Dyer (R)"]
+    [:preconstructed.worlds-2018-a-tag "Joe Schupp (C) vs. Chris Dyer (R)"]
+    [:preconstructed.worlds-2018-info "403(!) players attended worlds in 2018. This is the final worlds championship to be run by FFG. The tournament was held in Minneapolis, MN, USA, and consisted of 9(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Reign and Reverie"]
+    (precon "Joe Schupp - 2018: AMERICA CtM"
+            {:title "NBN: Controlling the Message" :side "Corp" :code 11017}
+            [{:qty 1 :card "15 Minutes"}
+             {:qty 3 :card "AR-Enhanced Security"}
+             {:qty 3 :card "Global Food Initiative"}
+             {:qty 3 :card "Project Beale"}
+             {:qty 1 :card "Quantum Predictive Model"}
+             {:qty 3 :card "Commercial Bankers Group"}
+             {:qty 3 :card "Daily Business Show"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 3 :card "Team Sponsorship"}
+             {:qty 1 :card "Exchange of Information"}
+             {:qty 3 :card "Hard-Hitting News"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 1 :card "Market Forces"}
+             {:qty 1 :card "Preemptive Action"}
+             {:qty 1 :card "Psychographics"}
+             {:qty 3 :card "Calibration Testing"}
+             {:qty 3 :card "Mumbad Virtual Tour"}
+             {:qty 3 :card "IP Block"}
+             {:qty 2 :card "Resistor"}
+             {:qty 3 :card "Enigma"}
+             {:qty 1 :card "Tollbooth"}
+             {:qty 1 :card "Turnpike"}])
+    (precon "Chris Dyer - 2018: Gooseberry MaxX"
+            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code 7029}
+            [{:qty 3 :card "Dirty Laundry"}
+             {:qty 3 :card "Hacktivist Meeting"}
+             {:qty 1 :card "Indexing"}
+             {:qty 3 :card "Inject"}
+             {:qty 1 :card "Knifed"}
+             {:qty 1 :card "Legwork"}
+             {:qty 1 :card "Levy AR Lab Access"}
+             {:qty 1 :card "Rebirth"}
+             {:qty 1 :card "Spooned"}
+             {:qty 3 :card "Stimhack"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 3 :card "Patchwork"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 1 :card "Ice Carver"}
+             {:qty 3 :card "Liberated Account"}
+             {:qty 3 :card "Same Old Thing"}
+             {:qty 3 :card "The Turning Wheel"}
+             {:qty 3 :card "Aumakua"}
+             {:qty 2 :card "Black Orchestra"}
+             {:qty 1 :card "MKUltra"}
+             {:qty 2 :card "Paperclip"}])))
+
+(def worlds-2018-joe-runs
+  (matchup
+    [:preconstructed.worlds-2018-b "Worlds 2018: Chris Dyer (C) vs. Joe Schupp (R)"]
+    [:preconstructed.worlds-2018-b-tag "Chris Dyer (C) vs. Joe Schupp (R)"]
+    [:preconstructed.worlds-2018-info "403(!) players attended worlds in 2018. This is the final worlds championship to be run by FFG. The tournament was held in Minneapolis, MN, USA, and consisted of 9(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Reign and Reverie"]
+    (precon "Chris Dyer - 2018: Trust the Process"
+            {:title "NBN: Controlling the Message" :side "Corp" :code 11017}
+            [{:qty 1 :card "15 Minutes"}
+             {:qty 3 :card "AR-Enhanced Security"}
+             {:qty 3 :card "Global Food Initiative"}
+             {:qty 3 :card "Project Beale"}
+             {:qty 1 :card "Quantum Predictive Model"}
+             {:qty 1 :card "Amani Senai"}
+             {:qty 3 :card "Commercial Bankers Group"}
+             {:qty 2 :card "Daily Business Show"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 3 :card "Team Sponsorship"}
+             {:qty 1 :card "Closed Accounts"}
+             {:qty 1 :card "Exchange of Information"}
+             {:qty 3 :card "Hard-Hitting News"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 1 :card "Preemptive Action"}
+             {:qty 1 :card "Psychographics"}
+             {:qty 1 :card "SEA Source"}
+             {:qty 2 :card "Calibration Testing"}
+             {:qty 3 :card "Mumbad Virtual Tour"}
+             {:qty 2 :card "IP Block"}
+             {:qty 3 :card "Resistor"}
+             {:qty 3 :card "Enigma"}
+             {:qty 1 :card "Tollbooth"}
+             {:qty 1 :card "Turnpike"}])
+    (precon "Joe Schupp - 2018: Dan D'Argenio KoS Val"
+            {:title "Valencia Estevez: The Angel of Cayambe" :side "Runner" :code 7030}
+            [{:qty 3 :card "Dirty Laundry"}
+             {:qty 3 :card "Employee Strike"}
+             {:qty 3 :card "I've Had Worse"}
+             {:qty 2 :card "Indexing"}
+             {:qty 3 :card "Inject"}
+             {:qty 3 :card "Mining Accident"}
+             {:qty 1 :card "Rebirth"}
+             {:qty 3 :card "Stimhack"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 2 :card "Turntable"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Earthrise Hotel"}
+             {:qty 1 :card "Ice Carver"}
+             {:qty 3 :card "Liberated Account"}
+             {:qty 1 :card "No One Home"}
+             {:qty 2 :card "The Turning Wheel"}
+             {:qty 2 :card "Aumakua"}
+             {:qty 3 :card "Black Orchestra"}
+             {:qty 2 :card "MKUltra"}
+             {:qty 3 :card "Paperclip"}
+             {:qty 1 :card "D4v1d"}])))
+
 ;; Utility
 
 (defn matchup-by-key
@@ -797,18 +906,20 @@
     :beginner system-gateway-beginner
     :intermediate system-gateway-intermediate
     ;; indexed
-    :worlds-2012-a worlds-2012-ben-runs
-    :worlds-2012-b worlds-2012-ben-corps
-    :worlds-2013-a worlds-2013-jens-runs
-    :worlds-2013-b worlds-2013-jens-corps
-    :worlds-2014-a worlds-2014-dan-d-runs
-    :worlds-2014-b worlds-2014-dan-d-corps
-    :worlds-2015-a worlds-2015-dan-d-runs
-    :worlds-2015-b worlds-2015-dan-d-corps
+    :worlds-2012-a worlds-2012-ben-corps
+    :worlds-2012-b worlds-2012-ben-runs
+    :worlds-2013-a worlds-2013-jens-corps
+    :worlds-2013-b worlds-2013-jens-runs
+    :worlds-2014-a worlds-2014-dan-d-corps
+    :worlds-2014-b worlds-2014-dan-d-runs
+    :worlds-2015-a worlds-2015-dan-d-corps
+    :worlds-2015-b worlds-2015-dan-d-runs
     :worlds-2016-a worlds-2016-chris-dyer-corps
     :worlds-2016-b worlds-2016-chris-dyer-runs
-    :worlds-2017-a worlds-2017-chaosjuggler-corps
-    :worlds-2017-b worlds-2017-chaosjuggler-runs))
+    :worlds-2017-a worlds-2017-wilfy-corps
+    :worlds-2017-b worlds-2017-wilfy-runs
+    :worlds-2018-a worlds-2018-joe-corps
+    :worlds-2018-b worlds-2018-joe-runs))
 
 (def all-matchups
   "A set of all preconstructed matchups (by key).
@@ -818,4 +929,5 @@
     :worlds-2014-a :worlds-2014-b
     :worlds-2015-a :worlds-2015-b
     :worlds-2016-a :worlds-2016-b
-    :worlds-2017-a :worlds-2017-b})
+    :worlds-2017-a :worlds-2017-b
+    :worlds-2018-a :worlds-2018-b})
