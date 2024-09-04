@@ -1005,7 +1005,7 @@
   (matchup
     [:preconstructed.worlds-2020-a "Worlds 2020: Limes (C) vs. tf34 (R)"]
     [:preconstructed.worlds-2020-a-tag "Limes (C) vs. tf34 (R)"]
-    [:preconstructed.worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
+    [:preconstructed.worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to Uprising."]
     (precon "Limes - 2020: I don't like this deck"
             {:title "Sportsmetal: Go Big or Go Home" :side "Corp" :code 22026}
             [{:qty 2 :card "False Lead"}
@@ -1054,7 +1054,7 @@
   (matchup
     [:preconstructed.worlds-2020-b "Worlds 2020: tf34 (R) vs. Limes (C)"]
     [:preconstructed.worlds-2020-b-tag "tf34 (R) vs. Limes (C)"]
-    [:preconstructed.worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
+    [:preconstructed.worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to Uprising."]
     (precon "tf34 - 2020: Malia CTM"
             {:title "NBN: Controlling the Message" :side "Corp" :code 11017}
             [{:qty 3 :card "Bellona"}
@@ -1101,6 +1101,124 @@
              {:qty 3 :card "Imp"}
              {:qty 1 :card "Stargate"}])))
 
+;; Worlds 2021: Patrick Gower vs. Jonas
+(def worlds-2021-patrick-corps
+  (matchup
+    [:preconstructed.worlds-2021-a "Worlds 2021: Patrick Gower (C) vs. Jonas (R)"]
+    [:preconstructed.worlds-2021-a-tag "Patrick Gower (C) vs. Jonas (R)"]
+    [:preconstructed.worlds-2021-info "201 players played in the second online world championship for Netrunner, run by Project NISEI in 2021. Due to the ongoing disruption caused by the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
+    (precon "Patrick Gower - 2021: 44 card PD"
+            {:title "Haas-Bioroid: Precision Design" :side "Corp" :code 30035}
+            [{:qty 3 :card "Cyberdex Sandbox"}
+             {:qty 2 :card "Global Food Initiative"}
+             {:qty 1 :card "Luminal Transubstantiation"}
+             {:qty 2 :card "Offworld Office"}
+             {:qty 3 :card "Advanced Assembly Lines"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 2 :card "Spin Doctor"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Seamless Launch"}
+             {:qty 1 :card "Anoetic Void"}
+             {:qty 1 :card "Crisium Grid"}
+             {:qty 1 :card "Cyberdex Virus Suite"}
+             {:qty 2 :card "Manegarm Skunkworks"}
+             {:qty 3 :card "Tranquility Home Grid"}
+             {:qty 2 :card "Border Control"}
+             {:qty 1 :card "Hagen"}
+             {:qty 3 :card "Gatekeeper"}
+             {:qty 1 :card "Macrophage"}
+             {:qty 2 :card "Magnet"}
+             {:qty 2 :card "Ansel 1.0"}
+             {:qty 3 :card "Drafter"}])
+    (precon "Jonas - 2021: Watch Me Drip, Watch Me Maemi"
+            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code 7029}
+            [{:qty 3 :card "Deuces Wild"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 1 :card "Falsified Credentials"}
+             {:qty 3 :card "I've Had Worse"}
+             {:qty 3 :card "Labor Rights"}
+             {:qty 3 :card "Mining Accident"}
+             {:qty 3 :card "Moshing"}
+             {:qty 2 :card "Overclock"}
+             {:qty 1 :card "Rebirth"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 3 :card "Gachapon"}
+             {:qty 3 :card "Hippo"}
+             {:qty 2 :card "Maw"}
+             {:qty 2 :card "Zer0"}
+             {:qty 1 :card "Citadel Sanctuary"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 1 :card "DJ Fenris"}
+             {:qty 3 :card "Liberated Account"}
+             {:qty 2 :card "Mystic Maemi"}
+             {:qty 3 :card "PAD Tap"}
+             {:qty 3 :card "Paladin Poemu"}
+             {:qty 2 :card "Political Operative"}
+             {:qty 1 :card "Trickster Taka"}
+             {:qty 3 :card "Black Orchestra"}
+             {:qty 3 :card "MKUltra"}
+             {:qty 3 :card "Paperclip"}
+             {:qty 2 :card "Botulus"}
+             {:qty 3 :card "Rezeki"}
+             {:qty 2 :card "Stargate"}])))
+
+(def worlds-2021-patrick-runs
+  (matchup
+    [:preconstructed.worlds-2021-b "Worlds 2021: Jonas (C) vs. Patrick Gower (R)"]
+    [:preconstructed.worlds-2021-b-tag "Jonas (C) vs. Patrick Gower (R)"]
+    [:preconstructed.worlds-2021-info "201 players played in the second online world championship for Netrunner, run by Project NISEI in 2021. Due to the ongoing disruption caused by the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
+    (precon "Jonas - 2021: Is Gagarin Good?"
+            {:title "Gagarin Deep Space: Expanding the Horizon" :side "Corp" :code 7002}
+            [{:qty 1 :card "Above the Law"}
+             {:qty 2 :card "Global Food Initiative"}
+             {:qty 2 :card "Hostile Takeover"}
+             {:qty 2 :card "Offworld Office"}
+             {:qty 3 :card "Project Atlas"}
+             {:qty 3 :card "Commercial Bankers Group"}
+             {:qty 3 :card "Jeeves Model Bioroids"}
+             {:qty 3 :card "Marilyn Campaign"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 3 :card "Reconstruction Contract"}
+             {:qty 3 :card "Spin Doctor"}
+             {:qty 3 :card "Wall to Wall"}
+             {:qty 1 :card "Audacity"}
+             {:qty 1 :card "Consulting Visit"}
+             {:qty 3 :card "Dedication Ceremony"}
+             {:qty 3 :card "Economic Warfare"}
+             {:qty 2 :card "Hard-Hitting News"}
+             {:qty 1 :card "High-Profile Target"}
+             {:qty 3 :card "Border Control"}
+             {:qty 2 :card "Magnet"}
+             {:qty 1 :card "Mausolus"}
+             {:qty 1 :card "Rototurret"}])
+    (precon "Patrick Gower - 2021: Medium to Large MaxX"
+            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code 7029}
+            [{:qty 3 :card "Deuces Wild"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 3 :card "I've Had Worse"}
+             {:qty 3 :card "Labor Rights"}
+             {:qty 1 :card "Mad Dash"}
+             {:qty 3 :card "Moshing"}
+             {:qty 3 :card "Overclock"}
+             {:qty 1 :card "Rebirth"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 3 :card "Hippo"}
+             {:qty 3 :card "Maw"}
+             {:qty 3 :card "Aeneas Informant"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Liberated Account"}
+             {:qty 3 :card "PAD Tap"}
+             {:qty 2 :card "Paladin Poemu"}
+             {:qty 1 :card "Political Operative"}
+             {:qty 1 :card "Salsette Slums"}
+             {:qty 1 :card "The Turning Wheel"}
+             {:qty 3 :card "Black Orchestra"}
+             {:qty 3 :card "MKUltra"}
+             {:qty 3 :card "Paperclip"}
+             {:qty 1 :card "Botulus"}
+             {:qty 3 :card "Rezeki"}
+             {:qty 1 :card "Stargate"}])))
+
 ;; Utility
 
 (defn matchup-by-key
@@ -1127,7 +1245,9 @@
     :worlds-2019-a worlds-2019-pinsel-corps
     :worlds-2019-b worlds-2019-pinsel-runs
     :worlds-2020-a worlds-2020-limes-corps
-    :worlds-2020-b worlds-2020-limes-runs))
+    :worlds-2020-b worlds-2020-limes-runs
+    :worlds-2021-a worlds-2021-patrick-corps
+    :worlds-2021-b worlds-2021-patrick-runs))
 
 (def all-matchups
   "A set of all preconstructed matchups (by key).
@@ -1140,4 +1260,5 @@
     :worlds-2017-a :worlds-2017-b
     :worlds-2018-a :worlds-2018-b
     :worlds-2019-a :worlds-2019-b
-    :worlds-2020-a :worlds-2020-b})
+    :worlds-2020-a :worlds-2020-b
+    :worlds-2021-a :worlds-2021-b})
