@@ -1219,6 +1219,115 @@
              {:qty 3 :card "Rezeki"}
              {:qty 1 :card "Stargate"}])))
 
+;; Worlds 2022: William Huang vs. skry
+(def worlds-2022-sokka-corps
+  (matchup
+    [:preconstructed.worlds-2022-a "Worlds 2022: William Huang (C) vs. skry (R)"]
+    [:preconstructed.worlds-2022-a-tag "William Huang (C) vs. skry (R)"]
+    [:preconstructed.worlds-2022-info "158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 8(?) rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun."]
+    (precon "William Huang - 2022: SNACS"
+            {:title "Sportsmetal: Go Big or Go Home" :side "Corp" :code 22026}
+            [{:qty 1 :card "Élivágar Bifurcation"}
+             {:qty 2 :card "Global Food Initiative"}
+             {:qty 1 :card "Luminal Transubstantiation"}
+             {:qty 3 :card "Megaprix Qualifier"}
+             {:qty 1 :card "Offworld Office"}
+             {:qty 3 :card "Project Vitruvius"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 3 :card "Spin Doctor"}
+             {:qty 2 :card "Audacity"}
+             {:qty 2 :card "Biotic Labor"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "NEXT Activation Command"}
+             {:qty 3 :card "Red Level Clearance"}
+             {:qty 3 :card "Seamless Launch"}
+             {:qty 2 :card "Mavirus"}
+             {:qty 3 :card "Tranquility Home Grid"}
+             {:qty 1 :card "Hagen"}
+             {:qty 3 :card "Fairchild 3.0"}
+             {:qty 3 :card "Magnet"}
+             {:qty 1 :card "Loki"}
+             {:qty 2 :card "Ansel 1.0"}
+             {:qty 1 :card "Drafter"}])
+    (precon "skry - 2022: Liberté, Égalité, Humidité"
+            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code 21081}
+            [{:qty 3 :card "Deuces Wild"}
+             {:qty 2 :card "Dirty Laundry"}
+             {:qty 1 :card "Mad Dash"}
+             {:qty 3 :card "Moshing"}
+             {:qty 2 :card "Pinhole Threading"}
+             {:qty 3 :card "Steelskin Scarring"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 2 :card "Endurance"}
+             {:qty 3 :card "Gachapon"}
+             {:qty 3 :card "Hippo"}
+             {:qty 2 :card "Zer0"}
+             {:qty 1 :card "Citadel Sanctuary"}
+             {:qty 1 :card "DreamNet"}
+             {:qty 1 :card "Liberated Account"}
+             {:qty 1 :card "Mystic Maemi"}
+             {:qty 2 :card "Paladin Poemu"}
+             {:qty 2 :card "Black Orchestra"}
+             {:qty 1 :card "MKUltra"}
+             {:qty 1 :card "Paperclip"}
+             {:qty 2 :card "Yusuf"}
+             {:qty 1 :card "Botulus"}
+             {:qty 3 :card "Fermenter"}
+             {:qty 2 :card "Stargate"}])))
+
+(def worlds-2022-sokka-runs
+  (matchup
+    [:preconstructed.worlds-2022-a "Worlds 2022: skry (C) vs. William Huang (R)"]
+    [:preconstructed.worlds-2022-a-tag "skry (C) vs. William Huang (R)"]
+    [:preconstructed.worlds-2022-info "158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 8(?) rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun."]
+    (precon "skry - 2022: Dies to Doomblade"
+            {:title "AgInfusion: New Miracles for a New World" :side "Corp" :code 12052}
+            [{:qty 1 :card "Longevity Serum"}
+             {:qty 3 :card "Obokata Protocol"}
+             {:qty 3 :card "Send a Message"}
+             {:qty 2 :card "NGO Front"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 3 :card "Regolith Mining License"}
+             {:qty 3 :card "Spin Doctor"}
+             {:qty 2 :card "Trieste Model Bioroids"}
+             {:qty 2 :card "Divert Power"}
+             {:qty 3 :card "Hansei Review"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 1 :card "Subliminal Messaging"}
+             {:qty 2 :card "Bio Vault"}
+             {:qty 2 :card "Chiyashi"}
+             {:qty 2 :card "DNA Tracker"}
+             {:qty 3 :card "Wave"}
+             {:qty 1 :card "Konjin"}
+             {:qty 1 :card "Loki"}
+             {:qty 3 :card "Anansi"}
+             {:qty 3 :card "Anemone"}
+             {:qty 3 :card "Mlinzi"}])
+    (precon "William Huang - 2022: ApocoLat"
+            {:title "Lat: Ethical Freelancer" :side "Runner" :code 26019}
+            [{:qty 3 :card "Apocalypse"}
+             {:qty 3 :card "Creative Commission"}
+             {:qty 1 :card "Deuces Wild"}
+             {:qty 3 :card "Diesel"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 2 :card "Into the Depths"}
+             {:qty 2 :card "Mad Dash"}
+             {:qty 2 :card "Pinhole Threading"}
+             {:qty 3 :card "Rigging Up"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 3 :card "Endurance"}
+             {:qty 1 :card "Aesop's Pawnshop"}
+             {:qty 1 :card "Beth Kilrain-Chang"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Stoneship Chart Room"}
+             {:qty 2 :card "Telework Contract"}
+             {:qty 2 :card "Engolo"}
+             {:qty 1 :card "Ika"}
+             {:qty 1 :card "Propeller"}
+             {:qty 1 :card "Misdirection"}
+             {:qty 1 :card "Self-modifying Code"}
+             {:qty 1 :card "Stargate"}])))
+
 ;; Utility
 
 (defn matchup-by-key
@@ -1247,7 +1356,9 @@
     :worlds-2020-a worlds-2020-limes-corps
     :worlds-2020-b worlds-2020-limes-runs
     :worlds-2021-a worlds-2021-patrick-corps
-    :worlds-2021-b worlds-2021-patrick-runs))
+    :worlds-2021-b worlds-2021-patrick-runs
+    :worlds-2022-a worlds-2022-sokka-corps
+    :worlds-2022-b worlds-2022-sokka-runs))
 
 (def all-matchups
   "A set of all preconstructed matchups (by key).
@@ -1261,4 +1372,5 @@
     :worlds-2018-a :worlds-2018-b
     :worlds-2019-a :worlds-2019-b
     :worlds-2020-a :worlds-2020-b
-    :worlds-2021-a :worlds-2021-b})
+    :worlds-2021-a :worlds-2021-b
+    :worlds-2022-a :worlds-2022-b})
