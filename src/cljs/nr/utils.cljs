@@ -121,26 +121,26 @@
 
 (def slug->format
   {"standard" "Standard"
-   "system-gateway" "System Gateway"
    "startup" "Startup"
+   "system-gateway" "System Gateway"
+   "preconstructed" "Preconstructed"
    "sunset" "Sunset"
    "eternal" "Eternal"
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
    "neo" "Neo"
-   "preconstructed" "Preconstructed"
    "casual" "Casual"})
 
 (def format->slug
   {"Standard" "standard"
-   "System Gateway" "system-gateway"
    "Startup" "startup"
+   "System Gateway" "system-gateway"
+   "Preconstructed" "preconstructed"
    "Sunset" "sunset"
    "Eternal" "eternal"
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"
    "Neo" "neo"
-   "Preconstructed" "preconstructed"
    "Casual" "casual"})
 
 (defn regex-escape
