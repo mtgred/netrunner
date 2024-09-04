@@ -179,7 +179,7 @@
 
 (defn- precon-span [precon]
   (when precon
-    [:span.format-precon (str " (" (tr (:tr-tag (matchup-by-key precon))) ")")]))
+    [:span.format-precon (str ": " (tr (:tr-tag (matchup-by-key precon))))]))
 
 (defn game-format [{fmt :format singleton? :singleton precon :precon}]
   [:div {:class "game-format"}
