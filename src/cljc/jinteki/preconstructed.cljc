@@ -897,6 +897,210 @@
              {:qty 3 :card "Paperclip"}
              {:qty 1 :card "D4v1d"}])))
 
+;; Worlds 2019: Pinsel vs. Testrunning
+(def worlds-2019-pinsel-corps
+  (matchup
+    [:preconstructed.worlds-2019-a "Worlds 2019: Pinsel (C) vs. Testrunning (R)"]
+    [:preconstructed.worlds-2019-a-tag "Pinsel (C) vs. Testrunning (R)"]
+    [:preconstructed.worlds-2019-info "256 players played in the first even Project NISEI Netrunner World Championship in 2019. This tournament was held in Rotterdam, NL, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Uprising Booster Pack"]
+    (precon "Pinsel - 2019: Fully dedicated to efficiency"
+            {:title "Asa Group: Security Through Vigilance" :side "Corp" :code 21009}
+            [{:qty 3 :card "Efficiency Committee"}
+             {:qty 3 :card "Global Food Initiative"}
+             {:qty 3 :card "Project Vitruvius"}
+             {:qty 3 :card "Cybernetics Court"}
+             {:qty 2 :card "Executive Boot Camp"}
+             {:qty 3 :card "Jeeves Model Bioroids"}
+             {:qty 1 :card "Lakshmi Smartfabrics"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 1 :card "Reconstruction Contract"}
+             {:qty 2 :card "Archived Memories"}
+             {:qty 2 :card "Biotic Labor"}
+             {:qty 2 :card "Dedication Ceremony"}
+             {:qty 3 :card "Fully Operational"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Violet Level Clearance"}
+             {:qty 1 :card "Cyberdex Virus Suite"}
+             {:qty 2 :card "Hagen"}
+             {:qty 3 :card "Vanilla"}
+             {:qty 3 :card "Gatekeeper"}
+             {:qty 3 :card "Architect"}])
+    (precon "Testrunning - 2019: Trash Panda"
+            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code 21081}
+            [{:qty 3 :card "Dirty Laundry"}
+             {:qty 3 :card "I've Had Worse"}
+             {:qty 3 :card "Inject"}
+             {:qty 3 :card "Stimhack"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 2 :card "Clone Chip"}
+             {:qty 3 :card "Hippo"}
+             {:qty 2 :card "Knobkierie"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Liberated Account"}
+             {:qty 3 :card "Street Peddler"}
+             {:qty 2 :card "Black Orchestra"}
+             {:qty 1 :card "MKUltra"}
+             {:qty 2 :card "Paperclip"}
+             {:qty 2 :card "Yusuf"}
+             {:qty 1 :card "Consume"}
+             {:qty 2 :card "D4v1d"}
+             {:qty 1 :card "Imp"}
+             {:qty 1 :card "Pelangi"}
+             {:qty 1 :card "Self-modifying Code"}
+             {:qty 1 :card "Stargate"}])))
+
+(def worlds-2019-pinsel-runs
+  (matchup
+    [:preconstructed.worlds-2019-b "Worlds 2019: Testrunning (C) vs. Pinsel (R)"]
+    [:preconstructed.worlds-2019-b-tag "Testrunning (C) vs. Pinsel (R)"]
+    [:preconstructed.worlds-2019-info "256 players played in the first even Project NISEI Netrunner World Championship in 2019. This tournament was held in Rotterdam, NL, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Uprising Booster Pack"]
+    (precon "Testrunning - 2019: 2 Grid for 2 Place"
+            {:title "Pālanā Foods: Sustainable Growth" :side "Corp" :code 10030}
+            [{:qty 3 :card "Nisei MK II"}
+             {:qty 3 :card "Obokata Protocol"}
+             {:qty 1 :card "Philotic Entanglement"}
+             {:qty 1 :card "SSL Endorsement"}
+             {:qty 3 :card "NGO Front"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 2 :card "Celebrity Gift"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "IPO"}
+             {:qty 3 :card "Scarcity of Resources"}
+             {:qty 3 :card "Bio Vault"}
+             {:qty 1 :card "Cyberdex Virus Suite"}
+             {:qty 3 :card "La Costa Grid"}
+             {:qty 3 :card "Border Control"}
+             {:qty 3 :card "IP Block"}
+             {:qty 1 :card "DNA Tracker"}
+             {:qty 3 :card "Slot Machine"}
+             {:qty 2 :card "Thimblerig"}
+             {:qty 2 :card "Excalibur"}
+             {:qty 3 :card "Anansi"}])
+    (precon "Pinsel - 2019: Trash Panda"
+            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code 21081}
+            [{:qty 3 :card "Dirty Laundry"}
+             {:qty 3 :card "I've Had Worse"}
+             {:qty 3 :card "Inject"}
+             {:qty 3 :card "Stimhack"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 2 :card "Clone Chip"}
+             {:qty 3 :card "Hippo"}
+             {:qty 2 :card "Knobkierie"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Liberated Account"}
+             {:qty 3 :card "Street Peddler"}
+             {:qty 2 :card "Black Orchestra"}
+             {:qty 1 :card "MKUltra"}
+             {:qty 2 :card "Paperclip"}
+             {:qty 2 :card "Yusuf"}
+             {:qty 1 :card "Consume"}
+             {:qty 2 :card "D4v1d"}
+             {:qty 1 :card "Imp"}
+             {:qty 1 :card "Pelangi"}
+             {:qty 1 :card "Self-modifying Code"}
+             {:qty 1 :card "Stargate"}])))
+
+;; Worlds 2020: Limes vs. tf34
+(def worlds-2020-limes-corps
+  (matchup
+    [:preconstructed.worlds-2020-a "Worlds 2020: Limes (C) vs. tf34 (R)"]
+    [:preconstructed.worlds-2020-a-tag "Limes (C) vs. tf34 (R)"]
+    [:preconstructed.worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
+    (precon "Limes - 2020: I don't like this deck"
+            {:title "Sportsmetal: Go Big or Go Home" :side "Corp" :code 22026}
+            [{:qty 2 :card "False Lead"}
+             {:qty 3 :card "Hyperloop Extension"}
+             {:qty 3 :card "Megaprix Qualifier"}
+             {:qty 3 :card "Project Vacheron"}
+             {:qty 3 :card "The Future is Now"}
+             {:qty 1 :card "CSR Campaign"}
+             {:qty 3 :card "Jeeves Model Bioroids"}
+             {:qty 3 :card "Marilyn Campaign"}
+             {:qty 3 :card "News Team"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 3 :card "Team Sponsorship"}
+             {:qty 3 :card "Archived Memories"}
+             {:qty 1 :card "BOOM!"}
+             {:qty 2 :card "Fast Break"}
+             {:qty 3 :card "Game Changer"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 1 :card "Preemptive Action"}
+             {:qty 3 :card "Stock Buy-Back"}
+             {:qty 3 :card "Meridian"}])
+    (precon "tf34 - 2020: Engolo Freedom"
+            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code 21081}
+            [{:qty 3 :card "Dirty Laundry"}
+             {:qty 3 :card "I've Had Worse"}
+             {:qty 1 :card "Rebirth"}
+             {:qty 1 :card "Stimhack"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 1 :card "Boomerang"}
+             {:qty 3 :card "Hippo"}
+             {:qty 2 :card "Keiko"}
+             {:qty 3 :card "Zer0"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Liberated Account"}
+             {:qty 3 :card "Paladin Poemu"}
+             {:qty 3 :card "Street Peddler"}
+             {:qty 2 :card "The Turning Wheel"}
+             {:qty 1 :card "Trickster Taka"}
+             {:qty 1 :card "Virus Breeding Ground"}
+             {:qty 2 :card "Aumakua"}
+             {:qty 2 :card "Engolo"}
+             {:qty 3 :card "Yusuf"}
+             {:qty 2 :card "Datasucker"}])))
+
+(def worlds-2020-limes-runs
+  (matchup
+    [:preconstructed.worlds-2020-b "Worlds 2020: tf34 (R) vs. Limes (C)"]
+    [:preconstructed.worlds-2020-b-tag "tf34 (R) vs. Limes (C)"]
+    [:preconstructed.worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
+    (precon "tf34 - 2020: Malia CTM"
+            {:title "NBN: Controlling the Message" :side "Corp" :code 11017}
+            [{:qty 3 :card "Bellona"}
+             {:qty 1 :card "Degree Mill"}
+             {:qty 3 :card "Project Beale"}
+             {:qty 1 :card "Remastered Edition"}
+             {:qty 3 :card "Commercial Bankers Group"}
+             {:qty 3 :card "Daily Business Show"}
+             {:qty 3 :card "Jeeves Model Bioroids"}
+             {:qty 3 :card "Malia Z0L0K4"}
+             {:qty 3 :card "Marilyn Campaign"}
+             {:qty 3 :card "Mumba Temple"}
+             {:qty 1 :card "NASX"}
+             {:qty 1 :card "PAD Campaign"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 3 :card "Hard-Hitting News"}
+             {:qty 2 :card "Market Forces"}
+             {:qty 2 :card "Psychographics"}
+             {:qty 2 :card "Mumbad Virtual Tour"}
+             {:qty 3 :card "IP Block"}
+             {:qty 2 :card "Wraparound"}
+             {:qty 2 :card "Enigma"}
+             {:qty 1 :card "Tollbooth"}
+             {:qty 1 :card "F2P"}])
+    (precon "Limes - 2020: Imp-pressive Hoshiko"
+            {:title "Hoshiko Shiro: Untold Protagonist" :side "Runner" :code 26066}
+            [{:qty 3 :card "Dirty Laundry"}
+             {:qty 2 :card "I've Had Worse"}
+             {:qty 2 :card "Labor Rights"}
+             {:qty 1 :card "Rebirth"}
+             {:qty 2 :card "Stimhack"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 2 :card "Friday Chip"}
+             {:qty 3 :card "Hippo"}
+             {:qty 2 :card "HQ Interface"}
+             {:qty 3 :card "Patchwork"}
+             {:qty 2 :card "DreamNet"}
+             {:qty 3 :card "Liberated Account"}
+             {:qty 3 :card "Paladin Poemu"}
+             {:qty 3 :card "Black Orchestra"}
+             {:qty 2 :card "MKUltra"}
+             {:qty 3 :card "Paperclip"}
+             {:qty 2 :card "Consume"}
+             {:qty 3 :card "Imp"}
+             {:qty 1 :card "Stargate"}])))
+
 ;; Utility
 
 (defn matchup-by-key
@@ -919,7 +1123,11 @@
     :worlds-2017-a worlds-2017-wilfy-corps
     :worlds-2017-b worlds-2017-wilfy-runs
     :worlds-2018-a worlds-2018-joe-corps
-    :worlds-2018-b worlds-2018-joe-runs))
+    :worlds-2018-b worlds-2018-joe-runs
+    :worlds-2019-a worlds-2019-pinsel-corps
+    :worlds-2019-b worlds-2019-pinsel-runs
+    :worlds-2020-a worlds-2020-limes-corps
+    :worlds-2020-b worlds-2020-limes-runs))
 
 (def all-matchups
   "A set of all preconstructed matchups (by key).
@@ -930,4 +1138,6 @@
     :worlds-2015-a :worlds-2015-b
     :worlds-2016-a :worlds-2016-b
     :worlds-2017-a :worlds-2017-b
-    :worlds-2018-a :worlds-2018-b})
+    :worlds-2018-a :worlds-2018-b
+    :worlds-2019-a :worlds-2019-b
+    :worlds-2020-a :worlds-2020-b})
