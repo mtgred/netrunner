@@ -1328,6 +1328,120 @@
              {:qty 1 :card "Self-modifying Code"}
              {:qty 1 :card "Stargate"}])))
 
+;; Worlds 2022: William Huang vs. cableCarnage
+(def worlds-2023-sokka-corps
+  (matchup
+    [:preconstructed.worlds-2023-a "Worlds 2023: William Huang (C) vs. cableCarnage (R)"]
+    [:preconstructed.worlds-2023-a-tag "William Huang (C) vs. cableCarnage (R)"]
+    [:preconstructed.worlds-2023-info "254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 8 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative."]
+    (precon "William Huang - 2023: The Worlds Grind"
+            {:title "Weyland Consortium: Built to Last" :side "Corp" :code 30059}
+            [{:qty 1 :card "Above the Law"}
+             {:qty 3 :card "SDS Drone Deployment"}
+             {:qty 3 :card "Send a Message"}
+             {:qty 2 :card "Clearinghouse"}
+             {:qty 3 :card "NGO Front"}
+             {:qty 3 :card "Spin Doctor"}
+             {:qty 3 :card "Wall to Wall"}
+             {:qty 3 :card "Government Subsidy"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 1 :card "Secure and Protect"}
+             {:qty 2 :card "Subliminal Messaging"}
+             {:qty 1 :card "Trojan Horse"}
+             {:qty 3 :card "Bio Vault"}
+             {:qty 3 :card "Akhet"}
+             {:qty 1 :card "Border Control"}
+             {:qty 2 :card "Pharos"}
+             {:qty 3 :card "Tree Line"}
+             {:qty 2 :card "Hortum"}
+             {:qty 2 :card "Mestnichestvo"}
+             {:qty 1 :card "Rime"}
+             {:qty 1 :card "Sadaka"}
+             {:qty 3 :card "Winchester"}])
+    (precon "cableCarnage - 2023: sableCarnage"
+            {:title "Nyusha \"Sable\" Sintashta: Symphonic Prodigy" :side "Runner" :code 33011}
+            [{:qty 1 :card "Bahia Bands"}
+             {:qty 3 :card "Bravado"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 3 :card "Diversion of Funds"}
+             {:qty 1 :card "Inside Job"}
+             {:qty 1 :card "Mutual Favor"}
+             {:qty 2 :card "Pinhole Threading"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 2 :card "Boomerang"}
+             {:qty 1 :card "Flip Switch"}
+             {:qty 2 :card "Hermes"}
+             {:qty 1 :card "WAKE Implant v2A-JRJ"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 2 :card "Earthrise Hotel"}
+             {:qty 2 :card "Info Bounty"}
+             {:qty 1 :card "Miss Bones"}
+             {:qty 1 :card "Mystic Maemi"}
+             {:qty 2 :card "No Free Lunch"}
+             {:qty 1 :card "Paladin Poemu"}
+             {:qty 3 :card "The Class Act"}
+             {:qty 2 :card "The Twinning"}
+             {:qty 1 :card "Aumakua"}
+             {:qty 1 :card "Curupira"}
+             {:qty 1 :card "Echelon"}
+             {:qty 1 :card "Unity"}
+             {:qty 1 :card "Cezve"}])))
+
+(def worlds-2023-sokka-runs
+  (matchup
+    [:preconstructed.worlds-2023-b "Worlds 2023: cableCarnage (C) vs. William Huang (R)"]
+    [:preconstructed.worlds-2023-b-tag "cableCarnage (C) vs. William Huang (R)"]
+    [:preconstructed.worlds-2023-info "254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 8 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative."]
+    (precon "cableCarnage - 2023: tableCarnage"
+            {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code 6005}
+            [{:qty 3 :card "Bellona"}
+             {:qty 2 :card "Degree Mill"}
+             {:qty 3 :card "False Lead"}
+             {:qty 1 :card "Tomorrow's Headline"}
+             {:qty 3 :card "Behold!"}
+             {:qty 2 :card "Chekist Scion"}
+             {:qty 3 :card "Federal Fundraising"}
+             {:qty 2 :card "Gaslight"}
+             {:qty 1 :card "Malia Z0L0K4"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 2 :card "Reaper Function"}
+             {:qty 3 :card "Regolith Mining License"}
+             {:qty 1 :card "SIU"}
+             {:qty 3 :card "Spin Doctor"}
+             {:qty 3 :card "Wage Workers"}
+             {:qty 2 :card "Attitude Adjustment"}
+             {:qty 1 :card "End of the Line"}
+             {:qty 2 :card "Hedge Fund"}
+             {:qty 1 :card "Mindscaping"}
+             {:qty 3 :card "Oppo Research"}
+             {:qty 2 :card "Your Digital Life"}
+             {:qty 1 :card "Ping"}
+             {:qty 1 :card "Virtual Service Agent"}
+             {:qty 1 :card "Unsmiling Tsarevna"}])
+    (precon "William Huang - 2023: You *do* always come back!"
+            {:title "Hoshiko Shiro: Untold Protagonist" :side "Runner" :code 26066}
+            [{:qty 2 :card "Diesel"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 3 :card "Moshing"}
+             {:qty 3 :card "Raindrops Cut Stone"}
+             {:qty 3 :card "Steelskin Scarring"}
+             {:qty 3 :card "Strike Fund"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 2 :card "Boomerang"}
+             {:qty 2 :card "Maw"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 1 :card "DJ Fenris"}
+             {:qty 1 :card "Miss Bones"}
+             {:qty 1 :card "Mystic Maemi"}
+             {:qty 1 :card "Paladin Poemu"}
+             {:qty 2 :card "The Twinning"}
+             {:qty 3 :card "Tsakhia \"Bankhar\" Gantulga"}
+             {:qty 2 :card "Buzzsaw"}
+             {:qty 2 :card "Carmen"}
+             {:qty 2 :card "Cleaver"}
+             {:qty 2 :card "Fermenter"}
+             {:qty 1 :card "Leech"}])))
+
 ;; Utility
 
 (defn matchup-by-key
@@ -1358,7 +1472,9 @@
     :worlds-2021-a worlds-2021-patrick-corps
     :worlds-2021-b worlds-2021-patrick-runs
     :worlds-2022-a worlds-2022-sokka-corps
-    :worlds-2022-b worlds-2022-sokka-runs))
+    :worlds-2022-b worlds-2022-sokka-runs
+    :worlds-2023-a worlds-2023-sokka-corps
+    :worlds-2023-b worlds-2023-sokka-runs))
 
 (def all-matchups
   "A set of all preconstructed matchups (by key).
@@ -1373,4 +1489,5 @@
     :worlds-2019-a :worlds-2019-b
     :worlds-2020-a :worlds-2020-b
     :worlds-2021-a :worlds-2021-b
-    :worlds-2022-a :worlds-2022-b})
+    :worlds-2022-a :worlds-2022-b
+    :worlds-2023-a :worlds-2023-b})
