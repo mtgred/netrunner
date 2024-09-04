@@ -135,9 +135,9 @@
 
 (def worlds-2012-ben-corps
   (matchup
-    [:preconstructed.worlds-2012-a "Worlds 2012: Ben Marsh (C) vs. Jeremy Z (R)"]
-    [:preconstructed.worlds-2012-a-tag "Ben Marsh (C) vs. Jeremy Z (R)"]
-    [:preconstructed.worlds-2012-info "TODO"]
+    [:preconstructed.worlds-2012-a "Worlds 2012: Ben Marsh (C) vs. Jeremy Zwirn (R)"]
+    [:preconstructed.worlds-2012-a-tag "Ben Marsh (C) vs. Jeremy Zwirn (R)"]
+    [:preconstructed.worlds-2012-info "Worlds 2012 was played with (up to 3 copies of) the Core Set as the only legal product. Jeremy Zwirn (Building a Better World, Gabriel Santiago) took first place against Ben Marsh (Engineering the Future, Gabriel Santiago) in the first ever Netrunner World Championship."]
     (precon "Ben Marsh - 2012: Weyland"
             {:title "Weyland Consortium: Building a Better World" :side "Corp" :code 1093}
             [{:qty 3 :card "Priority Requisition"}
@@ -184,7 +184,7 @@
   (matchup
     [:preconstructed.worlds-2012-b "Worlds 2012: Jeremy Z (C) vs. Ben Marsh (R)"]
     [:preconstructed.worlds-2012-b-tag "Jeremy Z (C) vs. Ben Marsh (R)"]
-    [:preconstructed.worlds-2012-info "TODO"]
+    [:preconstructed.worlds-2012-info "Worlds 2012 was played with (up to 3 copies of) the Core Set as the only legal product. Jeremy Zwirn (Building a Better World, Gabriel Santiago) took first place against Ben Marsh (Engineering the Future, Gabriel Santiago) in the first ever Netrunner World Championship."]
     (precon "Jeremy Z - 2012: ETF"
             {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
             [{:qty 3 :card "Enigma"}
@@ -1277,8 +1277,8 @@
 
 (def worlds-2022-sokka-runs
   (matchup
-    [:preconstructed.worlds-2022-a "Worlds 2022: skry (C) vs. William Huang (R)"]
-    [:preconstructed.worlds-2022-a-tag "skry (C) vs. William Huang (R)"]
+    [:preconstructed.worlds-2022-b "Worlds 2022: skry (C) vs. William Huang (R)"]
+    [:preconstructed.worlds-2022-b-tag "skry (C) vs. William Huang (R)"]
     [:preconstructed.worlds-2022-info "158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 8(?) rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun."]
     (precon "skry - 2022: Dies to Doomblade"
             {:title "AgInfusion: New Miracles for a New World" :side "Corp" :code 12052}
