@@ -236,7 +236,7 @@
   (matchup
     [:preconstructed.worlds-2013-a "Worlds 2013: Andrew Veen (C) vs. Jens Erickson (R)"]
     [:preconstructed.worlds-2013-a-tag "Andrew Veen (C) vs. Jens Erickson (R)"]
-    [:preconstructed.worlds-2013-info "TODO"]
+    [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves."]
     (precon "Andrew Veen - 2013: Making News"
             {:title "NBN: Making News" :side "Corp" :code 25104}
             [{:qty 3 :card "AstroScript Pilot Program"}
@@ -288,7 +288,7 @@
   (matchup
     [:preconstructed.worlds-2013-b "Worlds 2013: Jens Erickson (C) vs. Andrew Veen (R)"]
     [:preconstructed.worlds-2013-b-tag "Jens Erickson (C) vs. Andrew Veen (R)"]
-    [:preconstructed.worlds-2013-info "TODO"]
+    [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves."]
     (precon "Jens Erickson - 2013: Engineering the Future"
             {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
             [{:qty 3 :card "Accelerated Beta Test"}
@@ -335,13 +335,13 @@
              {:qty 3 :card "Daily Casts"}
              {:qty 3 :card "Professional Contacts"}])))
 
-;; worlds 2014: Dan D'Argenio vs. Spags
+;; worlds 2014: Dan D'Argenio vs. Minh Tran
 (def worlds-2014-dan-d-corps
   (matchup
-    [:preconstructed.worlds-2014-a "Worlds 2014: Dan D'Argenio (C) vs. spags (R)"]
-    [:preconstructed.worlds-2014-a-tag "Dan D'Argenio (C) vs. spags (R)"]
-    [:preconstructed.worlds-2014-info "TODO"]
-    (precon "Dan D'Argenio - 2014: Replicating Perfection"
+    [:preconstructed.worlds-2014-a "Worlds 2014: Dan D'Argenio (C) vs. Minh Tran (R)"]
+    [:preconstructed.worlds-2014-a-tag "Dan D'Argenio (C) vs. Minh Tran (R)"]
+    [:preconstructed.worlds-2014-info "238 players attended worlds in 2014. The tournament was held in Minneapolis, MN, USA, and consisted of 7 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Up and Over."]
+    (precon "Dan D'Argenio - 2014: Honor and Perfection"
             {:title "Jinteki: Replicating Perfection" :side "Corp" :code 2031}
             [{:qty 3 :card "NAPD Contract"}
              {:qty 3 :card "Nisei MK II"}
@@ -365,84 +365,198 @@
              {:qty 2 :card "Komainu"}
              {:qty 3 :card "Pup"}
              {:qty 3 :card "Tsurugi"}])
-    (precon "spags - 2014: Kate's Toolbox"
-            {:title "Kate \"Mac\" McCaffrey: Digital Tinker" :side "Runner" :code 01033}
-            [{:qty 3 :card "Diesel"}
-             {:qty 3 :card "Dirty Laundry"}
-             {:qty 2 :card "Legwork"}
-             {:qty 1 :card "Levy AR Lab Access"}
-             {:qty 3 :card "Lucky Find"}
-             {:qty 2 :card "Quality Time"}
+    (precon "Minh Tran - 2014: Andromedium"
+            {:title "Andromeda: Dispossessed Ristie" :side "Runner" :code 2083}
+            [{:qty 3 :card "Account Siphon"}
+             {:qty 2 :card "Inside Job"}
+             {:qty 2 :card "Special Order"}
              {:qty 3 :card "Sure Gamble"}
-             {:qty 1 :card "The Maker’s Eye"}
-             {:qty 2 :card "Astrolabe"}
-             {:qty 3 :card "Clone Chip"}
-             {:qty 1 :card "Dyson Mem Chip"}
-             {:qty 2 :card "Plascrete Carapace"}
-             {:qty 3 :card "Prepaid VoicePAD"}
-             {:qty 3 :card "R&D Interface"}
-             {:qty 1 :card "Same Old Thing"}
-             {:qty 1 :card "Atman"}
-             {:qty 1 :card "Deus X"}
+             {:qty 1 :card "Emergency Shutdown"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 1 :card "Legwork"}
+             {:qty 3 :card "Desperado"}
+             {:qty 1 :card "Plascrete Carapace"}
+             {:qty 1 :card "HQ Interface"}
+             {:qty 1 :card "Feedback Filter"}
+             {:qty 2 :card "Corroder"}
              {:qty 1 :card "Mimic"}
-             {:qty 1 :card "Sharpshooter"}
-             {:qty 1 :card "Snowball"}
-             {:qty 1 :card "ZU.13 Key Master"}
+             {:qty 1 :card "Yog.0"}
+             {:qty 1 :card "Femme Fatale"}
+             {:qty 2 :card "Faerie"}
+             {:qty 2 :card "Passport"}
              {:qty 2 :card "Datasucker"}
-             {:qty 1 :card "Parasite"}
-             {:qty 3 :card "Self-modifying Code"}])))
+             {:qty 2 :card "Medium"}
+             {:qty 1 :card "Sneakdoor Beta"}
+             {:qty 2 :card "Bank Job"}
+             {:qty 1 :card "Mr. Li"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 2 :card "John Masanori"}
+             {:qty 2 :card "Security Testing"}])))
 
 (def worlds-2014-dan-d-runs
   (matchup
-    [:preconstructed.worlds-2014-b "Worlds 2014: spags (C) vs. Dan D'Argenio (R)"]
-    [:preconstructed.worlds-2014-b-tag "spags (C) vs. Dan D'Argenio (R)"]
-    [:preconstructed.worlds-2014-info "TODO"]
-    (precon "spags - 2014: Broke A$$ Shite"
-            {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code 6005}
-            [{:qty 3 :card "AstroScript Pilot Program"}
-             {:qty 2 :card "Breaking News"}
-             {:qty 3 :card "NAPD Contract"}
-             {:qty 3 :card "Project Beale"}
-             {:qty 3 :card "Jackson Howard"}
-             {:qty 3 :card "Marked Accounts"}
-             {:qty 3 :card "PAD Campaign"}
-             {:qty 2 :card "Biotic Labor"}
-             {:qty 2 :card "Fast Track"}
-             {:qty 3 :card "Hedge Fund"}
-             {:qty 3 :card "Sweeps Week"}
-             {:qty 3 :card "SanSan City Grid"}
+    [:preconstructed.worlds-2014-b "Worlds 2014: Minh Tran (C) vs. Dan D'Argenio (R)"]
+    [:preconstructed.worlds-2014-b-tag "Minh Tran (C) vs. Dan D'Argenio (R)"]
+    [:preconstructed.worlds-2014-info "238 players attended worlds in 2014. The tournament was held in Minneapolis, MN, USA, and consisted of 7 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Up and Over."]
+    (precon "Minh Tran - 2014: Personal Evolution"
+            {:title "Jinteki: Personal Evolution" :side "Corp" :code 1067}
+            [{:qty 3 :card "Fetal AI"}
+             {:qty 3 :card "Gila Hands Arcology"}
+             {:qty 3 :card "House of Knives"}
+             {:qty 1 :card "Philotic Entanglement"}
+             {:qty 2 :card "The Future Perfect"}
+             {:qty 1 :card "Project Junebug"}
+             {:qty 3 :card "Snare!"}
+             {:qty 3 :card "Ronin"}
+             {:qty 2 :card "Jackson Howard"}
+             {:qty 3 :card "Psychic Field"}
+             {:qty 1 :card "Shattered Remains"}
+             {:qty 1 :card "Neural Katana"}
+             {:qty 2 :card "Enigma"}
              {:qty 3 :card "Eli 1.0"}
-             {:qty 2 :card "Wraparound"}
-             {:qty 3 :card "Pop-up Window"}
-             {:qty 3 :card "Quandary"}
-             {:qty 2 :card "Tollbooth"}
-             {:qty 3 :card "Architect"}])
-    (precon "Dan D'Argenio - 2014: Andromeda"
+             {:qty 2 :card "Komainu"}
+             {:qty 1 :card "Yagura"}
+             {:qty 2 :card "Pup"}
+             {:qty 3 :card "Neural EMP"}
+             {:qty 1 :card "Scorched Earth"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Mushin No Shin"}
+             {:qty 3 :card "Sweeps Week"}])
+    (precon "Dan D'Argenio - 2014: Daily QT Andy"
             {:title "Andromeda: Dispossessed Ristie" :side "Runner" :code 2083}
             [{:qty 3 :card "Account Siphon"}
-             {:qty 3 :card "Dirty Laundry"}
-             {:qty 1 :card "Emergency Shutdown"}
-             {:qty 1 :card "Express Delivery"}
-             {:qty 1 :card "Infiltration"}
              {:qty 1 :card "Inside Job"}
-             {:qty 2 :card "Legwork"}
-             {:qty 2 :card "Quality Time"}
              {:qty 3 :card "Special Order"}
+             {:qty 1 :card "Infiltration"}
              {:qty 3 :card "Sure Gamble"}
+             {:qty 1 :card "Emergency Shutdown"}
+             {:qty 2 :card "Quality Time"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 2 :card "Legwork"}
+             {:qty 1 :card "Express Delivery"}
              {:qty 3 :card "Desperado"}
              {:qty 1 :card "Plascrete Carapace"}
-             {:qty 2 :card "RAD Interface"}
-             {:qty 1 :card "Daily Casts"}
+             {:qty 2 :card "R&D Interface"}
+             {:qty 2 :card "Corroder"}
+             {:qty 1 :card "Mimic"}
+             {:qty 1 :card "Yog.0"}
+             {:qty 1 :card "Femme Fatale"}
+             {:qty 3 :card "Faerie"}
+             {:qty 1 :card "Passport"}
+             {:qty 3 :card "Datasucker"}
              {:qty 2 :card "Kati Jones"}
              {:qty 1 :card "Same Old Thing"}
-             {:qty 3 :card "Security Testing"}
+             {:qty 1 :card "Daily Casts"}
+             {:qty 3 :card "Security Testing"}])))
+
+;; Worlds 2015: Dan D'Argenio vs. Timmy Wong
+
+(def worlds-2015-dan-d-corps
+  (matchup
+    [:preconstructed.worlds-2015-a "Worlds 2015: Dan D'Argenio (C) vs. Timmy Wong (R)"]
+    [:preconstructed.worlds-2015-a-tag "Dan D'Argenio (C) vs. Timmy Wong (R)"]
+    [:preconstructed.worlds-2015-info "269 players attended worlds in 2015. The tournament was held in Minneapolis, MN, USA, and consisted of 8 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Data and Destiny."]
+    (precon "Dan D'Argenio - 2015: Foodcoatshop"
+            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
+            [{:qty 3 :card "Accelerated Beta Test"}
+             {:qty 1 :card "Project Vitruvius"}
+             {:qty 3 :card "NAPD Contract"}
+             {:qty 2 :card "Global Food Initiative"}
+             {:qty 3 :card "Adonis Campaign"}
+             {:qty 3 :card "Eve Campaign"}
+             {:qty 3 :card "Jackson Howard"}
+             {:qty 3 :card "Ichi 1.0"}
+             {:qty 1 :card "Tollbooth"}
+             {:qty 2 :card "Enigma"}
+             {:qty 3 :card "Eli 1.0"}
+             {:qty 2 :card "Ichi 2.0"}
+             {:qty 3 :card "Architect"}
+             {:qty 3 :card "Turing"}
+             {:qty 2 :card "Archived Memories"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Ash 2X3ZB9CY"}
+             {:qty 2 :card "Caprice Nisei"}
+             {:qty 1 :card "Cyberdex Virus Suite"}
+             {:qty 3 :card "Breaker Bay Grid"}])
+    (precon "Timmy Wong - 2015: The Morning After"
+            {:title "Whizzard: Master Gamer" :side "Runner" :code 2001}
+            [{:qty 2 :card "Stimhack"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 1 :card "Test Run"}
+             {:qty 3 :card "Inject"}
+             {:qty 3 :card "I've had worse"}
+             {:qty 2 :card "Career Fair"}
+             {:qty 3 :card "Clone Chip"}
+             {:qty 2 :card "Turntable"}
              {:qty 2 :card "Corroder"}
-             {:qty 3 :card "Faerie"}
-             {:qty 1 :card "Femme Fatale"}
              {:qty 1 :card "Mimic"}
-             {:qty 1 :card "Passport"}
              {:qty 1 :card "Yog.0"}
-             {:qty 3 :card "Datasucker"}])))
+             {:qty 1 :card "Femme Fatale"}
+             {:qty 1 :card "Atman"}
+             {:qty 1 :card "Medium"}
+             {:qty 3 :card "Parasite"}
+             {:qty 2 :card "Imp"}
+             {:qty 2 :card "D4v1d"}
+             {:qty 3 :card "Liberated Account"}
+             {:qty 1 :card "Kati Jones"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 2 :card "Earthrise Hotel"}
+             {:qty 3 :card "Street Peddler"}])))
+
+(def worlds-2015-dan-d-runs
+  (matchup
+    [:preconstructed.worlds-2015-b "Worlds 2015: Timmy Wong (C) vs. Dan D'Argenio (R)"]
+    [:preconstructed.worlds-2015-b-tag "Dan D'Argenio (C) vs. Timmy Wong (R)"]
+    [:preconstructed.worlds-2015-info "269 players attended worlds in 2015. The tournament was held in Minneapolis, MN, USA, and consisted of 8 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Data and Destiny."]
+    (precon "Timmy Wong - 2015: Yellow Shell"
+            {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code 6005}
+            [{:qty 3 :card "AstroScript Pilot Program"}
+             {:qty 3 :card "Breaking News"}
+             {:qty 2 :card "Project Beale"}
+             {:qty 1 :card "TGTBT"}
+             {:qty 3 :card "Explode-a-Palooza"}
+             {:qty 2 :card "Snare!"}
+             {:qty 3 :card "PAD Campaign"}
+             {:qty 3 :card "Jackson Howard"}
+             {:qty 1 :card "Psychic Field"}
+             {:qty 1 :card "Shattered Remains"}
+             {:qty 2 :card "Lily Lockwell"}
+             {:qty 3 :card "News Team"}
+             {:qty 1 :card "Data Raven"}
+             {:qty 3 :card "Pop-up Window"}
+             {:qty 1 :card "Wraparound"}
+             {:qty 1 :card "Archangel"}
+             {:qty 1 :card "Turnpike"}
+             {:qty 1 :card "Closed Accounts"}
+             {:qty 1 :card "Psychographics"}
+             {:qty 1 :card "SEA Source"}
+             {:qty 3 :card "Scorched Earth"}
+             {:qty 2 :card "Midseason Replacements"}
+             {:qty 2 :card "Sweeps Week"}
+             {:qty 1 :card "SanSan City Grid"}
+             {:qty 1 :card "Cyberdex Virus Suite"}
+             {:qty 3 :card "Product Placement"}])
+    (precon "Dan D'Argenio - 2015: Radisson Cheese Plate"
+            {:title "Valencia Estevez: The Angel of Cayambe" :side "Runner" :code 7030}
+            [{:qty 2 :card "Account Siphon"}
+             {:qty 3 :card "Blackmail"}
+             {:qty 2 :card "Queen's Gambit"}
+             {:qty 3 :card "Inject"}
+             {:qty 1 :card "Turntable"}
+             {:qty 3 :card "Faust"}
+             {:qty 2 :card "D4v1d"}
+             {:qty 3 :card "Joshua B."}
+             {:qty 3 :card "Scrubber"}
+             {:qty 3 :card "Same Old Thing"}
+             {:qty 3 :card "Data Leak Reversal"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Fall Guy"}
+             {:qty 1 :card "Hades Shard"}
+             {:qty 3 :card "Street Peddler"}
+             {:qty 3 :card "Off-Campus Apartment"}
+             {:qty 3 :card "Drug Dealer"}
+             {:qty 3 :card "Paparazzi"}
+             {:qty 3 :card "Wireless Net Pavilion"}])))
 
 ;; Utility
 
@@ -458,11 +572,14 @@
     :worlds-2013-a worlds-2013-jens-runs
     :worlds-2013-b worlds-2013-jens-corps
     :worlds-2014-a worlds-2014-dan-d-runs
-    :worlds-2014-b worlds-2014-dan-d-corps))
+    :worlds-2014-b worlds-2014-dan-d-corps
+    :worlds-2015-a worlds-2015-dan-d-runs
+    :worlds-2015-b worlds-2015-dan-d-corps))
 
 (def all-matchups
   "A set of all preconstructed matchups (by key).
   The frontend uses this to build a matchup table for play"
   #{:worlds-2012-a :worlds-2012-b
     :worlds-2013-a :worlds-2013-b
-    :worlds-2014-a :worlds-2014-b})
+    :worlds-2014-a :worlds-2014-b
+    :worlds-2015-a :worlds-2015-b})
