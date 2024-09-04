@@ -484,7 +484,7 @@
              {:qty 3 :card "Sure Gamble"}
              {:qty 1 :card "Test Run"}
              {:qty 3 :card "Inject"}
-             {:qty 3 :card "I've had worse"}
+             {:qty 3 :card "I've Had Worse"}
              {:qty 2 :card "Career Fair"}
              {:qty 3 :card "Clone Chip"}
              {:qty 2 :card "Turntable"}
@@ -514,7 +514,7 @@
              {:qty 3 :card "Breaking News"}
              {:qty 2 :card "Project Beale"}
              {:qty 1 :card "TGTBT"}
-             {:qty 3 :card "Explode-a-Palooza"}
+             {:qty 3 :card "Explode-a-palooza"}
              {:qty 2 :card "Snare!"}
              {:qty 3 :card "PAD Campaign"}
              {:qty 3 :card "Jackson Howard"}
@@ -558,6 +558,236 @@
              {:qty 3 :card "Paparazzi"}
              {:qty 3 :card "Wireless Net Pavilion"}])))
 
+;; Worlds 2016: Chris Dyer vs. Ben Ni
+
+(def worlds-2016-chris-dyer-corps
+  (matchup
+    [:preconstructed.worlds-2016-a "Worlds 2016: Chris Dyer (C) vs. Benjamin Ni (R)"]
+    [:preconstructed.worlds-2016-a-tag "Chris Dyer (C) vs. Benjamin Ni (R)"]
+    [:preconstructed.worlds-2016-info "278 players attended worlds in 2016. The tournament was held in Minneapolis, MN, USA, and consisted of 9 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Escalation."]
+    (precon "Chris Dyer - 2016: Snekbite"
+            {:title "NBN: Controlling the Message" :side "Corp" :code 11017}
+            [{:qty 1 :card "AstroScript Pilot Program"}
+             {:qty 3 :card "Breaking News"}
+             {:qty 3 :card "Project Beale"}
+             {:qty 3 :card "Global Food Initiative"}
+             {:qty 1 :card "PAD Campaign"}
+             {:qty 3 :card "Jackson Howard"}
+             {:qty 3 :card "Sensie Actors Union"}
+             {:qty 2 :card "Commercial Bankers Group"}
+             {:qty 2 :card "Tollbooth"}
+             {:qty 1 :card "Enigma"}
+             {:qty 2 :card "Pop-up Window"}
+             {:qty 2 :card "Archangel"}
+             {:qty 3 :card "Resistor"}
+             {:qty 2 :card "Turnpike"}
+             {:qty 1 :card "Cobra"}
+             {:qty 2 :card "Closed Accounts"}
+             {:qty 1 :card "Psychographics"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Sweeps Week"}
+             {:qty 2 :card "Hard-Hitting News"}
+             {:qty 2 :card "Exchange of Information"}
+             {:qty 2 :card "SanSan City Grid"}
+             {:qty 2 :card "Mumbad Virtual Tour"}])
+    (precon "Benjamin Ni - 2016: Minh MaxX++"
+            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code 7029}
+            [{:qty 3 :card "Déjà Vu"}
+             {:qty 2 :card "Account Siphon"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 1 :card "Retrieval Run"}
+             {:qty 1 :card "Levy AR Lab Access"}
+             {:qty 2 :card "Inject"}
+             {:qty 3 :card "I've Had Worse"}
+             {:qty 1 :card "Hacktivist Meeting"}
+             {:qty 1 :card "Rumor Mill"}
+             {:qty 1 :card "Femme Fatale"}
+             {:qty 2 :card "Eater"}
+             {:qty 1 :card "Paperclip"}
+             {:qty 2 :card "Joshua B."}
+             {:qty 3 :card "Scrubber"}
+             {:qty 3 :card "Same Old Thing"}
+             {:qty 3 :card "Data Leak Reversal"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Fall Guy"}
+             {:qty 2 :card "Paparazzi"}
+             {:qty 2 :card "DDoS"}
+             {:qty 3 :card "Wireless Net Pavilion"}])))
+
+(def worlds-2016-chris-dyer-runs
+  (matchup
+    [:preconstructed.worlds-2016-b "Worlds 2016: Benjamin Ni (R) vs. Chris Dyer (C)"]
+    [:preconstructed.worlds-2016-b-tag "Benjamin Ni (R) vs. Chris Dyer (C)"]
+    [:preconstructed.worlds-2016-info "278 players attended worlds in 2016. The tournament was held in Minneapolis, MN, USA, and consisted of 9 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Escalation."]
+    (precon "Benjamin Ni - 2016: Fiery Info"
+            {:title "SYNC: Everything, Everywhere" :side "Corp" :code 9001}
+            [{:qty 3 :card "Breaking News"}
+             {:qty 1 :card "NAPD Contract"}
+             {:qty 1 :card "15 Minutes"}
+             {:qty 3 :card "Quantum Predictive Model"}
+             {:qty 3 :card "Global Food Initiative"}
+             {:qty 3 :card "Jackson Howard"}
+             {:qty 3 :card "Data Raven"}
+             {:qty 2 :card "Pop-up Window"}
+             {:qty 1 :card "Gutenberg"}
+             {:qty 1 :card "Archangel"}
+             {:qty 3 :card "Resistor"}
+             {:qty 2 :card "Turnpike"}
+             {:qty 1 :card "Archived Memories"}
+             {:qty 2 :card "Closed Accounts"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Sweeps Week"}
+             {:qty 2 :card "24/7 News Cycle"}
+             {:qty 2 :card "Hard-Hitting News"}
+             {:qty 1 :card "Exchange of Information"}
+             {:qty 2 :card "Observe and Destroy"}
+             {:qty 2 :card "BOOM!"}])
+    (precon "Chris Dyer - 2016: Papa Smurf"
+            {:title "Whizzard: Master Gamer" :side "Runner" :code 2001}
+            [{:qty 1 :card "Déjà Vu"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 3 :card "Dirty Laundry"}
+             {:qty 1 :card "Retrieval Run"}
+             {:qty 2 :card "Inject"}
+             {:qty 3 :card "I've Had Worse"}
+             {:qty 2 :card "Employee Strike"}
+             {:qty 1 :card "Plascrete Carapace"}
+             {:qty 1 :card "Net-Ready Eyes"}
+             {:qty 2 :card "Obelus"}
+             {:qty 2 :card "Mimic"}
+             {:qty 2 :card "Yog.0"}
+             {:qty 2 :card "Paperclip"}
+             {:qty 2 :card "Datasucker"}
+             {:qty 2 :card "Medium"}
+             {:qty 3 :card "Parasite"}
+             {:qty 1 :card "Progenitor"}
+             {:qty 1 :card "Ice Carver"}
+             {:qty 1 :card "Liberated Account"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 1 :card "Earthrise Hotel"}
+             {:qty 3 :card "Street Peddler"}
+             {:qty 3 :card "Temüjin Contract"}])))
+
+;; Worlds 2017: ChaosJuggler vs. Gregory Tongue
+(def worlds-2017-chaosjuggler-corps
+  (matchup
+    [:preconstructed.worlds-2017-a "Worlds 2017: ChaosJuggler (C) vs. Gregory Tongue (R)"]
+    [:preconstructed.worlds-2017-a-tag "ChaosJuggler (C) vs. Gregory Tongue (R)"]
+    [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
+    (precon "ChaosJuggler - 2017: Sinson Reversed CI"
+            {:title "Cerebral Imagining: Infinite Frontiers" :side "Corp" :code 3001}
+            [{:qty 1 :card "Corporate Sales Team"}
+             {:qty 3 :card "Efficiency Committee"}
+             {:qty 2 :card "Elective Upgrade"}
+             {:qty 3 :card "Project Vitruvius"}
+             {:qty 3 :card "Jeeves Model Bioroids"}
+             {:qty 3 :card "MCA Austerity Policy"}
+             {:qty 3 :card "Reversed Accounts"}
+             {:qty 3 :card "Biotic Labor"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 2 :card "IPO"}
+             {:qty 1 :card "Scarcity of Resources"}
+             {:qty 2 :card "Shipment from Tennin"}
+             {:qty 3 :card "Ultraviolet Clearance"}
+             {:qty 3 :card "Violet Level Clearance"}
+             {:qty 2 :card "Bryan Stinson"}
+             {:qty 1 :card "Cyberdex Virus Suite"}
+             {:qty 1 :card "Bastion"}
+             {:qty 2 :card "Vanilla"}
+             {:qty 1 :card "Enigma"}
+             {:qty 1 :card "Fairchild 2.0"}
+             {:qty 3 :card "Fairchild 3.0"}
+             {:qty 2 :card "Architect"}
+             {:qty 1 :card "Ichi 1.0"}])
+    (precon "Gregory Tongue - 2017: Aesops Hayley"
+            {:title "Hayley Kaplan: Universal Scholar" :side "Runner" :code 8025}
+            [{:qty 2 :card "Stimhack"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 2 :card "Astrolabe"}
+             {:qty 1 :card "Heartbeat"}
+             {:qty 3 :card "Aesop’s Pawnshop"}
+             {:qty 1 :card "Councilman"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Professional Contacts"}
+             {:qty 3 :card "Sacrificial Construct"}
+             {:qty 2 :card "The Turning Wheel"}
+             {:qty 1 :card "Brahman"}
+             {:qty 1 :card "Cerberus \"Lady\" H1"}
+             {:qty 1 :card "Cyber-Cypher"}
+             {:qty 1 :card "Gordian Blade"}
+             {:qty 1 :card "Inti"}
+             {:qty 1 :card "Na'Not'K"}
+             {:qty 3 :card "Cache"}
+             {:qty 1 :card "Clot"}
+             {:qty 1 :card "DaVinci"}
+             {:qty 1 :card "Dhegdheer"}
+             {:qty 3 :card "Hyperdriver"}
+             {:qty 1 :card "Misdirection"}
+             {:qty 2 :card "Paricia"}
+             {:qty 3 :card "Self-modifying Code"}
+             {:qty 1 :card "Trope"}])))
+
+(def worlds-2017-chaosjuggler-runs
+  (matchup
+    [:preconstructed.worlds-2017-b "Worlds 2017: Gregory Tongue (C) vs. ChaosJuggler (R)"]
+    [:preconstructed.worlds-2017-b-tag "Gregory Tongue (C) vs. ChaosJuggler (R)"]
+    [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
+    (precon "Gregory Tongue - 2017: No-Show Rewiring CI"
+            {:title "Cerebral Imagining: Infinite Frontiers" :side "Corp" :code 3001}
+            [{:qty 2 :card "Brain Rewiring"}
+             {:qty 3 :card "Efficiency Committee"}
+             {:qty 2 :card "Global Food Initiative"}
+             {:qty 3 :card "Project Vitruvius"}
+             {:qty 1 :card "Contract Killer"}
+             {:qty 2 :card "Executive Boot Camp"}
+             {:qty 1 :card "Jeeves Model Bioroids"}
+             {:qty 3 :card "Archived Memories"}
+             {:qty 1 :card "Audacity"}
+             {:qty 2 :card "Best Defense"}
+             {:qty 3 :card "Biotic Labor"}
+             {:qty 1 :card "Consulting Visit"}
+             {:qty 2 :card "Enforced Curfew"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Shipment from Kaguya"}
+             {:qty 2 :card "Shipment from MirrorMorph"}
+             {:qty 3 :card "Ultraviolet Clearance"}
+             {:qty 3 :card "Violet Level Clearance"}
+             {:qty 2 :card "Cyberdex Virus Suite"}
+             {:qty 3 :card "Vanilla"}
+             {:qty 1 :card "Excalibur"}
+             {:qty 1 :card "Loki"}
+             {:qty 2 :card "Mother Goddess"}])
+    (precon "ChaosJuggler - 2017: Laguna Lock Hayley"
+            {:title "Hayley Kaplan: Universal Scholar" :side "Runner" :code 8025}
+            [{:qty 3 :card "Indexing"}
+             {:qty 1 :card "Information Sifting"}
+             {:qty 1 :card "Levy AR Lab Access"}
+             {:qty 1 :card "Mad Dash"}
+             {:qty 3 :card "Peace in Our Time"}
+             {:qty 1 :card "Scavenge"}
+             {:qty 1 :card "Stimhack"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 2 :card "Astrolabe"}
+             {:qty 1 :card "Feedback Filter"}
+             {:qty 1 :card "Artist Colony"}
+             {:qty 1 :card "Beth Kilrain-Chang"}
+             {:qty 1 :card "Citadel Sanctuary"}
+             {:qty 3 :card "Daily Casts"}
+             {:qty 3 :card "Fan Site"}
+             {:qty 1 :card "Hunting Grounds"}
+             {:qty 3 :card "Laguna Velasco District"}
+             {:qty 3 :card "Sacrificial Construct"}
+             {:qty 1 :card "The Shadow Net"}
+             {:qty 1 :card "Atman"}
+             {:qty 1 :card "Femme Fatale"}
+             {:qty 1 :card "Gordian Blade"}
+             {:qty 1 :card "Inti"}
+             {:qty 1 :card "Na'Not'K"}
+             {:qty 1 :card "Clot"}
+             {:qty 1 :card "Misdirection"}
+             {:qty 2 :card "Self-modifying Code"}
+             {:qty 2 :card "Tapwrm"}])))
+
 ;; Utility
 
 (defn matchup-by-key
@@ -574,7 +804,11 @@
     :worlds-2014-a worlds-2014-dan-d-runs
     :worlds-2014-b worlds-2014-dan-d-corps
     :worlds-2015-a worlds-2015-dan-d-runs
-    :worlds-2015-b worlds-2015-dan-d-corps))
+    :worlds-2015-b worlds-2015-dan-d-corps
+    :worlds-2016-a worlds-2016-chris-dyer-corps
+    :worlds-2016-b worlds-2016-chris-dyer-runs
+    :worlds-2017-a worlds-2017-chaosjuggler-corps
+    :worlds-2017-b worlds-2017-chaosjuggler-runs))
 
 (def all-matchups
   "A set of all preconstructed matchups (by key).
@@ -582,4 +816,6 @@
   #{:worlds-2012-a :worlds-2012-b
     :worlds-2013-a :worlds-2013-b
     :worlds-2014-a :worlds-2014-b
-    :worlds-2015-a :worlds-2015-b})
+    :worlds-2015-a :worlds-2015-b
+    :worlds-2016-a :worlds-2016-b
+    :worlds-2017-a :worlds-2017-b})
