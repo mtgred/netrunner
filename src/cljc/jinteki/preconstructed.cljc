@@ -675,7 +675,7 @@
     [:preconstructed.worlds-2017-a-tag "ChaosJuggler (C) vs. Gregory Tongue (R)"]
     [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
     (precon "ChaosJuggler - 2017: Sinson Reversed CI"
-            {:title "Cerebral Imagining: Infinite Frontiers" :side "Corp" :code 3001}
+            {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code 3001}
             [{:qty 1 :card "Corporate Sales Team"}
              {:qty 3 :card "Efficiency Committee"}
              {:qty 2 :card "Elective Upgrade"}
@@ -705,7 +705,7 @@
              {:qty 3 :card "Sure Gamble"}
              {:qty 2 :card "Astrolabe"}
              {:qty 1 :card "Heartbeat"}
-             {:qty 3 :card "Aesop’s Pawnshop"}
+             {:qty 3 :card "Aesop's Pawnshop"}
              {:qty 1 :card "Councilman"}
              {:qty 3 :card "Daily Casts"}
              {:qty 3 :card "Professional Contacts"}
@@ -733,7 +733,7 @@
     [:preconstructed.worlds-2017-b-tag "Gregory Tongue (C) vs. ChaosJuggler (R)"]
     [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
     (precon "Gregory Tongue - 2017: No-Show Rewiring CI"
-            {:title "Cerebral Imagining: Infinite Frontiers" :side "Corp" :code 3001}
+            {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code 3001}
             [{:qty 2 :card "Brain Rewiring"}
              {:qty 3 :card "Efficiency Committee"}
              {:qty 2 :card "Global Food Initiative"}
