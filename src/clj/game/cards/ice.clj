@@ -289,6 +289,14 @@
    :async true
    :effect (effect (gain-credits eid credits))})
 
+(defn corps-gains-and-runner-loses-credits
+  [gain loss]
+  {:label (str "Gain " gain " [Credits], Runner loses " loss " [Credits]")
+   :msg (str "gain " gain " [Credits] and force the Runner to lose " loss " [Credits]")
+   :async true
+   :effect (req (wait-for (gain-credits state :corp gain)
+                          (lose-credits state :runner eid loss)))})
+
 (defn power-counter-ability
   "Does specified ability using a power counter."
   [{:keys [label message] :as ability}]
@@ -665,11 +673,7 @@
                                                               :value true
                                                               :duration :end-of-encounter}))}}})]
     {:on-encounter (encounter-ab)
-     :subroutines[{:label "Gain 1 [Credits], Runner loses 1 [Credits]"
-                   :msg "gain 1 [Credits] and force the Runner to lose 1 [Credits]"
-                   :async true
-                   :effect (req (wait-for (gain-credits state :corp 1)
-                                          (lose-credits state :runner eid 1)))}
+     :subroutines[(corps-gains-and-runner-loses-credits 1 1)
                   runner-trash-installed-sub]}))
 
 (defcard "Afshar"
@@ -934,11 +938,7 @@
                                                (faceup? %))
                                          (:discard corp)))
                           2))
-        sub {:label "Gain 1 [Credits], Runner loses 1 [Credits]"
-             :msg "gain 1 [Credits] and force the Runner to lose 1 [Credits]"
-             :async true
-             :effect (req (wait-for (gain-credits state :corp 1)
-                                    (lose-credits state :runner eid 1)))}
+        sub (corps-gains-and-runner-loses-credits 1 1)
         reset-subs-abi {:effect (effect (reset-variable-subs card (sub-count corp)
                                                              sub
                                                              {:variable true :front true}))}]
