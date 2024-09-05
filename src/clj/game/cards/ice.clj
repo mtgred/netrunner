@@ -2043,7 +2043,7 @@
    :subroutines [(give-tags 1)
                  {:label "Choose a resource or piece of hardware to trash"
                   :msg (msg "trash " (:title target))
-                  :prompt "Trash a resource of piece of hardware"
+                  :prompt "Trash a resource or piece of hardware"
                   :choices {:req (req (and (installed? target)
                                            (or (hardware? target)
                                                (resource? target))))}
