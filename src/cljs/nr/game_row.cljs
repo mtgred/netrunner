@@ -190,7 +190,8 @@
    [:span.format-label (tr [:lobby.format "Format"]) ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
    [precon-span precon]
-   [:span.format-singleton (str (when singleton? (str " " (tr [:lobby.singleton-b "(singleton)"]))))]])
+   [:span.format-singleton (str (when singleton? (str " " (tr [:lobby.singleton-b "(singleton)"]))))]
+   [precon-under-span precon]])
 
 (defn- time-since
   "Helper method for game-time. Computes how many minutes since game start"
@@ -229,6 +230,5 @@
      [game-title state user game]
      [mod-menu-popup state user game]
      [game-format game]
-     [precon-under-span (:precon game)]
      [game-time game]
      [players-row game]]))
