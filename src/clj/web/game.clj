@@ -10,11 +10,11 @@
    [game.core.say :refer [make-system-message]]
    [game.core.set-up :refer [init-game]]
    [game.main :as main]
+   [jinteki.preconstructed :as preconstructed]
    [jinteki.utils :refer [side-from-str]]
    [medley.core :refer [find-first]]
    [web.app-state :as app-state]
    [web.lobby :as lobby]
-   [web.preconstructed :as preconstructed]
    [web.stats :as stats]
    [web.ws :as ws]))
 
@@ -142,23 +142,22 @@
       (assoc game :players (player-map-deck (:players game) uid deck)))
     game))
 
-(defn handle-precon-deck
+(defn set-precon-match
+  [game precon-match]
+  (-> game
+      (set-precon-deck "Corp" (:corp precon-match))
+      (set-precon-deck "Runner" (:runner precon-match))))
+
+(defn handle-precon-decks
   [game]
-  (cond
-    (= (:gateway-type game) "Beginner")
-    (-> game
-        (set-precon-deck "Corp" preconstructed/gateway-beginner-corp)
-        (set-precon-deck "Runner" preconstructed/gateway-beginner-runner))
-    (= (:gateway-type game) "Intermediate")
-    (-> game
-        (set-precon-deck "Corp" preconstructed/gateway-intermediate-corp)
-        (set-precon-deck "Runner" preconstructed/gateway-intermediate-runner))
-    :else game))
+  (if-let [precon (:precon game)]
+    (set-precon-match game (preconstructed/matchup-by-key precon))
+    game))
 
 (defn handle-start-game [lobbies gameid players now]
   (if-let [lobby (get lobbies gameid)]
     (as-> lobby g
-      (handle-precon-deck g)
+      (handle-precon-decks g)
       (merge g {:started true
                 :original-players players
                 :ending-players players

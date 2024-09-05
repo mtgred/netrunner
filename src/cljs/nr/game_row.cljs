@@ -1,6 +1,7 @@
 (ns nr.game-row
   (:require
    [jinteki.utils :refer [superuser?]]
+   [jinteki.preconstructed :refer [matchup-by-key]]
    [cljc.java-time.instant :as inst]
    [cljc.java-time.duration :as duration]
    [cljc.java-time.temporal.chrono-unit :as chrono]
@@ -176,20 +177,19 @@
         (let [c (count (:spectators game))]
           (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")"))))])
 
-(defn- gateway-type-span [gateway-type]
-  (cond
-    (= gateway-type "Beginner")
-    [:span.format-precon (str " (" (tr [:lobby.gateway-format.beginner "Beginner"]) ")")]
-    (= gateway-type "Intermediate")
-    [:span.format-precon (str " (" (tr [:lobby.gateway-format.intermediate "Intermediate"]) ")")]
-    (= gateway-type "Constructed")
-    [:span.format-precon (str " (" (tr [:lobby.gateway-format.constructed "Constructed"]) ")")]))
+(defn- precon-span [precon]
+  (when precon
+    [:span.format-precon (str ": " (tr (:tr-tag (matchup-by-key precon))))]))
 
-(defn game-format [{fmt :format singleton? :singleton gateway-type :gateway-type}]
+(defn- precon-under-span [precon]
+  (when precon
+    [:span.format-precon-deck-names (tr (:tr-underline (matchup-by-key precon)))]))
+
+(defn game-format [{fmt :format singleton? :singleton precon :precon}]
   [:div {:class "game-format"}
    [:span.format-label (tr [:lobby.format "Format"]) ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
-   [gateway-type-span gateway-type]
+   [precon-span precon]
    [:span.format-singleton (str (when singleton? (str " " (tr [:lobby.singleton-b "(singleton)"]))))]])
 
 (defn- time-since
@@ -229,5 +229,6 @@
      [game-title state user game]
      [mod-menu-popup state user game]
      [game-format game]
+     [precon-under-span (:precon game)]
      [game-time game]
      [players-row game]]))
