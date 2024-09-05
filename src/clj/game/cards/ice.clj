@@ -2041,16 +2041,16 @@
 (defcard "Hammer"
   {:implementation "Breaking restriction not implemented"
    :subroutines [(give-tags 1)
-                 {:label "Trash 1 resource or piece of hardware"
+                 {:label "Choose a resource or piece of hardware to trash"
                   :msg (msg "trash " (:title target))
-                  :prompt "Choose a resource of piece of hardware"
+                  :prompt "Trash a resource of piece of hardware"
                   :choices {:req (req (and (installed? target)
                                            (or (hardware? target)
                                                (resource? target))))}
                   :async true
                   :effect (effect (trash eid target {:cause :subroutine}))}
-                 {:label "Trash 1 program that is not a decoder, fracter or killer"
-                  :prompt "Choose a program that is not a decoder, fracter or killer"
+                 {:label "Choose a program to trash that is not a decoder, fracter or killer"
+                  :prompt "Trash a program that is not a decoder, fracter or killer"
                   :msg (msg "trash " (:title target))
                   :choices {:card #(and (installed? %)
                                         (program? %)
