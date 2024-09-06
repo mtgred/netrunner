@@ -145,5 +145,6 @@
                           (init-hands state)
                           (fake-checkpoint state)
                           (effect-completed state nil eid))))
+    (swap! state assoc :format-legal-id-selection (or (:format-legal-id-selection game) []))
     (swap! state assoc :history [(:hist-state (public-states state))])
     state))

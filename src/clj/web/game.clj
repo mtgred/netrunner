@@ -146,7 +146,8 @@
   [game precon-match]
   (-> game
       (set-precon-deck "Corp" (:corp precon-match))
-      (set-precon-deck "Runner" (:runner precon-match))))
+      (set-precon-deck "Runner" (:runner precon-match))
+      (assoc :format-legal-id-selection (:format-legal-id-selection precon-match))))
 
 (defn handle-precon-decks
   [game]
