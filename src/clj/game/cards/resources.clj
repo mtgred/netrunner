@@ -1130,19 +1130,24 @@
 
 (defcard "DJ Fenris"
   (let [is-draft-id? #(str/starts-with? (:code %) "00")
-        sorted-id-list (fn [runner format] (->> (server-cards)
+        precon-legal? (fn [state c]
+                        (and (= :preconstructed (:format @state))
+                             (some #(= (:title c) %)
+                                   (:format-legal-id-selection @state))))
+        sorted-id-list (fn [runner format state] (->> (server-cards)
                                                 (filter #(and (identity? %)
                                                               (has-subtype? % "G-mod")
                                                               (not= (-> runner :identity :faction)
                                                                     (:faction %))
                                                               (not (is-draft-id? %))
                                                               (or (= :casual format)
+                                                                  (precon-legal? state %)
                                                                   (legal? format :legal %))))
                                                 (sort-by :title)))
         fenris-effect {:async true
                        :waiting-prompt true
                        :prompt "Choose a g-mod identity to host"
-                       :choices (req (sorted-id-list runner (:format @state)))
+                       :choices (req (sorted-id-list runner (:format @state) state))
                        :msg (msg "host " (:title target))
                        :effect (req (let [card (assoc-host-zones card)
                                           ;; Work around for get-card and update!

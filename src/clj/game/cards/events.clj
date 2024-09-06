@@ -3132,12 +3132,17 @@
     :choices (req (let [is-draft-id? #(.startsWith (:code %) "00")
                         runner-identity (:identity runner)
                         format (:format @state)
+                        precon-legal? (fn [state c]
+                                        (and (= :preconstructed format)
+                                             (some #(= (:title c) %)
+                                                   (:format-legal-id-selection @state))))
                         is-swappable #(and (= "Identity" (:type %))
                                            (= "Runner" (:side %))
                                            (= (:faction runner-identity) (:faction %))
                                            (not (is-draft-id? %))
                                            (not= (:title runner-identity) (:title %))
                                            (or (= :casual format)
+                                               (precon-legal? state %)
                                                (legal? format :legal %)))
                         swappable-ids (filter is-swappable (server-cards))]
                     (sort-by :title swappable-ids)))
