@@ -8,13 +8,16 @@
    :cards deck})
 
 (defn matchup
-  [tr-inner tr-tag tr-desc tr-underline corp runner]
-  {:tr-inner tr-inner
-   :tr-tag tr-tag
-   :tr-desc tr-desc
-   :tr-underline tr-underline
-   :corp corp
-   :runner runner})
+  ([tr-inner tr-tag tr-desc tr-underline corp runner] (matchup tr-inner tr-tag tr-desc tr-underline corp runner nil))
+  ([tr-inner tr-tag tr-desc tr-underline corp runner format-legal-id-selection]
+   {:tr-inner tr-inner
+    :tr-tag tr-tag
+    :tr-desc tr-desc
+    :tr-underline tr-underline
+    :corp corp
+    ;; Note: we need to manually specify the legal set of ids for rebirth/fenris
+    :format-legal-id-selection format-legal-id-selection
+    :runner runner}))
 
 ;; Concept: Worlds matchups/decks
 
@@ -856,7 +859,11 @@
              {:qty 3 :card "Aumakua"}
              {:qty 2 :card "Black Orchestra"}
              {:qty 1 :card "MKUltra"}
-             {:qty 2 :card "Paperclip"}])))
+             {:qty 2 :card "Paperclip"}])
+    ["Alice Merchant: Clan Agitator" "Edward Kim: Humanity's Hammer"
+     "Freedom Khumalo: Crypto-Anarchist" "MaxX: Maximum Punk Rock"
+     "Nathaniel \"Gnat\" Hall: One-of-a-Kind" "Null: Whistleblower" "Omar Keung: Conspiracy Theorist"
+     "Quetzal: Free Spirit" "Reina Roja: Freedom Fighter" "Valencia Estevez: The Angel of Cayambe"]))
 
 (def worlds-2018-joe-runs
   (matchup
@@ -912,7 +919,11 @@
              {:qty 3 :card "Black Orchestra"}
              {:qty 2 :card "MKUltra"}
              {:qty 3 :card "Paperclip"}
-             {:qty 1 :card "D4v1d"}])))
+             {:qty 1 :card "D4v1d"}])
+    ["Alice Merchant: Clan Agitator" "Edward Kim: Humanity's Hammer"
+     "Freedom Khumalo: Crypto-Anarchist" "MaxX: Maximum Punk Rock"
+     "Nathaniel \"Gnat\" Hall: One-of-a-Kind" "Null: Whistleblower" "Omar Keung: Conspiracy Theorist"
+     "Quetzal: Free Spirit" "Reina Roja: Freedom Fighter" "Valencia Estevez: The Angel of Cayambe"]))
 
 ;; Worlds 2019: Pinsel vs. Testrunning
 (def worlds-2019-pinsel-corps
@@ -1068,7 +1079,12 @@
              {:qty 2 :card "Aumakua"}
              {:qty 2 :card "Engolo"}
              {:qty 3 :card "Yusuf"}
-             {:qty 2 :card "Datasucker"}])))
+             {:qty 2 :card "Datasucker"}])
+    ["Alice Merchant: Clan Agitator" "Edward Kim: Humanity's Hammer"
+     "Freedom Khumalo: Crypto-Anarchist" "MaxX: Maximum Punk Rock"
+     "Nathaniel \"Gnat\" Hall: One-of-a-Kind" "Null: Whistleblower" "Omar Keung: Conspiracy Theorist"
+     "Quetzal: Free Spirit" "Reina Roja: Freedom Fighter" "Valencia Estevez: The Angel of Cayambe"
+     "Hoshiko Shiro: Untold Protagonist"]))
 
 (def worlds-2020-limes-runs
   (matchup
@@ -1120,7 +1136,12 @@
              {:qty 3 :card "Paperclip"}
              {:qty 2 :card "Consume"}
              {:qty 3 :card "Imp"}
-             {:qty 1 :card "Stargate"}])))
+             {:qty 1 :card "Stargate"}])
+    ["Alice Merchant: Clan Agitator" "Edward Kim: Humanity's Hammer"
+     "Freedom Khumalo: Crypto-Anarchist" "MaxX: Maximum Punk Rock"
+     "Nathaniel \"Gnat\" Hall: One-of-a-Kind" "Null: Whistleblower" "Omar Keung: Conspiracy Theorist"
+     "Quetzal: Free Spirit" "Reina Roja: Freedom Fighter" "Valencia Estevez: The Angel of Cayambe"
+     "Hoshiko Shiro: Untold Protagonist"]))
 
 ;; Worlds 2021: Patrick Gower vs. Jonas
 (def worlds-2021-patrick-corps
@@ -1182,7 +1203,14 @@
              {:qty 3 :card "Paperclip"}
              {:qty 2 :card "Botulus"}
              {:qty 3 :card "Rezeki"}
-             {:qty 2 :card "Stargate"}])))
+             {:qty 2 :card "Stargate"}])
+    ["Alice Merchant: Clan Agitator" "Edward Kim: Humanity's Hammer"
+     "Freedom Khumalo: Crypto-Anarchist" "MaxX: Maximum Punk Rock"
+     "Nathaniel \"Gnat\" Hall: One-of-a-Kind" "Null: Whistleblower" "Omar Keung: Conspiracy Theorist"
+     "Quetzal: Free Spirit" "Reina Roja: Freedom Fighter" "René \"Loup\" Arcemont: Party Animal"
+     "Valencia Estevez: The Angel of Cayambe" "Hoshiko Shiro: Untold Protagonist"
+     "Steve Cambridge: Master Grifter" "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"
+     "Los: Data Hijacker" "Kabonesa Wu: Netspace Thrillseeker"]))
 
 (def worlds-2021-patrick-runs
   (matchup
@@ -1240,7 +1268,14 @@
              {:qty 3 :card "Paperclip"}
              {:qty 1 :card "Botulus"}
              {:qty 3 :card "Rezeki"}
-             {:qty 1 :card "Stargate"}])))
+             {:qty 1 :card "Stargate"}])
+    ["Alice Merchant: Clan Agitator" "Edward Kim: Humanity's Hammer"
+     "Freedom Khumalo: Crypto-Anarchist" "MaxX: Maximum Punk Rock"
+     "Nathaniel \"Gnat\" Hall: One-of-a-Kind" "Null: Whistleblower" "Omar Keung: Conspiracy Theorist"
+     "Quetzal: Free Spirit" "Reina Roja: Freedom Fighter" "René \"Loup\" Arcemont: Party Animal"
+     "Valencia Estevez: The Angel of Cayambe" "Hoshiko Shiro: Untold Protagonist"
+     "Steve Cambridge: Master Grifter" "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"
+     "Los: Data Hijacker" "Kabonesa Wu: Netspace Thrillseeker"]))
 
 ;; Worlds 2022: William Huang vs. skry
 (def worlds-2022-sokka-corps
@@ -1467,7 +1502,14 @@
              {:qty 2 :card "Carmen"}
              {:qty 2 :card "Cleaver"}
              {:qty 2 :card "Fermenter"}
-             {:qty 1 :card "Leech"}])))
+             {:qty 1 :card "Leech"}])
+    ["Alice Merchant: Clan Agitator" "Edward Kim: Humanity's Hammer"
+     "Freedom Khumalo: Crypto-Anarchist" "MaxX: Maximum Punk Rock"
+     "Nathaniel \"Gnat\" Hall: One-of-a-Kind" "Null: Whistleblower" "Omar Keung: Conspiracy Theorist"
+     "Quetzal: Free Spirit" "Reina Roja: Freedom Fighter" "René \"Loup\" Arcemont: Party Animal"
+     "Valencia Estevez: The Angel of Cayambe" "Hoshiko Shiro: Untold Protagonist"
+     "Steve Cambridge: Master Grifter" "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"
+     "Los: Data Hijacker"]))
 
 ;; Utility
 
