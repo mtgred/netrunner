@@ -57,6 +57,7 @@
                                     :trash
                                     (update h :zone #(map to-keyword %))
                                     {:unpreventable true
+                                     :suppress-checkpoint true
                                      :host-trashed true
                                      :game-trash true})
                        nil)

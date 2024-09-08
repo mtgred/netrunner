@@ -300,6 +300,19 @@
       (is (= 2 (count (:hand (get-runner)))) "Card was added to grip")
       (is (= 1 (count (:discard (get-runner)))) "Asmund Pudlat was trashed"))))
 
+(deftest asmund-pudlat-doesnt-duplicate-self
+  ;; Asmund Pudlat
+  (do-game
+    (new-game {:runner {:hand [(qty "Asmund Pudlat" 2)]
+                        :deck ["Unregistered S&W '35" (qty "Fermenter" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Asmund Pudlat")
+    (click-prompt state :runner "Fermenter")
+    (click-prompt state :runner "Unregistered S&W '35")
+    (play-from-hand state :runner "Asmund Pudlat")
+    (is (is-discard? state :runner ["Fermenter" "Unregistered S&W '35" "Asmund Pudlat"])
+        "Didn't duplicate asmund")))
+
 (deftest amelia-earhart
   (do-game
     (new-game {:runner {:hand ["Amelia Earhart" "The Maker's Eye" (qty "Legwork" 2)]
