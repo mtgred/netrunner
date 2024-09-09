@@ -7178,6 +7178,7 @@
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "End the run")
     (is (= 1 (count (:discard (get-corp)))) "trashed vanilla")
+    (is (= 0 (count (:discard (get-runner)))) "took 0 net damage")
     (is (not (:run @state)) "Run ended")))
 
 (deftest urban-art-vernissage
