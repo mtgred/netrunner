@@ -120,7 +120,7 @@
     [:lobby.gateway-format.beginner "Beginner"]
     [:lobby.gateway-format.beginner-info
      "This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points."]
-    [:lobby.gateway-format-beginner-ul "System Gateway - Beginner Teaching Decks"]
+    [:lobby.gateway-format.beginner-ul "System Gateway - Beginner Teaching Decks"]
     gateway-beginner-corp
     gateway-beginner-runner))
 
@@ -130,12 +130,11 @@
     [:lobby.gateway-format.intermediate "Intermediate"]
     [:lobby.gateway-format.intermediate-info
      "This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points."]
-    [:lobby.gateway-format-intermediate-ul "System Gateway - Intermediate Teaching Decks"]
+    [:lobby.gateway-format.intermediate-ul "System Gateway - Intermediate Teaching Decks"]
     gateway-intermediate-corp
     gateway-intermediate-runner))
 
 ;; Worlds 2012: Ben Marsh vs. Jeremy Z
-
 (def worlds-2012-ben-corps
   (matchup
     [:preconstructed.worlds-2012-a "Worlds 2012: Ben Marsh (C) vs. Jeremy Zwirn (R)"]
@@ -459,7 +458,6 @@
              {:qty 3 :card "Security Testing"}])))
 
 ;; Worlds 2015: Dan D'Argenio vs. Timmy Wong
-
 (def worlds-2015-dan-d-corps
   (matchup
     [:preconstructed.worlds-2015-a "Worlds 2015: Dan D'Argenio (C) vs. Timmy Wong (R)"]
@@ -570,7 +568,6 @@
              {:qty 3 :card "Wireless Net Pavilion"}])))
 
 ;; Worlds 2016: Chris Dyer vs. Ben Ni
-
 (def worlds-2016-chris-dyer-corps
   (matchup
     [:preconstructed.worlds-2016-a "Worlds 2016: Chris Dyer (C) vs. Benjamin Ni (R)"]
@@ -1304,7 +1301,7 @@
     [:preconstructed.worlds-2022-b "Worlds 2022: skry (C) vs. William Huang (R)"]
     [:preconstructed.worlds-2022-b-tag "skry (C) vs. William Huang (R)"]
     [:preconstructed.worlds-2022-info "158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 8(?) rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun."]
-    [:preconstructed.worlds-2022-a-ul "Worlds 2022: Dies to Doom Blade vs. ApocoLat"]
+    [:preconstructed.worlds-2022-b-ul "Worlds 2022: Dies to Doom Blade vs. ApocoLat"]
     (precon "skry - 2022: Dies to Doomblade"
             {:title "AgInfusion: New Miracles for a New World" :side "Corp" :code 12052}
             [{:qty 1 :card "Longevity Serum"}

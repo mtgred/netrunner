@@ -4830,6 +4830,19 @@
           (derez state :corp (get-ice state :rd 0)))
         "Available MU should not change")))
 
+(deftest mamba
+  (do-game
+    (fire-all-subs-test "Mamba" {:runner {:hand 5}})
+    (is (= 1 (count (:discard (get-runner)))) "Took 1 net damage")
+    (click-prompt state :corp "0 [Credits]")
+    (click-prompt state :runner "1 [Credits]")
+    (is (not (waiting? state :runner)) "No leftover prompt")
+    (let [mamba (get-ice state :hq 0)]
+      (is (= 1 (get-counters mamba :power)) "Gained 1 power counter")
+      (card-ability state :corp mamba 0)
+      (is (= 0 (get-counters (refresh mamba) :power)) "Spent 1 power counter")
+      (is (= 2 (count (:discard (get-runner)))) "Took 1 more net damage"))))
+
 (deftest marker
   ;; Marker
   (do-game
@@ -6085,6 +6098,14 @@
       (fire-subs state (refresh pulse))
       (is (= ["End the run"] (prompt-buttons :runner))
           "Runner has no click left to spend"))))
+
+(deftest quicksand
+  (do-game
+    (run-and-encounter-ice-test "Quicksand")
+    (let [qs (get-ice state :hq 0)]
+      (is (= 1 (get-counters qs :power)) "Gained 1 power counter")
+      (fire-subs state qs)
+      (is (not (:run @state)) "Quicksand ended the run"))))
 
 (deftest red-tape
   ;; Red Tape
@@ -8226,7 +8247,7 @@
       (run-on state :hq)
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
-      (click-prompt state :runner "Runner loses 1 [Credits]")
+      (click-prompt state :runner "Make the Runner lose 1 [Credits]")
       (is (changed? [(count-tags state) 1]
             (run-continue state :movement))
           "Runner got 1 tag")
@@ -8236,7 +8257,7 @@
       (run-on state :hq)
       (run-continue state)
       (card-ability state :runner (get-program state 1) 0)
-      (click-prompt state :runner "Runner loses 1 [Credits]")
+      (click-prompt state :runner "Make the Runner lose 1 [Credits]")
       (is (changed? [(count-tags state) 0]
             (run-continue state :movement))
           "Runner got no tag"))))
