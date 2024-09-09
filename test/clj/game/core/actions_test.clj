@@ -33,7 +33,13 @@
     (core/command-undo-turn state :corp)
     (is (= 3 (count (:hand (get-corp)))) "Corp has 3 cards in HQ")
     (is (zero? (:click (get-corp))) "Corp has no clicks - turn not yet started")
-    (is (= 5 (:credit (get-corp))) "Corp has 5 credits")))
+    (is (= 5 (:credit (get-corp))) "Corp has 5 credits")
+    (start-turn state :corp)
+    (play-from-hand state :corp "Hedge Fund")
+    (play-from-hand state :corp "Hedge Fund")
+    (is (= 1 (:click (get-corp))) "Corp spent 2 clicks")
+    (is (= 13 (:credit (get-corp))) "Corp has 13 credits")
+    (is (= 1 (count (:hand (get-corp)))) "Corp has 1 card in HQ")))
 
 (deftest undo-click
   (do-game
