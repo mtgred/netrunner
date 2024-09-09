@@ -673,7 +673,7 @@
                                                               :value true
                                                               :duration :end-of-encounter}))}}})]
     {:on-encounter (encounter-ab)
-     :subroutines[(corps-gains-and-runner-loses-credits 1 1)
+     :subroutines [(corps-gains-and-runner-loses-credits 1 1)
                   runner-trash-installed-sub]}))
 
 (defcard "Afshar"
