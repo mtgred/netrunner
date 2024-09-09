@@ -7173,6 +7173,27 @@
           "took 2 net damage")
       (run-continue state))))
 
+(deftest tsakhia-bankhar-gantula-vs-zato-grid-interaction
+  (do-game
+    (new-game {:runner {:hand ["Tsakhia \"Bankhar\" Gantulga" (qty "Sure Gamble" 4)]}
+               :corp {:hand ["Vanilla" "ZATO City Grid"]}})
+    (play-from-hand state :corp "Vanilla" "New remote")
+    (play-from-hand state :corp "ZATO City Grid" "Server 1")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Tsakhia \"Bankhar\" Gantulga")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (click-prompt state :runner "Server 1")
+    (run-on state :remote1)
+    (rez state :corp (get-ice state :remote1 0))
+    (rez state :corp (get-content state :remote1 0))
+    (run-continue state)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "End the run")
+    (is (= 1 (count (:discard (get-corp)))) "trashed vanilla")
+    (is (= 0 (count (:discard (get-runner)))) "took 0 net damage")
+    (is (not (:run @state)) "Run ended")))
+
 (deftest urban-art-vernissage
   (do-game
       (new-game {:runner {:hand ["Urban Art Vernissage" "Botulus" "Monkeywrench"]
