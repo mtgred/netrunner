@@ -304,8 +304,7 @@
         (is (= 1000 (:base (prompt-map :corp))) "Base trace should now be 1000"))))
 
   (testing "/undo-click"
-    (let [r {:username "Runner"}
-          c {:username "Corp"}]
+    (let [r {:username "Runner"}]
       (do-game
         (new-game {:corp {:hand ["Hedge Fund"]}})
         (dotimes [n 3]
@@ -316,8 +315,9 @@
                        (:credit (get-runner)) +1]
               (click-credit state :runner))
             "Clicked for a cred")
-        (core/command-parser state :runner {:user r :text "/undo-click"})
-        (core/command-parser state :runner {:user r :text "/undo-click"})
+        (dotimes [_ 2]
+          (core/command-parser state :runner {:user r :text "/undo-click"}))
+        (is (= :runner (:active-player @state)) "Runner still active player")
         (is (changed? [(:click (get-runner)) -1
                        (:credit (get-runner)) +1]
               (click-credit state :runner))
