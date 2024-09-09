@@ -303,6 +303,47 @@
         (core/command-parser state :corp {:user user :text "/trace 99999999999999999999999999999999999999999999"})
         (is (= 1000 (:base (prompt-map :corp))) "Base trace should now be 1000"))))
 
+  (testing "/undo-click"
+    (let [r {:username "Runner"}
+          c {:username "Corp"}]
+      (do-game
+        (new-game {:corp {:hand ["Hedge Fund"]}})
+        (dotimes [n 3]
+          (click-credit state :corp))
+        (end-turn state :corp)
+        (start-turn state :runner)
+        (is (changed? [(:click (get-runner)) -1
+                       (:credit (get-runner)) +1]
+              (click-credit state :runner))
+            "Clicked for a cred")
+        (core/command-parser state :runner {:user r :text "/undo-click"})
+        (core/command-parser state :runner {:user r :text "/undo-click"})
+        (is (changed? [(:click (get-runner)) -1
+                       (:credit (get-runner)) +1]
+              (click-credit state :runner))
+            "Clicked for a cred after undoing more clicks than there were taken"))))
+
+  (testing "/undo-turn"
+    (let [r {:username "Runner"}
+          c {:username "Corp"}]
+      (do-game
+        (new-game {:corp {:hand ["Hedge Fund"]}})
+        (dotimes [n 3]
+          (click-credit state :corp))
+        (end-turn state :corp)
+        (start-turn state :runner)
+        (is (changed? [(:click (get-runner)) -1
+                       (:credit (get-runner)) +1]
+              (click-credit state :runner))
+            "Clicked for a cred")
+        (core/command-parser state :runner {:user r :text "/undo-turn"})
+        (core/command-parser state :corp {:user c :text "/undo-turn"})
+        (start-turn state :runner)
+        (is (changed? [(:click (get-runner)) -1
+                       (:credit (get-runner)) +1]
+              (click-credit state :runner))
+            "Clicked for a cred after restarting turn"))))
+
   (testing "/unique"
     (let [user {:username "Runner"}]
       (do-game

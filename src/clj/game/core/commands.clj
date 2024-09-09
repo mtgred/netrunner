@@ -210,6 +210,7 @@
                                   :turn-state turn-state)]
         (reset! state original-turn-state))
       (doseq [s [:runner :corp]]
+        (swap! state dissoc-in [s :turn-started])
         (toast state s "Game reset to start of turn")))))
 
 (defn command-unique
