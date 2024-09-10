@@ -279,9 +279,9 @@
              {:qty 3 :card "Plascrete Carapace"}
              {:qty 3 :card "Desperado"}
              {:qty 3 :card "Atman"}
-             {:qty 1 :card "Deus Ex"}
-             {:qty 1 :card "Femme Fetale"}
-             {:qty 3 :card "Self-modifying code"}
+             {:qty 1 :card "Deus X"}
+             {:qty 1 :card "Femme Fatale"}
+             {:qty 3 :card "Self-modifying Code"}
              {:qty 3 :card "Datasucker"}
              {:qty 1 :card "Parasite"}
              {:qty 3 :card "Kati Jones"}
@@ -678,11 +678,11 @@
              {:qty 3 :card "Street Peddler"}
              {:qty 3 :card "Temüjin Contract"}])))
 
-;; Worlds 2017: ChaosJuggler vs. Gregory Tongue
-(def worlds-2017-wilfy-corps
+;; Worlds 2017: ChaosJuggler vs. Grey Tongue
+(def worlds-2017-jess-corps
   (matchup
-    [:preconstructed.worlds-2017-a "Worlds 2017: Wilfy Horig (C) vs. Gregory Tongue (R)"]
-    [:preconstructed.worlds-2017-a-tag "Wilfy Horig (C) vs. Gregory Tongue (R)"]
+    [:preconstructed.worlds-2017-a "Worlds 2017: Jess Horig (C) vs. Grey Tongue (R)"]
+    [:preconstructed.worlds-2017-a-tag "Jess Horig (C) vs. Grey Tongue (R)"]
     [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
     [:preconstructed.worlds-2017-a-ul "Worlds 2017: Stinson Reversed CI vs. Aesops Hayley"]
     (precon "ChaosJuggler - 2017: Sinson Reversed CI"
@@ -710,7 +710,7 @@
              {:qty 3 :card "Fairchild 3.0"}
              {:qty 2 :card "Architect"}
              {:qty 1 :card "Ichi 1.0"}])
-    (precon "Gregory Tongue - 2017: Aesops Hayley"
+    (precon "Grey Tongue - 2017: Aesops Hayley"
             {:title "Hayley Kaplan: Universal Scholar" :side "Runner" :code 8025}
             [{:qty 2 :card "Stimhack"}
              {:qty 3 :card "Sure Gamble"}
@@ -738,13 +738,13 @@
              {:qty 3 :card "Self-modifying Code"}
              {:qty 1 :card "Trope"}])))
 
-(def worlds-2017-wilfy-runs
+(def worlds-2017-jess-runs
   (matchup
-    [:preconstructed.worlds-2017-b "Worlds 2017: Gregory Tongue (C) vs. Wilfy Horig (R)"]
-    [:preconstructed.worlds-2017-b-tag "Gregory Tongue (C) vs. Wilfy Horig (R)"]
+    [:preconstructed.worlds-2017-b "Worlds 2017: Grey Tongue (C) vs. Jess Horig (R)"]
+    [:preconstructed.worlds-2017-b-tag "Grey Tongue (C) vs. Jess Horig (R)"]
     [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
     [:preconstructed.worlds-2017-b-ul "Worlds 2017: No-Show Rewiring CI vs. Laguna Lock Hayley"]
-    (precon "Gregory Tongue - 2017: No-Show Rewiring CI"
+    (precon "Grey Tongue - 2017: No-Show Rewiring CI"
             {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code 3001}
             [{:qty 2 :card "Brain Rewiring"}
              {:qty 3 :card "Efficiency Committee"}
@@ -1485,8 +1485,8 @@
     :worlds-2015-b worlds-2015-dan-d-runs
     :worlds-2016-a worlds-2016-chris-dyer-corps
     :worlds-2016-b worlds-2016-chris-dyer-runs
-    :worlds-2017-a worlds-2017-wilfy-corps
-    :worlds-2017-b worlds-2017-wilfy-runs
+    :worlds-2017-a worlds-2017-jess-corps
+    :worlds-2017-b worlds-2017-jess-runs
     :worlds-2018-a worlds-2018-joe-corps
     :worlds-2018-b worlds-2018-joe-runs
     :worlds-2019-a worlds-2019-pinsel-corps
