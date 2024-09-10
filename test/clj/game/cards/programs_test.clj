@@ -8708,6 +8708,7 @@
         (is (changed? [(count (:hand (get-corp))) 1]
               (click-prompt state :corp "Yes"))
             "Corp drew 1 card")
+        (is (last-log-contains? state "Corp uses Umbrella to") "Corp side msg displayed right")
         (core/continue state :corp nil)
         (run-jack-out state)
         (run-on state "R&D")

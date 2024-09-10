@@ -3633,12 +3633,14 @@
                :effect (effect
                          (register-events
                            card
-                           [{:event :pre-resolve-subroutine
-                             :duration :end-of-encounter
-                             :async true
-                             :msg "force the Corp to resolve \"[Subroutine] Do 1 net damage\""
-                             :effect (req (update-current-encounter state :replace-subroutine sub)
-                                          (effect-completed state side eid))}]))}
+                           (let [target-ice (:ice context)]
+                             [{:event :pre-resolve-subroutine
+                               :duration :end-of-encounter
+                               :async true
+                               :req (req (get-card state target-ice))
+                               :msg "force the Corp to resolve \"[Subroutine] Do 1 net damage\""
+                               :effect (req (update-current-encounter state :replace-subroutine sub)
+                                            (effect-completed state side eid))}])))}
               {:event :runner-turn-ends
                :silent (req true)
                :effect (effect (update! (dissoc card :card-target)))}]

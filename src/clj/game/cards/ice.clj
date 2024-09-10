@@ -253,11 +253,12 @@
    :async true
    :effect (effect (gain-tags :corp eid n))})
 
-(def add-power-counter
+(def gain-power-counter
   "Places 1 power counter on a card."
   {:label "Place 1 power counter"
    :msg "place 1 power counter on itself"
-   :effect (effect (add-counter card :power 1))})
+   :async true
+   :effect (req (add-counter state side eid card :power 1 {:placed true}))})
 
 (defn trace-ability
   "Run a trace with specified base strength.
@@ -288,6 +289,14 @@
    :async true
    :effect (effect (gain-credits eid credits))})
 
+(defn corps-gains-and-runner-loses-credits
+  [gain loss]
+  {:label (str "Gain " gain " [Credits], Runner loses " loss " [Credits]")
+   :msg (str "gain " gain " [Credits] and force the Runner to lose " loss " [Credits]")
+   :async true
+   :effect (req (wait-for (gain-credits state :corp gain)
+                          (lose-credits state :runner eid loss)))})
+
 (defn power-counter-ability
   "Does specified ability using a power counter."
   [{:keys [label message] :as ability}]
@@ -317,7 +326,7 @@
 (defn runner-loses-credits
   "Runner loses credits effect"
   [credits]
-  {:label (str "Runner loses " credits " [Credits]")
+  {:label (str "Make the Runner lose " credits " [Credits]")
    :msg (str "force the Runner to lose " credits " [Credits]")
    :async true
    :effect (effect (lose-credits :runner eid credits))})
@@ -664,11 +673,7 @@
                                                               :value true
                                                               :duration :end-of-encounter}))}}})]
     {:on-encounter (encounter-ab)
-     :subroutines[{:label "Gain 1 [Credits], Runner loses 1 [Credits]"
-                   :msg "gain 1 [Credits] and force the Runner to lose 1 [Credits]"
-                   :async true
-                   :effect (req (wait-for (gain-credits state :corp 1)
-                                          (lose-credits state :runner eid 1)))}
+     :subroutines [(corps-gains-and-runner-loses-credits 1 1)
                   runner-trash-installed-sub]}))
 
 (defcard "Afshar"
@@ -677,10 +682,7 @@
                                    (not (is-disabled-reg? state card)))
                             (empty? (filter #(and (:broken %) (:printed %)) (:subroutines card)))
                             :unrestricted))]
-    {:subroutines [{:msg "make the Runner lose 2 [Credits]"
-                    :breakable breakable-fn
-                    :async true
-                    :effect (effect (lose-credits :runner eid 2))}
+    {:subroutines [(assoc (runner-loses-credits 2) :breakable breakable-fn)
                    (assoc end-the-run :breakable breakable-fn)]}))
 
 (defcard "Aiki"
@@ -936,11 +938,7 @@
                                                (faceup? %))
                                          (:discard corp)))
                           2))
-        sub {:label "Gain 1 [Credits], Runner loses 1 [Credits]"
-             :msg "gain 1 [Credits] and force the Runner to lose 1 [Credits]"
-             :async true
-             :effect (req (wait-for (gain-credits state :corp 1)
-                                    (lose-credits state :runner eid 1)))}
+        sub (corps-gains-and-runner-loses-credits 1 1)
         reset-subs-abi {:effect (effect (reset-variable-subs card (sub-count corp)
                                                              sub
                                                              {:variable true :front true}))}]
@@ -1427,7 +1425,7 @@
                   :effect (req (if (= target "Take 1 tag")
                                  (gain-tags state :runner eid 1)
                                  (end-run state :runner eid card)))}
-   :subroutines [(trace-ability 3 add-power-counter)]})
+   :subroutines [(trace-ability 3 gain-power-counter)]})
 
 (defcard "Data Ward"
   {:on-encounter {:player :runner
@@ -1821,13 +1819,9 @@
    :abilities [(set-autoresolve :auto-fire "Formicary rezzing and moving itself on approach")]})
 
 (defcard "Free Lunch"
-  {:abilities [{:cost [(->c :power 1)]
-                :label "Runner loses 1 [Credits]"
-                :msg "make the Runner lose 1 [Credits]"
-                :async true
-                :effect (effect (lose-credits :runner eid 1))}]
-   :subroutines [add-power-counter
-                 add-power-counter]})
+  {:abilities [(power-counter-ability (runner-loses-credits 1))]
+   :subroutines [gain-power-counter
+                 gain-power-counter]})
 
 (defcard "Funhouse"
   {:on-encounter {:msg (msg (if (= target "Take 1 tag")
@@ -2047,16 +2041,16 @@
 (defcard "Hammer"
   {:implementation "Breaking restriction not implemented"
    :subroutines [(give-tags 1)
-                 {:label "Trash 1 resource or piece of hardware"
+                 {:label "Choose a resource or piece of hardware to trash"
                   :msg (msg "trash " (:title target))
-                  :prompt "Choose a resource of piece of hardware"
+                  :prompt "Trash a resource or piece of hardware"
                   :choices {:req (req (and (installed? target)
                                            (or (hardware? target)
                                                (resource? target))))}
                   :async true
                   :effect (effect (trash eid target {:cause :subroutine}))}
-                 {:label "Trash 1 program that is not a decoder, fracter or killer"
-                  :prompt "Choose a program that is not a decoder, fracter or killer"
+                 {:label "Choose a program to trash that is not a decoder, fracter or killer"
+                  :prompt "Trash a program that is not a decoder, fracter or killer"
                   :msg (msg "trash " (:title target))
                   :choices {:card #(and (installed? %)
                                         (program? %)
@@ -2415,9 +2409,7 @@
    :leave-play (req (remove-watch state (keyword (str "iq" (:cid card)))))})
 
 (defcard "Ireress"
-  (let [sub {:msg "make the Runner lose 1 [Credits]"
-             :async true
-             :effect (effect (lose-credits :runner eid 1))}
+  (let [sub (runner-loses-credits 1)
         ability {:effect (effect (reset-variable-subs card (count-bad-pub state) sub))}]
     {:events [(assoc ability
                      :event :rez
@@ -2883,10 +2875,7 @@
 (defcard "Mamba"
   {:abilities [(power-counter-ability (do-net-damage 1))]
    :subroutines [(do-net-damage 1)
-                 (do-psi {:label "Place 1 power counter"
-                          :msg "place 1 power counter"
-                          :effect (effect (add-counter card :power 1)
-                                          (effect-completed eid))})]})
+                 (do-psi gain-power-counter)]})
 
 (defcard "Marker"
   {:subroutines [{:label "Give next encountered ice \"End the run\""
@@ -3018,10 +3007,7 @@
                              :effect (effect (add-prop :corp card :advance-counter -1 {:placed true})
                                              (lose-credits :runner eid 3))}
                :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}
-   :subroutines [{:label "The Runner loses 3 [Credits]"
-                  :msg "force the Runner to lose 3 [Credits]"
-                  :async true
-                  :effect (effect (lose-credits :runner eid 3))}
+   :subroutines [(runner-loses-credits 3)
                  end-the-run]})
 
 (defcard "Mganga"
@@ -3470,9 +3456,7 @@
   {:subroutines [end-the-run]})
 
 (defcard "Quicksand"
-  {:on-encounter {:msg "place 1 power counter on itself"
-                  :effect (effect (add-counter card :power 1)
-                                  (update-all-ice))}
+  {:on-encounter gain-power-counter
    :subroutines [end-the-run]
    :static-abilities [(ice-strength-bonus (req (get-counters card :power)))]})
 
@@ -3846,7 +3830,7 @@
                 :prompt "Choose a card to trash"
                 :effect (effect (reveal (:hand runner))
                                 (trash eid target {:cause :subroutine}))}]
-   :subroutines [(trace-ability 3 add-power-counter)]})
+   :subroutines [(trace-ability 3 gain-power-counter)]})
 
 (defcard "Snowflake"
   {:subroutines [(do-psi end-the-run)]})
@@ -4312,10 +4296,7 @@
                {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}}))
 
 (defcard "Upayoga"
-  {:subroutines [(do-psi {:label "Make the Runner lose 2 [Credits]"
-                          :msg "make the Runner lose 2 [Credits]"
-                          :async true
-                          :effect (effect (lose-credits :runner eid 2))})
+  {:subroutines [(do-psi (runner-loses-credits 2))
                  (resolve-another-subroutine
                    #(has-subtype? % "Psi")
                    "Resolve a subroutine on a rezzed psi ice")]})
@@ -4386,7 +4367,7 @@
 
 (defcard "Viktor 2.0"
   {:abilities [(power-counter-ability (do-brain-damage 1))]
-   :subroutines [(trace-ability 2 add-power-counter)
+   :subroutines [(trace-ability 2 gain-power-counter)
                  end-the-run]
    :runner-abilities [(bioroid-break 2 2)]})
 
