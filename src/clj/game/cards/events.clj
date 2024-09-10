@@ -3138,6 +3138,7 @@
                                            (not (is-draft-id? %))
                                            (not= (:title runner-identity) (:title %))
                                            (or (= :casual format)
+                                               (= :preconstructed format)
                                                (legal? format :legal %)))
                         swappable-ids (filter is-swappable (server-cards))]
                     (sort-by :title swappable-ids)))
