@@ -1137,6 +1137,7 @@
                                                                     (:faction %))
                                                               (not (is-draft-id? %))
                                                               (or (= :casual format)
+                                                                  (= :preconstructed format)
                                                                   (legal? format :legal %))))
                                                 (sort-by :title)))
         fenris-effect {:async true
