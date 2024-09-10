@@ -280,9 +280,9 @@
              {:qty 3 :card "Plascrete Carapace"}
              {:qty 3 :card "Desperado"}
              {:qty 3 :card "Atman"}
-             {:qty 1 :card "Deus Ex"}
-             {:qty 1 :card "Femme Fetale"}
-             {:qty 3 :card "Self-modifying code"}
+             {:qty 1 :card "Deus X"}
+             {:qty 1 :card "Femme Fatale"}
+             {:qty 3 :card "Self-modifying Code"}
              {:qty 3 :card "Datasucker"}
              {:qty 1 :card "Parasite"}
              {:qty 3 :card "Kati Jones"}
