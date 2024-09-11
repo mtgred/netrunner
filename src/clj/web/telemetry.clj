@@ -11,7 +11,7 @@
    [taoensso.encore :as enc]
    [taoensso.timbre :as timbre]))
 
-(def log-stat-frequency (enc/ms :secs 15))
+(def log-stat-frequency (enc/ms :mins 15))
 
 (defn subscriber-time-metrics
   "average time | oldest"
