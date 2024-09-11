@@ -11,7 +11,7 @@
    [taoensso.encore :as enc]
    [taoensso.timbre :as timbre]))
 
-(def log-stat-frequency (enc/ms :mins 15))
+(def log-stat-frequency (enc/ms :mins 5))
 
 (defn subscriber-time-metrics
   "average time | oldest"
@@ -39,7 +39,7 @@
   (if (:started lobby)
     (let [state (:state lobby)
           commands (or (:command-log @state) [])
-          recent (filter #(inst/is-after (inst/plus-seconds (:timestamp %) (* 15 60)) (inst/now))
+          recent (filter #(inst/is-after (inst/plus-seconds (:timestamp %) (* 5 60)) (inst/now))
                          commands)]
       (map :command recent))
     []))
