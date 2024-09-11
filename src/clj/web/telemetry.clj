@@ -5,14 +5,13 @@
    [cljc.java-time.duration :as duration]
    [cljc.java-time.instant :as inst]
    [game.core.board :refer [all-active]]
-   [sigmund.commands.cpu-load :as cl]
    [web.app-state :refer [app-state]]
    [web.lobby :refer [lobby-update-uids]]
    [web.ws :refer [connected-sockets connections_]]
    [taoensso.encore :as enc]
    [taoensso.timbre :as timbre]))
 
-(def log-stat-frequency (enc/ms :mins 5))
+(def log-stat-frequency (enc/ms :secs 15))
 
 (defn subscriber-time-metrics
   "average time | oldest"
@@ -35,6 +34,29 @@
   [lobbies]
   (frequencies (reduce concat [] (map lobby->active-cards (vals lobbies)))))
 
+(defn lobby->recent-commands
+  [lobby]
+  (if (:started lobby)
+    (let [state (:state lobby)
+          commands (or (:command-log @state) [])
+          recent (filter #(inst/is-after (inst/plus-seconds (:timestamp %) (* 15 60)) (inst/now))
+                         commands)]
+      (map :command recent))
+    []))
+
+(defn recent-command-frequencies
+  [lobbies]
+  (frequencies (reduce concat [] (map lobby->recent-commands (vals lobbies)))))
+
+(defn- heap-usage
+  []
+  (.getHeapMemoryUsage (java.lang.management.ManagementFactory/getMemoryMXBean)))
+
+(defn- system-load-average
+  []
+  (let [bean (java.lang.management.ManagementFactory/getOperatingSystemMXBean)]
+    (str (int (* 100 (/ (.getSystemLoadAverage bean) (.getAvailableProcessors bean)))) "%")))
+
 (defonce log-stats
   (go (while true
     (<! (timeout log-stat-frequency))
@@ -42,7 +64,8 @@
           lobbies-count (count lobbies)
           players (reduce + 0 (map #(count (:players %)) (vals lobbies)))
           spectators (reduce + 0 (map #(count (:spectators %)) (vals lobbies)))
-          freqs (active-card-frequencies lobbies)
+          card-freqs (active-card-frequencies lobbies)
+          cmd-freqs (recent-command-frequencies lobbies)
           user-cache-count (count (:users @app-state))
           lobby-sub-count (count (filter identity (vals (:lobby-updates @app-state))))
           lobby-update-uids (count (lobby-update-uids))
@@ -74,5 +97,7 @@
                      " }"))
       ;; TODO - once we've got this set up on the server, wrap it in a try/catch - only ever display
       ;; the warning once!
-      (timbre/info (str "Active Cards (across all lobbies): " freqs))
-      (timbre/info (str (with-out-str (cl/print-cpu-load) "\n\n")))))))
+      (timbre/info (str "Active Cards (across all lobbies): " card-freqs))
+      (timbre/info (str "Recent Commands (across all lobbies): " cmd-freqs))
+      (timbre/info (str "System Load (average): " (system-load-average)
+                        " - heap: " (heap-usage) "\n"))))))
