@@ -61,7 +61,7 @@
   [{state :state :as lobby} side user message]
   (when (and state @state)
     (let [message (if (= (str/trim message) "null") " null" message)]
-      (if (and side user (parse-command message))
+      (if (and side user (parse-command state message))
         (update-and-send-diffs! main/handle-say lobby side user message)
         ;; if side is nil, then it's a notification
         (let [f (if (some? side) main/handle-say main/handle-notification)
