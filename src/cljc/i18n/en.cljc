@@ -119,6 +119,7 @@
                     :worlds-2023-b-ul "Worlds 2023: tableCarnage vs. You *do* always come back!"
                     :worlds-2023-info "254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 8 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative."}
    :set {:all "All"
+         :draft-cycle "Draft Cycle"
          :draft "Draft"
          :core-set "Core Set"
          :genesis-cycle "Genesis Cycle"
@@ -177,6 +178,7 @@
          :terminal-directive-cycle "Terminal Directive Cycle"
          :terminal-directive-cards "Terminal Directive Cards"
          :terminal-directive-campaign "Terminal Directive Campaign"
+         :unreleased "Unreleased"
          :revised-core-set "Revised Core Set"
          :kitara-cycle "Kitara Cycle"
          :sovereign-sight "Sovereign Sight"
@@ -207,6 +209,7 @@
          :alt-art "Alt Art"
          :kysra-alt-arts "Kysra Alt Arts"
          :ntscape-navigator-alt-arts "Ntscape Navigator Alt Arts"
+         :plural-and-miniplural-alt-arts "Plural and MiniPlural Alt Arts"
          :alternate "Alternate"
          :world-champion-2015 "World Champion 2015"
          :world-champion-2016 "World Champion 2016"
