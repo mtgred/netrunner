@@ -6,7 +6,8 @@
     [game.core.toasts :refer [toast]]
     [game.macros :refer [when-let*]]
     [game.utils :refer [pluralize side-str]]
-    [medley.core :refer [find-first]]))
+    [medley.core :refer [find-first]]
+    [stringer.core :as s]))
 
 (defn choice-parser
   [choices]
@@ -48,9 +49,9 @@
            {:eid (select-keys eid [:eid])
             :card card
             :prompt-type :waiting
-            :msg (str "Waiting for " 
+            :msg (s/strcat "Waiting for "
                       (if (true? waiting-prompt)
-                        (str (side-str side) " to make a decision")
+                        (s/strcat (side-str side) " to make a decision")
                         waiting-prompt))}))
        (add-to-prompt-queue state side newitem)))))
 
@@ -67,7 +68,7 @@
                   #(if (not= (:value %) dice-msg)
                      (f %)
                      (show-prompt state side card
-                                  (str message " (Dice result: " (inc (rand-int 6)) ")")
+                                  (s/strcat message " (Dice result: " (inc (rand-int 6)) ")")
                                   other-choices f args))
                   args))))
 
@@ -147,16 +148,16 @@
                       (str
                         "Choose"
                         (when min-choices
-                          (str " at least " min-choices))
+                          (s/strcat " at least " min-choices))
                         (when (and min-choices max-choices)
                           " and")
                         (when max-choices
-                          (str (if all "" " up to")
+                          (s/strcat (if all "" " up to")
                                " " max-choices))
                         (if max-choices
-                          (str " " (pluralize "target" max-choices))
+                          (s/strcat " " (pluralize "target" max-choices))
                           (if min-choices
-                            (str " " (pluralize "target" min-choices))
+                            (s/strcat " " (pluralize "target" min-choices))
                             " a target"))
                         " for " (:title card)))
                     (if all ["Hide"] ["Done"])
@@ -164,7 +165,7 @@
                       (fn [_]
                         ; "Hide" was selected. Show toast and reapply select prompt. This allows players to access
                         ; prompts that lie "beneath" the current select prompt.
-                        (toast state side (str "You must choose " max-choices " " (pluralize "card" max-choices)))
+                        (toast state side (s/strcat "You must choose " max-choices " " (pluralize "card" max-choices)))
                         (show-select state side card ability update! resolve-ability args))
                       (fn [_]
                         (let [selected (get-in @state [side :selected 0] [])
@@ -172,7 +173,7 @@
                           ; check for :min. If not enough cards are selected, show toast and stay in select prompt
                           (if (and min-choices (< (count cards) min-choices))
                             (do
-                              (toast state side (str "You must choose at least " min-choices " " (pluralize "card" min-choices)))
+                              (toast state side (s/strcat "You must choose at least " min-choices " " (pluralize "card" min-choices)))
                               (show-select state side card ability update! resolve-ability args))
                             (resolve-select state side card
                                             (select-keys (wrap-function args :cancel-effect) [:cancel-effect])
@@ -187,7 +188,7 @@
   The prompt cannot be closed except by a later call to clear-wait-prompt."
   ([state side message] (show-wait-prompt state side message nil))
   ([state side message {:keys [card]}]
-   (show-prompt state side card (str "Waiting for " message) nil nil
+   (show-prompt state side card (s/strcat "Waiting for " message) nil nil
                 {:prompt-type :waiting})))
 
 (defn clear-wait-prompt
@@ -200,8 +201,8 @@
   "Adds a dummy prompt to both side's prompt queues.
    The prompt cannot be closed except by a later call to clear-run-prompts."
   [state msg card]
-  (show-prompt state :runner card (str "You are " msg) nil nil {:prompt-type :run})
-  (show-prompt state :corp card (str "The Runner is " msg) nil nil {:prompt-type :run}))
+  (show-prompt state :runner card (s/strcat "You are " msg) nil nil {:prompt-type :run})
+  (show-prompt state :corp card (s/strcat "The Runner is " msg) nil nil {:prompt-type :run}))
 
 (defn clear-run-prompts
   [state]

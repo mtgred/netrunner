@@ -21,7 +21,8 @@
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [wait-for when-let*]]
     [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
-    [medley.core :refer [insert-nth]]))
+    [medley.core :refer [insert-nth]]
+    [stringer.core :as s]))
 
 ;; Helpers for move
 (defn- remove-old-card
@@ -285,7 +286,7 @@
         (when (and (not unpreventable)
                    (not= cause :ability-cost))
           (swap! state update-in [:trash :trash-prevent] dissoc ktype))
-        (let [type (->> ktype name (str "trash-") keyword)
+        (let [type (->> ktype name (s/strcat "trash-") keyword)
               prevent (get-prevent-list state :runner type)]
           ;; Check for prevention effects
           (if (and (not unpreventable)
@@ -294,14 +295,14 @@
             (do (system-msg state :runner "has the option to prevent trash effects")
                 (show-wait-prompt state :corp "Runner to prevent trash effects")
                 (show-prompt state :runner nil
-                             (str "Prevent the trashing of " (:title card) "?") ["Done"]
+                             (s/strcat "Prevent the trashing of " (:title card) "?") ["Done"]
                              (fn [_]
                                (clear-wait-prompt state :corp)
                                (if-let [_ (get-in @state [:trash :trash-prevent ktype])]
-                                 (do (system-msg state :runner (str "prevents the trashing of " (:title card)))
+                                 (do (system-msg state :runner (s/strcat "prevents the trashing of " (:title card)))
                                      (swap! state update-in [:trash :trash-prevent] dissoc ktype)
                                      (effect-completed state side eid))
-                                 (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
+                                 (do (system-msg state :runner (s/strcat "will not prevent the trashing of " (:title card)))
                                      (complete-with-result state side eid card))))
                              {:prompt-type :prevent}))
             ;; No prevention effects: add the card to the trash-list
@@ -643,7 +644,7 @@
                                                                           :unpreventable true})
              (let [card (get-card state card)]
                (when msg
-                 (system-msg state side (str "forfeits " (get-title card))))
+                 (system-msg state side (s/strcat "forfeits " (get-title card))))
                (move state (to-keyword (:side card)) card :rfg)
                (update-all-agenda-points state side)
                (check-win-by-agenda state side)

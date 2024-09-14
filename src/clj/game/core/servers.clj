@@ -3,7 +3,8 @@
   (:require
     [game.core.card :refer [get-zone]]
     [game.utils :refer [safe-split string->num]]
-    [clojure.string :as string]))
+    [clojure.string :as string]
+    [stringer.core :as s]))
 
 (defn target-server
   "Returns the server keyword corresponding to the target of a run."
@@ -12,13 +13,13 @@
 
 (defn remote-num->name
   [num]
-  (str "Server " num))
+  (s/strcat "Server " num))
 
 (defn remote->name
   "Converts a remote zone to a string"
   [zone]
   (let [kw (if (keyword? zone) zone (last zone))
-        s (str kw)]
+        s (s/strcat kw)]
     (when (string/starts-with? s ":remote")
       (let [num (last (string/split s #":remote"))]
         (remote-num->name num)))))
@@ -63,7 +64,7 @@
     :rd -2
     :hq -1
     (string->num
-      (last (safe-split (str zone) #":remote")))))
+      (last (safe-split (s/strcat zone) #":remote")))))
 
 (defn zones->sorted-names
   [zones]
@@ -156,7 +157,7 @@
       "R&D" :rd
       "Archives" :archives
       ;; assume "Server N"
-      (->> (string/split name-or-kw-or-zone #" ") last (str "remote") keyword))
+      (->> (string/split name-or-kw-or-zone #" ") last (s/strcat "remote") keyword))
 
     :else
     (second name-or-kw-or-zone)))

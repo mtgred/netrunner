@@ -8,7 +8,8 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect req wait-for]]
-    [clojure.string :as string]))
+    [clojure.string :as string]
+    [stringer.core :as s]))
 
 (defn optional-ability
   "Shows a 'Yes/No' prompt and resolves the given ability's :yes-ability if Yes is chosen, and :no-ability otherwise.
@@ -39,7 +40,7 @@
          "Yes" (prompt-fn {:value "Yes"})
          "No" (prompt-fn {:value "No"})
          (do (when autoresolve-fn
-               (toast state side (str "This prompt can be skipped by clicking "
+               (toast state side (s/strcat "This prompt can be skipped by clicking "
                                       (:title card) " and toggling autoresolve")))
              (show-prompt state side eid card message choices
                           prompt-fn (assoc ability :targets targets))))))))
@@ -69,11 +70,11 @@
   "Makes a card ability which lets the user toggle auto-resolve on an ability. Setting is stored under [:special toggle-kw]."
   [toggle-kw ability-name]
   {:autoresolve true
-   :label (str "Toggle auto-resolve on " ability-name)
-   :prompt (str "Set auto-resolve on " ability-name " to:")
+   :label (s/strcat "Toggle auto-resolve on " ability-name)
+   :prompt (s/strcat "Set auto-resolve on " ability-name " to:")
    :choices ["Always" "Never" "Ask"]
    :effect (effect (update! (assoc-in card [:special toggle-kw] (keyword (string/lower-case target))))
-                   (toast (str "From now on, " ability-name " will "
+                   (toast (s/strcat "From now on, " ability-name " will "
                                ({:always "always" :never "never" :ask "ask whether it should"}
                                 (get-in (get-card state card) [:special toggle-kw]))
                                " resolve.") "info"))})

@@ -9,7 +9,8 @@
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [pluralize quantify]]))
+    [game.utils :refer [pluralize quantify]]
+    [stringer.core :as s]))
 
 (defn sum-tag-effects
   [state]
@@ -56,7 +57,7 @@
   [state side eid n]
   (if (pos? n)
     (do (gain state :runner :tag {:base n})
-        (toast state :runner (str "Took " (quantify n "tag") "!") "info")
+        (toast state :runner (s/strcat "Took " (quantify n "tag") "!") "info")
         (update-tag-status state)
         (trigger-event-simult state side eid :runner-gain-tag nil {:amount n}))
     (effect-completed state side eid)))
@@ -77,11 +78,11 @@
                      (swap! state assoc-in [:prevent :current] :tag)
                      (show-prompt
                        state :runner nil
-                       (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
+                       (s/strcat "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
                        (fn [_]
                          (let [prevent (get-in @state [:tag :tag-prevent])
                                prevent-msg (if prevent
-                                             (str "avoids "
+                                             (s/strcat "avoids "
                                                   (if (= prevent Integer/MAX_VALUE) "all" prevent)
                                                   (pluralize prevent "tag"))
                                              "will not avoid tags")]

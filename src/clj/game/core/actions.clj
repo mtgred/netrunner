@@ -27,7 +27,8 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]))
+    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]
+    [stringer.core :as s]))
 
 (defn- update-click-state
   "Update :click-states to hold latest 4 moments before performing actions."
@@ -88,7 +89,7 @@
                          (not= side (to-keyword (:side card)))
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
      (when blocking-prompt?
-       (toast state side (str "You cannot play abilities while other abilities are resolving.")
+       (toast state side (s/strcat "You cannot play abilities while other abilities are resolving.")
               "warning"))
      (when-not cannot-play
        (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
@@ -101,7 +102,7 @@
           eid (make-eid state {:source card :source-type :ability})
           expend-ab (expend (:expend card))]
       (resolve-ability state side eid expend-ab card nil))
-    (toast state side (str "You cannot play abilities while other abilities are resolving.")
+    (toast state side (s/strcat "You cannot play abilities while other abilities are resolving.")
               "warning")))
 
 (defn play
@@ -150,7 +151,7 @@
       (let [move-card-to (partial move state s c)
             card-prompts (filter #(same-card? :title % c) (get-in @state [side :prompt]))
             log-move (fn [verb & text]
-                       (system-msg state side (str verb " " from-str
+                       (system-msg state side (s/strcat verb " " from-str
                                                    (when (seq text)
                                                      (apply str " " text)))))]
         (case server
@@ -182,9 +183,9 @@
 
 (defn- prompt-error
   [context prompt prompt-args]
-  (.println *err* (with-out-str (print-stack-trace (Exception. (str "Error " context)))))
-  (.println *err* (str "Prompt: " prompt))
-  (.println *err* (str "Prompt args: " prompt-args)))
+  (.println *err* (with-out-str (print-stack-trace (Exception. (s/strcat "Error " context)))))
+  (.println *err* (s/strcat "Prompt: " prompt))
+  (.println *err* (s/strcat "Prompt args: " prompt-args)))
 
 (defn- maybe-pay
   [state side eid card choices choice]
@@ -230,8 +231,8 @@
                   (when effect
                     (effect (or choice card)))
                   (finish-prompt state side prompt card))
-              (toast state side (str "You cannot choose " choice " for this effect.") "warning"))
-            (toast state side (str "Could not find a card named " choice ".") "warning")))
+              (toast state side (s/strcat "You cannot choose " choice " for this effect.") "warning"))
+            (toast state side (s/strcat "Could not find a card named " choice ".") "warning")))
         (prompt-error "in a card-title prompt" prompt args))
 
       ;; Otherwise, choices is a sequence of strings and/or cards
@@ -314,7 +315,7 @@
       (wait-for (pay state side (make-eid state eid) card total-pump-cost)
                 (dotimes [_ times-pump]
                   (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
-                (system-msg state side (str (build-spend-msg (:msg async-result) "increase")
+                (system-msg state side (s/strcat (build-spend-msg (:msg async-result) "increase")
                                             "the strength of " (:title card) " to "
                                             (get-strength (get-card state card))))
                 (effect-completed state side eid)))))
@@ -392,7 +393,7 @@
                                         [(remove :broken (:subroutines current-ice))])]
                   (wait-for (resolve-ability state side (play-heap-breaker-auto-pump-and-break-impl state side sub-groups-to-break current-ice) card nil)
                             (system-msg state side
-                                        (str (build-spend-msg payment-str "increase")
+                                        (s/strcat (build-spend-msg payment-str "increase")
                                              "the strength of " (:title card)
                                              " to " (get-strength (get-card state card))
                                              " and break all subroutines on " (:title current-ice)))
@@ -490,12 +491,12 @@
                     (wait-for (resolve-ability state side (play-auto-pump-and-break-impl state side sub-groups-to-break current-ice break-ability) card nil)
                               (system-msg state side
                                           (if (pos? times-pump)
-                                            (str (build-spend-msg payment-str "increase")
+                                            (s/strcat (build-spend-msg payment-str "increase")
                                                  "the strength of " (:title card)
                                                  " to " (get-strength (get-card state card))
                                                  " and break all " (when (< 1 unbroken-subs) unbroken-subs)
                                                  " subroutines on " (:title current-ice))
-                                            (str (build-spend-msg payment-str "use")
+                                            (s/strcat (build-spend-msg payment-str "use")
                                                  (:title card)
                                                  " to break "
                                                  (if some-already-broken
@@ -515,7 +516,7 @@
   [state side args]
   (if (no-blocking-or-prevent-prompt? state side)
     ((dynamic-abilities (:dynamic args)) state (keyword side) args)
-    (toast state side (str "You cannot play abilities while other abilities are resolving.")
+    (toast state side (s/strcat "You cannot play abilities while other abilities are resolving.")
            "warning")))
 
 
@@ -551,7 +552,7 @@
           sub (nth (:subroutines card) subroutine nil)]
       (when card
         (resolve-subroutine! state side card sub)))
-    (toast state side (str "You cannot fire subroutines while abilities are being resolved.")
+    (toast state side (s/strcat "You cannot fire subroutines while abilities are being resolved.")
            "warning")))
 
 (defn play-unbroken-subroutines
@@ -560,7 +561,7 @@
   (if (no-blocking-or-prevent-prompt? state side)
     (when-let [card (get-card state card)]
       (resolve-unbroken-subs! state side card))
-    (toast state side (str "You cannot fire subroutines while abilities are being resolved.")
+    (toast state side (s/strcat "You cannot fire subroutines while abilities are being resolved.")
            "warning")))
 
 ;;; Corp actions
@@ -639,7 +640,7 @@
                       (->c :click (if-not no-cost 1 0))
                       (->c :credit (if-not no-cost 1 0)))
                  (if-let [payment-str (:msg async-result)]
-                   (do (system-msg state side (str (build-spend-msg payment-str "advance") (card-str state card)))
+                   (do (system-msg state side (s/strcat (build-spend-msg payment-str "advance") (card-str state card)))
                        (update-advancement-requirement state card)
                        (add-prop state side (get-card state card) :advance-counter 1)
                        (play-sfx state side "click-advance")
@@ -657,7 +658,7 @@
         _ (update-all-agenda-points state)
         c (get-card state c)
         points (get-agenda-points c)]
-    (system-msg state :corp (str "scores " (:title c)
+    (system-msg state :corp (s/strcat "scores " (:title c)
                                  " and gains " (quantify points "agenda point")))
     (implementation-msg state card)
     (set-prop state :corp (get-card state c) :advance-counter 0)
@@ -691,5 +692,5 @@
                            (if (string/blank? (:msg payment-result))
                              (effect-completed state side eid)
                              (do
-                               (system-msg state side (str (:msg payment-result) " to score " (:title card)))
+                               (system-msg state side (s/strcat (:msg payment-result) " to score " (:title card)))
                                (resolve-score state side eid card))))))))))

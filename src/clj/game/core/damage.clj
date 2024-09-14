@@ -11,7 +11,8 @@
     [game.core.winning :refer [flatline]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [dissoc-in enumerate-str side-str]]
-    [jinteki.utils :refer [str->int]]))
+    [jinteki.utils :refer [str->int]]
+    [stringer.core :as s]))
 
 (defn damage-bonus
   "Registers a bonus of n damage to the next damage application of the given type."
@@ -28,7 +29,7 @@
 
 (defn prevention-prompt-msg
   [damage-amount damage-type prevented]
-  (str "Prevent "
+  (s/strcat "Prevent "
        (when (< 1 damage-amount) "any of the ")
        damage-amount
        " " (damage-name damage-type) " damage?"
@@ -122,7 +123,7 @@
                   (when (= dmg-type :brain)
                     (swap! state update-in [:runner :brain-damage] #(+ % n)))
                   (when-let [trashed-msg (enumerate-str (map get-title cards-trashed))]
-                    (system-msg state :runner (str "trashes " trashed-msg " due to " (damage-name dmg-type) " damage")))
+                    (system-msg state :runner (s/strcat "trashes " trashed-msg " due to " (damage-name dmg-type) " damage")))
                   (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
                   (swap! state update-in [:stats :corp :damage dmg-type] (fnil + 0) n)
                   (if (< (count hand) n)
@@ -160,17 +161,17 @@
               (> n already-prevented))
        ;; player can prevent damage
        (do (system-msg state player "has the option to prevent damage")
-           (show-wait-prompt state other-player (str (side-str player) " to prevent damage"))
+           (show-wait-prompt state other-player (s/strcat (side-str player) " to prevent damage"))
            (swap! state assoc-in [:prevent :current] type)
            (show-prompt
              state player nil
-             (str "Prevent " (when (< 1 (- n already-prevented)) "any of the ") (- n already-prevented) " " (damage-name type) " damage?")
+             (s/strcat "Prevent " (when (< 1 (- n already-prevented)) "any of the ") (- n already-prevented) " " (damage-name type) " damage?")
              ["Done"]
              (fn [_] (let [prevent (get-in @state [:damage :damage-prevent type])
                            damage-prevented (if prevent (- prevent already-prevented) false)]
                        (system-msg state player
                                    (if damage-prevented
-                                     (str "prevents "
+                                     (s/strcat "prevents "
                                           (if (= damage-prevented Integer/MAX_VALUE) "all" damage-prevented)
                                           " " (damage-name type) " damage")
                                      "will not prevent damage"))

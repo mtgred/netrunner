@@ -21,7 +21,8 @@
     [game.utils :refer [dissoc-in distinct-by enumerate-str in-coll? remove-once same-card? server-cards side-str to-keyword]]
     [jinteki.utils :refer [other-side]]
     [game.core.memory :refer [update-mu]]
-    [game.core.to-string :refer [card-str]]))
+    [game.core.to-string :refer [card-str]]
+    [stringer.core :as s]))
 
 ;; resolve-ability docs
 
@@ -285,7 +286,7 @@
     :else
     (.println *err* (with-out-str
                       (print-stack-trace
-                        (Exception. (str "Ability is nil????" ability card targets))
+                        (Exception. (s/strcat "Ability is nil????" ability card targets))
                         2500)))))
 
 ;;; Checking functions for resolve-ability
@@ -312,9 +313,9 @@
           disp-side (or (:display-side ability) (to-keyword (:side card)))]
       (cond
         (= :cost desc)
-        (system-msg state disp-side (str payment-str " to satisfy " (get-title card)))
+        (system-msg state disp-side (s/strcat payment-str " to satisfy " (get-title card)))
         desc
-        (system-msg state disp-side (str cost-spend-msg (get-title card) (str " to " desc)))))))
+        (system-msg state disp-side (s/strcat cost-spend-msg (get-title card) (s/strcat " to " desc)))))))
 
 (defn register-once
   "Register ability as having happened if :once specified"
@@ -325,7 +326,7 @@
 (defn do-nothing
   "Does nothing (loudly)"
   [state side eid card]
-  (system-msg state side (str "uses " (:title card) " to do nothing"))
+  (system-msg state side (s/strcat "uses " (:title card) " to do nothing"))
   (effect-completed state side eid))
 
 (defn- change-in-game-state?
@@ -392,9 +393,9 @@
       {:eid (select-keys eid [:eid])
        :card card
        :prompt-type :waiting
-       :msg (str "Waiting for " 
+       :msg (s/strcat "Waiting for "
                  (if (true? waiting-prompt)
-                   (str (side-str side) " to make a decision")
+                   (s/strcat (side-str side) " to make a decision")
                    waiting-prompt))}))
   (if (seq cost)
     ;; Ensure that any costs can be paid
@@ -815,7 +816,7 @@
   [event]
   (if (keyword? event)
     (name event)
-    (str event)))
+    (s/strcat event)))
 
 (defn trigger-event-simult
   "Triggers the given event by showing a prompt of all handlers for the event, allowing manual resolution of
@@ -854,14 +855,14 @@
               opponent-events (get-handlers opponent)]
           (wait-for (resolve-ability state side (make-eid state eid) first-ability nil nil)
                     (show-wait-prompt state opponent
-                                      (str (side-str active-player) " to resolve " (event-title event) " triggers"))
+                                      (s/strcat (side-str active-player) " to resolve " (event-title event) " triggers"))
                     ; let active player activate their events first
                     (wait-for (trigger-event-simult-player state side (make-eid state eid) active-player-events cancel-fn targets)
                               (when after-active-player
                                 (resolve-ability state side eid after-active-player nil nil))
                               (clear-wait-prompt state opponent)
                               (show-wait-prompt state active-player
-                                                (str (side-str opponent) " to resolve " (event-title event) " triggers"))
+                                                (s/strcat (side-str opponent) " to resolve " (event-title event) " triggers"))
                               (wait-for (trigger-event-simult-player state opponent (make-eid state eid) opponent-events cancel-fn targets)
                                         (clear-wait-prompt state active-player)
                                         (effect-completed state side eid))))))))
@@ -1014,10 +1015,10 @@
           opponent (other-side active-player)
           active-player-handlers (filter-handlers handlers active-player)
           opponent-handlers (filter-handlers handlers opponent)]
-      (show-wait-prompt state opponent (str (side-str active-player) " to resolve pending triggers"))
+      (show-wait-prompt state opponent (s/strcat (side-str active-player) " to resolve pending triggers"))
       (wait-for (trigger-queued-event-player state active-player (make-eid state eid) active-player-handlers args)
                 (clear-wait-prompt state opponent)
-                (show-wait-prompt state active-player (str (side-str opponent) " to resolve pending triggers"))
+                (show-wait-prompt state active-player (s/strcat (side-str opponent) " to resolve pending triggers"))
                 (wait-for (trigger-queued-event-player state opponent (make-eid state eid) opponent-handlers args)
                           (clear-wait-prompt state active-player)
                           (effect-completed state nil eid))))
@@ -1095,7 +1096,7 @@
                         :unpreventable true})
                 (doseq [card cards-to-trash]
                   (system-say state (to-keyword (:side card))
-                              (str (card-str state card) " is trashed.")))
+                              (s/strcat (card-str state card) " is trashed.")))
                 (effect-completed state nil eid))
       (effect-completed state nil eid))))
 
@@ -1110,7 +1111,7 @@
                        {:unpreventable true})
                 (doseq [card trash-when-tagged]
                   (system-say state (to-keyword (:side card))
-                              (str "trashes " (card-str state card) " for being tagged")))
+                              (s/strcat "trashes " (card-str state card) " for being tagged")))
                 (effect-completed state nil eid))
       (effect-completed state nil eid))))
 

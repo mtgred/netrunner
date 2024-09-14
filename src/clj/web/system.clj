@@ -32,7 +32,8 @@
    [web.telemetry]
    [web.utils :refer [tick]]
    [web.versions :refer [banned-msg frontend-version]]
-   [web.ws :refer [ch-chsk event-msg-handler]]))
+   [web.ws :refer [ch-chsk event-msg-handler]]
+   [stringer.core :as s]))
 
 (read-write/print-time-literals-clj!)
 
@@ -52,7 +53,7 @@
 
 (defmethod ig/init-key :mongodb/connection [_ opts]
   (let [{:keys [address port name connection-string]} opts
-        connection (or connection-string (str "mongodb://" address ":" port "/" name))]
+        connection (or connection-string (s/strcat "mongodb://" address ":" port "/" name))]
     (mg/connect-via-uri connection)))
 
 (defmethod ig/halt-key! :mongodb/connection [_ {:keys [conn]}]

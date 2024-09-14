@@ -6,7 +6,8 @@
     [game.core.eid :refer [make-eid]]
     [game.core.effects :refer [any-effects]]
     [game.core.toasts :refer [toast]]
-    [jinteki.utils :refer [capitalize]]))
+    [jinteki.utils :refer [capitalize]]
+    [stringer.core :as s]))
 
 (defn ->c
   ([type] (->c type 1))
@@ -100,7 +101,7 @@
 (defn- any-effect-stops-pay?
   "Checks installed cards to see if payment type is being prevented by an active card"
   [state side cost]
-  (let [kw-cost (keyword (str "cannot-pay-" (name (:cost/type cost))))]
+  (let [kw-cost (keyword (s/strcat "cannot-pay-" (name (:cost/type cost))))]
     (any-effects state side kw-cost true? {:amount (:cost/amount cost)})))
 
 (defn can-pay?
@@ -116,7 +117,7 @@
                        (payable? % state side eid card))
                  costs)
        costs
-       (do (when title (toast state side (str "Unable to pay for " title ".")))
+       (do (when title (toast state side (s/strcat "Unable to pay for " title ".")))
            nil)))))
 
 (defn cost-targets
@@ -167,8 +168,8 @@
       (let [cost-type (:cost/type cost)
             cost-string (label cost)]
         (cond
-          (#{:click :lose-click} cost-type) (str "spend " cost-string)
-          (= :credit cost-type) (str "pay " cost-string)
+          (#{:click :lose-click} cost-type) (s/strcat "spend " cost-string)
+          (= :credit cost-type) (s/strcat "pay " cost-string)
           :else cost-string)))
     (try (cost->string (first cost))
          (catch Throwable t
@@ -192,5 +193,5 @@
   ([cost-str verb] (build-spend-msg cost-str verb nil))
   ([cost-str verb verb2]
    (if (string/blank? cost-str)
-     (str (or verb2 (str verb "s")) " ")
-     (str cost-str " to " verb " "))))
+     (s/strcat (or verb2 (s/strcat verb "s")) " ")
+     (s/strcat cost-str " to " verb " "))))

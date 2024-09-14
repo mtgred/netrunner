@@ -22,7 +22,8 @@
     [game.utils :refer [dissoc-in same-card?]]
     [jinteki.utils :refer [count-bad-pub other-side]]
     [clojure.stacktrace :refer [print-stack-trace]]
-    [clojure.string :as string]))
+    [clojure.string :as string]
+    [stringer.core :as s]))
 
 (declare handle-end-run jack-out forced-encounter-cleanup run-cleanup gain-run-credits pass-ice successful-run)
 
@@ -134,7 +135,7 @@
                        ices (get-in @state (concat [:corp :servers] s [:ices]))
                        n (count ices)]
                    (when (not-empty payment-str)
-                     (system-msg state :runner (str (build-spend-msg payment-str "make a run on" "makes a run on")
+                     (system-msg state :runner (s/strcat (build-spend-msg payment-str "make a run on" "makes a run on")
                                                     (zone->name (unknown->kw server))
                                                     (when ignore-costs ", ignoring all costs"))))
                    ;; s is a keyword for the server, like :hq or :remote1
@@ -153,7 +154,7 @@
                                   :source-card (select-keys card [:code :cid :zone :title :side :type :art :implementation])})
                      (when card
                        (update! state side (assoc-in card [:special :run-id] run-id))))
-                   (show-run-prompts state (str "running on " (zone->name (unknown->kw server))) card)
+                   (show-run-prompts state (s/strcat "running on " (zone->name (unknown->kw server))) card)
                    (wait-for
                      (gain-run-credits state side
                                        (make-eid state eid)
@@ -209,7 +210,7 @@
     (update-current-encounter state :ending true)
     (when (:bypass encounter)
       (queue-event state :bypassed-ice ice)
-      (system-msg state :runner (str "bypasses " (:title ice))))
+      (system-msg state :runner (s/strcat "bypasses " (:title ice))))
     (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
                                        :end-of-encounter
                                        {:ice ice})
@@ -258,7 +259,7 @@
   (let [eid (make-phase-eid state eid)
         ice (get-current-ice state)
         on-approach (:on-approach (card-def ice))]
-    (system-msg state :runner (str "approaches " (card-str state ice)))
+    (system-msg state :runner (s/strcat "approaches " (card-str state ice)))
     (when on-approach
       (register-pending-event state :approach-ice ice on-approach))
     (queue-event state :approach-ice {:ice ice})
@@ -324,7 +325,7 @@
   [abi ice]
   {:async true
    :interactive (req true)
-   :ability-name (or (:ability-name abi) (str (:title ice) " Ability"))
+   :ability-name (or (:ability-name abi) (s/strcat (:title ice) " Ability"))
    :effect (req (swap! state assoc-in [:run :prevent-encounter-ability] nil)
                 (wait-for (trigger-event-simult state :runner :prevent-encounter-ability nil {:ability-name (:ability-name abi)})
                           (if (get-in @state [:run :prevent-encounter-ability])
@@ -341,7 +342,7 @@
   (let [on-encounter (:on-encounter (card-def ice))
         applied-encounters (get-effects state nil :gain-encounter-ability ice)
         all-encounters (map #(preventable-encounter-abi % ice) (remove nil? (conj applied-encounters on-encounter)))]
-    (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
+    (system-msg state :runner (s/strcat "encounters " (card-str state ice {:visible (active-ice? state ice)})))
     (doseq [on-encounter all-encounters]
       (register-pending-event state :encounter-ice ice on-encounter))
     (queue-event state :encounter-ice {:ice ice})
@@ -364,7 +365,7 @@
   ([state side eid ice new-state]
    ;; clears the broken subs out of the prompt, otherwise they can get stuck with some cards
    (reset-all-subs! state (get-card state ice))
-   (show-run-prompts state (str "encountering " (:title ice)) ice)
+   (show-run-prompts state (s/strcat "encountering " (:title ice)) ice)
    ;; do we need to mess with the run state
    (let [old-state (get-in @state [:run :phase])]
      (when new-state
@@ -408,7 +409,7 @@
     (set-phase state :movement)
     (swap! state assoc-in [:run :no-action] false)
     (when pass-ice?
-      (system-msg state :runner (str "passes " (card-str state ice)))
+      (system-msg state :runner (s/strcat "passes " (card-str state ice)))
       (queue-event state :pass-ice {:ice (get-card state ice)}))
     (swap! state assoc-in [:run :position] new-position)
     (when passed-all-ice
@@ -441,7 +442,7 @@
 (defn approach-server
   [state side eid]
   (set-current-ice state nil)
-  (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
+  (system-msg state :runner (s/strcat "approaches " (zone->name (:server (:run @state)))))
   (queue-event state :approach-server)
   (wait-for (checkpoint state side
                         (make-eid state)
@@ -500,7 +501,7 @@
   (.println *err* (with-out-str
                     (print-stack-trace
                       (Exception.
-                        (str "Continue clicked at the wrong time, run phase: " (:phase (:run @state))))
+                        (s/strcat "Continue clicked at the wrong time, run phase: " (:phase (:run @state))))
                       2500))))
 
 (defn redirect-run
@@ -584,7 +585,7 @@
       (let [chosen (first handlers)
             ability (:ability chosen)
             card (:card chosen)]
-        (system-msg state :runner (str "uses the replacement effect from " (:title card)))
+        (system-msg state :runner (s/strcat "uses the replacement effect from " (:title card)))
         (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])
                   (handle-end-run state :runner eid)))
       ;; there are multiple handlers
@@ -592,15 +593,15 @@
       (resolve-ability
         state :runner
         {:prompt "Choose a breach replacement ability"
-         :choices (if mandatory titles (conj titles (str "Breach " (zone->name (:server (:run @state))))))
+         :choices (if mandatory titles (conj titles (s/strcat "Breach " (zone->name (:server (:run @state))))))
          :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) handlers)
                             ability (:ability chosen)
                             card (:card chosen)]
                         (if chosen
-                          (do (system-msg state :runner (str "uses the replacement effect from " (:title card)))
+                          (do (system-msg state :runner (s/strcat "uses the replacement effect from " (:title card)))
                               (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])
                                         (handle-end-run state :runner eid)))
-                          (do (system-msg state :runner (str "chooses to breach " (zone->name (:server (:run @state))) " instead of use a replacement effect"))
+                          (do (system-msg state :runner (s/strcat "chooses to breach " (zone->name (:server (:run @state))) " instead of use a replacement effect"))
                               (wait-for (breach-server state :runner (make-eid state eid) (get-in @state [:run :server]))
                                         (handle-end-run state :runner eid))))))}
         nil nil)
@@ -628,9 +629,9 @@
           (:prevent-access the-run)
           (resolve-ability
             state :runner eid
-            {:prompt (str "You are prevented from breaching " (zone->name server) " this run.")
+            {:prompt (s/strcat "You are prevented from breaching " (zone->name server) " this run.")
              :choices ["OK"]
-             :effect (effect (system-msg :runner (str "is prevented from breaching " (zone->name server) " this run."))
+             :effect (effect (system-msg :runner (s/strcat "is prevented from breaching " (zone->name server) " this run."))
                              (handle-end-run eid))}
             nil nil)
 
@@ -710,7 +711,7 @@
                (do (system-msg state :runner "has the option to prevent the run from ending")
                    (show-wait-prompt state :corp "Runner to prevent the run from ending")
                    (show-prompt state :runner nil
-                                (str "Prevent the run from ending?") ["Done"]
+                                (s/strcat "Prevent the run from ending?") ["Done"]
                                 (fn [_]
                                   (clear-wait-prompt state :corp)
                                   (if-let [_ (get-in @state [:end-run :end-run-prevent])]
@@ -742,11 +743,11 @@
                  (if-let [payment-str (:msg async-result)]
                    (let [prevent (get-prevent-list state :corp :jack-out)]
                      (if (cards-can-prevent? state :corp prevent :jack-out)
-                       (do (system-msg state :runner (str (build-spend-msg payment-str "attempt to" "attempts to") "jack out"))
+                       (do (system-msg state :runner (s/strcat (build-spend-msg payment-str "attempt to" "attempts to") "jack out"))
                            (system-msg state :corp "has the option to prevent the Runner from jacking out")
                            (show-wait-prompt state :runner "Corp to prevent the jack out")
                            (show-prompt state :corp nil
-                                        (str "Prevent the Runner from jacking out?") ["Done"]
+                                        (s/strcat "Prevent the Runner from jacking out?") ["Done"]
                                         (fn [_]
                                           (clear-wait-prompt state :runner)
                                           (if-let [_ (get-in @state [:jack-out :jack-out-prevent])]
@@ -755,10 +756,10 @@
                                                 (resolve-jack-out state side eid))))
                                         {:prompt-type :prevent}))
                        (do (when-not (string/blank? payment-str)
-                             (system-msg state :runner (str payment-str " to jack out")))
+                             (system-msg state :runner (s/strcat payment-str " to jack out")))
                            (resolve-jack-out state side eid))))
                    (complete-with-result state side eid false)))
-       (do (system-msg state :runner (str "attempts to jack out but can't pay (" (build-cost-string cost) ")"))
+       (do (system-msg state :runner (s/strcat "attempts to jack out but can't pay (" (build-cost-string cost) ")"))
            (complete-with-result state side eid false))))))
 
 (defn- run-end-fx

@@ -8,7 +8,8 @@
     [game.core.prompts :refer [clear-wait-prompt show-trace-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg system-say]]
     [game.macros :refer [continue-ability effect wait-for]]
-    [game.core.payment :refer [->c]]))
+    [game.core.payment :refer [->c]]
+    [stringer.core :as s]))
 
 (defn- determine-initiator
   [state {:keys [player]}]
@@ -34,7 +35,7 @@
         trigger-trace (select-keys trace [:player :other :base :bonus :link :ability :strength])]
     (wait-for (pay state other (make-eid state eid) card [(->c :credit boost)])
               (let [payment-str (:msg async-result)]
-                (system-msg state other (str payment-str
+                (system-msg state other (s/strcat payment-str
                                              " to increase " (if (corp-start? trace) "link" "trace")
                                              " strength to " (if (corp-start? trace)
                                                                runner-strength
@@ -45,7 +46,7 @@
                                            (:successful trace)
                                            (:unsuccessful trace))
                                          :eid (make-eid state))]
-                (system-say state player (str "The trace was " (when-not successful "un") "successful."))
+                (system-say state player (s/strcat "The trace was " (when-not successful "un") "successful."))
                 (wait-for (trigger-event-simult state :corp (if successful :successful-trace :unsuccessful-trace)
                                                 nil ;; No special functions
                                                 (assoc trigger-trace
@@ -88,15 +89,15 @@
         trace (assoc trace :strength strength :beat-trace (beat-trace-amount player corp-credits runner-credits link base strength eid))]
     (wait-for (pay state player (make-eid state eid) card [(->c :credit boost)])
               (let [payment-str (:msg async-result)]
-                (system-msg state player (str payment-str
+                (system-msg state player (s/strcat payment-str
                                               " to increase " (if (corp-start? trace) "trace" "link")
                                               " strength to " strength)))
               (clear-wait-prompt state other)
               (show-wait-prompt state player
-                                (str (if (corp-start? trace) "Runner" "Corp")
+                                (s/strcat (if (corp-start? trace) "Runner" "Corp")
                                      " to boost " other-type " strength"))
               (show-trace-prompt state other (make-eid state eid) card
-                                 (str "Boost " other-type " strength?")
+                                 (s/strcat "Boost " other-type " strength?")
                                  #(resolve-trace state side eid card trace %)
                                  trace))))
 
@@ -104,17 +105,17 @@
   "Starts the trace process by showing the boost prompt to the first player (normally corp)."
   [state side eid card {:keys [player other base bonus label] :as trace}]
   (let [this-type (if (corp-start? trace) "trace" "link")]
-    (system-msg state player (str "uses " (:title card)
+    (system-msg state player (s/strcat "uses " (:title card)
                                   " to initiate a trace with strength " ((fnil + 0 0) base bonus)
                                   (when (pos? bonus)
-                                    (str " (" base " + " bonus ")"))
+                                    (s/strcat " (" base " + " bonus ")"))
                                   (when label
-                                    (str " (" label ")"))))
+                                    (s/strcat " (" label ")"))))
     (show-wait-prompt state other
-                      (str (if (corp-start? trace) "Corp" "Runner")
+                      (s/strcat (if (corp-start? trace) "Corp" "Runner")
                            " to boost " this-type " strength"))
     (show-trace-prompt state player (make-eid state eid) card
-                       (str "Boost " this-type " strength?")
+                       (s/strcat "Boost " this-type " strength?")
                        #(trace-reply state side eid card trace %)
                        trace)))
 

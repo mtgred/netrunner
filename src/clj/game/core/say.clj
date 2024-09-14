@@ -1,5 +1,6 @@
 (ns game.core.say
   (:require
+   [stringer.core :as s]
    [cljc.java-time.instant :as inst]
    [clojure.string :as str]
    [game.core.toasts :refer [toast]]))
@@ -54,7 +55,7 @@
   "Prints a system message to log (`say` from user __system__)"
   ([state side text] (system-say state side text nil))
   ([state side text {:keys [hr]}]
-   (say state side (make-system-message (str text (when hr "[hr]"))))))
+   (say state side (make-system-message (s/strcat text (when hr "[hr]"))))))
 
 (defn unsafe-say
   "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
@@ -67,23 +68,23 @@
   ([state side text] (system-msg state side text nil))
   ([state side text args]
    (let [username (get-in @state [side :user :username])]
-     (system-say state side (str username " " text ".") args))))
+     (system-say state side (s/strcat username " " text ".") args))))
 
 (defn enforce-msg
   "Prints a message related to a rules enforcement on a given card.
   Example: 'Architect cannot be trashed while installed.'"
   [state card text]
-  (system-say state nil (str (:title card) " " text ".")))
+  (system-say state nil (s/strcat (:title card) " " text ".")))
 
 (defn implementation-msg
   [state card]
   (when (not= :full (:implementation card))
-    (system-say state nil (str "[!] " (:title card) " - " (:implementation card)))))
+    (system-say state nil (s/strcat "[!] " (:title card) " - " (:implementation card)))))
 
 (defn indicate-action
   [state side _]
   (system-say state side
-              (str "[!] Please pause, " (if (= side :corp) "Corp" "Runner") " is acting."))
+              (s/strcat "[!] Please pause, " (if (= side :corp) "Corp" "Runner") " is acting."))
   (toast state side
          "You have indicated action to your opponent"
          "info"

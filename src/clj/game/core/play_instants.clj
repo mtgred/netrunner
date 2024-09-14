@@ -14,7 +14,8 @@
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.update :refer [update!]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [same-card? to-keyword]]))
+    [game.utils :refer [same-card? to-keyword]]
+    [stringer.core :as s]))
 
 (defn async-rfg
   ([state side eid card] (async-rfg state side eid card nil))
@@ -35,7 +36,7 @@
   (let [play-msg (if ignore-cost
                    "play "
                    (build-spend-msg payment-str "play"))]
-    (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
+    (system-msg state side (s/strcat play-msg title (when ignore-cost " at no cost")))
     (implementation-msg state card)
     (if-let [sfx (:play-sound (card-def card))]
       (play-sfx state side sfx)
@@ -67,7 +68,7 @@
                                           (unregister-static-abilities state side card)
                                           (when (= zone :rfg)
                                             (system-msg state side
-                                                        (str "removes " (:title c) " from the game instead of trashing it")))
+                                                        (s/strcat "removes " (:title c) " from the game instead of trashing it")))
                                           (when (has-subtype? card "Terminal")
                                             (lose state side :click (-> @state side :click))
                                             (swap! state assoc-in [:corp :register :terminal] true))

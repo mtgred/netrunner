@@ -6,7 +6,8 @@
    [game.core.card-defs :refer [card-def]]
    [game.core.eid :refer [make-eid]]
    [game.core.servers :refer [is-remote? zones->sorted-names]]
-   [game.utils :refer [dissoc-in to-keyword]]))
+   [game.utils :refer [dissoc-in to-keyword]]
+   [stringer.core :as s]))
 
 (defn corp-servers-cards [state]
   (for [server (vals (:servers (:corp @state)))
@@ -188,8 +189,8 @@
         "HQ" [:servers :hq]
         "R&D" [:servers :rd]
         "Archives" [:servers :archives]
-        "New remote" [:servers (keyword (str "remote" (:rid @state)))]
-        [:servers (->> (string/split server #" ") last (str "remote") keyword)]))))
+        "New remote" [:servers (keyword (s/strcat "remote" (:rid @state)))]
+        [:servers (->> (string/split server #" ") last (s/strcat "remote") keyword)]))))
 
 (defn card->server
   "Returns the server map that this card is installed in or protecting."

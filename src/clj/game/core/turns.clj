@@ -18,7 +18,7 @@
     [game.core.winning :refer [flatline]]
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [dissoc-in enumerate-str quantify]]
-    [clojure.string :as string]))
+    [stringer.core :as s]))
 
 (defn- turn-message
   "Prints a message for the start or end of a turn, summarizing credits and cards in hand."
@@ -27,7 +27,7 @@
         hand (if (= side :runner) "[their] Grip" "HQ")
         cards (count (get-in @state [side :hand]))
         credits (get-in @state [side :credit])
-        text (str pre " [their] turn " (:turn @state) " with " credits " [Credit] and " (quantify cards "card") " in " hand)]
+        text (s/strcat pre " [their] turn " (:turn @state) " with " credits " [Credit] and " (quantify cards "card") " in " hand)]
     (system-msg state side text {:hr (not start-of-turn)})))
 
 (defn end-phase-12
@@ -89,7 +89,7 @@
       (trigger-event state side phase nil)
       (if (not-empty start-cards)
         (toast state side
-               (str "You may use " (enumerate-str (map :title start-cards))
+               (s/strcat "You may use " (enumerate-str (map :title start-cards))
                     (if (= side :corp)
                       " between the start of your turn and your mandatory draw."
                       " before taking your first click."))
@@ -105,17 +105,17 @@
               (effect-completed state side eid))
           (any-effects state side :skip-discard)
           (do
-            (system-msg state side (str "skips [their] discard step this turn"))
+            (system-msg state side (s/strcat "skips [their] discard step this turn"))
             (effect-completed state side eid))
           (> cur-hand-size max-hand-size)
           (continue-ability
             state side
-            {:prompt (str "Discard down to " (quantify max-hand-size "card"))
+            {:prompt (s/strcat "Discard down to " (quantify max-hand-size "card"))
              :choices {:card in-hand?
                        :max (- cur-hand-size (max (hand-size state side) 0))
                        :all true}
              :effect (req (system-msg state side
-                                      (str "discards "
+                                      (s/strcat "discards "
                                            (if (= :runner side)
                                              (enumerate-str (map :title targets))
                                              (quantify (count targets) "card"))
@@ -169,5 +169,5 @@
                  (when (pos? extra-turns)
                    (start-turn state side nil)
                    (swap! state update-in [side :extra-turns] dec)
-                   (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
+                   (system-msg state side (s/strcat "will have " (quantify extra-turns "extra turn") " remaining."))))
                (effect-completed state side eid)))))

@@ -11,7 +11,8 @@
     [game.core.winning :refer [win-decked]]
     [game.macros :refer [continue-ability msg req wait-for]]
     [game.utils :refer [quantify safe-zero?]]
-    [jinteki.utils :refer [other-side]]))
+    [jinteki.utils :refer [other-side]]
+    [stringer.core :as s]))
 
 (defn max-draw
   "Put an upper limit on the number of cards that can be drawn in this turn."
@@ -44,7 +45,7 @@
 
 (defn first-time-draw-bonus
   [side n]
-  (let [event (keyword (str "pre-" (name side) "-draw"))]
+  (let [event (keyword (s/strcat "pre-" (name side) "-draw"))]
     {:event event
      :msg "draw 1 additional card"
      ;; The req catches draw events that happened before the card was installed
@@ -72,7 +73,7 @@
          (when (< draws-after-prevent draws-wanted)
            (let [prevented (- draws-wanted draws-after-prevent)]
              (system-msg state (other-side side)
-                         (str "prevents " (quantify prevented "card") " from being drawn"))))
+                         (s/strcat "prevents " (quantify prevented "card") " from being drawn"))))
          (if (or (and (= side active-player)
                       (get-in @state [side :register :cannot-draw]))
                  (not (pos? draws-after-prevent))
@@ -113,11 +114,11 @@
      (draw state side eid n args)
      (continue-ability
        state side
-       {:optional {:prompt (str "Draw " (quantify n "card") "?")
+       {:optional {:prompt (s/strcat "Draw " (quantify n "card") "?")
                    :yes-ability {:async true
                                  :msg (msg "draw " (quantify n " card"))
                                  :effect (req (draw state side eid n))}
-                   :no-ability {:effect (req (system-msg state side (str "declines to use " (get-title card) " to draw cards")))}}}
+                   :no-ability {:effect (req (system-msg state side (s/strcat "declines to use " (get-title card) " to draw cards")))}}}
        card nil))))
 
 (defn draw-up-to
@@ -127,7 +128,7 @@
      (draw state side eid 0 args)
      (continue-ability
        state side
-       {:prompt (str "Draw how many cards?" (when-not allow-zero-draws " (minimum 1)"))
+       {:prompt (s/strcat "Draw how many cards?" (when-not allow-zero-draws " (minimum 1)"))
         :choices {:number (req n)
                   :max (req n)
                   :default (req n)}

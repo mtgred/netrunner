@@ -15,7 +15,8 @@
     [jinteki.utils :refer [make-label]]
     [clojure.string :as string]
     [clojure.set :as set]
-    [medley.core :refer [find-first]]))
+    [medley.core :refer [find-first]]
+    [stringer.core :as s]))
 
 ;; These should be in runs.clj, but `req` needs get-current-ice and
 ;; moving.clj needs set-current-ice
@@ -309,7 +310,7 @@
   ([state side eid ice]
    (if-let [subroutines (seq (remove #(or (:broken %) (= false (:resolve %))) (:subroutines ice)))]
      (wait-for (resolve-next-unbroken-sub state side (make-eid state eid) ice subroutines)
-               (system-msg state :corp (str "resolves " (quantify (count async-result) "unbroken subroutine")
+               (system-msg state :corp (s/strcat "resolves " (quantify (count async-result) "unbroken subroutine")
                                             " on " (:title ice)
                                             " (\"[subroutine] "
                                             (string/join "\" and \"[subroutine] "
@@ -486,9 +487,9 @@
   ([ice target-count broken-subs] (break-subroutines-impl ice target-count broken-subs nil))
   ([ice target-count broken-subs args]
    {:async true
-    :prompt (str "Break a subroutine"
+    :prompt (s/strcat "Break a subroutine"
                  (when (and target-count (< 1 target-count))
-                   (str " (" (count broken-subs)
+                   (s/strcat " (" (count broken-subs)
                         " of " target-count ")")))
     :choices (req (concat (breakable-subroutines-choice state side eid card ice)
                           (when-not (and (:all args)
@@ -519,14 +520,14 @@
 (defn break-subroutines-msg
   ([ice broken-subs breaker] (break-subroutines-msg ice broken-subs breaker nil))
   ([ice broken-subs breaker args]
-   (str "use " (:title breaker)
+   (s/strcat "use " (:title breaker)
         " to break " (quantify (count broken-subs)
-                               (str (when-let [subtypes (:subtype args)]
+                               (s/strcat (when-let [subtypes (:subtype args)]
                                       (when-not (= #{"All"} subtypes)
                                         (-> subtypes
                                             (set/intersection (set (:subtypes ice)))
                                             (first)
-                                            (str " "))))
+                                            (s/strcat " "))))
                                     "subroutine"))
         " on " (:title ice)
         " (\"[subroutine] "
@@ -567,7 +568,7 @@
                        (wait-for (pay state side card total-cost)
                                  (if-let [payment-str (:msg async-result)]
                                    (do (when (not (string/blank? message))
-                                         (system-msg state :runner (str payment-str " to " message)))
+                                         (system-msg state :runner (s/strcat payment-str " to " message)))
                                        (doseq [sub broken-subs]
                                          (break-subroutine! state (get-card state ice) sub breaker)
                                          (resolve-ability state side (make-eid state {:source card
@@ -598,7 +599,7 @@
   (when-let [cost (find-first #(= :credit (:cost/type %)) (flatten [cost]))]
     (let [stealth (stealth-value cost)]
       (when (pos? stealth)
-        (str " (using at least " stealth " stealth [Credits])")))))
+        (s/strcat " (using at least " stealth " stealth [Credits])")))))
 
 (defn break-sub
   "Creates a break subroutine ability.
@@ -646,12 +647,12 @@
         :auto-break-sort (:auto-break-sort args)
         :break-cost-bonus (:break-cost-bonus args)
         :additional-ability (:additional-ability args)
-        :label (str (or (:label args)
-                        (str "break "
+        :label (s/strcat (or (:label args)
+                        (s/strcat "break "
                              (when (< 1 n) "up to ")
                              (if (pos? n) n "any number of")
                              (when-not (= #{"All"} subtypes)
-                               (str " " (string/join " or " (sort subtypes))))
+                               (s/strcat " " (string/join " or " (sort subtypes))))
                              (pluralize " subroutine" n)
                              (add-stealth-to-label cost))))
         :effect (effect (continue-ability
@@ -679,8 +680,8 @@
                            " for the remainder of the run"
                            (= duration :end-of-turn)
                            " for the remainder of the turn")]
-     {:label (str (or (:label args)
-                      (str "add " strength " strength"
+     {:label (s/strcat (or (:label args)
+                      (s/strcat "add " strength " strength"
                            duration-string
                            (add-stealth-to-label cost))))
       :req (req (if-let [str-req (:req args)]
@@ -771,7 +772,7 @@
                                            [{:dynamic :auto-pump-and-break
                                              :cost total-cost
                                              :cost-label (build-cost-label total-cost)
-                                             :label (str (if (and pump-ability (pos? times-pump))
+                                             :label (s/strcat (if (and pump-ability (pos? times-pump))
                                                            "Match strength and fully break "
                                                            "Fully break ")
                                                          (:title current-ice))}])
@@ -781,7 +782,7 @@
                                            [{:dynamic :auto-pump
                                              :cost total-pump-cost
                                              :cost-label (build-cost-label total-pump-cost)
-                                             :label (str "Match strength of " (:title current-ice))}])))
+                                             :label (s/strcat "Match strength of " (:title current-ice))}])))
                             abs)))))})
 
 ;; Takes a a card definition, and returns a new card definition that

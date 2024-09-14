@@ -37,7 +37,8 @@
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer [dissoc-in enumerate-str quantify safe-split
                        same-card? same-side? server-card string->num]]
-   [jinteki.utils :refer [str->int]]))
+   [jinteki.utils :refer [str->int]]
+   [stringer.core :as s]))
 
 (defn- constrain-value
   "Constrain value to [min-value max-value]"
@@ -46,7 +47,7 @@
 
 (defn- set-adv-counter [state side target value]
   (set-prop state side target :advance-counter value)
-  (system-msg state side (str "sets advancement counters to " value " on "
+  (system-msg state side (s/strcat "sets advancement counters to " value " on "
                               (card-str state target)))
   (trigger-event state side :advancement-placed {:card target}))
 
@@ -63,7 +64,7 @@
 (defn command-bug-report [state side]
   (swap! state update :bug-reported (fnil inc -1))
   (let [title "[EDITME] Please give a short description of your bug here"
-        body (str "Link to bug replay: https://jinteki.net/bug-report/" (:gameid @state)
+        body (s/strcat "Link to bug replay: https://jinteki.net/bug-report/" (:gameid @state)
                   "?b=" (:bug-reported @state) "\n\n"
                   "Description:\n\n"
                   "[EDITME] Please describe the steps to reproduce your bug and the resulting effect here.")]
@@ -71,7 +72,7 @@
                        "Thanks for helping us make the game better! The replay was saved. "
                        "Please report a bug following "
                        [:a {:target "_blank"
-                            :href (str "https://github.com/mtgred/netrunner/issues/new?title="
+                            :href (s/strcat "https://github.com/mtgred/netrunner/issues/new?title="
                                        (string/replace title #" " "%20")
                                        "&body="
                                        (string/replace (string/replace body #" " "%20") #"\n" "%0A"))}
@@ -96,13 +97,13 @@
 
                         (not counter-type)
                         (toast state side
-                               (str "Could not infer what counter type you mean. Please specify one manually, by typing "
+                               (s/strcat "Could not infer what counter type you mean. Please specify one manually, by typing "
                                     "'/counter TYPE " value "', where TYPE is advance, agenda, credit, power, bad publicity, or virus.")
                                "error" {:time-out 0 :close-button true})
 
                         :else
                         (do (update! state side (assoc-in target [:counter counter-type] value))
-                            (system-msg state side (str "sets " (name counter-type) " counters to " value " on "
+                            (system-msg state side (s/strcat "sets " (name counter-type) " counters to " value " on "
                                                         (card-str state target))))))))}
     (make-card {:title "/counter command"}) nil))
 
@@ -142,7 +143,7 @@
         (command-adv-counter state side value)
         (resolve-ability state side
                          {:effect (effect (update! (assoc-in target [:counter counter-type] value))
-                                          (system-msg (str "sets " (name counter-type) " counters to " value " on "
+                                          (system-msg (s/strcat "sets " (name counter-type) " counters to " value " on "
                                                            (card-str state target))))
                           :choices {:card (fn [t] (same-side? (:side t) side))}}
                          (make-card {:title "/counter command"}) nil)))))
@@ -167,14 +168,14 @@
 
 (defn command-roll [state side value]
   (let [value (constrain-value value 1 1000)]
-    (system-msg state side (str "rolls a " value " sided die and rolls a " (inc (rand-int value))))))
+    (system-msg state side (s/strcat "rolls a " value " sided die and rolls a " (inc (rand-int value))))))
 
 (defn command-set-mark
   "Sets a central server as the mark for the turn"
   [state side [server & _]]
   (when (and (= :runner side)
              (is-central? (unknown->kw server)))
-    (system-msg state side (str "sets " server " as the mark for this turn"))
+    (system-msg state side (s/strcat "sets " server " as the mark for this turn"))
     (set-mark state (unknown->kw server))))
 
 (defn command-undo-click
@@ -193,7 +194,7 @@
                                :history current-history
                                :run nil)]
         (reset! state last-click-state))
-      (system-say state side (str "[!] " (if (= side :corp) "Corp" "Runner") " uses the undo-click command"))
+      (system-say state side (s/strcat "[!] " (if (= side :corp) "Corp" "Runner") " uses the undo-click command"))
       (doseq [s [:runner :corp]]
         (toast state s "Game reset to start of click")))))
 
@@ -237,17 +238,17 @@
    (resolve-ability
      state side
      (if (= side :corp)
-       {:prompt (str "Choose a card to install" (when ignore-all-cost " (ignoring all costs)"))
+       {:prompt (s/strcat "Choose a card to install" (when ignore-all-cost " (ignoring all costs)"))
         :choices {:card #(and (corp? %)
                               (not (installed? %)))}
         :async true
         :effect (req (corp-install state side eid target nil {:ignore-all-cost ignore-all-cost}))}
-       {:prompt (str "Choose a card to install" (when ignore-all-cost " (ignoring all costs)"))
+       {:prompt (s/strcat "Choose a card to install" (when ignore-all-cost " (ignoring all costs)"))
         :choices {:card #(and (runner? %)
                               (not (installed? %)))}
         :async true
         :effect (req (runner-install state side eid target {:ignore-all-cost ignore-all-cost}))})
-     (make-card {:title (str "/install" (when ignore-all-cost "-free") " command")}) nil)))
+     (make-card {:title (s/strcat "/install" (when ignore-all-cost "-free") " command")}) nil)))
 
 (defn command-install-free
   [state side]
@@ -290,7 +291,7 @@
   (show-prompt
     state side
     nil
-    (str "The top " (quantify n "card")
+    (s/strcat "The top " (quantify n "card")
          " of your deck " (if (< 1 n) "are" "is") " (top->bottom): "
          (->> (get-in @state [side :deck])
               (take n)
@@ -322,7 +323,7 @@
         (when card
           (swap! state update-in [side :hand] #(concat % [(assoc card :zone [:hand])]))))
       (catch Exception ex
-        (toast state side (str card-name " isn't a real card"))))))
+        (toast state side (s/strcat card-name " isn't a real card"))))))
 
 (defn command-reload-id
   [state side]
@@ -336,9 +337,9 @@
             (disable-identity state side)
             (swap! state assoc-in [side :identity] new-id)
             (card-init state side new-id {:resolve-effect true :init-data true}))
-          (toast state side (str card-name " isn't a valid card"))))
+          (toast state side (s/strcat card-name " isn't a valid card"))))
       (catch Exception ex
-        (toast state side (str card-name " isn't a real card"))))))
+        (toast state side (s/strcat card-name " isn't a real card"))))))
 
 (defn command-replace-id
   [state side args]
@@ -352,9 +353,9 @@
             (disable-identity state side)
             (swap! state assoc-in [side :identity] new-id)
             (card-init state side new-id {:resolve-effect true :init-data true}))
-          (toast state side (str card-name " isn't a valid card"))))
+          (toast state side (s/strcat card-name " isn't a valid card"))))
       (catch Exception ex
-        (toast state side (str card-name " isn't a real card"))))))
+        (toast state side (s/strcat card-name " isn't a real card"))))))
 
 (defn command-host
   [state side]
@@ -412,7 +413,7 @@
             "/bp"         #(swap! %1 assoc-in [%2 :bad-publicity :base] (constrain-value value -1000 1000))
             "/bug"        command-bug-report
             "/card-info"  #(resolve-ability %1 %2
-                                            {:effect (effect (system-msg (str "shows card-info of "
+                                            {:effect (effect (system-msg (s/strcat "shows card-info of "
                                                                               (card-str state target)
                                                                               ": " (get-card state target))))
                                              :choices {:card (fn [t] (same-side? (:side t) %2))}}
