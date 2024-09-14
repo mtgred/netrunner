@@ -1,6 +1,7 @@
 (ns game.macros
   (:require [clojure.tools.analyzer.jvm :as a.j]
-            [clojure.tools.analyzer.ast :as ast]))
+            [clojure.tools.analyzer.ast :as ast]
+            [stringer.core :as s]))
 
 (def forms
   (->>
@@ -86,7 +87,7 @@
         nls (emit-only needed-locals)]
     `(fn ~['state 'side 'eid 'card 'targets]
        (assert (or (nil? (:source ~'eid)) (:cid (:source ~'eid)))
-               (str ":source should be a card, received: " (:source ~'eid)))
+               (s/strcat ":source should be a card, received: " (:source ~'eid)))
        (let [~@nls]
          ~@expr))))
 
@@ -94,7 +95,7 @@
   `(req ~@(effect-state-handler expr)))
 
 (defmacro msg [& expr]
-  `(req (str ~@expr)))
+  `(req (s/strcat ~@expr)))
 
 (defmacro wait-for
   [& body]

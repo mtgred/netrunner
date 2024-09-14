@@ -16,7 +16,8 @@
     [game.core.update :refer [update!]]
     [game.macros :refer [req]]
     [game.utils :refer [make-cid server-card to-keyword]]
-    [jinteki.utils :refer [make-label]]))
+    [jinteki.utils :refer [make-label]]
+    [stringer.core :as s]))
 
 (defn subroutines-init
   "Initialised the subroutines associated with the card, these work as abilities"
@@ -110,7 +111,7 @@
                    (cond
                      (fn? recurring) (recurring state side eid c nil)
                      (number? recurring) recurring
-                     :else (throw (Exception. (str (:title card) " - Recurring isn't number or fn"))))}))
+                     :else (throw (Exception. (s/strcat (:title card) " - Recurring isn't number or fn"))))}))
          _ (when recurring (update! state side (assoc-in c [:counter :recurring] 0)))
          _ (doseq [[c-type c-num] data]
              (add-counter state side (get-card state c) c-type c-num {:placed true}))
@@ -176,7 +177,7 @@
   (when-let [cdef (card-def card)]
     ;; Card is defined - hence implemented
     (if-let [impl (:implementation cdef)]
-      (if (:recurring cdef) (str impl ". Recurring credits usage not restricted") impl)
+      (if (:recurring cdef) (s/strcat impl ". Recurring credits usage not restricted") impl)
       (if (:recurring cdef) "Recurring credits usage not restricted" :full))))
 
 (defn make-card

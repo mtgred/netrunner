@@ -61,6 +61,7 @@
                  [org.clojure/data.csv "1.0.0"]
                  [dev.weavejester/medley "1.8.0"]
                  [org.slf4j/slf4j-nop "1.7.32"]
+                 [stringer "0.4.1"]
                  [integrant "0.8.0"]
                  [cljc.java-time "0.1.18"]
                  [time-literals "0.1.5"]

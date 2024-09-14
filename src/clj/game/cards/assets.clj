@@ -62,7 +62,8 @@
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]
-   [game.core.link :refer [get-link]]))
+   [game.core.link :refer [get-link]]
+   [stringer.core :as s]))
 
 ;;; Asset-specific helpers
 (defn- advance-ambush
@@ -79,7 +80,7 @@
          ability {:msg (msg "gain " (num-counters card) " [Credits]")
                   :once :per-turn
                   :req (req (:corp-phase-12 @state))
-                  :label (str "Gain " per-turn " [Credits] (start of turn)")
+                  :label (s/strcat "Gain " per-turn " [Credits] (start of turn)")
                   :async true
                   :effect (req (wait-for (gain-credits state side (num-counters card))
                                          (add-counter state side eid card counter-type (- (num-counters card)) nil)))}]
@@ -169,7 +170,7 @@
                                               (when (pos? unprevented)
                                                 (shuffle! state :corp :deck))
                                               (system-msg state :runner
-                                                          (str "pays " target " [Credits] to prevent "
+                                                          (s/strcat "pays " target " [Credits] to prevent "
                                                                (quantify prevented "random card")
                                                                " in HQ from being shuffled into R&D")))
                                             (shuffle-into-deck state :corp :hand)))}
@@ -189,7 +190,7 @@
   (letfn [(select-archives-cards [total]
             {:async true
              :show-discard true
-             :prompt (str "Choose " (quantify total "card") " from Archives")
+             :prompt (s/strcat "Choose " (quantify total "card") " from Archives")
              :choices {:card #(and (corp? %)
                                    (in-discard? %))
                        :max total
@@ -197,7 +198,7 @@
              :effect (effect (complete-with-result eid targets))})
           (select-hq-cards [total]
             {:async true
-             :prompt (str "Choose " (quantify total "card") " from HQ")
+             :prompt (s/strcat "Choose " (quantify total "card") " from HQ")
              :choices {:card #(and (corp? %)
                                    (in-hand? %))
                        :max total
@@ -266,13 +267,13 @@
                                 state side
                                 {:optional
                                  {:waiting-prompt true
-                                  :prompt (str "Move advancement tokens to " icename "?")
+                                  :prompt (s/strcat "Move advancement tokens to " icename "?")
                                   :yes-ability
                                   {:prompt "How many advancement tokens do you want to move?"
                                    :choices {:number (req (get-counters card :advancement))}
                                    :effect (effect (add-prop :corp ice :advance-counter target {:placed true})
                                                    (add-prop :corp card :advance-counter (- target) {:placed true})
-                                                   (system-msg (str "uses " (:title card) " to move "
+                                                   (system-msg (s/strcat "uses " (:title card) " to move "
                                                                     (quantify target "advancement counter")
                                                                     " to " (card-str state ice))))}}}
                                 card nil)))}]
@@ -291,7 +292,7 @@
                   :async true
                   :effect (req (let [cnt (get-counters target :advancement)]
                                  (set-prop state side target :advance-counter (dec cnt))
-                                 (system-msg state :corp (str "uses " (:title card) " to remove 1 advancement counter from "
+                                 (system-msg state :corp (s/strcat "uses " (:title card) " to remove 1 advancement counter from "
                                                               (card-str state target) " and gains 3 [Credits]"))
                                  (gain-credits state :corp eid 3)))}]}))
 
@@ -336,9 +337,9 @@
                                                    " from the top of R&D and gain 2 [Credits]")
                                          :effect (req (wait-for (reveal state side (make-eid state eid) top-card)
                                                                 (gain-credits state :corp eid 2)))}
-                                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to reveal the top card of R&D")))}}}
+                                        :no-ability {:effect (effect (system-msg (s/strcat "declines to use " (:title card) " to reveal the top card of R&D")))}}}
                                       card nil)
-                                    (do (system-msg state side (str "declines to use " (:title card) " to reveal the top card of R&D"))
+                                    (do (system-msg state side (s/strcat "declines to use " (:title card) " to reveal the top card of R&D"))
                                         (effect-completed state side eid))))))}
         ability {:label "Look at the top card of R&D (start of turn)"
                  :once :per-turn
@@ -363,7 +364,7 @@
                {:req (req (not (in-discard? card)))
                 :waiting-prompt true
                 :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
-                :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
+                :no-ability {:effect (effect (system-msg (s/strcat "declines to use " (:title card))))}
                 :yes-ability {:async true
                               :cost [(->c :credit 4)]
                               :msg "give the runner 2 tags"
@@ -427,7 +428,7 @@
    :poison true
    :on-access {:async true
                :effect (req (let [c (first (get-in @state [:runner :deck]))]
-                              (system-msg state :corp (str "uses " (:title card) " to do 1 meat damage"
+                              (system-msg state :corp (s/strcat "uses " (:title card) " to do 1 meat damage"
                                                            " and to trash " (:title c)
                                                            " from the top of the stack"))
                               (wait-for (mill state :corp :runner 1)
@@ -538,7 +539,7 @@
   {:events [{:event :end-of-encounter
              :req (req (pos? (count (remove :broken (:subroutines (:ice context))))))
              :msg (req (let [unbroken-count (count (remove :broken (:subroutines (:ice context))))]
-                         (str "place " (quantify unbroken-count "power counter") " on itself")))
+                         (s/strcat "place " (quantify unbroken-count "power counter") " on itself")))
              :effect (effect (add-counter :corp card :power (count (remove :broken (:subroutines (:ice context))))))}]
    :abilities [{:action true
                 :cost [(->c :click 1) (->c :power 5)]
@@ -559,7 +560,7 @@
                             "Take 1 tag"])
              :msg (msg (if (= target "Take 1 tag")
                           "give the runner 1 tag"
-                          (str "force the runner to " (decapitalize target))))
+                          (s/strcat "force the runner to " (decapitalize target))))
              :async true
              :effect (req (if (= target "Pay 1 [Credits]")
                             (wait-for (pay state :runner (make-eid state eid) card (->c :credit 1))
@@ -832,13 +833,13 @@
                               state side
                               (when (seq drawn)
                                 {:waiting-prompt true
-                                 :prompt (str "Choose " (quantify dbs "card") " to add to the bottom of R&D")
+                                 :prompt (s/strcat "Choose " (quantify dbs "card") " to add to the bottom of R&D")
                                  :choices {:max (min dbs (count drawn))
                                            :card #(some (fn [c] (same-card? c %)) drawn)
                                            :all true}
                                  :effect (req (doseq [c (reverse targets)]
                                                 (system-msg state side
-                                                            (str "uses " (:title card) " to add the "
+                                                            (s/strcat "uses " (:title card) " to add the "
                                                                  (pprint/cl-format nil "~:R" (inc (first (keep-indexed #(when (same-card? c %2) %1) drawn))))
                                                                  " card drawn to the bottom of R&D"))
                                                 (move state side c :deck)
@@ -858,7 +859,7 @@
      :events [{:event :successful-run
                :req (req this-server)
                :async true
-               :effect (effect (system-msg :runner (str "gains 2 [Credits] for a successful run "
+               :effect (effect (system-msg :runner (s/strcat "gains 2 [Credits] for a successful run "
                                                         "on the Daily Quest server"))
                                (gain-credits :runner eid 2))}
               (assoc ability :event :corp-turn-begins)]
@@ -928,7 +929,7 @@
                 :label "Reveal an agenda from HQ or Archives"
                 :msg (msg "reveal " (:title target) " from " (zone->name (get-zone target))
                           (let [target-agenda-points (get-agenda-points target)]
-                            (str ", gain " target-agenda-points " [Credits], "))
+                            (s/strcat ", gain " target-agenda-points " [Credits], "))
                           " and shuffle it into R&D")
                 :async true
                 :effect (req (wait-for
@@ -1020,7 +1021,7 @@
                 :async true
                 :effect (req (let [counters (get-counters card :power)
                                    credits (* 2 counters)]
-                               (system-msg state side (str "uses " (:title card) " to draw " (quantify counters "card")
+                               (system-msg state side (s/strcat "uses " (:title card) " to draw " (quantify counters "card")
                                                            " and gain " credits " [Credits]"))
                                (wait-for (draw state side counters)
                                          (gain-credits state side eid credits))))}]})
@@ -1102,7 +1103,7 @@
                             :yes-ability {:msg "draw 1 card"
                                           :async true
                                           :effect (effect (draw eid 1))}
-                            :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to draw 1 card")))}}}
+                            :no-ability {:effect (effect (system-msg (s/strcat "declines to use " (:title card) " to draw 1 card")))}}}
         ability
         {:once :per-turn
          :req (req (and (:corp-phase-12 @state)
@@ -1193,7 +1194,7 @@
                               :waiting-prompt true
                               :msg (msg (if (= target "Done")
                                           "shuffle R&D"
-                                          (str "add " (get-title target) " from R&D to HQ")))
+                                          (s/strcat "add " (get-title target) " from R&D to HQ")))
                               :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "Done"))
                               :async true
                               :effect (req (if (= target "Done")
@@ -1347,7 +1348,7 @@
 (defcard "Ibrahim Salem"
   (let [trash-ability (fn [card-type]
                         {:req (req (seq (filter #(is-type? % card-type) (:hand runner))))
-                         :prompt (str "Choose a " card-type " to trash")
+                         :prompt (s/strcat "Choose a " card-type " to trash")
                          :choices (req (filter #(is-type? % card-type) (:hand runner)))
                          :async true
                          :effect (effect (trash eid target {:cause-card card}))
@@ -1493,7 +1494,7 @@
    :flags {:corp-phase-12 (req true)}
    :abilities [{:msg "look at the top card of the stack"
                 :effect (effect (continue-ability
-                                  {:prompt (req (->> runner :deck first :title (str "The top card of the stack is ")))
+                                  {:prompt (req (->> runner :deck first :title (s/strcat "The top card of the stack is ")))
                                    :choices ["OK"]}
                                   card nil))}
                {:async true
@@ -1597,7 +1598,7 @@
                 :cost [(->c :click 1) (->c :tag 1)]
                 :msg (msg (if (= target "No action")
                             "shuffle R&D"
-                            (str "reveal " (:title target) " from R&D and add it to the top of R&D")))
+                            (s/strcat "reveal " (:title target) " from R&D and add it to the top of R&D")))
                 :choices (req (conj (vec (sort-by :title (filter operation? (:deck corp)))) "No action"))
                 :async true
                 :effect (req (if (= target "No action")
@@ -1664,7 +1665,7 @@
   (let [ability {:once :per-turn
                  :interactive (req (>= 2 (get-counters card :credit)))
                  :req (req (:corp-phase-12 @state))
-                 :label (str "Gain 2 [Credits] (start of turn)")
+                 :label (s/strcat "Gain 2 [Credits] (start of turn)")
                  :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                  :async true
                  :effect (req (let [credits (min 2 (get-counters card :credit))]
@@ -1766,7 +1767,7 @@
                                         (moon-pool-place-advancements (dec x))
                                         card nil)
                                       (effect-completed state side eid))))
-             :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to place advancement counters"))
+             :cancel-effect (effect (system-msg (s/strcat "declines to use " (:title card) " to place advancement counters"))
                                    (effect-completed eid))})]
     (let [moon-pool-reveal-ability
           {:prompt "Choose up to 2 facedown cards from Archives to shuffle into R&D"
@@ -1788,7 +1789,7 @@
                                         (moon-pool-place-advancements agenda-count)
                                         card nil)
                                       (effect-completed state side eid)))))
-           :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to reveal any cards in Archives"))
+           :cancel-effect (effect (system-msg (s/strcat "declines to use " (:title card) " to reveal any cards in Archives"))
                                   (effect-completed eid))}
           moon-pool-discard-ability
             {:prompt "Choose up to 2 cards from HQ to trash"
@@ -1802,7 +1803,7 @@
                                       state side
                                       moon-pool-reveal-ability
                                       card nil)))
-             :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash any cards from HQ"))
+             :cancel-effect (effect (system-msg (s/strcat "declines to use " (:title card) " to trash any cards from HQ"))
                                     (continue-ability moon-pool-reveal-ability card nil))}]
       {:abilities [{:label "Trash up to 2 cards from HQ. Shuffle up to 2 cards from Archives into R&D"
                     :cost [(->c :remove-from-game)]
@@ -1870,7 +1871,7 @@
                 :prompt (msg (let [mus (count (filter #(and (= (:title card) (:title %))
                                                             (rezzed? %))
                                                       (all-installed state :corp)))]
-                               (str "Choose " (quantify mus "card") " in Archives to shuffle into R&D")))
+                               (s/strcat "Choose " (quantify mus "card") " in Archives to shuffle into R&D")))
                 :choices {:card #(and (corp? %)
                                       (in-discard? %))
                           :max (req (count (filter #(and (= (:title card) (:title %))
@@ -1882,9 +1883,9 @@
                 :msg (msg "shuffle "
                           (let [seen (filter :seen targets)
                                 n (count (filter #(not (:seen %)) targets))]
-                            (str (enumerate-str (map :title seen))
+                            (s/strcat (enumerate-str (map :title seen))
                                  (when (pos? n)
-                                   (str (when-not (empty? seen) " and ")
+                                   (s/strcat (when-not (empty? seen) " and ")
                                         (quantify n "card")))))
                           " into R&D")
                 :effect (req (doseq [c targets]
@@ -1992,8 +1993,8 @@
             {:cost [(->c :advancement cost) (->c :trash-can)]
              :async true
              :effect (effect (gain-credits eid cred))
-             :label (str "Gain " cred " [Credits]")
-             :msg (str "gain " cred " [Credits]")})]
+             :label (s/strcat "Gain " cred " [Credits]")
+             :msg (s/strcat "gain " cred " [Credits]")})]
     {:advanceable :always
      :abilities [(builder 1 5)
                  (builder 2 8)]}))
@@ -2014,7 +2015,7 @@
                             (effect-completed state side eid)
                             (wait-for
                               (trash state :corp card {:unpreventable true :cause-card card})
-                              (system-msg state :corp (str "trashes Nico Campaign"
+                              (system-msg state :corp (s/strcat "trashes Nico Campaign"
                                                            (when (seq (:deck corp))
                                                              " and draws 1 card")))
                               (draw state :corp eid 1))))))}]
@@ -2029,7 +2030,7 @@
    :on-access {:async true
                :msg (msg (if (= target "Suffer 1 core damage")
                            "do 1 core damage"
-                           (str "force the runner to " (decapitalize target))))
+                           (s/strcat "force the runner to " (decapitalize target))))
                :player :runner
                :prompt "Choose one"
                :choices ["Suffer 1 core damage" "Add Nightmare Archive to score area"]
@@ -2043,7 +2044,7 @@
   {:events [{:event :corp-mandatory-draw
              :interactive (req true)
              :msg (msg (if (-> corp :deck count pos?)
-                         (str "reveal "
+                         (s/strcat "reveal "
                               (-> corp :deck first :title)
                               " from the top of R&D and add it to HQ")
                          "reveal no cards from R&D (it is empty)"))
@@ -2113,7 +2114,7 @@
                                     (let [cnt (count (get-in @state [:runner :hand]))
                                           credits (quot cnt 2)]
                                       (system-msg state :corp
-                                                  (str "uses " (:title card) " to force the runner to draw "
+                                                  (s/strcat "uses " (:title card) " to force the runner to draw "
                                                        "1 card and gain " credits " [Credits]"))
                                       (gain-credits state :corp eid credits))))}]})
 
@@ -2215,7 +2216,7 @@
   (let [ab {:async true
             :req (req installed)
             :effect (req (let [hand (count (:hand runner))
-                               message (str "do " hand " net damage")]
+                               message (s/strcat "do " hand " net damage")]
                            (continue-ability
                              state side
                              {:psi {:not-equal
@@ -2390,7 +2391,7 @@
                                   :prompt "Choose a card that can be advanced"
                                   :choices {:req (req (can-be-advanced? state target))}
                                   :effect (effect (add-counter target :advancement num-counters {:placed true})
-                                                  (system-msg (str "uses " (:title card) " to move " (quantify num-counters "hosted advancement token") " to " (card-str state target)))
+                                                  (system-msg (s/strcat "uses " (:title card) " to move " (quantify num-counters "hosted advancement token") " to " (card-str state target)))
                                                   (effect-completed eid))}
                                  card nil)))}]})
 
@@ -2624,15 +2625,15 @@
                     {:player :runner
                      :prompt "Choose one"
                      :waiting-prompt true
-                     :choices [(str "Take " dmg " net damage") "Add Shi.Kyū to score area"]
+                     :choices [(s/strcat "Take " dmg " net damage") "Add Shi.Kyū to score area"]
                      :async true
                      :effect (req (if (str/starts-with? target "Add")
-                                    (do (system-msg state :runner (str "adds " (:title card)
+                                    (do (system-msg state :runner (s/strcat "adds " (:title card)
                                                                        " to [their] score area as an agenda worth "
                                                                        (quantify -1 "agenda point")))
                                         (as-agenda state :runner card -1)
                                         (effect-completed state side eid))
-                                    (do (system-msg state :runner (str "takes " dmg " net damage from " (:title card)))
+                                    (do (system-msg state :runner (s/strcat "takes " dmg " net damage from " (:title card)))
                                         (damage state :corp eid :net dmg {:card card}))))})
                   card targets))}}}})
 
@@ -2664,7 +2665,7 @@
                {:req (req (not (in-discard? card)))
                 :waiting-prompt true
                 :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
-                :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
+                :no-ability {:effect (effect (system-msg (s/strcat "declines to use " (:title card))))}
                 :yes-ability {:async true
                               :cost [(->c :credit 4)]
                               :msg "do 3 net damage and give the Runner 1 tag"
@@ -2757,7 +2758,7 @@
                            :req (req (and (corp? target)
                                           (installed? target)))}
                  :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
-                 :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                 :cancel-effect (effect (system-msg (s/strcat "declines to use " (:title card)))
                                         (effect-completed eid))
                  :effect (req (wait-for (trash state side target {:unpreventable true
                                                                   :cause-card card})
@@ -2977,7 +2978,7 @@
              :effect (req (add-counter state side card :power -1)
                           (if (not (pos? (get-counters (get-card state card) :power)))
                             (wait-for (trash state side card {:cause-card card})
-                                      (system-msg state :corp (str "uses " (:title card) " to do 4 meat damage"))
+                                      (system-msg state :corp (s/strcat "uses " (:title card) " to do 4 meat damage"))
                                       (damage state side eid :meat 4 {:card card}))
                             (effect-completed state side eid)))}]})
 
@@ -3031,12 +3032,12 @@
                             :yes-ability
                             {:async true
                              :effect (req (wait-for (reveal state side (:hand runner))
-                                                    (system-msg state :corp (str "reveal "
+                                                    (system-msg state :corp (s/strcat "reveal "
                                                                 (quantify (count (:hand runner)) "card")
                                                                 " from grip: "
                                                                 (enumerate-str (map :title (:hand runner)))))
                                                     (continue-ability state side select-and-trash card nil)))}
-                            :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
+                            :no-ability {:effect (effect (system-msg (s/strcat "declines to use " (:title card))))}}}]
     {:events [{:event :agenda-scored
                :interactive (req true)
                :async true
@@ -3222,7 +3223,7 @@
                                  {:prompt "Choose a resource"
                                   :req (req (seq (all-installed-runner-type state :resource)))
                                   :choices {:card #(resource? %)}
-                                  :msg (msg (str "add " (:title target) " to the top of the stack"))
+                                  :msg (msg (s/strcat "add " (:title target) " to the top of the stack"))
                                   :effect (req (move state :runner target :deck {:front true}))}
                                  card nil)
                                (effect-completed state side eid)))}]})

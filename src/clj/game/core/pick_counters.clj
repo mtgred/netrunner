@@ -8,7 +8,8 @@
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [enumerate-str in-coll? quantify same-card?]]))
+    [game.utils :refer [enumerate-str in-coll? quantify same-card?]]
+    [stringer.core :as s]))
 
 (defn- pick-counter-triggers
   [state side eid current-cards selected-cards counter-count message]
@@ -31,8 +32,8 @@
   ([specific-card target-count] (pick-virus-counters-to-spend specific-card target-count (hash-map) 0))
   ([specific-card target-count selected-cards counter-count]
    {:async true
-    :prompt (str "Choose a card with virus counters ("
-                 counter-count (str " of " target-count)
+    :prompt (s/strcat "Choose a card with virus counters ("
+                 counter-count (s/strcat " of " target-count)
                  " virus counters)")
     :choices {:card #(and (if specific-card
                             (or (same-card? % specific-card)
@@ -54,7 +55,7 @@
                                        card nil)
                      (let [message (enumerate-str (map #(let [{:keys [card number]} %
                                                           title (:title card)]
-                                                      (str (quantify number "virus counter") " from " title))
+                                                      (s/strcat (quantify number "virus counter") " from " title))
                                                    (vals selected-cards)))]
                        (pick-counter-triggers state side eid selected-cards selected-cards counter-count message)))))
     :cancel-effect (if target-count
@@ -63,7 +64,7 @@
                           (complete-with-result state side eid :cancel))
                      (req (let [message (enumerate-str (map #(let [{:keys [card number]} %
                                                                title (:title card)]
-                                                           (str (quantify number "virus counter") " from " title))
+                                                           (s/strcat (quantify number "virus counter") " from " title))
                                                         (vals selected-cards)))]
                            (complete-with-result state side eid {:number counter-count :msg message}))))}))
 
@@ -97,13 +98,13 @@
                              (<= stealth-target stealth-count))
                         (let [remainder (max 0 (- target-count counter-count))
                               remainder-str (when (pos? remainder)
-                                              (str remainder " [Credits]"))
+                                              (s/strcat remainder " [Credits]"))
                               card-strs (when (pos? (count selected-cards))
-                                          (str (enumerate-str (map #(let [{:keys [card number]} %
+                                          (s/strcat (enumerate-str (map #(let [{:keys [card number]} %
                                                                       title (:title card)]
-                                                                  (str number " [Credits] from " title))
+                                                                  (s/strcat number " [Credits] from " title))
                                                                (vals selected-cards)))))
-                              message (str card-strs
+                              message (s/strcat card-strs
                                            (when (and card-strs remainder-str)
                                              " and ")
                                            remainder-str
@@ -126,12 +127,12 @@
          {:async true
           :effect pay-rest}
          {:async true
-          :prompt (str "Choose a credit providing card ("
+          :prompt (s/strcat "Choose a credit providing card ("
                       counter-count (when (and target-count (pos? target-count))
-                                      (str " of " target-count))
+                                      (s/strcat " of " target-count))
                       " [Credits]"
                       (if (pos? stealth-target)
-                         (str ", " (min stealth-count stealth-target) " of " stealth-target " stealth")
+                         (s/strcat ", " (min stealth-count stealth-target) " of " stealth-target " stealth")
                          "")
                       ")")
           :choices {:card #(in-coll? (map :cid provider-cards) (:cid %))}

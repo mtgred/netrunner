@@ -10,11 +10,12 @@
     [game.macros :refer [continue-ability effect wait-for]]
     [jinteki.utils :refer [str->int]]
     [clojure.string :as string]
-    [game.core.payment :refer [->c]]))
+    [game.core.payment :refer [->c]]
+    [stringer.core :as s]))
 
 (defn- bet-to-keyword
   [bet]
-  (keyword (str "bet-" bet)))
+  (keyword (s/strcat "bet-" bet)))
 
 (defn- resolve-psi
   "Resolves a psi game by charging credits to both sides and invoking the appropriate
@@ -41,7 +42,7 @@
                           (swap! state update-in [:stats (if (= card-side :corp) :runner :corp) :psi-game :wins] (fnil + 0) 1)
                           (effect-completed state side eid)))))))
       (show-wait-prompt
-        state side (str (string/capitalize (name opponent)) " to choose psi game credits")))))
+        state side (s/strcat (string/capitalize (name opponent)) " to choose psi game credits")))))
 
 (defn psi-game
   "Starts a psi game by showing the psi prompt to both players. psi is a map containing
@@ -56,8 +57,8 @@
              valid-amounts (remove #(or (any-flag-fn? state :corp :prevent-secretly-spend %)
                                         (any-flag-fn? state :runner :prevent-secretly-spend %))
                                    all-amounts)]
-         (show-prompt-with-dice state s card (str "Choose an amount to spend for " (:title card))
-                                (map #(str % " [Credits]") valid-amounts)
+         (show-prompt-with-dice state s card (s/strcat "Choose an amount to spend for " (:title card))
+                                (map #(s/strcat % " [Credits]") valid-amounts)
                                 #(resolve-psi state s eid card psi (str->int (first (string/split (:value %) #" "))) targets)
                                 {:prompt-type :psi}))))))
 

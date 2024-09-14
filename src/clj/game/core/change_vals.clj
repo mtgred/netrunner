@@ -9,7 +9,8 @@
     [game.core.memory :refer [available-mu update-mu]]
     [game.core.say :refer [system-msg]]
     [game.core.tags :refer [update-tag-status]]
-    [game.macros :refer [req]]))
+    [game.macros :refer [req]]
+    [stringer.core :as s]))
 
 (defn- change-msg
   "Send a system message indicating the property change"
@@ -18,8 +19,8 @@
               (= kw :brain-damage) "core damage"
               :else (name kw))]
     (system-msg state side
-                (str "sets " (.replace key "-" " ") " to " new-val
-                     " (" (if (pos? delta) (str "+" delta) delta) ")"))))
+                (s/strcat "sets " (.replace key "-" " ") " to " new-val
+                     " (" (if (pos? delta) (s/strcat "+" delta) delta) ")"))))
 
 (defn- change-map
   "Change a player's property using the :mod system"
@@ -36,8 +37,8 @@
      :value [:regular delta]})
   (update-mu state)
   (system-msg state side
-              (str "sets unused [mu] to " (available-mu state)
-                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+              (s/strcat "sets unused [mu] to " (available-mu state)
+                   " (" (if (pos? delta) (s/strcat "+" delta) delta) ")")))
 
 (defn- change-tags
   "Change a player's tag count"
@@ -45,8 +46,8 @@
   (gain state :runner :tag delta)
   (update-tag-status state)
   (system-msg state :runner
-              (str "sets Tags to " (get-in @state [:runner :tag :total])
-                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+              (s/strcat "sets Tags to " (get-in @state [:runner :tag :total])
+                   " (" (if (pos? delta) (s/strcat "+" delta) delta) ")")))
 
 (defn- change-bad-pub
   "Change a player's base bad pub count"
@@ -55,8 +56,8 @@
     (deduct state :corp [:bad-publicity (Math/abs delta)])
     (gain state :corp :bad-publicity delta))
   (system-msg state :corp
-              (str "sets Bad Publicity to " (get-in @state [:corp :bad-publicity :base])
-                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+              (s/strcat "sets Bad Publicity to " (get-in @state [:corp :bad-publicity :base])
+                   " (" (if (pos? delta) (s/strcat "+" delta) delta) ")")))
 
 (defn- change-agenda-points
   "Change a player's total agenda points, using floating effects."
@@ -71,8 +72,8 @@
        :value delta}))
   (update-all-agenda-points state side)
   (system-msg state side
-              (str "sets [their] agenda points to " (get-in @state [side :agenda-point])
-                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+              (s/strcat "sets [their] agenda points to " (get-in @state [side :agenda-point])
+                   " (" (if (pos? delta) (s/strcat "+" delta) delta) ")")))
 
 (defn- change-link
   "Change the runner's link, using floating effects."
@@ -83,8 +84,8 @@
      :value delta})
   (update-link state)
   (system-msg state side
-              (str "sets [their] [link] to " (get-link state)
-                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+              (s/strcat "sets [their] [link] to " (get-link state)
+                   " (" (if (pos? delta) (s/strcat "+" delta) delta) ")")))
 
 (defn- change-hand-size
   "Change the player's hand-size, using floating effects."
@@ -97,8 +98,8 @@
        :value delta}))
   (update-hand-size state side)
   (system-msg state side
-              (str "sets [their] hand size to " (hand-size state side)
-                   " (" (if (pos? delta) (str "+" delta) delta) ")")))
+              (s/strcat "sets [their] hand size to " (hand-size state side)
+                   " (" (if (pos? delta) (s/strcat "+" delta) delta) ")")))
 
 (defn- change-generic
   "Change a player's base generic property."

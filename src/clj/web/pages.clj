@@ -7,7 +7,8 @@
    [monger.operators :refer :all]
    [ring.middleware.anti-forgery :as anti-forgery]
    [web.utils :refer [response html-response]]
-   [web.versions :refer [frontend-version]]))
+   [web.versions :refer [frontend-version]]
+   [stringer.core :as s]))
 
 (defn index-page
   ([request] (index-page request nil nil))
@@ -30,7 +31,7 @@
         (hiccup/include-css "/lib/css/toastr.min.css")
         (if (= "dev" server-mode)
           (hiccup/include-css "/css/netrunner.css")
-          (hiccup/include-css (str "/css/netrunner.css?v=" @frontend-version)))]
+          (hiccup/include-css (s/strcat "/css/netrunner.css?v=" @frontend-version)))]
        [:body
         [:div#sente-csrf-token
          {:style {:display "hidden"}
@@ -48,11 +49,11 @@
         (hiccup/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js")
         (hiccup/include-js "/lib/js/toastr.min.js")
         [:script {:type "text/javascript"}
-         (str "var user=" (json/generate-string user) ";")]
+         (s/strcat "var user=" (json/generate-string user) ";")]
         (if (= "dev" server-mode)
           (list (hiccup/include-js "/js/cljs-runtime/goog.base.js")
                 (hiccup/include-js "/js/main.js"))
-          (list (hiccup/include-js (str "/js/main.js?v=" @frontend-version))))]))))
+          (list (hiccup/include-js (s/strcat "/js/main.js?v=" @frontend-version))))]))))
 
 (defn reset-password-page
   [{db :system/db

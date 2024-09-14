@@ -16,7 +16,8 @@
    [web.app-state :as app-state]
    [web.lobby :as lobby]
    [web.stats :as stats]
-   [web.ws :as ws]))
+   [web.ws :as ws]
+   [stringer.core :as s]))
 
 (defn game-diff-json
   "Converts the appropriate diff to json"
@@ -198,7 +199,7 @@
       ; The game will not exist if this is the last player to leave.
       (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
         (handle-message-and-send-diffs!
-          lobby? nil nil (str (:username user) " has left the game.")))
+          lobby? nil nil (s/strcat (:username user) " has left the game.")))
       (lobby/send-lobby-list uid)
       (lobby/broadcast-lobby-list)
       (when ?reply-fn (?reply-fn true)))))
@@ -264,7 +265,7 @@
                          :args args}))))
     (catch Exception e
       (ws/chsk-send! uid [:game/error])
-      (println (str "Caught exception"
+      (println (s/strcat "Caught exception"
                     "\nException Data: " (or (ex-data e) (.getMessage e))
                     "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100)))))))
 
@@ -276,7 +277,7 @@
     (when (and lobby (lobby/in-lobby? uid lobby))
       (if-let [state (:state lobby)]
         (send-state-to-uid! uid :game/resync lobby (diffs/public-states state))
-        (println (str "resync request unknown state"
+        (println (s/strcat "resync request unknown state"
                       "\nGameID:" gameid
                       "\nGameID by ClientID:" gameid
                       "\nClientID:" uid
@@ -292,7 +293,7 @@
   (let [lobby (app-state/get-lobby gameid)]
     (when (and lobby (lobby/allowed-in-lobby user lobby))
       (let [correct-password? (lobby/check-password lobby user password)
-            watch-str (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) ".")
+            watch-str (s/strcat (:username user) " joined the game as a spectator" (when request-side (s/strcat " (" request-side " perspective)")) ".")
             watch-message (make-system-message watch-str)
             new-app-state (swap! app-state/app-state
                                  update :lobbies
@@ -325,7 +326,7 @@
         {:keys [state mute-spectators] :as lobby?} (get-in new-app-state [:lobbies gameid])
         message (if mute-spectators "muted" "unmuted")]
     (when (and lobby? state (lobby/player? uid lobby?))
-      (handle-message-and-send-diffs! lobby? nil nil (str (:username user) " " message " spectators."))
+      (handle-message-and-send-diffs! lobby? nil nil (s/strcat (:username user) " " message " spectators."))
       ;; needed to update the status bar
       (lobby/send-lobby-state lobby?))))
 
@@ -362,7 +363,7 @@
       ; The game will not exist if this is the last player to leave.
       (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
         (handle-message-and-send-diffs!
-         lobby? nil nil (str (:username user) " has left the game.")))))
+         lobby? nil nil (s/strcat (:username user) " has left the game.")))))
   (lobby/send-lobby-list uid)
   (lobby/broadcast-lobby-list)
   (app-state/deregister-user! uid)

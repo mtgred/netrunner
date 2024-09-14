@@ -28,12 +28,13 @@
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
     [game.utils :refer [dissoc-in in-coll? same-card? to-keyword quantify]]
-    [medley.core :refer [find-first]]))
+    [medley.core :refer [find-first]]
+    [stringer.core :as s]))
 
 (defn install-locked?
   "Checks if installing is locked"
   [state side]
-  (let [kw (keyword (str (name side) "-lock-install"))]
+  (let [kw (keyword (s/strcat (name side) "-lock-install"))]
     (or (seq (get-in @state [:stack :current-run kw]))
         (seq (get-in @state [:stack :current-turn kw]))
         (seq (get-in @state [:stack :persistent kw])))))
@@ -79,16 +80,16 @@
     (case reason
       ;; failed install lock check
       :lock-install
-      (reason-toast (str "Unable to install " title ", installing is currently locked"))
+      (reason-toast (s/strcat "Unable to install " title ", installing is currently locked"))
       ;; failed ice check
       :ice
-      (reason-toast (str "Unable to install " title ": can only install 1 piece of ice per turn"))
+      (reason-toast (s/strcat "Unable to install " title ": can only install 1 piece of ice per turn"))
       ;; Earth station cannot have more than one remote server
       :earth-station
-      (reason-toast (str "Unable to install " title " in new remote: Earth Station limit"))
+      (reason-toast (s/strcat "Unable to install " title " in new remote: Earth Station limit"))
       ;; A Teia can only have two remotes
       :a-teia
-      (reason-toast (str "Unable to install " title " in new remote: A Teia limit"))
+      (reason-toast (s/strcat "Unable to install " title " in new remote: A Teia limit"))
       ;; else
       true)))
 
@@ -97,10 +98,10 @@
   [state side eid prev-card server]
   (continue-ability
     state side
-    {:prompt (str "The " (:title prev-card) " in " server " will now be trashed.")
+    {:prompt (s/strcat "The " (:title prev-card) " in " server " will now be trashed.")
      :choices ["OK"]
      :async true
-     :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
+     :effect (req (system-msg state :corp (s/strcat "trashes " (card-str state prev-card)))
                   (if (get-card state prev-card) ; make sure they didn't trash the card themselves
                     (trash state :corp eid prev-card {:keep-server-alive true})
                     (effect-completed state :corp eid)))}
@@ -137,7 +138,7 @@
   [{:keys [advance-counter] :as counters}]
   ;; TODO - rewrite this if/when we support more counter types through installs
   (if advance-counter
-    (str ", and place " (quantify advance-counter "Advancement counter") " on it")
+    (s/strcat ", and place " (quantify advance-counter "Advancement counter") " on it")
     ""))
 
 (defn- corp-install-message
@@ -154,17 +155,17 @@
                       (:title card)
                       (if (ice? card) "ice" "a card"))
           server-name (if (= server "New remote")
-                        (str (remote-num->name (dec (:rid @state))) " (new remote)")
+                        (s/strcat (remote-num->name (dec (:rid @state))) " (new remote)")
                         server)
           origin (if display-origin
-                   (str " from "
-                        (when origin-index (str " position " (inc origin-index) " of "))
+                   (s/strcat " from "
+                        (when origin-index (s/strcat " position " (inc origin-index) " of "))
                         (name-zone :corp (:zone card)))
                    "")
           lhs (if install-source
-                (str (build-spend-msg cost-str "use") (:title install-source) " to install ")
+                (s/strcat (build-spend-msg cost-str "use") (:title install-source) " to install ")
                 (build-spend-msg cost-str "install"))]
-      (system-msg state side (str lhs card-name origin
+      (system-msg state side (s/strcat lhs card-name origin
                                   (if (ice? card) " protecting " " in ") server-name
                                   (format-counters-msg counters)))
       (when (and (= :face-up install-state)
@@ -175,7 +176,7 @@
 (defn corp-install-msg
   "Gets a message describing where a card has been installed from. Example: Interns."
   [card]
-  (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
+  (s/strcat "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
 
 (defn reveal-if-unrezzed
   "Used to reveal a card if it cannot be rezzed when an instruction says to rez it
@@ -188,7 +189,7 @@
       (wait-for (checkpoint state nil)
                 (complete-with-result state side eid (get-card state moved-card)))
       (wait-for (reveal state :corp rezzed-card)
-                (system-msg state :corp (str "reveals " (card-str state rezzed-card {:visible true})))
+                (system-msg state :corp (s/strcat "reveals " (card-str state rezzed-card {:visible true})))
                 (wait-for (checkpoint state nil)
                           (complete-with-result state side eid (get-card state moved-card)))))))
 
@@ -344,7 +345,7 @@
        ;; No server selected; show prompt to select an install site (Interns, Lateral Growth, etc.)
        (not server)
        (continue-ability state side
-                         {:prompt (str "Choose a location to install " (:title card))
+                         {:prompt (s/strcat "Choose a location to install " (:title card))
                           :choices (installable-servers state card)
                           :async true
                           :effect (effect (corp-install eid card target args))}
@@ -388,11 +389,11 @@
          title (:title card)]
      (case reason
        :lock-install
-       (reason-toast (str "Unable to install " title " since installing is currently locked"))
+       (reason-toast (s/strcat "Unable to install " title " since installing is currently locked"))
        :req
-       (reason-toast (str "Installation requirements are not fulfilled for " title))
+       (reason-toast (s/strcat "Installation requirements are not fulfilled for " title))
        :locked-zone
-       (reason-toast (str "Unable to install " title " because it is currently in a locked zone"))
+       (reason-toast (s/strcat "Unable to install " title " because it is currently in a locked zone"))
        ;; else
        true))))
 
@@ -407,41 +408,41 @@
         discount-str (cond
                        ignore-all-cost " (ignoring all costs)"
                        ignore-install-cost " (ignoring it's install cost)"
-                       (and cost-bonus (pos? cost-bonus)) (str " (paying " cost-bonus " [Credits] more)")
-                       (and cost-bonus (neg? cost-bonus)) (str " (paying " (* -1 cost-bonus) " [Credits] less)")
+                       (and cost-bonus (pos? cost-bonus)) (s/strcat " (paying " cost-bonus " [Credits] more)")
+                       (and cost-bonus (neg? cost-bonus)) (s/strcat " (paying " (* -1 cost-bonus) " [Credits] less)")
                        :else nil)
         card-name (if facedown
                     (if known
-                      (str (:title card) " as a facedown card")
+                      (s/strcat (:title card) " as a facedown card")
                       "a card facedown")
                     (:title card))
         origin (if (and display-origin (not= (:previous-zone card) [:onhost]))
-                 (str " from "
-                      (when origin-index (str " position " (inc origin-index) " of "))
+                 (s/strcat " from "
+                      (when origin-index (s/strcat " position " (inc origin-index) " of "))
                       (cond
                         (= (:previous-zone card) [:set-aside])
                         "among the set-aside cards"
                         :else
-                        (str "the " (name-zone :runner (:previous-zone card)))))
+                        (s/strcat "the " (name-zone :runner (:previous-zone card)))))
                  "")
         pre-lhs (when (every? (complement string/blank?) [cost-str prepend-cost-str])
-                  (str prepend-cost-str ", and then "))
+                  (s/strcat prepend-cost-str ", and then "))
         from-host? (when (and display-origin (= (:previous-zone card) [:onhost]))
                      "hosted ")
         modified-cost-str (if (string/blank? cost-str)
                             prepend-cost-str
                             (if (string/blank? pre-lhs)
                               cost-str
-                              (str cost-str ",")))
+                              (s/strcat cost-str ",")))
         lhs (if install-source
-              (str (build-spend-msg modified-cost-str "use") (:title install-source) " to install ")
+              (s/strcat (build-spend-msg modified-cost-str "use") (:title install-source) " to install ")
               (build-spend-msg modified-cost-str "install"))]
     (when (:display-message args true)
       (if custom-message
         (system-msg state side (custom-message cost-str))
         (system-msg state side
-                    (str pre-lhs lhs from-host? card-name origin discount-str
-                         (when host-card (str " on " (card-str state host-card)))
+                    (s/strcat pre-lhs lhs from-host? card-name origin discount-str
+                         (when host-card (s/strcat " on " (card-str state host-card)))
                          (when no-cost " at no cost")))))))
 
 (defn runner-install-continue
@@ -575,7 +576,7 @@
       (if (pos? to-eliminate)
         (continue-ability
           state side
-          {:prompt (str (:title potential-host) " can only handle " max-mu " MU of programs - trash programs on " (:title card) " worth at least " to-eliminate " MU")
+          {:prompt (s/strcat (:title potential-host) " can only handle " max-mu " MU of programs - trash programs on " (:title card) " worth at least " to-eliminate " MU")
            :choices {:req (req (and (program? target)
                                     (some #(same-card? % target) relevant-cards)))
                      :max (count relevant-cards)
@@ -607,7 +608,7 @@
       (if (pos? to-destroy)
         (continue-ability
           state side
-          {:prompt (str "Insufficient Space - Choose at least " (quantify to-destroy "card") " on " (:title potential-host) " to trash")
+          {:prompt (s/strcat "Insufficient Space - Choose at least " (quantify to-destroy "card") " on " (:title potential-host) " to trash")
            :choices {:req (req (some #(same-card? % target) relevant-cards))
                      :min to-destroy
                      :max (count relevant-cards)}
@@ -626,7 +627,7 @@
   (continue-ability
     state side
     {:choices (conj potential-hosts "The Rig")
-     :prompt (str "Choose a destination for " (:title card))
+     :prompt (s/strcat "Choose a destination for " (:title card))
      :async true
      :effect (req (if (= target "The Rig")
                     (runner-install-pay state side eid card args)
@@ -655,7 +656,7 @@
        (continue-ability
          state side
          {:choices hosting
-          :prompt (str "Choose a card to host " (:title card) " on")
+          :prompt (s/strcat "Choose a card to host " (:title card) " on")
           :async true
           :effect (effect (runner-install-pay eid card (assoc args :host-card target)))}
          card nil)

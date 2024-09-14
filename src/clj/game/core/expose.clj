@@ -8,7 +8,8 @@
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.to-string :refer [card-str]]
-    [game.macros :refer [wait-for]]))
+    [game.macros :refer [wait-for]]
+    [stringer.core :as s]))
 
 (defn expose-prevent
   [state _ n]
@@ -16,7 +17,7 @@
 
 (defn- resolve-expose
   [state side eid target]
-  (system-msg state side (str "exposes " (card-str state target {:visible true})))
+  (system-msg state side (s/strcat "exposes " (card-str state target {:visible true})))
   (if-let [ability (:on-expose (card-def target))]
     (wait-for (resolve-ability state side ability target nil)
               (trigger-event-sync state side (make-result eid target) :expose target))
@@ -38,7 +39,7 @@
                     (do (system-msg state :corp "has the option to prevent a card from being exposed")
                         (show-wait-prompt state :runner "Corp to prevent the expose")
                         (show-prompt state :corp nil
-                                     (str "Prevent " (:title target) " from being exposed?") ["Done"]
+                                     (s/strcat "Prevent " (:title target) " from being exposed?") ["Done"]
                                      (fn [_]
                                        (clear-wait-prompt state :runner)
                                        (if (get-in @state [:expose :expose-prevent])

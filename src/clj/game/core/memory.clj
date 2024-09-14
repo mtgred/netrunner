@@ -5,7 +5,8 @@
    [game.core.card-defs :refer [card-def]]
    [game.core.eid :refer [make-eid]]
    [game.core.effects :refer [get-effect-maps get-effect-value get-effects is-disabled-reg? register-lingering-effect]]
-   [game.core.toasts :refer [toast]]))
+   [game.core.toasts :refer [toast]]
+   [stringer.core :as s]))
 
 (defn mu+
   "For use in :static-abilities and register-lingering-effect.
@@ -19,7 +20,7 @@
     :value (cond+
              [(or (vector? value) (fn? value)) value]
              [(number? value) [:regular value]]
-             [:else (throw (Exception. (str "mu+ needs a vector, number, or function: " value)))])}))
+             [:else (throw (Exception. (s/strcat "mu+ needs a vector, number, or function: " value)))])}))
 
 (defn virus-mu+
   "For use in :static-abilities and register-lingering-effect.
@@ -30,7 +31,7 @@
   ([req value] (mu+ req (cond+
                           [(or (vector? value) (fn? value)) value]
                           [(number? value) [:virus value]]
-                          [:else (throw (Exception. (str "virus-mu+ needs a vector, number, or function: " value)))]))))
+                          [:else (throw (Exception. (s/strcat "virus-mu+ needs a vector, number, or function: " value)))]))))
 
 (defn caissa-mu+
   "For use in :static-abilities and register-lingering-effect.
@@ -41,7 +42,7 @@
   ([req value] (mu+ req (cond+
                           [(or (vector? value) (fn? value)) value]
                           [(number? value) [:caissa value]]
-                          [:else (throw (Exception. (str "caissa-mu+ needs a vector, number, or function: " value)))]))))
+                          [:else (throw (Exception. (s/strcat "caissa-mu+ needs a vector, number, or function: " value)))]))))
 
 (defn available-mu
   "Returns the available MU the runner has"

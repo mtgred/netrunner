@@ -15,7 +15,8 @@
    [web.app-state :as app-state]
    [web.mongodb :as mongodb]
    [web.stats :as stats]
-   [web.ws :as ws]))
+   [web.ws :as ws]
+   [stringer.core :as s]))
 
 (read-write/print-time-literals-clj!)
 
@@ -25,7 +26,7 @@
         precon (and target (keyword (str/lower-case target)))]
     (when (or (and (= format "system-gateway")
                    (contains? #{:beginner :intermediate} precon))
-              (and (= (str format) "preconstructed")
+              (and (= (s/strcat format) "preconstructed")
                    (contains? all-matchups precon)))
       precon)))
 
@@ -96,7 +97,7 @@
                      (if (:started lobby)
                        [:name :date :identity]
                        [:name :date]))
-                   (assoc :_id (str _id) :status status))]
+                   (assoc :_id (s/strcat _id) :status status))]
       (assoc player :deck deck))
     player))
 
@@ -215,7 +216,7 @@
          users (map #(get user-cache %) uids)]
      (broadcast-lobby-list users)))
   ([users]
-   (assert (or (sequential? users) (nil? users)) (str "Users must be a sequence: " (pr-str users)))
+   (assert (or (sequential? users) (nil? users)) (s/strcat "Users must be a sequence: " (pr-str users)))
    (let [lobbies (app-state/get-lobbies)]
      (doseq [[uid ev] (prepare-lobby-list lobbies users)]
        (when uid
@@ -250,7 +251,7 @@
     ?data :?data}]
   (let [lobby (-> (create-new-lobby {:uid uid :user user :options ?data})
                   (send-message
-                    (core/make-system-message (str (:username user) " has created the game."))))
+                    (core/make-system-message (s/strcat (:username user) " has created the game."))))
         new-app-state (swap! app-state/app-state update :lobbies
                              register-lobby lobby uid)
         lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
@@ -336,7 +337,7 @@
      (on-close lobby))))
 
 (defn leave-lobby! [db user uid ?reply-fn lobby]
-  (let [leave-message (core/make-system-message (str (:username user) " left the game."))
+  (let [leave-message (core/make-system-message (s/strcat (:username user) " left the game."))
         new-app-state (swap! app-state/app-state
                                update :lobbies #(-> %
                                                     (handle-leave-lobby uid leave-message)
@@ -498,7 +499,7 @@
 
 (defn join-lobby! [user uid ?data ?reply-fn lobby]
   (let [correct-password? (check-password lobby user (:password ?data))
-        join-message (core/make-system-message (str (:username user) " joined the game."))
+        join-message (core/make-system-message (s/strcat (:username user) " joined the game."))
         new-app-state (swap! app-state/app-state
                              update :lobbies #(-> %
                                                   (handle-join-lobby ?data uid user correct-password? join-message)
@@ -562,12 +563,12 @@
   (let [[player1 player2] (mapv swap-side players)
         player1-username (-> player1 :user :username)
         player2-username (-> player2 :user :username)]
-    (str player1-username " has swapped sides. "
+    (s/strcat player1-username " has swapped sides. "
          (if (= current-side "Any Side")
            "Waiting for opponent."
-           (str player1-username " is now " (:side player1) ". "))
+           (s/strcat player1-username " is now " (:side player1) ". "))
          (when player2
-           (str player2-username " is now " (:side player2) ".")))))
+           (s/strcat player2-username " is now " (:side player2) ".")))))
 
 
 (defmethod ws/-msg-handler :lobby/swap
@@ -596,7 +597,7 @@
     (when (superuser? user)
       (let [player-name (-> lobby :original-players first :user :username)
             bad-name (:title lobby)
-            new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :title] (str player-name "'s game"))]
+            new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :title] (s/strcat player-name "'s game"))]
         (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
         (broadcast-lobby-list)
         (mc/insert db :moderator_actions
@@ -678,7 +679,7 @@
   (let [lobby (app-state/get-lobby gameid)]
     (when (and lobby (allowed-in-lobby user lobby))
       (let [correct-password? (check-password lobby user password)
-            watch-message (core/make-system-message (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) "."))
+            watch-message (core/make-system-message (s/strcat (:username user) " joined the game as a spectator" (when request-side (s/strcat " (" request-side " perspective)")) "."))
             new-app-state (swap! app-state/app-state
                                  update :lobbies #(-> %
                                                       (handle-watch-lobby gameid uid user correct-password? watch-message request-side)

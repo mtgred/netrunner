@@ -1,6 +1,5 @@
 (ns game.core.def-helpers
   (:require
-    [clojure.string :as str]
     [game.core.access :refer [access-bonus]]
     [game.core.board :refer [all-installed]]
     [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard?]]
@@ -21,12 +20,13 @@
     [game.core.toasts :refer [toast]]
     [game.macros :refer [continue-ability effect msg req wait-for]]
     [game.utils :refer [enumerate-str remove-once same-card? server-card to-keyword]]
-    [jinteki.utils :refer [other-side]]))
+    [jinteki.utils :refer [other-side]]
+    [stringer.core :as s]))
 
 (defn combine-abilities
   "Combines two or more abilities to a single one. Labels are joined together with a period between parts."
   ([ab-x ab-y]
-   {:label (str (:label ab-x) ". " (:label ab-y))
+   {:label (s/strcat (:label ab-x) ". " (:label ab-y))
     :async true
     :effect (req (wait-for (resolve-ability state side ab-x card nil)
                            (continue-ability state side ab-y card nil)))})
@@ -54,7 +54,7 @@
   ([reorder-side wait-side remaining chosen n original] (reorder-choice reorder-side wait-side remaining chosen n original nil))
   ([reorder-side wait-side remaining chosen n original dest]
    (when (not-empty remaining)
-     {:prompt (str "Choose a card to move next "
+     {:prompt (s/strcat "Choose a card to move next "
                    (if (= dest "bottom") "under " "onto ")
                    (if (= reorder-side :corp) "R&D" "the stack"))
       :choices remaining
@@ -77,9 +77,9 @@
   ([reorder-side wait-side chosen original] (reorder-final reorder-side wait-side chosen original nil))
   ([reorder-side wait-side chosen original dest]
    {:prompt (if (= dest "bottom")
-              (str "The bottom cards of " (if (= reorder-side :corp) "R&D" "the stack")
+              (s/strcat "The bottom cards of " (if (= reorder-side :corp) "R&D" "the stack")
                    " will be " (enumerate-str (map :title (reverse chosen))) ".")
-              (str "The top cards of " (if (= reorder-side :corp) "R&D" "the stack")
+              (s/strcat "The top cards of " (if (= reorder-side :corp) "R&D" "the stack")
                    " will be " (enumerate-str (map :title chosen)) "."))
    :choices ["Done" "Start over"]
    :async true
@@ -123,25 +123,25 @@
 (defn do-net-damage
   "Do specified amount of net-damage."
   [dmg]
-  {:label (str "Do " dmg " net damage")
+  {:label (s/strcat "Do " dmg " net damage")
    :async true
-   :msg (str "do " dmg " net damage")
+   :msg (s/strcat "do " dmg " net damage")
    :effect (effect (damage eid :net dmg {:card card}))})
 
 (defn do-meat-damage
   "Do specified amount of meat damage."
   [dmg]
-  {:label (str "Do " dmg " meat damage")
+  {:label (s/strcat "Do " dmg " meat damage")
    :async true
-   :msg (str "do " dmg " meat damage")
+   :msg (s/strcat "do " dmg " meat damage")
    :effect (effect (damage eid :meat dmg {:card card}))})
 
 (defn do-brain-damage
   "Do specified amount of core damage."
   [dmg]
-  {:label (str "Do " dmg " core damage")
+  {:label (s/strcat "Do " dmg " core damage")
    :async true
-   :msg (str "do " dmg " core damage")
+   :msg (s/strcat "do " dmg " core damage")
    :effect (effect (damage eid :brain dmg {:card card}))})
 
 (defn rfg-on-empty
@@ -150,7 +150,7 @@
   {:event :counter-added
    :req (req (and (same-card? card target)
                   (not (pos? (get-counters card counter-type)))))
-   :effect (effect (system-msg (str "removes " (:title card) " from the game"))
+   :effect (effect (system-msg (s/strcat "removes " (:title card) " from the game"))
                    (move card :rfg))})
 
 (defn trash-on-empty
@@ -160,7 +160,7 @@
    :req (req (and (same-card? card target)
                   (not (pos? (get-counters card counter-type)))))
    :async true
-   :effect (effect (system-msg (str "trashes " (:title card)))
+   :effect (effect (system-msg (s/strcat "trashes " (:title card)))
                    (trash eid card {:unpreventable true :source-card card}))})
 
 (defn make-recurring-ability
@@ -181,9 +181,9 @@
   (let [side (to-keyword (:side card))
         title (:title card)]
     (if (:rfg-instead-of-trashing card)
-      (do (system-say state side (str title " is removed from the game."))
+      (do (system-say state side (s/strcat title " is removed from the game."))
           (async-rfg state side eid card))
-      (do (system-say state side (str title " is trashed."))
+      (do (system-say state side (s/strcat title " is trashed."))
           (trash state side eid card {:unpreventable true :game-trash true})))))
 
 (defn offer-jack-out
@@ -200,9 +200,9 @@
      :prompt "Jack out?"
      :waiting-prompt true
      :yes-ability {:async true
-                   :effect (effect (system-msg :runner (str "uses " (:title card) " to jack out"))
+                   :effect (effect (system-msg :runner (s/strcat "uses " (:title card) " to jack out"))
                                    (jack-out eid))}
-     :no-ability {:effect (effect (system-msg :runner (str "uses " (:title card) " to continue the run")))}}}))
+     :no-ability {:effect (effect (system-msg :runner (s/strcat "uses " (:title card) " to continue the run")))}}}))
 
 (defn get-x-fn []
   (fn get-x-fn-inner
@@ -287,7 +287,7 @@
                         (if-not (:cost x)
                           (:option x)
                           (let [cs (build-cost-string (:cost x))]
-                            (if-not (:option x) cs (str cs ": " (:option x))))))
+                            (if-not (:option x) cs (s/strcat cs ": " (:option x))))))
            ;; converts options to choices
            choices-fn (fn [x state side eid card targets]
                         (when (payable? x state side eid card targets)
@@ -325,9 +325,9 @@
            base-map
            {:choices (req (into [] (map #(choices-fn % state side eid card targets) xs)))
             :waiting-prompt (not no-wait-msg)
-            :prompt (str (or (:prompt args) "Choose one")
+            :prompt (s/strcat (or (:prompt args) "Choose one")
                          ;; if we are resolving multiple
-                         (when (and count (pos? count)) (str " (" count " remaining)")))
+                         (when (and count (pos? count)) (s/strcat " (" count " remaining)")))
             :req (or meaningful-req? (:req args))
             ;; resolve-choices demands async
             :async true

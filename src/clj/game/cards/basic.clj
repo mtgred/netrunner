@@ -24,7 +24,8 @@
    [game.core.to-string :refer [card-str]]
    [game.macros :refer [effect msg req wait-for]]
    [game.utils :refer :all]
-   [jinteki.utils :refer :all]))
+   [jinteki.utils :refer :all]
+   [stringer.core :as s]))
 ;; Card definitions
 
 (defcard "Corp Basic Action Card"
@@ -130,18 +131,18 @@
                               (wait-for (resolve-ability
                                           state side
                                           (make-eid state eid)
-                                          {:prompt (str "Pay the additional cost to trash " (:title target) "?")
+                                          {:prompt (s/strcat "Pay the additional cost to trash " (:title target) "?")
                                            :choices [(when can-pay cost-strs) "No"]
                                            :async true
                                            :effect (req (if (= target "No")
-                                                          (do (system-msg state side (str "declines to pay the additional cost to trash " (:title target)))
+                                                          (do (system-msg state side (s/strcat "declines to pay the additional cost to trash " (:title target)))
                                                               (effect-completed state side eid))
                                                           (wait-for (pay state side (make-eid state
                                                                                               (assoc eid
                                                                                                      :additional-costs additional-costs
                                                                                                      :source-type :trash-card))
                                                                          nil additional-costs)
-                                                                    (system-msg state side (str (:msg async-result) " as an additional cost to trash " (:title target)))
+                                                                    (system-msg state side (s/strcat (:msg async-result) " as an additional cost to trash " (:title target)))
                                                                     (complete-with-result state side eid target))))}
                                           card nil)
                                         (if async-result

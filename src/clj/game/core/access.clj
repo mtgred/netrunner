@@ -21,7 +21,8 @@
     [jinteki.utils :refer [add-cost-to-label]]
     [clojure.set :as clj-set]
     [medley.core :refer [find-first]]
-    [clojure.string :as string]))
+    [clojure.string :as string]
+    [stringer.core :as s]))
 
 (defn no-trash-or-steal
   [state]
@@ -61,7 +62,7 @@
         access-ability (access-ab card)
         ability (add-cost-label-to-ability access-ability (card-ability-cost state :runner access-ability card))
         label (add-cost-to-label ability)]
-    (str "[" title "] " label)))
+    (s/strcat "[" title "] " label)))
 
 (defn access-non-agenda
   "Access a non-agenda. Show a prompt to trash for trashable cards."
@@ -89,7 +90,7 @@
             can-pay (when trash-cost
                       (can-pay? state :runner trash-eid card nil [(->c :credit trash-cost)]))
             trash-cost-str (when can-pay
-                             [(str "Pay " trash-cost " [Credits] to trash")])
+                             [(s/strcat "Pay " trash-cost " [Credits] to trash")])
             ; Is the runner is forced to trash this card with only credits? (NAT)
             must-trash-with-credits? (and can-pay
                                           (get-in @state [:runner :register :must-trash-with-credits]))
@@ -127,7 +128,7 @@
         (continue-ability
           state :runner
           {:async true
-           :prompt (str "You accessed " (:title card) ".")
+           :prompt (s/strcat "You accessed " (:title card) ".")
            :choices choices
            :effect (req (cond
                           ; Can't or won't trash or use an ability
@@ -146,7 +147,7 @@
                                           (swap! state assoc-in [:run :did-access] true)))
                                       (swap! state assoc-in [:runner :register :trashed-card] true)
                                       (swap! state assoc-in [:runner :register :trashed-accessed-card] true)
-                                      (system-msg state side (str (:msg async-result) " to trash "
+                                      (system-msg state side (s/strcat (:msg async-result) " to trash "
                                                                   (:title card) " from "
                                                                   (name-zone :corp (get-zone card))))
                                       (wait-for (trash state side card {:accessed true})
@@ -189,7 +190,7 @@
         _ (update-all-agenda-points state)
         c (get-card state c)
         points (get-agenda-points c)]
-    (system-msg state :runner (str "steals " (:title c) " and gains " (quantify points "agenda point")))
+    (system-msg state :runner (s/strcat "steals " (:title c) " and gains " (quantify points "agenda point")))
     (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c 0)))
     (play-sfx state side "agenda-steal")
     (when (:breach @state)
@@ -238,9 +239,9 @@
         no-action-str (when-not (= steal-str ["Steal"])
                         ["No action"])
         prompt-str (if (not (string/blank? cost-strs))
-                     (str " " cost-strs " to steal?")
+                     (s/strcat " " cost-strs " to steal?")
                      "")
-        prompt-str (str "You accessed " (:title card) "." prompt-str)
+        prompt-str (s/strcat "You accessed " (:title card) "." prompt-str)
         choices (vec (concat ability-strs steal-str no-action-str))]
     ;; Steal costs are additional costs and can be denied by the runner.
     (continue-ability
@@ -252,7 +253,7 @@
                       ;; Can't steal or pay, or won't pay additional costs to steal
                       (= target "No action")
                       (do (when-not (find-cid (:cid card) (:deck corp))
-                            (system-msg state side (str "decides to not pay to steal " (:title card))))
+                            (system-msg state side (s/strcat "decides to not pay to steal " (:title card))))
                           (access-end state side eid card))
 
                       ;; Steal normally
@@ -268,7 +269,7 @@
                                                       :source-type :runner-steal
                                                       :action :steal-cost))
                                      nil cost)
-                                (system-msg state side (str (:msg async-result) " to steal "
+                                (system-msg state side (s/strcat (:msg async-result) " to steal "
                                                             (:title card) " from "
                                                             (name-zone :corp (get-zone card))))
                                 (steal-agenda state side eid card))
@@ -319,14 +320,14 @@
   (let [cost-str (join-cost-strs cost-msg)]
     (when-not no-msg
       (system-msg state side
-                  (str (if (seq cost-msg)
-                         (str cost-str " to access ")
+                  (s/strcat (if (seq cost-msg)
+                         (s/strcat cost-str " to access ")
                          "accesses ")
                        title
                        (when card
-                         (str " from " (name-zone :corp zone)))))))
+                         (s/strcat " from " (name-zone :corp zone)))))))
   (if (reveal-access? state side card)
-    (do (system-msg state side (str "must reveal they accessed " (:title card)))
+    (do (system-msg state side (s/strcat "must reveal they accessed " (:title card)))
         (reveal state :runner eid card))
     (effect-completed state side eid)))
 
@@ -342,8 +343,8 @@
   ([cost ability]
    (let [ab (if (pos? cost) (assoc ability :cost [(->c :credit cost)]) ability)
          prompt (if (pos? cost)
-                  (req (str "Pay " cost " [Credits] to use " (:title card) " ability?"))
-                  (req (str "Use " (:title card) " ability?")))]
+                  (req (s/strcat "Pay " cost " [Credits] to use " (:title card) " ability?"))
+                  (req (s/strcat "Use " (:title card) " ability?")))]
      (installed-access-trigger cost ab prompt)))
   ([cost ability prompt]
    (let [cost (if (number? cost) [(->c :credit cost)] cost)]
@@ -408,7 +409,7 @@
         can-pay (when (not-empty cost)
                   (can-pay? state side (make-eid state eid) nil nil cost))
         prompt-str (if can-pay
-                     (str cost-str " to access this card?")
+                     (s/strcat cost-str " to access this card?")
                      "You can't pay the cost to access this card.")
         choices (if can-pay
                   ["Pay to access" "No action"]
@@ -828,7 +829,7 @@
                (continue-ability
                 state :corp
                 {:async true
-                 :prompt (str "Choose a card in HQ for the Runner to access")
+                 :prompt (s/strcat "Choose a card in HQ for the Runner to access")
                  :waiting-prompt true
                  :choices {:all true
                            :card #(and (in-hand? %)
@@ -1174,7 +1175,7 @@
         ;; Present the normal options
         :else
         {:async true
-         :prompt (str "Choose a card to access. You must access all cards")
+         :prompt (s/strcat "Choose a card to access. You must access all cards")
          :choices choices
          :effect (req (cond
 
@@ -1339,7 +1340,7 @@
   "Starts the breach routines for the run's server."
   ([state side eid server] (breach-server state side eid server nil))
   ([state side eid server args]
-   (system-msg state side (str "breaches " (zone->name server)))
+   (system-msg state side (s/strcat "breaches " (zone->name server)))
    (wait-for (trigger-event-simult state side :breach-server nil (first server))
              (swap! state assoc :breach {:breach-server (first server) :from-server (first server)})
              (let [args (clean-access-args args)

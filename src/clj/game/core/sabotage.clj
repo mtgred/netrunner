@@ -1,22 +1,22 @@
 (ns game.core.sabotage
   (:require
-    [clojure.string :as string]
     [game.core.card :refer [corp? in-hand?]]
     [game.core.eid :refer [effect-completed]]
     [game.core.engine :refer [resolve-ability]]
     [game.core.moving :refer [trash-cards]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [req msg continue-ability]]
-    [game.utils :refer [pluralize]]))
+    [game.utils :refer [pluralize]]
+    [stringer.core :as s]))
 
 (defn choosing-prompt-req
   [n]
   (req
     (let [cards-rd (count (get-in @state [:corp :deck]))
           forced-hq (- n cards-rd)]
-      (str "Choose"
+      (s/strcat "Choose"
            (when (pos? forced-hq)
-             (str " at least " forced-hq " " (pluralize "card" forced-hq) " and"))
+             (s/strcat " at least " forced-hq " " (pluralize "card" forced-hq) " and"))
            " up to " n " " (pluralize "card" n)
            " to trash from HQ. Remainder will be trashed from top of R&D."))))
 
@@ -32,11 +32,11 @@
                   (str
                     "trashes"
                     (when (pos? selected-hq)
-                      (str " " selected-hq " " (pluralize "card" selected-hq) " from HQ"))
+                      (s/strcat " " selected-hq " " (pluralize "card" selected-hq) " from HQ"))
                     (when (and (pos? selected-hq) (pos? selected-rd))
                       " and")
                     (when (pos? selected-rd)
-                      (str " " selected-rd " " (pluralize "card" selected-rd) " from the top of R&D"))))
+                      (s/strcat " " selected-rd " " (pluralize "card" selected-rd) " from the top of R&D"))))
       (trash-cards state side eid to-trash {:unpreventable true}))))
 
 (defn sabotage-ability

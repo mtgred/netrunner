@@ -7,7 +7,8 @@
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
-    [game.macros :refer [wait-for]]))
+    [game.macros :refer [wait-for]]
+    [stringer.core :as s]))
 
 (defn bad-publicity-prevent
   [state side n]
@@ -19,7 +20,7 @@
   [state side eid n]
   (if (pos? n)
     (do (gain state :corp :bad-publicity n)
-        (toast state :corp (str "Took " n " bad publicity!") "info")
+        (toast state :corp (s/strcat "Took " n " bad publicity!") "info")
         (trigger-event-sync state side (make-result eid n) :corp-gain-bad-publicity {:amount n}))
     (effect-completed state side eid)))
 
@@ -48,12 +49,12 @@
                      (swap! state assoc-in [:prevent :current] :bad-publicity)
                      (show-prompt
                        state :corp nil
-                       (str "Avoid " (when (< 1 n) "any of the ") n " bad publicity?") ["Done"]
+                       (s/strcat "Avoid " (when (< 1 n) "any of the ") n " bad publicity?") ["Done"]
                        (fn [_]
                          (let [prevent (get-in @state [:bad-publicity :bad-publicity-prevent])]
                            (system-msg state :corp
                                        (if prevent
-                                         (str "avoids "
+                                         (s/strcat "avoids "
                                               (if (= prevent Integer/MAX_VALUE) "all" prevent)
                                               " bad publicity")
                                          "will not avoid bad publicity"))

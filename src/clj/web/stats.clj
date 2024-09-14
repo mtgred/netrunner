@@ -15,7 +15,8 @@
    [web.pages :as pages]
    [web.user :refer [active-user?]]
    [web.utils :refer [json-response response mongo-time-to-utc-string]]
-   [web.ws :as ws]))
+   [web.ws :as ws]
+   [stringer.core :as s]))
 
 (defn clear-userstats-handler
   "Clear any statistics for a given user-id contained in a request"
@@ -48,7 +49,7 @@
 (defn build-stats-kw
   "Take a stats prefix and add a side to it"
   [prefix side]
-  (keyword (str prefix (lower-case (or side "Corp")))))
+  (keyword (s/strcat prefix (lower-case (or side "Corp")))))
 
 (defn inc-deck-stats
   "Update deck stats for a given counter"
@@ -127,14 +128,14 @@
           userstats (:stats (stats-for-user db user-id))
           deckstats (:stats (stats-for-deck db deck-id))]
       (ws/chsk-send! (:uid player) [:stats/update {:userstats userstats
-                                                   :deck-id (str deck-id)
+                                                   :deck-id (s/strcat deck-id)
                                                    :deckstats deckstats}]))))
 
 (defn game-started
   [db {:keys [gameid date start-date title room players format]}]
   (let [corp (some #(when (= "Corp" (:side %)) %) players)
         runner (some #(when (= "Runner" (:side %)) %) players)]
-    (mc/insert db :game-logs {:gameid (str gameid)
+    (mc/insert db :game-logs {:gameid (s/strcat gameid)
                               :title title
                               :room room
                               :creation-date date
@@ -186,7 +187,7 @@
           should-share-replay (:bug-reported @state)]
       (try
         (mc/update db :game-logs
-                   {:gameid (str gameid)}
+                   {:gameid (s/strcat gameid)}
                    {$set {:winner (:winner @state)
                           :reason (:reason @state)
                           :end-date (inst/now)
@@ -253,7 +254,7 @@
     (response 401 {:message "Unauthorized"})))
 
 (defn fetch-elapsed [db gameid]
-  (let [stats (mc/find-one-as-map db :game-logs {:gameid (str gameid)} ["stats"])]
+  (let [stats (mc/find-one-as-map db :game-logs {:gameid (s/strcat gameid)} ["stats"])]
     (-> stats :stats :time :elapsed)))
 
 (defn check-annotations-size [annotations]
@@ -284,7 +285,7 @@
                                                :runner (get-in body [:turns :runner])}
                                        :clicks (:clicks body)})]
             (mc/update db :game-logs
-                       {:gameid (str gameid)}
+                       {:gameid (s/strcat gameid)}
                        {$set {:annotations new-annotations}})
             (response 200 {:message "Annotations published"}))
           (response 413 {:message "File too large"})))
@@ -298,7 +299,7 @@
         (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "replay" "replay-shared" "annotations"])
         replay (or replay {})
         annotations (or annotations [])
-        [ind anno] (first (filter #(= date (str (:date (second %)))) (map-indexed vector annotations)))]
+        [ind anno] (first (filter #(= date (s/strcat (:date (second %)))) (map-indexed vector annotations)))]
     (if (or (= username (:username anno))
             (= username (get-in runner [:player :username]))
             (= username (get-in corp [:player :username])))
@@ -309,7 +310,7 @@
                 (vec (concat (subvec annotations 0 ind)
                              (subvec annotations (inc ind))))]
             (mc/update db :game-logs
-                       {:gameid (str gameid)}
+                       {:gameid (s/strcat gameid)}
                        {$set {:annotations new-annotations}})
             (response 200 {:message "Annotations deleted"}))
           (response 404 {:message "Annotations not found"})))
@@ -338,7 +339,7 @@
   (if username
     (try
       (mc/update db :game-logs
-                 {$and [{:gameid (str gameid)}
+                 {$and [{:gameid (s/strcat gameid)}
                         {$or [{:corp.player.username username}
                               {:runner.player.username username}]}]}
                  {$set {:replay-shared true}})
@@ -350,12 +351,12 @@
 
 (defn- get-winner-card
   [winner corp runner host]
-  (let [default-img (str host "/img/icons/jinteki_167.png")]
+  (let [default-img (s/strcat host "/img/icons/jinteki_167.png")]
     (if winner
       (let [win-id (:identity ((keyword winner) {:corp corp :runner runner}))
             win-card-img (get-in (@all-cards win-id) [:images :en :default :stock])]
         (if win-card-img
-          (str host win-card-img)
+          (s/strcat host win-card-img)
           default-img))
       default-img)))
 
@@ -369,22 +370,22 @@
   (let [{:keys [replay winner corp runner title]} (mc/find-one-as-map db :game-logs {:gameid (or gameid bugid)})
         replay (or replay {})
         gameid-str (cond ; different string for replays and bug-reports
-                     gameid (if (and n d) (str gameid "?n=" n "&d=" d) gameid)
-                     bugid (str bugid "?bug-report" (when b (str "&b=" b))))]
+                     gameid (if (and n d) (s/strcat gameid "?n=" n "&d=" d) gameid)
+                     bugid (s/strcat bugid "?bug-report" (when b (s/strcat "&b=" b))))]
     (if (empty? replay)
       (response 404 {:message "Replay not found"})
       (let [corp-user (get-in corp [:player :username] "Unknown")
             corp-id (:identity corp)
             runner-user (get-in runner [:player :username] "Unknown")
             runner-id (:identity runner)
-            host (str (name scheme) "://" (get headers "host"))
+            host (s/strcat (name scheme) "://" (get headers "host"))
             og {:type "website"
                 :url (request-url req)
                 :image (get-winner-card winner corp runner host)
-                :title (str (cond
+                :title (s/strcat (cond
                               gameid "REPLAY: "
                               bugid "BUG-REPORT: ")
                             title)
                 :site_name "jinteki.net"
-                :description (str corp-user " (" corp-id ") vs. " runner-user " (" runner-id ")")}]
+                :description (s/strcat corp-user " (" corp-id ") vs. " runner-user " (" runner-id ")")}]
         (pages/index-page req og gameid-str)))))

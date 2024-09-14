@@ -8,7 +8,8 @@
     [game.core.servers :refer [zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
-    [game.utils :refer [enumerate-str same-card? same-side?]]))
+    [game.utils :refer [enumerate-str same-card? same-side?]]
+    [stringer.core :as s]))
 
 (defn card-flag?
   "Checks the card to see if it has a :flags entry of the given flag-key, and with the given value if provided"
@@ -225,10 +226,10 @@
        :persistent-flag false
        ;; Uniqueness
        :unique (or ignore-unique
-                   (reason-toast (str "Cannot rez a second copy of " title " since it is unique. Please trash the other"
+                   (reason-toast (s/strcat "Cannot rez a second copy of " title " since it is unique. Please trash the other"
                                       " copy first")))
        ;; Rez requirement
-       :req (reason-toast (str "Rez requirements for " title " are not fulfilled"))))))
+       :req (reason-toast (s/strcat "Rez requirements for " title " are not fulfilled"))))))
 
 (defn can-steal?
   "Checks if the runner can steal agendas"
@@ -250,7 +251,7 @@
   (let [cards (->> @state :stack :current-turn :can-run (map :card))]
     (if (empty? cards)
       true
-      (do (when-not silent (toast state side (str "Cannot run due to " (enumerate-str (map :title cards))))
+      (do (when-not silent (toast state side (s/strcat "Cannot run due to " (enumerate-str (map :title cards))))
         false))))))
 
 (defn can-access?
@@ -264,7 +265,7 @@
   (let [cards (get-preventing-cards state side card :can-access [:current-run :current-turn :persistent])]
     (if (empty? cards)
       true
-      (do (toast state side (str "Cannot access " (card-str state card) " because of " (enumerate-str (map :title cards))) "info")
+      (do (toast state side (s/strcat "Cannot access " (card-str state card) " because of " (enumerate-str (map :title cards))) "info")
           false))))
 
 (defn can-advance?

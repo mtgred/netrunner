@@ -21,7 +21,8 @@
    [game.core.shuffling :refer [shuffle-deck]]
    [game.core.toasts :refer [ack-toast]]
    [game.core.turns :refer [end-phase-12 end-turn start-turn]]
-   [game.core.winning :refer [concede]]))
+   [game.core.winning :refer [concede]]
+   [stringer.core :as s]))
 
 (defn checkpoint+clean-up
   [state]
@@ -39,7 +40,7 @@
     (if-let [command (parse-command state text)]
       (when (and (not= side nil) (not= side :spectator))
         (command state side)
-        (system-say state side (str "[!]" (:username author) " uses a command: " text)))
+        (system-say state side (s/strcat "[!]" (:username author) " uses a command: " text)))
       (say state side args))))
 
 (def commands

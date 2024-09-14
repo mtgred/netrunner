@@ -17,7 +17,8 @@
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect wait-for]]
-    [game.utils :refer [enumerate-str to-keyword]]))
+    [game.utils :refer [enumerate-str to-keyword]]
+    [stringer.core :as s]))
 
 (defn get-rez-cost
   [state side card {:keys [ignore-cost alternative-cost cost-bonus]}]
@@ -40,7 +41,7 @@
       (effect-completed state side eid)
       (wait-for (trash-cards state side hosted-cards {:unpreventable true :game-trash true})
                 (when (pos? (count hosted-cards))
-                  (system-msg state side (str "trashes " (enumerate-str (map #(card-str state %) hosted-cards))
+                  (system-msg state side (s/strcat "trashes " (enumerate-str (map #(card-str state %) hosted-cards))
                                               " because " (:title card)
                                               " cannot host cards")))
                 (effect-completed state side eid)))))
@@ -66,7 +67,7 @@
                                               (update-in [:host :zone] #(map to-keyword %)))))
                     (when-not no-msg
                       (system-msg state side
-                                  (str (build-spend-msg msg "rez" "rezzes")
+                                  (s/strcat (build-spend-msg msg "rez" "rezzes")
                                        (:title card)
                                        (cond
                                          alternative-cost " by paying its alternative cost"
@@ -136,8 +137,8 @@
   ([state side card {:keys [source-card no-msg] :as args}]
    (let [card (get-card state card)]
      (when-not no-msg
-       (system-msg state side (str (if source-card
-                                     (str "uses " (:title source-card) " to derez ")
+       (system-msg state side (s/strcat (if source-card
+                                     (s/strcat "uses " (:title source-card) " to derez ")
                                      "derezzes ")
                                    (:title card))))
      (unregister-events state side card)
