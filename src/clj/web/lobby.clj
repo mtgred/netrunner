@@ -206,6 +206,25 @@
   []
   (filter #(app-state/receive-lobby-updates? %) (ws/connected-uids)))
 
+(defn already-in-game?
+  "Checks if a user with the given username is already in the game"
+  [{:keys [username]} lobby]
+  (some #(= username (get-in % [:user :username])) (get-players-and-spectators lobby)))
+
+(defn in-active-game?
+  "Checks if a user with the given username is in (any) started game, as a player or spec"
+  [user lobbies]
+  (some #(already-in-game? user %) (filter :started lobbies)))
+
+(defn users-not-in-game
+  "users not in an active game"
+  []
+  (let [user-cache (:users @app-state/app-state)
+        uids (lobby-update-uids)
+        users (map #(get user-cache %) uids)
+        lobbies (app-state/get-lobbies)]
+    (filter #(not (in-active-game? % lobbies)) users)))
+
 (defn broadcast-lobby-list
   "Sends the lobby list to all users or a given list of users.
   Filters the list per each users block list."
@@ -219,7 +238,7 @@
    (let [lobbies (app-state/get-lobbies)]
      (doseq [[uid ev] (prepare-lobby-list lobbies users)]
        (when uid
-         (ws/chsk-send! uid ev))))))
+         (future (ws/chsk-send! uid ev)))))))
 
 (defn prepare-lobby-state [lobby]
   (let [lobby-state (lobby-summary lobby true)]
@@ -348,7 +367,7 @@
             (swap! state update side dissoc :user)))
         (close-lobby! db lobby))
       (send-lobby-state lobby?)
-      (broadcast-lobby-list)
+      (broadcast-lobby-list (users-not-in-game))
       (when ?reply-fn (?reply-fn true))
       lobby?))
 
@@ -419,7 +438,8 @@
                                                       (handle-set-last-update (:gameid lobby) uid)))
             lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
         (send-lobby-state lobby?)
-        (broadcast-lobby-list)
+        ;;(broadcast-lobby-list) - not sure why we need to broadcast this to players outside
+        ;;                         of the lobby at all?
         (?reply-fn (some #(= processed-deck (:deck %)) (:players lobby?))))
       (?reply-fn false))))
 
@@ -455,11 +475,6 @@
   [user lobby]
   (or (superuser? user)
       (seq (filter-lobby-list [lobby] user))))
-
-(defn already-in-game?
-  "Checks if a user with the given username is already in the game"
-  [{:keys [username]} lobby]
-  (some #(= username (get-in % [:user :username])) (get-players-and-spectators lobby)))
 
 (defn determine-player-side
   "Determines the side of a player based on their side and a requested side"
@@ -512,7 +527,7 @@
                 (swap! state assoc-in [side :user] user))))
           (send-lobby-state lobby?)
           (send-lobby-ting lobby?)
-          (broadcast-lobby-list)
+          (broadcast-lobby-list (users-not-in-game))
           (when ?reply-fn (?reply-fn 200))
           lobby?)
       (false? correct-password?)
@@ -586,7 +601,7 @@
                                       (handle-set-last-update gameid uid)))
             lobby? (get-in new-app-state [:lobbies gameid])]
         (send-lobby-state lobby?)
-        (broadcast-lobby-list)))))
+        (broadcast-lobby-list (users-not-in-game))))))
 
 (defmethod ws/-msg-handler :lobby/rename-game
   lobby--rename-game
@@ -598,7 +613,7 @@
             bad-name (:title lobby)
             new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :title] (str player-name "'s game"))]
         (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
-        (broadcast-lobby-list)
+        (broadcast-lobby-list (users-not-in-game))
         (mc/insert db :moderator_actions
                    {:moderator (:username user)
                     :action :rename-game
@@ -688,7 +703,7 @@
           (and lobby? correct-password? (allowed-in-lobby user lobby?))
           (do (send-lobby-state lobby?)
               (send-lobby-ting lobby?)
-              (broadcast-lobby-list)
+              (broadcast-lobby-list (users-not-in-game))
               (when ?reply-fn (?reply-fn 200)))
           (false? correct-password?)
           (when ?reply-fn (?reply-fn 403))
