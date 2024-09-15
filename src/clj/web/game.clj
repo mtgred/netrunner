@@ -184,7 +184,7 @@
         (when lobby?
           (stats/game-started db lobby?)
           (lobby/send-lobby-state lobby?)
-          (lobby/broadcast-lobby-list)
+          (lobby/broadcast-lobby-list (lobby/users-not-in-game))
           (send-state-to-participants :game/start lobby? (diffs/public-states (:state lobby?))))))))
 
 (defmethod ws/-msg-handler :game/leave
@@ -200,7 +200,7 @@
         (handle-message-and-send-diffs!
           lobby? nil nil (str (:username user) " has left the game.")))
       (lobby/send-lobby-list uid)
-      (lobby/broadcast-lobby-list)
+      (lobby/broadcast-lobby-list (lobby/users-not-in-game))
       (when ?reply-fn (?reply-fn true)))))
 
 (defn uid-in-lobby-as-original-player? [uid]
@@ -305,7 +305,7 @@
           (do
             (lobby/send-lobby-state lobby?)
             (lobby/send-lobby-ting lobby?)
-            (lobby/broadcast-lobby-list)
+            (lobby/broadcast-lobby-list (lobby/users-not-in-game))
             (main/handle-notification (:state lobby?) watch-str)
             (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
             (when ?reply-fn (?reply-fn 200)))
