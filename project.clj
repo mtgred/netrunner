@@ -60,6 +60,7 @@
                  [cond-plus "1.1.1"]
                  [org.clojure/data.csv "1.0.0"]
                  [dev.weavejester/medley "1.8.0"]
+                 [org.clj-commons/claypoole "1.2.2"]
                  [org.slf4j/slf4j-nop "1.7.32"]
                  [integrant "0.8.0"]
                  [cljc.java-time "0.1.18"]

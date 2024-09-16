@@ -174,18 +174,19 @@
   [{{db :system/db} :ring-req
     uid :uid
     {gameid :gameid} :?data}]
-  (let [{:keys [players started] :as lobby} (app-state/get-lobby gameid)]
-    (when (and lobby (lobby/first-player? uid lobby) (not started))
-      (let [now (inst/now)
-            new-app-state
-            (swap! app-state/app-state
-                   update :lobbies handle-start-game gameid players now)
-            lobby? (get-in new-app-state [:lobbies gameid])]
-        (when lobby?
-          (stats/game-started db lobby?)
-          (lobby/send-lobby-state lobby?)
-          (lobby/broadcast-lobby-list)
-          (send-state-to-participants :game/start lobby? (diffs/public-states (:state lobby?))))))))
+  (lobby/lobby-thread
+    (let [{:keys [players started] :as lobby} (app-state/get-lobby gameid)]
+      (when (and lobby (lobby/first-player? uid lobby) (not started))
+        (let [now (inst/now)
+              new-app-state
+              (swap! app-state/app-state
+                     update :lobbies handle-start-game gameid players now)
+              lobby? (get-in new-app-state [:lobbies gameid])]
+          (when lobby?
+            (stats/game-started db lobby?)
+            (lobby/send-lobby-state lobby?)
+            (lobby/broadcast-lobby-list)
+            (send-state-to-participants :game/start lobby? (diffs/public-states (:state lobby?)))))))))
 
 (defmethod ws/-msg-handler :game/leave
   game--leave
@@ -193,15 +194,16 @@
     uid :uid
     {gameid :gameid} :?data
     ?reply-fn :?reply-fn}]
-  (let [{:keys [started state] :as lobby} (app-state/get-lobby gameid)]
-    (when (and lobby (lobby/in-lobby? uid lobby) started state)
-      ; The game will not exist if this is the last player to leave.
-      (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
-        (handle-message-and-send-diffs!
-          lobby? nil nil (str (:username user) " has left the game.")))
-      (lobby/send-lobby-list uid)
-      (lobby/broadcast-lobby-list)
-      (when ?reply-fn (?reply-fn true)))))
+  (lobby/lobby-thread
+    (let [{:keys [started state] :as lobby} (app-state/get-lobby gameid)]
+      (when (and lobby (lobby/in-lobby? uid lobby) started state)
+        ;; The game will not exist if this is the last player to leave.
+        (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
+          (handle-message-and-send-diffs!
+            lobby? nil nil (str (:username user) " has left the game.")))
+        (lobby/send-lobby-list uid)
+        (lobby/broadcast-lobby-list)
+        (when ?reply-fn (?reply-fn true))))))
 
 (defn uid-in-lobby-as-original-player? [uid]
   (find-first
@@ -214,16 +216,17 @@
   [{{user :user} :ring-req
     uid :uid
     ?data :?data}]
-  (let [{:keys [original-players started players] :as lobby} (uid-in-lobby-as-original-player? uid)
-        original-player (find-first #(= uid (:uid %)) original-players)]
-    (when (and started
-               original-player
-               (< (count (remove #(= uid (:uid %)) players)) 2))
-      (let [?data (assoc ?data :request-side "Any Side")
-            lobby? (lobby/join-lobby! user uid ?data nil lobby)]
-        (when lobby?
-          (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
-          (update-and-send-diffs! main/handle-rejoin lobby? user))))))
+  (lobby/lobby-thread
+    (let [{:keys [original-players started players] :as lobby} (uid-in-lobby-as-original-player? uid)
+          original-player (find-first #(= uid (:uid %)) original-players)]
+      (when (and started
+                 original-player
+                 (< (count (remove #(= uid (:uid %)) players)) 2))
+        (let [?data (assoc ?data :request-side "Any Side")
+              lobby? (lobby/join-lobby! user uid ?data nil lobby)]
+          (when lobby?
+            (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
+            (update-and-send-diffs! main/handle-rejoin lobby? user)))))))
 
 (defmethod ws/-msg-handler :game/concede
   game--concede
@@ -231,9 +234,11 @@
     {gameid :gameid} :?data}]
   (let [lobby (app-state/get-lobby gameid)
         player (lobby/player? uid lobby)]
-    (when (and lobby player)
-      (let [side (side-from-str (:side player))]
-        (update-and-send-diffs! main/handle-concede lobby side)))))
+    (lobby/game-thread
+      lobby
+      (when (and lobby player)
+        (let [side (side-from-str (:side player))]
+          (update-and-send-diffs! main/handle-concede lobby side))))))
 
 (defmethod ws/-msg-handler :game/action
   game--action
@@ -243,25 +248,27 @@
     (let [{:keys [state] :as lobby} (app-state/get-lobby gameid)
           player (lobby/player? uid lobby)
           spectator (lobby/spectator? uid lobby)]
-      (cond
-        (and state player)
-        (let [old-state @state
-              side (side-from-str (:side player))]
-          (try
-            (swap! app-state/app-state
-                   update :lobbies lobby/handle-set-last-update gameid uid)
-            (update-and-send-diffs! main/handle-action lobby side command args)
-            (catch Exception e
-              (reset! state old-state)
-              (throw e))))
-        (and (not spectator) (not= command "toast"))
-        (throw (ex-info "handle-game-action unknown state or side"
-                        {:gameid gameid
-                         :uid uid
-                         :players (map #(select-keys % [:uid :side]) (:players lobby))
-                         :spectators (map #(select-keys % [:uid]) (:spectators lobby))
-                         :command command
-                         :args args}))))
+      (lobby/game-thread
+        lobby
+        (cond
+          (and state player)
+          (let [old-state @state
+                side (side-from-str (:side player))]
+            (try
+              (swap! app-state/app-state
+                     update :lobbies lobby/handle-set-last-update gameid uid)
+              (update-and-send-diffs! main/handle-action lobby side command args)
+              (catch Exception e
+                (reset! state old-state)
+                (throw e))))
+          (and (not spectator) (not= command "toast"))
+          (throw (ex-info "handle-game-action unknown state or side"
+                          {:gameid gameid
+                           :uid uid
+                           :players (map #(select-keys % [:uid :side]) (:players lobby))
+                           :spectators (map #(select-keys % [:uid]) (:spectators lobby))
+                           :command command
+                           :args args})))))
     (catch Exception e
       (ws/chsk-send! uid [:game/error])
       (println (str "Caught exception"
@@ -273,15 +280,17 @@
   [{uid :uid
     {gameid :gameid} :?data}]
   (let [lobby (app-state/get-lobby gameid)]
-    (when (and lobby (lobby/in-lobby? uid lobby))
-      (if-let [state (:state lobby)]
-        (send-state-to-uid! uid :game/resync lobby (diffs/public-states state))
-        (println (str "resync request unknown state"
-                      "\nGameID:" gameid
-                      "\nGameID by ClientID:" gameid
-                      "\nClientID:" uid
-                      "\nPlayers:" (map #(select-keys % [:uid :side]) (:players lobby))
-                      "\nSpectators" (map #(select-keys % [:uid]) (:spectators lobby))))))))
+    (lobby/game-thread
+      lobby
+      (when (and lobby (lobby/in-lobby? uid lobby))
+        (if-let [state (:state lobby)]
+          (send-state-to-uid! uid :game/resync lobby (diffs/public-states state))
+          (println (str "resync request unknown state"
+                        "\nGameID:" gameid
+                        "\nGameID by ClientID:" gameid
+                        "\nClientID:" uid
+                        "\nPlayers:" (map #(select-keys % [:uid :side]) (:players lobby))
+                        "\nSpectators" (map #(select-keys % [:uid]) (:spectators lobby)))))))))
 
 (defmethod ws/-msg-handler :game/watch
   game--watch
@@ -289,30 +298,31 @@
     uid :uid
     {:keys [gameid password request-side]} :?data
     ?reply-fn :?reply-fn}]
-  (let [lobby (app-state/get-lobby gameid)]
-    (when (and lobby (lobby/allowed-in-lobby user lobby))
-      (let [correct-password? (lobby/check-password lobby user password)
-            watch-str (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) ".")
-            watch-message (make-system-message watch-str)
-            new-app-state (swap! app-state/app-state
-                                 update :lobbies
-                                 #(-> %
-                                      (lobby/handle-watch-lobby gameid uid user correct-password? watch-message request-side)
-                                      (lobby/handle-set-last-update gameid uid)))
-            lobby? (get-in new-app-state [:lobbies gameid])]
-        (cond
-          (and lobby? (lobby/spectator? uid lobby?) (lobby/allowed-in-lobby user lobby?))
-          (do
-            (lobby/send-lobby-state lobby?)
-            (lobby/send-lobby-ting lobby?)
-            (lobby/broadcast-lobby-list)
-            (main/handle-notification (:state lobby?) watch-str)
-            (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
-            (when ?reply-fn (?reply-fn 200)))
-          (false? correct-password?)
-          (when ?reply-fn (?reply-fn 403))
-          :else
-          (when ?reply-fn (?reply-fn 404)))))))
+  (lobby/lobby-thread
+    (let [lobby (app-state/get-lobby gameid)]
+      (when (and lobby (lobby/allowed-in-lobby user lobby))
+        (let [correct-password? (lobby/check-password lobby user password)
+              watch-str (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) ".")
+              watch-message (make-system-message watch-str)
+              new-app-state (swap! app-state/app-state
+                                   update :lobbies
+                                   #(-> %
+                                        (lobby/handle-watch-lobby gameid uid user correct-password? watch-message request-side)
+                                        (lobby/handle-set-last-update gameid uid)))
+              lobby? (get-in new-app-state [:lobbies gameid])]
+          (cond
+            (and lobby? (lobby/spectator? uid lobby?) (lobby/allowed-in-lobby user lobby?))
+            (do
+              (lobby/send-lobby-state lobby?)
+              (lobby/send-lobby-ting lobby?)
+              (lobby/broadcast-lobby-list)
+              (main/handle-notification (:state lobby?) watch-str)
+              (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
+              (when ?reply-fn (?reply-fn 200)))
+            (false? correct-password?)
+            (when ?reply-fn (?reply-fn 403))
+            :else
+            (when ?reply-fn (?reply-fn 404))))))))
 
 (defmethod ws/-msg-handler :game/mute-spectators
   game--mute-spectators
@@ -325,9 +335,11 @@
         {:keys [state mute-spectators] :as lobby?} (get-in new-app-state [:lobbies gameid])
         message (if mute-spectators "muted" "unmuted")]
     (when (and lobby? state (lobby/player? uid lobby?))
-      (handle-message-and-send-diffs! lobby? nil nil (str (:username user) " " message " spectators."))
-      ;; needed to update the status bar
-      (lobby/send-lobby-state lobby?))))
+      (lobby/game-thread
+        lobby?
+        (handle-message-and-send-diffs! lobby? nil nil (str (:username user) " " message " spectators."))
+        ;; needed to update the status bar
+        (lobby/send-lobby-state lobby?)))))
 
 (defmethod ws/-msg-handler :game/say
   game--say
@@ -340,16 +352,20 @@
                [(lobby/player? uid lobby?) :> #(side-from-str (:side %))]
                [(and (not mute-spectators) (lobby/spectator? uid lobby?)) :spectator])]
     (when (and lobby? state side)
-      (handle-message-and-send-diffs! lobby? side user msg))))
+      (lobby/game-thread
+        lobby?
+        (handle-message-and-send-diffs! lobby? side user msg)))))
 
 (defmethod ws/-msg-handler :game/typing
   game--typing
   [{uid :uid
     {:keys [gameid typing]} :?data}]
   (let [{:keys [state players] :as lobby} (app-state/get-lobby gameid)]
-    (when (and state (lobby/player? uid lobby))
-      (doseq [{:keys [uid]} (remove #(= uid (:uid %)) players)]
-        (ws/chsk-send! uid [:game/typing typing])))))
+    (lobby/game-thread
+      lobby
+      (when (and state (lobby/player? uid lobby))
+        (doseq [{:keys [uid]} (remove #(= uid (:uid %)) players)]
+          (ws/chsk-send! uid [:game/typing typing]))))))
 
 (defmethod ws/-msg-handler :chsk/uidport-close
   chsk--uidport-close
@@ -357,13 +373,14 @@
      user :user} :ring-req
     uid :uid
     ?reply-fn :?reply-fn}]
-  (let [{:keys [started state] :as lobby} (app-state/uid->lobby uid)]
-    (when (and started state)
-      ; The game will not exist if this is the last player to leave.
-      (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
-        (handle-message-and-send-diffs!
-         lobby? nil nil (str (:username user) " has left the game.")))))
-  (lobby/send-lobby-list uid)
-  (lobby/broadcast-lobby-list)
-  (app-state/deregister-user! uid)
-  (when ?reply-fn (?reply-fn true)))
+  (lobby/lobby-thread
+    (let [{:keys [started state] :as lobby} (app-state/uid->lobby uid)]
+      (when (and started state)
+        ;; The game will not exist if this is the last player to leave.
+        (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
+          (handle-message-and-send-diffs!
+            lobby? nil nil (str (:username user) " has left the game.")))))
+    (lobby/send-lobby-list uid)
+    (lobby/broadcast-lobby-list)
+    (app-state/deregister-user! uid)
+    (when ?reply-fn (?reply-fn true))))
