@@ -20,7 +20,7 @@
 
 (read-write/print-time-literals-clj!)
 
-(defonce lobby-pool (cp/threadpool 1))
+(defonce lobby-pool (cp/threadpool 1 {:name "lobbies-thread"}))
 (defn lobby-thread [& body]
   (cp/future lobby-pool body))
 
@@ -56,7 +56,7 @@
      :corp-spectators []
      :runner-spectators []
      :messages []
-     :pool (cp/threadpool 1) ;; each lobby can have it's own thread
+     :pool (cp/threadpool 1 {:name (str "game-" gameid)}) ;; each lobby can have it's own thread
      ;; options
      :precon (validate-precon format precon gateway-type)
      :allow-spectator allow-spectator

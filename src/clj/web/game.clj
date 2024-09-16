@@ -334,6 +334,7 @@
                                                                       (lobby/handle-set-last-update gameid uid)))
         {:keys [state mute-spectators] :as lobby?} (get-in new-app-state [:lobbies gameid])
         message (if mute-spectators "muted" "unmuted")]
+    ;; assert thread pool works like I think
     (when (and lobby? state (lobby/player? uid lobby?))
       (lobby/game-thread
         lobby?
