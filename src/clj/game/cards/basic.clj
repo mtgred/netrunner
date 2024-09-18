@@ -92,7 +92,6 @@
                 :cost [(->c :click 1) (->c :credit 1)]
                 :async true
                 :msg (msg "advance " (card-str state (:card context)))
-                :req (req (can-advance? state side (:card context)))
                 :effect (effect (update-advancement-requirement (:card context))
                                 (add-prop (get-card state (:card context)) :advance-counter 1)
                                 (play-sfx "click-advance")
