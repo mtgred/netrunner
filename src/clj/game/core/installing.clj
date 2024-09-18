@@ -422,7 +422,7 @@
                         (= (:previous-zone card) [:set-aside])
                         "among the set-aside cards"
                         :else
-                        (str "the " (name-zone :runner (:previous-zone card)))))
+                        (name-zone :runner (:previous-zone card))))
                  "")
         pre-lhs (when (every? (complement string/blank?) [cost-str prepend-cost-str])
                   (str prepend-cost-str ", and then "))
