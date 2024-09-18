@@ -35,8 +35,8 @@
         plural-repr (if (< 1 (count (flatten targets))) "them" "it")
         follow-up (when and-then (string/replace and-then #"(\[it\])|(\[them\])" plural-repr))]
     (if forced
-      (system-msg state (other-side side) (str " uses " (:title card) " to force the "
+      (system-msg state (other-side side) (str "uses " (:title card) " to force the "
                                                (string/capitalize (name side)) " to reveal "
                                                (enumerate-str strs) follow-up))
-      (system-msg state side (str " uses " (:title card) " to reveal " (enumerate-str strs) follow-up)))
+      (system-msg state side (str "uses " (:title card) " to reveal " (enumerate-str strs) follow-up)))
     (reveal state side eid targets)))
