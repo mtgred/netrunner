@@ -51,7 +51,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
-   [game.core.revealing :refer [reveal]]
+   [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
    [game.core.runs :refer [bypass-ice can-run-server? gain-next-run-credits get-runnable-zones
                            make-run prevent-access successful-run-replace-breach
@@ -471,18 +471,15 @@
                  :this-card-run true
                  :mandatory true
                  :ability
-                 {:msg "reveal 3 random cards from HQ"
-                  :req (req (<= 1 (count (:hand corp))))
+                 {:req (req (<= 1 (count (:hand corp))))
                   :async true
                   :effect (req (let [chosen-cards (take 3 (shuffle (:hand corp)))]
-                                 (system-msg
-                                   state side
-                                   (str "reveals " (enumerate-str (map :title chosen-cards))
-                                        " from HQ"))
-                                 (continue-ability
-                                   state side
-                                   (move-ab chosen-cards (min 2 (count chosen-cards)))
-                                   card nil)))}})]}))
+                                 (wait-for
+                                   (reveal-loud state side card nil chosen-cards)
+                                   (continue-ability
+                                     state side
+                                     (move-ab chosen-cards (min 2 (count chosen-cards)))
+                                     card nil))))}})]}))
 
 (defcard "By Any Means"
   {:on-play
@@ -638,8 +635,7 @@
                                    :choices ["OK"]}
                                   card nil))
                             (do
-                              (wait-for (reveal state side target)
-                                        (system-msg state :corp (str "reveals " (:title target) " from HQ"))
+                              (wait-for (reveal-loud state side card {:forced true} target)
                                         (continue-ability
                                           state :runner
                                           {:msg "gain [Click] and draw 1 card"
@@ -1254,12 +1250,8 @@
                 :effect (req (let [cards-to-reveal (take 2 (shuffle (:hand corp)))
                                    cards-to-trash (filter #(is-type? % target) cards-to-reveal)
                                    credits (* 4 (count cards-to-trash))]
-                               (system-msg state side
-                                           (str "uses " (:title card) " to reveal "
-                                                (enumerate-str (map :title cards-to-reveal))
-                                                " from HQ"))
                                (wait-for
-                                 (reveal state side cards-to-reveal)
+                                 (reveal-loud state side card nil cards-to-reveal)
                                  (if (pos? credits)
                                    (do (system-msg
                                          state side
@@ -1408,7 +1400,7 @@
 (defcard "Executive Wiretaps"
   {:on-play
    {:msg (msg "reveal " (enumerate-str (sort (map :title (:hand corp)))) " from HQ")
-    :change-in-game-state (req (seq (:deck corp)))
+    :change-in-game-state (req (seq (:hand corp)))
     :async true
     :effect (effect (reveal eid (:hand corp)))}})
 
