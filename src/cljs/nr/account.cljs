@@ -276,8 +276,10 @@
                             {:name (tr [:pronouns.blank "[blank]"]) :ref "blank"}
                             {:name (tr [:pronouns.they "They/them"]) :ref "they"}
                             {:name (tr [:pronouns.she "She/her"]) :ref "she"}
+                            {:name (tr [:pronouns.sheit "She/it"]) :ref "sheit"}
                             {:name (tr [:pronouns.shethey "She/they"]) :ref "shethey"}
                             {:name (tr [:pronouns.he "He/him"]) :ref "he"}
+                            {:name (tr [:pronouns.heit "He/it"]) :ref "heit"}
                             {:name (tr [:pronouns.hethey "He/they"]) :ref "hethey"}
                             {:name (tr [:pronouns.it "It"]) :ref "it"}
                             {:name (tr [:pronouns.ne "Ne/nem"]) :ref "ne"}
