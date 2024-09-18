@@ -836,7 +836,7 @@
                :runner {:hand ["Burner"]}})
     (take-credits state :corp)
     (play-run-event state "Burner" :hq)
-    (is (last-log-contains? state "reveals Hedge Fund, Hedge Fund, and Hedge Fund from HQ"))
+    (is (last-log-contains? state "reveal Hedge Fund, Hedge Fund, and Hedge Fund from HQ"))
     (is (changed? [(count (:deck (get-corp))) 2
                    (count (:hand (get-corp))) -2]
                   (click-prompt state :runner "Hedge Fund")

@@ -2846,7 +2846,7 @@
         (let [hand    (:hand (get-corp))
               gate    (get-ice state :hq 0)
               log-str (str "Corp uses Gatekeeper to reveal.+"
-                           " from HQ and shuffle them into R&D")]
+                           " from HQ, and shuffle them into R&D")]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -2868,7 +2868,7 @@
         (let [discard    (:discard (get-corp))
               gate    (get-ice state :hq 0)
               log-str (str "Corp uses Gatekeeper to reveal.+"
-                           " from Archives and shuffle them into R&D")]
+                           " from Archives, and shuffle them into R&D")]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -2893,7 +2893,7 @@
               discard (:discard (get-corp))
               gate    (get-ice state :hq 0)
               log-str (str "Corp uses Gatekeeper to reveal.+ from HQ "
-                           "and .+ from Archives and shuffle them into R&D")]
+                           "and .+ from Archives, and shuffle them into R&D")]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
