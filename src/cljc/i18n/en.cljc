@@ -244,7 +244,8 @@
               :ey "Ey/em"
               :zehir "Ze/hir"
               :zezir "Ze/zir"
-              :xe "Xe/xem"}
+              :xe "Xe/xem"
+              :xi "Xi/xir"}
    :chat {:title "Play Netrunner in your browser"
           :channels "Channels"
           :send "Send"
