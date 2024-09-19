@@ -1329,14 +1329,14 @@
                                     (gain-credits state side eid 9)))}]})
 
 (defcard "Eru Ayase-Pessoa"
-  (let [constant-ability
+  (let [constant-effect
         {:event :breach-server
          :req (req (and (threat-level 3 state)
                         (= :rd target)
                         (= :archives (first (:server run)))))
          :msg "access 1 additional card"
          :effect (effect (access-bonus :rd 1))}
-        ability
+        replace-breach-event
         (successful-run-replace-breach
           {:target-server :archives
            :this-card-run true
@@ -1344,7 +1344,8 @@
            :ability {:msg "breach R&D"
                      :async true
                      :effect (req (breach-server state :runner eid [:rd] nil))}})]
-    {:events [constant-ability]
+    {:events [constant-effect
+              replace-breach-event]
      :abilities [{:action true
                   :cost [(->c :click 1)]
                   :msg "make a run on Archives"
@@ -1354,7 +1355,6 @@
                   :async true
                   :effect
                   (req (wait-for (gain-tags state :runner 1 {:unpreventable true})
-                                 (register-events state side card [ability])
                                  (make-run state side eid :archives (get-card state card))))}]}))
 
 (defcard "Fall Guy"
