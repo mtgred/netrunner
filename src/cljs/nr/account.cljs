@@ -287,8 +287,11 @@
                             {:name (tr [:pronouns.ey "Ey/em"]) :ref "ey"}
                             {:name (tr [:pronouns.zehir "Ze/hir"]) :ref "zehir"}
                             {:name (tr [:pronouns.zezir "Ze/zir"]) :ref "zezir"}
-                            {:name (tr [:pronouns.xe "Xe/xem"]) :ref "xe"}]]
-                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
+                            {:name (tr [:pronouns.xe "Xe/xem"]) :ref "xe"}
+                            {:name (tr [:pronouns.xi "Xi/xir"]) :ref "xi"}]]
+                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
+           [:div "If your personal pronouns are not represented, you can request them "
+            [:a {:href "https://github.com/mtgred/netrunner/issues"} "here"]]]
           [:section
            [:h3 (tr [:settings.language "Language"])]
            [:select {:value (:language @s "en")
