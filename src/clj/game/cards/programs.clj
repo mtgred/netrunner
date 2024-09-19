@@ -2099,31 +2099,18 @@
 
 (defcard "Matryoshka"
   (let [break-abi {:label "Break X subroutines"
-                   :cost [(->c :x-credits)]
-                   :break-cost [(->c :x-credits)]
-                   :req (req (let [hosted (:hosted (get-card state card))
-                                   valid (filter #(not (facedown? %)) hosted)
-                                   same-title (filter #(= (:title card) (:title %)) valid)]
-                               (and (active-encounter? state)
-                                    current-ice card
-                                    (<= (get-strength current-ice) (get-strength card))
-                                    (not-empty same-title))))
-                                        ; no break-req to not enable auto-pumping
+                   :cost [(->c :x-credits)(->c :turn-hosted-matryoshka-facedown 1)]
+                   :break-cost [(->c :x-credits)(->c :turn-hosted-matryoshka-facedown 1)]
+                   :req (req (and
+                               (active-encounter? state)
+                               (<= (get-strength current-ice) (get-strength card))))
                    :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
-                             " on " (card-str state current-ice) " and turn 1 hosted copy of "
-                             (:title card) " facedown")
-                   :effect (req
-                             (let [hosted (:hosted (get-card state card))
-                                   valid (filter #(not (facedown? %)) hosted)
-                                   same-title (filter #(= (:title card) (:title %)) valid)
-                                   first-copy (first same-title)]
-                               (flip-facedown state side (get-card state first-copy))
-                               (if (pos? (cost-value eid :x-credits))
-                                 (continue-ability
-                                   state side
-                                   (break-sub nil (cost-value eid :x-credits) "All")
-                                   card nil)
-                                 (effect-completed state side eid))))}
+                             " on " (card-str state current-ice))
+                   :effect (effect
+                             (continue-ability
+                               (when (pos? (cost-value eid :x-credits))
+                                 (break-sub nil (cost-value eid :x-credits) "All" {:repeatable false}))
+                               card nil))}
         host-abi {:action true
                   :label "Host 1 copy of Matryoshka"
                   :prompt (msg "Choose 1 copy of " (:title card) " in the grip")

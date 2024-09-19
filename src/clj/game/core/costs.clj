@@ -10,7 +10,7 @@
    [game.core.effects :refer [any-effects is-disabled-reg?]]
    [game.core.flags :refer [is-scored?]]
    [game.core.gaining :refer [deduct lose]]
-   [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
+   [game.core.moving :refer [discard-from-hand flip-facedown forfeit mill move trash trash-cards]]
    [game.core.payment :refer [handler label payable? value stealth-value]]
    [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
    [game.core.revealing :refer [reveal]]
@@ -936,6 +936,29 @@
                          :paid/value (count cards)
                          :paid/targets cards})))}
       nil nil)))
+
+;; TurnHostedMatryoshkaFacedown
+(defmethod value :turn-hosted-matryoshka-facedown [cost] (:cost/amount cost))
+(defmethod label :turn-hosted-matryoshka-facedown [cost]
+  (str "turn " (quantify (value cost) "hosted cop" "y" "ies") " of Matryoshka facedown"))
+(defmethod payable? :turn-hosted-matryoshka-facedown
+  [cost state side eid card]
+  (<= (value cost)
+      (count (filter #(and (not (facedown? %)) (= (:title %) "Matryoshka"))
+                     (:hosted (get-card state card))))))
+(defmethod handler :turn-hosted-matryoshka-facedown
+  [cost state side eid card]
+  (let [pred #(and (not (facedown? %)) (= (:title %) "Matryoshka"))
+        selected (take (value cost) (filter pred (:hosted (get-card state card))))]
+    (doseq [c selected]
+      (flip-facedown state side c))
+    (complete-with-result
+      state side eid
+      {:paid/msg (str "turns "(quantify (value cost) "hosted cop" "y" "ies")
+                      " of Matryoshka facedown")
+       :paid/type :turn-hosted-matryoshka-facedown
+       :paid/value (value cost)
+       :paid/targets selected})))
 
 ;; AddRandomToBottom
 (defmethod value :add-random-from-hand-to-bottom-of-deck [cost] (:cost/amount cost))
