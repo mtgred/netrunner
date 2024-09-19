@@ -584,10 +584,11 @@
       ;; note that can-advance potentially generates toasts (effcom),
       ;; so it cannot go in the req of basic, since that can generate infinite toast loops
       ;; when update-and-send-diffs causes more updates that need to be updated and sent...
-      (when (can-advance? state side card)
+      (if (can-advance? state side card)
         (play-ability state side {:card (get-in @state [:corp :basic-action-card])
                                   :ability 4
-                                  :targets [context]})))))
+                                  :targets [context]})
+        (toast state :corp "Cannot advance cards this turn." "warning")))))
 
 ;;; Runner actions
 (defn click-run
