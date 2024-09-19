@@ -3970,9 +3970,7 @@
              :duration :until-runner-turn-begins
              :effect (effect (register-turn-flag!
                                card :can-advance
-                               (fn [state side card]
-                                 ((constantly false)
-                                  (toast state :corp "Cannot advance cards this turn due to The Price of Freedom." "warning")))))}]})
+                               (constantly false)))}]})
 
 (defcard "Three Steps Ahead"
   {:on-play

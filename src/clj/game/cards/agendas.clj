@@ -731,9 +731,7 @@
                 :effect (effect (gain-clicks 2)
                                 (register-turn-flag!
                                   card :can-advance
-                                  (fn [state side card]
-                                    ((constantly false)
-                                     (toast state :corp "Cannot advance cards this turn due to Efficiency Committee." "warning")))))
+                                  (constantly false)))
                 :keep-menu-open :while-agenda-tokens-left
                 :msg "gain [Click][Click]"}]})
 
