@@ -256,6 +256,7 @@
        [:div#profile-form.panel.blue-shade.content-page {:ref "profile-form"}
          [:h2 (tr [:nav.settings "Settings"])]
          [:form {:on-submit #(handle-post % "/profile" s)}
+          [:button.float-right (tr [:settings.update-profile "Update Profile"])]
           [:section
            [:h3 (tr [:settings.email "Email"])]
            [:a {:href "" :on-click #(do
@@ -574,8 +575,7 @@
 
      [api-keys s]
 
-     [:section
-      [:button.float-right (tr [:settings.update-profile "Update Profile"])]
+     [:section 
       [:span.flash-message (:flash-message @s)]]]])}))
 
 (defn account []
