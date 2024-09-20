@@ -1360,6 +1360,8 @@ settings_card-iamge = Card Image
 
 settings_card-images = Card images
 
+settings_card-language = Card language
+
 settings_card-preview-zoom = Card preview zoom
 
 settings_card-text = Card Text
