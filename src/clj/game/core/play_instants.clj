@@ -170,7 +170,7 @@
      ;; ensure the instant can be played
      (if (can-play-instant? state side eid card (assoc args :cached-costs costs))
        ;; Wait on pay to finish before triggering instant-effect
-       (if (can-decline-instant? state side eid card args)
+       (if (and (can-decline-instant? state side eid card args) (not (:base-cost args)))
          (continue-ability
            state side
            {:optional
