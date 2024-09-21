@@ -291,12 +291,26 @@
       {:legal false
        :reason (str "Illegal identity: " id)})))
 
+(defn startup-agenda-restriction
+  "As of 24.09, startup decks may only have 3 agendas worth 3 or more points"
+  [fmt {:keys [cards] :as deck}]
+  (if (= :startup fmt)
+    (let [relevant-agenda (fn [c] (and (= (:type (:card c)) "Agenda")
+                                       (>= (:agendapoints (:card c)) 3)))
+          relevant-agendas (filter relevant-agenda cards)
+          ct (reduce + 0 (map :qty relevant-agendas))]
+      (if (> ct 3)
+        {:reason "Too many agendas worth 3 or more points (startup restriction)"}
+        {:legal true}))
+    {:legal true}))
+
 (defn build-format-legality
   [valid fmt deck]
-  (let [mwl (legal-format? fmt deck)]
+  (let [mwl (legal-format? fmt deck)
+        startup-restriction (startup-agenda-restriction fmt deck)]
     (or (reject-system-gateway-neutral-ids fmt deck)
-        {:legal (and (:legal valid) (:legal mwl))
-         :reason (or (:reason valid) (:reason mwl))})))
+        {:legal (and (:legal valid) (:legal mwl) (:legal startup-restriction))
+         :reason (or (:reason valid) (:reason mwl) (:reason startup-restriction))})))
 
 (defn cards-over-one-sg
   "Returns cards in deck that require more than one copy of System Gateway."
