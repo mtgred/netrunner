@@ -226,17 +226,21 @@
             (case install-state
               ;; Ignore all costs
               :rezzed-no-cost
-              (if-not (agenda? moved-card)
-                (rez state side (assoc eid :source-type :rez)
-                     moved-card {:ignore-cost :all-costs
-                                 :no-msg no-msg})
-                (reveal-if-unrezzed state side eid moved-card))
+              (wait-for
+                (checkpoint state nil (make-eid state eid))
+                (if-not (agenda? moved-card)
+                  (rez state side (assoc eid :source-type :rez)
+                       moved-card {:ignore-cost :all-costs
+                                   :no-msg no-msg})
+                  (reveal-if-unrezzed state side eid moved-card)))
               ;; Ignore rez cost only
               :rezzed-no-rez-cost
-              (wait-for (rez state side (make-eid state (assoc eid :source-type :rez))
-                             moved-card {:ignore-cost :rez-costs
-                                         :no-msg no-msg})
-                        (reveal-if-unrezzed state side eid moved-card))
+              (wait-for
+                (checkpoint state nil (make-eid state eid))
+                (wait-for (rez state side (make-eid state (assoc eid :source-type :rez))
+                               moved-card {:ignore-cost :rez-costs
+                                           :no-msg no-msg})
+                          (reveal-if-unrezzed state side eid moved-card)))
               ;; Pay costs
               :rezzed
               (let [eid (assoc eid :source-type :rez)]
@@ -246,12 +250,18 @@
                         (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
                       (reveal-if-unrezzed state side eid moved-card))
                   (zero? cost-bonus)
-                  (wait-for (rez state side moved-card {:no-msg no-msg})
-                            (reveal-if-unrezzed state side eid moved-card))
+                  (wait-for
+                    (checkpoint state nil (make-eid state eid))
+                    (wait-for
+                      (rez state side moved-card {:no-msg no-msg})
+                      (reveal-if-unrezzed state side eid moved-card)))
                   :else
-                  (wait-for (rez state side moved-card {:no-msg no-msg
-                                                        :cost-bonus cost-bonus})
-                            (reveal-if-unrezzed state side eid moved-card))))
+                  (wait-for
+                    (checkpoint state nil (make-eid state eid))
+                    (wait-for
+                      (rez state side moved-card {:no-msg no-msg
+                                                  :cost-bonus cost-bonus})
+                      (reveal-if-unrezzed state side eid moved-card)))))
               ;; "Face-up" cards
               :face-up
               (let [moved-card (-> (get-card state moved-card)
