@@ -82,9 +82,9 @@
                                   (checkpoint state nil eid {:duration resolved-event})))))))))
 
 (defn play-instant-costs
-  [state side card {:keys [ignore-cost base-cost no-additional-cost cached-costs]}]
+  [state side card {:keys [ignore-cost base-cost no-additional-cost cached-costs cost-bonus]}]
   (or cached-costs
-      (let [cost (play-cost state side card)
+      (let [cost (play-cost state side card {:cost-bonus cost-bonus})
             additional-costs (play-additional-cost-bonus state side card)
             costs (merge-costs
                     [(when-not ignore-cost

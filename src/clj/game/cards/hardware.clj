@@ -1640,9 +1640,46 @@
    :abilities [(set-autoresolve :auto-fire "Paragon")]})
 
 (defcard "Patchwork"
-  (let [patchwork-ability {:once :per-turn
+  (let [install-word (fn [c] (if (event? c) "play" "install"))
+        patchwork-manual-prognosis {:cost [(->c :click 1)]
+                                    :action true
+                                    :once :per-turn
+                                    :label "Manually resolve patchwork"
+                                    :req (req (seq (:hand runner)))
+                                    :prompt "Designate a card to play or install"
+                                    :choices {:card (every-pred runner? in-hand?)}
+                                    :waiting-prompt true
+                                    :async true
+                                    :effect
+                                    (req (let [to-play target]
+                                           (update! state side (assoc-in card [:special :patchwork] true))
+                                           (continue-ability
+                                             state side
+                                             {:prompt (msg "Designate a card to trash")
+                                              :choices {:card (every-pred runner? in-hand?)
+                                                        :all true}
+                                              :async true
+                                              :effect (req
+                                                        (let [to-trash target]
+                                                          (continue-ability
+                                                            state side
+                                                            (if (same-card? to-trash to-play)
+                                                              {:msg (msg "trash " (:title to-trash) " from the Grip, and is no longer able to " (install-word to-trash) " it")
+                                                               :async true
+                                                               :effect (req (trash state side eid to-trash {:cause-card card}))}
+                                                              {:msg (msg "trash " (:title to-trash) " to " (install-word to-play) " " (:title to-play) " from the Grip, paying 2 [Credits] less")
+                                                               :async true
+                                                               :effect (req (wait-for
+                                                                              (trash state side to-trash {:cause-card card})
+                                                                              (if (event? to-play)
+                                                                                (play-instant state :runner eid to-play {:cost-bonus -2})
+                                                                                (runner-install state :runner eid to-play {:cost-bonus -2}))))})
+                                                            card nil)))}
+                                             card nil)))}
+        patchwork-ability {:once :per-turn
                            :effect (effect (update! (assoc-in card [:special :patchwork] true)))}]
     {:static-abilities [(mu+ 1)]
+     :abilities [patchwork-manual-prognosis]
      :interactions
      {:pay-credits
       {:req (req (and (#{:play :runner-install} (:source-type eid))
