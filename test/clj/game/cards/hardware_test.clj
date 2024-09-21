@@ -3956,6 +3956,19 @@
     (is (no-prompt? state :runner))
     (is (= 1 (:credit (get-runner))) "Gained 0c from nothing")))
 
+(deftest patchwork-cursed-rules-decline-addl-cost
+  (do-game
+    (new-game {:runner {:hand ["Patchwork" "Moshing" "Steelskin Scarring" "Sure Gamble"]
+                        :deck ["Easy Mark" "Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Patchwork")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-card state :runner "Moshing")
+    (click-card state :runner "Steelskin Scarring")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "No")
+    (is (is-hand? state :runner ["Moshing" "Sure Gamble" "Easy Mark" "Ika"]) "didn't mosh")))
+
 (deftest pennyshaver
   ;; Pennyshaver - Place credits on successful run and take credits from Pennyshaver
   (do-game

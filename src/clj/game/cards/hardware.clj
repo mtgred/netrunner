@@ -1680,6 +1680,7 @@
                            :effect (effect (update! (assoc-in card [:special :patchwork] true)))}]
     {:static-abilities [(mu+ 1)]
      :abilities [patchwork-manual-prognosis]
+     :implementation "click on patchwork to manually resolve it (for tricks)"
      :interactions
      {:pay-credits
       {:req (req (and (#{:play :runner-install} (:source-type eid))

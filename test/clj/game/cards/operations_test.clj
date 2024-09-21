@@ -981,6 +981,7 @@
         (card-ability state :corp (refresh hall) 0)
         (is (= ["Consulting Visit" "Mumba Temple" "Cancel"] (prompt-titles :corp)))
         (click-prompt state :corp (find-card "Consulting Visit" (:deck (get-corp))))
+        (click-prompt state :corp "Yes")
         (is (= 2 (:credit (get-corp))))
         (is (= ["Beanstalk Royalties" "Green Level Clearance" "Cancel"] (prompt-titles :corp)))
         (click-prompt state :corp (find-card "Green Level Clearance" (:deck (get-corp))))
