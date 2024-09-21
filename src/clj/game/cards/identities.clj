@@ -94,7 +94,7 @@
              :req (req (and (first-event? state :corp :corp-install)
                             (pos? (:turn @state))
                             (not (rezzed? (:card context)))
-                            (not (#{:rezzed-no-cost :rezzed-no-rez-cost :rezzed :face-up} (:install-state context)))))
+                            (not (#{:face-up} (:install-state context)))))
              :waiting-prompt true
              :effect
              (effect
