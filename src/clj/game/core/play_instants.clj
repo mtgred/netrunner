@@ -1,6 +1,6 @@
 (ns game.core.play-instants
   (:require
-    [game.core.card :refer [get-zone has-subtype?]]
+    [game.core.card :refer [get-card get-zone has-subtype?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
     [game.core.effects :refer [unregister-static-abilities]]
@@ -11,9 +11,10 @@
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c]]
+    [game.core.revealing :refer [reveal]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.update :refer [update!]]
-    [game.macros :refer [wait-for]]
+    [game.macros :refer [continue-ability msg req wait-for]]
     [game.utils :refer [same-card? to-keyword]]))
 
 (defn async-rfg
@@ -100,55 +101,94 @@
                        [additional-costs])])]
         costs)))
 
+(defn- can-decline-instant?
+  ([state side eid card {:keys [ignore-cost no-additional-cost]}]
+   (and (not no-additional-cost)
+        (not ignore-cost)
+        (or (has-subtype? card "Double")
+            (has-subtype? card "Triple")
+            (seq (play-additional-cost-bonus state side card))))))
+
 (defn can-play-instant?
   ([state side eid card] (can-play-instant? state side eid card nil))
   ([state side eid card {:keys [targets silent] :as args}]
    (let [eid (assoc eid :source-type :play)
          on-play (or (:on-play (card-def card)) {})
          costs (play-instant-costs state side card args)]
-     (and ;; req is satisfied
-          (should-trigger? state side eid card targets on-play)
-          ;; can pay all costs
-          (can-pay? state side eid card nil costs)
-          ;; The zone isn't locked
-          (not (zone-locked? state side (first (get-zone card))))
-          ;; This is a current, and currents can be played
-          (not (and (has-subtype? card "Current")
-                    (get-in @state [side :register :cannot-play-current])))
-          ;; This is a run event or makes a run, and running is allowed
-          (not (and (or (:makes-run (card-def card))
-                        (has-subtype? card "Run"))
-                    (not (can-run? state :runner silent))))
-          ;; if priority, have not spent a click
-          (not (and (has-subtype? card "Priority")
-                    (get-in @state [side :register :spent-click])))
-          ;; explicitly return true
-          true))))
+     (and ;; card still exists
+       (get-card state card)
+       ;; req is satisfied
+       (should-trigger? state side eid card targets on-play)
+       ;; can pay all costs
+       (can-pay? state side eid card nil costs)
+       ;; The zone isn't locked
+       (not (zone-locked? state side (first (get-zone card))))
+       ;; This is a current, and currents can be played
+       (not (and (has-subtype? card "Current")
+                 (get-in @state [side :register :cannot-play-current])))
+       ;; This is a run event or makes a run, and running is allowed
+       (not (and (or (:makes-run (card-def card))
+                     (has-subtype? card "Run"))
+                 (not (can-run? state :runner silent))))
+       ;; if priority, have not spent a click
+       (not (and (has-subtype? card "Priority")
+                 (get-in @state [side :register :spent-click])))
+       ;; explicitly return true
+       true))))
+
+(defn continue-play-instant
+  [state side eid card costs {:keys [ignore-cost] :as args}]
+  (let [original-zone (:zone card)
+        moved-card (move state side (assoc card :seen true) :play-area)]
+    (wait-for (pay state side (make-eid state (assoc eid :action :play-instant)) moved-card costs)
+              (let [payment-str (:msg async-result)
+                    cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))
+                    eid (assoc eid :cost-paid cost-paid :source-type :ability)]
+                (if payment-str
+                  (complete-play-instant state side eid moved-card payment-str ignore-cost)
+                  ;; could not pay the card's price; put it back and mark the effect as being over.
+                  (let [returned-card (move state side moved-card original-zone)]
+                    (continue-ability
+                      state side
+                      {:msg (msg "reveal that they are unable to play " (:title card))
+                       :cost (when (:base-cost args) [(:base-cost args)])
+                       :async true
+                       :effect (req (update! state :runner (-> returned-card
+                                               (dissoc :seen)
+                                               (assoc
+                                                 :cid (:cid card)
+                                                 :previous-zone (:previous-zone card))))
+                                    (reveal state side eid card))}
+                      card nil)))))))
 
 (defn play-instant
   "Plays an Event or Operation."
   ([state side eid card] (play-instant state side eid card nil))
-  ([state side eid card {:keys [ignore-cost] :as args}]
+  ([state side eid card args]
    (let [eid (assoc eid :source card :source-type :play)
          costs (play-instant-costs state side card (dissoc args :cached-costs))]
      ;; ensure the instant can be played
      (if (can-play-instant? state side eid card (assoc args :cached-costs costs))
        ;; Wait on pay to finish before triggering instant-effect
-       (let [original-zone (:zone card)
-             moved-card (move state side (assoc card :seen true) :play-area)]
-         (wait-for (pay state side (make-eid state (assoc eid :action :play-instant)) moved-card costs)
-                   (let [payment-str (:msg async-result)
-                         cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))
-                         eid (assoc eid :cost-paid cost-paid :source-type :ability)]
-                     (if payment-str
-                       (complete-play-instant state side eid moved-card payment-str ignore-cost)
-                       ;; could not pay the card's price; put it back and mark the effect as being over.
-                       (let [returned-card (move state side moved-card original-zone)]
-                         (update! state :runner (-> returned-card
-                                                    (dissoc :seen)
-                                                    (assoc
-                                                      :cid (:cid card)
-                                                      :previous-zone (:previous-zone card))))
-                         (effect-completed state side eid))))))
-       ;; card's req or other effects was not satisfied; mark the effect as being over.
-       (effect-completed state side eid)))))
+       (if (can-decline-instant? state side eid card args)
+         (continue-ability
+           state side
+           {:optional
+            {:prompt (str "Pay the additional costs to play " (:title card) "?")
+             :yes-ability {:async true
+                           :req (req (can-pay? state side eid (get-card state card) nil costs))
+                           :effect (req (continue-play-instant state side (assoc eid :source card :source-type :play) card costs args))}
+             :no-ability {:cost (when (:base-cost args) [(:base-cost args)])
+                          :async true
+                          :effect (req (reveal state side eid card)) ;;TODO - use reveal-explicit later?
+                          :msg (msg "reveal " (:title card) ", and refuse to pay the additional cost to play " (:title card))}}}
+           card nil)
+         (continue-play-instant state side eid card costs args))
+       (continue-ability
+         state side
+         {:msg (msg "reveal that they are unable to play " (:title card))
+          :cost (when (:base-cost args) [(:base-cost args)])
+          :async true
+          ;;TODO - use reveal-explicit later?
+          :effect (req (reveal state side eid card))}
+         card nil)))))
