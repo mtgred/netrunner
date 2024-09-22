@@ -8845,6 +8845,40 @@
         (is (= (dec credits) (:credit (get-runner)))))
       (is (= 3 (:credit (get-runner))) "Able to use ability now"))))
 
+(deftest utae-auto-pump
+  (do-game
+    (new-game {:corp {:hand ["Enigma" "Hortum"] :credits 50}
+               :runner {:hand ["Utae" "Paladin Poemu" "Cookbook" "Ice Carver"] :credits 50}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (play-from-hand state :corp "Hortum" "HQ")
+    (take-credits state :corp)
+    (doseq [s (map :title (:hand (get-runner)))]
+      (play-from-hand state :runner s))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
+    (run-on state :hq)
+    (let [utae (get-program state 0)]
+      (run-continue-until state :encounter-ice)
+      (is (changed? [(:credit (get-runner)) -4]
+            (auto-pump-and-break state (refresh utae)))
+          (str "spent 5 to break Hortum"))
+      (run-continue-until state :encounter-ice)
+      (is (changed? [(:credit (get-runner)) -2]
+            (auto-pump-and-break state (refresh utae)))
+          (str "spent 3 to break Enigma"))
+      (run-continue state)
+      (run-jack-out state)
+      (trash state :runner (get-resource state 0))
+      (run-on state :hq)
+      (run-continue-until state :encounter-ice)
+      (is (changed? [(:credit (get-runner)) -4]
+            (auto-pump-and-break state (refresh utae)))
+          (str "spent 5 to break Hortum"))
+      (run-continue-until state :encounter-ice)
+      (is (empty? (filter #(:dynamic %) (:abilities (refresh utae)))) "No option to break because of utae restriction"))))
+
 (deftest vamadeva-swap-ability
     ;; Swap ability
     (testing "Doesnt work if no Deva in hand"
