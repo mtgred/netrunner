@@ -704,6 +704,15 @@
                               card)
                             duration))})))
 
+(defn substitute-x-credit-costs
+  "Substitute out the 'x-credits' part of a cost when the credit count is known"
+  [cost x scale]
+  (let [pick-x (fn [c] (= (:cost/type c) :x-credits))
+        output-cost (when (and x scale) [(->c :credit (* x scale))])
+        adjusted (remove pick-x cost)]
+    (if (= (count adjusted) (count cost))
+      cost
+      (concat adjusted output-cost))))
 
 (def breaker-auto-pump
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the
@@ -751,6 +760,7 @@
                             (if (pos? subs-broken-at-once)
                               (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))
                               1))
+              break-cost (substitute-x-credit-costs break-cost unbroken-subs (:auto-break-creds-per-sub break-ability))
               total-break-cost (when (and break-cost
                                           times-break)
                                  (repeat times-break break-cost))

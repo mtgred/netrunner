@@ -10,9 +10,9 @@
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost score-additional-cost-bonus]]
     [game.core.effects :refer [any-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [ability-as-handler checkpoint register-pending-event pay queue-event resolve-ability trigger-event-simult]]
+    [game.core.engine :refer [ability-as-handler checkpoint register-once register-pending-event pay queue-event resolve-ability trigger-event-simult]]
     [game.core.flags :refer [can-advance? can-score?]]
-    [game.core.ice :refer [break-subroutine! break-subs-event-context get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
+    [game.core.ice :refer [break-subroutine! break-subs-event-context get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs! substitute-x-credit-costs]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string ->c]]
@@ -464,6 +464,7 @@
                    (sort-by #(-> % first :auto-break-sort))
                    (apply min-key #(let [costs (second %)]
                                      (reduce (fnil + 0 0) 0 (mapv :cost/amount costs)))))
+          once-key (:once break-ability)
           subs-broken-at-once (when break-ability
                                 (:break break-ability 1))
           unbroken-subs (when (:subroutines current-ice)
@@ -474,6 +475,7 @@
                         (if (pos? subs-broken-at-once)
                           (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))
                           1))
+          break-cost (substitute-x-credit-costs break-cost unbroken-subs (:auto-break-creds-per-sub break-ability))
           total-break-cost (when (and break-cost
                                       times-break)
                              (repeat times-break break-cost))
@@ -503,6 +505,7 @@
                                                    "all ")
                                                  unbroken-subs " subroutines on "
                                                  (:title current-ice))))
+                              (when once-key (register-once state side {:once once-key} card))
                               (continue state side nil))))))))
 
 (def dynamic-abilities
