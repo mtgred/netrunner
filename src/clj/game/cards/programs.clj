@@ -1982,10 +1982,14 @@
 
 (defcard "Lobisomem"
   (auto-icebreaker {:data {:counter {:power 1}}
-                    :abilities [(break-sub 1 1 "Code Gate")
+                    :abilities [(break-sub 1 1 "Code Gate" {:auto-break-sort 1})
                                 {:label "Break X Barrier subroutines"
                                  :cost [(->c :x-credits) (->c :power 1)]
                                  :break-cost [(->c :x-credits) (->c :power 1)]
+                                 :auto-break-creds-per-sub 1
+                                 :break 0 ;; technically not correct, but it's enough for the engine to pick up for auto-breaking
+                                 :break-req (req (and (active-encounter? state)
+                                                      (has-subtype? current-ice "Barrier")))
                                  :req (req (and
                                              (active-encounter? state)
                                              (<= (get-strength current-ice) (get-strength card))))
@@ -2101,6 +2105,9 @@
   (let [break-abi {:label "Break X subroutines"
                    :cost [(->c :x-credits)(->c :turn-hosted-matryoshka-facedown 1)]
                    :break-cost [(->c :x-credits)(->c :turn-hosted-matryoshka-facedown 1)]
+                   :auto-break-creds-per-sub 1
+                   :break 0 ;; technically not correct, but it's enough for the engine to pick up for auto-breaking
+                   :break-req (req (active-encounter? state))
                    :req (req (and
                                (active-encounter? state)
                                (<= (get-strength current-ice) (get-strength card))))
@@ -3399,7 +3406,12 @@
                                    :once :per-run
                                    :req (req (and (break-req state side eid card targets)
                                                   (<= (get-strength current-ice) (get-strength card))))
-                                   ; no break-req to not enable auto-pumping
+                                   :auto-break-creds-per-sub 1
+                                   :auto-break-sort 2
+                                   :break 0 ;; technically not correct, but it's enough for the engine to pick up for auto-breaking
+                                   :break-req (req (and (active-encounter? state)
+                                                        (not-used-once? state {:once :per-run} card)
+                                                        (has-subtype? current-ice "Code Gate")))
                                    :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
                                              " on " (card-str state current-ice))
                                    :effect (effect
@@ -3408,6 +3420,8 @@
                                                  (break-sub nil (cost-value eid :x-credits) "Code Gate"))
                                                card nil))}
                                   (break-sub 1 1 "Code Gate" {:label "Break 1 Code Gate subroutine (Virtual restriction)"
+                                                              ;; this should be prioritized when available
+                                                              :auto-break-sort 1
                                                               :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
                                                                                              (all-active-installed state :runner)))))})
                                   (strength-pump 1 1)]})))
