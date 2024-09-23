@@ -409,36 +409,38 @@
       [:div.panel.blue-shade.servers-menu (when active-menu?
                                             {:class "active-menu"
                                              :style {:display "inline"}})
-       [:ul (map-indexed
-             (fn [_ label]
-               ^{:key label}
-               [card-menu-item (label-fn label)
-                #(do (close-card-menu)
-                     (if (= "Expend" label)
-                       (send-command "expend" {:card card :server label})
-                       (send-command "play" {:card card :server label})))])
-             servers)]])))
+       [:ul (doall
+              (map-indexed
+                (fn [_ label]
+                  ^{:key label}
+                  [card-menu-item (label-fn label)
+                   #(do (close-card-menu)
+                        (if (= "Expend" label)
+                          (send-command "expend" {:card card :server label})
+                          (send-command "play" {:card card :server label})))])
+                servers))]])))
 
 (defn list-abilities
   [ab-type card abilities]
-  (map-indexed
-   (fn [i ab]
-     (let [command (case ab-type
-                     :runner "runner-ability"
-                     :corp "corp-ability"
-                     :ability (if (:dynamic ab) "dynamic-ability" "ability"))
-           args (merge {:card card}
-                       (if (:dynamic ab)
-                         (select-keys ab [:dynamic :source :index])
-                         {:ability i}))]
-       ^{:key i}
-       [card-menu-item (render-icons (add-cost-to-label ab))
-        #(do (send-command command args)
-             (if (:keep-menu-open ab)
-               (swap! card-menu assoc :keep-menu-open (keyword (:keep-menu-open ab)))
-               (close-card-menu)))
-        (:playable ab)]))
-   abilities))
+  (doall
+    (map-indexed
+      (fn [i ab]
+        (let [command (case ab-type
+                        :runner "runner-ability"
+                        :corp "corp-ability"
+                        :ability (if (:dynamic ab) "dynamic-ability" "ability"))
+              args (merge {:card card}
+                          (if (:dynamic ab)
+                            (select-keys ab [:dynamic :source :index])
+                            {:ability i}))]
+          ^{:key i}
+          [card-menu-item (render-icons (add-cost-to-label ab))
+           #(do (send-command command args)
+                (if (:keep-menu-open ab)
+                  (swap! card-menu assoc :keep-menu-open (keyword (:keep-menu-open ab)))
+                  (close-card-menu)))
+           (:playable ab)]))
+      abilities)))
 
 (defn check-keep-menu-open
   [card]
@@ -519,21 +521,22 @@
               (close-card-menu))])]
      (when (seq subroutines)
        [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
-     (map-indexed
-       (fn [i sub]
-         [:span {:style {:display "block"}
-                 :key i}
-          [:span (cond (:broken sub)
-                       {:class :disabled
-                        :style {:font-style :italic}}
-                       (false? (:resolve sub))
-                       {:class :dont-resolve
-                        :style {:text-decoration :line-through}})
-           (render-icons (str " [Subroutine]" " " (:label sub)))]
-          [:span.float-right
-           (cond (:broken sub) banned-span
-                 (:fired sub) "✅")]])
-       subroutines)]))
+     (doall
+       (map-indexed
+         (fn [i sub]
+           [:span {:style {:display "block"}
+                   :key i}
+            [:span (cond (:broken sub)
+                         {:class :disabled
+                          :style {:font-style :italic}}
+                         (false? (:resolve sub))
+                         {:class :dont-resolve
+                          :style {:text-decoration :line-through}})
+             (render-icons (str " [Subroutine]" " " (:label sub)))]
+            [:span.float-right
+             (cond (:broken sub) banned-span
+                   (:fired sub) "✅")]])
+         subroutines))]))
 
 (defn corp-abs [card corp-abilities]
   (when (= (:cid card) (:source @card-menu))
@@ -562,20 +565,21 @@
      [:hr]
      (when (seq subroutines)
        [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
-     (map-indexed
-       (fn [i sub]
-         [:div {:key i}
-          [:span (cond (:broken sub)
-                       {:class :disabled
-                        :style {:font-style :italic}}
-                       (false? (:resolve sub))
-                       {:class :dont-resolve
-                        :style {:text-decoration :line-through}})
-           (render-icons (str " [Subroutine] " (:label sub)))]
-          [:span.float-right
-           (cond (:broken sub) banned-span
-                 (:fired sub) "✅")]])
-       subroutines)]))
+     (doall
+       (map-indexed
+         (fn [i sub]
+           [:div {:key i}
+            [:span (cond (:broken sub)
+                         {:class :disabled
+                          :style {:font-style :italic}}
+                         (false? (:resolve sub))
+                         {:class :dont-resolve
+                          :style {:text-decoration :line-through}})
+             (render-icons (str " [Subroutine] " (:label sub)))]
+            [:span.float-right
+             (cond (:broken sub) banned-span
+                   (:fired sub) "✅")]])
+         subroutines))]))
 
 (defn card-abilities [card abilities subroutines]
   (let [actions (action-list card)]
@@ -594,22 +598,23 @@
          [:span.float-center (tr [:game.actions "Actions"]) ":"])
        (when (seq actions)
          [:ul
-          (map-indexed
-           (fn [_ action]
-             (let [keep-menu-open (case action
-                                    "derez" false
-                                    "rez" :if-abilities-available
-                                    "trash" false
-                                    "advance" :for-agendas
-                                    "score" false
-                                    false)]
-               ^{:key action}
-               [card-menu-item (capitalize (tr-game-prompt action))
-                #(do (send-command action {:card card})
-                     (if keep-menu-open
-                       (swap! card-menu assoc :keep-menu-open keep-menu-open)
-                       (close-card-menu)))]))
-           actions)])
+          (doall
+            (map-indexed
+              (fn [_ action]
+                (let [keep-menu-open (case action
+                                       "derez" false
+                                       "rez" :if-abilities-available
+                                       "trash" false
+                                       "advance" :for-agendas
+                                       "score" false
+                                       false)]
+                  ^{:key action}
+                  [card-menu-item (capitalize (tr-game-prompt action))
+                   #(do (send-command action {:card card})
+                        (if keep-menu-open
+                          (swap! card-menu assoc :keep-menu-open keep-menu-open)
+                          (close-card-menu)))]))
+              actions))])
        (when (or (seq abilities)
                  (and (active? card)
                       (seq (remove #(or (:fired %) (:broken %)) subroutines))))
@@ -626,29 +631,30 @@
          [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
        (when (seq subroutines)
          [:ul
-          (map-indexed
-           (fn [i sub]
-             (let [fire-sub #(do (send-command "subroutine" {:card card
-                                                             :subroutine i})
-                                 (close-card-menu))]
-               [:li {:key i
-                     :tab-index 0
-                     :on-click fire-sub
-                     :on-key-down #(when (= "Enter" (.-key %))
-                                     (fire-sub))
-                     :on-key-up #(when (= " " (.-key %))
-                                   (fire-sub))}
-                [:span (cond (:broken sub)
-                             {:class :disabled
-                              :style {:font-style :italic}}
-                             (false? (:resolve sub))
-                             {:class :dont-resolve
-                              :style {:text-decoration :line-through}})
-                 (render-icons (str " [Subroutine] " (:label sub)))]
-                [:span.float-right
-                 (cond (:broken sub) banned-span
-                       (:fired sub) "✅")]]))
-           subroutines)])])))
+          (doall
+            (map-indexed
+              (fn [i sub]
+                (let [fire-sub #(do (send-command "subroutine" {:card card
+                                                                :subroutine i})
+                                    (close-card-menu))]
+                  [:li {:key i
+                        :tab-index 0
+                        :on-click fire-sub
+                        :on-key-down #(when (= "Enter" (.-key %))
+                                        (fire-sub))
+                        :on-key-up #(when (= " " (.-key %))
+                                      (fire-sub))}
+                   [:span (cond (:broken sub)
+                                {:class :disabled
+                                 :style {:font-style :italic}}
+                                (false? (:resolve sub))
+                                {:class :dont-resolve
+                                 :style {:text-decoration :line-through}})
+                    (render-icons (str " [Subroutine] " (:label sub)))]
+                   [:span.float-right
+                    (cond (:broken sub) banned-span
+                          (:fired sub) "✅")]]))
+              subroutines))])])))
 
 (defn draw-facedown?
   "Returns true if the installed card should be drawn face down."
@@ -827,19 +833,20 @@
 (defn build-hand-card-view
   [hand size wrapper-class]
   [:div
-   (doall (map-indexed
-            (fn [i card]
-              [:div {:key (or (:cid card) i)
-                     :class (str wrapper-class)
-                     :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
-               (cond
-                 (spectator-view-hidden?)
-                 [card-view (dissoc card :new :selected)]
-                 (:cid card)
-                 [card-view card]
-                 :else
-                 [facedown-card (:side card)])])
-            hand))])
+   (doall
+     (map-indexed
+       (fn [i card]
+         [:div {:key (or (:cid card) i)
+                :class (str wrapper-class)
+                :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
+          (cond
+            (spectator-view-hidden?)
+            [card-view (dissoc card :new :selected)]
+            (:cid card)
+            [card-view card]
+            :else
+            [facedown-card (:side card)])])
+       hand))])
 
 (defn hand-view []
   (let [s (r/atom {})]
@@ -1728,12 +1735,13 @@
                                               :style {:display "inline"}})
         [:ul
          (let [servers (get-in @game-state [:runner :runnable-list])]
-           (map-indexed (fn [_ label]
-                          ^{:key label}
-                          [card-menu-item (tr-game-prompt label)
-                           #(do (close-card-menu)
-                                (send-command "run" {:server label}))])
-                        servers))]]]])
+           (doall
+             (map-indexed (fn [_ label]
+                            ^{:key label}
+                            [card-menu-item (tr-game-prompt label)
+                             #(do (close-card-menu)
+                                  (send-command "run" {:server label}))])
+                          servers)))]]]])
    (when (= side :corp)
      [cond-button (tr [:game.purge "Purge"])
       (and (not (or @runner-phase-12 @corp-phase-12))
