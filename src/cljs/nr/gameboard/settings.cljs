@@ -35,6 +35,15 @@
         (tr [:ingame-settings.ghost-trojans "Display hosted trojans in rig"])]]]
 
      [:section
+      [:h4 (tr [:ingame-settings.game-settings "Gameplay Settings"])]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :pass-on-rez])
+                        :on-change #(swap! app-state assoc-in [:options :pass-on-rez] (.. % -target -checked))}]
+        (tr [:ingame-settings.game-settings "Pass priority when rezzing ice"])]]]
+
+     [:section
       [:h4 (tr [:ingame-settings.card-sorting "Sorting"])]
       [:div
        [:label [:input {:type "checkbox"
