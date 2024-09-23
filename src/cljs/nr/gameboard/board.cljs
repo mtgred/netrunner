@@ -1422,7 +1422,8 @@
        [cond-button
         (str (tr [:game.rez "Rez"]) " " (get-title ice))
         (not (rezzed? ice))
-        #(send-command "rez" {:card ice :press-continue true})]
+        #(send-command "rez" {:card ice
+                              :press-continue (get-in @app-state [:options :pass-on-rez])})]
 
        (or (= "encounter-ice" (:phase @run))
            @encounters)
