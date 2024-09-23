@@ -1,3 +1,4 @@
+# Dockerfile for local development
 FROM clojure:latest
 
 RUN mkdir -p /usr/src/app
