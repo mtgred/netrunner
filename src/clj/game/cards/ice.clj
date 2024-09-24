@@ -804,7 +804,7 @@
                              :async true
                              :effect (effect (corp-install eid target nil {:ignore-all-cost true
                                                                            :msg-keys {:install-source card
-                                                                                      :index (first (positions #{target} (take 5 (:deck corp))))
+                                                                                      :origin-index (first (positions #{target} (take 5 (:deck corp))))
                                                                                       :display-origin true}}))
                              :cancel-effect (effect (system-msg "does not install any of the top 5 cards")
                                                     (effect-completed eid))}

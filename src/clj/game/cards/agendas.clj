@@ -212,7 +212,7 @@
                                                         eid target nil
                                                         {:ignore-all-cost true
                                                          :msg-keys {:install-source card
-                                                                    :index target-position
+                                                                    :origin-index target-position
                                                                     :display-origin true}
                                                          :install-state :rezzed-no-cost})))
                                        :cancel-effect
