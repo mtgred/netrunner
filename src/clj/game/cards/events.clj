@@ -3558,6 +3558,13 @@
                             :value -2}))
                        (update-all-ice))}]})
 
+(defcard "Security Leak"
+  {:static-abilities [{:type :card-ability-additional-cost
+                       :req (req (and (same-card? (:card context) (:basic-action-card corp))
+                                      (= "Advance 1 installed card"
+                                         (:label (:ability context)))))
+                      :value (->c :credit 1)}]})
+
 (defcard "Showing Off"
   {:makes-run true
    :on-play {:async true
