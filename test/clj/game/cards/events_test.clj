@@ -6465,6 +6465,8 @@
                :runner {:hand ["Security Leak"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Security Leak")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
     (dotimes [_ 2]
       (is (changed? [(:credit (get-corp)) -2]
             (click-advance state :corp (get-content state :remote1 0)))
