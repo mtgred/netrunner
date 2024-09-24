@@ -2302,7 +2302,7 @@
     (take-credits state :runner)
     (take-credits state :corp)
     (play-from-hand state :runner "Muse")
-    (is (= ["Muse" "Environmental Testing"] (prompt-titles :runner))
+    (is (= ["Environmental Testing" "Muse"] (sort (prompt-titles :runner)))
         "Option to trigger either muse of environmental testing first")))
 
 (deftest eru-ayase-pessoa
