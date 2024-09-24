@@ -641,7 +641,7 @@
                                             (effect (system-msg (str "declines to use " (get-title card) " to install a card from the top of R&D"))
                                                     (effect-completed eid))
                                             :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
-                                                                                                     :index (first (keep-indexed #(when (same-card? target %2) %1) top))
+                                                                                                     :origin-index (first (keep-indexed #(when (same-card? target %2) %1) top))
                                                                                                      :display-origin true}}))}
                                            card nil))))}]}))
 
