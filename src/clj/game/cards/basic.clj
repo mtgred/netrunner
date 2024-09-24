@@ -103,7 +103,7 @@
                 :async true
                 :req (req tagged)
                 :prompt "Choose a resource to trash"
-                :msg (msg "trash " (:title (:card context)))
+                :msg (msg "trash " (:title target))
                 ;; I hate that we need to modify the basic action card like this, but I don't think there's any way around it -nbkelly, '24
                 :choices {:req (req (and (if (and (->> (all-active-installed state :runner)
                                                        (filter (fn [c] (untrashable-while-resources? c)))
@@ -124,7 +124,8 @@
                 :effect (req
                           (let [additional-costs (merge-costs (get-effects state side :basic-ability-additional-trash-cost target))
                                 cost-strs (build-cost-string additional-costs)
-                                can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) target (:title target) additional-costs)]
+                                can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) target (:title target) additional-costs)
+                                target-card target]
                             (if (empty? additional-costs)
                               (trash state side eid target nil)
                               (wait-for (resolve-ability
@@ -143,7 +144,7 @@
                                                                          nil additional-costs)
                                                                     (system-msg state side (str (:msg async-result) " as an additional cost to trash " (:title target)))
                                                                     (complete-with-result state side eid target))))}
-                                          card nil)
+                                          card targets)
                                         (if async-result
                                           (trash state side eid target nil)
                                           (effect-completed state side eid))))))}
