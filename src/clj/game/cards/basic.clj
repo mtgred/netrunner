@@ -124,8 +124,7 @@
                 :effect (req
                           (let [additional-costs (merge-costs (get-effects state side :basic-ability-additional-trash-cost target))
                                 cost-strs (build-cost-string additional-costs)
-                                can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) target (:title target) additional-costs)
-                                target-card target]
+                                can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs additional-costs)) target (:title target) additional-costs)]
                             (if (empty? additional-costs)
                               (trash state side eid target nil)
                               (wait-for (resolve-ability
