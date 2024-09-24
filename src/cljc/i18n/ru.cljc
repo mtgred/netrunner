@@ -553,7 +553,7 @@
               :ffg "FFG"
               :api-keys "Ключи API"
               :delete-api-key "Удалить"
-              :create-api-key "Создать ключ API"}
+              :create-api-key "Создать ключ API"
               :bespoke-sounds-header "Звуки для отдельных карт"
               :bespoke-sounds
               {:archer "Лучник"
