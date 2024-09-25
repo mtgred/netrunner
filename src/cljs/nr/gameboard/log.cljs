@@ -188,8 +188,8 @@
 
 (defn format-system-timestamp [timestamp text corp runner]
   (if (get-in @app-state [:options :log-timestamps])
-    (render-message (render-player-highlight text corp runner (str "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]")))
-    (render-message (render-player-highlight text corp runner))
+    (render-player-highlight (render-message text) corp runner (str "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]"))
+    (render-player-highlight (render-message text) corp runner)
     )
   )
 

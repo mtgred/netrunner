@@ -1,4 +1,7 @@
-(ns i18n.en)
+(ns i18n.en
+  (:require
+   [clojure.string :refer [join] :as s]
+   [i18n.defs :refer [render-map]]))
 
 (def translations
   {:missing ":en missing text"
@@ -817,3 +820,11 @@
           :win-claimed (fn [[turn]] (str "wins by claim on turn " turn))
           :win-points (fn [[turn]] (str "wins by scoring agenda points on turn " turn))
           :win-other (fn [[turn reason]] (str "wins by " reason " on turn " turn))}})
+
+(defmethod render-map "en"
+  [_ input]
+  (let [username (:username input)
+        text (:raw-text input)]
+    (if username
+      (str username " " text ".")
+      text)))
