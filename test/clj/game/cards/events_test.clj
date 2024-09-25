@@ -5681,6 +5681,28 @@
           (click-prompt state :runner "No action"))
         "gained 3 credits from raindrop")))
 
+(deftest raindrops-cut-stone-forced-encounter
+  (do-game
+    (new-game {:corp {:hand ["Ganked!" "Enigma"]}
+               :runner {:hand ["Raindrops Cut Stone"]
+                        :deck [(qty "Ika" 5)]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Raindrops Cut Stone")
+    (click-prompt state :runner "HQ")
+    (let [enigma (get-ice state :hq 0)]
+      (rez state :corp (refresh enigma))
+      (run-continue-until state :success)
+      (is (last-log-contains? state "Runner accesses Ganked!") "Ganked! message printed to log")
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Enigma")
+      (let [enc (:ice (core/get-current-encounter state))]
+        (is (= "Enigma" (:title enc)) "Encountering enigma via ganked")
+        ;; should draw 2 from raindrops when we fire subs
+        (is (changed? [(count (:hand (get-runner))) 2]
+              (fire-subs state enc))
+            "Drew 2 cards from raindrops cut stone")))))
+
 ;; Rebirth
 (let [akiko "Akiko Nisei: Head Case"
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"
