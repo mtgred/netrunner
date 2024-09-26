@@ -11,7 +11,7 @@
                             all-installed-runner card->server get-all-cards server->zone]]
    [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp? condition-counter?
                            event? facedown? get-agenda-points get-card get-counters
-                           get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand? in-scored?
+                           get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand? in-set-aside? in-scored?
                            installed? is-type? program? resource? rezzed? runner? upgrade? virus-program?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [can-charge charge-ability]]
@@ -2951,6 +2951,22 @@
                :silent (req true)
                :effect (effect (update! (dissoc card :card-target)))}]
      :abilities [ability]}))
+
+(defcard "Shadow Team"
+  ;; we need to implement on-draw functionality
+  {:on-draw {:req (req (and (runner-can-pay-and-install? state side eid card)
+                            (in-set-aside? card)))
+             :msg (msg "install itself")
+             :async true
+             :effect (req (runner-install state side eid card))}
+   :events [{:event :run
+             :req (req (seq (:hand runner)))
+             :msg :cost
+             :cost [(->c :trash-from-hand 1)]}
+            {:event :successful-run
+             :req (req (#{:hq :rd :archives} (target-server context)))
+             :msg (msg "destroy itself")
+             :effect (req (move state side card :destroyed))}]})
 
 (defcard "Smartware Distributor"
   (let [start-of-turn-ability {:once :per-turn
