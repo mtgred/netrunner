@@ -3,7 +3,7 @@
    [clojure.pprint :as pprint]
    [clojure.set :as set]
    [clojure.string :as str]
-   [game.core.access :refer [access-card installed-access-trigger]]
+   [game.core.access :refer [access-bonus access-card get-only-card-to-access installed-access-trigger num-cards-to-access]]
    [game.core.actions :refer [score]]
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
@@ -1630,6 +1630,28 @@
              :async true
              :msg "give the Runner 1 tag"
              :effect (req (gain-tags state :runner eid 1))}]})
+
+(defcard "Lt. Todachine 2"
+  {:events [{:event :rez
+             :req (req (ice? (:card context)))
+             :async true
+             :msg "give the Runner 1 tag"
+             :effect (req (gain-tags state :runner eid 1))}
+            {:event :breach-server
+             :interactive (req true)
+             :player :corp
+             :req (req tagged)
+             :async true
+             ;; the random-access check needs to be dereffed to work correctly
+             :effect (req (continue-ability
+                            state side
+                            {:req (req
+                                    (and tagged
+                                         (> (:random-access-limit (num-cards-to-access state :runner target nil)) 1)
+                                         (not (get-only-card-to-access state))))
+                             :msg (msg "make the runner access 1 card fewer")
+                             :effect (req (access-bonus state :runner target -1))}
+                            card targets))}]})
 
 (defcard "Malia Z0L0K4"
   (let [unmark
