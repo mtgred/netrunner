@@ -41,8 +41,9 @@ WORKDIR /app
 # Copy the built artifact from the builder stage
 COPY --from=builder /app/target/netrunner-standalone.jar .
 
-# Set the startup command
-CMD ["java", "-jar", "netrunner-standalone.jar"]
+# Set the startup command. Custom config with 'prod.edn' can
+# be mapped as a volume at runtime to '/app/config/prod.edn'.
+CMD ["java", "-cp", "/app/netrunner-standalone.jar:/app/config", "web.core"]
 
 # Expose port to nginx-proxy
 EXPOSE 1042
