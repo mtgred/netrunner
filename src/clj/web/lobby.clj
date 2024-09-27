@@ -20,12 +20,32 @@
 
 (read-write/print-time-literals-clj!)
 
-(defonce lobby-pool (cp/threadpool 1 {:name "lobbies-thread"}))
-(defn lobby-thread [& body]
-  (cp/future lobby-pool body))
+;; Oracle guidance for active threads is ~cores+2
+(defonce pool-size (+ 2 (.availableProcessors (Runtime/getRuntime))))
 
-(defn game-thread [lobby & body]
-  (cp/future (:pool lobby) body))
+(defonce game-pools
+  (letfn [(new-pool [x]
+            {:pool (cp/threadpool 1 {:name (str "game-thread-" x)})
+             :occupants (atom 0)})] ;; note that occupants is just for load balancing purposes
+    (vec (map new-pool (range pool-size)))))
+
+(defn pool-occupants-info [] (map #(deref (:occupants %)) game-pools))
+
+(defn join-pool!
+  "Returns one of the pools at random with the least occupants. Updates pool occupancy"
+  []
+  (let [pool (first (sort-by #(deref (:occupants %)) (shuffle game-pools)))]
+    (swap! (:occupants pool) inc)
+    pool))
+
+(defn leave-pool!
+  "Leaves a pool. This just decrements the occupants, so we can reassign it smartly"
+  [pool]
+  (swap! (:occupants pool) dec))
+
+(defonce lobby-pool (cp/threadpool 1 {:name "lobbies-thread"}))
+(defn lobby-thread [& body] (cp/future lobby-pool body))
+(defn game-thread [lobby & body] (cp/future (get-in lobby [:pool :pool]) body))
 
 (defn validate-precon
   [format client-precon client-gateway-type]
@@ -56,7 +76,7 @@
      :corp-spectators []
      :runner-spectators []
      :messages []
-     :pool (cp/threadpool 1 {:name (str "game-" gameid)}) ;; each lobby can have it's own thread
+     :pool (join-pool!)
      ;; options
      :precon (validate-precon format precon gateway-type)
      :allow-spectator allow-spectator
@@ -333,7 +353,7 @@
 (defn close-lobby!
   "Closes the given game lobby, booting all players and updating stats."
   ([db lobby] (close-lobby! db lobby nil))
-  ([db {:keys [gameid players started on-close] :as lobby} skip-on-close]
+  ([db {:keys [gameid players pool started on-close] :as lobby} skip-on-close]
    (when started
      (stats/game-finished db lobby)
      (stats/update-deck-stats db lobby)
@@ -342,7 +362,7 @@
    (swap! app-state/app-state update :lobbies dissoc gameid)
    (doseq [uid (keep :uid (get-players-and-spectators lobby))]
      (clear-lobby-state uid))
-   (cp/shutdown (:pool lobby))
+   (leave-pool! pool)
    (when (and (not skip-on-close) on-close)
      (on-close lobby))))
 
