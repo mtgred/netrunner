@@ -737,10 +737,11 @@
                                 (let [payment-str (:msg async-result)]
                                   (wait-for
                                     (reveal state side (make-eid state eid) cards)
-                                    (system-msg state side (str payment-str
-                                                                " to use " (:title card)
-                                                                " to force the Corp to reveal they drew "
-                                                                (enumerate-str (map :title cards))))
+                                    (system-msg state side {:cost payment-str
+                                                            :raw-text (str
+                                                                       "use " (:title card)
+                                                                       " to force the Corp to reveal they drew "
+                                                                       (enumerate-str (map :title cards)))})
                                     (effect-completed state side eid))))))}}}]})
 
 (defcard "Bukhgalter"

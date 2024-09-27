@@ -187,10 +187,10 @@
     (when (not (string/blank? cost-string))
       (capitalize cost-string))))
 
-(defn build-spend-msg
-  "Constructs the spend message for specified cost-str and verb(s)."
-  ([cost-str verb] (build-spend-msg cost-str verb nil))
+(defn build-spend-msg-suffix
+  "Constructs the spend message  suffix for specified cost-str and verb(s)."
+  ([cost-str verb] (build-spend-msg-suffix cost-str verb nil))
   ([cost-str verb verb2]
-   (if (string/blank? cost-str)
+   (if (empty? cost-str)
      (str (or verb2 (str verb "s")) " ")
-     (str cost-str " to " verb " "))))
+     (str verb " "))))

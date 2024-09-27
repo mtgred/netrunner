@@ -568,7 +568,7 @@
                        (wait-for (pay state side card total-cost)
                                  (if-let [payment-str (:msg async-result)]
                                    (do (when (not (string/blank? message))
-                                         (system-msg state :runner (str payment-str " to " message)))
+                                         (system-msg state :runner {:cost payment-str :raw-text message}))
                                        (doseq [sub broken-subs]
                                          (break-subroutine! state (get-card state ice) sub breaker)
                                          (resolve-ability state side (make-eid state {:source card

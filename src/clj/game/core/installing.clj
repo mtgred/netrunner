@@ -16,7 +16,7 @@
     [game.core.initializing :refer [ability-init card-init corp-ability-init runner-ability-init]]
     [game.core.memory :refer [available-mu expected-mu sufficient-mu? update-mu]]
     [game.core.moving :refer [move trash trash-cards]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c value]]
+    [game.core.payment :refer [build-spend-msg-suffix can-pay? merge-costs ->c value]]
     [game.core.props :refer [add-prop]]
     [game.core.revealing :refer [reveal]]
     [game.core.rezzing :refer [rez]]
@@ -162,11 +162,12 @@
                         (name-zone :corp (:zone card)))
                    "")
           lhs (if install-source
-                (str (build-spend-msg cost-str "use") (:title install-source) " to install ")
-                (build-spend-msg cost-str "install"))]
-      (system-msg state side (str lhs card-name origin
-                                  (if (ice? card) " protecting " " in the root of ") server-name
-                                  (format-counters-msg counters)))
+                (str (build-spend-msg-suffix cost-str "use") (:title install-source) " to install ")
+                (build-spend-msg-suffix cost-str "install"))]
+      (system-msg state side {:cost cost-str
+                              :raw-text (str lhs card-name origin
+                                             (if (ice? card) " protecting " " in the root of ") server-name
+                                             (format-counters-msg counters))})
       (when (and (= :face-up install-state)
                  (agenda? card))
         (implementation-msg state card)))))
@@ -412,7 +413,7 @@
    {:keys [no-cost host-card facedown custom-message msg-keys ignore-install-cost ignore-all-cost cost-bonus] :as args}]
   (let [{:keys [display-origin install-source origin-index known]} msg-keys
         hide-zero-cost (:hide-zero-cost msg-keys facedown)
-        cost-str (if (and hide-zero-cost (= cost-str "pays 0 [Credits]")) nil cost-str)
+        cost-str (if (and hide-zero-cost (= cost-str {:credits 0})) nil cost-str)
         prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
         discount-str (cond
                        ignore-all-cost " (ignoring all costs)"
@@ -434,25 +435,26 @@
                         :else
                         (name-zone :runner (:previous-zone card))))
                  "")
-        pre-lhs (when (every? (complement string/blank?) [cost-str prepend-cost-str])
+        pre-lhs (when (every? (complement empty?) [cost-str prepend-cost-str])
                   (str prepend-cost-str ", and then "))
         from-host? (when (and display-origin (= (:previous-zone card) [:onhost]))
                      "hosted ")
-        modified-cost-str (if (string/blank? cost-str)
+        modified-cost-str (if (empty? cost-str)
                             prepend-cost-str
                             (if (string/blank? pre-lhs)
                               cost-str
                               (str cost-str ",")))
         lhs (if install-source
-              (str (build-spend-msg modified-cost-str "use") (:title install-source) " to install ")
-              (build-spend-msg modified-cost-str "install"))]
+              (str (build-spend-msg-suffix modified-cost-str "use") (:title install-source) " to install ")
+              (build-spend-msg-suffix modified-cost-str "install"))]
     (when (:display-message args true)
       (if custom-message
         (system-msg state side (custom-message cost-str))
         (system-msg state side
-                    (str pre-lhs lhs from-host? card-name origin discount-str
-                         (when host-card (str " on " (card-str state host-card)))
-                         (when no-cost " at no cost")))))))
+                    {:cost modified-cost-str
+                     :raw-text (str pre-lhs lhs from-host? card-name origin discount-str
+                                    (when host-card (str " on " (card-str state host-card)))
+                                    (when no-cost " at no cost"))})))))
 
 (defn runner-install-continue
   [state side eid card

@@ -10,7 +10,7 @@
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c]]
+    [game.core.payment :refer [build-spend-msg-suffix can-pay? merge-costs ->c]]
     [game.core.revealing :refer [reveal]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.update :refer [update!]]
@@ -33,10 +33,9 @@
 (defn- complete-play-instant
   "Completes the play of the event / operation that the player can play for"
   [state side eid {:keys [title] :as card} payment-str ignore-cost]
-  (let [play-msg (if ignore-cost
-                   "play "
-                   (build-spend-msg payment-str "play"))]
-    (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
+  (let [play-msg (build-spend-msg-suffix payment-str "play")]
+    (system-msg state side {:cost payment-str
+                            :raw-text (str play-msg title (when ignore-cost " at no cost"))})
     (implementation-msg state card)
     (if-let [sfx (:play-sound (card-def card))]
       (play-sfx state side sfx)

@@ -55,7 +55,7 @@
                              remove-from-currently-drawing trash trash-cards
                              trash-prevent]]
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
-   [game.core.payment :refer [build-spend-msg can-pay? ->c]]
+   [game.core.payment :refer [build-spend-msg-suffix can-pay? ->c]]
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
@@ -685,8 +685,10 @@
                                        (wait-for (pay state :runner (make-eid state eid) card [(->c :credit (get-strength ice))])
                                                  (if-let [payment-str (:msg async-result)]
                                                    (do (system-msg state :runner
-                                                                   (str (build-spend-msg payment-str "use")
-                                                                        (:title card) " to bypass " (:title ice)))
+                                                                   {:cost payment-str
+                                                                    :raw-text
+                                                                    (str (build-spend-msg-suffix payment-str "use")
+                                                                         (:title card) " to bypass " (:title ice))})
                                                        (register-events
                                                          state :runner card
                                                          [{:event :encounter-ice
@@ -2642,9 +2644,11 @@
                                                 (pay state :runner (make-eid state eid) card [(->c :credit target)])
                                                 (if-let [payment-str (:msg async-result)]
                                                   (do (system-msg state side
-                                                                  (str (build-spend-msg payment-str "use") (:title card)
-                                                                       " to remove " (quantify target "power counter")
-                                                                       " from " (:title paydowntarget)))
+                                                                  {:cost payment-str
+                                                                   :raw-text
+                                                                   (str (build-spend-msg-suffix payment-str "use") (:title card)
+                                                                        " to remove " (quantify target "power counter")
+                                                                        " from " (:title paydowntarget))})
                                                       (if (= num-counters target)
                                                         (runner-install state side (assoc eid :source card :source-type :runner-install) (dissoc paydowntarget :counter) {:ignore-all-cost true
                                                                                                                                                                           :msg-keys {:display-origin true
