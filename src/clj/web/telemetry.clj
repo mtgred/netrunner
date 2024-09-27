@@ -6,7 +6,7 @@
    [cljc.java-time.instant :as inst]
    [game.core.board :refer [all-active]]
    [web.app-state :refer [app-state]]
-   [web.lobby :refer [lobby-update-uids]]
+   [web.lobby :refer [lobby-update-uids pool-occupants-info]]
    [web.ws :refer [connected-sockets connections_]]
    [taoensso.encore :as enc]
    [taoensso.timbre :as timbre]))
@@ -95,6 +95,7 @@
                      " uid: " ws-uid-count
                      " conn: " ws-conn-total
                      " }"))
+      (timbre/info (str "pool occupants: " (seq (pool-occupants-info))))
       ;; TODO - once we've got this set up on the server, wrap it in a try/catch - only ever display
       ;; the warning once!
       (timbre/info (str "Active Cards (across all lobbies): " card-freqs))
