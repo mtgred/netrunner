@@ -1,7 +1,9 @@
 (ns web.app-state
   (:require
+   [clojure.core.async :refer [<! go timeout]]
    [cljc.java-time.temporal.chrono-unit :as chrono]
    [cljc.java-time.instant :as inst]
+   [taoensso.encore :as enc]
    [medley.core :refer [dissoc-in find-first]]))
 
 (defonce app-state
@@ -9,7 +11,7 @@
          :lobby-updates {}
          :users {}}))
 
-(defonce lobby-subs-timeout-hours 6)
+(defonce lobby-subs-timeout-hours 1)
 
 (defn register-user
   [app-state uid user]
@@ -56,7 +58,6 @@
   [uid user]
   (swap! app-state register-user uid user))
 
-
 (defn pause-lobby-updates
   [uid]
   (swap! app-state dissoc-in [:lobby-updates uid]))
@@ -68,12 +69,20 @@
 (defn receive-lobby-updates?
   [uid]
   (if-let [last-ping (get-in @app-state [:lobby-updates uid])]
-    (.isBefore (inst/now) (inst/plus last-ping lobby-subs-timeout-hours chrono/hours))
-    (do (pause-lobby-updates uid)
-        nil)))
+    (if (.isBefore (inst/now) (inst/plus last-ping lobby-subs-timeout-hours chrono/hours))
+      true
+      (do (pause-lobby-updates uid) nil))
+    (do (pause-lobby-updates uid) nil)))
 
 (defn deregister-user!
   "Remove user from app-state. Mutates."
   [uid]
   (pause-lobby-updates uid)
   (swap! app-state dissoc-in [:users uid]))
+
+(defonce lobby-subs-clearout-freq (enc/ms :mins 5))
+(defonce cleanup-lobby-subs
+  (go (while true
+        (<! (timeout lobby-subs-clearout-freq))
+        (doseq [[uid] (get-users)]
+          (receive-lobby-updates? uid)))))
