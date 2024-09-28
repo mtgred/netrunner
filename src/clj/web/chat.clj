@@ -5,6 +5,7 @@
    [monger.collection :as mc]
    [monger.query :as q]
    [web.app-state :as app-state]
+   [web.lobby :as lobby]
    [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user? visible-to-user]]
    [web.utils :refer [response mongo-time-to-utc-string]]
@@ -67,7 +68,9 @@
      chat-settings :system/chat
      user :user} :ring-req
     uid :uid
-    {:keys [channel msg]} :?data}]
+    {:keys [channel msg]} :?data
+    id :id
+    timestamp :timestamp}]
   (when (and (active-user? user)
              (not (s/blank? msg)))
     (let [len-valid (<= (count msg) (chat-max-length chat-settings))
@@ -88,13 +91,16 @@
                             (visible-to-user user {:username uid} connected-users))]
             (ws/broadcast-to! [uid] :chat/message inserted)))
         (when uid
-          (ws/broadcast-to! [uid] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)}))))))
+          (ws/broadcast-to! [uid] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)})))))
+  (lobby/log-delay! timestamp id))
 
 (defmethod ws/-msg-handler :chat/delete-msg
   chat--delete-msg
   [{{db :system/db
      {:keys [username isadmin ismoderator] :as user} :user} :ring-req
-    {:keys [msg]} :?data}]
+    {:keys [msg]} :?data
+    id :id
+    timestamp :timestamp}]
   (when-let [id (:_id msg)]
     (when (or isadmin ismoderator)
       (println username "deleted message" msg "\n")
@@ -105,13 +111,16 @@
                   :date (inst/now)
                   :msg msg})
       (doseq [uid (ws/connected-uids)]
-        (ws/broadcast-to! [uid] :chat/delete-msg msg)))))
+        (ws/broadcast-to! [uid] :chat/delete-msg msg))))
+  (lobby/log-delay! timestamp id))
 
 (defmethod ws/-msg-handler :chat/delete-all
   chat--delete-all
   [{{db :system/db
      {:keys [username isadmin ismoderator]} :user :as user} :ring-req
-    {:keys [sender]} :?data}]
+    {:keys [sender]} :?data
+    id :id
+    timestamp :timestamp}]
   (when (and sender
              (or isadmin ismoderator))
     (println username "deleted all messages from user" sender "\n")
@@ -122,4 +131,5 @@
                 :date (inst/now)
                 :sender sender})
     (doseq [uid (ws/connected-uids)]
-      (ws/broadcast-to! [uid] :chat/delete-all {:username sender}))))
+      (ws/broadcast-to! [uid] :chat/delete-all {:username sender})))
+  (lobby/log-delay! timestamp id))

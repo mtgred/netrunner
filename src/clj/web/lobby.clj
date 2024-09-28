@@ -1,6 +1,8 @@
 (ns web.lobby
   (:require
    [cljc.java-time.instant :as inst]
+   [cljc.java-time.duration :as duration]
+   [cljc.java-time.temporal.chrono-unit :as chrono]
    [clojure.set :as set]
    [clojure.string :as str]
    [com.climate.claypoole :as cp]
@@ -19,6 +21,26 @@
    [web.ws :as ws]))
 
 (read-write/print-time-literals-clj!)
+
+(defonce telemetry-buckets (atom {}))
+(defn log-delay!
+  [timestamp id]
+  (let [now (inst/now)
+        start timestamp
+        key (or id :unknown)
+        diff (duration/between start now)
+        total-ms (quot (duration/get diff chrono/nanos) 1000000)
+        create-or-update (fn [map]
+                           (if (contains? map key)
+                             (assoc map key (conj (key map) total-ms))
+                             (assoc map key (seq [total-ms]))))]
+    (swap! telemetry-buckets create-or-update)))
+(defn fetch-delay-log!
+  []
+  (let [res @telemetry-buckets]
+    (reset! telemetry-buckets {})
+    res))
+
 
 ;; Oracle guidance for active threads is ~cores+2
 (defonce pool-size (+ 2 (.availableProcessors (Runtime/getRuntime))))
@@ -276,7 +298,9 @@
   lobby--create
   [{{user :user} :ring-req
     uid :uid
-    ?data :?data}]
+    ?data :?data
+    id :id
+    timestamp :timestamp}]
   (lobby-thread
     (let [lobby (-> (create-new-lobby {:uid uid :user user :options ?data})
                     (send-message
@@ -286,7 +310,8 @@
           lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
       (when lobby?
         (send-lobby-state lobby?)
-        (broadcast-lobby-list)))))
+        (broadcast-lobby-list))
+      (log-delay! timestamp id))))
 
 (defn clear-lobby-state [uid]
   (when uid
@@ -303,8 +328,11 @@
 
 (defmethod ws/-msg-handler :lobby/list
   lobby--list
-  [{uid :uid}]
-  (lobby-thread (send-lobby-list uid)))
+  [{uid :uid
+    id :id
+    timestamp :timestamp}]
+  (lobby-thread (send-lobby-list uid)
+                (log-delay! timestamp id)))
 
 (defn player?
   "Returns player if the uid is a player in a given lobby"
@@ -388,11 +416,14 @@
   [{{db :system/db user :user} :ring-req
     uid :uid
     {gameid :gameid} :?data
-    ?reply-fn :?reply-fn}]
+    ?reply-fn :?reply-fn
+    id :id
+    timestamp :timestamp}]
   (lobby-thread
     (let [lobby (app-state/get-lobby gameid)]
       (when (and lobby (in-lobby? uid lobby))
-        (leave-lobby! db user uid ?reply-fn lobby)))))
+        (leave-lobby! db user uid ?reply-fn lobby))
+      (log-delay! timestamp id))))
 
 (defn find-deck
   [db opts]
@@ -440,7 +471,9 @@
   [{{db :system/db user :user} :ring-req
     uid :uid
     {:keys [gameid deck-id]} :?data
-    ?reply-fn :?reply-fn}]
+    ?reply-fn :?reply-fn
+    id :id
+    timestamp :timestamp}]
   (lobby-thread
     (let [lobby (app-state/get-lobby gameid)]
       (if (and lobby (in-lobby? uid lobby))
@@ -455,7 +488,8 @@
           (send-lobby-state lobby?)
           ;;(broadcast-lobby-list)
           (?reply-fn (some #(= processed-deck (:deck %)) (:players lobby?))))
-        (?reply-fn false)))))
+        (?reply-fn false))
+      (log-delay! timestamp id))))
 
 (defn handle-send-message [lobbies gameid message]
   (if-let [lobby (get lobbies gameid)]
@@ -468,7 +502,9 @@
   lobby--say
   [{{user :user} :ring-req
     uid :uid
-    {:keys [gameid text]} :?data}]
+    {:keys [gameid text]} :?data
+    id :id
+    timestamp :timestamp}]
   (assert (string? text) "Message must be a string")
   (lobby-thread
     (let [lobby (app-state/get-lobby gameid)]
@@ -479,7 +515,8 @@
                                                         (handle-send-message gameid message)
                                                         (handle-set-last-update gameid uid)))
               lobby? (get-in new-app-state [:lobbies gameid])]
-          (send-lobby-state lobby?))))))
+          (send-lobby-state lobby?))))
+    (log-delay! timestamp id)))
 
 (defn check-password [lobby user password]
   (or (empty? (:password lobby))
@@ -560,10 +597,13 @@
   [{{user :user} :ring-req
     uid :uid
     {gameid :gameid :as ?data} :?data
-    ?reply-fn :?reply-fn}]
+    ?reply-fn :?reply-fn
+    id :id
+    timestamp :timestamp}]
   (lobby-thread
     (when-let [lobby (app-state/get-lobby gameid)]
-      (join-lobby! user uid ?data ?reply-fn lobby))))
+      (join-lobby! user uid ?data ?reply-fn lobby))
+    (log-delay! timestamp id)))
 
 (defn swap-side
   "Returns a new player map with the player's :side switched"
@@ -610,7 +650,9 @@
   lobby--swap
   [{{user :user} :ring-req
     uid :uid
-    {:keys [gameid side]} :?data}]
+    {:keys [gameid side]} :?data
+    id :id
+    timestamp :timestamp}]
   (lobby-thread
     (let [lobby (app-state/get-lobby gameid)]
       (when (and lobby (first-player? uid lobby))
@@ -623,12 +665,15 @@
                                         (handle-set-last-update gameid uid)))
               lobby? (get-in new-app-state [:lobbies gameid])]
           (send-lobby-state lobby?)
-          (broadcast-lobby-list))))))
+          (broadcast-lobby-list))))
+    (log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :lobby/rename-game
   lobby--rename-game
   [{{db :system/db user :user} :ring-req
-    {:keys [gameid]} :?data}]
+    {:keys [gameid]} :?data
+    id :id
+    timestamp :timestamp}]
   (lobby-thread
     (when-let [lobby (app-state/get-lobby gameid)]
       (when (superuser? user)
@@ -642,12 +687,15 @@
                       :action :rename-game
                       :game-name bad-name
                       :first-player player-name
-                      :date (inst/now)}))))))
+                      :date (inst/now)}))))
+    (log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :lobby/delete-game
   lobby--delete-game
   [{{db :system/db user :user} :ring-req
-    {:keys [gameid]} :?data}]
+    {:keys [gameid]} :?data
+    id :id
+    timestamp :timestamp}]
   (lobby-thread
     (let [lobby (app-state/get-lobby gameid)
           player-name (-> lobby :original-players first :user :username)
@@ -660,7 +708,8 @@
                     :action :delete-game
                     :game-name bad-name
                     :first-player player-name
-                    :date (inst/now)})))))
+                    :date (inst/now)})))
+    (log-delay! timestamp id)))
 
 (defn clear-inactive-lobbies
   "Called by a background thread to close lobbies that are inactive for some number of seconds."
@@ -713,7 +762,9 @@
   [{{user :user} :ring-req
     uid :uid
     {:keys [gameid password request-side]} :?data
-    ?reply-fn :?reply-fn}]
+    ?reply-fn :?reply-fn
+    id :id
+    timestamp :timestamp}]
   (lobby-thread
     (let [lobby (app-state/get-lobby gameid)]
       (when (and lobby (allowed-in-lobby user lobby))
@@ -733,7 +784,8 @@
             (false? correct-password?)
             (when ?reply-fn (?reply-fn 403))
             :else
-            (when ?reply-fn (?reply-fn 404))))))))
+            (when ?reply-fn (?reply-fn 404))))))
+    (log-delay! timestamp id)))
 
 (defn handle-toggle-spectator-mute [lobbies gameid uid]
   (let [lobby (get lobbies gameid)]
@@ -744,13 +796,19 @@
 (defmethod ws/-msg-handler :lobby/pause-updates
   lobby--pause-updates
   [{{user :user} :ring-req
-    uid :uid}]
-  (lobby-thread (app-state/pause-lobby-updates uid)))
+    uid :uid
+    id :id
+    timestamp :timestamp}]
+  (lobby-thread (app-state/pause-lobby-updates uid)
+                (log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :lobby/continue-updates
   lobby--continue-updates
   [{{user :user} :ring-req
-    uid :uid}]
+    uid :uid
+    id :id
+    timestamp :timestamp}]
   (lobby-thread
     (app-state/continue-lobby-updates uid)
-    (send-lobby-list uid)))
+    (send-lobby-list uid)
+    (log-delay! timestamp id)))

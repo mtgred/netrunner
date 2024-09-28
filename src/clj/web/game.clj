@@ -173,7 +173,9 @@
   game--start
   [{{db :system/db} :ring-req
     uid :uid
-    {gameid :gameid} :?data}]
+    {gameid :gameid} :?data
+    id :id
+    timestamp :timestamp}]
   (lobby/lobby-thread
     (let [{:keys [players started] :as lobby} (app-state/get-lobby gameid)]
       (when (and lobby (lobby/first-player? uid lobby) (not started))
@@ -186,14 +188,17 @@
             (stats/game-started db lobby?)
             (lobby/send-lobby-state lobby?)
             (lobby/broadcast-lobby-list)
-            (send-state-to-participants :game/start lobby? (diffs/public-states (:state lobby?)))))))))
+            (send-state-to-participants :game/start lobby? (diffs/public-states (:state lobby?)))))))
+    (lobby/log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :game/leave
   game--leave
   [{{db :system/db user :user} :ring-req
     uid :uid
     {gameid :gameid} :?data
-    ?reply-fn :?reply-fn}]
+    ?reply-fn :?reply-fn
+    id :id
+    timestamp :timestamp}]
   (lobby/lobby-thread
     (let [{:keys [started state] :as lobby} (app-state/get-lobby gameid)]
       (when (and lobby (lobby/in-lobby? uid lobby) started state)
@@ -203,7 +208,8 @@
             lobby? nil nil (str (:username user) " has left the game.")))
         (lobby/send-lobby-list uid)
         (lobby/broadcast-lobby-list)
-        (when ?reply-fn (?reply-fn true))))))
+        (when ?reply-fn (?reply-fn true))))
+    (lobby/log-delay! timestamp id)))
 
 (defn uid-in-lobby-as-original-player? [uid]
   (find-first
@@ -215,7 +221,9 @@
   game--rejoin
   [{{user :user} :ring-req
     uid :uid
-    ?data :?data}]
+    ?data :?data
+    id :id
+    timestamp :timestamp}]
   (lobby/lobby-thread
     (let [{:keys [original-players started players] :as lobby} (uid-in-lobby-as-original-player? uid)
           original-player (find-first #(= uid (:uid %)) original-players)]
@@ -226,24 +234,30 @@
               lobby? (lobby/join-lobby! user uid ?data nil lobby)]
           (when lobby?
             (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
-            (update-and-send-diffs! main/handle-rejoin lobby? user)))))))
+            (update-and-send-diffs! main/handle-rejoin lobby? user)))))
+    (lobby/log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :game/concede
   game--concede
   [{uid :uid
-    {gameid :gameid} :?data}]
+    {gameid :gameid} :?data
+    id :id
+    timestamp :timestamp}]
   (let [lobby (app-state/get-lobby gameid)
         player (lobby/player? uid lobby)]
     (lobby/game-thread
       lobby
       (when (and lobby player)
         (let [side (side-from-str (:side player))]
-          (update-and-send-diffs! main/handle-concede lobby side))))))
+          (update-and-send-diffs! main/handle-concede lobby side)))
+      (lobby/log-delay! timestamp id))))
 
 (defmethod ws/-msg-handler :game/action
   game--action
   [{uid :uid
-    {:keys [gameid command args]} :?data}]
+    {:keys [gameid command args]} :?data
+    id :id
+    timestamp :timestamp}]
   (try
     (let [{:keys [state] :as lobby} (app-state/get-lobby gameid)
           player (lobby/player? uid lobby)
@@ -268,7 +282,8 @@
                            :players (map #(select-keys % [:uid :side]) (:players lobby))
                            :spectators (map #(select-keys % [:uid]) (:spectators lobby))
                            :command command
-                           :args args})))))
+                           :args args})))
+        (lobby/log-delay! timestamp id)))
     (catch Exception e
       (ws/chsk-send! uid [:game/error])
       (println (str "Caught exception"
@@ -278,7 +293,9 @@
 (defmethod ws/-msg-handler :game/resync
   game--resync
   [{uid :uid
-    {gameid :gameid} :?data}]
+    {gameid :gameid} :?data
+    id :id
+    timestamp :timestamp}]
   (let [lobby (app-state/get-lobby gameid)]
     (lobby/game-thread
       lobby
@@ -290,14 +307,17 @@
                         "\nGameID by ClientID:" gameid
                         "\nClientID:" uid
                         "\nPlayers:" (map #(select-keys % [:uid :side]) (:players lobby))
-                        "\nSpectators" (map #(select-keys % [:uid]) (:spectators lobby)))))))))
+                        "\nSpectators" (map #(select-keys % [:uid]) (:spectators lobby))))))
+      (lobby/log-delay! timestamp id))))
 
 (defmethod ws/-msg-handler :game/watch
   game--watch
   [{{user :user} :ring-req
     uid :uid
     {:keys [gameid password request-side]} :?data
-    ?reply-fn :?reply-fn}]
+    ?reply-fn :?reply-fn
+    id :id
+    timestamp :timestamp}]
   (lobby/lobby-thread
     (let [lobby (app-state/get-lobby gameid)]
       (when (and lobby (lobby/allowed-in-lobby user lobby))
@@ -322,13 +342,16 @@
             (false? correct-password?)
             (when ?reply-fn (?reply-fn 403))
             :else
-            (when ?reply-fn (?reply-fn 404))))))))
+            (when ?reply-fn (?reply-fn 404))))))
+    (lobby/log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :game/mute-spectators
   game--mute-spectators
   [{{user :user} :ring-req
     uid :uid
-    {gameid :gameid} :?data}]
+    {gameid :gameid} :?data
+    id :id
+    timestamp :timestamp}]
   (let [new-app-state (swap! app-state/app-state update :lobbies #(-> %
                                                                       (lobby/handle-toggle-spectator-mute gameid uid)
                                                                       (lobby/handle-set-last-update gameid uid)))
@@ -340,13 +363,16 @@
         lobby?
         (handle-message-and-send-diffs! lobby? nil nil (str (:username user) " " message " spectators."))
         ;; needed to update the status bar
-        (lobby/send-lobby-state lobby?)))))
+        (lobby/send-lobby-state lobby?)
+        (lobby/log-delay! timestamp id)))))
 
 (defmethod ws/-msg-handler :game/say
   game--say
   [{{user :user} :ring-req
     uid :uid
-    {:keys [gameid msg]} :?data}]
+    {:keys [gameid msg]} :?data
+    id :id
+    timestamp :timestamp}]
   (let [new-app-state (swap! app-state/app-state update :lobbies lobby/handle-set-last-update gameid uid)
         {:keys [state mute-spectators] :as lobby?} (get-in new-app-state [:lobbies gameid])
         side (cond+
@@ -355,25 +381,31 @@
     (when (and lobby? state side)
       (lobby/game-thread
         lobby?
-        (handle-message-and-send-diffs! lobby? side user msg)))))
+        (handle-message-and-send-diffs! lobby? side user msg)
+        (lobby/log-delay! timestamp id)))))
 
 (defmethod ws/-msg-handler :game/typing
   game--typing
   [{uid :uid
-    {:keys [gameid typing]} :?data}]
+    {:keys [gameid typing]} :?data
+    id :id
+    timestamp :timestamp}]
   (let [{:keys [state players] :as lobby} (app-state/get-lobby gameid)]
     (lobby/game-thread
       lobby
       (when (and state (lobby/player? uid lobby))
         (doseq [{:keys [uid]} (remove #(= uid (:uid %)) players)]
-          (ws/chsk-send! uid [:game/typing typing]))))))
+          (ws/chsk-send! uid [:game/typing typing])))
+      (lobby/log-delay! timestamp id))))
 
 (defmethod ws/-msg-handler :chsk/uidport-close
   chsk--uidport-close
   [{{db :system/db
      user :user} :ring-req
     uid :uid
-    ?reply-fn :?reply-fn}]
+    ?reply-fn :?reply-fn
+    id :id
+    timestamp :timestamp}]
   (lobby/lobby-thread
     (let [{:keys [started state] :as lobby} (app-state/uid->lobby uid)]
       (when (and started state)
@@ -384,4 +416,5 @@
     (lobby/send-lobby-list uid)
     (lobby/broadcast-lobby-list)
     (app-state/deregister-user! uid)
-    (when ?reply-fn (?reply-fn true))))
+    (when ?reply-fn (?reply-fn true))
+    (lobby/log-delay! timestamp id)))
