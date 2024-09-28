@@ -230,13 +230,12 @@
           (not (or user-blocked-players? players-blocked-user?))))
       lobbies)))
 
-(defn summaries-for-lobbies [filtered-lobbies]
-  (->> filtered-lobbies
-       (map lobby-summary)
+(defn sorted-lobbies [lobbies]
+  "ideally we only sort these once"
+  (->> (map lobby-summary lobbies)
        (sort-by :date)
        (reverse)
-       (sort-by :started)
-       (into [])))
+       (sort-by :started)))
 
 (comment
   (->> (for [x (range 5 10)]
@@ -247,11 +246,11 @@
 
 (defn prepare-lobby-list
   [lobbies users]
-  (for [user users
-        :let [uid (:uid user)]]
-     (let [filtered-lobbies (filter-lobby-list lobbies user)
-           lobby-summaries (summaries-for-lobbies filtered-lobbies)]
-       [uid [:lobby/list lobby-summaries]])))
+  (let [in-order (sorted-lobbies lobbies)]
+    (for [user users
+          :let [uid (:uid user)]]
+      (let [filtered-lobbies (into [] (filter-lobby-list in-order user))]
+       [uid [:lobby/list filtered-lobbies]]))))
 
 (defn lobby-update-uids
   []
