@@ -13,10 +13,21 @@
 
 (def log-stat-frequency (enc/ms :mins 5))
 
+(defn percentile [vector percentile]
+  ;; see: https://scicloj.github.io/stats-with-clojure/stats_with_clojure.basic_statistics.html
+  (let [sorted-vector (sort vector)
+        idx (int (* percentile (/ (count sorted-vector) 100)))]
+    (str (nth sorted-vector idx) "ms")))
+
+(defn- format-percentiles [data percentiles]
+  (apply str (interpose "/" (map #(percentile (vec data) %) percentiles))))
+
 (defn format-delay! []
   (let [delays (fetch-delay-log!)
+        percentiles [5 25 50 75 95]
         av #(quot (reduce + 0 %) (count %))
-        fmt #(str "Average: " (av %) "ms - Max: " (reduce max 0 %) " ms - Count: " (count %))]
+        fmt #(str "Average: " (av %) "ms - Count: " (count %) " - Percentiles (5/25/50/75/95): "
+                  (format-percentiles % percentiles))]
     (str (update-vals delays fmt))))
 
 (defn subscriber-time-metrics
