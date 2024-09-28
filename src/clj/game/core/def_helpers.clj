@@ -163,7 +163,7 @@
                   (not (get-in card [:special :skipped-loading]))
                   (not (pos? (get-counters card counter-type)))))
    :async true
-   :effect (effect (system-msg (str "trashes " (:title card)))
+   :effect (effect (system-msg {:type :trash :card (:title card)})
                    (trash eid card {:unpreventable true :source-card card}))})
 
 (defn make-recurring-ability

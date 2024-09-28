@@ -29,3 +29,23 @@
            "a facedown card"
            (get-title card)))
        (when host (str " hosted on " (card-str state (get-card state host)))))))
+
+;; TODO root info isn't carried, refer to is-root? above
+;; should be ok with full zone now, but render needs to check for :contents
+(defn card-str-map
+  ([state card] (card-str-map state card nil))
+  ([state {:keys [zone host facedown] :as card} {:keys [visible]}]
+   (merge (if (corp? card)
+            (let [installed-ice (and (ice? card) (installed? card))]
+              ;; Corp card messages
+              (merge (when (or (rezzed? card) visible)
+                       {:card (get-title card)})
+                     {:card-type (if installed-ice :ice :card)}
+                     (when-not host
+                       (merge {:server zone}
+                              (when installed-ice
+                                {:pos (card-index state card)})))))
+            ;; Runner card messages
+            (if (or facedown visible)
+              :facedown
+              (get-title card))))))

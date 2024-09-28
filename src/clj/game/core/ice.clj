@@ -10,7 +10,7 @@
     [game.core.payment :refer [build-cost-label can-pay? merge-costs ->c stealth-value]]
     [game.core.say :refer [system-msg]]
     [game.core.update :refer [update!]]
-    [game.macros :refer [req effect msg continue-ability wait-for]]
+    [game.macros :refer [req effect msg map-msg continue-ability wait-for]]
     [game.utils :refer [same-card? pluralize quantify remove-once]]
     [jinteki.utils :refer [make-label]]
     [clojure.string :as string]
@@ -309,12 +309,9 @@
   ([state side eid ice]
    (if-let [subroutines (seq (remove #(or (:broken %) (= false (:resolve %))) (:subroutines ice)))]
      (wait-for (resolve-next-unbroken-sub state side (make-eid state eid) ice subroutines)
-               (system-msg state :corp (str "resolves " (quantify (count async-result) "unbroken subroutine")
-                                            " on " (:title ice)
-                                            " (\"[subroutine] "
-                                            (string/join "\" and \"[subroutine] "
-                                                  (map :label (sort-by :index async-result)))
-                                            "\")"))
+               (system-msg state :corp {:type :resolve-subs
+                                        :resolved {:ice (:title ice)
+                                                   :subs (map :label (sort-by :index async-result))}})
                (effect-completed state side eid))
      (effect-completed state side eid))))
 
@@ -519,20 +516,15 @@
 (defn break-subroutines-msg
   ([ice broken-subs breaker] (break-subroutines-msg ice broken-subs breaker nil))
   ([ice broken-subs breaker args]
-   (str "use " (:title breaker)
-        " to break " (quantify (count broken-subs)
-                               (str (when-let [subtypes (:subtype args)]
-                                      (when-not (= #{"All"} subtypes)
-                                        (-> subtypes
-                                            (set/intersection (set (:subtypes ice)))
-                                            (first)
-                                            (str " "))))
-                                    "subroutine"))
-        " on " (:title ice)
-        " (\"[subroutine] "
-        (string/join "\" and \"[subroutine] "
-              (map :label (sort-by :index broken-subs)))
-        "\")")))
+   ;; TODO subtypes here should be a keyword
+   (let [subtype (when-let [subtypes (:subtype args)]
+                   (when-not (= #{"All"} subtypes)
+                     (-> subtypes
+                         (set/intersection (set (:subtypes ice)))
+                         (first)
+                         (str " "))))]
+     {:type :break-subs :card (:title breaker) :ice (:title ice) :subtype subtype
+      :subs (map :label (sort-by :index broken-subs))})))
 
 (defn break-subs-event-context
   [state ice broken-subs breaker]
@@ -567,8 +559,8 @@
                                      (break-subroutines-msg ice broken-subs breaker args))]
                        (wait-for (pay state side card total-cost)
                                  (if-let [payment-str (:msg async-result)]
-                                   (do (when (not (string/blank? message))
-                                         (system-msg state :runner {:cost payment-str :raw-text message}))
+                                   (do (when (not (empty? message))
+                                         (system-msg state :runner (merge {:cost payment-str} message)))
                                        (doseq [sub broken-subs]
                                          (break-subroutine! state (get-card state ice) sub breaker)
                                          (resolve-ability state side (make-eid state {:source card
@@ -693,13 +685,13 @@
       :cost-bonus (:cost-bonus args)
       :auto-pump-sort (:auto-break-sort args)
       :auto-pump-ignore (:auto-pump-ignore args)
-      :msg (msg "increase its strength from " (get-strength card)
-                " to " (+ (get-pump-strength
-                            state side
-                            (assoc args :pump strength)
-                            card)
-                          (get-strength card))
-                duration-string)
+      :msg (map-msg :str-pump [(get-strength card)
+                               (+ (get-pump-strength
+                                   state side
+                                   (assoc args :pump strength)
+                                   card)
+                                  (get-strength card))
+                               duration])
       :effect (effect (pump card
                             (get-pump-strength
                               state side

@@ -1568,6 +1568,7 @@
                                               first)
                                   broken-subs (->> (:subroutines current-ice)
                                                    (remove #(= (:index %) (:index target))))]
+                              ; TODO might be broken?
                               (break-subroutines-msg current-ice broken-subs card)))
                   :async true
                   :effect (req (let [selected (:idx (first targets))

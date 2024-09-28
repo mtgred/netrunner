@@ -23,7 +23,7 @@
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone remote-num->name]]
     [game.core.state :refer [make-rid]]
-    [game.core.to-string :refer [card-str]]
+    [game.core.to-string :refer [card-str card-str-map]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
@@ -100,7 +100,7 @@
     {:prompt (str "The " (:title prev-card) " in " server " will now be trashed.")
      :choices ["OK"]
      :async true
-     :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
+     :effect (req (system-msg state :corp {:type :trash :card (card-str-map state prev-card)})
                   (if (get-card state prev-card) ; make sure they didn't trash the card themselves
                     (trash state :corp eid prev-card {:keep-server-alive true})
                     (effect-completed state :corp eid)))}
@@ -136,9 +136,8 @@
 (defn- format-counters-msg
   [{:keys [advance-counter] :as counters}]
   ;; TODO - rewrite this if/when we support more counter types through installs
-  (if advance-counter
-    (str ", and place " (quantify advance-counter "Advancement counter") " on it")
-    ""))
+  (when advance-counter
+    {:place-counter [:adv advance-counter]}))
 
 (defn- corp-install-message
   "Prints the correct install message."
@@ -152,22 +151,24 @@
                             (:seen card)
                             (rezzed? card))
                       (:title card)
-                      (if (ice? card) "ice" "a card"))
-          server-name (if (= server "New remote")
-                        (str (remote-num->name (dec (:rid @state))) " (new remote)")
-                        server)
-          origin (if display-origin
-                   (str " from "
-                        (when origin-index (str " position " (inc origin-index) " of "))
-                        (name-zone :corp (:zone card)))
-                   "")
-          lhs (if install-source
-                (str (build-spend-msg-suffix cost-str "use") (:title install-source) " to install ")
-                (build-spend-msg-suffix cost-str "install"))]
-      (system-msg state side {:cost cost-str
-                              :raw-text (str lhs card-name origin
-                                             (if (ice? card) " protecting " " in the root of ") server-name
-                                             (format-counters-msg counters))})
+                      nil)
+          card-type (if (ice? card)
+                      :ice
+                      (when-not card-name :unknown))
+          server-info (if (= server "New remote")
+                        ;; TODO are we sure this info isn't somewhere already?
+                        {:server [:servers (keyword (str ":remote" (dec (:rid @state))))]
+                         :new-remote true}
+                        {:server (server->zone state server)})
+          origin (when display-origin
+                   (merge {:origin (:zone card)}
+                          (when origin-index {:origin-index (inc origin-index)})))]
+      (system-msg state side (merge {:type :install :cost cost-str
+                                     :card-type card-type :card card-name}
+                                    server-info
+                                    (when install-source {:install-source (:title install-source)})
+                                    origin
+                                    (format-counters-msg counters)))
       (when (and (= :face-up install-state)
                  (agenda? card))
         (implementation-msg state card)))))
@@ -176,7 +177,10 @@
 (defn corp-install-msg
   "Gets a message describing where a card has been installed from. Example: Interns."
   [card]
-  (str "install " (if (:seen card) (:title card) "an unseen card") " from " (name-zone :corp (:zone card))))
+  {:type :install
+   :card-type (if (:seen card) :known :unknown)
+   :card (when (:seen card) (:title card))
+   :origin (:zone card)})
 
 (defn reveal-if-unrezzed
   "Used to reveal a card if it cannot be rezzed when an instruction says to rez it
@@ -416,10 +420,9 @@
         cost-str (if (and hide-zero-cost (= cost-str {:credits 0})) nil cost-str)
         prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
         discount-str (cond
-                       ignore-all-cost " (ignoring all costs)"
-                       ignore-install-cost " (ignoring it's install cost)"
-                       (and cost-bonus (pos? cost-bonus)) (str " (paying " cost-bonus " [Credits] more)")
-                       (and cost-bonus (neg? cost-bonus)) (str " (paying " (* -1 cost-bonus) " [Credits] less)")
+                       ignore-all-cost {:ignore-all-costs true}
+                       ignore-install-cost {:ignore-install-costs true}
+                       cost-bonus {:cost-bonus cost-bonus}
                        :else nil)
         card-name (if facedown
                     (if known
@@ -427,14 +430,9 @@
                       "a card facedown")
                     (:title card))
         origin (if (and display-origin (not= (:previous-zone card) [:onhost]))
-                 (str " from "
-                      (when origin-index (str " position " (inc origin-index) " of "))
-                      (cond
-                        (= (:previous-zone card) [:set-aside])
-                        "among the set-aside cards"
-                        :else
-                        (name-zone :runner (:previous-zone card))))
-                 "")
+                 (merge {:origin (:previous-zone card)}
+                        (when origin-index {:origin-index (inc origin-index)}))
+                 nil)
         ;; currently loses ", and then" -- all costs are squashed into one
         from-host? (when (and display-origin (= (:previous-zone card) [:onhost]))
                      "hosted ")
@@ -446,10 +444,15 @@
       (if custom-message
         (system-msg state side (custom-message cost-str))
         (system-msg state side
-                    {:cost modified-cost-str
-                     :raw-text (str lhs from-host? card-name origin discount-str
-                                    (when host-card (str " on " (card-str state host-card)))
-                                    (when no-cost " at no cost"))})))))
+                    (merge {:type :install :cost modified-cost-str}
+                           (when (or (not facedown) known) {:card (:title card)})
+                           (when install-source {:install-source (:title install-source)})
+                           origin
+                           (when from-host? {:hosted true})
+                           (when facedown {:facedown true})
+                           (when host-card {:host (card-str-map state host-card)})
+                           discount-str
+                           (when no-cost {:no-cost true})))))))
 
 (defn runner-install-continue
   [state side eid card
