@@ -161,7 +161,7 @@
        ;; player can prevent damage
        (do (system-msg state player "has the option to prevent damage")
            (show-wait-prompt state other-player (str (side-str player) " to prevent damage"))
-           (swap! state assoc-in [:prevent :current] type)
+           (swap! state assoc-in [:prevent :current] {:type type :eid eid})
            (show-prompt
              state player nil
              (str "Prevent " (when (< 1 (- n already-prevented)) "any of the ") (- n already-prevented) " " (damage-name type) " damage?")

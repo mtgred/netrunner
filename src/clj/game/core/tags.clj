@@ -74,7 +74,7 @@
                         (cards-can-prevent? state :runner prevent :tag))
                  (do (system-msg state :runner "has the option to avoid tags")
                      (show-wait-prompt state :corp "Runner to prevent tags")
-                     (swap! state assoc-in [:prevent :current] :tag)
+                     (swap! state assoc-in [:prevent :current] {:type :tag :eid eid})
                      (show-prompt
                        state :runner nil
                        (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
