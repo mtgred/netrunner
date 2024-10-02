@@ -119,8 +119,7 @@
 (defmethod ig/init-key :sente/router [_ _opts]
   (sente/start-server-chsk-router!
     ch-chsk
-    event-msg-handler
-    {:simple-auto-threading? true}))
+    event-msg-handler))
 
 (defmethod ig/halt-key! :sente/router [_ stop-fn]
   (when (fn? stop-fn)
