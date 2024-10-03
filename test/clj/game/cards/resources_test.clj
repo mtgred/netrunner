@@ -3532,10 +3532,11 @@
     (click-prompt state :runner "Install a card from the grip, paying 1 [Credits] less")
     (click-card state :runner "Juli Moreira Lee")
     (is (not (:run @state)) "Run over")
-    (is (changed? [(:click (get-runner)) -1
-                   (get-counters (get-resource state 1) :power) 0]
+    (is (= 1 (:click (get-runner))))
+    (is (changed? [(get-counters (get-resource state 1) :power) 0]
           (click-credit state :runner))
-        "Didn't gain click, didn't spend counter")))
+        "didn't spend counter")
+    (is (= 0 (:click (get-runner))) "didn't gain click")))
 
 (deftest kasi-string
   ;; Kasi String
