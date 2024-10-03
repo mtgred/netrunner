@@ -3516,6 +3516,27 @@
           (card-ability state :runner (get-resource state 1) 0))
         "Runner did NOT gain 1 click from Juli Moreira Lee")))
 
+(deftest juli-basic-action
+  (do-game
+    (new-game {:runner {:hand ["Bahia Bands" "Telework Contract" "Juli Moreira Lee"]
+                        :deck [(qty "Ika" 3)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Telework Contract")
+    (is (changed? [(:credit (get-runner)) 3]
+          (card-ability state :runner (get-resource state 0) 0))
+        "Took 3 from telework")
+    (play-from-hand state :runner "Bahia Bands")
+    (click-prompt state :runner "Archives")
+    (run-continue-until state :success)
+    (click-prompt state :runner "Draw 2 cards")
+    (click-prompt state :runner "Install a card from the grip, paying 1 [Credits] less")
+    (click-card state :runner "Juli Moreira Lee")
+    (is (not (:run @state)) "Run over")
+    (is (changed? [(:click (get-runner)) -1
+                   (get-counters (get-resource state 1) :power) 0]
+          (click-credit state :runner))
+        "Didn't gain click, didn't spend counter")))
+
 (deftest kasi-string
   ;; Kasi String
   (do-game
