@@ -1699,10 +1699,12 @@
 (defn basic-actions [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me]}]
   [:div.panel.blue-shade
    (if (= (keyword @active-player) side)
+     ;; !!here
      (when (and (not (or @runner-phase-12 @corp-phase-12))
                 (zero? (:click @me))
                 (not @end-turn))
-       [:button {:on-click #(send-command "end-turn")}
+       [:button {:on-click #(do (close-card-menu)
+                                (send-command "end-turn"))}
         (tr [:game.end-turn "End Turn"])])
      (when @end-turn
        [:button {:on-click #(do
@@ -1997,6 +1999,7 @@
                    (zero? clicks)
                    (not @end-turn))
               (do (send-command "end-turn")
+                  (close-card-menu)
                   (.stopPropagation e))
               ;; gain clicks/mandatory draw
               (and (= active-player-kw @side)
