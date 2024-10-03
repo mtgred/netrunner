@@ -3100,7 +3100,7 @@
                                                                                   % nil [(->c :credit (install-cost state side % {:cost-bonus -1}))])) set-aside-cards))
                                             :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
                                                       (enumerate-str (map :title (remove-once #(same-card? % target) set-aside-cards)))
-                                                      "are trashed as a result")
+                                                      " are trashed as a result")
                                             :effect (req (wait-for (runner-install state side (make-eid  state (assoc eid :source card :source-type :runner-install)) target {:cost-bonus -1})
                                                                    (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card})))}
                                            card nil))))}]})
