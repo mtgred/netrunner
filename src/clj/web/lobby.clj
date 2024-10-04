@@ -41,7 +41,6 @@
     (reset! telemetry-buckets {})
     res))
 
-
 ;; Oracle guidance for active threads is ~cores+2
 (defonce pool-size (+ 2 (.availableProcessors (Runtime/getRuntime))))
 
@@ -66,8 +65,10 @@
   (swap! (:occupants pool) dec))
 
 (defonce lobby-pool (cp/threadpool 1 {:name "lobbies-thread"}))
-(defn lobby-thread [& body] (cp/future lobby-pool body))
-(defn game-thread [lobby & body] (cp/future (get-in lobby [:pool :pool]) body))
+(defmacro lobby-thread [& expr] `(cp/future lobby-pool ~@expr))
+(defmacro game-thread [lobby & expr]
+  "Note: if the lobby isn't actually real, or has been nulled somehow, executing on the lobby thread is safe"
+  `(cp/future (or (get-in ~lobby [:pool :pool]) lobby-pool) ~@expr))
 
 (defn validate-precon
   [format client-precon client-gateway-type]
