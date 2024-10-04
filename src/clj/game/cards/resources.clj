@@ -1853,10 +1853,9 @@
             {:event :runner-spent-click
              :once :per-turn
              :req (req (let [all-cards (get-all-cards state)
-                             pred (fn [context]
-                                    (and (:is-game-action? context)
-                                         (resource? (:stripped-source-card context))))]
-                         (and pred
+                             pred #(and (:is-game-action? %)
+                                        (resource? (:stripped-source-card %)))]
+                         (and (pred context)
                               (first-event? state side :runner-spent-click
                                             #(pred (first %))))))
              :cost [(->c :power 1)]
