@@ -67,6 +67,7 @@
   (swap! app-state assoc-in [:lobby-updates uid] (inst/now)))
 
 (defn receive-lobby-updates?
+  "checks if a user receives lobby updates, and updates the state if they've timed out to amortize subsequent checks. Mutates"
   [uid]
   (if-let [last-ping (get-in @app-state [:lobby-updates uid])]
     (if (.isBefore (inst/now) (inst/plus last-ping lobby-subs-timeout-hours chrono/hours))
@@ -84,5 +85,5 @@
 (defonce cleanup-lobby-subs
   (go (while true
         (<! (timeout lobby-subs-clearout-freq))
-        (doseq [[uid] (get-users)]
+        (doseq [{uid :uid} (vals (:users @app-state))]
           (receive-lobby-updates? uid)))))
