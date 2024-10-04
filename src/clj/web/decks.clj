@@ -8,6 +8,7 @@
    [jinteki.validator :refer [calculate-deck-status]]
    [monger.collection :as mc]
    [monger.result :refer [acknowledged?]]
+   [web.lobby :as lobby]
    [web.mongodb :refer [->object-id ->object-id]]
    [web.nrdb :as nrdb]
    [web.utils :refer [response mongo-time-to-utc-string]]
@@ -101,7 +102,9 @@
   [{{db :system/db
      {username :username} :user} :ring-req
     uid :uid
-    {:keys [input]} :?data}]
+    {:keys [input]} :?data
+    id :id
+    timestamp :timestamp}]
   (try
     (let [deck (nrdb/download-public-decklist db input)]
       (if (every? #(contains? deck %) [:name :identity :cards])
@@ -116,4 +119,5 @@
           (ws/broadcast-to! [uid] :decks/import-success "Imported"))
         (ws/broadcast-to! [uid] :decks/import-failure "Failed to parse imported deck.")))
     (catch Exception _
-      (ws/broadcast-to! [uid] :decks/import-failure "Failed to import deck."))))
+      (ws/broadcast-to! [uid] :decks/import-failure "Failed to import deck.")))
+  (lobby/log-delay! timestamp id))

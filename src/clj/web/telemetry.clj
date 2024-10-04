@@ -6,12 +6,29 @@
    [cljc.java-time.instant :as inst]
    [game.core.board :refer [all-active]]
    [web.app-state :refer [app-state]]
-   [web.lobby :refer [lobby-update-uids]]
+   [web.lobby :refer [lobby-update-uids pool-occupants-info fetch-delay-log!]]
    [web.ws :refer [connected-sockets connections_]]
    [taoensso.encore :as enc]
    [taoensso.timbre :as timbre]))
 
 (def log-stat-frequency (enc/ms :mins 5))
+
+(defn percentile [vector percentile]
+  ;; see: https://scicloj.github.io/stats-with-clojure/stats_with_clojure.basic_statistics.html
+  (let [sorted-vector (sort vector)
+        idx (int (* percentile (/ (count sorted-vector) 100)))]
+    (str (nth sorted-vector idx) "ms")))
+
+(defn- format-percentiles [data percentiles]
+  (apply str (interpose "/" (map #(percentile (vec data) %) percentiles))))
+
+(defn format-delay! []
+  (let [delays (fetch-delay-log!)
+        percentiles [5 25 50 75 95]
+        av #(quot (reduce + 0 %) (count %))
+        fmt #(str "Average: " (av %) "ms - Count: " (count %) " - Percentiles (5/25/50/75/95): "
+                  (format-percentiles % percentiles))]
+    (str (update-vals delays fmt))))
 
 (defn subscriber-time-metrics
   "average time | oldest"
@@ -70,6 +87,7 @@
           lobby-sub-count (count (filter identity (vals (:lobby-updates @app-state))))
           lobby-update-uids (count (lobby-update-uids))
           [average-sub-time oldest-sub-time] (subscriber-time-metrics (filter identity (vals (:lobby-updates @app-state))))
+          latencies (format-delay!)
           ajax-uid-count (count (:ajax @connected-sockets))
           ajax-conn-counts (seq (map count (:ajax @connections_)))
           ajax-conn-total (reduce + ajax-conn-counts)
@@ -95,6 +113,8 @@
                      " uid: " ws-uid-count
                      " conn: " ws-conn-total
                      " }"))
+      (timbre/info (str "pool occupants: " (seq (pool-occupants-info))))
+      (timbre/info latencies)
       ;; TODO - once we've got this set up on the server, wrap it in a try/catch - only ever display
       ;; the warning once!
       (timbre/info (str "Active Cards (across all lobbies): " card-freqs))
