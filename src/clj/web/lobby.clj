@@ -246,11 +246,12 @@
        (summaries-for-lobbies)))
 
 (defn prepare-lobby-list
-  [in-order-lobbies users]
-  (for [user users
-        :let [uid (:uid user)]]
-    (let [filtered-lobbies (into [] (filter-lobby-list in-order-lobbies user))]
-      [uid [:lobby/list filtered-lobbies]])))
+  [lobbies users]
+  (let [in-order-lobbies (sorted-lobbies lobbies)]
+    (for [user users
+          :let [uid (:uid user)]]
+      (let [filtered-lobbies (into [] (filter-lobby-list in-order-lobbies user))]
+        [uid [:lobby/list filtered-lobbies]]))))
 
 (defn lobby-update-uids
   []
@@ -266,9 +267,8 @@
      (broadcast-lobby-list users)))
   ([users]
    (assert (or (sequential? users) (nil? users)) (str "Users must be a sequence: " (pr-str users)))
-   (let [lobbies (app-state/get-lobbies)
-         in-order (sorted-lobbies lobbies)]
-     (doseq [[uid ev] (prepare-lobby-list in-order users)]
+   (let [lobbies (app-state/get-lobbies)]
+     (doseq [[uid ev] (prepare-lobby-list lobbies users)]
        (when uid
          (ws/chsk-send! uid ev))))))
 
