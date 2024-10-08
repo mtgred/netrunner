@@ -13,6 +13,7 @@
     [game.core.ice :refer [update-all-ice update-breaker-strength]]
     [game.core.moving :refer [move]]
     [game.core.say :refer [system-msg]]
+    [game.core.set-aside :refer [clean-set-aside!]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [flatline]]
@@ -143,6 +144,7 @@
                (unregister-floating-events state side :end-of-next-run)
                (unregister-lingering-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
                (unregister-floating-events state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
+               (clean-set-aside! state side)
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended
                  (when (= :this-turn (installed? card))
