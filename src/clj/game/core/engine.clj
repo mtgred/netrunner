@@ -1121,9 +1121,8 @@
       (wait-for
         (resolve-ability
           state (to-keyword (:side fc))
-          (when-not
-              (is-disabled-reg? state fc)
-            (:enforce-conditions fc))
+          (when-not (is-disabled-reg? state fc)
+            (:enforce-conditions (card-def fc)))
           fc nil)
         (enforce-conditions-impl state nil eid (rest cards))))
     (effect-completed state nil eid)))
@@ -1133,7 +1132,7 @@
   (wait-for
     (trash-on-tag state nil (make-eid state eid))
     (if-let [cards (seq (filter
-                          :enforce-conditions
+                          #(:enforce-conditions (card-def %))
                           (concat (all-installed state :corp)
                                   [(get-in @state [:corp :identity])]
                                   (all-active-installed state :runner))))]
