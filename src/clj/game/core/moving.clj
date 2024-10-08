@@ -23,6 +23,11 @@
     [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
     [medley.core :refer [insert-nth]]))
 
+(defn- wrap-cause-card
+  "Strips cause-card down to just keys used by it's handlers"
+  [card]
+  (select-keys card [:side]))
+
 ;; Helpers for move
 (defn- remove-old-card
   "Removes the old pre-move card from the game state, for use in move"
@@ -348,7 +353,7 @@
                (should-trigger? state side eid card
                                 [{:card card
                                   :cause cause
-                                  :cause-card cause-card
+                                  :cause-card (wrap-cause-card cause-card)
                                   :accessed accessed}]
                                 trash-effect))
       (-> trash-effect
@@ -437,7 +442,7 @@
                    (doseq [trashed-card trashlist]
                      (queue-event state trash-event {:card trashed-card
                                                      :cause cause
-                                                     :cause-card cause-card
+                                                     :cause-card (wrap-cause-card cause-card)
                                                      :accessed accessed}))
                    (if suppress-checkpoint
                      (effect-completed state nil eid)
