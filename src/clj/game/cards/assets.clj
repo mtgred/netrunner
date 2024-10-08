@@ -25,7 +25,7 @@
                               remaining-draws]]
    [game.core.effects :refer [is-disabled-reg? register-lingering-effect update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
-   [game.core.engine :refer [not-used-once? pay register-events resolve-ability trigger-event]]
+   [game.core.engine :refer [not-used-once? pay register-events resolve-ability trigger-event-sync]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [lock-zone prevent-current
@@ -1637,11 +1637,7 @@
                (update! state side (assoc-in (get-card state card) [:special :malia-target] nil))
                (remove-icon state :runner card (get-card state malia-target)))
              (update-disabled-cards state)
-             (trigger-event state :runner :disabled-cards-updated)
-             ;; I'm not sure why the side is nil here
-             ;; but the old impl had it, so 🤷
-             ;; --nbk, Apr '24
-             (effect-completed state nil eid))]
+             (trigger-event-sync state nil eid :disabled-cards-updated))]
     {:on-rez {:msg (msg "blank the text box of " (card-str state target))
               :choices {:card #(and (runner? %)
                                     (installed? %)
