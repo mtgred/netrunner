@@ -131,7 +131,8 @@
 (defn trash-when-tagged
   "Adds abilities for trashing a card when becoming tagged,
   and when updating disabled state while tagged, or on install.
-  cname is provided for labelling the ability"
+  cname is provided for labelling the ability. Cards that disable things in a funny way (ie malia)
+  may need to trigger a `disabled-cards-updated` event"
   [cname c]
   (let [ev {:req (req tagged)
             :interactive (req true)
