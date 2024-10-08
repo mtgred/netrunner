@@ -71,7 +71,7 @@
    [game.core.servers :refer [central->name is-central? is-remote?
                               protecting-same-server? remote->name target-server unknown->kw
                               zone->name zones->sorted-names]]
-   [game.core.set-aside :refer [set-aside get-set-aside set-aside-for-me]]
+   [game.core.set-aside :refer [set-aside set-aside-for-me]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags tag-prevent]]
    [game.core.to-string :refer [card-str]]
@@ -3084,8 +3084,7 @@
                                              {:cost-bonus -1
                                               :no-toast true}))
                                 (seq (:hosted card))))
-                :effect (req (set-aside state side eid (:hosted card))
-                             (let [set-aside-cards (get-set-aside state side eid)]
+                :effect (req (let [set-aside-cards (set-aside state side eid (:hosted card))]
                                (wait-for (trash state side card {:cause :ability-cost :cause-card card})
                                          (system-msg state side "trashed")
                                          (continue-ability
@@ -3303,8 +3302,7 @@
                :once-key :the-class-act-put-bottom
                :async true
                :effect
-               (req (set-aside-for-me state :runner eid (take (inc target) (:deck runner)))
-                    (let [cards (get-set-aside state :runner eid)]
+               (req (let [cards (set-aside-for-me state :runner eid (take (inc target) (:deck runner)))]
                       (continue-ability
                         state side
                         {:waiting-prompt true
