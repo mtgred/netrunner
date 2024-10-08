@@ -110,6 +110,8 @@
                 :msg message
                 :effect (effect (effect-fn eid card targets))}]})
 
+
+
 (defn companion-builder
   "pay-credits-req says when it can be used. turn-ends-ability defines what happens,
   and requires `effect-completed`."
@@ -125,6 +127,24 @@
                :async true
                :effect (effect (continue-ability turn-ends-ability card targets))}]
      :abilities [ability]}))
+
+(defn trash-when-tagged
+  "Adds abilities for trashing a card when becoming tagged,
+  and when updating disabled state while tagged, or on install.
+  cname is provided for labelling the ability. Cards that disable things in a funny way (ie malia)
+  may need to trigger a `disabled-cards-updated` event"
+  [cname c]
+  (let [ev {:req (req tagged)
+            :interactive (req true)
+            :ability-name (str cname " (trash if tagged)")
+            :msg (msg "trash itself due to being tagged")
+            :async true
+            :effect (req (trash state side eid card {:unpreventable true :cause-card card}))}
+        evs [(assoc ev :event :tags-changed)
+             (assoc ev :event :disabled-cards-updated)]]
+    (assoc c
+           :events (into [] (concat (:events c) evs))
+           :on-install ev)))
 
 (defn bitey-boi
   [f]
@@ -2674,8 +2694,9 @@
   {:static-abilities [(runner-hand-size+ 2)]})
 
 (defcard "Rachel Beckman"
-  {:trash-when-tagged true
-   :in-play [:click-per-turn 1]})
+  (trash-when-tagged
+    "Rachel Beckman"
+    {:in-play [:click-per-turn 1]}))
 
 (defcard "Raymond Flint"
   {:events [{:event :corp-gain-bad-publicity
@@ -3839,14 +3860,15 @@
                        :value 1}]})
 
 (defcard "Zona Sul Shipping"
-  {:events [{:event :runner-turn-begins
-             :effect (effect (add-counter card :credit 1))}]
-   :trash-when-tagged true
-   :abilities [{:action true
-                :cost [(->c :click 1)]
-                :msg (msg "gain " (get-counters card :credit) " [Credits]")
-                :label "Take all credits"
-                :async true
-                :effect (effect (add-counter card :credit
-                                             (- (get-counters card :credit)))
-                                (gain-credits eid (get-counters card :credit)))}]})
+  (trash-when-tagged
+    "Zona Sul Shipping"
+    {:events [{:event :runner-turn-begins
+               :effect (effect (add-counter card :credit 1))}]
+     :abilities [{:action true
+                  :cost [(->c :click 1)]
+                  :msg (msg "gain " (get-counters card :credit) " [Credits]")
+                  :label "Take all credits"
+                  :async true
+                  :effect (effect (add-counter card :credit
+                                               (- (get-counters card :credit)))
+                                  (gain-credits eid (get-counters card :credit)))}]}))
