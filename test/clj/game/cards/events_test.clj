@@ -6474,6 +6474,21 @@
       (run-continue state :movement)
       (run-jack-out state))))
 
+(deftest security-leak
+  (do-game
+    (new-game {:corp {:hand ["Hostile Takeover"]}
+               :runner {:hand ["Security Leak"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Security Leak")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (dotimes [_ 2]
+      (is (changed? [(:credit (get-corp)) -2]
+            (click-advance state :corp (get-content state :remote1 0)))
+          "Spent 2c to advance hostile takeover"))
+    (score state :corp (get-content state :remote1 0))
+    (is (is-discard? state :runner ["Security Leak"]) "Security leak works like other currents")))
+
 (deftest showing-off
   ;; Showing Off
   (do-game

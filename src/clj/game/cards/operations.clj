@@ -1819,7 +1819,7 @@
                                        (corp-install state side eid ice zone {:ignore-all-cost true
                                                                               :install-state :rezzed-no-cost
                                                                               :display-message false
-                                                                              :index index}))
+                                                                              :origin-index index}))
                                    (do (system-msg state side (str "uses " (:title card) " to shuffle R&D"))
                                        (effect-completed state side eid))))))))}})
 
@@ -2169,7 +2169,7 @@
              :choices (req (conj (vec (get-remote-names state)) "New remote"))
              :async true
              :effect (effect (corp-install eid chosen target {:msg-keys {:install-source card
-                                                                         :index (first (positions #{chosen} (take 5 (:deck corp))))
+                                                                         :origin-index (first (positions #{chosen} (take 5 (:deck corp))))
                                                                          :display-origin true}}))})]
     {:on-play
      {:async true
