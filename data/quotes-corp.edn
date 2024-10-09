@@ -153,6 +153,15 @@
   "Default" ["Intrusion Detected. Eyes Forward. Maintain peak efficiency."]
   "Shaper"
   ["Why would you choose to get in our way when we are shaping the world of tomorrow in ways beyond your limited understanding?"]}
+ "Haas-Bioroid: Precision Design"
+ {"Anarch"
+  ["Looks like we are about to get some live stress testing. Make sure to record the results."]
+  "Criminal"
+  ["They may call themselves a professional but in the end, their work is sloppy."]
+  "Default"
+  ["Authorizing emergency funding, unrestricted access to ICE, priority access to any relevant staff and facilities. Avoid any project slowdown."]
+  "Shaper"
+  ["People always want to seek out what is exciting today. We focus on what will be significant tomorrow."]}
  "Haas-Bioroid: Stronger Together"
  {"Anarch" ["Humanity does not end here. It merely begins its Golden Age."]
   "Criminal"
@@ -237,6 +246,15 @@
   ["From a house of knives// To a lotus field serene// Feel the thousand cuts"]
   "Shaper"
   ["An expert navigator of the network it seems. They will not so easily master ours."]}
+ "Jinteki: Restoring Humanity"
+ {"Anarch"
+  ["Disruptive, impulsive, full of noise and no thought. A caricature of the modern human."]
+  "Criminal"
+  ["There is a rat in the walls, looking for some cheese. Set some out for it."]
+  "Default"
+  ["Our network is our garden. You are welcome to enter, but beware the thorns."]
+  "Shaper"
+  ["You may appreciate what you find, but that will not let you master it."]}
  "MirrorMorph: Endless Iteration"
  {"Anarch"
   ["Our subroutines estimate an 92.2% chance of such a reckless runner flatlining themself before even catching a glimpse of our servers. Simulations upon simulations wind up the same."]
@@ -272,6 +290,13 @@
   ["They are targeting our ad revenue algorithms. Boost the signals, we'll zero in on their next pass."]
   "Default" ["Stay out of our business unless you want to become tomorrow's headline."]
   "Shaper" ["Seems they have not read our Terms & Conditions - which still apply."]}
+ "NBN: Reality Plus"
+ {"Anarch" ["You claim to fight for a better world but we created it."]
+  "Criminal"
+  ["You can only live in the shadows until we turn the spotlight on you."]
+  "Default" ["Even an illusion can be worth protecting."]
+  "Shaper"
+  ["We have created the wind indoors, put the sky in space and manufactured a slice of nature. What is your great work?"]}
  "NBN: The World is Yours*"
  {"Anarch" ["Full of sound and fury, signifying nothing."]
   "Criminal" ["The robbed that smiles steals something from the thief."]
@@ -420,6 +445,10 @@
   "Criminal" ["We keep everyone safe. You do not."]
   "Default" ["They cannot possibly comprehend the stability we bring to the worlds."]
   "Shaper" ["We know what is good for everyone. You do not."]}
+ "The Syndicate: Profit over Principle"
+ {"Default" ["There have been some issues, do what is best for the business."]
+  "The Catalyst: Convention Breaker"
+  ["We have noticed some disruptions. Soon they will discover that the world is not so kind to those who step out of line."]}
  "Titan Transnational: Investing In Your Future"
  {"Anarch"
   ["There is no future for those who fight it.//Biting the hand that feeds the market? They'll earn much more than a slap to the face."]
@@ -470,4 +499,13 @@
   "Shaper"
   ["It's a shame we can't cooperate and stand on opposing sides.. Together, we could have achieved so much more..."]
   "Sunny Lebeau: Security Specialist"
-  ["GlobalSec is poking around? Get the CIO to file for an injunction. Make sure we leave everything squeeky clean on our end.\n"]}}
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. Make sure we leave everything squeeky clean on our end.\n"]}
+ "Weyland Consortium: Built to Last"
+ {"Anarch"
+  ["We have some trouble makers. I expect they will scratch the paint."]
+  "Criminal"
+  ["Someone has been casing the new project. Block them, hire them, shoot them, doesn't matter, but make sure they are not a problem."]
+  "Default"
+  ["You cannot leave Earth without the Beanstalk we built. You cannot reach the moon without the ships we built. You cannot survive on the moon without the habitats we built. And yet our presence on the moon is being challenged?"]
+  "Shaper"
+  ["Do you think this is fun? We take our work seriously and will not stand for interference."]}}
