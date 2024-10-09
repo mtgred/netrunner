@@ -404,7 +404,7 @@
   "Haas-Bioroid" ["All work and no play makes Loup a very angry boy."]
   "Jinteki" ["I really appreciate their work, but I still don't like them."]
   "NBN" ["Shut-up, I'll get my news from my eyes."]
-  "Weyland" ["What was that saying about the bigger they are and falling?"]}
+  "Weyland Consortium" ["What was that saying about the bigger they are and falling?"]}
  "Rielle \"Kit\" Peddler: Transhuman"
  {"Default" ["They are trapped by their physical ideals. I must set them free."]
   "Haas-Bioroid"
@@ -464,7 +464,7 @@
   "Jinteki"
   ["What a narrow view of humanity. I will show you what a human can do."]
   "NBN" ["Filter out the noise. Clear your mind. I am ready."]
-  "Weyland"
+  "Weyland Consortium"
   ["For all your grand designs, you are never worried about the cracks and who might be falling through them."]}
  "The Catalyst: Convention Breaker"
  {"Default" ["This is going to be big."]
@@ -531,5 +531,5 @@
   ["Get in, authorize these prescriptions, and get out. Then pay for Soha's bone treatment."]
   "NBN"
   ["I was surprised that someone asked for all the raw footage for a sensie, but if they will pay I'll find it for them."]
-  "Weyland"
+  "Weyland Consortium"
   ["Massive delivery from the beanstalk. Too bad some was damaged and had to be destroyed."]}}
