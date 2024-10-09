@@ -1835,8 +1835,8 @@
              :msg "gain 9 [Credits] and take 1 tag"
              :req (req (and (= :hq (target-server context))
                             this-card-run))
-             :effect (req (wait-for (gain-tags state :runner 1)
-                                    (gain-credits state :runner eid 9)))}]})
+             :effect (req (wait-for (gain-credits state :runner 9)
+                                    (gain-tags state :runner eid 1)))}]})
 
 (defcard "I've Had Worse"
   {:on-play {:async true
