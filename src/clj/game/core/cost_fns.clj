@@ -149,6 +149,15 @@
                                                           :ability ability
                                                           :targets targets})])))
 
+(defn pump-card-ability-cost
+  ([state side ability card] (pump-card-ability-cost state side ability card nil))
+  ([state side ability card targets]
+   (merge-costs
+     [(:cost ability)
+      (:additional-cost ability)
+      (when-let [pump-fn (:pump-cost-bonus ability)]
+        (pump-fn state side (make-eid state) card targets))])))
+
 (defn jack-out-cost
   [state side]
   (get-effects state side :jack-out-additional-cost))
