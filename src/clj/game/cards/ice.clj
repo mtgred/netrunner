@@ -48,7 +48,7 @@
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.purging :refer [purge]]
-   [game.core.revealing :refer [reveal]]
+   [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
    [game.core.runs :refer [bypass-ice encounter-ends end-run
                            force-ice-encounter get-current-encounter prevent-access
@@ -1867,30 +1867,14 @@
                                       :max (req 3)}
                             :async true
                             :effect (req (wait-for
-                                           (reveal state side targets)
+                                           (reveal-loud state side card {:and-then ", and shuffle [them] into R&D"} targets)
                                            (doseq [c targets]
                                              (move state :corp c :deck))
                                            (shuffle! state :corp :deck)
                                            (effect-completed state :corp eid)))
-                            :cancel-effect (effect (shuffle! :deck)
-                                                   (effect-completed eid))
-                            :msg (msg
-                                   "reveal "
-                                   (enumerate-str
-                                     (filter identity
-                                             [(when-let [h (->> targets
-                                                                (filter in-hand?)
-                                                                (map :title)
-                                                                not-empty)]
-                                                (str (enumerate-str h)
-                                                     " from HQ"))
-                                              (when-let [d (->> targets
-                                                                (filter in-discard?)
-                                                                (map :title)
-                                                                not-empty)]
-                                                (str (enumerate-str d)
-                                                     " from Archives"))]))
-                                   " and shuffle them into R&D")}
+                            :cancel-effect (effect (system-msg (str "uses " (:title card) " to shuffle R&D"))
+                                                   (shuffle! :deck)
+                                                   (effect-completed eid))}
         draw-reveal-shuffle {:async true
                              :label "Draw cards, reveal and shuffle agendas"
                              :waiting-prompt true

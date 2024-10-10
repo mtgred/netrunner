@@ -59,7 +59,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
-   [game.core.revealing :refer [reveal]]
+   [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [derez rez]]
    [game.core.runs :refer [active-encounter? bypass-ice can-run-server? get-runnable-zones
                            gain-run-credits get-current-encounter
@@ -303,12 +303,21 @@
    :events [(trash-on-empty :power)]
    :abilities [{:cost [(->c :power 1)]
                 :keep-menu-open :while-power-tokens-left
-                :msg "look at the top card of Stack"
-                :optional
-                {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
-                 :yes-ability
-                 {:msg "add the top card of Stack to the bottom"
-                  :effect (req (move state side (first (:deck runner)) :deck))}}}]})
+                :msg "reveal the top card of Stack"
+                :req (req (seq (:deck runner)))
+                :async true
+                :effect (req
+                          (let [top-card (first (:deck runner))]
+                            (wait-for
+                              (reveal-loud state side card nil top-card)
+                              (continue-ability
+                                state side
+                                {:optional
+                                 {:prompt (msg "Add " (:title top-card) " to bottom of Stack?")
+                                  :yes-ability
+                                  {:msg (str "move " (:title top-card) " to the bottom of the Stack")
+                                   :effect (req (move state side (first (:deck runner)) :deck))}}}
+                                card nil))))}]})
 
 (defcard "Armitage Codebusting"
   {:data {:counter {:credit 12}}

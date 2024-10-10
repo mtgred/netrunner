@@ -640,7 +640,7 @@
         "2 Runner cards moved off the grip")
     (is (= "Sure Gamble" (:title (nth (:deck (get-runner)) 0))) "Sure Gamble on top of the deck")
     (is (= "Sure Gamble" (:title (nth (:deck (get-runner)) 1))) "Another Sure Gamble on top of the deck")
-    (is (last-log-contains? state "place Sure Gamble and Sure Gamble from the grip to the top of the stack"))
+    (is (last-log-contains? state "reveal Sure Gamble and Sure Gamble from"))
     (is (no-prompt? state :corp) "No additional prompt because threat level is not met")
     (is (zero? (:click (get-corp))) "Terminal ends turns")))
 
