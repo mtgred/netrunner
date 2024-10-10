@@ -773,7 +773,7 @@
                                        pump-ability))
                             (vec (concat abs
                                          (when (and break-ability
-                                                    (or pump-ability (zero? strength-diff))
+                                                    (or (not (get-strength card)) pump-ability (zero? strength-diff))
                                                     no-unbreakable-subs
                                                     (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
