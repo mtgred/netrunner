@@ -9,7 +9,7 @@
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.effects :refer [get-effects]]
    [game.core.engine :refer [pay resolve-ability trigger-event]]
-   [game.core.flags :refer [can-advance? untrashable-while-resources?]]
+   [game.core.flags :refer [untrashable-while-resources?]]
    [game.core.gaining :refer [gain-credits]]
    [game.core.installing :refer [corp-can-pay-and-install? corp-install
                                  runner-can-pay-and-install? runner-install]]
@@ -92,7 +92,6 @@
                 :cost [(->c :click 1) (->c :credit 1)]
                 :async true
                 :msg (msg "advance " (card-str state (:card context)))
-                :req (req (can-advance? state side (:card context)))
                 :effect (effect (update-advancement-requirement (:card context))
                                 (add-prop (get-card state (:card context)) :advance-counter 1)
                                 (play-sfx "click-advance")

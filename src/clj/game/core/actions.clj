@@ -585,9 +585,14 @@
   [state side {:keys [card] :as context}]
   (when-let [card (get-card state card)]
     (let [context (assoc context :card card)]
-      (play-ability state side {:card (get-in @state [:corp :basic-action-card])
-                                :ability 4
-                                :targets [context]}))))
+      ;; note that can-advance potentially generates toasts (effcom),
+      ;; so it cannot go in the req of basic, since that can generate infinite toast loops
+      ;; when update-and-send-diffs causes more updates that need to be updated and sent...
+      (if (can-advance? state side card)
+        (play-ability state side {:card (get-in @state [:corp :basic-action-card])
+                                  :ability 4
+                                  :targets [context]})
+        (toast state :corp "Cannot advance cards this turn." "warning")))))
 
 ;;; Runner actions
 (defn click-run
