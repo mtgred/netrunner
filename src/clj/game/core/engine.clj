@@ -6,7 +6,7 @@
     [cond-plus.core :refer [cond+]]
     [game.core.board :refer [clear-empty-remotes get-all-cards all-installed all-installed-runner
                              all-installed-runner-type all-active-installed]]
-    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title ice? in-discard? in-hand? installed? rezzed? program? console? unique?]]
+    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title ice? in-discard? in-hand? in-set-aside? installed? rezzed? program? console? unique?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [get-effect-maps unregister-lingering-effects is-disabled? is-disabled-reg? update-disabled-cards]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -622,6 +622,8 @@
           :inactive (not (active? card))
           :in-location (or (and (contains? location :discard)
                                 (in-discard? card))
+                           (and (contains? location :set-aside)
+                                (in-set-aside? card))
                            (and (contains? location :hand)
                                 (in-hand? card)))
           :test-condition true)
