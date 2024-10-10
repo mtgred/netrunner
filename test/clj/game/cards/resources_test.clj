@@ -5468,7 +5468,8 @@
       (core/gain state :runner :click 3)
       (is (changed? [(:credit (get-runner)) 6]
             (card-ability state :runner (get-resource state 0) 0)
-            (click-card state :runner "Lucky Find"))
+            (click-card state :runner "Lucky Find")
+            (click-prompt state :runner "Yes"))
           "Lucky Find is played from the Heap")
       (is (zero? (:click (get-runner))) "No clicks left")))
 
