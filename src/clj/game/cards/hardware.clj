@@ -32,7 +32,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [hand-size runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [all-subs-broken? any-subs-broken? break-sub pump
+   [game.core.ice :refer [all-subs-broken? any-subs-broken? auto-icebreaker break-sub pump
                           reset-all-ice update-all-ice update-all-icebreakers
                           update-breaker-strength]]
    [game.core.installing :refer [runner-can-install? runner-can-pay-and-install? runner-install]]
@@ -789,7 +789,7 @@
              :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]})
 
 (defcard "e3 Feedback Implants"
-  {:abilities [(break-sub 1 1 "All" {:req (req true)})]})
+  (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:req (req (any-subs-broken? current-ice))})]}))
 
 (defcard "Ekomind"
   (let [update-base-mu (fn [state n] (swap! state assoc-in [:runner :memory :base] n))]
@@ -820,14 +820,15 @@
                                                     true))))}]))}]})
 
 (defcard "Endurance"
-  {:data {:counter {:power 3}}
-   :static-abilities [(mu+ 2)]
-   :events [{:event :successful-run
-             :req (req (first-event? state :runner :successful-run))
-             :msg "place 1 power counter on itself"
-             :async true
-             :effect (effect (add-counter eid card :power 1 nil))}]
-   :abilities [(break-sub [(->c :power 2)] 2 "All")]})
+  (auto-icebreaker
+    {:data {:counter {:power 3}}
+     :static-abilities [(mu+ 2)]
+     :events [{:event :successful-run
+               :req (req (first-event? state :runner :successful-run))
+               :msg "place 1 power counter on itself"
+               :async true
+               :effect (effect (add-counter eid card :power 1 nil))}]
+     :abilities [(break-sub [(->c :power 2)] 2 "All")]}))
 
 (defcard "Feedback Filter"
   {:interactions {:prevent [{:type #{:net :brain}
@@ -1704,9 +1705,10 @@
                 :effect (req (damage-prevent state side :meat 1))}]})
 
 (defcard "Poison Vial"
-  {:data {:counter {:power 3}}
-   :events [(trash-on-empty :power)]
-   :abilities [(break-sub [(->c :power 1)] 2 "All" {:req (req (any-subs-broken? current-ice))})]})
+  (auto-icebreaker
+    {:data {:counter {:power 3}}
+     :events [(trash-on-empty :power)]
+     :abilities [(break-sub [(->c :power 1)] 2 "All" {:req (req (any-subs-broken? current-ice))})]}))
 
 (defcard "Polyhistor"
   (let [abi {:optional

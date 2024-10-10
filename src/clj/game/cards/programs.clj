@@ -676,15 +676,16 @@
                    (strength-pump 3 3 :end-of-encounter {:cost-bonus discount-fn})]})))
 
 (defcard "Botulus"
-  {:implementation "[Erratum] Program: Virus - Trojan"
-   :data {:counter {:virus 1}}
-   :hosting {:req (req (and (ice? target)
-                            (can-host? state target)))}
-   :events [{:event :runner-turn-begins
-             :effect (effect (add-counter card :virus 1))}]
-   :abilities [(break-sub
-                 [(->c :virus 1)] 1 "All"
-                 {:req (req (same-card? current-ice (:host card)))})]})
+  (auto-icebreaker
+    {:implementation "[Erratum] Program: Virus - Trojan"
+     :data {:counter {:virus 1}}
+     :hosting {:req (req (and (ice? target)
+                              (can-host? state target)))}
+     :events [{:event :runner-turn-begins
+               :effect (effect (add-counter card :virus 1))}]
+     :abilities [(break-sub
+                   [(->c :virus 1)] 1 "All"
+                   {:req (req (same-card? current-ice (:host card)))})]}))
 
 (defcard "Brahman"
   (auto-icebreaker {:abilities [(break-sub 1 2 "All")
@@ -1125,9 +1126,10 @@
                                                                    true))})]}))
 
 (defcard "D4v1d"
-  (let [david-req (req (<= 5 (get-strength current-ice)))]
-    {:data {:counter {:power 3}}
-     :abilities [(break-sub [(->c :power 1)] 1 "All" {:req david-req})]}))
+  (auto-icebreaker
+    (let [david-req (req (<= 5 (get-strength current-ice)))]
+      {:data {:counter {:power 3}}
+       :abilities [(break-sub [(->c :power 1)] 1 "All" {:req david-req})]})))
 
 (defcard "Dagger"
   (auto-icebreaker
