@@ -3,7 +3,7 @@
     [game.core.board :refer [all-active all-active-installed]]
     [game.core.card :refer [get-card map->Card program? runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost pump-card-ability-cost]]
+    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
     [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [is-ability? register-default-events register-events resolve-ability unregister-events]]
@@ -146,8 +146,6 @@
                        (cond
                          (:break-cost ab)
                          (assoc ab :cost (break-sub-ability-cost state side ab card))
-                         (:pump ab)
-                         (assoc ab :cost (pump-card-ability-cost state side ab card))
                          :else
                          ab)]]
              (add-cost-label-to-ability ab (card-ability-cost state side ab-cost card)))))
