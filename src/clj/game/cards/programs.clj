@@ -1932,7 +1932,7 @@
                                               "?")
                                  :waiting-prompt true
                                  :yes-ability
-                                 {:msg (msg "bypass" (card-str state current-ice))
+                                 {:msg (msg "bypass " (card-str state current-ice))
                                   :effect (req
                                             (wait-for (trash state :runner (make-eid state eid) card
                                                              {:unpreventable :true
