@@ -277,8 +277,10 @@
                             {:name (tr [:pronouns.blank "[blank]"]) :ref "blank"}
                             {:name (tr [:pronouns.they "They/them"]) :ref "they"}
                             {:name (tr [:pronouns.she "She/her"]) :ref "she"}
+                            {:name (tr [:pronouns.sheit "She/it"]) :ref "sheit"}
                             {:name (tr [:pronouns.shethey "She/they"]) :ref "shethey"}
                             {:name (tr [:pronouns.he "He/him"]) :ref "he"}
+                            {:name (tr [:pronouns.heit "He/it"]) :ref "heit"}
                             {:name (tr [:pronouns.hethey "He/they"]) :ref "hethey"}
                             {:name (tr [:pronouns.it "It"]) :ref "it"}
                             {:name (tr [:pronouns.ne "Ne/nem"]) :ref "ne"}
@@ -286,8 +288,11 @@
                             {:name (tr [:pronouns.ey "Ey/em"]) :ref "ey"}
                             {:name (tr [:pronouns.zehir "Ze/hir"]) :ref "zehir"}
                             {:name (tr [:pronouns.zezir "Ze/zir"]) :ref "zezir"}
-                            {:name (tr [:pronouns.xe "Xe/xem"]) :ref "xe"}]]
-                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
+                            {:name (tr [:pronouns.xe "Xe/xem"]) :ref "xe"}
+                            {:name (tr [:pronouns.xi "Xi/xir"]) :ref "xi"}]]
+                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
+           [:div "If your personal pronouns are not represented, you can request them "
+            [:a {:href "https://github.com/mtgred/netrunner/issues"} "here"]]]
           [:section
            [:h3 (tr [:settings.language "Language"])]
            [:select {:value (:language @s "en")

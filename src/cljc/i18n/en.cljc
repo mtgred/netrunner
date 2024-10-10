@@ -236,8 +236,10 @@
               :blank "[blank]"
               :they "They/them"
               :she "She/her"
+              :sheit "She/it"
               :shethey "She/they"
               :he "He/him"
+              :heit "He/it"
               :hethey "He/they"
               :it "It"
               :ne "Ne/nem"
@@ -245,7 +247,8 @@
               :ey "Ey/em"
               :zehir "Ze/hir"
               :zezir "Ze/zir"
-              :xe "Xe/xem"}
+              :xe "Xe/xem"
+              :xi "Xi/xir"}
    :chat {:title "Play Netrunner in your browser"
           :channels "Channels"
           :send "Send"
