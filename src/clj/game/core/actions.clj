@@ -7,7 +7,7 @@
     [game.core.board :refer [installable-servers]]
     [game.core.card :refer [get-agenda-points get-card]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost score-additional-cost-bonus]]
+    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost pump-card-ability-cost score-additional-cost-bonus]]
     [game.core.effects :refer [any-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [ability-as-handler checkpoint register-pending-event pay queue-event resolve-ability trigger-event-simult]]
@@ -292,7 +292,7 @@
         [pump-ability pump-cost]
         (some->> (filter (complement :auto-pump-ignore) (:abilities (card-def card)))
                  (keep #(when (can-pump %)
-                          [% (:cost %)]))
+                          [% (pump-card-ability-cost state side % card current-ice)]))
                  (filter (complement :auto-pump-ignore))
                  (seq)
                  (sort-by #(-> % first :auto-pump-sort))
@@ -434,7 +434,7 @@
           [pump-ability pump-cost]
           (some->> (filter (complement :auto-pump-ignore) (:abilities (card-def card)))
                    (keep #(when (can-pump %)
-                            [% (:cost %)]))
+                            [% (pump-card-ability-cost state side % card current-ice)]))
                    (seq)
                    (sort-by #(-> % first :auto-pump-sort))
                    (apply min-key #(let [costs (second %)]
