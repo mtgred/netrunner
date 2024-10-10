@@ -2315,6 +2315,26 @@
       (click-prompt state :runner "No action")
       (is (empty? (get-run)) "Run has ended"))))
 
+(deftest eru-ayase-pessoa-threat-3-with-mercury
+  (do-game
+    (new-game {:corp {:score-area ["City Works Project"]
+                      :hand []
+                      :deck ["Hedge Fund" "Hedge Fund" "Hedge Fund"]}
+               :runner {:id "Mercury: Chrome Libertador"
+                        :hand ["Eru Ayase-Pessoa"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Eru Ayase-Pessoa")
+    (let [eru (get-resource state 0)]
+      (is (changed? [(count-tags state) 1]
+            (card-ability state :runner (refresh eru) 0))
+          "Got 1 tag")
+      (run-continue state)
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (is (empty? (get-run)) "Run has ended"))))
+
 (deftest fan-site
   ;; Fan Site - Add to score area as 0 points when Corp scores an agenda
   (do-game
