@@ -1267,7 +1267,7 @@
                        :break {:ab 0 :amount 2 :cost 2 :type "Sentry"}
                        :boost {:ab 1 :amount 3 :cost 3}}))
 
-(deftest boi-tata-automated-test
+(deftest boi-tata-automated-test-with-trash-ev
   (basic-program-test {:name "Boi-tatá"
                        :runner-trash-ev true
                        :break {:ab 0 :amount 2 :cost 1 :type "Sentry"}
