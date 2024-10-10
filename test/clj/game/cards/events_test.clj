@@ -3476,6 +3476,21 @@
       (click-prompt state :runner "No action")
       (is (not (:run @state)) "Run is finished")))
 
+(deftest hot-pursuit-vs-seb
+  ;; Basic behavior
+  (do-game
+    (new-game {:runner {:id "Sebastião Souza Pessoa: Activist Organizer"
+                        :credits 2
+                        :deck ["Hot Pursuit" "The Supplier"]}})
+    (take-credits state :corp)
+    (play-run-event state "Hot Pursuit" :hq)
+    (is (= 9 (:credit (get-runner))) "Gained creds before firing sub's ability")
+    (is (= 1 (count-tags state)) "Took 1 tag on successful run")
+    (click-card state :runner "The Supplier")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run is finished")))
+
+
 (deftest hot-pursuit-bounce-from-hq
     ;; Bounce from HQ
     (do-game

@@ -1835,7 +1835,7 @@
              :msg "gain 9 [Credits] and take 1 tag"
              :req (req (and (= :hq (target-server context))
                             this-card-run))
-             :effect (req (wait-for (gain-tags state :runner 1)
+             :effect (req (wait-for (gain-tags state :runner 1 {:suppress-checkpoint true})
                                     (gain-credits state :runner eid 9)))}]})
 
 (defcard "I've Had Worse"

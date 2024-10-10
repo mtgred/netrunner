@@ -33,7 +33,7 @@
                 :cost [(->c :click)]
                 :msg "gain 1 [Credits]"
                 :async true
-                :effect (req (wait-for (gain-credits state side 1 :corp-click-credit)
+                :effect (req (wait-for (gain-credits state side 1 {:action :corp-click-credit})
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}
@@ -161,7 +161,7 @@
                 :cost [(->c :click)]
                 :msg "gain 1 [Credits]"
                 :async true
-                :effect (req (wait-for (gain-credits state side 1 :runner-click-credit)
+                :effect (req (wait-for (gain-credits state side 1 {:action :runner-click-credit})
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}

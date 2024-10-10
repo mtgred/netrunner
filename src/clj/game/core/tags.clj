@@ -2,7 +2,7 @@
   (:require
     [game.core.effects :refer [any-effects sum-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [trigger-event trigger-event-simult trigger-event-sync]]
+    [game.core.engine :refer [trigger-event trigger-event-simult trigger-event-sync queue-event checkpoint]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.gaining :refer [deduct gain]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
@@ -51,18 +51,23 @@
 
 (defn- resolve-tag
   "Resolve runner gain tags. Always gives `:base` tags."
-  [state side eid n]
+  [state side eid {:keys [card n suppress-checkpoint]}]
   (if (pos? n)
     (do (gain state :runner :tag {:base n})
         (toast state :runner (str "Took " (quantify n "tag") "!") "info")
         (update-tag-status state)
-        (trigger-event-simult state side eid :runner-gain-tag nil {:amount n}))
-    (effect-completed state side eid)))
+        (queue-event state :runner-gain-tag {:side side
+                                             :cause-card (select-keys card [:cid :title])
+                                             :amount n})
+        (if suppress-checkpoint
+          (effect-completed state nil eid)
+          (checkpoint state eid)))
+    (effect-completed state nil eid)))
 
 (defn gain-tags
   "Attempts to give the runner n tags, allowing for boosting/prevention effects."
   ([state side eid n] (gain-tags state side eid n nil))
-  ([state side eid n {:keys [unpreventable card] :as args}]
+  ([state side eid n {:keys [unpreventable card suppress-checkpoint] :as args}]
    (swap! state update :tag dissoc :tag-bonus :tag-prevent)
    (wait-for (trigger-event-simult state side :pre-tag nil card)
              (let [n (number-of-tags-to-gain state side n args)
@@ -85,9 +90,13 @@
                                              "will not avoid tags")]
                            (system-msg state :runner prevent-msg)
                            (clear-wait-prompt state :corp)
-                           (resolve-tag state side eid (max 0 (- n (or prevent 0))))))
+                           (resolve-tag state side eid {:suppress-checkpoint suppress-checkpoint
+                                                        :card card
+                                                        :n (max 0 (- n (or prevent 0)))})))
                        {:prompt-type :prevent}))
-                 (resolve-tag state side eid n))))))
+                 (resolve-tag state side eid {:suppress-checkpoint suppress-checkpoint
+                                              :card card
+                                              :n n}))))))
 
 (defn lose-tags
   "Always removes `:base` tags"
