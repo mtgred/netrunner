@@ -1394,12 +1394,17 @@
                             (not (in-discard? target))
                             (not (in-scored? target))))
              :once :per-turn
-             :msg "force the Corp to trash a random card from HQ"
              :effect (req (let [card-to-trash (first (shuffle (:hand corp)))
                                 card-seen? (same-card? target card-to-trash)
                                 card-to-trash (if card-seen? (assoc card-to-trash :seen true)
-                                                card-to-trash)]
-                            (trash state :corp eid card-to-trash {:cause-card card :cause :forced-to-trash})))}]})
+                                                  card-to-trash)]
+                            (continue-ability
+                              state side
+                              {:effect (req (trash state :corp eid card-to-trash {:cause-card card :cause :forced-to-trash}))
+                               :async true
+                               :msg (str "force the Corp to trash a random card from HQ"
+                                         (when card-seen? " (" (:title card-to-trash)")"))}
+                              card nil)))}]})
 
 (defcard "Maya"
   {:static-abilities [(mu+ 2)]
