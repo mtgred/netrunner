@@ -496,11 +496,12 @@
                                            (continue state :runner nil))}]}))
 
 (defcard "Atman"
-  {:on-install {:cost [(->c :x-credits)]
-                :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on itself")
-                :effect (effect (add-counter card :power (cost-value eid :x-credits)))}
-   :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
-   :static-abilities [(breaker-strength-bonus (req (get-counters card :power)))]})
+  (auto-icebreaker
+    {:on-install {:cost [(->c :x-credits)]
+                  :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on itself")
+                  :effect (effect (add-counter card :power (cost-value eid :x-credits)))}
+     :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
+     :static-abilities [(breaker-strength-bonus (req (get-counters card :power)))]}))
 
 (defcard "Au Revoir"
   {:events [{:event :jack-out
@@ -2742,16 +2743,19 @@
 (defcard "Pressure Spike"
   (letfn [(once [card]
             {:once :per-run
-             :once-key (str (:cid card) "-thread-pump")})]
-    {:implementation "Auto-breaking disabled for this card."
-     :abilities [(break-sub 1 1 "Barrier")
-                 (strength-pump 2 3)
-                 (let [base (strength-pump
-                              2 9 :end-of-encounter
-                              {:req (req (threat-level 4 state)
-                                         (not-used-once? state (once card) card))})]
-                   (assoc base :effect (req (register-once state side (once card) card)
-                                            ((:effect base) state side eid card targets))))]}))
+             :once-key (str (:cid card) "-threat-pump")})]
+    (auto-icebreaker
+      {:implementation "Auto-breaking always uses small boost."
+       :abilities [(break-sub 1 1 "Barrier")
+                   (strength-pump 2 3 :end-of-encounter {:auto-pump-sort 1})
+                   ;; note - this will get prioritized any time it is cheaper
+                   (let [base (strength-pump
+                                2 9 :end-of-encounter
+                                {:auto-pump-ignore true
+                                 :req (req (and (threat-level 4 state)
+                                                (not-used-once? state (once card) card)))})]
+                     (assoc base :effect (req (register-once state side (once card) card)
+                                              ((:effect base) state side eid card targets))))]})))
 
 (defcard "Progenitor"
   {:static-abilities [{:type :can-host
