@@ -1983,10 +1983,14 @@
 
 (defcard "Lobisomem"
   (auto-icebreaker {:data {:counter {:power 1}}
-                    :abilities [(break-sub 1 1 "Code Gate")
+                    :abilities [(break-sub 1 1 "Code Gate" {:auto-break-sort 1})
                                 {:label "Break X Barrier subroutines"
                                  :cost [(->c :x-credits) (->c :power 1)]
                                  :break-cost [(->c :x-credits) (->c :power 1)]
+                                 :auto-break-creds-per-sub 1
+                                 :break 0 ;; technically not correct, but it's enough for the engine to pick up for auto-breaking
+                                 :break-req (req (and (active-encounter? state)
+                                                      (has-subtype? current-ice "Barrier")))
                                  :req (req (and
                                              (active-encounter? state)
                                              (<= (get-strength current-ice) (get-strength card))))
@@ -2100,31 +2104,21 @@
 
 (defcard "Matryoshka"
   (let [break-abi {:label "Break X subroutines"
-                   :cost [(->c :x-credits)]
-                   :break-cost [(->c :x-credits)]
-                   :req (req (let [hosted (:hosted (get-card state card))
-                                   valid (filter #(not (facedown? %)) hosted)
-                                   same-title (filter #(= (:title card) (:title %)) valid)]
-                               (and (active-encounter? state)
-                                    current-ice card
-                                    (<= (get-strength current-ice) (get-strength card))
-                                    (not-empty same-title))))
-                                        ; no break-req to not enable auto-pumping
+                   :cost [(->c :x-credits)(->c :turn-hosted-matryoshka-facedown 1)]
+                   :break-cost [(->c :x-credits)(->c :turn-hosted-matryoshka-facedown 1)]
+                   :auto-break-creds-per-sub 1
+                   :break 0 ;; technically not correct, but it's enough for the engine to pick up for auto-breaking
+                   :break-req (req (active-encounter? state))
+                   :req (req (and
+                               (active-encounter? state)
+                               (<= (get-strength current-ice) (get-strength card))))
                    :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
-                             " on " (card-str state current-ice) " and turn 1 hosted copy of "
-                             (:title card) " facedown")
-                   :effect (req
-                             (let [hosted (:hosted (get-card state card))
-                                   valid (filter #(not (facedown? %)) hosted)
-                                   same-title (filter #(= (:title card) (:title %)) valid)
-                                   first-copy (first same-title)]
-                               (flip-facedown state side (get-card state first-copy))
-                               (if (pos? (cost-value eid :x-credits))
-                                 (continue-ability
-                                   state side
-                                   (break-sub nil (cost-value eid :x-credits) "All")
-                                   card nil)
-                                 (effect-completed state side eid))))}
+                             " on " (card-str state current-ice))
+                   :effect (effect
+                             (continue-ability
+                               (when (pos? (cost-value eid :x-credits))
+                                 (break-sub nil (cost-value eid :x-credits) "All" {:repeatable false}))
+                               card nil))}
         host-abi {:action true
                   :label "Host 1 copy of Matryoshka"
                   :prompt (msg "Choose 1 copy of " (:title card) " in the grip")
@@ -3415,7 +3409,12 @@
                                    :once :per-run
                                    :req (req (and (break-req state side eid card targets)
                                                   (<= (get-strength current-ice) (get-strength card))))
-                                   ; no break-req to not enable auto-pumping
+                                   :auto-break-creds-per-sub 1
+                                   :auto-break-sort 2
+                                   :break 0 ;; technically not correct, but it's enough for the engine to pick up for auto-breaking
+                                   :break-req (req (and (active-encounter? state)
+                                                        (not-used-once? state {:once :per-run} card)
+                                                        (has-subtype? current-ice "Code Gate")))
                                    :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
                                              " on " (card-str state current-ice))
                                    :effect (effect
@@ -3424,6 +3423,8 @@
                                                  (break-sub nil (cost-value eid :x-credits) "Code Gate"))
                                                card nil))}
                                   (break-sub 1 1 "Code Gate" {:label "Break 1 Code Gate subroutine (Virtual restriction)"
+                                                              ;; this should be prioritized when available
+                                                              :auto-break-sort 1
                                                               :req (req (<= 3 (count (filter #(has-subtype? % "Virtual")
                                                                                              (all-active-installed state :runner)))))})
                                   (strength-pump 1 1)]})))
