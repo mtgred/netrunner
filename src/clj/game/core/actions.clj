@@ -290,9 +290,10 @@
                    (when (:pump ability)
                      ((:req ability) state side eid card nil)))
         [pump-ability pump-cost]
-        (some->> (:abilities (card-def card))
+        (some->> (filter (complement :auto-pump-ignore) (:abilities (card-def card)))
                  (keep #(when (can-pump %)
                           [% (:cost %)]))
+                 (filter (complement :auto-pump-ignore))
                  (seq)
                  (sort-by #(-> % first :auto-pump-sort))
                  (apply min-key #(let [costs (second %)]
@@ -431,7 +432,7 @@
                      (when (:pump ability)
                        ((:req ability) state side eid card nil)))
           [pump-ability pump-cost]
-          (some->> (:abilities (card-def card))
+          (some->> (filter (complement :auto-pump-ignore) (:abilities (card-def card)))
                    (keep #(when (can-pump %)
                             [% (:cost %)]))
                    (seq)

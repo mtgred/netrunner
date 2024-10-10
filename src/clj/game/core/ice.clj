@@ -690,6 +690,7 @@
       :pump strength
       :pump-bonus (:pump-bonus args)
       :auto-pump-sort (:auto-break-sort args)
+      :auto-pump-ignore (:auto-pump-ignore args)
       :msg (msg "increase its strength from " (get-strength card)
                 " to " (+ (get-pump-strength
                             state side
@@ -719,7 +720,14 @@
               can-pump (fn [ability]
                          (when (:pump ability)
                            ((:req ability) state side eid card nil)))
-              pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+              [pump-ability pump-cost]
+              (some->> (filter (complement :auto-pump-ignore) (:abilities (card-def card)))
+                 (keep #(when (can-pump %)
+                          [% (:cost %)]))
+                 (seq)
+                 (sort-by #(-> % first :auto-pump-sort))
+                 (apply min-key #(let [costs (second %)]
+                                   (reduce (fnil + 0 0) 0 (keep :cost/amount costs)))))
               pump-strength (get-pump-strength state side pump-ability card)
               strength-diff (when (and current-ice
                                        (get-strength current-ice)
@@ -732,7 +740,7 @@
                            0)
               total-pump-cost (when (and pump-ability
                                          times-pump)
-                                (repeat times-pump (:cost pump-ability)))
+                                (repeat times-pump pump-cost))
               ;; break all subs
               can-break (fn [ability]
                           (when (:break-req ability)
