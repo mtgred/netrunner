@@ -673,7 +673,7 @@
                            [(->c :credit -1)]))]
     (auto-icebreaker
       {:abilities [(break-sub 2 2 "Sentry" {:break-cost-bonus discount-fn})
-                   (strength-pump 3 3 :end-of-encounter {:pump-cost-bonus discount-fn})]})))
+                   (strength-pump 3 3 :end-of-encounter {:cost-bonus discount-fn})]})))
 
 (defcard "Botulus"
   {:implementation "[Erratum] Program: Virus - Trojan"
