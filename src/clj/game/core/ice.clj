@@ -3,7 +3,7 @@
     [game.core.board :refer [all-active-installed all-installed card->server]]
     [game.core.card :refer [get-card ice? installed? rezzed? has-subtype?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [break-sub-ability-cost pump-card-ability-cost]]
+    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.effects :refer [any-effects get-effects register-lingering-effect sum-effects]]
     [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult queue-event checkpoint]]
@@ -689,7 +689,7 @@
       :cost [cost]
       :pump strength
       :pump-bonus (:pump-bonus args)
-      :pump-cost-bonus (:pump-cost-bonus args)
+      :cost-bonus (:cost-bonus args)
       :auto-pump-sort (:auto-break-sort args)
       :auto-pump-ignore (:auto-pump-ignore args)
       :msg (msg "increase its strength from " (get-strength card)
@@ -724,7 +724,7 @@
               [pump-ability pump-cost]
               (some->> (filter (complement :auto-pump-ignore) (:abilities (card-def card)))
                  (keep #(when (can-pump %)
-                          [% (pump-card-ability-cost state side % card current-ice)]))
+                          [% (card-ability-cost state side % card current-ice)]))
                  (seq)
                  (sort-by #(-> % first :auto-pump-sort))
                  (apply min-key #(let [costs (second %)]
