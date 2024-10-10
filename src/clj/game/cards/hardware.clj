@@ -32,7 +32,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [hand-size runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [all-subs-broken? any-subs-broken? break-sub pump
+   [game.core.ice :refer [all-subs-broken? any-subs-broken? auto-icebreaker break-sub pump
                           reset-all-ice update-all-ice update-all-icebreakers
                           update-breaker-strength]]
    [game.core.installing :refer [runner-can-install? runner-can-pay-and-install? runner-install]]
@@ -338,50 +338,51 @@
                                (get-card state card) nil))}]})
 
 (defcard "Boomerang"
-  {:on-install {:prompt "Choose an installed piece of ice"
-                :msg (msg "target " (card-str state target))
-                :choices {:card #(and (installed? %)
-                                      (ice? %))}
-                :effect (effect (add-icon card target "B" (faction-label card))
-                                (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))}
-   :leave-play (effect (remove-icon card))
-   :abilities [(assoc
-                 (break-sub
-                   [(->c :trash-can)] 2 "All"
-                   {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
-                                (some #(same-card? boomerang-target (:ice %)) (:encounters @state))
-                                true))}) ; When eg. flipped by Assimilator
-                 :effect
-                 (req (wait-for
-                        (trash state side (make-eid state eid) card
-                               {:cause :ability-cost
-                                :cause-card card
-                                :unpreventable true})
-                        (continue-ability
-                          state :runner
-                          (when-let [[boomerang] async-result]
-                            (break-sub
-                              nil 2 "All"
-                              {:additional-ability
-                               {:effect
-                                (effect
-                                  (register-events
-                                    boomerang
-                                    [{:event :run-ends
-                                      :duration :end-of-run
-                                      :optional
-                                      {:req (req (and (:successful target)
-                                                      (not (zone-locked? state :runner :discard))
-                                                      (some #(= (:title card) (:title %)) (:discard runner))))
-                                       :once :per-run
-                                       :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
-                                       :yes-ability
-                                       {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
-                                        :effect (effect (move (some #(when (= (:title card) (:title %)) %)
-                                                                    (:discard runner))
-                                                              :deck)
-                                                        (shuffle! :deck))}}}]))}}))
-                          card nil))))]})
+  (auto-icebreaker
+    {:on-install {:prompt "Choose an installed piece of ice"
+                  :msg (msg "target " (card-str state target))
+                  :choices {:card #(and (installed? %)
+                                        (ice? %))}
+                  :effect (effect (add-icon card target "B" (faction-label card))
+                                  (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))}
+     :leave-play (effect (remove-icon card))
+     :abilities [(assoc
+                   (break-sub
+                     [(->c :trash-can)] 2 "All"
+                     {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
+                                  (some #(same-card? boomerang-target (:ice %)) (:encounters @state))
+                                  true))}) ; When eg. flipped by Assimilator
+                   :effect
+                   (req (wait-for
+                          (trash state side (make-eid state eid) card
+                                 {:cause :ability-cost
+                                  :cause-card card
+                                  :unpreventable true})
+                          (continue-ability
+                            state :runner
+                            (when-let [[boomerang] async-result]
+                              (break-sub
+                                nil 2 "All"
+                                {:additional-ability
+                                 {:effect
+                                  (effect
+                                    (register-events
+                                      boomerang
+                                      [{:event :run-ends
+                                        :duration :end-of-run
+                                        :optional
+                                        {:req (req (and (:successful target)
+                                                        (not (zone-locked? state :runner :discard))
+                                                        (some #(= (:title card) (:title %)) (:discard runner))))
+                                         :once :per-run
+                                         :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
+                                         :yes-ability
+                                         {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
+                                          :effect (effect (move (some #(when (= (:title card) (:title %)) %)
+                                                                      (:discard runner))
+                                                                :deck)
+                                                          (shuffle! :deck))}}}]))}}))
+                            card nil))))]}))
 
 (defcard "Box-E"
   {:static-abilities [(mu+ 2)
@@ -789,7 +790,7 @@
              :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]})
 
 (defcard "e3 Feedback Implants"
-  {:abilities [(break-sub 1 1 "All" {:req (req true)})]})
+  (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:req (req (any-subs-broken? current-ice))})]}))
 
 (defcard "Ekomind"
   (let [update-base-mu (fn [state n] (swap! state assoc-in [:runner :memory :base] n))]
@@ -820,14 +821,15 @@
                                                     true))))}]))}]})
 
 (defcard "Endurance"
-  {:data {:counter {:power 3}}
-   :static-abilities [(mu+ 2)]
-   :events [{:event :successful-run
-             :req (req (first-event? state :runner :successful-run))
-             :msg "place 1 power counter on itself"
-             :async true
-             :effect (effect (add-counter eid card :power 1 nil))}]
-   :abilities [(break-sub [(->c :power 2)] 2 "All")]})
+  (auto-icebreaker
+    {:data {:counter {:power 3}}
+     :static-abilities [(mu+ 2)]
+     :events [{:event :successful-run
+               :req (req (first-event? state :runner :successful-run))
+               :msg "place 1 power counter on itself"
+               :async true
+               :effect (effect (add-counter eid card :power 1 nil))}]
+     :abilities [(break-sub [(->c :power 2)] 2 "All")]}))
 
 (defcard "Feedback Filter"
   {:interactions {:prevent [{:type #{:net :brain}
@@ -1709,9 +1711,10 @@
                 :effect (req (damage-prevent state side :meat 1))}]})
 
 (defcard "Poison Vial"
-  {:data {:counter {:power 3}}
-   :events [(trash-on-empty :power)]
-   :abilities [(break-sub [(->c :power 1)] 2 "All" {:req (req (any-subs-broken? current-ice))})]})
+  (auto-icebreaker
+    {:data {:counter {:power 3}}
+     :events [(trash-on-empty :power)]
+     :abilities [(break-sub [(->c :power 1)] 2 "All" {:req (req (any-subs-broken? current-ice))})]}))
 
 (defcard "Polyhistor"
   (let [abi {:optional

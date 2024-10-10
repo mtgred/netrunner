@@ -496,11 +496,12 @@
                                            (continue state :runner nil))}]}))
 
 (defcard "Atman"
-  {:on-install {:cost [(->c :x-credits)]
-                :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on itself")
-                :effect (effect (add-counter card :power (cost-value eid :x-credits)))}
-   :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
-   :static-abilities [(breaker-strength-bonus (req (get-counters card :power)))]})
+  (auto-icebreaker
+    {:on-install {:cost [(->c :x-credits)]
+                  :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on itself")
+                  :effect (effect (add-counter card :power (cost-value eid :x-credits)))}
+     :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
+     :static-abilities [(breaker-strength-bonus (req (get-counters card :power)))]}))
 
 (defcard "Au Revoir"
   {:events [{:event :jack-out
@@ -668,26 +669,24 @@
       (strength-pump (->c :credit 3 {:stealth 1}) 4 :end-of-run)]}))
 
 (defcard "Boi-tatá"
-  (letfn [(was-a-runner-card?
-            [target]
-            (runner? (:card (first target))))]
-    {:static-abilities [{:type :card-ability-cost
-                         :req (req (and (same-card? card (:card context))
-                                        (not (no-event? state side :runner-trash was-a-runner-card?))))
-                         :value (->c :credit -1)}]
-     :abilities [(break-sub 2 2 "Sentry")
-                 (strength-pump 3 3)]}))
+  (let [was-a-runner-card? (fn [target] (runner? (:card (first target))))
+        discount-fn (req (when (not (no-event? state side :runner-trash was-a-runner-card?))
+                           [(->c :credit -1)]))]
+    (auto-icebreaker
+      {:abilities [(break-sub 2 2 "Sentry" {:break-cost-bonus discount-fn})
+                   (strength-pump 3 3 :end-of-encounter {:cost-bonus discount-fn})]})))
 
 (defcard "Botulus"
-  {:implementation "[Erratum] Program: Virus - Trojan"
-   :data {:counter {:virus 1}}
-   :hosting {:req (req (and (ice? target)
-                            (can-host? state target)))}
-   :events [{:event :runner-turn-begins
-             :effect (effect (add-counter card :virus 1))}]
-   :abilities [(break-sub
-                 [(->c :virus 1)] 1 "All"
-                 {:req (req (same-card? current-ice (:host card)))})]})
+  (auto-icebreaker
+    {:implementation "[Erratum] Program: Virus - Trojan"
+     :data {:counter {:virus 1}}
+     :hosting {:req (req (and (ice? target)
+                              (can-host? state target)))}
+     :events [{:event :runner-turn-begins
+               :effect (effect (add-counter card :virus 1))}]
+     :abilities [(break-sub
+                   [(->c :virus 1)] 1 "All"
+                   {:req (req (same-card? current-ice (:host card)))})]}))
 
 (defcard "Brahman"
   (auto-icebreaker {:abilities [(break-sub 1 2 "All")
@@ -1128,9 +1127,10 @@
                                                                    true))})]}))
 
 (defcard "D4v1d"
-  (let [david-req (req (<= 5 (get-strength current-ice)))]
-    {:data {:counter {:power 3}}
-     :abilities [(break-sub [(->c :power 1)] 1 "All" {:req david-req})]}))
+  (auto-icebreaker
+    (let [david-req (req (<= 5 (get-strength current-ice)))]
+      {:data {:counter {:power 3}}
+       :abilities [(break-sub [(->c :power 1)] 1 "All" {:req david-req})]})))
 
 (defcard "Dagger"
   (auto-icebreaker
@@ -2743,16 +2743,18 @@
 (defcard "Pressure Spike"
   (letfn [(once [card]
             {:once :per-run
-             :once-key (str (:cid card) "-thread-pump")})]
-    {:implementation "Auto-breaking disabled for this card."
-     :abilities [(break-sub 1 1 "Barrier")
-                 (strength-pump 2 3)
-                 (let [base (strength-pump
-                              2 9 :end-of-encounter
-                              {:req (req (threat-level 4 state)
-                                         (not-used-once? state (once card) card))})]
-                   (assoc base :effect (req (register-once state side (once card) card)
-                                            ((:effect base) state side eid card targets))))]}))
+             :once-key (str (:cid card) "-threat-pump")})]
+    (auto-icebreaker
+      {:abilities [(break-sub 1 1 "Barrier")
+                   (strength-pump 2 3 :end-of-encounter {:auto-pump-sort 1})
+                   ;; note - this will get prioritized any time it is cheaper
+                   (let [base (strength-pump
+                                2 9 :end-of-encounter
+                                {:auto-pump-ignore true
+                                 :req (req (and (threat-level 4 state)
+                                                (not-used-once? state (once card) card)))})]
+                     (assoc base :effect (req (register-once state side (once card) card)
+                                              ((:effect base) state side eid card targets))))]})))
 
 (defcard "Progenitor"
   {:static-abilities [{:type :can-host

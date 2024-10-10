@@ -142,9 +142,12 @@
 (defn update-ability-cost-str
   [state side card ability-kw]
   (into [] (for [ab (get card ability-kw)
-                 :let [ab-cost (if (:break-cost ab)
-                                 (assoc ab :cost (break-sub-ability-cost state side ab card))
-                                 ab)]]
+                 :let [ab-cost
+                       (cond
+                         (:break-cost ab)
+                         (assoc ab :cost (break-sub-ability-cost state side ab card))
+                         :else
+                         ab)]]
              (add-cost-label-to-ability ab (card-ability-cost state side ab-cost card)))))
 
 (defn update-abilities-cost-str
