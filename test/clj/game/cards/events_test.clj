@@ -3476,6 +3476,21 @@
       (click-prompt state :runner "No action")
       (is (not (:run @state)) "Run is finished")))
 
+(deftest hot-pursuit-vs-seb
+  ;; Basic behavior
+  (do-game
+    (new-game {:runner {:id "Sebastião Souza Pessoa: Activist Organizer"
+                        :credits 2
+                        :deck ["Hot Pursuit" "The Supplier"]}})
+    (take-credits state :corp)
+    (play-run-event state "Hot Pursuit" :hq)
+    (is (= 9 (:credit (get-runner))) "Gained creds before firing sub's ability")
+    (is (= 1 (count-tags state)) "Took 1 tag on successful run")
+    (click-card state :runner "The Supplier")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run is finished")))
+
+
 (deftest hot-pursuit-bounce-from-hq
     ;; Bounce from HQ
     (do-game
@@ -6458,6 +6473,21 @@
       (is (zero? (get-strength (refresh turing))) "Scrubbed reduces strength by 2")
       (run-continue state :movement)
       (run-jack-out state))))
+
+(deftest security-leak
+  (do-game
+    (new-game {:corp {:hand ["Hostile Takeover"]}
+               :runner {:hand ["Security Leak"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Security Leak")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (dotimes [_ 2]
+      (is (changed? [(:credit (get-corp)) -2]
+            (click-advance state :corp (get-content state :remote1 0)))
+          "Spent 2c to advance hostile takeover"))
+    (score state :corp (get-content state :remote1 0))
+    (is (is-discard? state :runner ["Security Leak"]) "Security leak works like other currents")))
 
 (deftest showing-off
   ;; Showing Off

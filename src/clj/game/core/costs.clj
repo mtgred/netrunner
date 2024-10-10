@@ -243,11 +243,12 @@
                                              :paid/targets [card]}))))
 
 ;; Trash
-(defmethod value :trash-can [cost] 1)
+(defmethod value :trash-can [cost] (:cost/amount cost))
 (defmethod label :trash-can [cost] "[trash]")
 (defmethod payable? :trash-can
   [cost state side eid card]
-  (installed? (get-card state card)))
+  (and (installed? (get-card state card))
+       (= 1 (value cost))))
 (defmethod handler :trash-can
   [cost state side eid card]
   (wait-for (trash state side card {:cause :ability-cost

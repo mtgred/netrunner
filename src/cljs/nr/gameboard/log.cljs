@@ -48,11 +48,13 @@
 (defn send-typing
   "Send a typing event to server for this user if it is not already set in game state AND user is not a spectator"
   [s]
-  (let [text (:msg @s)]
-    (when (and (not (:replay @game-state))
-               (not-spectator?))
-      (ws/ws-send! [:game/typing {:gameid (current-gameid app-state)
-                                  :typing (boolean (seq text))}]))))
+  (r/with-let [typing (r/cursor game-state [:typing])]
+    (let [text (:msg @s)]
+      (when (and (not (:replay @game-state))
+                 (not @typing)
+                 (not-spectator?))
+        (ws/ws-send! [:game/typing {:gameid (current-gameid app-state)
+                                    :typing (boolean (seq text))}])))))
 
 (defn indicate-action []
   (when (not-spectator?)

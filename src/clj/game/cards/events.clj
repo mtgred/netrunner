@@ -1835,7 +1835,7 @@
              :msg "gain 9 [Credits] and take 1 tag"
              :req (req (and (= :hq (target-server context))
                             this-card-run))
-             :effect (req (wait-for (gain-tags state :runner 1)
+             :effect (req (wait-for (gain-tags state :runner 1 {:suppress-checkpoint true})
                                     (gain-credits state :runner eid 9)))}]})
 
 (defcard "I've Had Worse"
@@ -3557,6 +3557,13 @@
                             :req (req (same-card? target target-ice))
                             :value -2}))
                        (update-all-ice))}]})
+
+(defcard "Security Leak"
+  {:static-abilities [{:type :card-ability-additional-cost
+                       :req (req (and (same-card? (:card context) (:basic-action-card corp))
+                                      (= "Advance 1 installed card"
+                                         (:label (:ability context)))))
+                      :value (->c :credit 1)}]})
 
 (defcard "Showing Off"
   {:makes-run true

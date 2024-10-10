@@ -33,7 +33,7 @@
                 :cost [(->c :click)]
                 :msg "gain 1 [Credits]"
                 :async true
-                :effect (req (wait-for (gain-credits state side 1 :corp-click-credit)
+                :effect (req (wait-for (gain-credits state side 1 {:action :corp-click-credit})
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}
@@ -103,7 +103,7 @@
                 :async true
                 :req (req tagged)
                 :prompt "Choose a resource to trash"
-                :msg (msg "trash " (:title (:card context)))
+                :msg (msg "trash " (:title target))
                 ;; I hate that we need to modify the basic action card like this, but I don't think there's any way around it -nbkelly, '24
                 :choices {:req (req (and (if (and (->> (all-active-installed state :runner)
                                                        (filter (fn [c] (untrashable-while-resources? c)))
@@ -143,7 +143,7 @@
                                                                          nil additional-costs)
                                                                     (system-msg state side (str (:msg async-result) " as an additional cost to trash " (:title target)))
                                                                     (complete-with-result state side eid target))))}
-                                          card nil)
+                                          card targets)
                                         (if async-result
                                           (trash state side eid target nil)
                                           (effect-completed state side eid))))))}
@@ -161,7 +161,7 @@
                 :cost [(->c :click)]
                 :msg "gain 1 [Credits]"
                 :async true
-                :effect (req (wait-for (gain-credits state side 1 :runner-click-credit)
+                :effect (req (wait-for (gain-credits state side 1 {:action :runner-click-credit})
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}

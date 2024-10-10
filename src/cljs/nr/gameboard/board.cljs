@@ -209,6 +209,18 @@
           ; else
           nil)))))
 
+(defn spectate-side []
+  (let [corp-specs (get-in @app-state [:current-game :corp-spectators])
+        runner-specs (get-in @app-state [:current-game :runner-spectators])
+        me (:user @app-state)]
+    (cond
+      (some #(= (:uid %) (:uid me)) corp-specs)
+      :corp
+      (some #(= (:uid %) (:uid me)) runner-specs)
+      :runner
+      :else
+      nil)))
+
 (defn spectator-view-hidden?
   "Checks if spectators are allowed to see hidden information, such as hands and face-down cards"
   []
@@ -1699,10 +1711,12 @@
 (defn basic-actions [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me]}]
   [:div.panel.blue-shade
    (if (= (keyword @active-player) side)
+     ;; !!here
      (when (and (not (or @runner-phase-12 @corp-phase-12))
                 (zero? (:click @me))
                 (not @end-turn))
-       [:button {:on-click #(send-command "end-turn")}
+       [:button {:on-click #(do (close-card-menu)
+                                (send-command "end-turn"))}
         (tr [:game.end-turn "End Turn"])])
      (when @end-turn
        [:button {:on-click #(do
@@ -1997,6 +2011,7 @@
                    (zero? clicks)
                    (not @end-turn))
               (do (send-command "end-turn")
+                  (close-card-menu)
                   (.stopPropagation e))
               ;; gain clicks/mandatory draw
               (and (= active-player-kw @side)
@@ -2078,7 +2093,9 @@
        :reagent-render
        (fn []
         (when (and @corp @runner @side true)
-           (let [me-side (if (= :spectator @side) :corp @side)
+          (let [me-side (if (= :spectator @side)
+                          (or (spectate-side) :corp)
+                          @side)
                  op-side (utils/other-side me-side)
                  me (r/cursor game-state [me-side])
                  opponent (r/cursor game-state [op-side])
@@ -2186,7 +2203,8 @@
                      [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
                      [rfg-view op-current (tr [:game.current "Current"]) false]
                      [rfg-view me-current (tr [:game.current "Current"]) false]])
-                  (when-not (= @side :spectator)
+                  (when (or (not= @side :spectator)
+                            (and (spectator-view-hidden?) (spectate-side)))
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters
                                   :end-turn end-turn :runner-phase-12 runner-phase-12
                                   :corp-phase-12 corp-phase-12 :corp corp :runner runner

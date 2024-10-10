@@ -3,7 +3,7 @@
     [game.core.board :refer [all-active-installed all-installed card->server]]
     [game.core.card :refer [get-card ice? installed? rezzed? has-subtype?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [break-sub-ability-cost]]
+    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.effects :refer [any-effects get-effects register-lingering-effect sum-effects]]
     [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult queue-event checkpoint]]
@@ -689,7 +689,9 @@
       :cost [cost]
       :pump strength
       :pump-bonus (:pump-bonus args)
+      :cost-bonus (:cost-bonus args)
       :auto-pump-sort (:auto-break-sort args)
+      :auto-pump-ignore (:auto-pump-ignore args)
       :msg (msg "increase its strength from " (get-strength card)
                 " to " (+ (get-pump-strength
                             state side
@@ -719,7 +721,14 @@
               can-pump (fn [ability]
                          (when (:pump ability)
                            ((:req ability) state side eid card nil)))
-              pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+              [pump-ability pump-cost]
+              (some->> (filter (complement :auto-pump-ignore) (:abilities (card-def card)))
+                 (keep #(when (can-pump %)
+                          [% (card-ability-cost state side % card current-ice)]))
+                 (seq)
+                 (sort-by #(-> % first :auto-pump-sort))
+                 (apply min-key #(let [costs (second %)]
+                                   (reduce (fnil + 0 0) 0 (keep :cost/amount costs)))))
               pump-strength (get-pump-strength state side pump-ability card)
               strength-diff (when (and current-ice
                                        (get-strength current-ice)
@@ -732,7 +741,7 @@
                            0)
               total-pump-cost (when (and pump-ability
                                          times-pump)
-                                (repeat times-pump (:cost pump-ability)))
+                                (repeat times-pump pump-cost))
               ;; break all subs
               can-break (fn [ability]
                           (when (:break-req ability)
@@ -764,7 +773,7 @@
                                        pump-ability))
                             (vec (concat abs
                                          (when (and break-ability
-                                                    (or pump-ability (zero? strength-diff))
+                                                    (or (not (get-strength card)) pump-ability (zero? strength-diff))
                                                     no-unbreakable-subs
                                                     (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
