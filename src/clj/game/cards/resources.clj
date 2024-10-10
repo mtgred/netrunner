@@ -1342,7 +1342,7 @@
 
 (defcard "Environmental Testing"
   {:events [{:event :runner-install
-             :silent (req true)
+             :silent (req (not= 3 (get-counters card :power)))
              :req (req (and (or (hardware? (:card context))
                                 (program? (:card context)))
                             (not (:facedown? context))))

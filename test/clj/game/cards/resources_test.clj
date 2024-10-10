@@ -2290,6 +2290,21 @@
             "Env. Testing was trashed"))
           "Env Testing pops for 9c"))))
 
+(deftest environmental-testing-interactive-at-3
+  ;; can just be silent if there's not 3 counters
+  (do-game
+    (new-game {:runner {:hand ["Environmental Testing" (qty "Ika" 3) "Muse"]
+                        :deck ["Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Environmental Testing")
+    (dotimes [_ 3]
+      (play-from-hand state :runner "Ika"))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Muse")
+    (is (= ["Environmental Testing" "Muse"] (sort (prompt-titles :runner)))
+        "Option to trigger either muse of environmental testing first")))
+
 (deftest eru-ayase-pessoa
   (do-game
     (new-game {:corp {:hand ["IPO" "IPO" "City Works Project"]
