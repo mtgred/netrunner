@@ -509,13 +509,14 @@
              :msg "gain 1 [Credits]"}]})
 
 (defcard "Audrey v2"
-  {:abilities [(break-sub [(->c :virus 1)] 2)
-               (strength-pump [(->c :trash-from-hand 1)] 3)]
-   :events [{:event :runner-trash
-             :once-per-instance true
-             :req (req (:accessed target))
-             :effect (effect (add-counter :runner card :virus 1))
-             :msg "place 1 virus counter on itself"}]})
+  (auto-icebreaker
+    {:abilities [(break-sub [(->c :virus 1)] 2)
+                 (strength-pump [(->c :trash-from-hand 1)] 3)]
+     :events [{:event :runner-trash
+               :once-per-instance true
+               :req (req (:accessed target))
+               :effect (effect (add-counter :runner card :virus 1))
+               :msg "place 1 virus counter on itself"}]}))
 
 (defcard "Aumakua"
   (auto-icebreaker {:implementation "[Erratum] Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
