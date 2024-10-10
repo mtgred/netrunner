@@ -668,15 +668,12 @@
       (strength-pump (->c :credit 3 {:stealth 1}) 4 :end-of-run)]}))
 
 (defcard "Boi-tatá"
-  (letfn [(was-a-runner-card?
-            [target]
-            (runner? (:card (first target))))]
-    {:static-abilities [{:type :card-ability-cost
-                         :req (req (and (same-card? card (:card context))
-                                        (not (no-event? state side :runner-trash was-a-runner-card?))))
-                         :value (->c :credit -1)}]
-     :abilities [(break-sub 2 2 "Sentry")
-                 (strength-pump 3 3)]}))
+  (let [was-a-runner-card? (fn [target] (runner? (:card (first target))))
+        discount-fn (req (when (not (no-event? state side :runner-trash was-a-runner-card?))
+                           [(->c :credit -1)]))]
+    (auto-icebreaker
+      {:abilities [(break-sub 2 2 "Sentry" {:break-cost-bonus discount-fn})
+                   (strength-pump 3 3 :end-of-encounter {:pump-cost-bonus discount-fn})]})))
 
 (defcard "Botulus"
   {:implementation "[Erratum] Program: Virus - Trojan"
@@ -2745,8 +2742,7 @@
             {:once :per-run
              :once-key (str (:cid card) "-threat-pump")})]
     (auto-icebreaker
-      {:implementation "Auto-breaking always uses small boost."
-       :abilities [(break-sub 1 1 "Barrier")
+      {:abilities [(break-sub 1 1 "Barrier")
                    (strength-pump 2 3 :end-of-encounter {:auto-pump-sort 1})
                    ;; note - this will get prioritized any time it is cheaper
                    (let [base (strength-pump
