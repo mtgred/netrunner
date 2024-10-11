@@ -13,7 +13,7 @@
    [jinteki.cards :refer [all-cards]]
    [jinteki.utils :refer [add-cost-to-label is-tagged? select-non-nil-keys
                           str->int] :as utils]
-   [nr.appstate :refer [app-state]]
+   [nr.appstate :refer [app-state current-gameid]]
    [nr.cardbrowser :refer [card-as-text]]
    [nr.end-of-game-stats :refer [build-game-stats]]
    [nr.gameboard.actions :refer [send-command]]
@@ -28,6 +28,7 @@
    [nr.translations :refer [tr tr-side tr-game-prompt]]
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
                      image-or-face render-icons render-message]]
+   [nr.ws :as ws]
    [reagent.core :as r]))
 
 (declare stacked-card-view show-distinct-cards)
@@ -1291,6 +1292,18 @@
            [:div (tr [:game.time-taken] time)]
            [:br]
            [build-game-stats (get-in @game-state [:stats :corp]) (get-in @game-state [:stats :runner])]
+           (when (not= :spectator (:side @game-state))
+             [:br]
+             [:div {:class "end-of-game-buttons"}
+              (when (= :corp (:side @game-state))
+                [:button#rez-all
+                 {:on-click #(ws/ws-send! [:game/say {:gameid (current-gameid app-state)
+                                                      :msg "/rez-all"}])}
+                 (tr [:game.rez-all "Rez All"])])
+              [:button#reveal-hand
+               {:on-click #(ws/ws-send! [:game/say {:gameid (current-gameid app-state)
+                                                    :msg "/show-hand"}])}
+               (tr [:game.reveal-my-hand "Reveal My Hand"])]])
            [:button.win-right {:on-click #(reset! win-shown true) :type "button"} "✘"]])))))
 
 (defn build-start-box
