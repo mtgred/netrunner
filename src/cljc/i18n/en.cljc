@@ -726,6 +726,8 @@
           :end-turn "End Turn"
           :mandatory-draw "Mandatory Draw"
           :take-clicks "Take Clicks"
+          :rez-all "Rez All"
+          :reveal-my-hand "Reveal My Hand"
           :hq "HQ"
           :grip "Grip"
           :rfg "Removed from the game"
