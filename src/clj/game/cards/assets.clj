@@ -2998,6 +2998,20 @@
                                       (contains? break-ability :break-cost)))))
                        :value true}]})
 
+(defcard "Trojan"
+  {:flags {:rd-reveal (req true)}
+   :poison true
+   :on-access {:async true
+               :req (req (not (in-discard? card)))
+               :msg (msg "lose 2 [Credits], destroy itself, and trash 1 card from HQ at random")
+               :effect (req (wait-for
+                              (lose-credits state :corp 2)
+                              (move state side card :destroyed)
+                              (let [trash-target (first (shuffle (get-in @state [:corp :hand])))]
+                                (if trash-target
+                                  (trash state :corp eid trash-target {:cause-card card})
+                                  (effect-completed state side eid)))))}})
+
 (defcard "Turtlebacks"
   {:events [{:event :server-created
              :msg "gain 1 [Credits]"
