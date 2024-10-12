@@ -163,6 +163,12 @@
   (= (get-zone card) #?(:clj [:play-area]
                         :cljs ["play-area"])))
 
+(defn in-destroyed?
+  "Checks if the specific card is in a set-aside area."
+  [card]
+  (= (get-zone card) #?(:clj [:destroyed]
+                        :cljs ["destroyed"])))
+
 (defn in-set-aside?
   "Checks if the specific card is in a set-aside area."
   [card]
@@ -469,6 +475,7 @@
        (in-current? card)
        (in-play-area? card)
        (in-rfg? card)
+       (in-destroyed? card)
        (set-aside-visible? card side)
        (if (= side :corp)
          ;; public runner cards:
