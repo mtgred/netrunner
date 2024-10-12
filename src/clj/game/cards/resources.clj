@@ -2953,7 +2953,6 @@
      :abilities [ability]}))
 
 (defcard "Shadow Team"
-  ;; we need to implement on-draw functionality
   {:on-draw {:req (req (and (runner-can-pay-and-install? state side eid card)
                             (in-set-aside? card)))
              :msg (msg "install itself")
