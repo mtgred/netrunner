@@ -820,6 +820,24 @@
                  :async true
                  :effect (effect (gain-credits :corp eid 5))}}}})
 
+(defcard "Evidence Collection"
+  {:events [{:event :win
+             :req (req (= :corp (:winner @state)))
+             :msg (msg "reveal set 2")}]})
+
+(defcard "Evidence Collection 2"
+  {:events [{:event :win
+             :req (req (= :corp (:winner @state)))
+             :msg (msg "reveal set 5")}]})
+
+(defcard "Evidence Collection 3"
+  {:events [{:event :win
+             :req (req (= :corp (:winner @state)))
+             :msg (msg "reveal set 8")}]})
+
+(defcard "Evidence Collection 4"
+  {:agendapoints-runner (req 1)})
+
 (defcard "False Lead"
   {:abilities [{:req (req (<= 2 (:click runner)))
                 :label "runner loses [Click][Click]"
