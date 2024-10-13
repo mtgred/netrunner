@@ -49,6 +49,7 @@
   (swap! app-state assoc-in [:options :player-stats-icons] (:player-stats-icons @s))
   (swap! app-state assoc-in [:options :stacked-cards] (:stacked-cards @s))
   (swap! app-state assoc-in [:options :ghost-trojans] (:ghost-trojans @s))
+  (swap! app-state assoc-in [:options :display-encounter-info] (:display-encounter-info @s))
   (swap! app-state assoc-in [:options :sides-overlap] (:sides-overlap @s))
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
   (swap! app-state assoc-in [:options :log-width] (:log-width @s))
@@ -69,6 +70,7 @@
   (.setItem js/localStorage "player-stats-icons" (:player-stats-icons @s))
   (.setItem js/localStorage "stacked-cards" (:stacked-cards @s))
   (.setItem js/localStorage "ghost-trojans" (:ghost-trojans @s))
+  (.setItem js/localStorage "display-encounter-info" (:display-encounter-info @s))
   (.setItem js/localStorage "sides-overlap" (:sides-overlap @s))
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
   (.setItem js/localStorage "card-back" (:card-back @s))
@@ -377,7 +379,13 @@
                              :value true
                              :checked (:ghost-trojans @s)
                              :on-change #(swap! s assoc-in [:ghost-trojans] (.. % -target -checked))}]
-             (tr [:settings.ghost-trojans "Display ghosts for hosted programs"])]]
+             (tr [:settings.display-encounter-info "Display ghosts for hosted programs"])]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:display-encounter-info @s)
+                             :on-change #(swap! s assoc-in [:display-encounter-info] (.. % -target -checked))}]
+             (tr [:settings.display-encounter-info "Always display encounter info dialog"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
@@ -580,7 +588,7 @@
 
      [api-keys s]
 
-     [:section 
+     [:section
       [:span.flash-message (:flash-message @s)]]]])}))
 
 (defn account []
@@ -605,6 +613,7 @@
                        :card-resolution (get-in @app-state [:options :card-resolution])
                        :stacked-cards (get-in @app-state [:options :stacked-cards])
                        :ghost-trojans (get-in @app-state [:options :ghost-trojans])
+                       :display-encounter-info (get-in @app-state [:options :display-encounter-info])
                        :sides-overlap (get-in @app-state [:options :sides-overlap])
                        :player-stats-icons (get-in @app-state [:options :player-stats-icons])
                        :runner-board-order (get-in @app-state [:options :runner-board-order])

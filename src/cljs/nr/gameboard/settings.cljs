@@ -32,7 +32,13 @@
                         :value true
                         :checked (get-in @app-state [:options :ghost-trojans])
                         :on-change #(swap! app-state assoc-in [:options :ghost-trojans] (.. % -target -checked))}]
-        (tr [:ingame-settings.ghost-trojans "Display hosted trojans in rig"])]]]
+        (tr [:ingame-settings.ghost-trojans "Display hosted trojans in rig"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :display-encounter-info])
+                        :on-change #(swap! app-state assoc-in [:options :display-encounter-info] (.. % -target -checked))}]
+        (tr [:ingame-settings.display-encounter-info "Always display encounter info"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings.card-sorting "Sorting"])]
