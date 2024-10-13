@@ -580,17 +580,27 @@
      (doall
        (map-indexed
          (fn [i sub]
-           [:div {:key i}
-            [:span (cond (:broken sub)
-                         {:class :disabled
-                          :style {:font-style :italic}}
-                         (false? (:resolve sub))
-                         {:class :dont-resolve
-                          :style {:text-decoration :line-through}})
-             (render-icons (str " [Subroutine] " (:label sub)))]
-            [:span.float-right
-             (cond (:broken sub) banned-span
-                   (:fired sub) "✅")]])
+           (let [fire-sub #(when (= :corp (:side @game-state))
+                             (send-command "subroutine" {:card ice
+                                                         :subroutine i})
+                             (close-card-menu))]
+             [:div {:key i
+                    :tab-index 0
+                    :on-click fire-sub
+                    :on-key-down #(when (= "Enter" (.-key %))
+                                    (fire-sub))
+                    :on-key-up #(when (= " " (.-key %))
+                                  (fire-sub))}
+              [:span (cond (:broken sub)
+                           {:class :disabled
+                            :style {:font-style :italic}}
+                           (false? (:resolve sub))
+                           {:class :dont-resolve
+                            :style {:text-decoration :line-through}})
+               (render-icons (str " [Subroutine] " (:label sub)))]
+              [:span.float-right
+               (cond (:broken sub) banned-span
+                     (:fired sub) "✅")]]))
          subroutines))]))
 
 (defn card-abilities [card abilities subroutines]
@@ -1430,7 +1440,7 @@
                :on-mouse-out #(card-highlight-mouse-out % ice button-channel)}
          (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (get-title ice))]
         [:hr]
-        (when (:button @app-state)
+        (when (or (:button @app-state) (get-in @app-state [:options :display-encounter-info]))
           [encounter-info-div ice])])
      (when @run
        [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title (:phase @run) (tr [:game.unknown-phase "Unknown phase"]))])
@@ -1500,7 +1510,7 @@
                :on-mouse-out #(card-highlight-mouse-out % ice button-channel)}
          (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (get-title ice))]
         [:hr]
-        (when (:button @app-state)
+        (when (or (:button @app-state)  (get-in @app-state [:options :display-encounter-info]))
           [encounter-info-div ice])])
      (when @run
        [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title phase)])
