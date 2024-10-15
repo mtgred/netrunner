@@ -8,7 +8,7 @@
     [nr.gameboard.actions :refer [send-command]]
     [nr.gameboard.card-preview :refer [card-preview-mouse-out
                                        card-preview-mouse-over zoom-channel]]
-    [nr.gameboard.state :refer [game-state not-spectator?]]
+    [nr.gameboard.state :refer [game-state not-spectator? all-users?]]
     [nr.translations :refer [tr]]
     [nr.utils :refer [influence-dot player-highlight-option-class
                       render-message render-player-highlight]]
@@ -179,20 +179,26 @@
          [command-menu !input-ref state]]))))
 
 (defn format-system-timestamp [timestamp text corp runner]
-  (if (contains? (set [corp runner]) (first (string/split text #" ")))
-    [:div.timestamp-wrapper
-      [:span.timestamp "[" (.toLocaleTimeString (js/Date. timestamp)) "]"]
+  (if (get-in @app-state [:options :log-timestamps])
+    (if (not= text "[hr]")
+      [:div.timestamp-wrapper
+       [:span.timestamp "[" (.toLocaleTimeString (js/Date. timestamp)) "]"]
+       (render-message (render-player-highlight text corp runner))
+       ]
       (render-message (render-player-highlight text corp runner))
-      ]
+      )
     (render-message (render-player-highlight text corp runner))
     )
   )
 
 (defn format-user-timestamp [timestamp user]
-  [:div.timestamp-wrapper
-   [:div.timestamp "[" (.toLocaleTimeString (js/Date. timestamp)) "]"]
-   [:div.username (:username user)]
-   ]
+  (if (get-in @app-state [:options :log-timestamps])
+    [:div.timestamp-wrapper
+     [:div.timestamp "[" (.toLocaleTimeString (js/Date. timestamp)) "]"]
+     [:div.username (:username user)]
+     ]
+    [:div.username (:username user)]
+    )
   )
 
 (defn log-messages []

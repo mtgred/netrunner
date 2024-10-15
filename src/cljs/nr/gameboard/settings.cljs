@@ -60,6 +60,14 @@
                                  :on-change #(swap! app-state assoc-in [:options :runner-board-order] (.. % -target -value))
                                  :checked (= (get-in @app-state [:options :runner-board-order]) (:ref option))}]
                  (:name option)]]))]
+     [:section
+      [:h4 (tr [:ingame-settings.log-timestamps "Log timestamps"])]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :log-timestamps])
+                        :on-change #(swap! app-state assoc-in [:options :log-timestamps] (.. % -target -checked))}]
+        (tr [:ingame-settings.log-timestamps "Show log timestamps"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings.board-overlap "Board overlap"])]
