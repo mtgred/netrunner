@@ -32,20 +32,18 @@
         transition(all 0.2s ease-in-out)
 
 .timestamp-wrapper
-    display: inline
+    display: flex
+    margin-top: -.125rem
+    line-height 1rem !important
 
-.timestamp-wrapper .timestamp
+.timestamp-wrapper .username
+    margin-top: 0 !important
+
+.timestamp
     color: #999999
     margin-right: .5em
     font-size .5rem
     display inline
-
-.timestamp-wrapper .username
-    line-height .875rem !important
-
-.timestamp-wrapper :nth-child(2)
-    display inline
-    word-wrap break-word
 
 .message
     display-flex()

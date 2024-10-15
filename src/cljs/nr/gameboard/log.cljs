@@ -181,7 +181,7 @@
 (defn format-system-timestamp [timestamp text corp runner]
   (if (get-in @app-state [:options :log-timestamps])
     (if (not= text "[hr]")
-      [:div.timestamp-wrapper
+      [:div.timestamp-wrapper-system
        [:span.timestamp "[" (.toLocaleTimeString (js/Date. timestamp)) "]"]
        (render-message (render-player-highlight text corp runner))
        ]
@@ -194,8 +194,8 @@
 (defn format-user-timestamp [timestamp user]
   (if (get-in @app-state [:options :log-timestamps])
     [:div.timestamp-wrapper
-     [:div.timestamp "[" (.toLocaleTimeString (js/Date. timestamp)) "]"]
      [:div.username (:username user)]
+     [:div.timestamp "[" (.toLocaleTimeString (js/Date. timestamp)) "]"]
      ]
     [:div.username (:username user)]
     )
@@ -242,9 +242,7 @@
                       [:div.system
                         (format-system-timestamp timestamp text @corp @runner)]
                       [:div.message
-                       [:div.avatar-box
-                        [avatar user {:opts {:size 38}}]
-                        ]
+                       [avatar user {:opts {:size 38}}]
                        [:div.content
                         (format-user-timestamp timestamp user)
                         [:div (render-message text)]]]
