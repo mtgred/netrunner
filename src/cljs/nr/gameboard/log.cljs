@@ -182,7 +182,7 @@
   (if (get-in @app-state [:options :log-timestamps])
     (if (not= text "[hr]")
       [:div.timestamp-wrapper-system
-       [:span.timestamp "[" (.toLocaleTimeString (js/Date. timestamp)) "]"]
+       [:span.timestamp "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]"]
        (render-message (render-player-highlight text corp runner))
        ]
       (render-message (render-player-highlight text corp runner))
@@ -195,7 +195,7 @@
   (if (get-in @app-state [:options :log-timestamps])
     [:div.timestamp-wrapper
      [:div.username (:username user)]
-     [:div.timestamp "[" (.toLocaleTimeString (js/Date. timestamp)) "]"]
+     [:div.timestamp "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]"]
      ]
     [:div.username (:username user)]
     )
