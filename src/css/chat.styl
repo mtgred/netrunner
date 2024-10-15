@@ -31,8 +31,18 @@
         left: -70px
         transition(all 0.2s ease-in-out)
 
-.message-container .timestamp
-    font-size: .5rem
+.timestamp-wrapper
+    display: inline
+
+.timestamp-wrapper .timestamp
+    color: #999999
+    margin-right: .5em
+    font-size .5rem
+    display inline
+
+.timestamp-wrapper :nth-child(2)
+    display inline
+    word-wrap break-word
 
 .message
     display-flex()
@@ -46,6 +56,12 @@
 
     .content
         flex(1)
+
+    .avatar-box
+        margin-right: .1rem
+        display: flex
+        align-items: center
+        height auto
 
     .block-menu
         display: none

@@ -1,20 +1,20 @@
 (ns nr.gameboard.log
   (:require
-   [clojure.string :as string]
-   [jinteki.utils :refer [command-info]]
-   [nr.angel-arena.log :as angel-arena-log]
-   [nr.appstate :refer [app-state current-gameid]]
-   [nr.avatar :refer [avatar]]
-   [nr.gameboard.actions :refer [send-command]]
-   [nr.gameboard.card-preview :refer [card-preview-mouse-out
-                                      card-preview-mouse-over zoom-channel]]
-   [nr.gameboard.state :refer [game-state not-spectator?]]
-   [nr.translations :refer [tr]]
-   [nr.utils :refer [influence-dot player-highlight-option-class
-                     render-message render-player-highlight]]
-   [nr.ws :as ws]
-   [reagent.core :as r]
-   [reagent.dom :as rdom]))
+    [clojure.string :as string]
+    [jinteki.utils :refer [command-info]]
+    [nr.angel-arena.log :as angel-arena-log]
+    [nr.appstate :refer [app-state current-gameid]]
+    [nr.avatar :refer [avatar]]
+    [nr.gameboard.actions :refer [send-command]]
+    [nr.gameboard.card-preview :refer [card-preview-mouse-out
+                                       card-preview-mouse-over zoom-channel]]
+    [nr.gameboard.state :refer [game-state not-spectator?]]
+    [nr.translations :refer [tr]]
+    [nr.utils :refer [influence-dot player-highlight-option-class
+                      render-message render-player-highlight]]
+    [nr.ws :as ws]
+    [reagent.core :as r]
+    [reagent.dom :as rdom]))
 
 (def commands (distinct (map :name command-info)))
 (def command-info-map (->> command-info
@@ -178,6 +178,23 @@
          [indicate-action]
          [command-menu !input-ref state]]))))
 
+(defn format-system-timestamp [timestamp text corp runner]
+  (if (contains? (set [corp runner]) (first (string/split text #" ")))
+    [:div.timestamp-wrapper
+      [:span.timestamp "[" (.toLocaleTimeString (js/Date. timestamp)) "]"]
+      (render-message (render-player-highlight text corp runner))
+      ]
+    (render-message (render-player-highlight text corp runner))
+    )
+  )
+
+(defn format-user-timestamp [timestamp user]
+  [:div.timestamp-wrapper
+   [:div.timestamp "[" (.toLocaleTimeString (js/Date. timestamp)) "]"]
+   [:div.username (:username user)]
+   ]
+  )
+
 (defn log-messages []
   (let [log (r/cursor game-state [:log])
         corp (r/cursor game-state [:corp :user :username])
@@ -215,17 +232,17 @@
                (map
                  (fn [{:keys [user text timestamp]}]
                    ^{:key timestamp}
-                   [:div.message-container
-                    (when (not= text "[hr]")
-                      [:div.timestamp "[ " (.toLocaleTimeString (js/Date. timestamp)) " ]"])
-                    (if (= user "__system__")
-                      [:div.system (render-message (render-player-highlight text @corp @runner))]
+                   (if (= user "__system__")
+                      [:div.system
+                        (format-system-timestamp timestamp text @corp @runner)]
                       [:div.message
-                       [avatar user {:opts {:size 38}}]
+                       [:div.avatar-box
+                        [avatar user {:opts {:size 38}}]
+                        ]
                        [:div.content
-                        [:div.username (:username user)]
+                        (format-user-timestamp timestamp user)
                         [:div (render-message text)]]]
-                      )])
+                      ))
                  @log)))})))
 
 (defn log-pane []
