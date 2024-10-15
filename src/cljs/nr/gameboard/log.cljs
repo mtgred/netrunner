@@ -215,13 +215,17 @@
                (map
                  (fn [{:keys [user text timestamp]}]
                    ^{:key timestamp}
-                   (if (= user "__system__")
-                     [:div.system (render-message (render-player-highlight text @corp @runner))]
-                     [:div.message
-                      [avatar user {:opts {:size 38}}]
-                      [:div.content
-                       [:div.username (:username user)]
-                       [:div (render-message text)]]]))
+                   [:div.message-container
+                    (when (not= text "[hr]")
+                      [:div.timestamp "[ " (.toLocaleTimeString (js/Date. timestamp)) " ]"])
+                    (if (= user "__system__")
+                      [:div.system (render-message (render-player-highlight text @corp @runner))]
+                      [:div.message
+                       [avatar user {:opts {:size 38}}]
+                       [:div.content
+                        [:div.username (:username user)]
+                        [:div (render-message text)]]]
+                      )])
                  @log)))})))
 
 (defn log-pane []
