@@ -8,7 +8,7 @@
     [game.core.initializing :refer [card-init]]
     [game.core.memory :refer [init-mu-cost]]
     [game.core.update :refer [update! update-hosted!]]
-    [game.utils :refer [remove-once]]))
+    [game.utils :refer [remove-once same-card?]]))
 
 (defn remove-from-host
   "Removes a card from its host."
@@ -17,6 +17,11 @@
     (update-hosted! state side (update-in host-card [:hosted] (fn [coll] (remove-once #(= (:cid %) cid) coll))))
     (when-let [hosted-lost (:hosted-lost (card-def host-card))]
       (hosted-lost state side (make-eid state) (get-card state host-card) (dissoc card :host)))))
+
+(defn has-ancestor?
+  "Determines if the target is an ancestor of the given card (a card is its own ancestor)"
+  [card target]
+  (when (and card target) (or (same-card? card target) (has-ancestor? (:host card) target))))
 
 (defn host
   "Host the target onto the card."
