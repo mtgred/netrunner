@@ -180,13 +180,7 @@
 
 (defn format-system-timestamp [timestamp text corp runner]
   (if (get-in @app-state [:options :log-timestamps])
-    (if (not= text "[hr]")
-      [:div.timestamp-wrapper-system
-       [:span.timestamp "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]"]
-       (render-message (render-player-highlight text corp runner))
-       ]
-      (render-message (render-player-highlight text corp runner))
-      )
+    (render-message (render-player-highlight text corp runner (str "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]")))
     (render-message (render-player-highlight text corp runner))
     )
   )
