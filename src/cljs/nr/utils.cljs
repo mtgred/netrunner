@@ -312,12 +312,10 @@
   [element timestamp]
   (if (some? timestamp)
     [:div.timestamp-wrapper-system element [:span.timestamp.timestamp-system timestamp]]
-    element
-    )
-  )
+    element))
 
 (defn- player-highlight-patterns-impl [corp runner timestamp]
-  (letfn [(regex-of [player-name] (print player-name "shiloh shiloh" corp runner)(re-pattern (str "^" (regex-escape player-name))))]
+  (letfn [(regex-of [player-name] (re-pattern (str "^" (regex-escape player-name))))]
     (->> {corp (wrap-timestamp [:span.corp-username corp] timestamp)
           runner (wrap-timestamp [:span.runner-username runner] timestamp)}
          (filter (fn [[k _]] (not-empty k)))
