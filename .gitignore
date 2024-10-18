@@ -16,6 +16,7 @@ pom.xml
 .nrepl-history
 .rebel_readline_history
 .idea
+*.iml
 .eastwood
 .cache
 

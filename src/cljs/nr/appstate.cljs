@@ -40,6 +40,7 @@
                             :player-stats-icons (= (get-local-value "player-stats-icons" "true") "true")
                             :stacked-servers (= (get-local-value "stacked-servers" "true") "true")
                             :sides-overlap (= (get-local-value "sides-overlap" "true") "true")
+                            :log-timestamps (= (get-local-value "log-timestamps" "true") "true")
                             :runner-board-order (let [value (get-local-value "runner-board-order" "irl")]
                                                   (case value
                                                     "true" "jnet"
