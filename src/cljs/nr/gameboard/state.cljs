@@ -36,9 +36,6 @@
 (defn not-spectator? []
   (not= :spectator (get-side @game-state)))
 
-(defn all-users? []
-  (get-side @game-state))
-
 (defn check-lock?
   "Check if we can clear client lock based on action-id"
   []

@@ -270,8 +270,6 @@
   fragment, and index each HTML element in the return fragment with the :key
   attribute as required by React"
   [fragment patterns]
-  (print "frag" fragment)
-  (print "shiloh" patterns)
   (let [counter (atom 0)
         set-next-key (fn [elem] (set-react-key (do (swap! counter inc) @counter) elem))]
     (->> (reduce replace-in-fragment fragment patterns)

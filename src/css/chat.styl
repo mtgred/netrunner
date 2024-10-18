@@ -34,25 +34,26 @@
 .timestamp-wrapper
     display: flex
 
-.timestamp-wrapper .username
-    margin-right: 0
+    .username
+        margin-right: 0
 
-.timestamp-wrapper .timestamp
-    line-height: .5rem
-    margin-top: .15rem
+    .timestamp
+        color: #999999
+        font-size .5rem
+        display inline-flex
+        margin-left: .12rem
+        line-height: .5rem
+        margin-top: .15rem
 
 .timestamp-wrapper-system
     display: inline-flex
     line-height .75rem !important
 
-.timestamp
-    color: #999999
-    font-size .5rem
-    display inline-flex
-    margin-left: .12rem
-
-//.timestamp-system
-//    margin-left: .1rem
+    .timestamp
+        color: #999999
+        font-size .5rem
+        display inline-flex
+        margin-left: .12rem
 
 .message
     display-flex()
@@ -66,12 +67,6 @@
 
     .content
         flex(1)
-
-    .avatar-box
-        margin-right: .1rem
-        display: flex
-        align-items: center
-        height auto
 
     .block-menu
         display: none

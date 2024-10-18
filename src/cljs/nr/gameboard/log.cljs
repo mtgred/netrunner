@@ -8,7 +8,7 @@
     [nr.gameboard.actions :refer [send-command]]
     [nr.gameboard.card-preview :refer [card-preview-mouse-out
                                        card-preview-mouse-over zoom-channel]]
-    [nr.gameboard.state :refer [game-state not-spectator? all-users?]]
+    [nr.gameboard.state :refer [game-state not-spectator?]]
     [nr.translations :refer [tr]]
     [nr.utils :refer [influence-dot player-highlight-option-class
                       render-message render-player-highlight]]
