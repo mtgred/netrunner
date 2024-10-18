@@ -1,20 +1,20 @@
 (ns nr.gameboard.log
   (:require
-    [clojure.string :as string]
-    [jinteki.utils :refer [command-info]]
-    [nr.angel-arena.log :as angel-arena-log]
-    [nr.appstate :refer [app-state current-gameid]]
-    [nr.avatar :refer [avatar]]
-    [nr.gameboard.actions :refer [send-command]]
-    [nr.gameboard.card-preview :refer [card-preview-mouse-out
-                                       card-preview-mouse-over zoom-channel]]
-    [nr.gameboard.state :refer [game-state not-spectator?]]
-    [nr.translations :refer [tr]]
-    [nr.utils :refer [influence-dot player-highlight-option-class
-                      render-message render-player-highlight]]
-    [nr.ws :as ws]
-    [reagent.core :as r]
-    [reagent.dom :as rdom]))
+   [clojure.string :as string]
+   [jinteki.utils :refer [command-info]]
+   [nr.angel-arena.log :as angel-arena-log]
+   [nr.appstate :refer [app-state current-gameid]]
+   [nr.avatar :refer [avatar]]
+   [nr.gameboard.actions :refer [send-command]]
+   [nr.gameboard.card-preview :refer [card-preview-mouse-out
+                                      card-preview-mouse-over zoom-channel]]
+   [nr.gameboard.state :refer [game-state not-spectator?]]
+   [nr.translations :refer [tr]]
+   [nr.utils :refer [influence-dot player-highlight-option-class
+                     render-message render-player-highlight]]
+   [nr.ws :as ws]
+   [reagent.core :as r]
+   [reagent.dom :as rdom]))
 
 (def commands (distinct (map :name command-info)))
 (def command-info-map (->> command-info
