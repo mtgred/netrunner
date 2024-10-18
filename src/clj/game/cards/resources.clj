@@ -1747,12 +1747,13 @@
              :async true
              :interactive (req true)
              :once :per-turn
-             :req (req (first-event? state side :run-ends #(is-mark? state (target-server (first %)))))
-             :effect
-             (req (if (first-event? state side :end-breach-server #(is-mark? state (:from-server (first %))))
-                    (do (system-msg state :runner (str "uses " (:title card) " to gain 2 [Credits]"))
-                        (gain-credits state :runner eid 2))
-                    (effect-completed state side eid)))}]})
+             :req (req (and (:marked-server context)
+                            (first-event? state side :run-ends #(:marked-server (first %)))
+                            (let [run-server (get-in targets [0 :server 0])
+                                  evs (mapcat rest (filter #(= :end-breach-server (first %)) (:events context)))]
+                              (some #(= run-server (:from-server (first %))) evs))))
+             :msg (msg "gain 2 [Credits]")
+             :effect (req (gain-credits state side eid 2))}]})
 
 (defcard "Inside Man"
   {:recurring 2
