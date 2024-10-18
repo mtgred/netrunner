@@ -391,10 +391,8 @@
   [card]
   (when (:cost card)
     [:div.card-cost
-     (render-message (str (:cost card) "[credit]"))
-     ]
-    )
-  )
+     (render-message (str (:cost card) "[credit]"))]
+    ))
 
 (defn card-influence-html
   "Returns hiccup-ready vector with dots for influence as well as rotated / restricted / banned symbols"
