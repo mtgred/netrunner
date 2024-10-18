@@ -3266,6 +3266,36 @@
           "Gained 2 credits when finished breaching mark")
       (click-prompt state :runner "No action")))
 
+(deftest info-bounty-cheating-out-creds
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund"]
+                        :deck [(qty "Hedge Fund" 10)]}
+                 :runner {:deck ["Info Bounty" "Virtuoso"]
+                          :credits 10}})
+    (take-credits state :corp)
+    (core/set-mark state :hq)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "No action")
+    (play-from-hand state :runner "Info Bounty")
+    (run-on state :rd)
+    (is (changed? [(:credit (get-runner)) 0]
+          (run-jack-out state))
+        "Didn't gain 2")))
+
+(deftest info-bounty-correctly-getting-creds
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund"]
+                        :deck [(qty "Hedge Fund" 10)]}
+                 :runner {:deck ["Info Bounty" "Virtuoso"]
+                          :credits 10}})
+    (take-credits state :corp)
+    (core/set-mark state :hq)
+    (play-from-hand state :runner "Info Bounty")
+    (is (changed? [(:credit (get-runner)) 2]
+          (run-empty-server state :hq)
+          (click-prompt state :runner "No action")
+          "Did gain 2"))))
+
 (deftest inside-man-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
