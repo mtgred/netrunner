@@ -15,7 +15,7 @@
     [nr.utils :refer [alliance-dots banned-span cond-button
                       deck-points-card-span dots-html format->slug format-date-time
                       influence-dot influence-dots mdy-formatter non-game-toast num->percent
-                      restricted-span rotated-span set-scroll-top slug->format store-scroll-top]]
+                      restricted-span rotated-span set-scroll-top slug->format store-scroll-top render-message]]
     [nr.ws :as ws]
     [reagent-modals.modals :as reagent-modals]
     [reagent.core :as r]
@@ -387,6 +387,15 @@
             (set-deck-on-state s deck)
             (put! select-channel (:deck @s)))))))
 
+(defn card-cost-html
+  [card]
+  (when (:cost card)
+    [:div.card-cost
+     (render-message (str (:cost card) "[credit]"))
+     ]
+    )
+  )
+
 (defn card-influence-html
   "Returns hiccup-ready vector with dots for influence as well as rotated / restricted / banned symbols"
   [format card qty in-faction allied?]
@@ -667,7 +676,8 @@
                                   (not valid) " invalid"))
                 :on-mouse-enter #(when (:setname card) (put! zoom-channel line))
                 :on-mouse-leave #(put! zoom-channel false)} title]
-        [card-influence-html format card modqty infaction allied]])
+        (card-cost-html card)
+        (card-influence-html format card modqty infaction allied)])
      card)])
 
 (defn line-qty-span
@@ -697,6 +707,7 @@
                                         (not valid) " invalid"))
                       :on-mouse-enter #(when (:setname card) (put! zoom-channel line))
                       :on-mouse-leave #(put! zoom-channel false)} name]
+              (card-cost-html card)
               (card-influence-html format card modqty infaction allied)])
            card)])
 
