@@ -121,18 +121,42 @@
                 margin-top: 10px
                 columns(2, 5px)
 
+            .line:hover
+                background: rgba(19 26 35 .46)
+
             .line
                 position: relative
                 overflow: visible
                 line-height: 20px
                 white-space:pre
+                columns(2, 1rem)
 
-                .card-cost
-                    display: inline-flex
-                    margin-left: .2rem
+                .card-cost-wrapper
+                    display: flex;
+                    position:relative;
+                    overflow: visible;
+                    width: auto;
+                    justify-content flex-end;
 
-                    .credit
-                        margin-left: .1rem
+                    .card-cost
+                        line-height: .75rem;
+                        margin-top: .25rem;
+                        margin-right: 2rem;
+                        display: inline-flex;
+                        position: absolute;
+                        justify-content: left;
+
+                    .edit
+                        line-height: .75rem;
+                        margin-top: .35rem;
+                        margin-right: .5rem;
+                    .cost-item
+                        display: inline-flex
+                        margin-inline: .1rem;
+
+                        .credit
+                            margin-left: .1rem
+
 
                 button.small
                     margin: 3px 6px 3px 0
