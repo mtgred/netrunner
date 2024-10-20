@@ -234,13 +234,12 @@
                    ^{:key timestamp}
                    (if (= user "__system__")
                       [:div.system
-                        (format-system-timestamp timestamp text @corp @runner)]
+                        [format-system-timestamp timestamp text @corp @runner]]
                       [:div.message
                        [avatar user {:opts {:size 38}}]
                        [:div.content
-                        (format-user-timestamp timestamp user)
-                        [:div (render-message text)]]]
-                      ))
+                        [format-user-timestamp timestamp user]
+                        [:div (render-message text)]]]))
                  @log)))})))
 
 (defn log-pane []
