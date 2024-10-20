@@ -6,7 +6,7 @@
    [game.core.card :refer [active? agenda? asset? card-index corp? facedown? faceup?
                            get-advancement-requirement get-card get-counters
                            get-nested-host get-title get-zone
-                           hardware? has-subtype? in-hand? in-discard? ice? installed?
+                           hardware? has-subtype? has-any-subtype? in-hand? in-discard? ice? installed?
                            is-type? program? resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [charge-ability]]
@@ -1921,9 +1921,7 @@
 
 (defcard "Laser Pointer"
   {:events [{:event :encounter-ice
-             :req (req (or (has-subtype? current-ice "AP")
-                           (has-subtype? current-ice "Observer")
-                           (has-subtype? current-ice "Destroyer")))
+             :req (req (has-any-subtype? current-ice ["AP" "Observer" "Destroyer"]))
              :async true
              :effect (effect (continue-ability
                                {:optional

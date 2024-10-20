@@ -6,7 +6,7 @@
    [game.core.actions :refer [play-ability]]
    [game.core.board :refer [all-active all-active-installed all-installed]]
    [game.core.card :refer [corp? event? facedown? get-card get-counters get-title
-                           get-zone hardware? has-subtype? ice? in-deck? in-discard?
+                           get-zone hardware? has-subtype? has-any-subtype? ice? in-deck? in-discard?
                            in-hand? in-scored? installed? is-type? program? resource? rezzed?
                            runner? virus-program? faceup?]]
    [game.core.card-defs :refer [card-def]]
@@ -2480,19 +2480,13 @@
                     (seq (filter
                            #(and (rezzed? %)
                                  (installed? %)
-                                 (or (has-subtype? % "Bioroid")
-                                     (has-subtype? % "Clone")
-                                     (has-subtype? % "Executive")
-                                     (has-subtype? % "Sysop")))
+                                 (has-any-subtype? % ["Bioroid" "Clone" "Executive" "Sysop"]))
                            (all-active-installed state :corp)))))
      :label "trash a Bioroid, Clone, Executive or Sysop"
      :prompt "Choose a Bioroid, Clone, Executive, or Sysop to trash"
      :choices {:card #(and (rezzed? %)
                            (installed? %)
-                           (or (has-subtype? % "Bioroid")
-                               (has-subtype? % "Clone")
-                               (has-subtype? % "Executive")
-                               (has-subtype? % "Sysop")))}
+                           (has-any-subtype? % ["Bioroid" "Clone" "Executive" "Sysop"]))}
      :async true
      :msg (msg "trash " (:title target))
      :effect (effect (trash eid target {:cause-card card}))}]})

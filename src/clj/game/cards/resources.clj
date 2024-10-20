@@ -11,8 +11,9 @@
                             all-installed-runner card->server get-all-cards server->zone]]
    [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp? condition-counter?
                            event? facedown? get-agenda-points get-card get-counters
-                           get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand? in-scored?
-                           installed? is-type? program? resource? rezzed? runner? upgrade? virus-program?]]
+                           get-title get-zone hardware? has-subtype? has-any-subtype? ice? identity?
+                           in-discard? in-hand? in-scored? installed? is-type? program? resource? rezzed?
+                           runner? upgrade? virus-program?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [can-charge charge-ability]]
    [game.core.checkpoint :refer [fake-checkpoint]]
@@ -367,8 +368,7 @@
              (req (let [hosted-cards (:hosted (get-card state card))
                         not-hosted? (fn [c] (not-any? #(= (:title %) (:title c)) hosted-cards))]
                     (cancellable (filter #(and (not-hosted? %)
-                                               (or (has-subtype? % "Virus")
-                                                   (has-subtype? % "Weapon")))
+                                               (has-any-subtype? % ["Virus" "Weapon"]))
                                          (:deck runner)) :sorted)))
              :async true
              :waiting-prompt true
