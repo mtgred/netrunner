@@ -746,7 +746,7 @@
           :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Bad Publicity"))
           :mu-count (fn [[unused available]] (str unused " of " available " MU unused"))
           :special-mu-count (fn [[unused available mu-type]] (str unused " of " available " " mu-type " MU unused"))
-          :indicate-paid-ability "Indicate paid ability"
+          :indicate-action "Indicate paid ability"
           :spec-count (fn [[c]] (str c " Spectator" (when (> c 1) "s")))
           :spec-view "Spectator View"
           :runner-view "Runner View"
