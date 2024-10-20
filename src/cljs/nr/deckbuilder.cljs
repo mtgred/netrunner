@@ -398,8 +398,7 @@
         (when show-mu-cost
           (when-let [mu (:memoryunits card)] [:div.cost-item (render-message (str  mu "[mu] "))]))
         (when show-credit-cost
-          (when-let [cost (:cost card)] [:div.cost-item (render-message (str cost "[credit]"))]))]
-       ])))
+          (when-let [cost (:cost card)] [:div.cost-item (render-message (str cost "[credit]"))]))]])))
 
 (defn card-influence-html
   "Returns hiccup-ready vector with dots for influence as well as rotated / restricted / banned symbols"
@@ -681,7 +680,7 @@
                                   (not valid) " invalid"))
                 :on-mouse-enter #(when (:setname card) (put! zoom-channel line))
                 :on-mouse-leave #(put! zoom-channel false)} title]
-        (card-influence-html format card modqty infaction allied)])
+        [card-influence-html format card modqty infaction allied]])
      card)])
 
 (defn line-qty-span
@@ -711,7 +710,7 @@
                                         (not valid) " invalid"))
                       :on-mouse-enter #(when (:setname card) (put! zoom-channel line))
                       :on-mouse-leave #(put! zoom-channel false)} name]
-              (card-influence-html format card modqty infaction allied)])
+              [card-influence-html format card modqty infaction allied]])
            card)])
 
 (defn- build-deck-points-tooltip [deck]
@@ -814,8 +813,8 @@
                                                 :card (:card line)})
                                 :type "button"} "+"]
                 [line-name-span deck line]]
-               [line-span deck line]
-               )(card-cost-html s (:card line))]))]))])
+                [line-span deck line])
+             [card-cost-html s (:card line)]]))]))])
 
 (defn decklist-notes
   [deck]
@@ -893,7 +892,7 @@
           :else [view-buttons s deck])
         [:h3 (:name deck)]
         [decklist-header deck cards]
-        (view-toggles s deck)
+        [view-toggles s deck]
         [decklist-contents s deck cards]
         (when-not (:edit @s)
           [decklist-notes deck])]))])
