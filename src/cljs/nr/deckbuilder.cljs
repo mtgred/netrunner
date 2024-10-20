@@ -876,8 +876,7 @@
    [:div
     [:input {:type "checkbox" :checked (:show-credit-cost @s)
              :on-change #(swap! s assoc :show-credit-cost (.. % -target -checked))}]
-    [:span "Show Credit Cost"]]
-   ])
+    [:span "Show Credit Cost"]]])
 
 (defn selected-panel
   [s]
