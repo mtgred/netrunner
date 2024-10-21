@@ -1468,7 +1468,7 @@
 
 (def worlds-2024-deer-runs
     (matchup
-      [:preconstructed.worlds-2024-a "Worlds 2023: Aruzan (C) vs. DeeR (R)"]
+      [:preconstructed.worlds-2024-a "Worlds 2024: Aruzan (C) vs. DeeR (R)"]
       [:preconstructed.worlds-2024-a-tag "Aruzan (C) vs. DeeR (R)"]
       [:preconstructed.worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
       [:preconstructed.worlds-2024-a-ul "Worlds 2024: ??? vs. ???"]
@@ -1477,7 +1477,7 @@
             [{:qty 2 :card "Degree Mill"}
              {:qty 1 :card "Oracle Thinktank"}
              {:qty 3 :card "Project Beale"}
-             {:qty 1 :card "Tomorrowʼs Headline"}
+             {:qty 1 :card "Tomorrow's Headline"}
              {:qty 3 :card "False Lead"}
              {:qty 1 :card "Orbital Superiority"}
              {:qty 3 :card "Behold!"}
@@ -1528,7 +1528,7 @@
 
 (def worlds-2024-deer-corps
   (matchup
-    [:preconstructed.worlds-2024-b "Worlds 2023: cableCarnage (C) vs. William Huang (R)"]
+    [:preconstructed.worlds-2024-b "Worlds 2024: DeeR (C) vs Aruzan (R)"]
     [:preconstructed.worlds-2024-b-tag "cableCarnage (C) vs. William Huang (R)"]
     [:preconstructed.worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
     [:preconstructed.worlds-2024-b-ul "Worlds 2024: ??? vs. ???"]
