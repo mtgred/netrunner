@@ -1638,4 +1638,5 @@
     :worlds-2020-a :worlds-2020-b
     :worlds-2021-a :worlds-2021-b
     :worlds-2022-a :worlds-2022-b
-    :worlds-2023-a :worlds-2023-b})
+    :worlds-2023-a :worlds-2023-b
+    :worlds-2024-a :worlds-2024-b})
