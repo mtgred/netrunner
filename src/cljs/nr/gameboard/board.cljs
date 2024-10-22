@@ -1325,7 +1325,6 @@
         (let [corp-list (or (get-in @game-state [:decklists :corp]) {:- 1})
               runner-list (or (get-in @game-state [:decklists :runner]) {:- 1})]
           [:div.decklists.blue-shade
-           [:div "some text to block out some space"]
            [:br]
            [build-in-game-decklists corp-list runner-list]])))))
 
