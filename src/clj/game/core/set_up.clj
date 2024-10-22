@@ -126,8 +126,8 @@
 
 (defn- set-deck-lists
   [state]
-  (let [runner-cards (into (sorted-map) (frequencies (map :title (get-in @state [:runner :deck]))))
-        corp-cards (into (sorted-map) (frequencies (map :title (get-in @state [:corp :deck]))))]
+  (let [runner-cards (sort-by key (frequencies (map :title (get-in @state [:runner :deck]))))
+        corp-cards (sort-by key (frequencies (map :title (get-in @state [:corp :deck]))))]
     (swap! state assoc :decklists {:corp corp-cards :runner runner-cards})))
 
 (defn init-game

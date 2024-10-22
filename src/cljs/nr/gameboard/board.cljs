@@ -1301,7 +1301,7 @@
         card-name (fn [c] [:div {:text-align "left"
                                  :on-mouse-over #(card-preview-mouse-over % zoom-channel)
                                  :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
-                           (render-message (subs (str (first c) "  ") 1))])]
+                           (render-message (first c))])]
     [:div
      [:table.decklists.table
       [:tbody
