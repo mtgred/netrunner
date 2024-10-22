@@ -1471,7 +1471,7 @@
       [:preconstructed.worlds-2024-a "Worlds 2024: Alex Boyd (C) vs. Dee Ruttenberg (R)"]
       [:preconstructed.worlds-2024-a-tag "Alex Boyd (C) vs. Dee Ruttenberg (R)"]
       [:preconstructed.worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Alex Boyd AKA Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against Dee Ruttenberg AKA DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
-      [:preconstructed.worlds-2024-a-ul "Worlds 2024: ??? vs. ???"]
+      [:preconstructed.worlds-2024-a-ul "Worlds 2024: Kill R+ vs. Good Stuff Lat"]
       (precon "Aruzan - 2024: Kill R+"
             {:title "NBN: Reality Plus" :side "Corp" :code 30051}
             [{:qty 2 :card "Degree Mill"}
@@ -1531,7 +1531,7 @@
     [:preconstructed.worlds-2024-b "Worlds 2024: Dee Ruttenberg (C) vs Alex Boyd (R)"]
     [:preconstructed.worlds-2024-b-tag "Dee Ruttenberg (C) vs. Alex Boyd (R)"]
     [:preconstructed.worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Alex Boyd AKA Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against Dee Ruttenberg AKA DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
-    [:preconstructed.worlds-2024-b-ul "Worlds 2024: ??? vs. ???"]
+    [:preconstructed.worlds-2024-b-ul "Worlds 2024: Loud PE vs. Deep Dive Arissana"]
     (precon "DeeR - 2024: Loud PE"
             {:title "Jinteki: Personal Evolution" :side "Corp" :code 1067}
             [{:qty 1 :card "Blood in the Water"}
