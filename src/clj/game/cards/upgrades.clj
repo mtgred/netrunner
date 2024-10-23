@@ -371,7 +371,8 @@
                 :effect (effect (play-instant eid (-> target
                                                       (assoc :rfg-instead-of-trashing true)
                                                       (assoc-in [:special :rfg-when-trashed] true))
-                                              {:ignore-cost true}))}]})
+                                              {:no-additional-cost true
+                                               :ignore-cost true}))}]})
 
 (defcard "Calibration Testing"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
