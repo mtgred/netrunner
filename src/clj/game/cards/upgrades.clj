@@ -33,7 +33,7 @@
                           unbroken-subroutines-choice update-all-ice update-all-icebreakers]]
    [game.core.installing :refer [corp-install]]
    [game.core.moving :refer [mill move remove-from-currently-drawing
-                             swap-cards swap-ice trash trash-cards]]
+                             swap-cards swap-cards-async swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? cost-value ->c]]
    [game.core.play-instants :refer [play-instant]]
@@ -570,7 +570,8 @@
            :cost [(->c :trash-can)]
            :msg (msg "swap " (card-str state to-swap)
                      " with " (card-str state target))
-           :effect (effect (swap-cards to-swap target))})
+           :async true
+           :effect (effect (swap-cards-async eid to-swap target))})
         ability
         {:optional
          {:waiting-prompt true
@@ -1183,8 +1184,10 @@
                                      (in-hand? %))}
                :msg (msg "swap " (card-str state current-ice)
                          " with a piece of ice from HQ")
-               :effect (req (swap-cards state :corp current-ice target)
-                            (continue-ability state :runner (offer-jack-out) card nil))}}}]})
+               :effect (req (wait-for (swap-cards-async state :corp current-ice target)
+                                      (continue-ability state :runner
+                                                        (offer-jack-out)
+                                                        card nil)))}}}]})
 
 (defcard "Midway Station Grid"
   {:static-abilities [{:type :break-sub-additional-cost
