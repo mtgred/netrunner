@@ -1180,9 +1180,7 @@
                                           c (make-card c)
                                           c (assoc c
                                                    :host (dissoc card :hosted)
-                                                   :zone [:onhost]
-                                                   ;; semi hack to get deactivate to work
-                                                   :installed true)]
+                                                   :zone [:onhost])]
                                       ;; Manually host id on card
                                       (update! state side (assoc card :hosted [c]))
                                       (card-init state :runner c)

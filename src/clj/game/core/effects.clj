@@ -1,6 +1,6 @@
 (ns game.core.effects
   (:require [clj-uuid :as uuid]
-            [game.core.card :refer [get-card]]
+            [game.core.card :refer [facedown? get-card runner?]]
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
             [game.core.board :refer [get-all-cards]]
@@ -93,7 +93,9 @@
   "Gets all cards currently disabled"
   [state]
   (let [all-cards (get-all-cards state)
-        disabled-cards (filter #(is-disabled? state nil %) all-cards)]
+        disabled-cards (filter #(or (is-disabled? state nil %)
+                                    (and (runner? %) (facedown? %)))
+                               all-cards)]
     (into {} (map (juxt :cid identity)) disabled-cards)))
 
 (defn update-disabled-cards [state]
