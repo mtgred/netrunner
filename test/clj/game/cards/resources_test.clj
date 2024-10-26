@@ -2026,7 +2026,7 @@
     (click-prompt state :runner "Pay to steal")
     (click-card state :runner "DJ Fenris")
     (click-card state :runner (first (:hosted (get-resource state 0)))) ;; not selected
-    (is (not (no-prompt? state :runner)) "did not confirm by picking fake agenda")
+    (is (not (no-prompt? state :runner)) "did not confirm by picking fake id")
     (click-card state :runner "Ika")
     (is (no-prompt? state :runner) "Stole degree mill")))
 
