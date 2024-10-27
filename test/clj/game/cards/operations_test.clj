@@ -2804,6 +2804,24 @@
       (is (not (has-subtype? (refresh bla) "Advertisement")) "Not an ad")
       (is (= "Media Blitz" (:title (second (:discard (get-corp)))))))))
 
+(deftest media-blitz-na-sol-async-issues
+  (do-game
+    (new-game {:corp {:hand ["Media Blitz"]
+                      :discard ["Better Citizen Program"]
+                      :id "New Angeles Sol: Your News"}
+               :runner {:hand ["Ika"]}})
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (click-prompt state :runner "Steal")
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Media Blitz")
+    (click-card state :corp "Better Citizen Program")
+    (is (not (waiting? state :runner)) "Prompt closed")
+    (is (not (waiting? state :corp)) "Prompt closed")
+    (play-from-hand state :runner "Ika")
+    (click-prompt state :corp "Yes")
+    (is (is-tagged? state) "BCP tag worked")))
+
 (deftest medical-research-fundraiser
   ;; Medical Research Fundraiser - runner gains 8creds, runner gains 3creds
   (do-game
