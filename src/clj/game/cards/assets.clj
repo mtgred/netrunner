@@ -3,7 +3,7 @@
    [clojure.pprint :as pprint]
    [clojure.set :as set]
    [clojure.string :as str]
-   [game.core.access :refer [access-card installed-access-trigger]]
+   [game.core.access :refer [access-bonus access-card get-only-card-to-access installed-access-trigger num-cards-to-access]]
    [game.core.actions :refer [score]]
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
@@ -28,9 +28,9 @@
    [game.core.engine :refer [not-used-once? pay register-events resolve-ability trigger-event-sync]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
    [game.core.expose :refer [expose-prevent]]
-   [game.core.flags :refer [lock-zone prevent-current
+   [game.core.flags :refer [in-runner-scored? lock-zone prevent-current
                             prevent-draw
-                            register-turn-flag! release-zone]]
+                            register-turn-flag! release-zone when-scored?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ runner-hand-size+]]
@@ -40,7 +40,7 @@
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [as-agenda mill move remove-from-currently-drawing
-                             swap-cards swap-installed trash trash-cards]]
+                             swap-agendas swap-cards swap-installed trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? cost-value ->c]]
    [game.core.play-instants :refer [play-instant]]
@@ -1392,6 +1392,31 @@
              :async true
              :effect (effect (gain-credits eid 1))}]})
 
+(defcard "Investigator Inez Delgado A"
+  {:events [{:event :agenda-scored
+             :interactive (req true)
+             :req (req (seq (:scored runner)))
+             :async true
+             :effect (effect
+                       (continue-ability
+                         (let [stolen (:card context)]
+                           {:optional
+                            {:prompt (msg "Swap " (:title stolen) " for an agenda in the Runner's score area?")
+                             :yes-ability
+                             {:prompt (str "Choose a scored Runner agenda to swap with " (:title stolen))
+                              :choices {:card #(in-runner-scored? state side %)}
+                              :msg (msg "swap " (:title stolen) " for " (:title target))
+                              :async true
+                              :effect (req (let [new-scored (second (swap-agendas state side target stolen))]
+                                             (continue-ability
+                                               state side
+                                               (when (when-scored? new-scored)
+                                                 {:msg (msg "trigger the \"when scored\" ability of " (:title new-scored))
+                                                  :async true
+                                                  :effect (effect (continue-ability (:on-score (card-def new-scored)) target nil))})
+                                               card nil)))}}})
+                         card targets))}]})
+
 (defcard "Isabel McGuire"
   {:abilities [{:action true
                 :label "Add an installed card to HQ"
@@ -1630,6 +1655,28 @@
              :async true
              :msg "give the Runner 1 tag"
              :effect (req (gain-tags state :runner eid 1))}]})
+
+(defcard "Lt. Todachine 2"
+  {:events [{:event :rez
+             :req (req (ice? (:card context)))
+             :async true
+             :msg "give the Runner 1 tag"
+             :effect (req (gain-tags state :runner eid 1))}
+            {:event :breach-server
+             :interactive (req true)
+             :player :corp
+             :req (req tagged)
+             :async true
+             ;; the random-access check needs to be dereffed to work correctly
+             :effect (req (continue-ability
+                            state side
+                            {:req (req
+                                    (and tagged
+                                         (> (:random-access-limit (num-cards-to-access state :runner target nil)) 1)
+                                         (not (get-only-card-to-access state))))
+                             :msg (msg "make the runner access 1 card fewer")
+                             :effect (req (access-bonus state :runner target -1))}
+                            card targets))}]})
 
 (defcard "Malia Z0L0K4"
   (let [unmark
@@ -2948,6 +2995,20 @@
                                       (contains? break-ability :heap-breaker-break)
                                       (contains? break-ability :break-cost)))))
                        :value true}]})
+
+(defcard "Trojan"
+  {:flags {:rd-reveal (req true)}
+   :poison true
+   :on-access {:async true
+               :req (req (not (in-discard? card)))
+               :msg (msg "lose 2 [Credits], destroy itself, and trash 1 card from HQ at random")
+               :effect (req (wait-for
+                              (lose-credits state :corp 2)
+                              (move state side card :destroyed)
+                              (let [trash-target (first (shuffle (get-in @state [:corp :hand])))]
+                                (if trash-target
+                                  (trash state :corp eid trash-target {:cause-card card})
+                                  (effect-completed state side eid)))))}})
 
 (defcard "Turtlebacks"
   {:events [{:event :server-created

@@ -3274,6 +3274,33 @@
         (click-prompt state :corp "8")
         (is (= (+ credits 8) (:credit (get-corp))) "Corp should gain 8 credits from Long-Term Investment ability")))))
 
+(deftest lt-todachine
+  (do-game
+    (new-game {:corp {:hand ["Lt. Todachine" "Vanilla"]}})
+    (play-from-hand state :corp "Lt. Todachine" "New remote")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-ice state :hq 0))
+    (is (= 1 (count-tags state)) "Runner has 1 tag")))
+
+(deftest lt-todachine-2
+  (do-game
+    (new-game {:corp {:hand ["Lt. Todachine 2" "Vanilla"]
+                      :deck [(qty "IPO" 3)]}
+               :runner {:hand ["Jailbreak"]}})
+    (play-from-hand state :corp "Lt. Todachine 2" "New remote")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-ice state :hq 0))
+    (is (= 1 (count-tags state)) "Runner has 1 tag")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jailbreak")
+    (click-prompt state :runner "R&D")
+    (run-continue-until state :success)
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner) "No prompt")
+    (is (not (:run @state)) "Access ended after 1 card seen - todachine did his work")))
+
 (deftest malia-z0l0k4
   ;; Malia Z0L0K4 - blank an installed non-virtual runner resource
   (do-game
