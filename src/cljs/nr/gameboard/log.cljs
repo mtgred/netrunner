@@ -186,6 +186,23 @@
          [show-decklists]
          [command-menu !input-ref state]]))))
 
+(defn format-system-timestamp [timestamp text corp runner]
+  (if (get-in @app-state [:options :log-timestamps])
+    (render-message (render-player-highlight text corp runner (str "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]")))
+    (render-message (render-player-highlight text corp runner))
+    )
+  )
+
+(defn format-user-timestamp [timestamp user]
+  (if (get-in @app-state [:options :log-timestamps])
+    [:div.timestamp-wrapper
+     [:div.username (:username user)]
+     [:div.timestamp "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]"]
+     ]
+    [:div.username (:username user)]
+    )
+  )
+
 (defn log-messages []
   (let [log (r/cursor game-state [:log])
         corp (r/cursor game-state [:corp :user :username])
@@ -224,12 +241,13 @@
                  (fn [{:keys [user text timestamp]}]
                    ^{:key timestamp}
                    (if (= user "__system__")
-                     [:div.system (render-message (render-player-highlight text @corp @runner))]
-                     [:div.message
-                      [avatar user {:opts {:size 38}}]
-                      [:div.content
-                       [:div.username (:username user)]
-                       [:div (render-message text)]]]))
+                      [:div.system
+                        [format-system-timestamp timestamp text @corp @runner]]
+                      [:div.message
+                       [avatar user {:opts {:size 38}}]
+                       [:div.content
+                        [format-user-timestamp timestamp user]
+                        [:div (render-message text)]]]))
                  @log)))})))
 
 (defn log-pane []

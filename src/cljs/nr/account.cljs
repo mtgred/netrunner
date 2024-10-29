@@ -51,6 +51,7 @@
   (swap! app-state assoc-in [:options :ghost-trojans] (:ghost-trojans @s))
   (swap! app-state assoc-in [:options :display-encounter-info] (:display-encounter-info @s))
   (swap! app-state assoc-in [:options :sides-overlap] (:sides-overlap @s))
+  (swap! app-state assoc-in [:options :log-timestamps] (:log-timestamps @s))
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
   (swap! app-state assoc-in [:options :log-width] (:log-width @s))
   (swap! app-state assoc-in [:options :log-top] (:log-top @s))
@@ -72,6 +73,7 @@
   (.setItem js/localStorage "ghost-trojans" (:ghost-trojans @s))
   (.setItem js/localStorage "display-encounter-info" (:display-encounter-info @s))
   (.setItem js/localStorage "sides-overlap" (:sides-overlap @s))
+  (.setItem js/localStorage "log-timestamps" (:log-timestamps @s))
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
   (.setItem js/localStorage "card-back" (:card-back @s))
   (.setItem js/localStorage "card-zoom" (:card-zoom @s))
@@ -392,6 +394,12 @@
                              :checked (:sides-overlap @s)
                              :on-change #(swap! s assoc-in [:sides-overlap] (.. % -target -checked))}]
              (tr [:settings.sides-overlap "Runner and Corp board may overlap"])]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:log-timestamps @s)
+                             :on-change #(swap! s assoc-in [:log-timestamps] (.. % -target -checked))}]
+             (tr [:settings.log-timestamps "Show log timestamps"])]]
 
            [:br]
            [:h4 (tr [:settings.runner-layout "Runner layout from Corp perspective"])]
@@ -615,6 +623,7 @@
                        :ghost-trojans (get-in @app-state [:options :ghost-trojans])
                        :display-encounter-info (get-in @app-state [:options :display-encounter-info])
                        :sides-overlap (get-in @app-state [:options :sides-overlap])
+                       :log-timestamps (get-in @app-state [:options :log-timestamps])
                        :player-stats-icons (get-in @app-state [:options :player-stats-icons])
                        :runner-board-order (get-in @app-state [:options :runner-board-order])
                        :log-width (get-in @app-state [:options :log-width])
