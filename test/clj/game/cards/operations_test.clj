@@ -640,7 +640,7 @@
         "2 Runner cards moved off the grip")
     (is (= "Sure Gamble" (:title (nth (:deck (get-runner)) 0))) "Sure Gamble on top of the deck")
     (is (= "Sure Gamble" (:title (nth (:deck (get-runner)) 1))) "Another Sure Gamble on top of the deck")
-    (is (last-log-contains? state "place Sure Gamble and Sure Gamble from the grip to the top of the stack"))
+    (is (last-log-contains? state "reveal Sure Gamble and Sure Gamble from"))
     (is (no-prompt? state :corp) "No additional prompt because threat level is not met")
     (is (zero? (:click (get-corp))) "Terminal ends turns")))
 
@@ -981,6 +981,7 @@
         (card-ability state :corp (refresh hall) 0)
         (is (= ["Consulting Visit" "Mumba Temple" "Cancel"] (prompt-titles :corp)))
         (click-prompt state :corp (find-card "Consulting Visit" (:deck (get-corp))))
+        (click-prompt state :corp "Yes")
         (is (= 2 (:credit (get-corp))))
         (is (= ["Beanstalk Royalties" "Green Level Clearance" "Cancel"] (prompt-titles :corp)))
         (click-prompt state :corp (find-card "Green Level Clearance" (:deck (get-corp))))
@@ -2802,6 +2803,24 @@
       (core/fake-checkpoint state)
       (is (not (has-subtype? (refresh bla) "Advertisement")) "Not an ad")
       (is (= "Media Blitz" (:title (second (:discard (get-corp)))))))))
+
+(deftest media-blitz-na-sol-async-issues
+  (do-game
+    (new-game {:corp {:hand ["Media Blitz"]
+                      :discard ["Better Citizen Program"]
+                      :id "New Angeles Sol: Your News"}
+               :runner {:hand ["Ika"]}})
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (click-prompt state :runner "Steal")
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Media Blitz")
+    (click-card state :corp "Better Citizen Program")
+    (is (not (waiting? state :runner)) "Prompt closed")
+    (is (not (waiting? state :corp)) "Prompt closed")
+    (play-from-hand state :runner "Ika")
+    (click-prompt state :corp "Yes")
+    (is (is-tagged? state) "BCP tag worked")))
 
 (deftest medical-research-fundraiser
   ;; Medical Research Fundraiser - runner gains 8creds, runner gains 3creds

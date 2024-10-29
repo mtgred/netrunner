@@ -308,18 +308,27 @@
   [input]
   (render-specials (render-icons (render-cards input))))
 
-(defn- player-highlight-patterns-impl [corp runner]
+(defn wrap-timestamp
+  [element timestamp]
+  (if (some? timestamp)
+    [:div.timestamp-wrapper-system element [:span.timestamp.timestamp-system timestamp]]
+    element))
+
+(defn- player-highlight-patterns-impl [corp runner timestamp]
   (letfn [(regex-of [player-name] (re-pattern (str "^" (regex-escape player-name))))]
-    (->> {corp [:span.corp-username corp]
-          runner [:span.runner-username runner]}
+    (->> {corp (wrap-timestamp [:span.corp-username corp] timestamp)
+          runner (wrap-timestamp [:span.runner-username runner] timestamp)}
          (filter (fn [[k _]] (not-empty k)))
          (mapcat (fn [[k v]] [[(regex-of k) v]
                               [(regex-of (str "[!]" k)) [:<> [:div.smallwarning "!"] v]]]))
          (sort-by (comp count str first) >))))
 (def player-highlight-patterns (memoize player-highlight-patterns-impl))
 
-(defn render-player-highlight [message corp runner]
-  (render-input message (player-highlight-patterns corp runner)))
+(defn render-player-highlight
+  ([message corp runner] (render-player-highlight message corp runner nil))
+  ([message corp runner timestamp]
+  (render-input message (player-highlight-patterns corp runner timestamp)))
+  )
 
 (defn player-highlight-option-class []
   (case (get-in @app-state [:options :log-player-highlight])

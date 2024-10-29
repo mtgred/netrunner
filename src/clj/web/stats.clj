@@ -72,14 +72,15 @@
 
 (defn update-deck-stats
   "Update stats for player decks on game ending"
-  [db {:keys [original-players ending-players state]}]
-  (doseq [player original-players]
-    (let [enable-deckstats (get-in player [:user :options :deckstats])
-          deck-id (get-in player [:deck :_id])]
-      (when (and enable-deckstats deck-id)
-        (inc-deck-stats db deck-id {:stats.games-started 1}))))
-  (doseq [player ending-players]
-    (inc-deck-stats db (get-in player [:deck :_id]) (deck-record-end state player))))
+  [db {:keys [original-players ending-players state precon]}]
+  (when (not precon)
+    (doseq [player original-players]
+      (let [enable-deckstats (get-in player [:user :options :deckstats])
+            deck-id (get-in player [:deck :_id])]
+        (when (and enable-deckstats deck-id)
+          (inc-deck-stats db deck-id {:stats.games-started 1}))))
+    (doseq [player ending-players]
+      (inc-deck-stats db (get-in player [:deck :_id]) (deck-record-end state player)))))
 
 (defn inc-game-stats
   "Update user's game stats for a given counter"

@@ -784,7 +784,8 @@
   (swap! state assoc-in [:end-run :ended] true)
   (when (get-current-encounter state)
     (queue-event state :end-of-encounter {:ice (get-current-ice state)}))
-  (let [run (:run @state)
+  (let [marked? (is-mark? state (get-in @state [:run :server 0]))
+        run (if marked? (assoc (:run @state) :marked-server true) (:run @state))
         run-eid (:eid run)]
     (swap! state assoc-in [:runner :register :last-run] run)
     (swap! state update-in [:runner :credit] - (get-in @state [:runner :run-credit]))

@@ -133,7 +133,7 @@
 (defn- basic-program-test
   "tests a program which has simple boost and break functionality"
   [{:keys [name boost break threat counters-modify-strength run-event-bonus subtypes tags
-           click-prompt-on-install click-prompt-on-encounter]}]
+           click-prompt-on-install click-prompt-on-encounter runner-trash-ev]}]
   ;; set threat level like {:threat 3}
   ;; set str modify counters like {:counters-modify-strength {:type :power
   ;;                                                          :granularity x (default 1)
@@ -151,7 +151,7 @@
         (new-game {:corp {:credits 100
                           :hand ["Mother Goddess" type]}
                    :runner {:credits 100
-                            :hand [name "Dirty Laundry"]}})
+                            :hand [name "Dirty Laundry" "Spy Camera"]}})
         ;;set the threat level when appropriate
         (when threat
           (do (game.core.change-vals/change
@@ -173,6 +173,12 @@
         (play-from-hand state :runner name)
         (when click-prompt-on-install
           (click-prompt state :runner click-prompt-on-install))
+        ;; boi-tata may require a card to be trashed
+        (when runner-trash-ev
+          (play-from-hand state :runner "Spy Camera")
+          (core/gain state :runner :click 1)
+          (card-ability state :runner (get-hardware state 0) 1)
+          (click-prompt state :runner "OK"))
         (let [card (get-program state 0)
               ice (get-ice state :hq 0)
               base-breaker-str (get-strength (refresh card))]
@@ -1255,6 +1261,17 @@
                                  (second (:abilities (refresh boi)))
                                  (refresh boi)))
           "Cost reduction from trash"))))
+
+(deftest boi-tata-automated-test
+  (basic-program-test {:name "Boi-tatá"
+                       :break {:ab 0 :amount 2 :cost 2 :type "Sentry"}
+                       :boost {:ab 1 :amount 3 :cost 3}}))
+
+(deftest boi-tata-automated-test-with-trash-ev
+  (basic-program-test {:name "Boi-tatá"
+                       :runner-trash-ev true
+                       :break {:ab 0 :amount 2 :cost 1 :type "Sentry"}
+                       :boost {:ab 1 :amount 3 :cost 2}}))
 
 (deftest botulus
   ;; Botulus
@@ -8844,6 +8861,40 @@
         (click-prompt state :runner "Done")
         (is (= (dec credits) (:credit (get-runner)))))
       (is (= 3 (:credit (get-runner))) "Able to use ability now"))))
+
+(deftest utae-auto-pump
+  (do-game
+    (new-game {:corp {:hand ["Enigma" "Hortum"] :credits 50}
+               :runner {:hand ["Utae" "Paladin Poemu" "Cookbook" "Ice Carver"] :credits 50}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (play-from-hand state :corp "Hortum" "HQ")
+    (take-credits state :corp)
+    (doseq [s (map :title (:hand (get-runner)))]
+      (play-from-hand state :runner s))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
+    (run-on state :hq)
+    (let [utae (get-program state 0)]
+      (run-continue-until state :encounter-ice)
+      (is (changed? [(:credit (get-runner)) -4]
+            (auto-pump-and-break state (refresh utae)))
+          (str "spent 5 to break Hortum"))
+      (run-continue-until state :encounter-ice)
+      (is (changed? [(:credit (get-runner)) -2]
+            (auto-pump-and-break state (refresh utae)))
+          (str "spent 3 to break Enigma"))
+      (run-continue state)
+      (run-jack-out state)
+      (trash state :runner (get-resource state 0))
+      (run-on state :hq)
+      (run-continue-until state :encounter-ice)
+      (is (changed? [(:credit (get-runner)) -4]
+            (auto-pump-and-break state (refresh utae)))
+          (str "spent 5 to break Hortum"))
+      (run-continue-until state :encounter-ice)
+      (is (empty? (filter #(:dynamic %) (:abilities (refresh utae)))) "No option to break because of utae restriction"))))
 
 (deftest vamadeva-swap-ability
     ;; Swap ability

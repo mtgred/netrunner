@@ -115,16 +115,17 @@
       (is (prompt-is-type? state :corp :select) "Corp should still have select prompt")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-interation-with-install-and-rez-effects-issue-4485
-    ;; interation with 'install and rez' effects. Issue #4485
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Building Blocks" "Ice Wall"]
-                        :credits 10}
-                 :runner {:id "419: Amoral Scammer"}})
-      (play-from-hand state :corp "Building Blocks")
-      (click-card state :corp "Ice Wall")
-      (click-prompt state :corp "HQ")
-      (is (no-prompt? state :runner) "419 doesn't trigger on installed and rezzed cards")))
+  ;; interation with 'install and rez' effects. Issue #4485
+  ;; note this was reversed in the 24.09 rules update
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Building Blocks" "Ice Wall"]
+                      :credits 10}
+               :runner {:id "419: Amoral Scammer"}})
+    (play-from-hand state :corp "Building Blocks")
+    (click-card state :corp "Ice Wall")
+    (click-prompt state :corp "HQ")
+    (is (not (no-prompt? state :runner)) "419 does trigger on installed and rezzed cards")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-419-vs-sportsmetal-jinja-grid-issue-3806
     ;; 419 vs Sportsmetal Jinja Grid. Issue #3806
@@ -148,6 +149,20 @@
       (click-prompt state :corp "No")
       (is (= 2 (count (prompt-buttons :corp))) "Corp should have prompt back with 2 options")
       (is (waiting? state :runner) "Runner should wait again")))
+
+(deftest FourHundredAndNineTeen-amoral-scammer-419-vs-expose-timing-rules-change
+  ;; 419 vs Sportsmetal Jinja Grid. Issue #3806
+  (do-game
+    (new-game {:corp {:discard ["PAD Campaign"]
+                      :hand ["Restore"]}
+               :runner {:id "419: Amoral Scammer"}})
+    (play-from-hand state :corp "Restore")
+    (click-card state :corp "PAD Campaign")
+    (click-prompt state :corp "New remote")
+    (is (not (rezzed? (get-content state :remote1 0))) "Waiting on 419")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "No")
+    (is (rezzed? (get-content state :remote1 0)) "Waiting on 419")))
 
 (deftest a-teia-ip-recovery
   (do-game

@@ -125,7 +125,7 @@
   Sends a command to clear any server side toasts."
   [msg toast-type options]
   (set! (.-options js/toastr) (toastr-options options))
-  (let [f (aget js/toastr (if (= "exception" toast-type) "error" toast-type))]
+  (when-let [f (aget js/toastr (if (= "exception" toast-type) "error" toast-type))]
     (f (if (= "exception" toast-type) (build-exception-msg msg (:last-error @game-state)) msg))))
 
 (defonce side (r/cursor game-state [:side]))

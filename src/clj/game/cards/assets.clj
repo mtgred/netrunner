@@ -13,8 +13,8 @@
                             installable-servers]]
    [game.core.card :refer [agenda? asset? can-be-advanced? corp? event? corp-installable-type?
                            faceup? fake-identity? get-advancement-requirement
-                           get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype? ice?
-                           identity? in-deck? in-discard? in-hand? in-server? installed? is-type?
+                           get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
+                           has-any-subtype? ice? identity? in-deck? in-discard? in-hand? in-server? installed? is-type?
                            operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.checkpoint :refer [fake-checkpoint]]
@@ -25,7 +25,7 @@
                               remaining-draws]]
    [game.core.effects :refer [is-disabled-reg? register-lingering-effect update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
-   [game.core.engine :refer [not-used-once? pay register-events resolve-ability]]
+   [game.core.engine :refer [not-used-once? pay register-events resolve-ability trigger-event-sync]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
    [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [lock-zone prevent-current
@@ -1063,9 +1063,7 @@
   {:abilities [{:action true
                 :prompt "Choose an Executive, Sysop, or Character to add to HQ"
                 :msg (msg "reveal " (:title target) ", add it to HQ, and shuffle R&D")
-                :choices (req (cancellable (filter #(or (has-subtype? % "Executive")
-                                                        (has-subtype? % "Sysop")
-                                                        (has-subtype? % "Character"))
+                :choices (req (cancellable (filter #(has-any-subtype? % ["Executive" "Sysop" "Character"])
                                                    (:deck corp))
                                            :sorted))
                 :cost [(->c :click 1)]
@@ -1636,10 +1634,8 @@
         (req (when-let [malia-target (get-in card [:special :malia-target])]
                (update! state side (assoc-in (get-card state card) [:special :malia-target] nil))
                (remove-icon state :runner card (get-card state malia-target)))
-             ;; I'm not sure why the side is nil here
-             ;; but the old impl had it, so 🤷
-             ;; --nbk, Apr '24
-             (effect-completed state nil eid))]
+             (update-disabled-cards state)
+             (trigger-event-sync state nil eid :disabled-cards-updated))]
     {:on-rez {:msg (msg "blank the text box of " (card-str state target))
               :choices {:card #(and (runner? %)
                                     (installed? %)

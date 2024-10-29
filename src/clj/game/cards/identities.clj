@@ -8,8 +8,8 @@
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? faceup? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
-                           ice? in-discard? in-hand? in-play-area? in-rfg? installed? is-type? operation? program?
-                           resource? rezzed? runner? upgrade?]]
+                           has-any-subtype? ice? in-discard? in-hand? in-play-area? in-rfg? installed? is-type?
+                           operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [charge-ability]]
    [game.core.cost-fns :refer [install-cost play-cost
                                rez-additional-cost-bonus rez-cost]]
@@ -94,7 +94,7 @@
              :req (req (and (first-event? state :corp :corp-install)
                             (pos? (:turn @state))
                             (not (rezzed? (:card context)))
-                            (not (#{:rezzed-no-cost :rezzed-no-rez-cost :rezzed :face-up} (:install-state context)))))
+                            (not (#{:face-up} (:install-state context)))))
              :waiting-prompt true
              :effect
              (effect
@@ -417,8 +417,7 @@
   ;; Effect marks Az's ability as "used" if it has already met it's trigger condition this turn
   (letfn [(az-type? [card] (or (hardware? card)
                                (and (resource? card)
-                                    (or (has-subtype? card "Job")
-                                        (has-subtype? card "Connection")))))
+                                    (has-any-subtype? card ["Job" "Connection"]))))
           (not-triggered? [state] (no-event? state :runner :runner-install #(az-type? (:card (first %)))))]
     {:static-abilities [{:type :install-cost
                          :req (req (and (az-type? target)
@@ -641,7 +640,7 @@
                                             (effect (system-msg (str "declines to use " (get-title card) " to install a card from the top of R&D"))
                                                     (effect-completed eid))
                                             :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
-                                                                                                     :index (first (keep-indexed #(when (same-card? target %2) %1) top))
+                                                                                                     :origin-index (first (keep-indexed #(when (same-card? target %2) %1) top))
                                                                                                      :display-origin true}}))}
                                            card nil))))}]}))
 

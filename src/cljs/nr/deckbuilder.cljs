@@ -15,7 +15,7 @@
     [nr.utils :refer [alliance-dots banned-span cond-button
                       deck-points-card-span dots-html format->slug format-date-time
                       influence-dot influence-dots mdy-formatter non-game-toast num->percent
-                      restricted-span rotated-span set-scroll-top slug->format store-scroll-top]]
+                      restricted-span rotated-span set-scroll-top slug->format store-scroll-top render-message]]
     [nr.ws :as ws]
     [reagent-modals.modals :as reagent-modals]
     [reagent.core :as r]
@@ -387,6 +387,19 @@
             (set-deck-on-state s deck)
             (put! select-channel (:deck @s)))))))
 
+(defn card-cost-html
+  [s card]
+  (let  [show-credit-cost (:show-credit-cost @s)
+         show-mu-cost (:show-mu-cost @s)
+         is-edit (:edit @s)]
+    (when (or show-credit-cost show-mu-cost)
+      [:div.card-cost-wrapper
+       [:span.card-cost {:class (when is-edit "edit")}
+        (when show-mu-cost
+          (when-let [mu (:memoryunits card)] [:div.cost-item (render-message (str  mu "[mu] "))]))
+        (when show-credit-cost
+          (when-let [cost (:cost card)] [:div.cost-item (render-message (str cost "[credit]"))]))]])))
+
 (defn card-influence-html
   "Returns hiccup-ready vector with dots for influence as well as rotated / restricted / banned symbols"
   [format card qty in-faction allied?]
@@ -697,7 +710,7 @@
                                         (not valid) " invalid"))
                       :on-mouse-enter #(when (:setname card) (put! zoom-channel line))
                       :on-mouse-leave #(put! zoom-channel false)} name]
-              (card-influence-html format card modqty infaction allied)])
+              [card-influence-html format card modqty infaction allied]])
            card)])
 
 (defn- build-deck-points-tooltip [deck]
@@ -800,7 +813,8 @@
                                                 :card (:card line)})
                                 :type "button"} "+"]
                 [line-name-span deck line]]
-               [line-span deck line])]))]))])
+                [line-span deck line])
+             [card-cost-html s (:card line)]]))]))])
 
 (defn decklist-notes
   [deck]
@@ -850,6 +864,20 @@
    ;;    (tr [:deck-builder.create-game "Create Game"])])
    ])
 
+(defn view-toggles
+  [s deck]
+  [:div.decklist-view-options
+   [:h4 "View Options"]
+   (when (= (:side (:identity deck)) "Runner")
+     [:div
+      [:input {:type "checkbox" :checked (:show-mu-cost @s)
+               :on-change #(swap! s assoc :show-mu-cost (.. % -target -checked))}]
+      [:span "Show Memory Cost"]])
+   [:div
+    [:input {:type "checkbox" :checked (:show-credit-cost @s)
+             :on-change #(swap! s assoc :show-credit-cost (.. % -target -checked))}]
+    [:span "Show Credit Cost"]]])
+
 (defn selected-panel
   [s]
   [:div.decklist
@@ -863,6 +891,7 @@
           :else [view-buttons s deck])
         [:h3 (:name deck)]
         [decklist-header deck cards]
+        [view-toggles s deck]
         [decklist-contents s deck cards]
         (when-not (:edit @s)
           [decklist-notes deck])]))])
@@ -1050,7 +1079,9 @@
                    :deck nil
                    :side-filter all-sides-filter
                    :faction-filter all-factions-filter
-                   :format-filter all-formats-filter})
+                   :format-filter all-formats-filter
+                   :show-credit-cost false
+                   :show-mu-cost false})
         decks (r/cursor app-state [:decks])
         user (r/cursor app-state [:user])
         decks-loaded (r/cursor app-state [:decks-loaded])
