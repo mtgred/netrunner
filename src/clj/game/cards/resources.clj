@@ -1749,7 +1749,7 @@
              :once :per-turn
              :req (req (and (:marked-server context)
                             (first-event? state side :run-ends #(:marked-server (first %)))
-                            (let [run-server (get-in targets [0 :server 0])
+                            (let [run-server (first (:server context))
                                   evs (mapcat rest (filter #(= :end-breach-server (first %)) (:events context)))]
                               (some #(= run-server (:from-server (first %))) evs))))
              :msg (msg "gain 2 [Credits]")
