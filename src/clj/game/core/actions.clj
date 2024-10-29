@@ -143,8 +143,10 @@
         from-str (card-str state c)
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     ;; allow moving from play-area always, otherwise only when same side, and to valid zone
+    ;; here!
     (when (and (not= src server)
                (same-side? s (:side card))
+               (not= :select (get-in @state [side :prompt-state :prompt-type]))
                (or (= last-zone :play-area)
                    (same-side? side (:side card))))
       (let [move-card-to (partial move state s c)
