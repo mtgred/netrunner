@@ -85,7 +85,7 @@
     user :user
     {:keys [gameid now
             allow-spectator api-access format mute-spectators password room save-replay
-            precon gateway-type side singleton spectatorhands timer title]
+            precon gateway-type side singleton spectatorhands timer title open-decklists]
      :or {gameid (random-uuid)
           now (inst/now)}} :options}]
   (let [player {:user user
@@ -102,6 +102,7 @@
      :pool (join-pool!)
      ;; options
      :precon (validate-precon format precon gateway-type)
+     :open-decklists (or open-decklists (when (validate-precon format precon gateway-type) true))
      :allow-spectator allow-spectator
      :api-access api-access
      :format format
@@ -181,6 +182,7 @@
    :messages
    :mute-spectators
    :original-players
+   :open-decklists
    :password
    :players
    :room

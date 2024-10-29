@@ -425,6 +425,7 @@
    ;; :angel-arena-info
    :corp
    :corp-phase-12
+   :decklists
    :encounters
    :end-turn
    :gameid

@@ -141,26 +141,28 @@
     [:preconstructed.worlds-2012-a-tag "Ben Marsh (C) vs. Jeremy Zwirn (R)"]
     [:preconstructed.worlds-2012-info "Worlds 2012 was played with (up to 3 copies of) the Core Set as the only legal product. Jeremy Zwirn (Building a Better World, Gabriel Santiago) took first place against Ben Marsh (Engineering the Future, Gabriel Santiago) in the first ever Netrunner World Championship."]
     [:preconstructed.worlds-2012-a-ul "Worlds 2012: Weyland vs. Criminal"]
-    (precon "Ben Marsh - 2012: Weyland"
-            {:title "Weyland Consortium: Building a Better World" :side "Corp" :code 1093}
-            [{:qty 3 :card "Priority Requisition"}
-             {:qty 3 :card "Private Security Force"}
-             {:qty 3 :card "Hostile Takeover"}
-             {:qty 2 :card "Posted Bounty"}
-             {:qty 3 :card "Ice Wall"}
+    (precon "Ben Marsh - 2012: ETF"
+            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
+            [{:qty 3 :card "Enigma"}
+             {:qty 2 :card "Heimdall 1.0"}
+             {:qty 2 :card "Tollbooth"}
+             {:qty 3 :card "Viktor 1.0"}
+             {:qty 2 :card "Ichi 1.0"}
+             {:qty 3 :card "Rototurret"}
+             {:qty 2 :card "Archer"}
+             {:qty 1 :card "Ice Wall"}
              {:qty 3 :card "Wall of Static"}
-             {:qty 3 :card "Enigma"}
-             {:qty 3 :card "Shadow"}
-             {:qty 3 :card "Archer"}
-             {:qty 3 :card "Data Raven"}
-             {:qty 3 :card "Hadrian's Wall"}
-             {:qty 3 :card "Melange Mining Corp."}
-             {:qty 1 :card "Corporate Troubleshooter"}
+             {:qty 3 :card "Adonis Campaign"}
+             {:qty 3 :card "PAD Campaign"}
+             {:qty 2 :card "Project Junebug"}
+             {:qty 2 :card "Aggressive Secretary"}
              {:qty 2 :card "Snare!"}
-             {:qty 2 :card "Archived Memories"}
-             {:qty 3 :card "Beanstalk Royalties"}
+             {:qty 1 :card "Experiential Data"}
              {:qty 3 :card "Hedge Fund"}
-             {:qty 3 :card "Scorched Earth"}])
+             {:qty 3 :card "Biotic Labor"}
+             {:qty 3 :card "Private Security Force"}
+             {:qty 3 :card "Accelerated Beta Test"}
+             {:qty 3 :card "Priority Requisition"}])
     (precon "Jeremy Z - 2012: Criminal"
             {:title "Gabriel Santiago: Consummate Professional" :side "Runner" :code 1017}
             [{:qty 2 :card "Corroder"}
@@ -189,28 +191,26 @@
     [:preconstructed.worlds-2012-b-tag "Jeremy Z (C) vs. Ben Marsh (R)"]
     [:preconstructed.worlds-2012-info "Worlds 2012 was played with (up to 3 copies of) the Core Set as the only legal product. Jeremy Zwirn (Building a Better World, Gabriel Santiago) took first place against Ben Marsh (Engineering the Future, Gabriel Santiago) in the first ever Netrunner World Championship."]
     [:preconstructed.worlds-2012-b-ul "Worlds 2012: Haas-Bioroid vs. Criminal"]
-    (precon "Jeremy Z - 2012: ETF"
-            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
-            [{:qty 3 :card "Enigma"}
-             {:qty 2 :card "Heimdall 1.0"}
-             {:qty 2 :card "Tollbooth"}
-             {:qty 3 :card "Viktor 1.0"}
-             {:qty 2 :card "Ichi 1.0"}
-             {:qty 3 :card "Rototurret"}
-             {:qty 2 :card "Archer"}
-             {:qty 1 :card "Ice Wall"}
-             {:qty 3 :card "Wall of Static"}
-             {:qty 3 :card "Adonis Campaign"}
-             {:qty 3 :card "PAD Campaign"}
-             {:qty 2 :card "Project Junebug"}
-             {:qty 2 :card "Aggressive Secretary"}
-             {:qty 2 :card "Snare!"}
-             {:qty 1 :card "Experiential Data"}
-             {:qty 3 :card "Hedge Fund"}
-             {:qty 3 :card "Biotic Labor"}
+    (precon "Jeremy Z - 2012: Weyland"
+            {:title "Weyland Consortium: Building a Better World" :side "Corp" :code 1093}
+            [{:qty 3 :card "Priority Requisition"}
              {:qty 3 :card "Private Security Force"}
-             {:qty 3 :card "Accelerated Beta Test"}
-             {:qty 3 :card "Priority Requisition"}])
+             {:qty 3 :card "Hostile Takeover"}
+             {:qty 2 :card "Posted Bounty"}
+             {:qty 3 :card "Ice Wall"}
+             {:qty 3 :card "Wall of Static"}
+             {:qty 3 :card "Enigma"}
+             {:qty 3 :card "Shadow"}
+             {:qty 3 :card "Archer"}
+             {:qty 3 :card "Data Raven"}
+             {:qty 3 :card "Hadrian's Wall"}
+             {:qty 3 :card "Melange Mining Corp."}
+             {:qty 1 :card "Corporate Troubleshooter"}
+             {:qty 2 :card "Snare!"}
+             {:qty 2 :card "Archived Memories"}
+             {:qty 3 :card "Beanstalk Royalties"}
+             {:qty 3 :card "Hedge Fund"}
+             {:qty 3 :card "Scorched Earth"}])
     (precon "Ben Marsh - 2012: Gabe"
             {:title "Gabriel Santiago: Consummate Professional" :side "Runner" :code 1017}
             [{:qty 3 :card "Sneakdoor Beta"}
@@ -240,7 +240,7 @@
   (matchup
     [:preconstructed.worlds-2013-a "Worlds 2013: Jens Erickson (C) vs. Andrew Veen (R)"]
     [:preconstructed.worlds-2013-a-tag "Jens Erickson (C) vs. Andrew Veen (R)"]
-    [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves."]
+    [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves. Jens Erickson (Andromeda, ETR) took first place against Andrew Veen (Kate, NBN: Making News)"]
     [:preconstructed.worlds-2013-a-ul "Worlds 2013: HB FastAdv vs. Shaper Katman"]
     (precon "Jens Erickson - 2013: Engineering the Future"
             {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
@@ -292,7 +292,7 @@
   (matchup
     [:preconstructed.worlds-2013-b "Worlds 2013: Andrew Veen (C) vs. Jens Erickson (R)"]
     [:preconstructed.worlds-2013-b-tag "Andrew Veen (C) vs. Jens Erickson (R)"]
-    [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves."]
+    [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves. Jens Erickson (Andromeda, ETR) took first place against Andrew Veen (Kate, NBN: Making News)"]
     [:preconstructed.worlds-2013-b-ul "Worlds 2013: NBN Fast Adv vs. Andy Sucker"]
     (precon "Andrew Veen - 2013: Making News"
             {:title "NBN: Making News" :side "Corp" :code 25104}
@@ -1466,6 +1466,128 @@
              {:qty 2 :card "Fermenter"}
              {:qty 1 :card "Leech"}])))
 
+(def worlds-2024-deer-runs
+    (matchup
+      [:preconstructed.worlds-2024-a "Worlds 2024: Alex Boyd (C) vs. Dee Ruttenberg (R)"]
+      [:preconstructed.worlds-2024-a-tag "Alex Boyd (C) vs. Dee Ruttenberg (R)"]
+      [:preconstructed.worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Alex Boyd AKA Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against Dee Ruttenberg AKA DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
+      [:preconstructed.worlds-2024-a-ul "Worlds 2024: Kill R+ vs. Good Stuff Lat"]
+      (precon "Aruzan - 2024: Kill R+"
+            {:title "NBN: Reality Plus" :side "Corp" :code 30051}
+            [{:qty 2 :card "Degree Mill"}
+             {:qty 1 :card "Oracle Thinktank"}
+             {:qty 3 :card "Project Beale"}
+             {:qty 1 :card "Tomorrow's Headline"}
+             {:qty 3 :card "False Lead"}
+             {:qty 1 :card "Orbital Superiority"}
+             {:qty 3 :card "Behold!"}
+             {:qty 1 :card "Gaslight"}
+             {:qty 3 :card "Spin Doctor"}
+             {:qty 1 :card "Lady Liberty"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 3 :card "Regolith Mining License"}
+             {:qty 3 :card "Ping"}
+             {:qty 3 :card "Unsmiling Tsarevna"}
+             {:qty 2 :card "Virtual Service Agent"}
+             {:qty 3 :card "Oppo Research"}
+             {:qty 1 :card "Predictive Planogram"}
+             {:qty 2 :card "Your Digital Life"}
+             {:qty 1 :card "Sprint"}
+             {:qty 2 :card "Mindscaping"}
+             {:qty 2 :card "End of the Line"}
+             {:qty 1 :card "Pivot"}
+             {:qty 2 :card "AMAZE Amusements"}
+             {:qty 2 :card "The Holo Man"}])
+      (precon "DeeR - 2024: Deep Dive Lat"
+              {:title "Lat: Ethical Freelancer" :side "Runner" :code 26019}
+              [{:qty 3 :card "Creative Commission"}
+               {:qty 2 :card "Deep Dive"}
+               {:qty 2 :card "Diesel"}
+               {:qty 3 :card "Trick Shot"}
+               {:qty 1 :card "Bahia Bands"}
+               {:qty 3 :card "Dirty Laundry"}
+               {:qty 3 :card "Overclock"}
+               {:qty 2 :card "Sure Gamble"}
+               {:qty 2 :card "Pinhole Threading"}
+               {:qty 3 :card "Simulchip"}
+               {:qty 2 :card "Swift"}
+               {:qty 1 :card "Echelon"}
+               {:qty 1 :card "Euler"}
+               {:qty 1 :card "Gauss"}
+               {:qty 1 :card "K2CP Turbine"}
+               {:qty 1 :card "Paricia"}
+               {:qty 1 :card "Propeller"}
+               {:qty 3 :card "Self-modifying Code"}
+               {:qty 1 :card "Fermenter"}
+               {:qty 1 :card "Cupellation"}
+               {:qty 1 :card "Revolver"}
+               {:qty 1 :card "Dr. Nuka Vrolyck"}
+               {:qty 3 :card "Stoneship Chart Room"}
+               {:qty 2 :card "Telework Contract"}
+               {:qty 1 :card "DJ Fenris"}])))
+
+(def worlds-2024-deer-corps
+  (matchup
+    [:preconstructed.worlds-2024-b "Worlds 2024: Dee Ruttenberg (C) vs Alex Boyd (R)"]
+    [:preconstructed.worlds-2024-b-tag "Dee Ruttenberg (C) vs. Alex Boyd (R)"]
+    [:preconstructed.worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Alex Boyd AKA Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against Dee Ruttenberg AKA DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
+    [:preconstructed.worlds-2024-b-ul "Worlds 2024: Loud PE vs. Deep Dive Arissana"]
+    (precon "DeeR - 2024: Loud PE"
+            {:title "Jinteki: Personal Evolution" :side "Corp" :code 1067}
+            [{:qty 1 :card "Blood in the Water"}
+             {:qty 3 :card "Fujii Asset Retrieval"}
+             {:qty 2 :card "House of Knives"}
+             {:qty 2 :card "Hybrid Release"}
+             {:qty 2 :card "Regenesis"}
+             {:qty 3 :card "Sting!"}
+             {:qty 3 :card "Cohort Guidance Program"}
+             {:qty 2 :card "Moon Pool"}
+             {:qty 3 :card "Prāna Condenser"}
+             {:qty 1 :card "Snare!"}
+             {:qty 3 :card "Rashida Jaheem"}
+             {:qty 1 :card "Wage Workers"}
+             {:qty 3 :card "Spin Doctor"}
+             {:qty 2 :card "Anansi"}
+             {:qty 2 :card "Anemone"}
+             {:qty 3 :card "Tatu-Bola"}
+             {:qty 3 :card "Vampyronassa"}
+             {:qty 2 :card "Data Loop"}
+             {:qty 3 :card "Mindscaping"}
+             {:qty 1 :card "Hedge Fund"}
+             {:qty 1 :card "Mavirus"}
+             {:qty 1 :card "Tranquility Home Grid"}
+             {:qty 1 :card "The Holo Man"}
+             {:qty 1 :card "Crisium Grid"}])
+    (precon "Aruzan - 2024: Spree Arissana"
+            {:title "Arissana Rocha Nahu: Street Artist" :side "Runner" :code 34020}
+            [{:qty 2 :card "Burner"}
+             {:qty 3 :card "Creative Commission"}
+             {:qty 3 :card "Deep Dive"}
+             {:qty 3 :card "Diesel"}
+             {:qty 3 :card "Spec Work"}
+             {:qty 2 :card "Spree"}
+             {:qty 3 :card "Trick Shot"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 2 :card "Pinhole Threading"}
+             {:qty 2 :card "Aniccam"}
+             {:qty 3 :card "Simulchip"}
+             {:qty 1 :card "Coalescence"}
+             {:qty 1 :card "Euler"}
+             {:qty 1 :card "Gauss"}
+             {:qty 1 :card "Ika"}
+             {:qty 3 :card "Muse"}
+             {:qty 1 :card "Paricia"}
+             {:qty 1 :card "Pichação"}
+             {:qty 1 :card "Propeller"}
+             {:qty 1 :card "Self-modifying Code"}
+             {:qty 1 :card "Botulus"}
+             {:qty 2 :card "Fermenter"}
+             {:qty 1 :card "Physarum Entangler"}
+             {:qty 2 :card "Environmental Testing"}
+             {:qty 2 :card "Daily Casts"}
+             {:qty 1 :card "DJ Fenris"}
+             {:qty 1 :card "Hannah \"Wheels\" Pilintra"}])))
+
 ;; Utility
 
 (defn matchup-by-key
@@ -1498,7 +1620,9 @@
     :worlds-2022-a worlds-2022-sokka-corps
     :worlds-2022-b worlds-2022-sokka-runs
     :worlds-2023-a worlds-2023-sokka-corps
-    :worlds-2023-b worlds-2023-sokka-runs))
+    :worlds-2023-b worlds-2023-sokka-runs
+    :worlds-2024-a worlds-2024-deer-runs
+    :worlds-2024-b worlds-2024-deer-corps))
 
 (def all-matchups
   "A set of all preconstructed matchups (by key).
@@ -1514,4 +1638,5 @@
     :worlds-2020-a :worlds-2020-b
     :worlds-2021-a :worlds-2021-b
     :worlds-2022-a :worlds-2022-b
-    :worlds-2023-a :worlds-2023-b})
+    :worlds-2023-a :worlds-2023-b
+    :worlds-2024-a :worlds-2024-b})

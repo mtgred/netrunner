@@ -21,6 +21,7 @@
    :spectatorhands
    :precon
    :gateway-type
+   :open-decklists
    :timer
    :title])
 
@@ -77,6 +78,12 @@
    [:input {:type "checkbox" :checked (:singleton @options)
             :on-change #(swap! options assoc :singleton (.. % -target -checked))}]
    (tr [:lobby.singleton "Singleton"])])
+
+(defn open-decklists [options]
+  [:label
+   [:input {:type "checkbox" :checked (:open-decklists @options)
+            :on-change #(swap! options assoc :open-decklists (.. % -target -checked))}]
+   (tr [:lobby.open-decklists "Open Decklists"])])
 
 (defn gateway-constructed-choice [fmt-state gateway-type]
   [:div
@@ -219,6 +226,7 @@
    [:h3 (tr [:lobby.options "Options"])]
    [allow-spectators options]
    [toggle-hidden-info options]
+   [open-decklists options]
    [password-input options]
    [add-timer options]
    [save-replay options]
@@ -239,6 +247,7 @@
                                 :save-replay (not= "casual" (:room @lobby-state))
                                 :singleton false
                                 :spectatorhands false
+                                :open-decklists false
                                 :timed false
                                 :timer nil})
                title (r/cursor state [:title])
