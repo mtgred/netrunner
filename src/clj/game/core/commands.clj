@@ -154,6 +154,16 @@
               (rez-all state side eid (next cards)))
     (effect-completed state side eid)))
 
+(defn rez-all-turn-agendas-faceup
+  [cards]
+  (let [agendas (filter (every-pred agenda? (complement :seen)) cards)]
+    (when (seq agendas)
+      {:optional
+       {:prompt "Turn all agendas faceup?"
+        :yes-ability {:effect (req (doseq [c agendas]
+                                     (update! state side (assoc c :seen true))))
+                      :msg (msg "turns all agendas faceup")}}})))
+
 (defn command-rezall
   [state side]
   (resolve-ability
@@ -162,7 +172,12 @@
      {:prompt "Rez all cards and turn cards in archives faceup?"
       :yes-ability {:async true
                     :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                                 (rez-all state side eid (remove rezzed? (all-installed state side))))}}}
+                                 (wait-for
+                                   (rez-all state side (remove rezzed? (all-installed state side)))
+                                   (continue-ability
+                                     state side
+                                     (rez-all-turn-agendas-faceup (all-installed state side))
+                                     card nil)))}}}
     (make-card {:title "/rez-all command"}) nil))
 
 (defn command-roll [state side value]
