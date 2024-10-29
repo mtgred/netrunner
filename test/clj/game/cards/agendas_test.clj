@@ -3396,6 +3396,26 @@
         (is (= (:title (get-ice state :hq 0)) "Eli 1.0") "Swapped Ice Wall with Eli 1.0")
         (click-prompt state :runner "No"))))
 
+(deftest yagi-uda-swap-triggers-install
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :credits 20
+                      :hand ["Tranquility Home Grid" "Project Yagi-Uda" "Project Atlas" "Project Beale"]}})
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Tranquility Home Grid" "New remote")
+    (play-from-hand state :corp "Project Beale" "Server 1")
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Project Yagi-Uda" "New remote")
+    (let [pyu (get-content state :remote2 0)]
+      (advance state pyu 4)
+      (score state :corp (refresh pyu)))
+    (take-credits state :corp)
+    (run-on state :remote1)
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (click-card state :corp "Project Beale")
+    (click-card state :corp "Project Atlas")
+    (click-prompt state :corp "Gain 2 [Credits]")))
+
 (deftest puppet-master
   ;; Puppet Master - game progresses if no valid targets. Issue #1661.
   (do-game
