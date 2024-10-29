@@ -164,7 +164,7 @@
    :alt-arts :card-resolution :deckstats :gamestats :card-zoom :pin-zoom
    :card-back :stacked-cards :ghost-trojans :display-encounter-info
    :sides-overlap :archives-sorted :heap-sorted
-   :labeled-cards :labeled-unrezzed-cards :bespoke-sounds])
+   :labeled-cards :labeled-unrezzed-cards :bespoke-sounds :pass-on-rez])
 
 (defn update-profile-handler
   [{db :system/db
