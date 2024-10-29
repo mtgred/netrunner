@@ -211,7 +211,7 @@
        (select-non-nil-keys lobby-keys))))
 
 (defn get-blocked-list [user]
-  (->> user :options :blocked-users (map str/lower-case)))
+  (->> (app-state/get-user (:username user)) :options :blocked-users (map str/lower-case)))
 
 (defn filter-lobby-list
   [lobbies user]
