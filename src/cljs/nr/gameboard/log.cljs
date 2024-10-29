@@ -61,7 +61,14 @@
     [:button.indicate-action {:on-click #(do (.preventDefault %)
                                              (send-command "indicate-action"))
                               :key "Indicate action"}
-     (tr [:game.indicate-action "Indicate action"])]))
+     (tr [:game.indicate-action "Indicate paid ability"])]))
+
+(defn show-decklists []
+  (when (get-in @app-state [:current-game :open-decklists])
+    [:button.show-decklists {:on-click #(do (.preventDefault %)
+                                            (swap! app-state update-in [:display-decklists] not))
+                             :key "Show Decklists"}
+     (tr [:game.show-decklists "Show/Hide decklists"])]))
 
 (defn fuzzy-match-score
   "Matches if all characters in input appear in target in order.
@@ -176,6 +183,7 @@
              :on-key-down #(command-menu-key-down-handler state %)
              :on-change #(log-input-change-handler state %)}]]]
          [indicate-action]
+         [show-decklists]
          [command-menu !input-ref state]]))))
 
 (defn log-messages []

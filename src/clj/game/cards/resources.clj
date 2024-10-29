@@ -11,8 +11,9 @@
                             all-installed-runner card->server get-all-cards server->zone]]
    [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp? condition-counter?
                            event? facedown? get-agenda-points get-card get-counters
-                           get-title get-zone hardware? has-subtype? ice? identity? in-discard? in-hand? in-scored?
-                           installed? is-type? program? resource? rezzed? runner? upgrade? virus-program?]]
+                           get-title get-zone hardware? has-subtype? has-any-subtype? ice? identity?
+                           in-discard? in-hand? in-scored? installed? is-type? program? resource? rezzed?
+                           runner? upgrade? virus-program?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [can-charge charge-ability]]
    [game.core.checkpoint :refer [fake-checkpoint]]
@@ -59,7 +60,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
-   [game.core.revealing :refer [reveal]]
+   [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [derez rez]]
    [game.core.runs :refer [active-encounter? bypass-ice can-run-server? get-runnable-zones
                            gain-run-credits get-current-encounter
@@ -303,12 +304,21 @@
    :events [(trash-on-empty :power)]
    :abilities [{:cost [(->c :power 1)]
                 :keep-menu-open :while-power-tokens-left
-                :msg "look at the top card of Stack"
-                :optional
-                {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of Stack?")
-                 :yes-ability
-                 {:msg "add the top card of Stack to the bottom"
-                  :effect (req (move state side (first (:deck runner)) :deck))}}}]})
+                :msg "reveal the top card of Stack"
+                :req (req (seq (:deck runner)))
+                :async true
+                :effect (req
+                          (let [top-card (first (:deck runner))]
+                            (wait-for
+                              (reveal-loud state side card nil top-card)
+                              (continue-ability
+                                state side
+                                {:optional
+                                 {:prompt (msg "Add " (:title top-card) " to bottom of Stack?")
+                                  :yes-ability
+                                  {:msg (str "move " (:title top-card) " to the bottom of the Stack")
+                                   :effect (req (move state side (first (:deck runner)) :deck))}}}
+                                card nil))))}]})
 
 (defcard "Armitage Codebusting"
   {:data {:counter {:credit 12}}
@@ -358,8 +368,7 @@
              (req (let [hosted-cards (:hosted (get-card state card))
                         not-hosted? (fn [c] (not-any? #(= (:title %) (:title c)) hosted-cards))]
                     (cancellable (filter #(and (not-hosted? %)
-                                               (or (has-subtype? % "Virus")
-                                                   (has-subtype? % "Weapon")))
+                                               (has-any-subtype? % ["Virus" "Weapon"]))
                                          (:deck runner)) :sorted)))
              :async true
              :waiting-prompt true
@@ -1171,9 +1180,7 @@
                                           c (make-card c)
                                           c (assoc c
                                                    :host (dissoc card :hosted)
-                                                   :zone [:onhost]
-                                                   ;; semi hack to get deactivate to work
-                                                   :installed true)]
+                                                   :zone [:onhost])]
                                       ;; Manually host id on card
                                       (update! state side (assoc card :hosted [c]))
                                       (card-init state :runner c)
@@ -1333,7 +1340,7 @@
 
 (defcard "Environmental Testing"
   {:events [{:event :runner-install
-             :silent (req true)
+             :silent (req (not= 3 (get-counters card :power)))
              :req (req (and (or (hardware? (:card context))
                                 (program? (:card context)))
                             (not (:facedown? context))))
@@ -1349,14 +1356,14 @@
                                     (gain-credits state side eid 9)))}]})
 
 (defcard "Eru Ayase-Pessoa"
-  (let [constant-ability
+  (let [constant-effect
         {:event :breach-server
          :req (req (and (threat-level 3 state)
                         (= :rd target)
                         (= :archives (first (:server run)))))
          :msg "access 1 additional card"
          :effect (effect (access-bonus :rd 1))}
-        ability
+        replace-breach-event
         (successful-run-replace-breach
           {:target-server :archives
            :this-card-run true
@@ -1364,7 +1371,8 @@
            :ability {:msg "breach R&D"
                      :async true
                      :effect (req (breach-server state :runner eid [:rd] nil))}})]
-    {:events [constant-ability]
+    {:events [constant-effect
+              replace-breach-event]
      :abilities [{:action true
                   :cost [(->c :click 1)]
                   :msg "make a run on Archives"
@@ -1374,7 +1382,6 @@
                   :async true
                   :effect
                   (req (wait-for (gain-tags state :runner 1 {:unpreventable true})
-                                 (register-events state side card [ability])
                                  (make-run state side eid :archives (get-card state card))))}]}))
 
 (defcard "Fall Guy"
@@ -1738,12 +1745,13 @@
              :async true
              :interactive (req true)
              :once :per-turn
-             :req (req (first-event? state side :run-ends #(is-mark? state (target-server (first %)))))
-             :effect
-             (req (if (first-event? state side :end-breach-server #(is-mark? state (:from-server (first %))))
-                    (do (system-msg state :runner (str "uses " (:title card) " to gain 2 [Credits]"))
-                        (gain-credits state :runner eid 2))
-                    (effect-completed state side eid)))}]})
+             :req (req (and (:marked-server context)
+                            (first-event? state side :run-ends #(:marked-server (first %)))
+                            (let [run-server (first (:server context))
+                                  evs (mapcat rest (filter #(= :end-breach-server (first %)) (:events context)))]
+                              (some #(= run-server (:from-server (first %))) evs))))
+             :msg (msg "gain 2 [Credits]")
+             :effect (req (gain-credits state side eid 2))}]})
 
 (defcard "Inside Man"
   {:recurring 2

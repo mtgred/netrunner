@@ -34,7 +34,7 @@
    [game.core.ice :refer [add-extra-sub! remove-sub! update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
-   [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-ice
+   [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-cards-async swap-ice
                              trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? ->c]]
@@ -731,9 +731,7 @@
                 :effect (effect (gain-clicks 2)
                                 (register-turn-flag!
                                   card :can-advance
-                                  (fn [state side card]
-                                    ((constantly false)
-                                     (toast state :corp "Cannot advance cards this turn due to Efficiency Committee." "warning")))))
+                                  (constantly false)))
                 :keep-menu-open :while-agenda-tokens-left
                 :msg "gain [Click][Click]"}]})
 
@@ -1687,8 +1685,8 @@
                                          (asset? %)
                                          (upgrade? %))))}
              :msg (msg "swap " (card-str state to-swap) " with a card from HQ")
-             :effect (effect (swap-cards to-swap target)
-                             (continue-ability :runner (offer-jack-out) card nil))
+             :effect (req (wait-for (swap-cards-async state side to-swap target)
+                                    (continue-ability state :runner (offer-jack-out) card nil)))
              :cancel-effect (effect (put-back-counter card)
                                     (effect-completed eid))})
           (choose-card [run-server]

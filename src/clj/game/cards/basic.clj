@@ -9,7 +9,7 @@
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.effects :refer [get-effects]]
    [game.core.engine :refer [pay resolve-ability trigger-event]]
-   [game.core.flags :refer [can-advance? untrashable-while-resources?]]
+   [game.core.flags :refer [untrashable-while-resources?]]
    [game.core.gaining :refer [gain-credits]]
    [game.core.installing :refer [corp-can-pay-and-install? corp-install
                                  runner-can-pay-and-install? runner-install]]
@@ -33,7 +33,7 @@
                 :cost [(->c :click)]
                 :msg "gain 1 [Credits]"
                 :async true
-                :effect (req (wait-for (gain-credits state side 1 :corp-click-credit)
+                :effect (req (wait-for (gain-credits state side 1 {:action :corp-click-credit})
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}
@@ -92,7 +92,6 @@
                 :cost [(->c :click 1) (->c :credit 1)]
                 :async true
                 :msg (msg "advance " (card-str state (:card context)))
-                :req (req (can-advance? state side (:card context)))
                 :effect (effect (update-advancement-requirement (:card context))
                                 (add-prop (get-card state (:card context)) :advance-counter 1)
                                 (play-sfx "click-advance")
@@ -105,12 +104,8 @@
                 :prompt "Choose a resource to trash"
                 :msg (msg "trash " (:title target))
                 ;; I hate that we need to modify the basic action card like this, but I don't think there's any way around it -nbkelly, '24
-                :choices {:req (req (and (if (and (->> (all-active-installed state :runner)
-                                                       (filter (fn [c] (untrashable-while-resources? c)))
-                                                       (seq))
-                                                  (< 1 (->> (all-active-installed state :runner)
-                                                            (filter resource?)
-                                                            count)))
+                :choices {:req (req (and (if (and (untrashable-while-resources? target)
+                                                  (< (count (filter resource? (all-active-installed state :runner))) 2))
                                            true
                                            (not (untrashable-while-resources? target)))
                                          (resource? target)
@@ -161,7 +156,7 @@
                 :cost [(->c :click)]
                 :msg "gain 1 [Credits]"
                 :async true
-                :effect (req (wait-for (gain-credits state side 1 :runner-click-credit)
+                :effect (req (wait-for (gain-credits state side 1 {:action :runner-click-credit})
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
                                        (play-sfx state side "click-credit")
                                        (effect-completed state side eid)))}

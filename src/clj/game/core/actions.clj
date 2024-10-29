@@ -7,16 +7,16 @@
     [game.core.board :refer [installable-servers]]
     [game.core.card :refer [get-agenda-points get-card]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost score-additional-cost-bonus]]
-    [game.core.effects :refer [any-effects]]
+    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost card-ability-cost score-additional-cost-bonus]]
+    [game.core.effects :refer [any-effects is-disabled-reg?]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [ability-as-handler checkpoint register-pending-event pay queue-event resolve-ability trigger-event-simult]]
+    [game.core.engine :refer [ability-as-handler checkpoint register-once register-pending-event pay queue-event resolve-ability trigger-event-simult]]
     [game.core.flags :refer [can-advance? can-score?]]
-    [game.core.ice :refer [break-subroutine! break-subs-event-context get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs!]]
+    [game.core.ice :refer [break-subroutine! break-subs-event-context get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs! substitute-x-credit-costs]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string ->c]]
-    [game.core.expend :refer [expend]]
+    [game.core.expend :refer [expend expendable?]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
     [game.core.props :refer [add-counter add-prop set-prop]]
@@ -99,7 +99,7 @@
   (if (no-blocking-or-prevent-prompt? state side)
     (let [card (get-card state card)
           eid (make-eid state {:source card :source-type :ability})
-          expend-ab (expend (:expend card))]
+          expend-ab (expend (:expend (card-def card)))]
       (resolve-ability state side eid expend-ab card nil))
     (toast state side (str "You cannot play abilities while other abilities are resolving.")
               "warning")))
@@ -143,8 +143,10 @@
         from-str (card-str state c)
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     ;; allow moving from play-area always, otherwise only when same side, and to valid zone
+    ;; here!
     (when (and (not= src server)
                (same-side? s (:side card))
+               (not= :select (get-in @state [side :prompt-state :prompt-type]))
                (or (= last-zone :play-area)
                    (same-side? side (:side card))))
       (let [move-card-to (partial move state s c)
@@ -290,9 +292,10 @@
                    (when (:pump ability)
                      ((:req ability) state side eid card nil)))
         [pump-ability pump-cost]
-        (some->> (:abilities (card-def card))
+        (some->> (filter (complement :auto-pump-ignore) (:abilities (card-def card)))
                  (keep #(when (can-pump %)
-                          [% (:cost %)]))
+                          [% (card-ability-cost state side % card current-ice)]))
+                 (filter (complement :auto-pump-ignore))
                  (seq)
                  (sort-by #(-> % first :auto-pump-sort))
                  (apply min-key #(let [costs (second %)]
@@ -431,9 +434,9 @@
                      (when (:pump ability)
                        ((:req ability) state side eid card nil)))
           [pump-ability pump-cost]
-          (some->> (:abilities (card-def card))
+          (some->> (filter (complement :auto-pump-ignore) (:abilities (card-def card)))
                    (keep #(when (can-pump %)
-                            [% (:cost %)]))
+                            [% (card-ability-cost state side % card current-ice)]))
                    (seq)
                    (sort-by #(-> % first :auto-pump-sort))
                    (apply min-key #(let [costs (second %)]
@@ -464,6 +467,7 @@
                    (sort-by #(-> % first :auto-break-sort))
                    (apply min-key #(let [costs (second %)]
                                      (reduce (fnil + 0 0) 0 (mapv :cost/amount costs)))))
+          once-key (:once break-ability)
           subs-broken-at-once (when break-ability
                                 (:break break-ability 1))
           unbroken-subs (when (:subroutines current-ice)
@@ -474,6 +478,7 @@
                         (if (pos? subs-broken-at-once)
                           (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))
                           1))
+          break-cost (substitute-x-credit-costs break-cost unbroken-subs (:auto-break-creds-per-sub break-ability))
           total-break-cost (when (and break-cost
                                       times-break)
                              (repeat times-break break-cost))
@@ -503,6 +508,7 @@
                                                    "all ")
                                                  unbroken-subs " subroutines on "
                                                  (:title current-ice))))
+                              (when once-key (register-once state side {:once once-key} card))
                               (continue state side nil))))))))
 
 (def dynamic-abilities
@@ -581,9 +587,14 @@
   [state side {:keys [card] :as context}]
   (when-let [card (get-card state card)]
     (let [context (assoc context :card card)]
-      (play-ability state side {:card (get-in @state [:corp :basic-action-card])
-                                :ability 4
-                                :targets [context]}))))
+      ;; note that can-advance potentially generates toasts (effcom),
+      ;; so it cannot go in the req of basic, since that can generate infinite toast loops
+      ;; when update-and-send-diffs causes more updates that need to be updated and sent...
+      (if (can-advance? state side card)
+        (play-ability state side {:card (get-in @state [:corp :basic-action-card])
+                                  :ability 4
+                                  :targets [context]})
+        (toast state :corp "Cannot advance cards this turn." "warning")))))
 
 ;;; Runner actions
 (defn click-run
@@ -613,12 +624,11 @@
 
 (defn generate-install-list
   [state _ {:keys [card]}]
-  (let [card (get-card state card)]
-    (if card
-      (if (:expend card)
-        (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Expend")) ;;april fools we can make this "cast as a sorcery"
-        (swap! state assoc-in [:corp :install-list] (installable-servers state card)))
-      (swap! state dissoc-in [:corp :install-list]))))
+  (if-let [card (get-card state card)]
+    (if (expendable? state card)
+      (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Expend")) ;;april fools we can make this "cast as a sorcery"
+      (swap! state assoc-in [:corp :install-list] (installable-servers state card)))
+    (swap! state dissoc-in [:corp :install-list])))
 
 (defn generate-runnable-zones
   [state _ _]

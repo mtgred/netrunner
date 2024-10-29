@@ -3,7 +3,7 @@
     [game.core.board :refer [all-active-installed all-installed card->server]]
     [game.core.card :refer [get-card ice? installed? rezzed? has-subtype?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [break-sub-ability-cost]]
+    [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.effects :refer [any-effects get-effects register-lingering-effect sum-effects]]
     [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult queue-event checkpoint]]
@@ -276,10 +276,11 @@
                (update-current-encounter state :prevent-subroutine nil)
                (if prevent
                  (checkpoint state nil eid {:duration :subroutine-currently-resolving})
-                 ;; see if there are any effects which can prevent this subroutine
-                 (wait-for (resolve-ability state side (make-eid state eid) (:sub-effect sub) (get-card state ice) nil)
-                           (queue-event state :subroutine-fired {:sub sub :ice ice})
-                           (checkpoint state nil eid {:duration :subroutine-currently-resolving})))))))
+                 (wait-for
+                   (trigger-event-simult state side :subroutine-fired nil {:sub sub :ice ice})
+                   (wait-for
+                     (resolve-ability state side (make-eid state eid) (:sub-effect sub) (get-card state ice) nil)
+                     (checkpoint state nil eid {:duration :subroutine-currently-resolving}))))))))
 
 (defn- resolve-next-unbroken-sub
   ([state side ice subroutines]
@@ -689,7 +690,9 @@
       :cost [cost]
       :pump strength
       :pump-bonus (:pump-bonus args)
+      :cost-bonus (:cost-bonus args)
       :auto-pump-sort (:auto-break-sort args)
+      :auto-pump-ignore (:auto-pump-ignore args)
       :msg (msg "increase its strength from " (get-strength card)
                 " to " (+ (get-pump-strength
                             state side
@@ -704,6 +707,15 @@
                               card)
                             duration))})))
 
+(defn substitute-x-credit-costs
+  "Substitute out the 'x-credits' part of a cost when the credit count is known"
+  [cost x scale]
+  (let [pick-x (fn [c] (= (:cost/type c) :x-credits))
+        output-cost (when (and x scale) [(->c :credit (* x scale))])
+        adjusted (remove pick-x cost)]
+    (if (= (count adjusted) (count cost))
+      cost
+      (concat adjusted output-cost))))
 
 (def breaker-auto-pump
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the
@@ -719,7 +731,14 @@
               can-pump (fn [ability]
                          (when (:pump ability)
                            ((:req ability) state side eid card nil)))
-              pump-ability (some #(when (can-pump %) %) (:abilities (card-def card)))
+              [pump-ability pump-cost]
+              (some->> (filter (complement :auto-pump-ignore) (:abilities (card-def card)))
+                 (keep #(when (can-pump %)
+                          [% (card-ability-cost state side % card current-ice)]))
+                 (seq)
+                 (sort-by #(-> % first :auto-pump-sort))
+                 (apply min-key #(let [costs (second %)]
+                                   (reduce (fnil + 0 0) 0 (keep :cost/amount costs)))))
               pump-strength (get-pump-strength state side pump-ability card)
               strength-diff (when (and current-ice
                                        (get-strength current-ice)
@@ -732,7 +751,7 @@
                            0)
               total-pump-cost (when (and pump-ability
                                          times-pump)
-                                (repeat times-pump (:cost pump-ability)))
+                                (repeat times-pump pump-cost))
               ;; break all subs
               can-break (fn [ability]
                           (when (:break-req ability)
@@ -751,6 +770,7 @@
                             (if (pos? subs-broken-at-once)
                               (int (Math/ceil (/ unbroken-subs subs-broken-at-once)))
                               1))
+              break-cost (substitute-x-credit-costs break-cost unbroken-subs (:auto-break-creds-per-sub break-ability))
               total-break-cost (when (and break-cost
                                           times-break)
                                  (repeat times-break break-cost))
@@ -764,7 +784,7 @@
                                        pump-ability))
                             (vec (concat abs
                                          (when (and break-ability
-                                                    (or pump-ability (zero? strength-diff))
+                                                    (or (not (get-strength card)) pump-ability (zero? strength-diff))
                                                     no-unbreakable-subs
                                                     (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))

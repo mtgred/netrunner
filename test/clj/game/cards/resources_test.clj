@@ -2011,6 +2011,25 @@
                     (click-prompt state :runner "Pay 3 [Credits] to trash"))
           "Loup triggered (see https://nullsignal.games/blog/card-text-updates-v1-2-released/ for ruling"))))
 
+(deftest dj-vs-degree-mill
+  (do-game
+    (new-game {:runner {:hand ["DJ Fenris" "Ika"]}
+               :corp {:hand ["Degree Mill"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "DJ Fenris")
+    (click-prompt state :runner "René \"Loup\" Arcemont: Party Animal")
+    (run-empty-server state :hq)
+    (is (= '("No action") (prompt-buttons :runner)) "Cannot steal degree mill with just dj")
+    (click-prompt state :runner "No action")
+    (play-from-hand state :runner "Ika")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Pay to steal")
+    (click-card state :runner "DJ Fenris")
+    (click-card state :runner (first (:hosted (get-resource state 0)))) ;; not selected
+    (is (not (no-prompt? state :runner)) "did not confirm by picking fake id")
+    (click-card state :runner "Ika")
+    (is (no-prompt? state :runner) "Stole degree mill")))
+
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
   (do-game
@@ -2290,6 +2309,21 @@
             "Env. Testing was trashed"))
           "Env Testing pops for 9c"))))
 
+(deftest environmental-testing-interactive-at-3
+  ;; can just be silent if there's not 3 counters
+  (do-game
+    (new-game {:runner {:hand ["Environmental Testing" (qty "Ika" 3) "Muse"]
+                        :deck ["Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Environmental Testing")
+    (dotimes [_ 3]
+      (play-from-hand state :runner "Ika"))
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Muse")
+    (is (= ["Environmental Testing" "Muse"] (sort (prompt-titles :runner)))
+        "Option to trigger either muse of environmental testing first")))
+
 (deftest eru-ayase-pessoa
   (do-game
     (new-game {:corp {:hand ["IPO" "IPO" "City Works Project"]
@@ -2310,6 +2344,26 @@
       ;;1 from hq 2 from rd
       (play-from-hand state :runner "Divide and Conquer")
       (run-continue state :success)
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (click-prompt state :runner "No action")
+      (is (empty? (get-run)) "Run has ended"))))
+
+(deftest eru-ayase-pessoa-threat-3-with-mercury
+  (do-game
+    (new-game {:corp {:score-area ["City Works Project"]
+                      :hand []
+                      :deck ["Hedge Fund" "Hedge Fund" "Hedge Fund"]}
+               :runner {:id "Mercury: Chrome Libertador"
+                        :hand ["Eru Ayase-Pessoa"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Eru Ayase-Pessoa")
+    (let [eru (get-resource state 0)]
+      (is (changed? [(count-tags state) 1]
+            (card-ability state :runner (refresh eru) 0))
+          "Got 1 tag")
+      (run-continue state)
+      (click-prompt state :runner "Yes")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
@@ -3230,6 +3284,36 @@
             (click-prompt state :runner "Info Bounty"))
           "Gained 2 credits when finished breaching mark")
       (click-prompt state :runner "No action")))
+
+(deftest info-bounty-cheating-out-creds
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund"]
+                        :deck [(qty "Hedge Fund" 10)]}
+                 :runner {:deck ["Info Bounty" "Virtuoso"]
+                          :credits 10}})
+    (take-credits state :corp)
+    (core/set-mark state :hq)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "No action")
+    (play-from-hand state :runner "Info Bounty")
+    (run-on state :rd)
+    (is (changed? [(:credit (get-runner)) 0]
+          (run-jack-out state))
+        "Didn't gain 2")))
+
+(deftest info-bounty-correctly-getting-creds
+  (do-game
+    (new-game {:corp {:hand ["Hedge Fund"]
+                        :deck [(qty "Hedge Fund" 10)]}
+                 :runner {:deck ["Info Bounty" "Virtuoso"]
+                          :credits 10}})
+    (take-credits state :corp)
+    (core/set-mark state :hq)
+    (play-from-hand state :runner "Info Bounty")
+    (is (changed? [(:credit (get-runner)) 2]
+          (run-empty-server state :hq)
+          (click-prompt state :runner "No action")
+          "Did gain 2"))))
 
 (deftest inside-man-pay-credits-prompt
     ;; Pay-credits prompt
@@ -5468,7 +5552,8 @@
       (core/gain state :runner :click 3)
       (is (changed? [(:credit (get-runner)) 6]
             (card-ability state :runner (get-resource state 0) 0)
-            (click-card state :runner "Lucky Find"))
+            (click-card state :runner "Lucky Find")
+            (click-prompt state :runner "Yes"))
           "Lucky Find is played from the Heap")
       (is (zero? (:click (get-runner))) "No clicks left")))
 

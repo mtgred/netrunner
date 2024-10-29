@@ -11,10 +11,10 @@
     [game.core.engine :refer [checkpoint register-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
     [game.core.effects :refer [is-disabled-reg? register-static-abilities unregister-static-abilities update-disabled-cards]]
     [game.core.flags :refer [turn-flag? zone-locked?]]
-    [game.core.hosting :refer [host]]
+    [game.core.hosting :refer [has-ancestor? host]]
     [game.core.ice :refer [update-breaker-strength]]
     [game.core.initializing :refer [ability-init card-init corp-ability-init runner-ability-init]]
-    [game.core.memory :refer [expected-mu sufficient-mu? update-mu]]
+    [game.core.memory :refer [available-mu expected-mu sufficient-mu? update-mu]]
     [game.core.moving :refer [move trash trash-cards]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c value]]
     [game.core.props :refer [add-prop]]
@@ -432,7 +432,7 @@
                         (= (:previous-zone card) [:set-aside])
                         "among the set-aside cards"
                         :else
-                        (str "the " (name-zone :runner (:previous-zone card)))))
+                        (name-zone :runner (:previous-zone card))))
                  "")
         pre-lhs (when (every? (complement string/blank?) [cost-str prepend-cost-str])
                   (str prepend-cost-str ", and then "))
@@ -519,8 +519,9 @@
           true))))
 
 (defn runner-install-pay
-  [state side eid card {:keys [no-mu facedown] :as args}]
-  (let [costs (runner-install-cost state side (assoc card :facedown facedown) (dissoc args :cached-costs))]
+  [state side eid card {:keys [no-mu facedown host-card] :as args}]
+  (let [costs (runner-install-cost state side (assoc card :facedown facedown) (dissoc args :cached-costs))
+        available-mem (available-mu state)]
     (if-not (runner-can-pay-and-install? state side eid card (assoc args :cached-costs costs))
       (effect-completed state side eid)
       (if (and (program? card)
@@ -529,14 +530,22 @@
         (continue-ability
           state side
           {:prompt (format "Insufficient MU to install %s. Trash installed programs?" (:title card))
-           :choices {:max (count (all-installed-runner-type state :program))
+           :choices {:max (count (filter #(and (program? %) (not (has-ancestor? % host-card))) (all-installed state :runner)))
                      :card #(and (installed? %)
+                                 ;; note: rules team says we can't create illegal gamestates by
+                                 ;; trashing a host when installing a card. If they ever change it,
+                                 ;; then be aware that the engine will hang when trying to do this
+                                 ;; without these guards. - nbkelly, oct 2024
+                                 (not (has-ancestor? % host-card))
                                  (program? %))}
            :async true
            :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true})
                                   (update-mu state)
                                   (runner-install-pay state side eid card args)))
-           :cancel-effect (effect (effect-completed eid))}
+           :cancel-effect (req (update-mu state)
+                               (if (= available-mem (available-mu state))
+                                 (effect-completed state side eid)
+                                 (runner-install-pay state side eid card args)))}
           card nil)
         (let [played-card (move state side (assoc card :facedown facedown) :play-area {:suppress-event true})]
           (wait-for (pay state side (make-eid state eid) card costs)

@@ -57,6 +57,8 @@
     (mc/update db card-collection {:code code} {$set {k path}})
     (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$set {prev-k path}})))
 
+(def ^:const cards-to-skip #{"08012" "09001" "26066" "26120"})
+
 (defn- add-card-image
   "Add an image to a card in the db"
   ([db base-path lang resolution f] (add-card-image db base-path lang resolution :stock f))
@@ -69,8 +71,9 @@
              prev-k-root (if (= :stock art-set) code (name art-set))
              prev-k (str/join "." ["images" (name lang) (name resolution) prev-k-root])
              path (str/join "/" [base-path (name lang) (name resolution) (name art-set) filename])]
-         (mc/update db card-collection {:code code} {$set {k path}})
-         (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$set {prev-k path}}))))))
+         (when-not (some #(= % code) cards-to-skip)
+           (mc/update db card-collection {:code code} {$set {k path}})
+           (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$set {prev-k path}})))))))
 
 (defn- add-alt-images
   "All all images in the specified alt directory"

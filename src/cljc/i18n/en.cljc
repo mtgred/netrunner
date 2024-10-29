@@ -236,8 +236,10 @@
               :blank "[blank]"
               :they "They/them"
               :she "She/her"
+              :sheit "She/it"
               :shethey "She/they"
               :he "He/him"
+              :heit "He/it"
               :hethey "He/they"
               :it "It"
               :ne "Ne/nem"
@@ -245,7 +247,8 @@
               :ey "Ey/em"
               :zehir "Ze/hir"
               :zezir "Ze/zir"
-              :xe "Xe/xem"}
+              :xe "Xe/xem"
+              :xi "Xi/xir"}
    :chat {:title "Play Netrunner in your browser"
           :channels "Channels"
           :send "Send"
@@ -394,6 +397,8 @@
                             :intermediate-info "This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points."
                             :intermediate-ul "System Gateway - Intermediate Teaching Decks"
                             :constructed "Constructed"}
+           :open-decklists "Open Decklists"
+           :open-decklists-b "(open decklists)"
            :singleton "Singleton"
            :singleton-b "(singleton)"
            :singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."
@@ -745,7 +750,8 @@
           :bad-pub-count (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Bad Publicity"))
           :mu-count (fn [[unused available]] (str unused " of " available " MU unused"))
           :special-mu-count (fn [[unused available mu-type]] (str unused " of " available " " mu-type " MU unused"))
-          :indicate-action "Indicate action"
+          :show-decklists "Show/Hide decklists"
+          :indicate-action "Indicate paid ability"
           :spec-count (fn [[c]] (str c " Spectator" (when (> c 1) "s")))
           :spec-view "Spectator View"
           :runner-view "Runner View"

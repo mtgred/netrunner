@@ -124,6 +124,12 @@
                      :type "Basic Action"
                      :title "Runner Basic Action Card"})))
 
+(defn- set-deck-lists
+  [state]
+  (let [runner-cards (sort-by key (frequencies (map :title (get-in @state [:runner :deck]))))
+        corp-cards (sort-by key (frequencies (map :title (get-in @state [:corp :deck]))))]
+    (swap! state assoc :decklists {:corp corp-cards :runner runner-cards})))
+
 (defn init-game
   "Initializes a new game with the given players vector."
   [game]
@@ -133,6 +139,8 @@
     (when-let [messages (seq (:messages game))]
       (swap! state assoc :log (into [] messages))
       (system-say state nil "[hr]"))
+    (when (:open-decklists game)
+      (set-deck-lists state))
     (card-init state :corp corp-identity)
     (implementation-msg state corp-identity)
     (card-init state :runner runner-identity)

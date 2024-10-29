@@ -185,12 +185,17 @@
   (when precon
     [:span.format-precon-deck-names (tr (:tr-underline (matchup-by-key precon)))]))
 
-(defn game-format [{fmt :format singleton? :singleton precon :precon}]
+(defn- open-decklists-span [precon open-decklists]
+  (when (and open-decklists (not precon))
+    [:span.open-decklists (str " " (tr [:lobby.open-decklists-b] "(open decklists)"))]))
+
+(defn game-format [{fmt :format singleton? :singleton precon :precon open-decklists :open-decklists}]
   [:div {:class "game-format"}
    [:span.format-label (tr [:lobby.format "Format"]) ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
    [precon-span precon]
    [:span.format-singleton (str (when singleton? (str " " (tr [:lobby.singleton-b "(singleton)"]))))]
+   [open-decklists-span precon open-decklists]
    [precon-under-span precon]])
 
 (defn- time-since

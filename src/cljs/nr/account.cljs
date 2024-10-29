@@ -49,6 +49,7 @@
   (swap! app-state assoc-in [:options :player-stats-icons] (:player-stats-icons @s))
   (swap! app-state assoc-in [:options :stacked-cards] (:stacked-cards @s))
   (swap! app-state assoc-in [:options :ghost-trojans] (:ghost-trojans @s))
+  (swap! app-state assoc-in [:options :display-encounter-info] (:display-encounter-info @s))
   (swap! app-state assoc-in [:options :sides-overlap] (:sides-overlap @s))
   (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
   (swap! app-state assoc-in [:options :log-width] (:log-width @s))
@@ -69,6 +70,7 @@
   (.setItem js/localStorage "player-stats-icons" (:player-stats-icons @s))
   (.setItem js/localStorage "stacked-cards" (:stacked-cards @s))
   (.setItem js/localStorage "ghost-trojans" (:ghost-trojans @s))
+  (.setItem js/localStorage "display-encounter-info" (:display-encounter-info @s))
   (.setItem js/localStorage "sides-overlap" (:sides-overlap @s))
   (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
   (.setItem js/localStorage "card-back" (:card-back @s))
@@ -277,8 +279,10 @@
                             {:name (tr [:pronouns.blank "[blank]"]) :ref "blank"}
                             {:name (tr [:pronouns.they "They/them"]) :ref "they"}
                             {:name (tr [:pronouns.she "She/her"]) :ref "she"}
+                            {:name (tr [:pronouns.sheit "She/it"]) :ref "sheit"}
                             {:name (tr [:pronouns.shethey "She/they"]) :ref "shethey"}
                             {:name (tr [:pronouns.he "He/him"]) :ref "he"}
+                            {:name (tr [:pronouns.heit "He/it"]) :ref "heit"}
                             {:name (tr [:pronouns.hethey "He/they"]) :ref "hethey"}
                             {:name (tr [:pronouns.it "It"]) :ref "it"}
                             {:name (tr [:pronouns.ne "Ne/nem"]) :ref "ne"}
@@ -286,8 +290,11 @@
                             {:name (tr [:pronouns.ey "Ey/em"]) :ref "ey"}
                             {:name (tr [:pronouns.zehir "Ze/hir"]) :ref "zehir"}
                             {:name (tr [:pronouns.zezir "Ze/zir"]) :ref "zezir"}
-                            {:name (tr [:pronouns.xe "Xe/xem"]) :ref "xe"}]]
-                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
+                            {:name (tr [:pronouns.xe "Xe/xem"]) :ref "xe"}
+                            {:name (tr [:pronouns.xi "Xi/xir"]) :ref "xi"}]]
+                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
+           [:div "If your personal pronouns are not represented, you can request them "
+            [:a {:href "https://github.com/mtgred/netrunner/issues"} "here"]]]
           [:section
            [:h3 (tr [:settings.language "Language"])]
            [:select {:value (:language @s "en")
@@ -372,7 +379,13 @@
                              :value true
                              :checked (:ghost-trojans @s)
                              :on-change #(swap! s assoc-in [:ghost-trojans] (.. % -target -checked))}]
-             (tr [:settings.ghost-trojans "Display ghosts for hosted programs"])]]
+             (tr [:settings.display-encounter-info "Display ghosts for hosted programs"])]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:display-encounter-info @s)
+                             :on-change #(swap! s assoc-in [:display-encounter-info] (.. % -target -checked))}]
+             (tr [:settings.display-encounter-info "Always display encounter info dialog"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
@@ -575,7 +588,7 @@
 
      [api-keys s]
 
-     [:section 
+     [:section
       [:span.flash-message (:flash-message @s)]]]])}))
 
 (defn account []
@@ -600,6 +613,7 @@
                        :card-resolution (get-in @app-state [:options :card-resolution])
                        :stacked-cards (get-in @app-state [:options :stacked-cards])
                        :ghost-trojans (get-in @app-state [:options :ghost-trojans])
+                       :display-encounter-info (get-in @app-state [:options :display-encounter-info])
                        :sides-overlap (get-in @app-state [:options :sides-overlap])
                        :player-stats-icons (get-in @app-state [:options :player-stats-icons])
                        :runner-board-order (get-in @app-state [:options :runner-board-order])

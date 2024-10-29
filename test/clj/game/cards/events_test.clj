@@ -836,7 +836,7 @@
                :runner {:hand ["Burner"]}})
     (take-credits state :corp)
     (play-run-event state "Burner" :hq)
-    (is (last-log-contains? state "reveals Hedge Fund, Hedge Fund, and Hedge Fund from HQ"))
+    (is (last-log-contains? state "reveal Hedge Fund, Hedge Fund, and Hedge Fund from HQ"))
     (is (changed? [(count (:deck (get-corp))) 2
                    (count (:hand (get-corp))) -2]
                   (click-prompt state :runner "Hedge Fund")
@@ -3476,6 +3476,21 @@
       (click-prompt state :runner "No action")
       (is (not (:run @state)) "Run is finished")))
 
+(deftest hot-pursuit-vs-seb
+  ;; Basic behavior
+  (do-game
+    (new-game {:runner {:id "Sebastião Souza Pessoa: Activist Organizer"
+                        :credits 2
+                        :deck ["Hot Pursuit" "The Supplier"]}})
+    (take-credits state :corp)
+    (play-run-event state "Hot Pursuit" :hq)
+    (is (= 9 (:credit (get-runner))) "Gained creds before firing sub's ability")
+    (is (= 1 (count-tags state)) "Took 1 tag on successful run")
+    (click-card state :runner "The Supplier")
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run is finished")))
+
+
 (deftest hot-pursuit-bounce-from-hq
     ;; Bounce from HQ
     (do-game
@@ -5681,6 +5696,28 @@
           (click-prompt state :runner "No action"))
         "gained 3 credits from raindrop")))
 
+(deftest raindrops-cut-stone-forced-encounter
+  (do-game
+    (new-game {:corp {:hand ["Ganked!" "Enigma"]}
+               :runner {:hand ["Raindrops Cut Stone"]
+                        :deck [(qty "Ika" 5)]}})
+    (play-from-hand state :corp "Enigma" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Raindrops Cut Stone")
+    (click-prompt state :runner "HQ")
+    (let [enigma (get-ice state :hq 0)]
+      (rez state :corp (refresh enigma))
+      (run-continue-until state :success)
+      (is (last-log-contains? state "Runner accesses Ganked!") "Ganked! message printed to log")
+      (click-prompt state :corp "Yes")
+      (click-card state :corp "Enigma")
+      (let [enc (:ice (core/get-current-encounter state))]
+        (is (= "Enigma" (:title enc)) "Encountering enigma via ganked")
+        ;; should draw 2 from raindrops when we fire subs
+        (is (changed? [(count (:hand (get-runner))) 2]
+              (fire-subs state enc))
+            "Drew 2 cards from raindrops cut stone")))))
+
 ;; Rebirth
 (let [akiko "Akiko Nisei: Head Case"
       kate "Kate \"Mac\" McCaffrey: Digital Tinker"
@@ -5964,6 +6001,19 @@
         (card-ability state :runner stargate 0)
         (run-continue state)
         (click-prompt state :runner "Hedge Fund"))))
+
+(deftest rejig-vs-aniccam
+  ;; Rejig
+  (do-game
+    (new-game {:options {:start-as :runner}
+               :runner {:hand ["Rejig" "Aniccam"]
+                        :deck ["Ika"]}})
+    (play-from-hand state :runner "Aniccam")
+    (play-from-hand state :runner "Rejig")
+    (click-card state :runner "Aniccam")
+    (is-hand? state :runner ["Aniccam"])
+    (click-card state :runner "Aniccam")
+    (is-hand? state :runner ["Ika"])))
 
 (deftest reprise
   ;; Reprise

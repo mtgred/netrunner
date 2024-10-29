@@ -10,9 +10,9 @@
    [game.core.effects :refer [any-effects is-disabled-reg?]]
    [game.core.flags :refer [is-scored?]]
    [game.core.gaining :refer [deduct lose]]
-   [game.core.moving :refer [discard-from-hand forfeit mill move trash trash-cards]]
+   [game.core.moving :refer [discard-from-hand flip-facedown forfeit mill move trash trash-cards]]
    [game.core.payment :refer [handler label payable? value stealth-value]]
-   [game.core.pick-counters :refer [pick-credit-providing-cards pick-virus-counters-to-spend]]
+   [game.core.pick-counters :refer [pick-credit-providing-cards pick-credit-reducers pick-virus-counters-to-spend]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez]]
    [game.core.shuffling :refer [shuffle!]]
@@ -149,35 +149,38 @@
 (defmethod handler :credit
   [cost state side eid card]
   (let [provider-func #(eligible-pay-credit-cards state side eid card)]
-    (cond
-      (and (pos? (value cost))
-           (pos? (count (provider-func))))
-      (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid (value cost) (stealth-value cost)) card nil)
-                (let [pay-async-result async-result]
-                  (wait-for (trigger-event-sync
-                              state side (make-eid state eid)
-                              (if (= side :corp) :corp-spent-credits :runner-spent-credits)
-                              (value cost))
-                            (swap! state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
-                            (complete-with-result state side eid
-                                                  {:paid/msg (str "pays " (:msg pay-async-result))
-                                                   :paid/type :credit
-                                                   :paid/value (:number pay-async-result)
-                                                   :paid/targets (:targets pay-async-result)}))))
-      (pos? (value cost))
-      (do (lose state side :credit (value cost))
-          (wait-for (trigger-event-sync
-                      state side (make-eid state eid)
-                      (if (= side :corp) :corp-spent-credits :runner-spent-credits)
-                      (value cost))
-                    (swap! state update-in [:stats side :spent :credit] (fnil + 0) (value cost))
-                    (complete-with-result state side eid {:paid/msg (str "pays " (value cost) " [Credits]")
-                                                          :paid/type :credit
-                                                          :paid/value (value cost)})))
-      :else
-      (complete-with-result state side eid {:paid/msg "pays 0 [Credits]"
-                                            :paid/type :credit
-                                            :paid/value 0}))))
+    (wait-for
+      (resolve-ability state side (pick-credit-reducers provider-func eid (value cost) (stealth-value cost)) card nil)
+      (let [updated-cost (max 0 (- (value cost) (or (:reduction async-result) 0)))]
+        (cond
+          (and (pos? updated-cost)
+               (pos? (count (provider-func))))
+          (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid updated-cost (stealth-value cost)) card nil)
+                    (let [pay-async-result async-result]
+                      (wait-for (trigger-event-sync
+                                  state side (make-eid state eid)
+                                  (if (= side :corp) :corp-spent-credits :runner-spent-credits)
+                                  updated-cost)
+                                (swap! state update-in [:stats side :spent :credit] (fnil + 0) updated-cost)
+                                (complete-with-result state side eid
+                                                      {:paid/msg (str "pays " (:msg pay-async-result))
+                                                       :paid/type :credit
+                                                       :paid/value (:number pay-async-result)
+                                                       :paid/targets (:targets pay-async-result)}))))
+          (pos? updated-cost)
+          (do (lose state side :credit updated-cost)
+              (wait-for (trigger-event-sync
+                          state side (make-eid state eid)
+                          (if (= side :corp) :corp-spent-credits :runner-spent-credits)
+                          updated-cost)
+                        (swap! state update-in [:stats side :spent :credit] (fnil + 0) updated-cost)
+                        (complete-with-result state side eid {:paid/msg (str "pays " updated-cost " [Credits]")
+                                                              :paid/type :credit
+                                                              :paid/value updated-cost})))
+          :else
+          (complete-with-result state side eid {:paid/msg "pays 0 [Credits]"
+                                                :paid/type :credit
+                                                :paid/value 0}))))))
 
 ;; X Credits
 (defmethod value :x-credits [_] 0)
@@ -243,11 +246,12 @@
                                              :paid/targets [card]}))))
 
 ;; Trash
-(defmethod value :trash-can [cost] 1)
+(defmethod value :trash-can [cost] (:cost/amount cost))
 (defmethod label :trash-can [cost] "[trash]")
 (defmethod payable? :trash-can
   [cost state side eid card]
-  (installed? (get-card state card)))
+  (and (installed? (get-card state card))
+       (= 1 (value cost))))
 (defmethod handler :trash-can
   [cost state side eid card]
   (wait-for (trash state side card {:cause :ability-cost
@@ -936,6 +940,29 @@
                          :paid/value (count cards)
                          :paid/targets cards})))}
       nil nil)))
+
+;; TurnHostedMatryoshkaFacedown
+(defmethod value :turn-hosted-matryoshka-facedown [cost] (:cost/amount cost))
+(defmethod label :turn-hosted-matryoshka-facedown [cost]
+  (str "turn " (quantify (value cost) "hosted cop" "y" "ies") " of Matryoshka facedown"))
+(defmethod payable? :turn-hosted-matryoshka-facedown
+  [cost state side eid card]
+  (<= (value cost)
+      (count (filter #(and (not (facedown? %)) (= (:title %) "Matryoshka"))
+                     (:hosted (get-card state card))))))
+(defmethod handler :turn-hosted-matryoshka-facedown
+  [cost state side eid card]
+  (let [pred #(and (not (facedown? %)) (= (:title %) "Matryoshka"))
+        selected (take (value cost) (filter pred (:hosted (get-card state card))))]
+    (doseq [c selected]
+      (flip-facedown state side c))
+    (complete-with-result
+      state side eid
+      {:paid/msg (str "turns "(quantify (value cost) "hosted cop" "y" "ies")
+                      " of Matryoshka facedown")
+       :paid/type :turn-hosted-matryoshka-facedown
+       :paid/value (value cost)
+       :paid/targets selected})))
 
 ;; AddRandomToBottom
 (defmethod value :add-random-from-hand-to-bottom-of-deck [cost] (:cost/amount cost))

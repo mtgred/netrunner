@@ -399,6 +399,12 @@
   "Weyland"
   ["If you think Weyland is working for your good without blood on their hands, think again."]
   "Weyland Consortium: Because We Built It" ["They cower behind their walls"]}
+ "René \"Loup\" Arcemont: Party Animal"
+ {"Default" ["Freedom isn't a place you can run to."]
+  "Haas-Bioroid" ["All work and no play makes Loup a very angry boy."]
+  "Jinteki" ["I really appreciate their work, but I still don't like them."]
+  "NBN" ["Shut-up, I'll get my news from my eyes."]
+  "Weyland Consortium" ["What was that saying about the bigger they are and falling?"]}
  "Rielle \"Kit\" Peddler: Transhuman"
  {"Default" ["They are trapped by their physical ideals. I must set them free."]
   "Haas-Bioroid"
@@ -452,6 +458,18 @@
   ["Their books are always kept clean. Thats why we need to dig deeper."]
   "Weyland"
   ["I did get quite a few contracts from Weyland's divisions over the years... The amount of dirt they're buried under must equal many ancient civilizations."]}
+ "Tāo Salonga: Telepresence Magician"
+ {"Default" ["Just don't ask me how I do it."]
+  "Haas-Bioroid" ["{Whirring Rotors} I feel a bit like a bioroid sometimes."]
+  "Jinteki"
+  ["What a narrow view of humanity. I will show you what a human can do."]
+  "NBN" ["Filter out the noise. Clear your mind. I am ready."]
+  "Weyland Consortium"
+  ["For all your grand designs, you are never worried about the cracks and who might be falling through them."]}
+ "The Catalyst: Convention Breaker"
+ {"Default" ["This is going to be big."]
+  "The Syndicate: Profit over Princible"
+  ["Things are changing. It is time to see where it will lead us."]}
  "The Masque: Cyber General" {"Default"
                               ["With winds of change at our back, victory is certain."]}
  "The Professor: Keeper of Knowledge"
@@ -503,4 +521,15 @@
   "NBN" ["You're looking for the wrong person in all the wrong places. Keep looking."]
   "Weyland"
   ["Now, these people don't know how to play fair. And they're bad losers, at that."]}
- "Wyvern: Chemically Enhanced" {"Default" ["Burning cortex? There's a pill for that."]}}
+ "Wyvern: Chemically Enhanced" {"Default" ["Burning cortex? There's a pill for that."]}
+ "Zahya Sadeghi: Versatile Smuggler"
+ {"Default"
+  ["You have something someone wants, and I think I can offer them a better price."]
+  "Haas-Bioroid"
+  ["The great thing about new product is there is always someone who wants the new designs."]
+  "Jinteki"
+  ["Get in, authorize these prescriptions, and get out. Then pay for Soha's bone treatment."]
+  "NBN"
+  ["I was surprised that someone asked for all the raw footage for a sensie, but if they will pay I'll find it for them."]
+  "Weyland Consortium"
+  ["Massive delivery from the beanstalk. Too bad some was damaged and had to be destroyed."]}}

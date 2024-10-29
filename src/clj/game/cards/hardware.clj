@@ -6,7 +6,7 @@
    [game.core.actions :refer [play-ability]]
    [game.core.board :refer [all-active all-active-installed all-installed]]
    [game.core.card :refer [corp? event? facedown? get-card get-counters get-title
-                           get-zone hardware? has-subtype? ice? in-deck? in-discard?
+                           get-zone hardware? has-subtype? has-any-subtype? ice? in-deck? in-discard?
                            in-hand? in-scored? installed? is-type? program? resource? rezzed?
                            runner? virus-program? faceup?]]
    [game.core.card-defs :refer [card-def]]
@@ -32,7 +32,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [hand-size runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [all-subs-broken? any-subs-broken? break-sub pump
+   [game.core.ice :refer [all-subs-broken? any-subs-broken? auto-icebreaker break-sub pump
                           reset-all-ice update-all-ice update-all-icebreakers
                           update-breaker-strength]]
    [game.core.installing :refer [runner-can-install? runner-can-pay-and-install? runner-install]]
@@ -338,50 +338,51 @@
                                (get-card state card) nil))}]})
 
 (defcard "Boomerang"
-  {:on-install {:prompt "Choose an installed piece of ice"
-                :msg (msg "target " (card-str state target))
-                :choices {:card #(and (installed? %)
-                                      (ice? %))}
-                :effect (effect (add-icon card target "B" (faction-label card))
-                                (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))}
-   :leave-play (effect (remove-icon card))
-   :abilities [(assoc
-                 (break-sub
-                   [(->c :trash-can)] 2 "All"
-                   {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
-                                (some #(same-card? boomerang-target (:ice %)) (:encounters @state))
-                                true))}) ; When eg. flipped by Assimilator
-                 :effect
-                 (req (wait-for
-                        (trash state side (make-eid state eid) card
-                               {:cause :ability-cost
-                                :cause-card card
-                                :unpreventable true})
-                        (continue-ability
-                          state :runner
-                          (when-let [[boomerang] async-result]
-                            (break-sub
-                              nil 2 "All"
-                              {:additional-ability
-                               {:effect
-                                (effect
-                                  (register-events
-                                    boomerang
-                                    [{:event :run-ends
-                                      :duration :end-of-run
-                                      :optional
-                                      {:req (req (and (:successful target)
-                                                      (not (zone-locked? state :runner :discard))
-                                                      (some #(= (:title card) (:title %)) (:discard runner))))
-                                       :once :per-run
-                                       :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
-                                       :yes-ability
-                                       {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
-                                        :effect (effect (move (some #(when (= (:title card) (:title %)) %)
-                                                                    (:discard runner))
-                                                              :deck)
-                                                        (shuffle! :deck))}}}]))}}))
-                          card nil))))]})
+  (auto-icebreaker
+    {:on-install {:prompt "Choose an installed piece of ice"
+                  :msg (msg "target " (card-str state target))
+                  :choices {:card #(and (installed? %)
+                                        (ice? %))}
+                  :effect (effect (add-icon card target "B" (faction-label card))
+                                  (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))}
+     :leave-play (effect (remove-icon card))
+     :abilities [(assoc
+                   (break-sub
+                     [(->c :trash-can)] 2 "All"
+                     {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
+                                  (some #(same-card? boomerang-target (:ice %)) (:encounters @state))
+                                  true))}) ; When eg. flipped by Assimilator
+                   :effect
+                   (req (wait-for
+                          (trash state side (make-eid state eid) card
+                                 {:cause :ability-cost
+                                  :cause-card card
+                                  :unpreventable true})
+                          (continue-ability
+                            state :runner
+                            (when-let [[boomerang] async-result]
+                              (break-sub
+                                nil 2 "All"
+                                {:additional-ability
+                                 {:effect
+                                  (effect
+                                    (register-events
+                                      boomerang
+                                      [{:event :run-ends
+                                        :duration :end-of-run
+                                        :optional
+                                        {:req (req (and (:successful target)
+                                                        (not (zone-locked? state :runner :discard))
+                                                        (some #(= (:title card) (:title %)) (:discard runner))))
+                                         :once :per-run
+                                         :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
+                                         :yes-ability
+                                         {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
+                                          :effect (effect (move (some #(when (= (:title card) (:title %)) %)
+                                                                      (:discard runner))
+                                                                :deck)
+                                                          (shuffle! :deck))}}}]))}}))
+                            card nil))))]}))
 
 (defcard "Box-E"
   {:static-abilities [(mu+ 2)
@@ -789,7 +790,7 @@
              :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]})
 
 (defcard "e3 Feedback Implants"
-  {:abilities [(break-sub 1 1 "All" {:req (req true)})]})
+  (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:req (req (any-subs-broken? current-ice))})]}))
 
 (defcard "Ekomind"
   (let [update-base-mu (fn [state n] (swap! state assoc-in [:runner :memory :base] n))]
@@ -820,14 +821,15 @@
                                                     true))))}]))}]})
 
 (defcard "Endurance"
-  {:data {:counter {:power 3}}
-   :static-abilities [(mu+ 2)]
-   :events [{:event :successful-run
-             :req (req (first-event? state :runner :successful-run))
-             :msg "place 1 power counter on itself"
-             :async true
-             :effect (effect (add-counter eid card :power 1 nil))}]
-   :abilities [(break-sub [(->c :power 2)] 2 "All")]})
+  (auto-icebreaker
+    {:data {:counter {:power 3}}
+     :static-abilities [(mu+ 2)]
+     :events [{:event :successful-run
+               :req (req (first-event? state :runner :successful-run))
+               :msg "place 1 power counter on itself"
+               :async true
+               :effect (effect (add-counter eid card :power 1 nil))}]
+     :abilities [(break-sub [(->c :power 2)] 2 "All")]}))
 
 (defcard "Feedback Filter"
   {:interactions {:prevent [{:type #{:net :brain}
@@ -1394,12 +1396,17 @@
                             (not (in-discard? target))
                             (not (in-scored? target))))
              :once :per-turn
-             :msg "force the Corp to trash a random card from HQ"
              :effect (req (let [card-to-trash (first (shuffle (:hand corp)))
                                 card-seen? (same-card? target card-to-trash)
                                 card-to-trash (if card-seen? (assoc card-to-trash :seen true)
-                                                card-to-trash)]
-                            (trash state :corp eid card-to-trash {:cause-card card :cause :forced-to-trash})))}]})
+                                                  card-to-trash)]
+                            (continue-ability
+                              state side
+                              {:effect (req (trash state :corp eid card-to-trash {:cause-card card :cause :forced-to-trash}))
+                               :async true
+                               :msg (str "force the Corp to trash a random card from HQ"
+                                         (when card-seen? " (" (:title card-to-trash)")"))}
+                              card nil)))}]})
 
 (defcard "Maya"
   {:static-abilities [(mu+ 2)]
@@ -1640,9 +1647,47 @@
    :abilities [(set-autoresolve :auto-fire "Paragon")]})
 
 (defcard "Patchwork"
-  (let [patchwork-ability {:once :per-turn
+  (let [install-word (fn [c] (if (event? c) "play" "install"))
+        patchwork-manual-prognosis {:cost [(->c :click 1)]
+                                    :action true
+                                    :once :per-turn
+                                    :label "Manually resolve patchwork"
+                                    :req (req (seq (:hand runner)))
+                                    :prompt "Designate a card to play or install"
+                                    :choices {:card (every-pred runner? in-hand?)}
+                                    :waiting-prompt true
+                                    :async true
+                                    :effect
+                                    (req (let [to-play target]
+                                           (update! state side (assoc-in card [:special :patchwork] true))
+                                           (continue-ability
+                                             state side
+                                             {:prompt (msg "Designate a card to trash")
+                                              :choices {:card (every-pred runner? in-hand?)
+                                                        :all true}
+                                              :async true
+                                              :effect (req
+                                                        (let [to-trash target]
+                                                          (continue-ability
+                                                            state side
+                                                            (if (same-card? to-trash to-play)
+                                                              {:msg (msg "trash " (:title to-trash) " from the Grip, and is no longer able to " (install-word to-trash) " it")
+                                                               :async true
+                                                               :effect (req (trash state side eid to-trash {:cause-card card}))}
+                                                              {:msg (msg "trash " (:title to-trash) " to " (install-word to-play) " " (:title to-play) " from the Grip, paying 2 [Credits] less")
+                                                               :async true
+                                                               :effect (req (wait-for
+                                                                              (trash state side to-trash {:cause-card card})
+                                                                              (if (event? to-play)
+                                                                                (play-instant state :runner eid to-play {:cost-bonus -2})
+                                                                                (runner-install state :runner eid to-play {:cost-bonus -2}))))})
+                                                            card nil)))}
+                                             card nil)))}
+        patchwork-ability {:once :per-turn
                            :effect (effect (update! (assoc-in card [:special :patchwork] true)))}]
     {:static-abilities [(mu+ 1)]
+     :abilities [patchwork-manual-prognosis]
+     :implementation "click on patchwork to manually resolve it (for tricks)"
      :interactions
      {:pay-credits
       {:req (req (and (#{:play :runner-install} (:source-type eid))
@@ -1704,9 +1749,10 @@
                 :effect (req (damage-prevent state side :meat 1))}]})
 
 (defcard "Poison Vial"
-  {:data {:counter {:power 3}}
-   :events [(trash-on-empty :power)]
-   :abilities [(break-sub [(->c :power 1)] 2 "All" {:req (req (any-subs-broken? current-ice))})]})
+  (auto-icebreaker
+    {:data {:counter {:power 3}}
+     :events [(trash-on-empty :power)]
+     :abilities [(break-sub [(->c :power 1)] 2 "All" {:req (req (any-subs-broken? current-ice))})]}))
 
 (defcard "Polyhistor"
   (let [abi {:optional
@@ -2434,19 +2480,13 @@
                     (seq (filter
                            #(and (rezzed? %)
                                  (installed? %)
-                                 (or (has-subtype? % "Bioroid")
-                                     (has-subtype? % "Clone")
-                                     (has-subtype? % "Executive")
-                                     (has-subtype? % "Sysop")))
+                                 (has-any-subtype? % ["Bioroid" "Clone" "Executive" "Sysop"]))
                            (all-active-installed state :corp)))))
      :label "trash a Bioroid, Clone, Executive or Sysop"
      :prompt "Choose a Bioroid, Clone, Executive, or Sysop to trash"
      :choices {:card #(and (rezzed? %)
                            (installed? %)
-                           (or (has-subtype? % "Bioroid")
-                               (has-subtype? % "Clone")
-                               (has-subtype? % "Executive")
-                               (has-subtype? % "Sysop")))}
+                           (has-any-subtype? % ["Bioroid" "Clone" "Executive" "Sysop"]))}
      :async true
      :msg (msg "trash " (:title target))
      :effect (effect (trash eid target {:cause-card card}))}]})

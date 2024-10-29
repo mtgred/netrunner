@@ -9,7 +9,7 @@
                             installable-servers server->zone]]
    [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index corp? corp-installable-type?
                            event? facedown? faceup? get-advancement-requirement
-                           get-card get-counters get-title get-zone hardware? has-subtype? ice? identity?
+                           get-card get-counters get-title get-zone hardware? has-subtype? has-any-subtype? ice? identity?
                            in-discard? in-hand? installed? is-type? operation? program? resource?
                            rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
@@ -40,7 +40,7 @@
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
-   [game.core.revealing :refer [reveal]]
+   [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [derez rez]]
    [game.core.runs :refer [end-run make-run]]
    [game.core.say :refer [system-msg]]
@@ -267,6 +267,7 @@
 (defcard "Attitude Adjustment"
   {:on-play
    {:async true
+    :msg (msg "draw 2 cards")
     :effect
     (req (wait-for
            (draw state side 2)
@@ -280,30 +281,17 @@
                                         (in-discard? %)))}
               :async true
               :show-discard true
-              :effect
-              (req (wait-for
-                     (reveal state side targets)
-                     (wait-for
-                       (gain-credits state side (* 2 (count targets)))
-                       (doseq [c targets]
-                         (move state :corp c :deck))
-                       (shuffle! state :corp :deck)
-                       (let [from-hq (map :title (filter in-hand? targets))
-                             from-archives (map :title (filter in-discard? targets))]
-                         (system-msg
-                           state side
-                           (str "uses " (:title card) " to reveal "
-                                (enumerate-str
-                                  (filter identity
-                                          [(when (not-empty from-hq)
-                                             (str (enumerate-str from-hq)
-                                                  " from HQ"))
-                                           (when (not-empty from-archives)
-                                             (str (enumerate-str from-archives)
-                                                  " from Archives"))]))
-                                ", shuffle them into R&D and gain "
-                                (* 2 (count targets)) " [Credits]")))
-                       (effect-completed state side eid))))}
+              :effect (req (let [to-gain (* 2 (count targets))]
+                             (wait-for
+                               (reveal-loud state side card
+                                                {:and-then (str ", gain " to-gain " [Credits], and shuffle [them] into R&D")}
+                                                targets)
+                               (wait-for
+                                 (gain-credits state side to-gain)
+                                 (doseq [c targets]
+                                   (move state :corp c :deck))
+                                 (shuffle! state :corp :deck)
+                                 (effect-completed state side eid)))))}
              card nil)))}})
 
 (defcard "Audacity"
@@ -483,38 +471,33 @@
     :effect (effect (damage eid :meat 7 {:card card}))}})
 
 (defcard "Bring Them Home"
-  (letfn [(hide-away [cards]
-            {:msg (msg "place " (enumerate-str (map :title cards))
-                       " from the grip to the top of the stack")
-             :async true
-             :effect (req (doseq [c (shuffle cards)]
-                            (move state :runner c :deck {:front true}))
-                          (continue-ability
-                            state side
-                            {:optional
-                             {:prompt "Shuffle 1 random card from the grip into the stack?"
-                              :req (req (threat-level 3 state))
-                              :waiting-prompt true
-                              :yes-ability
-                              {:cost [(->c :credit 2)]
-                               :req (req (seq (:hand runner)))
-                               :effect (req (let [target-card (first (shuffle (:hand runner)))]
-                                              (wait-for
-                                                (reveal state side target-card)
-                                                (system-msg state side (str "shuffles " (:title target-card) " into the stack"))
-                                                (move state :runner target-card :deck)
-                                                (shuffle! state :runner :deck))))}}}
-                            card nil))})]
+  (let [threat-abi
+        {:optional
+         {:prompt "Shuffle 1 random card from the grip into the stack?"
+          :req (req (threat-level 3 state))
+          :waiting-prompt true
+          :yes-ability
+          {:cost [(->c :credit 2)]
+           :req (req (seq (:hand runner)))
+           :effect (req (let [target-card (first (shuffle (:hand runner)))]
+                          (wait-for
+                            (reveal-loud state side card {:and-then " and shuffle it into the Stack"} target-card)
+                            (move state :runner target-card :deck)
+                            (shuffle! state :runner :deck))))}}}]
     {:on-play
      {:async true
       :req (req (or (last-turn? state :runner :trashed-card)
                     (last-turn? state :runner :stole-agenda)))
       :effect (req
                 (let [chosen-cards (take 2 (shuffle (:hand runner)))]
-                  (continue-ability
-                    state side
-                    (hide-away chosen-cards)
-                    card nil)))}}))
+                  (wait-for
+                    (reveal-loud state side card {:and-then " and place [them] on the top of the stack (in a random order)"} chosen-cards)
+                    (doseq [c (shuffle chosen-cards)]
+                      (move state :runner c :deck {:front true}))
+                    (continue-ability
+                      state side
+                      threat-abi
+                      card nil))))}}))
 
 (defcard "Building Blocks"
   {:on-play
@@ -522,11 +505,10 @@
     :choices {:card #(and (corp? %)
                           (has-subtype? % "Barrier")
                           (in-hand? %))}
-    :msg (msg "reveal " (:title target))
     :async true
     :change-in-game-state (req (seq (:hand corp)))
     :effect (req (wait-for
-                   (reveal state side target)
+                   (reveal-loud state side card nil target)
                    (corp-install state side eid target nil {:ignore-all-cost true
                                                             :msg-keys {:install-source card
                                                                        :display-origin true}
@@ -1083,8 +1065,7 @@
             :successful
             {:prompt "Choose 1 card to trash"
              :choices {:card #(and (installed? %)
-                                   (or (has-subtype? % "Virtual")
-                                       (has-subtype? % "Link")))}
+                                   (has-any-subtype? % ["Virtual" "Link"]))}
              :msg (msg "trash " (card-str state target))
              :async true
              :effect (effect (trash eid target {:cause-card card}))}}}})
@@ -1665,8 +1646,7 @@
 
 (defcard "Media Blitz"
   {:on-play
-   {:async true
-    :prompt "Choose an agenda in the runner's score area"
+   {:prompt "Choose an agenda in the runner's score area"
     :choices {:req (req (and (agenda? target)
                              (is-scored? state :runner target)))}
     :change-in-game-state (req (seq (:scored runner)))
@@ -2382,9 +2362,7 @@
   {:on-play
    {:prompt "Choose a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (:title target) " to remove 2 bad publicity")
-    :choices {:card #(or (has-subtype? % "Clone")
-                         (has-subtype? % "Executive")
-                         (has-subtype? % "Sysop"))}
+    :choices {:card #(has-any-subtype? % ["Clone" "Executive" "Sysop"])}
     :async true
     :effect (req (wait-for
                    (lose-bad-publicity state side 2)

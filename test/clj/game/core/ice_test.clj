@@ -177,17 +177,21 @@
   (testing "Auto pump available even with no active break ability"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["DNA Tracker"]
+                        :hand ["DNA Tracker" "Enigma"]
                         :credits 20}
                  :runner {:deck ["Utae"]
                           :credits 20}})
       (play-from-hand state :corp "DNA Tracker" "HQ")
+      (play-from-hand state :corp "Enigma" "HQ")
       (rez state :corp (get-ice state :hq 0))
+      (rez state :corp (get-ice state :hq 1))
       (take-credits state :corp)
       (play-from-hand state :runner "Utae")
       (let [utae (get-program state 0)]
         (run-on state :hq)
         (run-continue state)
+        (auto-pump-and-break state (refresh utae))
+        (run-continue-until state :encounter-ice)
         (is (not-empty (filter #(= :auto-pump (:dynamic %)) (:abilities (refresh utae)))) "Auto pump is active")
         (is (empty? (filter #(= :auto-pump-and-break (:dynamic %)) (:abilities (refresh utae)))) "No auto break dynamic ability")))))
 

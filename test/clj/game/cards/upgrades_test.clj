@@ -702,6 +702,17 @@
       (click-prompt state :corp (find-card "IPO" (:discard (get-corp))))
       (is (find-card "IPO" (:rfg (get-corp))) "IPO is removed from game"))))
 
+(deftest stinson-ignores-all-costs
+  (do-game
+    (new-game {:corp {:hand ["Bryan Stinson"] :discard ["Ultraviolet Clearance"]}})
+    (play-from-hand state :corp "Bryan Stinson" "HQ")
+    (rez state :corp (get-content state :hq 0))
+    (is (changed? [(:click (get-corp)) -1
+                  (:credit (get-corp)) 10]
+          (card-ability state :corp (get-content state :hq 0) 0)
+          (click-prompt state :corp "Ultraviolet Clearance"))
+        "Gained 10c in one click (ignoring the req and extra 2 clicks)")))
+
 (deftest calibration-testing
   ;; Calibration Testing - advanceable / non-advanceable
   (do-game

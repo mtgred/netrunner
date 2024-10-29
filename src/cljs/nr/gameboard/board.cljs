@@ -27,7 +27,7 @@
    [nr.sounds :refer [update-audio]]
    [nr.translations :refer [tr tr-side tr-game-prompt]]
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
-                     image-or-face render-icons render-message]]
+                     image-or-face map-longest render-icons render-message]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 
@@ -581,17 +581,27 @@
      (doall
        (map-indexed
          (fn [i sub]
-           [:div {:key i}
-            [:span (cond (:broken sub)
-                         {:class :disabled
-                          :style {:font-style :italic}}
-                         (false? (:resolve sub))
-                         {:class :dont-resolve
-                          :style {:text-decoration :line-through}})
-             (render-icons (str " [Subroutine] " (:label sub)))]
-            [:span.float-right
-             (cond (:broken sub) banned-span
-                   (:fired sub) "✅")]])
+           (let [fire-sub #(when (= :corp (:side @game-state))
+                             (send-command "subroutine" {:card ice
+                                                         :subroutine i})
+                             (close-card-menu))]
+             [:div {:key i
+                    :tab-index 0
+                    :on-click fire-sub
+                    :on-key-down #(when (= "Enter" (.-key %))
+                                    (fire-sub))
+                    :on-key-up #(when (= " " (.-key %))
+                                  (fire-sub))}
+              [:span (cond (:broken sub)
+                           {:class :disabled
+                            :style {:font-style :italic}}
+                           (false? (:resolve sub))
+                           {:class :dont-resolve
+                            :style {:text-decoration :line-through}})
+               (render-icons (str " [Subroutine] " (:label sub)))]
+              [:span.float-right
+               (cond (:broken sub) banned-span
+                     (:fired sub) "✅")]]))
          subroutines))]))
 
 (defn card-abilities [card abilities subroutines]
@@ -1306,6 +1316,41 @@
                (tr [:game.reveal-my-hand "Reveal My Hand"])]])
            [:button.win-right {:on-click #(reset! win-shown true) :type "button"} "✘"]])))))
 
+(defn- build-in-game-decklists
+  "Builds the in-game decklist display"
+  [corp-list runner-list]
+  (let [lists (map-longest list nil corp-list runner-list)
+        card-qty (fn [c] (second c))
+        card-name (fn [c] [:div {:text-align "left"
+                                 :on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                                 :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
+                           (render-message (first c))])]
+    [:div
+     [:table.decklists.table
+      [:tbody
+       [:tr.win.th
+        [:td.win.th (tr [:side.corp "Corp"])] [:td.win.th]
+        [:td.win.th (tr [:side.runner "Runner"])] [:td.win.th]]
+       (doall (map-indexed
+                (fn [i [corp runner]]
+                  [:tr {:key i}
+                   [:td (card-qty corp)] [:td (card-name corp)]
+                   [:td (card-qty runner)] [:td (card-name runner)]])
+                lists))]]]))
+
+(defn build-decks-box
+  "Builds the decklist display box for open decklists"
+  [game-state]
+  (let [show-decklists (r/cursor app-state [:display-decklists])]
+    (fn [game-state]
+      (when (and @show-decklists
+                 (get-in @game-state [:decklists]))
+        (let [corp-list (or (get-in @game-state [:decklists :corp]) {:- 1})
+              runner-list (or (get-in @game-state [:decklists :runner]) {:- 1})]
+          [:div.decklists.blue-shade
+           [:br]
+           [build-in-game-decklists corp-list runner-list]])))))
+
 (defn build-start-box
   "Builds the start-of-game pop up box"
   [my-ident my-user my-hand prompt-state my-keep op-ident op-user op-keep me-quote op-quote my-side]
@@ -1443,7 +1488,7 @@
                :on-mouse-out #(card-highlight-mouse-out % ice button-channel)}
          (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (get-title ice))]
         [:hr]
-        (when (:button @app-state)
+        (when (or (:button @app-state) (get-in @app-state [:options :display-encounter-info]))
           [encounter-info-div ice])])
      (when @run
        [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title (:phase @run) (tr [:game.unknown-phase "Unknown phase"]))])
@@ -1513,7 +1558,7 @@
                :on-mouse-out #(card-highlight-mouse-out % ice button-channel)}
          (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (get-title ice))]
         [:hr]
-        (when (:button @app-state)
+        (when (or (:button @app-state)  (get-in @app-state [:options :display-encounter-info]))
           [encounter-info-div ice])])
      (when @run
        [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title phase)])
@@ -2155,6 +2200,7 @@
                      op-quote (r/cursor game-state [op-side :quote])]
                  [build-start-box me-ident me-user me-hand prompt-state me-keep op-ident op-user op-keep me-quote op-quote side])
 
+               [build-decks-box game-state]
                [build-win-box game-state]
 
                [:div {:class (if (:replay @game-state)
