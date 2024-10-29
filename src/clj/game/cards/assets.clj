@@ -13,8 +13,8 @@
                             installable-servers]]
    [game.core.card :refer [agenda? asset? can-be-advanced? corp? event? corp-installable-type?
                            faceup? fake-identity? get-advancement-requirement
-                           get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype? ice?
-                           identity? in-deck? in-discard? in-hand? in-server? installed? is-type?
+                           get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
+                           has-any-subtype? ice? identity? in-deck? in-discard? in-hand? in-server? installed? is-type?
                            operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.checkpoint :refer [fake-checkpoint]]
@@ -1063,9 +1063,7 @@
   {:abilities [{:action true
                 :prompt "Choose an Executive, Sysop, or Character to add to HQ"
                 :msg (msg "reveal " (:title target) ", add it to HQ, and shuffle R&D")
-                :choices (req (cancellable (filter #(or (has-subtype? % "Executive")
-                                                        (has-subtype? % "Sysop")
-                                                        (has-subtype? % "Character"))
+                :choices (req (cancellable (filter #(has-any-subtype? % ["Executive" "Sysop" "Character"])
                                                    (:deck corp))
                                            :sorted))
                 :cost [(->c :click 1)]

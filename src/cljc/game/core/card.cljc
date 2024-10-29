@@ -288,6 +288,16 @@
   [card subtype]
   (find-first #(= % subtype) (:subtypes card)))
 
+(defn has-any-subtype?
+  "Checks if the provided list of subtypes contains any of the subtypes present on the card"
+  [card subtypes]
+  (some #(has-subtype? card %) subtypes))
+
+(defn has-all-subtypes?
+  "Checks if the provided list of subtypes contains any of the subtypes present on the card"
+  [card subtypes]
+  (every? #(has-subtype? card %) subtypes))
+
 (defn virus-program?
   [card]
   (and (program? card)

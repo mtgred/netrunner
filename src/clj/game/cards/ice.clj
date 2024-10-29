@@ -9,8 +9,8 @@
                             get-all-cards get-all-installed server->zone]]
    [game.core.card :refer [active? agenda? asset? card-index can-be-advanced?
                            corp? corp-installable-type? faceup?
-                           get-card get-counters get-zone
-                           hardware? has-subtype? ice? in-discard? in-hand? installed? is-type? operation?
+                           get-card get-counters get-zone hardware?
+                           has-any-subtype? has-subtype? ice? in-discard? in-hand? installed? is-type? operation?
                            program? protecting-a-central? protecting-archives? protecting-hq? protecting-rd?
                            resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
@@ -2003,9 +2003,7 @@
                   :msg (msg "trash " (:title target))
                   :choices {:card #(and (installed? %)
                                         (program? %)
-                                        (not (has-subtype? % "Decoder"))
-                                        (not (has-subtype? % "Fracter"))
-                                        (not (has-subtype? % "Killer")))}
+                                        (not (has-any-subtype? % ["Decoder" "Fracter" "Killer"])))}
                   :async true
                   :effect (effect (clear-wait-prompt :runner)
                                   (trash eid target {:cause :subroutine}))}
@@ -2038,9 +2036,7 @@
                   :msg (msg "trash " (:title target))
                   :choices {:card #(and (installed? %)
                                         (program? %)
-                                        (not (has-subtype? % "Decoder"))
-                                        (not (has-subtype? % "Fracter"))
-                                        (not (has-subtype? % "Killer")))}
+                                        (not (has-any-subtype? % ["Decoder" "Fracter" "Killer"])))}
                   :async true
                   :effect (effect (trash eid target {:cause :subroutine}))}]})
 

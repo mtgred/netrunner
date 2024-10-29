@@ -9,7 +9,7 @@
                             installable-servers server->zone]]
    [game.core.card :refer [active? agenda? asset? can-be-advanced? card-index corp? corp-installable-type?
                            event? facedown? faceup? get-advancement-requirement
-                           get-card get-counters get-title get-zone hardware? has-subtype? ice? identity?
+                           get-card get-counters get-title get-zone hardware? has-subtype? has-any-subtype? ice? identity?
                            in-discard? in-hand? installed? is-type? operation? program? resource?
                            rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
@@ -1065,8 +1065,7 @@
             :successful
             {:prompt "Choose 1 card to trash"
              :choices {:card #(and (installed? %)
-                                   (or (has-subtype? % "Virtual")
-                                       (has-subtype? % "Link")))}
+                                   (has-any-subtype? % ["Virtual" "Link"]))}
              :msg (msg "trash " (card-str state target))
              :async true
              :effect (effect (trash eid target {:cause-card card}))}}}})
@@ -2363,9 +2362,7 @@
   {:on-play
    {:prompt "Choose a Sysop, Executive or Clone to trash"
     :msg (msg "trash " (:title target) " to remove 2 bad publicity")
-    :choices {:card #(or (has-subtype? % "Clone")
-                         (has-subtype? % "Executive")
-                         (has-subtype? % "Sysop"))}
+    :choices {:card #(has-any-subtype? % ["Clone" "Executive" "Sysop"])}
     :async true
     :effect (req (wait-for
                    (lose-bad-publicity state side 2)
