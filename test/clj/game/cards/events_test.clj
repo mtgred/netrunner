@@ -6002,6 +6002,19 @@
         (run-continue state)
         (click-prompt state :runner "Hedge Fund"))))
 
+(deftest rejig-vs-aniccam
+  ;; Rejig
+  (do-game
+    (new-game {:options {:start-as :runner}
+               :runner {:hand ["Rejig" "Aniccam"]
+                        :deck ["Ika"]}})
+    (play-from-hand state :runner "Aniccam")
+    (play-from-hand state :runner "Rejig")
+    (click-card state :runner "Aniccam")
+    (is-hand? state :runner ["Aniccam"])
+    (click-card state :runner "Aniccam")
+    (is-hand? state :runner ["Ika"])))
+
 (deftest reprise
   ;; Reprise
   (do-game
