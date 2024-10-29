@@ -3201,7 +3201,7 @@
                  :choices {:card #(and (valid-target? %)
                                        (installed? %))}
                  :effect (req (move state side target :hand)
-                              (effect-completed state side (make-result eid (:cost target))))}
+                              (complete-with-result state side eid (:cost target)))}
         put-down (fn [bonus]
                    {:async true
                     :prompt "Choose a program or piece of hardware to install"
@@ -3216,6 +3216,7 @@
                                                                        :display-origin true}}))})]
     {:on-play
      {:req (req (some valid-target? (all-installed state :runner)))
+      :async true
       :effect (req (wait-for (resolve-ability state side pick-up card nil)
                              (continue-ability state side
                                                (put-down async-result)

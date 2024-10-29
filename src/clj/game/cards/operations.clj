@@ -1647,8 +1647,7 @@
 
 (defcard "Media Blitz"
   {:on-play
-   {:async true
-    :prompt "Choose an agenda in the runner's score area"
+   {:prompt "Choose an agenda in the runner's score area"
     :choices {:req (req (and (agenda? target)
                              (is-scored? state :runner target)))}
     :change-in-game-state (req (seq (:scored runner)))

@@ -2011,6 +2011,25 @@
                     (click-prompt state :runner "Pay 3 [Credits] to trash"))
           "Loup triggered (see https://nullsignal.games/blog/card-text-updates-v1-2-released/ for ruling"))))
 
+(deftest dj-vs-degree-mill
+  (do-game
+    (new-game {:runner {:hand ["DJ Fenris" "Ika"]}
+               :corp {:hand ["Degree Mill"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "DJ Fenris")
+    (click-prompt state :runner "René \"Loup\" Arcemont: Party Animal")
+    (run-empty-server state :hq)
+    (is (= '("No action") (prompt-buttons :runner)) "Cannot steal degree mill with just dj")
+    (click-prompt state :runner "No action")
+    (play-from-hand state :runner "Ika")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Pay to steal")
+    (click-card state :runner "DJ Fenris")
+    (click-card state :runner (first (:hosted (get-resource state 0)))) ;; not selected
+    (is (not (no-prompt? state :runner)) "did not confirm by picking fake id")
+    (click-card state :runner "Ika")
+    (is (no-prompt? state :runner) "Stole degree mill")))
+
 (deftest donut-taganes
   ;; Donut Taganes - add 1 to play cost of Operations & Events when this is in play
   (do-game

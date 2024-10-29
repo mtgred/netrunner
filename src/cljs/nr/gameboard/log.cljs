@@ -61,7 +61,7 @@
     [:button.indicate-action {:on-click #(do (.preventDefault %)
                                              (send-command "indicate-action"))
                               :key "Indicate action"}
-     (tr [:game.indicate-action "Indicate action"])]))
+     (tr [:game.indicate-action "Indicate paid ability"])]))
 
 (defn show-decklists []
   (when (get-in @app-state [:current-game :open-decklists])
