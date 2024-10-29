@@ -139,6 +139,15 @@
                                       card targets))}
                          card targets))}]})
 
+(defn- trojan
+  ([cdef] (trojan nil cdef))
+  ([{:keys [rezzed host-req] :as args} cdef]
+   (assoc-in cdef [:hosting :req]
+             (req (and (ice? target)
+                       (can-host? state target)
+                       (or (not rezzed) (rezzed? target))
+                       (or (not host-req) (host-req state side eid card targets)))))))
+
 (defn- pump-and-break
   "Paid ability for conspiracy breakers
   (Conspiracy suite: Black Orchestra, MKUltra, Paperclip)"
@@ -678,15 +687,14 @@
 
 (defcard "Botulus"
   (auto-icebreaker
-    {:implementation "[Erratum] Program: Virus - Trojan"
-     :data {:counter {:virus 1}}
-     :hosting {:req (req (and (ice? target)
-                              (can-host? state target)))}
-     :events [{:event :runner-turn-begins
-               :effect (effect (add-counter card :virus 1))}]
-     :abilities [(break-sub
-                   [(->c :virus 1)] 1 "All"
-                   {:req (req (same-card? current-ice (:host card)))})]}))
+    (trojan
+      {:implementation "[Erratum] Program: Virus - Trojan"
+       :data {:counter {:virus 1}}
+        :events [{:event :runner-turn-begins
+                  :effect (effect (add-counter card :virus 1))}]
+       :abilities [(break-sub
+                     [(->c :virus 1)] 1 "All"
+                     {:req (req (same-card? current-ice (:host card)))})]})))
 
 (defcard "Brahman"
   (auto-icebreaker {:abilities [(break-sub 1 2 "All")
@@ -797,22 +805,20 @@
                                                                   true))})]}))
 
 (defcard "Chisel"
-  {:implementation "[Erratum] Program: Virus - Trojan"
-   :hosting {:req (req (and (ice? target)
-                            (installed? target)
-                            (can-host? state target)))}
-   :static-abilities [{:type :ice-strength
-                       :req (req (same-card? target (:host card)))
-                       :value (req (- (get-virus-counters state card)))}]
-   :events [{:event :encounter-ice
-             :req (req (same-card? (:ice context) (:host card)))
-             :async true
-             :effect (req (if (pos? (ice-strength state side (:ice context)))
-                            (do (system-msg state side (str "uses " (:title card) " to place 1 virus counter on itself"))
-                                (add-counter state side card :virus 1)
-                                (effect-completed state side eid))
-                            (do (system-msg state side (str "uses " (:title card) " to trash " (card-str state (:ice context))))
-                                (trash state side eid (:ice context) {:cause-card card}))))}]})
+  (trojan
+    {:implementation "[Erratum] Program: Virus - Trojan"
+     :static-abilities [{:type :ice-strength
+                         :req (req (same-card? target (:host card)))
+                         :value (req (- (get-virus-counters state card)))}]
+     :events [{:event :encounter-ice
+               :req (req (same-card? (:ice context) (:host card)))
+               :async true
+               :effect (req (if (pos? (ice-strength state side (:ice context)))
+                              (do (system-msg state side (str "uses " (:title card) " to place 1 virus counter on itself"))
+                                  (add-counter state side card :virus 1)
+                                  (effect-completed state side eid))
+                              (do (system-msg state side (str "uses " (:title card) " to trash " (card-str state (:ice context))))
+                                  (trash state side eid (:ice context) {:cause-card card}))))}]}))
 
 (defcard "Cat's Cradle"
   (auto-icebreaker
@@ -1292,15 +1298,14 @@
                                 (strength-pump 3 2)]}))
 
 (defcard "Egret"
-  {:implementation "[Erratum] Program: Trojan"
-   :hosting {:req (req (and (ice? target)
-                            (can-host? state target)
-                            (rezzed? target)))}
-   :on-install {:msg (msg "make " (card-str state (:host card))
-                          " gain Barrier, Code Gate and Sentry subtypes")}
-   :static-abilities [{:type :gain-subtype
-                       :req (req (same-card? target (:host card)))
-                       :value ["Barrier" "Code Gate" "Sentry"]}]})
+  (trojan
+    {:rezzed true}
+    {:implementation "[Erratum] Program: Trojan"
+     :on-install {:msg (msg "make " (card-str state (:host card))
+                            " gain Barrier, Code Gate and Sentry subtypes")}
+     :static-abilities [{:type :gain-subtype
+                         :req (req (same-card? target (:host card)))
+                         :value ["Barrier" "Code Gate" "Sentry"]}]}))
 
 (defcard "Endless Hunger"
   {:implementation "ETR restriction not implemented"
@@ -1468,13 +1473,12 @@
                                 (strength-pump 1 1)]}))
 
 (defcard "Flux Capacitor"
-  {:hosting {:req (req (and (ice? target)
-                            (can-host? state target)))}
-    :events [{:event :subroutines-broken
-              :once :per-encounter
-              :async true
-              :req (req (and this-server (same-card? current-ice (:host card))))
-              :effect (effect (continue-ability (charge-ability state side) card nil))}]})
+  (trojan
+    {:events [{:event :subroutines-broken
+               :once :per-encounter
+               :async true
+               :req (req (and this-server (same-card? current-ice (:host card))))
+               :effect (effect (continue-ability (charge-ability state side) card nil))}]}))
 
 (defcard "Force of Nature"
   (auto-icebreaker {:abilities [(break-sub 2 2 "Code Gate")
@@ -1702,35 +1706,34 @@
                                    :effect (req (trigger-event
                                                   state :corp
                                                   :subroutines-should-update))}]
-  {:implementation "Experimentally implemented. If it doesn't work correctly, please file a bug report with the exact case and cards used, and we will investigate."
-   :hosting {:req (req (and (ice? target)
-                            (can-host? state target)))}
-   :static-abilities [{:type :disable-card
-                       :req (req (same-card? target (:host card)))
-                       :value true}]
-   :on-install {:effect (req (reset-card-to-printed-subs state side (:host card)))}
-   ;; hoping and praying that it's impossible for this to cause a feedback loop
-   :events [{:event :subroutines-changed
-             :req (req (and
-                         (same-card? target (:host card))
-                         (or (some :variable (:subroutines target))
-                             (some #(not (:printed %)) (:subroutines target)))))
-             :effect (req (reset-card-to-printed-subs state side target))}]
-   :on-trash subroutines-should-update
-   :move-zone (req (continue-ability state side subroutines-should-update card nil))
-   :abilities [{:action true
-                :label "Host on a piece of ice"
-                :prompt "Choose a piece of ice"
-                :cost [(->c :click 1)]
-                :choices {:req (req (and (ice? target)
-                                         (installed? target)
-                                         (can-host? state target)))}
-                :msg (msg "host itself on " (card-str state target))
-                :async true
-                :effect (req (host state side target card)
-                             (update-disabled-cards state)
-                             (reset-card-to-printed-subs state side target)
-                             (continue-ability state side subroutines-should-update card nil))}]}))
+    (trojan
+      {:implementation "Experimentally implemented. If it doesn't work correctly, please file a bug report with the exact case and cards used, and we will investigate."
+       :static-abilities [{:type :disable-card
+                           :req (req (same-card? target (:host card)))
+                           :value true}]
+       :on-install {:effect (req (reset-card-to-printed-subs state side (:host card)))}
+       ;; hoping and praying that it's impossible for this to cause a feedback loop
+       :events [{:event :subroutines-changed
+                 :req (req (and
+                             (same-card? target (:host card))
+                             (or (some :variable (:subroutines target))
+                                 (some #(not (:printed %)) (:subroutines target)))))
+                 :effect (req (reset-card-to-printed-subs state side target))}]
+       :on-trash subroutines-should-update
+       :move-zone (req (continue-ability state side subroutines-should-update card nil))
+       :abilities [{:action true
+                    :label "Host on a piece of ice"
+                    :prompt "Choose a piece of ice"
+                    :cost [(->c :click 1)]
+                    :choices {:req (req (and (ice? target)
+                                             (installed? target)
+                                             (can-host? state target)))}
+                    :msg (msg "host itself on " (card-str state target))
+                    :async true
+                    :effect (req (host state side target card)
+                                 (update-disabled-cards state)
+                                 (reset-card-to-printed-subs state side target)
+                                 (continue-ability state side subroutines-should-update card nil))}]})))
 
 (defcard "Hyperbaric"
   (auto-icebreaker {:data {:counter {:power 1}}
@@ -1891,16 +1894,14 @@
                  (break-sub 2 1 "All" {:req knight-req})]}))
 
 (defcard "Kyuban"
-  {:implementation "[Erratum] Program: Trojan"
-   :hosting {:req (req (and (ice? target)
-                            (installed? target)
-                            (can-host? state target)))}
-   :events [{:event :pass-ice
-             :interactive (req true)
-             :req (req (same-card? (:ice context) (:host card)))
-             :msg "gain 2 [Credits]"
-             :async true
-             :effect (effect (gain-credits :runner eid 2))}]})
+  (trojan
+    {:implementation "[Erratum] Program: Trojan"
+     :events [{:event :pass-ice
+               :interactive (req true)
+               :req (req (same-card? (:ice context) (:host card)))
+               :msg "gain 2 [Credits]"
+               :async true
+               :effect (effect (gain-credits :runner eid 2))}]}))
 
 (defcard "Laamb"
   (give-ice-subtype 2 "Barrier"
@@ -1960,14 +1961,13 @@
                                 (strength-pump 3 5)]}))
 
 (defcard "Living Mural"
-  (auto-icebreaker {:on-install {:req (req (threat-level 4 state))
-                                 :msg "gain 3 strength for the remainder of the turn"
-                                 :effect (effect (pump card 3 :end-of-turn))}
-                    :hosting {:req (req (and (ice? target)
-                                             (installed? target)
-                                             (can-host? state target)))}
-                    :abilities [(break-sub 1 1 "Sentry" {:req (req (protecting-same-server? current-ice (:host card)))})
-                                (strength-pump 1 2)]}))
+  (auto-icebreaker
+    (trojan
+      {:on-install {:req (req (threat-level 4 state))
+                    :msg "gain 3 strength for the remainder of the turn"
+                    :effect (effect (pump card 3 :end-of-turn))}
+       :abilities [(break-sub 1 1 "Sentry" {:req (req (protecting-same-server? current-ice (:host card)))})
+                   (strength-pump 1 2)]})))
 
 (defcard "LLDS Energy Regulator"
   {:interactions {:prevent [{:type #{:trash-hardware}
@@ -2215,13 +2215,11 @@
                                 (strength-pump 2 2)]}))
 
 (defcard "Monkeywrench"
-  {:hosting {:req (req (and (ice? target)
-                            (installed? target)
-                            (can-host? state target)))}
-   :static-abilities [{:type :ice-strength
-                       :req (req (and (ice? target)
-                                      (= (get-zone (:host card)) (get-zone target))))
-                       :value (req (if (same-card? target (:host card)) -2 -1))}]})
+  (trojan
+    {:static-abilities [{:type :ice-strength
+                         :req (req (and (ice? target)
+                                        (= (get-zone (:host card)) (get-zone target))))
+                         :value (req (if (same-card? target (:host card)) -2 -1))}]}))
 
 (defcard "Morning Star"
   (auto-icebreaker {:abilities [(break-sub 1 0 "Barrier")]}))
@@ -2504,32 +2502,30 @@
            :abilities abilities)))
 
 (defcard "Parasite"
-  {:implementation "[Erratum] Program: Virus - Trojan"
-   :hosting {:req (req (and (ice? target)
-                            (installed? target)
-                            (rezzed? target)
-                            (can-host? state target)))}
-   :on-install
-   {:effect (req (when-let [h (:host card)]
-                   (update! state side (assoc-in card [:special :installing] true))
-                   (when-let [card (get-card state card)]
-                     (update! state side (update-in card [:special] dissoc :installing)))))}
-   :static-abilities [{:type :ice-strength
-                       :req (req (same-card? target (:host card)))
-                       :value (req (- (get-virus-counters state card)))}]
-   :events [{:event :runner-turn-begins
-             :effect (req (add-counter state side card :virus 1))}
-            {:event :ice-strength-changed
-             :req (req (and (same-card? (:card context) (:host card))
-                            (not (card-flag? (:host card) :untrashable-while-rezzed true))
-                            (<= (get-strength (:card context)) 0)))
-             :async true
-             :effect (req (unregister-events state side card)
-                          (when (get-in card [:special :installing])
-                            (update! state side (update-in card [:special] dissoc :installing))
-                            (trigger-event state :runner :runner-install card))
-                          (trash state :runner eid (:card context) {:unpreventable true :cause-card card}))
-             :msg (msg "trash " (:title (:card context)))}]})
+  (trojan
+    {:rezzed true}
+    {:implementation "[Erratum] Program: Virus - Trojan"
+     :on-install
+     {:effect (req (when-let [h (:host card)]
+                     (update! state side (assoc-in card [:special :installing] true))
+                     (when-let [card (get-card state card)]
+                       (update! state side (update-in card [:special] dissoc :installing)))))}
+     :static-abilities [{:type :ice-strength
+                         :req (req (same-card? target (:host card)))
+                         :value (req (- (get-virus-counters state card)))}]
+     :events [{:event :runner-turn-begins
+               :effect (req (add-counter state side card :virus 1))}
+              {:event :ice-strength-changed
+               :req (req (and (same-card? (:card context) (:host card))
+                              (not (card-flag? (:host card) :untrashable-while-rezzed true))
+                              (<= (get-strength (:card context)) 0)))
+               :async true
+               :effect (req (unregister-events state side card)
+                            (when (get-in card [:special :installing])
+                              (update! state side (update-in card [:special] dissoc :installing))
+                              (trigger-event state :runner :runner-install card))
+                            (trash state :runner eid (:card context) {:unpreventable true :cause-card card}))
+               :msg (msg "trash " (:title (:card context)))}]}))
 
 (defcard "Paricia"
   {:recurring 2
@@ -2664,57 +2660,53 @@
                                 :type :recurring}}})
 
 (defcard "Physarum Entangler"
-  {:hosting {:req (req (and (ice? target)
-                            (installed? target)
-                            (can-host? state target)))}
-   :events [{:event :purge
-             :async true
-             :msg "trash itself"
-             :effect (req (trash state :runner eid card {:cause :purge
-                                                         :cause-card card}))}
-            {:event :encounter-ice
-             :optional {:prompt (msg "Pay " (count (:subroutines (get-card state current-ice)))
-                                     " [Credits] to bypass encountered ice?")
-                        :req (req (and (not (has-subtype? current-ice "Barrier"))
-                                       (same-card? current-ice (:host card))
-                                       (can-pay? state :runner eid (:ice context) nil [(->c :credit (count (:subroutines (get-card state current-ice))))])))
-                        :yes-ability {:async true
-                                      :effect (req (wait-for
-                                                     (pay state side (make-eid state eid) card [(->c :credit (count (:subroutines (get-card state current-ice))))])
-                                                     (let [payment-str (:msg async-result)
-                                                           msg-ab {:msg (str "bypass " (card-str state (:ice context)))}]
-                                                       (print-msg state side msg-ab card nil payment-str))
-                                                     (bypass-ice state)
-                                                     (effect-completed state side eid)))}}}]})
+  (trojan
+    {:events [{:event :purge
+               :async true
+               :msg "trash itself"
+               :effect (req (trash state :runner eid card {:cause :purge
+                                                           :cause-card card}))}
+              {:event :encounter-ice
+               :optional {:prompt (msg "Pay " (count (:subroutines (get-card state current-ice)))
+                                       " [Credits] to bypass encountered ice?")
+                          :req (req (and (not (has-subtype? current-ice "Barrier"))
+                                         (same-card? current-ice (:host card))
+                                         (can-pay? state :runner eid (:ice context) nil [(->c :credit (count (:subroutines (get-card state current-ice))))])))
+                          :yes-ability {:async true
+                                        :effect (req (wait-for
+                                                       (pay state side (make-eid state eid) card [(->c :credit (count (:subroutines (get-card state current-ice))))])
+                                                       (let [payment-str (:msg async-result)
+                                                             msg-ab {:msg (str "bypass " (card-str state (:ice context)))}]
+                                                         (print-msg state side msg-ab card nil payment-str))
+                                                       (bypass-ice state)
+                                                       (effect-completed state side eid)))}}}]}))
 
 (defcard "Pichação"
   ;; TODO - there's not really a way to tell if an event happened during a run?
   ;; this can be cleaned up a little later
-  {:hosting {:req (req (and (ice? target)
-                            (installed? target)
-                            (can-host? state target)))}
-   :events [{:event :pass-ice
-             :optional {:interactive (req true)
-                        :prompt "Gain [Click]?"
-                        :waiting-prompt true
-                        :req (req (same-card? (:ice context) (:host card)))
+  (trojan
+    {:events [{:event :pass-ice
+               :optional {:interactive (req true)
+                          :prompt "Gain [Click]?"
+                          :waiting-prompt true
+                          :req (req (same-card? (:ice context) (:host card)))
 
-                        :yes-ability
-                        {:msg "gain [Click]"
-                         :async true
-                         :effect (req
-                                   (gain-clicks state :runner 1)
-                                   (if (< 1 (count (turn-events state side :runner-click-gain)))
-                                     (continue-ability
-                                       state side
-                                       {:optional
-                                        {:prompt (str "Is " (:title card) " added to the grip?")
-                                         :waiting-prompt true
-                                         :yes-ability {:msg "appease the rules"
-                                                       :cost [(->c :return-to-hand)]}}}
-                                       card nil)
-                                     (effect-completed state side eid)))}
-                        :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]})
+                          :yes-ability
+                          {:msg "gain [Click]"
+                           :async true
+                           :effect (req
+                                     (gain-clicks state :runner 1)
+                                     (if (< 1 (count (turn-events state side :runner-click-gain)))
+                                       (continue-ability
+                                         state side
+                                         {:optional
+                                          {:prompt (str "Is " (:title card) " added to the grip?")
+                                           :waiting-prompt true
+                                           :yes-ability {:msg "appease the rules"
+                                                         :cost [(->c :return-to-hand)]}}}
+                                         card nil)
+                                       (effect-completed state side eid)))}
+                          :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]}))
 
 (defcard "Pipeline"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Sentry")
@@ -2897,24 +2889,22 @@
                        :value 2}]})
 
 (defcard "Saci"
-  {:hosting {:req (req (and (ice? target)
-                            (installed? target)
-                            (can-host? state target)))}
-   :events [{:event :rez
-             :req (req (same-card? (:card context) (:host card)))
-             :msg "gain 3 [Credits]"
-             :async true
-             :effect (effect (gain-credits :runner eid 3))}
-            {:event :derez
-             :req (req (same-card? (:card context) (:host card)))
-             ;; NOTE
-             ;;   current guidance from rules is that saci doesn't get
-             ;;   a payout on magnet rez, but does get one when magnet is
-             ;;   derezzed.
-             ;; - Apr 13 '24, nbkelly
-             :msg "gain 3 [Credits]"
-             :async true
-             :effect (effect (gain-credits :runner eid 3))}]})
+  (trojan
+    {:events [{:event :rez
+               :req (req (same-card? (:card context) (:host card)))
+               :msg "gain 3 [Credits]"
+               :async true
+               :effect (effect (gain-credits :runner eid 3))}
+              {:event :derez
+               :req (req (same-card? (:card context) (:host card)))
+               ;; NOTE
+               ;;   current guidance from rules is that saci doesn't get
+               ;;   a payout on magnet rez, but does get one when magnet is
+               ;;   derezzed.
+               ;; - Apr 13 '24, nbkelly
+               :msg "gain 3 [Credits]"
+               :async true
+               :effect (effect (gain-credits :runner eid 3))}]}))
 
 (defcard "Sadyojata"
   (swap-with-in-hand "Sadyojata"
@@ -3007,11 +2997,9 @@
   (break-and-enter "Sentry"))
 
 (defcard "Slap Vandal"
-  {:hosting {:req (req (and (ice? target)
-                            (installed? target)
-                            (can-host? state target)))}
-   :abilities [(break-sub 1 1 "All" {:req (req (same-card? current-ice (:host card)))
-                                     :repeatable false})]})
+  (trojan
+    {:abilities [(break-sub 1 1 "All" {:req (req (same-card? current-ice (:host card)))
+                                       :repeatable false})]}))
 
 (defcard "Sneakdoor Beta"
   {:abilities [{:action true
@@ -3253,14 +3241,12 @@
                     (when (and (rezzed? (get-card state (:host card)))
                                (<= 3 (get-virus-counters state (get-card state card))))
                       (derez state side (get-card state (:host card)) {:source-card card})))]
-    {:implementation "[Erratum] Program: Virus - Trojan"
-     :hosting {:req (req (and (ice? target)
-                              (installed? target)
-                              (can-host? state target)))}
-     :on-install {:interactive (req true)
-                  :effect action}
-     :events [{:event :runner-turn-begins
-               :effect action}]}))
+    (trojan
+      {:implementation "[Erratum] Program: Virus - Trojan"
+       :on-install {:interactive (req true)
+                    :effect action}
+       :events [{:event :runner-turn-begins
+                 :effect action}]})))
 
 (defcard "Tremolo"
   (letfn [(credit-discount [s] (->> (all-installed-runner-type s :hardware)
@@ -3305,28 +3291,26 @@
                                 (unregister-events state side card)
                                 (trash state :runner eid h {:cause-card card}))
                             (effect-completed state side eid))))]
-    {:implementation "[Erratum] Program: Virus - Trojan"
-     :hosting {:req (req (and (ice? target)
-                              (installed? target)
-                              (can-host? state target)))}
-     :on-install {:async true
-                  :effect trash-if-5}
-     :abilities [(set-autoresolve :auto-place-counter "Trypano placing virus counters on itself")]
-     :events [{:event :runner-turn-begins
-               :optional
-               {:prompt (msg "Place 1 virus counter on " (:title card) "?")
-                :autoresolve (get-autoresolve :auto-place-counter)
-                :yes-ability {:msg "place 1 virus counter on itself"
-                              :effect (req (add-counter state side card :virus 1))}}}
-              {:event :counter-added
-               :async true
-               :effect trash-if-5}
-              {:event :card-moved
-               :async true
-               :effect trash-if-5}
-              {:event :runner-install
-               :async true
-               :effect trash-if-5}]}))
+    (trojan
+      {:implementation "[Erratum] Program: Virus - Trojan"
+       :on-install {:async true
+                    :effect trash-if-5}
+       :abilities [(set-autoresolve :auto-place-counter "Trypano placing virus counters on itself")]
+       :events [{:event :runner-turn-begins
+                 :optional
+                 {:prompt (msg "Place 1 virus counter on " (:title card) "?")
+                  :autoresolve (get-autoresolve :auto-place-counter)
+                  :yes-ability {:msg "place 1 virus counter on itself"
+                                :effect (req (add-counter state side card :virus 1))}}}
+                {:event :counter-added
+                 :async true
+                 :effect trash-if-5}
+                {:event :card-moved
+                 :async true
+                 :effect trash-if-5}
+                {:event :runner-install
+                 :async true
+                 :effect trash-if-5}]})))
 
 (defcard "Tunnel Vision"
   (auto-icebreaker {:events [mark-changed-event
