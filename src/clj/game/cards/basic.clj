@@ -104,12 +104,8 @@
                 :prompt "Choose a resource to trash"
                 :msg (msg "trash " (:title target))
                 ;; I hate that we need to modify the basic action card like this, but I don't think there's any way around it -nbkelly, '24
-                :choices {:req (req (and (if (and (->> (all-active-installed state :runner)
-                                                       (filter (fn [c] (untrashable-while-resources? c)))
-                                                       (seq))
-                                                  (< 1 (->> (all-active-installed state :runner)
-                                                            (filter resource?)
-                                                            count)))
+                :choices {:req (req (and (if (and (untrashable-while-resources? target)
+                                                  (< (count (filter resource? (all-active-installed state :runner))) 2))
                                            true
                                            (not (untrashable-while-resources? target)))
                                          (resource? target)
