@@ -15,6 +15,7 @@
     [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [clear-wait-prompt]]
     [game.core.props :refer [add-counter]]
+    [game.core.revealing :refer [conceal-hand reveal-hand reveal-loud]]
     [game.core.runs :refer [jack-out]]
     [game.core.say :refer [system-msg system-say]]
     [game.core.to-string :refer [card-str]]
@@ -341,6 +342,22 @@
   {:cost cost
    :ability {:display-side side
              :msg :cost}})
+
+(defn with-revealed-hand
+  "Resolves an ability while a player has their hand revealed (so you can click cards in their hand)
+  You can set the side that triggers the reveal (event-side) and if it displays as a forced reveal
+  (forced) via the args"
+  ([target-side abi] (with-revealed-hand target-side nil abi))
+  ([target-side {:keys [event-side forced] :as args} abi]
+   {:async true
+    :effect (req
+              (wait-for (reveal-loud state (or event-side side) card args (get-in @state [target-side :hand]))
+                        (if (get-in @state [target-side :openhand])
+                          (continue-ability state side abi card targets)
+                          (do (reveal-hand state target-side)
+                              (wait-for (resolve-ability state side abi card targets)
+                                        (conceal-hand state target-side)
+                                        (effect-completed state side eid))))))}))
 
 (defmacro defcard
   [title ability]
