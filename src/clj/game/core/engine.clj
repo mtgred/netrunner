@@ -305,16 +305,15 @@
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets payment-str]
   (when-let [message (:msg ability)]
-    (let [desc (if (or (= :cost message) (string? message))
+    (let [desc (if (or (= :cost message) (string? message) (map? message))
                  message
                  (message state side eid card targets))
           cost-spend-msg (build-spend-msg-suffix payment-str "use")
           disp-side (or (:display-side ability) (to-keyword (:side card)))]
-      (cond
-        (= :cost desc)
-        (system-msg state disp-side {:cost payment-str :raw-text (str " to satisfy " (get-title card))})
-        desc
-        (system-msg state disp-side {:cost payment-str :raw-text (str cost-spend-msg (get-title card) (str " to " desc))})))))
+      (if (string? desc)
+        (system-msg state disp-side {:cost payment-str :raw-text (str cost-spend-msg (get-title card) (str " to " desc))})
+        (system-msg state disp-side {:type :use :cost payment-str :effect desc
+                                     :card (get-title card) :forced (= :cost desc)})))))
 
 (defn register-once
   "Register ability as having happened if :once specified"
