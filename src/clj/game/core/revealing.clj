@@ -24,7 +24,7 @@
 
 (defn reveal-loud
   "Trigger the event for revealing one or more cards, and also handle the log printout"
-  [state side eid card {:keys [forced and-then] :as args} & targets]
+  [state side eid card {:keys [forced and-then no-event] :as args} & targets]
   (let [cards-by-zone (group-by #(select-keys % [:side :zone]) (flatten targets))
         strs (map #(str (enumerate-str (map :title (get cards-by-zone %)))
                         " from " (name-zone (:side %) (:zone %)))
@@ -39,4 +39,6 @@
                                                (string/capitalize (name side)) " to reveal "
                                                (enumerate-str strs) follow-up))
       (system-msg state side (str "uses " (:title card) " to reveal " (enumerate-str strs) follow-up)))
-    (reveal state side eid targets)))
+    (if-not no-event
+      (reveal state side eid targets)
+      (effect-completed state side eid))))

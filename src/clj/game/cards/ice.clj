@@ -18,7 +18,7 @@
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [combine-abilities corp-recur defcard
                                   do-brain-damage do-net-damage offer-jack-out
-                                  reorder-choice get-x-fn]]
+                                  reorder-choice get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw draw-up-to]]
    [game.core.effects :refer [get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-static-abilities update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -1593,7 +1593,6 @@
                                      state side card
                                      [{:event :corp-reveal
                                        :duration :end-of-encounter
-                                       :async true
                                        :req (req (and
                                                    ; all revealed cards are in grip
                                                    (every? in-hand? targets)
@@ -1601,13 +1600,17 @@
                                                    (= (count targets) (count (:hand runner)))
                                                    ; there are cards with the named card type
                                                    (some #(is-type? % cardtype) targets)))
-                                       :prompt "Choose revealed card to trash"
-                                       :choices (req (concat (filter #(is-type? % cardtype) targets) ["Done"]))
-                                       :not-distinct true
-                                       :msg (msg "trash " (:title target) " from the grip")
-                                       :effect (req (if (= "Done" target)
-                                                      (effect-completed state side eid)
-                                                      (trash state side eid target {:cause :subroutine})))}])))}
+                                       :async true
+                                       :effect (req (continue-ability
+                                                      state side
+                                                      (with-revealed-hand :runner {:skip-reveal true}
+                                                        {:prompt "Choose revealed card to trash"
+                                                         :choices {:card #(and (runner? %)
+                                                                               (in-hand? %)
+                                                                               (is-type? % cardtype))}
+                                                         :msg (msg "trash " (:title target) " from the Grip")
+                                                         :effect (req (trash state side eid target {:cause :subroutine}))})
+                                                      card nil))}])))}
      :subroutines [sub
                    sub]}))
 
@@ -3801,15 +3804,20 @@
                             " from the grip")
                   :async true
                   :effect (effect (reveal eid (:hand runner)))}
-   :abilities [{:async true
-                :req (req (pos? (get-counters card :power)))
+   :abilities [{:req (req (pos? (get-counters card :power)))
                 :cost [(->c :power 1)]
                 :label "Reveal all cards in the grip and trash 1 card"
-                :msg (msg "reveal all cards in the grip and trash " (:title target))
-                :choices (req (cancellable (:hand runner) :sorted))
-                :prompt "Choose a card to trash"
-                :effect (effect (reveal (:hand runner))
-                                (trash eid target {:cause :subroutine}))}]
+                :async true
+                :effect (req (continue-ability
+                               state side
+                               (with-revealed-hand :runner {:event-side :corp}
+                                 {:prompt "Choose a card to trash"
+                                  :req (req (seq (:hand runner)))
+                                  :choices {:card (every-pred in-hand? runner?)}
+                                  :async true
+                                  :msg (msg "trash " (:title target) " from the Grip")
+                                  :effect (req (trash state side eid target {:cause-card card}))})
+                               card nil))}]
    :subroutines [(trace-ability 3 gain-power-counter)]})
 
 (defcard "Snowflake"

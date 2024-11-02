@@ -348,16 +348,23 @@
   You can set the side that triggers the reveal (event-side) and if it displays as a forced reveal
   (forced) via the args"
   ([target-side abi] (with-revealed-hand target-side nil abi))
-  ([target-side {:keys [event-side forced] :as args} abi]
+  ([target-side {:keys [event-side forced skip-reveal] :as args} abi]
    {:async true
-    :effect (req
-              (wait-for (reveal-loud state (or event-side side) card args (get-in @state [target-side :hand]))
-                        (if (get-in @state [target-side :openhand])
+    :effect (req (if skip-reveal
+                   (if (get-in @state [target-side :openhand])
                           (continue-ability state side abi card targets)
                           (do (reveal-hand state target-side)
                               (wait-for (resolve-ability state side abi card targets)
                                         (conceal-hand state target-side)
-                                        (effect-completed state side eid))))))}))
+                                        (effect-completed state side eid))))
+                   (wait-for
+                     (reveal-loud state (or event-side side) card args (get-in @state [target-side :hand]))
+                     (if (get-in @state [target-side :openhand])
+                       (continue-ability state side abi card targets)
+                       (do (reveal-hand state target-side)
+                           (wait-for (resolve-ability state side abi card targets)
+                                     (conceal-hand state target-side)
+                                     (effect-completed state side eid)))))))}))
 
 (defmacro defcard
   [title ability]

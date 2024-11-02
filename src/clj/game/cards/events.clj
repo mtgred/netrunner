@@ -4176,17 +4176,16 @@
    {:trace
     {:base 3
      :req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
-     :unsuccessful
-     (with-revealed-hand :corp {:event-side :corp :forced true}
-       {:prompt "Shuffle up to 2 cards into HQ"
-        :player :runner
-        :choices {:req (req (and (corp? target)
-                                 (in-hand? target)))
-                  :max (req (min 2 (count (:hand corp))))}
-        :msg (msg "shuffle " (enumerate-str (map :title targets)) " into R&D")
-        :effect (req (doseq [t targets]
-                       (move state :corp t :deck))
-                     (shuffle! state :corp :deck))})}}})
+     :unsuccessful (with-revealed-hand :corp {:event-side :corp :forced true}
+                     {:prompt "Shuffle up to 2 cards into R&D"
+                      :player :runner
+                      :choices {:req (req (and (corp? target)
+                                               (in-hand? target)))
+                                :max (req (min 2 (count (:hand corp))))}
+                      :msg (msg "shuffle " (enumerate-str (map :title targets)) " into R&D")
+                      :effect (req (doseq [t targets]
+                                     (move state :corp t :deck))
+                                   (shuffle! state :corp :deck))})}}})
 
 (defcard "Wildcat Strike"
   {:on-play (choose-one-helper
