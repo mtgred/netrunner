@@ -1,6 +1,7 @@
 (ns game.cards.ice
   (:require
    [clojure.string :as str]
+   [i18n.en :refer [render-cost]]
    [game.core.access :refer [access-bonus access-card breach-server max-access]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed all-installed-runner 
@@ -181,7 +182,7 @@
   [cost]
   {:async true
    :effect (req (wait-for (pay state :runner (make-eid state eid) card cost)
-                          (when-let [payment-str (:msg async-result)]
+                          (when-let [payment-str (render-cost (:msg async-result) side)]
                             (system-msg state :runner
                                         (str payment-str
                                              " due to " (:title card)
@@ -205,7 +206,7 @@
     :effect (req (if (= "End the run" target)
                    (end-run state :corp eid card)
                    (wait-for (pay state :runner (make-eid state eid) card cost)
-                             (when-let [payment-str (:msg async-result)]
+                             (when-let [payment-str (render-cost (:msg async-result) side)]
                                (system-msg state :runner
                                            (str payment-str
                                                 " due to " (:title card)
