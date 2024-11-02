@@ -2770,7 +2770,7 @@
         (is (:corp-phase-12 @state) "Corp is in Step 1.2")
         (card-ability state :corp ibrahim 0)
         (click-prompt state :corp card-type)
-        (click-prompt state :corp (find-card card-name (:hand (get-runner))))
+        (click-card state :corp card-name)
         (end-phase-12 state :corp)
         (is (= (inc i) (-> (get-runner) :discard count)))))))
 
@@ -6357,19 +6357,19 @@
     (play-and-score state "15 Minutes")
     (is (last-log-contains? state "Sure Gamble, Hippo, and Endurance") "Revealed Runner grip")
     (is (changed? [(count (:hand (get-runner))) -1]
-          (click-prompt state :corp "Hippo"))
+          (click-card state :corp "Hippo"))
         "Hippo was discarded")
     (is (= 1 (count (:discard (get-runner)))))
     (play-and-score state "15 Minutes")
     (is (changed? [(count (:hand (get-runner))) -1]
-          (click-prompt state :corp "Sure Gamble"))
+          (click-card state :corp "Sure Gamble"))
         "Sure Gamble was discarded")
     (is (= 2 (count (:discard (get-runner)))))
     (take-credits state :corp)
     (run-empty-server state "Server 2")
     (click-prompt state :runner "Steal")
     (is (changed? [(count (:hand (get-runner))) -1]
-          (click-prompt state :corp "Endurance"))
+          (click-card state :corp "Endurance"))
         "Endurance was discarded")
     (is (= 3 (count (:discard (get-runner)))))))
 

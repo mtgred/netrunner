@@ -1,6 +1,7 @@
 (ns game.core.revealing
   (:require
    [clojure.string :as string]
+   [game.core.eid :refer [effect-completed]]
    [game.core.engine :refer [trigger-event-sync]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [name-zone]]
