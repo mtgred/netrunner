@@ -6469,13 +6469,13 @@
         (is (changed? [(:credit (get-corp)) 1]
               (click-prompt state :corp "Gain 1 [Credits]"))
             "Gained 1 credit")
-        (is (= ["Draw 1 card" "Place 1 advancement token on a piece of ice" "Add this asset to HQ" "Done"]
+        (is (= ["Draw 1 card" "Place 1 advancement counter on a piece of ice" "Add this asset to HQ" "Done"]
                (prompt-buttons :corp)) "Chosen options are removed")
         (is (changed? [(count (:hand (get-corp))) 1]
               (click-prompt state :corp "Draw 1 card"))
             "Drew 1 card")
         (is (changed? [(get-counters (refresh iw) :advancement) 1]
-              (click-prompt state :corp "Place 1 advancement token on a piece of ice")
+              (click-prompt state :corp "Place 1 advancement counter on a piece of ice")
               (click-card state :corp iw))
             "Added 1 advancement token")
         (rez state :corp pad)
