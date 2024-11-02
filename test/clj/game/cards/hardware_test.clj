@@ -5438,9 +5438,8 @@
       (core/move state :runner (find-card "Kati Jones" (:discard (get-runner))) :hand)
       (play-from-hand state :corp "Neural EMP")
       (click-prompt state :corp "Yes")
-      (let [kati (find-card "Kati Jones" (:hand (get-runner)))]
-        (click-prompt state :corp kati) ; Chronos Protocol takes precedence over Ribs on Corp turn
-        (is (= 2 (count (:discard (get-runner)))) "Card chosen by Corp for first net damage")))))
+      (click-card state :corp "Kati Jones") ; Chronos Protocol takes precedence over Ribs on Corp turn
+      (is (= 2 (count (:discard (get-runner)))) "Card chosen by Corp for first net damage"))))
 
 (deftest titanium-ribs-vs-damage-stat
   (do-game

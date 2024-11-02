@@ -927,7 +927,7 @@
       (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
                         :deck [(qty "Hedge Fund" 5)]
                         :hand ["Complete Image" "Priority Requisition"]}
-                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+                 :runner {:hand ["Ika" (qty "Sure Gamble" 4)]}})
       (play-from-hand state :corp "Priority Requisition" "New remote")
       (take-credits state :corp)
       (run-empty-server state :remote1)
@@ -935,15 +935,13 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Complete Image")
       (is (-> (get-runner) :discard count zero?) "heap should be empty")
-      (click-prompt state :corp "Sure Gamble") ;; Complete Image
+      (click-prompt state :corp "Ika") ;; Complete Image
       (is (not (no-prompt? state :corp)) "Corp guessed right so should have another choice")
       (click-prompt state :corp "Yes") ;; Chronos Protocol
-      (click-prompt state :corp "Sure Gamble") ;; Chronos Protocol
-      (click-prompt state :corp "Sure Gamble") ;; Complete Image
-      (click-prompt state :corp "Sure Gamble") ;; Complete Image
-      (click-prompt state :corp "Sure Gamble") ;; Complete Image
+      (click-card state :corp "Ika") ;; Chronos Protocol
+      (dotimes [_ 4]
+        (click-prompt state :corp "Sure Gamble")) ;; Complete Image
       (is (not (no-prompt? state :corp)) "Even when the runner has no cards in hand, Corp must choose again")
-      (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (is (no-prompt? state :corp) "Runner is flatlined so no more choices")
       (is (= 5 (-> (get-runner) :discard count)) "heap should have 5 cards")))
