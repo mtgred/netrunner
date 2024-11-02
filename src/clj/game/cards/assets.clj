@@ -3072,9 +3072,9 @@
              {:msg "draw 1 card"
               :async true
               :effect (effect (draw eid 1))}
-             {:label "place 1 advancement token on a piece of ice"
-              :msg (msg "place 1 advancement token on " (card-str state target))
-              :prompt "Choose a piece of ice to place 1 advancement token on"
+             {:label "place 1 advancement counter on a piece of ice"
+              :msg (msg "place 1 advancement counter on " (card-str state target))
+              :prompt "Choose a piece of ice to place 1 advancement counter on"
               :async true
               :choices {:card #(and (ice? %)
                                     (installed? %))}
