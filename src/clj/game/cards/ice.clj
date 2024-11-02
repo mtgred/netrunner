@@ -353,6 +353,18 @@
    :async true
    :effect (effect (trash eid target {:cause :subroutine}))})
 
+(def runner-trash-program-sub
+  {:prompt "Choose a program to trash"
+   :player :runner
+   :label "Force the Runner to trash a program"
+   :msg (msg "force the runner to trash " (:title target))
+   :display-side :corp
+   :choices {:card #(and (installed? %)
+                         (program? %))}
+   :async true
+   :effect (effect (trash eid target {:cause :subroutine}))})
+
+
 (def trash-hardware-sub
   {:prompt "Choose a piece of hardware to trash"
    :label "Trash a piece of hardware"
@@ -1103,19 +1115,12 @@
                     :msg "gain 2 [Credits] if there is an installed AI"
                     :async true
                     :effect (effect (gain-credits eid 2))}
-     :subroutines [(assoc trash-program-sub
-                          :player :runner
-                          :msg "force the Runner to trash 1 program"
-                          :label "The Runner trashes 1 program")
+     :subroutines [runner-trash-program-sub
                    sub
                    sub]}))
 
 (defcard "Burke Bugs"
-  {:subroutines [(trace-ability 0 (assoc trash-program-sub
-                                         :not-distinct true
-                                         :player :runner
-                                         :msg "force the Runner to trash a program"
-                                         :label "Force the Runner to trash a program"))]})
+  {:subroutines [(trace-ability 0 runner-trash-program-sub)]})
 
 (defcard "Caduceus"
   {:subroutines [(trace-ability 3 (gain-credits-sub 3))
@@ -1311,10 +1316,7 @@
                                          (gain-credits state :runner eid 1)))}]})
 
 (defcard "Conundrum"
-  {:subroutines [(assoc trash-program-sub
-                        :player :runner
-                        :msg "force the Runner to trash 1 program"
-                        :label "The Runner trashes 1 program")
+  {:subroutines [runner-trash-program-sub
                  runner-loses-click
                  end-the-run]
    :static-abilities [(ice-strength-bonus
