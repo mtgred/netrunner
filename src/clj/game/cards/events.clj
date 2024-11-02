@@ -2158,6 +2158,7 @@
    :events [{:event :successful-run
              :silent (req true)
              :async true
+             :msg "draw 1 card"
              :req (req (and (#{:hq :rd} (target-server context))
                             this-card-run))
              :effect (effect (register-events
