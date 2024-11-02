@@ -2957,7 +2957,6 @@
   {:abilities [{:req (req (not (install-locked? state side)))
                 :label "Install a program from the stack"
                 :cost [(->c :trash-can) (->c :credit 2)]
-                :msg (msg "install a program from the stack")
                 :async true
                 :effect (effect
                           (continue-ability
@@ -2973,14 +2972,17 @@
                                                   (seq))
                                              ["Done"]))
                              :async true
+                             :waiting-prompt true
                              :effect (req (trigger-event state side :searched-stack)
                                           (shuffle! state side :deck)
                                           (if (= target "Done")
                                             (do (system-msg state side (str (:latest-payment-str eid) " to shuffle the Stack"))
                                                 (effect-completed state side eid))
-                                            (runner-install state side (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
-                                                                                                                                                :display-origin true
-                                                                                                                                                :include-cost-from-eid eid}})))}
+                                            (wait-for (runner-install state side (assoc (make-eid state eid) :source card :source-type :runner-install) target {:msg-keys {:install-source card
+                                                                                                                                                                           :display-origin true
+                                                                                                                                                                           :include-cost-from-eid eid}})
+                                                      (when-not async-result (system-msg state side (str (:latest-payment-str eid) " to shuffle the Stack")))
+                                                      (effect-completed state side eid))))}
                             card nil))}]})
 
 (defcard "Sharpshooter"
