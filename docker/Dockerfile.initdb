@@ -1,0 +1,39 @@
+# This image bundles mongotools along with a mongodump of the initial database
+# collections and indexes. When it runs, it restores the collections and
+# indexes to a target database.  The MONGO_CONNECTION_URI environment variable
+# must be set (including a database name) when it runs for it to work.
+#
+# E.g. docker run -e MONGO_CONNECTION_URI --rm dagolden/jnet-initdb
+#
+# It expects a mongodump of a locally initialized database to exist in the root
+# directory as 'jnet-tmpl.archive'.  Here is one way to generate it:
+#
+# $ export MONGO_CONNECTION_URI="mongodb://localhost/jnet-tmpl"
+# $ lein fetch
+# $ lein create-indexes
+# $ mongodump --uri="$MONGO_CONNECTION_URI" --archive=jnet-tmpl.archive -d jnet-tmpl
+
+FROM amazonlinux:2023
+
+# Set up the working directory
+WORKDIR /app
+
+# Install mongotools, including mongorestore
+
+ENV MONGO_ARCHIVE=jnet-tmpl.archive
+
+RUN yum install -y tar gzip \
+  && mkdir mongotools \
+  && curl -L https://fastdl.mongodb.org/tools/db/mongodb-database-tools-amazon2023-x86_64-100.10.0.tgz | tar -xz --strip-components=1 -C mongotools
+
+# The database must be initialized locally with `lein fetch` (including card
+# images!) and then dumped with mongodump:
+#    mongodump --uri="mongodb://localhost/" --archive=jnet-tmpl.archive --db="jnet-tmpl"
+COPY ./$MONGO_ARCHIVE .
+
+# Create an entrypoint script
+COPY docker/init-db.sh /app/init-db.sh
+RUN chmod +x /app/init-db.sh
+
+# Set the entrypoint
+ENTRYPOINT ["/app/init-db.sh"]

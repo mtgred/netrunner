@@ -1,0 +1,14 @@
+# Create an image to serve card images with nginx.
+#
+# To work around the .dockerignore file that excludes cards, you must use the
+# resources directory as the docker context. E.g.
+#
+#   docker buildx build -f docker/Dockerfile.cards ./resources
+#
+# This image must be generated after card images are downloaded while
+# populating a local database with 'lein fetch'. See also Dockerfile.initdb for
+# how the local database is used as a template to seed a production database.
+
+FROM nginx:alpine
+
+COPY ./public/img/cards /usr/share/nginx/html/img/cards
