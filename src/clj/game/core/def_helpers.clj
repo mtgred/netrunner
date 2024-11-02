@@ -3,11 +3,11 @@
     [clojure.string :as str]
     [game.core.access :refer [access-bonus]]
     [game.core.board :refer [all-installed]]
-    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard?]]
+    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? runner? in-hand?]]
     [game.core.card-defs :as card-defs]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [resolve-ability trigger-event-sync]]
+    [game.core.engine :refer [register-events resolve-ability trigger-event-sync unregister-event-by-uuid]]
     [game.core.effects :refer [is-disabled-reg?]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.moving :refer [move trash]]
@@ -349,22 +349,36 @@
   (forced) via the args"
   ([target-side abi] (with-revealed-hand target-side nil abi))
   ([target-side {:keys [event-side forced skip-reveal] :as args} abi]
-   {:async true
-    :effect (req (if skip-reveal
-                   (if (get-in @state [target-side :openhand])
-                          (continue-ability state side abi card targets)
-                          (do (reveal-hand state target-side)
-                              (wait-for (resolve-ability state side abi card targets)
-                                        (conceal-hand state target-side)
-                                        (effect-completed state side eid))))
-                   (wait-for
-                     (reveal-loud state (or event-side side) card args (get-in @state [target-side :hand]))
-                     (if (get-in @state [target-side :openhand])
-                       (continue-ability state side abi card targets)
-                       (do (reveal-hand state target-side)
-                           (wait-for (resolve-ability state side abi card targets)
-                                     (conceal-hand state target-side)
-                                     (effect-completed state side eid)))))))}))
+   ;; note - if the target draws (ie with steelskin), then the hand should be unrevealed again
+   ;; this only matters if a card like buffer drive or aniccam is in play that causes a prompt
+   ;; and the server sends the paused state back with the new cards faceup
+   (letfn [(maybe-register-ev
+             [state side card was-open?]
+             (if-not was-open?
+               (let [uuid (:uuid (first (register-events state side card
+                                                         [{:event :card-moved
+                                                           :req (req (let [sidefn (if (= :corp target-side) corp? runner?)]
+                                                                       (and (sidefn (:moved-card context))
+                                                                            (in-hand? (:moved-card context)))))
+                                                           :silent (req true)
+                                                           :effect (req (conceal-hand state target-side))}])))]
+                 (fn [] (unregister-event-by-uuid state side uuid)))
+               (fn [] nil)))
+           (maybe-reveal
+             [state side eid card target-side {:keys [event-side forced skip-reveal] :as args}]
+             (if skip-reveal
+               (effect-completed state side eid)
+               (reveal-loud state (or event-side side) eid card args (get-in @state [target-side :hand]))))]
+     {:async true
+      :effect (req (wait-for
+                     (maybe-reveal state side card target-side args)
+                     (let [was-open? (get-in @state [target-side :openhand])
+                           unregister-ev-callback (maybe-register-ev state side card was-open?)]
+                       (when-not was-open? (reveal-hand state target-side))
+                       (wait-for (resolve-ability state side abi card targets)
+                                 (when-not was-open? (conceal-hand state target-side))
+                                 (unregister-ev-callback)
+                                 (effect-completed state side eid)))))})))
 
 (defmacro defcard
   [title ability]
