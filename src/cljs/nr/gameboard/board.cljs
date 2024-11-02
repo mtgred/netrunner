@@ -1222,7 +1222,7 @@
 (defn- find-hosted-programs
   "finds all programs hosted on ice, and makes them have the 'ghost' key"
   [servers]
-  (let [servers (concat [(:archives @servers) (:rd @servers) (:hq @servers)] (get-remotes @servers))
+  (let [servers (concat [(:archives @servers) (:rd @servers) (:hq @servers)] (map second (get-remotes @servers)))
         ices (mapcat :ices servers)
         hosted (mapcat :hosted ices)
         hosted-programs (filter program? hosted)]
