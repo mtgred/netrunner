@@ -142,6 +142,8 @@
         src (name-zone (:side c) (:zone c))
         from-str (card-str state c)
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
+    (println src)
+    (println server)
     ;; allow moving from play-area always, otherwise only when same side, and to valid zone
     ;; here!
     (when (and (not= src server)
@@ -168,7 +170,7 @@
                     (log-move "discards"))
                 (do (trash state s (make-eid state) c {:unpreventable true})
                     (log-move "trashes"))))
-          ("Grip" "HQ")
+          ("the Grip" "HQ")
           (do (move-card-to :hand {:force true})
               (log-move "moves" "to " server))
           ("Stack" "R&D")
