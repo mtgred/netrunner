@@ -879,7 +879,7 @@
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
-           (drop-area (if (= :corp side) "HQ" "Grip") {:class (when (> size 6) "squeeze")})
+           (drop-area (if (= :corp side) "HQ" "the Grip") {:class (when (> size 6) "squeeze")})
            [build-hand-card-view filled-hand size "card-wrapper"]
            [label filled-hand {:opts {:name (if (= :corp side)
                                               (tr [:game.hq "HQ"])
