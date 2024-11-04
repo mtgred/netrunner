@@ -142,10 +142,7 @@
         src (name-zone (:side c) (:zone c))
         from-str (card-str state c)
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
-    (println src)
-    (println server)
     ;; allow moving from play-area always, otherwise only when same side, and to valid zone
-    ;; here!
     (when (and (not= src server)
                (same-side? s (:side card))
                (not= :select (get-in @state [side :prompt-state :prompt-type]))
