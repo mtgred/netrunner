@@ -13,7 +13,7 @@
    [jinteki.cards :refer [all-cards]]
    [jinteki.utils :refer [add-cost-to-label is-tagged? select-non-nil-keys
                           str->int] :as utils]
-   [nr.appstate :refer [app-state]]
+   [nr.appstate :refer [app-state current-gameid]]
    [nr.cardbrowser :refer [card-as-text]]
    [nr.end-of-game-stats :refer [build-game-stats]]
    [nr.gameboard.actions :refer [send-command]]
@@ -27,7 +27,8 @@
    [nr.sounds :refer [update-audio]]
    [nr.translations :refer [tr tr-side tr-game-prompt]]
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
-                     image-or-face render-icons render-message]]
+                     image-or-face map-longest render-icons render-message]]
+   [nr.ws :as ws]
    [reagent.core :as r]))
 
 (declare stacked-card-view show-distinct-cards)
@@ -208,6 +209,18 @@
           (handle-abilities side card)
           ; else
           nil)))))
+
+(defn spectate-side []
+  (let [corp-specs (get-in @app-state [:current-game :corp-spectators])
+        runner-specs (get-in @app-state [:current-game :runner-spectators])
+        me (:user @app-state)]
+    (cond
+      (some #(= (:uid %) (:uid me)) corp-specs)
+      :corp
+      (some #(= (:uid %) (:uid me)) runner-specs)
+      :runner
+      :else
+      nil)))
 
 (defn spectator-view-hidden?
   "Checks if spectators are allowed to see hidden information, such as hands and face-down cards"
@@ -568,17 +581,27 @@
      (doall
        (map-indexed
          (fn [i sub]
-           [:div {:key i}
-            [:span (cond (:broken sub)
-                         {:class :disabled
-                          :style {:font-style :italic}}
-                         (false? (:resolve sub))
-                         {:class :dont-resolve
-                          :style {:text-decoration :line-through}})
-             (render-icons (str " [Subroutine] " (:label sub)))]
-            [:span.float-right
-             (cond (:broken sub) banned-span
-                   (:fired sub) "✅")]])
+           (let [fire-sub #(when (= :corp (:side @game-state))
+                             (send-command "subroutine" {:card ice
+                                                         :subroutine i})
+                             (close-card-menu))]
+             [:div {:key i
+                    :tab-index 0
+                    :on-click fire-sub
+                    :on-key-down #(when (= "Enter" (.-key %))
+                                    (fire-sub))
+                    :on-key-up #(when (= " " (.-key %))
+                                  (fire-sub))}
+              [:span (cond (:broken sub)
+                           {:class :disabled
+                            :style {:font-style :italic}}
+                           (false? (:resolve sub))
+                           {:class :dont-resolve
+                            :style {:text-decoration :line-through}})
+               (render-icons (str " [Subroutine] " (:label sub)))]
+              [:span.float-right
+               (cond (:broken sub) banned-span
+                     (:fired sub) "✅")]]))
          subroutines))]))
 
 (defn card-abilities [card abilities subroutines]
@@ -1279,7 +1302,54 @@
            [:div (tr [:game.time-taken] time)]
            [:br]
            [build-game-stats (get-in @game-state [:stats :corp]) (get-in @game-state [:stats :runner])]
+           (when (not= :spectator (:side @game-state))
+             [:br]
+             [:div {:class "end-of-game-buttons"}
+              (when (= :corp (:side @game-state))
+                [:button#rez-all
+                 {:on-click #(ws/ws-send! [:game/say {:gameid (current-gameid app-state)
+                                                      :msg "/rez-all"}])}
+                 (tr [:game.rez-all "Rez All"])])
+              [:button#reveal-hand
+               {:on-click #(ws/ws-send! [:game/say {:gameid (current-gameid app-state)
+                                                    :msg "/show-hand"}])}
+               (tr [:game.reveal-my-hand "Reveal My Hand"])]])
            [:button.win-right {:on-click #(reset! win-shown true) :type "button"} "✘"]])))))
+
+(defn- build-in-game-decklists
+  "Builds the in-game decklist display"
+  [corp-list runner-list]
+  (let [lists (map-longest list nil corp-list runner-list)
+        card-qty (fn [c] (second c))
+        card-name (fn [c] [:div {:text-align "left"
+                                 :on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                                 :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
+                           (render-message (first c))])]
+    [:div
+     [:table.decklists.table
+      [:tbody
+       [:tr.win.th
+        [:td.win.th (tr [:side.corp "Corp"])] [:td.win.th]
+        [:td.win.th (tr [:side.runner "Runner"])] [:td.win.th]]
+       (doall (map-indexed
+                (fn [i [corp runner]]
+                  [:tr {:key i}
+                   [:td (card-qty corp)] [:td (card-name corp)]
+                   [:td (card-qty runner)] [:td (card-name runner)]])
+                lists))]]]))
+
+(defn build-decks-box
+  "Builds the decklist display box for open decklists"
+  [game-state]
+  (let [show-decklists (r/cursor app-state [:display-decklists])]
+    (fn [game-state]
+      (when (and @show-decklists
+                 (get-in @game-state [:decklists]))
+        (let [corp-list (or (get-in @game-state [:decklists :corp]) {:- 1})
+              runner-list (or (get-in @game-state [:decklists :runner]) {:- 1})]
+          [:div.decklists.blue-shade
+           [:br]
+           [build-in-game-decklists corp-list runner-list]])))))
 
 (defn build-start-box
   "Builds the start-of-game pop up box"
@@ -1418,7 +1488,7 @@
                :on-mouse-out #(card-highlight-mouse-out % ice button-channel)}
          (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (get-title ice))]
         [:hr]
-        (when (:button @app-state)
+        (when (or (:button @app-state) (get-in @app-state [:options :display-encounter-info]))
           [encounter-info-div ice])])
      (when @run
        [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title (:phase @run) (tr [:game.unknown-phase "Unknown phase"]))])
@@ -1429,7 +1499,8 @@
        [cond-button
         (str (tr [:game.rez "Rez"]) " " (get-title ice))
         (not (rezzed? ice))
-        #(send-command "rez" {:card ice :press-continue true})]
+        #(send-command "rez" {:card ice
+                              :press-continue (get-in @app-state [:options :pass-on-rez])})]
 
        (or (= "encounter-ice" (:phase @run))
            @encounters)
@@ -1488,7 +1559,7 @@
                :on-mouse-out #(card-highlight-mouse-out % ice button-channel)}
          (tr [:game.encounter-ice "Encounter ice"]) ": " (render-message (get-title ice))]
         [:hr]
-        (when (:button @app-state)
+        (when (or (:button @app-state)  (get-in @app-state [:options :display-encounter-info]))
           [encounter-info-div ice])])
      (when @run
        [:h4 (tr [:game.current-phase "Current phase"]) ":" [:br] (get phase->title phase)])
@@ -1699,10 +1770,12 @@
 (defn basic-actions [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me]}]
   [:div.panel.blue-shade
    (if (= (keyword @active-player) side)
+     ;; !!here
      (when (and (not (or @runner-phase-12 @corp-phase-12))
                 (zero? (:click @me))
                 (not @end-turn))
-       [:button {:on-click #(send-command "end-turn")}
+       [:button {:on-click #(do (close-card-menu)
+                                (send-command "end-turn"))}
         (tr [:game.end-turn "End Turn"])])
      (when @end-turn
        [:button {:on-click #(do
@@ -1997,6 +2070,7 @@
                    (zero? clicks)
                    (not @end-turn))
               (do (send-command "end-turn")
+                  (close-card-menu)
                   (.stopPropagation e))
               ;; gain clicks/mandatory draw
               (and (= active-player-kw @side)
@@ -2078,7 +2152,9 @@
        :reagent-render
        (fn []
         (when (and @corp @runner @side true)
-           (let [me-side (if (= :spectator @side) :corp @side)
+          (let [me-side (if (= :spectator @side)
+                          (or (spectate-side) :corp)
+                          @side)
                  op-side (utils/other-side me-side)
                  me (r/cursor game-state [me-side])
                  opponent (r/cursor game-state [op-side])
@@ -2125,6 +2201,7 @@
                      op-quote (r/cursor game-state [op-side :quote])]
                  [build-start-box me-ident me-user me-hand prompt-state me-keep op-ident op-user op-keep me-quote op-quote side])
 
+               [build-decks-box game-state]
                [build-win-box game-state]
 
                [:div {:class (if (:replay @game-state)
@@ -2190,7 +2267,8 @@
                      [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
                      [rfg-view op-current (tr [:game.current "Current"]) false]
                      [rfg-view me-current (tr [:game.current "Current"]) false]])
-                  (when-not (= @side :spectator)
+                  (when (or (not= @side :spectator)
+                            (and (spectator-view-hidden?) (spectate-side)))
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters
                                   :end-turn end-turn :runner-phase-12 runner-phase-12
                                   :corp-phase-12 corp-phase-12 :corp corp :runner runner

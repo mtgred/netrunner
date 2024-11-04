@@ -32,7 +32,22 @@
                         :value true
                         :checked (get-in @app-state [:options :ghost-trojans])
                         :on-change #(swap! app-state assoc-in [:options :ghost-trojans] (.. % -target -checked))}]
-        (tr [:ingame-settings.ghost-trojans "Display hosted trojans in rig"])]]]
+        (tr [:ingame-settings.ghost-trojans "Display hosted trojans in rig"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :display-encounter-info])
+                        :on-change #(swap! app-state assoc-in [:options :display-encounter-info] (.. % -target -checked))}]
+        (tr [:ingame-settings.display-encounter-info "Always display encounter info"])]]]
+
+     [:section
+      [:h4 (tr [:ingame-settings.game-settings "Gameplay Settings"])]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :pass-on-rez])
+                        :on-change #(swap! app-state assoc-in [:options :pass-on-rez] (.. % -target -checked))}]
+        (tr [:ingame-settings.game-settings "Pass priority when rezzing ice"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings.card-sorting "Sorting"])]
@@ -60,6 +75,14 @@
                                  :on-change #(swap! app-state assoc-in [:options :runner-board-order] (.. % -target -value))
                                  :checked (= (get-in @app-state [:options :runner-board-order]) (:ref option))}]
                  (:name option)]]))]
+     [:section
+      [:h4 (tr [:ingame-settings.log-timestamps "Log timestamps"])]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :log-timestamps])
+                        :on-change #(swap! app-state assoc-in [:options :log-timestamps] (.. % -target -checked))}]
+        (tr [:ingame-settings.log-timestamps "Show log timestamps"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings.board-overlap "Board overlap"])]

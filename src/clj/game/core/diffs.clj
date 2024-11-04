@@ -426,6 +426,7 @@
    ;; :angel-arena-info
    :corp
    :corp-phase-12
+   :decklists
    :encounters
    :end-turn
    :gameid
@@ -487,29 +488,32 @@
 
 (defn public-states
   "Generates privatized states for the Corp, Runner, any spectators, and the history from the base state.
-  If `:spectatorhands` is on, all information is passed on to spectators as well."
-  [state]
-  (let [stripped-state (strip-state state)
-        corp-state (state-summary stripped-state state :corp)
-        runner-state (state-summary stripped-state state :runner)
-        replay-state (strip-for-replay stripped-state corp-state runner-state)]
-    ;; corp, runner, spectator, history
-    {:corp-state corp-state
-     :runner-state runner-state
-     :spect-state (strip-for-spectators replay-state corp-state runner-state)
-     :corp-spect-state (strip-for-corp-spect replay-state corp-state runner-state)
-     :runner-spect-state (strip-for-runner-spect replay-state corp-state runner-state)
-     :hist-state replay-state}))
+  If `:spectatorhands` is on, all information is passed on to spectators as well.
+  note that when joining or starting a game, all states are always generated.
+  Otherwise when computing diffs, only the relevant states are needed, and we can skip computing the other ones."
+  ([state] (public-states state true true true))
+  ([state spectators? corp-spectators? runner-spectators?]
+   (let [stripped-state (strip-state state)
+         corp-state (state-summary stripped-state state :corp)
+         runner-state (state-summary stripped-state state :runner)
+         replay-state (strip-for-replay stripped-state corp-state runner-state)]
+     ;; corp, runner, spectator, history
+     {:corp-state corp-state
+      :runner-state runner-state
+      :spect-state (when spectators? (strip-for-spectators replay-state corp-state runner-state))
+      :corp-spect-state (when corp-spectators? (strip-for-corp-spect replay-state corp-state runner-state))
+      :runner-spect-state (when runner-spectators? (strip-for-runner-spect replay-state corp-state runner-state))
+      :hist-state replay-state})))
 
 (defn public-diffs [old-state new-state spectators? corp-spectators? runner-spectators?]
   (let [{old-corp :corp-state old-runner :runner-state
          old-spect :spect-state old-hist :hist-state
          old-corp-spect :corp-spect-state
-         old-runner-spect :runner-spect-state} (when old-state (public-states (atom old-state)))
+         old-runner-spect :runner-spect-state} (when old-state (public-states (atom old-state) spectators? corp-spectators? runner-spectators?))
         {new-corp :corp-state new-runner :runner-state
          new-spect :spect-state new-hist :hist-state
          new-corp-spect :corp-spect-state
-         new-runner-spect :runner-spect-state} (public-states new-state)]
+         new-runner-spect :runner-spect-state} (public-states new-state spectators? corp-spectators? runner-spectators?)]
     {:runner-diff (differ/diff old-runner new-runner)
      :corp-diff (differ/diff old-corp new-corp)
      :spect-diff (when spectators? (differ/diff old-spect new-spect))

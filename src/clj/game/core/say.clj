@@ -26,6 +26,8 @@
       "she" "her"
       "he" "his"
       "it" "its"
+      "heit" "its"
+      "sheit" "its"
       "their")))
 
 (defn- insert-pronouns

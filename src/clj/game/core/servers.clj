@@ -46,9 +46,9 @@
                    :else side)
         zone (if (keyword? zone) [zone] (vec zone))]
   (cond
-    (= zone [:hand]) (if (= side "Runner") "Grip" "HQ")
-    (= zone [:discard]) (if (= side "Runner") "Heap" "Archives")
-    (= zone [:deck]) (if (= side "Runner") "Stack" "R&D")
+    (= zone [:hand]) (if (= side "Runner") "the Grip" "HQ")
+    (= zone [:discard]) (if (= side "Runner") "the Heap" "Archives")
+    (= zone [:deck]) (if (= side "Runner") "the Stack" "R&D")
     (= zone [:set-aside]) "set-aside cards"
     (= (take 1 zone) [:rig]) "Rig"
     (= (take 2 zone) [:servers :hq]) "the root of HQ"

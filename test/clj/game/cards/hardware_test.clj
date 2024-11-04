@@ -3885,6 +3885,7 @@
       (play-from-hand state :runner "Patchwork")
       (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
       (play-from-hand state :runner "Career Fair")
+      (click-prompt state :runner "Done")
       (click-card state :runner (find-card "Liberated Account" (:hand (get-runner))))
       (click-card state :runner (get-hardware state 0))
       (click-card state :runner (find-card "Sure Gamble" (:hand (get-runner))))
@@ -3918,6 +3919,55 @@
       (click-card state :runner patchwork)
       (click-card state :runner paperclip)
       (is (= 0 (get-counters (refresh twinning) :power)) "Twinning should not have gained a counter"))))
+
+(deftest patchwork-cursed-rules-trash-your-target
+  (do-game
+    (new-game {:runner {:hand ["Patchwork" "Strike Fund"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Patchwork")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-card state :runner "Strike Fund")
+    (click-card state :runner "Strike Fund")
+    (click-prompt state :runner "Yes")
+    (is (no-prompt? state :runner))
+    (is (= 3 (:credit (get-runner))) "Gained 2c from strike")))
+
+(deftest patchwork-cursed-rules-play-sure-gamble
+  (do-game
+    (new-game {:runner {:hand ["Patchwork" "Strike Fund" "Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Patchwork")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-card state :runner "Sure Gamble")
+    (click-card state :runner "Strike Fund")
+    (click-prompt state :runner "Yes")
+    (is (no-prompt? state :runner))
+    (is (= 9 (:credit (get-runner))) "Gained 8c from strike+gamble")))
+
+(deftest patchwork-cursed-rules-cannot-play-sure-gamble
+  (do-game
+    (new-game {:runner {:hand ["Patchwork" "Strike Fund" "Sure Gamble"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Patchwork")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-card state :runner "Sure Gamble")
+    (click-card state :runner "Strike Fund")
+    (click-prompt state :runner "No")
+    (is (no-prompt? state :runner))
+    (is (= 1 (:credit (get-runner))) "Gained 0c from nothing")))
+
+(deftest patchwork-cursed-rules-decline-addl-cost
+  (do-game
+    (new-game {:runner {:hand ["Patchwork" "Moshing" "Steelskin Scarring" "Sure Gamble"]
+                        :deck ["Easy Mark" "Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Patchwork")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-card state :runner "Moshing")
+    (click-card state :runner "Steelskin Scarring")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "No")
+    (is (is-hand? state :runner ["Moshing" "Sure Gamble" "Easy Mark" "Ika"]) "didn't mosh")))
 
 (deftest pennyshaver
   ;; Pennyshaver - Place credits on successful run and take credits from Pennyshaver

@@ -123,6 +123,8 @@
   ([state side ability card] (card-ability-cost state side ability card nil))
   ([state side ability card targets]
    (let [base-cost [(:cost ability)
+                    (when-let [cost-bonus-fn (:cost-bonus ability)]
+                      (cost-bonus-fn state side (make-eid state) card targets))
                     (get-effects state side :card-ability-cost
                                  {:card card
                                   :ability ability

@@ -1,8 +1,15 @@
 (ns game.core.expend
   (:require
+   [game.core.card-defs :refer [card-def]]
+   [game.core.effects :refer [is-disabled-reg?]]
    [game.core.engine :refer [checkpoint queue-event resolve-ability]]
    [game.core.payment :refer [can-pay? merge-costs ->c]]
    [game.macros :refer [req wait-for]]))
+
+(defn expendable?
+  "Can a card be expended? (disabled cards will not retain the ability)"
+  [state card]
+  (and (:expend (card-def card)) (not (is-disabled-reg? state card))))
 
 (defn expend
   [ex]

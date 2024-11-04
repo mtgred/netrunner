@@ -48,18 +48,27 @@
 (defn send-typing
   "Send a typing event to server for this user if it is not already set in game state AND user is not a spectator"
   [s]
-  (let [text (:msg @s)]
-    (when (and (not (:replay @game-state))
-               (not-spectator?))
-      (ws/ws-send! [:game/typing {:gameid (current-gameid app-state)
-                                  :typing (boolean (seq text))}]))))
+  (r/with-let [typing (r/cursor game-state [:typing])]
+    (let [text (:msg @s)]
+      (when (and (not (:replay @game-state))
+                 (not @typing)
+                 (not-spectator?))
+        (ws/ws-send! [:game/typing {:gameid (current-gameid app-state)
+                                    :typing (boolean (seq text))}])))))
 
 (defn indicate-action []
   (when (not-spectator?)
     [:button.indicate-action {:on-click #(do (.preventDefault %)
                                              (send-command "indicate-action"))
                               :key "Indicate action"}
-     (tr [:game.indicate-action "Indicate action"])]))
+     (tr [:game.indicate-action "Indicate paid ability"])]))
+
+(defn show-decklists []
+  (when (get-in @app-state [:current-game :open-decklists])
+    [:button.show-decklists {:on-click #(do (.preventDefault %)
+                                            (swap! app-state update-in [:display-decklists] not))
+                             :key "Show Decklists"}
+     (tr [:game.show-decklists "Show/Hide decklists"])]))
 
 (defn fuzzy-match-score
   "Matches if all characters in input appear in target in order.
@@ -174,7 +183,25 @@
              :on-key-down #(command-menu-key-down-handler state %)
              :on-change #(log-input-change-handler state %)}]]]
          [indicate-action]
+         [show-decklists]
          [command-menu !input-ref state]]))))
+
+(defn format-system-timestamp [timestamp text corp runner]
+  (if (get-in @app-state [:options :log-timestamps])
+    (render-message (render-player-highlight text corp runner (str "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]")))
+    (render-message (render-player-highlight text corp runner))
+    )
+  )
+
+(defn format-user-timestamp [timestamp user]
+  (if (get-in @app-state [:options :log-timestamps])
+    [:div.timestamp-wrapper
+     [:div.username (:username user)]
+     [:div.timestamp "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]"]
+     ]
+    [:div.username (:username user)]
+    )
+  )
 
 (defn log-messages []
   (let [log (r/cursor game-state [:log])
@@ -214,12 +241,13 @@
                  (fn [{:keys [user text timestamp]}]
                    ^{:key timestamp}
                    (if (= user "__system__")
-                     [:div.system (render-message (render-player-highlight text @corp @runner))]
-                     [:div.message
-                      [avatar user {:opts {:size 38}}]
-                      [:div.content
-                       [:div.username (:username user)]
-                       [:div (render-message text)]]]))
+                      [:div.system
+                        [format-system-timestamp timestamp text @corp @runner]]
+                      [:div.message
+                       [avatar user {:opts {:size 38}}]
+                       [:div.content
+                        [format-user-timestamp timestamp user]
+                        [:div (render-message text)]]]))
                  @log)))})))
 
 (defn log-pane []

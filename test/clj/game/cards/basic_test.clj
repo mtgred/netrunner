@@ -84,6 +84,7 @@
         (gain-tags state :runner 1)
         (trash-resource state)
         (click-card state :corp fs)
+        (is (last-log-contains? state "to trash Fan Site") "Logged correctly")
         (is (= 1 (count (:discard (get-runner)))) "Fan Site got trashed"))))
 
 (deftest corp-basic-actions-purge

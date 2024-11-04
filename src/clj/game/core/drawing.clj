@@ -82,8 +82,7 @@
            (effect-completed state side eid)
            (let [to-draw (take draws-after-prevent (get-in @state [side :deck]))
                  set-aside-eid eid]
-             (set-aside-for-me state side set-aside-eid to-draw)
-             (let [drawn (get-set-aside state side set-aside-eid)
+             (let [drawn (set-aside-for-me state side set-aside-eid to-draw)
                    drawn-count (count drawn)]
                (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % drawn-count) 0))
                (if (not no-update-draw-stats)

@@ -1,5 +1,6 @@
 (ns web.ws
   (:require
+   [cljc.java-time.instant :as inst]
    [clojure.core.async :refer [<! >! chan go timeout]]
    [web.app-state :refer [register-user! deregister-user!]]
    [web.user :refer [active-user?]]
@@ -91,7 +92,7 @@
   "Wraps `-msg-handler` with logging, error catching, etc."
   [event]
   (try
-    (-msg-handler event)
+    (-msg-handler (assoc event :timestamp (inst/now)))
     (catch Exception e
       (println "Caught an error in the message handler")
       (println (.printStackTrace e)))))

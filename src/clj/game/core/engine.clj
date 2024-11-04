@@ -1101,21 +1101,6 @@
                 (effect-completed state nil eid))
       (effect-completed state nil eid))))
 
-(defn trash-on-tag
-  [state _ eid]
-  (let [trash-when-tagged (when (jinteki.utils/is-tagged? state)
-                            (filter :trash-when-tagged (all-installed-runner state)))
-        trash-when-tagged (filter #(not (is-disabled? state nil %)) trash-when-tagged)]
-    (if (seq trash-when-tagged)
-      (wait-for (move* state nil (make-eid state eid)
-                       :trash-cards trash-when-tagged
-                       {:unpreventable true})
-                (doseq [card trash-when-tagged]
-                  (system-say state (to-keyword (:side card))
-                              (str "trashes " (card-str state card) " for being tagged")))
-                (effect-completed state nil eid))
-      (effect-completed state nil eid))))
-
 (defn- enforce-conditions-impl
   [state _ eid cards]
   (if (seq cards)
@@ -1123,24 +1108,21 @@
       (wait-for
         (resolve-ability
           state (to-keyword (:side fc))
-          (when-not
-              (is-disabled-reg? state fc)
-            (:enforce-conditions fc))
+          (when-not (is-disabled-reg? state fc)
+            (:enforce-conditions (card-def fc)))
           fc nil)
         (enforce-conditions-impl state nil eid (rest cards))))
     (effect-completed state nil eid)))
 
 (defn enforce-conditions
   [state _ eid]
-  (wait-for
-    (trash-on-tag state nil (make-eid state eid))
-    (if-let [cards (seq (filter
-                          :enforce-conditions
-                          (concat (all-installed state :corp)
-                                  [(get-in @state [:corp :identity])]
-                                  (all-active-installed state :runner))))]
-      (enforce-conditions-impl state nil eid cards)
-      (effect-completed state nil eid))))
+  (if-let [cards (seq (filter
+                        #(:enforce-conditions (card-def %))
+                        (concat (all-installed state :corp)
+                                [(get-in @state [:corp :identity])]
+                                (all-active-installed state :runner))))]
+    (enforce-conditions-impl state nil eid cards)
+    (effect-completed state nil eid)))
 
 (defn check-restrictions
   [state _ eid]

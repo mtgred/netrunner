@@ -3,20 +3,17 @@
     [game.core.card :refer [in-set-aside?]]
     [game.core.eid :refer [effect-completed]]
     [game.core.moving :refer [move swap-cards]]
+    [game.utils :refer [dissoc-in]]
     [clojure.string :as string]))
 
 (defn set-aside
   "move a group of cards to the set-aside zone. Does not call effect-completed on the eid"
   ([state side eid cards] (set-aside state side eid cards true true))
-   ;(swap! state assoc-in [side :set-aside-tracking (:eid eid)] (map :cid cards))
-   ;(doseq [c cards] (move state side c :set-aside))
-   ;(effect-completed state side eid))
   ([state side eid cards corp-vis runner-vis]
    (swap! state assoc-in [side :set-aside-tracking (:eid eid)] (map :cid cards))
-   (doseq [c cards]
-     (move state side (assoc c
-                             :set-aside-visibility {:corp-can-see corp-vis :runner-can-see runner-vis}
-                             :set-aside-eid eid) :set-aside))))
+   (mapv #(move state side (assoc % :set-aside-visibility {:corp-can-see corp-vis :runner-can-see runner-vis}
+                                  :set-aside-eid eid) :set-aside)
+         cards)))
 
 (defn set-aside-for-me
   "sets aside cards visible only to the player setting them aside"
@@ -34,6 +31,13 @@
     (->> (:set-aside player)
          (filter #(contains? cids (:cid %)))
          (into []))))
+
+(defn clean-set-aside!
+  "cleans stale entries out of the set aside tracker"
+  [state side]
+  (let [to-clear (filter #(empty? (get-set-aside state side {:eid %})) (keys (get-in @state [side :set-aside-tracking])))]
+    (doseq [eid to-clear]
+      (swap! state dissoc-in [side :set-aside-tracking eid]))))
 
 ;; adds a card into the set aside zone using a given cid (ie add it to the set of cards in a draw)
 (defn add-to-set-aside
