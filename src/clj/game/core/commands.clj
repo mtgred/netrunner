@@ -564,6 +564,7 @@
                                                                  (not (ice? c))))}
                                     :effect (effect (swap-installed (first targets) (second targets)))}
                                    (make-card {:title "/swap-installed command"}) nil))
+            "/swap-sides" #(true)
             "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (constrain-value value 0 1000))
             "/take-core" #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :brain (constrain-value value 0 1000)
                                                        {:card (make-card {:title "/damage command" :side %2})}))
