@@ -1170,6 +1170,7 @@
                 :label "Give -1 strength to current piece of ice"
                 :req (req (and (rezzed? current-ice)
                                (get-current-encounter state)))
+                :keep-menu-open :while-virus-tokens-left
                 :msg (msg "give -1 strength to " (:title current-ice))
                 :effect (effect (pump-ice current-ice -1))}]})
 
@@ -1947,6 +1948,7 @@
    :abilities [{:cost [(->c :virus 1)]
                 :label "Give -1 strength to current piece of ice"
                 :req (req (active-encounter? state))
+                :keep-menu-open :while-virus-tokens-left
                 :msg (msg "give -1 strength to " (:title current-ice))
                 :effect (effect (pump-ice current-ice -1))}]})
 
@@ -3188,6 +3190,7 @@
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
+                :keep-menu-open :while-power-tokens-left
                 :msg (msg "give +3 strength to " (:title target))
                 :effect (effect (pump target 3))}
                (set-autoresolve :auto-place-counter "Takobi placing power counters on itself")]})
