@@ -429,6 +429,7 @@
    :encounters
    :end-turn
    :gameid
+   :last-revealed
    :log
    :mark
    :options

@@ -2152,7 +2152,7 @@
        :reagent-render
        (fn []
         (when (and @corp @runner @side true)
-          (let [me-side (if (= :spectator @side)
+           (let [me-side (if (= :spectator @side)
                           (or (spectate-side) :corp)
                           @side)
                  op-side (utils/other-side me-side)
@@ -2248,6 +2248,7 @@
                         op-set-aside (r/cursor game-state [op-side :set-aside])
                         op-current (r/cursor game-state [op-side :current])
                         op-play-area (r/cursor game-state [op-side :play-area])
+                        last-revealed (r/cursor game-state [:last-revealed])
                         me-rfg (r/cursor game-state [me-side :rfg])
                         me-set-aside (r/cursor game-state [me-side :set-aside])
                         me-current (r/cursor game-state [me-side :current])
@@ -2262,7 +2263,8 @@
                      [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]
                      [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
                      [rfg-view op-current (tr [:game.current "Current"]) false]
-                     [rfg-view me-current (tr [:game.current "Current"]) false]])
+                     [rfg-view me-current (tr [:game.current "Current"]) false]
+                     [rfg-view last-revealed (tr [:game.last-revealed "Last Revealed"]) false]])
                   (when (or (not= @side :spectator)
                             (and (spectator-view-hidden?) (spectate-side)))
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters
