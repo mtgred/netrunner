@@ -15,7 +15,7 @@
                                rez-additional-cost-bonus rez-cost]]
    [game.core.damage :refer [chosen-damage corp-can-choose-damage? damage
                              enable-corp-damage-choice]]
-   [game.core.def-helpers :refer [corp-recur defcard offer-jack-out]]
+   [game.core.def-helpers :refer [corp-recur defcard offer-jack-out with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect is-disabled?]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
@@ -520,19 +520,11 @@
                              (pos? (count (:hand runner)))))
               :waiting-prompt true
               :prompt "Choose the first card to trash?"
-              :yes-ability
-              {:async true
-               :msg (msg "look at the grip ( "
-                         (enumerate-str (map :title (sort-by :title (:hand runner))))
-                         " ) and choose the card that is trashed")
-               :effect
-               (effect (continue-ability
-                         {:prompt "Choose 1 card to trash"
-                          :choices (req (:hand runner))
-                          :not-distinct true
-                          :msg (msg "choose " (:title target) " to trash")
-                          :effect (req (chosen-damage state :corp target))}
-                         card nil))}
+              :yes-ability (with-revealed-hand :runner {:no-event true}
+                             {:prompt "Choose 1 card to trash"
+                              :choices {:card (every-pred runner? in-hand?)}
+                              :msg (msg "choose " (:title target) " to trash")
+                              :effect (req (chosen-damage state :corp target))})
               :no-ability
               {:effect (req (system-msg state :corp (str "declines to use " (:title card))))}}}]})
 

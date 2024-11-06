@@ -973,25 +973,24 @@
   (do-game
       (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
                         :hand [(qty "Neural EMP" 2)]}
-                 :runner {:deck [(qty "Imp" 3)]}})
+                 :runner {:deck ["Imp" "Ika" "Inti"]}})
       (take-credits state :corp)
       (damage state :corp :net 1)
       (click-prompt state :corp "Yes")
-      (let [imp (find-card "Imp" (:hand (get-runner)))]
-        (click-prompt state :corp imp)
-        (is (= 1 (count (:discard (get-runner)))))
-        (damage state :corp :net 1)
-        (is (no-prompt? state :corp) "No choice on second net damage")
-        (is (= 2 (count (:discard (get-runner)))))
-        (run-empty-server state "Archives")
-        (take-credits state :runner)
-        (core/move state :runner (find-card "Imp" (:discard (get-runner))) :hand)
-        (play-from-hand state :corp "Neural EMP")
-        (click-prompt state :corp "No")
-        (is (= 2 (count (:discard (get-runner)))) "Damage dealt after declining ability")
-        (play-from-hand state :corp "Neural EMP")
-        (is (no-prompt? state :corp) "No choice after declining on first damage")
-        (is (= 3 (count (:discard (get-runner))))))))
+      (click-card state :corp "Imp")
+      (is (= 1 (count (:discard (get-runner)))))
+      (damage state :corp :net 1)
+      (is (no-prompt? state :corp) "No choice on second net damage")
+      (is (= 2 (count (:discard (get-runner)))))
+      (run-empty-server state "Archives")
+      (take-credits state :runner)
+      (core/move state :runner (find-card "Imp" (:discard (get-runner))) :hand)
+      (play-from-hand state :corp "Neural EMP")
+      (click-prompt state :corp "No")
+      (is (= 2 (count (:discard (get-runner)))) "Damage dealt after declining ability")
+      (play-from-hand state :corp "Neural EMP")
+      (is (no-prompt? state :corp) "No choice after declining on first damage")
+      (is (= 3 (count (:discard (get-runner)))))))
 
 (deftest chronos-protocol-selective-mind-mapping-with-obokata-pay-4-net-damage-to-steal-only-3-damage-left-after-chronos-no-trigger-of-damage-prevent
     ;; with Obokata: Pay 4 net damage to steal. Only 3 damage left after Chronos. No trigger of damage prevent.
@@ -1006,7 +1005,7 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay to steal")
       (click-prompt state :corp "Yes")
-      (click-prompt state :corp (find-card "Inti" (:hand (get-runner))))
+      (click-card state :corp "Inti")
       (is (no-prompt? state :runner) "Feedback Filter net damage prevention opportunity not given")
       (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 net damage")))
 

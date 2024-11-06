@@ -7554,23 +7554,22 @@
     (is (waiting? state :runner) "Runner is waiting for Corp to boost")
     (click-prompt state :corp "0")
     (click-prompt state :runner "4")
-    (click-prompt state :runner (find-card "Ice Wall" (:hand (get-corp))))
-    (click-prompt state :runner (find-card "Enigma" (:hand (get-corp))))
-    (is (= #{"Ice Wall" "Enigma"} (->> (get-corp) :deck (map :title) (into #{}))))))
+    (click-card state :runner  "Ice Wall")
+    (click-card state :runner "Enigma")
+    (is-deck? state :corp ["Ice Wall" "Enigma"])))
 
 (deftest white-hat-single-card-selected
   ;; White Hat - can shuffle back just a single card
   (do-game
-    (new-game {:corp {:hand ["Ice Wall" "Ice Wall"]}
+    (new-game {:corp {:hand ["Ice Wall" "Enigma"]}
                :runner {:hand ["White Hat"]}})
     (take-credits state :corp)
     (run-empty-server state :archives)
     (play-from-hand state :runner "White Hat")
     (click-prompt state :corp "0")
     (click-prompt state :runner "4")
-    (is (= "Choose a card in HQ to shuffle into R&D (2 remaining)" (:msg (prompt-map :runner))))
-    (click-prompt state :runner (find-card "Ice Wall" (:hand (get-corp))))
-    (is (= "Choose a card in HQ to shuffle into R&D (1 remaining)" (:msg (prompt-map :runner))))
+    (is (= "Shuffle up to 2 cards into R&D" (:msg (prompt-map :runner))))
+    (click-card state :runner "Ice Wall")
     (click-prompt state :runner "Done")
     (is (no-prompt? state :runner))))
 
