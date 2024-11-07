@@ -739,6 +739,7 @@
           :play-area "Play Area"
           :current "Current"
           :scored-area "Scored Area"
+          :last-revealed "Last Revealed"
           :archives "Archives"
           :max-hand "Max hand size"
           :brain-damage "Core Damage"

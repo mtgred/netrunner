@@ -20,7 +20,9 @@
 (defn reveal
   "Trigger the event for revealing one or more cards."
   [state side eid & targets]
-  (apply trigger-event-sync state side eid (if (= :corp side) :corp-reveal :runner-reveal) (flatten targets)))
+  (let [cards (flatten targets)]
+    (swap! state assoc :last-revealed cards)
+    (apply trigger-event-sync state side eid (if (= :corp side) :corp-reveal :runner-reveal) cards)))
 
 (defn reveal-loud
   "Trigger the event for revealing one or more cards, and also handle the log printout"
