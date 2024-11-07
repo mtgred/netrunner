@@ -2272,7 +2272,7 @@
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters
                                   :end-turn end-turn :runner-phase-12 runner-phase-12
                                   :corp-phase-12 corp-phase-12 :corp corp :runner runner
-                                  :me            me :opponent opponent :prompt-state prompt-state}])]]
+                                  :me me :opponent opponent :prompt-state prompt-state}])]]
 
                 [:div.me
                  [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true]]]]
