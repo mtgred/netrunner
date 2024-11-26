@@ -39,6 +39,8 @@
 (defonce corp-prompt-state (r/cursor game-state [:corp :prompt :prompt-state]))
 (defonce runner-prompt-state (r/cursor game-state [:runner :prompt :prompt-state]))
 
+(defn is-replay? [] (= "local-replay" (:gameid @app-state [:gameid])))
+
 (defn- any-prompt-open?
   [side]
   (if (= side :corp)
@@ -912,41 +914,41 @@
       (str title " (" hand-count ")")]]))
 
 (defn deck-view [render-side player-side identity deck deck-count]
-   (let [is-runner (= :runner render-side)
-         title (if is-runner (tr [:game.stack "Stack"]) (tr [:game.r&d "R&D"]))
-         ref (if is-runner "stack" "rd")
-         menu-ref (keyword (str ref "-menu"))
-         content-ref (keyword (str ref "-content"))]
-     (fn [render-side player-side identity deck]
-       ; deck-count is only sent to live games and does not exist in the replay
-       (let [deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)]
-         [:div.deck-container (drop-area title {})
-          [:div.blue-shade.deck {:on-click (when (and (= render-side player-side) (not-spectator?))
-                                             #(let [popup-display (-> (content-ref @board-dom) .-style .-display)]
-                                                (if (or (empty? popup-display)
-                                                        (= "none" popup-display))
-                                                  (-> (menu-ref @board-dom) js/$ .toggle)
-                                                  (close-popup % (content-ref @board-dom) "stops looking at their deck" false true))))}
-           (when (pos? deck-count-number)
-             [facedown-card (:side @identity) ["bg"] nil])
-           [:div.header {:class "darkbg server-label"}
-            (str title " (" deck-count-number ")")]]
-          (when (= render-side player-side)
-            [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
-             [:div {:on-click #(do (send-command "shuffle")
-                                   (-> (menu-ref @board-dom) js/$ .fadeOut))} (tr [:game.shuffle "Shuffle"])]
-             [:div {:on-click #(show-deck % ref)} (tr [:game.show "Show"])]])
-          (when (= render-side player-side)
-            [:div.panel.blue-shade.popup {:ref #(swap! board-dom assoc content-ref %)}
-             [:div
-              [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" false true)}
-               (tr [:game.close "Close"])]
-              [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" true true)}
-               (tr [:game.close-shuffle "Close & Shuffle"])]]
-             (doall
-               (for [card @deck]
-                 ^{:key (:cid card)}
-                 [card-view card]))])]))))
+  (let [is-runner (= :runner render-side)
+        title (if is-runner (tr [:game.stack "Stack"]) (tr [:game.r&d "R&D"]))
+        ref (if is-runner "stack" "rd")
+        menu-ref (keyword (str ref "-menu"))
+        content-ref (keyword (str ref "-content"))]
+    (fn [render-side player-side identity deck]
+      ;; deck-count is only sent to live games and does not exist in the replay
+      (let [deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)]
+        [:div.deck-container (drop-area title {})
+         [:div.blue-shade.deck {:on-click (when (and (= render-side player-side) (not-spectator?))
+                                            #(let [popup-display (-> (content-ref @board-dom) .-style .-display)]
+                                               (if (or (empty? popup-display)
+                                                       (= "none" popup-display))
+                                                 (-> (menu-ref @board-dom) js/$ .toggle)
+                                                 (close-popup % (content-ref @board-dom) "stops looking at their deck" false true))))}
+          (when (pos? deck-count-number)
+            [facedown-card (:side @identity) ["bg"] nil])
+          [:div.header {:class "darkbg server-label"}
+           (str title " (" deck-count-number ")")]]
+         (when (and (= render-side player-side) (not (is-replay?)))
+           [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
+            [:div {:on-click #(do (send-command "shuffle")
+                                  (-> (menu-ref @board-dom) js/$ .fadeOut))} (tr [:game.shuffle "Shuffle"])]
+            [:div {:on-click #(show-deck % ref)} (tr [:game.show "Show"])]])
+         (when (and (= render-side player-side) (not (is-replay?)))
+           [:div.panel.blue-shade.popup {:ref #(swap! board-dom assoc content-ref %)}
+            [:div
+             [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" false true)}
+              (tr [:game.close "Close"])]
+             [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" true true)}
+              (tr [:game.close-shuffle "Close & Shuffle"])]]
+            (doall
+              (for [card @deck]
+                ^{:key (:cid card)}
+                [card-view card]))])]))))
 
 (defn discard-view-runner [player-side discard]
   (let [s (r/atom {})]
