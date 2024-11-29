@@ -1294,6 +1294,7 @@
       (rez state :corp bran)
       (run-continue state)
       (card-subroutine state :corp bran 0)
+      (waiting? state :runner)
       (is (changed? [(:credit (get-corp)) 0]
             (click-card state :corp "Mausolus"))
           "Mausolus installed for free")
