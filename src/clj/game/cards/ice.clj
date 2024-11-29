@@ -1079,6 +1079,7 @@
                   :label "Install an ice from HQ or Archives"
                   :prompt "Choose an ice to install from Archives or HQ"
                   :show-discard true
+                  :waiting-prompt true
                   :choices {:card #(and (ice? %)
                                         (or (in-hand? %)
                                             (in-discard? %)))}
