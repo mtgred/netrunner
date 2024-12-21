@@ -16,7 +16,7 @@
    [game.utils :as utils]
    [game.utils-test :refer [error-wrapper is']]
    [jinteki.cards :refer [all-cards]]
-   [jinteki.utils :as jutils]))
+   [jinteki.utils :as jutils :refer [render-map-default]]))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -986,18 +986,21 @@
 (defn last-log-contains?
   [state content]
   (->> (-> @state :log last :text)
+       (render-map-default)
        (re-find (re-pattern (escape-log-string content)))
        some?))
 
 (defn second-last-log-contains?
   [state content]
   (->> (-> @state :log butlast last :text)
+       (render-map-default)
        (re-find (re-pattern (escape-log-string content)))
        some?))
 
 (defn last-n-log-contains?
   [state n content]
   (->> (-> @state :log reverse (nth n) :text)
+       (render-map-default)
        (re-find (re-pattern (escape-log-string content)))
        some?))
 
