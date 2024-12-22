@@ -435,15 +435,10 @@
                         :else
                         (name-zone :runner (:previous-zone card))))
                  "")
-        pre-lhs (when (every? (complement empty?) [cost-str prepend-cost-str])
-                  (str prepend-cost-str ", and then "))
+        ;; currently loses ", and then" -- all costs are squashed into one
         from-host? (when (and display-origin (= (:previous-zone card) [:onhost]))
                      "hosted ")
-        modified-cost-str (if (empty? cost-str)
-                            prepend-cost-str
-                            (if (string/blank? pre-lhs)
-                              cost-str
-                              (str cost-str ",")))
+        modified-cost-str (merge prepend-cost-str cost-str)
         lhs (if install-source
               (str (build-spend-msg-suffix modified-cost-str "use") (:title install-source) " to install ")
               (build-spend-msg-suffix modified-cost-str "install"))]
@@ -452,7 +447,7 @@
         (system-msg state side (custom-message cost-str))
         (system-msg state side
                     {:cost modified-cost-str
-                     :raw-text (str pre-lhs lhs from-host? card-name origin discount-str
+                     :raw-text (str lhs from-host? card-name origin discount-str
                                     (when host-card (str " on " (card-str state host-card)))
                                     (when no-cost " at no cost"))})))))
 
