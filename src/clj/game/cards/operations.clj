@@ -763,7 +763,7 @@
                                                     :async true
                                                     :effect (effect (corp-install eid card-to-install target {:msg-keys {:install-source card
                                                                                                                          :display-origin true}}))})
-                                                 target nil)
+                                                 card nil)
                                                (end-effect state side eid card targets)))
                         :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
                                                (end-effect eid card targets))}
