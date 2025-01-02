@@ -483,9 +483,8 @@
              :effect (effect (continue-ability (charge-ability state side) card nil))}]})
 
 (defcard "Cerebral Imaging: Infinite Frontiers"
-  {:static-abilities [(corp-hand-size+ (req (:credit corp)))]
-   :effect (req (swap! state assoc-in [:corp :hand-size :base] 0))
-   :leave-play (req (swap! state assoc-in [:corp :hand-size :base] 5))})
+  {:static-abilities [(corp-hand-size+ (req (- (:credit corp) 5)))]})
+
 
 (defcard "Chaos Theory: Wünderkind"
   {:static-abilities [(mu+ 1)]})
