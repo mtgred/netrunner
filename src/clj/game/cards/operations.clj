@@ -720,6 +720,7 @@
     :msg (msg (if (= "None" target)
                 "shuffle R&D"
                 (str "reveal " (:title target) " from R&D and add it to HQ")))
+    :async true
     :effect (let [end-effect (req (system-msg state side "can not score agendas for the remainder of the turn")
                                   (swap! state assoc-in [:corp :register :cannot-score]
                                          (filter agenda? (all-installed state :corp)))
