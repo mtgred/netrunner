@@ -78,8 +78,8 @@ jobs:
          path: |
            ~/.m2
            ~/.lein
-         key: ${{ runner.os }}-clojure-${{ hashFiles('**/project.clj') }}
-         restore-keys: ${{ runner.os }}-clojure
+         key: ${{ runner.os }}-node-clojure-${{ hashFiles('**/project.clj') }}
+         restore-keys: ${{ runner.os }}-node-clojure
 
      - name: Install npm dependencies
        run: npm ci
