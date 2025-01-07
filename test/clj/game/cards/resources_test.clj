@@ -2189,7 +2189,7 @@
       (take-credits state :runner)
       (card-ability state :corp (get-content state :remote2 0) 0)
       (click-prompt state :corp "Program")
-      (click-prompt state :corp "Cache")
+      (click-card state :corp "Cache")
       (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trashing from hand")))
 
 (deftest earthrise-hotel
