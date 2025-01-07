@@ -745,10 +745,10 @@
 
 (deftest attini-threat-ability
   (do-game
-    (new-game {:corp {:hand ["Attini" "Obokata Protocol"]
+    (new-game {:corp {:hand ["Attini"]
+                      :score-area  ["Obokata Protocol"]
                       :credits 10}
                :runner {:hand [(qty "Sure Gamble" 3)]}})
-    (play-and-score state "Obokata Protocol")
     (play-from-hand state :corp "Attini" "HQ")
     (take-credits state :corp)
     (let [att (get-ice state :hq 0)]
@@ -758,6 +758,29 @@
       (is (changed? [(count (:hand (get-runner))) -3]
             (fire-subs state att))
           "Runner took 3 damage and couldn't choose to spend credits"))))
+
+(deftest attini-threat-ability-vs-hush
+  (do-game
+    (new-game {:corp {:hand ["Attini"]
+                      :score-area  ["Obokata Protocol"]
+                      :credits 10}
+               :runner {:hand ["Hush" (qty "Sure Gamble" 3)]
+                        :credits 7}})
+    (play-from-hand state :corp "Attini" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hush")
+    (click-card state :runner "Attini")
+    (let [att (get-ice state :hq 0)]
+      (run-on state "HQ")
+      (rez state :corp (refresh att))
+      (run-continue state)
+      (is (changed? [(count (:hand (get-runner))) 0]
+            (fire-subs state (refresh att))
+            (dotimes [_ 3]
+              (is (changed? [(:credit (get-runner)) -2]
+                    (click-prompt state :runner "Pay 2 [Credits]"))
+                  "Paid 2 to not take a net")))
+          "Took 0 net (paid it off)"))))
 
 (deftest attini-threat-vs-prana-condenser
   (do-game
@@ -1294,6 +1317,7 @@
       (rez state :corp bran)
       (run-continue state)
       (card-subroutine state :corp bran 0)
+      (waiting? state :runner)
       (is (changed? [(:credit (get-corp)) 0]
             (click-card state :corp "Mausolus"))
           "Mausolus installed for free")

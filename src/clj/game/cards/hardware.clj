@@ -1648,18 +1648,21 @@
 
 (defcard "Patchwork"
   (let [install-word (fn [c] (if (event? c) "play" "install"))
+        patchwork-ability {:once :per-turn
+                           :effect (effect (update! (assoc-in card [:special :patchwork] true)))}
         patchwork-manual-prognosis {:cost [(->c :click 1)]
                                     :action true
                                     :once :per-turn
                                     :label "Manually resolve patchwork"
-                                    :req (req (seq (:hand runner)))
+                                    :req (req (and (seq (:hand runner))
+                                                   (can-trigger? state side eid patchwork-ability card targets)))
+
                                     :prompt "Designate a card to play or install"
                                     :choices {:card (every-pred runner? in-hand?)}
                                     :waiting-prompt true
                                     :async true
                                     :effect
                                     (req (let [to-play target]
-                                           (update! state side (assoc-in card [:special :patchwork] true))
                                            (continue-ability
                                              state side
                                              {:prompt (msg "Designate a card to trash")
@@ -1667,6 +1670,7 @@
                                                         :all true}
                                               :async true
                                               :effect (req
+                                                        (register-once state side patchwork-ability card)
                                                         (let [to-trash target]
                                                           (continue-ability
                                                             state side
@@ -1682,9 +1686,7 @@
                                                                                 (play-instant state :runner eid to-play {:cost-bonus -2})
                                                                                 (runner-install state :runner eid to-play {:cost-bonus -2}))))})
                                                             card nil)))}
-                                             card nil)))}
-        patchwork-ability {:once :per-turn
-                           :effect (effect (update! (assoc-in card [:special :patchwork] true)))}]
+                                             card nil)))}]
     {:static-abilities [(mu+ 1)]
      :abilities [patchwork-manual-prognosis]
      :implementation "click on patchwork to manually resolve it (for tricks)"
@@ -1700,7 +1702,6 @@
        :custom-amount 2
        :custom (req (let [cost-type (str (when (= :play (:source-type eid)) "play")
                                          (when (= :runner-install (:source-type eid)) "install"))
-                          patchwork card
                           targetcard target]
                       (continue-ability
                         state side
@@ -1715,7 +1716,7 @@
                          ; provide 2 credits
                          :effect (req (wait-for (trash state side target {:unpreventable true
                                                                           :cause-card card})
-                                                (register-once state side patchwork-ability patchwork)
+                                                (register-once state side patchwork-ability card)
                                                 (effect-completed state side (make-result eid 2))))
                          ; provide 0 credits
                          :cancel-effect (effect (effect-completed (make-result eid 0)))}
@@ -2174,6 +2175,7 @@
                 (effect
                   (continue-ability
                     {:show-discard true
+                     :waiting-prompt true
                      :choices {:req (req (and (in-discard? target)
                                               (program? target)
                                               (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil

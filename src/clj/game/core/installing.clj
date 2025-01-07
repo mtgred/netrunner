@@ -165,7 +165,7 @@
                 (str (build-spend-msg cost-str "use") (:title install-source) " to install ")
                 (build-spend-msg cost-str "install"))]
       (system-msg state side (str lhs card-name origin
-                                  (if (ice? card) " protecting " " in ") server-name
+                                  (if (ice? card) " protecting " " in the root of ") server-name
                                   (format-counters-msg counters)))
       (when (and (= :face-up install-state)
                  (agenda? card))

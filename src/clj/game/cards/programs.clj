@@ -13,7 +13,7 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-prevent]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
+   [game.core.def-helpers :refer [breach-access-bonus choose-one-helper defcard offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -1170,6 +1170,7 @@
                 :label "Give -1 strength to current piece of ice"
                 :req (req (and (rezzed? current-ice)
                                (get-current-encounter state)))
+                :keep-menu-open :while-virus-tokens-left
                 :msg (msg "give -1 strength to " (:title current-ice))
                 :effect (effect (pump-ice current-ice -1))}]})
 
@@ -1498,18 +1499,28 @@
                                 (strength-pump 2 3)]}))
 
 (defcard "God of War"
-  (auto-icebreaker {:flags {:runner-phase-12 (req true)}
-                    :abilities [(break-sub [(->c :virus 1)] 1)
-                                (strength-pump 2 1)
-                                {:label "Take 1 tag to place 2 virus counters (start of turn)"
-                                 :once :per-turn
-                                 :effect (req (wait-for (gain-tags state :runner 1)
-                                                        (if (not (get-in @state [:tag :tag-prevent]))
-                                                          (do (add-counter state side card :virus 2)
-                                                              (system-msg state side
-                                                                          (str "takes 1 tag to place 2 virus counters on God of War"))
-                                                              (effect-completed state side eid))
-                                                          (effect-completed state side eid))))}]}))
+  (auto-icebreaker
+    (let [abi {:label "Take 1 tag to place 2 virus counters (start of turn)"
+               :once :per-turn
+               :effect (req (wait-for (gain-tags state :runner 1)
+                                      (if (not (get-in @state [:tag :tag-prevent]))
+                                        (do (add-counter state side card :virus 2)
+                                            (system-msg state side
+                                                        (str "takes 1 tag to place 2 virus counters on God of War"))
+                                            (effect-completed state side eid))
+                                        (effect-completed state side eid))))}]
+      {:flags {:runner-phase-12 (req true)}
+       :events [(choose-one-helper
+                  {:event :runner-turn-begins
+                   :interactive (req true)
+                   :prompt "Take 1 tag: Place 2 virus counters on God of War"
+                   :req (req (not-used-once? state {:once :per-turn} card))}
+                  [{:option "Yes"
+                    :ability abi}
+                   {:option "No"}])]
+       :abilities [(break-sub [(->c :virus 1)] 1)
+                   (strength-pump 2 1)
+                   abi]})))
 
 (defcard "Golden"
   (return-and-derez (break-sub 2 2 "Sentry")
@@ -1947,6 +1958,7 @@
    :abilities [{:cost [(->c :virus 1)]
                 :label "Give -1 strength to current piece of ice"
                 :req (req (active-encounter? state))
+                :keep-menu-open :while-virus-tokens-left
                 :msg (msg "give -1 strength to " (:title current-ice))
                 :effect (effect (pump-ice current-ice -1))}]})
 
@@ -2957,7 +2969,6 @@
   {:abilities [{:req (req (not (install-locked? state side)))
                 :label "Install a program from the stack"
                 :cost [(->c :trash-can) (->c :credit 2)]
-                :msg (msg "install a program from the stack")
                 :async true
                 :effect (effect
                           (continue-ability
@@ -2973,14 +2984,17 @@
                                                   (seq))
                                              ["Done"]))
                              :async true
+                             :waiting-prompt true
                              :effect (req (trigger-event state side :searched-stack)
                                           (shuffle! state side :deck)
                                           (if (= target "Done")
                                             (do (system-msg state side (str (:latest-payment-str eid) " to shuffle the Stack"))
                                                 (effect-completed state side eid))
-                                            (runner-install state side (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
-                                                                                                                                                :display-origin true
-                                                                                                                                                :include-cost-from-eid eid}})))}
+                                            (wait-for (runner-install state side (assoc (make-eid state eid) :source card :source-type :runner-install) target {:msg-keys {:install-source card
+                                                                                                                                                                           :display-origin true
+                                                                                                                                                                           :include-cost-from-eid eid}})
+                                                      (when-not async-result (system-msg state side (str (:latest-payment-str eid) " to shuffle the Stack")))
+                                                      (effect-completed state side eid))))}
                             card nil))}]})
 
 (defcard "Sharpshooter"
@@ -3188,6 +3202,7 @@
                 :choices {:card #(and (has-subtype? % "Icebreaker")
                                       (not (has-subtype? % "AI"))
                                       (installed? %))}
+                :keep-menu-open :while-power-tokens-left
                 :msg (msg "give +3 strength to " (:title target))
                 :effect (effect (pump target 3))}
                (set-autoresolve :auto-place-counter "Takobi placing power counters on itself")]})

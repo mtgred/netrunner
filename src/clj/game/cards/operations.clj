@@ -741,36 +741,54 @@
                 "shuffle R&D"
                 (str "reveal " (:title target) " from R&D and add it to HQ")))
     :async true
-    :effect (req (wait-for
-                   (resolve-ability
-                     state side
-                     (when-not (= "None" target)
-                       {:async true
-                        :effect (req (wait-for (reveal state side target)
-                                               (move state side target :hand)
-                                               (effect-completed state side eid)))})
-                     card targets)
-                   (shuffle! state side :deck)
-                   (continue-ability
-                     state side
-                     {:prompt "Choose a card in HQ to install"
-                      :choices {:card #(and (in-hand? %)
-                                            (corp? %)
-                                            (not (operation? %)))}
-                      :async true
-                      :effect (req (wait-for (resolve-ability
-                                               state side
-                                               (let [card-to-install target]
-                                                 {:prompt "Choose a server"
-                                                  :choices (remove #{"HQ" "R&D" "Archives"} (installable-servers state card-to-install))
-                                                  :async true
-                                                  :effect (effect (corp-install eid card-to-install target {:msg-keys {:install-source card
-                                                                                                                       :display-origin true}}))})
-                                               card nil)
-                                             (end-effect state side eid card targets)))
-                      :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
-                                             (end-effect eid card targets))}
-                     card nil)))}}))
+    :effect (let [end-effect (req (system-msg state side "can not score agendas for the remainder of the turn")
+                                  (swap! state assoc-in [:corp :register :cannot-score]
+                                         (filter agenda? (all-installed state :corp)))
+                                  (register-events
+                                    state side card
+                                    [{:event :corp-install
+                                      :duration :until-corp-turn-begins
+                                      :async true
+                                      :req (req (agenda? (:card context)))
+                                      :effect (req
+                                                (register-turn-flag!
+                                                  state side
+                                                  (:card context) :can-score
+                                                  (fn [state _ card]
+                                                    (if (same-card? card (:card context))
+                                                      ((constantly false) (toast state :corp "Cannot score due to Digital Rights Management." "warning"))
+                                                      true)))
+                                                (effect-completed state side eid))}])
+                                  (effect-completed state side eid))]
+              (req (wait-for
+                     (resolve-ability
+                       state side
+                       (when-not (= "None" target)
+                         {:async true
+                          :effect (req (wait-for (reveal state side target)
+                                                 (move state side target :hand)
+                                                 (effect-completed state side eid)))})
+                       card targets)
+                     (shuffle! state side :deck)
+                     (continue-ability
+                       state side
+                       {:prompt "Choose a card in HQ to install"
+                        :choices {:card #(and (in-hand? %)
+                                              (corp? %)
+                                              (not (operation? %)))}
+                        :effect (req (wait-for (resolve-ability
+                                                 state side
+                                                 (let [card-to-install target]
+                                                   {:prompt "Choose a server"
+                                                    :choices (remove #{"HQ" "R&D" "Archives"} (installable-servers state card-to-install))
+                                                    :async true
+                                                    :effect (effect (corp-install eid card-to-install target {:msg-keys {:install-source card
+                                                                                                                         :display-origin true}}))})
+                                                 card nil)
+                                               (end-effect state side eid card targets)))
+                        :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
+                                               (end-effect eid card targets))}
+                       card nil))))}})
 
 (defcard "Distract the Masses"
   (let [shuffle-two {:async true

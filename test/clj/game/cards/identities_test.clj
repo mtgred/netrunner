@@ -947,11 +947,18 @@
   ;; Cerebral Imaging - Maximum hand size equal to credits
   (do-game
     (new-game {:corp {:id "Cerebral Imaging: Infinite Frontiers"
-                      :deck [(qty "Hedge Fund" 3)]}})
+                      :deck [(qty "Hedge Fund" 3) "Scarcity of Resources"]}
+               :runner {:hand ["Employee Strike"]}})
     (play-from-hand state :corp "Hedge Fund")
     (play-from-hand state :corp "Hedge Fund")
     (is (= 13 (:credit (get-corp))) "Has 13 credits")
-    (is (= 13 (hand-size :corp)) "Max hand size is 13")))
+    (is (= 13 (hand-size :corp)) "Max hand size is 13")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Employee Strike")
+    (is (= 5 (hand-size :corp)) "Hand size is 5 while striked")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Scarcity of Resources")
+    (is (= 13 (hand-size :corp)) "Hand size is big again")))
 
 (deftest chaos-theory-wunderkind
   ;; Chaos Theory, start with +1 MU
