@@ -60,6 +60,8 @@
     ;; Fix for Hayley triggers
     (swap! state assoc :turn-events nil)
     (swap! state assoc-in [side :turn-started] true)
+    ;; clear out last-revealed so cards don't stick around all game
+    (swap! state assoc :last-revealed [])
 
     ;; Functions to set up state for undo-turn functionality
     (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))

@@ -708,7 +708,7 @@
                                                   (or (active? card)
                                                       (playable? card)))
                                          0)
-                            :draggable (when (not-spectator?) true)
+                            :draggable (when (and (not-spectator?) (not disable-click)) true)
                             :on-touch-start #(handle-touchstart % card)
                             :on-touch-end   #(handle-touchend %)
                             :on-touch-move  #(handle-touchmove %)
@@ -1006,30 +1006,32 @@
               ^{:key idx}
               [:div (draw-card c false)]))]]))))
 
-(defn rfg-view [cards name popup]
-  (let [dom (atom {})]
-    (fn [cards name popup]
-      (when-not (empty? @cards)
-        (let [size (count @cards)]
-          [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")
-                                      :on-click (when popup #(-> (:rfg-popup @dom) js/$ .fadeToggle))}
-           (doall
-             (map-indexed (fn [i card]
-                            [:div.card-wrapper {:key i
-                                                :style {:left (when (> size 1) (* (/ 128 size) i))}}
-                             [:div [card-view card]]])
-                          @cards))
-           [label @cards {:opts {:name name}}]
-           (when popup
-             [:div.panel.blue-shade.popup {:ref #(swap! dom assoc :rfg-popup %)
-                                           :class "opponent"}
-              [:div
-               [:a {:on-click #(close-popup % (:rfg-popup @dom) nil false false)} (tr [:game.close "Close"])]
-               [:label (tr [:game.card-count] size)]]
-              (doall
-                (for [c @cards]
-                  ^{:key (:cid c)}
-                  [card-view c]))])])))))
+(defn rfg-view
+  ([cards name popup] (rfg-view cards name popup nil))
+  ([cards name popup noclick]
+   (let [dom (atom {})]
+     (fn [cards name popup]
+       (when-not (empty? @cards)
+         (let [size (count @cards)]
+           [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")
+                                       :on-click (when popup #(-> (:rfg-popup @dom) js/$ .fadeToggle))}
+            (doall
+              (map-indexed (fn [i card]
+                             [:div.card-wrapper {:key i
+                                                 :style {:left (when (> size 1) (* (/ 128 size) i))}}
+                              [:div [card-view card nil noclick]]])
+                           @cards))
+            [label @cards {:opts {:name name}}]
+            (when popup
+              [:div.panel.blue-shade.popup {:ref #(swap! dom assoc :rfg-popup %)
+                                            :class "opponent"}
+               [:div
+                [:a {:on-click #(close-popup % (:rfg-popup @dom) nil false false)} (tr [:game.close "Close"])]
+                [:label (tr [:game.card-count] size)]]
+               (doall
+                 (for [c @cards]
+                   ^{:key (:cid c)}
+                   [card-view c]))])]))))))
 
 (defn play-area-view [user name cards]
   (fn [user name cards]
@@ -2152,7 +2154,7 @@
        :reagent-render
        (fn []
         (when (and @corp @runner @side true)
-          (let [me-side (if (= :spectator @side)
+           (let [me-side (if (= :spectator @side)
                           (or (spectate-side) :corp)
                           @side)
                  op-side (utils/other-side me-side)
@@ -2248,6 +2250,7 @@
                         op-set-aside (r/cursor game-state [op-side :set-aside])
                         op-current (r/cursor game-state [op-side :current])
                         op-play-area (r/cursor game-state [op-side :play-area])
+                        last-revealed (r/cursor game-state [:last-revealed])
                         me-rfg (r/cursor game-state [me-side :rfg])
                         me-set-aside (r/cursor game-state [me-side :set-aside])
                         me-current (r/cursor game-state [me-side :current])
@@ -2257,18 +2260,19 @@
                        [starting-timestamp @start-date @timer])
                      [rfg-view op-rfg (tr [:game.rfg "Removed from the game"]) true]
                      [rfg-view me-rfg (tr [:game.rfg "Removed from the game"]) true]
-                     [rfg-view op-set-aside (tr [:game.set-aside "Set aside"]) true]
-                     [rfg-view me-set-aside (tr [:game.set-aside "Set aside"]) true]
+                     [rfg-view op-set-aside (tr [:game.set-aside "Set aside"]) false]
+                     [rfg-view me-set-aside (tr [:game.set-aside "Set aside"]) false]
                      [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]
                      [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
                      [rfg-view op-current (tr [:game.current "Current"]) false]
-                     [rfg-view me-current (tr [:game.current "Current"]) false]])
+                     [rfg-view me-current (tr [:game.current "Current"]) false]
+                     [rfg-view last-revealed (tr [:game.last-revealed "Last Revealed"]) false true]])
                   (when (or (not= @side :spectator)
                             (and (spectator-view-hidden?) (spectate-side)))
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters
                                   :end-turn end-turn :runner-phase-12 runner-phase-12
                                   :corp-phase-12 corp-phase-12 :corp corp :runner runner
-                                  :me            me :opponent opponent :prompt-state prompt-state}])]]
+                                  :me me :opponent opponent :prompt-state prompt-state}])]]
 
                 [:div.me
                  [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true]]]]
