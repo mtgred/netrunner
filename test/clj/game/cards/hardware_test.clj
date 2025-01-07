@@ -4770,6 +4770,7 @@
         (click-card state :runner "Corroder")
         (is (changed? [(:credit (get-runner)) 0]
               (card-ability state :runner (get-hardware state 0) 0)
+              (waiting? state :corp)
               (click-card state :runner "Mantle"))
             "Mantle is installed for free")
         (is (get-program state 0) "Mantle is installed for free")))

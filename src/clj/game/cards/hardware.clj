@@ -2175,6 +2175,7 @@
                 (effect
                   (continue-ability
                     {:show-discard true
+                     :waiting-prompt true
                      :choices {:req (req (and (in-discard? target)
                                               (program? target)
                                               (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
