@@ -28,6 +28,7 @@
             :snapshot-plus "Snapshot Plus"
             :socr "SOCR"
             :sunset "Sunset"
+            :throwback "Throwback"
             :neo "Neo"
             :preconstructed "Preconstructed"
             :classic "Classic"

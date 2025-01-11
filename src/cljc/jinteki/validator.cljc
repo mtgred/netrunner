@@ -340,6 +340,7 @@
      :casual valid
      :standard (build-format-legality valid :standard deck)
      :startup (build-format-legality valid :startup deck)
+     :throwback (build-format-legality valid :throwback deck)
      :sunset (build-format-legality valid :sunset deck)
      :system-gateway (build-system-gateway-legality valid deck)
      :eternal (build-format-legality valid :eternal deck)

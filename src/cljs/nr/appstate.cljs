@@ -13,6 +13,7 @@
   []
   (let [default-visible-formats #{"standard"
                                   "system-gateway"
+                                  "throwback"
                                   "startup"
                                   "sunset"
                                   "eternal"
