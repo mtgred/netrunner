@@ -121,6 +121,7 @@
 
 (def slug->format
   {"standard" "Standard"
+   "throwback" "Throwback"
    "startup" "Startup"
    "system-gateway" "System Gateway"
    "preconstructed" "Preconstructed"
@@ -133,6 +134,7 @@
 
 (def format->slug
   {"Standard" "standard"
+   "Throwback" "throwback"
    "Startup" "startup"
    "System Gateway" "system-gateway"
    "Preconstructed" "preconstructed"
