@@ -4366,6 +4366,20 @@
                   (click-card state :corp (get-content state :remote3 0)))
         "Corp gained 2 credits (+1 from Hyobu because the agenda was revealed) and put 1 advancement counter on a card")))
 
+(deftest stoke-the-embers-reveal-check
+  (do-game
+    (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
+                      :hand ["Stoke the Embers" "NGO Front" "Restore"]
+                      :discard ["Stoke the Embers"]}})
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (play-from-hand state :corp "Restore")
+    (click-card state :corp (find-card "Stoke the Embers" (:discard (get-corp))))
+    (click-prompt state :corp "New remote")
+    (is (changed? [(:credit (get-corp)) 2]
+          (click-prompt state :corp "Yes")))
+    (click-card state :corp "NGO Front")
+    (is (= ["Stoke the Embers"] (map :title (:last-revealed @state))))))
+
 (deftest successful-field-test
   ;; Successful Field Test
   (do-game
