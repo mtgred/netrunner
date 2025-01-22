@@ -369,15 +369,11 @@
   "Weyland"
   ["No matter how much they build, they'll never bury their secrets deep enough."]}
  "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"
- {"Default"
-  ["Every day, my mission is simple. Acquire credits or starve."]
-  "Haas-Bioroid"
-  ["Do Bioroids dream of electric sheep?\n"
-  "Jinteki"
-  ["I wonder what patterns your clones will display today."]
-  "NBN"
-  ["What lies will you peddle today?\n"]}
-  "Weyland"
+ {"Default" ["Every day, my mission is simple. Acquire credits or starve."]
+  "Haas-Bioroid" ["Do Bioroids dream of electric sheep?"]
+  "Jinteki" ["I wonder what patterns your clones will display today."]
+  "NBN" ["What lies will you peddle today?]
+  "Weyland" ["Your credits are better spent putting a roof over my head and blini in in my stomach."]}
  "Omar Keung: Conspiracy Theorist"
  {"Default"
   ["All my unanswered questions have lead me here. I know it's all connected; here is where the truth will be uncovered. Let's begin."]
