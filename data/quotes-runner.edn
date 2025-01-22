@@ -368,11 +368,21 @@
   "NBN" ["Lies and smokescreens. They are hiding something big. Time to find out what."]
   "Weyland"
   ["No matter how much they build, they'll never bury their secrets deep enough."]}
+ "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"
+ {"Default"
+  ["Every day, my mission is simple. Acquire credits or starve."]
+  "Haas-Bioroid"
+  ["Do Bioroids dream of electric sheep?\n"
+  "Jinteki"
+  ["I wonder what patterns your clones will display today."]
+  "NBN"
+  ["What lies will you peddle today?\n"]}
+  "Weyland"
  "Omar Keung: Conspiracy Theorist"
  {"Default"
   ["All my unanswered questions have lead me here. I know it's all connected; here is where the truth will be uncovered. Let's begin."]
   "Gagarin Deep Space: Expanding the Horizon"
-  ["What lies and secrets could be so treatcherous as to warrant hiding them so far away?"]
+  ["What lies and secrets could be so treatcherous as to warrant hiding them so far away?\n"]
   "Haas-Bioroid"
   ["With enough time and access to the vast corporate archives, it can be doubtlessly proved that more than half of bioroids have been created without the source mind owner's consent."]
   "Jinteki"
