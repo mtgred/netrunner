@@ -97,18 +97,23 @@
   ([chunk conditional?]
    (cond
      (= conditional? :MAP)
-     (do ;;(println "Make a map out of: " chunk)
-         (let [keypairs (partition 2 chunk)
+     (do (let [keypairs (partition 2 chunk)
                mapped (zipmap (map first keypairs) (map second keypairs))]
            ;; if it contains an :effect, then:
            ;;   see if it contains :async true. If it does, effect must complete eid
            ;;   if it does not, effect should not complete the eid
-           (if (:effect mapped)
-             ;; TODO - prompts that are async may require the cancel effect to be async too
-             (if (:async mapped)
-               (is-valid-chunk? (:effect mapped) :async)
-               (is-valid-chunk? (:effect mapped) :sync))
-             (every? is-valid-chunk? (vals mapped)))))
+           (and
+             (if (:effect mapped)
+               (if (:async mapped)
+                 (is-valid-chunk? (:effect mapped) :async)
+                 (is-valid-chunk? (:effect mapped) :sync))
+               (every? is-valid-chunk? (vals mapped)))
+             ;; note that async effects require cancels to be async, etc
+             (if (:cancel-effect mapped)
+               (if (:async mapped)
+                 (is-valid-chunk? (:cancel-effect mapped) :async)
+                 (is-valid-chunk? (:cancel-effect mapped) :sync))
+               true))))
      (= conditional? :async)
      (and (completes? chunk 0) (is-valid-chunk? chunk))
      (= conditional? :sync)
