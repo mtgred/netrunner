@@ -1616,6 +1616,7 @@
                                                                                (in-hand? %)
                                                                                (is-type? % cardtype))}
                                                          :msg (msg "trash " (:title target) " from the Grip")
+                                                         :async true
                                                          :effect (req (trash state side eid target {:cause :subroutine}))})
                                                       card nil))}])))}
      :subroutines [sub
