@@ -1275,9 +1275,11 @@
                                               trash-installed-sub
                                               (= target "Take 2 tags")
                                               {:msg (msg "force the Runner to " (decapitalize target))
+                                               :async true
                                                :effect (effect (gain-tags :runner eid 2 {:unpreventable true}))}
                                               (= target "Suffer 3 net damage")
                                               {:msg (msg "force the Runner to " (decapitalize target))
+                                               :async true
                                                :effect (req (pay state :runner eid card [(->c :net 3)]))})
                                             card targets))}
                                card nil))}]})
@@ -3271,7 +3273,8 @@
                   :effect (req (doseq [c targets]
                                  (move state :corp c :deck))
                                (shuffle! state :corp :deck))
-                  :cancel-effect (effect (shuffle! :corp :deck))
+                  :cancel-effect (effect (shuffle! :corp :deck)
+                                         (effect-completed eid))
                   :msg (msg "shuffle " (quantify (count targets) "card") " from HQ into R&D")}]})
 
 (defcard "NEXT Silver"
@@ -4420,7 +4423,8 @@
                   :prompt "Choose a card to add to HQ"
                   :msg "add a card from R&D to HQ"
                   :choices (req (cancellable (:deck corp) :sorted))
-                  :cancel-effect (effect (system-msg "cancels the effect of Watchtower"))
+                  :cancel-effect (effect (system-msg "cancels the effect of Watchtower")
+                                         (effect-completed eid))
                   :effect (effect (shuffle! :deck)
                                   (move target :hand))}]})
 
