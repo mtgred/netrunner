@@ -1585,7 +1585,8 @@
                 :req (req (pos? (get-counters card :agenda)))
                 :msg (msg "add " (:title target) " to HQ from R&D")
                 :choices (req (cancellable (:deck corp) :sorted))
-                :cancel-effect (effect (system-msg (str "declines to use " (:title card))))
+                :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                                       (effect-completed eid))
                 :effect (effect (shuffle! :deck)
                                 (move target :hand))}]})
 
