@@ -2900,9 +2900,9 @@
               :yes-ability
               {:msg "reveal and add itself to HQ"
                :async true
-               :effect (req (wait-for (reveal state side (make-eid state eid) card))
-                            (move state side card :hand)
-                            (effect-completed state side eid))}}}]})
+               :effect (req (wait-for (reveal state side card)
+                                      (move state side card :hand)
+                                      (effect-completed state side eid)))}}}]})
 
 (defcard "Success"
   (letfn [(advance-n-times [state side eid card target n]
