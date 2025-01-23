@@ -4078,8 +4078,7 @@
 
 (defcard "Uninstall"
   {:on-play
-   {:async true
-    :change-in-game-state (req (some #(and (not (facedown? %))
+   {:change-in-game-state (req (some #(and (not (facedown? %))
                                      (or (hardware? %) (program? %)))
                                (all-installed state :runner)))
     :choices {:card #(and (installed? %)
