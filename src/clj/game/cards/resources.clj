@@ -711,6 +711,7 @@
                 :keep-menu-open :while-clicks-left
                 :label "Install a program from the grip"
                 :prompt "Choose a program to install"
+                :async true
                 :choices
                 {:async true
                  :req (req (and (program? target)
@@ -792,6 +793,7 @@
                                    :choices (req (iced-servers state side eid card))
                                    :msg (msg "choose " (zone->name (unknown->kw target))
                                              " and remove itself from the game")
+                                   :async true
                                    :effect (effect (continue-ability
                                                      :corp
                                                      (trash-or-bonus (rest (server->zone state target)))
@@ -998,6 +1000,7 @@
               {:event :runner-turn-begins
                :once :per-turn
                :interactive (req true)
+               :async true
                :effect
                (effect (continue-ability
                          {:msg "gain 1 [Credits]"
@@ -2660,6 +2663,7 @@
                      :choices {:card #(and (:trash %)
                                            (rezzed? %)
                                            (can-pay? state side (assoc eid :source card :source-type :ability) card nil [(->c :credit (trash-cost state :runner %))]))}
+                     :async true
                      :effect (effect
                                (continue-ability
                                  {:async true
@@ -3050,6 +3054,7 @@
 
 (defcard "Stim Dealer"
   {:events [{:event :runner-turn-begins
+             :async true
              :effect (req (if (>= (get-counters card :power) 2)
                             (do (add-counter state side card :power (- (get-counters card :power)))
                                 (damage state side eid :brain 1 {:unpreventable true :card card})
@@ -3074,6 +3079,7 @@
   (letfn [(runner-break [unbroken-subs]
             {:prompt "Choose a subroutine to resolve"
              :choices unbroken-subs
+             :async true
              :effect (req (let [sub (first (filter #(and (not (:broken %))
                                                          (= target (make-label (:sub-effect %))))
                                                    (:subroutines current-ice)))]
@@ -3295,6 +3301,7 @@
                                          (has-trash-ability? target)))}
                 :msg (msg "shuffle " (enumerate-str (map :title targets))
                           " into the stack")
+                :async true
                 :effect (req (doseq [c targets] (move state side c :deck))
                              (shuffle! state side :deck)
                              (effect-completed state side eid))}]})
