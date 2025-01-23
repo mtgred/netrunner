@@ -2311,7 +2311,8 @@
                                                                              " from the heap into the stack, and draws 1 card"))
                                               (shuffle! state :runner :deck)
                                               (draw state :runner eid 1))}
-                                {:effect (effect
+                                {:async true
+                                 :effect (effect
                                            (do (system-msg state :runner "shuffles the stack and draws 1 card")
                                                (shuffle! state :runner :deck)
                                                (draw state :runner eid 1)))})
@@ -3765,6 +3766,7 @@
    :events [{:event :run-ends
              :req (req this-card-run)
              :msg "take 1 core damage"
+             :async true
              :effect (effect (damage eid :brain 1 {:unpreventable true
                                                    :card card}))}]})
 
