@@ -2181,8 +2181,7 @@
       (click-prompt state :corp "Program")
       (card-subroutine state :corp ef 0)
       (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
-      (is (= 2 (count (prompt-buttons :corp))) "Only options: Corroder and Done")
-      (click-prompt state :corp "Corroder")
+      (click-card state :corp "Corroder")
       (is (not (find-card "Corroder" (:hand (get-runner)))) "Corroder got trashed")
       (is (= 1 (count (:discard (get-runner)))) "Corroder in heap")
       (card-subroutine state :corp ef 0)
@@ -2977,7 +2976,7 @@
       (click-prompt state :corp "3") ; boost to trace strength 5
       (click-prompt state :runner "0")
       (click-prompt state :corp "Yes")
-      (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
+      (click-card state :corp "Sure Gamble")
       (is (= 2 (count (:discard (get-runner)))) "Did 2 net damage"))))
 
 (deftest gold-farmer-subroutine-test

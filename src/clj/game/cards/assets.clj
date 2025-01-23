@@ -20,7 +20,7 @@
    [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
-                                  reorder-choice trash-on-empty get-x-fn]]
+                                  reorder-choice trash-on-empty get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
    [game.core.effects :refer [is-disabled-reg? register-lingering-effect update-disabled-cards]]
@@ -1346,18 +1346,21 @@
 
 (defcard "Ibrahim Salem"
   (let [trash-ability (fn [card-type]
-                        {:req (req (seq (filter #(is-type? % card-type) (:hand runner))))
-                         :prompt (str "Choose a " card-type " to trash")
-                         :choices (req (filter #(is-type? % card-type) (:hand runner)))
-                         :async true
-                         :effect (effect (trash eid target {:cause-card card}))
-                         :msg (msg "trash " (:title target) " from the grip")})
+                        (with-revealed-hand :runner {:event-side :corp}
+                          {:req (req (seq (filter #(is-type? % card-type) (:hand runner))))
+                           :prompt (str "Choose a " card-type " to trash")
+                           :choices {:card #(and (in-hand? %)
+                                                 (runner? %)
+                                                 (is-type? % card-type))}
+                           :async true
+                           :effect (effect (trash eid target {:cause-card card}))
+                           :msg (msg "trash " (:title target) " from the grip")}))
         choose-ability {:label "Trash 1 card in the grip of a named type"
                         :once :per-turn
                         :req (req (seq (:hand runner)))
                         :prompt "Choose a card type"
                         :choices ["Event" "Hardware" "Program" "Resource"]
-                        :msg (msg "reveal " (enumerate-str (map :title (:hand runner))))
+                        :msg (msg "choose " target)
                         :async true
                         :effect (effect (continue-ability (trash-ability target) card nil))}]
     {:additional-cost [(->c :forfeit)]
@@ -3027,33 +3030,20 @@
                                                                          :display-origin true}}))}]})
 
 (defcard "Vera Ivanovna Shuyskaya"
-  (let [select-and-trash {:async true
-                          :prompt "Choose a card to trash"
-                          :waiting-prompt true
-                          :choices (req (cancellable (:hand runner) :sorted))
-                          :msg (msg "trash " (:title target) " from the grip")
-                          :effect (effect (trash eid target {:cause-card card}))}
-        ability {:interactive (req true)
+  (let [ability {:interactive (req true)
                  :optional {:prompt "Reveal the grip and trash a card?"
                             :player :corp
                             :autoresolve (get-autoresolve :auto-fire)
-                            :yes-ability
-                            {:async true
-                             :effect (req (wait-for (reveal state side (:hand runner))
-                                                    (system-msg state :corp (str "reveal "
-                                                                (quantify (count (:hand runner)) "card")
-                                                                " from grip: "
-                                                                (enumerate-str (map :title (:hand runner)))))
-                                                    (continue-ability state side select-and-trash card nil)))}
+                            :yes-ability (with-revealed-hand :runner {:event-side :corp}
+                                           {:prompt "Choose a card to trash"
+                                            :req (req (seq (:hand runner)))
+                                            :choices {:card (every-pred in-hand? runner?)}
+                                            :async true
+                                            :msg (msg "trash " (:title target) " from the Grip")
+                                            :effect (req (trash state side eid target {:cause-card card}))})
                             :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
-    {:events [{:event :agenda-scored
-               :interactive (req true)
-               :async true
-               :effect (effect (continue-ability ability card nil))}
-              {:event :agenda-stolen
-               :interactive (req true)
-               :async true
-               :effect (effect (continue-ability ability card nil))}]
+    {:events [(assoc ability :event :agenda-scored)
+              (assoc ability :event :agenda-stolen)]
      :abilities [(set-autoresolve :auto-fire "Vera Ivanovna Shuyskaya")]}))
 
 (defcard "Victoria Jenkins"

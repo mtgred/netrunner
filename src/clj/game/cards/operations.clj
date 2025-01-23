@@ -16,7 +16,7 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-bonus]]
-   [game.core.def-helpers :refer [choose-one-helper corp-recur cost-option defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn]]
+   [game.core.def-helpers :refer [choose-one-helper corp-recur cost-option defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -1034,18 +1034,12 @@
     :prompt "Choose one"
     :choices ["Event" "Hardware" "Program" "Resource"]
     :async true
+    :msg (msg "choose " target)
     :effect (req (let [type target
                        numtargets (count (filter #(= type (:type %)) (:hand runner)))]
-                   (system-msg
-                     state :corp
-                     (str "uses " (:title card) " to choose " target
-                          " and reveal "
-                          (enumerate-str (map :title (sort-by :title (:hand runner))))
-                          " from the grip"))
-                   (wait-for
-                     (reveal state side (:hand runner))
-                     (continue-ability
-                       state :corp
+                   (continue-ability
+                     state side
+                     (with-revealed-hand :runner {:event-side :corp}
                        (when (pos? numtargets)
                          {:async true
                           :prompt "How many credits do you want to pay?"
@@ -1062,8 +1056,8 @@
                                                         :choices {:card installed?}
                                                         :effect (effect (add-prop target :advance-counter c {:placed true}))}
                                                        card nil))
-                                           (effect-completed state side eid))))})
-                       card nil))))}})
+                                           (effect-completed state side eid))))}))
+                       card nil)))}})
 
 (defcard "Foxfire"
   {:on-play

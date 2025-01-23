@@ -16,7 +16,7 @@
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [breach-access-bonus choose-one-helper defcard offer-jack-out
-                                  reorder-choice]]
+                                  reorder-choice with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid
@@ -4169,33 +4169,20 @@
                          (register-events card (rfg-card-event target)))}]}))
 
 (defcard "White Hat"
-  (letfn [(finish-choice [choices]
-            (let [choices (filter #(not= "Done" %) choices)]
-              (when (not-empty choices)
-                {:effect (req (doseq [c choices]
-                                (move state :corp c :deck))
-                              (shuffle! state :corp :deck))
-                 :msg (str "shuffle " (enumerate-str (map :title choices)) " into R&D")})))
-          (choose-cards [choices chosen]
-            {:prompt (str "Choose a card in HQ to shuffle into R&D (" (- 2 (count chosen)) " remaining)")
-             :player :runner
-             :choices (concat choices ["Done"])
-             :not-distinct true
-             :async true
-             :effect (req (if (and (empty? chosen)
-                                   (not= "Done" target))
-                            (continue-ability state side (choose-cards (remove-once #(= % target) choices) (conj chosen target)) card nil)
-                            (continue-ability state side (finish-choice (conj chosen target)) card nil)))})]
-    {:on-play
-     {:trace
-      {:base 3
-       :req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
-       :unsuccessful
-       {:async true
-        :msg (msg "reveal " (enumerate-str (map :title (:hand corp))) " from HQ")
-        :effect (req (wait-for
-                       (reveal state side (:hand corp))
-                       (continue-ability state :runner (choose-cards (:hand corp) #{}) card nil)))}}}}))
+  {:on-play
+   {:trace
+    {:base 3
+     :req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
+     :unsuccessful (with-revealed-hand :corp {:event-side :corp :forced true}
+                     {:prompt "Shuffle up to 2 cards into R&D"
+                      :player :runner
+                      :choices {:req (req (and (corp? target)
+                                               (in-hand? target)))
+                                :max (req (min 2 (count (:hand corp))))}
+                      :msg (msg "shuffle " (enumerate-str (map :title targets)) " into R&D")
+                      :effect (req (doseq [t targets]
+                                     (move state :corp t :deck))
+                                   (shuffle! state :corp :deck))})}}})
 
 (defcard "Wildcat Strike"
   {:on-play (choose-one-helper
