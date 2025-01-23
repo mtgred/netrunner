@@ -329,13 +329,15 @@
                                (move state side c :hand)))}
                {:label "Add all hosted cards to the grip"
                 :trash-icon true
-                :effect (req (doseq [c (:hosted card)]
-                               (move state side c :hand))
-                             (continue-ability
-                               state side
-                               {:cost [(->c :trash-can)]
-                                :msg "add all hosted cards to the grip"}
-                               (get-card state card) nil))}]})
+                :async true
+                :effect (req (let [hosted-cards (:hosted card)]
+                               (doseq [c hosted-cards]
+                                 (move state side c :hand))
+                               (continue-ability
+                                 state side
+                                 {:cost [(->c :trash-can)]
+                                  :msg (msg "add " (quantify (count hosted-cards) "hosted card") " to the grip")}
+                                 card nil)))}]})
 
 (defcard "Boomerang"
   (auto-icebreaker
@@ -560,6 +562,7 @@
                                          (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                    [(->c :credit (install-cost state side target))])))}
                 :cost [(->c :trash-can)]
+                :async true
                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
                                                                                                                          :display-origin true
                                                                                                                          :include-cost-from-eid eid}}))}]})
@@ -2180,6 +2183,7 @@
                                               (program? target)
                                               (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                         [(->c :credit (install-cost state side target {:cost-bonus -3}))])))}
+                     :async true
                      :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3
                                                                                                                    :msg-keys {:display-origin true
                                                                                                                               :install-source card
@@ -2231,6 +2235,7 @@
    :events [{:event :successful-trace
              :req (req run)
              :msg "suffer 1 core damage"
+             :async true
              :effect (effect (damage eid :brain 1 {:card card}))}]
    :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                (has-subtype? target "Icebreaker")))
@@ -2262,6 +2267,7 @@
                {:label "Look at the top card of R&D"
                 :msg "look at the top card of R&D"
                 :cost [(->c :trash-can)]
+                :async true
                 :effect (effect (continue-ability
                                   {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                    :choices ["OK"]}
@@ -2338,6 +2344,7 @@
                          (when second-card (str "Install " (:title second-card)))
                          "No install"]
                :msg (msg "reveal " rev-str " from the top of the stack")
+               :async true
                :effect (req (if-not (= target "No install")
                               (wait-for (runner-install
                                           state side
@@ -2370,8 +2377,8 @@
                 (continue-ability
                   state side
                   {:msg (msg "reveal " rev-str " from the top of the stack")
-                  :effect (effect (shuffle! :deck)
-                                  (system-msg "shuffles the Stack"))}
+                   :effect (effect (shuffle! :deck)
+                                   (system-msg "shuffles the Stack"))}
                   card nil)
                 (install-choice state side eid card rev-str first-card nil))))]
     {:abilities [{:cost [(->c :trash-can)]
