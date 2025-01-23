@@ -67,6 +67,21 @@
         (completes? (last chunk) (inc depth))))
     :else nil))
 
+;; TODO - can add a few more to these as errors get picked up down the line
+(def terminal-fns #{"effect-completed" "complete-with-result" "wait-for" "continue-ability" "damage" "draw" "gain-credits" "resolve-ability"})
+(defn should-complete?
+  "Should a chunk (probably) complete an eid?"
+  [chunk depth]
+  (cond
+    (and (string? chunk) (zero? depth)) nil
+    (and (vector? chunk) (= 2 (count chunk)) (zero? depth)) nil
+    (and (vector? chunk) (= (first chunk) :FN))
+    (let [func-name (second chunk)]
+      (if (contains? terminal-fns func-name)
+        true
+        (some #(should-complete? % (inc depth)) (rest (rest chunk)))))
+    :else nil))
+
 (defn is-valid-chunk?
   ([chunk]
    (cond
@@ -94,10 +109,9 @@
                (is-valid-chunk? (:effect mapped) :sync))
              (every? is-valid-chunk? (vals mapped)))))
      (= conditional? :async)
-     (do (let [comp (completes? chunk 0)]
-           (and comp (is-valid-chunk? chunk))))
+     (and (completes? chunk 0) (is-valid-chunk? chunk))
      (= conditional? :sync)
-     (is-valid-chunk? chunk))))
+     (and (not (should-complete? chunk 0)) (is-valid-chunk? chunk)))))
 
 (defn clean-chunks
   "remove the empties and nils, and swaps keywords in"
