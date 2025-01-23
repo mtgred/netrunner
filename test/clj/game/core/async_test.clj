@@ -56,19 +56,32 @@
   "does a chunk complete an eid (probably)?"
   [chunk depth]
   (cond
+    ;; TODO - see if we can actually map these maybe?
+    ;; if we're just deffering to another def, that map should be able to check for itself
     (and (string? chunk) (zero? depth)) :maybe
     ;; special case for fns which defer the def elsewhere
     (and (vector? chunk) (= 2 (count chunk)) (zero? depth)) :maybe
+    ;; both sides of the ifn should complete
+    (and (vector? chunk) (= (first chunk) :FN)
+         (or (= (second chunk) "if") (= (second chunk) "if-not")))
+    (and (completes? (nth chunk 3 nil) (inc depth))
+         (completes? (nth chunk 4 nil) (inc depth)))
+    ;; cond - every RHS pair should complete
+    (and (vector? chunk) (= (first chunk) :FN) (= (second chunk) "cond"))
+    (let [assignments (take-nth 2 (nthrest chunk 3))]
+      (every? #(completes? % (inc depth)) assignments))
+    ;; regular fn, or continue-abi
+    (and (vector? chunk) (= (first chunk) :FN)
+         (or (= (second chunk) "continue-ability") (contains-eid? chunk)))
+    :maybe
+    ;; other fns - see if the rightmost member completes
     (and (vector? chunk) (= (first chunk) :FN))
-    (let [func-name (second chunk)]
-      (if (or (contains-eid? chunk)
-              (= func-name "continue-ability"))
-        :maybe
-        (completes? (last chunk) (inc depth))))
+    (completes? (last chunk) (inc depth))
     :else nil))
 
 ;; TODO - can add a few more to these as errors get picked up down the line
-(def terminal-fns #{"checkpoint" "complete-with-result" "continue-ability" "corp-install" "damage" "draw" "effect-completed" "gain-credits" "resolve-ability" "runner-install"
+(def terminal-fns #{"checkpoint" "complete-with-result" "continue-ability" "corp-install" "damage" "draw" "effect-completed"
+                    "gain-credits" "gain-tags" "make-run" "reveal" "rez" "resolve-ability" "runner-install"
                     "trash" "trash-cards" "trigger-event-simult" "trigger-event-sync" "wait-for"})
 (defn should-complete?
   "Should a chunk (probably) complete an eid?"
@@ -108,11 +121,10 @@
                  (is-valid-chunk? (:effect mapped) :async)
                  (is-valid-chunk? (:effect mapped) :sync))
                (every? is-valid-chunk? (vals mapped)))
-             ;; note that async effects require cancels to be async, etc
+             ;; note that cancel effects must always complete eids,
+             ;; as there is no provision for async-checking them baked into the engine
              (if (:cancel-effect mapped)
-               (if (:async mapped)
-                 (is-valid-chunk? (:cancel-effect mapped) :async)
-                 (is-valid-chunk? (:cancel-effect mapped) :sync))
+               (is-valid-chunk? (:cancel-effect mapped) :async)
                true))))
      (= conditional? :async)
      (and (completes? chunk 0) (is-valid-chunk? chunk))
