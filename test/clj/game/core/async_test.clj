@@ -130,5 +130,7 @@
   (doseq [fname relevant-cards-files]
     (let [f (slurp (str card-base-str fname))
           chunks (stitch-and-split-card-files f)]
-      (doseq [chunk chunks]
-        (is (validate-chunk chunk) (str "invalid chunk at " chunk))))))
+      (let [invalid-chunks (filter (complement validate-chunk) chunks)
+            titles (map #(re-find #" \".+?\"" %) invalid-chunks)]
+        (when (seq titles)
+          (is nil (str "The following cards/fns in file" fname "may be invalid (async/sync): " (str/join ", " titles))))))))
