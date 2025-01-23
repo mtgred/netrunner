@@ -816,7 +816,7 @@
                 :req (req (and this-server
                                (pos? (count run-ices))
                                (pos? (count (:hand corp)))))
-                                :cost [(->c :trash-from-hand 1)]
+                :cost [(->c :trash-from-hand 1)]
                 :effect (effect (register-lingering-effect
                                   card
                                   {:type :ice-strength
