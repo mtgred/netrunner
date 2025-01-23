@@ -1287,7 +1287,6 @@
   (letfn [(better-name [card-type] (if (= "hardware" card-type) "piece of hardware" card-type))
           (dummy-prevent [card-type]
             {:msg (str "prevent a " (better-name card-type) " from being trashed")
-             :async true
              :cost [(->c (keyword (str "trash-" card-type "-from-hand")) 1)]
              :effect (effect (trash-prevent (keyword card-type) 1))})]
     {:interactions {:prevent [{:type #{:trash-hardware :trash-resource :trash-program}
