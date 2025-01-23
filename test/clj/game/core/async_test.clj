@@ -68,7 +68,8 @@
     :else nil))
 
 ;; TODO - can add a few more to these as errors get picked up down the line
-(def terminal-fns #{"effect-completed" "complete-with-result" "wait-for" "continue-ability" "damage" "draw" "gain-credits" "resolve-ability"})
+(def terminal-fns #{"checkpoint" "complete-with-result" "continue-ability" "corp-install" "damage" "draw" "effect-completed" "gain-credits" "resolve-ability" "runner-install"
+                    "trash" "trash-cards" "trigger-event-sync" "wait-for"})
 (defn should-complete?
   "Should a chunk (probably) complete an eid?"
   [chunk depth]
@@ -133,4 +134,4 @@
       (let [invalid-chunks (filter (complement validate-chunk) chunks)
             titles (map #(re-find #" \".+?\"" %) invalid-chunks)]
         (when (seq titles)
-          (is nil (str "The following cards/fns in file" fname "may be invalid (async/sync): " (str/join ", " titles))))))))
+          (is nil (str "The following cards/fns in file '" fname "' may be invalid (async/sync): " (str/join ", " titles))))))))
