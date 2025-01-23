@@ -385,7 +385,7 @@
                                    :async true
                                    :msg (msg "place an advancement token on " (card-str state target))
                                    :cost [(->c :trash-can)]
-                                   :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
+                                   :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}
                                   card nil))}]})
 
 (defcard "Caprice Nisei"
