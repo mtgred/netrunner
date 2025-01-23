@@ -479,11 +479,13 @@
           :yes-ability
           {:cost [(->c :credit 2)]
            :req (req (seq (:hand runner)))
+           :async true
            :effect (req (let [target-card (first (shuffle (:hand runner)))]
                           (wait-for
                             (reveal-loud state side card {:and-then " and shuffle it into the Stack"} target-card)
                             (move state :runner target-card :deck)
-                            (shuffle! state :runner :deck))))}}}]
+                            (shuffle! state :runner :deck)
+                            (effect-completed state side eid))))}}}]
     {:on-play
      {:async true
       :req (req (or (last-turn? state :runner :trashed-card)
@@ -571,6 +573,7 @@
   {:on-play
    {:psi {:req (req (last-turn? state :runner :successful-run))
           :not-equal {:player :runner
+                      :async true
                       :prompt "Choose one"
                       :waiting-prompt true
                       :choices ["Take 1 tag" "Suffer 1 core damage"]
@@ -715,11 +718,12 @@
                    (not (some #{:hq} (:successful-run runner-reg-last)))))
     :prompt "Choose an Agenda"
     :change-in-game-state (req (or (seq (:deck corp))
-                             (seq (:hand corp))))
+                                   (seq (:hand corp))))
     :choices (req (conj (vec (filter agenda? (:deck corp))) "None"))
     :msg (msg (if (= "None" target)
                 "shuffle R&D"
                 (str "reveal " (:title target) " from R&D and add it to HQ")))
+    :async true
     :effect (let [end-effect (req (system-msg state side "can not score agendas for the remainder of the turn")
                                   (swap! state assoc-in [:corp :register :cannot-score]
                                          (filter agenda? (all-installed state :corp)))
@@ -755,6 +759,7 @@
                         :choices {:card #(and (in-hand? %)
                                               (corp? %)
                                               (not (operation? %)))}
+                        :async true
                         :effect (req (wait-for (resolve-ability
                                                  state side
                                                  (let [card-to-install target]
@@ -970,6 +975,7 @@
                                                         (not (operation? %))
                                                         (in-hand? %)
                                                         (seq (filter (fn [c] (= server c)) (installable-servers state %))))}
+                                  :async true
                                   :effect (req (wait-for
                                                  (corp-install state side target server {:msg-keys {:install-source card
                                                                                                     :display-origin true}})
@@ -1697,8 +1703,7 @@
                                                                  (corp? %))
                                                      ;; just incase everything gets jinja'd out of hand
                                                      :all (req (not (zero? (count (:hand corp)))))}
-                                           :effect (effect (move target :deck {:front true})
-                                                           (effect-completed eid))}
+                                           :effect (effect (move target :deck {:front true}))}
                                           card nil)))))}})
 
 (defcard "Mitosis"
@@ -3078,6 +3083,7 @@
                                    (installed? %)
                                    (not (faceup? %)))}
              :change-in-game-state (req (some (every-pred (complement faceup?) (complement ice?)) (all-installed state :corp)))
+             :async true
              :effect (req (let [target (update! state side (assoc target
                                                                   :seen true
                                                                   :rezzed true))]
