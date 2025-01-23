@@ -768,6 +768,7 @@
                     (zones->sorted-names (get-runnable-zones state side eid card nil))))
           (trash-or-bonus [chosen-server]
             {:player :corp
+             :waiting-prompt true
              :prompt "Choose a piece of ice to trash"
              :choices {:card #(and (= (last (get-zone %)) :ices)
                                    (= chosen-server (rest (butlast (get-zone %)))))}
@@ -782,14 +783,17 @@
                                         :req (req (#{:hq :rd} target))
                                         :once :per-turn
                                         :msg (msg "access 2 additional cards from " (zone->name target))
-                                        :effect (effect (access-bonus :runner target 2))}]))})]
+                                        :effect (effect (access-bonus :runner target 2))}])
+                                    (effect-completed eid))})]
     {:events [{:event :runner-turn-begins
                :async true
+               :interactive (req true)
                :effect (req (let [card (move state side card :rfg)]
                               (continue-ability
                                 state side
                                 (if (pos? (count (iced-servers state side eid card)))
                                   {:prompt "Choose a server"
+                                   :waiting-prompt true
                                    :choices (req (iced-servers state side eid card))
                                    :msg (msg "choose " (zone->name (unknown->kw target))
                                              " and remove itself from the game")
@@ -3055,13 +3059,15 @@
 (defcard "Stim Dealer"
   {:events [{:event :runner-turn-begins
              :async true
+             :msg (msg (if (>= (get-counters card :power) 2)
+                         "takes 1 core damage"
+                         "gain [Click]"))
              :effect (req (if (>= (get-counters card :power) 2)
                             (do (add-counter state side card :power (- (get-counters card :power)))
-                                (damage state side eid :brain 1 {:unpreventable true :card card})
-                                (system-msg state side "takes 1 core damage from Stim Dealer"))
+                                (damage state side eid :brain 1 {:unpreventable true :card card}))
                             (do (add-counter state side card :power 1)
                                 (gain-clicks state side 1)
-                                (system-msg state side (str "uses " (:title card) " to gain [Click]")))))}]})
+                                (effect-completed state side eid))))}]})
 
 (defcard "Stoneship Chart Room"
   {:abilities [{:label "Draw 2 cards"

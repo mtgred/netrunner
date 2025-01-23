@@ -879,13 +879,12 @@
     ;; Corp doesn't trash, access HQ
     (do-game
       (new-game {:runner {:deck ["Climactic Showdown"]}
-                 :corp {:deck [(qty "Vanilla" 10)]}})
+                 :corp {:deck [(qty "Vanilla" 3)]
+                        :hand [(qty "Vanilla" 3)]}})
       (play-from-hand state :corp "Vanilla" "Archives")
-      (core/move state :corp (find-card "Vanilla" (:hand (get-corp))) :deck)
       (take-credits state :corp)
       (play-from-hand state :runner "Climactic Showdown")
       (take-credits state :runner)
-      (core/move state :corp (find-card "Vanilla" (:hand (get-corp))) :deck)
       (take-credits state :corp)
       (is (= "Climactic Showdown" (-> (get-runner) :rfg first :title)) "Climactic Showdown RFGed")
       (click-prompt state :runner "Archives")
