@@ -63,12 +63,20 @@
     (and (vector? chunk) (= 2 (count chunk)) (zero? depth)) :maybe
     ;; both sides of the ifn should complete
     (and (vector? chunk) (= (first chunk) :FN)
-         (or (= (second chunk) "if") (= (second chunk) "if-not")))
+         (contains? #{"if" "if-not" "if-let"} (second chunk)))
     (and (completes? (nth chunk 3 nil) (inc depth))
          (completes? (nth chunk 4 nil) (inc depth)))
+    ;; `when ... complete` is a bad pattern, we should avoid it
+    (and (vector? chunk) (= (first chunk) :FN)
+         (contains? #{"when" "when-not" "when-let"} (second chunk)))
+    nil
     ;; cond - every RHS pair should complete
     (and (vector? chunk) (= (first chunk) :FN) (= (second chunk) "cond"))
     (let [assignments (take-nth 2 (nthrest chunk 3))]
+      (every? #(completes? % (inc depth)) assignments))
+    ;; condp - same as above, just shifted over 1 more
+    (and (vector? chunk) (= (first chunk) :FN) (= (second chunk) "condp"))
+    (let [assignments (take-nth 2 (nthrest chunk 4))]
       (every? #(completes? % (inc depth)) assignments))
     ;; regular fn, or continue-abi
     (and (vector? chunk) (= (first chunk) :FN)
