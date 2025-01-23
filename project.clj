@@ -65,6 +65,7 @@
                  [integrant "0.8.0"]
                  [com.widdindustries/cljc.java-time "0.1.21"]
                  [time-literals "0.1.5"]
+                 [instaparse "1.5.0"]
                  [metosin/reitit "0.5.18"]]
 
   :test-selectors {:default (fn [m] (not (:kaocha/pending m)))}
@@ -78,7 +79,8 @@
                                   [lambdaisland/kaocha "1.68.1059"]
                                   [thheller/shadow-cljs "2.16.8"]]
                    :plugins [[lein-eftest "0.6.0"]
-                             [cider/cider-nrepl "0.47.1"]]
+                             [cider/cider-nrepl "0.47.1"]
+                             ]
                    :eftest {:report eftest.report.pretty/report
                             :fail-fast? false}
                    :source-paths ["src/clj" "src/cljs" "src/cljc" "src/css"

@@ -57,6 +57,8 @@
   [chunk depth]
   (cond
     (and (string? chunk) (zero? depth)) :maybe
+    ;; special case for fns which defer the def elsewhere
+    (and (vector? chunk) (= 2 (count chunk)) (zero? depth)) :maybe
     (and (vector? chunk) (= (first chunk) :FN))
     (let [func-name (second chunk)]
       (if (or (contains-eid? chunk)
