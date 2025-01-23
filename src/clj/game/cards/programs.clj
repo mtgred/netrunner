@@ -1952,7 +1952,8 @@
                                             (wait-for (trash state :runner (make-eid state eid) card
                                                              {:unpreventable :true
                                                               :cause-card card})
-                                                      (bypass-ice state)))}}}
+                                                      (bypass-ice state)
+                                                      (effect-completed state side eid)))}}}
                                card nil))}]})
 
 (defcard "Leech"
