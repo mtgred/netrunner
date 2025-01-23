@@ -69,7 +69,7 @@
 
 ;; TODO - can add a few more to these as errors get picked up down the line
 (def terminal-fns #{"checkpoint" "complete-with-result" "continue-ability" "corp-install" "damage" "draw" "effect-completed" "gain-credits" "resolve-ability" "runner-install"
-                    "trash" "trash-cards" "trigger-event-sync" "wait-for"})
+                    "trash" "trash-cards" "trigger-event-simult" "trigger-event-sync" "wait-for"})
 (defn should-complete?
   "Should a chunk (probably) complete an eid?"
   [chunk depth]
