@@ -194,7 +194,7 @@
         c3 "{:async true :effect (req (case x a (effect-completed state side eid) (effect-completed state side eid)))}"]
     (is (not (validate-chunk c1)) "Case block C1 is picked up as being wrong (terminal does not complete)")
     (is (not (validate-chunk c2)) "Case block C2 is picked up as being wrong (LHS does not complete)")
-    (is (validate-chunk c3)       "Case block C3 is picked up as being right (LHS and terminal both complete)")))x
+    (is (validate-chunk c3)       "Case block C3 is picked up as being right (LHS and terminal both complete)")))
 
 (deftest async-test-cond+-is-correct?
   (let [c1 "{:async true :effect (req (cond+ [a (damage state :runner)] [:else (effect-completed state side eid)]))}"
