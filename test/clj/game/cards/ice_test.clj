@@ -1688,18 +1688,18 @@
                      (count (:discard (get-runner))) 3]
                     (card-subroutine state :corp (refresh ce) 2))
           "Runner suffered 3 net damage")
-      (run-continue state :movement)
+      (run-continue-until state :movement)
       (is (= 2 (count (prompt-buttons :runner))) "Runner doesn't have the option to suffer net damage")
       (is (changed? [(count-tags state) 2]
                     (click-prompt state :runner "Take 2 tags"))
           "Runner got 2 tags")
-      (is (last-log-contains? state "Cloud Eater to force the Runner to take 2 tag") "Correctly logs choice")
+      (is (last-n-log-contains? state 1 "Cloud Eater to force the Runner to take 2 tag") "Correctly logs choice")
       (run-jack-out state)
       (take-credits state :runner)
       (take-credits state :corp)
       (run-on state :hq)
       (run-continue state)
-      (run-continue state :movement)
+      (run-continue-until state :encounter-ice)
       (is (no-prompt? state :runner) "Runner has no Cloud Eater prompt if it was rezzed since the previous turn"))))
 
 (deftest congratulations

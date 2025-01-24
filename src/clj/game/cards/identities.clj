@@ -209,6 +209,7 @@
                                          :all true
                                          :card #(and (runner? %)
                                                      (in-play-area? %))}
+                               :async true
                                :effect (req (wait-for
                                               (runner-install
                                                 state side
@@ -261,6 +262,7 @@
              :psi {:req (req (= target :rd))
                    :player :runner
                    :equal {:msg "access 1 additional card"
+                           :async true
                            :effect (effect (access-bonus :rd 1)
                                            (effect-completed eid))}}}]})
 
@@ -345,6 +347,7 @@
                                                      state side
                                                      (assoc eid :source-type :runner-install) % {:no-toast true}))
                                              (:hand runner))))
+                     :async true
                      :effect (req (wait-for (runner-install state :runner
                                                             (assoc (make-eid state eid) :source card :source-type :runner-install)
                                                             (assoc-in target [:special :street-artist] true) {:msg-keys {:install-source card
@@ -356,12 +359,15 @@
                                                 :interactive (req true)
                                                 :duration :end-of-run
                                                 :req (req (some #(get-in % [:special :street-artist]) (all-installed state :runner)))
+                                                :async true
                                                 :effect (req (doseq [program (filter #(get-in % [:special :street-artist]) (all-installed state :runner))]
                                                                (if (has-subtype? program "Trojan")
-                                                                 (update! state :runner (dissoc-in program [:special :street-artist]))
+                                                                 (do (update! state :runner (dissoc-in program [:special :street-artist]))
+                                                                     (effect-completed state side eid))
                                                                  (do
                                                                    (system-msg state side (str "uses " (:title card) " to trash " (:title program)))
-                                                                   (trash-cards state side eid [program] {:cause-card card})))))}])))}
+                                                                   (trash-cards state side eid [program] {:cause-card card})))))}])
+                                            (effect-completed state side eid)))}
                     card nil))}]})
 
 (defcard "Asa Group: Security Through Vigilance"
@@ -613,6 +619,7 @@
                 :label "Look at the top 3 cards of R&D"
                 :cost [(->c :click 1) (->c :power 1)]
                 :msg "look at the top 3 cards of R&D"
+                :async true
                 :effect (req (let [top (take 3 (:deck corp))]
                                (wait-for (resolve-ability state side
                                                           {:async true
@@ -1073,7 +1080,8 @@
                                         :choices {:req (req (can-be-advanced? state target))}
                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))}
                                        card nil))
-                                 (toast state :corp (str "Unknown Jinteki Biotech: Life Imagined card: " flip) "error"))))}]})
+                                 (do (toast state :corp (str "Unknown Jinteki Biotech: Life Imagined card: " flip) "error")
+                                     (effect-completed state side eid)))))}]})
 
 (defcard "Jinteki: Personal Evolution"
   (let [ability {:async true
@@ -1519,6 +1527,7 @@
                              :choices {:card #(and (corp? %)
                                                    (ice? %)
                                                    (in-hand? %))}
+                             :async true
                              :effect (req (wait-for (corp-install state side target nil {:msg-keys {:install-source card
                                                                                                     :display-origin true}})
                                                     (continue-ability state side (when (< n 3) (nd (inc n))) card nil)))})]
@@ -2116,6 +2125,7 @@
     {:events [{:event :action-resolved
                :req (req (= :runner side))
                :silent (req true)
+               :async true
                :effect (req (let [current-queue (get-in card [:special :previous-actions])
                                   filtered-context (relevant-keys context)]
                               (if (and (seq current-queue)
@@ -2125,7 +2135,8 @@
                                   (if (= 3 (count new-queue))
                                     (continue-ability state side gain-click-abi card nil)
                                     (effect-completed state side eid)))
-                                (update! state side (assoc-in card [:special :previous-actions] [filtered-context])))))}
+                                (do (update! state side (assoc-in card [:special :previous-actions] [filtered-context]))
+                                    (effect-completed state side eid)))))}
               {:event :runner-turn-begins
                :silent (req true)
                :effect (req (update! state side (assoc-in card [:special :previous-actions] nil)))}]}))

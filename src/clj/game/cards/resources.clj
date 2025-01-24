@@ -711,6 +711,7 @@
                 :keep-menu-open :while-clicks-left
                 :label "Install a program from the grip"
                 :prompt "Choose a program to install"
+                :async true
                 :choices
                 {:async true
                  :req (req (and (program? target)
@@ -767,6 +768,7 @@
                     (zones->sorted-names (get-runnable-zones state side eid card nil))))
           (trash-or-bonus [chosen-server]
             {:player :corp
+             :waiting-prompt true
              :prompt "Choose a piece of ice to trash"
              :choices {:card #(and (= (last (get-zone %)) :ices)
                                    (= chosen-server (rest (butlast (get-zone %)))))}
@@ -781,17 +783,21 @@
                                         :req (req (#{:hq :rd} target))
                                         :once :per-turn
                                         :msg (msg "access 2 additional cards from " (zone->name target))
-                                        :effect (effect (access-bonus :runner target 2))}]))})]
+                                        :effect (effect (access-bonus :runner target 2))}])
+                                    (effect-completed eid))})]
     {:events [{:event :runner-turn-begins
                :async true
+               :interactive (req true)
                :effect (req (let [card (move state side card :rfg)]
                               (continue-ability
                                 state side
                                 (if (pos? (count (iced-servers state side eid card)))
                                   {:prompt "Choose a server"
+                                   :waiting-prompt true
                                    :choices (req (iced-servers state side eid card))
                                    :msg (msg "choose " (zone->name (unknown->kw target))
                                              " and remove itself from the game")
+                                   :async true
                                    :effect (effect (continue-ability
                                                      :corp
                                                      (trash-or-bonus (rest (server->zone state target)))
@@ -998,6 +1004,7 @@
               {:event :runner-turn-begins
                :once :per-turn
                :interactive (req true)
+               :async true
                :effect
                (effect (continue-ability
                          {:msg "gain 1 [Credits]"
@@ -1287,7 +1294,6 @@
   (letfn [(better-name [card-type] (if (= "hardware" card-type) "piece of hardware" card-type))
           (dummy-prevent [card-type]
             {:msg (str "prevent a " (better-name card-type) " from being trashed")
-             :async true
              :cost [(->c (keyword (str "trash-" card-type "-from-hand")) 1)]
              :effect (effect (trash-prevent (keyword card-type) 1))})]
     {:interactions {:prevent [{:type #{:trash-hardware :trash-resource :trash-program}
@@ -2661,6 +2667,7 @@
                      :choices {:card #(and (:trash %)
                                            (rezzed? %)
                                            (can-pay? state side (assoc eid :source card :source-type :ability) card nil [(->c :credit (trash-cost state :runner %))]))}
+                     :async true
                      :effect (effect
                                (continue-ability
                                  {:async true
@@ -3051,13 +3058,16 @@
 
 (defcard "Stim Dealer"
   {:events [{:event :runner-turn-begins
+             :async true
+             :msg (msg (if (>= (get-counters card :power) 2)
+                         "takes 1 core damage"
+                         "gain [Click]"))
              :effect (req (if (>= (get-counters card :power) 2)
                             (do (add-counter state side card :power (- (get-counters card :power)))
-                                (damage state side eid :brain 1 {:unpreventable true :card card})
-                                (system-msg state side "takes 1 core damage from Stim Dealer"))
+                                (damage state side eid :brain 1 {:unpreventable true :card card}))
                             (do (add-counter state side card :power 1)
                                 (gain-clicks state side 1)
-                                (system-msg state side (str "uses " (:title card) " to gain [Click]")))))}]})
+                                (effect-completed state side eid))))}]})
 
 (defcard "Stoneship Chart Room"
   {:abilities [{:label "Draw 2 cards"
@@ -3075,6 +3085,7 @@
   (letfn [(runner-break [unbroken-subs]
             {:prompt "Choose a subroutine to resolve"
              :choices unbroken-subs
+             :async true
              :effect (req (let [sub (first (filter #(and (not (:broken %))
                                                          (= target (make-label (:sub-effect %))))
                                                    (:subroutines current-ice)))]
@@ -3296,6 +3307,7 @@
                                          (has-trash-ability? target)))}
                 :msg (msg "shuffle " (enumerate-str (map :title targets))
                           " into the stack")
+                :async true
                 :effect (req (doseq [c targets] (move state side c :deck))
                              (shuffle! state side :deck)
                              (effect-completed state side eid))}]})

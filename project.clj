@@ -74,6 +74,7 @@
                                   [com.clojure-goes-fast/clj-async-profiler "0.5.1"]
                                   [rewrite-clj "1.1.45"]
                                   [criterium "0.4.6"]
+                                  [instaparse "1.5.0"]
                                   [integrant/repl "0.3.2"]
                                   [lambdaisland/kaocha "1.68.1059"]
                                   [thheller/shadow-cljs "2.16.8"]]

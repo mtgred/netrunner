@@ -88,9 +88,11 @@
              :interactive (req true)
              :psi {:req (req this-server)
                    :not-equal {:msg (msg "prevent the Runner from accessing cards other than " (:title card))
+                               :async true
                                :effect (effect (set-only-card-to-access card)
                                                (effect-completed eid))}
                    :equal {:msg (msg "prevent the Runner from accessing " (:title card))
+                           :async true
                            :effect (effect (register-run-flag!
                                              card :can-access
                                              ;; prevent access of advanced card
@@ -138,6 +140,7 @@
   {:expend {:req (req (threat-level 3 state))
             :cost [(->c :credit 1)]
             :msg "do 1 meat damage"
+            :async true
             :effect (effect (damage eid :meat 1 {:card card}))}
    :on-access {:optional
                {:req (req (rezzed? card))
@@ -190,6 +193,7 @@
                      :req (req this-server)
                      :successful
                      {:msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
+                      :async true
                       :effect (effect (set-only-card-to-access card)
                                       (effect-completed eid))}}}]})
 
@@ -330,6 +334,7 @@
                             (some #(and (ice? %)
                                         (not (same-card? % (:card context))))
                                   (all-active-installed state :corp))))
+             :async true
              :effect (req
                        (let [rezzed-card (:card context)]
                          (continue-ability
@@ -385,7 +390,7 @@
                                    :async true
                                    :msg (msg "place an advancement token on " (card-str state target))
                                    :cost [(->c :trash-can)]
-                                   :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
+                                   :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}
                                   card nil))}]})
 
 (defcard "Caprice Nisei"
@@ -811,7 +816,6 @@
                 :req (req (and this-server
                                (pos? (count run-ices))
                                (pos? (count (:hand corp)))))
-                :async true
                 :cost [(->c :trash-from-hand 1)]
                 :effect (effect (register-lingering-effect
                                   card

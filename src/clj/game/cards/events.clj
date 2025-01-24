@@ -1638,7 +1638,7 @@
                            ["Done"])
                 :async true
                 :effect
-                (req (letfn [(log-and-trash-cards [cards]
+                (req (letfn [(log-and-trash-cards [cards eid]
                                (system-msg state side
                                            (str "uses " (get-title card)
                                                 " to trash "
@@ -1646,14 +1646,14 @@
                                                 " from the top of the stack"))
                                (trash-cards state side eid cards {:unpreventable true :cause-card card}))]
                        (if (= target "Done")
-                         (log-and-trash-cards top-ten)
+                         (log-and-trash-cards top-ten eid)
                          (let [number-of-shuffles (count (turn-events state :runner :runner-shuffle-deck))]
                            (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install})
                                                      target {:cost-bonus -5
                                                              :msg-keys {:display-origin true
                                                                         :install-source card}})
                                      (if (= number-of-shuffles (count (turn-events state :runner :runner-shuffle-deck)))
-                                       (log-and-trash-cards (remove #(same-card? % target) top-ten))
+                                       (log-and-trash-cards (remove #(same-card? % target) top-ten) eid)
                                        (do (system-msg state side "does not have to trash cards because the stack was shuffled")
                                            (effect-completed state side eid))))))))}
                card nil))})
@@ -2311,7 +2311,8 @@
                                                                              " from the heap into the stack, and draws 1 card"))
                                               (shuffle! state :runner :deck)
                                               (draw state :runner eid 1))}
-                                {:effect (effect
+                                {:async true
+                                 :effect (effect
                                            (do (system-msg state :runner "shuffles the stack and draws 1 card")
                                                (shuffle! state :runner :deck)
                                                (draw state :runner eid 1)))})
@@ -3765,6 +3766,7 @@
    :events [{:event :run-ends
              :req (req this-card-run)
              :msg "take 1 core damage"
+             :async true
              :effect (effect (damage eid :brain 1 {:unpreventable true
                                                    :card card}))}]})
 
@@ -4078,8 +4080,7 @@
 
 (defcard "Uninstall"
   {:on-play
-   {:async true
-    :change-in-game-state (req (some #(and (not (facedown? %))
+   {:change-in-game-state (req (some #(and (not (facedown? %))
                                      (or (hardware? %) (program? %)))
                                (all-installed state :runner)))
     :choices {:card #(and (installed? %)

@@ -475,6 +475,7 @@
                :prompt "Draw 2 cards?"
                :player :corp
                :yes-ability {:msg "draw 2 cards"
+                             :async true
                              :effect (effect (draw eid 2))}}}})
 
 (defcard "Capital Investors"
@@ -709,6 +710,7 @@
                 :waiting-prompt true
                 :choices {:card #(and (ice? %)
                                       (get-counters % :advancement))}
+                :async true
                 :effect (effect
                           (continue-ability
                             (let [from-ice target]
@@ -1472,6 +1474,7 @@
     {:abilities [ability]
      :leave-play cleanup
      :events [{:event :corp-spent-click
+               :async true
                :effect (req (let [{:keys [action value ability-idx]} context
                                   bac-cid (get-in @state [:corp :basic-action-card :cid])
                                   cause (if (keyword? action)
@@ -1484,8 +1487,9 @@
                                   clicks-spent (+ (get-in card [:seen-this-turn cause] 0) value)
                                   card (update! state side (assoc-in card [:seen-this-turn cause] clicks-spent))]
                               ; can be >= 3 because :once :per-turn on ability
-                              (when (>= clicks-spent 3)
-                                (resolve-ability state side ability card nil))))}
+                              (if (>= clicks-spent 3)
+                                (resolve-ability state side eid ability card nil)
+                                (effect-completed state side eid))))}
               {:event :corp-turn-ends
                :effect cleanup}]}))
 
@@ -1493,8 +1497,10 @@
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req true)}
    :abilities [{:msg "look at the top card of the stack"
+                :async true
                 :effect (effect (continue-ability
                                   {:prompt (req (->> runner :deck first :title (str "The top card of the stack is ")))
+                                   :waiting-prompt true
                                    :choices ["OK"]}
                                   card nil))}
                {:async true
@@ -1560,6 +1566,7 @@
                      :choices {:req (req (and (agenda? target)
                                               (<= (:agendapoints target) (cost-value eid :x-power))))}
                      :msg (msg "reveal " (:title target) " from HQ")
+                     :async true
                      :effect (req (wait-for (reveal state side target)
                                             (let [title (:title target)]
                                               (register-turn-flag!
@@ -1941,6 +1948,7 @@
                   :prompt "Draw 1 card?"
                   :yes-ability
                   {:msg "draw 1 card"
+                   :async true
                    :effect (effect (draw :corp eid 1))}}}]
     {:events [(-> ability
                   (assoc :event :runner-lose-tag)
@@ -2176,12 +2184,14 @@
                 :async true
                 :req (req true)
                 :effect (req (add-counter state side card :power 1)
-                             (gain-credits state :corp eid 3)
-                             (damage-prevent state :corp :net 1))}
+                             (wait-for (gain-credits state :corp 3)
+                                       (damage-prevent state :corp :net 1)
+                                       (effect-completed state side eid)))}
                {:action true
                 :msg (msg "deal " (get-counters card :power) " net damage")
                 :label "deal net damage"
                 :cost [(->c :click 2) (->c :trash-can)]
+                :async true
                 :effect (effect (damage eid :net (get-counters card :power) {:card card}))}]})
 
 (defcard "Primary Transmission Dish"
@@ -2258,6 +2268,7 @@
                           :choices {:card #(and (ice? %)
                                                 (not (rezzed? %)))}
                           :msg (msg "rez " (:title target))
+                          :waiting-prompt true
                           :effect (req (let [agenda (last (:rfg corp))
                                              ap (:agendapoints agenda 0)]
                                          (wait-for (rez state side target {:no-warning true :cost-bonus (* ap -2)})
@@ -2267,6 +2278,7 @@
     {:abilities [{:label "Forfeit agenda to rez up to 3 pieces of ice with a 2 [Credit] discount per agenda point"
                   :req (req (pos? (count (:scored corp))))
                   :cost [(->c :forfeit)]
+                  :async true
                   :effect (req (continue-ability state side (rez-ice 1) card nil))}]}))
 
 (defcard "Raman Rai"
@@ -2438,6 +2450,7 @@
         ability {:once :per-turn
                  :req (req (:corp-phase-12 @state))
                  :label "Remove 1 counter (start of turn)"
+                 :async true
                  :effect (req (add-counter state side card :power -1)
                               (if (zero? (get-counters (get-card state card) :power))
                                 (wait-for (trash state side card {:cause-card card})
@@ -3194,6 +3207,7 @@
                 :label "Gain 3 [Credits]"
                 :msg "gain 3 [Credits]"
                 :keep-menu-open :while-power-tokens-left
+                :async true
                 :effect (req (gain-credits state side eid 3))}
                {:action true
                 :cost [(->c :click 1) (->c :power 5)]

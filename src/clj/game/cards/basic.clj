@@ -165,6 +165,7 @@
                 :req (req (not-empty (:deck runner)))
                 :cost [(->c :click)]
                 :msg "draw 1 card"
+                :async true
                 :effect (req (trigger-event state side :runner-click-draw {:card (-> @state side :deck (nth 0))})
                              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
                              (play-sfx state side "click-card")

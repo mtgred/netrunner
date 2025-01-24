@@ -350,6 +350,7 @@
                 :cost [(->c :trash-from-deck 1) (->c :agenda 1)]
                 :once :per-turn
                 :msg "add 1 card from Archives to HQ"
+                :async true
                 :effect (effect (continue-ability (corp-recur) card nil))}]})
 
 (defcard "Bellona"
@@ -630,7 +631,8 @@
              :psi {:req (req (= :hq (target-server context))
                              (first-event? state side :successful-run
                                            #(= :hq (target-server (first %)))))
-                   :not-equal {:effect (effect (register-lingering-effect
+                   :not-equal {:async true
+                               :effect (effect (register-lingering-effect
                                                  card
                                                  {:type :corp-choose-hq-access
                                                   :duration :end-of-run
@@ -703,9 +705,11 @@
     :waiting-prompt true
     :prompt "Choose a card to derez"
     :choices {:card #(rezzed? %)}
+    :async true
     :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
-    :effect (effect (derez target {:source-card card}))}})
+    :effect (effect (derez target {:source-card card})
+                    (effect-completed eid))}})
 
 (defcard "Eden Fragment"
   {:static-abilities [{:type :ignore-install-cost
@@ -865,8 +869,7 @@
                                     :msg "add 1 card in HQ to the top of R&D"
                                     :choices {:card #(and (in-hand? %)
                                                           (corp? %))}
-                                    :effect (effect (move target :deck {:front true})
-                                                    (effect-completed eid))}
+                                    :effect (effect (move target :deck {:front true}))}
                                    card nil))))}]})
 
 (defcard "Fly on the Wall"
@@ -1044,6 +1047,7 @@
                 :msg "do 1 net damage"
                 :req (req (:run @state))
                 :once :per-run
+                :async true
                 :effect (effect (damage eid :net 1 {:card card}))}]})
 
 (defcard "Hybrid Release"
@@ -1497,6 +1501,7 @@
   {:on-score {:interactive (req true)
               :req (req (pos? (count (:scored runner))))
               :msg (msg "do " (count (:scored runner)) " net damage")
+              :async true
               :effect (effect (damage eid :net (count (:scored runner)) {:card card}))}})
 
 (defcard "Post-Truth Dividend"
@@ -1534,6 +1539,7 @@
                 :req (req tagged)
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
+                :async true
                 :effect (effect (damage eid :meat 1 {:card card}))
                 :msg "do 1 meat damage"}]})
 
@@ -1579,7 +1585,8 @@
                 :req (req (pos? (get-counters card :agenda)))
                 :msg (msg "add " (:title target) " to HQ from R&D")
                 :choices (req (cancellable (:deck corp) :sorted))
-                :cancel-effect (effect (system-msg (str "declines to use " (:title card))))
+                :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                                       (effect-completed eid))
                 :effect (effect (shuffle! :deck)
                                 (move target :hand))}]})
 
@@ -1802,7 +1809,8 @@
                                      (update-all-agenda-points state)
                                      (check-win-by-agenda state side)
                                      (effect-completed state side eid)))
-              :cancel-effect (effect (system-msg (str "declines to use " (:title card))))}})
+              :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                                     (effect-completed state side eid))}})
 
 (defcard "Regulatory Capture"
   {:advancement-requirement (req (- (min 4 (count-bad-pub state))))})
@@ -1962,10 +1970,11 @@
                                          (effect-completed state side eid))))}]})
 
 (defcard "Sentinel Defense Program"
-  {:events [{:event :pre-resolve-damage
-             :req (req (and (= target :brain)
-                            (pos? (last targets))))
+  {:events [{:event :damage
+             :req (req (and (pos? (:amount context))
+                            (= (:damage-type context) :brain)))
              :msg "do 1 net damage"
+             :async true
              :effect (effect (damage eid :net 1 {:card card}))}]})
 
 (defcard "Show of Force"
@@ -2200,6 +2209,7 @@
    :on-access {:psi {:req (req (not installed))
                      :not-equal
                      {:msg "prevent itself from being stolen"
+                      :async true
                       :effect (effect (register-run-flag!
                                         card :can-steal
                                         (fn [_ _ c] (not (same-card? c card))))
