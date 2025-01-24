@@ -1080,7 +1080,8 @@
                                         :choices {:req (req (can-be-advanced? state target))}
                                         :effect (effect (add-prop target :advance-counter 4 {:placed true}))}
                                        card nil))
-                                 (toast state :corp (str "Unknown Jinteki Biotech: Life Imagined card: " flip) "error"))))}]})
+                                 (do (toast state :corp (str "Unknown Jinteki Biotech: Life Imagined card: " flip) "error")
+                                     (effect-completed state side eid)))))}]})
 
 (defcard "Jinteki: Personal Evolution"
   (let [ability {:async true

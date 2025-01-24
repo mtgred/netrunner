@@ -3090,7 +3090,8 @@
                                             :req (req (same-card? (:host card) (:card context)))
                                             :async true
                                             :msg "gain 1 [Credit]"
-                                            :effect (effect (gain-credits eid 1))}])))))}})
+                                            :effect (effect (gain-credits eid 1))}]))
+                                      (effect-completed state side eid))))}})
 
 (defcard "Trick of Light"
   {:on-play

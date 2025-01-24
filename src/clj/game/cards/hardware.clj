@@ -1881,10 +1881,11 @@
      :yes-ability {:async true
                    :effect (req (trigger-event state side :searched-stack)
                                 (shuffle! state :runner :deck)
-                                (when-let [c (some #(when (= (:title %) (:title card)) %)
+                                (if-let [c (some #(when (= (:title %) (:title card)) %)
                                                    (:deck runner))]
                                   (runner-install state side eid c {:msg-keys {:install-source card
-                                                                               :display-origin true}})))}}}})
+                                                                               :display-origin true}})
+                                  (effect-completed state side eid)))}}}})
 
 (defcard "Ramujan-reliant 550 BMI"
   {:interactions {:prevent [{:type #{:net :brain}

@@ -45,10 +45,12 @@
     split-and-stitch))
 
 (defn- contains-eid?
-  [chunk]
+  [chunk depth]
   (some #(cond
            (string? %) (= % "eid")
-           (vector? %) (contains-eid? %)
+           (and (vector? %) (= (second %) "make-eid")) true
+           (and (vector? %) (= (second %) "assoc")) (contains-eid? % (inc depth))
+           (and (vector? %) (zero? depth)) (contains-eid? % 1)
            :else nil)
         chunk))
 
@@ -78,9 +80,15 @@
     (and (vector? chunk) (= (first chunk) :FN) (= (second chunk) "condp"))
     (let [assignments (take-nth 2 (nthrest chunk 4))]
       (every? #(completes? % (inc depth)) assignments))
+    ;; cond+ - the RHS of every child vec should complete
+    (and (vector? chunk) (= (first chunk) :FN) (= (second chunk) "cond+"))
+    (let [children (nthrest chunk 2)]
+      (every? #(or (string? %) (completes? (last %) (inc depth))) children))
     ;; regular fn, or continue-abi
     (and (vector? chunk) (= (first chunk) :FN)
-         (or (= (second chunk) "continue-ability") (contains-eid? chunk)))
+         (or (= (second chunk) "continue-ability")
+             (contains-eid? chunk 0)
+             (and (> (count chunk) 2) (completes? (last chunk) (inc depth)))))
     :maybe
     ;; other fns - see if the rightmost member completes
     (and (vector? chunk) (= (first chunk) :FN))
@@ -160,3 +168,19 @@
             titles (map #(re-find #" \".+?\"" %) invalid-chunks)]
         (when (seq titles)
           (is nil (str "The following cards/fns in file '" fname "' may be invalid (async/sync): " (str/join ", " titles))))))))
+
+(deftest async-test-if-block-is-correct?
+  (let [c1 "{:async true :effect (req (if (some corp-installable-type? (:hand corp)) (continue-ability state side select-ability card nil) (damage state)))}"
+        c2 "{:async true :effect (req (if-not (some corp-installable-type? (:hand corp)) (damage 2) (damage state side eid 1)))}"
+        c3 "{:async true :effect (req (if-let (some corp-installable-type? (:hand corp)) (continue-ability state side select-ability card nil) (damage state side eid 1)))}"]
+    (is (not (validate-chunk c1)) "If block C1 is picked up as being wrong (RHS does not complete)")
+    (is (not (validate-chunk c2)) "If block C2 is picked up as being wrong (LHS does not complete)")
+    (is (validate-chunk c3)       "If block C3 is picked up as being right (LHS and RHS both complete)")))
+
+(deftest async-test-cond+-is-correct?
+  (let [c1 "{:async true :effect (req (cond+ [a (damage state :runner)] [:else (effect-completed state side eid)]))}"
+        c2 "{:async true :effect (req (cond+ [a (effect-completed state :runner eid)] [:else (damage state side)]))}"
+        c3 "{:async true :effect (req (cond+ [a (effect-completed state :runner eid)] [:else (effect-completed state side eid)]))}"]
+    (is (not (validate-chunk c1)) "Cond+ block C1 is picked up as being wrong (RHS does not complete)")
+    (is (not (validate-chunk c2)) "Cond+ block C2 is picked up as being wrong (LHS does not complete)")
+    (is (validate-chunk c3)       "Cond+ block C3 is picked up as being right (LHS and RHS both complete)")))

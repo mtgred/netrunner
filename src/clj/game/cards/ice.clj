@@ -1,7 +1,6 @@
 (ns game.cards.ice
   (:require
    [clojure.string :as str]
-   [cond-plus.core :refer [cond+]]
    [game.core.access :refer [access-bonus access-card breach-server max-access]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed all-installed-runner 
@@ -2280,7 +2279,8 @@
                                   :async true
                                   :msg (req (msg "derez " (:title new-ice) " and trash itself"))
                                   :effect (effect (derez new-ice {:no-msg true})
-                                                  (trash eid card {:cause :subroutine}))}]))))}]})
+                                                  (trash eid card {:cause :subroutine}))}])
+                              (effect-completed state side eid))))}]})
 
 (defcard "Hudson 1.0"
   (let [sub {:msg "prevent the Runner from accessing more than 1 card during this run"
@@ -2555,12 +2555,12 @@
                  :unregister-once-resolved true
                  :msg (msg "unblank " (:title t))
                  :async true
-                 :effect
-                 (req (when (:disabled (get-card state t))
-                        (enable-card state :runner (get-card state t))
-                        (if-let [reactivate-effect (:reactivate (card-def t))]
-                          (resolve-ability state :runner eid reactivate-effect (get-card state t) nil)
-                          (effect-completed state side eid))))})
+                 :effect (req (if (:disabled (get-card state t))
+                                (do (enable-card state :runner (get-card state t))
+                                    (if-let [reactivate-effect (:reactivate (card-def t))]
+                                      (resolve-ability state :runner eid reactivate-effect (get-card state t) nil)
+                                      (effect-completed state side eid)))
+                                (effect-completed state side eid)))})
         register-corp-next-turn-end
         (fn [t] {:event :corp-turn-ends ;; delayed registration to make it wait the Corp next turn end
                  :unregister-once-resolved true
@@ -2800,8 +2800,9 @@
                                          state side
                                          (end-the-run-unless-runner-pays (->c :click 1) "ability")
                                          card nil)
-                                       (when (and run (= (get-current-ice state) card))
-                                         (encounter-ends state side eid))))}]
+                                       (if (and run (= (get-current-ice state) card))
+                                         (encounter-ends state side eid)
+                                         (effect-completed state side eid))))}]
    :subroutines [runner-loses-click
                  runner-loses-click
                  end-the-run]})
@@ -3593,13 +3594,13 @@
                               ;; than one additional damage...
                               (if-not (seq matching-type)
                                 (effect-completed state side eid)
-                                (letfn [(resolve-extra-damage [x]
+                                (letfn [(resolve-extra-damage [x eid]
                                           (system-msg state :corp (str "uses " (:title card) " to deal 1 additional net damage" (when (> x 1) (str " (" (dec x) " remaining)"))))
                                           (if-not (> x 1)
                                             (damage state side eid :net 1 {:card card})
                                             (wait-for (damage side :net 1 {:card card})
-                                                      (resolve-extra-damage (dec x)))))]
-                                  (resolve-extra-damage (count matching-type))))))}
+                                                      (resolve-extra-damage (dec x) eid))))]
+                                  (resolve-extra-damage (count matching-type) eid)))))}
               {:event :end-of-encounter
                :req (req (:card-target card))
                :effect (effect (update! (dissoc card :card-target)))}]

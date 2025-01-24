@@ -1638,7 +1638,7 @@
                            ["Done"])
                 :async true
                 :effect
-                (req (letfn [(log-and-trash-cards [cards]
+                (req (letfn [(log-and-trash-cards [cards eid]
                                (system-msg state side
                                            (str "uses " (get-title card)
                                                 " to trash "
@@ -1646,14 +1646,14 @@
                                                 " from the top of the stack"))
                                (trash-cards state side eid cards {:unpreventable true :cause-card card}))]
                        (if (= target "Done")
-                         (log-and-trash-cards top-ten)
+                         (log-and-trash-cards top-ten eid)
                          (let [number-of-shuffles (count (turn-events state :runner :runner-shuffle-deck))]
                            (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install})
                                                      target {:cost-bonus -5
                                                              :msg-keys {:display-origin true
                                                                         :install-source card}})
                                      (if (= number-of-shuffles (count (turn-events state :runner :runner-shuffle-deck)))
-                                       (log-and-trash-cards (remove #(same-card? % target) top-ten))
+                                       (log-and-trash-cards (remove #(same-card? % target) top-ten) eid)
                                        (do (system-msg state side "does not have to trash cards because the stack was shuffled")
                                            (effect-completed state side eid))))))))}
                card nil))})
