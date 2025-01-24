@@ -73,12 +73,16 @@
          (contains? #{"when" "when-not" "when-let"} (second chunk)))
     nil
     ;; cond - every RHS pair should complete
-    (and (vector? chunk) (= (first chunk) :FN) (= (second chunk) "cond"))
+    (and (vector? chunk) (= (first chunk) :FN) (or (= (second chunk) "cond")))
     (let [assignments (take-nth 2 (nthrest chunk 3))]
       (every? #(completes? % (inc depth)) assignments))
     ;; condp - same as above, just shifted over 1 more
     (and (vector? chunk) (= (first chunk) :FN) (= (second chunk) "condp"))
     (let [assignments (take-nth 2 (nthrest chunk 4))]
+      (every? #(completes? % (inc depth)) assignments))
+    ;; case - every RHS pair should complete, and the terminal (last element) should too
+    (and (vector? chunk) (= (first chunk) :FN) (= (second chunk) "case"))
+    (let [assignments (concat (take-nth 2 (nthrest chunk 4)) [(last chunk)])]
       (every? #(completes? % (inc depth)) assignments))
     ;; cond+ - the RHS of every child vec should complete
     (and (vector? chunk) (= (first chunk) :FN) (= (second chunk) "cond+"))
@@ -139,6 +143,7 @@
                (every? is-valid-chunk? (vals mapped)))
              ;; note that cancel effects must always complete eids,
              ;; as there is no provision for async-checking them baked into the engine
+             ;; this comment is valid as of Jan '25 -nbk
              (if (:cancel-effect mapped)
                (is-valid-chunk? (:cancel-effect mapped) :async)
                true))))
@@ -176,6 +181,20 @@
     (is (not (validate-chunk c1)) "If block C1 is picked up as being wrong (RHS does not complete)")
     (is (not (validate-chunk c2)) "If block C2 is picked up as being wrong (LHS does not complete)")
     (is (validate-chunk c3)       "If block C3 is picked up as being right (LHS and RHS both complete)")))
+
+(deftest async-test-when-block-is-correct?
+  (let [c1 "{:async true :effect (req (when x (effect-completed state side eid)))}"
+        c2 "{:async true :effect (req (do (when x y) (effect-completed state side eid)))}"]
+    (is (not (validate-chunk c1)) "When block C1 is picked up as being wrong (conditional may not complete)")
+    (is (validate-chunk c2)       "When block C2 is picked up as being right (conditional does not block completion)")))
+
+(deftest async-test-case-block-is-correct?
+  (let [c1 "{:async true :effect (req (case x a (effect-completed state side eid) (system-msg state side \"whoops\")))}"
+        c2 "{:async true :effect (req (case x a (system-msg state side \"whoops\") (effect-completed state side eid)))}"
+        c3 "{:async true :effect (req (case x a (effect-completed state side eid) (effect-completed state side eid)))}"]
+    (is (not (validate-chunk c1)) "Case block C1 is picked up as being wrong (terminal does not complete)")
+    (is (not (validate-chunk c2)) "Case block C2 is picked up as being wrong (LHS does not complete)")
+    (is (validate-chunk c3)       "Case block C3 is picked up as being right (LHS and terminal both complete)")))x
 
 (deftest async-test-cond+-is-correct?
   (let [c1 "{:async true :effect (req (cond+ [a (damage state :runner)] [:else (effect-completed state side eid)]))}"
