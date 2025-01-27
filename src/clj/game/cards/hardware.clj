@@ -346,30 +346,21 @@
                   :effect (effect (add-icon card target "B" (faction-label card))
                                   (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))}
      :leave-play (effect (remove-icon card))
-     :abilities [(assoc
-                   (break-sub
-                     [(->c :trash-can)] 2 "All"
-                     {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
-                                  (some #(same-card? boomerang-target (:ice %)) (:encounters @state))
-                                  true))}) ; When eg. flipped by Assimilator
-                   :effect
-                   (req (wait-for
-                          (trash state side (make-eid state eid) card
-                                 {:cause :ability-cost
-                                  :cause-card card
-                                  :unpreventable true})
-                          (continue-ability
-                            state :runner
-                            (when-let [[boomerang] async-result]
-                              (break-sub
-                                nil 2 "All"
-                                {:additional-ability
-                                 {:effect
-                                  (effect
+     :abilities [(break-sub
+                   [(->c :trash-can)] 2 "All"
+                   {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
+                                (some #(same-card? boomerang-target (:ice %)) (:encounters @state))
+                                true)) ; When eg. flipped by Assimilator
+                    :additional-ability
+                    {:effect (req (let [source (or card (first (get-in eid [:cost-paid :trash-can :paid/targets])))]
+                                    ;; special note: since the source is trashed, auto-pump-impl doesn't pass it on
+                                    ;; to the additional-abi in a nice way. This is a bit of a hack to fix that.
+                                    ;; If we ever rework costs, this might need to be adjusted -nbk, 2025
                                     (register-events
-                                      boomerang
+                                      state side source
                                       [{:event :run-ends
                                         :duration :end-of-run
+                                        :unregister-once-resolved true
                                         :optional
                                         {:req (req (and (:successful target)
                                                         (not (zone-locked? state :runner :discard))
@@ -381,8 +372,7 @@
                                           :effect (effect (move (some #(when (= (:title card) (:title %)) %)
                                                                       (:discard runner))
                                                                 :deck)
-                                                          (shuffle! :deck))}}}]))}}))
-                            card nil))))]}))
+                                                          (shuffle! :deck))}}}])))}})]}))
 
 (defcard "Box-E"
   {:static-abilities [(mu+ 2)
