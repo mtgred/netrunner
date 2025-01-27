@@ -581,8 +581,10 @@
                                        :card2 moved-b})
       (doseq [moved [moved-a moved-b]]
         (when (installed? moved)
-          (when-let [dre (:derezzed-events (card-def moved))]
-            (register-events state side moved (map #(assoc % :condition :derezzed) dre)))))
+          (let [cdef (card-def moved)
+                dre (:derezzed-events cdef)]
+            (update! state side (assoc moved :advanceable (:advanceable cdef)))
+            (when dre (register-events state side moved (map #(assoc % :condition :derezzed) dre))))))
       (when (and (:run @state)
                  (or (ice? a)
                      (ice? b)))
