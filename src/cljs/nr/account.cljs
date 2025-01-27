@@ -291,6 +291,7 @@
                             {:name (tr [:pronouns.heit "He/it"]) :ref "heit"}
                             {:name (tr [:pronouns.hethey "He/they"]) :ref "hethey"}
                             {:name (tr [:pronouns.it "It"]) :ref "it"}
+                            {:name (tr [:pronouns.ne "Fae/faer"]) :ref "faefaer"}
                             {:name (tr [:pronouns.ne "Ne/nem"]) :ref "ne"}
                             {:name (tr [:pronouns.ve "Ve/ver"]) :ref "ve"}
                             {:name (tr [:pronouns.ey "Ey/em"]) :ref "ey"}

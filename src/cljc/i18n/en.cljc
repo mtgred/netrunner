@@ -241,6 +241,7 @@
               :he "He/him"
               :heit "He/it"
               :hethey "He/they"
+              :faefaer "Fae/Faer"
               :it "It"
               :ne "Ne/nem"
               :ve "Ve/ver"
