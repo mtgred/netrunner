@@ -609,6 +609,29 @@
         (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
         (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
 
+(deftest boomerang-with-auto-break-still-shuffles-back
+  (do-game
+    (new-game {:runner {:deck ["Boomerang"]}
+               :corp {:deck ["Ice Wall" "Hedge Fund"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Boomerang")
+    (let [icew (get-ice state :hq 0)
+          boom (get-hardware state 0)]
+      (click-card state :runner icew)
+      (run-on state :hq)
+      (rez state :corp icew)
+      (run-continue state)
+      (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
+      (core/play-dynamic-ability state :runner {:dynamic "auto-pump-and-break" :card (refresh boom)})
+      (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
+      (run-continue-until state :success)
+      (click-prompt state :runner "No action")
+      (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
+      (click-prompt state :runner "Yes")
+      (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
+      (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
+
 (deftest boomerang-only-triggers-once-with-virtuoso-breach
   (do-game
     (new-game {:runner {:hand ["Boomerang" "Virtuoso"]
