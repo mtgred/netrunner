@@ -4,6 +4,8 @@
   [:div.landing.panel.content-page.blue-shade
    [:h2 "Welcome!"]
    [:p "This website is for the facilitation of Netrunner games online. Please note that jinteki.net does not provide a complete implementation of the " [:u "rules"] " of the game."]
+   [:h4 "Making Jinteki.net better:"]
+   [:p "Jinteki.net is the product of voluntary contributions made by many individuals. If you wish to make Jinteki.net better, found a bug and need to report an issue, or just like reading code, simply visit " [:a {:href "https://github.com/mtgred/netrunner" :target "_blank"} "our github page."]]
    [:h4 "The use of Jinteki.net:"]
    [:ul.list.compact
     [:li "Please be respectful. Any disrespectful conduct will not be tolerated regardless of the circumstance or rationale."]
