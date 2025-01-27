@@ -7399,6 +7399,26 @@
     (is (= "Tatu-Bola" (-> (get-corp) :hand first :title)))
     (is (= "Guard" (:title (get-ice state :archives 0))))))
 
+(deftest tatu-bola-ice-wall
+  (do-game
+    (new-game {:corp {:hand ["Tatu-Bola" "Ice Wall"]}})
+    (play-from-hand state :corp "Tatu-Bola" "Archives")
+    (take-credits state :corp)
+    (run-on state "Archives")
+    (rez state :corp (get-ice state :archives 0))
+    (run-continue state)
+    (run-continue state :movement)
+    (is (changed? [(:credit (get-corp)) 4]
+          (click-prompt state :corp "Yes")
+          (click-prompt state :corp "Ice Wall"))
+        "Corp gained 4 credits")
+    (is (= "Tatu-Bola" (-> (get-corp) :hand first :title)))
+    (is (= "Ice Wall" (:title (get-ice state :archives 0))))
+    (run-continue-until state :success)
+    (take-credits state :runner)
+    (click-advance state :corp (get-ice state :archives 0))
+    (is (= 1 (get-counters (get-ice state :archives 0) :advancement)) "was able to adv ice wall")))
+
 (deftest tatu-bola-fake-prompt
   (do-game
     (new-game {:corp {:hand ["Tatu-Bola" "Hedge Fund"]}})
