@@ -401,7 +401,7 @@
                             (continue state side nil)))))))
 
 (defn- play-auto-pump-and-break-impl
-  [state side sub-groups-to-break current-ice break-ability]
+  [state side payment-eid sub-groups-to-break current-ice break-ability]
   {:async true
    :effect (req
              (let [subs-to-break (first sub-groups-to-break)
@@ -413,12 +413,12 @@
                      event-args (when on-break-subs
                                   {:card-abilities (ability-as-handler ice on-break-subs)})]
                (wait-for
-                 (resolve-ability state side (make-eid state {:source card :source-type :ability})
+                 (resolve-ability state side (make-eid state payment-eid)
                                   (:additional-ability break-ability) (get-card state card) nil)
                  (wait-for (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice subs-to-break card))
                            (if (empty? sub-groups-to-break)
                              (effect-completed state side eid)
-                             (continue-ability state side (play-auto-pump-and-break-impl state side sub-groups-to-break current-ice break-ability) card nil)))))))})
+                             (continue-ability state side (play-auto-pump-and-break-impl state side payment-eid sub-groups-to-break current-ice break-ability) card nil)))))))})
 
 (defn play-auto-pump-and-break
   "Use play-auto-pump and then break all available subroutines"
@@ -487,11 +487,12 @@
         (wait-for (pay state side (make-eid state eid) card total-cost)
                   (dotimes [_ times-pump]
                     (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
-                  (let [payment-str (:msg async-result)
+                  (let [payment-eid async-result
+                        payment-str (:msg payment-eid)
                         sub-groups-to-break (if (pos? subs-broken-at-once)
                                               (partition subs-broken-at-once subs-broken-at-once nil (remove :broken (:subroutines current-ice)))
                                               [(remove :broken (:subroutines current-ice))])]
-                    (wait-for (resolve-ability state side (play-auto-pump-and-break-impl state side sub-groups-to-break current-ice break-ability) card nil)
+                    (wait-for (resolve-ability state side (play-auto-pump-and-break-impl state side payment-eid sub-groups-to-break current-ice break-ability) card nil)
                               (system-msg state side
                                           (if (pos? times-pump)
                                             (str (build-spend-msg payment-str "increase")
