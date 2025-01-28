@@ -49,11 +49,11 @@
                                 shuffle-into-rd-effect]]
    [game.core.tags :refer [gain-tags]]
    [game.core.threat :refer [threat threat-level]]
-   [game.core.to-string :refer [card-str]]
+   [game.core.to-string :refer [card-str card-str-map]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
    [game.core.virus :refer [number-of-virus-counters]]
-   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.macros :refer [continue-ability effect msg map-msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]))
 
@@ -1187,7 +1187,7 @@
 
 (defcard "Government Subsidy"
   {:on-play
-   {:msg "gain 15 [Credits]"
+   {:msg {:gain-credits 15}
     :async true
     :effect (effect (gain-credits eid 15))}})
 
@@ -1265,12 +1265,12 @@
                                 :all true
                                 :card #(and (corp? %)
                                             (in-hand? %))}
-                      :msg "trash a card from HQ and gain 10 [Credits]"
+                      :msg {:trash-from-hand 1 :gain-credits 10}
                       :async true
                       :effect (req (wait-for (trash-cards state side targets {:cause-card card})
                                              (gain-credits state side eid 10)))} card nil)
                    (do
-                     (system-msg state side (str "uses " (:title card) " to gain 10 [Credits]"))
+                     (system-msg state side {:type :use :card (:title card) :effect {:gain-credits 10}})
                      (gain-credits state side eid 10))))}})
 
 (defcard "Hard-Hitting News"
@@ -1324,7 +1324,7 @@
 
 (defcard "Hedge Fund"
   {:on-play
-   {:msg "gain 9 [Credits]"
+   {:msg {:gain-credits 9}
     :async true
     :effect (effect (gain-credits eid 9))}})
 
@@ -1832,7 +1832,7 @@
 
 (defcard "Neurospike"
   {:on-play
-   {:msg (msg "do " (:scored-agenda corp-reg 0) " net damage")
+   {:msg (map-msg :deal-net (:scored-agenda corp-reg 0))
     :change-in-game-state (req (pos? (:scored-agenda corp-reg 0)))
     :async true
     :effect (effect (damage eid :net (:scored-agenda corp-reg 0) {:card card}))}})
@@ -2069,7 +2069,13 @@
                    "Draw 3 cards"
                    (when tagged
                      "Gain 3 [Credits] and draw 3 cards")])
-    :msg (msg (decapitalize target))
+    :msg (msg (case target
+                   "Gain 3 [Credits]"
+                   {:gain-credits 3}
+                   "Draw 3 cards"
+                   {:draw-cards 3}
+                   "Gain 3 [Credits] and draw 3 cards"
+                   {:gain-credits 3 :draw-cards 3}))
     :async true
     :effect (req (case target
                    "Gain 3 [Credits]"
@@ -2187,7 +2193,7 @@
               [{:option "Take 1 tag"
                 :ability {:async true
                           :display-side :corp
-                          :msg "give the runner 1 tag"
+                          :msg {:give-tag 1}
                           :effect (req (gain-tags state :corp eid 1))}}
                (cost-option [(->c :credit 8)] :runner)])})
 
@@ -2389,7 +2395,7 @@
     :choices {:req (req (and (installed? target)
                              (or (program? target)
                                  (hardware? target))))}
-    :msg (msg "trash " (card-str state target))
+    :msg (map-msg :trash (card-str-map state target))
     :async true
     :effect (effect (trash eid target {:cause-card card}))}})
 
@@ -2562,7 +2568,7 @@
     :choices {:card #(and (corp? %)
                           (installed? %)
                           (not= :this-turn (installed? %)))}
-    :msg (msg "place 2 advancement tokens on " (card-str state target))
+    :msg (map-msg :place-counter [:adv 2 :target (card-str-map state target)])
     :async true
     :effect (effect (add-prop eid target :advance-counter 2 {:placed true}))}})
 
@@ -2773,8 +2779,8 @@
    {:async true
     :effect (req (wait-for
                    (draw state side 3)
-                   (system-msg state side (str "uses " (:title card) " to draw "
-                                               (quantify (count async-result) "card")))
+                   (system-msg state side {:type :use :card (:title card)
+                                           :effect {:draw-cards (count async-result)}})
                    (continue-ability
                      state side
                      {:prompt "Choose 2 cards in HQ to shuffle into R&D"
@@ -2782,7 +2788,7 @@
                                 :all true
                                 :card #(and (corp? %)
                                             (in-hand? %))}
-                      :msg (msg "shuffle " (quantify (count targets) "card") " from HQ into R&D")
+                      :msg (map-msg :shuffle-from-hand-to-deck (count targets))
                       :effect (req (doseq [c targets]
                                      (move state side c :deck))
                                    (shuffle! state side :deck))}

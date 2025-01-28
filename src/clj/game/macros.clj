@@ -99,6 +99,9 @@
 (defmacro map-msg [& expr]
   `(req (hash-map ~@expr)))
 
+(defmacro map-msg-apply [& expr]
+  `(req ~@expr))
+
 (defmacro wait-for
   [& body]
   (let [[binds action] (if (vector? (first body))

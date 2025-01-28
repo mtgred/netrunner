@@ -54,7 +54,7 @@
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
-   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.macros :refer [continue-ability effect msg map-msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]))
 
@@ -112,7 +112,7 @@
          :async true
          :effect (req (if (:did-steal context)
                         (do (gain-tags state :corp eid 2)
-                            (system-msg state :corp (str "uses " (:title card) " to give the Runner 2 tags")))
+                            (system-msg state :corp {:type :use :card (:title card) :effect {:give-tag 2}}))
                         (effect-completed state side eid)))}]
   {:events [ability]
    :on-trash
@@ -160,7 +160,7 @@
                              this-server))
               :yes-ability
               {:async true
-               :msg "end the run"
+               :msg {:end-run true}
                :cost [(->c :credit 2) (->c :trash-from-hand 2)]
                :effect (req (end-run state side eid card))}}}]})
 
@@ -1074,13 +1074,13 @@
               {:prompt "Choose a card"
                :choices (req (cancellable (filter #(not (agenda? %)) (:deck corp))
                                           :sorted))
-               :msg (msg "reveal " (:title target) " from R&D and add it to HQ")
+               :msg (map-msg :add-from-rnd (:title target))
                :async true
                :effect (req (wait-for
-                              (reveal state side target)
-                              (shuffle! state side :deck)
-                              (move state side target :hand)
-                              (effect-completed state side eid)))}
+                             (reveal state side target)
+                             (shuffle! state side :deck)
+                             (move state side target :hand)
+                             (effect-completed state side eid)))}
               :no-ability
               {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]})
 
@@ -1101,7 +1101,7 @@
                             [(and (= target "Spend [Click][Click]")
                                   (can-pay? state :runner eid card nil [(->c :click 2)]))
                              (wait-for (pay state side (make-eid state eid) card (->c :click 2))
-                                       (system-msg state side (:msg async-result))
+                                       (system-msg state side  {:cost (:msg async-result)})
                                        (effect-completed state :runner eid))]
                             [(and (= target "Pay 5 [Credits]")
                                   (can-pay? state :runner eid card nil [(->c :credit 5)]))
@@ -1109,7 +1109,7 @@
                                        (system-msg state side (:msg async-result))
                                        (effect-completed state :runner eid))]
                             [:else
-                             (system-msg state :corp (str "uses " (:title card) " to end the run"))
+                             (system-msg state :corp {:type :use :card (:title card) :effect {:end-run true}})
                              (end-run state :corp eid card)]))}]})
 
 (defcard "Manta Grid"

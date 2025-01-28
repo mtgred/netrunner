@@ -146,7 +146,7 @@
 (def end-the-run
   "Basic ETR subroutine"
   {:label "End the run"
-   :msg "end the run"
+   :msg {:end-run true}
    :async true
    :effect (effect (end-run :corp eid card))})
 
@@ -154,7 +154,7 @@
   "ETR subroutine if tagged"
   {:label "End the run if the Runner is tagged"
    :req (req tagged)
-   :msg "end the run"
+   :msg {:end-run true}
    :async true
    :effect (effect (end-run :corp eid card))})
 
@@ -249,7 +249,7 @@
   "Basic give runner n tags subroutine."
   [n]
   {:label (str "Give the Runner " (quantify n "tag"))
-   :msg (str "give the Runner " (quantify n "tag"))
+   :msg {:give-tag n}
    :async true
    :effect (effect (gain-tags :corp eid n))})
 
@@ -285,7 +285,7 @@
   "Gain specified amount of credits"
   [credits]
   {:label (str "Gain " credits " [Credits]")
-   :msg (str "gain " credits " [Credits]")
+   :msg {:gain-credits credits}
    :async true
    :effect (effect (gain-credits eid credits))})
 
@@ -327,7 +327,7 @@
   "Runner loses credits effect"
   [credits]
   {:label (str "Make the Runner lose " credits " [Credits]")
-   :msg (str "force the Runner to lose " credits " [Credits]")
+   :msg {:lose-credits credits}
    :async true
    :effect (effect (lose-credits :runner eid credits))})
 
@@ -1470,7 +1470,7 @@
   {:subroutines
    [{:label "Do 1 net damage"
      :async true
-     :msg "do 1 net damage"
+     :msg {:deal-net 1}
      :effect (req (wait-for
                     (damage state :corp (make-eid state eid) :net 1 {:card card})
                     (let [[trashed-card] async-result]
@@ -1840,8 +1840,8 @@
 
 (defcard "Funhouse"
   {:on-encounter {:msg (msg (if (= target "Take 1 tag")
-                              (str "force the runner to " (decapitalize target) " on encountering it")
-                              (decapitalize target)))
+                              {:tag-force 1}
+                              {:end-run true}))
                   :player :runner
                   :prompt "Choose one"
                   :choices (req [(when-not (forced-to-avoid-tags? state side)
@@ -1861,8 +1861,8 @@
                                  (when (can-pay? state :runner eid card nil [(->c :credit 4)])
                                    "Pay 4 [Credits]")])
                   :msg (msg (if (= target "Pay 4 [Credits]")
-                              (str "force the runner to " (decapitalize target))
-                              "give the runner 1 tag"))
+                              {:credits-force 4}
+                              {:give-tag 1}))
                   :effect (req (if (= "Take 1 tag" target)
                                  (gain-tags state :corp eid 1)
                                  (wait-for (pay state side (make-eid state eid) card (->c :credit 4))
@@ -3412,7 +3412,7 @@
 
 (defcard "Ping"
   {:on-rez {:req (req (and run this-server))
-            :msg "give the Runner 1 tag"
+            :msg {:give-tag 1}
             :async true
             :effect (effect (gain-tags :corp eid 1))}
    :subroutines [end-the-run]})
@@ -4491,7 +4491,7 @@
   {:subroutines [(runner-loses-credits 3)
                  {:label "End the run if the Runner has 6 [Credits] or less"
                   :req (req (< (:credit runner) 7))
-                  :msg "end the run"
+                  :msg {:end-run true}
                   :async true
                   :effect (effect (end-run :corp eid card))}]})
 

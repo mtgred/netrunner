@@ -49,11 +49,11 @@
    [game.core.shuffling :refer [shuffle! shuffle-into-deck
                                 shuffle-into-rd-effect]]
    [game.core.tags :refer [gain-tags]]
-   [game.core.to-string :refer [card-str]]
+   [game.core.to-string :refer [card-str card-str-map]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
    [game.core.winning :refer [check-win-by-agenda]]
-   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.macros :refer [continue-ability effect msg map-msg map-msg-apply req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]))
 
@@ -101,7 +101,7 @@
                     (all-active-installed state :runner)))
     :choices {:card #(and (installed? %)
                           (resource? %))}
-    :msg (msg "trash " (card-str state target))
+    :msg (map-msg :trash (card-str-map state target))
     :async true
     :effect (effect (trash eid target {:cause-card card}))}})
 
@@ -1263,7 +1263,7 @@
     :choices {:max (req (count (:hand corp)))
               :card #(and (corp? %)
                           (in-hand? %))}
-    :msg (msg "trash " (quantify (count targets) "card") " from HQ")
+    :msg (map-msg :trash-from-hand (count targets))
     :async true
     :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash any cards from HQ"))
                            (shuffle-into-rd-effect eid card 3))
@@ -1272,8 +1272,7 @@
 
 (defcard "Luminal Transubstantiation"
   {:on-score
-   {:silent (req true)
-    :effect (req (gain-clicks state :corp 3)
+   {:effect (req (gain-clicks state :corp 3)
                  (register-turn-flag!
                    state side card :can-score
                    (fn [state side card]
@@ -1443,7 +1442,7 @@
 (defcard "Offworld Office"
   {:on-score
    {:async true
-    :msg "gain 7 [Credits]"
+    :msg {:gain-credits 7}
     :effect (effect (gain-credits :corp eid 7))}})
 
 (defcard "Ontological Dependence"
@@ -1465,7 +1464,7 @@
 
 (defcard "Orbital Superiority"
   {:on-score
-   {:msg (msg (if (is-tagged? state) "do 4 meat damage" "give the Runner 1 tag"))
+   {:msg (map-msg-apply (if (is-tagged? state) {:take-meat 4} {:gain-tag 1}))
     :async true
     :effect (req (if (is-tagged? state)
                    (damage state :corp eid :meat 4 {:card card})
@@ -2175,7 +2174,7 @@
    :on-score
    {:optional
     {:prompt "Draw 2 cards?"
-     :yes-ability {:msg "draw 2 cards"
+     :yes-ability {:msg {:draw-cards 2}
                    :async true
                    :effect (effect (draw :corp eid 2))}}}})
 
@@ -2253,7 +2252,7 @@
 (defcard "Tomorrow's Headline"
   (let [ability
         {:interactive (req true)
-         :msg "give the Runner 1 tag"
+         :msg {:give-tag 1}
          :async true
          :effect (req (gain-tags state :corp eid 1))}]
     {:on-score ability

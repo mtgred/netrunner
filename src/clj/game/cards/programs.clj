@@ -61,7 +61,7 @@
    [game.core.trace :refer [force-base]]
    [game.core.update :refer [update!]]
    [game.core.virus :refer [get-virus-counters]]
-   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.macros :refer [continue-ability effect msg map-msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]))
 
@@ -883,7 +883,7 @@
               :waiting-prompt true
               :autoresolve (get-autoresolve :auto-place-counter)
               :prompt (msg "Place 1 virus counter on " (:title card) "?")
-              :yes-ability {:msg "place 1 virus counter on itself"
+              :yes-ability {:msg {:place-counter [:virus 1]}
                             :effect (effect (add-counter card :virus 1))}
               :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to place 1 virus counter on itself")))}}}
             {:event :successful-run
@@ -893,7 +893,8 @@
                               card [(breach-access-bonus :rd (max 0 (get-virus-counters state card)) {:duration :end-of-run})]))}]
    :abilities [{:action true
                 :cost [(->c :click 1)]
-                :msg "make a run on R&D"
+                :label "Make a run on R&D"
+                :msg {:make-run [:servers :rd]}
                 :makes-run true
                 :async true
                 :effect (req (make-run state side eid :rd card))}
@@ -1465,7 +1466,7 @@
                 :req (req (pos? (get-virus-counters state card)))
                 :cost [(->c :click 1) (->c :trash-can)]
                 :label "Gain 2 [Credits] for each hosted virus counter"
-                :msg (msg (str "gain " (* 2 (get-virus-counters state card)) " [Credits]"))
+                :msg (map-msg :gain-credits (* 2 (get-virus-counters state card)))
                 :async true
                 :effect (effect (gain-credits eid (* 2 (get-virus-counters state card))))}]})
 
@@ -1961,13 +1962,13 @@
 (defcard "Leech"
   {:events [{:event :successful-run
              :req (req (is-central? (target-server context)))
-             :msg "place 1 virus counter on itself"
+             :msg {:place-counter [:virus 1]}
              :effect (req (add-counter state side card :virus 1))}]
    :abilities [{:cost [(->c :virus 1)]
                 :label "Give -1 strength to current piece of ice"
                 :req (req (active-encounter? state))
                 :keep-menu-open :while-virus-tokens-left
-                :msg (msg "give -1 strength to " (:title current-ice))
+                :msg (map-msg :reduce-str (:title current-ice))
                 :effect (effect (pump-ice current-ice -1))}]})
 
 (defcard "Leprechaun"
