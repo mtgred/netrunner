@@ -21,7 +21,6 @@
 ;;
 ;; --nbk, Jan 2025
 
-
 (def card-base-str "src/clj/game/cards/")
 (def relevant-cards-files ["basic.clj" "agendas.clj" "assets.clj" "events.clj" "hardware.clj"
                            "ice.clj" "identities.clj" "operations.clj" "programs.clj"
@@ -68,7 +67,7 @@
                             ;; and TLDR, which contains a semicolon in the title
                             sans-comments (map first (map #(str/split % #"(?<!(tagged)|(TL));" 2) lines))]
                         (str/join "\n" sans-comments)))]
-    (mapv restitch-fn split-file)))
+    (map restitch-fn split-file)))
 
 (defn- get-fn-name
   "extracts a function name from a parsed segment of code"
@@ -173,7 +172,6 @@
   (when-not (= meta [:keyword "ignore-async-check"])
     body))
 
-;; TODO - check function metadata for ignore-async-check, just incase we purposely break shit
 (defn- is-valid-chunk?
   "checks if a chunk of code is 'valid' in terms of sync/async classification.
    This is intended to be at least 99% accurate, but if something is getting missed,
@@ -225,7 +223,6 @@
 
 (deftest cards-are-async-test
   (doseq [fname (take 15 relevant-cards-files)]
-    (println "checking" fname)
     (let [f (slurp (str card-base-str fname))
           chunks (rest (stitch-and-split-card-files f))]
       (let [invalids (->> chunks (map invalid-chunk?) (filterv identity))]
@@ -238,7 +235,6 @@
         c2 "(defcard \\b {:async true :effect (req nil)})"]
     (is (not (invalid-chunk? c1)) "c1 is valid because we ignore the async check")
     (is (invalid-chunk? c2) "c2 is invalid because we do not ignore the async check")))
-
 
 (deftest async-test-defferred-fns-are-correct
   (let [c1 "(defcard \"c1\" (let [x (req (do-something state side eid))] {:async true :effect x}))"
