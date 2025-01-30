@@ -324,6 +324,7 @@
                                (or (installed? target)
                                    (in-hand? target))))}
       :msg (msg "score " (card-str state target {:visible true}) ", ignoring all restrictions")
+      :async true
       :effect (effect (score eid target {:no-req true :ignore-turn true}))}
      (make-card {:title "the '/score' command"}) nil)))
 
@@ -408,6 +409,7 @@
       state side
       {:prompt "Choose a card to trash"
        :choices {:card #(f %)}
+       :async true
        :effect (effect (trash eid target {:unpreventable true}))}
       nil nil)))
 

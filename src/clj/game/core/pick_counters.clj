@@ -111,8 +111,8 @@
                            pay-function (if (= :custom pay-credits-type)
                                           (-> target card-def :interactions :pay-credits :custom)
                                           (take-counters-of-type pay-credits-type))
-                           custom-ability {:async true
-                                           :effect pay-function}
+                           custom-ability ^:ignore-async-check  {:async true
+                                                                 :effect pay-function}
                            neweid (make-eid state outereid)
                            providing-card target]
                        (wait-for (resolve-ability state side neweid custom-ability providing-card [card])
@@ -169,8 +169,8 @@
      (if (or (not (pos? target-count))        ; there is a limit
              (<= target-count counter-count)  ; paid everything
              (zero? (count provider-cards)))  ; no more additional credit sources found
-         {:async true
-          :effect pay-rest}
+       {:async true
+        :effect pay-rest}
          {:async true
           :prompt (str "Choose a credit providing card ("
                       counter-count (when (and target-count (pos? target-count))
@@ -185,8 +185,8 @@
                              pay-function (if (= :custom pay-credits-type)
                                             (-> target card-def :interactions :pay-credits :custom)
                                             (take-counters-of-type pay-credits-type))
-                             custom-ability {:async true
-                                             :effect pay-function}
+                             custom-ability ^:ignore-async-check {:async true
+                                                                  :effect pay-function}
                              neweid (make-eid state outereid)
                              providing-card target]
                          (wait-for (resolve-ability state side neweid custom-ability providing-card [card])

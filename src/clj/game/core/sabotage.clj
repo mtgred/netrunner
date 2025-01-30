@@ -42,6 +42,7 @@
 (defn sabotage-ability
   [n]
   (let [choosing-ab (fn [forced-hq]
+                      ^:ignore-async-check
                       {:waiting-prompt true
                        :player :corp
                        :prompt (choosing-prompt-req n)

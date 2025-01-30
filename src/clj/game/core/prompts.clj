@@ -28,15 +28,15 @@
     {:keys [waiting-prompt prompt-type show-discard cancel-effect end-effect targets]}]
    (let [prompt (if (string? message) message (message state side eid card targets))
          choices (choice-parser choices)
-         newitem {:eid eid
-                  :msg prompt
-                  :choices choices
-                  :effect f
-                  :card card
-                  :prompt-type (or prompt-type :other)
-                  :show-discard show-discard
-                  :cancel-effect cancel-effect
-                  :end-effect end-effect}]
+         newitem ^:ignore-async-check {:eid eid
+                                       :msg prompt
+                                       :choices choices
+                                       :effect f
+                                       :card card
+                                       :prompt-type (or prompt-type :other)
+                                       :show-discard show-discard
+                                       :cancel-effect cancel-effect
+                                       :end-effect end-effect}]
      (when (or (#{:waiting :run} prompt-type)
                (:number choices)
                (:card-title choices)
