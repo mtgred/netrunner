@@ -1,7 +1,6 @@
 (ns game.core.async-test
   (:require
    [clojure.test :refer :all]
-   [clojure.java.io :as io]
    [instaparse.core :as insta]
    [clojure.string :as str]))
 
@@ -22,23 +21,22 @@
 ;; --nbk, Jan 2025
 
 (def card-base-str "src/clj/game/cards/")
-(def relevant-cards-files ["basic.clj" "agendas.clj" "assets.clj" "events.clj" "hardware.clj"
-                           "ice.clj" "identities.clj" "operations.clj" "programs.clj"
-                           "resources.clj" "upgrades.clj"])
+(def core-base-str "src/clj/game/core/")
 
 (def clojure-grammar
   (insta/parser
     "clojure  = form+
-    <form>      = <ws> (anon-fn | fn | list | vector | map | set | symbol | literal | metadata | comment) <ws>
+    <form>      = <ws> (anon-fn | fn | list | vector | map | set | symbol | literal | metadata | comment | unquote) <ws>
     fn          = <'(' ws> form* <ws ')'>
     <anon-fn>   = <ws '#'> fn
-    list        = <ws '\\''> fn
+    list        = <ws ('\\''|'`')> fn
     vector      = <'[' ws> form* <ws ']'>
     map         = <'{' ws> (form form)* <'}'>
     set         = <'#{' ws> form* <'}'>
     comment     = <'#_' form>
-    <symbol>    = '@'? identifier
-    <identifier>  = #'[\\'&%a-zA-Z_+\\-*/<>=?!\\.][%a-zA-Z0-9_+\\-*/<>=?!\\.]*'
+    unquote     = <'~' form>
+    <symbol>    = <('#\\''|'@')?> identifier
+    <identifier>  = #'[\\'&%a-zA-Z_+\\-*/<>=?!\\.][%a-zA-Z0-9_+\\-*/<>=?!\\.#]*'
     (* throw away the content of everything except for keywords and strings *)
     <literal>   = number | string | truthy | keyword | character
     number      = <#'-?[0-9]+'>
@@ -46,7 +44,7 @@
     truthy      = <'true' | 'false' | 'nil'>
     keyword     = <':'> identifier
     (* I doubt we will ever use any of these, but it can't hurt *)
-    character   = <#'\\\\[a-zA-Z0-9]'
+    character   = <#'\\\\[a-zA-Z0-9#]'
                  | #'\\\\newline'
                  | #'\\\\space'
                  | #'\\\\tab'
@@ -60,7 +58,7 @@
 
 (defn- stitch-and-split-card-files
   [file]
-  (let [split-file (str/split file #"(?=\(def)")
+  (let [split-file (str/split file #"(?=\n\(def)")
         restitch-fn (fn [chunk]
                       (let [lines (str/split-lines chunk)
                             ;; special case specifically for the hydra subs, which have semicolons,
@@ -70,11 +68,15 @@
     (map restitch-fn split-file)))
 
 (defn- get-fn-name
-  "extracts a function name from a parsed segment of code"
+  "extracts a function name from a parsed segment of code
+  expects something like [:fn ide], where ide is either a string, or [:string ...],
+  and may also be wrapped in a [:clojure] tag, like [:clojure [:fn ide]]"
   [parsed]
-  (let [[t s :as ide] (nth (if (= :clojure (first parsed)) (second parsed) parsed) 2)]
-    (if (= :string t) s
-        ide)))
+  (let [[_ sig [t s :as ide] multi] (if (= :clojure (first parsed)) (second parsed) parsed)]
+    (cond
+      (= :string t) s
+      (= sig "defmethod") [ide multi]
+      :else ide)))
 
 (defn- assemble-keywords
   "convert chunks into keywords where appropriate"
@@ -102,7 +104,7 @@
 
 (def safe-fns
   "functions which probably contain an eid, but do not complete it"
-  #{"can-pay?" "cost-value"})
+  #{"can-pay?" "cost-value" "recurring-fn"})
 
 (defn- contains-eid?
   [chunk depth]
@@ -180,12 +182,15 @@
   ([[sig :as chunk] memory]
    (when (= :fn sig) (bank-fn! chunk memory))
    (cond
-     (contains? #{:string :keyword :number :character :truthy :list :comment} sig) :fine
+     (contains? #{:string :keyword :number :character :truthy :list :comment :unquote} sig) :fine
      (string? chunk) :fine
      (contains? #{:fn :vector :set} sig) (every? #(is-valid-chunk? % memory) (rest chunk))
      ;; maps -> require more complicated logic
      (= :map sig) (is-valid-chunk? (rest chunk) memory :map)
      ;; note, metadata can signify that a function does not need to be checked
+     ;; this is primarily for things which defer to other files, written like:
+     ;; {:async true :effect fn-from-another-file}. Resolving that properly is
+     ;; way beyond the scope of this test :) - nbk, 2025
      (= :metadata sig)
      (if-let [next-chunk (read-metadata chunk)] (is-valid-chunk? next-chunk memory) :fine)
      :else nil))
@@ -216,14 +221,37 @@
 
 (defn- invalid-chunk?
   [chunk]
-  (let [[sig body :as parsed] (clojure-grammar chunk)]
-    (if-not (is-valid-chunk? body)
-      (get-fn-name body)
-      nil)))
+  (let [parsed (clojure-grammar chunk)]
+    ;; just in case there are parsing errors, this should spit out something
+    ;; that's usable enough to figure out what we're missing in the grammar
+    ;; (or if some fancy new specs get added to clojure)
+    (if (= (str (type parsed)) "class instaparse.gll.Failure")
+      (do (println "unable to parse chunk: " chunk)
+          (println parsed)
+          "[parse-error]")
+      (let [[sig body] parsed]
+        (if-not (is-valid-chunk? body)
+          (get-fn-name body)
+          nil)))))
+
+;; note: this SHOULD avoid emacs autosave and backup files, but I'm not sure if it will
+;; potentially pick up backup files from other editors. If that happens, I can just adjust
+;; the regex later. -nbk, 2025
+(defn get-clojure-files [d]
+  (sort (filter #(re-matches #"^.*\.clj$" %) (seq (.list (clojure.java.io/file d))))))
 
 (deftest cards-are-async-test
-  (doseq [fname (take 15 relevant-cards-files)]
+  (doseq [fname (get-clojure-files card-base-str)]
     (let [f (slurp (str card-base-str fname))
+          chunks (rest (stitch-and-split-card-files f))]
+      (let [invalids (->> chunks (map invalid-chunk?) (filterv identity))]
+        (is (empty? invalids)
+            (str "the following definitions in " fname
+                 " may have sync/async issues: " (str/join ", " invalids)))))))
+
+(deftest core-fns-are-async-test
+  (doseq [fname (get-clojure-files core-base-str)]
+    (let [f (slurp (str core-base-str fname))
           chunks (rest (stitch-and-split-card-files f))]
       (let [invalids (->> chunks (map invalid-chunk?) (filterv identity))]
         (is (empty? invalids)
