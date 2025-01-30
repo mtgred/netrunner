@@ -88,6 +88,7 @@
                    :resource-paths ["target"]
                    :clean-targets ^{:protect false} ["target"]
                    :jvm-opts ["-Djdk.attach.allowAttachSelf"
+                              "-XX:TieredStopAtLevel=4"
                               "-XX:+UnlockDiagnosticVMOptions"
                               "-XX:-OmitStackTraceInFastThrow"
                               "-XX:+DebugNonSafepoints"]}
