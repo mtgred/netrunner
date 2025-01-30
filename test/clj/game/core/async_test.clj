@@ -5,6 +5,23 @@
    [instaparse.core :as insta]
    [clojure.string :as str]))
 
+;; This is intended to be a (mostly) exhaustive test for if cards that are
+;; marked as async to in-fact complete eids, and if cards that are not
+;; are also correct. I'm aiming to be accurate, and I think it's pretty much there.
+;;
+;; I currently don't have support for macros (mainly, just the tokens).
+;;
+;; If something is incorrect, you can prevent it being evaluated by adding
+;; the following metadata to a card-def: ^:ignore-async-check
+;; like: (defcard "Fall Guy" ^:ignore-async-check {:effect (req (do-something-cool))})
+;;
+;; There's a list of 'safe fns' (right-most rns that can contain an eid) and
+;; terminal fns. If something gets caught out at some point in the future, it probably
+;; means that one of these needs to be updated.
+;;
+;; --nbk, Jan 2025
+
+
 (def card-base-str "src/clj/game/cards/")
 (def relevant-cards-files ["basic.clj" "agendas.clj" "assets.clj" "events.clj" "hardware.clj"
                            "ice.clj" "identities.clj" "operations.clj" "programs.clj"
@@ -38,7 +55,7 @@
                  | #'\\\\formfeed'
                  | #'\\\\return'>
     (*TODO: allow specifying 'ignore-async-check' in metadata*)
-    metadata    = <'^'> map form
+    metadata    = <'^'> form form
     (* handle whitespace*)
     <ws>        = <#'[\\s,\\n]+'?> "))
 
@@ -76,12 +93,25 @@
     (doseq [[_ k _ rhs] (rest bindings)]
       (when (string? k) (swap! memory assoc k rhs)))))
 
+;; TODO - add more things as needed, if issues arise
+(def terminal-fns
+  "functions which should complete an eid, or indicate one needs to be completed"
+  #{"checkpoint" "complete-with-result" "continue-ability" "corp-install"
+    "damage" "draw" "effect-completed" "gain-credits" "gain-tags" "make-run"
+    "reveal" "rez" "resolve-ability" "runner-install"
+    "trash" "trash-cards" "trigger-event-simult" "trigger-event-sync" "wait-for"})
+
+(def safe-fns
+  "functions which probably contain an eid, but do not complete it"
+  #{"can-pay?" "cost-value"})
+
 (defn- contains-eid?
   [chunk depth]
   (some #(cond
            (string? %) (= % "eid")
            (not (vector? %)) nil
            (= (second %) "make-eid") true
+           (contains? safe-fns (second %)) nil
            (contains? #{"assoc" "assoc-in"} (second %)) (contains-eid? % (inc depth))
            (zero? depth) (contains-eid? % 1)
            :else nil)
@@ -98,6 +128,8 @@
     ;; referring to a pre-deffed fn
     (and ide (contains? @memory ide) (< depth 15))
     (completes-eid? (get @memory ide) memory (inc depth))
+    ;; if it's a safe function, it does not complete
+    (contains? safe-fns ide) nil
     ;; both sides of the ifn should complete
     (contains? #{"if" "if-not" "if-let"} ide)
     (let [[_ _ body lhs rhs] chunk]
@@ -126,12 +158,6 @@
     ;; leftover fn - check the RHS member completes
     :else (and (> (count chunk) 2) (completes-eid? (last chunk) memory (inc depth)))))
 
-;; TODO - add more things as needed, if issues arise
-(def terminal-fns #{"checkpoint" "complete-with-result" "continue-ability" "corp-install"
-                    "damage" "draw" "effect-completed" "gain-credits" "gain-tags" "make-run"
-                    "reveal" "rez" "resolve-ability" "runner-install"
-                    "trash" "trash-cards" "trigger-event-simult" "trigger-event-sync" "wait-for"})
-
 (defn- should-be-async?
   "should a chunk (probably) complete an eid?"
   [[sig ide :as chunk] memory depth]
@@ -141,6 +167,11 @@
     (and ide (contains? @memory ide)) (should-be-async? (get @memory ide) memory (inc depth))
     (= :fn sig) (or (contains? terminal-fns ide)
                     (some #(should-be-async? % memory (inc depth)) (drop 2 chunk)))))
+
+(defn- read-metadata
+  [[_ meta body :as metadata]]
+  (when-not (= meta [:keyword "ignore-async-check"])
+    body))
 
 ;; TODO - check function metadata for ignore-async-check, just incase we purposely break shit
 (defn- is-valid-chunk?
@@ -156,6 +187,9 @@
      (contains? #{:fn :vector :set} sig) (every? #(is-valid-chunk? % memory) (rest chunk))
      ;; maps -> require more complicated logic
      (= :map sig) (is-valid-chunk? (rest chunk) memory :map)
+     ;; note, metadata can signify that a function does not need to be checked
+     (= :metadata sig)
+     (if-let [next-chunk (read-metadata chunk)] (is-valid-chunk? next-chunk memory) :fine)
      :else nil))
   ([chunk memory sig]
    (cond
@@ -199,6 +233,13 @@
             (str "the following definitions in " fname
                  " may have sync/async issues: " (str/join ", " invalids)))))))
 
+(deftest metadata-ignore-works
+  (let [c1 "(defcard \\a ^:ignore-async-check {:async true :effect (req nil)})"
+        c2 "(defcard \\b {:async true :effect (req nil)})"]
+    (is (not (invalid-chunk? c1)) "c1 is valid because we ignore the async check")
+    (is (invalid-chunk? c2) "c2 is invalid because we do not ignore the async check")))
+
+
 (deftest async-test-defferred-fns-are-correct
   (let [c1 "(defcard \"c1\" (let [x (req (do-something state side eid))] {:async true :effect x}))"
         c2 "(defcard \"c2\" (let [x (req (do-something state side nil))] {:async true :effect x}))"
@@ -226,23 +267,23 @@
     (is (not c3) "If block C3 is picked up as being right (LHS and RHS both complete)")))
 
 (deftest async-test-when-block-is-correct?
-  (let [c1 "(defcard \"c1\" {:async true :effect (req (when x (effect-completed state side eid)))})"
-        c2 "(defcard \"c2\" {:async true :effect (req (do (when x y) (effect-completed state side eid)))})"]
+  (let [c1 "(defcard \"c1\" {:async true :effect (req (when x (do-something state side eid)))})"
+        c2 "(defcard \"c2\" {:async true :effect (req (do (when x y) (do-something state side eid)))})"]
     (is (invalid-chunk? c1)       "When block C1 is picked up as being wrong (conditional may not complete)")
     (is (not (invalid-chunk? c2)) "When block C2 is picked up as being right (conditional does not block completion)")))
 
 (deftest async-test-case-block-is-correct?
-  (let [c1 "(defcard \"c1\" {:async true :effect (req (case x a (effect-completed state side eid) (system-msg state side \"whoops\")))})"
-        c2 "(defcard \"c2\" {:async true :effect (req (case x a (system-msg state side \"whoops\") (effect-completed state side eid)))})"
-        c3 "(defcard \"c3\" {:async true :effect (req (case x a (effect-completed state side eid) (effect-completed state side eid)))})"]
+  (let [c1 "(defcard \"c1\" {:async true :effect (req (case x a (do-something state side eid) (system-msg state side \"whoops\")))})"
+        c2 "(defcard \"c2\" {:async true :effect (req (case x a (system-msg state side \"whoops\") (do-something state side eid)))})"
+        c3 "(defcard \"c3\" {:async true :effect (req (case x a (do-thing state side eid) (do-something state side eid)))})"]
     (is (invalid-chunk? c1)       "Case block C1 is picked up as being wrong (terminal does not complete)")
     (is (invalid-chunk? c2)       "Case block C2 is picked up as being wrong (LHS does not complete)")
     (is (not (invalid-chunk? c3)) "Case block C3 is picked up as being right (LHS and terminal both complete)")))
 
 (deftest async-test-cond+-is-correct?
-  (let [c1 "(defcard \"c1\" {:async true :effect (req (cond+ [a (damage state :runner)] [:else (effect-completed state side eid)]))})"
-        c2 "(defcard \"c2\" {:async true :effect (req (cond+ [a (effect-completed state :runner eid)] [:else (damage state side)]))})"
-        c3 "(defcard \"c3\" {:async true :effect (req (cond+ [a (effect-completed state :runner eid)] [:else (effect-completed state side eid)]))})"]
+  (let [c1 "(defcard \"c1\" {:async true :effect (req (cond+ [a (damage state :runner)] [:else (do-something state side eid)]))})"
+        c2 "(defcard \"c2\" {:async true :effect (req (cond+ [a (do-something state :runner eid)] [:else (damage state side)]))})"
+        c3 "(defcard \"c3\" {:async true :effect (req (cond+ [a (do-something state :runner eid)] [:else (do-something state side eid)]))})"]
     (is (invalid-chunk? c1)       "Cond+ block C1 is picked up as being wrong (RHS does not complete)")
     (is (invalid-chunk? c2)       "Cond+ block C2 is picked up as being wrong (LHS does not complete)")
     (is (not (invalid-chunk? c3)) "Cond+ block C3 is picked up as being right (LHS and RHS both complete)")))
