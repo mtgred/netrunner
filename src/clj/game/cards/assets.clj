@@ -304,6 +304,7 @@
 
 (defcard "B-1001"
   {:abilities [{:req (req (not this-server))
+                :async true
                 :cost [(->c :tag 1)]
                 :msg "end the run"
                 :label "End the run on another server"

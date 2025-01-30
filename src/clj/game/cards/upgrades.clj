@@ -397,6 +397,7 @@
   {:events [{:event :pass-all-ice
              :psi {:req (req this-server)
                    :not-equal {:msg "end the run"
+                               :async true
                                :effect (effect (end-run eid card))}}}]})
 
 (defcard "Cayambe Grid"
@@ -493,8 +494,7 @@
                 :effect (effect (add-counter card :power 1))}]})
 
 (defcard "Corporate Troubleshooter"
-  {:abilities [{:async true
-                :label "Add strength to a rezzed piece of ice protecting this server"
+  {:abilities [{:label "Add strength to a rezzed piece of ice protecting this server"
                 :cost [(->c :trash-can) (->c :x-credits)]
                 :choices {:all true
                           :req (req (and (ice? target)
@@ -678,6 +678,7 @@
         etr {:req (req this-server)
              :cost [(->c :power 1)]
              :msg "end the run"
+             :async true
              :effect (effect (end-run eid card))}]
     {:derezzed-events [(assoc corp-rez-toast :event :runner-turn-ends)]
      :events [(assoc maybe-gain-counter :event :corp-turn-begins)
@@ -1707,6 +1708,7 @@
          :choices {:req (req (same-server? card target))}
          :msg (msg "place " (if (is-boosted-fn? state side) 3 2) " advancement counters on "
                    (card-str state target))
+         :async true
          :effect
          (req (let [n (if (is-boosted-fn? state side) 3 2)]
                 (add-prop state side eid target :advance-counter n {:placed true})))}]
@@ -1752,7 +1754,7 @@
               {:async true
                :msg "do 1 core damage instead of net damage"
                :effect (req (swap! state update :damage dissoc :damage-replace :defer-damage)
-                            (wait-for (pay state :corp (make-eid state eid) card (->c :credit 2))
+                            (wait-for (pay state :corp card (->c :credit 2))
                                       (system-msg state side (:msg async-result))
                                       (wait-for (damage state side :brain 1 {:card card})
                                                 (swap! state assoc-in [:damage :damage-replace] true)

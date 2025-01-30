@@ -1632,6 +1632,7 @@
                                    (has-subtype? % "Connection")
                                    (installed? %))}
              :msg (msg "host itself on " (card-str state target) ". The Runner has an additional tag")
+             :async true
              :effect (effect (install-as-condition-counter eid card target))}
    :static-abilities [{:type :tags
                        :value 1}]

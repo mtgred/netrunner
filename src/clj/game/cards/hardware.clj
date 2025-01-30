@@ -1253,6 +1253,7 @@
 
 (defcard "Lemuria Codecracker"
   {:abilities [{:action true
+                :async true
                 :cost [(->c :click 1) (->c :credit 1)]
                 :req (req (some #{:hq} (:successful-run runner-reg)))
                 :choices {:card installed?}
