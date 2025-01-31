@@ -10,7 +10,7 @@
     [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event trigger-event-simult]]
     [game.core.flags :refer [can-run? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
     [game.core.gaining :refer [gain-credits]]
-    [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
+    [game.core.ice :refer [active-ice? break-subs-event-context get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.mark :refer [is-mark?]]
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs ->c]]
     [game.core.prompts :refer [clear-run-prompts clear-wait-prompt show-run-prompts show-prompt show-wait-prompt]]
@@ -334,10 +334,15 @@
                                 (checkpoint state side eid)))))})
 
 (defn encounter-ice
+  ;; note: as far as I can tell, this deliberately leaves on open eid (the run eid).
+  ;; Attempting to change that breaks a very large number of tests, so I'm leaving this
+  ;; note here to remind me when I look at this later. -nbk, 2025
   [state side eid ice]
   (swap! state update :encounters conj {:eid eid
                                         :ice ice})
   (check-auto-no-action state)
+  ;; step 6.9.3a: The encounter begins. Conditions relating to the Runner encountering
+  ;; this ice are met (this is on-encounter effects, etc)
   (let [on-encounter (:on-encounter (card-def ice))
         applied-encounters (get-effects state nil :gain-encounter-ability ice)
         all-encounters (map #(preventable-encounter-abi % ice) (remove nil? (conj applied-encounters on-encounter)))]
@@ -349,8 +354,16 @@
                           (make-eid state)
                           {:cancel-fn (fn [state]
                                         (should-end-encounter? state side ice))})
-              (when (should-end-encounter? state side ice)
-                (encounter-ends state side eid)))))
+              (if (should-end-encounter? state side ice)
+                (encounter-ends state side eid)
+                ;; step 6.9.3b: if there are no subroutines on the ice,
+                ;; the runner is considered to have broken all the subroutines on this ice.
+                ;; This should fire an event, so it can get picked up with cards like hippo
+                ;; or knifed.
+                (when-let [c-ice (get-current-ice state)]
+                  (when (and (same-card? c-ice ice) (zero? (count (:subroutines c-ice))))
+                    (wait-for (trigger-event-simult state side :subroutines-broken nil (break-subs-event-context state c-ice [] (get-in @state [:runner :basic-action-card]))))))))))
+
 
 (defmethod start-next-phase :encounter-ice
   [state side _]

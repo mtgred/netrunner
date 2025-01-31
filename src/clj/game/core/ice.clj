@@ -185,8 +185,7 @@
 (defn all-subs-broken?
   [ice]
   (let [subroutines (:subroutines ice)]
-    (and (seq subroutines)
-         (every? :broken subroutines))))
+    (every? :broken subroutines)))
 
 (defn any-subs-broken-by-card?
   [ice card]
