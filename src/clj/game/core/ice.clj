@@ -266,7 +266,7 @@
   ([state side eid ice sub]
    (wait-for (trigger-event-simult state side (make-eid state eid) :pre-resolve-subroutine nil sub ice)
              ;; this is for cards like marcus batty
-             (when-not (:exernal-trigger sub)
+             (when-not (:external-trigger sub)
                (update! state :corp (resolve-subroutine ice sub)))
              ;; TODO - need a way to interact with multiple replacement effects.
              (let [replacement (:replace-subroutine (get-current-encounter state))
