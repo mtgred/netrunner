@@ -2678,6 +2678,27 @@
       (click-prompt state :runner "End the run")
       (is (no-prompt? state :runner) "No Hippo prompt on later ice")))
 
+(deftest hippo-interaction-with-konjin
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall" "Konjin"]}
+               :runner {:hand ["Hippo" "Eater"] :credits 15}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Konjin" "R&D")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :rd 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hippo")
+    (play-from-hand state :runner "Eater")
+    (run-on state :rd)
+    (run-continue state :encounter-ice)
+    (is (= "Choose an amount to spend for Konjin" (:msg (prompt-map :corp))) "Psi Game")
+    (click-prompt state :corp "0 [Credits]")
+    (click-prompt state :runner "1 [Credits]")
+    (is (= "Choose a piece of ice" (:msg (prompt-map :corp))) "Prompt to choose Ice")
+    (click-card state :corp "Ice Wall")
+    (auto-pump-and-break state (get-program state 0))
+    (is (no-prompt? state :runner) "Not prompted to use hippo (we're not on the attacked server)")))
+
 (deftest hippocampic-mechanocytes
   ;; Hippocampic Mechanocytes
   (do-game
