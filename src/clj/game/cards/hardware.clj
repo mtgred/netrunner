@@ -1154,7 +1154,7 @@
   {:events [{:event :subroutines-broken
              :optional
              {:req (req
-                     (let [pred (every-pred :all-subs-broken :outermost :during-run)]
+                     (let [pred (every-pred :all-subs-broken :outermost :during-run :on-attacked-server)]
                        (and (pred context)
                             (get-card state (:ice context))
                             (first-event? state side :subroutines-broken #(pred (first %))))))

@@ -185,8 +185,7 @@
 (defn all-subs-broken?
   [ice]
   (let [subroutines (:subroutines ice)]
-    (and (seq subroutines)
-         (every? :broken subroutines))))
+    (every? :broken subroutines)))
 
 (defn any-subs-broken-by-card?
   [ice card]
@@ -539,6 +538,7 @@
   [state ice broken-subs breaker]
   {:outermost (when-let [server-ice (:ices (card->server state ice))] (same-card? ice (last server-ice)))
    :during-run (some? (:run @state))
+   :on-attacked-server (= (get-in @state [:run :server]) [(second (:zone ice))])
    :all-subs-broken (all-subs-broken? ice)
    :broken-subs broken-subs
    ;; enough info to backtrack and find breakers without bloating the gamestate

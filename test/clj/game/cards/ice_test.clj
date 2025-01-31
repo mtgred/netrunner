@@ -4398,6 +4398,36 @@
       (fire-subs state (refresh iw))
       (is (not (:run @state)) "The run should have ended"))))
 
+(deftest konjin-target-ice-gets-trashed
+  ;; Return to encountering Konjin after forced encounter
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall" "Konjin"]}
+               :runner {:hand ["Arruaceiras Crew"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Konjin" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Arruaceiras Crew")
+    (let [konjin (get-ice state :rd 0)
+          iw (get-ice state :hq 0)]
+      (rez state :corp konjin)
+      (rez state :corp iw)
+      (run-on state :rd)
+      (run-continue state)
+      (is (= (refresh konjin) (core/get-current-ice state)) "The runner should be encountering Konjin")
+      (is (= "Choose an amount to spend for Konjin" (:msg (prompt-map :corp))) "Psi Game")
+      (click-prompt state :corp "0 [Credits]")
+      (click-prompt state :runner "1 [Credits]")
+      (is (= "Choose a piece of ice" (:msg (prompt-map :corp))) "Prompt to choose Ice")
+      (click-card state :corp iw)
+      (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall")
+      (card-ability state :runner (get-resource state 0) 0)
+      (card-ability state :runner (get-resource state 0) 1)
+      (is (= "Ice Wall" (-> (get-corp) :discard first :title)) "Trashed ice wall")
+      (run-continue state :encounter-ice)
+      (is (= (refresh konjin) (core/get-current-ice state)) "The runner should be back to encountering Konjin")
+      (is (no-prompt? state :runner) "No repeat psi prompt")
+      (is (no-prompt? state :corp) "No repeat psi prompt"))))
+
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game
