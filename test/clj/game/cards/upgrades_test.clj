@@ -2467,25 +2467,56 @@
 (deftest marcus-batty
   ;; Marcus Batty
   (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Marcus Batty" "Ice Wall"]
-                        :credits 10}})
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (play-from-hand state :corp "Marcus Batty" "HQ")
-      (let [iw (get-ice state :hq 0)
-            mb (get-content state :hq 0)]
-        (rez state :corp mb)
-        (take-credits state :corp)
-        (run-on state "HQ")
-        (rez state :corp iw)
-        (card-ability state :corp mb 0)
-        (is (= :psi (prompt-type :corp)))
-        (click-prompt state :corp "1 [Credits]")
-        (click-prompt state :runner "0 [Credits]")
-        (click-card state :corp iw)
-        (click-prompt state :corp "End the run")
-        (is (not (:run @state)) "Run has ended")
-        (is (nil? (refresh mb)) "Marcus Batty is trashed"))))
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Marcus Batty" "Ice Wall"]
+                      :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Marcus Batty" "HQ")
+    (let [iw (get-ice state :hq 0)
+          mb (get-content state :hq 0)]
+      (rez state :corp mb)
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (rez state :corp iw)
+      (card-ability state :corp mb 0)
+      (is (= :psi (prompt-type :corp)))
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "0 [Credits]")
+      (click-card state :corp iw)
+      (click-prompt state :corp "End the run")
+      (is (not (:run @state)) "Run has ended")
+      (is (nil? (refresh mb)) "Marcus Batty is trashed"))))
+
+(deftest marcus-batty-doesnt-mark-subs-as-fired
+  ;; Marcus Batty
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Marcus Batty" "Funhouse"]
+                      :credits 10}})
+    (play-from-hand state :corp "Funhouse" "HQ")
+    (play-from-hand state :corp "Marcus Batty" "HQ")
+    (let [iw (get-ice state :hq 0)
+          mb (get-content state :hq 0)]
+      (rez state :corp mb)
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (rez state :corp iw)
+      (run-continue state :encounter-ice)
+      (click-prompt state :runner "Take 1 tag")
+      (is (= 1 (count-tags state)))
+      (card-ability state :corp mb 0)
+      (is (= :psi (prompt-type :corp)))
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "0 [Credits]")
+      (click-card state :corp iw)
+      (click-prompt state :corp "Give the Runner 1 tag unless they pay 4 [Credits]")
+      (click-prompt state :runner "Take 1 tag")
+      (is (= 2 (count-tags state)))
+      (is (not (-> iw refresh :subroutines first :fired)) "sub not considered fired (External trigger)")
+      (is (nil? (refresh mb)) "Marcus Batty is trashed")
+      (fire-subs state (refresh iw))
+      (click-prompt state :runner "Take 1 tag")
+      (is (-> iw refresh :subroutines first :fired) "sub is now considered fired (regular trigger)"))))
 
 (deftest mason-bellamy
   (do-game
