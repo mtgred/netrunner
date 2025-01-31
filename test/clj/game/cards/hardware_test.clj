@@ -2697,7 +2697,10 @@
     (is (= "Choose a piece of ice" (:msg (prompt-map :corp))) "Prompt to choose Ice")
     (click-card state :corp "Ice Wall")
     (auto-pump-and-break state (get-program state 0))
-    (is (no-prompt? state :runner) "Not prompted to use hippo (we're not on the attacked server)")))
+    (is (no-prompt? state :runner) "Not prompted to use hippo (we're not on the attacked server)")
+    (run-continue state :encounter-ice)
+    (click-prompt state :runner "Yes")
+    (is (= "Konjin" (-> (get-corp) :discard first :title)) "Trashed konjin with hippo (you have 'broken all subs' when the encounter phase ends)")))
 
 (deftest hippocampic-mechanocytes
   ;; Hippocampic Mechanocytes
