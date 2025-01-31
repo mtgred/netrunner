@@ -593,6 +593,7 @@
         state :runner
         {:prompt "Choose a breach replacement ability"
          :choices (if mandatory titles (conj titles (str "Breach " (zone->name (:server (:run @state))))))
+         :async true
          :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) handlers)
                             ability (:ability chosen)
                             card (:card chosen)]
@@ -630,6 +631,7 @@
             state :runner eid
             {:prompt (str "You are prevented from breaching " (zone->name server) " this run.")
              :choices ["OK"]
+             :async true
              :effect (effect (system-msg :runner (str "is prevented from breaching " (zone->name server) " this run."))
                              (handle-end-run eid))}
             nil nil)

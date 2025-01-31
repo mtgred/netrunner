@@ -28,7 +28,8 @@
     {:keys [waiting-prompt prompt-type show-discard cancel-effect end-effect targets]}]
    (let [prompt (if (string? message) message (message state side eid card targets))
          choices (choice-parser choices)
-         newitem {:eid eid
+         newitem ^:ignore-async-check
+                 {:eid eid
                   :msg prompt
                   :choices choices
                   :effect f

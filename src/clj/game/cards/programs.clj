@@ -2081,7 +2081,6 @@
                                  :once :per-turn
                                  :cost [(->c :x-credits)]
                                  :req (req (:runner-phase-12 @state))
-                                 :async true
                                  :effect (effect (add-counter card :power (cost-value eid :x-credits)))
                                  :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on itself")}
                                 (break-sub [(->c :power 1)] 1)

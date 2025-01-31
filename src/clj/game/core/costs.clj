@@ -1000,6 +1000,7 @@
      :choices {:card #(and (agenda? %)
                            (is-scored? state side %)
                            (pos? (get-counters % :agenda)))}
+     :async true
      :effect (req (let [title (:title target)
                         target (update! state side (update-in target [:counter :agenda] - (value cost)))]
                     (wait-for (trigger-event-sync state side :agenda-counter-spent target)

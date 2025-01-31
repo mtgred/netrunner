@@ -117,6 +117,7 @@
              :choices {:card in-hand?
                        :max (- cur-hand-size (max (hand-size state side) 0))
                        :all true}
+             :async true
              :effect (req (system-msg state side
                                       (str "discards "
                                            (if (= :runner side)

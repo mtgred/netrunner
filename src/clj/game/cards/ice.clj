@@ -1241,6 +1241,7 @@
 
 (defcard "Clairvoyant Monitor"
   {:subroutines [(do-psi {:label "Place 1 advancement token and end the run"
+                          :async true
                           :player :corp
                           :prompt "Choose an installed card to place 1 advancement token on"
                           :msg (msg "place 1 advancement token on "
