@@ -375,9 +375,11 @@
                (if (and (not (:run @state))
                         (empty? (:encounters @state)))
                  (forced-encounter-cleanup state :runner eid)
-                 (do (when (and new-state (= new-state (get-in @state [:run :phase])))
-                       (set-phase state old-state))
-                     (effect-completed state side eid)))))))
+                 (do
+                   (when (and new-state (= new-state (get-in @state [:run :phase])))
+                     (set-phase state old-state))
+                   (set-current-ice state)
+                   (effect-completed state side eid)))))))
 
 (defmethod continue :encounter-ice
   [state side _]
