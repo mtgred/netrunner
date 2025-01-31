@@ -337,6 +337,10 @@
   ;; note: as far as I can tell, this deliberately leaves on open eid (the run eid).
   ;; Attempting to change that breaks a very large number of tests, so I'm leaving this
   ;; note here to remind me when I look at this later. -nbk, 2025
+  ;;
+  ;; TODO: rewrite forced encounter to use it's own version of encounter-ice,
+  ;; then we can close the eids on this. Right now, closing the eids breaks
+  ;; forced encounters and nothing else.
   [state side eid ice]
   (swap! state update :encounters conj {:eid eid
                                         :ice ice})
@@ -362,8 +366,10 @@
                 ;; or knifed.
                 (when-let [c-ice (get-current-ice state)]
                   (when (and (same-card? c-ice ice) (zero? (count (:subroutines c-ice))))
-                    (wait-for (trigger-event-simult state side :subroutines-broken nil (break-subs-event-context state c-ice [] (get-in @state [:runner :basic-action-card]))))))))))
-
+                    (wait-for
+                      (trigger-event-simult state side :subroutines-broken nil (break-subs-event-context state c-ice [] (get-in @state [:runner :basic-action-card])))
+                      (when (should-end-encounter? state side ice)
+                        (encounter-ends state side eid)))))))))
 
 (defmethod start-next-phase :encounter-ice
   [state side _]
