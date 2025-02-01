@@ -8128,6 +8128,25 @@
       (click-prompt state :runner "Do 2 net damage")
       (is (no-prompt? state :runner) "Cannot break more than 1 sub"))))
 
+(deftest unsmiling-tsarevna-auto-break
+  ;; Unsmiling Tsarevna - limit auto break when rez ability fired
+  (do-game
+    (new-game {:corp {:hand [(qty "Unsmiling Tsarevna" 1)]
+                      :deck [(qty "Hedge Fund" 5)]
+                      :credits 20}
+               :runner {:hand ["Carmen"]
+                        :credits 20}})
+    (play-from-hand state :corp "Unsmiling Tsarevna" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Carmen")
+    (let [ut-hq (get-ice state :hq 0)
+          carm (get-program state 0)]
+      (run-on state :hq)
+      (rez state :corp ut-hq)
+      (click-prompt state :corp "Yes")
+      (run-continue state)
+      (is (empty? (filter #(:dynamic %) (:abilities (refresh carm)))) "No auto break dynamic ability"))))
+
 (deftest valentao-no-choice-without-tags
   (do-game
     (new-game {:corp {:hand ["Valentão"]}})

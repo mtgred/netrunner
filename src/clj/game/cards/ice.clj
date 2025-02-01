@@ -4265,6 +4265,12 @@
                                           :duration :end-of-run
                                           :req (req (same-card? card (:ice context)))
                                           :value (req (any-subs-broken? (:ice context)))})
+                                       (register-lingering-effect
+                                         state side card
+                                         {:type :cannot-auto-break-subs-on-ice
+                                          :duration :end-of-run
+                                          :req (req (same-card? card (:ice context)))
+                                          :value true})
                                        (effect-completed state side eid)))}]
     {:subroutines [(give-tags 1)
                    (do-net-damage 2)

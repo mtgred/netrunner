@@ -765,6 +765,7 @@
                                                      (not= :unrestricted ((:breakable %) state side eid current-ice [card]))
                                                      (not (:breakable % true))) ; breakable is a bool
                                                   (:subroutines current-ice)))
+              can-auto-break (not (any-effects state side :cannot-auto-break-subs-on-ice true? {:ice current-ice}))
               times-break (when (and (pos? unbroken-subs)
                                      subs-broken-at-once)
                             (if (pos? subs-broken-at-once)
@@ -786,6 +787,7 @@
                                          (when (and break-ability
                                                     (or (not (get-strength card)) pump-ability (zero? strength-diff))
                                                     no-unbreakable-subs
+                                                    can-auto-break
                                                     (pos? unbroken-subs)
                                                     (can-pay? state side eid card total-cost))
                                            [{:dynamic :auto-pump-and-break
