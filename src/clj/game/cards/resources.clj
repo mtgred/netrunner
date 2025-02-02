@@ -2127,7 +2127,7 @@
                                       (threat-level 3 state)))
                        :value [(->c :trash-from-hand 1)]}]
    :events [{:event :breach-server
-             :req (req (and tagged run
+             :req (req (and tagged
                             (or (= target :rd) (= target :hq))))
              :msg (msg "access 1 additional card from " (zone->name target))
              :effect (effect (access-bonus target 1))}]})
