@@ -258,37 +258,37 @@
     {:keys [gameid command args]} :?data
     id :id
     timestamp :timestamp}]
-  (try
-    (let [{:keys [state] :as lobby} (app-state/get-lobby gameid)
-          player (lobby/player? uid lobby)
-          spectator (lobby/spectator? uid lobby)]
-      (lobby/game-thread
-        lobby
-        (cond
-          (and state player)
-          (let [old-state @state
-                side (side-from-str (:side player))]
-            (try
-              (swap! app-state/app-state
-                     update :lobbies lobby/handle-set-last-update gameid uid)
-              (update-and-send-diffs! main/handle-action lobby side command args)
-              (catch Exception e
-                (reset! state old-state)
-                (throw e))))
-          (and (not spectator) (not= command "toast"))
-          (throw (ex-info "handle-game-action unknown state or side"
-                          {:gameid gameid
-                           :uid uid
-                           :players (map #(select-keys % [:uid :side]) (:players lobby))
-                           :spectators (map #(select-keys % [:uid]) (:spectators lobby))
-                           :command command
-                           :args args})))
-        (lobby/log-delay! timestamp id)))
-    (catch Exception e
-      (ws/chsk-send! uid [:game/error])
-      (println (str "Caught exception"
-                    "\nException Data: " (or (ex-data e) (.getMessage e))
-                    "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100)))))))
+  (let [{:keys [state] :as lobby} (app-state/get-lobby gameid)]
+    (lobby/game-thread
+      lobby
+      (try
+        (let [player (lobby/player? uid lobby)
+              spectator (lobby/spectator? uid lobby)]
+          (cond
+            (and state player)
+            (let [old-state @state
+                  side (side-from-str (:side player))]
+              (try
+                (swap! app-state/app-state
+                       update :lobbies lobby/handle-set-last-update gameid uid)
+                (update-and-send-diffs! main/handle-action lobby side command args)
+                (catch Exception e
+                  (reset! state old-state)
+                  (throw e))))
+            (and (not spectator) (not= command "toast"))
+            (throw (ex-info "handle-game-action unknown state or side"
+                            {:gameid gameid
+                             :uid uid
+                             :players (map #(select-keys % [:uid :side]) (:players lobby))
+                             :spectators (map #(select-keys % [:uid]) (:spectators lobby))
+                             :command command
+                             :args args})))
+          (lobby/log-delay! timestamp id))
+        (catch Exception e
+          (ws/chsk-send! uid [:game/error])
+          (println (str "Caught exception"
+                        "\nException Data: " (or (ex-data e) (.getMessage e))
+                        "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100)))))))))
 
 (defmethod ws/-msg-handler :game/resync
   game--resync
