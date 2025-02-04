@@ -576,8 +576,8 @@
   ([state side title server]
    `(error-wrapper (play-from-hand-impl ~state ~side ~title ~server))))
 
-(defn play-from-hand-with-prompt-impl
-  [state side title choice]
+(defn play-from-hand-with-prompts-impl
+  [state side title choices]
   (let [card (find-card title (get-in @state [side :hand]))]
     (ensure-no-prompts state)
     (is' (some? card) (str title "is in hand"))
@@ -587,14 +587,14 @@
               (println title " was instead found in the opposing hand - was the wrong side used?")))
           true)
       (when-let [played (core/process-action "play" state side {:card card})]
-        (click-prompts state side choice)))))
+        (click-prompts-impl state side choices)))))
 
-(defmacro play-from-hand-with-prompt
-  "Play a card from hand based on it's title, and then click a prompt
+(defmacro play-from-hand-with-prompts
+  "Play a card from hand based on it's title, and then click any number of prompts
    accepts for prompt: a string, a fn, a card object"
   ([state side title] `(play-from-hand ~state ~side ~title nil))
-  ([state side title prompt]
-   `(error-wrapper (play-from-hand-with-prompt-impl ~state ~side ~title ~prompt))))
+  ([state side title & prompts]
+   `(error-wrapper (play-from-hand-with-prompts-impl ~state ~side ~title ~(vec prompts)))))
 
 ;;; Run functions
 (defn run-on-impl
