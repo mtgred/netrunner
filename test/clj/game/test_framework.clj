@@ -587,17 +587,7 @@
               (println title " was instead found in the opposing hand - was the wrong side used?")))
           true)
       (when-let [played (core/process-action "play" state side {:card card})]
-        (cond
-          (not choice) (is` nil "attempt to resolve nil prompt option")
-          ;; it's a select prompt - we want to click on a card
-          (prompt-is-type? state side :select)
-          (if (or (:cid choice) (string? choice))
-            (click-card state side choice)
-            (click-card state (or (:side choice) side) (:choice choice)))
-          :else
-          (if (or (:cid choice) (string? choice))
-            (click-prompt state side choice)
-            (click-prompt state (or (:side choice) side) (:choice choice))))))))
+        (click-prompts state side choice)))))
 
 (defmacro play-from-hand-with-prompt
   "Play a card from hand based on it's title, and then click a prompt
