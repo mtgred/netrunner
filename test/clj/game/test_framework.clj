@@ -187,20 +187,26 @@
 (defn click-prompts-impl
   [state side prompts]
   (loop [[prompt & prompts] prompts]
-    (cond
-      (and (not prompt) (not (seq prompts))) true
-      (not prompt) (is` nil "attempt to resolve nil prompt option")
-      ;; it's a select prompt - we want to click on a card
-      (prompt-is-type? state side :select)
-      (do (if (or (:cid prompt) (string? prompt))
-            (click-card state side prompt)
-            (click-card state (or (:side prompt) side) (:choice prompt)))
-          (recur prompts))
-      :else
-      (do (if (or (:cid prompt) (string? prompt))
-            (click-prompt state side prompt)
-            (click-prompt state (or (:side prompt) side) (:choice prompt)))
-          (recur prompts)))))
+    (let [prompt
+          ;; if an 1-fn is passed in, scry it's output based on the game state
+          (cond
+            (fn? prompt) (prompt state)
+            (fn? (:choice prompt)) (merge prompt {:choice ((:choice prompt) state)})
+            :else prompt)]
+      (cond
+        (and (not prompt) (not (seq prompts))) true
+        (not prompt) (is` nil "attempt to resolve nil prompt option")
+        ;; it's a select prompt - we want to click on a card
+        (prompt-is-type? state side :select)
+        (do (if (or (:cid prompt) (string? prompt))
+              (click-card state side prompt)
+              (click-card state (or (:side prompt) side) (:choice prompt)))
+            (recur prompts))
+        :else
+        (do (if (or (:cid prompt) (string? prompt))
+              (click-prompt state side prompt)
+              (click-prompt state (or (:side prompt) side) (:choice prompt)))
+            (recur prompts))))))
 
 (defmacro click-prompts
   "click an arbitrary number of prompts, one after the other.
