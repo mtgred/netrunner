@@ -2225,8 +2225,7 @@
   (do-game
      (new-game {:runner {:deck [(qty "Dirty Laundry" 2)]}})
      (take-credits state :corp)
-     (play-from-hand state :runner "Dirty Laundry")
-     (click-prompt state :runner "Archives")
+     (play-from-hand-with-prompt state :runner "Dirty Laundry" "Archives")
      (run-continue state)
      (is (= 8 (:credit (get-runner))) "Gained 5 credits")
      (play-from-hand state :runner "Dirty Laundry")

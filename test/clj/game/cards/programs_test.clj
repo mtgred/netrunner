@@ -1840,8 +1840,7 @@
                  :runner {:hand ["Chisel"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
-      (play-from-hand state :runner "Chisel")
-      (click-card state :runner "Ice Wall")
+      (play-from-hand-with-prompt state :runner "Chisel" "Ice Wall")
       (let [iw (get-ice state :hq 0)
             chisel (first (:hosted (refresh iw)))]
         (run-on state "HQ")
@@ -1891,8 +1890,7 @@
                  :runner {:hand ["Chisel" "Devil Charm"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
-      (play-from-hand state :runner "Chisel")
-      (click-card state :runner "Ice Wall")
+      (play-from-hand-with-prompt state :runner "Chisel" "Ice Wall")
       (play-from-hand state :runner "Devil Charm")
       (let [iw (get-ice state :hq 0)
             chisel (first (:hosted (refresh iw)))]
