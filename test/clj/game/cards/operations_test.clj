@@ -214,11 +214,7 @@
                       :hand ["Ad Blitz" "Launch Campaign"]
                       :discard ["Pop-up Window"]}})
     (play-from-hand state :corp "Ad Blitz")
-    (click-prompt state :corp "2")
-    (click-card state :corp "Launch Campaign")
-    (click-prompt state :corp "New remote")
-    (click-card state :corp "Pop-up Window")
-    (click-prompt state :corp "Server 1")
+    (click-prompts state :corp "2" "Launch Campaign" "New remote" "Pop-up Window" "Server 1")
     (is (zero? (count (:hand (get-corp)))) "Corp should have no cards in HQ")
     (is (= ["Ad Blitz"] (->> (get-corp) :discard (map :title))) "Corp should have only Ad Blitz in Archives")))
 
@@ -3223,10 +3219,11 @@
           (play-from-hand state :corp "Oppo Research")
           (is (not (no-prompt? state :runner)) "Runner prompted to avoid tag")
           (card-ability state :runner (get-resource state 0) 0)
-          (click-prompt state :corp "0")
-          (click-prompt state :runner "0")
-          (click-prompt state :runner "Done")
-          (click-prompt state :corp "Yes"))
+          (click-prompts state :corp
+                         "0"
+                         {:side :runner :choice "0"}
+                         {:side :runner :choice "Done"}
+                         "Yes"))
         "Runner prevented 2 tag")))
 
 (deftest oversight-ai-rez-at-no-cost
@@ -5193,9 +5190,7 @@
         (advance state (refresh ngo) 2)
         (is (= 2 (get-counters (refresh ngo) :advancement)) "NGO Front should have 2 counters")
         (play-from-hand state :corp "Trick of Light")
-        (click-card state :corp iw)
-        (click-card state :corp ngo)
-        (click-prompt state :corp "2")
+        (click-prompts state :corp iw ngo "2")
         (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall is now advanced")
         (is (zero? (get-counters (refresh ngo) :advancement)) "NGO Front should have 0 counters"))))
 
