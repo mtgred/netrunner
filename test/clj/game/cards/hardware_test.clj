@@ -1306,6 +1306,25 @@
           (is (find-card "I've Had Worse" (:deck (get-runner))))
           (is (find-card "Buffer Drive" (get-hardware state)))))))
 
+(deftest buffer-drive-dont-offer-duplicate-option-with-the-price
+  (do-game
+    (new-game {:runner {:discard ["Boomerang"] :deck ["Ika" "Boomerang" "Sure Gamble"] :hand ["The Price" "Buffer Drive"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Buffer Drive")
+    (play-from-hand state :runner "The Price")
+    (click-prompt state :runner "Boomerang")
+    (is (not-any? #{"Boomerang"} (prompt-buttons :runner)) "No offer to install boomerang")))
+
+(deftest buffer-drive-plays-nice-with-skorpios
+  (do-game
+    (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"}
+               :runner {:deck ["Ika" "Boomerang" "Sure Gamble"] :hand ["The Price" "Buffer Drive"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Buffer Drive")
+    (play-from-hand state :runner "The Price")
+    (click-prompt state :corp "Boomerang")
+    (is (not-any? #{"Boomerang"} (prompt-buttons :runner)) "No offer to install boomerang")))
+
 (deftest capstone
   ;; Capstone
   (do-game
