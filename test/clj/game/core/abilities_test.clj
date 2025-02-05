@@ -61,16 +61,22 @@
           :when (not-empty (card-def card))]
     (is (core/has-trash-ability? card) (str (:title card) " needs either :cost [(->c :trash-can)] or :trash-icon true"))))
 
-(deftest label
-  (doseq [[title abilities]
+(defn- x-has-labels
+  [x-key x-name]
+  (doseq [[title cards-with-x]
           (->> @all-cards
                vals
                (sort-by (juxt :type :title))
                (map (juxt :title card-def))
-               (filter (comp :abilities second)))
-          [idx ability] (map-indexed (fn [idx itm] [idx itm]) (:abilities abilities))]
-    (is (string? (or (:label ability) (:msg ability)))
-        (str title ": Ability " (inc idx) " doesn't have an appropriate label"))))
+               (filter (comp x-key second)))
+          [idx x] (map-indexed (fn [idx itm] [idx itm]) (x-key cards-with-x))]
+    (is (string? (or (:label x) (:msg x))) (str title ": " x-name " " (inc idx) " doen't have an appropriate label"))))
+
+(deftest abilities-have-labels
+  (x-has-labels :abilities "Ability")
+  (x-has-labels :corp-abilities "Runner Ability")
+  (x-has-labels :runner-abilities "Corp Ability")
+  (x-has-labels :subroutines "Subroutine"))
 
 (defn generate-label
   [card]

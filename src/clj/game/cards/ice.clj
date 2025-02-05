@@ -1457,6 +1457,7 @@
 
 (defcard "Datapike"
   {:subroutines [{:async true
+                  :label "Runner must pay 2 [Credits]. If they cannot, end the run"
                   :effect (req (wait-for (pay state :runner (make-eid state eid) card (->c :credit 2))
                                          (if (:cost-paid async-result)
                                            (do (system-msg state :runner (:msg async-result))
@@ -3056,6 +3057,7 @@
                   :choices {:card #(and (ice? %)
                                         (in-hand? %))}
                   :prompt "Choose a piece of ice to install from HQ"
+                  :label "install ice from HQ, ignoring all costs"
                   :effect (effect (corp-install eid target (zone->name (target-server run)) {:ignore-all-cost true
                                                                                              :msg-keys {:install-source card
                                                                                                         :display-origin true}}))}]})
