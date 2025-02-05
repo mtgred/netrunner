@@ -8,19 +8,19 @@
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? faceup? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
-                           has-any-subtype? ice? in-discard? in-hand? in-play-area? in-rfg? installed? is-type?
+                           has-any-subtype? ice? in-discard? in-deck? in-hand? in-play-area? in-rfg? installed? is-type?
                            operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [charge-ability]]
    [game.core.cost-fns :refer [install-cost play-cost
                                rez-additional-cost-bonus rez-cost]]
    [game.core.damage :refer [chosen-damage corp-can-choose-damage? damage
                              enable-corp-damage-choice]]
-   [game.core.def-helpers :refer [corp-recur defcard offer-jack-out with-revealed-hand]]
+   [game.core.def-helpers :refer [choose-one-helper corp-recur defcard offer-jack-out with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect is-disabled?]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event]]
-   [game.core.events :refer [event-count first-event?
+   [game.core.events :refer [event-count first-event? first-trash?
                              first-successful-run-on-server? no-event? not-last-turn? run-events run-event-count turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-latest]]
@@ -1913,14 +1913,64 @@
              :effect (effect (expose eid target))}]})
 
 (defcard "Skorpios Defense Systems: Persuasive Power"
-  {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted. Cannot use on in progress run event"
-   :abilities [{:label "Remove a card in the Heap that was just trashed from the game"
-                :waiting-prompt true
-                :prompt "Choose a card in the Heap that was just trashed"
-                :once :per-turn
-                :choices (req (cancellable (:discard runner)))
-                :msg (msg "remove " (:title target) " from the game")
-                :effect (req (move state :runner target :rfg))}]})
+  (let [set-resolution-mode
+        (fn [x] {:label x
+                 :effect (req (update! state side (assoc-in card [:special :resolution-mode] x))
+                              (toast state :corp (str "Set Skorpios resolution to " x " mode"))
+                              (update! state side (assoc (get-card state card) :card-target x)))})
+        grip-or-stack-trash?
+        (fn [targets]
+          (some #(and (runner? %)
+                      (or (in-hand? %)
+                          (in-deck? %)))
+                targets))
+        relevant-cards-general #{"Labor Rights" "The Price"}
+        relevant-cards-corp-turn #{"I've Had Worse" "Strike Fund" "Steelskin Scarring"}
+        trigger-ability-req (req (let [res-type (get-in (get-card state card) [:special :resolution-mode])
+                                       valid-cards (mapv #(get-card state %) (filter runner? context))]
+                                   (and (some runner? context)
+                                        (cond
+                                          ;; manual: do nothing
+                                          (= res-type "Automatic") true
+                                          ;; there's either:
+                                          (= res-type "Smart")
+                                          (or
+                                            ;; 1) a relevant card resoluton
+                                            (contains? relevant-cards-general (->> runner :play-area first :title))
+                                            ;; 2) a buffer drive that may resolve
+                                            (and (contains? #{"Buffer Drive"} (map :title (all-installed state :runner)))
+                                                 (grip-or-stack-trash? context)
+                                                 (first-trash? state grip-or-stack-trash?))
+                                            ;; 3) a program among the trashed cards
+                                            (some #(->> % program?) context)
+                                            ;; 4) a relevant card on the corp turn (Steelskin, Strike fund, I've Had Worse)
+                                            (contains? relevant-cards-corp-turn (map #(->> % :card :title) context)))
+                                          :else nil))))
+        triggered-ability {:once :per-turn
+                           :player :corp
+                           :event :pre-trash-interrupt
+                           :waiting-prompt true
+                           :req trigger-ability-req
+                           :prompt "Remove a card from the game?"
+                           :choices (req (cancellable context))
+                           :msg (msg "remove " (:title target) " from the game")
+                           :effect (req (move state :runner target :rfg))}]
+    {:implementation "Switch between manual, \"smart\", and automatic resolution by using the ability on the card"
+     :events [(assoc (set-resolution-mode "Smart")
+                     :event :pre-first-turn
+                     :req (req (= side :corp)))
+              triggered-ability]
+     :abilities [(choose-one-helper
+                   {:optional true
+                    :label "Set resolution mode"}
+                   (mapv (fn [x] {:option x :ability (set-resolution-mode x)}) ["Manual" "Smart" "Automatic"]))
+                 {:label "Remove a card in the Heap that was just trashed from the game"
+                  :waiting-prompt true
+                  :prompt "Choose a card in the Heap that was just trashed"
+                  :once :per-turn
+                  :choices (req (cancellable (:discard runner)))
+                  :msg (msg "remove " (:title target) " from the game")
+                  :effect (req (move state :runner target :rfg))}]}))
 
 (defcard "Spark Agency: Worldswide Reach"
   {:events [{:event :rez
