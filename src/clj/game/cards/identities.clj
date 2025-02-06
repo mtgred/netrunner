@@ -1946,7 +1946,7 @@
                                             ;; 3) a program among the trashed cards
                                             (some #(->> % program?) context)
                                             ;; 4) a relevant card is trashed (Steelskin, Strike fund, I've Had Worse)
-                                            (contains? relevant-cards-trashed (map #(->> % :card :title) context)))
+                                            (some #(contains? relevant-cards-trashed %) (map #(->> % :title) context)))
                                           :else nil))))
         triggered-ability {:once :per-turn
                            :player :corp
