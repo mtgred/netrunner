@@ -256,6 +256,7 @@
    :hand-size
    :keep
    :quote
+   :trash-like-cards
    :prompt-state
    :agenda-point
    :agenda-point-req])

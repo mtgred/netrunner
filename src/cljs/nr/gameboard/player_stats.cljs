@@ -67,7 +67,7 @@
 (defmethod stats-area "Runner" [runner]
   (let [ctrl (stat-controls-for-side :runner)]
     (fn [runner]
-      (let [{:keys [user click credit run-credit memory link tag
+      (let [{:keys [user click credit run-credit memory link tag trash-like-cards
                     brain-damage active]} @runner
             base-credit (- credit run-credit)
             plus-run-credit (when (pos? run-credit) (str "+" run-credit))
@@ -94,12 +94,18 @@
                        (when show-tagged [:div.warning "!"])]))
          (ctrl
           :brain-damage
-          [:div (str brain-damage " " (tr [:game.brain-damage "Core Damage"]))])]))))
+          [:div (str brain-damage " " (tr [:game.brain-damage "Core Damage"]))])
+         (when (= (:side @game-state) :runner)
+           [:div [:label [:input {:type "checkbox"
+                                  :value true
+                                  :checked trash-like-cards
+                                  :on-click #(send-command "change" {:key :trash-like-cards :delta (.. % -target -checked)})}]
+                  (tr [:game.trash-like-cards "Offer to trash like cards"])]])]))))
 
 (defmethod stats-area "Corp" [corp]
   (let [ctrl (stat-controls-for-side :corp)]
     (fn [corp]
-      (let [{:keys [user click credit bad-publicity active]} @corp
+      (let [{:keys [user click credit bad-publicity active trash-like-cards]} @corp
             icons? (get-in @app-state [:options :player-stats-icons] true)]
         [:div.stats-area
          (if icons?
@@ -110,7 +116,13 @@
             (ctrl :click [:div (tr [:game.click-count] click)])
             (ctrl :credit [:div (tr [:game.credit-count] credit -1)])])
          (let [{:keys [base additional]} bad-publicity]
-           (ctrl :bad-publicity [:div (tr [:game.bad-pub-count] base additional)]))]))))
+           (ctrl :bad-publicity [:div (tr [:game.bad-pub-count] base additional)]))
+         (when (= (:side @game-state) :corp)
+           [:div [:label [:input {:type "checkbox"
+                                  :value true
+                                  :checked trash-like-cards
+                                  :on-click #(send-command "change" {:key :trash-like-cards :delta (.. % -target -checked)})}]
+                  (tr [:game.trash-like-cards "Offer to trash like cards"])]])]))))
 
 (defn stats-view
   [player]

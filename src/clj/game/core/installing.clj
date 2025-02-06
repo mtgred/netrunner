@@ -457,8 +457,7 @@
 (defn runner-install-continue
   [state side eid card
    {:keys [previous-zone host-card facedown no-mu no-msg payment-str] :as args}]
-  (let [
-        c (if host-card
+  (let [c (if host-card
             (host state side host-card card)
             (move state side card
                   [:rig (if facedown :facedown (to-keyword (:type card)))]))
@@ -519,17 +518,22 @@
           true))))
 
 (defn runner-install-pay
-  [state side eid card {:keys [no-mu facedown host-card] :as args}]
+  [state side eid card {:keys [no-mu facedown host-card resolved-optional-trash] :as args}]
   (let [costs (runner-install-cost state side (assoc card :facedown facedown) (dissoc args :cached-costs))
-        available-mem (available-mu state)]
+        available-mem (available-mu state)
+        runner-wants-to-trash? (and (get-in @state [:runner :trash-like-cards])
+                                    (not resolved-optional-trash))]
     (if-not (runner-can-pay-and-install? state side eid card (assoc args :cached-costs costs))
       (effect-completed state side eid)
       (if (and (program? card)
                (not facedown)
-               (not (or no-mu (sufficient-mu? state card))))
+               (or (not (or no-mu (sufficient-mu? state card)))
+                   runner-wants-to-trash?))
         (continue-ability
           state side
-          {:prompt (format "Insufficient MU to install %s. Trash installed programs?" (:title card))
+          {:prompt (if (and runner-wants-to-trash? (or no-mu (sufficient-mu? state card)))
+                     (format "Trash installed programs before installing %s?" (:title card))
+                     (format "Insufficient MU to install %s. Trash installed programs?" (:title card)))
            :choices {:max (count (filter #(and (program? %) (not (has-ancestor? % host-card))) (all-installed state :runner)))
                      :card #(and (installed? %)
                                  ;; note: rules team says we can't create illegal gamestates by
@@ -541,11 +545,13 @@
            :async true
            :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true})
                                   (update-mu state)
-                                  (runner-install-pay state side eid card args)))
+                                  (runner-install-pay state side eid card (assoc args :resolved-optional-trash true))))
            :cancel-effect (req (update-mu state)
-                               (if (= available-mem (available-mu state))
+                               (if (and (= available-mem (available-mu state))
+                                        ;;(not runner-wants-to-trash?)
+                                        (not (or no-mu (sufficient-mu? state card))))
                                  (effect-completed state side eid)
-                                 (runner-install-pay state side eid card args)))}
+                                 (runner-install-pay state side eid card (assoc args :resolved-optional-trash true))))}
           card nil)
         (let [played-card (move state side (assoc card :facedown facedown) :play-area {:suppress-event true})]
           (wait-for (pay state side (make-eid state eid) card costs)
