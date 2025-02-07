@@ -96,11 +96,13 @@
           :brain-damage
           [:div (str brain-damage " " (tr [:game.brain-damage "Core Damage"]))])
          (when (= (:side @game-state) :runner)
-           [:div [:label [:input {:type "checkbox"
-                                  :value true
-                                  :checked trash-like-cards
-                                  :on-click #(send-command "change" {:key :trash-like-cards :delta (.. % -target -checked)})}]
-                  (tr [:game.trash-like-cards "Offer to trash like cards"])]])]))))
+           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :delta (.. % -target -checked)})]
+             [:div [:label [:input {:type "checkbox"
+                                    :value true
+                                    :checked trash-like-cards
+                                    :on-key-down #(when (= "`" (.-key %)) (toggle-offer-trash %))
+                                    :on-click toggle-offer-trash}]
+                    (tr [:game.trash-like-cards "Offer to trash like cards"])]]))]))))
 
 (defmethod stats-area "Corp" [corp]
   (let [ctrl (stat-controls-for-side :corp)]
@@ -118,11 +120,13 @@
          (let [{:keys [base additional]} bad-publicity]
            (ctrl :bad-publicity [:div (tr [:game.bad-pub-count] base additional)]))
          (when (= (:side @game-state) :corp)
-           [:div [:label [:input {:type "checkbox"
-                                  :value true
-                                  :checked trash-like-cards
-                                  :on-click #(send-command "change" {:key :trash-like-cards :delta (.. % -target -checked)})}]
-                  (tr [:game.trash-like-cards "Offer to trash like cards"])]])]))))
+           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :delta (.. % -target -checked)})]
+             [:div [:label [:input {:type "checkbox"
+                                    :value true
+                                    :checked trash-like-cards
+                                    :on-key-down #(when (= "`" (.-key %)) (toggle-offer-trash %))
+                                    :on-click toggle-offer-trash}]
+                    (tr [:game.trash-like-cards "Offer to trash like cards"])]]))]))))
 
 (defn stats-view
   [player]

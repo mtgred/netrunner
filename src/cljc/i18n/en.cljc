@@ -745,6 +745,7 @@
           :archives "Archives"
           :max-hand "Max hand size"
           :brain-damage "Core Damage"
+          :trash-like-cards "Offer to trash like cards"
           :tag-count (fn [[base additional total]] (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= total 1) "s" "")))
           :agenda-count (fn [[agenda-point]] (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s")))
           :link-strength "Link Strength"

@@ -108,10 +108,6 @@
     (swap! state update-in [side key] (partial + delta)))
   (change-msg state side key (get-in @state [side key]) delta))
 
-(defn- change-trash-like-cards
-  [state side key val]
-  (swap! state assoc-in [side key] val))
-
 (defn change
   "Increase/decrease a player's property (clicks, credits, MU, etc.) by delta."
   [state side {:keys [key delta]}]
@@ -122,6 +118,5 @@
     :bad-publicity (change-bad-pub state delta)
     :agenda-point (change-agenda-points state side delta)
     :link (change-link state side delta)
-    :trash-like-cards (change-trash-like-cards state side key delta)
     ; else
     (change-generic state side key delta)))
