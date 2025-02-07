@@ -61,15 +61,17 @@
                                    (corp-can-pay-and-install?
                                      state side eid
                                      target-card server {:base-cost [(->c :click 1)]
-                                                    :action :corp-click-install
-                                                    :no-toast true})
+                                                         :ignore-ice-cost true
+                                                         :action :corp-click-install
+                                                         :no-toast true})
                                    (some
                                      (fn [server]
                                        (corp-can-pay-and-install?
                                          state side eid
                                          target-card server {:base-cost [(->c :click 1)]
-                                                        :action :corp-click-install
-                                                        :no-toast true}))
+                                                             :ignore-ice-cost true
+                                                             :action :corp-click-install
+                                                             :no-toast true}))
                                      (installable-servers state target-card))))))
                 :effect (req (let [{target-card :card server :server} context]
                                (corp-install
