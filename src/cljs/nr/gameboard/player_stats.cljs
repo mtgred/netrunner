@@ -100,7 +100,6 @@
              [:div [:label [:input {:type "checkbox"
                                     :value true
                                     :checked trash-like-cards
-                                    :on-key-down #(when (= "`" (.-key %)) (toggle-offer-trash %))
                                     :on-click toggle-offer-trash}]
                     (tr [:game.trash-like-cards "Offer to trash like cards"])]]))]))))
 
@@ -124,7 +123,6 @@
              [:div [:label [:input {:type "checkbox"
                                     :value true
                                     :checked trash-like-cards
-                                    :on-key-down #(when (= "`" (.-key %)) (toggle-offer-trash %))
                                     :on-click toggle-offer-trash}]
                     (tr [:game.trash-like-cards "Offer to trash like cards"])]]))]))))
 
