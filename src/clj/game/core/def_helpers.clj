@@ -150,6 +150,7 @@
   [counter-type]
   {:event :counter-added
    :req (req (and (same-card? card target)
+                  (not (get-in card [:special :skipped-loading]))
                   (not (pos? (get-counters card counter-type)))))
    :effect (effect (system-msg (str "removes " (:title card) " from the game"))
                    (move card :rfg))})
@@ -159,6 +160,7 @@
   [counter-type]
   {:event :counter-added
    :req (req (and (same-card? card target)
+                  (not (get-in card [:special :skipped-loading]))
                   (not (pos? (get-counters card counter-type)))))
    :async true
    :effect (effect (system-msg (str "trashes " (:title card)))

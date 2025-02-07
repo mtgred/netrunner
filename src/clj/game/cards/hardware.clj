@@ -98,11 +98,12 @@
 (defcard "AirbladeX (JSRF Ed.)"
   {:data {:counter {:power 3}}
    :interactions {:prevent [{:type #{:net}
-                             :req (req run)}]}
+                             :req (req (and run (pos? (get-counters card :power))))}]}
    :events [(trash-on-empty :power)
             {:event :prevent-encounter-ability
              :interactive (req true)
-             :req (req (not (get-in @state [:run :prevent-encounter-ability])))
+             :req (req (and (not (get-in @state [:run :prevent-encounter-ability]))
+                            (pos? (get-counters card :power))))
              :async true
              :effect (req
                        (if (get-in @state [:run :prevent-encounter-ability])
@@ -488,6 +489,7 @@
                          {:async true
                           :msg "rearrange the top 4 cards of R&D"
                           :cost [(->c :power 1)]
+                          :req (req (pos? (get-counters card :power)))
                           :waiting-prompt true
                           :effect (req (continue-ability
                                          state side

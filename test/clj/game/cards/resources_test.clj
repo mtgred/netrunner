@@ -380,6 +380,75 @@
       (is (not (refresh kat1)) "old kati trashed")
       (is (= 0 (get-counters (get-resource state 1) :credit)) "0 credits on new kati"))))
 
+(deftest assimilator-load-and-trash-on-empty
+  (doseq [[scenario deck] [[:airblade ["AirbladeX (JSRF Ed.)"]]
+                           [:bank-job ["Bank Job"]]
+                           [:cataloguer ["Cataloguer"]]
+                           [:crowdfunding ["Crowdfunding"]]
+                           [:casts ["Daily Casts"]]
+                           [:nuka ["Dr. Nuka Vrolyck"]]
+                           [:hotel ["Earthrise Hotel" (qty "Earthrise Hotel" 14)]]
+                           [:juli ["Juli Moreira Lee"]]
+                           [:liberated ["Liberated Account"]]
+                           [:malandragem ["Malandragem"]]
+                           [:nga ["Nga"]]
+                           [:penumbral ["Penumbral Toolkit"]]
+                           [:telework ["Telework Contract"]]]]
+    (do-game
+      (new-game {:corp {:hand []}
+                 :runner {:hand ["Assimilator" "Hunting Grounds" "Kati Jones"]
+                          :credits 25
+                          :deck deck}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Assimilator")
+      (play-from-hand state :runner "Hunting Grounds")
+      (core/gain state :runner :click 10)
+      (card-ability state :runner (get-resource state 1) 0)
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-card state :runner (get-runner-facedown state 0))
+      ;; kati
+      (case scenario
+        :airblade     (is (= (first deck) (:title (get-hardware state 0))) "Airblades exists")
+        :bank-job     (is (= (first deck) (:title (get-resource state 1))) "Bank Job exists")
+        :cataloguer   (is (= (first deck) (:title (get-hardware state 0))) "Cataloguer exists")
+        :crowdfunding (is (= (first deck) (:title (get-resource state 1))) "CF exists")
+        :casts        (do (is (= (first deck) (:title (get-resource state 1))) "Casts exists")
+                          (take-credits state :runner)
+                          (is (changed? [(:credit (get-runner)) 0]
+                                (take-credits state :corp))
+                              "gained 0 from casts")
+                          (is (= (first deck) (:title (get-resource state 1))) "But Casts exists"))
+        :nuka         (is (= (first deck) (:title (get-resource state 1))) "Doc. Nuka")
+        :hotel        (do (is (= (first deck) (:title (get-resource state 1))) "Earthrise Exists")
+                          (take-credits state :runner)
+                          (is (changed? [(count (:hand (get-runner))) 2]
+                                (take-credits state :corp))
+                              "Hotel still draws 2")
+                          (is (= (first deck) (:title (get-resource state 1))) "Earthrise still Exists"))
+        :juli         (do (is (= (first deck) (:title (get-resource state 1))) "Juli exists")
+                          (take-credits state :runner)
+                          (take-credits state :corp)
+                          (play-from-hand state :runner "Kati Jones")
+                          (is (changed? [(:click (get-runner)) 0]
+                                (card-ability state :runner (get-resource state 2) 0))
+                              "gained click when using kati")
+                          (is (= (first deck) (:title (get-resource state 1))) "But juli still exists"))
+        :liberated    (do (is (= (first deck) (:title (get-resource state 1))) "Lib exists")
+                          (is (changed? [(:click (get-runner)) -1
+                                         (:credit (get-runner)) 0]
+                                (card-ability state :runner (get-resource state 1) 0))
+                              "Gained 0, wasted a click")
+                          (is (= (first deck) (:title (get-resource state 1))) "Lib still exists"))
+        :malandragem  (is (= (first deck) (:title (get-program state 0))) "Malandragem Exists")
+        :nga          (is (= (first deck) (:title (get-program state 0))) "Nga Exists")
+        :penumbral    (is (= (first deck) (:title (get-resource state 1))) "Penumbral Exists")
+        :telework     (do (is (= (first deck) (:title (get-resource state 1))) "Telework exists")
+                          (is (changed? [(:click (get-runner)) -1
+                                         (:credit (get-runner)) 0]
+                                (card-ability state :runner (get-resource state 1) 0))
+                              "Gained 0, wasted a click")
+                          (is (= (first deck) (:title (get-resource state 1))) "Telework still exists"))))))
+
 (deftest avgustina-ivanovskaya
   ;; First time each turn you install a virus program, resist 1
   (do-game
@@ -3584,6 +3653,7 @@
     (new-game {:runner {:hand [(qty "Juli Moreira Lee" 2) (qty "Telework Contract" 2)]
                         :credits 10}})
     (take-credits state :corp)
+    (core/gain state :runner :click 1)
     (play-from-hand state :runner "Juli Moreira Lee")
     (play-from-hand state :runner "Telework Contract")
     (is (changed? [(get-counters (get-resource state 0) :power) -1

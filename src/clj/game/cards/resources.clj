@@ -921,7 +921,8 @@
                  :once :per-turn
                  :label "Take 1 [Credits] (start of turn)"
                  :msg "gain 1 [Credits]"
-                 :req (req (:runner-phase-12 @state))
+                 :req (req (and (:runner-phase-12 @state)
+                                (pos? (get-counters card :credit))))
                  :effect (req (add-counter state side card :credit -1)
                               (wait-for (gain-credits state :runner 1)
                                         (if (not (pos? (get-counters (get-card state card) :credit)))
@@ -1016,7 +1017,8 @@
 (defcard "Daily Casts"
   (let [ability {:once :per-turn
                  :label "Take 2 [Credits] (start of turn)"
-                 :req (req (:runner-phase-12 @state))
+                 :req (req (and (:runner-phase-12 @state)
+                                (pos? (get-counters card :credit))))
                  :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                  :async true
                  :effect (req (let [credits (min 2 (get-counters card :credit))]
@@ -1307,20 +1309,19 @@
 (defcard "Earthrise Hotel"
   (let [ability {:msg "draw 2 cards"
                  :once :per-turn
-                 :cost [(->c :power 1)]
                  :req (req (:runner-phase-12 @state))
                  :async true
                  :interactive (req true)
-                 :effect (req (wait-for (draw state :runner 2)
-                                        (if (not (pos? (get-counters (get-card state card) :power)))
-                                          (trash state :runner eid card {:unpreventable true :cause-card card})
-                                          (effect-completed state side eid))))}]
+                 :effect (req (when (pos? (get-counters card :power))
+                                (add-counter state side card :power -1))
+                              (draw state side eid 2))}]
     {:flags {:runner-turn-draw true
              :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
                                                        (cons (get-in @state [:runner :identity])
                                                              (all-active-installed state :runner))))))}
      :data {:counter {:power  3}}
-     :events [(assoc ability :event :runner-turn-begins)]
+     :events [(assoc ability :event :runner-turn-begins)
+              (trash-on-empty :power)]
      :abilities [ability]}))
 
 (defcard "Eden Shard"
@@ -1884,17 +1885,16 @@
 (defcard "Juli Moreira Lee"
   {:data {:counter {:power 4}}
    :events [(trash-on-empty :power)
-            {:event :runner-spent-click
+            {:event :action-played
              :once :per-turn
-             :req (req (let [all-cards (get-all-cards state)
-                             pred #(and (:is-game-action? %)
-                                        (resource? (:stripped-source-card %)))]
-                         (and (pred context)
-                              (first-event? state side :runner-spent-click
-                                            #(pred (first %))))))
-             :cost [(->c :power 1)]
+             :req (req (let [valid-ctx? (fn [[ctx]] (resource? (:card ctx)))]
+                         (and (valid-ctx? targets)
+                              (= :runner side)
+                              (first-event? state side :action-played valid-ctx?))))
              :msg "gain [Click]"
-             :effect (effect (gain-clicks 1))}]})
+             :effect (req (when (pos? (get-counters card :power))
+                            (add-counter state side card :power -1))
+                          (gain-clicks state side 1))}]})
 
 (defcard "Kasi String"
   {:events [{:event :run-ends
@@ -2017,6 +2017,7 @@
    :abilities [{:action true
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
+                :change-in-game-state (req (pos? (get-counters card :credit)))
                 :label "gain 4 [Credits]"
                 :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
                 :async true
@@ -3204,6 +3205,7 @@
    :abilities [{:action true
                 :label "Take 3 [Credits] from this resource"
                 :cost [(->c :click 1)]
+                :change-in-game-state (req (pos? (get-counters card :credit)))
                 :once :per-turn
                 :msg "gain 3 [Credits]"
                 :async true
