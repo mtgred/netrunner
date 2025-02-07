@@ -669,7 +669,7 @@
     (move state side card [:rig :facedown])))
 
 (defn flip-faceup
-  "Flips a runner card facedown, either manually (if it's hosted) or by calling move to correct area.
+  "Flips a runner card faceup, either manually (if it's hosted) or by calling move to correct area.
   Wires events without calling effect/init-data"
   [state side {:keys [host] :as card}]
   (let [card (if host
