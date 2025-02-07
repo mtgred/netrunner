@@ -47,7 +47,7 @@
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
    [game.core.revealing :refer [reveal]]
-   [game.core.rezzing :refer [derez rez]]
+   [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [end-run]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
@@ -1042,7 +1042,10 @@
              :effect (effect (update! (dissoc card :ebc-rezzed)))}]
    :abilities [{:async true
                 :once :per-turn
-                :choices {:card (complement rezzed?)}
+                :choices {:req (req (and (corp? target)
+                                         (not (rezzed? target))
+                                         (can-pay-to-rez? state side (assoc eid :source card)
+                                                          target {:cost-bonus -1})))}
                 :label "Rez a card, lowering the cost by 1 [Credits] (start of turn)"
                 :msg (msg "rez " (:title target))
                 :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus -1})
@@ -2264,23 +2267,30 @@
              :effect (effect (as-agenda card 1))}]})
 
 (defcard "Quarantine System"
-  (letfn [(rez-ice [cnt] {:prompt "Choose a piece of ice to rez"
-                          :async true
-                          :choices {:card #(and (ice? %)
-                                                (not (rezzed? %)))}
-                          :msg (msg "rez " (:title target))
-                          :waiting-prompt true
-                          :effect (req (let [agenda (last (:rfg corp))
-                                             ap (:agendapoints agenda 0)]
-                                         (wait-for (rez state side target {:no-warning true :cost-bonus (* ap -2)})
-                                                   (if (< cnt 3)
-                                                     (continue-ability state side (rez-ice (inc cnt)) card nil)
-                                                     (effect-completed state side eid)))))})]
+  (letfn [(rez-ice [cnt discount]
+            {:prompt (str "Choose a piece of ice to rez, paying " discount " [Credits] less")
+             :async true
+             :choices {:req (req (and (ice? target)
+                                      (can-pay-to-rez? state side (assoc eid :source card)
+                                                       target {:cost-bonus (- discount)})
+                                      (not (rezzed? target))))}
+             :msg (msg "rez " (:title target))
+             :waiting-prompt true
+             :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus (- discount)})
+                                    (if (< cnt 3)
+                                      (continue-ability
+                                        state side
+                                        (rez-ice (inc cnt) discount)
+                                        card nil)
+                                      (effect-completed state side eid))))})]
     {:abilities [{:label "Forfeit agenda to rez up to 3 pieces of ice with a 2 [Credit] discount per agenda point"
                   :req (req (pos? (count (:scored corp))))
                   :cost [(->c :forfeit)]
                   :async true
-                  :effect (req (continue-ability state side (rez-ice 1) card nil))}]}))
+                  :effect (req (continue-ability
+                                 state side
+                                 (rez-ice 1 (* 2 (:agendapoints (last (:rfg corp)) 0)))
+                                 card nil))}]}))
 
 (defcard "Raman Rai"
   {:events [{:event :corp-draw
