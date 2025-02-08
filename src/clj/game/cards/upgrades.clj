@@ -41,7 +41,7 @@
    [game.core.props :refer [add-counter add-prop set-prop]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal]]
-   [game.core.rezzing :refer [rez derez]]
+   [game.core.rezzing :refer [can-pay-to-rez? rez derez]]
    [game.core.runs :refer [end-run force-ice-encounter jack-out redirect-run
                            set-next-phase start-next-phase]]
    [game.core.say :refer [system-msg]]
@@ -128,9 +128,8 @@
              :optional
              {:req (req (and (ice? (:card context))
                              (protecting-same-server? card (:card context))
-                             (can-pay? state side (assoc eid :source card :source-type :rez)
-                                       (:card context) nil
-                                       [(->c :credit (rez-cost state side (:card context) {:cost-bonus -3}))])))
+                             (can-pay-to-rez? state side (assoc eid :source card)
+                                              (:card context) {:cost-bonus -3})))
               :prompt "Rez ice with rez cost lowered by 3?"
               :yes-ability {:msg (msg "lower the rez cost of " (:title (:card context)) " by 3 [Credits]")
                             :async true
@@ -214,15 +213,17 @@
    :events [{:event :pass-all-ice
              :optional
              {:req (req (and this-server
-                             (some #(can-pay? state side (assoc eid :source card :source-type :rez) % nil
-                                              [(->c :credit (rez-cost state side % {:cost-bonus -7}))])
+                             (some #(can-pay-to-rez? state side (assoc eid :source card)
+                                                     % {:cost-bonus -7})
                                    (:hosted card))))
               :prompt "Rez and force the Runner to encounter a hosted piece of ice?"
               :waiting-prompt true
               :yes-ability
               {:async true
                :prompt "Choose a hosted piece of Bioroid ice to rez"
-               :choices (req (:hosted card))
+               :choices (req (filter #(can-pay-to-rez? state side (assoc eid :source card)
+                                                       % {:cost-bonus -7})
+                                     (:hosted card)))
                :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
                :effect (req (wait-for (rez state side target {:cost-bonus -7})
                                       (let [ice (:card async-result)]
@@ -1662,16 +1663,13 @@
                                (not (same-card? target card))
                                (some #(and (not (rezzed? %))
                                            (not (agenda? %))
-                                           (can-pay? state side (assoc eid :source card :source-type :rez) % nil
-                                                     [(->c :credit (install-cost state side % {:cost-bonus -2}))]))
+                                           (can-pay-to-rez? state side (assoc eid :source card) % {:cost-bonus -2}))
                                      (all-installed state :corp)))))
               :prompt "Rez another card paying 2 [Credits] less?"
               :yes-ability {:prompt "Choose a card to rez"
                             :choices {:req (req (and (not (rezzed? target))
                                                      (not (agenda? target))
-                                                     (can-pay? state side (assoc eid :source card :source-type :rez)
-                                                               target nil
-                                                               [(->c :credit (rez-cost state side target {:cost-bonus -2}))])))}
+                                                     (can-pay-to-rez? state side (assoc eid :source card) target {:cost-bonus -2})))}
                             :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
                             :async true
                             :effect (effect (rez eid target {:cost-bonus -2}))}}}]})

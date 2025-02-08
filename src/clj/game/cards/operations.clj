@@ -41,7 +41,7 @@
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal reveal-loud]]
-   [game.core.rezzing :refer [derez rez]]
+   [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [end-run make-run]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? remote->name zone->name]]
@@ -821,16 +821,16 @@
     :async true
     :effect (req (doseq [c targets]
                    (derez state side c {:source-card card}))
-                 (let [discount (* -3 (count targets))]
+                 (let [discount (* 3 (count targets))]
                    (continue-ability
                      state side
                      {:async true
-                      :prompt "Choose a card to rez"
-                      :choices {:card #(and (installed? %)
-                                            (corp? %)
-                                            (not (rezzed? %))
-                                            (not (agenda? %)))}
-                      :effect (req (rez state side eid target {:cost-bonus discount}))}
+                      :prompt (str "Choose a card to rez, paying " discount " [Credits] less")
+                      :choices {:req (req (and (every-pred installed? corp? (complement rezzed?)
+                                                           installed? (complement agenda?))
+                                               (can-pay-to-rez? state side (assoc eid :source card)
+                                                                target {:cost-bonus (- discount)})))}
+                      :effect (req (rez state side eid target {:cost-bonus (- discount)}))}
                      card nil)))}})
 
 (defcard "Door to Door"
