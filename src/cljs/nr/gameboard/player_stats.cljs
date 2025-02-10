@@ -117,4 +117,7 @@
   (fn [player]
     [:div.panel.blue-shade.stats {:class (when (:active @player) "active-player")}
      (name-area (:user @player))
-     [stats-area player]]))
+     ;; note: react doesn't like defmulti much, and caches the first hit
+     ;; when it redoes stats - so it needs a key to re-render if sides
+     ;; change (ie playing a corp game after playing a runner game) - nbk
+     ^{:key (get-in @player [:identity :side])} [stats-area player]]))
