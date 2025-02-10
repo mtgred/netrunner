@@ -18,6 +18,7 @@
    :save-replay
    :side
    :singleton
+   :turmoil
    :spectatorhands
    :precon
    :gateway-type
@@ -79,6 +80,12 @@
             :on-change #(swap! options assoc :singleton (.. % -target -checked))}]
    (tr [:lobby.singleton "Singleton"])])
 
+(defn turmoil-mode [options]
+  [:span [:label
+          [:input {:type "checkbox" :checked (:turmoil @options)
+                   :on-change #(swap! options assoc :turmoil (.. % -target -checked))}]
+          (tr [:lobby.turmoil "Turmoil"])]])
+
 (defn open-decklists [options]
   [:label
    [:input {:type "checkbox" :checked (:open-decklists @options)
@@ -124,8 +131,13 @@
         ^{:key k}
         [:option {:value k} (tr-format v)]))]
    [singleton-only options fmt-state]
+   [turmoil-mode options]
    [gateway-constructed-choice fmt-state gateway-type]
    [precon-choice fmt-state precon]
+   [:div.infobox.blue-shade
+    {:style {:display (if (:turmoil @options) "block" "none")}}
+    [:p (tr [:lobby.turmoil-details "The fickle winds of fate shall decide your future."])]
+    [:p (tr [:lobby.turmoil-theme "\"FINUKA DISPOSES\""])]]
    [:div.infobox.blue-shade
     {:style {:display (if (:singleton @options) "block" "none")}}
     [:p (tr [:lobby.singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."])]
@@ -246,6 +258,7 @@
                                 :protected false
                                 :save-replay (not= "casual" (:room @lobby-state))
                                 :singleton false
+                                :turmoil false
                                 :spectatorhands false
                                 :open-decklists false
                                 :timed false
