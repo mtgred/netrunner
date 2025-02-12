@@ -32,6 +32,13 @@
     (handle-end-run state :corp nil)
     (fake-checkpoint state)))
 
+(defn set-property
+  "set properties of the game state that need to be adjustable by the frontend
+  ie: * do we want an offer to trash like cards on installs?"
+  [state side {:keys [key value]}]
+  (case key
+    :trash-like-cards (swap! state assoc-in [side :trash-like-cards] value)))
+
 (defn command-parser
   [state side {:keys [user text] :as args}]
   (let [author (or user (get-in @state [side :user]))
@@ -74,6 +81,7 @@
    "runner-ability" #'play-runner-ability
    "score" #(score %1 %2 (make-eid %1) (get-card %1 (:card %3)) nil)
    "select" #'select
+   "set-property" #'set-property
    "shuffle" #'shuffle-deck
    "start-turn" #'start-turn
    "subroutine" #'play-subroutine

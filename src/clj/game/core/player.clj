@@ -20,6 +20,7 @@
    set-aside
    set-aside-tracking
    servers
+   trash-like-cards
    click
    click-per-turn
    credit
@@ -56,6 +57,7 @@
      :credit 5
      :bad-publicity (map->BadPublicity {:base 0 :additional 0})
      :toast []
+     :trash-like-cards nil
      :hand-size (map->HandSize {:base 5 :total 5})
      :agenda-point 0 :agenda-point-req 7
      :keep false
@@ -85,6 +87,7 @@
    run-credit
    link
    tag
+   trash-like-cards
    memory
    hand-size
    agenda-point
@@ -118,6 +121,7 @@
      :toast []
      :click 0 :click-per-turn 4
      :credit 5 :run-credit 0
+     :trash-like-cards nil
      :link 0
      :tag (map->Tags {:base 0 :total 0 :is-tagged false})
      :memory {:base 4
