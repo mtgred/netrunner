@@ -1493,8 +1493,10 @@
   {:on-rez {:prompt "How many power counters do you want to place?"
             :choices :credit
             :msg (msg "place " (quantify target "power counter"))
-            :effect (effect (add-counter card :power target)
-                            (update-ice-strength card))}
+            :async true
+            :effect (req (wait-for (add-counter state side card :power target nil)
+                                   (update-ice-strength state side card)
+                                   (effect-completed state side eid)))}
    :static-abilities [(ice-strength-bonus (req (get-counters card :power)))]
    :subroutines [(trace-ability 2 {:label "Give the Runner 1 tag and end the run"
                                    :msg "give the Runner 1 tag and end the run"
@@ -1511,7 +1513,8 @@
    :events [{:event :rez
              :req (req (and (has-subtype? (:card context) "Harmonic")
                             (ice? (:card context))))
-             :effect (effect (add-counter card :power 1))}
+             :async true
+             :effect (effect (add-counter eid card :power 1 nil))}
             {:event :subroutines-should-update
              :silent (req true)
              :effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))}
@@ -1631,10 +1634,12 @@
 
 (defcard "Envelopment"
   (let [subs-effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))]
-    {:on-rez {:effect (effect (add-counter card :power 4))}
+    {:on-rez {:async true
+              :effect (effect (add-counter eid card :power 4 nil))}
      :events [{:event :corp-turn-begins
                :req (req (pos? (get-counters card :power)))
-               :effect (effect (add-counter card :power -1))}
+               :async true
+               :effect (effect (add-counter eid card :power -1 nil))}
               {:event :subroutines-should-update
                :silent (req true)
                :effect subs-effect}
@@ -3330,23 +3335,24 @@
                                         (not (ice? %)))}
                   :effect (req (let [c target
                                      title (card-str state target)]
-                                 (add-counter state side c :advancement 3)
-                                 (continue-ability
-                                   state side
-                                   {:player :runner
-                                    :async true
-                                    :waiting-prompt true
-                                    :prompt "Choose one"
-                                    :choices [(str "Access " title)
-                                              (when (can-pay? state :runner eid card nil [(->c :credit 3)])
-                                                "Pay 3 [Credits]")]
-                                    :msg (msg "force the Runner to " (decapitalize target))
-                                    :effect (req (if (= target "Pay 3 [Credits]")
-                                                   (wait-for (pay state :runner (make-eid state eid) card (->c :credit 3))
-                                                             (system-msg state :runner (:msg async-result))
-                                                             (effect-completed state side eid))
-                                                   (access-card state :runner eid c)))}
-                                   card nil)))}]})
+                                 (wait-for
+                                   (add-counter state side c :advancement 3 {:placed true})
+                                   (continue-ability
+                                     state side
+                                     {:player :runner
+                                      :async true
+                                      :waiting-prompt true
+                                      :prompt "Choose one"
+                                      :choices [(str "Access " title)
+                                                (when (can-pay? state :runner eid card nil [(->c :credit 3)])
+                                                  "Pay 3 [Credits]")]
+                                      :msg (msg "force the Runner to " (decapitalize target))
+                                      :effect (req (if (= target "Pay 3 [Credits]")
+                                                     (wait-for (pay state :runner (make-eid state eid) card (->c :credit 3))
+                                                               (system-msg state :runner (:msg async-result))
+                                                               (effect-completed state side eid))
+                                                     (access-card state :runner eid c)))}
+                                     card nil))))}]})
 
 (defcard "Owl"
   {:subroutines [{:choices {:card #(and (installed? %)
@@ -3633,8 +3639,10 @@
   {:subroutines [end-the-run]
    :static-abilities [(ice-strength-bonus (req (- (get-counters card :virus))))]
    :on-encounter {:msg "place 1 virus counter on itself"
-                  :effect (effect (add-counter card :virus 1)
-                                  (update-ice-strength (get-card state card)))}})
+                  :async true
+                  :effect (req (wait-for (add-counter state side card :virus 1 nil)
+                                         (update-ice-strength state side (get-card state card))
+                                         (effect-completed state side eid)))}})
 
 (defcard "Sapper"
   {:flags {:rd-reveal (req true)}
@@ -4163,7 +4171,8 @@
             :choices {:req (req (and (ice? target)
                                      (installed? target)))}
             :msg (msg "place 3 advancement counters on " (card-str state target))
-            :effect (effect (add-counter target :advancement 3 {:placed true}))}})
+            :async true
+            :effect (effect (add-counter eid target :advancement 3 {:placed true}))}})
 
 (defcard "Tribunal"
   {:subroutines [runner-trash-installed-sub
