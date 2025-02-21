@@ -932,7 +932,7 @@
                  :choices {:card virus-program?}
                  :async true
                  :effect (req (wait-for
-                                (add-counter state :runner card :virus -1 {:supress-checkpoint true})
+                                (add-counter state :runner card :virus -1 {:suppress-checkpoint true})
                                 (add-counter state :runner eid target :virus 1 nil)))}]
     {:abilities [(set-autoresolve :auto-fire "Friday Chip placing virus counters on itself")]
      :events [(assoc ability :event :runner-turn-begins)
