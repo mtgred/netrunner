@@ -11,6 +11,7 @@
                                  runner-can-pay-and-install?]]
    [game.core.payment :refer [can-pay? ->c]]
    [game.core.play-instants :refer [can-play-instant?]]
+   [game.core.winning :refer [agenda-points-required-to-win]]
    [game.utils :refer [dissoc-in]]
    [jinteki.utils :refer [select-non-nil-keys]]
    [medley.core :refer [update-existing]]))
@@ -272,6 +273,7 @@
       (update :set-aside cards-summary state side)
       (update :prompt-state prompt-summary same-side?)
       (update :toast toast-summary same-side?)
+      (assoc :agenda-point-req (agenda-points-required-to-win state side))
       (select-non-nil-keys (into player-keys additional-keys))))
 
 (def corp-keys

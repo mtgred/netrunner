@@ -3,7 +3,7 @@
    [cljc.java-time.duration :as duration]
    [cljc.java-time.instant :as inst]
    [cond-plus.core :refer [cond+]]
-   [game.core.effects :refer [any-effects]]
+   [game.core.effects :refer [any-effects sum-effects]]
    [game.core.say :refer [play-sfx system-msg system-say]]
    [game.utils :refer [dissoc-in]]
    [jinteki.utils :refer [other-side]]))
@@ -79,9 +79,14 @@
     (swap! state dissoc-in [:corp :clear-win])
     (swap! state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time)))
 
+(defn agenda-points-required-to-win
+  [state side]
+  (+ (get-in @state [side :agenda-point-req])
+     (sum-effects state side :agenda-point-req)))
+
 (defn side-win
   [state side]
-  (<= (get-in @state [side :agenda-point-req]) (get-in @state [side :agenda-point])))
+  (<= (agenda-points-required-to-win state side) (get-in @state [side :agenda-point])))
 
 (defn check-win-by-agenda
   ([state] (check-win-by-agenda state nil))
