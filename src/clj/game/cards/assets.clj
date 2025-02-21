@@ -3064,6 +3064,7 @@
 
 (defcard "Wage Workers"
   (let [payoff {:msg "gain [Click]"
+                :req (req (not (get-in @state [side :register :terminal])))
                 :effect (effect (gain-clicks 1))}
         relevant-keys (fn [context] {:cid (get-in context [:card :cid])
                                      :idx (:ability-idx context)})]

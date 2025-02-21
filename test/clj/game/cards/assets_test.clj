@@ -6416,6 +6416,18 @@
           (click-credit state :corp)))
         "Corp spent 2 clicks instead of 3")))
 
+(deftest wage-workers-vs-terminal-operations
+  (do-game
+    (new-game {:corp {:hand ["Wage Workers" "Too Big to Fail" "Biotic Labor" "IPO"]
+                      :credits 9}})
+    (play-from-hand state :corp "Wage Workers" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Too Big to Fail")
+    (play-from-hand state :corp "Biotic Labor")
+    (is (= 2 (:click (get-corp))) "2 clicks to go")
+    (play-from-hand state :corp "IPO")
+    (is (= 0 (:click (get-corp))) "Terminal pinned us to 0 creds")))
+
 (deftest wage-workers-vs-ob-interaction
   (do-game
     (new-game {:corp {:deck ["Wage Workers"]
