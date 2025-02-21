@@ -985,7 +985,7 @@
    :leave-play (effect (gain :agenda-point-req (get-counters card :power)))
    :static-abilities [{:type :agenda-point-req
                        :req (req (= :corp side))
-                       :value (req (* -1 (get-counters card :power)))}]
+                       :value (req (- (get-counters card :power)))}]
    :events [{:event :agenda-scored
              :interactive (req true)
              :req (req (and (->> (turn-events state side :corp-install)
