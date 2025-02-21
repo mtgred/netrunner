@@ -487,12 +487,14 @@
    :events [{:event :corp-turn-begins
              :req (req (pos? (get-counters card :power)))
              :msg "remove all hosted power counters"
-             :effect (effect (add-counter card :power (- (get-counters card :power))))}]
+             :async true
+             :effect (effect (add-counter eid card :power (- (get-counters card :power)) nil))}]
    :abilities [{:action true
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :msg "place 1 power counter on itself"
-                :effect (effect (add-counter card :power 1))}]})
+                :async true
+                :effect (effect (add-counter eid card :power 1 nil))}]})
 
 (defcard "Corporate Troubleshooter"
   {:abilities [{:label "Add strength to a rezzed piece of ice protecting this server"
@@ -672,7 +674,8 @@
                                       (continue-ability
                                         {:optional
                                          {:prompt (msg "Pay 1 [Credit] to place 1 power counter on " (:title card) "?")
-                                          :yes-ability {:effect (effect (add-counter card :power 1))
+                                          :yes-ability {:effect (effect (add-counter eid card :power 1 nil))
+                                                        :async true
                                                         :cost [(->c :credit 1)]
                                                         :msg "place 1 power counter on itself"}}}
                                         card nil))}
@@ -686,7 +689,8 @@
               {:event :successful-run
                :req (req (pos? (get-counters card :power)))
                :msg "remove 1 power counter from itself"
-               :effect (effect (add-counter card :power -1))}]
+               :async true
+               :effect (effect (add-counter eid card :power -1 nil))}]
      :abilities [maybe-gain-counter
                  etr]}))
 
@@ -1533,17 +1537,18 @@
              :req (req (and (pos? (get-counters card :power))
                             (is-central? (:server context))))
              :msg "remove 1 hosted power counter"
-             :effect (effect (add-counter card :power -1))}]
+             :async true
+             :effect (effect (add-counter eid card :power -1 nil))}]
    :on-rez {:waiting-prompt true
             :prompt "How many credits do you want to pay?"
             :choices (req (map str (range (inc (min 4 (get-in @state [:corp :credit]))))))
             :async true
             :effect (req (let [spent (str->int target)]
-                           (add-counter state :corp card :power spent)
-                           (system-msg state :corp (str "uses " (:title card) " to place "
-                                                        (quantify spent "power counter")
-                                                        " on itself"))
-                           (lose-credits state :corp eid spent)))}})
+                           (wait-for (add-counter state :corp card :power spent nil)
+                                     (system-msg state :corp (str "uses " (:title card) " to place "
+                                                                  (quantify spent "power counter")
+                                                                  " on itself"))
+                                     (lose-credits state :corp eid spent))))}})
 
 (defcard "Research Station"
   {:install-req (req (filter #{"HQ"} targets))
@@ -1609,15 +1614,17 @@
      :cost [(->c :click 1)]
      :msg "store 3 [Credits]"
      :once :per-turn
-     :effect (effect (add-counter card :credit 3))}
+     :async true
+     :effect (effect (add-counter eid card :credit 3 nil))}
     {:action true
      :cost [(->c :click 1)]
      :msg (msg "gain " (get-counters card :credit) " [Credits]")
      :once :per-turn
      :label "Take all credits"
      :async true
-     :effect (effect (add-counter card :credit (- (get-counters card :credit)))
-                     (gain-credits eid (get-counters card :credit)))}]})
+     :effect (req (wait-for
+                    (add-counter state side card :credit (- (get-counters card :credit)) nil)
+                    (gain-credits state side eid (get-counters card :credit))))}]})
 
 (defcard "Signal Jamming"
   {:abilities [{:label "Cards cannot be installed until the end of the run"
