@@ -519,7 +519,8 @@
 (defcard "Business As Usual"
   (let [faux-purge {:choices {:req (req (and (installed? target)
                                              (pos? (get-counters target :virus))))}
-                    :effect (effect (add-counter target :virus (* -1 (get-counters target :virus))))
+                    :async true
+                    :effect (effect (add-counter eid target :virus (* -1 (get-counters target :virus)) nil))
                     :msg (msg "remove all virus counters from " (card-str state target))}
         kaguya {:choices {:max 2
                           :req (req (and (corp? target)
@@ -697,13 +698,15 @@
                                   (:host %))
                               (not (facedown? %))))}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
-    :effect (effect (add-counter target :advancement 3 {:placed true})
-                    (register-turn-flag!
-                      target :can-score
-                      (fn [state _ card]
-                        (if (same-card? card target)
-                          ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
-                          true))))}})
+    :async true
+    :effect (req (add-counter state side eid target :advancement 3 {:placed true})
+                 (register-turn-flag!
+                   state side
+                   target :can-score
+                   (fn [state _ card]
+                     (if (same-card? card target)
+                       ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
+                       true))))}})
 
 (defcard "Defective Brainchips"
   {:events [{:event :pre-damage
@@ -2482,7 +2485,8 @@
              :condition :hosted
              :req (req (same-card? (:ice context) (:host card)))
              :msg "place 1 power counter on itself"
-             :effect (effect (add-counter card :power 1))}]})
+             :async true
+             :effect (effect (add-counter eid card :power 1 nil))}]})
 
 (defcard "Sacrifice"
   {:on-play
