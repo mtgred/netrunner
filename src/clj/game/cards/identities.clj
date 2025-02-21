@@ -612,7 +612,8 @@
   (let [valid-trash (fn [target] (corp? (:card target)))
         ability {:once :per-turn
                  :msg "place 1 power counter on itself"
-                 :effect (req (add-counter state side card :power 1))}]
+                 :async true
+                 :effect (req (add-counter state side eid card :power 1 nil))}]
   {:events [(assoc ability :event :runner-trash :req (req (valid-trash target)))
             (assoc ability :event :agenda-stolen :req (req true))]
    :abilities [{:action true
@@ -996,10 +997,13 @@
                                  (filter #(same-card? (:card context) (:card %)))
                                  empty?)))
              :msg "put 1 charge counter on itself"
-             :effect (req (add-counter state side card :power 1)
-                          (swap! state assoc-in [:corp :agenda-point-req]
-                                 (dec (get-in @state [:corp :agenda-point-req])))
-                          (check-win-by-agenda state))}]})
+             :async true
+             :effect (req (wait-for
+                            (add-counter state side card :power 1 nil)
+                            (swap! state assoc-in [:corp :agenda-point-req]
+                                   (dec (get-in @state [:corp :agenda-point-req])))
+                            (check-win-by-agenda state)
+                            (effect-completed state side eid)))}]})
 
 (defcard "Jamie \"Bzzz\" Micken: Techno Savant"
   {:events [{:event :pre-start-game
@@ -2251,7 +2255,8 @@
 (defcard "Titan Transnational: Investing In Your Future"
   {:events [{:event :agenda-scored
              :msg (msg "place 1 agenda counter on " (:title (:card context)))
-             :effect (effect (add-counter (get-card state (:card context)) :agenda 1))}]})
+             :async true
+             :effect (effect (add-counter eid (:card context) :agenda 1 nil))}]})
 
 (defcard "Valencia Estevez: The Angel of Cayambe"
   {:events [{:event :pre-start-game
