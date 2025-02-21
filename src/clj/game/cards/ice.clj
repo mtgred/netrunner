@@ -146,14 +146,13 @@
   "Basic ETR subroutine"
   {:label "End the run"
    :msg "end the run"
-   :change-in-game-state (req run)
    :async true
    :effect (effect (end-run :corp eid card))})
 
 (def end-the-run-if-tagged
   "ETR subroutine if tagged"
   {:label "End the run if the Runner is tagged"
-   :change-in-game-state (req (and run tagged))
+   :change-in-game-state (req tagged)
    :msg "end the run"
    :async true
    :effect (effect (end-run :corp eid card))})
