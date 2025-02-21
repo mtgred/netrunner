@@ -1,7 +1,7 @@
 (ns game.core.props
   (:require
     [game.core.card :refer [get-card ice? rezzed?]]
-    [game.core.eid :refer [make-eid]]
+    [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [trigger-event-sync]]
     [game.core.finding :refer [find-latest]]
     [game.core.ice :refer [update-ice-strength]]
@@ -29,11 +29,13 @@
   ([state side card prop-type n] (add-counter state side (make-eid state) card prop-type n nil))
   ([state side card prop-type n args] (add-counter state side (make-eid state) card prop-type n args))
   ([state side eid card prop-type n {:keys [placed] :as args}]
-   (if (= prop-type :advancement)
-     ;; if advancement counter use existing system
-     (add-prop state side eid card :advance-counter n args)
-     (let [updated-card (update! state side (update-in (get-card state card) [:counter prop-type] #(+ (or % 0) n)))]
-       (trigger-event-sync state side eid :counter-added updated-card {:counter-type prop-type :amount n :placed placed})))))
+   (if-let [card (get-card state card)]
+     (if (= prop-type :advancement)
+       ;; if advancement counter use existing system
+       (add-prop state side eid card :advance-counter n args)
+       (let [updated-card (update! state side (update-in card [:counter prop-type] #(+ (or % 0) n)))]
+         (trigger-event-sync state side eid :counter-added updated-card {:counter-type prop-type :amount n :placed placed})))
+     (effect-completed state side eid))))
 
 (defn set-prop
   "Like add-prop, but sets multiple keys to corresponding values without triggering events.
