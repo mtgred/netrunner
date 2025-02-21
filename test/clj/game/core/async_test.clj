@@ -205,6 +205,10 @@
              (is-valid-chunk? (:effect mapped) memory :async)
              (is-valid-chunk? (:effect mapped) memory :sync))
            true)
+         ;; note that :move-zone fns should complete an eid
+         (if (:move-zone mapped)
+           (is-valid-chunk? (:move-zone mapped) memory :async)
+           true)
          (if (:cancel-effect mapped)
            (is-valid-chunk? (:cancel-effect mapped) memory :async)
            true)
