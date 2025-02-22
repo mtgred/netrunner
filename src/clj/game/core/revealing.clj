@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as string]
    [game.core.eid :refer [effect-completed]]
-   [game.core.engine :refer [trigger-event-sync]]
+   [game.core.engine :refer [queue-event checkpoint]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [name-zone]]
    [game.utils :refer [enumerate-str]]
@@ -18,12 +18,18 @@
   [state side]
   (swap! state update side dissoc :openhand))
 
+;; TODO - find a way to condense these into one fn
+(defn reveal-and-queue-event
+  [state side & targets]
+  (let [cards (flatten targets)]
+    (swap! state assoc :last-revealed cards)
+    (queue-event state (if (= :corp side) :corp-reveal :runner-reveal) {:cards cards})))
+
 (defn reveal
   "Trigger the event for revealing one or more cards."
   [state side eid & targets]
-  (let [cards (flatten targets)]
-    (swap! state assoc :last-revealed cards)
-    (apply trigger-event-sync state side eid (if (= :corp side) :corp-reveal :runner-reveal) cards)))
+  (reveal-and-queue-event state side [targets])
+  (checkpoint state side eid))
 
 (defn reveal-loud
   "Trigger the event for revealing one or more cards, and also handle the log printout"
