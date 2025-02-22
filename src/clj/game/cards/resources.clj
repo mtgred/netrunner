@@ -139,17 +139,21 @@
   cname is provided for labelling the ability. Cards that disable things in a funny way (ie malia)
   may need to trigger a `disabled-cards-updated` event"
   [cname c]
-  (let [ev {:req (req tagged)
-            :interactive (req true)
-            :ability-name (str cname " (trash if tagged)")
-            :msg (msg "trash itself due to being tagged")
-            :async true
-            :effect (req (trash state side eid card {:unpreventable true :cause-card card}))}
-        evs [(assoc ev :event :tags-changed)
-             (assoc ev :event :disabled-cards-updated)]]
+  (letfn [(ev [] {:req (req tagged)
+                  :interactive (req true)
+                  :ability-name (str cname " (trash if tagged)")
+                  :msg (msg "trash itself due to being tagged")
+                  :async true
+                  :effect (req (wait-for
+                                 (trash state side card {:cause-card card})
+                                 (if (and (get-card state card) tagged)
+                                   (continue-ability state side (ev) card nil)
+                                   (effect-completed state side eid))))})
+          (evs [] [(assoc (ev) :event :tags-changed)
+                   (assoc (ev) :event :disabled-cards-updated)])]
     (assoc c
-           :events (into [] (concat (:events c) evs))
-           :on-install ev)))
+           :events (into [] (concat (:events c) (evs)))
+           :on-install (ev))))
 
 (defn bitey-boi
   [f]
@@ -935,14 +939,22 @@
                  :msg "gain 1 [Credits]"
                  :req (req (and (:runner-phase-12 @state)
                                 (pos? (get-counters card :credit))))
-                 :effect (req (wait-for (take-credits state side card :credit 1)
-                                        (if (not (pos? (get-counters (get-card state card) :credit)))
-                                          (wait-for (trash state :runner card {:unpreventable true :cause-card card})
-                                                    (system-msg state :runner (str "trashes Crowdfunding"
-                                                                                   (when (seq (:deck runner))
-                                                                                     " and draws 1 card")))
-                                                    (draw state :runner eid 1))
-                                          (effect-completed state side eid))))}]
+                 :effect (req
+                           (letfn [(maybe-trash-myself [state side eid card]
+                                     (system-msg state :runner (str "trashes Crowdfunding"
+                                                                    (when (seq (:deck runner))
+                                                                      " and draws 1 card")))
+                                     (wait-for
+                                       (trash state :runner card {:cause-card card :suppress-checkpoint true})
+                                       (wait-for
+                                         (draw state :runner 1)
+                                         (if (get-card state card)
+                                           (maybe-trash-myself state side eid card)
+                                           (effect-completed state side eid)))))]
+                             (wait-for (take-credits state side card :credit 1)
+                                       (if (not (pos? (get-counters (get-card state card) :credit)))
+                                         (maybe-trash-myself state side eid card)
+                                          (effect-completed state side eid)))))}]
     {:data {:counter {:credit 3}}
      :highlight-in-discard true
      :flags {:drip-economy true
@@ -1002,18 +1014,23 @@
              :effect (effect (pump (:card context) 2 :end-of-turn))}]})
 
 (defcard "Dadiana Chacon"
-  (let [trash-effect {:async true
-                      :req (req (zero? (get-in @state [:runner :credit])))
-                      :msg "suffer 3 meat damage"
-                      :effect (req (wait-for (trash state :runner card {:unpreventable true :cause-card card})
-                                             (damage state :runner eid :meat 3 {:unboostable true :card card})))}]
+  (letfn [(trash-effect [] {:async true
+                            :req (req (zero? (get-in @state [:runner :credit])))
+                            :msg "suffer 3 meat damage"
+                            :effect (req (wait-for
+                                           (trash state :runner card {:cause-card card :suppress-checkpoint true})
+                                           (wait-for
+                                             (damage state :runner :meat 3 {:unboostable true :card card})
+                                             (if (get-card state card)
+                                               (continue-ability state side (trash-effect) card nil)
+                                               (effect-completed state side eid)))))})]
     {:on-install {:async true
                   :effect (req (if (zero? (get-in @state [:runner :credit]))
-                                 (continue-ability state side trash-effect card nil)
+                                 (continue-ability state side (trash-effect) card nil)
                                  (effect-completed state side eid)))}
      :flags {:drip-economy true}
-     :events [(assoc trash-effect :event :runner-credit-loss)
-              (assoc trash-effect :event :runner-spent-credits)
+     :events [(assoc (trash-effect) :event :runner-credit-loss)
+              (assoc (trash-effect) :event :runner-spent-credits)
               {:event :runner-turn-begins
                :once :per-turn
                :interactive (req true)
@@ -1356,21 +1373,30 @@
              :req (req (genetics-trigger? state side :successful-run))}]})
 
 (defcard "Environmental Testing"
-  {:events [{:event :runner-install
-             :silent (req (not= 3 (get-counters card :power)))
-             :req (req (and (or (hardware? (:card context))
-                                (program? (:card context)))
-                            (not (:facedown? context))))
-             :async true
-             :msg "place 1 power counter on itself"
-             :effect (req (add-counter state :runner eid card :power 1))}
-            {:event :counter-added
-             :async true
-             :req (req (<= 4 (get-counters (get-card state card) :power)))
-             :msg "trash itself and gain 9 [Credit]"
-             :effect (req (wait-for (trash state side card {:unpreventable :true
-                                                            :cause-card card})
-                                    (gain-credits state side eid 9)))}]})
+  (letfn [(maybe-trash-myself
+            [state side eid card]
+            (wait-for
+              (trash state side card {:cause-card card :suppress-checkpoint true})
+              (wait-for
+                (gain-credits state side 9)
+                (if (and (get-card state card)
+                         (<= 4 (get-counters (get-card state card) :power)))
+                  (do (system-msg state side "uses Environmental Testing to make another attempt to trash itself and gain 9 [Credit]")
+                      (maybe-trash-myself state side eid (get-card state card)))
+                  (effect-completed state side eid)))))]
+    {:events [{:event :runner-install
+               :silent (req (not= 3 (get-counters card :power)))
+               :req (req (and (or (hardware? (:card context))
+                                  (program? (:card context)))
+                              (not (:facedown? context))))
+               :async true
+               :msg "place 1 power counter on itself"
+               :effect (req (add-counter state :runner eid card :power 1))}
+              {:event :counter-added
+               :async true
+               :req (req (<= 4 (get-counters (get-card state card) :power)))
+               :msg "trash itself and gain 9 [Credit]"
+               :effect (req (maybe-trash-myself state side eid card))}]}))
 
 (defcard "Eru Ayase-Pessoa"
   (let [constant-effect
@@ -1405,6 +1431,7 @@
   {:interactions {:prevent [{:type #{:trash-resource}
                              :req (req true)}]}
    :abilities [{:label "Prevent another installed resource from being trashed"
+                :msg "prevent a resource from being trashed"
                 :cost [(->c :trash-can)]
                 :effect (effect (trash-prevent :resource 1))}
                {:label "Gain 2 [Credits]"

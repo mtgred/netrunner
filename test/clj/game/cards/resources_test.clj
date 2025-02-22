@@ -2389,6 +2389,19 @@
     (is (= ["Environmental Testing" "Muse"] (sort (prompt-titles :runner)))
         "Option to trigger either muse of environmental testing first")))
 
+(deftest environmental-testing-works-with-prevention
+  (do-game
+    (new-game {:runner {:hand ["Environmental Testing" "Fall Guy" (qty "Ika" 4)]}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 2)
+    (play-from-hand state :runner "Environmental Testing")
+    (play-from-hand state :runner "Fall Guy")
+    (dotimes [_ 4] (play-from-hand state :runner "Ika"))
+    (card-ability state :runner (get-resource state 1) 0)
+    (click-prompt state :runner "Done")
+    (is (= 20 (:credit (get-runner))) "Got paid out twice")
+    (is (= 2 (count (:discard (get-runner)))) "Env and fall guy both trashed")))
+
 (deftest eru-ayase-pessoa
   (do-game
     (new-game {:corp {:hand ["IPO" "IPO" "City Works Project"]

@@ -2625,8 +2625,7 @@
                                  :msg (msg "trash itself and install " (:title target) ", ignoring all costs")
                                  :async true
                                  :effect (req (wait-for
-                                                (trash state side card {:cause-card card
-                                                                        :unpreventable true})
+                                                (trash state side card {:cause-card card})
                                                 (runner-install state side eid target {:ignore-all-cost true
                                                                                        :msg-keys {:display-origin true
                                                                                                   :install-source card}})))
