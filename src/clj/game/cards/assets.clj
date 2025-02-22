@@ -2281,7 +2281,7 @@
              :async true
              :effect (effect (add-counter eid card :power -1 nil))}
             {:event :counter-added
-             :req (req (same-card? card target)
+             :req (req (same-card? card (:card context))
                        (not (pos? (get-counters card :power))))
              :msg "add itself to [their] score area as an agenda worth 1 agenda point"
              :effect (effect (as-agenda card 1))}]})
@@ -2770,7 +2770,7 @@
              :effect (req (wait-for (add-counter state side card :bad-publicity -1 nil)
                                     (gain-bad-publicity state :corp eid 1)))}
             {:event :counter-added
-             :req (req (and (same-card? card target)
+             :req (req (and (same-card? card (:card context))
                             (not (pos? (get-counters (get-card state card) :bad-publicity)))
                             (:borehole-valid (:special card))))
              :msg "win the game"

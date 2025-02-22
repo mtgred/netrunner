@@ -3801,7 +3801,7 @@
 (defcard "Surge"
   (letfn [(placed-virus-cards [state]
             (->> (turn-events state :runner :counter-added)
-                 (filter #(= :virus (:counter-type (second %))))
+                 (filter #(= :virus (:counter-type %)))
                  (map first)
                  (keep #(get-card state %))
                  (seq)))]

@@ -3,7 +3,7 @@
    [clojure.string :as str]
    [game.core.access :refer [access-bonus access-card breach-server max-access]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
-   [game.core.board :refer [all-active-installed all-installed all-installed-runner 
+   [game.core.board :refer [all-active-installed all-installed all-installed-runner
                             all-installed-runner-type installable-servers card->server
                             get-all-cards get-all-installed server->zone]]
    [game.core.card :refer [active? agenda? asset? card-index can-be-advanced?
@@ -1519,7 +1519,7 @@
              :silent (req true)
              :effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))}
             {:event :counter-added
-             :req (req (same-card? card target))
+             :req (req (same-card? card (:card context)))
              :effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))}]})
 
 (defcard "Eli 1.0"
@@ -1644,7 +1644,7 @@
                :silent (req true)
                :effect subs-effect}
               {:event :counter-added
-               :req (req (same-card? card target))
+               :req (req (same-card? card (:card context)))
                :effect subs-effect}]
      :subroutines [{:label "Trash this ice"
                     :async true

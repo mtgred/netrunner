@@ -241,8 +241,10 @@
 ;; note: this SHOULD avoid emacs autosave and backup files, but I'm not sure if it will
 ;; potentially pick up backup files from other editors. If that happens, I can just adjust
 ;; the regex later. -nbk, 2025
+;; for reference:
+;; * emacs autosaves contain a #, and backups contain a ~
 (defn get-clojure-files [d]
-  (sort (filter #(re-matches #"^.*\.clj$" %) (seq (.list (clojure.java.io/file d))))))
+  (sort (filter #(re-matches #"[^#~]*\.clj$" %) (seq (.list (clojure.java.io/file d))))))
 
 (deftest cards-are-async-test
   (doseq [fname (get-clojure-files card-base-str)]

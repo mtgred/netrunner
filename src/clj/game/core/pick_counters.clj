@@ -3,7 +3,7 @@
     [game.core.card :refer [get-card get-counters has-subtype? installed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.eid :refer [effect-completed make-eid complete-with-result]]
-    [game.core.engine :refer [resolve-ability trigger-event-sync]]
+    [game.core.engine :refer [resolve-ability queue-event]]
     [game.core.gaining :refer [lose]]
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
@@ -11,23 +11,12 @@
     [game.utils :refer [enumerate-str in-coll? quantify same-card?]]))
 
 (defn- pick-counter-triggers
-  [state side eid current-cards selected-cards counter-count message]
+  [state side eid current-cards selected-cards counter-type counter-count message]
   (if-let [[_ selected] (first current-cards)]
     (if-let [{:keys [card number]} selected]
-      (wait-for (trigger-event-sync state side :counter-added (get-card state card) number)
-                (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-count message))
-      (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-count message))
-    (complete-with-result state side eid {:number counter-count
-                                          :msg message
-                                          :targets (keep #(:card (second %)) selected-cards)})))
-
-(defn- pick-reducer-triggers
-  [state side eid current-cards selected-cards counter-count message]
-  (if-let [[_ selected] (first current-cards)]
-    (if-let [{:keys [card number]} selected]
-      (wait-for (trigger-event-sync state side :counter-added (get-card state card) number)
-                (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-count message))
-      (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-count message))
+      (do (queue-event state :counter-added {:card (get-card state card) :counter-type counter-type :amount number})
+          (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-type counter-count message))
+      (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-type counter-count message))
     (complete-with-result state side eid {:number counter-count
                                           :msg message
                                           :targets (keep #(:card (second %)) selected-cards)})))
@@ -67,7 +56,7 @@
                                                           title (:title card)]
                                                       (str (quantify number "virus counter") " from " title))
                                                    (vals selected-cards)))]
-                       (pick-counter-triggers state side eid selected-cards selected-cards counter-count message)))))
+                       (pick-counter-triggers state side eid selected-cards selected-cards :virus counter-count message)))))
     :cancel-effect (if target-count
                      (req (doseq [{:keys [card number]} (vals selected-cards)]
                             (update! state :runner (update-in (get-card state card) [:counter :virus] + number)))
@@ -81,8 +70,8 @@
 (defn- trigger-spend-credits-from-cards
   [state side eid cards]
   (if (seq cards)
-    (wait-for (trigger-event-sync state side :spent-credits-from-card (first cards))
-              (trigger-spend-credits-from-cards state side eid (rest cards)))
+    (do (queue-event state :spent-credits-from-card {:card (first cards)})
+        (trigger-spend-credits-from-cards state side eid (rest cards)))
     (effect-completed state side eid)))
 
 (defn- take-counters-of-type
@@ -161,7 +150,7 @@
                                          (remove #(-> (card-def %) :interactions :pay-credits :cost-reduction)))]
                           (wait-for (trigger-spend-credits-from-cards state side cards)
                                         ; Now we trigger all of the :counter-added events we'd neglected previously
-                                    (pick-counter-triggers state side eid selected-cards selected-cards target-count message))))
+                                    (pick-counter-triggers state side eid selected-cards selected-cards :credit target-count message))))
                       (continue-ability
                         state side
                         (pick-credit-providing-cards provider-func eid target-count stealth-target selected-cards)
