@@ -4413,7 +4413,7 @@
       (is (rezzed? (get-ice state :hq 0)) "Ice Wall should be rezzed initially")
       (play-from-hand state :runner "Leave No Trace")
       (click-prompt state :runner "Archives")
-      (core/add-prop state :corp (get-ice state :hq 0) :advance-counter 1)
+      (core/add-prop state :corp (core/make-eid state) (get-ice state :hq 0) :advance-counter 1)
       (run-continue state)
       (is (= 1 (get-counters (get-ice state :hq 0) :advancement)))
       (is (rezzed? (get-ice state :hq 0)) "Ice Wall should still be rezzed")))

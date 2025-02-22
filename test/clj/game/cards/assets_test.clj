@@ -2080,6 +2080,7 @@
                   (new-game {:corp {:deck ["False Flag"]}})
                   (play-from-hand state :corp "False Flag" "New remote")
                   (core/add-prop state :corp
+                                 (core/make-eid state)
                                  (get-content state :remote1 0)
                                  :advance-counter advancements)
                   (take-credits state :corp)

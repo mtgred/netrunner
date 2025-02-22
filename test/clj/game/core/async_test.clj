@@ -99,7 +99,7 @@
   "functions which should complete an eid, or indicate one needs to be completed"
   #{"checkpoint" "complete-with-result" "continue-ability" "corp-install"
     "damage" "draw" "effect-completed" "gain-credits" "gain-tags" "make-run"
-    "reveal" "rez" "resolve-ability" "runner-install" "add-counter"
+    "reveal" "rez" "resolve-ability" "runner-install" "add-counter" "add-prop"
     "trash" "trash-cards" "trigger-event-simult" "trigger-event-sync" "wait-for"})
 
 (def safe-fns

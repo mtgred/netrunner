@@ -3698,9 +3698,9 @@
            gr (get-content state :remote2 0)
            iw1 (get-ice state :hq 0)
            iw2 (get-ice state :rd 0)]
-       (core/add-prop state :corp gr :advance-counter 3)
-       (core/add-prop state :corp iw1 :advance-counter 2)
-       (core/add-prop state :corp iw2 :advance-counter 1)
+       (core/add-prop state :corp (core/make-eid state) gr :advance-counter 3)
+       (core/add-prop state :corp (core/make-eid state) iw1 :advance-counter 2)
+       (core/add-prop state :corp (core/make-eid state) iw2 :advance-counter 1)
        (play-from-hand state :corp "Red Planet Couriers")
        (click-card state :corp gt)
        (is (zero? (get-counters (refresh gr) :advancement)) "Advancements removed")
@@ -3720,7 +3720,7 @@
            mas-rd (get-ice state :rd 0)]
        (rez state :corp mas-hq)
        (rez state :corp mas-rd)
-       (core/add-prop state :corp mas-hq :advance-counter 2)
+       (core/add-prop state :corp (core/make-eid state) mas-hq :advance-counter 2)
        (play-from-hand state :corp "Red Planet Couriers")
        (click-card state :corp (refresh mas-rd))
        (is (zero? (get-counters (refresh mas-hq) :advancement)) "Advancements removed")
