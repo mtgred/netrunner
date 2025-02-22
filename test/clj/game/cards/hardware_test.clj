@@ -2128,7 +2128,6 @@
       (is (zero? (get-counters aum :virus)) "Auakua starts with 0 counters")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 3 [Credits] to trash") ; trash Adonis Campaing
-      (click-prompt state :runner "Yes") ; gain virus counter
       (is (= 1 (get-counters (refresh fc) :virus)) "Friday Chip gains a counter on trash")
       (is (zero? (get-counters (refresh aum) :virus)) "Aumakua doesn't gain a counter")
       (run-empty-server state "HQ")
