@@ -931,9 +931,9 @@
 
 (defcard "Hyoubu Institute: Absolute Clarity"
   {:events [{:event :corp-reveal
-             :req (req (and
-                         (pos? (count targets))
-                         (first-event? state side :corp-reveal #(pos? (count %)))))
+             :req (req (letfn [(valid-ctx? [[{:keys [cards] :as ctx}]] (pos? (count cards)))]
+                         (and (valid-ctx? [context])
+                              (first-event? state side :corp-reveal valid-ctx?))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]

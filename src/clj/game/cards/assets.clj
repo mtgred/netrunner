@@ -1982,7 +1982,7 @@
                    :effect (effect (draw :corp eid 1))}}}]
     {:events [(-> ability
                   (assoc :event :runner-lose-tag)
-                  (assoc-in [:optional :req] (req (= side :runner))))
+                  (assoc-in [:optional :req] (req (= (:side context) :runner))))
               (-> ability
                   (assoc :event :runner-prevent)
                   (assoc-in [:optional :req] (req (= :tag (:type context)))))]

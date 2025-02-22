@@ -1608,13 +1608,15 @@
                                      state side card
                                      [{:event :corp-reveal
                                        :duration :end-of-encounter
-                                       :req (req (and
+                                       :req (req
+                                              (and
                                                    ; all revealed cards are in grip
-                                                   (every? in-hand? targets)
+                                                   (every? in-hand? (:cards context))
                                                    ; entire grip was revealed
-                                                   (= (count targets) (count (:hand runner)))
+                                                   (= (count (:cards context))
+                                                      (count (:hand runner)))
                                                    ; there are cards with the named card type
-                                                   (some #(is-type? % cardtype) targets)))
+                                                   (some #(is-type? % cardtype) (:cards context))))
                                        :async true
                                        :effect (req (continue-ability
                                                       state side
