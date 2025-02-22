@@ -102,9 +102,8 @@
          corp-abs (corp-ability-init cdef)
          c (update! state side
                     (merge card {:runner-abilities run-abs
-                                 :corp-abilities corp-abs}
-                           (when (->> cdef :data :special)
-                             {:special (->> cdef :data :special)})))
+                                 :special (:special cdef)
+                                 :corp-abilities corp-abs}))
          c (if init-data c (assoc-in c [:special :skipped-loading] true))
          data (merge
                 (when init-data (:counter (:data cdef)))
@@ -121,9 +120,10 @@
      ;; TODO - handle recurring credits as part of the start of turn phase (as in the CR), rather than applying events to each card
      (when recurring
        (let [recurring-fn (req (if (number? recurring) recurring (recurring state side eid card targets)))
-             r (req (let [card (update! state side (assoc-in card [:counter :recurring] 0))]
+             r (req (let [card (update! state side (assoc-in card [:counter :recurring] 0))
+                          n (recurring-fn state side eid card targets)]
                       (add-counter state side eid card
-                                   :recurring (recurring-fn state side eid card targets)
+                                   :recurring n
                                    {:placed true})))]
          (register-events
            state side c

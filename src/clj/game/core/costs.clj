@@ -13,6 +13,7 @@
    [game.core.moving :refer [discard-from-hand flip-facedown forfeit mill move trash trash-cards]]
    [game.core.payment :refer [handler label payable? value stealth-value]]
    [game.core.pick-counters :refer [pick-credit-providing-cards pick-credit-reducers pick-virus-counters-to-spend]]
+   [game.core.props :refer [add-counter add-prop]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez]]
    [game.core.shuffling :refer [shuffle!]]
@@ -1042,9 +1043,9 @@
   (<= 0 (- (get-counters card :advancement) (value cost))))
 (defmethod handler :advancement
   [cost state side eid card]
-  (let [title (:title card)
-        card (update! state side (update card :advance-counter - (value cost)))]
-    (wait-for (trigger-event-sync state side :counter-added card)
+  ;; TODO - use add-counter with suppress-checkpoint
+  (let [title (:title card)]
+    (wait-for (add-prop state side card :advancement (- (value cost)) {:placed true :suppress-checkpoint true})
               (complete-with-result
                 state side eid
                 {:paid/msg (str "spends "
@@ -1086,9 +1087,9 @@
   (<= 0 (- (get-counters card :power) (value cost))))
 (defmethod handler :power
   [cost state side eid card]
-  (let [title (:title card)
-        card (update! state side (update-in card [:counter :power] - (value cost)))]
-    (wait-for (trigger-event-sync state side :counter-added card)
+  (let [title (:title card)]
+    ;; TODO - add counter/suppress-checkpoint
+    (wait-for (add-counter state side card :power (- (value cost)) {:suppress-checkpoint true})
               (complete-with-result
                 state side eid
                 {:paid/msg (str "spends "
@@ -1112,9 +1113,8 @@
      :choices {:number (req (get-counters card :power))}
      :effect
      (req (let [cost target
-                title (:title card)
-                card (update! state side (update-in card [:counter :power] - cost))]
-            (wait-for (trigger-event-sync state side :counter-added card)
+                title (:title card)]
+            (wait-for (add-counter state side card :power cost {:suppress-checkpoint true})
                       (complete-with-result
                         state side eid
                         {:paid/msg (str "spends "
@@ -1151,13 +1151,12 @@
                  :paid/type :virus
                  :paid/value (:number async-result)
                  :paid/targets (:targets async-result)}))
-    (let [title (:title card)
-          card (update! state side (update-in card [:counter :virus] - (value cost)))]
-        (wait-for (trigger-event-sync state side :counter-added card)
-                  (complete-with-result
-                    state side eid
-                    {:paid/msg (str "spends "
-                                   (quantify (value cost) (str "hosted virus counter"))
-                                   " from on " title)
-                     :paid/type :virus
-                     :paid/value (value cost)})))))
+    (let [title (:title card)]
+      (wait-for (add-counter state side card :virus (- (value cost)) {:suppress-checkpoint true})
+                (complete-with-result
+                  state side eid
+                  {:paid/msg (str "spends "
+                                  (quantify (value cost) (str "hosted virus counter"))
+                                  " from on " title)
+                   :paid/type :virus
+                   :paid/value (value cost)})))))
