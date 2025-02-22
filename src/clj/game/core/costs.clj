@@ -6,7 +6,7 @@
    [game.core.card-defs :refer [card-def]]
    [game.core.damage :refer [damage]]
    [game.core.eid :refer [complete-with-result make-eid]]
-   [game.core.engine :refer [checkpoint resolve-ability trigger-event-sync]]
+   [game.core.engine :refer [checkpoint queue-event resolve-ability trigger-event-sync]]
    [game.core.effects :refer [any-effects is-disabled-reg?]]
    [game.core.flags :refer [is-scored?]]
    [game.core.gaining :refer [deduct lose]]
@@ -45,20 +45,19 @@
         source (get-in eid [:source])]
     (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
     (deduct state side [:click (value cost)])
-    (wait-for (trigger-event-sync state side (make-eid state eid)
-                                  (if (= side :corp) :corp-spent-click :runner-spent-click)
-                                  {:action a
-                                   :is-game-action? is-game-action?
-                                   :stripped-source-card (select-keys source [:cid :title :type])
-                                   :value (value cost)
-                                   :ability-idx (:ability-idx (:source-info eid))})
+    (queue-event state (if (= side :corp) :corp-spent-click :runner-spent-click)
+                 {:action a
+                  :is-game-action? is-game-action?
+                  :stripped-source-card (select-keys source [:cid :title :type])
+                  :value (value cost)
+                  :ability-idx (:ability-idx (:source-info eid))})
               ;; sending the idx is mandatory to make wage workers functional
               ;; and so we can look through the events and figure out WHICH abilities were used
               ;; I don't think it will break anything
-              (swap! state assoc-in [side :register :spent-click] true)
-              (complete-with-result state side eid {:paid/msg (str "spends " (label cost))
-                                                    :paid/type :click
-                                                    :paid/value (value cost)}))))
+    (swap! state assoc-in [side :register :spent-click] true)
+    (complete-with-result state side eid {:paid/msg (str "spends " (label cost))
+                                          :paid/type :click
+                                          :paid/value (value cost)})))
 
 ;; Lose Click
 (defn lose-click-label
@@ -76,13 +75,11 @@
   [cost state side eid _card]
   (swap! state update-in [:stats side :lose :click] (fnil + 0) (value cost))
   (deduct state side [:click (value cost)])
-  (wait-for (trigger-event-sync state side (make-eid state eid)
-                                (if (= side :corp) :corp-spent-click :runner-spent-click)
-                                {:value (value cost)})
-            (swap! state assoc-in [side :register :spent-click] true)
-            (complete-with-result state side eid {:paid/msg (str "loses " (lose-click-label cost))
-                                                  :paid/type :lose-click
-                                                  :paid/value (value cost)})))
+  (queue-event state (if (= side :corp) :corp-spent-click :runner-spent-click) {:value (value cost)})
+  (swap! state assoc-in [side :register :spent-click] true)
+  (complete-with-result state side eid {:paid/msg (str "loses " (lose-click-label cost))
+                                        :paid/type :lose-click
+                                        :paid/value (value cost)}))
 
 
 (defn- all-active-pay-credit-cards
@@ -158,26 +155,22 @@
                (pos? (count (provider-func))))
           (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid updated-cost (stealth-value cost)) card nil)
                     (let [pay-async-result async-result]
-                      (wait-for (trigger-event-sync
-                                  state side (make-eid state eid)
-                                  (if (= side :corp) :corp-spent-credits :runner-spent-credits)
-                                  updated-cost)
-                                (swap! state update-in [:stats side :spent :credit] (fnil + 0) updated-cost)
-                                (complete-with-result state side eid
-                                                      {:paid/msg (str "pays " (:msg pay-async-result))
-                                                       :paid/type :credit
-                                                       :paid/value (:number pay-async-result)
-                                                       :paid/targets (:targets pay-async-result)}))))
+                      (queue-event state
+                                   (if (= side :corp) :corp-spent-credits :runner-spent-credits)
+                                   {:value updated-cost})
+                      (swap! state update-in [:stats side :spent :credit] (fnil + 0) updated-cost)
+                      (complete-with-result state side eid
+                                            {:paid/msg (str "pays " (:msg pay-async-result))
+                                             :paid/type :credit
+                                             :paid/value (:number pay-async-result)
+                                             :paid/targets (:targets pay-async-result)})))
           (pos? updated-cost)
           (do (lose state side :credit updated-cost)
-              (wait-for (trigger-event-sync
-                          state side (make-eid state eid)
-                          (if (= side :corp) :corp-spent-credits :runner-spent-credits)
-                          updated-cost)
-                        (swap! state update-in [:stats side :spent :credit] (fnil + 0) updated-cost)
-                        (complete-with-result state side eid {:paid/msg (str "pays " updated-cost " [Credits]")
-                                                              :paid/type :credit
-                                                              :paid/value updated-cost})))
+              (queue-event state (if (= side :corp) :corp-spent-credits :runner-spent-credits) {:value updated-cost})
+              (swap! state update-in [:stats side :spent :credit] (fnil + 0) updated-cost)
+              (complete-with-result state side eid {:paid/msg (str "pays " updated-cost " [Credits]")
+                                                    :paid/type :credit
+                                                    :paid/value updated-cost}))
           :else
           (complete-with-result state side eid {:paid/msg "pays 0 [Credits]"
                                                 :paid/type :credit
@@ -215,14 +208,11 @@
                                                            :paid/targets (:targets async-result)}))
            (pos? cost)
            (do (lose state side :credit cost)
-               (wait-for (trigger-event-sync
-                           state side (make-eid state eid)
-                           (if (= side :corp) :corp-spent-credits :runner-spent-credits)
-                           cost)
-                         (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
-                         (complete-with-result state side eid {:paid/msg (str "pays " cost " [Credits]")
-                                                               :paid/type :x-credits
-                                                               :paid/value cost})))
+               (queue-event state (if (= side :corp) :corp-spent-credits :runner-spent-credits) {:value cost})
+               (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
+               (complete-with-result state side eid {:paid/msg (str "pays " cost " [Credits]")
+                                                     :paid/type :x-credits
+                                                     :paid/value cost}))
            :else
            (complete-with-result state side eid {:paid/msg (str "pays 0 [Credits]")
                                                  :paid/type :x-credits
@@ -1002,17 +992,15 @@
                            (is-scored? state side %)
                            (pos? (get-counters % :agenda)))}
      :async true
-     :effect (req (let [title (:title target)
-                        target (update! state side (update-in target [:counter :agenda] - (value cost)))]
-                    (wait-for (trigger-event-sync state side :agenda-counter-spent target)
-                              (complete-with-result
-                                state side eid
-                                {:paid/msg (str "spends "
-                                           (quantify (value cost) (str "hosted agenda counter"))
-                                           " from on " title)
-                                 :paid/type :any-agenda-counter
-                                 :paid/value (value cost)
-                                 :paid/targets [target]}))))}
+     :effect (req (wait-for (add-counter state side target :agenda (- (value cost)) {:suppress-checkpoint true})
+                            (complete-with-result
+                              state side eid
+                              {:paid/msg (str "spends "
+                                              (quantify (value cost) (str "hosted agenda counter"))
+                                              " from on " (:title target))
+                               :paid/type :any-agenda-counter
+                               :paid/value (value cost)
+                               :paid/targets [target]})))}
     nil nil))
 
 ;; AnyVirusCounter
@@ -1043,15 +1031,14 @@
   (<= 0 (- (get-counters card :advancement) (value cost))))
 (defmethod handler :advancement
   [cost state side eid card]
-  (let [title (:title card)]
-    (wait-for (add-prop state side card :advance-counter (- (value cost)) {:placed true :suppress-checkpoint true})
-              (complete-with-result
-                state side eid
-                {:paid/msg (str "spends "
-                               (quantify (value cost) (str "hosted advancement counter"))
-                               " from on " title)
-                 :paid/type :advancement
-                 :paid/value (value cost)}))))
+  (wait-for (add-prop state side card :advance-counter (- (value cost)) {:placed true :suppress-checkpoint true})
+            (complete-with-result
+              state side eid
+              {:paid/msg (str "spends "
+                              (quantify (value cost) (str "hosted advancement counter"))
+                              " from on " (:title card))
+               :paid/type :advancement
+               :paid/value (value cost)})))
 
 ;; AgendaCounter
 (defmethod value :agenda [cost] (:cost/amount cost))
@@ -1064,16 +1051,14 @@
   (<= 0 (- (get-counters card :agenda) (value cost))))
 (defmethod handler :agenda
   [cost state side eid card]
-  (let [title (:title card)
-        card (update! state side (update-in card [:counter :agenda] - (value cost)))]
-    (wait-for (trigger-event-sync state side :agenda-counter-spent card)
-              (complete-with-result
-                state side eid
-                {:paid/msg (str "spends "
-                               (quantify (value cost) "hosted agenda counter")
-                               " from on " title)
-                 :paid/type :agenda
-                 :paid/value (value cost)}))))
+  (wait-for (add-counter state side card :agenda (- (value cost)) {:suppress-checkpoint true})
+            (complete-with-result
+              state side eid
+              {:paid/msg (str "spends "
+                              (quantify (value cost) "hosted agenda counter")
+                              " from on " (:title card))
+               :paid/type :agenda
+               :paid/value (value cost)})))
 
 ;; PowerCounter
 (defmethod value :power [cost] (:cost/amount cost))
@@ -1086,15 +1071,14 @@
   (<= 0 (- (get-counters card :power) (value cost))))
 (defmethod handler :power
   [cost state side eid card]
-  (let [title (:title card)]
-    (wait-for (add-counter state side card :power (- (value cost)) {:suppress-checkpoint true})
-              (complete-with-result
-                state side eid
-                {:paid/msg (str "spends "
-                               (quantify (value cost) "hosted power counter")
-                               " from on " title)
-                 :paid/type :power
-                 :paid/value (value cost)}))))
+  (wait-for (add-counter state side card :power (- (value cost)) {:suppress-checkpoint true})
+            (complete-with-result
+              state side eid
+              {:paid/msg (str "spends "
+                              (quantify (value cost) "hosted power counter")
+                              " from on " (:title card))
+               :paid/type :power
+               :paid/value (value cost)})))
 
 ;; XPowerCounter
 (defmethod value :x-power [_] 0)
@@ -1110,14 +1094,13 @@
      :prompt "How many hosted power counters do you want to spend?"
      :choices {:number (req (get-counters card :power))}
      :effect
-     (req (let [cost target
-                title (:title card)]
+     (req (let [cost target]
             (wait-for (add-counter state side card :power (- cost) {:suppress-checkpoint true})
                       (complete-with-result
                         state side eid
                         {:paid/msg (str "spends "
                                        (quantify cost "hosted power counter")
-                                       " from on " title)
+                                       " from on " (:title card))
                          :paid/type :x-power
                          :paid/value cost}))))}
     card nil))
