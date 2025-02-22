@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [rez-cost install-cost]]
    [game.core.damage :refer [damage damage-bonus]]
    [game.core.def-helpers :refer [corp-recur defcard do-net-damage
-                                  offer-jack-out reorder-choice get-x-fn]]
+                                  offer-jack-out reorder-choice take-credits get-x-fn]]
    [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -272,7 +272,8 @@
                 :label "place 1 advancement counter"
                 :msg (msg "place 1 advancement counter on " (card-str state target))
                 :choices {:req (req (can-be-advanced? state target))}
-                :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
+                :async true
+                :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Award Bait"
   {:flags {:rd-reveal (req true)}
@@ -286,7 +287,8 @@
                                    {:choices {:req (req (can-be-advanced? state target))}
                                     :msg (msg "place " (quantify c "advancement token")
                                               " on " (card-str state target))
-                                    :effect (effect (add-prop :corp target :advance-counter c {:placed true}))})
+                                    :async true
+                                    :effect (req (add-prop state :corp eid target :advance-counter c {:placed true}))})
                                  card nil))}})
 
 (defcard "Azef Protocol"
@@ -591,8 +593,7 @@
   (let [e {:req (req (pos? (get-counters card :credit)))
            :msg "gain 1 [Credits]"
            :async true
-           :effect (req (wait-for (add-counter state side card :credit -1 nil)
-                                  (gain-credits state :corp eid 1)))}]
+           :effect (req (take-credits state side eid card :credit 1))}]
     {:on-score {:effect (req (add-counter state side eid card :credit 10 nil))
                 :async true
                 :silent (req true)}
@@ -857,7 +858,8 @@
                 :req (req (pos? (get-counters card :agenda)))
                 :msg (msg "place 1 advancement counter on " (card-str state target))
                 :once :per-turn
-                :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
+                :async true
+                :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Flower Sermon"
   {:on-score {:silent (req true)
@@ -1046,7 +1048,8 @@
                                          :req (req (can-be-advanced? state target))}
                                :msg (msg "place " (quantify n "advancement token")
                                          " on " (card-str state target))
-                               :effect (effect (add-prop :corp target :advance-counter n {:placed true}))}
+                               :async true
+                               :effect (effect (add-prop :corp eid target :advance-counter n {:placed true}))}
                               card nil)))}]})
 
 (defcard "Hostile Takeover"
@@ -1140,7 +1143,8 @@
      :choices {:card #(and (= (last (get-zone %)) :content)
                            (is-remote? (second (get-zone %))))}
      :msg (msg "place 2 advancement token on " (card-str state target))
-     :effect (effect (add-prop :corp target :advance-counter 2 {:placed true}))}]})
+     :async true
+     :effect (effect (add-prop :corp eid target :advance-counter 2 {:placed true}))}]})
 
 (defcard "Kimberlite Field"
   {:on-score
@@ -1758,7 +1762,8 @@
              :prompt "Choose a card that can be advanced to place 1 advancement token on"
              :choices {:req (req (can-be-advanced? state card))}
              :msg (msg "place 1 advancement token on " (card-str state target))
-             :effect (effect (add-prop :corp target :advance-counter 1 {:placed true}))}]})
+             :async true
+             :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Quantum Predictive Model"
   {:flags {:rd-reveal (req true)}
@@ -1862,7 +1867,8 @@
                 :label "place 1 advancement token"
                 :keep-menu-open :while-agenda-tokens-left
                 :choices {:card installed?}
-                :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
+                :async true
+                :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Remote Data Farm"
   {:move-zone (req (when (and (in-scored? card)
@@ -2061,8 +2067,7 @@
             :msg (msg "place 2 advancement counters on " (card-str state target))
             :async true
             :effect (req
-                      (add-prop state :corp target :advance-counter 2 {:placed true})
-                      (effect-completed state side eid))}})
+                      (add-prop state :corp eid target :advance-counter 2 {:placed true}))}})
 
 (defcard "SSL Endorsement"
   (let [add-credits-abi {:effect (req (add-counter state side eid card :credit 9 nil))
@@ -2081,8 +2086,7 @@
                 {:async true
                  :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
                  :effect (req (if (pos? (get-counters card :credit))
-                                (wait-for (add-counter state side card :credit -3 nil)
-                                          (gain-credits state :corp eid 3))
+                                (take-credits state side eid card :credit 3)
                                 (effect-completed state side eid)))}}}]}))
 
 (defcard "Standoff"
@@ -2175,7 +2179,8 @@
                                :waiting-prompt true
                                :msg (msg "place 1 advancement counter on "
                                          (card-str state target))
-                               :effect (effect (add-prop :corp target :advance-counter 1
+                               :async true
+                               :effect (effect (add-prop :corp eid target :advance-counter 1
                                                          {:placed true}))}
                               card nil)))})]
     {:on-score (score-abi 3)

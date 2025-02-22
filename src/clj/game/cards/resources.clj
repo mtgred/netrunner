@@ -3526,7 +3526,8 @@
                           (swap! state update-in [:runner :register :made-run] conj server)
                           (add-counter state :runner eid card :power 1))})]
     {:events [{:event :run-ends
-               :req (req (no-run-event? state side :agenda-stolen))
+               :req (req (and (not (:did-steal context))
+                              (some #{:hq :rd} (:server context))))
                :async true
                :effect (req (add-counter state side eid card :power 1))
                :silent (req true)}]

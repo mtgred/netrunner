@@ -1043,9 +1043,8 @@
   (<= 0 (- (get-counters card :advancement) (value cost))))
 (defmethod handler :advancement
   [cost state side eid card]
-  ;; TODO - use add-counter with suppress-checkpoint
   (let [title (:title card)]
-    (wait-for (add-prop state side card :advancement (- (value cost)) {:placed true :suppress-checkpoint true})
+    (wait-for (add-prop state side card :advance-counter (- (value cost)) {:placed true :suppress-checkpoint true})
               (complete-with-result
                 state side eid
                 {:paid/msg (str "spends "
@@ -1088,7 +1087,6 @@
 (defmethod handler :power
   [cost state side eid card]
   (let [title (:title card)]
-    ;; TODO - add counter/suppress-checkpoint
     (wait-for (add-counter state side card :power (- (value cost)) {:suppress-checkpoint true})
               (complete-with-result
                 state side eid

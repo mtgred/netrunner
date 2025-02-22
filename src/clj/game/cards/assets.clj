@@ -20,7 +20,7 @@
    [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.damage :refer [damage damage-prevent]]
    [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
-                                  reorder-choice trash-on-empty get-x-fn with-revealed-hand]]
+                                  reorder-choice spend-credits take-credits trash-on-empty get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
    [game.core.effects :refer [is-disabled-reg? register-lingering-effect update-disabled-cards]]
@@ -81,8 +81,7 @@
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain " per-turn " [Credits] (start of turn)")
                   :async true
-                  :effect (req (wait-for (gain-credits state side (num-counters card))
-                                         (add-counter state side eid card counter-type (- (num-counters card)) nil)))}]
+                  :effect (req (take-credits state side eid card counter-type per-turn))}]
      {:data {:counter {counter-type counters}}
       :derezzed-events [corp-rez-toast]
       :events [(trash-on-empty counter-type)
@@ -258,7 +257,8 @@
   (let [ability {:label "Place 1 advancement token (start of turn)"
                  :once :per-turn
                  :msg "place 1 advancement token on itself"
-                 :effect (effect (add-prop card :advance-counter 1 {:placed true}))}]
+                 :async true
+                 :effect (effect (add-prop eid card :advance-counter 1 {:placed true}))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)
@@ -276,11 +276,15 @@
                                   :yes-ability
                                   {:prompt "How many advancement tokens do you want to move?"
                                    :choices {:number (req (get-counters card :advancement))}
-                                   :effect (effect (add-prop :corp ice :advance-counter target {:placed true})
-                                                   (add-prop :corp card :advance-counter (- target) {:placed true})
-                                                   (system-msg (str "uses " (:title card) " to move "
-                                                                    (quantify target "advancement counter")
-                                                                    " to " (card-str state ice))))}}}
+                                   :async true
+                                   :effect (req (wait-for
+                                                  (add-prop state :corp ice :advance-counter target {:placed true})
+                                                  (wait-for
+                                                    (add-prop state :corp card :advance-counter (- target) {:placed true})
+                                                    (system-msg state side (str "uses " (:title card) " to move "
+                                                                                (quantify target "advancement counter")
+                                                                                " to " (card-str state ice)))
+                                                    (effect-completed state side eid))))}}}
                                 card nil)))}]
      :abilities [ability]}))
 
@@ -517,10 +521,11 @@
           {:msg "remove 1 hosted advancement counter from itself to gain 4 [Credits] and draw 1 card"
            :async true
            :effect (req
-                     (add-prop state :corp card :advance-counter -1)
                      (wait-for
-                       (gain-credits state side 4)
-                       (draw state side eid 1)))}}}
+                       (add-prop state :corp card :advance-counter -1)
+                       (wait-for
+                         (gain-credits state side 4)
+                         (draw state side eid 1))))}}}
         queue-ability {:interactive (req true)
                        :event :corp-turn-begins
                        :req (req (and (not-used-once? state {:once :per-turn} card)
@@ -678,8 +683,9 @@
                                                                        (installed? %))}
                                                  :msg (msg "place 1 advancement counter on "
                                                            (card-str state target))
+                                                 :async true
                                                  :effect (effect
-                                                           (add-prop target
+                                                           (add-prop eid target
                                                                      :advance-counter 1
                                                                      {:placed true}))}
                                                 card nil))})
@@ -731,8 +737,9 @@
                                          (card-str state from-ice)
                                          " to "
                                          (card-str state target))
-                               :effect (effect (add-prop :corp target :advance-counter 1 {:placed true})
-                                               (add-prop :corp from-ice :advance-counter -1))})
+                               :async true
+                               :effect (req (wait-for (add-prop state :corp target :advance-counter 1 {:placed true})
+                                                      (add-prop state :corp eid from-ice :advance-counter -1)))})
                             card nil))}]})
 
 (defcard "Contract Killer"
@@ -816,8 +823,7 @@
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}
                {:async true
-                :effect (req (wait-for (add-counter state side card :credit -1 nil)
-                                       (gain-credits state side eid 1)))
+                :effect (req (spend-credits state side eid card :credit 1))
                 :label "Take 1 hosted [Credits] (manual)"
                 :msg "take 1 hosted [Credits]"}]
    :interactions {:pay-credits {:req (req (= :corp-install (:source-type eid)))
@@ -959,7 +965,8 @@
                                          (in-server? target)))} ; should be *in* a server
                 :once :per-turn
                 :msg (msg "place 1 advancement token on " (card-str state target))
-                :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
+                :async true
+                :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Echo Chamber"
   {:abilities [{:action true
@@ -1287,7 +1294,8 @@
                    :choices {:req (req (and (can-be-advanced? state target)
                                             (installed? target)))}
                    :msg (msg "place 1 advancement counter on " (card-str state target))
-                   :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
+                   :async true
+                   :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}
         ability {:req (req (:corp-phase-12 @state))
                  :label "Move 1 hosted advancement counter to another card you can advance (start of turn)"
                  :once :per-turn
@@ -1308,9 +1316,11 @@
                                           " to "
                                           (card-str state target))
                                 :async true
-                                :effect (effect (add-prop :corp target :advance-counter 1 {:placed true})
-                                                (add-prop :corp from-ice :advance-counter -1)
-                                                (continue-ability political card nil))
+                                :effect (req (wait-for
+                                                  (add-prop state :corp target :advance-counter 1 {:placed true})
+                                                  (wait-for
+                                                    (add-prop state :corp from-ice :advance-counter -1)
+                                                    (continue-ability state :corp political card nil))))
                                 :cancel-effect (effect (continue-ability political card nil))})
                              card nil))
                  :cancel-effect (effect (continue-ability political card nil))}]
@@ -1464,8 +1474,7 @@
                   :label "Take all hosted credits and add this asset to HQ. Install 1 card from HQ"
                   :async true
                   :msg (msg "gain " (get-counters (get-card state card) :credit) " [Credits] and add itself to HQ")
-                  :effect (req (wait-for (gain-credits state side (make-eid state eid)
-                                                       (get-counters (get-card state card) :credit))
+                  :effect (req (wait-for (take-credits state side  card :credit :all)
                                          (move state :corp card :hand)
                                          (continue-ability
                                            state side
@@ -1565,7 +1574,8 @@
 (defcard "Lakshmi Smartfabrics"
   {:events [{:event :rez
              :async true
-             :effect (effect (add-counter eid card :power 1 nil))}]
+             :silent (req true)
+             :effect (req (add-counter state side eid card :power 1))}]
    :abilities [{:req (req (seq (filter #(and (agenda? %)
                                              (>= (get-counters card :power)
                                                  (:agendapoints %)))
@@ -1646,7 +1656,7 @@
    :events [{:event :corp-turn-begins
              :msg "place 2 [Credit] on itself"
              :async true
-             :effect (effect (add-counter eid card :credit 2 nil))}]})
+             :effect (req (add-counter state side eid card :credit 2))}]})
 
 (defcard "Lt. Todachine"
   {:events [{:event :rez
@@ -1689,14 +1699,11 @@
                  :label (str "Gain 2 [Credits] (start of turn)")
                  :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                  :async true
-                 :effect (req (let [credits (min 2 (get-counters card :credit))]
-                                (wait-for
-                                  (add-counter state side card :credit (- credits) nil)
-                                  (wait-for
-                                    (gain-credits state :corp credits)
-                                    (if (not (pos? (get-counters (get-card state card) :credit)))
-                                      (trash state :corp eid card {:unpreventable true :cause-card card})
-                                      (effect-completed state :corp eid))))))}]
+                 :effect (req (wait-for
+                                (take-credits state side card :credit 2)
+                                (if (not (pos? (get-counters (get-card state card) :credit)))
+                                  (trash state :corp eid card {:unpreventable true :cause-card card})
+                                  (effect-completed state :corp eid))))}]
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :data {:counter {:credit 8}}
@@ -1733,9 +1740,7 @@
                  :once :per-turn
                  :req (req (pos? (get-counters card :credit)))
                  :async true
-                 :effect (req (wait-for
-                                (add-counter state side card :credit -1 nil)
-                                (gain-credits state side eid 1)))}]
+                 :effect (req (take-credits state side eid card :credit 1))}]
     {:abilities [ability
                  {:action true
                   :cost [(->c :click 1)]
@@ -1878,7 +1883,8 @@
 (defcard "Mumbad Construction Co."
   {:derezzed-events [corp-rez-toast]
    :events [{:event :corp-turn-begins
-             :effect (effect (add-prop card :advance-counter 1 {:placed true}))}]
+             :async true
+             :effect (effect (add-prop eid card :advance-counter 1 {:placed true}))}]
    :abilities [{:cost [(->c :credit 2)]
                 :keep-menu-open :while-advancement-tokens-left
                 :req (req (and (pos? (get-counters card :advancement))
@@ -1887,8 +1893,9 @@
                 :prompt "Choose a faceup card"
                 :choices {:card faceup?}
                 :msg (msg "move an advancement token to " (card-str state target))
-                :effect (effect (add-prop card :advance-counter -1 {:placed true})
-                                (add-prop target :advance-counter 1 {:placed true}))}]})
+                :async true
+                :effect (req (wait-for (add-prop state side card :advance-counter -1 {:placed true})
+                                       (add-prop state side eid target :advance-counter 1 {:placed true})))}]})
 
 (defcard "Museum of History"
   {:derezzed-events [corp-rez-toast]
@@ -2036,19 +2043,16 @@
          :label "Take 3 [Credits] (start of turn)"
          :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
          :req (req (:corp-phase-12 @state))
-         :effect (req (let [credits (min 3 (get-counters card :credit))]
-                        (wait-for
-                          (add-counter state side card :credit (- credits) nil)
+         :effect (req (wait-for
+                        (take-credits state side card :credit 3)
+                        (if (pos? (get-counters (get-card state card) :credit))
+                          (effect-completed state side eid)
                           (wait-for
-                            (gain-credits state :corp credits)
-                            (if (pos? (get-counters (get-card state card) :credit))
-                              (effect-completed state side eid)
-                              (wait-for
-                                (trash state :corp card {:unpreventable true :cause-card card})
-                                (system-msg state :corp (str "trashes Nico Campaign"
-                                                             (when (seq (:deck corp))
-                                                               " and draws 1 card")))
-                                (draw state :corp eid 1)))))))}]
+                            (trash state :corp card {:unpreventable true :cause-card card})
+                            (system-msg state :corp (str "trashes Nico Campaign"
+                                                         (when (seq (:deck corp))
+                                                           " and draws 1 card")))
+                            (draw state :corp eid 1)))))}]
     {:data {:counter {:credit 9}}
      :derezzed-events [corp-rez-toast]
      :abilities [ability]
@@ -2110,19 +2114,22 @@
                 :label "Place 1 advancement token on a card"
                 :choices {:card installed?}
                 :msg (msg "place 1 advancement token on " (card-str state target))
-                :effect (req (add-prop state :corp target :advance-counter 1 {:placed true})
-                             (let [tgtcid (:cid target)]
-                               (register-turn-flag!
-                                 state side
-                                 target :can-score
-                                 (fn [state _ card]
-                                   (if (and (= tgtcid
-                                               (:cid card))
-                                            (<= (get-advancement-requirement card)
-                                                (get-counters card :advancement)))
-                                     ((constantly false)
-                                      (toast state :corp "Cannot score due to PAD Factory." "warning"))
-                                     true)))))}]})
+                :async true
+                :effect (req (wait-for
+                               (add-prop state :corp target :advance-counter 1 {:placed true})
+                               (let [tgtcid (:cid target)]
+                                 (register-turn-flag!
+                                   state side
+                                   target :can-score
+                                   (fn [state _ card]
+                                     (if (and (= tgtcid
+                                                 (:cid card))
+                                              (<= (get-advancement-requirement card)
+                                                  (get-counters card :advancement)))
+                                       ((constantly false)
+                                        (toast state :corp "Cannot score due to PAD Factory." "warning"))
+                                       true))))
+                               (effect-completed state side eid)))}]})
 
 (defcard "Pālanā Agroplex"
   (let [ability {:msg "make each player draw 1 card"
@@ -2231,9 +2238,7 @@
                 :label "Take hosted credits"
                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                 :async true
-                :effect (req (let [credits (min 2 (get-counters card :credit))]
-                               (wait-for (add-counter state side card :credit (- credits) nil)
-                                         (gain-credits state :corp eid credits))))}]})
+                :effect (req (take-credits state side eid card :credit 2))}]})
 
 (defcard "Project Junebug"
   (advance-ambush 1 {:req (req (pos? (get-counters (get-card state card) :advancement)))
@@ -2455,10 +2460,7 @@
                 :keep-menu-open :while-clicks-left
                 :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
                 :async true
-                :effect (req (let [credits (min 3 (get-counters card :credit))]
-                               (wait-for
-                                 (gain-credits state :corp (make-eid state eid) credits)
-                                 (add-counter state side eid card :credit (- credits) {:placed true}))))}]})
+                :effect (req (take-credits state side eid card :credit 3))}]})
 
 (defcard "Reversed Accounts"
   {:advanceable :always
@@ -2551,7 +2553,7 @@
                 :choices {:number (req (- (:credit corp) 1))}
                 :msg (msg "store " target " [Credits]")
                 :async true
-                :effect (req (wait-for (add-counter state side card :credit target nil)
+                :effect (req (wait-for (add-counter state side card :credit target)
                                        (lose-credits state side eid target)))}
                {:action true
                 :label "Move any number of credits to your credit pool"
@@ -2723,7 +2725,8 @@
                 :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
                               :prompt "Choose a card to place an advancement token on"
                               :choices {:req (req (can-be-advanced? state target))}
-                              :effect (effect (add-prop target :advance-counter 1 {:placed true}))}}}})
+                              :async true
+                              :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}}}})
 
 (defcard "Spin Doctor"
   {:on-rez {:async true
@@ -3116,8 +3119,7 @@
               :choices {:card #(and (ice? %)
                                     (installed? %))}
               :cancel-effect (effect (effect-completed eid))
-              :effect (effect (add-prop target :advance-counter 1 {:placed true})
-                              (effect-completed eid))}
+              :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}
              {:label "add this asset to HQ"
               :msg "add itself to HQ"
               :effect (effect (move card :hand))}]

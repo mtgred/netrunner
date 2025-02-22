@@ -4067,7 +4067,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Cookbook")
     (play-from-hand state :runner "Gravedigger")
-    (click-prompt state :runner "Yes")
     (is (changed? [(:credit (get-corp)) 0]
           (card-ability state :runner (get-program state 0) 0))
         "Nuvem should not fire on Runner's turn")))

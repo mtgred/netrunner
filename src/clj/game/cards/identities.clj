@@ -725,7 +725,8 @@
              :choices {:card #(and (installed? %)
                                    (ice? %))}
              :msg (msg "place 1 advancement token on " (card-str state target))
-             :effect (req (add-prop state :corp target :advance-counter 1 {:placed true}))}]})
+             :async true
+             :effect (req (add-prop state :corp eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Gabriel Santiago: Consummate Professional"
   {:events [{:event :successful-run
@@ -1029,7 +1030,8 @@
                                           (corp? %))}
                     :msg (msg "place " (quantify p "advancement token")
                               " on " (card-str state target))
-                    :effect (effect (add-prop :corp target :advance-counter p {:placed true}))})
+                    :async true
+                    :effect (effect (add-prop :corp eid target :advance-counter p {:placed true}))})
                  card nil))}]})
 
 (defcard "Jesminder Sareen: Girl Behind the Curtain"
@@ -1082,7 +1084,8 @@
                                        state side
                                        {:prompt "Choose a card that can be advanced"
                                         :choices {:req (req (can-be-advanced? state target))}
-                                        :effect (effect (add-prop target :advance-counter 4 {:placed true}))}
+                                        :async true
+                                        :effect (effect (add-prop eid target :advance-counter 4 {:placed true}))}
                                        card nil))
                                  (do (toast state :corp (str "Unknown Jinteki Biotech: Life Imagined card: " flip) "error")
                                      (effect-completed state side eid)))))}]})
@@ -1981,7 +1984,8 @@
                                    :choices {:card #(selectable-ice? %)}
                                    :msg (msg "place " (quantify agenda-points "advancement token")
                                              " on " (card-str state target))
-                                   :effect (effect (add-prop target :advance-counter agenda-points {:placed true}))}
+                                   :async true
+                                   :effect (effect (add-prop eid target :advance-counter agenda-points {:placed true}))}
                                   card nil)))}}}]
      :abilities [(set-autoresolve :auto-fire "SSO Industries: Fueling Innovation")]}))
 
@@ -2113,7 +2117,8 @@
                 :req (req (and (:corp-phase-12 @state)
                                (not-last-turn? state :runner :successful-run)))
                 :once :per-turn
-                :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
+                :async true
+                :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "The Catalyst: Convention Breaker"
   ;; No special implementation

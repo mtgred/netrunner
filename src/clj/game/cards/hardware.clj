@@ -14,7 +14,7 @@
    [game.core.damage :refer [chosen-damage damage damage-prevent
                              enable-runner-damage-choice runner-can-choose-damage?]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
-                                  reorder-choice trash-on-empty get-x-fn]]
+                                  reorder-choice spend-credits take-credits trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect
                               unregister-effects-for-card unregister-lingering-effects]]
@@ -858,20 +858,17 @@
                   :req (req (and (not-empty (:hosted card))
                                  (pos? (get-counters card :credit))))
                   :async true
-                  :effect (req (wait-for
-                                 (add-counter state side card :credit -1)
-                                 (system-msg state :runner "takes 1 hosted [Credits] from Flame-out")
-                                 (register-flame-effect state card)
-                                 (gain-credits state :runner eid 1)))}
+                  :effect (req (system-msg state :runner "takes 1 hosted [Credits] from Flame-out")
+                               (register-flame-effect state card)
+                               (spend-credits state side eid card :credit 1))}
                  {:label "Take all hosted [Credits]"
                   :req (req (and (not-empty (:hosted card))
                                  (pos? (get-counters card :credit))))
                   :async true
                   :effect (req (let [credits (get-counters card :credit)]
-                                 (update! state :runner (dissoc-in card [:counter :credit]))
                                  (system-msg state :runner (str "takes " credits " hosted [Credits] from Flame-out"))
                                  (register-flame-effect state card)
-                                 (gain-credits state :runner eid credits)))}]
+                                 (take-credits state side eid card :credit :all)))}]
      :events [(assoc maybe-turn-end :event :runner-turn-ends)
               (assoc maybe-turn-end :event :corp-turn-ends)]
      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
@@ -879,7 +876,7 @@
                                                  (pos? (get-counters card :credit))))
                                   :custom-amount 1
                                   :custom (req (wait-for
-                                                 (add-counter state side card :credit -1)
+                                                 (add-counter state side card :credit -1 {:suppress-checkpoint true})
                                                  (register-flame-effect state card)
                                                  (effect-completed state side (make-result eid 1))))
                                   :type :custom}}}))
@@ -1220,31 +1217,24 @@
                             (effect-completed state side eid)))}]})
 
 (defcard "Keiko"
-  {:static-abilities [(mu+ 2)]
-   :events [{:event :spent-credits-from-card
-             :req (req (and (not (facedown? {:card context}))
-                            (has-subtype? {:card context} "Companion")
-                            (= 1 (+ (event-count state :runner :spent-credits-from-card
-                                                 #(and (not (facedown? (:card (first %))))
-                                                       (has-subtype? (:card (first %)) "Companion")))
-                                    (event-count state :runner :runner-install
-                                                 #(and (not (facedown? (:card (first %))))
-                                                       (has-subtype? (:card (first %)) "Companion")))))))
+  (letfn [(companion? [[{:keys [card]}]]
+            (and (not (facedown? card))
+                 (has-subtype? card "Companion")))]
+    {:static-abilities [(mu+ 2)]
+     :events [{:event :spent-credits-from-card
+               :req (req (and (companion? [context])
+                              (= 1 (+ (event-count state :runner :spent-credits-from-card companion?)
+                                      (event-count state :runner :runner-install companion?)))))
              :msg "gain 1 [Credit]"
              :async true
              :effect (effect (gain-credits :runner eid 1))}
             {:event :runner-install
-             :req (req (and (not (:facedown context))
-                            (has-subtype? (:card context) "Companion")
-                            (= 1 (+ (event-count state :runner :spent-credits-from-card
-                                                 #(and (not (facedown? (:card (first %))))
-                                                       (has-subtype? (:card (first %)) "Companion")))
-                                    (event-count state :runner :runner-install
-                                                 #(and (not (:facedown (first %)))
-                                                       (has-subtype? (:card (first %)) "Companion")))))))
+             :req (req (and (companion? [context])
+                            (= 1 (+ (event-count state :runner :spent-credits-from-card companion?)
+                                    (event-count state :runner :runner-install companion?)))))
              :msg "gain 1 [Credit]"
              :async true
-             :effect (effect (gain-credits :runner eid 1))}]})
+             :effect (effect (gain-credits :runner eid 1))}]}))
 
 (defcard "Knobkierie"
   {:static-abilities [(virus-mu+ 3)]

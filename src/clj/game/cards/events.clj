@@ -1444,8 +1444,9 @@
                                                         (= (first (:server run)) (second (get-zone %))))}
                                   :msg (msg "remove " (quantify c "advancement token")
                                             " from " (card-str state target))
+                                  :async true
                                   :effect (req (let [to-remove (min c (get-counters target :advancement))]
-                                                 (add-prop state :corp target :advance-counter (- to-remove))))}
+                                                 (add-prop state :corp eid target :advance-counter (- to-remove))))}
                                  card nil)))}})]})
 
 (defcard "Express Delivery"
@@ -3072,14 +3073,16 @@
                                          (not (:rezzed %)))}
                    :msg (msg "place " (quantify c "advancement token") " on " (card-str state target) " and gain " (* 2 c) " [Credits]")
                    :async true
-                   :effect (req (wait-for (gain-credits state side (* 2 c))
-                                          (add-prop state :corp target :advance-counter c {:placed true})
-                                          (register-turn-flag!
-                                            state side
-                                            card :can-access
-                                            ;; prevent access of advanced card
-                                            (fn [_ _ card] (not (same-card? target card))))
-                                          (effect-completed state side eid)))})
+                   :effect (req (wait-for
+                                  (gain-credits state side (* 2 c))
+                                  (wait-for
+                                    (add-prop state :corp target :advance-counter c {:placed true})
+                                    (register-turn-flag!
+                                      state side
+                                      card :can-access
+                                      ;; prevent access of advanced card
+                                      (fn [_ _ card] (not (same-card? target card))))
+                                    (effect-completed state side eid))))})
                 card nil))}})
 
 (defcard "Quest Completed"
@@ -3801,9 +3804,9 @@
 (defcard "Surge"
   (letfn [(placed-virus-cards [state]
             (->> (turn-events state :runner :counter-added)
-                 (filter #(= :virus (:counter-type %)))
+                 (filter #(= :virus (:counter-type (first %))))
                  (map first)
-                 (keep #(get-card state %))
+                 (keep #(get-card state (:card %)))
                  (seq)))]
     {:on-play
      {:req (req (placed-virus-cards state))

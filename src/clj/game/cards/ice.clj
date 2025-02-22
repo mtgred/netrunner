@@ -729,8 +729,8 @@
                     :prompt "Choose an installed card"
                     :choices {:card installed?}
                     :async true
-                    :effect (effect (add-prop target :advance-counter 1 {:placed true})
-                                    (gain-credits eid 1))}
+                    :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
+                                           (gain-credits state side eid 1)))}
                    (assoc end-the-run :breakable breakable-fn)]
      :static-abilities [(ice-strength-bonus
                           (req (<= 3 (get-counters card :advancement)))
@@ -1061,7 +1061,8 @@
              :msg (msg "place 1 advancement token on " (card-str state target))
              :choices {:req (req (and (ice? target)
                                       (can-be-advanced? state target)))}
-             :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
+             :async true
+             :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]
     {:abilities [{:action true
                   :label "Move this ice to the outermost position of any server"
                   :cost [(->c :click 1)]
@@ -1247,8 +1248,9 @@
                           :msg (msg "place 1 advancement token on "
                                     (card-str state target) " and end the run")
                           :choices {:card installed?}
-                          :effect (effect (add-prop target :advance-counter 1 {:placed true})
-                                          (end-run eid card))})]})
+                          :effect (req (wait-for
+                                         (add-prop state side target :advance-counter 1 {:placed true})
+                                         (end-run state side eid card)))})]})
 
 (defcard "Cloud Eater"
   {:subroutines [trash-installed-sub
@@ -2164,7 +2166,8 @@
                                                  {:msg (msg "pay " c " [Credits] and place " (quantify c "advancement token")
                                                             " on " (card-str state target))
                                                   :choices {:req (req (can-be-advanced? state target))}
-                                                  :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                                  :async true
+                                                  :effect (effect (add-prop eid target :advance-counter c {:placed true}))}
                                                  card nil)))
                                    (effect-completed state side eid))))}]
    :on-access {:async true
@@ -2646,7 +2649,8 @@
   {:advanceable :always
    :static-abilities [(ice-strength-bonus (req (get-counters card :advancement)))]
    :on-rez {:msg (msg "place " (quantify (inc (faceup-archives-types corp)) "advancement counter") " on itself")
-            :effect (effect (add-prop card
+            :async true
+            :effect (effect (add-prop eid card
                                       :advance-counter
                                       (inc (faceup-archives-types corp))
                                       {:placed true}))}
@@ -2912,7 +2916,9 @@
   (let [ability {:req (req (same-card? card (:card context)))
                  :effect (effect (reset-variable-subs card (get-counters card :advancement) end-the-run))}]
     {:advanceable :always
-     :on-rez {:effect (effect (add-prop card :advance-counter 1 {:placed true}))}
+     ;; TODO - can this just be data?
+     :on-rez {:async true
+              :effect (effect (add-prop eid card :advance-counter 1 {:placed true}))}
      :events [(assoc ability :event :advance)
               (assoc ability :event :subroutines-should-update :req nil)
               (assoc ability :event :advancement-placed)
@@ -2922,7 +2928,8 @@
   {:on-encounter {:cost [(->c :credit 1)]
                   :choices {:req (req (can-be-advanced? state target))}
                   :msg (msg "place 1 advancement token on " (card-str state target))
-                  :effect (effect (add-prop target :advance-counter 1 {:placed true}))}
+                  :async true
+                  :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}
    :subroutines [(tag-trace 2)]})
 
 (defcard "Mausolus"
@@ -3010,8 +3017,8 @@
                :req (req (pos? (get-counters (get-card state card) :advancement)))
                :yes-ability {:async true
                              :msg (msg "spend 1 hosted advancement counter from " (:title card) " to force the Runner to lose 3 [Credits]")
-                             :effect (effect (add-prop :corp card :advance-counter -1 {:placed true})
-                                             (lose-credits :runner eid 3))}
+                             :effect (req (wait-for (add-prop state :corp card :advance-counter -1 {:placed true})
+                                                    (lose-credits state :runner eid 3)))}
                :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}
    :subroutines [(runner-loses-credits 3)
                  end-the-run]})
@@ -3303,18 +3310,21 @@
   {:on-encounter
    {:msg "place 1 advancement counter on itself"
     :async true
-    :effect (effect (add-prop card :advance-counter 1 {:placed true})
-                    (continue-ability
-                      (let [card (get-card state card)
-                            counters ((get-x-fn) state side eid card targets)]
-                        {:optional
-                         {:prompt (str "Place " (quantify counters "advancement counter") " on another ice?")
-                          :yes-ability
-                          {:msg (msg "place " (quantify counters "advancement counter") " on " (card-str state target))
-                           :choices {:card ice?
-                                     :not-self true}
-                           :effect (effect (add-prop target :advance-counter counters {:placed true}))}}})
-                      (get-card state card) nil))}
+    :effect (req (wait-for
+                   (add-prop state side card :advance-counter 1 {:placed true})
+                   (continue-ability
+                     state side
+                     (let [card (get-card state card)
+                           counters ((get-x-fn) state side eid card targets)]
+                       {:optional
+                        {:prompt (str "Place " (quantify counters "advancement counter") " on another ice?")
+                         :yes-ability
+                         {:msg (msg "place " (quantify counters "advancement counter") " on " (card-str state target))
+                          :async true
+                          :choices {:card ice?
+                                    :not-self true}
+                          :effect (effect (add-prop eid target :advance-counter counters {:placed true}))}}})
+                     (get-card state card) nil)))}
    :x-fn (req (get-counters card :advancement))
    :subroutines [end-the-run
                  end-the-run]})
@@ -3825,7 +3835,8 @@
                                      :prompt "Choose an installed card"
                                      :msg (msg "place 3 advancement tokens on "
                                                (card-str state target))
-                                     :effect (effect (add-prop target :advance-counter 3 {:placed true}))}))
+                                     :async true
+                                     :effect (effect (add-prop eid target :advance-counter 3 {:placed true}))}))
                                 card nil))}]}))
 
 (defcard "Snoop"

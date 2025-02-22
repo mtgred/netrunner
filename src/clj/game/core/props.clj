@@ -11,8 +11,7 @@
 (defn add-prop
   "Adds the given value n to the existing value associated with the key in the card.
   Example: (add-prop ... card :counter 1) adds one power/virus counter. Triggers events."
-  ([state side card prop-type n] (add-prop state side (make-eid state) card prop-type n nil))
-  ([state side card prop-type n args] (add-prop state side (make-eid state) card prop-type n args))
+  ([state side eid card prop-type n] (add-prop state side eid card prop-type n nil))
   ([state side eid card prop-type n {:keys [placed suppress-checkpoint]}]
    (if-let [card (get-card state card)]
      (let [updated-card (update! state side (update card prop-type #(+ (or % 0) n)))

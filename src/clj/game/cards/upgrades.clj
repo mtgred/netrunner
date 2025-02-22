@@ -16,7 +16,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [corp-rez-toast defcard offer-jack-out
-                                  reorder-choice get-x-fn]]
+                                  reorder-choice take-credits get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
@@ -421,7 +421,8 @@
                         :choices {:card #(and (ice? %)
                                               (same-server? % card))}
                         :msg (msg "place 1 advancement counter on " (card-str state target))
-                        :effect (effect (add-prop target :advance-counter 1 {:placed true}))})
+                        :async true
+                        :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))})
                      card nil))}]
     {:events [(assoc ability :event :corp-turn-begins)
               {:event :approach-server
@@ -928,7 +929,8 @@
                                           (zero? (get-counters target :advancement))
                                           (same-server? target card)))}
                  :msg (msg "place 1 advancement counter on " (card-str state target))
-                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
+                 :async true
+                 :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]
     {:static-abilities [{:type :ice-strength
                          :req (req (and (ice? target)
                                         (= (card->server state card) (card->server state target))))
@@ -1043,7 +1045,8 @@
                  :msg (msg "place 1 advancement counter on " (card-str state target))
                  :choices {:req (req (and (installed? target)
                                           (in-same-server? card target)))}
-                 :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]
+                 :async true
+                 :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]
     {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
      :derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
@@ -1406,7 +1409,8 @@
                             (= 1 (count (filter #(= (second (get-zone (:card %))) (second (get-zone card)))
                                                 (map first (turn-events state side :advance)))))))
              :msg (msg "place 1 additional advancement token on " (card-str state (:card context)))
-             :effect (effect (add-prop :corp (:card context) :advance-counter 1 {:placed true}))}]})
+             :async true
+             :effect (effect (add-prop :corp eid (:card context) :advance-counter 1 {:placed true}))}]})
 
 (defcard "Off the Grid"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
@@ -1622,9 +1626,7 @@
      :once :per-turn
      :label "Take all credits"
      :async true
-     :effect (req (wait-for
-                    (add-counter state side card :credit (- (get-counters card :credit)) nil)
-                    (gain-credits state side eid (get-counters card :credit))))}]})
+     :effect (req (take-credits state side eid card :credit :all))}]})
 
 (defcard "Signal Jamming"
   {:abilities [{:label "Cards cannot be installed until the end of the run"
@@ -1864,7 +1866,8 @@
                           :req (req (and (installed? target)
                                          (can-be-advanced? state target)
                                          (in-same-server? card target)))}
-                :effect (effect (add-prop target :advance-counter 2 {:placed true}))}]})
+                :async true
+                :effect (effect (add-prop eid target :advance-counter 2 {:placed true}))}]})
 
 (defcard "Vovô Ozetti"
    {:static-abilities [{:type :rez-cost

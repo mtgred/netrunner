@@ -3373,7 +3373,6 @@
                                 :async true
                                 :effect (req (add-counter state side eid card :virus 1 nil))}}}
                 {:event :counter-added
-                 :req (req (same-card? card (:card context)))
                  :async true
                  :effect trash-if-5}
                 {:event :card-moved

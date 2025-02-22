@@ -651,9 +651,10 @@
                  (if-let [payment-str (:msg async-result)]
                    (do (system-msg state side (str (build-spend-msg payment-str "advance") (card-str state card)))
                        (update-advancement-requirement state card)
-                       (add-prop state side (get-card state card) :advance-counter 1)
-                       (play-sfx state side "click-advance")
-                       (effect-completed state side eid))
+                       (wait-for
+                         (add-prop state side (get-card state card) :advance-counter 1)
+                         (play-sfx state side "click-advance")
+                         (effect-completed state side eid)))
                    (effect-completed state side eid)))
        (effect-completed state side eid)))))
 

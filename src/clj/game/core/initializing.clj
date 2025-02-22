@@ -100,9 +100,10 @@
          recurring (:recurring cdef)
          run-abs (runner-ability-init cdef)
          corp-abs (corp-ability-init cdef)
+         special (merge (:special card) (:special cdef))
          c (update! state side
                     (merge card {:runner-abilities run-abs
-                                 :special (:special cdef)
+                                 :special special
                                  :corp-abilities corp-abs}))
          c (if init-data c (assoc-in c [:special :skipped-loading] true))
          data (merge
