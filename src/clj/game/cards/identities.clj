@@ -848,10 +848,8 @@
                       (conceal-hand state :runner)))}))
 
 (defcard "Harmony Medtech: Biomedical Pioneer"
-  {:effect (effect (lose :agenda-point-req 1)
-                   (lose :runner :agenda-point-req 1))
-   :leave-play (effect (gain :agenda-point-req 1)
-                       (gain :runner :agenda-point-req 1))})
+  {:static-abilities [{:type :agenda-point-req
+                       :value -1}]})
 
 (defcard "Hayley Kaplan: Universal Scholar"
   {:events [{:event :runner-install
@@ -987,6 +985,9 @@
 (defcard "Issuaq Adaptics: Sustaining Diversity"
   {:effect (effect (lose :agenda-point-req (get-counters card :power)))
    :leave-play (effect (gain :agenda-point-req (get-counters card :power)))
+   :static-abilities [{:type :agenda-point-req
+                       :req (req (= :corp side))
+                       :value (req (- (get-counters card :power)))}]
    :events [{:event :agenda-scored
              :interactive (req true)
              :req (req (and (->> (turn-events state side :corp-install)
@@ -999,12 +1000,7 @@
                                  empty?)))
              :msg "put 1 charge counter on itself"
              :async true
-             :effect (req (wait-for
-                            (add-counter state side card :power 1 nil)
-                            (swap! state assoc-in [:corp :agenda-point-req]
-                                   (dec (get-in @state [:corp :agenda-point-req])))
-                            (check-win-by-agenda state)
-                            (effect-completed state side eid)))}]})
+             :effect (req (add-counter state side eid card :power 1))}]})
 
 (defcard "Jamie \"Bzzz\" Micken: Techno Savant"
   {:events [{:event :pre-start-game

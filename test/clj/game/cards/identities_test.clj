@@ -7,6 +7,7 @@
    [game.core.card :refer :all]
    [game.core.mark :refer [is-mark?]]
    [game.core.servers :refer [unknown->kw zone->name]]
+   [game.core.winning :refer [agenda-points-required-to-win]]
    [game.test-framework :refer :all]
    [game.utils :as utils]))
 
@@ -2424,7 +2425,7 @@
       (take-credits state :runner)
       (score-agenda state :corp hok)
       (is (= 0 (get-counters (refresh issuaq) :power)) "Issuaq has no power counters")
-      (is (= 7 (:agenda-point-req (get-corp))) "Corp still requires 7 points to win"))))
+      (is (= 7 (agenda-points-required-to-win state :corp)) "Corp still requires 7 points to win"))))
 
 (deftest issuaq-adaptics-single-score
   ;; Issuaq Adaptics - Adjust point requirement when a single agenda is scored
@@ -2439,7 +2440,7 @@
       (play-from-hand state :corp "Seamless Launch")
       (click-card state :corp pk)
       (score state :corp (refresh pk))
-      (is (= 6 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 1")
+      (is (= 6 (agenda-points-required-to-win state :corp)) "Corp Agenda point requirement reduced by 1")
       (is (= 1 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 1 power counter"))))
 
 (deftest issuaq-adaptics-multiple-score
@@ -2460,7 +2461,7 @@
         (click-card state :corp pk2)
         (score state :corp (refresh pk1))
         (score state :corp (refresh pk2))
-        (is (= 5 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 2")
+        (is (= 5 (agenda-points-required-to-win state :corp)) "Corp Agenda point requirement reduced by 2")
         (is (= 2 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 2 power counters"))))
 
 (deftest jemison-astronautics-sacrifice-audacity-success
