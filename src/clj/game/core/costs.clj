@@ -1112,7 +1112,7 @@
      :effect
      (req (let [cost target
                 title (:title card)]
-            (wait-for (add-counter state side card :power cost {:suppress-checkpoint true})
+            (wait-for (add-counter state side card :power (- cost) {:suppress-checkpoint true})
                       (complete-with-result
                         state side eid
                         {:paid/msg (str "spends "

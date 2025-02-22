@@ -193,6 +193,7 @@
     (pay state side eid card (->c :credit (min choice (get-in @state [side :credit]))))
     (effect-completed state side eid)))
 
+;; TODO - resolve-prompt does some evil things with eids, maybe we can fix it later - nbk, 2025
 (defn resolve-prompt
   "Resolves a prompt by invoking its effect function with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
@@ -213,7 +214,7 @@
               (wait-for (maybe-pay state side eid card choices choice)
                         (when (:counter choices)
                           ;; :Counter prompts deduct counters from the card
-                          (add-counter state side card (:counter choices) (- choice)))
+                          (add-counter state side (make-eid state eid) card (:counter choices) (- choice)))
                         ;; trigger the prompt's effect function
                         (when effect
                           (effect (or choice card)))
