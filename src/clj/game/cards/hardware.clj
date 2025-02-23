@@ -782,6 +782,7 @@
              :req (req (and (program? target)
                             (first-event? state :runner :runner-install #(program? (first %)))))
              :silent (req true)
+             ; TODO actually this never shows up, because of the above silent
              :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]})
 
 (defcard "e3 Feedback Implants"
@@ -1599,6 +1600,7 @@
                           (assoc eid :source card :source-type :runner-install)
                           target {:msg-keys {:install-source card
                                              :display-origin true}}))
+         ; TODO decline
          :cancel-effect (effect (system-msg :runner (str "declines to use " (:title card) " to install a card"))
                                 (effect-completed eid))}
         gain-credit-ability

@@ -2025,6 +2025,7 @@
                             (effect-completed state side eid)
                             (wait-for
                               (trash state :corp card {:unpreventable true :cause-card card})
+                              ;; TODO this doesn't fit cleanly, it's not a use but the card isn't the source
                               (system-msg state :corp (str "trashes Nico Campaign"
                                                            (when (seq (:deck corp))
                                                              " and draws 1 card")))

@@ -1265,6 +1265,7 @@
                           (in-hand? %))}
     :msg (map-msg :trash-from-hand (count targets))
     :async true
+    ; TODO decline
     :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash any cards from HQ"))
                            (shuffle-into-rd-effect eid card 3))
     :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
