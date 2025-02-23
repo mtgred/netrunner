@@ -1015,7 +1015,9 @@
       :virus (let [[host count] value]
                (str "spends " (quantify count "hosted virus counter") " from on " host))
       :advancement (str "spends " (quantify (second value) "hosted advancement counter") " from on " (first value))
-      :power (str "spends " (quantify (second value) "hosted power counter") " from on " (first value)))))
+      :power (str "spends " (quantify (second value) "hosted power counter") " from on " (first value))
+      :turn-hosted-matryoshka-facedown (str "turns "(quantify value "hosted cop" "y" "ies")
+                                            " of Matryoshka facedown"))))
 
 (defn render-cost
   [cost side]

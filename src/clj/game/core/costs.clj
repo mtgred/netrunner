@@ -928,8 +928,7 @@
       (flip-facedown state side c))
     (complete-with-result
       state side eid
-      {:paid/msg (str "turns "(quantify (value cost) "hosted cop" "y" "ies")
-                      " of Matryoshka facedown")
+      {:paid/msg {:turn-hosted-matryoshka-facedown (value cost)}
        :paid/type :turn-hosted-matryoshka-facedown
        :paid/value (value cost)
        :paid/targets selected})))
