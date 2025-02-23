@@ -3,7 +3,8 @@
    [clojure.test :refer :all]
    [game.core :as core]
    [game.core.card :refer :all]
-   [game.test-framework :refer :all]))
+   [game.test-framework :refer :all]
+   [jinteki.utils :refer [render-map-default]]))
 
 (deftest acacia
   ;; Acacia - Optionally gain credits for number of virus tokens then trash
@@ -2065,7 +2066,7 @@
         (is (refresh flip) "Flip Switch hasn't been trashed")
         (run-on state "HQ")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (= "Runner jacks out." (-> @state :log last :text)))
+        (is (= "Runner jacks out." (render-map-default (-> @state :log last :text))))
         (is (nil? (refresh flip)) "Flip Switch has been trashed")
         (is (find-card "Flip Switch" (:discard (get-runner)))))))
 

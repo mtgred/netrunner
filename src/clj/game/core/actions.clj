@@ -15,7 +15,7 @@
     [game.core.ice :refer [break-subroutine! break-subs-event-context get-current-ice get-pump-strength get-strength pump resolve-subroutine! resolve-unbroken-subs! substitute-x-credit-costs]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string ->c]]
+    [game.core.payment :refer [build-spend-msg-suffix can-pay? merge-costs build-cost-string ->c]]
     [game.core.expend :refer [expend expendable?]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
@@ -23,7 +23,7 @@
     [game.core.runs :refer [continue get-runnable-zones]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone zones->sorted-names]]
-    [game.core.to-string :refer [card-str]]
+    [game.core.to-string :refer [card-str card-str-map]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
@@ -316,9 +316,10 @@
       (wait-for (pay state side (make-eid state eid) card total-pump-cost)
                 (dotimes [_ times-pump]
                   (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
-                (system-msg state side (str (build-spend-msg (:msg async-result) "increase")
-                                            "the strength of " (:title card) " to "
-                                            (get-strength (get-card state card))))
+                (system-msg state side {:cost (:msg async-result)
+                                        :raw-text (str (build-spend-msg-suffix (:msg async-result) "increase")
+                                                       "the strength of " (:title card) " to "
+                                                       (get-strength (get-card state card)))})
                 (effect-completed state side eid)))))
 
 (defn- play-heap-breaker-auto-pump-and-break-impl
@@ -394,10 +395,12 @@
                                         [(remove :broken (:subroutines current-ice))])]
                   (wait-for (resolve-ability state side (play-heap-breaker-auto-pump-and-break-impl state side sub-groups-to-break current-ice) card nil)
                             (system-msg state side
-                                        (str (build-spend-msg payment-str "increase")
-                                             "the strength of " (:title card)
-                                             " to " (get-strength (get-card state card))
-                                             " and break all subroutines on " (:title current-ice)))
+                                        {:cost payment-str
+                                         :raw-text
+                                         (str (build-spend-msg-suffix payment-str "increase")
+                                              "the strength of " (:title card)
+                                              " to " (get-strength (get-card state card))
+                                              " and break all subroutines on " (:title current-ice))})
                             (continue state side nil)))))))
 
 (defn- play-auto-pump-and-break-impl
@@ -494,20 +497,13 @@
                                               [(remove :broken (:subroutines current-ice))])]
                     (wait-for (resolve-ability state side (play-auto-pump-and-break-impl state side payment-eid sub-groups-to-break current-ice break-ability) card nil)
                               (system-msg state side
-                                          (if (pos? times-pump)
-                                            (str (build-spend-msg payment-str "increase")
-                                                 "the strength of " (:title card)
-                                                 " to " (get-strength (get-card state card))
-                                                 " and break all " (when (< 1 unbroken-subs) unbroken-subs)
-                                                 " subroutines on " (:title current-ice))
-                                            (str (build-spend-msg payment-str "use")
-                                                 (:title card)
-                                                 " to break "
-                                                 (if some-already-broken
-                                                   "the remaining "
-                                                   "all ")
-                                                 unbroken-subs " subroutines on "
-                                                 (:title current-ice))))
+                                          (merge
+                                           {:type :break-subs :cost payment-str
+                                            :card (:title card)
+                                            :ice (:title current-ice)
+                                            :break-type (if some-already-broken :remaining :all)
+                                            :sub-count unbroken-subs}
+                                           (when (pos? times-pump) {:str-boost (get-strength (get-card state card))})))
                               (when once-key (register-once state side {:once once-key} card))
                               (continue state side nil))))))))
 
@@ -649,7 +645,8 @@
                       (->c :click (if-not no-cost 1 0))
                       (->c :credit (if-not no-cost 1 0)))
                  (if-let [payment-str (:msg async-result)]
-                   (do (system-msg state side (str (build-spend-msg payment-str "advance") (card-str state card)))
+                   (do (system-msg state side {:type :advance :cost payment-str
+                                               :card (card-str-map state card)})
                        (update-advancement-requirement state card)
                        (add-prop state side (get-card state card) :advance-counter 1)
                        (play-sfx state side "click-advance")
@@ -667,8 +664,7 @@
         _ (update-all-agenda-points state)
         c (get-card state c)
         points (get-agenda-points c)]
-    (system-msg state :corp (str "scores " (:title c)
-                                 " and gains " (quantify points "agenda point")))
+    (system-msg state :corp {:type :score :card (:title c) :points points})
     (implementation-msg state card)
     (set-prop state :corp (get-card state c) :advance-counter 0)
     (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
@@ -698,8 +694,9 @@
                                                           :source-type :corp-score))
                               card cost)
                          (let [payment-result async-result]
-                           (if (string/blank? (:msg payment-result))
+                           (if (empty? (:msg payment-result))
                              (effect-completed state side eid)
                              (do
-                               (system-msg state side (str (:msg payment-result) " to score " (:title card)))
+                               (system-msg state side {:type :score :cost (:msg payment-result)
+                                                       :card (:title card)})
                                (resolve-score state side eid card))))))))))

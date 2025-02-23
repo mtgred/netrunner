@@ -24,11 +24,15 @@
 (defn- turn-message
   "Prints a message for the start or end of a turn, summarizing credits and cards in hand."
   [state side start-of-turn]
-  (let [pre (if start-of-turn "started" "is ending")
-        hand (if (= side :runner) "[their] Grip" "HQ")
+  (let [pre (if start-of-turn :start-turn :end-turn)
         cards (count (get-in @state [side :hand]))
         credits (get-in @state [side :credit])
-        text (str pre " [their] turn " (:turn @state) " with " credits " [Credit] and " (quantify cards "card") " in " hand)]
+        text (merge {:type :turn-state
+                     :state {:phase pre
+                             :turn (:turn @state)
+                             :credits credits
+                             :cards cards
+                             :side side}})]
     (system-msg state side text {:hr (not start-of-turn)})))
 
 (defn end-phase-12
@@ -42,7 +46,7 @@
              (unregister-lingering-effects state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
              (unregister-floating-events state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
              (if (= side :corp)
-               (do (system-msg state side "makes [their] mandatory start of turn draw")
+               (do (system-msg state side {:type :mandatory-draw})
                    (wait-for (draw state side 1 nil)
                              (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
                (effect-completed state nil eid))
@@ -119,12 +123,11 @@
                        :all true}
              :async true
              :effect (req (system-msg state side
-                                      (str "discards "
-                                           (if (= :runner side)
-                                             (enumerate-str (map :title targets))
-                                             (quantify (count targets) "card"))
-                                           " from " (if (= :runner side) "[their] Grip" "HQ")
-                                           " at end of turn"))
+                                      {:type :discard
+                                       :card (if (= :runner side)
+                                               (map :title targets)
+                                               (count targets))
+                                       :reason :end-turn})
                           (doseq [t targets]
                             (move state side t :discard))
                           (effect-completed state side eid))}

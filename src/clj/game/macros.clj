@@ -96,6 +96,12 @@
 (defmacro msg [& expr]
   `(req (str ~@expr)))
 
+(defmacro map-msg [& expr]
+  `(req (hash-map ~@expr)))
+
+(defmacro map-msg-apply [& expr]
+  `(req ~@expr))
+
 (defmacro wait-for
   [& body]
   (let [[binds action] (if (vector? (first body))
@@ -111,9 +117,9 @@
            existing-eid# ~(when (contains? &env 'eid) 'eid)
            new-eid# (if use-eid# eid?# (game.core.eid/make-eid ~state existing-eid#))]
        (game.core.eid/register-effect-completed
-         ~state new-eid#
-         (fn ~fn-name ~(if (vector? binds) binds [binds])
-           ~@expr))
+        ~state new-eid#
+        (fn ~fn-name ~(if (vector? binds) binds [binds])
+          ~@expr))
        (if use-eid#
          (~@(take to-take action) new-eid# ~@(drop (inc to-take) action))
          (~@(take to-take action) new-eid# ~@(drop to-take action))))))

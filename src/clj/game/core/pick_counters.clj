@@ -63,10 +63,10 @@
                      (continue-ability state side
                                        (pick-virus-counters-to-spend specific-card target-count selected-cards counter-count)
                                        card nil)
-                     (let [message (enumerate-str (map #(let [{:keys [card number]} %
-                                                          title (:title card)]
-                                                      (str (quantify number "virus counter") " from " title))
-                                                   (vals selected-cards)))]
+                     (let [message {:virus (map #(let [{:keys [card number]} %
+                                                       title (:title card)]
+                                                   [title number])
+                                                (vals selected-cards))}]
                        (pick-counter-triggers state side eid selected-cards selected-cards counter-count message)))))
     :cancel-effect (if target-count
                      (req (doseq [{:keys [card number]} (vals selected-cards)]
@@ -142,19 +142,13 @@
                     (if (and (<= (- target-count counter-count) (get-in @state [side :credit]))
                              (<= stealth-target stealth-count))
                       (let [remainder (max 0 (- target-count counter-count))
-                            remainder-str (when (pos? remainder)
-                                            (str remainder " [Credits]"))
-                            card-strs (when (pos? (count selected-cards))
-                                        (str (enumerate-str (map #(let [{:keys [card number]} %
-                                                                        title (:title card)]
-                                                                    (str number " [Credits] from " title))
-                                                                 (vals selected-cards)))))
-                            message (str card-strs
-                                         (when (and card-strs remainder-str)
-                                           " and ")
-                                         remainder-str
-                                         (when (and card-strs remainder-str)
-                                           " from [their] credit pool"))]
+                            message (hash-map :credits (merge
+                                                     (when (pos? remainder) {:pool remainder})
+                                                     (when (pos? (count selected-cards))
+                                                       {:cards (map #(let [{:keys [card number]} %
+                                                                           title (:title card)]
+                                                                       [title number])
+                                                                    (vals selected-cards))})))]
                         (lose state side :credit remainder)
                         (let [cards (->> (vals selected-cards)
                                          (map :card)

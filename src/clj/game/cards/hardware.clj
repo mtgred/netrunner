@@ -59,7 +59,7 @@
    [game.core.update :refer [update!]]
    [game.core.virus :refer [count-virus-programs]]
    [game.core.winning :refer [win]]
-   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.macros :refer [continue-ability effect msg map-msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]
    [game.core.set-aside :refer [set-aside get-set-aside]]
@@ -475,7 +475,7 @@
                     (not (get-in @state [:per-turn (:cid card)]))
                     (<= 2 (count (:hand runner)))))
      :cost [(->c :trash-from-hand 2)]
-     :msg (msg "trash " (:title target) " at no cost")
+     :msg (map-msg :trash-free (:title target))
      :once :per-turn
      :async true
      :effect (effect (trash eid (assoc target :seen true) {:accessed true
@@ -710,7 +710,7 @@
              :hq 1
              {:req (req (and (= :hq target)
                              (first-event? state side :breach-server #(= :hq (first %)))))
-              :msg "access 1 additional card from HQ"})]})
+              :msg (map-msg :access-additional-from-hq 1)})]})
 
 (defcard "Doppelgänger"
   {:static-abilities [(mu+ 1)]
@@ -782,6 +782,7 @@
              :req (req (and (program? target)
                             (first-event? state :runner :runner-install #(program? (first %)))))
              :silent (req true)
+             ; TODO actually this never shows up, because of the above silent
              :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]})
 
 (defcard "e3 Feedback Implants"
@@ -1599,12 +1600,13 @@
                           (assoc eid :source card :source-type :runner-install)
                           target {:msg-keys {:install-source card
                                              :display-origin true}}))
+         ; TODO decline
          :cancel-effect (effect (system-msg :runner (str "declines to use " (:title card) " to install a card"))
                                 (effect-completed eid))}
         gain-credit-ability
         {:interactive (req true)
          :async true
-         :msg "gain 1 [Credits]"
+         :msg {:gain-credits 1}
          :effect (req (wait-for (gain-credits state :runner 1)
                                 (continue-ability state side install-ability card nil)))}]
     {:static-abilities [(mu+ 1)]
@@ -1725,13 +1727,13 @@
    :events [{:event :successful-run
              :silent (req true)
              :async true
-             :msg "place 1 [Credits]"
+             :msg {:place-counter [:credit 1]}
              :effect (req (add-counter state :runner eid card :credit 1 nil))}]
    :abilities [{:action true
                 :cost [(->c :click 1)]
                 :label "Gain 1 [Credits]. Take all hosted credits"
                 :async true
-                :msg (msg "gain " (inc (get-counters card :credit)) " [Credits]")
+                :msg (map-msg :gain-credits (inc (get-counters card :credit)))
                 :effect (req (let [credits (inc (get-counters card :credit))]
                                (add-counter state side card :credit (-(dec credits)))
                                (gain-credits state :runner eid credits)))}]})

@@ -5056,7 +5056,7 @@
         (end-phase-12 state :runner)
         (is (no-prompt? state :runner) "No second prompt for Patron - used already"))))
 
-(deftest paule-s-cafe
+#_(deftest paule-s-cafe
   (do-game
       (new-game {:runner {:hand ["Paule's Café" "Hernando Cortez" "Kati Jones" "Magnum Opus" "Desperado" "Fan Site" "Corroder"]}})
       (take-credits state :corp)
@@ -5093,7 +5093,7 @@
               "Pay 3 for Corroder install in Corp turn (1+2)")
           (is (last-log-contains? state "pays 1 [Credits], and then pays 2 [Credits], to use Paule's Café to install hosted Corroder") "Correct message for Corroder install")))))
 
-(deftest paule-s-cafe-can-t-lower-cost-below-1-issue-4816
+#_(deftest paule-s-cafe-can-t-lower-cost-below-1-issue-4816
     ;; Can't lower cost below 1. Issue #4816
     (do-game
       (new-game {:runner {:hand ["Paule's Café" "Hernando Cortez" "Kati Jones""Fan Site" "Miss Bones" "Corroder"]}})

@@ -55,7 +55,7 @@
                              remove-from-currently-drawing trash trash-cards
                              trash-prevent]]
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
-   [game.core.payment :refer [build-spend-msg can-pay? ->c]]
+   [game.core.payment :refer [build-spend-msg-suffix can-pay? ->c]]
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
@@ -75,13 +75,13 @@
    [game.core.set-aside :refer [set-aside set-aside-for-me]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags tag-prevent]]
-   [game.core.to-string :refer [card-str]]
+   [game.core.to-string :refer [card-str card-str-map]]
    [game.core.toasts :refer [toast]]
    [game.core.threat :refer [threat-level]]
    [game.core.update :refer [update!]]
    [game.core.virus :refer [get-virus-counters number-of-runner-virus-counters]]
    [game.core.winning :refer [check-win-by-agenda]]
-   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.macros :refer [continue-ability effect msg map-msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]
    [jinteki.validator :refer [legal?]]
@@ -685,8 +685,10 @@
                                        (wait-for (pay state :runner (make-eid state eid) card [(->c :credit (get-strength ice))])
                                                  (if-let [payment-str (:msg async-result)]
                                                    (do (system-msg state :runner
-                                                                   (str (build-spend-msg payment-str "use")
-                                                                        (:title card) " to bypass " (:title ice)))
+                                                                   {:cost payment-str
+                                                                    :raw-text
+                                                                    (str (build-spend-msg-suffix payment-str "use")
+                                                                         (:title card) " to bypass " (:title ice))})
                                                        (register-events
                                                          state :runner card
                                                          [{:event :encounter-ice
@@ -821,7 +823,7 @@
              :optional {:prompt "Place 1 virus counter?"
                         :req (req (has-subtype? (:card context) "Virus"))
                         :autoresolve (get-autoresolve :auto-fire)
-                        :yes-ability {:msg (msg "place 1 virus counter on " (card-str state (:card context)))
+                        :yes-ability {:msg (map-msg :place-counter [:virus 1 (card-str-map state (:card context))])
                                       :effect (effect (add-counter (:card context) :virus 1))}}}]
    :abilities [(set-autoresolve :auto-fire "Cookbook")]})
 
@@ -1019,7 +1021,7 @@
                  :label "Take 2 [Credits] (start of turn)"
                  :req (req (and (:runner-phase-12 @state)
                                 (pos? (get-counters card :credit))))
-                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
+                 :msg (map-msg :gain-credits (min 2 (get-counters card :credit)))
                  :async true
                  :effect (req (let [credits (min 2 (get-counters card :credit))]
                                 (add-counter state side card :credit (- credits))
@@ -2642,9 +2644,11 @@
                                                 (pay state :runner (make-eid state eid) card [(->c :credit target)])
                                                 (if-let [payment-str (:msg async-result)]
                                                   (do (system-msg state side
-                                                                  (str (build-spend-msg payment-str "use") (:title card)
-                                                                       " to remove " (quantify target "power counter")
-                                                                       " from " (:title paydowntarget)))
+                                                                  {:cost payment-str
+                                                                   :raw-text
+                                                                   (str (build-spend-msg-suffix payment-str "use") (:title card)
+                                                                        " to remove " (quantify target "power counter")
+                                                                        " from " (:title paydowntarget))})
                                                       (if (= num-counters target)
                                                         (runner-install state side (assoc eid :source card :source-type :runner-install) (dissoc paydowntarget :counter) {:ignore-all-cost true
                                                                                                                                                                           :msg-keys {:display-origin true
@@ -2764,7 +2768,7 @@
    :events [(trash-on-empty :credit)
             {:event :successful-run
              :req (req this-card-run)
-             :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
+             :msg (map-msg :gain-credits (min 3 (get-counters card :credit)))
              :interactive (req true)
              :async true
              :effect (req (let [credits (min 3 (get-counters card :credit))]
@@ -2785,7 +2789,7 @@
                                      (remove (into #{} (:made-run runner-reg)))
                                      (map central->name))))
                 :label "make a run on a central server"
-                :msg (msg "make a run on " target)
+                :msg (map-msg :make-run (server->zone state target))
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid target card))}]})
@@ -2993,14 +2997,15 @@
                                :label "Take 1 [Credits] (start of turn)"
                                :req (req (and (:runner-phase-12 @state)
                                               (pos? (get-counters card :credit))))
-                               :msg "gain 1 [Credits]"
+                               :msg {:gain-credits 1}
                                :async true
                                :effect (req (add-counter state side card :credit -1)
-                                         (gain-credits state side eid 1))}]
+                                            (gain-credits state side eid 1))}]
     {:flags {:drip-economy (req (pos? (get-counters card :credit)))}
      :abilities [{:action true
                   :cost [(->c :click 1)]
-                  :msg "place 3 [Credits]"
+                  :label "Place 3 [Credits]"
+                  :msg {:place-counter [:credit 3]}
                   :req (req (not (:runner-phase-12 @state)))
                   :effect (req (add-counter state side card :credit 3))}
                  start-of-turn-ability]
@@ -3207,7 +3212,7 @@
                 :cost [(->c :click 1)]
                 :change-in-game-state (req (pos? (get-counters card :credit)))
                 :once :per-turn
-                :msg "gain 3 [Credits]"
+                :msg {:gain-credits 3}
                 :async true
                 :effect (req (let [credits (min 3 (get-counters card :credit))]
                                (add-counter state side card :credit (- credits))
@@ -3769,7 +3774,7 @@
 (defcard "Verbal Plasticity"
   {:events [{:event :runner-click-draw
              :req (req (genetics-trigger? state side :runner-click-draw))
-             :msg "draw 1 additional card"
+             :msg {:draw-additional 1}
              :effect (effect (click-draw-bonus 1))}]})
 
 (defcard "Virus Breeding Ground"

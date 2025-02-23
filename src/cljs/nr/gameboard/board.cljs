@@ -532,7 +532,7 @@
       (when (seq subroutines)
         [card-menu-item (tr [:game.let-subs-fire "Let unbroken subroutines fire"])
          #(do (send-command "system-msg"
-                            {:msg (str "indicates to fire all unbroken subroutines on " title)})
+                            {:msg {:type :fire-unbroken :card title}})
               (close-card-menu))])]
      (when (seq subroutines)
        [:span.float-center (tr [:game.subs "Subroutines"]) ":"])
@@ -1601,7 +1601,7 @@
                          (:resolve % true))
                    (:subroutines ice)))
         #(send-command "system-msg"
-                       {:msg (str "indicates to fire all unbroken subroutines on " (get-title ice))})])
+                       {:msg {:type :fire-unbroken :card (get-title ice)}})])
 
      (when @encounters
        [cond-button

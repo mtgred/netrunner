@@ -1,5 +1,8 @@
 (ns jinteki.utils
-  (:require [clojure.string :as str]))
+  (:require
+   [clojure.string :as str]
+   [i18n.defs :refer [render-map]]
+   [i18n.en]))
 
 (def INFINITY 2147483647)
 
@@ -115,6 +118,10 @@
             ret)
           (next keyseq)))
       (with-meta (persistent! ret) (meta m)))))
+
+(defn render-map-default
+  [input]
+  (render-map "en" input))
 
 (def command-info
   [{:name "/adv-counter"

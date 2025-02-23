@@ -15,7 +15,7 @@
     (let [started (get-in @state [:stats :time :started])
           now (inst/now)
           duration (duration/to-minutes (duration/between started now))]
-      (system-msg state side "wins the game")
+      (system-msg state side {:type :win-game})
       (play-sfx state side "game-end")
       (swap! state (fn [state]
                      (-> state

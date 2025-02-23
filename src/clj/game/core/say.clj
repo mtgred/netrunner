@@ -39,16 +39,20 @@
                        (= side :corp) corp-pronoun
                        (= side :runner) runner-pronoun
                        :else "their")]
-    (-> text
-        (str/replace #"(\[pronoun\])|(\[their\])" user-pronoun)
-        (str/replace #"\[corp-pronoun\]" corp-pronoun)
-        (str/replace #"\[runner-pronoun\]" runner-pronoun))))
+    (if text
+      (-> text
+          (str/replace #"(\[pronoun\])|(\[their\])" user-pronoun)
+          (str/replace #"\[corp-pronoun\]" corp-pronoun)
+          (str/replace #"\[runner-pronoun\]" runner-pronoun)))))
 
 (defn say
   "Prints a message to the log as coming from the given user."
   [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))
-        message (make-message {:user author :text (insert-pronouns state side text)})]
+        message (make-message {:user author
+                               :text (if (string? text)
+                                       (insert-pronouns state side text)
+                                       (update-in text [:raw-text] #(insert-pronouns state side %)))})]
     (swap! state update :log conj message)
     (swap! state assoc :typing false)))
 
@@ -56,7 +60,10 @@
   "Prints a system message to log (`say` from user __system__)"
   ([state side text] (system-say state side text nil))
   ([state side text {:keys [hr]}]
-   (say state side (make-system-message (str text (when hr "[hr]"))))))
+   (say state side (make-system-message (merge {:username nil}
+                                               (if (string? text) {:raw-text text} text))))
+   (when hr
+     (say state side (make-system-message {:raw-text "[hr]"})))))
 
 (defn unsafe-say
   "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
@@ -69,7 +76,9 @@
   ([state side text] (system-msg state side text nil))
   ([state side text args]
    (let [username (get-in @state [side :user :username])]
-     (system-say state side (str username " " text ".") args))))
+     (system-say state side (merge {:username username :side side}
+                                   (if (string? text) {:raw-text text} text))
+                 args))))
 
 (defn enforce-msg
   "Prints a message related to a rules enforcement on a given card.

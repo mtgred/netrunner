@@ -306,7 +306,7 @@
   (lobby-thread
     (let [lobby (-> (create-new-lobby {:uid uid :user user :options ?data})
                     (send-message
-                      (core/make-system-message (str (:username user) " has created the game."))))
+                      (core/make-system-message {:type :create-game :username (:username user)})))
           new-app-state (swap! app-state/app-state update :lobbies
                                register-lobby lobby uid)
           lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]

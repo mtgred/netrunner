@@ -11,7 +11,7 @@
     [game.core.effects :refer [get-effect-maps unregister-lingering-effects is-disabled? is-disabled-reg? update-disabled-cards]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.finding :refer [find-cid]]
-    [game.core.payment :refer [build-spend-msg can-pay? handler]]
+    [game.core.payment :refer [build-spend-msg-suffix can-pay? handler]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
     [game.core.say :refer [system-msg system-say]]
@@ -305,16 +305,15 @@
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets payment-str]
   (when-let [message (:msg ability)]
-    (let [desc (if (or (= :cost message) (string? message))
+    (let [desc (if (or (= :cost message) (string? message) (map? message))
                  message
                  (message state side eid card targets))
-          cost-spend-msg (build-spend-msg payment-str "use")
+          cost-spend-msg (build-spend-msg-suffix payment-str "use")
           disp-side (or (:display-side ability) (to-keyword (:side card)))]
-      (cond
-        (= :cost desc)
-        (system-msg state disp-side (str payment-str " to satisfy " (get-title card)))
-        desc
-        (system-msg state disp-side (str cost-spend-msg (get-title card) (str " to " desc)))))))
+      (if (string? desc)
+        (system-msg state disp-side {:cost payment-str :raw-text (str cost-spend-msg (get-title card) (str " to " desc))})
+        (system-msg state disp-side {:type :use :cost payment-str :effect desc
+                                     :card (get-title card) :forced (= :cost desc)})))))
 
 (defn register-once
   "Register ability as having happened if :once specified"
@@ -366,7 +365,7 @@
         ;; this lets nested abilities access payment strs from outside the nesting
         ;; which is admittedly a little cursed
         last-payment-str (get-in ability [:eid :latest-payment-str])
-        ability (assoc-in ability [:eid :latest-payment-str] (if-not (string/blank? payment-str) payment-str last-payment-str))
+        ability (assoc-in ability [:eid :latest-payment-str] (if-not (empty? payment-str) payment-str last-payment-str))
         ;; After paying costs, counters will be removed, so fetch the latest version.
         ;; We still want the card if the card is trashed, so default to given
         ;; when the latest is gone.
@@ -1207,7 +1206,7 @@
                               state side eid
                               {:msg (->> payment-result
                                          (keep :paid/msg)
-                                         (enumerate-str))
+                                         (apply merge {}))
                                :cost-paid (->> payment-result
                                                (keep #(not-empty (dissoc % :paid/msg)))
                                                (reduce

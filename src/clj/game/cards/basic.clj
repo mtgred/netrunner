@@ -21,8 +21,8 @@
    [game.core.runs :refer [make-run]]
    [game.core.say :refer [play-sfx system-msg]]
    [game.core.tags :refer [lose-tags]]
-   [game.core.to-string :refer [card-str]]
-   [game.macros :refer [effect msg req wait-for]]
+   [game.core.to-string :refer [card-str-map]]
+   [game.macros :refer [effect msg map-msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]))
 ;; Card definitions
@@ -31,7 +31,7 @@
   {:abilities [{:action true
                 :label "Gain 1 [Credits]"
                 :cost [(->c :click)]
-                :msg "gain 1 [Credits]"
+                :msg {:gain-credits 1}
                 :async true
                 :effect (req (wait-for (gain-credits state side 1 {:action :corp-click-credit})
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
@@ -41,7 +41,7 @@
                 :label "Draw 1 card"
                 :req (req (not-empty (:deck corp)))
                 :cost [(->c :click)]
-                :msg "draw 1 card"
+                :msg {:draw-cards 1}
                 :async true
                 :effect (req (trigger-event state side :corp-click-draw {:card (-> @state side :deck (nth 0))})
                              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
@@ -91,7 +91,7 @@
                 :label "Advance 1 installed card"
                 :cost [(->c :click 1) (->c :credit 1)]
                 :async true
-                :msg (msg "advance " (card-str state (:card context)))
+                :msg (map-msg :advance (card-str-map state (:card context)))
                 :effect (effect (update-advancement-requirement (:card context))
                                 (add-prop (get-card state (:card context)) :advance-counter 1)
                                 (play-sfx "click-advance")
@@ -102,7 +102,7 @@
                 :async true
                 :req (req tagged)
                 :prompt "Choose a resource to trash"
-                :msg (msg "trash " (:title target))
+                :msg (map-msg :trash (:title target))
                 ;; I hate that we need to modify the basic action card like this, but I don't think there's any way around it -nbkelly, '24
                 :choices {:req (req (and (if (and (untrashable-while-resources? target)
                                                   (< (count (filter resource? (all-active-installed state :runner))) 2))
@@ -145,7 +145,7 @@
                {:action true
                 :label "Purge virus counters"
                 :cost [(->c :click 3)]
-                :msg "purge all virus counters"
+                :msg {:purge true}
                 :async true
                 :effect (req (play-sfx state side "virus-purge")
                              (purge state side eid))}]})
@@ -154,7 +154,7 @@
   {:abilities [{:action true
                 :label "Gain 1 [Credits]"
                 :cost [(->c :click)]
-                :msg "gain 1 [Credits]"
+                :msg {:gain-credits 1}
                 :async true
                 :effect (req (wait-for (gain-credits state side 1 {:action :runner-click-credit})
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
@@ -164,7 +164,7 @@
                 :label "Draw 1 card"
                 :req (req (not-empty (:deck runner)))
                 :cost [(->c :click)]
-                :msg "draw 1 card"
+                :msg {:draw-cards 1}
                 :async true
                 :effect (req (trigger-event state side :runner-click-draw {:card (-> @state side :deck (nth 0))})
                              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
@@ -204,7 +204,7 @@
                {:action true
                 :label "Remove 1 tag"
                 :cost [(->c :click 1) (->c :credit 2)]
-                :msg "remove 1 tag"
+                :msg {:remove-tag 1}
                 :req (req tagged)
                 :async true
                 :effect (effect (play-sfx "click-remove-tag")

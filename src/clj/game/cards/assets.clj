@@ -59,7 +59,7 @@
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
    [game.core.winning :refer [check-win-by-agenda win]]
-   [game.macros :refer [continue-ability effect msg req wait-for]]
+   [game.macros :refer [continue-ability effect msg map-msg req wait-for]]
    [game.utils :refer :all]
    [jinteki.utils :refer :all]
    [game.core.link :refer [get-link]]))
@@ -582,7 +582,7 @@
                     {:prompt (msg "Trash this asset to do " (get-counters card :advancement) " meat damage?")
                      :yes-ability
                      {:async true
-                      :msg "do 1 meat damage for each hosted advancement counter"
+                      :msg (map-msg :deal-meat (get-counters card :advancement))
                       :effect (req (wait-for
                                     (trash state side card {:cause-card card})
                                     (damage state side eid :meat (get-counters card :advancement) {:card card})))}}}
@@ -2015,7 +2015,7 @@
          :interactive (req true)
          :once :per-turn
          :label "Take 3 [Credits] (start of turn)"
-         :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
+         :msg (map-msg :gain-credits (min 3 (get-counters card :credit)))
          :req (req (:corp-phase-12 @state))
          :effect (req (let [credits (min 3 (get-counters card :credit))]
                         (add-counter state side card :credit (- credits))
@@ -2025,6 +2025,7 @@
                             (effect-completed state side eid)
                             (wait-for
                               (trash state :corp card {:unpreventable true :cause-card card})
+                              ;; TODO this doesn't fit cleanly, it's not a use but the card isn't the source
                               (system-msg state :corp (str "trashes Nico Campaign"
                                                            (when (seq (:deck corp))
                                                              " and draws 1 card")))
@@ -2433,7 +2434,7 @@
                 :label "Take 3 [Credits] from this asset"
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
-                :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
+                :msg (map-msg :gain-credits (min 3 (get-counters card :credit)))
                 :async true
                 :effect (req (let [credits (min 3 (get-counters card :credit))]
                                (wait-for (gain-credits state :corp (make-eid state eid) credits)
@@ -2707,7 +2708,7 @@
 
 (defcard "Spin Doctor"
   {:on-rez {:async true
-            :msg "draw 2 cards"
+            :msg {:draw-cards 2}
             :effect (effect (draw eid 2))}
    :abilities [{:label "Shuffle up to 2 cards from Archives into R&D"
                 :cost [(->c :remove-from-game)]
@@ -3005,7 +3006,7 @@
                             (effect-completed state side eid)))}]})
 
 (defcard "Urtica Cipher"
-  (advance-ambush 0 {:msg (msg "do " (+ 2 (get-counters (get-card state card) :advancement)) " net damage")
+  (advance-ambush 0 {:msg (map-msg :deal-net (+ 2 (get-counters (get-card state card) :advancement)))
                      :async true
                      :effect (effect (damage eid :net (+ 2 (get-counters (get-card state card) :advancement)) {:card card}))}))
 

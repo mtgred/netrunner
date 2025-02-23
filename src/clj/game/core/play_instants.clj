@@ -10,7 +10,7 @@
     [game.core.gaining :refer [lose]]
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c]]
+    [game.core.payment :refer [build-spend-msg-suffix can-pay? merge-costs ->c]]
     [game.core.revealing :refer [reveal]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.update :refer [update!]]
@@ -33,54 +33,51 @@
 (defn- complete-play-instant
   "Completes the play of the event / operation that the player can play for"
   [state side eid {:keys [title] :as card} payment-str ignore-cost]
-  (let [play-msg (if ignore-cost
-                   "play "
-                   (build-spend-msg payment-str "play"))]
-    (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
-    (implementation-msg state card)
-    (if-let [sfx (:play-sound (card-def card))]
-      (play-sfx state side sfx)
-      (play-sfx state side "play-instant"))
-    ;; Select the "on the table" version of the card
-    (let [card (current-handler state side card)
-          cdef (-> (:on-play (card-def card))
-                   (dissoc :cost :additional-cost)
-                   (dissoc-req))
-          card (card-init state side
-                          (if (:rfg-instead-of-trashing cdef)
-                            (assoc card :rfg-instead-of-trashing true)
-                            card)
-                          ;; :resolve-effect is true as a temporary solution to allow Direct Access to blank IDs
-                          {:resolve-effect true :init-data true})
-          play-event (if (= side :corp) :play-operation :play-event)
-          resolved-event (if (= side :corp) :play-operation-resolved :play-event-resolved)]
-      (queue-event state play-event {:card card :event play-event})
-      (swap! state update-in [:stats side :cards-played :play-instant] (fnil inc 0))
-      (wait-for (checkpoint state nil (make-eid state eid) {:duration play-event})
-                (wait-for (resolve-ability state side (make-eid state eid) cdef card nil)
-                          (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
-                                trash-after-resolving (:trash-after-resolving cdef true)
-                                zone (if (:rfg-instead-of-trashing c) :rfg :discard)]
-                            (if (and c trash-after-resolving)
-                              (let [trash-or-move (if (= zone :rfg) async-rfg trash)]
-                                (wait-for (trash-or-move state side c {:unpreventable true})
-                                          (unregister-events state side card)
-                                          (unregister-static-abilities state side card)
-                                          (when (= zone :rfg)
-                                            (system-msg state side
-                                                        (str "removes " (:title c) " from the game instead of trashing it")))
-                                          (when (has-subtype? card "Terminal")
-                                            (lose state side :click (-> @state side :click))
-                                            (swap! state assoc-in [:corp :register :terminal] true))
-                                          ;; this is explicit support for nuvem,
-                                          ;; which wants 'after the op finishes resolving' as an event
-                                          (queue-event state resolved-event {:card card :event resolved-event})
-                                          (checkpoint state nil eid {:duration resolved-event})))
-                              (do (when (has-subtype? card "Terminal")
-                                    (lose state side :click (-> @state side :click))
-                                    (swap! state assoc-in [:corp :register :terminal] true))
-                                  (queue-event state resolved-event {:card card :event resolved-event})
-                                  (checkpoint state nil eid {:duration resolved-event})))))))))
+  (system-msg state side {:type :play :cost payment-str :card title :ignore-cost ignore-cost})
+  (implementation-msg state card)
+  (if-let [sfx (:play-sound (card-def card))]
+    (play-sfx state side sfx)
+    (play-sfx state side "play-instant"))
+  ;; Select the "on the table" version of the card
+  (let [card (current-handler state side card)
+        cdef (-> (:on-play (card-def card))
+                 (dissoc :cost :additional-cost)
+                 (dissoc-req))
+        card (card-init state side
+                        (if (:rfg-instead-of-trashing cdef)
+                          (assoc card :rfg-instead-of-trashing true)
+                          card)
+                        ;; :resolve-effect is true as a temporary solution to allow Direct Access to blank IDs
+                        {:resolve-effect true :init-data true})
+        play-event (if (= side :corp) :play-operation :play-event)
+        resolved-event (if (= side :corp) :play-operation-resolved :play-event-resolved)]
+    (queue-event state play-event {:card card :event play-event})
+    (swap! state update-in [:stats side :cards-played :play-instant] (fnil inc 0))
+    (wait-for (checkpoint state nil (make-eid state eid) {:duration play-event})
+              (wait-for (resolve-ability state side (make-eid state eid) cdef card nil)
+                        (let [c (some #(when (same-card? card %) %) (get-in @state [side :play-area]))
+                              trash-after-resolving (:trash-after-resolving cdef true)
+                              zone (if (:rfg-instead-of-trashing c) :rfg :discard)]
+                          (if (and c trash-after-resolving)
+                            (let [trash-or-move (if (= zone :rfg) async-rfg trash)]
+                              (wait-for (trash-or-move state side c {:unpreventable true})
+                                        (unregister-events state side card)
+                                        (unregister-static-abilities state side card)
+                                        (when (= zone :rfg)
+                                          (system-msg state side
+                                                      (str "removes " (:title c) " from the game instead of trashing it")))
+                                        (when (has-subtype? card "Terminal")
+                                          (lose state side :click (-> @state side :click))
+                                          (swap! state assoc-in [:corp :register :terminal] true))
+                                        ;; this is explicit support for nuvem,
+                                        ;; which wants 'after the op finishes resolving' as an event
+                                        (queue-event state resolved-event {:card card :event resolved-event})
+                                        (checkpoint state nil eid {:duration resolved-event})))
+                            (do (when (has-subtype? card "Terminal")
+                                  (lose state side :click (-> @state side :click))
+                                  (swap! state assoc-in [:corp :register :terminal] true))
+                                (queue-event state resolved-event {:card card :event resolved-event})
+                                (checkpoint state nil eid {:duration resolved-event}))))))))
 
 (defn play-instant-costs
   [state side card {:keys [ignore-cost base-cost no-additional-cost cached-costs cost-bonus]}]

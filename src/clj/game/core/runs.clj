@@ -12,11 +12,11 @@
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [active-ice? break-subs-event-context get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.mark :refer [is-mark?]]
-    [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs ->c]]
+    [game.core.payment :refer [build-cost-string build-spend-msg-suffix can-pay? merge-costs ->c]]
     [game.core.prompts :refer [clear-run-prompts clear-wait-prompt show-run-prompts show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [is-remote? target-server unknown->kw zone->name]]
-    [game.core.to-string :refer [card-str]]
+    [game.core.to-string :refer [card-str card-str-map]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
     [game.utils :refer [dissoc-in same-card?]]
@@ -134,9 +134,9 @@
                        ices (get-in @state (concat [:corp :servers] s [:ices]))
                        n (count ices)]
                    (when (not-empty payment-str)
-                     (system-msg state :runner (str (build-spend-msg payment-str "make a run on" "makes a run on")
-                                                    (zone->name (unknown->kw server))
-                                                    (when ignore-costs ", ignoring all costs"))))
+                     (system-msg state :runner {:cost payment-str
+                                                :type :start-run :server (server->zone state s)
+                                                :ignore-costs ignore-costs}))
                    ;; s is a keyword for the server, like :hq or :remote1
                    (let [run-id (make-eid state)]
                      (swap! state assoc
@@ -209,7 +209,7 @@
     (update-current-encounter state :ending true)
     (when (:bypass encounter)
       (queue-event state :bypassed-ice ice)
-      (system-msg state :runner (str "bypasses " (:title ice))))
+      (system-msg state :runner {:type :bypass-ice :ice (:title ice)}))
     (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
                                        :end-of-encounter
                                        {:ice ice})
@@ -258,7 +258,7 @@
   (let [eid (make-phase-eid state eid)
         ice (get-current-ice state)
         on-approach (:on-approach (card-def ice))]
-    (system-msg state :runner (str "approaches " (card-str state ice)))
+    (system-msg state :runner {:type :approach-ice :ice (card-str-map state ice)})
     (when on-approach
       (register-pending-event state :approach-ice ice on-approach))
     (queue-event state :approach-ice {:ice ice})
@@ -280,7 +280,7 @@
   (if-not (get-in @state [:run :no-action])
     (do (swap! state assoc-in [:run :no-action] side)
         (when (= :corp side)
-          (system-msg state side "has no further action")))
+          (system-msg state side {:type :no-action})))
     (let [eid (make-phase-eid state nil)
           approached-ice (get-card state (get-current-ice state))]
       (wait-for (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-approach-ice)
@@ -350,7 +350,7 @@
   (let [on-encounter (:on-encounter (card-def ice))
         applied-encounters (get-effects state nil :gain-encounter-ability ice)
         all-encounters (map #(preventable-encounter-abi % ice) (remove nil? (conj applied-encounters on-encounter)))]
-    (system-msg state :runner (str "encounters " (card-str state ice {:visible (active-ice? state ice)})))
+    (system-msg state :runner {:type :encounter-ice :ice (card-str-map state ice {:visible (active-ice? state ice)})})
     (doseq [on-encounter all-encounters]
       (register-pending-event state :encounter-ice ice on-encounter))
     (queue-event state :encounter-ice {:ice ice})
@@ -410,7 +410,7 @@
       (encounter-ends state side (make-phase-eid state nil))
       (do (update-current-encounter state :no-action side)
           (when (= :runner side)
-            (system-msg state side "has no further action"))))))
+            (system-msg state side {:type :no-action}))))))
 
 (defmethod start-next-phase :movement
   [state side eid]
@@ -429,7 +429,7 @@
     (set-phase state :movement)
     (swap! state assoc-in [:run :no-action] false)
     (when pass-ice?
-      (system-msg state :runner (str "passes " (card-str state ice)))
+      (system-msg state :runner {:type :pass-ice :ice (card-str-map state ice)})
       (queue-event state :pass-ice {:ice (get-card state ice)}))
     (swap! state assoc-in [:run :position] new-position)
     (when passed-all-ice
@@ -462,7 +462,8 @@
 (defn approach-server
   [state side eid]
   (set-current-ice state nil)
-  (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
+  (system-msg state :runner {:type :approach-server
+                             :server (server->zone state (:server (:run @state)))})
   (queue-event state :approach-server)
   (wait-for (checkpoint state side
                         (make-eid state)
@@ -491,7 +492,7 @@
   (if-not (get-in @state [:run :no-action])
     (do (swap! state assoc-in [:run :no-action] side)
         (when (= :runner side)
-          (system-msg state side "will continue the run")))
+          (system-msg state side {:type :continue-run})))
     (let [eid (make-phase-eid state nil)]
       (cond (or (check-for-empty-server state)
                 (:ended (:end-run @state)))
@@ -765,7 +766,8 @@
                  (if-let [payment-str (:msg async-result)]
                    (let [prevent (get-prevent-list state :corp :jack-out)]
                      (if (cards-can-prevent? state :corp prevent :jack-out)
-                       (do (system-msg state :runner (str (build-spend-msg payment-str "attempt to" "attempts to") "jack out"))
+                       (do (system-msg state :runner {:cost payment-str
+                                                      :raw-text (str (build-spend-msg-suffix payment-str "attempt to" "attempts to") "jack out")})
                            (system-msg state :corp "has the option to prevent the Runner from jacking out")
                            (show-wait-prompt state :runner "Corp to prevent the jack out")
                            (show-prompt state :corp nil
@@ -777,8 +779,8 @@
                                             (do (system-msg state :corp "will not prevent the Runner from jacking out")
                                                 (resolve-jack-out state side eid))))
                                         {:prompt-type :prevent}))
-                       (do (when-not (string/blank? payment-str)
-                             (system-msg state :runner (str payment-str " to jack out")))
+                       (do (when-not (empty? payment-str)
+                             (system-msg state :runner {:cost payment-str :type :jack-out}))
                            (resolve-jack-out state side eid))))
                    (complete-with-result state side eid false)))
        (do (system-msg state :runner (str "attempts to jack out but can't pay (" (build-cost-string cost) ")"))

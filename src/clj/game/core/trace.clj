@@ -34,11 +34,12 @@
         trigger-trace (select-keys trace [:player :other :base :bonus :link :ability :strength])]
     (wait-for (pay state other (make-eid state eid) card [(->c :credit boost)])
               (let [payment-str (:msg async-result)]
-                (system-msg state other (str payment-str
-                                             " to increase " (if (corp-start? trace) "link" "trace")
-                                             " strength to " (if (corp-start? trace)
-                                                               runner-strength
-                                                               corp-strength))))
+                (system-msg state other {:cost payment-str
+                                         :raw-text (str
+                                                    "increase " (if (corp-start? trace) "link" "trace")
+                                                    " strength to " (if (corp-start? trace)
+                                                                      runner-strength
+                                                                      corp-strength))}))
               (clear-wait-prompt state player)
               (let [successful (> corp-strength runner-strength)
                     which-ability (assoc (if successful
@@ -88,9 +89,10 @@
         trace (assoc trace :strength strength :beat-trace (beat-trace-amount player corp-credits runner-credits link base strength eid))]
     (wait-for (pay state player (make-eid state eid) card [(->c :credit boost)])
               (let [payment-str (:msg async-result)]
-                (system-msg state player (str payment-str
-                                              " to increase " (if (corp-start? trace) "trace" "link")
-                                              " strength to " strength)))
+                (system-msg state player {:cost payment-str
+                                          :raw-text (str
+                                                     "increase " (if (corp-start? trace) "trace" "link")
+                                                     " strength to " strength)}))
               (clear-wait-prompt state other)
               (show-wait-prompt state player
                                 (str (if (corp-start? trace) "Runner" "Corp")

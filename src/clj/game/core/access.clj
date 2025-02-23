@@ -1,7 +1,7 @@
 (ns game.core.access
   (:require
     [game.core.agendas :refer [update-all-advancement-requirements update-all-agenda-points]]
-    [game.core.board :refer [all-active]]
+    [game.core.board :refer [all-active server->zone]]
     [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-archives-root? in-deck? in-discard? in-hand? in-hq-root? in-remote-root? in-rd-root? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [card-ability-cost trash-cost steal-cost]]
@@ -146,9 +146,10 @@
                                           (swap! state assoc-in [:run :did-access] true)))
                                       (swap! state assoc-in [:runner :register :trashed-card] true)
                                       (swap! state assoc-in [:runner :register :trashed-accessed-card] true)
-                                      (system-msg state side (str (:msg async-result) " to trash "
-                                                                  (:title card) " from "
-                                                                  (name-zone :corp (get-zone card))))
+                                      (system-msg state side {:type :trash :cost (:msg async-result)
+                                                              :card (:title card)
+                                                              ;; TODO clean up zone handling
+                                                              :server (get-zone card)})
                                       (wait-for (trash state side card {:accessed true})
                                                 (access-end state side eid (first async-result) {:trashed true}))))
 
@@ -189,7 +190,7 @@
         _ (update-all-agenda-points state)
         c (get-card state c)
         points (get-agenda-points c)]
-    (system-msg state :runner (str "steals " (:title c) " and gains " (quantify points "agenda point")))
+    (system-msg state :runner {:type :steal :card (:title c) :points points})
     (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c 0)))
     (play-sfx state side "agenda-steal")
     (when (:breach @state)
@@ -319,12 +320,10 @@
   (let [cost-str (join-cost-strs cost-msg)]
     (when-not no-msg
       (system-msg state side
-                  (str (if (seq cost-msg)
-                         (str cost-str " to access ")
-                         "accesses ")
-                       title
-                       (when card
-                         (str " from " (name-zone :corp zone)))))))
+                  (merge {:type :access
+                          ;; TODO need to clean up how zones are referenced here
+                          :server zone}
+                         (when title {:card title})))))
   (if (reveal-access? state side card)
     (do (system-msg state side (str "must reveal they accessed " (:title card)))
         (reveal state :runner eid card))
@@ -633,7 +632,7 @@
 
         card-from-deck-fn
         (req
-          (wait-for (access-card state side card-to-access "an unseen card")
+          (wait-for (access-card state side card-to-access nil)
                     (let [shuffled-during-run (get-in @state [:run :shuffled-during-access :rd])
                           ;; if R&D was shuffled because of the access,
                           ;; the runner "starts over" from the top
@@ -1121,7 +1120,7 @@
 
         everything-else-fn
         (req (let [accessed (get-archives-inactive state)]
-               (system-msg state side "accesses everything else in Archives")
+               (system-msg state side {:type :access-all})
                (wait-for (access-inactive-archives-cards state side accessed access-amount)
                          (let [already-accessed (apply conj already-accessed (keep :cid async-result))
                                access-amount {:total-mod (access-bonus-count state side :total)
@@ -1339,7 +1338,7 @@
   "Starts the breach routines for the run's server."
   ([state side eid server] (breach-server state side eid server nil))
   ([state side eid server args]
-   (system-msg state side (str "breaches " (zone->name server)))
+   (system-msg state side {:type :breach-server :server (server->zone state server)})
    (wait-for (trigger-event-simult state side :breach-server nil (first server))
              (swap! state assoc :breach {:breach-server (first server) :from-server (first server)})
              (let [args (clean-access-args args)

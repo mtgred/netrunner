@@ -121,8 +121,9 @@
                                          (concat chosen-cards))]
                   (when (= dmg-type :brain)
                     (swap! state update-in [:runner :brain-damage] #(+ % n)))
-                  (when-let [trashed-msg (enumerate-str (map get-title cards-trashed))]
-                    (system-msg state :runner (str "trashes " trashed-msg " due to " (damage-name dmg-type) " damage")))
+                  (when-let [trashed-cards (map get-title cards-trashed)]
+                    (system-msg state :runner {:type :take-damage :cards trashed-cards
+                                               :cause dmg-type}))
                   (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
                   (swap! state update-in [:stats :corp :damage dmg-type] (fnil + 0) n)
                   (if (< (count hand) n)

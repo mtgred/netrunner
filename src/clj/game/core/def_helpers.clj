@@ -18,9 +18,9 @@
     [game.core.revealing :refer [conceal-hand reveal-hand reveal-loud]]
     [game.core.runs :refer [jack-out]]
     [game.core.say :refer [system-msg system-say]]
-    [game.core.to-string :refer [card-str]]
+    [game.core.to-string :refer [card-str card-str-map]]
     [game.core.toasts :refer [toast]]
-    [game.macros :refer [continue-ability effect msg req wait-for]]
+    [game.macros :refer [continue-ability effect msg map-msg req wait-for]]
     [game.utils :refer [enumerate-str remove-once same-card? server-card to-keyword]]
     [jinteki.utils :refer [other-side]]))
 
@@ -126,7 +126,7 @@
   [dmg]
   {:label (str "Do " dmg " net damage")
    :async true
-   :msg (str "do " dmg " net damage")
+   :msg {:deal-net dmg}
    :effect (effect (damage eid :net dmg {:card card}))})
 
 (defn do-meat-damage
@@ -134,7 +134,7 @@
   [dmg]
   {:label (str "Do " dmg " meat damage")
    :async true
-   :msg (str "do " dmg " meat damage")
+   :msg {:deal-meat dmg}
    :effect (effect (damage eid :meat dmg {:card card}))})
 
 (defn do-brain-damage
@@ -142,7 +142,7 @@
   [dmg]
   {:label (str "Do " dmg " core damage")
    :async true
-   :msg (str "do " dmg " core damage")
+   :msg {:deal-core dmg}
    :effect (effect (damage eid :brain dmg {:card card}))})
 
 (defn rfg-on-empty
@@ -152,7 +152,7 @@
    :req (req (and (same-card? card target)
                   (not (get-in card [:special :skipped-loading]))
                   (not (pos? (get-counters card counter-type)))))
-   :effect (effect (system-msg (str "removes " (:title card) " from the game"))
+   :effect (effect (system-msg {:type :rfg :card (:title card)})
                    (move card :rfg))})
 
 (defn trash-on-empty
@@ -163,7 +163,7 @@
                   (not (get-in card [:special :skipped-loading]))
                   (not (pos? (get-counters card counter-type)))))
    :async true
-   :effect (effect (system-msg (str "trashes " (:title card)))
+   :effect (effect (system-msg {:type :trash :card (:title card)})
                    (trash eid card {:unpreventable true :source-card card}))})
 
 (defn make-recurring-ability
@@ -254,7 +254,7 @@
     :choices {:card #(and (corp? %)
                        (in-discard? %)
                        (pred %))}
-    :msg (msg "add " (card-str state target {:visible (faceup? target)}) " to HQ")
+    :msg (map-msg :add-to-hq (card-str-map state target {:visible (faceup? target)}))
     :effect (effect (move :corp target :hand))}))
 
 (def card-defs-cache (atom {}))

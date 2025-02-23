@@ -6,6 +6,7 @@
    [cljc.java-time.zone-id :as zone]
    [cljc.java-time.instant :as inst]
    [clojure.string :refer [join] :as s]
+   [i18n.defs :refer [render-map]]
    [goog.object :as gobject]
    [goog.string :as gstring]
    [goog.string.format]
@@ -308,7 +309,10 @@
 (defn render-message
   "Render icons, cards and special codes in a message"
   [input]
-  (render-specials (render-icons (render-cards input))))
+  (let [lang (get-in @app-state [:options :language] "en")]
+    (render-specials (render-icons (render-cards (if (string? input)
+                                                   input
+                                                   (render-map lang input)))))))
 
 (defn wrap-timestamp
   [element timestamp]
