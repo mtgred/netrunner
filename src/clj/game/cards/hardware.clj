@@ -13,10 +13,10 @@
    [game.core.cost-fns :refer [install-cost rez-additional-cost-bonus rez-cost trash-cost]]
    [game.core.damage :refer [chosen-damage damage damage-prevent
                              enable-runner-damage-choice runner-can-choose-damage?]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
+   [game.core.def-helpers :refer [breach-access-bonus choose-one-helper defcard offer-jack-out
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-lingering-effect
+   [game.core.effects :refer [any-effects register-lingering-effect
                               unregister-effect-by-uuid unregister-effects-for-card unregister-lingering-effects]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
    [game.core.engine :refer [can-trigger? register-events
@@ -911,19 +911,26 @@
                 :effect (effect (lose-tags eid 1))}]})
 
 (defcard "Forger"
-  {:interactions {:prevent [{:type #{:tag}
-                             :req (req true)}]}
-   :static-abilities [(link+ 1)]
-   :abilities [{:msg "avoid 1 tag"
-                :label "Avoid 1 tag"
-                :async true
-                :cost [(->c :trash-can)]
-                :effect (effect (tag-prevent :runner eid 1))}
-               {:msg "remove 1 tag"
-                :label "Remove 1 tag"
-                :cost [(->c :trash-can)]
-                :async true
-                :effect (effect (lose-tags eid 1))}]})
+  (let [avoid-ab {:msg "avoid 1 tag"
+                  :label "Avoid 1 tag"
+                  :async true
+                  :cost [(->c :trash-can)]
+                  :effect (effect (prevent-tag :runner eid 1))}]
+    {:events [(choose-one-helper
+                {:event :tag-interrupt
+                 :req (req (and (pos? (get-in @state [:prevent :tags :remaining]))
+                                (not (any-effects state side :prevent-paid-ability true? card [avoid-ab 0]))))
+                 :optional true
+                 :interactive (req true)}
+                [{:option "Avoid 1 tag"
+                  :cost [(->c :trash-can)]
+                  :ability avoid-ab}])]
+     :static-abilities [(link+ 1)]
+     :abilities [{:msg "remove 1 tag"
+                  :label "Remove 1 tag"
+                  :cost [(->c :trash-can)]
+                  :async true
+                  :effect (effect (lose-tags eid 1))}]}))
 
 (defcard "Friday Chip"
   (let [ability {:msg (msg "move 1 virus counter to " (:title target))

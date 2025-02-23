@@ -78,7 +78,7 @@
                  (resolve-tag-prevention state side n args)
                  (resolve-tag state side eid {:suppress-checkpoint suppress-checkpoint
                                               :card card
-                                              :n (:count async-result)}))))))
+                                              :n (:remaining async-result)}))))))
 
 (defn lose-tags
   "Always removes `:base` tags"
