@@ -1235,7 +1235,7 @@
          (when server
            (str (if (= card-type :ice)
                   " protecting "
-                  " in ")
+                  " in the root of ")
                 (to-zone-name server)
                 (when new-remote " (new remote)")))
          (when host
