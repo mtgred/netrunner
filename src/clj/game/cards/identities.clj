@@ -38,6 +38,7 @@
    [game.core.moving :refer [mill move swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
    [game.core.payment :refer [build-cost-label can-pay? cost->string merge-costs ->c]]
+   [game.core.prevention :refer [prevent-tag]]
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
@@ -1028,12 +1029,14 @@
                  card nil))}]})
 
 (defcard "Jesminder Sareen: Girl Behind the Curtain"
-  {:flags {:forced-to-avoid-tag true}
-   :events [{:event :pre-tag
+  {:static-abilities [{:type :forced-to-avoid-tag
+                       :req (req (and run (zero? (run-event-count state side :tag-interrupt))))
+                       :value true}]
+   :events [{:event :tag-interrupt
              :async true
-             :req (req (and run (<= (run-event-count state side :pre-tag) 1)))
-             :msg "avoid the first tag during this run"
-             :effect (effect (tag-prevent :runner eid 1))}]})
+             :req (req (and run (<= (run-event-count state side :tag-interrupt) 1)))
+             :msg "avoid 1 tag"
+             :effect (effect (prevent-tag :runner eid 1))}]})
 
 (defcard "Jinteki Biotech: Life Imagined"
   {:events [{:event :pre-first-turn

@@ -5,6 +5,7 @@
     [game.core.engine :refer [trigger-event trigger-event-simult trigger-event-sync queue-event checkpoint]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.gaining :refer [deduct gain]]
+    [game.core.prevention :refer [resolve-tag-prevention]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
@@ -35,12 +36,14 @@
                                                    :is-tagged is-tagged?}))
      changed?)))
 
+;; this can also be cut
 (defn tag-prevent
   [state side eid n]
   (swap! state update-in [:tag :tag-prevent] (fnil #(+ % n) 0))
   (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) {:type :tag
                                                                                         :amount n}))
 
+;; this can actually be cut entirely
 (defn- number-of-tags-to-gain
   "Calculates the number of tags to give, taking into account prevention and boosting effects."
   [state _ n {:keys [unpreventable unboostable]}]
@@ -70,33 +73,12 @@
   ([state side eid n {:keys [unpreventable card suppress-checkpoint] :as args}]
    (swap! state update :tag dissoc :tag-bonus :tag-prevent)
    (wait-for (trigger-event-simult state side :pre-tag nil card)
-             (let [n (number-of-tags-to-gain state side n args)
-                   prevent (get-prevent-list state :runner :tag)]
-               (if (and (pos? n)
-                        (not unpreventable)
-                        (cards-can-prevent? state :runner prevent :tag))
-                 (do (system-msg state :runner "has the option to avoid tags")
-                     (show-wait-prompt state :corp "Runner to prevent tags")
-                     (swap! state assoc-in [:prevent :current] :tag)
-                     (show-prompt
-                       state :runner nil
-                       (str "Avoid " (when (< 1 n) "any of the ") (quantify n "tag") "?") ["Done"]
-                       (fn [_]
-                         (let [prevent (get-in @state [:tag :tag-prevent])
-                               prevent-msg (if prevent
-                                             (str "avoids "
-                                                  (if (= prevent Integer/MAX_VALUE) "all" prevent)
-                                                  (pluralize prevent "tag"))
-                                             "will not avoid tags")]
-                           (system-msg state :runner prevent-msg)
-                           (clear-wait-prompt state :corp)
-                           (resolve-tag state side eid {:suppress-checkpoint suppress-checkpoint
-                                                        :card card
-                                                        :n (max 0 (- n (or prevent 0)))})))
-                       {:prompt-type :prevent}))
+             (let [n (number-of-tags-to-gain state side n args)]
+               (wait-for
+                 (resolve-tag-prevention state side n args)
                  (resolve-tag state side eid {:suppress-checkpoint suppress-checkpoint
                                               :card card
-                                              :n n}))))))
+                                              :n (:count async-result)}))))))
 
 (defn lose-tags
   "Always removes `:base` tags"

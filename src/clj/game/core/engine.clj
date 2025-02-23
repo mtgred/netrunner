@@ -580,6 +580,15 @@
                  (into [])))
      (unregister-suppress state side card))))
 
+(defn update-floating-event-durations
+  "updates all effects with a given duration to have another duration
+   ie: :until-next-corp-turn-begins -> :until-corp-turn-begins"
+  [state _ from-key to-key]
+  (swap! state assoc :events
+         (->> (:events @state)
+              (map #(if (= (:duration %) from-key) (assoc % :duration to-key) %))
+              (into []))))
+
 (defn unregister-floating-events
   "Removes all event handlers with a non-persistent duration"
   [state _ duration]

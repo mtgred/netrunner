@@ -19,7 +19,7 @@
                                   do-brain-damage do-net-damage offer-jack-out
                                   reorder-choice get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw draw-up-to]]
-   [game.core.effects :refer [get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-static-abilities update-disabled-cards]]
+   [game.core.effects :refer [any-effects get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-static-abilities update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [gather-events pay register-default-events register-events
                              resolve-ability trigger-event trigger-event-simult unregister-events
@@ -1843,7 +1843,7 @@
                               (decapitalize target)))
                   :player :runner
                   :prompt "Choose one"
-                  :choices (req [(when-not (forced-to-avoid-tags? state side)
+                  :choices (req [(when-not (any-effects state :runner :forced-to-avoid-tag)
                                    "Take 1 tag")
                                  "End the run"])
                   :waiting-prompt true

@@ -17,7 +17,7 @@
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect
-                              unregister-effects-for-card unregister-lingering-effects]]
+                              unregister-effect-by-uuid unregister-effects-for-card unregister-lingering-effects]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
    [game.core.engine :refer [can-trigger? register-events
                              register-once register-suppress resolve-ability trigger-event
@@ -42,6 +42,7 @@
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
    [game.core.payment :refer [build-cost-string can-pay? cost-value ->c]]
    [game.core.play-instants :refer [play-instant]]
+   [game.core.prevention :refer [prevent-tag]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
@@ -742,8 +743,17 @@
                                             (make-run eid target (get-card state card)))}}}]})
 
 (defcard "Dorm Computer"
-  {:flags {:forced-to-avoid-tag true}
-   :data {:counter {:power 4}}
+  {:data {:counter {:power 4}}
+   :static-abilities [{:type :forced-to-avoid-tag
+                       :value true
+                       ;; TODO - replace this with a 'this-card-is-run-source- fn, it's in playtest
+                       ;; note that this needs to account for the card being trashed mid-run? oh no
+                       :req (req (= (get-in run [:source-card :title]) (:title card)))}]
+   :events [{:event :tag-interrupt
+             :req (req (= (get-in run [:source-card :title]) (:title card)))
+             :async true
+             :msg "avoid all tags"
+             :effect (req (prevent-tag state :runner eid :all))}]
    :abilities [{:action true
                 :cost [(->c :click 1) (->c :power 1)]
                 :req (req (not run))
@@ -752,14 +762,7 @@
                 :msg "make a run and avoid all tags for the remainder of the run"
                 :makes-run true
                 :async true
-                :effect (effect (register-events
-                                  card
-                                  [{:event :pre-tag
-                                    :duration :end-of-run
-                                    :async true
-                                    :msg "avoid all tags during the run"
-                                    :effect (effect (tag-prevent :runner eid Integer/MAX_VALUE))}])
-                                (make-run eid target card))}]})
+                :effect (effect (make-run eid target card))}]})
 
 (defcard "Dyson Fractal Generator"
   {:recurring 1
@@ -1843,24 +1846,29 @@
               (assoc e :event :corp-trash)])})
 
 (defcard "Qianju PT"
-  {:flags {:runner-phase-12 (req true)
-           :forced-to-avoid-tag true}
+  {:flags {:runner-phase-12 (req true)}
    :abilities [{:label "Lose [Click], avoid 1 tag (start of turn)"
                 :once :per-turn
                 :req (req (:runner-phase-12 @state))
-                :effect (effect (update! (assoc card :qianju-active true)))
-                :msg (msg "lose [Click] and avoid the first tag received until [their] next turn")}]
-   :events [{:event :corp-turn-ends
-             :effect (effect (update! (dissoc card :qianju-active)))}
-            {:event :runner-turn-begins
-             :req (req (:qianju-active card))
-             :effect (effect (lose-clicks 1))}
-            {:event :pre-tag
-             :async true
-             :req (req (:qianju-active card))
-             :msg "avoid the first tag received"
-             :effect (effect (update! (dissoc card :qianju-active))
-                             (tag-prevent :runner eid 1))}]})
+                :cost [(->c :lose-click 1)]
+                :msg "avoid the first tag received until [their] next turn"
+                ;; TODO - I should do this to fix klevetnik, lmao
+                :effect (req (let [current-turn (:turn @state)
+                                   lingering (register-lingering-effect
+                                               state side card
+                                               {:type :forced-to-avoid-tag
+                                                :duration :until-next-runner-turn-begins
+                                                :value true})]
+                               (register-events
+                                 state side card
+                                 [{:event :tag-interrupt
+                                   :unregister-once-resolved true
+                                   :duration :until-next-runner-turn-begins
+                                   :async true
+                                   :msg "avoid 1 tag"
+                                   :effect (req
+                                             (unregister-effect-by-uuid state side lingering)
+                                             (prevent-tag state :runner eid 1))}])))}]})
 
 (defcard "R&D Interface"
   {:events [(breach-access-bonus :rd 1)]})
