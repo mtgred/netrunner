@@ -2349,7 +2349,7 @@
      ;; expose and jack out
      (run-on state :hq)
      (card-ability state :runner gpi 0)
-     (is (last-log-contains? state "exposes Ice Wall") "Expose approached ice")
+     (is (last-log-contains? state "expose Ice Wall") "Expose approached ice")
      (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to jack out")
      (click-prompt state :runner "Yes")
      (is (nil? (get-run)) "Run has ended")
@@ -5737,6 +5737,8 @@
     (play-from-hand state :corp "Ice Wall" "Archives")
     (take-credits state :corp)
     (play-from-hand state :runner "Zamba")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-prompt state :runner "Always")
     (is (= 6 (core/available-mu state)) "Gain 2 memory")
     (is (= 1 (:credit (get-runner))) "At 1 credit")
     (play-from-hand state :runner "Infiltration")

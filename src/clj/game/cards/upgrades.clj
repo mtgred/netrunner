@@ -1825,10 +1825,11 @@
                 :cost [(->c :trash-can)]
                 :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]})
 
-;; TODO - fix this card
 (defcard "Underway Grid"
-  {:events []
-   :static-abilities [{:type :bypass-ice
+  {:static-abilities [{:type :cannot-be-exposed
+                       :req (req (same-server? card target))
+                       :value true}
+                      {:type :bypass-ice
                        :req (req (same-server? card target))
                        :value false}]})
 

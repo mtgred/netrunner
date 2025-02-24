@@ -6701,15 +6701,14 @@
       (is (some? (prompt-map :corp)) "Corp should get the option to rez Zaibatsu Loyalty before expose")
       (click-prompt state :corp "Yes")
       (is (rezzed? (refresh zai)) "Zaibatsu Loyalty should be rezzed")
-      (let [credits (:credit (get-corp))]
-        (card-ability state :corp zai 0)
-        (is (= (dec credits) (:credit (get-corp))) "Corp should lose 1 credit for stopping the expose")
-        (click-prompt state :corp "Done"))
+      (is (changed? [(:credit (get-corp)) -1]
+            (click-prompt state :corp "1 [Credit]: Zaibatsu Loyalty")))
       (card-ability state :runner code 0)
       (click-card state :runner (refresh iw))
       (is (some? (prompt-map :corp)) "Corp should be prompted to prevent")
       (is (zero? (-> (get-corp) :discard count)) "No trashed cards")
-      (card-ability state :corp zai 1)
+      (is (changed? [(:credit (get-corp)) 0]
+            (click-prompt state :corp "[trash]: Zaibatsu Loyalty")))
       (is (= 1 (-> (get-corp) :discard count)) "Zaibatsu Loyalty should be in discard after using ability"))))
 
 (deftest zealous-judge

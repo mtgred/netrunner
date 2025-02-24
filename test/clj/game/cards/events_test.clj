@@ -2935,13 +2935,12 @@
         (play-from-hand state :runner "Falsified Credentials")
         (click-prompt state :runner "Agenda")
         (click-card state :runner atl)
-        (click-prompt state :corp "Done")
+        (click-prompt state :corp "Allow 1 card to be exposed")
         (is (= 9 (:credit (get-runner))) "An unprevented expose gets credits")
         (play-from-hand state :runner "Falsified Credentials")
         (click-prompt state :runner "Agenda")
         (click-card state :runner atl)
-        (card-ability state :corp (refresh zaibatsu) 0) ; prevent the expose!
-        (click-prompt state :corp "Done")
+        (click-prompt state :corp "1 [Credit]: Zaibatsu Loyalty")
         (is (= 8 (:credit (get-runner))) "A prevented expose does not"))))
 
 (deftest fear-the-masses
@@ -3731,7 +3730,7 @@
       (play-from-hand state :runner "Infiltration")
       (click-prompt state :runner "Expose a card")
       (click-card state :runner "Ice Wall")
-      (is (last-log-contains? state "Runner exposes Ice Wall protecting HQ at position 0")
+      (is (last-log-contains? state "Runner uses Infiltration to expose Ice Wall protecting HQ at position 0")
           "Infiltration properly exposes the ice")))
 
 (deftest information-sifting-hudson-interaction-max-access
@@ -6721,7 +6720,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Spot the Prey")
     (click-card state :runner "Hostile Takeover")
-    (is (last-log-contains? state "Runner exposes Hostile Takeover"))
+    (is (last-log-contains? state "Runner uses Spot the Prey to expose Hostile Takeover"))
     (click-prompt state :runner "HQ")
     (is (:run @state) "Run should be initiated")))
 

@@ -14,106 +14,106 @@
   FourHundredAndNineTeen-amoral-scammer
   ;; 419
   (do-game
-      (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
-                        :deck ["PAD Campaign" "The Cleaners" (qty "Pup" 3) "Oaktown Renovation"]}
-                 :runner {:id "419: Amoral Scammer"}})
-      (is (= 5 (:credit (get-corp))) "Starts with 5 credits")
-      (play-from-hand state :corp "Pup" "HQ")
-      (click-prompt state :runner "Yes")
-      (click-prompt state :corp "Yes")
-      (is (= 4 (:credit (get-corp))) "Pays 1 credit to not expose card")
-      (play-from-hand state :corp "Pup" "HQ")
-      (is (no-prompt? state :runner) "No option on second install")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Pup" "Archives")
-      (click-prompt state :runner "No")
-      (is (no-prompt? state :corp) "No prompt if Runner chooses No")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "The Cleaners" "New remote")
-      (click-prompt state :runner "Yes")
-      (click-prompt state :corp "No")
-      (is (last-log-contains? state "exposes The Cleaners") "Installed card was exposed")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Oaktown Renovation" "New remote")
-      (is (no-prompt? state :corp) "Cannot expose faceup agendas")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (core/lose state :corp :credit (:credit (get-corp)))
-      (is (zero? (:credit (get-corp))) "Corp has no credits")
-      (play-from-hand state :corp "PAD Campaign" "New remote")
-      (click-prompt state :runner "Yes")
-      (is (no-prompt? state :corp) "No prompt if Corp has no credits")
-      (is (last-log-contains? state "exposes PAD Campaign") "Installed card was exposed")))
+    (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
+                      :deck ["PAD Campaign" "The Cleaners" (qty "Pup" 3) "Oaktown Renovation"]}
+               :runner {:id "419: Amoral Scammer"}})
+    (is (= 5 (:credit (get-corp))) "Starts with 5 credits")
+    (play-from-hand state :corp "Pup" "HQ")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "Yes")
+    (is (= 4 (:credit (get-corp))) "Pays 1 credit to not expose card")
+    (play-from-hand state :corp "Pup" "HQ")
+    (is (no-prompt? state :runner) "No option on second install")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Pup" "Archives")
+    (click-prompt state :runner "No")
+    (is (no-prompt? state :corp) "No prompt if Runner chooses No")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "The Cleaners" "New remote")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "No")
+    (is (last-log-contains? state "expose The Cleaners") "Installed card was exposed")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Oaktown Renovation" "New remote")
+    (is (no-prompt? state :corp) "Cannot expose faceup agendas")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (core/lose state :corp :credit (:credit (get-corp)))
+    (is (zero? (:credit (get-corp))) "Corp has no credits")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (click-prompt state :runner "Yes")
+    (is (no-prompt? state :corp) "No prompt if Corp has no credits")
+    (is (last-log-contains? state "expose PAD Campaign") "Installed card was exposed")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-verify-expose-can-be-blocked
-    ;; Verify expose can be blocked
-    (do-game
-      (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
-                        :deck ["Underway Grid" "Pup"]}
-                 :runner {:id "419: Amoral Scammer"}})
-      (play-from-hand state :corp "Underway Grid" "New remote")
-      (click-prompt state :runner "No")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Pup" "Server 1")
-      (click-prompt state :runner "Yes")
-      (let [ug (get-in @state [:corp :servers :remote1 :content 0])]
-        (rez state :corp ug)
-        (click-prompt state :corp "No")
-        (is (last-log-contains? state "uses Underway Grid to prevent 1 card from being exposed") "Exposure was prevented"))))
+  ;; Verify expose can be blocked
+  (do-game
+    (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
+                      :deck ["Underway Grid" "Pup"]}
+               :runner {:id "419: Amoral Scammer"}})
+    (play-from-hand state :corp "Underway Grid" "New remote")
+    (click-prompt state :runner "No")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Pup" "Server 1")
+    (click-prompt state :runner "Yes")
+    (let [ug (get-in @state [:corp :servers :remote1 :content 0])]
+      (rez state :corp ug)
+      (click-prompt state :corp "No")
+      (is (not (last-log-contains? state "expose Pup")) "Exposure was prevented"))))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-ixodidae-shouldn-t-trigger-off-419-s-ability
-    ;; Ixodidae shouldn't trigger off 419's ability
-    (do-game
-      (new-game {:corp {:deck ["PAD Campaign"]}
-                 :runner {:id "419: Amoral Scammer"
-                          :deck ["Ixodidae"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Ixodidae")
-      (take-credits state :runner)
-      (play-from-hand state :corp "PAD Campaign" "New remote")
-      (let [corp-credits (:credit (get-corp))
-            runner-credits (:credit (get-runner))]
-        (click-prompt state :runner "Yes")
-        (click-prompt state :corp "Yes")
-        (is (= 1 (- corp-credits (:credit (get-corp)))) "Should lose 1 credit from 419 ability")
-        (is (zero? (- runner-credits (:credit (get-runner)))) "Should not gain any credits from Ixodidae"))))
+  ;; Ixodidae shouldn't trigger off 419's ability
+  (do-game
+    (new-game {:corp {:deck ["PAD Campaign"]}
+               :runner {:id "419: Amoral Scammer"
+                        :deck ["Ixodidae"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ixodidae")
+    (take-credits state :runner)
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (let [corp-credits (:credit (get-corp))
+          runner-credits (:credit (get-runner))]
+      (click-prompt state :runner "Yes")
+      (click-prompt state :corp "Yes")
+      (is (= 1 (- corp-credits (:credit (get-corp)))) "Should lose 1 credit from 419 ability")
+      (is (zero? (- runner-credits (:credit (get-runner)))) "Should not gain any credits from Ixodidae"))))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-419-vs-asa-group-double-install-corp-s-turn
-    ;; 419 vs Asa Group double install, Corp's turn
-    (do-game
-      (new-game {:corp {:id "Asa Group: Security Through Vigilance"
-                        :deck [(qty "Hedge Fund" 5)]
-                        :hand ["PAD Campaign" "Ice Wall"]}
-                 :runner {:id "419: Amoral Scammer"}})
-      (play-from-hand state :corp "PAD Campaign" "New remote")
-      (click-card state :corp "Ice Wall")
-      (click-prompt state :runner "Yes")
-      (click-prompt state :corp "No")
-      (is (last-log-contains? state "exposes PAD Campaign in Server 1") "Installed card was exposed")))
+  ;; 419 vs Asa Group double install, Corp's turn
+  (do-game
+    (new-game {:corp {:id "Asa Group: Security Through Vigilance"
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["PAD Campaign" "Ice Wall"]}
+               :runner {:id "419: Amoral Scammer"}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (click-card state :corp "Ice Wall")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "No")
+    (is (last-log-contains? state "expose PAD Campaign in Server 1") "Installed card was exposed")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-419-vs-asa-group-double-install-runner-s-turn
-    ;; 419 vs Asa Group double install, Runner's turn
-    (do-game
-      (new-game {:corp {:id "Asa Group: Security Through Vigilance"
-                        :deck [(qty "Hedge Fund" 5)]
-                        :hand ["PAD Campaign" "Ice Wall" "Advanced Assembly Lines"]}
-                 :runner {:id "419: Amoral Scammer"}})
-      (play-from-hand state :corp "Advanced Assembly Lines" "New remote")
-      (click-prompt state :corp "Done")
-      (click-prompt state :runner "No")
-      (take-credits state :corp)
-      (rez state :corp (get-content state :remote1 0))
-      (card-ability state :corp (get-content state :remote1 0) 0)
-      (click-card state :corp "PAD Campaign")
-      (click-prompt state :corp "New remote")
-      (click-prompt state :runner "Yes")
-      (click-prompt state :corp "No")
-      (is (last-log-contains? state "exposes PAD Campaign in Server 2") "Installed card was exposed")
-      (is (prompt-is-type? state :corp :select) "Corp should still have select prompt")))
+  ;; 419 vs Asa Group double install, Runner's turn
+  (do-game
+    (new-game {:corp {:id "Asa Group: Security Through Vigilance"
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["PAD Campaign" "Ice Wall" "Advanced Assembly Lines"]}
+               :runner {:id "419: Amoral Scammer"}})
+    (play-from-hand state :corp "Advanced Assembly Lines" "New remote")
+    (click-prompt state :corp "Done")
+    (click-prompt state :runner "No")
+    (take-credits state :corp)
+    (rez state :corp (get-content state :remote1 0))
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (click-card state :corp "PAD Campaign")
+    (click-prompt state :corp "New remote")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "No")
+    (is (last-log-contains? state "expose PAD Campaign in Server 2") "Installed card was exposed")
+    (is (prompt-is-type? state :corp :select) "Corp should still have select prompt")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-interation-with-install-and-rez-effects-issue-4485
   ;; interation with 'install and rez' effects. Issue #4485
@@ -129,27 +129,27 @@
     (is (not (no-prompt? state :runner)) "419 does trigger on installed and rezzed cards")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-419-vs-sportsmetal-jinja-grid-issue-3806
-    ;; 419 vs Sportsmetal Jinja Grid. Issue #3806
-    (do-game
-      (new-game {:corp {:id "Sportsmetal: Go Big or Go Home"
-                        :deck [(qty "Ice Wall" 5)]
-                        :hand ["Domestic Sleepers" "Jinja City Grid"]}
-                 :runner {:id "419: Amoral Scammer"}})
-      (play-from-hand state :corp "Jinja City Grid" "New remote")
-      (rez state :corp (get-content state :remote1 0))
-      (click-prompt state :runner "No")
-      (take-credits state :corp)
-      (run-empty-server state :hq)
-      (click-prompt state :runner "Steal")
-      (click-prompt state :corp "Draw 2 cards")
-      (is (waiting? state :runner) "During Jinja, Runner should wait")
-      (click-prompt state :corp (first (prompt-buttons :corp)))
-      (is (= 2 (count (prompt-buttons :runner))) "419 can trigger ability with 2 options")
-      (is (waiting? state :corp) "Corp is waiting for runner ability")
-      (click-prompt state :runner "Yes")
-      (click-prompt state :corp "No")
-      (is (= 2 (count (prompt-buttons :corp))) "Corp should have prompt back with 2 options")
-      (is (waiting? state :runner) "Runner should wait again")))
+  ;; 419 vs Sportsmetal Jinja Grid. Issue #3806
+  (do-game
+    (new-game {:corp {:id "Sportsmetal: Go Big or Go Home"
+                      :deck [(qty "Ice Wall" 5)]
+                      :hand ["Domestic Sleepers" "Jinja City Grid"]}
+               :runner {:id "419: Amoral Scammer"}})
+    (play-from-hand state :corp "Jinja City Grid" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (click-prompt state :runner "No")
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Steal")
+    (click-prompt state :corp "Draw 2 cards")
+    (is (waiting? state :runner) "During Jinja, Runner should wait")
+    (click-prompt state :corp (first (prompt-buttons :corp)))
+    (is (= 2 (count (prompt-buttons :runner))) "419 can trigger ability with 2 options")
+    (is (waiting? state :corp) "Corp is waiting for runner ability")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "No")
+    (is (= 2 (count (prompt-buttons :corp))) "Corp should have prompt back with 2 options")
+    (is (waiting? state :runner) "Runner should wait again")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-419-vs-expose-timing-rules-change
   ;; 419 vs Sportsmetal Jinja Grid. Issue #3806

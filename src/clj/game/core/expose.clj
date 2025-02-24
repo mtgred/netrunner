@@ -2,7 +2,8 @@
   (:require
     [game.core.card :refer [rezzed?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.eid :refer [effect-completed make-eid make-result]]
+    [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
+    [game.core.effects :refer [any-effects]]
     [game.core.engine :refer [checkpoint queue-event register-pending-event resolve-ability trigger-event-sync]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.prevention :refer [resolve-expose-prevention]]
@@ -20,16 +21,19 @@
         (doseq [t targets]
           (when-let [ability (:on-expose (card-def t))]
             ;; if it gets rezzed by blackguard or something, the effect shouldn't fizzle
-            ;; but if it dies to drive-by, the effect SHOULD fizzle
             (register-pending-event state :expose t (assoc ability :condition :installed))))
         (queue-event state :expose {:cards targets})
-        (checkpoint state side eid {:duration :expose}))))
+        (wait-for (checkpoint state side {:duration :expose})
+                  (complete-with-result state side eid {:cards targets})))))
 
 (defn expose
   "Exposes the given cards."
   ([state side eid targets] (expose state side eid targets nil))
   ([state side eid targets {:keys [unpreventable card] :as args}]
-   (let [targets (filterv #(not (or (rezzed? %) (nil? %))) targets)]
+   (let [targets (filterv #(not (or (rezzed? %)
+                                    (nil? %)
+                                    (any-effects state side :cannot-be-exposed true? %)))
+                          targets)]
      (if (empty? targets)
        (effect-completed state side eid) ;; cannot expose faceup cards
        (wait-for (resolve-expose-prevention state side targets args)

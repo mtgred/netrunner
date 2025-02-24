@@ -239,7 +239,6 @@
                 :effect (effect (damage eid :brain 2 {:card card}))}
    :in-play [:click-per-turn 1]})
 
-;; TODO - if there are multiple cards exposed!
 (defcard "Blackguard"
   (letfn [(force-a-rez [c]
             {:msg (msg "attempt to force the rez of " (:title c))
@@ -272,6 +271,7 @@
               {:prompt "Force the Corp to rez which card?"
                :req (req (seq cards))
                :choices (req cards)
+               :async true
                :effect (req (wait-for (resolve-ability
                                         state side
                                         (force-a-rez target)
@@ -1132,9 +1132,8 @@
                                (ice? current-ice)
                                (not (rezzed? current-ice))))
                 :label "expose approached ice"
-                :msg "expose the approached ice"
                 :async true
-                :effect (req (wait-for (expose state side (make-eid state eid) [current-ice])
+                :effect (req (wait-for (expose state side (make-eid state eid) [current-ice] {:card card})
                                        (continue-ability state side (offer-jack-out) card nil)))}]})
 
 (defcard "Grimoire"
@@ -1291,8 +1290,8 @@
                 :cost [(->c :click 1) (->c :credit 1)]
                 :req (req (some #{:hq} (:successful-run runner-reg)))
                 :choices {:card installed?}
-                :effect (effect (expose eid [target]))
-                :msg "expose 1 card"}]})
+                :label "Expose a card"
+                :effect (effect (expose eid [target] {:card card}))}]})
 
 (defcard "LilyPAD"
   {:events [{:event :runner-install
@@ -2604,14 +2603,23 @@
                 :msg "draw 1 card from the bottom of the stack"
                 :effect (effect (move (last (:deck runner)) :hand))}]})
 
-;; TODO - add an autoresolve to this, make it work when multiple cards are exposed
 (defcard "Zamba"
-  {:implementation "Credit gain is automatic"
+  {:special {:auto-gain-credits :always}
+   :implementation "Credit gain is automatic"
    :static-abilities [(mu+ 2)]
+   :abilities [(set-autoresolve :auto-gain-credits "Zamba gaining credits on expose")]
    :events [{:event :expose
+             :interactive (get-autoresolve :auto-gain-credits (complement never?))
+             :silent (get-autoresolve :auto-gain-credits never?)
              :async true
-             :effect (effect (gain-credits :runner eid 1))
-             :msg "gain 1 [Credits]"}]})
+             :optional
+             {:waiting-prompt true
+              :prompt (msg "Gain " (count (:cards context)) " [Credits]?")
+              :player :runner
+              :autoresolve (get-autoresolve :auto-gain-credits)
+              :yes-ability {:msg (msg "gain " (count (:cards context)) " [Credits]")
+                            :async true
+                            :effect (effect (gain-credits eid (count (:cards context))))}}}]})
 
 (defcard "Zenit Chip JZ-2MJ"
   {:on-install {:async true

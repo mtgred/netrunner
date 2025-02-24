@@ -2756,12 +2756,11 @@
              :async true
              :msg "breach HQ"
              :effect (req (breach-server state :runner eid [:hq] {:no-root true}))}]
-   :abilities [{:msg "expose 1 card"
-                :label "Expose 1 installed card"
+   :abilities [{:label "Expose 1 installed card"
                 :choices {:card installed?}
                 :async true
                 :cost [(->c :trash-can)]
-                :effect (effect (expose eid [target]))}]})
+                :effect (effect (expose eid [target] {:card card}))}]})
 
 (defcard "Reclaim"
   {:abilities

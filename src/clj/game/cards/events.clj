@@ -1060,7 +1060,7 @@
               :choices {:card #(and (installed? %)
                                     (ice? %))}
               :async true
-              :effect (req (wait-for (expose state side [target])
+              :effect (req (wait-for (expose state side [target] {:card card})
                                      (continue-ability
                                        state side
                                        {:prompt "Choose a server"
@@ -1201,7 +1201,6 @@
              :effect (req (wait-for (breach-server state side [:hq] {:no-root true})
                                     (breach-server state side eid [:rd] {:no-root true})))}]})
 
-;; TODO - fix this card
 (defcard "Drive By"
   {:on-play
    {:choices {:card #(let [topmost (get-nested-host %)]
@@ -1209,8 +1208,8 @@
                             (= (last (get-zone topmost)) :content)
                             (not (:rezzed %))))}
     :async true
-    :effect (req (wait-for (expose state side [target])
-                           (if-let [target async-result]
+    :effect (req (wait-for (expose state side [target] {:card card})
+                           (if-let [target (when async-result (first (:cards async-result)))]
                              (if (or (asset? target)
                                      (upgrade? target))
                                (do (system-msg state :runner (str "uses " (:title card) " to trash " (:title target)))
@@ -1484,7 +1483,6 @@
                                    card [(breach-access-bonus :hq 1 {:duration :end-of-run})])
                                  (effect-completed state side eid)))}]})
 
-;; TODO - fix this card
 (defcard "Falsified Credentials"
   {:on-play
    {:prompt "Choose one"
@@ -1499,7 +1497,7 @@
                                            (= (last (get-zone topmost)) :content)
                                            (not (rezzed? %))))}
                    :async true
-                   :effect (req (wait-for (expose state side [target])
+                   :effect (req (wait-for (expose state side [target] {:card card})
                                           (continue-ability
                                             state :runner
                                             (when (and async-result ;; expose was successful
@@ -3500,7 +3498,7 @@
     :async true
     :change-in-game-state (req (some (complement faceup?) (all-installed state :corp)))
     :effect (req (if (pos? (count targets))
-                   (expose state side eid targets)
+                   (expose state side eid targets {:card card})
                    (effect-completed state side eid)))}})
 
 (defcard "Scavenge"
@@ -3698,7 +3696,7 @@
                           (not (ice? %))
                           (corp? %))}
     :async true
-    :effect (req (wait-for (expose state side [target])
+    :effect (req (wait-for (expose state side [target] {:card card})
                            (continue-ability
                              state side
                              {:prompt "Choose a server"

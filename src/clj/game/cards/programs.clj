@@ -529,7 +529,6 @@
                :effect (effect (add-counter :runner card :virus 1))
                :msg "place 1 virus counter on itself"}]}))
 
-;; TODO - fix this card
 (defcard "Aumakua"
   (auto-icebreaker {:implementation "[Erratum] Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
                     :abilities [(break-sub 1 1)
@@ -542,7 +541,7 @@
                                                  (:did-trash target))))
                               :effect (effect (add-counter card :virus 1))}
                              {:event :expose
-                              :effect (effect (add-counter card :virus 1))}]}))
+                              :effect (effect (add-counter card :virus (count (:cards context))))}]}))
 
 (defcard "Aurora"
   (auto-icebreaker {:abilities [(break-sub 2 1 "Barrier")
@@ -3095,9 +3094,8 @@
               :prompt "Expose approached piece of ice?"
               :yes-ability
               {:async true
-               :msg "expose the approached piece of ice"
                :effect (req (wait-for
-                              (expose state side [(:ice context)])
+                              (expose state side [(:ice context)] {:card card})
                               (continue-ability state side (offer-jack-out) card nil)))}}}]})
 
 (defcard "Snowball"
@@ -3441,7 +3439,6 @@
                      {:req (req (and (= 1 (count (:subroutines current-ice)))
                                      (<= (get-strength current-ice) (get-strength card))))}))
 
-;; TODO - fix this card
 (defcard "Wari"
   (letfn [(prompt-for-subtype []
             {:prompt "Choose one"
@@ -3457,11 +3454,11 @@
                                    (not (rezzed? %)))}
              :async true
              :msg (str "name " chosen-subtype)
-             :effect (req (wait-for (expose state side [target])
-                                    (when (has-subtype? async-result chosen-subtype)
-                                      (do (move state :corp async-result :hand)
+             :effect (req (wait-for (expose state side [target] {:card card})
+                                    (when (and async-result (has-subtype? target chosen-subtype))
+                                      (do (move state :corp target :hand)
                                           (system-msg state :runner
-                                                      (str "add " (:title async-result) " to HQ"))))
+                                                      (str "add " (:title target) " to HQ"))))
                                     (effect-completed state side eid)))})]
     {:events [{:event :successful-run
                :interactive (req true)
