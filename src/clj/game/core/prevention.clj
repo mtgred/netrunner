@@ -110,15 +110,15 @@
 
 (defn- build-prevention-option
   [prevention]
-  {:option (:label prevention)
+  {:option (or (:label prevention) (->> prevention :card :printed-title))
    :ability {:async true
              :req (:req (:ability prevention))
              :effect (req
                        (swap! state update-in [:prevent :tags :uses (->> prevention :card :cid)] (fnil inc 0))
                        (resolve-ability
                          state side (assoc eid :source (:card prevention) :source-type :ability)
-                         (if (:choice prevention)
-                           {:optional {:prompt (:choice prevention)
+                         (if (:prompt prevention)
+                           {:optional {:prompt (:prompt prevention)
                                        :yes-ability (:ability prevention)}}
                            (:ability prevention))
                          (:card prevention) nil))}})
@@ -137,7 +137,8 @@
                       (choose-one-helper
                         {:prompt (str "Prevent any of the " (get-in @state [:prevent :tags :count]) " tags?"
                                       (when-not (= (get-in @state [:prevent :tags :count]) remainder)
-                                        (str "(" remainder " remaining)")))}
+                                        (str "(" remainder " remaining)")))
+                         :waiting-prompt "your opponent to prevent tags"}
                         (concat (mapv build-prevention-option preventions)
                                 [{:option (str "Allow " (quantify remainder "remaining tag"))
                                   :ability {:effect (req (swap! state assoc-in [:prevent :tags :passed] true))}}]))
