@@ -75,7 +75,7 @@
                               zone->name zones->sorted-names]]
    [game.core.set-aside :refer [set-aside set-aside-for-me]]
    [game.core.shuffling :refer [shuffle!]]
-   [game.core.tags :refer [gain-tags lose-tags tag-prevent]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.threat :refer [threat-level]]
@@ -2392,10 +2392,8 @@
                :trace {:base 0
                        :unsuccessful {:async true
                                       :msg message
-                                      :effect (req (if (= type :net)
-                                                     (do (damage-prevent state :runner :net Integer/MAX_VALUE)
-                                                         (effect-completed state side eid))
-                                                     (tag-prevent state :runner eid Integer/MAX_VALUE)))}}}))]
+                                      :effect (req (do (damage-prevent state :runner :net Integer/MAX_VALUE)
+                                                       (effect-completed state side eid)))}}}))]
     {:prevention [{:prevents :tag
                    :type :event
                    :label "No One Home"

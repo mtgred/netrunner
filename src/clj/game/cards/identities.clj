@@ -52,7 +52,7 @@
    [game.core.servers :refer [central->name is-central? is-remote? name-zone
                               target-server zone->name]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck]]
-   [game.core.tags :refer [gain-tags lose-tags tag-prevent]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]

@@ -1506,13 +1506,11 @@
     (let [abi {:label "Take 1 tag to place 2 virus counters (start of turn)"
                :once :per-turn
                :async true
-               :effect (req (wait-for (gain-tags state :runner 1)
-                                      (if (not (get-in @state [:tag :tag-prevent]))
-                                        (do (add-counter state side card :virus 2)
-                                            (system-msg state side
-                                                        (str "takes 1 tag to place 2 virus counters on God of War"))
-                                            (effect-completed state side eid))
-                                        (effect-completed state side eid))))}]
+               :effect (req (wait-for (gain-tags state :runner 1 {:unpreventable true})
+                                      (add-counter state side card :virus 2)
+                                      (system-msg state side
+                                                  (str "takes 1 tag to place 2 virus counters on God of War"))
+                                      (effect-completed state side eid)))}]
       {:flags {:runner-phase-12 (req true)}
        :events [(choose-one-helper
                   {:event :runner-turn-begins
