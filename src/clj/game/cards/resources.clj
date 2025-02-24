@@ -58,6 +58,7 @@
    [game.core.payment :refer [build-spend-msg can-pay? ->c]]
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
+   [game.core.prevention :refer [prevent-tag prevent-up-to-n-tags]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -1126,12 +1127,14 @@
                                 :type :credit}}})
 
 (defcard "Decoy"
-  {:interactions {:prevent [{:type #{:tag}
-                             :req (req true)}]}
-   :abilities [{:async true
-                :cost [(->c :trash-can)]
-                :msg "avoid 1 tag"
-                :effect (effect (tag-prevent :runner eid 1))}]})
+  {:prevention [{:prevents :tag
+                 :type :ability
+                 :label "Decoy"
+                 :choice "Trash Decoy to avoid 1 tag?"
+                 :ability {:async true
+                           :cost [(->c :trash-can)]
+                           :msg "avoid 1 tag"
+                           :effect (req (prevent-tag state :runner eid 1))}}]})
 
 (defcard "District 99"
   (letfn [(eligible-cards [runner]
@@ -2335,16 +2338,32 @@
              :effect (req (swap! state assoc-in [:runner :register :must-trash-with-credits] false))}]})
 
 (defcard "New Angeles City Hall"
-  {:interactions {:prevent [{:type #{:tag}
-                             :req (req true)}]}
+  (letfn [(prevent-another-tag []
+            {:optional
+             {:req (req (and (pos? (get-in @state [:prevent :tags :remaining]))
+                             (can-pay? state side (assoc eid :source card :source-type :ability) card nil [(->c :credit 2)])))
+              :prompt (msg "Pay 2 [Credits] to avoid another tag? (" (get-in @state [:prevent :tags :remaining]) " remaining)")
+              :yes-ability {:async true
+                            :cost [(->c :credit 2)]
+                            :msg "avoid 1 tag"
+                            :effect (req (wait-for (prevent-tag state :runner 1)
+                                                   (continue-ability
+                                                     state side
+                                                     (prevent-another-tag)
+                                                     card nil)))}}})]
+  {:prevention [{:prevents :tag
+                 :type :ability
+                 :label "New Angeles City Hall"
+                 :choice "Pay 2 [Credits] to avoid a tag?"
+                 :ability {:async true
+                           :cost [(->c :credit 2)]
+                           :msg "avoid 1 tag"
+                           :effect (req (wait-for (prevent-tag state :runner 1)
+                                                  (continue-ability state side (prevent-another-tag) card nil)))}}]
    :events [{:event :agenda-stolen
              :async true
              :msg "trash itself"
-             :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))}]
-   :abilities [{:async true
-                :cost [(->c :credit 2)]
-                :msg "avoid 1 tag"
-                :effect (effect (tag-prevent :runner eid 1))}]})
+             :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))}]}))
 
 (defcard "No Free Lunch"
   {:abilities [{:label "Gain 3 [Credits]"
@@ -2376,7 +2395,26 @@
                                                      (do (damage-prevent state :runner :net Integer/MAX_VALUE)
                                                          (effect-completed state side eid))
                                                      (tag-prevent state :runner eid Integer/MAX_VALUE)))}}}))]
-    {:interactions {:prevent [{:type #{:net :tag}
+    {:prevention [{:prevents :tag
+                   :type :event
+                   :label "No One Home"
+                   :choice "Trash No One Home to force the Corp to trace"
+                   :ability {:async true
+                             :msg "force the Corp to trace"
+                             :req (req (and (first-event? state side :tag-interrupt)
+                                            ;; note that the checkpoints are suppressed for both damage and tag when resolving a snare,
+                                            ;; (or at least they will be after the costs merge), so this should work
+                                            (no-event? state side :damage #(= :net (:damage-type (first %))))))
+                             :effect (req (wait-for
+                                            (trash state side card {:unpreventable true :cause-card card})
+                                            (continue-ability
+                                              state :corp
+                                              {:label "Trace 0 - if unsuccessful, the Runner avoids any number of tags"
+                                               :trace {:base 0
+                                                       :unsuccessful {:async true
+                                                                      :effect (req (continue-ability state :runner (prevent-up-to-n-tags :all) card nil))}}}
+                                              card nil)))}}]
+     :interactions {:prevent [{:type #{:net}
                                :req (req (first-chance? state side))}]}
      :abilities [{:msg "force the Corp to trace"
                   :async true

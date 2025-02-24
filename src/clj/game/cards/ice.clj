@@ -125,8 +125,7 @@
 ;;; Checks if the runner has active events that would force them to avoid/prevent a tag
 (defn forced-to-avoid-tags?
   [state side]
-  (let [cards (map :card (gather-events state side :pre-tag nil))]
-    (pos? (count (filter #(card-flag? % :forced-to-avoid-tag true) cards)))))
+  (any-effects state side :forced-to-avoid-tag))
 
 ;;; Break abilities on ice should only occur when encountering that ice
 (defn currently-encountering-card
@@ -1843,7 +1842,7 @@
                               (decapitalize target)))
                   :player :runner
                   :prompt "Choose one"
-                  :choices (req [(when-not (any-effects state :runner :forced-to-avoid-tag)
+                  :choices (req [(when-not (forced-to-avoid-tags? state :runner)
                                    "Take 1 tag")
                                  "End the run"])
                   :waiting-prompt true

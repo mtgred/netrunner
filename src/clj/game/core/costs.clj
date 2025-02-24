@@ -256,7 +256,7 @@
   [cost state side eid card]
   (wait-for (trash state side card {:cause :ability-cost
                                     :unpreventable true})
-            (complete-with-result state side eid {:paid/msg (str "trashes " (:title card))
+            (complete-with-result state side eid {:paid/msg (str "trashes " (:printed-title card))
                                                   :paid/type :trash-can
                                                   :paid/value 1
                                                   :paid/targets [card]})))

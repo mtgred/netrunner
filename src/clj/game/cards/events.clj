@@ -49,6 +49,7 @@
                              swap-ice trash trash-cards]]
    [game.core.payment :refer [can-pay? ->c]]
    [game.core.play-instants :refer [play-instant]]
+   [game.core.prevention :refer [prevent-up-to-n-tags]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -2684,21 +2685,21 @@
                    (draw state :runner eid 4)))}})
 
 (defcard "On the Lam"
-  {:on-play {:prompt "Choose a resource to host On the Lam on"
+  {:prevention [{:prevents :tag
+                 :type :ability
+                 :label "On the Lam"
+                 :choice "Trash On the Lam to avoid up to 3 tags?"
+                 :ability (assoc (prevent-up-to-n-tags 3) :cost [(->c :trash-can)])}]
+   :on-play {:prompt "Choose a resource to host On the Lam on"
              :choices {:card #(and (resource? %)
                                    (installed? %))}
              :change-in-game-state (req (some resource? (all-active-installed state :runner)))
              :async true
              :effect (req (system-msg state side (str "hosts On the Lam on " (:title target)))
                           (install-as-condition-counter state side eid card target))}
-   :interactions {:prevent [{:type #{:net :brain :meat :tag}
+   :interactions {:prevent [{:type #{:net :brain :meat}
                              :req (req true)}]}
-   :abilities [{:label "Avoid 3 tags"
-                :msg "avoid up to 3 tags"
-                :async true
-                :cost [(->c :trash-can)]
-                :effect (effect (tag-prevent :runner eid 3))}
-               {:label "Prevent up to 3 damage"
+   :abilities [{:label "Prevent up to 3 damage"
                 :msg "prevent up to 3 damage"
                 :cost [(->c :trash-can)]
                 :effect (effect (damage-prevent :net 3)
