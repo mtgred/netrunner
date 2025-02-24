@@ -3222,10 +3222,11 @@
     (is (changed? [(count-tags state) 2]
           (play-from-hand state :corp "Oppo Research")
           (is (not (no-prompt? state :runner)) "Runner prompted to avoid tag")
-          (card-ability state :runner (get-resource state 0) 0)
+          (click-prompt state :runner "No One Home")
+          (click-prompt state :runner "Yes")
           (click-prompt state :corp "0")
           (click-prompt state :runner "0")
-          (click-prompt state :runner "Done")
+          (click-prompt state :runner "2")
           (click-prompt state :corp "Yes"))
         "Runner prevented 2 tag")))
 

@@ -3778,16 +3778,16 @@
       (is (= 1 (count (:hand (get-corp)))) "Corp hand size is 1 before run")
       (run-empty-server state "Server 1")
       (click-prompt state :corp "Yes") ; Ghost Branch ability
-      (card-ability state :runner nach 0)
+      (click-prompt state :runner "New Angeles City Hall")
+      (click-prompt state :runner "Yes")
       (click-prompt state :corp "Yes") ; Draw from Net Analytics
-      (click-prompt state :runner "Done")
       (click-prompt state :runner "No action")
       (is (no-prompt? state :runner) "Runner waiting prompt is cleared")
       (is (zero? (count-tags state)) "Avoided 1 Ghost Branch tag")
       (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
       ; tag removal
       (gain-tags state :runner 1)
-      (click-prompt state :runner "Done") ; Don't prevent the tag
+      (click-prompt state :runner "Allow 1 remaining tag") ; Don't prevent the tag
       (remove-tag state :runner)
       (click-prompt state :corp "Yes") ; Draw from Net Analytics
       (is (= 3 (count (:hand (get-corp)))) "Corp draw from NA"))))
