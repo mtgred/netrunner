@@ -46,7 +46,7 @@
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
-   [game.core.rezzing :refer [derez rez]]
+   [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [bypass-ice end-run end-run-prevent
                            get-current-encounter jack-out make-run
                            successful-run-replace-breach total-cards-accessed]]
@@ -239,16 +239,19 @@
                 :effect (effect (damage eid :brain 2 {:card card}))}
    :in-play [:click-per-turn 1]})
 
+;; TODO - if there are multiple cards exposed!
 (defcard "Blackguard"
-  {:static-abilities [(mu+ 2)]
-   :events [{:event :expose
-             :msg (msg "attempt to force the rez of " (:title target))
+  (letfn [(force-a-rez [c]
+            {:msg (msg "attempt to force the rez of " (:title c))
              :async true
-             :effect (req (let [c target
-                                cname (:title c)
-                                cost (rez-cost state side target)
-                                additional-costs (rez-additional-cost-bonus state side target)]
-                            (if (seq additional-costs)
+             :effect (req (let [cname (:title c)
+                                cost (rez-cost state side c)
+                                additional-costs (rez-additional-cost-bonus state side c)
+                                payable? (can-pay-to-rez? state :corp eid c)]
+                            (cond
+                              (not payable?)
+                              (effect-completed state side eid)
+                              (seq additional-costs)
                               (continue-ability
                                 state side
                                 {:optional
@@ -262,7 +265,26 @@
                                   :no-ability {:msg (msg "declines to pay additional costs"
                                                          " and is not forced to rez " cname)}}}
                                 card nil)
-                              (rez state :corp eid target))))}]})
+                              :else (rez state :corp eid c))))})
+          (choose-a-card [cards]
+            (if (= 1 (count cards))
+              (force-a-rez (first cards))
+              {:prompt "Force the Corp to rez which card?"
+               :req (req (seq cards))
+               :choices (req cards)
+               :effect (req (wait-for (resolve-ability
+                                        state side
+                                        (force-a-rez target)
+                                        card nil)
+                                      (continue-ability
+                                        state side
+                                        (choose-a-card (filterv #(not (same-card? % target)) cards))
+                                        card nil)))}))]
+  {:static-abilities [(mu+ 2)]
+   :events [{:event :expose
+             :req (req (seq (:cards context)))
+             :async true
+             :effect (req (continue-ability state side (choose-a-card (:cards context)) card nil))}]}))
 
 (defcard "BMI Buffer"
   (let [grip-program-trash?
@@ -1112,7 +1134,7 @@
                 :label "expose approached ice"
                 :msg "expose the approached ice"
                 :async true
-                :effect (req (wait-for (expose state side (make-eid state eid) current-ice)
+                :effect (req (wait-for (expose state side (make-eid state eid) [current-ice])
                                        (continue-ability state side (offer-jack-out) card nil)))}]})
 
 (defcard "Grimoire"
@@ -1269,7 +1291,7 @@
                 :cost [(->c :click 1) (->c :credit 1)]
                 :req (req (some #{:hq} (:successful-run runner-reg)))
                 :choices {:card installed?}
-                :effect (effect (expose eid target))
+                :effect (effect (expose eid [target]))
                 :msg "expose 1 card"}]})
 
 (defcard "LilyPAD"
@@ -2582,6 +2604,7 @@
                 :msg "draw 1 card from the bottom of the stack"
                 :effect (effect (move (last (:deck runner)) :hand))}]})
 
+;; TODO - add an autoresolve to this, make it work when multiple cards are exposed
 (defcard "Zamba"
   {:implementation "Credit gain is automatic"
    :static-abilities [(mu+ 2)]

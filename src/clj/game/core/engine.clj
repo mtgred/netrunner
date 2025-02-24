@@ -623,6 +623,7 @@
           :active (active? card)
           :derezzed (and (installed? card)
                          (not (rezzed? card)))
+          :installed (installed? card)
           :facedown (and (installed? card)
                          (facedown? card))
           :faceup (and (installed? card)

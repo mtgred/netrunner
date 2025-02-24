@@ -3,49 +3,34 @@
     [game.core.card :refer [rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.eid :refer [effect-completed make-eid make-result]]
-    [game.core.engine :refer [resolve-ability trigger-event-sync]]
+    [game.core.engine :refer [checkpoint queue-event register-pending-event resolve-ability trigger-event-sync]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
+    [game.core.prevention :refer [resolve-expose-prevention]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.to-string :refer [card-str]]
+    [game.utils :refer [enumerate-str]]
     [game.macros :refer [wait-for]]))
 
-(defn expose-prevent
-  [state _ n]
-  (swap! state update-in [:expose :expose-prevent] #(+ (or % 0) n)))
-
-(defn- resolve-expose
-  [state side eid target]
-  (system-msg state side (str "exposes " (card-str state target {:visible true})))
-  (if-let [ability (:on-expose (card-def target))]
-    (wait-for (resolve-ability state side ability target nil)
-              (trigger-event-sync state side (make-result eid target) :expose target))
-    (trigger-event-sync state side (make-result eid target) :expose target)))
+(defn resolve-expose
+  [state side eid targets {:keys [card] :as args}]
+  (if-not (seq targets)
+    (effect-completed state side eid)
+    (do (system-msg state side (str (if-not card "exposes " (str "uses " (:title card) " to expose ")) (enumerate-str (map #(card-str state % {:visible true}) targets))))
+        (doseq [t targets]
+          (when-let [ability (:on-expose (card-def t))]
+            ;; if it gets rezzed by blackguard or something, the effect shouldn't fizzle
+            ;; but if it dies to drive-by, the effect SHOULD fizzle
+            (register-pending-event state :expose t (assoc ability :condition :installed))))
+        (queue-event state :expose {:cards targets})
+        (checkpoint state side eid {:duration :expose}))))
 
 (defn expose
-  "Exposes the given card."
-  ([state side target] (expose state side (make-eid state) target))
-  ([state side eid target] (expose state side eid target nil))
-  ([state side eid target {:keys [unpreventable]}]
-    (swap! state update :expose dissoc :expose-prevent)
-    (if (or (rezzed? target)
-            (nil? target))
-      (effect-completed state side eid) ; cannot expose faceup cards
-      (wait-for (trigger-event-sync state side :pre-expose target)
-                (let [prevent (get-prevent-list state :corp :expose)]
-                  (if (and (not unpreventable)
-                           (cards-can-prevent? state :corp prevent :expose))
-                    (do (system-msg state :corp "has the option to prevent a card from being exposed")
-                        (show-wait-prompt state :runner "Corp to prevent the expose")
-                        (show-prompt state :corp nil
-                                     (str "Prevent " (:title target) " from being exposed?") ["Done"]
-                                     (fn [_]
-                                       (clear-wait-prompt state :runner)
-                                       (if (get-in @state [:expose :expose-prevent])
-                                         (effect-completed state side (make-result eid false))
-                                         (do (system-msg state :corp "will not prevent a card from being exposed")
-                                             (resolve-expose state side eid target))))
-                                     {:prompt-type :prevent}))
-                    (if-not (get-in @state [:expose :expose-prevent])
-                      (resolve-expose state side eid target)
-                      (effect-completed state side (make-result eid false)))))))))
+  "Exposes the given cards."
+  ([state side eid targets] (expose state side eid targets nil))
+  ([state side eid targets {:keys [unpreventable card] :as args}]
+   (let [targets (filterv #(not (or (rezzed? %) (nil? %))) targets)]
+     (if (empty? targets)
+       (effect-completed state side eid) ;; cannot expose faceup cards
+       (wait-for (resolve-expose-prevention state side targets args)
+                 (resolve-expose state side eid (:remaining async-result) args))))))

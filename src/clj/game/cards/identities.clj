@@ -110,7 +110,7 @@
                     :effect (req (if (not (can-pay? state :corp eid card nil (->c :credit 1)))
                                    (do
                                      (toast state :corp "Cannot afford to pay 1 [Credit] to block card exposure" "info")
-                                     (expose state :runner eid (:card context)))
+                                     (expose state :runner eid [(:card context)] {:card card}))
                                    (continue-ability
                                      state side
                                      {:optional
@@ -119,7 +119,7 @@
                                        :player :corp
                                        :no-ability
                                        {:async true
-                                        :effect (effect (expose :runner eid (:card context)))}
+                                        :effect (effect (expose :runner eid [(:card context)] {:card card}))}
                                        :yes-ability
                                        {:async true
                                         :effect
@@ -1911,8 +1911,7 @@
                             (first-successful-run-on-server? state :hq)))
              :choices {:card #(and (installed? %)
                                    (not (rezzed? %)))}
-             :msg "expose 1 card"
-             :effect (effect (expose eid target))}]})
+             :effect (effect (expose eid [target] {:card card}))}]})
 
 (defcard "Skorpios Defense Systems: Persuasive Power"
   {:implementation "Manually triggered, no restriction on which cards in Heap can be targeted. Cannot use on in progress run event"

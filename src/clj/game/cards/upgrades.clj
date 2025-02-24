@@ -23,7 +23,6 @@
    [game.core.engine :refer [dissoc-req pay register-default-events
                              register-events resolve-ability unregister-events]]
    [game.core.events :refer [first-event? first-run-event? no-event? turn-events]]
-   [game.core.expose :refer [expose-prevent]]
    [game.core.finding :refer [find-cid find-latest]]
    [game.core.flags :refer [clear-persistent-flag! is-scored? register-persistent-flag!
                             register-run-flag!]]
@@ -1826,11 +1825,9 @@
                 :cost [(->c :trash-can)]
                 :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]})
 
+;; TODO - fix this card
 (defcard "Underway Grid"
-  {:events [{:event :pre-expose
-             :req (req (same-server? card target))
-             :msg "prevent 1 card from being exposed"
-             :effect (effect (expose-prevent 1))}]
+  {:events []
    :static-abilities [{:type :bypass-ice
                        :req (req (same-server? card target))
                        :value false}]})

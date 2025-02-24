@@ -26,7 +26,6 @@
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
    [game.core.engine :refer [not-used-once? pay register-events resolve-ability trigger-event-sync]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
-   [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [lock-zone prevent-current
                             prevent-draw
                             register-turn-flag! release-zone]]
@@ -45,7 +44,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
-   [game.core.prevention :refer [prevent-bad-publicity]]
+   [game.core.prevention :refer [prevent-bad-publicity prevent-expose]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [end-run]]
@@ -3258,27 +3257,32 @@
                                        (rez state side eid (last (:hosted (get-card state card))) {:cost-bonus -2})))}]})
 
 (defcard "Zaibatsu Loyalty"
-  {:interactions {:prevent [{:type #{:expose}
-                             :req (req true)}]}
-   :derezzed-events [{:event :pre-expose
+  {:prevention [{:prevents :expose
+                 :type :ability
+                 :label "1 [Credit]: Zaibatsu Loyalty"
+                 :ability {:cost [(->c :credit 1)]
+                           :msg "prevent a card from being exposed"
+                           :async true
+                           :effect (req (prevent-expose state side eid card))}}
+                {:prevents :expose
+                 :type :ability
+                 :label "[trash]: Zaibatsu Loyalty"
+                 :ability {:cost [(->c :trash-can)]
+                           :msg "prevent a card from being exposed"
+                           :async true
+                           :effect (req (prevent-expose state side eid card))}}]
+   :derezzed-events [{:event :expose-interrupt
                       :async true
-                      :effect (req (let [etarget target]
+                      :effect (req (let [ctx context]
                                      (continue-ability
                                        state side
                                        {:optional
                                         {:req (req (not (rezzed? card)))
                                          :player :corp
-                                         :prompt (msg "The Runner is about to expose " (:title etarget) ". Rez Zaibatsu Loyalty?")
+                                         :prompt (msg "The Runner is about to expose " (enumerate-str (map #(card-str state % {:visible true}) (:cards ctx))) ". Rez Zaibatsu Loyalty?")
                                          :yes-ability {:async true
                                                        :effect (effect (rez eid card))}}}
-                                       card nil)))}]
-   :abilities [{:msg "prevent 1 card from being exposed"
-                :cost [(->c :credit 1)]
-                :effect (effect (expose-prevent 1))}
-               {:msg "prevent 1 card from being exposed"
-                :label "Prevent 1 card from being exposed"
-                :cost [(->c :trash-can)]
-                :effect (effect (expose-prevent 1))}]})
+                                       card nil)))}]})
 
 (defcard "Zealous Judge"
   {:rez-req (req tagged)

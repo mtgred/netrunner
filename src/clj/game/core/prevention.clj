@@ -1,6 +1,7 @@
 (ns game.core.prevention
   (:require
    [game.core.board :refer [all-installed]]
+   [game.core.card :refer [get-card rezzed? same-card?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.cost-fns :refer [card-ability-cost]]
    [game.core.def-helpers :refer [choose-one-helper]]
@@ -8,7 +9,8 @@
    [game.core.effects :refer [any-effects]]
    [game.core.engine :refer [resolve-ability trigger-event-simult trigger-event-sync]]
    [game.core.payment :refer [can-pay?]]
-   [game.utils :refer [dissoc-in quantify]]
+   [game.core.to-string :refer [card-str]]
+   [game.utils :refer [dissoc-in enumerate-str quantify]]
    [game.macros :refer [msg req wait-for]]
    [jinteki.utils :refer [other-side]]))
 
@@ -65,6 +67,7 @@
     res))
 
 (defn- trigger-prevention
+  "Triggers an ability as having prevented something"
   [state side eid key prevention]
   (swap! state update-in [:prevent key :uses (->> prevention :card :cid)] (fnil inc 0))
   (resolve-ability
@@ -82,6 +85,76 @@
    :ability {:async true
              :req (:req (:ability prevention))
              :effect (req (trigger-prevention state side eid key prevention))}})
+
+;; EXPOSE PREVENTION
+
+(defn prevent-expose
+  [state side eid card]
+  (if (get-in @state [:prevent :expose])
+    (if (<= (count (get-in @state [:prevent :expose :remaining])) 1)
+      (do (swap! state update-in [:prevent :expose] merge {:prevented :all :remaining []})
+          (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) {:type :expose
+                                                                                                :amount 1}))
+      (resolve-ability
+        state side eid
+        {:prompt "Prevent which card from being exposed?"
+         :choices (req (sort-by :title (get-in @state [:prevent :expose :remaining])))
+         :effect (req (swap! state update-in [:prevent :expose :remaining] (fn [v] (filterv #(not (same-card? % target)) v)))
+                      (swap! state update-in [:prevent :expose :prevented] (fnil inc 0)))}
+        card nil))
+    (do (println "tried to prevent expose outside of an expose prevention window")
+        (effect-completed state side eid))))
+
+  ;; (if (
+  ;; [n]
+  ;; {:prompt (str "Prevent " (quantify n "card") " from being exposed")
+  ;;  :label (str "prevent " (quantify n "card") " from being exposed")
+  ;;  :choices {:req (req (vec-contains-card? (get-in @state [:prevent :expose :remaining]) target))
+  ;;            :max n
+  ;;            :all true}
+  ;;  :msg (msg "prevent " (enumerate-str (map #(card-str state %) targets)) " from being exposed")
+  ;;  :effect (req (let [remainder (get-in @state [:prevent :expose :remaining])
+  ;;                     remainder (filterv #(not (vec-contains-card? targets %)) remainder)]
+  ;;                 (swap! state assoc-in [:prevent :expose :remaining] remainder)))})
+
+(defn resolve-expose-prevention-for-side
+  [state side eid]
+  (let [remainder (get-in @state [:prevent :expose :remaining])]
+    (if (or (not (seq remainder)) (get-in @state [:prevent :expose :passed]))
+      (do (swap! state dissoc-in [:prevent :expose :passed])
+          (effect-completed state side eid))
+      (let [preventions (gather-prevention-abilities state side eid :expose)]
+        (if (empty? preventions)
+          (effect-completed state side eid)
+          (wait-for (resolve-ability
+                      state side
+                      (choose-one-helper
+                        {:prompt (str "Prevent " (enumerate-str (map #(card-str state % {:visible (= side :corp)}) remainder) "or") " from being exposed?")
+                         :waiting-prompt "your opponent to prevent an Expose"}
+                        (concat (mapv #(build-prevention-option % :expose) preventions)
+                                [{:option (str "Allow " (quantify (count remainder) "card") " to be exposed")
+                                  :ability {:effect (req (swap! state assoc-in [:prevent :expose :passed] true))}}]))
+                      nil nil)
+                    (resolve-expose-prevention-for-side state side eid)))))))
+
+(defn resolve-expose-prevention
+  [state side eid targets {:keys [unpreventable card] :as args}]
+  (swap! state assoc-in [:prevent :expose]
+         {:count (count targets) :remaining targets :prevented 0 :source-player side :source-card card :uses {}})
+  (wait-for
+    (trigger-event-simult state side :expose-interrupt nil {:cards targets})
+    (let [new-targets (filterv #(not (or (rezzed? %) (nil? %))) (map #(get-card state %) targets))]
+      (swap! state assoc-in [:prevent :expose :remaining] new-targets)
+      (swap! state assoc-in [:prevent :expose :counnt] (count new-targets))
+      (if (or unpreventable (not (seq new-targets)))
+        (complete-with-result state side eid (fetch-and-clear! state :expose))
+        (let [active-side (:active-player @state)
+              responding-side (other-side active-side)]
+          (wait-for
+            (resolve-expose-prevention-for-side state active-side)
+            (wait-for
+              (resolve-expose-prevention-for-side state responding-side)
+              (complete-with-result state side eid (fetch-and-clear! state :expose)))))))))
 
 ;; BAD PUBLICITY PREVENTION
 
@@ -119,15 +192,15 @@
   [state side eid n {:keys [unpreventable card] :as args}]
   (swap! state assoc-in [:prevent :bad-publicity]
          {:count n :remaining n :prevented 0 :source-player side :source-card card :uses {}})
-    (if (or unpreventable (not (pos? n)))
-      (complete-with-result state side eid (fetch-and-clear! state :bad-publicity))
-      (let [active-side (:active-player @state)
-            responding-side (other-side active-side)]
+  (if (or unpreventable (not (pos? n)))
+    (complete-with-result state side eid (fetch-and-clear! state :bad-publicity))
+    (let [active-side (:active-player @state)
+          responding-side (other-side active-side)]
+      (wait-for
+        (resolve-bad-pub-prevention-for-side state active-side)
         (wait-for
-          (resolve-bad-pub-prevention-for-side state active-side)
-          (wait-for
-            (resolve-bad-pub-prevention-for-side state responding-side)
-            (complete-with-result state side eid (fetch-and-clear! state :bad-publicity)))))))
+          (resolve-bad-pub-prevention-for-side state responding-side)
+          (complete-with-result state side eid (fetch-and-clear! state :bad-publicity)))))))
 
 ;; TAG PREVENTION
 

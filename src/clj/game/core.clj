@@ -387,8 +387,7 @@
 
 (expose-vars
   [game.core.expose
-   expose
-   expose-prevent])
+   expose])
 
 (expose-vars
   [game.core.finding

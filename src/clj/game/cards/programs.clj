@@ -529,6 +529,7 @@
                :effect (effect (add-counter :runner card :virus 1))
                :msg "place 1 virus counter on itself"}]}))
 
+;; TODO - fix this card
 (defcard "Aumakua"
   (auto-icebreaker {:implementation "[Erratum] Whenever you finish breaching a server, if you did not steal or trash any accessed cards, place 1 virus counter on this program."
                     :abilities [(break-sub 1 1)
@@ -3096,7 +3097,7 @@
               {:async true
                :msg "expose the approached piece of ice"
                :effect (req (wait-for
-                              (expose state side (:ice context))
+                              (expose state side [(:ice context)])
                               (continue-ability state side (offer-jack-out) card nil)))}}}]})
 
 (defcard "Snowball"
@@ -3440,6 +3441,7 @@
                      {:req (req (and (= 1 (count (:subroutines current-ice)))
                                      (<= (get-strength current-ice) (get-strength card))))}))
 
+;; TODO - fix this card
 (defcard "Wari"
   (letfn [(prompt-for-subtype []
             {:prompt "Choose one"
@@ -3455,7 +3457,7 @@
                                    (not (rezzed? %)))}
              :async true
              :msg (str "name " chosen-subtype)
-             :effect (req (wait-for (expose state side target)
+             :effect (req (wait-for (expose state side [target])
                                     (when (has-subtype? async-result chosen-subtype)
                                       (do (move state :corp async-result :hand)
                                           (system-msg state :runner
