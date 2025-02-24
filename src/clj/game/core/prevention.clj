@@ -18,41 +18,6 @@
 ;;  * are they repeatable?
 ;;  * the source card
 ;;  * is it an ability, an interrupt, or a triggered event?
-;;
-;; Relevant Cards:
-;; Jesminder, Quianju PT (forced interrupts) - these are pre-tag events, we can skip them
-;; Forger (interrupt, ability)               - move this to the pre-tag event/interrupt, then we can skip it
-;; No One Home (event, avoid any number of tags) (done)
-;; On the lam (ability, avoid up to three tags) (done)
-;; Decoy (ability, avoid up to 1 tags) - done
-;; New Angeles City Hall (ability, avoid 1 tag, repeatable)
-;; Dorm Computer (aura/event, avoid all tags)
-;;
-;; Plan of attack:
-;; * Rework Forger to be an interrupt (done)
-;; * Rework the 'forced-to-avoid-tag' flag as a static-ability (see jesminder) (done)
-;; * Rework NOH, On the Lam, Decoy, NACH, Dorm Computer to have prevention
-;;     abilities I can scry the state for, like:
-;;
-;;  :prevention [{:type tag
-;;                :type :ability
-;;                :label "(No One Home) Avoid any number of tags"
-;;                :ability {:optional true
-;;                          :cost [(->c :trash-can 1)]
-;;                          :req (req (and (no-event state side :tag)
-;;                                         (no-event state side :net-damage)))
-;;                          :optional true
-;;                          :yes-ability {:async true
-;;                                        :effect (req (do-whatever-trace))}]
-;;
-;;  :prevention [{:prevent tag
-;;                :type :effect
-;;                :mandatory true
-;;                :max-uses 1
-;;                :label "(Dorm Computer) Avoid all tags"
-;;                :ability {:msg "avoid all tags"
-;;                          :req (req (this-card-is-run-source state)) ;; - dorm computer
-;;                          :effect (req (prevent state side :tag :all))}}]
 
 (defn- relevant-prevention-abilities
   "selects all prevention abilities which are:
@@ -80,17 +45,48 @@
   [state side eid key]
   (mapcat #(relevant-prevention-abilities state side eid key %) (all-installed state side)))
 
-(defn prevent-tag
-  [state side eid n]
-  (if (get-in @state [:prevent :tags])
+(defn prevent-numeric
+  [state side eid key ev n]
+  (if (get-in @state [:prevent key])
     (do (if (= n :all)
-          (swap! state update-in [:prevent :tags] merge {:prevented :all :remaining 0})
-          (do (swap! state update-in [:prevent :tags :prevented] + n)
-              (swap! state update-in [:prevent :tags :remaining] #(max 0 (- % n)))))
-        (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) {:type :tag
+          (swap! state update-in [:prevent key] merge {:prevented :all :remaining 0})
+          (do (swap! state update-in [:prevent key :prevented] + n)
+              (swap! state update-in [:prevent key :remaining] #(max 0 (- % n)))))
+        (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) {:type ev
                                                                                               :amount n}))
-    (do (println "tried to prevent tags outside of a tag prevention window")
+    (do (println "tried to prevent " (name key) " outside of a " (name key) "  prevention window")
         (effect-completed state side eid))))
+
+(defn- fetch-and-clear!
+  "get the prevent map for a key and also dissoc it from the state"
+  [state key]
+  (let [res (get-in @state [:prevent key])]
+    (swap! state dissoc-in [:prevent key])
+    res))
+
+(defn- build-prevention-option
+  "Builds a menu item for firing a prevention ability"
+  [prevention key]
+  {:option (or (:label prevention) (->> prevention :card :printed-title))
+   :ability {:async true
+             :req (:req (:ability prevention))
+             :effect (req
+                       (swap! state update-in [:prevent key :uses (->> prevention :card :cid)] (fnil inc 0))
+                       (resolve-ability
+                         state side (assoc eid :source (:card prevention) :source-type :ability)
+                         (if (:prompt prevention)
+                           {:optional {:prompt (:prompt prevention)
+                                       :yes-ability (:ability prevention)}}
+                           (:ability prevention))
+                         (:card prevention) nil))}})
+
+;; BAD PUBLICITY PREVENTION
+
+(defn prevent-bad-publicity [state side eid n] (prevent-numeric state side eid :bad-publicity :bad-publicity n))
+
+;; TAG PREVENTION
+
+(defn prevent-tag [state side eid n] (prevent-numeric state side eid :tags :tag n))
 
 (defn prevent-up-to-n-tags
   [n]
@@ -104,28 +100,6 @@
      :msg (msg "avoid " (quantify target "tag"))
      :effect (req (prevent-tag state side eid target))
      :cancel-effect (req (prevent-tag state side eid 0))}))
-
-(defn- fetch-and-clear!
-  "get the prevent map for a key and also dissoc it from the state"
-  [state key]
-  (let [res (get-in @state [:prevent key])]
-    (swap! state dissoc-in [:prevent key])
-    res))
-
-(defn- build-prevention-option
-  [prevention]
-  {:option (or (:label prevention) (->> prevention :card :printed-title))
-   :ability {:async true
-             :req (:req (:ability prevention))
-             :effect (req
-                       (swap! state update-in [:prevent :tags :uses (->> prevention :card :cid)] (fnil inc 0))
-                       (resolve-ability
-                         state side (assoc eid :source (:card prevention) :source-type :ability)
-                         (if (:prompt prevention)
-                           {:optional {:prompt (:prompt prevention)
-                                       :yes-ability (:ability prevention)}}
-                           (:ability prevention))
-                         (:card prevention) nil))}})
 
 (defn- resolve-tag-prevention-for-side
   [state side eid]
@@ -143,7 +117,7 @@
                                       (when-not (= (get-in @state [:prevent :tags :count]) remainder)
                                         (str "(" remainder " remaining)")))
                          :waiting-prompt "your opponent to prevent tags"}
-                        (concat (mapv build-prevention-option preventions)
+                        (concat (mapv #(build-prevention-option % :tags) preventions)
                                 [{:option (str "Allow " (quantify remainder "remaining tag"))
                                   :ability {:effect (req (swap! state assoc-in [:prevent :tags :passed] true))}}]))
                       nil nil)
@@ -155,7 +129,6 @@
          {:count n :remaining n :prevented 0 :source-player side :source-card card :uses {}})
     (if (or unpreventable (not (pos? n)))
       (complete-with-result state side eid (fetch-and-clear! state :tags))
-      ;; interrupts and static abilities happen first
       (wait-for (trigger-event-simult state side :tag-interrupt nil card)
                   (let [active-side (:active-player @state)
                         responding-side (other-side active-side)]
