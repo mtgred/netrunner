@@ -327,7 +327,7 @@
          (merge
            base-map
            {:choices (req (into [] (map #(choices-fn % state side eid card targets) xs)))
-            :waiting-prompt (not no-wait-msg)
+            :waiting-prompt (or (:waiting-prompt args) (not no-wait-msg))
             :prompt (str (or (:prompt args) "Choose one")
                          ;; if we are resolving multiple
                          (when (and count (pos? count)) (str " (" count " remaining)")))
