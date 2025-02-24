@@ -33,8 +33,8 @@
                                  payable? (can-pay? state side eid card nil (seq (card-ability-cost state side (:ability %) card [])))
                                  ;; todo - account for card being disabled
                                  not-used-too-many-times? (or (not (:max-uses %))
-                                                          (not (get-in @state [:prevent :tags :uses (:cid card)]))
-                                                          (< (get-in @state [:prevent :tags :uses (:cid card)]) (:max-uses %)))
+                                                          (not (get-in @state [:prevent key :uses (:cid card)]))
+                                                          (< (get-in @state [:prevent key :uses (:cid card)]) (:max-uses %)))
                                  ability-req? (or (not (get-in % [:ability :req]))
                                                   ((get-in % [:ability :req]) state side eid card nil))]
                              (and (not cannot-play?) payable? not-used-too-many-times? ability-req?))
@@ -46,13 +46,13 @@
   (mapcat #(relevant-prevention-abilities state side eid key %) (all-installed state side)))
 
 (defn prevent-numeric
-  [state side eid key ev n]
+  [state side eid key n]
   (if (get-in @state [:prevent key])
     (do (if (= n :all)
           (swap! state update-in [:prevent key] merge {:prevented :all :remaining 0})
           (do (swap! state update-in [:prevent key :prevented] + n)
               (swap! state update-in [:prevent key :remaining] #(max 0 (- % n)))))
-        (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) {:type ev
+        (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) {:type key
                                                                                               :amount n}))
     (do (println "tried to prevent " (name key) " outside of a " (name key) "  prevention window")
         (effect-completed state side eid))))
@@ -64,36 +64,81 @@
     (swap! state dissoc-in [:prevent key])
     res))
 
+(defn- trigger-prevention
+  [state side eid key prevention]
+  (swap! state update-in [:prevent key :uses (->> prevention :card :cid)] (fnil inc 0))
+  (resolve-ability
+    state side (assoc eid :source (:card prevention) :source-type :ability)
+    (if (:prompt prevention)
+      {:optional {:prompt (:prompt prevention)
+                  :yes-ability (:ability prevention)}}
+      (:ability prevention))
+    (:card prevention) nil))
+
 (defn- build-prevention-option
   "Builds a menu item for firing a prevention ability"
   [prevention key]
   {:option (or (:label prevention) (->> prevention :card :printed-title))
    :ability {:async true
              :req (:req (:ability prevention))
-             :effect (req
-                       (swap! state update-in [:prevent key :uses (->> prevention :card :cid)] (fnil inc 0))
-                       (resolve-ability
-                         state side (assoc eid :source (:card prevention) :source-type :ability)
-                         (if (:prompt prevention)
-                           {:optional {:prompt (:prompt prevention)
-                                       :yes-ability (:ability prevention)}}
-                           (:ability prevention))
-                         (:card prevention) nil))}})
+             :effect (req (trigger-prevention state side eid key prevention))}})
 
 ;; BAD PUBLICITY PREVENTION
 
-(defn prevent-bad-publicity [state side eid n] (prevent-numeric state side eid :bad-publicity :bad-publicity n))
+(defn prevent-bad-publicity [state side eid n] (prevent-numeric state side eid :bad-publicity n))
+
+(defn- resolve-bad-pub-prevention-for-side
+  [state side eid]
+  (let [remainder (get-in @state [:prevent :bad-publicity :remaining])]
+    (if (or (not (pos? remainder)) (get-in @state [:prevent :bad-publicity :passed]))
+      (do (swap! state dissoc-in [:prevent :bad-publicity :passed])
+          (effect-completed state side eid))
+      (let [preventions (gather-prevention-abilities state side eid :bad-publicity)]
+        (if (empty? preventions)
+          (effect-completed state side eid)
+          ;; TODO - if there's exactly ONE choice, and it's also mandatory, just rip that choice
+          (if (and (= 1 (count preventions))
+                   (:mandatory (first preventions)))
+            (wait-for (trigger-prevention state side :bad-publicity (first preventions))
+                      (resolve-bad-pub-prevention-for-side state side eid))
+            (wait-for (resolve-ability
+                        state side
+                        (choose-one-helper
+                          {:prompt (str "Prevent any of the " (get-in @state [:prevent :bad-publicity :count]) " bad publicity?"
+                                        (when-not (= (get-in @state [:prevent :bad-publicity :count]) remainder)
+                                          (str "(" remainder " remaining)")))
+                           :waiting-prompt "your opponent to prevent bad publicity"}
+                          (concat (mapv #(build-prevention-option % :bad-publicity) preventions)
+                                  [(when-not (some :mandatory preventions)
+                                     {:option (str "Allow " remainder " remaining bad publicity")
+                                      :ability {:effect (req (swap! state assoc-in [:prevent :bad-publicity :passed] true))}})]))
+                        nil nil)
+                      (resolve-bad-pub-prevention-for-side state side eid))))))))
+
+(defn resolve-bad-pub-prevention
+  [state side eid n {:keys [unpreventable card] :as args}]
+  (swap! state assoc-in [:prevent :bad-publicity]
+         {:count n :remaining n :prevented 0 :source-player side :source-card card :uses {}})
+    (if (or unpreventable (not (pos? n)))
+      (complete-with-result state side eid (fetch-and-clear! state :bad-publicity))
+      (let [active-side (:active-player @state)
+            responding-side (other-side active-side)]
+        (wait-for
+          (resolve-bad-pub-prevention-for-side state active-side)
+          (wait-for
+            (resolve-bad-pub-prevention-for-side state responding-side)
+            (complete-with-result state side eid (fetch-and-clear! state :bad-publicity)))))))
 
 ;; TAG PREVENTION
 
-(defn prevent-tag [state side eid n] (prevent-numeric state side eid :tags :tag n))
+(defn prevent-tag [state side eid n] (prevent-numeric state side eid :tag n))
 
 (defn prevent-up-to-n-tags
   [n]
-  (letfn [(remainder [state] (get-in @state [:prevent :tags :remaining]))
+  (letfn [(remainder [state] (get-in @state [:prevent :tag :remaining]))
           (max-to-avoid [state n] (if (= n :all) (remainder state) (min (remainder state) n)))]
     {:prompt "Choose how many tags to avoid"
-     :req (req (get-in @state [:prevent :tags]))
+     :req (req (get-in @state [:prevent :tag]))
      :choices {:number (req (max-to-avoid state n))
                :default (req (max-to-avoid state n))}
      :async true
@@ -103,9 +148,9 @@
 
 (defn- resolve-tag-prevention-for-side
   [state side eid]
-  (let [remainder (get-in @state [:prevent :tags :remaining])]
-    (if (or (not (pos? remainder)) (get-in @state [:prevent :tags :passed]))
-      (do (swap! state dissoc-in [:prevent :tags :passed])
+  (let [remainder (get-in @state [:prevent :tag :remaining])]
+    (if (or (not (pos? remainder)) (get-in @state [:prevent :tag :passed]))
+      (do (swap! state dissoc-in [:prevent :tag :passed])
           (effect-completed state side eid))
       (let [preventions (gather-prevention-abilities state side eid :tag)]
         (if (empty? preventions)
@@ -113,22 +158,22 @@
           (wait-for (resolve-ability
                       state side
                       (choose-one-helper
-                        {:prompt (str "Prevent any of the " (get-in @state [:prevent :tags :count]) " tags?"
-                                      (when-not (= (get-in @state [:prevent :tags :count]) remainder)
+                        {:prompt (str "Prevent any of the " (get-in @state [:prevent :tag :count]) " tags?"
+                                      (when-not (= (get-in @state [:prevent :tag :count]) remainder)
                                         (str "(" remainder " remaining)")))
                          :waiting-prompt "your opponent to prevent tags"}
-                        (concat (mapv #(build-prevention-option % :tags) preventions)
+                        (concat (mapv #(build-prevention-option % :tag) preventions)
                                 [{:option (str "Allow " (quantify remainder "remaining tag"))
-                                  :ability {:effect (req (swap! state assoc-in [:prevent :tags :passed] true))}}]))
+                                  :ability {:effect (req (swap! state assoc-in [:prevent :tag :passed] true))}}]))
                       nil nil)
                     (resolve-tag-prevention-for-side state side eid)))))))
 
 (defn resolve-tag-prevention
   [state side eid n {:keys [unpreventable card] :as args}]
-  (swap! state assoc-in [:prevent :tags]
+  (swap! state assoc-in [:prevent :tag]
          {:count n :remaining n :prevented 0 :source-player side :source-card card :uses {}})
     (if (or unpreventable (not (pos? n)))
-      (complete-with-result state side eid (fetch-and-clear! state :tags))
+      (complete-with-result state side eid (fetch-and-clear! state :tag))
       (wait-for (trigger-event-simult state side :tag-interrupt nil card)
                   (let [active-side (:active-player @state)
                         responding-side (other-side active-side)]
@@ -136,4 +181,4 @@
                       (resolve-tag-prevention-for-side state active-side)
                       (wait-for
                         (resolve-tag-prevention-for-side state responding-side)
-                        (complete-with-result state side eid (fetch-and-clear! state :tags))))))))
+                        (complete-with-result state side eid (fetch-and-clear! state :tag))))))))

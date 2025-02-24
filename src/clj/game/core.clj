@@ -145,7 +145,6 @@
 
 (expose-vars
   [game.core.bad-publicity
-   bad-publicity-prevent
    gain-bad-publicity
    lose-bad-publicity])
 

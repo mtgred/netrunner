@@ -918,7 +918,7 @@
                   :effect (effect (prevent-tag :runner eid 1))}]
     {:events [(choose-one-helper
                 {:event :tag-interrupt
-                 :req (req (and (pos? (get-in @state [:prevent :tags :remaining]))
+                 :req (req (and (pos? (get-in @state [:prevent :tag :remaining]))
                                 (not (any-effects state side :prevent-paid-ability true? card [avoid-ab 0]))))
                  :optional true
                  :interactive (req true)}

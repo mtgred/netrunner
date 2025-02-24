@@ -7,8 +7,7 @@
    [game.core.actions :refer [score]]
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
-   [game.core.bad-publicity :refer [bad-publicity-prevent gain-bad-publicity
-                                    lose-bad-publicity]]
+   [game.core.bad-publicity :refer [gain-bad-publicity lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed all-installed-runner-type get-remotes
                             installable-servers]]
    [game.core.card :refer [agenda? asset? can-be-advanced? corp? event? corp-installable-type?
@@ -46,6 +45,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
+   [game.core.prevention :refer [prevent-bad-publicity]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [end-run]]
@@ -435,11 +435,14 @@
                                         (damage state side eid :meat 1 {:card card}))))}})
 
 (defcard "Broadcast Square"
-  {:events [{:event :pre-bad-publicity
-             :async true
-             :trace {:base 3
-                     :successful {:msg "prevents all bad publicity"
-                                  :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}]})
+  {:prevention [{:prevents :bad-publicity
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:trace {:base 3
+                                   :successful {:msg "prevent all bad publicity"
+                                                :async true
+                                                :effect (req (prevent-bad-publicity state side eid :all))}}}}]})
 
 (defcard "C.I. Fund"
   {:derezzed-events [corp-rez-toast]

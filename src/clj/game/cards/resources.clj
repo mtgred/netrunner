@@ -2341,9 +2341,9 @@
 (defcard "New Angeles City Hall"
   (letfn [(prevent-another-tag []
             {:optional
-             {:req (req (and (pos? (get-in @state [:prevent :tags :remaining]))
+             {:req (req (and (pos? (get-in @state [:prevent :tag :remaining]))
                              (can-pay? state side (assoc eid :source card :source-type :ability) card nil [(->c :credit 2)])))
-              :prompt (msg "Pay 2 [Credits] to avoid another tag? (" (get-in @state [:prevent :tags :remaining]) " remaining)")
+              :prompt (msg "Pay 2 [Credits] to avoid another tag? (" (get-in @state [:prevent :tag :remaining]) " remaining)")
               :yes-ability {:async true
                             :cost [(->c :credit 2)]
                             :msg "avoid 1 tag"
