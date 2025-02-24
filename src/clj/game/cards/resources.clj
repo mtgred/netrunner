@@ -1127,10 +1127,11 @@
                                 :type :credit}}})
 
 (defcard "Decoy"
-  {:prevention [{:prevents :tag
+  {:trash-icon true
+   :prevention [{:prevents :tag
                  :type :ability
                  :label "Decoy"
-                 :choice "Trash Decoy to avoid 1 tag?"
+                 :prompt "Trash Decoy to avoid 1 tag?"
                  :ability {:async true
                            :cost [(->c :trash-can)]
                            :msg "avoid 1 tag"
@@ -2354,7 +2355,7 @@
   {:prevention [{:prevents :tag
                  :type :ability
                  :label "New Angeles City Hall"
-                 :choice "Pay 2 [Credits] to avoid a tag?"
+                 :prompt "Pay 2 [Credits] to avoid a tag?"
                  :ability {:async true
                            :cost [(->c :credit 2)]
                            :msg "avoid 1 tag"
@@ -2398,7 +2399,7 @@
     {:prevention [{:prevents :tag
                    :type :event
                    :label "No One Home"
-                   :choice "Trash No One Home to force the Corp to trace"
+                   :prompt "Trash No One Home to force the Corp to trace"
                    :ability {:async true
                              :msg "force the Corp to trace"
                              :req (req (and (first-event? state side :tag-interrupt)

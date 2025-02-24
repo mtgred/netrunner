@@ -2687,8 +2687,7 @@
 (defcard "On the Lam"
   {:prevention [{:prevents :tag
                  :type :ability
-                 :label "On the Lam"
-                 :choice "Trash On the Lam to avoid up to 3 tags?"
+                 :prompt "Trash On the Lam to avoid up to 3 tags?"
                  :ability (assoc (prevent-up-to-n-tags 3) :cost [(->c :trash-can)])}]
    :on-play {:prompt "Choose a resource to host On the Lam on"
              :choices {:card #(and (resource? %)
