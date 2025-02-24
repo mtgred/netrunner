@@ -55,10 +55,14 @@
 ;;                          :effect (req (prevent state side :tag :all))}}]
 
 (defn- relevant-prevention-abilities
+  "selects all prevention abilities which are:
+   1) relevant to the context
+   2) playable (navi mumbai + req)
+   3) the player can afford to pay for
+   4) haven't been used too many times (ie net shield, prana condenser)"
   [state side eid key card]
   (let [abs (filter #(= (:prevents %) key) (:prevention (card-def card)))
         with-card (map #(assoc % :card card) abs)
-        ;; filter only to ones that are playable and can be played
         playable? (filter #(let [cannot-play? (and (= (:type %) :ability)
                                                    (any-effects state side :prevent-paid-ability true? card [(:ability %) 0]))
                                  payable? (can-pay? state side eid card nil (seq (card-ability-cost state side (:ability %) card [])))

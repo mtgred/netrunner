@@ -803,8 +803,7 @@
 (expose-vars
   [game.core.tags
    gain-tags
-   lose-tags
-   tag-prevent])
+   lose-tags])
 
 (expose-vars
   [game.core.threat
