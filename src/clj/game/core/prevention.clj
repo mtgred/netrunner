@@ -89,9 +89,9 @@
 (defn- resolve-keyed-prevention-for-side
   [state side eid key {:keys [prompt waiting option data-type] :as args}]
   (let [remainder (get-in @state [:prevent key :remaining])
-        prompt  (if (string? prompt)  prompt  (prompt state))
-        waiting (if (string? waiting) waiting (waiting state))
-        option  (if (string? option)  option  (option state))]
+        prompt  (if (string? prompt)  prompt  (prompt state remainder))
+        waiting (if (string? waiting) waiting (waiting state remainder))
+        option  (if (string? option)  option  (option state remainder))]
     (if (or (if (= data-type :sequential)
               (not (seq remainder))
               (not (pos? remainder)))
@@ -190,13 +190,12 @@
 
 (defn resolve-expose-prevention-for-side
   [state side eid]
-  (letfn [(remainder [state] (get-in @state [:prevent :expose :remaining]))]
-    (resolve-keyed-prevention-for-side
-      state side eid :expose
-      {:data-type :sequential
-       :prompt (fn [state] (str "Prevent " (enumerate-str (map #(card-str state % {:visible (= side :corp)}) (remainder state)) "or") " from being exposed?"))
-       :waiting "your opponent to prevent an Expose"
-       :option (fn [state] (str "Allow " (quantify (count (remainder state)) "card") " to be exposed"))})))
+  (resolve-keyed-prevention-for-side
+    state side eid :expose
+    {:data-type :sequential
+     :prompt (fn [state remainder] (str "Prevent " (enumerate-str (map #(card-str state % {:visible (= side :corp)}) remainder) "or") " from being exposed?"))
+     :waiting "your opponent to prevent an Expose"
+     :option (fn [state remainder] (str "Allow " (quantify (count remainder) "card") " to be exposed"))}))
 
 (defn resolve-expose-prevention
   [state side eid targets {:keys [unpreventable card] :as args}]
@@ -223,14 +222,13 @@
 
 (defn resolve-bad-pub-prevention-for-side
   [state side eid]
-  (letfn [(remainder [state] (get-in @state [:prevent :expose :remaining]))]
-    (resolve-keyed-prevention-for-side
-      state side eid :bad-publicity
-      {:prompt (fn [state] (str "Prevent any of the " (get-in @state [:prevent :bad-publicity :count]) " bad publicity?"
-                                (when-not (= (get-in @state [:prevent :bad-publicity :count]) (remainder state)
-                                             (str "(" (remainder state) " remaining)")))))
-       :waiting "your opponent to prevent bad publicity"
-       :option (fn [state] (str "Allow " (get-in @state [:prevent :bad-publicity :remaining]) " bad publicity"))})))
+  (resolve-keyed-prevention-for-side
+    state side eid :bad-publicity
+    {:prompt (fn [state remainder] (str "Prevent any of the " (get-in @state [:prevent :bad-publicity :count]) " bad publicity?"
+                                        (when-not (= (get-in @state [:prevent :bad-publicity :count]) remainder)
+                                          (str "(" remainder " remaining)"))))
+     :waiting "your opponent to prevent bad publicity"
+     :option (fn [state remainder] (str "Allow " remainder " bad publicity"))}))
 
 (defn resolve-bad-pub-prevention
   [state side eid n {:keys [unpreventable card] :as args}]
@@ -263,16 +261,15 @@
      :effect (req (prevent-tag state side eid target))
      :cancel-effect (req (prevent-tag state side eid 0))}))
 
-(defn resolve-bad-pub-prevention-for-side
+(defn resolve-tag-prevention-for-side
   [state side eid]
-  (letfn [(remainder [state] (get-in @state [:prevent :tag :remaining]))]
-    (resolve-keyed-prevention-for-side
-      state side eid :tag
-      {:prompt (fn [state] (str "Prevent any of the " (get-in @state [:prevent :tag :count]) " tags?"
-                                (when-not (= (get-in @state [:prevent :tag :count]) (remainder state)
-                                             (str "(" (remainder state) " remaining)")))))
-       :waiting "your opponent to prevent tags"
-       :option (fn [state] (str "Allow " (quantify (remainder state) "remaining tag")))})))
+  (resolve-keyed-prevention-for-side
+    state side eid :tag
+    {:prompt (fn [state remainder] (str "Prevent any of the " (get-in @state [:prevent :tag :count]) " tags?"
+                                        (when-not (= (get-in @state [:prevent :tag :count]) remainder)
+                                          (str "(" remainder " remaining)"))))
+     :waiting "your opponent to prevent tags"
+     :option (fn [state remainder] (str "Allow " (quantify remainder "remaining tag")))}))
 
 (defn resolve-tag-prevention
   [state side eid n {:keys [unpreventable card] :as args}]
