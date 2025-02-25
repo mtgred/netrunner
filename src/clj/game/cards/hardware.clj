@@ -12,7 +12,7 @@
    [game.core.card-defs :refer [card-def]]
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [install-cost rez-additional-cost-bonus rez-cost trash-cost]]
-   [game.core.damage :refer [chosen-damage damage damage-prevent
+   [game.core.damage :refer [chosen-damage damage
                              enable-runner-damage-choice runner-can-choose-damage?]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice trash-on-empty get-x-fn]]
@@ -43,7 +43,7 @@
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
    [game.core.payment :refer [build-cost-string can-pay? cost-value ->c]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [prevent-encounter prevent-end-run prevent-tag]]
+   [game.core.prevention :refer [damage-type damage-pending damage-unpreventable? damage-prevent* prevent-encounter prevent-end-run prevent-tag]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
@@ -111,7 +111,7 @@
    :abilities [{:cost [(->c :power 1)]
                 :req (req run)
                 :msg "prevent 1 net damage"
-                :effect (effect (damage-prevent :net 1))}]})
+                :effect (effect (damage-prevent* :net 1))}]})
 
 (defcard "Akamatsu Mem Chip"
   {:static-abilities [(mu+ 1)]})
@@ -846,11 +846,11 @@
                              :req (req true)}]}
    :abilities [{:cost [(->c :credit 3)]
                 :msg "prevent 1 net damage"
-                :effect (effect (damage-prevent :net 1))}
+                :effect (effect (damage-prevent* :net 1))}
                {:label "Prevent up to 2 core damage"
                 :msg "prevent up to 2 core damage"
                 :cost [(->c :trash-can)]
-                :effect (effect (damage-prevent :brain 2))}]})
+                :effect (effect (damage-prevent* :brain 2))}]})
 
 (defcard "Flame-out"
   (let [register-flame-effect
@@ -1140,9 +1140,9 @@
    :abilities [{:label "Prevent 1 damage"
                 :msg "prevent 1 damage"
                 :cost [(->c :trash-installed 1)]
-                :effect (effect (damage-prevent :brain 1)
-                                (damage-prevent :meat 1)
-                                (damage-prevent :net 1))}]})
+                :effect (effect (damage-prevent* :brain 1)
+                                (damage-prevent* :meat 1)
+                                (damage-prevent* :net 1))}]})
 
 (defcard "Hermes"
   (let [ab {:interactive (req true)
@@ -1487,8 +1487,8 @@
                   :effect (effect (continue-ability (mhelper 1) card nil))}
      :abilities [{:msg "prevent 1 brain or net damage"
                   :cost [(->c :trash-program-from-hand 1)]
-                  :effect (effect (damage-prevent :brain 1)
-                                  (damage-prevent :net 1))}]}))
+                  :effect (effect (damage-prevent* :brain 1)
+                                  (damage-prevent* :net 1))}]}))
 
 (defcard "Mu Safecracker"
   {:implementation "Stealth credit restriction not enforced"
@@ -1516,12 +1516,19 @@
                                 card [(breach-access-bonus :rd 1 {:duration :end-of-run})]))}}}]})
 
 (defcard "Muresh Bodysuit"
-  {:events [{:event :pre-damage
-             :once-key :muresh-bodysuit
-             :req (req (and (= (:type context) :meat)
-                            (first-event? state side :pre-damage #(= :meat (:type (first %))))))
-             :msg "prevent the first meat damage this turn"
-             :effect (effect (damage-prevent :meat 1))}]})
+  {:prevention [{:prevents :pre-damage
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:async true
+                           :req (req
+                                  (and (= :meat (damage-type state :pre-damage))
+                                       (first-event? state side :pre-damage-flag
+                                                     #(= :meat (:type (first %))))
+                                       (pos? (damage-pending state :pre-damage))
+                                       (not (damage-unpreventable? state :pre-damage))))
+                           :msg "reduce the pending meat damage by 1"
+                           :effect (req (damage-prevent* state side eid :pre-damage 1))}}]})
 
 (defcard "Net-Ready Eyes"
   {:on-install {:async true
@@ -1765,7 +1772,7 @@
    :events [(trash-on-empty :power)]
    :abilities [{:cost [(->c :power 1)]
                 :msg "prevent 1 meat damage"
-                :effect (req (damage-prevent state side :meat 1))}]})
+                :effect (req (damage-prevent* state side :meat 1))}]})
 
 (defcard "Poison Vial"
   (auto-icebreaker
@@ -1923,8 +1930,8 @@
                                   :msg (msg "trash " (enumerate-str (map :title (take target (:deck runner))))
                                             " from the stack and prevent " target " damage")
                                   :cost [(->c :trash-can)]
-                                  :effect (effect (damage-prevent :net target)
-                                                  (damage-prevent :brain target)
+                                  :effect (effect (damage-prevent* :net target)
+                                                  (damage-prevent* :brain target)
                                                   (mill :runner eid :runner target))}
                                  card nil)))}]})
 
@@ -1942,7 +1949,7 @@
                                  (= (:cid (:card (first (:pre-damage (eventmap @state)))))
                                     (:cid (first (:pre-access-card (eventmap @state)))))))
                   :msg (msg "prevent " (cost-value eid :x-credits) " damage")
-                  :effect (effect (damage-prevent (:type (first (:pre-damage (eventmap @state))))
+                  :effect (effect (damage-prevent* (:type (first (:pre-damage (eventmap @state))))
                                                   (cost-value eid :x-credits)))}]}))
 
 (defcard "Record Reconstructor"

@@ -5,6 +5,7 @@
     [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-simult]]
     [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.moving :refer [trash-cards get-trash-event]]
+    [game.core.prevention :refer [resolve-damage-prevention]]
     [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
@@ -184,13 +185,16 @@
   prevention/boosting process and eventually resolves the damage."
   ([state side eid type n] (damage state side eid type n nil))
   ([state side eid type n {:keys [unpreventable card] :as args}]
-   (swap! state update-in [:damage :damage-bonus] dissoc type)
-   (swap! state update-in [:damage :damage-prevent] dissoc type)
-   ;; alert listeners that damage is about to be calculated.
-   (trigger-event state side :pre-damage {:type type :card card :amount n})
-   (let [active-player (get-in @state [:active-player])]
-     (if unpreventable
-       (resolve-damage state side eid type (damage-count state side type n args) args)
-       (wait-for (check-damage-prevention state side type n active-player)
-                 (wait-for (check-damage-prevention state side type n (if (= active-player :corp) :runner :corp))
-                           (resolve-damage state side eid type (damage-count state side type n args) args)))))))
+   (wait-for (resolve-damage-prevention state side type n args)
+             (println async-result))))
+
+   ;; (swap! state update-in [:damage :damage-bonus] dissoc type)
+   ;; (swap! state update-in [:damage :damage-prevent] dissoc type)
+   ;; ;; alert listeners that damage is about to be calculated.
+   ;; (trigger-event state side :pre-damage {:type type :card card :amount n})
+   ;; (let [active-player (get-in @state [:active-player])]
+   ;;   (if unpreventable
+   ;;     (resolve-damage state side eid type (damage-count state side type n args) args)
+   ;;     (wait-for (check-damage-prevention state side type n active-player)
+   ;;               (wait-for (check-damage-prevention state side type n (if (= active-player :corp) :runner :corp))
+   ;;                         (resolve-damage state side eid type (damage-count state side type n args) args)))))))

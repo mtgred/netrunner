@@ -50,7 +50,7 @@
                              swap-ice trash trash-cards]]
    [game.core.payment :refer [can-pay? ->c]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [prevent-up-to-n-tags]]
+   [game.core.prevention :refer [damage-type damage-pending damage-unpreventable? damage-prevent* prevent-up-to-n-tags]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -2379,22 +2379,32 @@
     {:req (req (some #{:hq} (:successful-run runner-reg)))
      :player :corp
      :prompt "Take 2 bad publicity?"
+     :waiting-prompt true
      :yes-ability {:player :corp
                    :msg "takes 2 bad publicity"
                    :effect (effect (gain-bad-publicity :corp 2))}
      :no-ability {:player :runner
                   :msg "is immune to damage until the beginning of the Runner's next turn"
-                  :effect (effect
-                            (register-events
-                              card
-                              [{:event :pre-damage
-                                :duration :until-runner-turn-begins
-                                :effect (effect (damage-prevent :net Integer/MAX_VALUE)
-                                                (damage-prevent :meat Integer/MAX_VALUE)
-                                                (damage-prevent :brain Integer/MAX_VALUE))}
-                               {:event :runner-turn-begins
-                                :duration :until-runner-turn-begins
-                                :effect (effect (unregister-floating-events :until-runner-turn-begins))}]))}}}})
+                  :effect (req
+                            (register-lingering-effect
+                              state side card
+                              {:type :prevention
+                               :duration :until-runner-turn-begins
+                               :req (req (= :runner side))
+                               :value {:prevents :pre-damage
+                                       :type :floating
+                                       :max-uses 1
+                                       :card card
+                                       :mandatory true
+                                       :ability {:async true
+                                                 :card card
+                                                 :condition :floating
+                                                 :req (req
+                                                        (and
+                                                          (pos? (damage-pending state :pre-damage))
+                                                          (not (damage-unpreventable? state :pre-damage))))
+                                                 :msg "prevent all damage"
+                                                 :effect (req (damage-prevent* state side eid :pre-damage :all))}}}))}}}})
 
 (defcard "Levy AR Lab Access"
   {:on-play

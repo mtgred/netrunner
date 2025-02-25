@@ -6,9 +6,10 @@
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [card-ability-cost]]
    [game.core.eid :refer [complete-with-result effect-completed]]
-   [game.core.effects :refer [any-effects]]
+   [game.core.effects :refer [any-effects get-effects]]
    [game.core.engine :refer [resolve-ability trigger-event-simult trigger-event-sync]]
    [game.core.payment :refer [can-pay?]]
+   [game.core.prompts :refer [clear-wait-prompt]]
    [game.core.to-string :refer [card-str]]
    [game.utils :refer [dissoc-in enumerate-str quantify]]
    [game.macros :refer [msg req wait-for]]
@@ -38,14 +39,30 @@
                                                           (not (get-in @state [:prevent key :uses (:cid card)]))
                                                           (< (get-in @state [:prevent key :uses (:cid card)]) (:max-uses %)))
                                  ability-req? (or (not (get-in % [:ability :req]))
-                                                  ((get-in % [:ability :req]) state side eid card nil))]
+                                                  ((get-in % [:ability :req]) state side eid card [(get-in @state [:prevent key])]))]
                              (and (not cannot-play?) payable? not-used-too-many-times? ability-req?))
                           abs)]
     (seq (map #(assoc % :card card) playable?))))
 
+(defn- floating-prevention-abilities
+  [state side eid key]
+  (let [evs (get-effects state side :prevention)
+        abs (filter #(= (:prevents %) key) evs)
+        playable? (filter #(let [payable? (can-pay? state side eid (:card %) nil (seq (card-ability-cost state side (:ability %) (:card %) [])))
+                                 not-used-too-many-times? (or (not (:max-uses %))
+                                                              (not (get-in @state [:prevent key :uses (:cid (:card %))]))
+                                                              (< (get-in @state [:prevent key :uses (:cid (:card %))]) (:max-uses %)))
+                                 ability-req? (or (not (get-in % [:ability :req]))
+                                                  ((get-in % [:ability :req]) state side eid (:card %) [(get-in @state [:prevent key])]))]
+                             (and payable? not-used-too-many-times? ability-req?))
+                          abs)]
+    (seq playable?)))
+
+
 (defn- gather-prevention-abilities
   [state side eid key]
-  (mapcat #(relevant-prevention-abilities state side eid key %) (all-active state side)))
+  (concat (mapcat #(relevant-prevention-abilities state side eid key %) (all-active state side))
+          (floating-prevention-abilities state side eid key)))
 
 (defn prevent-numeric
   [state side eid key n]
@@ -70,20 +87,27 @@
   "Triggers an ability as having prevented something"
   [state side eid key prevention]
   (swap! state update-in [:prevent key :uses (->> prevention :card :cid)] (fnil inc 0))
-  (resolve-ability
-    state side (assoc eid :source (:card prevention) :source-type :ability)
-    (if (:prompt prevention)
-      {:optional {:prompt (:prompt prevention)
-                  :yes-ability (:ability prevention)}}
-      (:ability prevention))
-    (:card prevention) nil))
+  ;; this marks the player as having acted, so we can play the priority game
+  ;; Note that this requires the following concession:
+  ;;   * All abilities should either use the prompt system set up here
+  ;;   * Or if they do not, clicking the ability MUST act
+  ;; The consequence of ignoring this is the potential for a silly player to pretend to act, do nothing, and flip priority
+  (let [abi {:async true
+             :effect (req (swap! state assoc-in [:prevent key :priority-passes] 0)
+                          (resolve-ability state side eid (:ability prevention) card [(get-in @state [:prevent key])]))}]
+    (resolve-ability
+      state side (assoc eid :source (:card prevention) :source-type :ability)
+      (if (:prompt prevention)
+        {:optional {:prompt (:prompt prevention)
+                    :yes-ability abi}}
+        abi)
+      (:card prevention) nil)))
 
 (defn- build-prevention-option
   "Builds a menu item for firing a prevention ability"
   [prevention key]
   {:option (or (:label prevention) (->> prevention :card :printed-title))
    :ability {:async true
-             :req (:req (:ability prevention))
              :effect (req (trigger-prevention state side eid key prevention))}})
 
 (defn- resolve-keyed-prevention-for-side
@@ -101,7 +125,6 @@
       (let [preventions (gather-prevention-abilities state side eid key)]
         (if (empty? preventions)
           (effect-completed state side eid)
-          ;; TODO - if there's exactly ONE choice, and it's also mandatory, just rip that choice
           (if (and (= 1 (count preventions))
                    (:mandatory (first preventions)))
             (wait-for (trigger-prevention state side key (first preventions))
@@ -117,6 +140,113 @@
                                       :ability {:effect (req (swap! state assoc-in [:prevent key :passed] true))}})]))
                         nil nil)
                       (resolve-keyed-prevention-for-side state side eid key args))))))))
+
+;; DAMAGE PREVENTION
+;;
+;; The following are either interrupts, or static abilities, that must come first:
+;;   Guru Davinder (done)
+;;   Leverage (done)
+;;   Chrome Parlor (done)
+;;   Muresh Bodysuit (done)
+;;   The Cleaners (done)
+;;
+;; The following are normal prevention timing:
+;;   Heartbeat
+;;   Jarogniew Mercs
+;;   Monolith
+;;   Net Shield
+;;   No One Home
+;;   On the Lam
+;;   Plascrete Carapace
+;;   Ramujan-reliant 550 BMI
+;;   Recon Drone
+;;   Sacrificial Clone (lmao)
+;;   AirbladeX (JSRF Ed.)
+;;   Bio-Modeled Network
+;;   Biometric Spoofing
+;;   Caldera
+;;   Deus X
+;;   Feedback Filter
+;;
+;; These just nominate the selecting side:
+;;   Titanium Ribs
+;;   Chronos Protocol: Selective Mind-mapping
+;;
+;; The follwing do something funny (confirm with rules what they actually do):
+;;   Tori Hanzo
+
+(defn damage-type
+  [state key]
+  (get-in @state [:prevent key :type]))
+
+(defn damage-pending
+  [state key]
+  (get-in @state [:prevent key :remaining]))
+
+(defn damage-unboostable?
+  [state key]
+  (get-in @state [:prevent key :unboostable]))
+
+(defn damage-unpreventable?
+  [state key]
+  (get-in @state [:prevent key :unpreventable]))
+
+(defn damage-boost
+  [state side eid key n]
+  (when (pos? (damage-pending state key))
+    (swap! state update-in [:prevent key :remaining] + n))
+  (effect-completed state side eid))
+
+;; TODO - rename this after I strip it out of damage
+(defn damage-prevent*
+  [state side eid key n]
+  (when (pos? (damage-pending state key))
+    (if (= n :all)
+      (swap! state update-in [:prevent key] merge {:remaining 0 :prevented :all})
+      (do (swap! state update-in [:prevent key :remaining] #(max 0 (- % n)))
+          (swap! state update-in [:prevent key :prevented] (fnil inc 1)))))
+  (effect-completed state side eid))
+
+(defn- damage-name
+  [state key]
+  (case (damage-type state key)
+    :meat "meat"
+    :brain "core"
+    :core "core"
+    :net "net"
+    "neat"))
+
+(defn resolve-pre-damage-for-side
+  [state side eid]
+  (resolve-keyed-prevention-for-side
+    state side eid :pre-damage
+    {:prompt (fn [state remainder]
+               (if (= side :runner)
+                 (str "Prevent " (damage-pending state :pre-damage) " " (damage-name state :pre-damage) " damage?")
+                 (str "There is " (damage-pending state :pre-damage) " " (damage-name state :pre-damage) " pending damage")))
+     :waiting "your opponent to resolve pre-damage triggers"
+     :option (fn [state remainder] (str "Pass priority"))}))
+
+(defn- resolve-pre-damage-effects
+  [state side eid]
+  (clear-wait-prompt state side)
+  (println "passes: " (get-in @state [:prevent :pre-damage :priority-passes]))
+  (if (= 2 (get-in @state [:prevent :pre-damage :priority-passes]))
+    (complete-with-result state side eid (fetch-and-clear! state :pre-damage))
+    (wait-for (resolve-pre-damage-for-side state side)
+              (swap! state update-in [:prevent :pre-damage :priority-passes] (fnil inc 1))
+              (resolve-pre-damage-effects state (other-side side) eid))))
+
+(defn resolve-damage-prevention
+  [state side eid type n {:keys [unpreventable unboostable card] :as args}]
+  (swap! state assoc-in [:prevent :pre-damage]
+         {:count n :remaining n :prevented 0 :source-player side :source-card card :priority-passes 0
+          :type type :unpreventable unpreventable :unboostable unboostable :uses {}})
+  (wait-for (trigger-event-simult state side :pre-damage-flag nil {:card card :type type :count n})
+            (wait-for (resolve-pre-damage-effects state side)
+                      (swap! state assoc-in [:prevent :damage] async-result)
+                      (complete-with-result state side eid (fetch-and-clear! state :damage)))))
+
 
 ;; ENCOUNTER PREVENTION
 (def prevent-encounter

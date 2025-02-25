@@ -629,6 +629,7 @@
           :faceup (and (installed? card)
                        (faceup? card))
           :hosted (:host card)
+          :floating true
           :inactive (not (active? card))
           :in-location (or (and (contains? location :discard)
                                 (in-discard? card))

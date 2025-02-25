@@ -38,7 +38,7 @@
                              trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? ->c]]
-   [game.core.prevention :refer [prevent-jack-out]]
+   [game.core.prevention :refer [damage-type damage-pending damage-unboostable? damage-boost prevent-jack-out]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
@@ -2197,11 +2197,20 @@
                :effect (effect (gain-tags eid 1))}})
 
 (defcard "The Cleaners"
-  {:events [{:event :pre-damage
-             :req (req (and (= :meat (:type context))
-                            (= :corp side)))
-             :msg "do 1 additional meat damage"
-             :effect (effect (damage-bonus :meat 1))}]})
+  {:prevention [{:prevents :pre-damage
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:async true
+                           :condition :active
+                           :req (req
+                                  (println "checking")
+                                  (and (= :meat (damage-type state :pre-damage))
+                                       (= :corp (get-in @state [:prevent :pre-damage :source-player]))
+                                       (pos? (damage-pending state :pre-damage))
+                                       (not (damage-unboostable? state :pre-damage))))
+                           :msg "increase the pending meat damage by 1"
+                           :effect (req (damage-boost state side eid :pre-damage 1))}}]})
 
 (defcard "The Future is Now"
   {:on-score {:interactive (req true)

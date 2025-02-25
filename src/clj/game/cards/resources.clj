@@ -58,7 +58,7 @@
    [game.core.payment :refer [build-spend-msg can-pay? ->c]]
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [prevent-encounter prevent-tag prevent-up-to-n-tags]]
+   [game.core.prevention :refer [damage-type damage-pending damage-unpreventable? damage-prevent* prevent-encounter prevent-tag prevent-up-to-n-tags]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -728,9 +728,18 @@
                                        (effect-completed state side eid)))}]})
 
 (defcard "Chrome Parlor"
-  {:events [{:event :pre-damage
-             :req (req (has-subtype? (:card context) "Cybernetic"))
-             :effect (effect (damage-prevent (:type context) Integer/MAX_VALUE))}]})
+  {:prevention [{:prevents :pre-damage
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:async true
+                           :req (req
+                                  (and
+                                    (has-subtype? (:source-card context) "Cybernetic")
+                                    (pos? (damage-pending state :pre-damage))
+                                    (not (damage-unpreventable? state :pre-damage))))
+                           :msg "prevent all damage"
+                           :effect (req (damage-prevent* state side eid :pre-damage :all))}}]})
 
 (defcard "Citadel Sanctuary"
   {:interactions {:prevent [{:type #{:meat}
@@ -1603,32 +1612,33 @@
   {:static-abilities [{:type :cannot-pay-net
                        :value true}
                       {:type :cannot-pay-meat
-                       :value true}
-                      {:type :cannot-pay-brain
                        :value true}]
-   :events [{:event :pre-damage
-             :req (req (and (#{:meat :net} (:type context))
-                            (pos? (:amount context))))
-             :msg (msg "prevent all " (name (:type context)) " damage")
-             :effect (req (damage-prevent state side :meat Integer/MAX_VALUE)
-                          (damage-prevent state side :net Integer/MAX_VALUE)
-                          (register-events
-                            state side card
-                            [{:event :pre-resolve-damage
-                              :unregister-once-resolved true
-                              :async true
-                              :msg (msg (if (= target "Trash Guru Davinder")
-                                          "trash itself"
-                                          (decapitalize target)))
-                              :prompt "Choose one"
-                              :waiting-prompt true
-                              :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil (->c :credit 4))
-                                               "Pay 4 [Credits]")
-                                             "Trash Guru Davinder"])
-                              :effect (req (if (= target "Trash Guru Davinder")
-                                              (trash state :runner eid card {:cause :runner-ability :cause-card card})
-                                              (pay state :runner eid card (->c :credit 4))))}]))}]})
-
+   :prevention [{:prevents :pre-damage
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:async true
+                           :req (req
+                                  (and (pos? (damage-pending state :pre-damage))
+                                       (or (= :meat (damage-type state :pre-damage))
+                                           (= :net (damage-type state :pre-damage)))
+                                       (not (damage-unpreventable? state :pre-damage))))
+                           :msg "prevent all damage"
+                           :effect (req (wait-for (damage-prevent* state side :pre-damage :all)
+                                                  (continue-ability
+                                                    state side
+                                                    {:msg (msg (if (= target "Trash Guru Davinder")
+                                                                 "trash itself"
+                                                                 (decapitalize target)))
+                                                     :prompt "Choose one"
+                                                     :waiting-prompt true
+                                                     :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil (->c :credit 4))
+                                                                      "Pay 4 [Credits]")
+                                                                    "Trash Guru Davinder"])
+                                                     :effect (req (if (= target "Trash Guru Davinder")
+                                                                    (trash state :runner eid card {:cause :runner-ability :cause-card card})
+                                                                    (pay state :runner eid card (->c :credit 4))))}
+                                                    card nil)))}}]})
 
 (defcard "Hades Shard"
   (shard-constructor "Hades Shard" :archives "breach Archives"
