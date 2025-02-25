@@ -258,7 +258,9 @@
       (click-prompt state :corp "R&D")
       (click-prompt state :runner "Yes")
       (is (:run @state) "Run started")
-      (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
+      (run-continue-until state :movement)
+      (run-jack-out state)
+      (is (:run @state) "Did not jack out")
       (is (not (find-card "An Offer You Can't Refuse" (:scored (get-corp)))) "Offer isn't in score area")))
 
 (deftest anonymous-tip

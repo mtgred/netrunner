@@ -6021,6 +6021,7 @@
         (is (= 1 (get-strength (refresh nanotk))) "Default strength")
         (run-on state "HQ")
         (rez state :corp susanoo)
+        (rez state :corp (get-ice state :archives 0))
         (run-continue state)
         (is (= 3 (get-strength (refresh nanotk))) "2 ice on HQ")
         (card-subroutine state :corp (refresh susanoo) 0)
