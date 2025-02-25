@@ -86,6 +86,48 @@
              :req (:req (:ability prevention))
              :effect (req (trigger-prevention state side eid key prevention))}})
 
+;; END RUN PREVENTION
+(def prevent-end-run
+  (fn [state side eid] (prevent-numeric state side eid :end-run 1)))
+
+(defn- resolve-end-run-prevention-for-side
+  [state side eid]
+  (let [remainder (get-in @state [:prevent :end-run :remaining])]
+    (if (or (not (pos? remainder)) (get-in @state [:prevent :end-run :passed]))
+      (do (swap! state dissoc-in [:prevent :end-run :passed])
+          (effect-completed state side eid))
+      (let [preventions (gather-prevention-abilities state side eid :end-run)]
+        (if (empty? preventions)
+          (effect-completed state side eid)
+          ;; TODO - if there's exactly ONE choice, and it's also mandatory, just rip that choice
+          (if (and (= 1 (count preventions))
+                   (:mandatory (first preventions)))
+            (wait-for (trigger-prevention state side :end-run (first preventions))
+                      (resolve-end-run-prevention-for-side state side eid))
+            (wait-for (resolve-ability
+                        state side
+                        (choose-one-helper
+                          {:prompt "Prevent the run from ending?"
+                           :waiting-prompt "your opponent to prevent the run from ending"}
+                          (concat (mapv #(build-prevention-option % :end-run) preventions)
+                                  [(when-not (some :mandatory preventions)
+                                     {:option (str "Allow the run to end")
+                                      :ability {:effect (req (swap! state assoc-in [:prevent :end-run :passed] true))}})]))
+                        nil nil)
+                      (resolve-end-run-prevention-for-side state side eid))))))))
+
+(defn resolve-end-run-prevention
+  [state side eid {:keys [unpreventable card] :as args}]
+  (swap! state assoc-in [:prevent :end-run]
+         {:count 1 :remaining 1 :prevented 0 :source-player side :source-card card :uses {}})
+  (wait-for
+    (trigger-event-simult state side :end-run-interrupt nil {:card card :source-eid eid})
+    (if unpreventable
+      (complete-with-result state side eid (fetch-and-clear! state :end-run))
+      (wait-for
+        (resolve-end-run-prevention-for-side state :runner)
+        (complete-with-result state side eid (fetch-and-clear! state :end-run))))))
+
 ;; JACK OUT PREVENTION
 
 (def prevent-jack-out

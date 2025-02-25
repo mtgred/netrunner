@@ -44,11 +44,12 @@
                              trash-prevent]]
    [game.core.optional :refer [get-autoresolve set-autoresolve never?]]
    [game.core.payment :refer [build-cost-label can-pay? cost-target cost-value ->c value]]
+   [game.core.prevention :refer [prevent-end-run]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
-   [game.core.runs :refer [active-encounter? bypass-ice continue end-run end-run-prevent
+   [game.core.runs :refer [active-encounter? bypass-ice continue end-run
                            get-current-encounter make-run successful-run-replace-breach
                            update-current-encounter]]
    [game.core.sabotage :refer [sabotage-ability]]
@@ -581,29 +582,15 @@
                                  :msg (msg "prevent " (card-str state current-ice) " from ending the run this encounter")
                                  :effect (req
                                            (let [target-ice (:ice (get-current-encounter state))]
-                                             (register-lingering-effect
-                                               state side
-                                               card
-                                               {:type :auto-prevent-run-end
-                                                :duration :end-of-encounter
-                                                :req (req
-                                                       (let [target (second targets)]
-                                                         (and (same-card? target target-ice)
-                                                              ;;special case for border control/MIC
-                                                              ;; this is an ugly hack, but we have
-                                                              ;; no way of knowing which *ability*
-                                                              ;; actually ended the run
-                                                              ;; these seem like the safe hedge.
-                                                              ;; MIC is included for paint effects.
-                                                              ;; TODO - fix this, add :cause :subroutine to a bunch of
-                                                              ;; end the run effects
-                                                              (if (#{"Border Control" "M.I.C."} (:title target-ice))
-                                                                (not (some #(and
-                                                                              (same-card? target (:card (first %)))
-                                                                              (= (:cause (first %)) :ability-cost))
-                                                                           (run-events state :corp :corp-trash)))
-                                                                true))))
-                                                :value (req true)})))}]}))
+                                             (register-events
+                                               state side card
+                                               [{:event :end-run-interrupt
+                                                 :duration :end-of-encounter
+                                                 :async true
+                                                 :silent (req true)
+                                                 :req (req (= :subroutine (->> context :source-eid :source-type)))
+                                                 :msg "prevent the run from ending"
+                                                 :effect (req (prevent-end-run state side eid))}])))}]}))
 
 (defcard "Battering Ram"
   (auto-icebreaker {:abilities [(break-sub 2 2 "Barrier")

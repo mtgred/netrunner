@@ -704,7 +704,6 @@
    continue
    encounter-ends
    end-run
-   end-run-prevent
    force-ice-encounter
    gain-next-run-credits
    gain-run-credits

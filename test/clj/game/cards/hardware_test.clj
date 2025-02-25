@@ -2974,9 +2974,7 @@
     (click-prompt state :corp "Yes")
     (click-card state :corp "IPO")
     (click-card state :corp "Extract")
-    (is (:run @state) "Run not ended yet")
-    (card-ability state :runner (get-hardware state 0) 0)
-    (click-prompt state :runner "Done")
+    (click-prompt state :runner "Lucky Charm")
     (is (:run @state) "Run prevented from ending")))
 
 (deftest lucky-charm-no-interference-with-runs-ending-successfully-or-by-jacking-out-and-batty-normal-etr-border-control-interaction
@@ -3022,7 +3020,7 @@
        (card-subroutine state :corp (refresh iw) 0)
        (is (:run @state) "Run not ended yet")
        (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
-       (click-prompt state :runner "Done")
+       (click-prompt state :runner "Allow the run to end")
        (is (not (:run @state)) "Run ended yet")
        (is (no-prompt? state :runner) "Prevent prompt gone")
        ;; run into border control, have its subroutine ETR, do use lucky charm
@@ -3031,8 +3029,7 @@
        (card-subroutine state :corp (refresh bc) 1)
        (is (:run @state) "Run not ended yet")
        (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
-       (card-ability state :runner (get-hardware state 0) 0)
-       (click-prompt state :runner "Done")
+       (click-prompt state :runner "Lucky Charm")
        (is (= 1 (count (:rfg (get-runner)))) "Lucky Charm RFGed")
        (is (:run @state) "Run prevented from ending")
        (is (no-prompt? state :runner) "Prevent prompt gone")
@@ -3045,8 +3042,7 @@
        (is (= 1 (count (:discard (get-corp)))) "Border Control trashed")
        (is (:run @state) "Run not ended yet")
        (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
-       (card-ability state :runner (get-hardware state 0) 0)
-       (click-prompt state :runner "Done")
+       (click-prompt state :runner "Lucky Charm")
        (is (= 2 (count (:rfg (get-runner)))) "2nd Lucky Charm RFGed")
        (is (:run @state) "Run prevented from ending")
        ;; win batty psi game and fire ice wall sub
@@ -3061,8 +3057,7 @@
        (click-prompt state :corp "End the run")
        (is (:run @state) "Run not ended yet")
        (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
-       (card-ability state :runner (get-hardware state 0) 0)
-       (click-prompt state :runner "Done")
+       (click-prompt state :runner "Lucky Charm")
        (is (:run @state) "Run prevented from ending"))))
 
 (deftest mache

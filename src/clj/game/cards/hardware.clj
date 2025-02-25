@@ -43,12 +43,12 @@
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
    [game.core.payment :refer [build-cost-string can-pay? cost-value ->c]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [prevent-tag]]
+   [game.core.prevention :refer [prevent-end-run prevent-tag]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
-   [game.core.runs :refer [bypass-ice end-run end-run-prevent
+   [game.core.runs :refer [bypass-ice end-run
                            get-current-encounter jack-out make-run
                            successful-run-replace-breach total-cards-accessed]]
    [game.core.say :refer [system-msg]]
@@ -1340,13 +1340,14 @@
                              (move target :hand))}]})
 
 (defcard "Lucky Charm"
-  {:interactions {:prevent [{:type #{:end-run}
-                             :req (req (and (some #{:hq} (:successful-run runner-reg))
-                                            (corp? (:card-cause target))))}]}
-   :abilities [{:msg "prevent the run from ending"
-                :req (req (some #{:hq} (:successful-run runner-reg)))
-                :cost [(->c :remove-from-game)]
-                :effect (effect (end-run-prevent))}]})
+  {:prevention [{:prevents :end-run
+                 :type :ability
+                 :ability {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                                          (= :corp (get-in @state [:prevent :end-run :source-player]))))
+                           :cost [(->c :remove-from-game)]
+                           :async true
+                           :msg "prevent the run from ending"
+                           :effect (req (prevent-end-run state side eid))}}]})
 
 (defcard "Mâché"
   (letfn [(pred [{:keys [card accessed]}]
