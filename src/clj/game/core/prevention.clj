@@ -86,35 +86,53 @@
              :req (:req (:ability prevention))
              :effect (req (trigger-prevention state side eid key prevention))}})
 
+(defn- resolve-keyed-prevention-for-side
+  [state side eid key {:keys [prompt waiting option data-type] :as args}]
+  (let [remainder (get-in @state [:prevent key :remaining])
+        prompt  (if (string? prompt)  prompt  (prompt state))
+        waiting (if (string? waiting) waiting (waiting state))
+        option  (if (string? option)  option  (option state))]
+    (if (or (if (= data-type :sequential)
+              (not (seq remainder))
+              (not (pos? remainder)))
+            (get-in @state [:prevent key :passed]))
+      (do (swap! state dissoc-in [:prevent key :passed])
+          (effect-completed state side eid))
+      (let [preventions (gather-prevention-abilities state side eid key)]
+        (if (empty? preventions)
+          (effect-completed state side eid)
+          ;; TODO - if there's exactly ONE choice, and it's also mandatory, just rip that choice
+          (if (and (= 1 (count preventions))
+                   (:mandatory (first preventions)))
+            (wait-for (trigger-prevention state side key (first preventions))
+                      (resolve-keyed-prevention-for-side state side eid key args))
+            (wait-for (resolve-ability
+                        state side
+                        (choose-one-helper
+                          {:prompt prompt
+                           :waiting-prompt waiting}
+                          (concat (mapv #(build-prevention-option % key) preventions)
+                                  [(when-not (some :mandatory preventions)
+                                     {:option option
+                                      :ability {:effect (req (swap! state assoc-in [:prevent key :passed] true))}})]))
+                        nil nil)
+                      (resolve-keyed-prevention-for-side state side eid key args))))))))
+
+;; ENCOUNTER PREVENTION
+(def prevent-encounter
+  (fn [state side eid] (prevent-numeric state side eid :encounter 1)))
+
 ;; END RUN PREVENTION
 (def prevent-end-run
   (fn [state side eid] (prevent-numeric state side eid :end-run 1)))
 
 (defn- resolve-end-run-prevention-for-side
   [state side eid]
-  (let [remainder (get-in @state [:prevent :end-run :remaining])]
-    (if (or (not (pos? remainder)) (get-in @state [:prevent :end-run :passed]))
-      (do (swap! state dissoc-in [:prevent :end-run :passed])
-          (effect-completed state side eid))
-      (let [preventions (gather-prevention-abilities state side eid :end-run)]
-        (if (empty? preventions)
-          (effect-completed state side eid)
-          ;; TODO - if there's exactly ONE choice, and it's also mandatory, just rip that choice
-          (if (and (= 1 (count preventions))
-                   (:mandatory (first preventions)))
-            (wait-for (trigger-prevention state side :end-run (first preventions))
-                      (resolve-end-run-prevention-for-side state side eid))
-            (wait-for (resolve-ability
-                        state side
-                        (choose-one-helper
-                          {:prompt "Prevent the run from ending?"
-                           :waiting-prompt "your opponent to prevent the run from ending"}
-                          (concat (mapv #(build-prevention-option % :end-run) preventions)
-                                  [(when-not (some :mandatory preventions)
-                                     {:option (str "Allow the run to end")
-                                      :ability {:effect (req (swap! state assoc-in [:prevent :end-run :passed] true))}})]))
-                        nil nil)
-                      (resolve-end-run-prevention-for-side state side eid))))))))
+  (resolve-keyed-prevention-for-side
+    state side eid :end-run
+    {:prompt "Prevent the run from ending"
+     :waiting "your opponent to prevent the run from ending"
+     :option "Allow the run to end"}))
 
 (defn resolve-end-run-prevention
   [state side eid {:keys [unpreventable card] :as args}]
@@ -135,29 +153,11 @@
 
 (defn- resolve-jack-out-prevention-for-side
   [state side eid]
-  (let [remainder (get-in @state [:prevent :jack-out :remaining])]
-    (if (or (not (pos? remainder)) (get-in @state [:prevent :jack-out :passed]))
-      (do (swap! state dissoc-in [:prevent :jack-out :passed])
-          (effect-completed state side eid))
-      (let [preventions (gather-prevention-abilities state side eid :jack-out)]
-        (if (empty? preventions)
-          (effect-completed state side eid)
-          ;; TODO - if there's exactly ONE choice, and it's also mandatory, just rip that choice
-          (if (and (= 1 (count preventions))
-                   (:mandatory (first preventions)))
-            (wait-for (trigger-prevention state side :jack-out (first preventions))
-                      (resolve-jack-out-prevention-for-side state side eid))
-            (wait-for (resolve-ability
-                        state side
-                        (choose-one-helper
-                          {:prompt "Prevent the Runner from jacking out?"
-                           :waiting-prompt "your opponent to prevent you from jacking out"}
-                          (concat (mapv #(build-prevention-option % :jack-out) preventions)
-                                  [(when-not (some :mandatory preventions)
-                                     {:option (str "Allow the Runner to jack out")
-                                      :ability {:effect (req (swap! state assoc-in [:prevent :jack-out :passed] true))}})]))
-                        nil nil)
-                      (resolve-jack-out-prevention-for-side state side eid))))))))
+  (resolve-keyed-prevention-for-side
+    state side eid :jack-out
+    {:prompt "Prevent the runner from jacking out"
+     :waiting "your opponent to prevent you from jacking out"
+     :option "Allow the Runner to jack out"}))
 
 (defn resolve-jack-out-prevention
   [state side eid {:keys [unpreventable card] :as args}]
@@ -190,23 +190,13 @@
 
 (defn resolve-expose-prevention-for-side
   [state side eid]
-  (let [remainder (get-in @state [:prevent :expose :remaining])]
-    (if (or (not (seq remainder)) (get-in @state [:prevent :expose :passed]))
-      (do (swap! state dissoc-in [:prevent :expose :passed])
-          (effect-completed state side eid))
-      (let [preventions (gather-prevention-abilities state side eid :expose)]
-        (if (empty? preventions)
-          (effect-completed state side eid)
-          (wait-for (resolve-ability
-                      state side
-                      (choose-one-helper
-                        {:prompt (str "Prevent " (enumerate-str (map #(card-str state % {:visible (= side :corp)}) remainder) "or") " from being exposed?")
-                         :waiting-prompt "your opponent to prevent an Expose"}
-                        (concat (mapv #(build-prevention-option % :expose) preventions)
-                                [{:option (str "Allow " (quantify (count remainder) "card") " to be exposed")
-                                  :ability {:effect (req (swap! state assoc-in [:prevent :expose :passed] true))}}]))
-                      nil nil)
-                    (resolve-expose-prevention-for-side state side eid)))))))
+  (letfn [(remainder [state] (get-in @state [:prevent :expose :remaining]))]
+    (resolve-keyed-prevention-for-side
+      state side eid :expose
+      {:data-type :sequential
+       :prompt (fn [state] (str "Prevent " (enumerate-str (map #(card-str state % {:visible (= side :corp)}) (remainder state)) "or") " from being exposed?"))
+       :waiting "your opponent to prevent an Expose"
+       :option (fn [state] (str "Allow " (quantify (count (remainder state)) "card") " to be exposed"))})))
 
 (defn resolve-expose-prevention
   [state side eid targets {:keys [unpreventable card] :as args}]
@@ -231,33 +221,16 @@
 
 (defn prevent-bad-publicity [state side eid n] (prevent-numeric state side eid :bad-publicity n))
 
-(defn- resolve-bad-pub-prevention-for-side
+(defn resolve-bad-pub-prevention-for-side
   [state side eid]
-  (let [remainder (get-in @state [:prevent :bad-publicity :remaining])]
-    (if (or (not (pos? remainder)) (get-in @state [:prevent :bad-publicity :passed]))
-      (do (swap! state dissoc-in [:prevent :bad-publicity :passed])
-          (effect-completed state side eid))
-      (let [preventions (gather-prevention-abilities state side eid :bad-publicity)]
-        (if (empty? preventions)
-          (effect-completed state side eid)
-          ;; TODO - if there's exactly ONE choice, and it's also mandatory, just rip that choice
-          (if (and (= 1 (count preventions))
-                   (:mandatory (first preventions)))
-            (wait-for (trigger-prevention state side :bad-publicity (first preventions))
-                      (resolve-bad-pub-prevention-for-side state side eid))
-            (wait-for (resolve-ability
-                        state side
-                        (choose-one-helper
-                          {:prompt (str "Prevent any of the " (get-in @state [:prevent :bad-publicity :count]) " bad publicity?"
-                                        (when-not (= (get-in @state [:prevent :bad-publicity :count]) remainder)
-                                          (str "(" remainder " remaining)")))
-                           :waiting-prompt "your opponent to prevent bad publicity"}
-                          (concat (mapv #(build-prevention-option % :bad-publicity) preventions)
-                                  [(when-not (some :mandatory preventions)
-                                     {:option (str "Allow " remainder " remaining bad publicity")
-                                      :ability {:effect (req (swap! state assoc-in [:prevent :bad-publicity :passed] true))}})]))
-                        nil nil)
-                      (resolve-bad-pub-prevention-for-side state side eid))))))))
+  (letfn [(remainder [state] (get-in @state [:prevent :expose :remaining]))]
+    (resolve-keyed-prevention-for-side
+      state side eid :bad-publicity
+      {:prompt (fn [state] (str "Prevent any of the " (get-in @state [:prevent :bad-publicity :count]) " bad publicity?"
+                                (when-not (= (get-in @state [:prevent :bad-publicity :count]) (remainder state)
+                                             (str "(" (remainder state) " remaining)")))))
+       :waiting "your opponent to prevent bad publicity"
+       :option (fn [state] (str "Allow " (get-in @state [:prevent :bad-publicity :remaining]) " bad publicity"))})))
 
 (defn resolve-bad-pub-prevention
   [state side eid n {:keys [unpreventable card] :as args}]
@@ -290,27 +263,16 @@
      :effect (req (prevent-tag state side eid target))
      :cancel-effect (req (prevent-tag state side eid 0))}))
 
-(defn- resolve-tag-prevention-for-side
+(defn resolve-bad-pub-prevention-for-side
   [state side eid]
-  (let [remainder (get-in @state [:prevent :tag :remaining])]
-    (if (or (not (pos? remainder)) (get-in @state [:prevent :tag :passed]))
-      (do (swap! state dissoc-in [:prevent :tag :passed])
-          (effect-completed state side eid))
-      (let [preventions (gather-prevention-abilities state side eid :tag)]
-        (if (empty? preventions)
-          (effect-completed state side eid)
-          (wait-for (resolve-ability
-                      state side
-                      (choose-one-helper
-                        {:prompt (str "Prevent any of the " (get-in @state [:prevent :tag :count]) " tags?"
-                                      (when-not (= (get-in @state [:prevent :tag :count]) remainder)
-                                        (str "(" remainder " remaining)")))
-                         :waiting-prompt "your opponent to prevent tags"}
-                        (concat (mapv #(build-prevention-option % :tag) preventions)
-                                [{:option (str "Allow " (quantify remainder "remaining tag"))
-                                  :ability {:effect (req (swap! state assoc-in [:prevent :tag :passed] true))}}]))
-                      nil nil)
-                    (resolve-tag-prevention-for-side state side eid)))))))
+  (letfn [(remainder [state] (get-in @state [:prevent :tag :remaining]))]
+    (resolve-keyed-prevention-for-side
+      state side eid :tag
+      {:prompt (fn [state] (str "Prevent any of the " (get-in @state [:prevent :tag :count]) " tags?"
+                                (when-not (= (get-in @state [:prevent :tag :count]) (remainder state)
+                                             (str "(" (remainder state) " remaining)")))))
+       :waiting "your opponent to prevent tags"
+       :option (fn [state] (str "Allow " (quantify (remainder state) "remaining tag")))})))
 
 (defn resolve-tag-prevention
   [state side eid n {:keys [unpreventable card] :as args}]
