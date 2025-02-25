@@ -152,6 +152,11 @@
                (unregister-floating-events state side :end-of-next-run)
                (unregister-lingering-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
                (unregister-floating-events state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
+               (if (= side :corp)
+                 (do (update-lingering-effect-durations state side :until-next-corp-turn-ends :until-corp-turn-ends)
+                     (update-floating-event-durations state side :until-next-corp-turn-ends :until-corp-turn-ends))
+                 (do (update-lingering-effect-durations state side :until-next-runner-turn-ends :until-runner-turn-ends)
+                   (update-floating-event-durations state side :until-next-runner-turn-ends :until-runner-turn-ends)))
                (clean-set-aside! state side)
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended

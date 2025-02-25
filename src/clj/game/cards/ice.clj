@@ -2545,23 +2545,7 @@
                                            (encounter-ends state side eid)))}}}]})
 
 (defcard "Klevetnik"
-  ;; TODO - make this use a floating effect to disable cards
-  (let [re-enable-target
-        (fn [t] {:event :corp-turn-ends
-                 :unregister-once-resolved true
-                 :msg (msg "unblank " (:title t))
-                 :async true
-                 :effect (req (if (:disabled (get-card state t))
-                                (do (enable-card state :runner (get-card state t))
-                                    (if-let [reactivate-effect (:reactivate (card-def t))]
-                                      (resolve-ability state :runner eid reactivate-effect (get-card state t) nil)
-                                      (effect-completed state side eid)))
-                                (effect-completed state side eid)))})
-        register-corp-next-turn-end
-        (fn [t] {:event :corp-turn-ends ;; delayed registration to make it wait the Corp next turn end
-                 :unregister-once-resolved true
-                 :effect (effect (register-events card [(re-enable-target t)]))})
-        on-rez-ability {:prompt "Choose an installed resource"
+  (let [on-rez-ability {:prompt "Choose an installed resource"
                         :waiting-prompt true
                         :choices {:card #(and (installed? %)
                                               (resource? %))}
@@ -2569,16 +2553,18 @@
                         :msg (msg "let the Runner gain 2 [Credits] to"
                                   " blank the text box of " (:title target)
                                   " until the Corp next turn ends")
-                        :effect
-                        (req (let [t target]
-                               (wait-for (gain-credits state :runner 2)
-                                         (disable-card state :runner t)
-                                         (register-events
-                                           state side card
-                                           [(if (= (:active-player @state) :runner)
-                                              (re-enable-target t)
-                                              (register-corp-next-turn-end t))])
-                                         (effect-completed state side eid))))}]
+                        :effect (req (let [t target
+                                           duration (if (= :corp (:active-player @state))
+                                                      :until-next-corp-turn-ends
+                                                      :until-corp-turn-ends)]
+                                       (wait-for (gain-credits state :runner 2)
+                                                 (register-lingering-effect
+                                                   state side card
+                                                   {:type :disable-card
+                                                    :req (req (same-card? t target))
+                                                    :duration duration
+                                                    :value true})
+                                                 (effect-completed state side eid))))}]
     {:subroutines [end-the-run]
      :on-rez {:optional
               {:prompt "Let the Runner gain 2 [Credits]?"

@@ -4233,9 +4233,7 @@
       (is (changed? [(:credit (get-runner)) 2]
             (click-card state :corp nfl1))
           "Runner gained 2 Credits thanks to Klevetnik's on-rez ability")
-      (is (changed? [(:credit (get-runner)) 0]
-            (card-ability state :runner (refresh nfl1) 0))
-          "No Free Lunch was blanked")
+      (is (not (:playable (first (:abilities (refresh nfl1))))) "NFL abilities are not playable")
       (is (changed? [(:credit (get-runner)) 3]
             (card-ability state :runner (refresh nfl2) 0))
           "Other No Free Lunch was not blanked")
@@ -4243,10 +4241,9 @@
       (card-subroutine state :corp klev 0)
       (is (not (:run @state)) "The run should have ended")
       (take-credits state :runner)
-      (is (changed? [(:credit (get-runner)) 0]
-            (card-ability state :runner (refresh nfl1) 0))
-          "No Free Lunch still blank")
+      (is (not (:playable (first (:abilities (refresh nfl1))))) "NFL abilities are still not playable")
       (take-credits state :corp)
+      (take-credits state :runner)
       (is (changed? [(:credit (get-runner)) 3]
             (card-ability state :runner (refresh nfl1) 0))
           "No Free Lunch unblanked"))))
@@ -4291,15 +4288,11 @@
       (is (changed? [(:credit (get-runner)) 2]
             (click-card state :corp nfl))
           "Runner gained 2 Credits thanks to Klevetnik's on-rez ability")
-      (is (changed? [(:credit (get-runner)) 0]
-            (card-ability state :runner (refresh nfl) 0))
-          "No Free Lunch was blanked")
+      (is (not (:playable (first (:abilities (refresh nfl))))) "NFL abilities are not playable")
       (run-continue state)
       (card-subroutine state :corp klev 0)
       (take-credits state :corp) ;; End of the Corp current turn
-      (is (changed? [(:credit (get-runner)) 0]
-            (card-ability state :runner (refresh nfl) 0))
-          "No Free Lunch still blank")
+      (is (not (:playable (first (:abilities (refresh nfl))))) "NFL abilities are still not playable")
       (take-credits state :runner)
       (take-credits state :corp) ;; End of the Corp next turn
       (is (changed? [(:credit (get-runner)) 3]
