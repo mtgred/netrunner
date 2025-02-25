@@ -112,7 +112,7 @@
       (run-on state :hq)
       (rez state :corp (get-ice state :hq 1))
       (run-continue state)
-      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "AirbladeX (JSRF Ed.)")
       (is (no-prompt? state :runner) "No Funhouse prompt")
       (is (= 2 (get-counters (refresh airbladex) :power)) "Spent 1 hosted power counter")
       (run-continue state)

@@ -3202,7 +3202,7 @@
       (run-on state "Server 1")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Hunting Grounds")
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
         (is (:run @state) "Run hasn't ended from not paying Tollbooth"))))
 
@@ -3218,7 +3218,7 @@
       (play-from-hand state :runner "Hunting Grounds")
       (run-on state "Server 1")
       (run-continue state)
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "Allow Tollbooth encounter")
       (is (zero? (:credit (get-runner))) "Runner loses credits to Tollbooth")
       (is (:run @state) "Run hasn't ended when paying Tollbooth")))
 
@@ -3239,7 +3239,7 @@
       (run-on state "Server 1")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Hunting Grounds")
         (run-continue-until state :encounter-ice)
         (is (= (- credits 3) (:credit (get-runner))) "Runner loses 3 credits to Tollbooth 2 "))))
 
@@ -3256,7 +3256,7 @@
       (let [credits (:credit (get-runner))]
         (run-on state "Server 1")
         (run-continue state)
-        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Hunting Grounds")
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
         (run-continue state :movement)
         (run-jack-out state))

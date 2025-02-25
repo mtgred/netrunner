@@ -58,7 +58,7 @@
    [game.core.payment :refer [build-spend-msg can-pay? ->c]]
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [prevent-tag prevent-up-to-n-tags]]
+   [game.core.prevention :refer [prevent-encounter prevent-tag prevent-up-to-n-tags]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -1699,23 +1699,13 @@
              :effect (effect (gain-credits :runner eid (get-agenda-points (:card context))))}]})
 
 (defcard "Hunting Grounds"
-  {:events [{:event :prevent-encounter-ability
-             :interactive (req true)
-             :async true
-             :req (req (and (not (get-in @state [:run :prevent-encounter-ability]))
-                            (not-used-once? state {:once :per-turn} card)))
-             :effect (req
-                       (if (get-in @state [:run :prevent-encounter-ability])
-                         (effect-completed state side eid)
-                         (continue-ability
-                           state side
-                           {:optional {:prompt (msg "Prevent a \"when encountered\" ability on " (:title current-ice) (when (:ability-name target)
-                                                                                                                        (str " (" (:ability-name target) ")")))
-                                       :once :per-turn
-                                       :yes-ability {:msg (msg "prevent the encounter ability on " (:title current-ice) (when (:ability-name target)
-                                                                                                                          (str " (" (:ability-name target) ")")))
-                                                     :effect (req (swap! state assoc-in [:run :prevent-encounter-ability] true))}}}
-                           card targets)))}]
+  {:prevention [{:prevents :encounter
+                 :type :event
+                 :ability {:async true
+                           :once :per-turn
+                           :req (req (not-used-once? state {:once :per-turn} card))
+                           :msg (msg "prevent the encounter ability on " (:title current-ice))
+                           :effect (req (prevent-encounter state side eid))}}]
    :abilities [(letfn [(ri [cards]
                          (when (seq cards)
                            {:async true

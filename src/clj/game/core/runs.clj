@@ -13,7 +13,7 @@
     [game.core.ice :refer [active-ice? break-subs-event-context get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.mark :refer [is-mark?]]
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs ->c]]
-    [game.core.prevention :refer [resolve-end-run-prevention resolve-jack-out-prevention]]
+    [game.core.prevention :refer [resolve-encounter-prevention resolve-end-run-prevention resolve-jack-out-prevention]]
     [game.core.prompts :refer [clear-run-prompts clear-wait-prompt show-run-prompts show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [is-remote? target-server unknown->kw zone->name]]
@@ -325,14 +325,13 @@
   [abi ice]
   {:async true
    :interactive (req true)
-   :ability-name (or (:ability-name abi) (str (:title ice) " Ability"))
-   :effect (req (swap! state assoc-in [:run :prevent-encounter-ability] nil)
-                (wait-for (trigger-event-simult state :runner :prevent-encounter-ability nil {:ability-name (:ability-name abi)})
-                          (if (get-in @state [:run :prevent-encounter-ability])
-                            (effect-completed state side eid)
+   :ability-name (str (or (:ability-name abi) (:title ice)) " encounter")
+   :effect (req (wait-for (resolve-encounter-prevention state side {:title (str (or (:ability-name abi) (:title ice)) " encounter") :card ice})
+                          (if (pos? (:remaining async-result))
                             (do (register-pending-event state :resolve-ice-encounter-abi ice abi)
                                 (queue-event state :resolve-ice-encounter-abi {:ice ice})
-                                (checkpoint state side eid)))))})
+                                (checkpoint state side eid))
+                            (effect-completed state side eid))))})
 
 (defn encounter-ice
   ;; note: as far as I can tell, this deliberately leaves on open eid (the run eid).

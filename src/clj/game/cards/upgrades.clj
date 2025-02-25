@@ -1961,7 +1961,7 @@
                                       (some #(:printed %) (:subroutines target))
                                       (not (:disabled target))))
                        :value (req {:async true
-                                    :ability-name "ZATO Ability"
+                                    :ability-name "ZATO City Grid"
                                     :interactive (req true)
                                     :optional
                                     {:waiting-prompt true

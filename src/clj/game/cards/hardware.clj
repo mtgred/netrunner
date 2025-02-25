@@ -43,7 +43,7 @@
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
    [game.core.payment :refer [build-cost-string can-pay? cost-value ->c]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [prevent-end-run prevent-tag]]
+   [game.core.prevention :refer [prevent-encounter prevent-end-run prevent-tag]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
@@ -101,28 +101,17 @@
   {:data {:counter {:power 3}}
    :interactions {:prevent [{:type #{:net}
                              :req (req (and run (pos? (get-counters card :power))))}]}
-   :events [(trash-on-empty :power)
-            {:event :prevent-encounter-ability
-             :interactive (req true)
-             :req (req (and (not (get-in @state [:run :prevent-encounter-ability]))
-                            (pos? (get-counters card :power))))
-             :async true
-             :effect (req
-                       (if (get-in @state [:run :prevent-encounter-ability])
-                         (effect-completed state side eid)
-                         (continue-ability
-                           state side
-                           {:optional {:prompt (msg "Prevent a \"when encountered\" ability on " (:title current-ice) (when (:ability-name target)
-                                                                                                                        (str " (" (:ability-name target) ")")))
-                                       :yes-ability {:cost [(->c :power 1)]
-                                                     :msg (msg "prevent the encounter ability on " (:title current-ice) (when (:ability-name target)
-                                                                                                                          (str " (" (:ability-name target) ")")))
-                                                     :effect (req (swap! state assoc-in [:run :prevent-encounter-ability] true))}}}
-                           card targets)))}]
-     :abilities [{:cost [(->c :power 1)]
-                  :req (req run)
-                  :msg "prevent 1 net damage"
-                  :effect (effect (damage-prevent :net 1))}]})
+   :prevention [{:prevents :encounter
+                 :type :event
+                 :ability {:async true
+                           :cost [(->c :power 1)]
+                           :msg (msg "prevent the encounter ability on " (:title current-ice))
+                           :effect (req (prevent-encounter state side eid))}}]
+   :events [(trash-on-empty :power)]
+   :abilities [{:cost [(->c :power 1)]
+                :req (req run)
+                :msg "prevent 1 net damage"
+                :effect (effect (damage-prevent :net 1))}]})
 
 (defcard "Akamatsu Mem Chip"
   {:static-abilities [(mu+ 1)]})

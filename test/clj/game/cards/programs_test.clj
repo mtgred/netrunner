@@ -4784,7 +4784,7 @@
         (run-continue-until state :approach-ice)
         (rez state :corp (get-ice state :rd 0))
         (run-continue state)
-        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Hunting Grounds")
         (card-ability state :runner inv 1)
         (card-ability state :runner inv 1)
         (card-ability state :runner inv 0)

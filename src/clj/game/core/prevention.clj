@@ -122,6 +122,24 @@
 (def prevent-encounter
   (fn [state side eid] (prevent-numeric state side eid :encounter 1)))
 
+(defn resolve-encounter-prevention-for-side
+  [state side eid]
+  (resolve-keyed-prevention-for-side
+    state side eid :encounter
+    {:prompt (fn [state remainder] (str "Prevent " (get-in @state [:prevent :encounter :title]) " ability?"))
+     :waiting "your opponent to prevent a \"when encountered\" ability"
+     :option (fn [state remainder] (str "Allow " (get-in @state [:prevent :encounter :title])))}))
+
+(defn resolve-encounter-prevention
+  [state side eid {:keys [unpreventable card title] :as args}]
+  (swap! state assoc-in [:prevent :encounter]
+         {:count 1 :remaining 1 :title title :prevented 0 :source-player side :source-card card :uses {}})
+  (if unpreventable
+    (complete-with-result state side eid (fetch-and-clear! state :encounter))
+    (wait-for
+      (resolve-encounter-prevention-for-side state :runner)
+      (complete-with-result state side eid (fetch-and-clear! state :encounter)))))
+
 ;; END RUN PREVENTION
 (def prevent-end-run
   (fn [state side eid] (prevent-numeric state side eid :end-run 1)))
