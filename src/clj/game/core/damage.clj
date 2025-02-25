@@ -103,7 +103,7 @@
 (defn- resolve-damage
   "Resolves the attempt to do n damage, now that both sides have acted to boost or
   prevent damage."
-  [state side eid dmg-type n {:keys [card cause]}]
+  [state side eid dmg-type n {:keys [card cause suppress-checkpoint]}]
   (swap! state update-in [:damage :defer-damage] dissoc dmg-type)
   (swap! state dissoc-in [:damage :chosen-damage])
   (damage-choice-priority state)
@@ -130,16 +130,19 @@
                         (trash-cards state side eid cards-trashed {:unpreventable true}))
                     (wait-for (trash-cards state side cards-trashed {:unpreventable true
                                                                      :cause dmg-type
+                                                                     :suppress-checkpoint true
                                                                      :suppress-event true})
                               (queue-event state :damage {:amount n
                                                           :card card
                                                           :damage-type dmg-type
                                                           :cause cause
                                                           :cards-trashed cards-trashed})
-                              (let [trash-event (get-trash-event side false)
-                                    args {:durations [:damage trash-event]}]
-                                (wait-for (checkpoint state nil (make-eid state eid) args)
-                                          (complete-with-result state side eid cards-trashed))))))))))
+                              (if suppress-checkpoint
+                                (complete-with-result state side eid cards-trashed)
+                                (let [trash-event (get-trash-event side false)
+                                      args {:durations [:damage trash-event]}]
+                                  (wait-for (checkpoint state nil (make-eid state eid) args)
+                                            (complete-with-result state side eid cards-trashed)))))))))))
 
 (defn damage-count
   "Calculates the amount of damage to do, taking into account prevention and boosting effects."

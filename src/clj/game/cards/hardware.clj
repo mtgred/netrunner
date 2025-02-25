@@ -14,7 +14,7 @@
    [game.core.damage :refer [chosen-damage damage damage-prevent
                              enable-runner-damage-choice runner-can-choose-damage?]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
-                                  reorder-choice trash-on-empty get-x-fn]]
+                                  reorder-choice spend-credits take-credits trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect
                               unregister-effects-for-card unregister-lingering-effects]]
@@ -170,7 +170,8 @@
             {:event :runner-turn-ends
              :req (req tagged)
              :msg "place 1 power counter on itself"
-             :effect (req (add-counter state side (get-card state card) :power 1))}]})
+             :async true
+             :effect (req (add-counter state side eid card :power 1))}]})
 
 
 (defcard "Aniccam"
@@ -823,7 +824,7 @@
                :req (req (first-event? state :runner :successful-run))
                :msg "place 1 power counter on itself"
                :async true
-               :effect (effect (add-counter eid card :power 1 nil))}]
+               :effect (effect (add-counter eid card :power 1))}]
      :abilities [(break-sub [(->c :power 2)] 2 "All")]}))
 
 (defcard "Feedback Filter"
@@ -857,28 +858,27 @@
                   :req (req (and (not-empty (:hosted card))
                                  (pos? (get-counters card :credit))))
                   :async true
-                  :effect (req (add-counter state side card :credit -1)
-                               (system-msg state :runner "takes 1 hosted [Credits] from Flame-out")
+                  :effect (req (system-msg state :runner "takes 1 hosted [Credits] from Flame-out")
                                (register-flame-effect state card)
-                               (gain-credits state :runner eid 1))}
+                               (spend-credits state side eid card :credit 1))}
                  {:label "Take all hosted [Credits]"
                   :req (req (and (not-empty (:hosted card))
                                  (pos? (get-counters card :credit))))
                   :async true
                   :effect (req (let [credits (get-counters card :credit)]
-                                 (update! state :runner (dissoc-in card [:counter :credit]))
                                  (system-msg state :runner (str "takes " credits " hosted [Credits] from Flame-out"))
                                  (register-flame-effect state card)
-                                 (gain-credits state :runner eid credits)))}]
+                                 (take-credits state side eid card :credit :all)))}]
      :events [(assoc maybe-turn-end :event :runner-turn-ends)
               (assoc maybe-turn-end :event :corp-turn-ends)]
      :interactions {:pay-credits {:req (req (and (= :ability (:source-type eid))
                                                  (same-card? card (:host target))
                                                  (pos? (get-counters card :credit))))
                                   :custom-amount 1
-                                  :custom (req (add-counter state side card :credit -1)
-                                               (register-flame-effect state card)
-                                               (effect-completed state side (make-result eid 1)))
+                                  :custom (req (wait-for
+                                                 (add-counter state side card :credit -1 {:suppress-checkpoint true})
+                                                 (register-flame-effect state card)
+                                                 (effect-completed state side (make-result eid 1))))
                                   :type :custom}}}))
 
 (defcard "Flip Switch"
@@ -927,9 +927,12 @@
                  :req (req (and (pos? (get-counters card :virus))
                                 (pos? (count-virus-programs state))))
                  :choices {:card virus-program?}
-                 :effect (req (add-counter state :runner card :virus -1)
-                              (add-counter state :runner target :virus 1))}]
+                 :async true
+                 :effect (req (wait-for
+                                (add-counter state :runner card :virus -1 {:suppress-checkpoint true})
+                                (add-counter state :runner eid target :virus 1)))}]
     {:abilities [(set-autoresolve :auto-fire "Friday Chip placing virus counters on itself")]
+     :special {:auto-fire :always}
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-trash
                :once-per-instance true
@@ -939,18 +942,20 @@
                                   sing-ab {:optional
                                            {:prompt (msg "Place a virus counter on " (:title card) "?")
                                             :autoresolve (get-autoresolve :auto-fire)
-                                            :yes-ability {:effect (effect (system-msg
+                                            :yes-ability {:async true
+                                                          :effect (effect (system-msg
                                                                             :runner
                                                                             (str "uses " (:title card) " to place 1 virus counter on itself"))
-                                                                          (add-counter :runner card :virus 1))}}}
+                                                                          (add-counter :runner eid card :virus 1))}}}
                                   mult-ab {:prompt (msg "Place virus counters on " (:title card) "?")
                                            :choices {:number (req amt-trashed)
                                                      :default (req amt-trashed)}
+                                           :async true
                                            :effect (effect (system-msg :runner
                                                                        (str "uses " (:title card) " to place "
                                                                             (quantify target "virus counter")
                                                                             " on itself"))
-                                                           (add-counter :runner card :virus target))}
+                                                           (add-counter :runner eid card :virus target))}
                                   ab (if (> amt-trashed 1) mult-ab sing-ab)]
                               (continue-ability state side ab card targets)))}]}))
 
@@ -1110,7 +1115,8 @@
    :events [{:event :runner-install
              :interactive (req true)
              :req (req (has-subtype? (:card context) "Virus"))
-             :effect (effect (add-counter (:card context) :virus 1))}]})
+             :async true
+             :effect (effect (add-counter eid (:card context) :virus 1))}]})
 
 (defcard "Heartbeat"
   {:static-abilities [(mu+ 1)]
@@ -1211,31 +1217,24 @@
                             (effect-completed state side eid)))}]})
 
 (defcard "Keiko"
-  {:static-abilities [(mu+ 2)]
-   :events [{:event :spent-credits-from-card
-             :req (req (and (not (facedown? target))
-                            (has-subtype? target "Companion")
-                            (= 1 (+ (event-count state :runner :spent-credits-from-card
-                                                 #(and (not (facedown? (first %)))
-                                                       (has-subtype? (first %) "Companion")))
-                                    (event-count state :runner :runner-install
-                                                 #(and (not (facedown? (:card (first %))))
-                                                       (has-subtype? (:card (first %)) "Companion")))))))
+  (letfn [(companion? [[{:keys [card]}]]
+            (and (not (facedown? card))
+                 (has-subtype? card "Companion")))]
+    {:static-abilities [(mu+ 2)]
+     :events [{:event :spent-credits-from-card
+               :req (req (and (companion? [context])
+                              (= 1 (+ (event-count state :runner :spent-credits-from-card companion?)
+                                      (event-count state :runner :runner-install companion?)))))
              :msg "gain 1 [Credit]"
              :async true
              :effect (effect (gain-credits :runner eid 1))}
             {:event :runner-install
-             :req (req (and (not (:facedown context))
-                            (has-subtype? (:card context) "Companion")
-                            (= 1 (+ (event-count state :runner :spent-credits-from-card
-                                                 #(and (not (facedown? (first %)))
-                                                       (has-subtype? (first %) "Companion")))
-                                    (event-count state :runner :runner-install
-                                                 #(and (not (:facedown (first %)))
-                                                       (has-subtype? (:card (first %)) "Companion")))))))
+             :req (req (and (companion? [context])
+                            (= 1 (+ (event-count state :runner :spent-credits-from-card companion?)
+                                    (event-count state :runner :runner-install companion?)))))
              :msg "gain 1 [Credit]"
              :async true
-             :effect (effect (gain-credits :runner eid 1))}]})
+             :effect (effect (gain-credits :runner eid 1))}]}))
 
 (defcard "Knobkierie"
   {:static-abilities [(virus-mu+ 3)]
@@ -1250,7 +1249,8 @@
                                                             (has-subtype? % "Virus")
                                                             (program? %))}
                                       :msg (msg "place 1 virus counter on " (:title target))
-                                      :effect (effect (add-counter target :virus 1))}}}]
+                                      :async true
+                                      :effect (effect (add-counter eid target :virus 1))}}}]
    :abilities [(set-autoresolve :auto-fire "Knobkierie")]})
 
 (defcard "Lemuria Codecracker"
@@ -1329,13 +1329,15 @@
                :once-per-instance true
                :req (req (and (some pred targets)
                               (first-event? state side :runner-trash (fn [targets] (some pred targets)))))
+               :async true
                :effect (req (let [target (some #(when (pred %) (:card %)) targets)
                                   cost (trash-cost state side target)]
-                              (when cost
-                                (system-msg state side (str "uses " (:title card) " to place "
+                              (if cost
+                                (do (system-msg state side (str "uses " (:title card) " to place "
                                                             (quantify cost "power counter")
                                                             " on itself"))
-                                (add-counter state side card :power cost))))}]}))
+                                    (add-counter state side eid card :power cost))
+                                (effect-completed state side eid))))}]}))
 
 (defcard "Marrow"
   {:static-abilities [(mu+ 1)
@@ -1426,7 +1428,8 @@
    :events [{:event :successful-run
              :silent (req true)
              :req (req (= :rd (target-server context)))
-             :effect (effect (add-counter card :power 1))}]
+             :async true
+             :effect (effect (add-counter eid card :power 1))}]
    :abilities [{:action true
                 :async true
                 :cost [(->c :click 1) (->c :power 3)]
@@ -1442,7 +1445,8 @@
                                {:prompt "Choose a card and replace 1 spent [Recurring Credits] on it"
                                 :choices {:card #(< (get-counters % :recurring) (:recurring (card-def %) 0))}
                                 :msg (msg "replace 1 spent [Recurring Credits] on " (:title target))
-                                :effect (effect (add-counter target :recurring 1))}
+                                :async true
+                                :effect (effect (add-counter eid target :recurring 1))}
                                card nil))}]})
 
 (defcard "Monolith"
@@ -1726,15 +1730,16 @@
              :silent (req true)
              :async true
              :msg "place 1 [Credits]"
-             :effect (req (add-counter state :runner eid card :credit 1 nil))}]
+             :effect (req (add-counter state :runner eid card :credit 1))}]
    :abilities [{:action true
                 :cost [(->c :click 1)]
                 :label "Gain 1 [Credits]. Take all hosted credits"
                 :async true
                 :msg (msg "gain " (inc (get-counters card :credit)) " [Credits]")
                 :effect (req (let [credits (inc (get-counters card :credit))]
-                               (add-counter state side card :credit (-(dec credits)))
-                               (gain-credits state :runner eid credits)))}]})
+                               (wait-for
+                                 (add-counter state side card :credit (-(dec credits)))
+                                 (gain-credits state :runner eid credits))))}]})
 
 (defcard "Plascrete Carapace"
   {:data {:counter {:power 4}}
@@ -1957,13 +1962,15 @@
   (let [ability {:once :per-turn
                  :msg "draw 1 card and place a power counter"
                  :async true
-                 :effect (req (wait-for (draw state :runner 1)
-                                        (add-counter state side (get-card state card) :power 1)
-                                        (if (= 3 (get-counters (get-card state card) :power))
-                                          (do (system-msg state :runner (str "trashes " (:title card) " as it reached 3 power counters"))
-                                              (trash state side eid card {:unpreventable true
-                                                                          :cause-card card}))
-                                          (effect-completed state side eid))))}
+                 :effect (req (wait-for
+                                (draw state :runner 1)
+                                (wait-for
+                                  (add-counter state side (get-card state card) :power 1)
+                                  (if (= 3 (get-counters (get-card state card) :power))
+                                    (do (system-msg state :runner (str "trashes " (:title card) " as it reached 3 power counters"))
+                                        (trash state side eid card {:unpreventable true
+                                                                    :cause-card card}))
+                                    (effect-completed state side eid)))))}
         event {:req (req (zero? (count (:hand runner))))
                :async true
                :effect (effect (continue-ability ability card targets))}]
@@ -2201,12 +2208,13 @@
                             (when (pos? (count-real-tags state)) "Remove 1 tag")
                             "Done"])
              :effect (req (if (= target "Draw 1 card")
-                            (do (add-counter state side card :power -1)
-                                (system-msg state side (str "uses " (:title card)
-                                                            " to draw 1 card"))
-                                (draw state :runner eid 1))
+                            (wait-for
+                              (add-counter state side card :power -1)
+                              (system-msg state side (str "uses " (:title card)
+                                                          " to draw 1 card"))
+                              (draw state :runner eid 1))
                             (if (= target "Remove 1 tag")
-                              (do
+                              (wait-for
                                 (add-counter state side card :power -1)
                                 (system-msg state side (str "uses " (:title card)
                                                             " to remove 1 tag"))
@@ -2220,8 +2228,7 @@
                                           (fn [targets]
                                             (some #(corp? (:card %)) targets)))))
              :msg "place 1 power counter on itself"
-             :effect (effect (add-counter :runner card :power 1)
-                             (effect-completed eid))}]})
+             :effect (effect (add-counter :runner eid card :power 1))}]})
 
 (defcard "Spinal Modem"
   {:static-abilities [(mu+ 1)]
@@ -2392,14 +2399,12 @@
    :events [{:event :runner-turn-begins
              :async true
              :effect (req (if (<= 3 (get-counters (get-card state card) :power))
-                            (wait-for (trash state side card {:unpreventable :true
-                                                              :cause-card card})
+                            (wait-for (trash state side card {:cause-card card})
                                       (continue-ability state side
                                                         (sabotage-ability 3)
                                                         card nil))
                             (do (system-msg state side (str "uses " (:title card) " to place 1 power counter on itself"))
-                                (add-counter state side card :power 1)
-                                (effect-completed state side eid))))}]})
+                                (add-counter state side eid card :power 1))))}]})
 
 (defcard "Titanium Ribs"
   {:on-install {:async true
@@ -2541,8 +2546,7 @@
              :async true
              :req (req (= :hq (target-server context)))
              :msg "place 1 power counter on itself"
-             :effect (req (add-counter state :runner card :power 1 {:placed true})
-                          (effect-completed state side eid))}
+             :effect (req (add-counter state :runner eid card :power 1 {:placed true}))}
             {:event :breach-server
              :async true
              :req (req (and (= :rd target)
@@ -2555,9 +2559,8 @@
                              :msg (msg "access " (quantify target "additional card") " from R&D")
                              :waiting-prompt true
                              :async true
-                             :effect (effect (access-bonus :rd (max 0 target))
-                                             (add-counter :runner card :power (- target) {:placed true})
-                                             (effect-completed eid))}
+                             :effect (req (access-bonus state :runner :rd (max 0 target))
+                                          (add-counter state :runner eid card :power (- target) {:placed true}))}
                             card nil))}]})
 
 (defcard "Window"

@@ -612,7 +612,8 @@
   (let [valid-trash (fn [target] (corp? (:card target)))
         ability {:once :per-turn
                  :msg "place 1 power counter on itself"
-                 :effect (req (add-counter state side card :power 1))}]
+                 :async true
+                 :effect (req (add-counter state side eid card :power 1 nil))}]
   {:events [(assoc ability :event :runner-trash :req (req (valid-trash target)))
             (assoc ability :event :agenda-stolen :req (req true))]
    :abilities [{:action true
@@ -724,7 +725,8 @@
              :choices {:card #(and (installed? %)
                                    (ice? %))}
              :msg (msg "place 1 advancement token on " (card-str state target))
-             :effect (req (add-prop state :corp target :advance-counter 1 {:placed true}))}]})
+             :async true
+             :effect (req (add-prop state :corp eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Gabriel Santiago: Consummate Professional"
   {:events [{:event :successful-run
@@ -929,9 +931,9 @@
 
 (defcard "Hyoubu Institute: Absolute Clarity"
   {:events [{:event :corp-reveal
-             :req (req (and
-                         (pos? (count targets))
-                         (first-event? state side :corp-reveal #(pos? (count %)))))
+             :req (req (letfn [(valid-ctx? [[{:keys [cards] :as ctx}]] (pos? (count cards)))]
+                         (and (valid-ctx? [context])
+                              (first-event? state side :corp-reveal valid-ctx?))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]
@@ -997,8 +999,8 @@
                                  (filter #(same-card? (:card context) (:card %)))
                                  empty?)))
              :msg "put 1 charge counter on itself"
-             :effect (req (add-counter state side card :power 1)
-                          (check-win-by-agenda state))}]})
+             :async true
+             :effect (req (add-counter state side eid card :power 1))}]})
 
 (defcard "Jamie \"Bzzz\" Micken: Techno Savant"
   {:events [{:event :pre-start-game
@@ -1024,7 +1026,8 @@
                                           (corp? %))}
                     :msg (msg "place " (quantify p "advancement token")
                               " on " (card-str state target))
-                    :effect (effect (add-prop :corp target :advance-counter p {:placed true}))})
+                    :async true
+                    :effect (effect (add-prop :corp eid target :advance-counter p {:placed true}))})
                  card nil))}]})
 
 (defcard "Jesminder Sareen: Girl Behind the Curtain"
@@ -1077,7 +1080,8 @@
                                        state side
                                        {:prompt "Choose a card that can be advanced"
                                         :choices {:req (req (can-be-advanced? state target))}
-                                        :effect (effect (add-prop target :advance-counter 4 {:placed true}))}
+                                        :async true
+                                        :effect (effect (add-prop eid target :advance-counter 4 {:placed true}))}
                                        card nil))
                                  (do (toast state :corp (str "Unknown Jinteki Biotech: Life Imagined card: " flip) "error")
                                      (effect-completed state side eid)))))}]})
@@ -1976,7 +1980,8 @@
                                    :choices {:card #(selectable-ice? %)}
                                    :msg (msg "place " (quantify agenda-points "advancement token")
                                              " on " (card-str state target))
-                                   :effect (effect (add-prop target :advance-counter agenda-points {:placed true}))}
+                                   :async true
+                                   :effect (effect (add-prop eid target :advance-counter agenda-points {:placed true}))}
                                   card nil)))}}}]
      :abilities [(set-autoresolve :auto-fire "SSO Industries: Fueling Innovation")]}))
 
@@ -2108,7 +2113,8 @@
                 :req (req (and (:corp-phase-12 @state)
                                (not-last-turn? state :runner :successful-run)))
                 :once :per-turn
-                :effect (effect (add-prop target :advance-counter 1 {:placed true}))}]})
+                :async true
+                :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "The Catalyst: Convention Breaker"
   ;; No special implementation
@@ -2250,7 +2256,8 @@
 (defcard "Titan Transnational: Investing In Your Future"
   {:events [{:event :agenda-scored
              :msg (msg "place 1 agenda counter on " (:title (:card context)))
-             :effect (effect (add-counter (get-card state (:card context)) :agenda 1))}]})
+             :async true
+             :effect (effect (add-counter eid (:card context) :agenda 1 nil))}]})
 
 (defcard "Valencia Estevez: The Angel of Cayambe"
   {:events [{:event :pre-start-game

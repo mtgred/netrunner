@@ -519,15 +519,20 @@
 (defcard "Business As Usual"
   (let [faux-purge {:choices {:req (req (and (installed? target)
                                              (pos? (get-counters target :virus))))}
-                    :effect (effect (add-counter target :virus (* -1 (get-counters target :virus))))
+                    :async true
+                    :effect (effect (add-counter eid target :virus (* -1 (get-counters target :virus)) nil))
                     :msg (msg "remove all virus counters from " (card-str state target))}
         kaguya {:choices {:max 2
                           :req (req (and (corp? target)
                                          (installed? target)
                                          (can-be-advanced? state target)))}
                 :msg (msg "place 1 advancement counter on " (quantify (count targets) "card"))
-                :effect (req (doseq [t targets]
-                               (add-prop state :corp t :advance-counter 1 {:placed true})))}]
+                :async true
+                :effect (req (let [[f1 f2] targets]
+                               (if f2
+                                 (wait-for (add-prop state :corp f1 :advance-counter 1 {:placed true})
+                                           (add-prop state :corp eid f2 :advance-counter 1 {:placed true}))
+                                 (add-prop state :corp eid f1 :advance-counter 1 {:placed true}))))}]
     {:on-play (choose-one-helper
                 {:optional :after-first
                  :change-in-game-state (req (or (something-can-be-advanced? state)
@@ -697,13 +702,15 @@
                                   (:host %))
                               (not (facedown? %))))}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
-    :effect (effect (add-counter target :advancement 3 {:placed true})
-                    (register-turn-flag!
-                      target :can-score
-                      (fn [state _ card]
-                        (if (same-card? card target)
-                          ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
-                          true))))}})
+    :async true
+    :effect (req (add-counter state side eid target :advancement 3 {:placed true})
+                 (register-turn-flag!
+                   state side
+                   target :can-score
+                   (fn [state _ card]
+                     (if (same-card? card target)
+                       ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
+                       true))))}})
 
 (defcard "Defective Brainchips"
   {:events [{:event :pre-damage
@@ -1054,7 +1061,8 @@
                                                        {:msg (msg "place " (quantify c " advancement token") " on "
                                                                   (card-str state target))
                                                         :choices {:card installed?}
-                                                        :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                                        :async true
+                                                        :effect (effect (add-prop eid target :advance-counter c {:placed true}))}
                                                        card nil))
                                            (effect-completed state side eid))))}))
                        card nil)))}})
@@ -1217,7 +1225,8 @@
                                                                        :waiting-prompt true
                                                                        :yes-ability {:msg (msg "removes 1 tag to place 1 advancement counter on " (card-str state installed-card))
                                                                                      :cost [(->c :tag 1)]
-                                                                                     :effect (req (add-prop state :corp installed-card :advance-counter 1 {:placed true}))}}}
+                                                                                     :async true
+                                                                                     :effect (req (add-prop state :corp eid installed-card :advance-counter 1 {:placed true}))}}}
                                                            card nil)
                                                          (effect-completed state side eid)))))}
                              card nil)))}})
@@ -2138,7 +2147,8 @@
                                    {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
                                     :change-in-game-state (req (something-can-be-advanced? state))
                                     :choices {:req (req (can-be-advanced? state target))}
-                                    :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                    :async true
+                                    :effect (effect (add-prop eid target :advance-counter c {:placed true}))}
                                    card nil)))
                      (effect-completed state side eid))))}})
 
@@ -2300,21 +2310,27 @@
       :effect (effect (continue-ability (choice all false) card nil))}}))
 
 (defcard "Red Planet Couriers"
-  {:on-play
-   {:prompt "Choose an installed card that can be advanced"
-    :choices {:req (req (can-be-advanced? state target))}
-    :change-in-game-state (req (something-can-be-advanced? state))
-    :async true
-    :effect (req (let [installed (get-all-installed state)
-                       total-adv (reduce + (map #(get-counters % :advancement) installed))]
-                   (doseq [c installed]
-                     (add-prop state side c :advance-counter (- (get-counters c :advancement)) {:placed true}))
-                   (add-prop state side target :advance-counter total-adv {:placed true})
-                   (update-all-ice state side)
-                   (system-msg state side (str "uses " (:title card) " to move "
-                                               (quantify total-adv "advancement counter")
-                                               " to " (card-str state target)))
-                   (effect-completed state side eid)))}})
+  (letfn [(clear-counters [state side eid [c :as installed]]
+            (if (seq installed)
+              (wait-for (add-prop state side c :advance-counter (- (get-counters c :advancement)) {:placed true :suppress-checkpoint true})
+                        (clear-counters state side eid (rest installed)))
+              (effect-completed state side eid)))]
+    {:on-play
+     {:prompt "Choose an installed card that can be advanced"
+      :choices {:req (req (can-be-advanced? state target))}
+      :change-in-game-state (req (something-can-be-advanced? state))
+      :async true
+      :effect (req (let [installed (get-all-installed state)
+                         total-adv (reduce + (map #(get-counters % :advancement) installed))]
+                     (wait-for
+                       (clear-counters state side installed)
+                       (wait-for
+                         (add-prop state side target :advance-counter total-adv {:placed true})
+                         (update-all-ice state side)
+                         (system-msg state side (str "uses " (:title card) " to move "
+                                                     (quantify total-adv "advancement counter")
+                                                     " to " (card-str state target)))
+                         (effect-completed state side eid)))))}}))
 
 (defcard "Replanting"
   (letfn [(replant [n]
@@ -2482,7 +2498,8 @@
              :condition :hosted
              :req (req (same-card? (:ice context) (:host card)))
              :msg "place 1 power counter on itself"
-             :effect (effect (add-counter card :power 1))}]})
+             :async true
+             :effect (effect (add-counter eid card :power 1 nil))}]})
 
 (defcard "Sacrifice"
   {:on-play
@@ -2623,8 +2640,12 @@
                              (can-be-advanced? state target)))}
     :change-in-game-state (req (something-can-be-advanced? state))
     :msg (msg "place 1 advancement token on " (quantify (count targets) "card"))
-    :effect (req (doseq [t targets]
-                   (add-prop state :corp t :advance-counter 1 {:placed true})))}})
+    :async true
+    :effect (req (let [[f1 f2] targets]
+                               (if f2
+                                 (wait-for (add-prop state :corp f1 :advance-counter 1 {:placed true})
+                                           (add-prop state :corp eid f2 :advance-counter 1 {:placed true}))
+                                 (add-prop state :corp eid f1 :advance-counter 1 {:placed true}))))}})
 
 (defcard "Shipment from MirrorMorph"
   (letfn [(shelper [n]
@@ -2653,7 +2674,8 @@
                      state side
                      {:choices {:req (req (can-be-advanced? state target))}
                       :msg (msg "place " (quantify c "advancement token") " on " (card-str state target))
-                      :effect (effect (add-prop :corp target :advance-counter c {:placed true}))}
+                      :async true
+                      :effect (effect (add-prop :corp eid target :advance-counter c {:placed true}))}
                      card nil)))}})
 
 (defcard "Shipment from Tennin"
@@ -2662,7 +2684,8 @@
     :choices {:card #(and (corp? %)
                           (installed? %))}
     :msg (msg "place 2 advancement tokens on " (card-str state target))
-    :effect (effect (add-prop target :advance-counter 2 {:placed true}))}})
+    :async true
+    :effect (effect (add-prop eid target :advance-counter 2 {:placed true}))}})
 
 (defcard "Shipment from Vladisibirsk"
   (letfn [(ability [x]
@@ -3115,8 +3138,10 @@
                                   :choices (take (inc (get-counters source :advancement)) ["0" "1" "2"])
                                   :msg (msg "move " target " advancement counters from "
                                             (card-str state source) " to " (card-str state card-to-advance))
-                                  :effect (effect (add-prop :corp card-to-advance :advance-counter (str->int target) {:placed true})
-                                                  (add-prop :corp source :advance-counter (- (str->int target)) {:placed true}))})
+                                  :async true
+                                  :effect (req (wait-for
+                                                 (add-prop state :corp card-to-advance :advance-counter (str->int target) {:placed true :suppress-checkpoint true})
+                                                 (add-prop state :corp eid source :advance-counter (- (str->int target)) {:placed true})))})
                                card nil))})
                 card nil))}})
 

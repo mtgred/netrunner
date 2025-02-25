@@ -460,15 +460,17 @@
 
 (defn mill
   "Force the discard of n cards from the deck by trashing them"
-  [state from-side eid to-side n]
-  (let [cards (take n (get-in @state [to-side :deck]))]
-    (trash-cards state from-side eid cards {:unpreventable true})))
+  ([state from-side eid to-side n] (mill state from-side eid to-side n nil))
+  ([state from-side eid to-side n args]
+   (let [cards (take n (get-in @state [to-side :deck]))]
+     (trash-cards state from-side eid cards (assoc args :unpreventable true)))))
 
 (defn discard-from-hand
   "Force the discard of n cards from the hand by trashing them"
-  [state from-side eid to-side n]
-  (let [cards (take n (shuffle (get-in @state [to-side :hand])))]
-    (trash-cards state from-side eid cards {:unpreventable true})))
+  ([state from-side eid to-side n] (discard-from-hand state from-side eid to-side n nil))
+  ([state from-side eid to-side n args]
+   (let [cards (take n (shuffle (get-in @state [to-side :hand])))]
+     (trash-cards state from-side eid cards (assoc args :unpreventable true)))))
 
 (defn swap-legal?
   "checks that swapping two installed corp cards is legal"

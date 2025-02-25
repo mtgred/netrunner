@@ -100,11 +100,15 @@
 
 (defn lose-tags
   "Always removes `:base` tags"
-  [state side eid n]
-  (if (= n :all)
-    (lose-tags state side eid (get-in @state [:runner :tag :base]))
-    (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
-        (deduct state :runner [:tag {:base n}])
-        (update-tag-status state)
-        (trigger-event-sync state side eid :runner-lose-tag {:amount n
-                                                             :side side}))))
+  ([state side eid n] (lose-tags state side eid n nil))
+  ([state side eid n {:keys [suppress-checkpoint] :as args}]
+   (if (= n :all)
+     (lose-tags state side eid (get-in @state [:runner :tag :base]))
+     (do (swap! state update-in [:stats :runner :lose :tag] (fnil + 0) n)
+         (deduct state :runner [:tag {:base n}])
+         (update-tag-status state)
+         (queue-event state :runner-lose-tag {:amount n
+                                              :side side})
+         (if suppress-checkpoint
+           (effect-completed state nil eid)
+           (checkpoint state eid))))))

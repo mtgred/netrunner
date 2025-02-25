@@ -235,8 +235,7 @@
              {:msg "remove 1 tag"
               :async true
               :effect (effect (lose-tags eid 1))}
-             {:effect (effect (add-counter (get-card state card) :credit 4)
-                              (effect-completed eid))
+             {:effect (effect (add-counter eid (get-card state card) :credit 4 nil))
               :async true
               :msg "place 4 [Credits] for paying trash costs"}]
         choice (fn choice [abis rem]
@@ -740,10 +739,12 @@
               {:async true
                :msg (msg "reveal " (get-title topcard) " from the top of the stack, "
                          "move it to the grip and place " (:cost topcard) " [Credits] on itself")
-               :effect (req (wait-for (reveal state side topcard)
-                                      (add-counter state side card :credit (:cost topcard) {:placed true})
-                                      (move state :runner topcard :hand)
-                                      (effect-completed state side eid)))}))]
+               :effect (req (wait-for
+                              (reveal state side topcard)
+                              (wait-for
+                                (add-counter state side card :credit (:cost topcard) {:placed true})
+                                (move state :runner topcard :hand)
+                                (effect-completed state side eid))))}))]
     {:makes-run true
      :interactions {:pay-credits {:req (req run)
                                   :type :credit}}
@@ -1443,8 +1444,9 @@
                                                         (= (first (:server run)) (second (get-zone %))))}
                                   :msg (msg "remove " (quantify c "advancement token")
                                             " from " (card-str state target))
+                                  :async true
                                   :effect (req (let [to-remove (min c (get-counters target :advancement))]
-                                                 (add-prop state :corp target :advance-counter (- to-remove))))}
+                                                 (add-prop state :corp eid target :advance-counter (- to-remove))))}
                                  card nil)))}})]})
 
 (defcard "Express Delivery"
@@ -3071,14 +3073,16 @@
                                          (not (:rezzed %)))}
                    :msg (msg "place " (quantify c "advancement token") " on " (card-str state target) " and gain " (* 2 c) " [Credits]")
                    :async true
-                   :effect (req (wait-for (gain-credits state side (* 2 c))
-                                          (add-prop state :corp target :advance-counter c {:placed true})
-                                          (register-turn-flag!
-                                            state side
-                                            card :can-access
-                                            ;; prevent access of advanced card
-                                            (fn [_ _ card] (not (same-card? target card))))
-                                          (effect-completed state side eid)))})
+                   :effect (req (wait-for
+                                  (gain-credits state side (* 2 c))
+                                  (wait-for
+                                    (add-prop state :corp target :advance-counter c {:placed true})
+                                    (register-turn-flag!
+                                      state side
+                                      card :can-access
+                                      ;; prevent access of advanced card
+                                      (fn [_ _ card] (not (same-card? target card))))
+                                    (effect-completed state side eid))))})
                 card nil))}})
 
 (defcard "Quest Completed"
@@ -3101,7 +3105,8 @@
              :effect (effect (make-run eid target card))}
    :events [{:event :subroutine-fired
              :req (req (some #(= % :play-area) (:zone card)))
-             :effect (effect (add-counter (get-card state card) :power 1))}
+             :async true
+             :effect (effect (add-counter eid (get-card state card) :power 1 nil))}
             {:event :run-ends
              :async true
              :req (req this-card-run)
@@ -3799,15 +3804,16 @@
 (defcard "Surge"
   (letfn [(placed-virus-cards [state]
             (->> (turn-events state :runner :counter-added)
-                 (filter #(= :virus (:counter-type (second %))))
+                 (filter #(= :virus (:counter-type (first %))))
                  (map first)
-                 (keep #(get-card state %))
+                 (keep #(get-card state (:card %)))
                  (seq)))]
     {:on-play
      {:req (req (placed-virus-cards state))
       :choices {:req (req (some #(same-card? % target) (placed-virus-cards state)))}
       :msg (msg "place 2 virus tokens on " (:title target))
-      :effect (effect (add-counter :runner target :virus 2))}}))
+      :async true
+      :effect (effect (add-counter :runner eid target :virus 2 nil))}}))
 
 (defcard "SYN Attack"
   {:on-play
@@ -4061,10 +4067,11 @@
                             this-card-run
                             (= (get-in card [:special :run-eid :eid]) (get-in @state [:run :eid :eid]))))
              :msg "place 2 [Credits] on itself and access 1 additional card from R&D"
+             :async true
              :effect (effect
-                       (add-counter card :credit 2 {:placed true})
                        (register-events
-                         card [(breach-access-bonus :rd 1 {:duration :end-of-run})]))}
+                         card [(breach-access-bonus :rd 1 {:duration :end-of-run})])
+                       (add-counter eid card :credit 2 {:placed true}))}
             {:event :run-ends
              :unregister-once-resolved true
              :req (req this-card-run)

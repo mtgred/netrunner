@@ -7,7 +7,7 @@
     [game.core.card-defs :as card-defs]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [register-events resolve-ability trigger-event-sync unregister-event-by-uuid]]
+    [game.core.engine :refer [queue-event register-events resolve-ability trigger-event-sync unregister-event-by-uuid]]
     [game.core.effects :refer [is-disabled-reg?]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.moving :refer [move trash]]
@@ -149,7 +149,7 @@
   "Used in :event maps for effects like Malandragem"
   [counter-type]
   {:event :counter-added
-   :req (req (and (same-card? card target)
+   :req (req (and (same-card? card (:card context))
                   (not (get-in card [:special :skipped-loading]))
                   (not (pos? (get-counters card counter-type)))))
    :effect (effect (system-msg (str "removes " (:title card) " from the game"))
@@ -159,12 +159,41 @@
   "Used in :event maps for effects like Daily Casts"
   [counter-type]
   {:event :counter-added
-   :req (req (and (same-card? card target)
+   :req (req (and (same-card? card (:card context))
                   (not (get-in card [:special :skipped-loading]))
                   (not (pos? (get-counters card counter-type)))))
    :async true
    :effect (effect (system-msg (str "trashes " (:title card)))
                    (trash eid card {:unpreventable true :source-card card}))})
+
+(defn take-credits
+  "Take n counters from a card and place them in your credit pool as if they were credits (if possible)"
+  ([state side eid card type n] (take-credits state side eid card type n nil))
+  ([state side eid card type n args]
+   (if-let [card (get-card state card)]
+     (let [n (if (= :all n) (get-counters card type) n)
+           n (min n (get-counters card type))]
+       (if (pos? n)
+         (wait-for (add-counter state side card type (- n) {:placed true :suppress-checkpoint true})
+                   ;; (queue-event state side :spent-credits-from-card card)
+                   (gain-credits state side eid n args))
+         (effect-completed state side eid)))
+     (effect-completed state side eid))))
+
+;; NOTE - update this as the above (take credits) is updated
+(defn spend-credits
+  "Take n counters from a card and place them in your credit pool (if possible) - and trigger an event as if the credits were spent"
+  ([state side eid card type n] (spend-credits state side eid card type n nil))
+  ([state side eid card type n args]
+   (if-let [card (get-card state card)]
+     (let [n (if (= :all n) (get-counters card type) n)
+           n (min n (get-counters card type))]
+       (if (pos? n)
+         (wait-for (add-counter state side card type (- n) {:placed true :suppress-checkpoint true})
+                   (queue-event state :spent-credits-from-card {:card card})
+                   (gain-credits state side eid n args))
+         (effect-completed state side eid)))
+     (effect-completed state side eid))))
 
 (defn make-recurring-ability
   [ability]
@@ -173,9 +202,7 @@
           {:msg "take 1 [Recurring Credits]"
            :req (req (pos? (get-counters card :recurring)))
            :async true
-           :effect (req (add-counter state side card :recurring -1)
-                        (wait-for (gain-credits state side 1)
-                                  (trigger-event-sync state side eid :spent-credits-from-card (get-card state card))))}]
+           :effect (req (spend-credits state side eid card :recurring 1))}]
       (update ability :abilities #(conj (into [] %) recurring-ability)))
     ability))
 

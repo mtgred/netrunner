@@ -3,6 +3,7 @@
    [clojure.string :as str]
    [clojure.test :refer :all]
    [game.core :as core]
+   [game.core.eid :refer [make-eid]]
    [game.core.card :refer :all]
    [game.core.mark :refer [is-mark?]]
    [game.core.servers :refer [unknown->kw zone->name]]
@@ -1657,7 +1658,7 @@
       (is (= 1 (count (prompt-buttons :runner))) "Runner doesn't have enough credits to trash")
       (click-prompt state :runner "No action")
       (play-from-hand state :runner "Imp")
-      (core/add-counter state :runner (get-program state 0) :virus 5)
+      (core/add-counter state :runner (make-eid state) (get-program state 0) :virus 5)
       (play-from-hand state :runner "Skulljack")
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1714,7 +1715,7 @@
       (play-from-hand state :corp "Sandstone" "R&D")
       (let [sandstone (get-ice state :rd 0)]
         (rez state :corp sandstone)
-        (core/add-counter state :corp sandstone :virus 1)
+        (core/add-counter state :corp (make-eid state) sandstone :virus 1)
         (take-credits state :corp)
         (run-empty-server state "HQ")
         (is (= 1 (get-counters (refresh sandstone) :virus)) "Sandstone has 1 virus counter")
@@ -2503,7 +2504,7 @@
       (let [gs (get-content state :remote1 0)
             arch (get-ice state :hq 0)
             iwall (get-ice state :rd 0)]
-        (core/add-counter state :corp gs :advancement 3)
+        (core/add-counter state :corp (make-eid state) gs :advancement 3)
         (rez state :corp (refresh gs))
         (card-ability state :corp (refresh gs) 0)
         (is (nil? (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
@@ -4067,7 +4068,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Cookbook")
     (play-from-hand state :runner "Gravedigger")
-    (click-prompt state :runner "Yes")
     (is (changed? [(:credit (get-corp)) 0]
           (card-ability state :runner (get-program state 0) 0))
         "Nuvem should not fire on Runner's turn")))
