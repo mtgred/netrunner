@@ -431,7 +431,6 @@
    persistent-flag?
    prevent-current
    prevent-draw
-   prevent-jack-out
    register-persistent-flag!
    register-run-flag!
    register-turn-flag!
@@ -713,7 +712,6 @@
    get-runnable-zones
    handle-end-run
    jack-out
-   jack-out-prevent
    make-run
    pass-ice
    prevent-access

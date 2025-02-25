@@ -10,10 +10,11 @@
                            in-hand? in-scored? installed? is-type? program? resource? rezzed?
                            runner? virus-program? faceup?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [install-cost rez-additional-cost-bonus rez-cost trash-cost]]
    [game.core.damage :refer [chosen-damage damage damage-prevent
                              enable-runner-damage-choice runner-can-choose-damage?]]
-   [game.core.def-helpers :refer [breach-access-bonus choose-one-helper defcard offer-jack-out
+   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects register-lingering-effect

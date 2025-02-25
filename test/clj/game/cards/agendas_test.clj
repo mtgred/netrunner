@@ -2070,40 +2070,30 @@
 (deftest labyrinthine-servers
   ;; Labyrinthine Servers
   (do-game
-    (new-game {:corp {:deck [(qty "Labyrinthine Servers" 2)]}})
-    (play-and-score state "Labyrinthine Servers")
+    (new-game {:corp {:deck [(qty "Labyrinthine Servers" 1)]}})
     (play-and-score state "Labyrinthine Servers")
     (take-credits state :corp)
-    (let [ls1 (get-scored state :corp 0)
-          ls2 (get-scored state :corp 1)]
+    (let [ls1 (get-scored state :corp 0)]
       (is (= 2 (get-counters (refresh ls1) :power)))
-      (is (= 2 (get-counters (refresh ls2) :power)))
       (testing "Don't use token"
         (run-on state "HQ")
         (run-jack-out state)
         (is (:run @state) "Jack out prevent prompt")
-        (click-prompt state :corp "Done")
+        (click-prompt state :corp "Allow the Runner to jack out")
         (is (not (:run @state)) "Corp does not prevent the jack out, run ends"))
       (testing "Use token"
         (run-on state "HQ")
         (run-jack-out state)
-        (card-ability state :corp ls1 0)
-        (card-ability state :corp ls2 0)
-        (card-ability state :corp ls1 0)
-        (click-prompt state :corp "Done")
+        (click-prompt state :corp "Labyrinthine Servers")
         (is (:run @state) "Jack out prevented, run is still ongoing")
-        (is (get-in @state [:run :cannot-jack-out]) "Cannot jack out flag is in effect")
         (run-continue state)
         (is (not (:run @state))))
-      (testing "one Labyrinthine is empty but the other still has one token, ensure prompt still occurs"
-        (is (zero? (get-counters (refresh ls1) :power)))
-        (is (= 1 (get-counters (refresh ls2) :power)))
+      (testing "one counter left"
+        (is (= 1 (get-counters (refresh ls1) :power)))
         (run-on state "HQ")
         (run-jack-out state)
         (is (:run @state))
-        (card-ability state :corp ls2 0)
-        (click-prompt state :corp "Done")
-        (is (get-in @state [:run :cannot-jack-out]))
+        (click-prompt state :corp "Labyrinthine Servers")
         (run-continue state)
         (is (not (:run @state))))
       (testing "No more tokens"

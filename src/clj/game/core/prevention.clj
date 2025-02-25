@@ -1,10 +1,10 @@
 (ns game.core.prevention
   (:require
-   [game.core.board :refer [all-installed]]
+   [game.core.board :refer [all-active]]
    [game.core.card :refer [get-card rezzed? same-card?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [card-ability-cost]]
-   [game.core.def-helpers :refer [choose-one-helper]]
    [game.core.eid :refer [complete-with-result effect-completed]]
    [game.core.effects :refer [any-effects]]
    [game.core.engine :refer [resolve-ability trigger-event-simult trigger-event-sync]]
@@ -45,7 +45,7 @@
 
 (defn- gather-prevention-abilities
   [state side eid key]
-  (mapcat #(relevant-prevention-abilities state side eid key %) (all-installed state side)))
+  (mapcat #(relevant-prevention-abilities state side eid key %) (all-active state side)))
 
 (defn prevent-numeric
   [state side eid key n]
@@ -86,6 +86,47 @@
              :req (:req (:ability prevention))
              :effect (req (trigger-prevention state side eid key prevention))}})
 
+;; JACK OUT PREVENTION
+
+(def prevent-jack-out
+  (fn [state side eid] (prevent-numeric state side eid :jack-out 1)))
+
+(defn- resolve-jack-out-prevention-for-side
+  [state side eid]
+  (let [remainder (get-in @state [:prevent :jack-out :remaining])]
+    (if (or (not (pos? remainder)) (get-in @state [:prevent :jack-out :passed]))
+      (do (swap! state dissoc-in [:prevent :jack-out :passed])
+          (effect-completed state side eid))
+      (let [preventions (gather-prevention-abilities state side eid :jack-out)]
+        (if (empty? preventions)
+          (effect-completed state side eid)
+          ;; TODO - if there's exactly ONE choice, and it's also mandatory, just rip that choice
+          (if (and (= 1 (count preventions))
+                   (:mandatory (first preventions)))
+            (wait-for (trigger-prevention state side :jack-out (first preventions))
+                      (resolve-jack-out-prevention-for-side state side eid))
+            (wait-for (resolve-ability
+                        state side
+                        (choose-one-helper
+                          {:prompt "Prevent the Runner from jacking out?"
+                           :waiting-prompt "your opponent to prevent you from jacking out"}
+                          (concat (mapv #(build-prevention-option % :jack-out) preventions)
+                                  [(when-not (some :mandatory preventions)
+                                     {:option (str "Allow the Runner to jack out")
+                                      :ability {:effect (req (swap! state assoc-in [:prevent :jack-out :passed] true))}})]))
+                        nil nil)
+                      (resolve-jack-out-prevention-for-side state side eid))))))))
+
+(defn resolve-jack-out-prevention
+  [state side eid {:keys [unpreventable card] :as args}]
+  (swap! state assoc-in [:prevent :jack-out]
+         {:count 1 :remaining 1 :prevented 0 :source-player side :source-card card :uses {}})
+  (if unpreventable
+    (complete-with-result state side eid (fetch-and-clear! state :jack-out))
+    (wait-for
+      (resolve-jack-out-prevention-for-side state :corp)
+      (complete-with-result state side eid (fetch-and-clear! state :jack-out)))))
+
 ;; EXPOSE PREVENTION
 
 (defn prevent-expose
@@ -104,18 +145,6 @@
         card nil))
     (do (println "tried to prevent expose outside of an expose prevention window")
         (effect-completed state side eid))))
-
-  ;; (if (
-  ;; [n]
-  ;; {:prompt (str "Prevent " (quantify n "card") " from being exposed")
-  ;;  :label (str "prevent " (quantify n "card") " from being exposed")
-  ;;  :choices {:req (req (vec-contains-card? (get-in @state [:prevent :expose :remaining]) target))
-  ;;            :max n
-  ;;            :all true}
-  ;;  :msg (msg "prevent " (enumerate-str (map #(card-str state %) targets)) " from being exposed")
-  ;;  :effect (req (let [remainder (get-in @state [:prevent :expose :remaining])
-  ;;                     remainder (filterv #(not (vec-contains-card? targets %)) remainder)]
-  ;;                 (swap! state assoc-in [:prevent :expose :remaining] remainder)))})
 
 (defn resolve-expose-prevention-for-side
   [state side eid]

@@ -13,9 +13,10 @@
                            installed? is-type? operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [can-charge charge-ability charge-card]]
    [game.core.checkpoint :refer [fake-checkpoint]]
+   [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
    [game.core.damage :refer [damage damage-prevent]]
-   [game.core.def-helpers :refer [breach-access-bonus choose-one-helper defcard offer-jack-out
+   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]

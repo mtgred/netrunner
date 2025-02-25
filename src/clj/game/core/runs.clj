@@ -8,11 +8,12 @@
     [game.core.effects :refer [any-effects get-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event trigger-event-simult]]
-    [game.core.flags :refer [can-run? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
+    [game.core.flags :refer [can-run? cards-can-prevent? clear-run-register! get-prevent-list]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.ice :refer [active-ice? break-subs-event-context get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.mark :refer [is-mark?]]
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs ->c]]
+    [game.core.prevention :refer [resolve-jack-out-prevention]]
     [game.core.prompts :refer [clear-run-prompts clear-wait-prompt show-run-prompts show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [is-remote? target-server unknown->kw zone->name]]
@@ -744,11 +745,6 @@
                (resolve-end-run state side eid)))))
      (effect-completed state side eid))))
 
-(defn jack-out-prevent
-  [state side]
-  (swap! state update-in [:jack-out :jack-out-prevent] (fnil inc 0))
-  (prevent-jack-out state side))
-
 (defn- resolve-jack-out
   [state side eid]
   (queue-event state :jack-out nil)
@@ -758,31 +754,22 @@
 (defn jack-out
   "The runner decides to jack out."
   ([state side eid]
-   (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
-   (let [cost (jack-out-cost state side)]
-     (if (can-pay? state side eid nil "jack out" cost)
-       (wait-for (pay state :runner nil cost)
-                 (if-let [payment-str (:msg async-result)]
-                   (let [prevent (get-prevent-list state :corp :jack-out)]
-                     (if (cards-can-prevent? state :corp prevent :jack-out)
-                       (do (system-msg state :runner (str (build-spend-msg payment-str "attempt to" "attempts to") "jack out"))
-                           (system-msg state :corp "has the option to prevent the Runner from jacking out")
-                           (show-wait-prompt state :runner "Corp to prevent the jack out")
-                           (show-prompt state :corp nil
-                                        (str "Prevent the Runner from jacking out?") ["Done"]
-                                        (fn [_]
-                                          (clear-wait-prompt state :runner)
-                                          (if-let [_ (get-in @state [:jack-out :jack-out-prevent])]
-                                            (effect-completed state side (make-result eid false))
-                                            (do (system-msg state :corp "will not prevent the Runner from jacking out")
-                                                (resolve-jack-out state side eid))))
-                                        {:prompt-type :prevent}))
-                       (do (when-not (string/blank? payment-str)
-                             (system-msg state :runner (str payment-str " to jack out")))
-                           (resolve-jack-out state side eid))))
-                   (complete-with-result state side eid false)))
-       (do (system-msg state :runner (str "attempts to jack out but can't pay (" (build-cost-string cost) ")"))
-           (complete-with-result state side eid false))))))
+   (if (any-effects state side :cannot-jack-out true?)
+     (do (system-msg state :runner "cannot jack out this run")
+         (complete-with-result state side eid false))
+     (let [cost (jack-out-cost state side)]
+       (if (can-pay? state side eid nil "jack out" cost)
+         (wait-for (pay state :runner nil cost)
+                   (if-let [payment-str (:msg async-result)]
+                     (do (when-not (string/blank? payment-str)
+                           (system-msg state :runner (str payment-str " to jack out")))
+                         (wait-for (resolve-jack-out-prevention state side nil)
+                                   (if (pos? (:remaining async-result))
+                                     (resolve-jack-out state side eid)
+                                     (complete-with-result state side eid false))))
+                     (complete-with-result state side eid false)))
+         (do (system-msg state :runner (str "attempts to jack out but can't pay (" (build-cost-string cost) ")"))
+             (complete-with-result state side eid false)))))))
 
 (defn- run-end-fx
   [state side {:keys [eid successful unsuccessful]}]

@@ -158,9 +158,6 @@
 (defn prevent-draw [state _]
   (swap! state assoc-in [:runner :register :cannot-draw] true))
 
-(defn prevent-jack-out [state _]
-  (swap! state assoc-in [:run :cannot-jack-out] true))
-
 (defn prevent-current [state _]
   (swap! state assoc-in [:runner :register :cannot-play-current] true))
 

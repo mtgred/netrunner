@@ -3740,14 +3740,16 @@
       (rez state :corp inazuma)
       (run-continue state)
       (fire-subs state (refresh inazuma))
-      (run-continue state :movement)
-      (is (not (= nil (get-in @state [:run :cannot-jack-out]))) "Runner cannot jack out")
+      (run-continue-until state :movement)
+      (run-jack-out state)
+      (is (:run @state) "Runner cannot jack out")
       (run-continue state :approach-ice)
       (rez state :corp cl)
       (run-continue state)
       (fire-subs state cl)
-      (run-continue state)
-      (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out"))))
+      (run-continue-until state :movement)
+      (run-jack-out state)
+      (is (not (:run @state)) "Runner jacked out"))))
 
 (deftest inazuma-cannot-break-subroutines-of-next-piece-of-ice
   ;; Cannot break subroutines of next piece of ice
@@ -7265,12 +7267,12 @@
       (run-continue state)
       (fire-subs state susanoo)
       (is (= [:archives] (get-in @state [:run :server])) "Deflected to archives")
-      (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
       (rez state :corp cl)
       (run-continue-until state :encounter-ice cl)
       (fire-subs state cl)
       (run-continue state :movement)
-      (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out again"))))
+      (run-jack-out state)
+      (is (not (:run @state)) "Runner can jack out"))))
 
 (deftest susanoo-no-mikoto-redirection-does-not-occur-during-a-forced-encounter
   ;; Redirection does not occur during a forced encounter
@@ -7295,7 +7297,6 @@
       (fire-subs state susanoo)
       (is (= [:rd] (get-in @state [:run :server])) "Run still on R&D")
       (run-continue state :encounter-ice)
-      (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
       (rez state :corp cl)
       (run-continue-until state :encounter-ice cl)
       (is (not (get-in @state [:run :cannot-jack-out])) "Runner can jack out again"))))
@@ -8434,7 +8435,8 @@
       (rez state :corp wp)
       (run-continue state)
       (fire-subs state wp)
-      (is (get-in @state [:run :cannot-jack-out]))
+      (run-jack-out state)
+      (is (:run @state) "Runner cannot jack out")
       (is (nil? (refresh wp)) "Whirlpool is trashed"))))
 
 (deftest whirlpool-on-hq
@@ -8451,7 +8453,8 @@
       (rez state :corp wp)
       (run-continue state)
       (fire-subs state wp)
-      (is (get-in @state [:run :cannot-jack-out]))
+      (run-jack-out state)
+      (is (:run @state) "Runner cannot jack out")
       (is (nil? (refresh wp)) "Whirlpool is trashed"))))
 
 (deftest whirlpool-whirlpool-not-trashed-when-broken

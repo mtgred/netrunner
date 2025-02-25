@@ -38,12 +38,13 @@
                              trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? ->c]]
+   [game.core.prevention :refer [prevent-jack-out]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez]]
-   [game.core.runs :refer [end-run force-ice-encounter jack-out-prevent]]
+   [game.core.runs :refer [end-run force-ice-encounter]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck
@@ -1177,12 +1178,19 @@
 (defcard "Labyrinthine Servers"
   {:on-score {:silent (req true)
               :effect (effect (add-counter card :power 2))}
-   :interactions {:prevent [{:type #{:jack-out}
-                             :req (req (pos? (get-counters card :power)))}]}
-   :abilities [{:req (req (:run @state))
-                :cost [(->c :power 1)]
-                :msg "prevent the Runner from jacking out"
-                :effect (effect (jack-out-prevent))}]})
+   :prevention [{:prevents :jack-out
+                 :type :ability
+                 :ability {:cost [(->c :power 1)]
+                           :msg "prevent the runner from jacking out for the remainder of this run"
+                           :condition :active
+                           :async true
+                           :effect (req (wait-for (prevent-jack-out state side)
+                                                  (register-lingering-effect
+                                                    state side card
+                                                    {:type :cannot-jack-out
+                                                     :value true
+                                                     :duration :end-of-run})
+                                                  (effect-completed state side eid)))}}]})
 
 (defcard "License Acquisition"
   {:on-score {:interactive (req true)

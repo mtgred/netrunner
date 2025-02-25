@@ -13,17 +13,18 @@
                            in-discard? in-hand? installed? is-type? operation? program? resource?
                            rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.choose-one :refer [choose-one-helper cost-option]]
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage damage-bonus]]
-   [game.core.def-helpers :refer [choose-one-helper corp-recur cost-option defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
+   [game.core.def-helpers :refer [corp-recur defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
    [game.core.engine :refer [do-nothing pay register-events resolve-ability should-trigger?]]
    [game.core.events :refer [event-count first-event? last-turn? no-event? not-last-turn? turn-events ]]
    [game.core.flags :refer [can-score? clear-persistent-flag! in-corp-scored?
-                            in-runner-scored? is-scored? prevent-jack-out
+                            in-runner-scored? is-scored?
                             register-persistent-flag! register-turn-flag! when-scored? zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-clicks
                               lose-credits]]
@@ -210,9 +211,13 @@
                   :player :runner
                   :yes-ability {:msg (str "let the Runner make a run on " serv)
                                 :async true
-                                :effect (effect (clear-wait-prompt :corp)
-                                                (make-run eid serv card)
-                                                (prevent-jack-out))}
+                                :effect (req (clear-wait-prompt state :corp)
+                                             (register-lingering-effect
+                                               state side card
+                                               {:type :cannot-jack-out
+                                                :value true
+                                                :duration :end-of-run})
+                                             (make-run state :runner eid serv card))}
                   :no-ability {:msg "add itself to [their] score area as an agenda worth 1 agenda point"
                                :effect (effect (clear-wait-prompt :corp)
                                                (as-agenda :corp card 1))}}})
