@@ -953,7 +953,7 @@
                  :runner {:deck [(qty "By Any Means" 2)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "By Any Means")
-      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (card-ability state :corp (get-in @state [:corp :identity]) 1)
       (click-prompt state :corp (find-card "By Any Means" (:discard (get-runner))))
       (is (= 1 (count (get-in @state [:runner :rfg]))) "By Any Means RFGed")
       (is (zero? (count (:discard (get-corp)))) "Nothing trashed yet")

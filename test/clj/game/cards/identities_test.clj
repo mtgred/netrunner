@@ -4725,7 +4725,7 @@
       (is (= 12 (:credit (get-runner))) "Gained 4cr")
       (is (= 12 (get-counters (get-resource state 0) :credit)) "12 cr on Temujin")))
 
-(deftest skorpios-defense-systems-persuasive-power
+(deftest skorpios-defense-systems-persuasive-power-manual-usage
   ; Remove a card from game when it moves to discard once per round
   (do-game
     (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"
@@ -4734,11 +4734,13 @@
     (play-from-hand state :corp "Hedge Fund")
     (dotimes [_ 4] (core/move state :corp (first (:hand (get-corp))) :deck))
     (take-credits state :corp)
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (click-prompt state :corp "Manual")
     (play-from-hand state :runner "Lucky Find")
     (play-from-hand state :runner "The Maker's Eye")
     (is (= [:rd] (:server (get-run))))
     ; Don't allow a run-event in progress to be targeted #2963
-    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (card-ability state :corp (get-in @state [:corp :identity]) 1)
     (is (empty? (filter #(= "The Maker's Eye" (:title %)) (-> (get-corp) :prompt first :choices))) "No Maker's Eye choice")
     (click-prompt state :corp "Cancel")
     (run-continue state)
@@ -4749,11 +4751,20 @@
     (is (accessing state "Quandary"))
     (click-prompt state :runner "No action")
     (is (not (:run @state)))
-    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (card-ability state :corp (get-in @state [:corp :identity]) 1)
     (click-prompt state :corp (find-card "The Maker's Eye" (:discard (get-runner))))
     (is (= 1 (count (get-in @state [:runner :rfg]))) "One card RFGed")
-    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (card-ability state :corp (get-in @state [:corp :identity]) 1)
     (is (no-prompt? state :corp) "Cannot use Skorpios twice")))
+
+(deftest skorpios-smart-test
+  (do-game
+    (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"}
+               :runner {:deck ["Corroder"]}})
+    (damage state :corp :brain 1)
+    (click-prompt state :corp "Corroder")
+    (is (= 1 (count (get-in @state [:runner :rfg]))) "One card RFGed")))
+
 
 (deftest spark-agency-worldswide-reach
   ;; Spark Agency - Rezzing advertisements

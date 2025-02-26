@@ -407,14 +407,16 @@
          :req (req (and (grip-or-stack-trash? targets)
                         (first-trash? state grip-or-stack-trash?)))
          :prompt "Choose 1 trashed card to add to the bottom of the stack"
-         :choices (req (conj (sort (map :title (map :card targets))) "No action"))
+         :choices (req (conj (sort (keep #(->> (:moved-card %) :title) targets)) "No action"))
          :async true
          :effect (req (if (= "No action" target)
                         (effect-completed state side eid)
                         (do (system-msg state side
                                         (str "uses " (:title card) " to add " target
                                              " to the bottom of the stack"))
-                            (move state side (find-card target (:discard (:runner @state))) :deck)
+                            ;; note - need to search in reverse order, to remove the NEWEST copy of the card
+                            ;; this is for interactions with the price, etc
+                            (move state side (find-card target (reverse (:discard (:runner @state)))) :deck)
                             (effect-completed state side eid))))}]
     {:events [(assoc triggered-ability :event :runner-trash)
               (assoc triggered-ability :event :corp-trash)]
