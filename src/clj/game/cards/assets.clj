@@ -44,7 +44,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
-   [game.core.prevention :refer [prevent-bad-publicity prevent-expose]]
+   [game.core.prevention :refer [damage-name damage-prevent* prevent-bad-publicity prevent-expose]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [end-run]]
@@ -2183,17 +2183,19 @@
                                 card nil)))}]}))
 
 (defcard "Prāna Condenser"
-  {:interactions {:prevent [{:type #{:net}
-                             :req (req (= :corp (:side target)))}]}
-   :abilities [{:label "Prevent 1 net damage to place power counter on Prāna Condenser"
-                :msg "prevent 1 net damage, place 1 power counter, and gain 3 [Credits]"
-                :async true
-                :req (req true)
-                :effect (req (add-counter state side card :power 1)
-                             (wait-for (gain-credits state :corp 3)
-                                       (damage-prevent state :corp :net 1)
-                                       (effect-completed state side eid)))}
-               {:action true
+  {:prevention [{:prevents :damage
+                 :type :event
+                 :max-uses 1
+                 :ability {:async true
+                           :msg "prevent 1 net damage, place 1 counter on itself, and gain 3 [Credits]"
+                           :req (req (and (= :net (:type context))
+                                          (= :corp (:source-player context))
+                                          (not (:unpreventable context))
+                                          (pos? (:remaining context))))
+                           :effect (req (wait-for (damage-prevent* state side :damage 1)
+                                                  (wait-for (add-counter state side card :power 1 {:suppress-checkpoint true})
+                                                            (gain-credits state side eid 3))))}}]
+   :abilities [{:action true
                 :msg (msg "deal " (get-counters card :power) " net damage")
                 :label "deal net damage"
                 :cost [(->c :click 2) (->c :trash-can)]

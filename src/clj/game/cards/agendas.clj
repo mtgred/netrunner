@@ -38,7 +38,7 @@
                              trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? ->c]]
-   [game.core.prevention :refer [damage-type damage-pending damage-unboostable? damage-boost prevent-jack-out]]
+   [game.core.prevention :refer [damage-boost prevent-jack-out]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
@@ -2204,11 +2204,10 @@
                  :ability {:async true
                            :condition :active
                            :req (req
-                                  (println "checking")
-                                  (and (= :meat (damage-type state :pre-damage))
-                                       (= :corp (get-in @state [:prevent :pre-damage :source-player]))
-                                       (pos? (damage-pending state :pre-damage))
-                                       (not (damage-unboostable? state :pre-damage))))
+                                  (and (= :meat (:type context))
+                                       (= :corp (:source-player context))
+                                       (pos? (:remaining context))
+                                       (not (:unboostable context))))
                            :msg "increase the pending meat damage by 1"
                            :effect (req (damage-boost state side eid :pre-damage 1))}}]})
 

@@ -44,7 +44,7 @@
                              trash-prevent]]
    [game.core.optional :refer [get-autoresolve set-autoresolve never?]]
    [game.core.payment :refer [build-cost-label can-pay? cost-target cost-value ->c value]]
-   [game.core.prevention :refer [prevent-end-run]]
+   [game.core.prevention :refer [damage-name damage-prevent* prevent-end-run prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
@@ -1215,12 +1215,11 @@
                    (strength-pump 2 3)))
 
 (defcard "Deus X"
-  {:interactions {:prevent [{:type #{:net}
-                             :req (req true)}]}
-   :abilities [(break-sub [(->c :trash-can)] 0 "AP")
-               {:msg "prevent any amount of net damage"
-                :cost [(->c :trash-can)]
-                :effect (effect (damage-prevent :net Integer/MAX_VALUE))}]})
+  {:prevention [{:prevents :damage
+                 :type :ability
+                 :ability (assoc (prevent-up-to-n-damage :all :damage #{:net})
+                                 :cost [(->c :trash-can)])}]
+   :abilities [(break-sub [(->c :trash-can)] 0 "AP")]})
 
 (defcard "Dhegdheer"
   {:implementation "Discount not considered by any engine functions when checking if a program is playable"
@@ -2339,14 +2338,17 @@
                                card nil))}]})
 
 (defcard "Net Shield"
-  {:interactions {:prevent [{:type #{:net}
-                             :req (req true)}]}
-   ;; TODO - once a proper prevention system is set up, we can actually enforce the conditions
-   ;; on this card. nbkelly, 2024
-   :abilities [{:cost [(->c :credit 1)]
-                :once :per-turn
-                :msg "prevent the first net damage this turn"
-                :effect (effect (damage-prevent :net 1))}]})
+  {:prevention [{:prevents :damage
+                 :type :ability
+                 :max-uses 1
+                 :ability {:async true
+                           :cost [(->c :credit 1)]
+                           :msg "prevent 1 net damage"
+                           :req (req (and (= :net (:type context))
+                                          (not (:unpreventable context))
+                                          (first-event? state side :pre-damage-flag #(= :net (:type (first %))))
+                                          (pos? (:remaining context))))
+                           :effect (req (damage-prevent* state side eid :damage 1))}}]})
 
 (defcard "Nfr"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")]

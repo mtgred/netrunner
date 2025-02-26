@@ -50,7 +50,7 @@
                              swap-ice trash trash-cards]]
    [game.core.payment :refer [can-pay? ->c]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [damage-type damage-pending damage-unpreventable? damage-prevent* prevent-up-to-n-tags]]
+   [game.core.prevention :refer [damage-name damage-prevent* prevent-up-to-n-tags prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -2400,10 +2400,9 @@
                                                  :card card
                                                  :condition :floating
                                                  :req (req
-                                                        (and
-                                                          (pos? (damage-pending state :pre-damage))
-                                                          (not (damage-unpreventable? state :pre-damage))))
-                                                 :msg "prevent all damage"
+                                                        (and (pos? (:remaining context))
+                                                             (not (:unpreventable context))))
+                                                 :msg (msg "prevent " (:remaining context) " " (damage-name state :pre-damage) " damage")
                                                  :effect (req (damage-prevent* state side eid :pre-damage :all))}}}))}}}})
 
 (defcard "Levy AR Lab Access"
@@ -2699,22 +2698,18 @@
   {:prevention [{:prevents :tag
                  :type :ability
                  :prompt "Trash On the Lam to avoid up to 3 tags?"
-                 :ability (assoc (prevent-up-to-n-tags 3) :cost [(->c :trash-can)])}]
+                 :ability (assoc (prevent-up-to-n-tags 3) :cost [(->c :trash-can)])}
+                {:prevents :damage
+                 :type :ability
+                 :prompt "Trash On the Lam to prevent up to 3 damage?"
+                 :ability (assoc (prevent-up-to-n-damage 3 :damage #{:net :meat :core :brain}) :cost [(->c :trash-can)])}]
    :on-play {:prompt "Choose a resource to host On the Lam on"
              :choices {:card #(and (resource? %)
                                    (installed? %))}
              :change-in-game-state (req (some resource? (all-active-installed state :runner)))
              :async true
              :effect (req (system-msg state side (str "hosts On the Lam on " (:title target)))
-                          (install-as-condition-counter state side eid card target))}
-   :interactions {:prevent [{:type #{:net :brain :meat}
-                             :req (req true)}]}
-   :abilities [{:label "Prevent up to 3 damage"
-                :msg "prevent up to 3 damage"
-                :cost [(->c :trash-can)]
-                :effect (effect (damage-prevent :net 3)
-                                (damage-prevent :meat 3)
-                                (damage-prevent :brain 3))}]})
+                          (install-as-condition-counter state side eid card target))}})
 
 (defcard "Out of the Ashes"
   (let [ashes-run {:prompt "Choose a server"

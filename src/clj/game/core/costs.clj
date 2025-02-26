@@ -182,7 +182,7 @@
                                                 :paid/type :credit
                                                 :paid/value 0}))))))
 
-;; X Credits
+;; X Credits - can take ':maximum' to specify a max number that can be paid
 (defmethod value :x-credits [_] 0)
 ;We put stealth credits in the third slot rather than the empty second slot for consistency with credits
 (defmethod stealth-value :x-credits [cost] (or (:cost/stealth cost) 0))
@@ -193,11 +193,14 @@
        (<= (stealth-value cost) (total-available-stealth-credits state side eid card))))
 (defmethod handler :x-credits
   [cost state side eid card]
+  (println cost)
   (continue-ability
     state side
     {:async true
      :prompt "How many credits do you want to spend?"
-     :choices {:number (req (total-available-credits state side eid card))}
+     :choices {:number (req (if-let [maximum (->> cost :cost/args :maximum)]
+                              (min (total-available-credits state side eid card) maximum)
+                              (total-available-credits state side eid card)))}
      :effect
      (req
        (let [stealth-value (if (= -1 (stealth-value cost)) cost (stealth-value cost))

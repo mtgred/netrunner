@@ -144,36 +144,46 @@
 ;; DAMAGE PREVENTION
 ;;
 ;; The following are either interrupts, or static abilities, that must come first:
-;;   Guru Davinder (done)
-;;   Leverage (done)
-;;   Chrome Parlor (done)
-;;   Muresh Bodysuit (done)
-;;   The Cleaners (done)
+;;   Guru Davinder              (done)
+;;   Leverage                   (done)
+;;   Chrome Parlor              (done)
+;;   Muresh Bodysuit            (done)
+;;   The Cleaners               (done)
+;;   Paparrazi                  (done)
 ;;
 ;; The following are normal prevention timing:
-;;   Heartbeat
-;;   Jarogniew Mercs
-;;   Monolith
-;;   Net Shield
-;;   No One Home
-;;   On the Lam
-;;   Plascrete Carapace
-;;   Ramujan-reliant 550 BMI
-;;   Recon Drone
-;;   Sacrificial Clone (lmao)
-;;   AirbladeX (JSRF Ed.)
-;;   Bio-Modeled Network
-;;   Biometric Spoofing
-;;   Caldera
-;;   Deus X
-;;   Feedback Filter
+;;   Hardware:
+;;     AirbladeX (JSRF Ed.)     (done)
+;;     Feedback Filter          (done)
+;;     Heartbeat                (done)
+;;     Monolith                 (done)
+;;     Plascrete Carapace       (done)
+;;     Ramujan-reliant 550 BMI  (done)
+;;     Recon Drone              (done)
+;;   Resources:
+;;     Jarogniew Mercs          (done)
+;;     No One Home              (done)
+;;     Sacrificial Clone (lmao) (done)
+;;     Bio-Modeled Network      (done)
+;;     Biometric Spoofing       (done)
+;;     Caldera                  (done)
+;;     Citadel Sanctuary        (done)
+;;   Programs:
+;;     Net Shield               (done)
+;;     Deus X                   (done)
+;;   Events:
+;;     On the Lam               (done)
+;;   Assets:
+;;     Prana Condenser
+;;   Upgrades:
+;;     Tori Hanzo
 ;;
-;; These just nominate the selecting side:
+;; These just nominate the selecting side, they can probably still be done in the damage class:
 ;;   Titanium Ribs
 ;;   Chronos Protocol: Selective Mind-mapping
 ;;
 ;; The follwing do something funny (confirm with rules what they actually do):
-;;   Tori Hanzo
+;;   Tori Hanzo (set damage to 1, change type from net to brain)
 
 (defn damage-type
   [state key]
@@ -182,14 +192,6 @@
 (defn damage-pending
   [state key]
   (get-in @state [:prevent key :remaining]))
-
-(defn damage-unboostable?
-  [state key]
-  (get-in @state [:prevent key :unboostable]))
-
-(defn damage-unpreventable?
-  [state key]
-  (get-in @state [:prevent key :unpreventable]))
 
 (defn damage-boost
   [state side eid key n]
@@ -204,10 +206,26 @@
     (if (= n :all)
       (swap! state update-in [:prevent key] merge {:remaining 0 :prevented :all})
       (do (swap! state update-in [:prevent key :remaining] #(max 0 (- % n)))
-          (swap! state update-in [:prevent key :prevented] (fnil inc 1)))))
+          (swap! state update-in [:prevent key :prevented] (fnil #(+ n %) n)))))
   (effect-completed state side eid))
 
-(defn- damage-name
+(defn prevent-up-to-n-damage
+  [n key types]
+  (letfn [(remainder [state] (get-in @state [:prevent key :remaining]))
+          (max-to-avoid [state n] (if (= n :all) (remainder state) (min (remainder state) n)))]
+    {:prompt (msg "Choose how much " (damage-name state key) " damage prevent")
+     :req (req (and (pos? (get-in @state [:prevent key :remaining]))
+                    (not (get-in @state [:prevent key :unpreventable]))
+                    (or (not types)
+                        (contains? types (get-in @state [:prevent key :type])))))
+     :choices {:number (req (max-to-avoid state n))
+               :default (req (max-to-avoid state n))}
+     :async true
+     :msg (msg "prevent " target " " (damage-name state key) " damage")
+     :effect (req (damage-prevent* state side eid key target))
+     :cancel-effect (req (damage-prevent* state side eid key 0))}))
+
+(defn damage-name
   [state key]
   (case (damage-type state key)
     :meat "meat"
@@ -223,19 +241,41 @@
     {:prompt (fn [state remainder]
                (if (= side :runner)
                  (str "Prevent " (damage-pending state :pre-damage) " " (damage-name state :pre-damage) " damage?")
-                 (str "There is " (damage-pending state :pre-damage) " " (damage-name state :pre-damage) " pending damage")))
+                 (str "There is " (damage-pending state :pre-damage) " pending " (damage-name state :pre-damage) " damage")))
      :waiting "your opponent to resolve pre-damage triggers"
-     :option (fn [state remainder] (str "Pass priority"))}))
+     :option "Pass priority"}))
 
 (defn- resolve-pre-damage-effects
   [state side eid]
-  (clear-wait-prompt state side)
-  (println "passes: " (get-in @state [:prevent :pre-damage :priority-passes]))
+  (clear-wait-prompt state side) ;; TODO - do I need this?
   (if (= 2 (get-in @state [:prevent :pre-damage :priority-passes]))
     (complete-with-result state side eid (fetch-and-clear! state :pre-damage))
     (wait-for (resolve-pre-damage-for-side state side)
               (swap! state update-in [:prevent :pre-damage :priority-passes] (fnil inc 1))
               (resolve-pre-damage-effects state (other-side side) eid))))
+
+;; NOTE - PRE-DAMAGE EFFECTS HAPPEN BEFORE DAMAGE EFFECTS, AND ARE THE CONSTANT ABILITIES (IE GURU DAVINDER, MURESH BODYSUIT, THE CLEANERS, ETC)
+;; AND MAY JUST CLOSE THE WINDOW ALL TOGETHER IF ALL DAMAGE IS PREVENTED
+
+;; TODO - is this generic enough that I can just make a helper function for it and throw everything else through it?
+(defn resolve-damage-for-side
+  [state side eid]
+  (resolve-keyed-prevention-for-side
+    state side eid :damage
+    {:prompt (fn [state remainder]
+               (if (= side :runner)
+                 (str "Prevent " (damage-pending state :damage) " " (damage-name state :damage) " damage?")
+                 (str "There is " (damage-pending state :damage) " pending " (damage-name state :damage) " damage")))
+     :waiting "your opponent to resolve damage triggers"
+     :option "Pass priority"}))
+
+(defn resolve-damage-effects
+  [state side eid]
+  (if (= 2 (get-in @state [:prevent :damage :priority-passes]))
+    (complete-with-result state side eid (fetch-and-clear! state :damage))
+    (wait-for (resolve-damage-for-side state side)
+              (swap! state update-in [:prevent :damage :priority-passes] (fnil inc 1))
+              (resolve-damage-effects state (other-side side) eid))))
 
 (defn resolve-damage-prevention
   [state side eid type n {:keys [unpreventable unboostable card] :as args}]
@@ -243,10 +283,10 @@
          {:count n :remaining n :prevented 0 :source-player side :source-card card :priority-passes 0
           :type type :unpreventable unpreventable :unboostable unboostable :uses {}})
   (wait-for (trigger-event-simult state side :pre-damage-flag nil {:card card :type type :count n})
-            (wait-for (resolve-pre-damage-effects state side)
+            (wait-for (resolve-pre-damage-effects state (:active-player @state))
                       (swap! state assoc-in [:prevent :damage] async-result)
-                      (complete-with-result state side eid (fetch-and-clear! state :damage)))))
-
+                      (swap! state assoc-in [:prevent :damage :priority-passes] 0)
+                      (resolve-damage-effects state (:active-player @state) eid))))
 
 ;; ENCOUNTER PREVENTION
 (def prevent-encounter

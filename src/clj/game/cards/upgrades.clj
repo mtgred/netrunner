@@ -1733,31 +1733,17 @@
                                         (force-ice-encounter state side eid current-ice))))}}}]})
 
 (defcard "Tori Hanzō"
-  {:events [{:event :pre-resolve-damage
-             :optional
-             {:req (req (and this-server
-                             (= target :net)
-                             (= :corp (second targets))
-                             (pos? (last targets))
-                             (first-run-event? state side :pre-resolve-damage
-                                               (fn [[t s]]
-                                                 (and (= :net t)
-                                                      (= :corp s))))
-                             (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [(->c :credit 2)])))
-              :waiting-prompt true
-              :prompt "Pay 2 [Credits] to do 1 core damage?"
-              :player :corp
-              :yes-ability
-              {:async true
-               :msg "do 1 core damage instead of net damage"
-               :effect (req (swap! state update :damage dissoc :damage-replace :defer-damage)
-                            (wait-for (pay state :corp card (->c :credit 2))
-                                      (system-msg state side (:msg async-result))
-                                      (wait-for (damage state side :brain 1 {:card card})
-                                                (swap! state assoc-in [:damage :damage-replace] true)
-                                                (effect-completed state side eid))))}
-              :no-ability
-              {:effect (req (swap! state update :damage dissoc :damage-replace))}}}]})
+  {:prevention [{:prevents :damage
+                 :type :event
+                 :max-uses 1
+                 :prompt "Pay 2 [Credits] to do 1 core damage instead?"
+                 :ability {:cost [(->c :credit 2)]
+                           :msg "instead do 1 core damage"
+                           :req (req (and (= :net (:type context))
+                                          (= :corp (:source-player context))
+                                          (first-run-event? state side :pre-damage-flag #(= :net (:type (first %))))
+                                          (pos? (:remaining context))))
+                           :effect (req (swap! state update-in [:prevent :damage] merge {:type :brain :prevented 0 :count 1 :remaining 1}))}}]})
 
 (defcard "Traffic Analyzer"
   {:events [{:event :rez

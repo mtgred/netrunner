@@ -45,11 +45,12 @@
         (update-tag-status state)
         (queue-event state :runner-gain-tag {:side side
                                              :cause-card (select-keys card [:cid :title])
-                                             :amount n})
-        (if suppress-checkpoint
-          (effect-completed state nil eid)
-          (checkpoint state eid)))
-    (effect-completed state nil eid)))
+                                             :amount n}))
+    (queue-event state :runner-prevents-all-tags {:side side
+                                                  :cause-card card}))
+  (if suppress-checkpoint
+    (effect-completed state nil eid)
+    (checkpoint state eid)))
 
 (defn gain-tags
   "Attempts to give the runner n tags, allowing for boosting/prevention effects."
