@@ -17,7 +17,7 @@
                            operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.checkpoint :refer [fake-checkpoint]]
-   [game.core.damage :refer [damage damage-prevent]]
+   [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
                                   reorder-choice trash-on-empty get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
@@ -44,7 +44,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
-   [game.core.prevention :refer [damage-name damage-prevent* prevent-bad-publicity prevent-expose]]
+   [game.core.prevention :refer [damage-name prevent-bad-publicity prevent-damage prevent-expose]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [end-run]]
@@ -2192,7 +2192,7 @@
                                           (= :corp (:source-player context))
                                           (not (:unpreventable context))
                                           (pos? (:remaining context))))
-                           :effect (req (wait-for (damage-prevent* state side :damage 1)
+                           :effect (req (wait-for (prevent-damage state side :damage 1)
                                                   (wait-for (add-counter state side card :power 1 {:suppress-checkpoint true})
                                                             (gain-credits state side eid 3))))}}]
    :abilities [{:action true

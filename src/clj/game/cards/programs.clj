@@ -13,7 +13,7 @@
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
-   [game.core.damage :refer [damage damage-prevent]]
+   [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
@@ -44,7 +44,7 @@
                              trash-prevent]]
    [game.core.optional :refer [get-autoresolve set-autoresolve never?]]
    [game.core.payment :refer [build-cost-label can-pay? cost-target cost-value ->c value]]
-   [game.core.prevention :refer [damage-name damage-prevent* prevent-end-run prevent-up-to-n-damage]]
+   [game.core.prevention :refer [damage-name prevent-damage prevent-end-run prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
@@ -2348,7 +2348,7 @@
                                           (not (:unpreventable context))
                                           (first-event? state side :pre-damage-flag #(= :net (:type (first %))))
                                           (pos? (:remaining context))))
-                           :effect (req (damage-prevent* state side eid :damage 1))}}]})
+                           :effect (req (prevent-damage state side eid :damage 1))}}]})
 
 (defcard "Nfr"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")]

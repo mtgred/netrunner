@@ -15,7 +15,7 @@
    [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
-   [game.core.damage :refer [damage damage-prevent]]
+   [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice with-revealed-hand]]
    [game.core.drawing :refer [draw]]
@@ -50,7 +50,7 @@
                              swap-ice trash trash-cards]]
    [game.core.payment :refer [can-pay? ->c]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [damage-name damage-prevent* prevent-up-to-n-tags prevent-up-to-n-damage]]
+   [game.core.prevention :refer [damage-name prevent-damage prevent-up-to-n-tags prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -2403,7 +2403,7 @@
                                                         (and (pos? (:remaining context))
                                                              (not (:unpreventable context))))
                                                  :msg (msg "prevent " (:remaining context) " " (damage-name state :pre-damage) " damage")
-                                                 :effect (req (damage-prevent* state side eid :pre-damage :all))}}}))}}}})
+                                                 :effect (req (prevent-damage state side eid :pre-damage :all))}}}))}}}})
 
 (defcard "Levy AR Lab Access"
   {:on-play
@@ -3913,6 +3913,29 @@
 
 (defcard "The Noble Path"
   {:makes-run true
+   :static-abilities [{:type :cannot-pay-net
+                       :req (req run)
+                       :value true}
+                      {:type :cannot-pay-brain
+                       :req (req run)
+                       :value true}
+                      {:type :cannot-pay-meat
+                       :req (req run)
+                       :value true}]
+   :prevention [{:prevents :pre-damage
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:async true
+                           :req (req
+                                  (and
+                                    run
+                                    (same-card? card (get-in @state [:runner :play-area 0]))
+                                    (pos? (:remaining context))
+                                    (not (:unpreventable context))))
+                           :condition :active
+                           :msg (msg "prevent " (:remaining context) " " (damage-name state :pre-damage) " damage")
+                           :effect (req (prevent-damage state side eid :pre-damage :all))}}]
    :on-play {:async true
              :change-in-game-state (req (or (seq (:hand runner))
                                       (seq runnable-servers)))
@@ -3926,12 +3949,7 @@
                                :msg (msg "trash [their] grip and make a run on " target
                                          ", preventing all damage")
                                :effect (effect (make-run eid target card))}
-                              card nil)))}
-   :events [{:event :pre-damage
-             :duration :end-of-run
-             :effect (effect (damage-prevent :net Integer/MAX_VALUE)
-                             (damage-prevent :meat Integer/MAX_VALUE)
-                             (damage-prevent :brain Integer/MAX_VALUE))}]})
+                              card nil)))}})
 
 (defcard "The Price"
   {:on-play {:async true

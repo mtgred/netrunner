@@ -150,6 +150,8 @@
 ;;   Muresh Bodysuit            (done)
 ;;   The Cleaners               (done)
 ;;   Paparrazi                  (done)
+;;   The Noble Path             (done)
+;;   Defective Brainchips       (done)
 ;;
 ;; The following are normal prevention timing:
 ;;   Hardware:
@@ -199,8 +201,16 @@
     (swap! state update-in [:prevent key :remaining] + n))
   (effect-completed state side eid))
 
-;; TODO - rename this after I strip it out of damage
-(defn damage-prevent*
+(defn damage-name
+  [state key]
+  (case (damage-type state key)
+    :meat "meat"
+    :brain "core"
+    :core "core"
+    :net "net"
+    "neat"))
+
+(defn prevent-damage
   [state side eid key n]
   (when (pos? (damage-pending state key))
     (if (= n :all)
@@ -222,17 +232,8 @@
                :default (req (max-to-avoid state n))}
      :async true
      :msg (msg "prevent " target " " (damage-name state key) " damage")
-     :effect (req (damage-prevent* state side eid key target))
-     :cancel-effect (req (damage-prevent* state side eid key 0))}))
-
-(defn damage-name
-  [state key]
-  (case (damage-type state key)
-    :meat "meat"
-    :brain "core"
-    :core "core"
-    :net "net"
-    "neat"))
+     :effect (req (prevent-damage state side eid key target))
+     :cancel-effect (req (prevent-damage state side eid key 0))}))
 
 (defn resolve-pre-damage-for-side
   [state side eid]

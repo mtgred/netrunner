@@ -280,9 +280,6 @@
    chosen-damage
    corp-can-choose-damage?
    damage
-   damage-bonus
-   damage-count
-   damage-prevent
    enable-corp-damage-choice
    enable-runner-damage-choice
    runner-can-choose-damage?])

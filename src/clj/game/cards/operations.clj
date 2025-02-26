@@ -16,7 +16,7 @@
    [game.core.choose-one :refer [choose-one-helper cost-option]]
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
-   [game.core.damage :refer [damage damage-bonus]]
+   [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [corp-recur defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -38,6 +38,7 @@
                              trash-cards]]
    [game.core.payment :refer [can-pay? cost-target ->c]]
    [game.core.play-instants :refer [play-instant]]
+   [game.core.prevention :refer [damage-boost]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
@@ -711,11 +712,20 @@
                           true))))}})
 
 (defcard "Defective Brainchips"
-  {:events [{:event :pre-damage
-             :req (req (and (= (:type context) :brain)
-                            (first-event? state side :pre-damage #(= :brain (:type (first %))))))
-             :msg "do 1 additional core damage"
-             :effect (effect (damage-bonus :brain 1))}]})
+  {:prevention [{:prevents :pre-damage
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:async true
+                           :condition :active
+                           :req (req
+                                  (and (or (= :brain (:type context))
+                                           (= :core (:type context)))
+                                       (first-event? state side :pre-damage-flag #(= :brain (:type (first %))))
+                                       (pos? (:remaining context))
+                                       (not (:unboostable context))))
+                           :msg "increase the pending core damage by 1"
+                           :effect (req (damage-boost state side eid :pre-damage 1))}}]})
 
 (defcard "Digital Rights Management"
   {:on-play

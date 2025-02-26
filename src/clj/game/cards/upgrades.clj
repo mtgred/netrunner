@@ -1743,7 +1743,7 @@
                                           (= :corp (:source-player context))
                                           (first-run-event? state side :pre-damage-flag #(= :net (:type (first %))))
                                           (pos? (:remaining context))))
-                           :effect (req (swap! state update-in [:prevent :damage] merge {:type :brain :prevented 0 :count 1 :remaining 1}))}}]})
+                           :effect (req (swap! state update-in [:prevent :damage] merge {:type :brain :prevented 0 :count 1 :remaining 1 :source-card card}))}}]})
 
 (defcard "Traffic Analyzer"
   {:events [{:event :rez
