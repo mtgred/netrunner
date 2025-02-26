@@ -184,6 +184,38 @@
   [state side choice & args]
   `(error-wrapper (click-prompt-impl ~state ~side ~choice ~@args)))
 
+(defn click-prompts-impl
+  [state side prompts]
+  (loop [[prompt & prompts] prompts]
+    (let [prompt
+          ;; if an 1-fn is passed in, scry it's output based on the game state
+          (cond
+            (fn? prompt) (prompt state)
+            (fn? (:choice prompt)) (merge prompt {:choice ((:choice prompt) state)})
+            :else prompt)]
+      (cond
+        (and (not prompt) (not (seq prompts))) true
+        (not prompt) (is` nil "attempt to resolve nil prompt option")
+        ;; it's a select prompt - we want to click on a card
+        (prompt-is-type? state side :select)
+        (do (if (or (:cid prompt) (string? prompt))
+              (click-card state side prompt)
+              (click-card state (or (:side prompt) side) (:choice prompt)))
+            (recur prompts))
+        :else
+        (do (if (or (:cid prompt) (string? prompt))
+              (click-prompt state side prompt)
+              (click-prompt state (or (:side prompt) side) (:choice prompt)))
+            (recur prompts))))))
+
+(defmacro click-prompts
+  "click an arbitrary number of prompts, one after the other.
+  You can tag a prompt like {:side :runner :choice ...}, feed in raw cards,
+  or feed in cards like {:choice ...}"
+  ([state side] true)
+  ([state side & prompts]
+   `(error-wrapper (click-prompts-impl ~state ~side ~(vec prompts)))))
+
 (defn do-trash-prompt
   [state cost]
   (click-prompt state :runner (str "Pay " cost " [Credits] to trash")))
@@ -532,6 +564,10 @@
   (let [card (find-card title (get-in @state [side :hand]))]
     (ensure-no-prompts state)
     (is' (some? card) (str title " is in the hand"))
+    (when-not (some? card)
+      (let [other-side (if (= side :runner) :corp :runner)]
+        (when (some? (find-card title (get-in @state [other-side :hand])))
+          (println title " was instead found in the opposing hand - was the wrong side used?"))))
     (when server
       (is' (some #{server} (concat (server-list state) ["New remote"]))
            (str server " is not a valid server.")))
@@ -545,6 +581,26 @@
   ([state side title] `(play-from-hand ~state ~side ~title nil))
   ([state side title server]
    `(error-wrapper (play-from-hand-impl ~state ~side ~title ~server))))
+
+(defn play-from-hand-with-prompts-impl
+  [state side title choices]
+  (let [card (find-card title (get-in @state [side :hand]))]
+    (ensure-no-prompts state)
+    (is' (some? card) (str title "is in hand"))
+    (if-not (some? card)
+      (do (let [other-side (if (= side :runner) :corp :runner)]
+            (when (some? (find-card title (get-in @state [other-side :hand])))
+              (println title " was instead found in the opposing hand - was the wrong side used?")))
+          true)
+      (when-let [played (core/process-action "play" state side {:card card})]
+        (click-prompts-impl state side choices)))))
+
+(defmacro play-from-hand-with-prompts
+  "Play a card from hand based on it's title, and then click any number of prompts
+   accepts for prompt: a string, a fn, a card object"
+  ([state side title] `(play-from-hand ~state ~side ~title nil))
+  ([state side title & prompts]
+   `(error-wrapper (play-from-hand-with-prompts-impl ~state ~side ~title ~(vec prompts)))))
 
 ;;; Run functions
 (defn run-on-impl
