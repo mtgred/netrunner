@@ -4563,7 +4563,7 @@
       (click-card state :corp (find-card "Scorched Earth" (:hand (get-corp))))
       (is (waiting? state :corp)
           "Corp does not have Subcontract prompt until damage prevention completes")
-      (click-prompt state :runner "Done")
+      (click-prompt state :runner "Pass priority")
       (is (not (no-prompt? state :corp)) "Corp can now play second Subcontract operation")))
 
 (deftest subcontract-interaction-with-terminal-operations

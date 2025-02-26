@@ -736,11 +736,10 @@
           "Runner lost 2 credits")
       (is (changed? [(count (:hand (get-runner))) 0]
             (click-prompt state :runner "Take 1 net damage")
-            (card-ability state :runner (get-resource state 0) 0))
+            (click-prompt state :runner "Caldera"))
           "Runner prevented 1 net damage")
       (is (changed? [(count (:hand (get-runner))) -1]
-            (click-prompt state :runner "Take 1 net damage")
-            (click-prompt state :runner "Done"))
+            (click-prompt state :runner "Take 1 net damage"))
           "Runner got 1 damage"))))
 
 (deftest attini-threat-ability
@@ -799,7 +798,7 @@
       (fire-subs state (refresh att))
       (dotimes [_ 3]
         (is (changed? [(:credit (get-corp)) 3]
-                      (card-ability state :corp (get-content state :remote1 0) 0))
+              (click-prompt state :corp "Prāna Condenser"))
             "prevented 1 net with prana")))))
 
 (deftest attini-threat-ability-cannot-spend-credits
@@ -818,12 +817,7 @@
       (is (changed?
             [(count (:hand (get-runner))) -3]
             (fire-subs state (refresh att))
-            (dotimes [_ 3]
-              (is (changed?
-                    [(:credit (get-runner)) 0]
-                    (card-ability state :runner (get-resource state 0) 0)
-                    (click-prompt state :runner "Done"))
-                  "couldn't spend on caldera")))
+            (is (no-prompt? state :runner) "Not prompted :)"))
           "Runner took 3 damage and couldn't prevent any of them by spending credits"))))
 
 (deftest authenticator-encounter-decline-to-take-tag
@@ -6424,16 +6418,16 @@
       (click-prompt state :corp "Event")
       (fire-subs state (refresh sai))
       (is (changed? [(count (:hand (get-runner))) -1]
-            (click-prompt state :runner "Done"))
+            (click-prompt state :runner "Pass priority"))
           "Let through first sub damage")
       (is (changed? [(count (:hand (get-runner))) 0]
-            (card-ability state :runner cal 0))
+            (click-prompt state :runner "Caldera"))
           "Prevent special damage")
       (is (changed? [(count (:hand (get-runner))) 0]
-            (card-ability state :runner cal 0))
+            (click-prompt state :runner "Caldera"))
           "Prevent second sub damage")
       (is (changed? [(count (:hand (get-runner))) 0]
-            (card-ability state :runner cal 0))
+            (click-prompt state :runner "Caldera"))
           "Prevent third sub damage")
       (is (no-prompt? state :runner) "No more damage prevention triggers"))))
 

@@ -4032,7 +4032,7 @@
       (is (= 2 (count (:discard (get-runner)))))
       (card-subroutine state :corp viktor 0)
       (click-prompt state :runner "Feedback Filter (Core)")
-      (click-prompt state :runner 1) ;; Prevent the brain damage this time
+      (click-prompt state :runner "1") ;; Prevent the brain damage this time
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
 

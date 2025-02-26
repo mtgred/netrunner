@@ -3939,7 +3939,7 @@
                            :effect (req (prevent-damage state side eid :pre-damage :all))}}]
    :on-play {:async true
              :change-in-game-state (req (or (seq (:hand runner))
-                                      (seq runnable-servers)))
+                                            (seq runnable-servers)))
              :effect (req (wait-for
                             (trash-cards state side (:hand runner) {:cause-card card})
                             (continue-ability

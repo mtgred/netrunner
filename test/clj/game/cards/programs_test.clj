@@ -2878,7 +2878,8 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 5 [Credits] to trash")
       (let [dx (get-program state 0)]
-        (card-ability state :runner dx 1)
+        (click-prompt state :runner "Deus X")
+        (click-prompt state :runner "1")
         (is (= 2 (count (:hand (get-runner)))) "Deus X prevented one Hostile net damage"))))
 
 (deftest deus-x-vs-multiple-sources-of-net-damage
@@ -2893,7 +2894,8 @@
       (play-from-hand state :runner "Deus X")
       (run-empty-server state "Server 1")
       (let [dx (get-program state 0)]
-        (card-ability state :runner dx 1)
+        (click-prompt state :runner "Deus X")
+        (click-prompt state :runner "2")
         (click-prompt state :runner "Pay to steal")
         (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
         (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))

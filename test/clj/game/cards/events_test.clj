@@ -5031,7 +5031,9 @@
       (click-card state :runner (get-resource state 0))
       (take-credits state :runner)
       (play-and-score state "Show of Force")
-      (card-ability state :runner (-> (get-resource state 0) :hosted first) 0)
+      (click-prompt state :runner "On the Lam")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "2")
       (is (zero? (count-tags state)) "Runner should avoid all meat damage")
       (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap")))
 
@@ -7133,25 +7135,21 @@
 (deftest the-noble-path
   ;; The Noble Path - Prevents damage during run
   (do-game
-    (new-game {:runner {:deck ["The Noble Path" (qty "Sure Gamble" 2)]}})
-    (let [hand-count #(count (:hand (get-runner)))]
-      (starting-hand state :runner ["The Noble Path" "Sure Gamble"])
-      (take-credits state :corp)
-      ;; Play The Noble Path and confirm it trashes remaining cards in hand
-      (is (= 2 (hand-count)) "Start with 2 cards")
-      (play-from-hand state :runner "The Noble Path")
-      (is (zero? (hand-count)) "Playing Noble Path trashes the remaining cards in hand")
-      ;; Put a card into hand so I can confirm it's not discarded by damage
-      ;; Don't want to dealing with checking damage on a zero card hand
-      (starting-hand state :runner ["Sure Gamble"])
-      (damage state :runner :net 1)
-      (is (= 1 (hand-count)) "Damage was prevented")
+    (new-game {:runner {:hand ["The Noble Path" "Sports Hopper" "Sure Gamble"]
+                        :deck [(qty "Sure Gamble" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sports Hopper")
+    (play-from-hand state :runner "The Noble Path")
+    (is (zero? (count (:hand (get-runner)))) "Playing Noble Path trashes the remaining cards in hand")
+    (click-prompt state :runner "HQ")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (damage state :runner :net 2)
+    (is (= 2 (count (:hand (get-runner)))) "Damage was prevented")
       ;; Finish the run and check that damage works again
-      (click-prompt state :runner "HQ")
-      (run-continue state)
-      (click-prompt state :runner "No action")
-      (damage state :runner :net 1)
-      (is (zero? (hand-count)) "Damage works again after run"))))
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (damage state :runner :net 2)
+    (is (zero? (count (:hand (get-runner)))) "Damage works again after run")))
 
 (deftest the-price
   ;; trash the top 4, install one paying 3 less

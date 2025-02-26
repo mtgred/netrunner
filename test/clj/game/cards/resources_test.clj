@@ -868,6 +868,7 @@
       (play-from-hand state :corp "Scorched Earth")
       (is (zero? (count (:discard (get-runner)))) "No cards have been discarded or trashed yet")
       (click-prompt state :runner "Citadel Sanctuary")
+      (click-prompt state :runner "Yes")
       (is (= 3 (count (:discard (get-runner)))) "CS and all cards in grip are trashed")))
 
 (deftest citadel-sanctuary-end-of-turn-trace

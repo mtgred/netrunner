@@ -1151,7 +1151,7 @@
                  :label "Heartbeat"
                  :ability {:async true
                            :cost [(->c :trash-installed 1)]
-                           :msg (msg "prevent 1 " (damage-type state :damage) " damage")
+                           :msg (msg "prevent 1 " (damage-name state :damage) " damage")
                            :req (req (and (not (:unpreventable context))
                                           (pos? (:remaining context))))
                            :effect (req (prevent-damage state side eid :damage 1))}}]})
@@ -1499,7 +1499,7 @@
                    :type :ability
                    :ability {:async true
                              :cost [(->c :trash-program-from-hand 1)]
-                             :msg (msg "prevent 1 " (damage-type state :damage) " damage")
+                             :msg (msg "prevent 1 " (damage-name state :damage) " damage")
                              :req (req (and (not (= :meat (:type context)))
                                             (not (:unpreventable context))
                                             (pos? (:remaining context))))}}]}))
@@ -1786,8 +1786,7 @@
                  :ability {:async true
                            :cost [(->c :power 1)]
                            :msg "prevent 1 meat damage"
-                           :req (req (and run
-                                          (not (:unpreventable context))
+                           :req (req (and (not (:unpreventable context))
                                           (= :meat (:type context))
                                           (pos? (:remaining context))))
                            :effect (req (prevent-damage state side eid :damage 1))}}]

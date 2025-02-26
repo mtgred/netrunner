@@ -751,8 +751,9 @@
   {:trash-icon true
    :prevention [{:prevents :damage
                  :type :ability
+                 :prompt "Use Citadel Sanctuary to prevent meat damage?"
                  :ability {:async true
-                           :cost [(->c :trash-can)]
+                           :cost [(->c :trash-can) (->c :trash-entire-hand)]
                            :req (req
                                   (and (pos? (:remaining context))
                                        (= :meat (:type context))
@@ -1854,6 +1855,7 @@
                 :effect (req (wait-for (gain-tags state :runner 1)
                                        (add-counter state :runner card :power (+ 3 (count-tags state)))
                                        (effect-completed state :runner eid)))}
+   :flags {:untrashable-while-resources true}
    :events [(trash-on-empty :power)]
    :prevention [{:prevents :damage
                  :type :ability
