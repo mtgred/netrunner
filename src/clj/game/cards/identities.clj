@@ -1252,7 +1252,7 @@
                                           (fn [targets]
                                             (let [context (first targets)]
                                               (is-central? (:server context)))))))
-             :effect (req (wait-for (gain-tags state :runner 1)
+             :effect (req (wait-for (gain-tags state :runner 1 {:suppress-checkpoint true})
                                     (draw state :runner eid 2)))}]})
 
 (defcard "Los: Data Hijacker"
