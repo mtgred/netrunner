@@ -86,7 +86,6 @@
 (defn- trigger-prevention
   "Triggers an ability as having prevented something"
   [state side eid key prevention]
-  (swap! state update-in [:prevent key :uses (->> prevention :card :cid)] (fnil inc 0))
   ;; this marks the player as having acted, so we can play the priority game
   ;; Note that this requires the following concession:
   ;;   * All abilities should either use the prompt system set up here
@@ -94,6 +93,7 @@
   ;; The consequence of ignoring this is the potential for a silly player to pretend to act, do nothing, and flip priority
   (let [abi {:async true
              :effect (req (swap! state assoc-in [:prevent key :priority-passes] 0)
+                          (swap! state update-in [:prevent key :uses (->> prevention :card :cid)] (fnil inc 0))
                           (resolve-ability state side eid (:ability prevention) card [(get-in @state [:prevent key])]))}]
     (resolve-ability
       state side (assoc eid :source (:card prevention) :source-type :ability)
