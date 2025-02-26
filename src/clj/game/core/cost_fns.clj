@@ -112,6 +112,7 @@
   (let [abilities (:abilities (card-def card))
         events (:events (card-def card))]
     (or (some :trash-icon (concat abilities events))
+        (:trash-icon (card-def card))
         (some #(= :trash-can (:cost/type %))
               (->> abilities
                    (map :cost)

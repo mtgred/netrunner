@@ -435,11 +435,9 @@
       (play-from-hand state :runner "Feedback Filter")
       (take-credits state :runner)
       (let [ff (get-hardware state 0)]
-        (is (= 2 (count (:prompt (get-runner)))) "Runner has a single damage prevention prompt")
-        (card-ability state :runner ff 0)
+        (click-prompt state :runner "Feedback Filter (Net)")
         (is (zero? (count (:discard (get-runner)))) "Runner prevented damage")
-        (is (= 2 (count (:prompt (get-runner)))) "Runner has a next damage prevention prompt")
-        (click-prompt state :runner "Done")
+        (click-prompt state :runner "Pass priority")
         (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage"))))
 
 (deftest bioroid-work-crew
@@ -4159,18 +4157,18 @@
       (play-from-hand state :corp "Neural EMP")
       (let [corp-credits (:credit (get-corp))]
         (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-        (card-ability state :corp (refresh pc) 0)
+        (click-prompt state :corp "Prāna Condenser")
         (is (= 1 (get-counters (refresh pc) :power)) "Added 1 power counter")
         (is (= (+ 3 corp-credits) (:credit (get-corp))) "Gained 3 credits")
         (play-from-hand state :corp "Neural EMP")
         (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-        (card-ability state :corp pc 0)
+        (click-prompt state :corp "Prāna Condenser")
         (is (= 2 (get-counters (refresh pc) :power)) "Added another power counter")
         (is (= (+ 4 corp-credits) (:credit (get-corp))) "Gained another 3 credits (and paid 2 for EMP)")
         (is (= 5 (count (:hand (get-runner)))) "No damage dealt"))
       (take-credits state :corp)
       (take-credits state :runner)
-      (card-ability state :corp  pc 1)
+      (card-ability state :corp  pc 0)
       (is (= 3 (count (:hand (get-runner)))) "2 damage dealt"))))
 
 (deftest prana-condenser-refuse-to-prevent-damage
@@ -4187,7 +4185,7 @@
         (play-from-hand state :corp "Neural EMP")
         (let [corp-credits (:credit (get-corp))]
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-          (click-prompt state :corp "Done")
+          (click-prompt state :corp "Pass priority")
           (is (= 4 (count (:hand (get-runner)))) "1 net damage dealt")
           (is (= 0 (get-counters (refresh pc) :power)) "No power counter added")
           (is (= corp-credits (:credit (get-corp))) "No credits gained")))))
@@ -4205,7 +4203,7 @@
         (play-from-hand state :runner "Caldera")
         (is (= 4 (count (:hand (get-runner)))) "Runner starts with 4 cards in grip")
         (run-empty-server state :hq)
-        (card-ability state :runner (get-resource state 0) 0)
+        (click-prompt state :runner "Caldera")
         (is (= 4 (count (:hand (get-runner)))) "Runner took no damage")
         (is (no-prompt? state :corp) "No Prana prompt for Corp"))))
 
@@ -4259,7 +4257,7 @@
           (play-from-hand state :runner "PAD Tap")
           (play-from-hand state :runner "PAD Tap")
           (take-credits state :runner)
-          (card-ability state :corp (refresh pc) 0)
+          (click-prompt state :corp "Prāna Condenser")
           (is (= 9 (:credit (get-runner))) "Runner gained 3 credits from Prana"))))
 
 (deftest primary-transmission-dish

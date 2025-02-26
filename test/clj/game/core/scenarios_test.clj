@@ -455,9 +455,8 @@
         (take-credits state :runner)
         (is (= 6 (:credit (get-runner))))
         (play-from-hand state :corp "Neural EMP")
-        (let [ns (get-program state 0)
-              fg (first (:hosted (refresh apt)))]
-          (card-ability state :runner ns 0)
+        (let [fg (first (:hosted (refresh apt)))]
+          (click-prompt state :runner "Net Shield")
           (is (= 5 (:credit (get-runner))) "Runner paid 1c to survive Neural EMP")
           (play-from-hand state :corp "SEA Source")
           (click-prompt state :corp "3") ; boost trace to 6

@@ -4025,13 +4025,14 @@
       (rez state :corp viktor)
       (run-continue state)
       (card-subroutine state :corp viktor 0)
-      (click-prompt state :runner "Done")  ;; Don't prevent the brain damage
+      (click-prompt state :runner "Pass priority")  ;; Don't prevent the brain damage
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 1 (:brain-damage (get-runner))))
-      (click-prompt state :runner "Done")  ;; So we take the net, but don't prevent it either
+      (click-prompt state :runner "Pass priority")  ;; So we take the net, but don't prevent it either
       (is (= 2 (count (:discard (get-runner)))))
       (card-subroutine state :corp viktor 0)
-      (card-ability state :runner ff 1)  ;; Prevent the brain damage this time
+      (click-prompt state :runner "Feedback Filter (Core)")
+      (click-prompt state :runner 1) ;; Prevent the brain damage this time
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
 

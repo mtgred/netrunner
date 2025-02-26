@@ -867,7 +867,7 @@
       (gain-tags state :runner 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (zero? (count (:discard (get-runner)))) "No cards have been discarded or trashed yet")
-      (card-ability state :runner (get-resource state 0) 0)
+      (click-prompt state :runner "Citadel Sanctuary")
       (is (= 3 (count (:discard (get-runner)))) "CS and all cards in grip are trashed")))
 
 (deftest citadel-sanctuary-end-of-turn-trace
@@ -4456,16 +4456,14 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Feedback Filter")
       (play-from-hand state :runner "Net Mercur")
-      (let [nm (get-resource state 0)
-            ff (get-hardware state 0)]
+      (let [nm (get-resource state 0)]
         (core/add-counter state :runner (refresh nm) :credit 4)
         (damage state :corp :net 2)
-        (card-ability state :runner ff 0)
+        (click-prompt state :runner "Feedback Filter (Net)")
         (click-card state :runner nm)
         (click-card state :runner nm)
         (click-card state :runner nm)
-        (card-ability state :runner ff 0)
-        (click-prompt state :runner "Done")
+        (click-prompt state :runner "Pass priority")
         (is (= 1 (get-counters (refresh nm) :credit)) "Net Mercur has lost 3 credits"))))
 
 (deftest network-exchange
@@ -4629,15 +4627,16 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "No One Home")
-      (let [dm (get-ice state :archives 0)
-            noh (get-resource state 0)]
+      (let [dm (get-ice state :archives 0)]
         (run-on state "Archives")
         (rez state :corp dm)
         (run-continue state)
         (card-subroutine state :corp dm 0)
-        (card-ability state :runner noh 0)
+        (click-prompt state :runner "No One Home")
+        (click-prompt state :runner "Yes")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
+        (click-prompt state :runner "1")
         (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
         (run-continue state)
         (play-from-hand state :runner "No One Home")
@@ -4677,9 +4676,11 @@
         (rez state :corp dm)
         (run-continue state)
         (card-subroutine state :corp dm 0)
-        (card-ability state :runner noh 0)
+        (click-prompt state :runner "No One Home")
+        (click-prompt state :runner "Yes")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
+        (click-prompt state :runner "1")
         (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented"))))))
 
 (deftest off-campus-apartment-ability-shows-a-simultaneous-resolution-prompt-when-appropriate

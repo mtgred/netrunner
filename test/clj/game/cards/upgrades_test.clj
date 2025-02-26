@@ -4180,18 +4180,16 @@
       (play-from-hand state :runner "Net Shield")
       (run-on state "HQ")
       (let [pup (get-ice state :hq 0)
-            tori (get-content state :hq 0)
-            nshld (get-program state 0)]
+            tori (get-content state :hq 0)]
         (rez state :corp pup)
         (rez state :corp tori)
         (run-continue state)
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Suffer 1 net damage")
-        (card-ability state :runner nshld 0)
+        (click-prompt state :runner "Net Shield")
         (is (empty? (:discard (get-runner))) "1 net damage prevented")
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Suffer 1 net damage")
-        (click-prompt state :runner "Done") ; decline to prevent
         (is (= 1 (count (:discard (get-runner)))) "1 net damage; previous prevention stopped Tori ability")
         (run-continue state :movement)
         (run-jack-out state)
@@ -4199,7 +4197,7 @@
         (run-continue state)
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Suffer 1 net damage")
-        (click-prompt state :runner "Done")
+        (click-prompt state :corp "Tori Hanzō")
         (click-prompt state :corp "Yes")
         (is (= 2 (count (:discard (get-runner)))) "1 core damage suffered")
         (is (= 1 (:brain-damage (get-runner)))))))
@@ -4218,14 +4216,15 @@
         (rez state :corp hg)
         (rez state :corp tori)
         (run-continue state)
-        (click-prompt state :corp "No") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+        (click-prompt state :corp "Pass priority") ;; Tori prompt to pay 2c to replace 1 net with 1 brain
         (is (= 1 (count (:discard (get-runner)))) "1 net damage suffered")
         (click-prompt state :runner "Hokusai Grid")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
         (is (no-prompt? state :corp) "No prompts, run ended")
         (run-empty-server state "Archives")
-        (click-prompt state :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+        (click-prompt state :corp "Tori Hanzō")
+        (click-prompt state :corp "Yes") ;; Tori prompt to pay 2c to replace 1 net with 1 brain
         (is (= 2 (count (:discard (get-runner)))))
         (is (= 1 (:brain-damage (get-runner))) "1 core damage suffered")
         (click-prompt state :runner "Hokusai Grid")
@@ -4249,6 +4248,7 @@
         (run-continue state)
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Suffer 1 net damage")
+        (click-prompt state :corp "Tori Hanzō")
         (click-prompt state :corp "Yes") ; pay 2c to replace 1 net with 1 brain
         (is (= 1 (count (:discard (get-runner)))) "1 core damage suffered")
         (is (= 1 (:brain-damage (get-runner))))

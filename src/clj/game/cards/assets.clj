@@ -3259,7 +3259,8 @@
                                        (rez state side eid (last (:hosted (get-card state card))) {:cost-bonus -2})))}]})
 
 (defcard "Zaibatsu Loyalty"
-  {:prevention [{:prevents :expose
+  {:trash-icon true
+   :prevention [{:prevents :expose
                  :type :ability
                  :label "1 [Credit]: Zaibatsu Loyalty"
                  :ability {:cost [(->c :credit 1)]

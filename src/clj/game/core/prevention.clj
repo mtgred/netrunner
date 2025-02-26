@@ -80,7 +80,7 @@
   "get the prevent map for a key and also dissoc it from the state"
   [state key]
   (let [res (get-in @state [:prevent key])]
-    (swap! state dissoc-in [:prevent key])
+    (swap! state dissoc :prevent)
     res))
 
 (defn- trigger-prevention

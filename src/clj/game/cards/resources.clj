@@ -576,7 +576,8 @@
              :effect (req (mill state :corp eid :corp 1))}]})
 
 (defcard "Bio-Modeled Network"
-  {:prevention [{:prevents :damage
+  {:trash-icon true
+   :prevention [{:prevents :damage
                  :type :ability
                  :max-uses 1
                  :ability {:async true
@@ -589,7 +590,8 @@
                            :effect (req (prevent-damage state side eid :damage (dec (:remaining context))))}}]})
 
 (defcard "Biometric Spoofing"
-  {:prevention [{:prevents :damage
+  {:trash-icon true
+   :prevention [{:prevents :damage
                  :type :ability
                  :max-uses 1
                  :ability {:async true
@@ -746,7 +748,8 @@
                            :effect (req (prevent-damage state side eid :pre-damage :all))}}]})
 
 (defcard "Citadel Sanctuary"
-  {:prevention [{:prevents :damage
+  {:trash-icon true
+   :prevention [{:prevents :damage
                  :type :ability
                  :ability {:async true
                            :cost [(->c :trash-can)]
@@ -922,7 +925,8 @@
                                   (make-run eid target card))}]}))
 
 (defcard "Crash Space"
-  {:prevention [{:prevents :damage
+  {:trash-icon true
+   :prevention [{:prevents :damage
                  :type :ability
                  :ability (assoc (prevent-up-to-n-damage 3 :damage #{:meat})
                                  :cost [(->c :trash-can)])}]
@@ -1641,6 +1645,7 @@
                                                      :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil (->c :credit 4))
                                                                       "Pay 4 [Credits]")
                                                                     "Trash Guru Davinder"])
+                                                     :async true
                                                      :effect (req (if (= target "Trash Guru Davinder")
                                                                     (trash state :runner eid card {:cause :runner-ability :cause-card card})
                                                                     (pay state :runner eid card (->c :credit 4))))}
@@ -2320,7 +2325,7 @@
                                             run
                                             (= :corp (:active-player @state))
                                             (#{:psi :trace} (:source-type eid))
-                                            (get-in @state [:prevention])))
+                                            (get-in @state [:prevent])))
                                 :type :credit}}})
 
 (defcard "Network Exchange"
@@ -2908,7 +2913,8 @@
                       card nil))}]}))
 
 (defcard "Sacrificial Clone"
-  {:prevention [{:prevents :damage
+  {:trash-icon true
+   :prevention [{:prevents :damage
                  :type :ability
                  :max-uses 1
                  :ability {:async true

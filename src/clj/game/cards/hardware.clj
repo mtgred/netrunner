@@ -846,7 +846,8 @@
      :abilities [(break-sub [(->c :power 2)] 2 "All")]}))
 
 (defcard "Feedback Filter"
-  {:prevention [{:prevents :damage
+  {:trash-icon true
+   :prevention [{:prevents :damage
                  :type :ability
                  :label "Feedback Filter (Net)"
                  :ability {:async true
@@ -1934,7 +1935,8 @@
 
 (defcard "Ramujan-reliant 550 BMI"
   (letfn [(max-trash [state] (inc (count (filter #(= (:title %) "Ramujan-reliant 550 BMI") (all-installed state :runner)))))]
-    {:prevention [{:prevents :damage
+    {:trash-icon true
+     :prevention [{:prevents :damage
                    :type :ability
                    :ability {:async true
                              :cost [(->c :trash-can)]
@@ -1949,7 +1951,8 @@
                                                         (mill state :runner eid :runner prevented-this-instance)))))}}]}))
 
 (defcard "Recon Drone"
-  {:prevention [{:prevents :damage
+  {:trash-icon true
+   :prevention [{:prevents :damage
                  :type :ability
                  :ability {:async true
                            :req (req (and (pos? (:remaining context))

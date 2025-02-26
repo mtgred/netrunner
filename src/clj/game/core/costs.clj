@@ -193,7 +193,6 @@
        (<= (stealth-value cost) (total-available-stealth-credits state side eid card))))
 (defmethod handler :x-credits
   [cost state side eid card]
-  (println cost)
   (continue-ability
     state side
     {:async true
