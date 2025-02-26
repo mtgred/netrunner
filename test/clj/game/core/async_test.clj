@@ -99,7 +99,7 @@
   "functions which should complete an eid, or indicate one needs to be completed"
   #{"checkpoint" "complete-with-result" "continue-ability" "corp-install"
     "damage" "draw" "effect-completed" "gain-credits" "gain-tags" "make-run"
-    "reveal" "rez" "resolve-ability" "runner-install"
+    "reveal" "rez" "resolve-ability" "runner-install" "add-counter" "add-prop"
     "trash" "trash-cards" "trigger-event-simult" "trigger-event-sync" "wait-for"})
 
 (def safe-fns
@@ -205,6 +205,10 @@
              (is-valid-chunk? (:effect mapped) memory :async)
              (is-valid-chunk? (:effect mapped) memory :sync))
            true)
+         ;; note that :move-zone fns should complete an eid
+         (if (:move-zone mapped)
+           (is-valid-chunk? (:move-zone mapped) memory :async)
+           true)
          (if (:cancel-effect mapped)
            (is-valid-chunk? (:cancel-effect mapped) memory :async)
            true)
@@ -237,8 +241,10 @@
 ;; note: this SHOULD avoid emacs autosave and backup files, but I'm not sure if it will
 ;; potentially pick up backup files from other editors. If that happens, I can just adjust
 ;; the regex later. -nbk, 2025
+;; for reference:
+;; * emacs autosaves contain a #, and backups contain a ~
 (defn get-clojure-files [d]
-  (sort (filter #(re-matches #"^.*\.clj$" %) (seq (.list (clojure.java.io/file d))))))
+  (sort (filter #(re-matches #"[^#~]*\.clj$" %) (seq (.list (clojure.java.io/file d))))))
 
 (deftest cards-are-async-test
   (doseq [fname (get-clojure-files card-base-str)]

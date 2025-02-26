@@ -13,8 +13,8 @@
       (play-from-hand state :runner "Acacia")
       (play-from-hand state :runner "Virus Breeding Ground")
       (play-from-hand state :runner "Datasucker")
-      (core/add-counter state :runner (get-resource state 0) :virus 4)
-      (core/add-counter state :runner (get-program state 0) :virus 3)
+      (core/add-counter state :runner (core/make-eid state) (get-resource state 0) :virus 4)
+      (core/add-counter state :runner (core/make-eid state) (get-program state 0) :virus 3)
       (take-credits state :runner)
       (is (= 2 (:credit (get-runner))) "Runner initial credits")
       (purge state :corp)
@@ -30,7 +30,7 @@
       (play-from-hand state :runner "Acacia")
       (play-from-hand state :runner "Datasucker")
       (play-from-hand state :runner "LLDS Energy Regulator")
-      (core/add-counter state :runner (get-program state 0) :virus 3)
+      (core/add-counter state :runner (core/make-eid state) (get-program state 0) :virus 3)
       (take-credits state :runner)
       (let [llds (get-program state 1)]
         (is (changed? [(:credit (get-runner)) 0]
@@ -56,7 +56,7 @@
       (take-credits state :runner)
       (let [sandstone (get-ice state :hq 0)]
         (rez state :corp sandstone)
-        (core/add-counter state :corp sandstone :virus 1)
+        (core/add-counter state :corp (core/make-eid state) sandstone :virus 1)
         (is (= 1 (get-counters (refresh sandstone) :virus)) "Sandstone has 1 virus counter")
         (is (= 7 (:credit (get-runner))) "Runner credits should be 7")
         (purge state :corp)
@@ -1306,6 +1306,25 @@
           (is (find-card "I've Had Worse" (:deck (get-runner))))
           (is (find-card "Buffer Drive" (get-hardware state)))))))
 
+(deftest buffer-drive-dont-offer-duplicate-option-with-the-price
+  (do-game
+    (new-game {:runner {:discard ["Boomerang"] :deck ["Ika" "Boomerang" "Sure Gamble"] :hand ["The Price" "Buffer Drive"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Buffer Drive")
+    (play-from-hand state :runner "The Price")
+    (click-prompt state :runner "Boomerang")
+    (is (not-any? #{"Boomerang"} (prompt-buttons :runner)) "No offer to install boomerang")))
+
+(deftest buffer-drive-plays-nice-with-skorpios
+  (do-game
+    (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"}
+               :runner {:deck ["Ika" "Boomerang" "Sure Gamble"] :hand ["The Price" "Buffer Drive"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Buffer Drive")
+    (play-from-hand state :runner "The Price")
+    (click-prompt state :corp "Boomerang")
+    (is (not-any? #{"Boomerang"} (prompt-buttons :runner)) "No offer to install boomerang")))
+
 (deftest capstone
   ;; Capstone
   (do-game
@@ -2128,7 +2147,6 @@
       (is (zero? (get-counters aum :virus)) "Auakua starts with 0 counters")
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 3 [Credits] to trash") ; trash Adonis Campaing
-      (click-prompt state :runner "Yes") ; gain virus counter
       (is (= 1 (get-counters (refresh fc) :virus)) "Friday Chip gains a counter on trash")
       (is (zero? (get-counters (refresh aum) :virus)) "Aumakua doesn't gain a counter")
       (run-empty-server state "HQ")
@@ -2245,7 +2263,7 @@
       ; Deck is now top to bottom: A B C D E F
       (play-from-hand state :runner "Paladin Poemu")
       (let [pp (get-resource state 0)]
-        (core/add-counter state :runner (refresh pp) :credit 2)
+        (core/add-counter state :runner (core/make-eid state) (refresh pp) :credit 2)
         (play-from-hand state :runner "Gachapon")
         (card-ability state :runner (get-hardware state 0) 0)
         (is (last-log-contains? state "Au Revoir, Bankroll, Clone Chip, DDoS, Equivocation, and Falsified Credentials") "Shown correct six cards")
@@ -2716,7 +2734,7 @@
       (card-ability state :runner (get-resource state 0) 1)
       (click-card state :runner hm)
       (is (= 8 (hand-size :runner)))
-      (core/add-counter state :runner (refresh hm) :power -3)
+      (core/add-counter state :runner (core/make-eid state) (refresh hm) :power -3)
       (core/update-hand-size state :runner)
       (is (= 5 (hand-size :runner))))))
 
@@ -2818,7 +2836,7 @@
               (play-from-hand state :runner "Trickster Taka"))
             "Got 1c back from installing Trickster Taka")
         (let [tt (get-resource state 0)]
-          (core/add-counter state :runner (refresh tt) :credit 1)
+          (core/add-counter state :runner (core/make-eid state) (refresh tt) :credit 1)
           (run-on state "HQ")
           (is (changed? [(:credit (get-runner)) 1]
                 (card-ability state :runner tt 0))
@@ -2830,7 +2848,7 @@
         (play-from-hand state :runner "Keiko")
         (play-from-hand state :runner "Trickster Taka")
         (let [tt (get-resource state 0)]
-          (core/add-counter state :runner (refresh tt) :credit 1)
+          (core/add-counter state :runner (core/make-eid state) (refresh tt) :credit 1)
           (take-credits state :runner)
           (take-credits state :corp)
           (run-on state "HQ")
@@ -3249,7 +3267,7 @@
     (play-from-hand state :runner "Masterwork (v37)")
     (play-from-hand state :runner "Paladin Poemu")
     (let [pp (get-resource state 0)]
-      (core/add-counter state :runner (refresh pp) :credit 2)
+      (core/add-counter state :runner (core/make-eid state) (refresh pp) :credit 2)
       (run-on state "HQ")
       (click-prompt state :runner "Yes")
       (click-card state :runner "Acacia")

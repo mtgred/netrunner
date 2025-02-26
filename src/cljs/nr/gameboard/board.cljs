@@ -170,13 +170,13 @@
         (:poison card)
         (:highlight-in-discard card))))
 
-(defn handle-card-click [{:keys [type zone] :as card}]
+(defn handle-card-click [{:keys [type zone] :as card} shift-key-held]
   (let [side (:side @game-state)]
     (when (not-spectator?)
       (cond
         ;; Selecting card
         (= (get-in @game-state [side :prompt-state :prompt-type]) "select")
-        (send-command "select" {:card (card-for-click card)})
+        (send-command "select" {:card (card-for-click card) :shift-key-held shift-key-held})
 
         ;; Card is an identity of player's side
         (and (= (:type card) "Identity")
@@ -189,7 +189,7 @@
              (not (any-prompt-open? side))
              (= "hand" (first zone))
              (playable? card))
-        (send-command "play" {:card (card-for-click card)})
+        (send-command "play" {:card (card-for-click card) :shift-key-held shift-key-held})
 
         ;; Corp clicking on a corp card
         (and (= side :corp)
@@ -202,7 +202,8 @@
           (if (= (:cid card) (:source @card-menu))
             (do (send-command "generate-install-list" nil)
                 (close-card-menu))
-            (do (send-command "generate-install-list" {:card (card-for-click card)})
+            (do (send-command "generate-install-list" {:card (card-for-click card)
+                                                       :shift-key-held shift-key-held})
                 (open-card-menu (:cid card)))))
 
         :else
@@ -722,13 +723,13 @@
                                                (put-game-card-in-channel card zoom-channel))
                             :on-mouse-leave #(put! zoom-channel false)
                             :on-click #(when (not disable-click)
-                                         (handle-card-click card))
+                                         (handle-card-click card (.-shiftKey %)))
                             :on-key-down #(when (and (= "Enter" (.-key %))
                                                      (not disable-click))
-                                            (handle-card-click card))
+                                            (handle-card-click card (.-shiftKey %)))
                             :on-key-up #(when (and (= " " (.-key %))
                                                    (not disable-click))
-                                          (handle-card-click card))}
+                                          (handle-card-click card (.-shiftKey %)))}
       (if (or (not code) flipped facedown)
         (let [facedown-but-known (or (not (or (not code) flipped facedown))
                                      (spectator-view-hidden?)
@@ -1051,7 +1052,7 @@
                         @cards))
          [label @cards {:opts {:name name}}]]))))
 
-(defn scored-view [scored agenda-point me?]
+(defn scored-view [scored agenda-point agenda-point-req me?]
   (let [size (count @scored)
         ctrl (if me? stat-controls (fn [key content] content))]
     [:div.panel.blue-shade.scored.squeeze
@@ -1063,7 +1064,8 @@
                     @scored))
      [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]
      [:div.stats-area
-      (ctrl :agenda-point [:div (tr [:game.agenda-count] @agenda-point)])]]))
+      (ctrl :agenda-point [:div (tr [:game.agenda-count] @agenda-point)
+                           (tr [:game.agenda-point-req (if-not (= 7 agenda-point-req) (str " (" agenda-point-req " required)") "")] @agenda-point-req)])]]))
 
 (defn run-arrow [run]
   [:div.run-arrow [:div {:class (cond
@@ -2191,6 +2193,8 @@
                  op-scored (r/cursor game-state [op-side :scored])
                  me-agenda-point (r/cursor game-state [me-side :agenda-point])
                  op-agenda-point (r/cursor game-state [op-side :agenda-point])
+                 me-agenda-point-req (r/cursor game-state [me-side :agenda-point-req])
+                 op-agenda-point-req (r/cursor game-state [op-side :agenda-point-req])
                  ;; servers
                  corp-servers (r/cursor game-state [:corp :servers])
                  runner-rig (r/cursor game-state [:runner :rig])
@@ -2242,9 +2246,9 @@
                  [:div.left-inner-leftpane
                   [:div
                    [stats-view opponent]
-                   [scored-view op-scored op-agenda-point false]]
+                   [scored-view op-scored op-agenda-point op-agenda-point-req false]]
                   [:div
-                   [scored-view me-scored me-agenda-point true]
+                   [scored-view me-scored me-agenda-point me-agenda-point-req true]
                    [stats-view me]]]
 
                  [:div.right-inner-leftpane

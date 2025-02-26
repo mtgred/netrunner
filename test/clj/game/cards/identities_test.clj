@@ -3,9 +3,11 @@
    [clojure.string :as str]
    [clojure.test :refer :all]
    [game.core :as core]
+   [game.core.eid :refer [make-eid]]
    [game.core.card :refer :all]
    [game.core.mark :refer [is-mark?]]
    [game.core.servers :refer [unknown->kw zone->name]]
+   [game.core.winning :refer [agenda-points-required-to-win]]
    [game.test-framework :refer :all]
    [game.utils :as utils]))
 
@@ -1656,7 +1658,7 @@
       (is (= 1 (count (prompt-buttons :runner))) "Runner doesn't have enough credits to trash")
       (click-prompt state :runner "No action")
       (play-from-hand state :runner "Imp")
-      (core/add-counter state :runner (get-program state 0) :virus 5)
+      (core/add-counter state :runner (make-eid state) (get-program state 0) :virus 5)
       (play-from-hand state :runner "Skulljack")
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1713,7 +1715,7 @@
       (play-from-hand state :corp "Sandstone" "R&D")
       (let [sandstone (get-ice state :rd 0)]
         (rez state :corp sandstone)
-        (core/add-counter state :corp sandstone :virus 1)
+        (core/add-counter state :corp (make-eid state) sandstone :virus 1)
         (take-credits state :corp)
         (run-empty-server state "HQ")
         (is (= 1 (get-counters (refresh sandstone) :virus)) "Sandstone has 1 virus counter")
@@ -2423,7 +2425,7 @@
       (take-credits state :runner)
       (score-agenda state :corp hok)
       (is (= 0 (get-counters (refresh issuaq) :power)) "Issuaq has no power counters")
-      (is (= 7 (:agenda-point-req (get-corp))) "Corp still requires 7 points to win"))))
+      (is (= 7 (agenda-points-required-to-win state :corp)) "Corp still requires 7 points to win"))))
 
 (deftest issuaq-adaptics-single-score
   ;; Issuaq Adaptics - Adjust point requirement when a single agenda is scored
@@ -2438,7 +2440,7 @@
       (play-from-hand state :corp "Seamless Launch")
       (click-card state :corp pk)
       (score state :corp (refresh pk))
-      (is (= 6 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 1")
+      (is (= 6 (agenda-points-required-to-win state :corp)) "Corp Agenda point requirement reduced by 1")
       (is (= 1 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 1 power counter"))))
 
 (deftest issuaq-adaptics-multiple-score
@@ -2459,7 +2461,7 @@
         (click-card state :corp pk2)
         (score state :corp (refresh pk1))
         (score state :corp (refresh pk2))
-        (is (= 5 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 2")
+        (is (= 5 (agenda-points-required-to-win state :corp)) "Corp Agenda point requirement reduced by 2")
         (is (= 2 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 2 power counters"))))
 
 (deftest jemison-astronautics-sacrifice-audacity-success
@@ -2502,7 +2504,7 @@
       (let [gs (get-content state :remote1 0)
             arch (get-ice state :hq 0)
             iwall (get-ice state :rd 0)]
-        (core/add-counter state :corp gs :advancement 3)
+        (core/add-counter state :corp (make-eid state) gs :advancement 3)
         (rez state :corp (refresh gs))
         (card-ability state :corp (refresh gs) 0)
         (is (nil? (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
@@ -4066,7 +4068,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Cookbook")
     (play-from-hand state :runner "Gravedigger")
-    (click-prompt state :runner "Yes")
     (is (changed? [(:credit (get-corp)) 0]
           (card-ability state :runner (get-program state 0) 0))
         "Nuvem should not fire on Runner's turn")))
@@ -4724,7 +4725,7 @@
       (is (= 12 (:credit (get-runner))) "Gained 4cr")
       (is (= 12 (get-counters (get-resource state 0) :credit)) "12 cr on Temujin")))
 
-(deftest skorpios-defense-systems-persuasive-power
+(deftest skorpios-defense-systems-persuasive-power-manual-usage
   ; Remove a card from game when it moves to discard once per round
   (do-game
     (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"
@@ -4733,11 +4734,13 @@
     (play-from-hand state :corp "Hedge Fund")
     (dotimes [_ 4] (core/move state :corp (first (:hand (get-corp))) :deck))
     (take-credits state :corp)
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (click-prompt state :corp "Manual")
     (play-from-hand state :runner "Lucky Find")
     (play-from-hand state :runner "The Maker's Eye")
     (is (= [:rd] (:server (get-run))))
     ; Don't allow a run-event in progress to be targeted #2963
-    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (card-ability state :corp (get-in @state [:corp :identity]) 1)
     (is (empty? (filter #(= "The Maker's Eye" (:title %)) (-> (get-corp) :prompt first :choices))) "No Maker's Eye choice")
     (click-prompt state :corp "Cancel")
     (run-continue state)
@@ -4748,11 +4751,20 @@
     (is (accessing state "Quandary"))
     (click-prompt state :runner "No action")
     (is (not (:run @state)))
-    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (card-ability state :corp (get-in @state [:corp :identity]) 1)
     (click-prompt state :corp (find-card "The Maker's Eye" (:discard (get-runner))))
     (is (= 1 (count (get-in @state [:runner :rfg]))) "One card RFGed")
-    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (card-ability state :corp (get-in @state [:corp :identity]) 1)
     (is (no-prompt? state :corp) "Cannot use Skorpios twice")))
+
+(deftest skorpios-smart-test
+  (do-game
+    (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"}
+               :runner {:deck ["Corroder"]}})
+    (damage state :corp :brain 1)
+    (click-prompt state :corp "Corroder")
+    (is (= 1 (count (get-in @state [:runner :rfg]))) "One card RFGed")))
+
 
 (deftest spark-agency-worldswide-reach
   ;; Spark Agency - Rezzing advertisements

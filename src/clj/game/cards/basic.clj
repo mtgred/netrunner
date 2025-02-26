@@ -93,9 +93,8 @@
                 :async true
                 :msg (msg "advance " (card-str state (:card context)))
                 :effect (effect (update-advancement-requirement (:card context))
-                                (add-prop (get-card state (:card context)) :advance-counter 1)
                                 (play-sfx "click-advance")
-                                (effect-completed eid))}
+                                (add-prop eid (get-card state (:card context)) :advance-counter 1))}
                {:action true
                 :label "Trash 1 resource if the Runner is tagged"
                 :cost [(->c :click 1) (->c :credit 2)]

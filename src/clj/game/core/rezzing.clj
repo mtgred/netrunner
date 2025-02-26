@@ -94,6 +94,19 @@
                           (continue state side nil))
                         (complete-with-result state side eid {:card (get-card state card)})))))))))
 
+(defn can-pay-to-rez?
+  ([state side eid card] (can-pay-to-rez? state side eid card nil))
+  ([state side eid card args]
+   (let [eid (assoc eid :source-type :rez)
+         card (get-card state card)
+         costs (get-rez-cost state side card args)
+         alternative-cost (when (and card
+                                     (not (is-disabled? state side card)))
+                            (:alternative-cost (card-def card)))]
+     (or (and alternative-cost
+              (can-pay? state side eid card nil alternative-cost))
+         (can-pay? state side eid card nil costs)))))
+
 (defn rez
   "Rez a corp card."
   ([state side eid card] (rez state side eid card nil))
