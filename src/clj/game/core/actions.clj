@@ -258,13 +258,14 @@
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
   if the max number of cards has been selected."
-  [state side {:keys [card]}]
+  [state side {:keys [card shift-key-held]}]
   (let [target (get-card state card)
         prompt (first (get-in @state [side :selected]))
         ability (:ability prompt)
         card-req (:req prompt)
         card-condition (:card prompt)
         cid (:not-self prompt)]
+    (swap! state assoc-in [side :shift-key-select] shift-key-held)
     (when (and (not= (:cid target) cid)
                (cond
                  card-condition (card-condition target)
