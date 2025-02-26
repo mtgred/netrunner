@@ -2766,7 +2766,7 @@
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (waiting? state :runner)
           "Runner has prompt to wait for Corp to shuffle Marilyn")
-      (is (= "Shuffle Marilyn Campaign into R&D?" (:msg (prompt-map :corp))) "Now Corp gets shuffle choice")
+      (is (= "Choose an interrupt" (:msg (prompt-map :corp))) "Now Corp gets shuffle choice")
       (is (= 2 (:credit (get-runner)))) #_ trashed_marilyn))
 
 (deftest friend-of-a-friend

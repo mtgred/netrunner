@@ -52,13 +52,12 @@
    [game.core.mark :refer [identify-mark-ability mark-changed-event is-mark?]]
    [game.core.memory :refer [available-mu]]
    [game.core.moving :refer [as-agenda flip-faceup forfeit mill move
-                             remove-from-currently-drawing trash trash-cards
-                             trash-prevent]]
+                             remove-from-currently-drawing trash trash-cards]]
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
    [game.core.payment :refer [build-spend-msg can-pay? ->c]]
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [damage-name prevent-damage prevent-encounter prevent-tag prevent-up-to-n-tags prevent-up-to-n-damage]]
+   [game.core.prevention :refer [damage-name prevent-damage prevent-encounter prevent-tag prevent-trash-installed-by-type prevent-up-to-n-tags prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -1317,18 +1316,10 @@
                 :msg "draw 10 cards"}]})
 
 (defcard "Dummy Box"
-  (letfn [(better-name [card-type] (if (= "hardware" card-type) "piece of hardware" card-type))
-          (dummy-prevent [card-type]
-            {:msg (str "prevent a " (better-name card-type) " from being trashed")
-             :cost [(->c (keyword (str "trash-" card-type "-from-hand")) 1)]
-             :effect (effect (trash-prevent (keyword card-type) 1))})]
-    {:interactions {:prevent [{:type #{:trash-hardware :trash-resource :trash-program}
-                               :req (req (and (installed? (:prevent-target target))
-                                              (not= :runner-ability (:cause target))
-                                              (not= :purge (:cause target))))}]}
-     :abilities [(dummy-prevent "hardware")
-                 (dummy-prevent "program")
-                 (dummy-prevent "resource")]}))
+  (letfn [(valid-context? [context] (= :corp (:source-player context)))]
+    {:prevention [(prevent-trash-installed-by-type "Dummy Box (hardware)" "Hardware" [(->c :trash-hardware-from-hand 1)] valid-context?)
+                  (prevent-trash-installed-by-type "Dummy Box (program)"  "Program"  [(->c :trash-program-from-hand 1)]  valid-context?)
+                  (prevent-trash-installed-by-type "Dummy Box (resource)" "Resource" [(->c :trash-resource-from-hand 1)] valid-context?)]}))
 
 (defcard "Earthrise Hotel"
   (let [ability {:msg "draw 2 cards"
@@ -1416,16 +1407,13 @@
                                  (make-run state side eid :archives (get-card state card))))}]}))
 
 (defcard "Fall Guy"
-  {:interactions {:prevent [{:type #{:trash-resource}
-                             :req (req true)}]}
-   :abilities [{:label "Prevent another installed resource from being trashed"
-                :cost [(->c :trash-can)]
-                :effect (effect (trash-prevent :resource 1))}
-               {:label "Gain 2 [Credits]"
-                :msg "gain 2 [Credits]"
-                :cost [(->c :trash-can)]
-                :async true
-                :effect (effect (gain-credits eid 2))}]})
+  (letfn [(valid-context? [context] (not= :ability-cost (:cause context)))]
+    {:prevention [(prevent-trash-installed-by-type "Fall Guy" "Resource" [(->c :trash-can)] valid-context?)]
+    :abilities [{:label "Gain 2 [Credits]"
+                 :msg "gain 2 [Credits]"
+                 :cost [(->c :trash-can)]
+                 :async true
+                 :effect (effect (gain-credits eid 2))}]}))
 
 (defcard "Fan Site"
   {:events [{:event :agenda-scored
@@ -2945,12 +2933,9 @@
                                                               (wait-for (lose-credits state side (make-eid state eid) :all)
                                                                         (lose-tags state side eid :all))))))}}]})
 (defcard "Sacrificial Construct"
-  {:interactions {:prevent [{:type #{:trash-program :trash-hardware}
-                             :req (req true)}]}
-   :abilities [{:cost [(->c :trash-can)]
-                :label "prevent a program trash"
-                :effect (effect (trash-prevent :program 1)
-                                (trash-prevent :hardware 1))}]})
+  (letfn [(valid-context? [context] (not= :ability-cost (:cause context)))]
+    {:prevention [(prevent-trash-installed-by-type "Sacrificial Construct (Program)"  "Program"  [(->c :trash-can)] valid-context?)
+                  (prevent-trash-installed-by-type "Sacrificial Construct (Hardware)" "Hardware" [(->c :trash-can)] valid-context?)]}))
 
 (defcard "Safety First"
   {:static-abilities [(runner-hand-size+ -2)]

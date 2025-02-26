@@ -1,15 +1,18 @@
 (ns game.core.prevention
   (:require
-   [game.core.board :refer [all-active]]
-   [game.core.card :refer [get-card rezzed? same-card?]]
+   [clojure.set :as set]
+   [game.core.board :refer [all-active all-active-installed]]
+   [game.core.card :refer [get-card installed? resource? rezzed? same-card?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [card-ability-cost]]
    [game.core.eid :refer [complete-with-result effect-completed]]
    [game.core.effects :refer [any-effects get-effects]]
    [game.core.engine :refer [resolve-ability trigger-event-simult trigger-event-sync]]
+   [game.core.flags :refer [can-trash? untrashable-while-resources? untrashable-while-rezzed?]]
    [game.core.payment :refer [can-pay?]]
    [game.core.prompts :refer [clear-wait-prompt]]
+   [game.core.say :refer [enforce-msg]]
    [game.core.to-string :refer [card-str]]
    [game.utils :refer [dissoc-in enumerate-str quantify]]
    [game.macros :refer [msg req wait-for]]
@@ -73,15 +76,24 @@
               (swap! state update-in [:prevent key :remaining] #(max 0 (- % n)))))
         (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) {:type key
                                                                                               :amount n}))
-    (do (println "tried to prevent " (name key) " outside of a " (name key) "  prevention window")
+    (do (println "tried to prevent " (name key) " outside of a " (name key) "  prevention window (eid: " eid ")")
         (effect-completed state side eid))))
 
 (defn- fetch-and-clear!
   "get the prevent map for a key and also dissoc it from the state"
   [state key]
   (let [res (get-in @state [:prevent key])]
-    (swap! state dissoc :prevent)
+    (if (seq (:prevent-stack @state))
+      (do (swap! state assoc :prevent (first (:prevent-stack @state)))
+          (swap! state update :prevent-stack rest))
+      (swap! state dissoc :prevent))
     res))
+
+(defn- push-prevention!
+  [state key map]
+  (when (:prevent @state)
+    (swap! state assoc :prevent-stack (concat [(:prevent @state)] (:prevent-stack @state))))
+  (swap! state assoc-in [:prevent key] map))
 
 (defn- trigger-prevention
   "Triggers an ability as having prevented something"
@@ -141,51 +153,87 @@
                         nil nil)
                       (resolve-keyed-prevention-for-side state side eid key args))))))))
 
-;; DAMAGE PREVENTION
-;;
-;; The following are either interrupts, or static abilities, that must come first:
-;;   Guru Davinder              (done)
-;;   Leverage                   (done)
-;;   Chrome Parlor              (done)
-;;   Muresh Bodysuit            (done)
-;;   The Cleaners               (done)
-;;   Paparrazi                  (done)
-;;   The Noble Path             (done)
-;;   Defective Brainchips       (done)
-;;
-;; The following are normal prevention timing:
-;;   Hardware:
-;;     AirbladeX (JSRF Ed.)     (done)
-;;     Feedback Filter          (done)
-;;     Heartbeat                (done)
-;;     Monolith                 (done)
-;;     Plascrete Carapace       (done)
-;;     Ramujan-reliant 550 BMI  (done)
-;;     Recon Drone              (done)
-;;   Resources:
-;;     Jarogniew Mercs          (done)
-;;     No One Home              (done)
-;;     Sacrificial Clone (lmao) (done)
-;;     Bio-Modeled Network      (done)
-;;     Biometric Spoofing       (done)
-;;     Caldera                  (done)
-;;     Citadel Sanctuary        (done)
-;;   Programs:
-;;     Net Shield               (done)
-;;     Deus X                   (done)
-;;   Events:
-;;     On the Lam               (done)
-;;   Assets:
-;;     Prana Condenser
-;;   Upgrades:
-;;     Tori Hanzo
-;;
-;; These just nominate the selecting side, they can probably still be done in the damage class:
-;;   Titanium Ribs
-;;   Chronos Protocol: Selective Mind-mapping
-;;
-;; The follwing do something funny (confirm with rules what they actually do):
-;;   Tori Hanzo (set damage to 1, change type from net to brain)
+;; TRASH PREVENTION
+
+(defn prevent-trash-installed-by-type
+  [label type cost valid-context?]
+  (letfn [(relevant [state] (filter #(and (= (:type %) type)
+                                          (installed? %))
+                                    (map :card (get-in @state [:prevent :trash :remaining]))))]
+    {:prevents :trash
+     :type :ability
+     :label label
+     :ability {:req (req
+                      (and (seq (relevant state))
+                           (valid-context? context)
+                           (can-pay? state side eid card nil cost)))
+               :async true
+               :effect (req
+                         (resolve-ability
+                              state side eid
+                              (if (= 1 (count (relevant state)))
+                                {:msg (msg "prevent " (->> (relevant state) first :title) " from being trashed")
+                                 :cost cost
+                                 :effect (req (swap! state assoc-in [:prevent :trash :remaining] []))}
+                                {:prompt (str "Choose a " type " to save from being trashed")
+                                 :cost cost
+                                 :choices (req (relevant state))
+                                 :msg (msg "prevent " (:title target) " from being trashed")
+                                 :effect (req (swap! state update-in [:prevent :trash :remaining] (fn [s] (filterv #(not (same-card? (:card %) target)) s))))})
+                              card nil))}}))
+
+(defn resolve-trash-for-side
+  [state side eid]
+  (resolve-keyed-prevention-for-side
+    state side eid :trash
+    {:data-type :sequential
+     :prompt (fn [state remainder]
+               (if (= side :runner)
+                 (if (>= 5 (count (get-in @state [:prevent :trash :remaining])))
+                   (str "Prevent any of " (enumerate-str (map #(->> % :card :title) (get-in @state [:prevent :trash :remaining])) "or") " from being trashed?")
+                   (str "Prevent any of " (count (get-in @state [:prevent :trash :remaining])) " cards from being trashed?"))
+                 "Choose an interrupt")) ;; note - for corp, this is only marilyn campaign
+     :waiting "your opponent to resolve trash prevention triggers"
+     :option (fn [state remainder] (str "Allow " (quantify (count (get-in @state [:prevent :trash :remaining])) "card") " to be trashed"))}))
+
+(defn resolve-trash-effects
+  [state side eid]
+  (if (= 2 (get-in @state [:prevent :trash :priority-passes]))
+    (complete-with-result state side eid (fetch-and-clear! state :trash))
+    (wait-for (resolve-trash-for-side state side)
+              (swap! state update-in [:prevent :trash :priority-passes] (fnil inc 1))
+              (resolve-trash-effects state (other-side side) eid))))
+
+(defn resolve-trash-prevention
+  [state side eid targets {:keys [unpreventable game-trash cause cause-card] :as args}]
+  (let [untrashable (mapv #(cond
+                             (and (not game-trash)
+                                  (untrashable-while-rezzed? %))
+                             [%  "cannot be trashed while installed"]
+                             (and (= side :runner)
+                                  (not (can-trash? state side %)))
+                             [% "cannot be trashed"]
+                             (and (= side :corp)
+                                  (untrashable-while-resources? %)
+                                  (> (count (filter resource? (all-active-installed state :runner))) 1))
+                             [% "cannot be trashed while there are other resources installed"])
+                          targets)
+        trashable (when (seq untrashable)
+                    (vec (set/difference (set targets) (set (map first untrashable))))
+                    (vec targets))
+        untrashable (mapv (fn [[c reason]] {:card c :destination :discard :reason reason}) untrashable)
+        trashable   (mapv (fn [c] {:card c :destination :discard}) trashable)]
+    (doseq [{:keys [card reason]} untrashable]
+      (when reason
+        (enforce-msg state card reason)))
+    (push-prevention! state :trash
+         {:count (count trashable) :remaining trashable :untrashable untrashable :prevented 0 :source-player side :source-card cause-card :priority-passes 0
+          :type type :unpreventable unpreventable :cause cause :game-trash game-trash :uses {}})
+    (if (not (seq trashable))
+      (complete-with-result state side eid (fetch-and-clear! state :trash))
+      (resolve-trash-effects state (:active-player @state) eid))))
+
+;; DAMAGE PREVENTION + PRE-DAMAGE PREVENTION
 
 (defn damage-type
   [state key]
@@ -258,7 +306,6 @@
 ;; NOTE - PRE-DAMAGE EFFECTS HAPPEN BEFORE DAMAGE EFFECTS, AND ARE THE CONSTANT ABILITIES (IE GURU DAVINDER, MURESH BODYSUIT, THE CLEANERS, ETC)
 ;; AND MAY JUST CLOSE THE WINDOW ALL TOGETHER IF ALL DAMAGE IS PREVENTED
 
-;; TODO - is this generic enough that I can just make a helper function for it and throw everything else through it?
 (defn resolve-damage-for-side
   [state side eid]
   (resolve-keyed-prevention-for-side
@@ -280,7 +327,7 @@
 
 (defn resolve-damage-prevention
   [state side eid type n {:keys [unpreventable unboostable card] :as args}]
-  (swap! state assoc-in [:prevent :pre-damage]
+  (push-prevention! state :pre-damage
          {:count n :remaining n :prevented 0 :source-player side :source-card card :priority-passes 0
           :type type :unpreventable unpreventable :unboostable unboostable :uses {}})
   (wait-for (trigger-event-simult state side :pre-damage-flag nil {:card card :type type :count n})
@@ -303,7 +350,7 @@
 
 (defn resolve-encounter-prevention
   [state side eid {:keys [unpreventable card title] :as args}]
-  (swap! state assoc-in [:prevent :encounter]
+  (push-prevention! state :encounter
          {:count 1 :remaining 1 :title title :prevented 0 :source-player side :source-card card :uses {}})
   (if unpreventable
     (complete-with-result state side eid (fetch-and-clear! state :encounter))
@@ -325,7 +372,7 @@
 
 (defn resolve-end-run-prevention
   [state side eid {:keys [unpreventable card] :as args}]
-  (swap! state assoc-in [:prevent :end-run]
+  (push-prevention! state :end-run
          {:count 1 :remaining 1 :prevented 0 :source-player side :source-card card :uses {}})
   (wait-for
     (trigger-event-simult state side :end-run-interrupt nil {:card card :source-eid eid})
@@ -350,7 +397,7 @@
 
 (defn resolve-jack-out-prevention
   [state side eid {:keys [unpreventable card] :as args}]
-  (swap! state assoc-in [:prevent :jack-out]
+  (push-prevention! state :jack-out
          {:count 1 :remaining 1 :prevented 0 :source-player side :source-card card :uses {}})
   (if unpreventable
     (complete-with-result state side eid (fetch-and-clear! state :jack-out))
@@ -388,7 +435,7 @@
 
 (defn resolve-expose-prevention
   [state side eid targets {:keys [unpreventable card] :as args}]
-  (swap! state assoc-in [:prevent :expose]
+  (push-prevention! state :expose
          {:count (count targets) :remaining targets :prevented 0 :source-player side :source-card card :uses {}})
   (wait-for
     (trigger-event-simult state side :expose-interrupt nil {:cards targets})
@@ -421,7 +468,7 @@
 
 (defn resolve-bad-pub-prevention
   [state side eid n {:keys [unpreventable card] :as args}]
-  (swap! state assoc-in [:prevent :bad-publicity]
+  (push-prevention! state :bad-publicity
          {:count n :remaining n :prevented 0 :source-player side :source-card card :uses {}})
   (if (or unpreventable (not (pos? n)))
     (complete-with-result state side eid (fetch-and-clear! state :bad-publicity))
@@ -462,7 +509,7 @@
 
 (defn resolve-tag-prevention
   [state side eid n {:keys [unpreventable card] :as args}]
-  (swap! state assoc-in [:prevent :tag]
+  (push-prevention! state :tag
          {:count n :remaining n :prevented 0 :source-player side :source-card card :uses {}})
     (if (or unpreventable (not (pos? n)))
       (complete-with-result state side eid (fetch-and-clear! state :tag))
