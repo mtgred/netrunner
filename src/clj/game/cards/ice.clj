@@ -152,7 +152,7 @@
 (def end-the-run-if-tagged
   "ETR subroutine if tagged"
   {:label "End the run if the Runner is tagged"
-   :req (req tagged)
+   :change-in-game-state (req tagged)
    :msg "end the run"
    :async true
    :effect (effect (end-run :corp eid card))})
@@ -179,14 +179,9 @@
 (defn runner-pays
   "Ability to pay to avoid a subroutine by paying a resource"
   [cost]
-  {:async true
-   :effect (req (wait-for (pay state :runner (make-eid state eid) card cost)
-                          (when-let [payment-str (:msg async-result)]
-                            (system-msg state :runner
-                                        (str payment-str
-                                             " due to " (:title card)
-                                             " subroutine")))
-                          (effect-completed state side eid)))})
+  {:display-side :runner
+   :cost cost
+   :msg :cost})
 
 (defn end-the-run-unless-runner-pays
   ([cost] (end-the-run-unless-runner-pays cost "subroutine"))
@@ -333,7 +328,7 @@
 (def add-runner-card-to-grip
   "Add 1 installed Runner card to the grip"
   {:label "Add an installed Runner card to the grip"
-   :req (req (not-empty (all-installed state :runner)))
+   :change-in-game-state (req (seq (all-installed state :runner)))
    :waiting-prompt true
    :prompt "Choose a card"
    :choices {:card #(and (installed? %)
@@ -347,6 +342,8 @@
   {:prompt "Choose a program to trash"
    :label "Trash a program"
    :msg (msg "trash " (:title target))
+   :waiting-prompt true
+   :change-in-game-state (req (seq (filter program? (all-installed state :runner))))
    :choices {:card #(and (installed? %)
                          (program? %))}
    :async true
@@ -358,6 +355,8 @@
    :label "Force the Runner to trash a program"
    :msg (msg "force the runner to trash " (:title target))
    :display-side :corp
+   :waiting-prompt true
+   :change-in-game-state (req (seq (filter program? (all-installed state :runner))))
    :choices {:card #(and (installed? %)
                          (program? %))}
    :async true
@@ -370,6 +369,8 @@
    :msg (msg "trash " (:title target))
    :choices {:card #(and (installed? %)
                          (hardware? %))}
+   :waiting-prompt true
+   :change-in-game-state (req (seq (filter hardware? (all-installed state :runner))))
    :async true
    :effect (effect (trash eid target {:cause :subroutine}))})
 
@@ -379,6 +380,8 @@
    :msg (msg "trash " (:title target))
    :choices {:card #(and (installed? %)
                          (resource? %))}
+   :waiting-prompt true
+   :change-in-game-state (req (seq (filter resource? (all-installed state :runner))))
    :async true
    :effect (effect (trash eid target {:cause :subroutine}))})
 
@@ -387,6 +390,8 @@
    :prompt "Choose an installed card to trash"
    :label "Trash an installed Runner card"
    :msg (msg "trash " (:title target))
+   :waiting-prompt true
+   :change-in-game-state (req (seq (all-installed state :runner)))
    :choices {:card #(and (installed? %)
                          (runner? %))}
    :effect (effect (trash eid target {:cause :subroutine}))})

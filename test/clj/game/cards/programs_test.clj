@@ -7892,7 +7892,6 @@
           (fire-subs state (refresh ichi))
           (is (= :select (prompt-type :corp)) "Corp has a prompt to choose program to delete")
           (click-card state :corp "Sneakdoor Beta")
-          (click-prompt state :corp "Done")
           (is (= "Sneakdoor Beta" (-> (get-runner) :discard first :title)) "Sneakdoor was trashed")
           (click-prompt state :corp "0")
           (click-prompt state :runner "1")
