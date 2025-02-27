@@ -5,7 +5,6 @@
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.effects :refer [any-effects]]
     [game.core.engine :refer [checkpoint queue-event register-pending-event resolve-ability trigger-event-sync]]
-    [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.prevention :refer [resolve-expose-prevention]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]

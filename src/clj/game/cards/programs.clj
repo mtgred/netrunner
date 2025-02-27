@@ -43,7 +43,7 @@
    [game.core.moving :refer [flip-facedown mill move swap-cards swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve never?]]
    [game.core.payment :refer [build-cost-label can-pay? cost-target cost-value ->c value]]
-   [game.core.prevention :refer [damage-name prevent-damage prevent-end-run prevent-up-to-n-damage]]
+   [game.core.prevention :refer [damage-name prevent-damage prevent-end-run prevent-up-to-n-damage prevent-trash-installed-by-type]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
@@ -1972,9 +1972,11 @@
                    (strength-pump 1 2)]})))
 
 (defcard "LLDS Energy Regulator"
-  (letfn [(valid-context? [context] (not= :ability-cost (:cause context)))]
-    {:prevention [(prevent-trash-installed-by-type "3 [Credits]: LLDS Energy Regulator"  "Hardware"  [(->c :credits 3)]   valid-context?)
-                  (prevent-trash-installed-by-type "[Trash]: LLDS Energy Regulator"      "Hardware"  [(->c :trash-can 3)] valid-context?)]}))
+  (letfn [(valid-context? [context] (and (not= :ability-cost (:cause context))
+                                         (not (:game-trash context))))]
+    {:trash-icon true
+     :prevention [(prevent-trash-installed-by-type "3 [Credits]: LLDS Energy Regulator"  #{"Hardware"}  [(->c :credit 3)]   valid-context?)
+                  (prevent-trash-installed-by-type "[Trash]: LLDS Energy Regulator"      #{"Hardware"}  [(->c :trash-can 3)] valid-context?)]}))
 
 (defcard "Lobisomem"
   (auto-icebreaker {:data {:counter {:power 1}}

@@ -395,7 +395,6 @@
 
 (expose-vars
   [game.core.flags
-   ab-can-prevent?
    any-flag-fn?
    can-access-loud
    can-access?
@@ -406,10 +405,8 @@
    can-score?
    can-steal?
    can-trash?
-   card-can-prevent?
    card-flag-fn?
    card-flag?
-   cards-can-prevent?
    check-flag-types?
    clear-all-flags-for-card!
    clear-persistent-flag!
@@ -417,9 +414,6 @@
    clear-run-register!
    clear-turn-flag!
    clear-turn-register!
-   get-card-prevention
-   get-prevent-list
-   get-preventing-cards
    has-flag?
    in-corp-scored?
    in-runner-scored?
@@ -588,7 +582,6 @@
    swap-installed
    trash
    trash-cards
-   trash-prevent
    uninstall])
 
 (expose-vars

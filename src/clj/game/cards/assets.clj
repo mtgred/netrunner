@@ -1688,14 +1688,13 @@
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :on-rez {:effect (req (add-counter state side card :credit 8))}
-     :abilities [(set-autoresolve :auto-reshuffle "Marilyn Campaign shuffling itself back into R&D")]
      :prevention [{:prevents :trash
                    :type :event
                    :label "Shuffle Marilyn Campaign into R&D"
                    :max-uses 1
                    :ability {:msg "shuffle itself into R&D instead of moving it to Archives"
                              :req (req (some #(same-card? % card) (map :card (get-in @state  [:prevent :trash :remaining]))))
-                             :effect (req (swap! state update-in [:prevent :trash :remaining] (fn [ctx] (if (same-card? card (:card ctx)) (assoc ctx :destination :shuffle-rd) ctx))))}}]}))
+                             :effect (req (swap! state update-in [:prevent :trash :remaining] (fn [ctx] (mapv #(if (same-card? card (:card %)) (assoc % :destination :deck :shuffle-rd true) %) ctx))))}}]}))
 
 (defcard "Mark Yale"
   {:events [{:event :agenda-counter-spent

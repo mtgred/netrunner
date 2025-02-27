@@ -7207,11 +7207,11 @@
       (play-from-hand state :runner "Fall Guy")
       (is (zero? (count (:hand (get-runner)))) "No cards in hand")
       ; No draw from Fall Guy trash as Reaver already fired this turn
-      (card-ability state :runner (get-resource state 0) 1)
+      (card-ability state :runner (get-resource state 0) 0)
       (is (zero? (count (:hand (get-runner)))) "No cards in hand")
       (take-credits state :runner)
       ; Draw from Fall Guy trash on corp turn
-      (card-ability state :runner (get-resource state 0) 1)
+      (card-ability state :runner (get-resource state 0) 0)
       (is (= 1 (count (:hand (get-runner)))) "One card in hand")))
 
 (deftest reaver-not-triggering-on-non-installed-cards

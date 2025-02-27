@@ -4548,7 +4548,7 @@
         (end-phase-12 state :corp)
         (is (= 2 (-> (prompt-map :corp) :choices count)) "Corp should have two abilities to trigger")
         (click-prompt state :corp "Marilyn Campaign")
-        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "Shuffle Marilyn Campaign into R&D")
         (is (find-card "Marilyn Campaign" (:deck (get-corp))))
         (is (zero? (-> (get-corp) :hand count)) "Corp should have 3 cards in hand")
         (click-prompt state :corp "Yes")

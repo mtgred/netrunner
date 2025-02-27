@@ -9,7 +9,7 @@
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.engine :as engine :refer [checkpoint dissoc-req register-pending-event queue-event register-default-events register-events should-trigger? trigger-event trigger-event-sync unregister-events]]
     [game.core.finding :refer [get-scoring-owner]]
-    [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed? zone-locked?]]
+    [game.core.flags :refer [can-trash? card-flag? untrashable-while-resources? untrashable-while-rezzed? zone-locked?]]
     [game.core.hosting :refer [remove-from-host]]
     [game.core.ice :refer [get-current-ice set-current-ice update-breaker-strength]]
     [game.core.initializing :refer [card-init deactivate reset-card]]
@@ -264,9 +264,6 @@
       (move state side card to))))
 
 ;;; Trashing
-(defn trash-prevent
-  [state _ type n]
-  (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
 
 (defn update-current-ice-to-trash
   "If the current ice is going to be trashed, update it with any changes"
@@ -280,16 +277,6 @@
   [state c]
   (when-let [card (get-card state c)]
     (assoc card :seen (:seen c))))
-
-;; (defn- prevent-trash
-;;   ([state side eid cs args] (prevent-trash state side eid cs args []))
-;;   ([state side eid cs args acc]
-;;    (if (seq cs)
-;;      (wait-for (prevent-trash-impl state side (make-eid state eid) (get-card? state (first cs)) args)
-;;                (if-let [card async-result]
-;;                  (prevent-trash state side eid (rest cs) args (conj acc card))
-;;                  (prevent-trash state side eid (rest cs) args acc)))
-;;      (complete-with-result state side eid acc))))
 
 (defn get-trash-effect
   "Criteria for abilities that trigger when the card is trashed."
@@ -366,7 +353,7 @@
                      ;; of using `side`, we use the card's `:side`.
                      move-card (fn [card dest]
                                  (move state (to-keyword (:side card)) card dest {:keep-server-alive keep-server-alive}))
-                     should-shuffle-rd? (some :shuffle-rd (map :destination trashlist))
+                     should-shuffle-rd? (some :shuffle-rd trashlist)
                      ;; If the trashed card is installed, update all of the indicies
                      ;; of the other installed cards in the same location
                      update-indicies (fn [card]
@@ -394,7 +381,7 @@
                      (swap! state assoc-in [:run :shuffled-during-access :rd] true))
                    (swap! state update-in [:stats :corp :shuffle-count] (fnil + 0) 1)
                    (swap! state update-in [:corp :deck] shuffle)
-                   (trigger-event state side  :corp-shuffle-deck :runner-shuffle-deck))
+                   (trigger-event state side :corp-shuffle-deck))
                  (swap! state update-in [:trash :trash-list] dissoc eid)
                  (when (and side (seq (remove #{side} (map #(to-keyword (:side %)) (map :card trashlist)))))
                    (swap! state assoc-in [side :register :trashed-card] true))

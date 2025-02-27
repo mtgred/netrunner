@@ -32,18 +32,14 @@
       (play-from-hand state :runner "LLDS Energy Regulator")
       (core/add-counter state :runner (get-program state 0) :virus 3)
       (take-credits state :runner)
-      (let [llds (get-program state 1)]
-        (is (changed? [(:credit (get-runner)) 0]
-              (purge state :corp)
-              (click-prompt state :runner "Yes"))
-            "Runner didn't get credits before deciding on LLDS")
-        (is (changed? [(:credit (get-runner)) -3]
-              (card-ability state :runner (refresh llds) 0))
-            "Runner pays 3 for LLDS")
-        (is (changed? [(:credit (get-runner)) 3]
-              (click-prompt state :runner "Done"))
-            "Runner got Acacia credits")
-        (is (zero? (count (:discard (get-runner)))) "Acacia has not been trashed"))))
+      (is (changed? [(:credit (get-runner)) 0]
+            (purge state :corp)
+            (click-prompt state :runner "Yes"))
+          "Runner didn't get credits before deciding on LLDS")
+      (is (changed? [(:credit (get-runner)) 0]
+            (click-prompt state :runner "3 [Credits]: LLDS Energy Regulator"))
+          "Runner pays 3 for LLDS, then gets acacia credits")
+        (is (zero? (count (:discard (get-runner)))) "Acacia has not been trashed")))
 
 (deftest acacia-effect-counts-both-runner-and-corp-virus-counters
     ;; Effect counts both Runner and Corp virus counters

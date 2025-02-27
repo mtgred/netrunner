@@ -466,7 +466,7 @@
           (trash-resource state)
           (click-card state :corp "Off-Campus Apartment")
           (is (= 3 (:credit (get-corp))) "WNP increased cost to trash a resource by 2")
-          (card-ability state :runner fg 0) ; Trash Fall Guy to save the Apartment!
+          (click-prompt state :runner "Fall Guy") ;; Trash Fall Guy to save the Apartment!
           (is (= (:title (get-resource state 0)) "Off-Campus Apartment")
               "Apartment still standing")
           (is (= (:title (last (:discard (get-runner)))) "Fall Guy") "Fall Guy trashed"))))))

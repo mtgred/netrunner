@@ -3,7 +3,6 @@
     [game.core.effects :refer [any-effects sum-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [trigger-event trigger-event-simult trigger-event-sync queue-event checkpoint]]
-    [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.gaining :refer [deduct gain]]
     [game.core.prevention :refer [resolve-tag-prevention]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]

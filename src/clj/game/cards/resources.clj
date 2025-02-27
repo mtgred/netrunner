@@ -1317,9 +1317,9 @@
 
 (defcard "Dummy Box"
   (letfn [(valid-context? [context] (= :corp (:source-player context)))]
-    {:prevention [(prevent-trash-installed-by-type "Dummy Box (hardware)" "Hardware" [(->c :trash-hardware-from-hand 1)] valid-context?)
-                  (prevent-trash-installed-by-type "Dummy Box (program)"  "Program"  [(->c :trash-program-from-hand 1)]  valid-context?)
-                  (prevent-trash-installed-by-type "Dummy Box (resource)" "Resource" [(->c :trash-resource-from-hand 1)] valid-context?)]}))
+    {:prevention [(prevent-trash-installed-by-type "Dummy Box (Hardware)" #{"Hardware"} [(->c :trash-hardware-from-hand 1)] valid-context?)
+                  (prevent-trash-installed-by-type "Dummy Box (Program)"  #{"Program"}  [(->c :trash-program-from-hand 1)]  valid-context?)
+                  (prevent-trash-installed-by-type "Dummy Box (Resource)" #{"Resource"} [(->c :trash-resource-from-hand 1)] valid-context?)]}))
 
 (defcard "Earthrise Hotel"
   (let [ability {:msg "draw 2 cards"
@@ -1408,7 +1408,7 @@
 
 (defcard "Fall Guy"
   (letfn [(valid-context? [context] (not= :ability-cost (:cause context)))]
-    {:prevention [(prevent-trash-installed-by-type "Fall Guy" "Resource" [(->c :trash-can)] valid-context?)]
+    {:prevention [(prevent-trash-installed-by-type "Fall Guy" #{"Resource"} [(->c :trash-can)] valid-context?)]
     :abilities [{:label "Gain 2 [Credits]"
                  :msg "gain 2 [Credits]"
                  :cost [(->c :trash-can)]
@@ -2933,9 +2933,10 @@
                                                               (wait-for (lose-credits state side (make-eid state eid) :all)
                                                                         (lose-tags state side eid :all))))))}}]})
 (defcard "Sacrificial Construct"
-  (letfn [(valid-context? [context] (not= :ability-cost (:cause context)))]
-    {:prevention [(prevent-trash-installed-by-type "Sacrificial Construct (Program)"  "Program"  [(->c :trash-can)] valid-context?)
-                  (prevent-trash-installed-by-type "Sacrificial Construct (Hardware)" "Hardware" [(->c :trash-can)] valid-context?)]}))
+  (letfn [(valid-context? [context] (and (not= :ability-cost (:cause context))
+                                         (not (:game-trash context))))]
+    {:trash-icon true
+     :prevention [(prevent-trash-installed-by-type "Sacrificial Construct"  #{"Program" "Hardware"}  [(->c :trash-can)] valid-context?)]}))
 
 (defcard "Safety First"
   {:static-abilities [(runner-hand-size+ -2)]

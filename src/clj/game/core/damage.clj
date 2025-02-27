@@ -3,7 +3,6 @@
     [game.core.card :refer [get-title]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-simult]]
-    [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.moving :refer [trash-cards get-trash-event]]
     [game.core.prevention :refer [resolve-damage-prevention]]
     [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]

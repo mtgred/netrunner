@@ -2,7 +2,6 @@
   (:require
     [game.core.eid :refer [effect-completed make-eid make-result]]
     [game.core.engine :refer [trigger-event trigger-event-sync]]
-    [game.core.flags :refer [cards-can-prevent? get-prevent-list]]
     [game.core.gaining :refer [gain lose]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.prevention :refer [resolve-bad-pub-prevention]]
