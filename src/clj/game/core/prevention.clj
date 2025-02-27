@@ -206,7 +206,7 @@
      :prompt (fn [state remainder]
                (if (= side :runner)
                  (cond
-                   (= 1 (:count (get-in @state [:prevent :trash :remaining])))
+                   (= 1 (count (get-in @state [:prevent :trash :remaining])))
                    (str "Prevent " (->> (get-in @state [:prevent :trash :remaining]) :card :title) " from being trashed?")
                    (>= 5 (count (get-in @state [:prevent :trash :remaining])))
                    (str "Prevent any of " (enumerate-str (sort (map #(->> % :card :title) (get-in @state [:prevent :trash :remaining]))) "or") " from being trashed?")

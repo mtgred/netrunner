@@ -4,6 +4,7 @@
    [clojure.test :refer :all]
    [game.core :as core]
    [game.core.card :refer :all]
+   [game.core.eid :refer [make-eid]]
    [game.test-framework :refer :all]
    [jinteki.validator :refer [legal?]]))
 
@@ -1043,8 +1044,6 @@
       (play-from-hand state :runner "Cookbook")
       (play-from-hand state :runner "Imp")
       (let [imp (get-program state 0)]
-        (is (= 2 (get-counters (refresh imp) :virus)) "Imp installed with two counters")
-        (click-prompt state :runner "Yes")
         (is (= 3 (get-counters (refresh imp) :virus)) "Imp received an extra virus counter"))))
 
 (deftest cookbook-autoresolve
@@ -1070,13 +1069,11 @@
      (play-from-hand state :runner "Cookbook")
      (play-from-hand state :runner "Leech")
      (click-prompt state :runner "Grimoire")
-     (click-prompt state :runner "Yes")
      (is (= 2 (get-counters (get-program state 0) :virus)) "Leech has 2 counters from Grimoire and Cookbook")
      (card-ability state :runner (get-resource state 0) 0)
      (click-prompt state :runner "Always")
      (play-from-hand state :runner "Fermenter")
      (click-prompt state :runner "Grimoire")
-     (click-prompt state :runner "Cookbook")
      (is (= 3 (get-counters (get-program state 1) :virus)) "Fermenter has 2 additional counters from Grimoire and Cookbook")))
 
 (deftest councilman-rez-prevention
@@ -1401,10 +1398,10 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Crypt")
       (let [crypt (get-resource state 0)]
-        (core/add-counter state :runner (refresh crypt) :virus 2)
+        (core/add-counter state :runner (make-eid state) (refresh crypt) :virus 2)
         (card-ability state :runner (refresh crypt) 0)
         (is (no-prompt? state :runner) "Crypt ability costs 3 virus counters")
-        (core/add-counter state :runner (refresh crypt) :virus 1)
+        (core/add-counter state :runner (make-eid state) (refresh crypt) :virus 1)
         (is (changed? [(:click (get-runner)) -1
                (:credit (get-runner)) -5]
               (card-ability state :runner (refresh crypt) 0)
@@ -1426,7 +1423,7 @@
       (play-from-hand state :runner "Crypt")
       (play-from-hand state :runner "Paladin Poemu")
       (let [crypt (get-resource state 0)]
-        (core/add-counter state :runner (refresh crypt) :virus 3)
+        (core/add-counter state :runner (make-eid state) (refresh crypt) :virus 3)
         (take-credits state :runner)
         (take-credits state :corp)
         (is (changed? [(:credit (get-runner)) -4]
@@ -1846,7 +1843,7 @@
       (play-from-hand state :runner "District 99")
       (is (not (find-card "Corroder" (:hand (get-runner)))) "Corroder is not in hand")
       (is (find-card "Corroder" (:discard (get-runner))) "Corroder is in heap")
-      (core/add-counter state :runner (get-resource state 0) :power 3)
+      (core/add-counter state :runner (make-eid state) (get-resource state 0) :power 3)
       (card-ability state :runner (get-resource state 0) 0)
       (is (= 1 (count (prompt-buttons :runner))) "Only 1 card shown")
       (click-prompt state :runner "Corroder")
@@ -1862,7 +1859,7 @@
                           :discard ["Sure Gamble"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "District 99")
-      (core/add-counter state :runner (get-resource state 0) :power 3)
+      (core/add-counter state :runner (make-eid state) (get-resource state 0) :power 3)
       (card-ability state :runner (get-resource state 0) 0)
       (is (no-prompt? state :runner) "Add to hand prompt did not come up")))
 
@@ -1877,7 +1874,7 @@
       (rez state :corp (refresh (get-content state :remote1 0)))
       (take-credits state :corp)
       (play-from-hand state :runner "District 99")
-      (core/add-counter state :runner (get-resource state 0) :power 3)
+      (core/add-counter state :runner (make-eid state) (get-resource state 0) :power 3)
       (card-ability state :runner (get-resource state 0) 0)
       (is (no-prompt? state :runner) "Add to hand prompt did not come up")))
 
@@ -2393,6 +2390,18 @@
     (is (= ["Environmental Testing" "Muse"] (sort (prompt-titles :runner)))
         "Option to trigger either muse of environmental testing first")))
 
+(deftest environmental-testing-works-with-prevention
+  (do-game
+    (new-game {:runner {:hand ["Environmental Testing" "Fall Guy" (qty "Ika" 4)]}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 2)
+    (play-from-hand state :runner "Environmental Testing")
+    (play-from-hand state :runner "Fall Guy")
+    (dotimes [_ 4] (play-from-hand state :runner "Ika"))
+    (click-prompt state :runner "Fall Guy")
+    (is (= 20 (:credit (get-runner))) "Got paid out twice")
+    (is (= 2 (count (:discard (get-runner)))) "Env and fall guy both trashed")))
+
 (deftest eru-ayase-pessoa
   (do-game
     (new-game {:corp {:hand ["IPO" "IPO" "City Works Project"]
@@ -2501,7 +2510,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Fencer Fueno")
       (let [ff (get-resource state 0)]
-        (core/add-counter state :runner (refresh ff) :credit 4)
+        (core/add-counter state :runner (make-eid state) (refresh ff) :credit 4)
         (is (= 4 (get-counters (refresh ff) :credit)) "Fencer counters added")
         (let [credits (:credit (get-runner))
               counters (get-counters (refresh ff) :credit)]
@@ -2538,7 +2547,7 @@
       (core/lose state :runner :credit 5) ;no money besides fueno
       (let [ff (get-resource state 0)
             popup (get-ice state :remote1 0)]
-        (core/add-counter state :runner (refresh ff) :credit 4)
+        (core/add-counter state :runner (make-eid state) (refresh ff) :credit 4)
         (is (= 4 (get-counters (refresh ff) :credit)) "Fencer counters added")
         (run-on state "Server 1")
         (rez state :corp popup)
@@ -2565,7 +2574,7 @@
       (core/lose state :runner :credit 5) ;no money besides fueno
       (play-from-hand state :runner "Fencer Fueno")
       (let [ff (get-resource state 0)]
-        (core/add-counter state :runner (refresh ff) :credit 5)
+        (core/add-counter state :runner (make-eid state) (refresh ff) :credit 5)
         (is (= 5 (get-counters (refresh ff) :credit)) "Fencer counters added")
         (run-empty-server state "Server 1")
         (is (changed? [(:credit (get-runner)) 0]
@@ -3645,7 +3654,7 @@
           "No further Juli Moreira Lee trigger")
       (take-credits state :runner)
       (take-credits state :corp)
-      (core/add-counter state :runner (refresh juli) :power -2)
+      (core/add-counter state :runner (make-eid state) (refresh juli) :power -2)
       (card-ability state :runner artist 0)
       (is (= 1 (count (:discard (get-runner)))) "Juli Moreira Lee trashed"))))
 
@@ -4438,7 +4447,7 @@
                :corp {:hand ["See How They Run"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Net Mercur")
-    (core/add-counter state :runner (get-resource state 0) :credit 2)
+    (core/add-counter state :runner (make-eid state) (get-resource state 0) :credit 2)
     (take-credits state :runner)
     (play-and-score state "See How They Run")
     (click-prompt state :corp "1 [Credits]")
@@ -4449,22 +4458,22 @@
     (is (no-prompt? state :runner) "No more prompt")))
 
 (deftest net-mercur-prevention-prompt-issue-4464
-    ;; Prevention prompt. Issue #4464
-    (do-game
-      (new-game {:runner {:hand ["Feedback Filter" "Net Mercur"]
-                          :credits 10}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Feedback Filter")
-      (play-from-hand state :runner "Net Mercur")
-      (let [nm (get-resource state 0)]
-        (core/add-counter state :runner (refresh nm) :credit 4)
-        (damage state :corp :net 2)
-        (click-prompt state :runner "Feedback Filter (Net)")
-        (click-card state :runner nm)
-        (click-card state :runner nm)
-        (click-card state :runner nm)
-        (click-prompt state :runner "Pass priority")
-        (is (= 1 (get-counters (refresh nm) :credit)) "Net Mercur has lost 3 credits"))))
+  ;; Prevention prompt. Issue #4464
+  (do-game
+    (new-game {:runner {:hand ["Feedback Filter" "Net Mercur"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (play-from-hand state :runner "Net Mercur")
+    (let [nm (get-resource state 0)]
+      (core/add-counter state :runner (make-eid state) (refresh nm) :credit 4)
+      (damage state :corp :net 2)
+      (click-prompt state :runner "Feedback Filter (Net)")
+      (click-card state :runner nm)
+      (click-card state :runner nm)
+      (click-card state :runner nm)
+      (click-prompt state :runner "Pass priority")
+      (is (= 1 (get-counters (refresh nm) :credit)) "Net Mercur has lost 3 credits"))))
 
 (deftest network-exchange
   ;; ice install costs 1 more except for inner most
@@ -5164,7 +5173,7 @@
             refr (get-program state 0)]
         (is (changed? [(:credit (get-runner)) 2]
               (dotimes [_ 2]
-                             (card-ability state :runner (refresh pt) 0)))
+                (card-ability state :runner (refresh pt) 0)))
             "Took 2 credits off of Penumbral Toolkit the traditional way.")
         (is (changed? [(:credit (get-runner)) 0]
               (card-ability state :runner refr 1)
@@ -5172,7 +5181,7 @@
               (card-ability state :runner (refresh refr) 1)
               (click-card state :runner (refresh pt)))
             "Used 2 credits from Penumbral Toolkit")
-        (is (not-empty (:discard (get-runner))) "Empty Ghost Runner trashed"))))
+        (is (not-empty (:discard (get-runner))) "Empty penumbral trashed"))))
 
 (deftest personal-workshop-removes-token-on-start-of-turn-and-installs
     ;; Removes token on start of turn and installs
@@ -6308,23 +6317,22 @@
 (deftest telework-contract
   ;; Telework Contract
   (do-game
-      (new-game {:runner {:deck ["Telework Contract"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Telework Contract")
+    (new-game {:runner {:deck ["Telework Contract"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Telework Contract")
+    (dotimes [n 3]
       (is (changed? [(:credit (get-runner)) 3]
             (card-ability state :runner (get-resource state 0) 0))
           "Got 3 credits from Telework Contract")
-      (is (changed? [(:credit (get-runner)) 0]
-            (card-ability state :runner (get-resource state 0) 0))
-          "Got 0 credits from second attempt to click Telework Contract")
-      (is (= 2 (:click (get-runner))) "No click taken from second attempt")
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (card-ability state :runner (get-resource state 0) 0)
-      (take-credits state :runner)
-      (take-credits state :corp)
-      (card-ability state :runner (get-resource state 0) 0)
-      (is (empty? (get-resource state)) "Telework Contract trashed after all credits taken")))
+      (if (= n 2)
+        (is (empty? (get-resource state)) "Telework Contract trashed after all credits taken")
+        (do (is (changed? [(:credit (get-runner)) 0
+                           (:click (get-runner)) 0]
+                  (card-ability state :runner (get-resource state 0) 0))
+                "Got 0 credits from second attempt to click Telework Contract")
+            (take-credits state :runner)
+            (take-credits state :corp))))))
+
 
 (deftest temujin-contract-multiple-times-in-one-turn-issue-1952
     ;; Multiple times in one turn. Issue #1952
@@ -6399,7 +6407,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "The Back")
       (let [the-back (get-resource state 0)]
-        (core/add-counter state :runner (refresh the-back) :power 2)
+        (core/add-counter state :runner (make-eid state) (refresh the-back) :power 2)
         (card-ability state :runner (refresh the-back) 1)
         (is (= "Choose up to 4 targets for The Back" (:msg (prompt-map :runner))) "Runner gets up to 4 cards")
         (click-card state :runner "Spy Camera")             ; Hardware
@@ -6422,7 +6430,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "The Back")
       (let [the-back (get-resource state 0)]
-        (core/add-counter state :runner (refresh the-back) :power 2)
+        (core/add-counter state :runner (make-eid state) (refresh the-back) :power 2)
         (card-ability state :runner (refresh the-back) 1)
         (is (no-prompt? state :runner) "The Back prompt did not come up"))))
 
@@ -6780,7 +6788,7 @@
             nihilist (get-resource state 0)]
         (rez state :corp sandstone)
         (purge state :corp)
-        (core/add-counter state :corp sandstone :virus 2)
+        (core/add-counter state :corp (make-eid state) sandstone :virus 2)
         (is (= 0 (get-counters (refresh nihilist) :virus)) "The Nihilist has 0 virus counters")
         (is (= 2 (get-counters (refresh sandstone) :virus)) "Sandstone has 2 virus counters")
         (is (= 0 (count (prompt-buttons :runner))) "The Nihilist did not trigger"))))
@@ -7099,8 +7107,7 @@
         (is (changed? [(get-counters (refresh twin) :power) 1]
               (card-ability state :runner corr 1)
               (click-card state :runner "Net Mercur"))
-            "1 counter for spending on the corp turn")))
-  ))
+            "1 counter for spending on the corp turn")))))
 
 (deftest the-twinning
   ;; First time each turn you spend credits from an installed card, place 1 power counter
@@ -7122,7 +7129,7 @@
           "no counter for second spend")
       (take-credits state :runner)
       (take-credits state :corp)
-      (core/add-counter state :runner (refresh twin) :power 3)
+      (core/add-counter state :runner (make-eid state) (refresh twin) :power 3)
       (run-empty-server state :hq)
       (is (changed? [(get-counters (refresh twin) :power) -2]
             (click-prompt state :runner "2"))
@@ -7266,7 +7273,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Trickster Taka")
       (let [tt (get-resource state 0)]
-        (core/add-counter state :runner (refresh tt) :credit 4)
+        (core/add-counter state :runner (make-eid state) (refresh tt) :credit 4)
         (is (= 4 (get-counters (refresh tt) :credit)) "Taka counters added")
         (let [credits (:credit (get-runner))
               counters (get-counters (refresh tt) :credit)]
@@ -7305,7 +7312,7 @@
       (play-from-hand state :runner "Net Mercur")
       (play-from-hand state :runner "Trickster Taka")
       (let [tt (get-resource state 0)]
-        (core/add-counter state :runner (refresh tt) :credit 4)
+        (core/add-counter state :runner (make-eid state) (refresh tt) :credit 4)
         (is (= 4 (get-counters (refresh tt) :credit)) "Taka counters added"))
       (let [tt (get-resource state 0)]
         (run-on state "Server 1")
@@ -7450,11 +7457,9 @@
     (new-game {:corp {:hand []}
                :runner {:hand ["Valentina Ferreira Carvalho" "Privileged Access" "Fermenter"]
                         :id "Sebastião Souza Pessoa: Activist Organizer"
+                        :score-area ["City Works Project"]
                         :discard ["Thunder Art Gallery" "Cleaver"]
                         :credits 10}})
-    (game.core.change-vals/change
-      ;; theoretically, either side is fine!
-      state (first (shuffle [:corp :runner])) {:key :agenda-point :delta 3})
     (take-credits state :corp)
     (play-from-hand state :runner "Privileged Access")
     (run-continue state :success)
@@ -7463,6 +7468,7 @@
     (click-prompt state :runner "Sebastião Souza Pessoa: Activist Organizer")
     (click-card state :runner "Valentina Ferreira Carvalho")
     (click-prompt state :runner "Remove 1 tag")
+    (click-prompt state :runner "Thunder Art Gallery")
     (click-card state :runner "Fermenter")
     (click-prompt state :runner "Cleaver")
     (is (= 1 (count (:discard (get-runner)))))

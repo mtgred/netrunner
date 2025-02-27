@@ -1,7 +1,7 @@
 (ns game.core.bad-publicity
   (:require
     [game.core.eid :refer [effect-completed make-eid make-result]]
-    [game.core.engine :refer [trigger-event trigger-event-sync]]
+    [game.core.engine :refer [queue-event checkpoint trigger-event-sync]]
     [game.core.gaining :refer [gain lose]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.prevention :refer [resolve-bad-pub-prevention]]
@@ -10,11 +10,14 @@
     [game.macros :refer [wait-for]]))
 
 (defn- resolve-bad-publicity
-  [state side eid n]
+  [state side eid n {:keys [suppress-checkpoint] :as args}]
   (if (pos? n)
     (do (gain state :corp :bad-publicity n)
         (toast state :corp (str "Took " n " bad publicity!") "info")
-        (trigger-event-sync state side (make-result eid n) :corp-gain-bad-publicity {:amount n}))
+        (queue-event state :corp-gain-bad-publicity {:amount n})
+        (if suppress-checkpoint
+          (effect-completed state side eid)
+          (checkpoint state eid)))
     (effect-completed state side eid)))
 
 (defn gain-bad-publicity
@@ -23,7 +26,7 @@
   ([state side eid n] (gain-bad-publicity state side eid n nil))
   ([state side eid n {:keys [unpreventable card] :as args}]
    (wait-for (resolve-bad-pub-prevention state side n args)
-             (resolve-bad-publicity state side eid (:remaining async-result)))))
+             (resolve-bad-publicity state side eid (:remaining async-result) args))))
 
 (defn lose-bad-publicity
   ([state side n] (lose-bad-publicity state side (make-eid state) n))

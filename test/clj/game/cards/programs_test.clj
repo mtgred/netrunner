@@ -81,7 +81,7 @@
       (when counters
         ;; counters of the form :counter {:power x :credit x}
         (doseq [[c-type c-count] counters]
-          (core/add-counter state :corp (get-ice state server-key 0) c-type c-count)))
+          (core/add-counter state :corp (core/make-eid state) (get-ice state server-key 0) c-type c-count)))
       (when-not unrezzed
         (rez state :corp (get-ice state server-key 0)))
       ;; gain tags when required
@@ -210,11 +210,11 @@
                       steps (quot counters gran)
                       expected-change (* steps mag)]
                   (is (changed? [(get-strength (refresh card)) expected-change]
-                                (add-counter state :runner (refresh card) ctype counters)
+                                (add-counter state :runner (core/make-eid state) (refresh card) ctype counters)
                                 (update-all-icebreakers state :runner))
                       (str (:title card) " gained " expected-change
                            " strength from " counters " counters"))
-                  (add-counter state :runner (refresh card) ctype (- counters))
+                  (add-counter state :runner (core/make-eid state) (refresh card) ctype (- counters))
                   (update-all-icebreakers state :runner)))))
 
           (if-not run-event-bonus
@@ -1840,8 +1840,7 @@
                  :runner {:hand ["Chisel"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
-      (play-from-hand state :runner "Chisel")
-      (click-card state :runner "Ice Wall")
+      (play-from-hand-with-prompts state :runner "Chisel" "Ice Wall")
       (let [iw (get-ice state :hq 0)
             chisel (first (:hosted (refresh iw)))]
         (run-on state "HQ")
@@ -1891,8 +1890,7 @@
                  :runner {:hand ["Chisel" "Devil Charm"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (take-credits state :corp)
-      (play-from-hand state :runner "Chisel")
-      (click-card state :runner "Ice Wall")
+      (play-from-hand-with-prompts state :runner "Chisel" "Ice Wall")
       (play-from-hand state :runner "Devil Charm")
       (let [iw (get-ice state :hq 0)
             chisel (first (:hosted (refresh iw)))]
@@ -2128,7 +2126,6 @@
         (is (zero? (get-counters (refresh c) :virus)) "Consume starts with no counters")
         (run-empty-server state "Server 1")
         (click-prompt state :runner "Pay 3 [Credits] to trash")
-        (click-prompt state :runner "Yes")
         (is (= 1 (count (:discard (get-corp)))) "Adonis Campaign trashed")
         (is (= 1 (get-counters (refresh c) :virus)) "Consume gains a counter")
         (is (zero? (:credit (get-runner))) "Runner starts with no credits")
@@ -2152,7 +2149,6 @@
         (is (= 1 (get-counters (refresh h) :virus)) "Hivemind starts with a counter")
         (run-empty-server state "Server 1")
         (click-prompt state :runner "Pay 3 [Credits] to trash")
-        (click-prompt state :runner "Yes")
         (is (= 1 (count (:discard (get-corp)))) "Adonis Campaign trashed")
         (is (= 1 (get-counters (refresh c) :virus)) "Consume gains a counter")
         (is (= 1 (get-counters (refresh h) :virus)) "Hivemind retains counter")
@@ -2236,7 +2232,7 @@
       (play-from-hand state :corp "Enigma" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Cordyceps")
-      (core/add-counter state :runner (get-program state 0) :virus -2)
+      (core/add-counter state :runner (core/make-eid state) (get-program state 0) :virus -2)
       (is (= 0 (get-counters (get-program state 0) :virus)) "Has no virus tokens")
       (run-on state "HQ")
       (run-continue-until state :success)
@@ -2255,7 +2251,7 @@
       (play-from-hand state :corp "Enigma" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Cordyceps")
-      (core/add-counter state :runner (get-program state 0) :virus -2)
+      (core/add-counter state :runner (core/make-eid state) (get-program state 0) :virus -2)
       (play-from-hand state :runner "Hivemind")
       (run-on state "HQ")
       (run-continue-until state :success)
@@ -2777,7 +2773,7 @@
       (let [sucker (get-program state 0)
             wrap (get-ice state :hq 0)
             spider (get-ice state :hq 1)]
-        (core/add-counter state :runner sucker :virus 2)
+        (core/add-counter state :runner (core/make-eid state) sucker :virus 2)
         (rez state :corp spider)
         (rez state :corp wrap)
         (play-from-hand state :runner "Parasite")
@@ -2818,7 +2814,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "DaVinci")
       (let [davinci (get-program state 0)]
-        (core/add-counter state :runner davinci :power 2)
+        (core/add-counter state :runner (core/make-eid state) davinci :power 2)
         (is (changed? [(:credit (get-runner)) 0]
               (card-ability state :runner (refresh davinci) 0)
               (click-card state :runner "The Turning Wheel"))
@@ -2835,7 +2831,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "DaVinci")
       (let [davinci (get-program state 0)]
-        (core/add-counter state :runner davinci :power 2)
+        (core/add-counter state :runner (core/make-eid state) davinci :power 2)
         (is (changed? [(:credit (get-runner)) 0]
               (card-ability state :runner (refresh davinci) 0)
               (click-card state :runner "Simulchip"))
@@ -3002,7 +2998,7 @@
           chak (first (:hosted djinn))]
       (is (= "Chakana" (:title chak)) "Djinn has a hosted Chakana")
       ;; manually add 3 counters
-      (core/add-counter state :runner (first (:hosted (refresh djinn))) :virus 3)
+      (core/add-counter state :runner (core/make-eid state) (first (:hosted (refresh djinn))) :virus 3)
       (take-credits state :runner 2)
       (click-advance state :corp agenda)
       (is (= 1 (get-counters (refresh agenda) :advancement)) "Agenda was advanced"))))
@@ -3178,7 +3174,7 @@
       (play-from-hand state :corp "Rototurret" "HQ")
       (take-credits state :corp)
       (play-from-hand state :runner "Trickster Taka")
-      (core/add-counter state :runner (get-resource state 0) :credit 2)
+      (core/add-counter state :runner (core/make-eid state) (get-resource state 0) :credit 2)
       (play-from-hand state :runner "Engolo")
       (let [roto (get-ice state :hq 0)]
         (run-on state :hq)
@@ -4537,7 +4533,7 @@
       (play-from-hand state :runner "Hivemind")
       (is (= 1 (get-counters (get-program state 0) :virus)))
       (play-from-hand state :runner "Imp")
-      (core/add-counter state :runner (get-program state 1) :virus -2)
+      (core/add-counter state :runner (core/make-eid state) (get-program state 1) :virus -2)
       (is (= 0 (get-counters (get-program state 1) :virus)))
       (run-empty-server state "HQ")
       (click-prompt state :runner "[Imp] Hosted virus counter: Trash card")
@@ -5106,7 +5102,7 @@
       (let [leech (get-program state 0)
             wrap (get-ice state :hq 0)
             spider (get-ice state :hq 1)]
-        (core/add-counter state :runner leech :virus 2)
+        (core/add-counter state :runner (core/make-eid state) leech :virus 2)
         (rez state :corp spider)
         (rez state :corp wrap)
         (play-from-hand state :runner "Parasite")
@@ -7897,7 +7893,6 @@
           (fire-subs state (refresh ichi))
           (is (= :select (prompt-type :corp)) "Corp has a prompt to choose program to delete")
           (click-card state :corp "Sneakdoor Beta")
-          (click-prompt state :corp "Done")
           (is (= "Sneakdoor Beta" (-> (get-runner) :discard first :title)) "Sneakdoor was trashed")
           (click-prompt state :corp "0")
           (click-prompt state :runner "1")
@@ -8381,7 +8376,7 @@
       (let [tako (get-program state 0)
             corr (get-program state 1)
             faus (get-program state 2)]
-        (core/add-counter state :runner tako :power 3)
+        (core/add-counter state :runner (core/make-eid state) tako :power 3)
         (is (= 3 (get-counters (refresh tako) :power)) "3 counters on Takobi")
         (run-on state "HQ")
         (rez state :corp (get-ice state :hq 0))

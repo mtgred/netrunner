@@ -242,7 +242,7 @@
                         :credits 20}})
       (play-from-hand state :corp "Embolus" "New remote")
       (rez state :corp (get-content state :remote1 0))
-      (core/add-counter state :corp (get-content state :remote1 0) :power 4)
+      (core/add-counter state :corp (core/make-eid state) (get-content state :remote1 0) :power 4)
       (play-from-hand state :corp "Giordano Memorial Field" "New remote")
       (rez state :corp (get-content state :remote2 0))
       (play-from-hand state :corp "Hostile Takeover" "New remote")

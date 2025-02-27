@@ -1638,7 +1638,7 @@
               (play-from-hand state :corp "Docklands Crackdown" "New remote")
               (let [dlcd (get-content state :remote1 0)]
                 (rez state :corp dlcd)
-                (core/add-counter state :corp dlcd :power number)
+                (core/add-counter state :corp (core/make-eid state) dlcd :power number)
                 (take-credits state :corp)
                 (take-credits state :runner)
                 (is (changed? [(:credit (get-corp)) 0]
@@ -2045,7 +2045,7 @@
         (new-game {:corp {:deck ["False Flag"]}})
         (play-from-hand state :corp "False Flag" "New remote")
         (let [ff (get-content state :remote1 0)]
-          (core/add-counter state :corp ff :advancement 7)
+          (core/add-counter state :corp (core/make-eid state) ff :advancement 7)
           (rez state :corp (refresh ff))
           (card-ability state :corp (refresh ff) 0)
           (is (nil? (get-content state :remote1 0))
@@ -2059,7 +2059,7 @@
         (new-game {:corp {:deck ["False Flag"]}})
         (play-from-hand state :corp "False Flag" "New remote")
         (let [ff (get-content state :remote1 0)]
-          (core/add-counter state :corp ff :advancement 6)
+          (core/add-counter state :corp (core/make-eid state) ff :advancement 6)
           (rez state :corp (refresh ff))
           (card-ability state :corp (refresh ff) 0)
           (is (not (nil? (get-content state :remote1 0)))
@@ -2078,6 +2078,7 @@
                   (new-game {:corp {:deck ["False Flag"]}})
                   (play-from-hand state :corp "False Flag" "New remote")
                   (core/add-prop state :corp
+                                 (core/make-eid state)
                                  (get-content state :remote1 0)
                                  :advance-counter advancements)
                   (take-credits state :corp)
@@ -2242,7 +2243,7 @@
       (card-ability state :corp (refresh rec) 0)
       (click-card state :corp "NGO Front")
       (let [ngo (first (:hosted (refresh rec)))]
-        (core/add-counter state :corp ngo :advancement 1)
+        (core/add-counter state :corp (core/make-eid state) ngo :advancement 1)
         (rez state :corp (refresh ngo))
         (card-ability state :corp (refresh ngo) 0)
         (is (not (refresh ngo)) "NGO gone"))
@@ -2315,7 +2316,7 @@
       (new-game {:corp {:deck ["Gene Splicer"]}
                  :runner {:deck [(qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Gene Splicer" "New remote")
-      (core/add-counter state :corp (get-content state :remote1 0) :advancement 1)
+      (core/add-counter state :corp (core/make-eid state) (get-content state :remote1 0) :advancement 1)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
@@ -2329,7 +2330,7 @@
       (new-game {:corp {:deck ["Gene Splicer"]}
                  :runner {:deck [(qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Gene Splicer" "New remote")
-      (core/add-counter state :corp (get-content state :remote1 0) :advancement 1)
+      (core/add-counter state :corp (core/make-eid state) (get-content state :remote1 0) :advancement 1)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 1 [Credits] to trash")
@@ -2344,7 +2345,7 @@
       (new-game {:corp {:deck ["Gene Splicer"]}
                  :runner {:deck [(qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Gene Splicer" "New remote")
-      (core/add-counter state :corp (get-content state :remote1 0) :advancement 2)
+      (core/add-counter state :corp (core/make-eid state) (get-content state :remote1 0) :advancement 2)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
@@ -2358,7 +2359,7 @@
       (new-game {:corp {:deck ["Gene Splicer"]}
                  :runner {:deck [(qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Gene Splicer" "New remote")
-      (core/add-counter state :corp (get-content state :remote1 0) :advancement 2)
+      (core/add-counter state :corp (core/make-eid state) (get-content state :remote1 0) :advancement 2)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 1 [Credits] to trash")
@@ -2374,9 +2375,9 @@
                  :runner {:deck [(qty "Sure Gamble" 3)]}})
       (play-from-hand state :corp "Gene Splicer" "New remote")
       (let [gs (get-content state :remote1 0)]
-        (core/add-counter state :corp gs :advancement 2)
+        (core/add-counter state :corp (core/make-eid state) gs :advancement 2)
         (take-credits state :runner)
-        (core/add-counter state :corp (refresh gs) :advancement 1)
+        (core/add-counter state :corp (core/make-eid state) (refresh gs) :advancement 1)
         (rez state :corp (refresh gs))
         (card-ability state :corp (refresh gs) 0)
         (is (nil? (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
@@ -2847,7 +2848,7 @@
       (card-ability state :corp itd 0)
       (is (zero? (:click (get-corp))) "Spent 1 click")
       (is (= 1 (get-counters (refresh itd) :power)) "IT Dept has 1 counter")
-      (core/add-counter state :corp (refresh itd) :power 4)
+      (core/add-counter state :corp (core/make-eid state) (refresh itd) :power 4)
       (is (= 5 (get-counters (refresh itd) :power)) "IT Dept has 5 counters")
       (card-ability state :corp itd 1)
       (click-card state :corp wos)
@@ -6627,7 +6628,7 @@
       (is (changed? [(get-counters (refresh wp) :power) 1]
                     (rez state :corp (get-ice state :hq 0)))
           "Power counter added")
-      (core/add-counter state :corp wp :power 4)
+      (core/add-counter state :corp (core/make-eid state) wp :power 4)
       (is (changed? [(get-counters (refresh wp) :power) -1
                      (:credit (get-corp)) 3]
                     (card-ability state :corp (refresh wp) 0))
@@ -6640,7 +6641,7 @@
       (is (empty (get-resource state)))
       (is (= "Smartware Distributor" (:title (first (:deck (get-runner))))))
       (core/gain state :corp :click 1)
-      (core/add-counter state :corp wp :power 5)
+      (core/add-counter state :corp (core/make-eid state) wp :power 5)
       (is (changed? [(:credit (get-corp)) 6]
                     (card-ability state :corp (refresh wp) 1))
           "5 power counters removed to gain 6 credits")

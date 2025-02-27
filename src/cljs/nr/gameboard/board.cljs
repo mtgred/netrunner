@@ -170,13 +170,13 @@
         (:poison card)
         (:highlight-in-discard card))))
 
-(defn handle-card-click [{:keys [type zone] :as card}]
+(defn handle-card-click [{:keys [type zone] :as card} shift-key-held]
   (let [side (:side @game-state)]
     (when (not-spectator?)
       (cond
         ;; Selecting card
         (= (get-in @game-state [side :prompt-state :prompt-type]) "select")
-        (send-command "select" {:card (card-for-click card)})
+        (send-command "select" {:card (card-for-click card) :shift-key-held shift-key-held})
 
         ;; Card is an identity of player's side
         (and (= (:type card) "Identity")
@@ -189,7 +189,7 @@
              (not (any-prompt-open? side))
              (= "hand" (first zone))
              (playable? card))
-        (send-command "play" {:card (card-for-click card)})
+        (send-command "play" {:card (card-for-click card) :shift-key-held shift-key-held})
 
         ;; Corp clicking on a corp card
         (and (= side :corp)
@@ -202,7 +202,8 @@
           (if (= (:cid card) (:source @card-menu))
             (do (send-command "generate-install-list" nil)
                 (close-card-menu))
-            (do (send-command "generate-install-list" {:card (card-for-click card)})
+            (do (send-command "generate-install-list" {:card (card-for-click card)
+                                                       :shift-key-held shift-key-held})
                 (open-card-menu (:cid card)))))
 
         :else
@@ -722,13 +723,13 @@
                                                (put-game-card-in-channel card zoom-channel))
                             :on-mouse-leave #(put! zoom-channel false)
                             :on-click #(when (not disable-click)
-                                         (handle-card-click card))
+                                         (handle-card-click card (.-shiftKey %)))
                             :on-key-down #(when (and (= "Enter" (.-key %))
                                                      (not disable-click))
-                                            (handle-card-click card))
+                                            (handle-card-click card (.-shiftKey %)))
                             :on-key-up #(when (and (= " " (.-key %))
                                                    (not disable-click))
-                                          (handle-card-click card))}
+                                          (handle-card-click card (.-shiftKey %)))}
       (if (or (not code) flipped facedown)
         (let [facedown-but-known (or (not (or (not code) flipped facedown))
                                      (spectator-view-hidden?)

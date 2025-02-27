@@ -506,7 +506,7 @@
         (rez state :corp ansel)
         (run-continue state :encounter-ice)
         (fire-subs state (refresh ansel))
-        (click-prompt state :corp "Done")
+        ;;(click-prompt state :corp "Done")
         (click-prompt state :corp "Done")
         (is (last-log-contains? state "cannot steal or trash"))
         (run-continue-until state :success)
@@ -2368,7 +2368,7 @@
       (card-subroutine state :corp fc1 1)
       (is (= 1 (count (:choices (prompt-map :runner)))) "Only 1 choice in prompt")
       (click-prompt state :runner "Trash an installed card")
-      (click-prompt state :runner "Done"))))
+      (is (no-prompt? state :runner) "no lingering prompt"))))
 
 (deftest fairchild-2-0
   ;; Fairchild 2.0
@@ -8562,10 +8562,8 @@
       (fire-subs state win)
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (click-prompt state :corp "Done")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (click-prompt state :corp "Done")
       (run-continue state :movement)
       (run-jack-out state)
       ;Click 2 - Install Aumakua
@@ -8708,6 +8706,4 @@
       (run-on state :hq)
       (run-continue state)
       (fire-subs state zed)
-      (click-prompt state :corp "Done")
-      (click-prompt state :corp "Done")
       (is (= 0 (:brain-damage (get-runner))) "Runner took 0 core damage"))))

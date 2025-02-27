@@ -3172,7 +3172,7 @@
       (play-from-hand state :corp "NGO Front" "Server 1")
       (let [navi (get-content state :remote1 0)
             ngo  (get-content state :remote1 1)]
-        (core/add-counter state :corp ngo :advancement 2)
+        (core/add-counter state :corp (core/make-eid state) ngo :advancement 2)
         (take-credits state :corp)
         (run-on state :remote1)
         (rez state :corp navi)
@@ -4602,7 +4602,7 @@
             cor (get-program state 0)
             mem (get-hardware state 0)]
         (rez state :corp war)
-        (core/add-counter state :runner clv :power 2)
+        (core/add-counter state :runner (core/make-eid state) clv :power 2)
         (card-ability state :runner (refresh clv) 0)
         ;; Prompt choice checks there is a trace prompt from Warroid
         (click-prompt state :corp "0")

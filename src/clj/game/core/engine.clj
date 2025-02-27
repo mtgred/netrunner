@@ -1169,7 +1169,7 @@
      (wait-for
        (unregister-expired-durations state nil (make-eid state eid) (conj durations duration) context-maps)
        ;; update the disabled-card registry here
-        (update-disabled-cards state)
+       (update-disabled-cards state)
        ;; c: Check winning or tying by agenda points
        (check-win-by-agenda state)
        ;; d: uniqueness/console check
