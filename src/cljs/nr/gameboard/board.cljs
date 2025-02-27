@@ -718,6 +718,7 @@
                             :on-drag-start #(handle-dragstart % card)
                             :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                             :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
+                                                       title
                                                        (spectator-view-hidden?)
                                                        (= (:side @game-state) (keyword (lower-case side))))
                                                (put-game-card-in-channel card zoom-channel))

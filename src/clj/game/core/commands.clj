@@ -413,6 +413,18 @@
        :effect (effect (trash eid target {:unpreventable true}))}
       nil nil)))
 
+(defn dont-share-information
+  [state side]
+  (system-msg state side "stops playing with open information")
+  (swap! state dissoc-in [side :share-information]))
+
+(defn share-information
+  [state side]
+  (if (get-in @state [side :share-information])
+    (system-msg state side "stops playing with open information")
+    (system-msg state side "starts playing with open information"))
+  (swap! state update-in [side :share-information] not))
+
 (defn parse-command
   [state text]
   (let [[command & args] (safe-split text #" ")
@@ -454,6 +466,8 @@
                                               (make-card {:title "/disable-card command"}) nil)
             "/discard"    #(toast %1 %2 "/discard number takes the format #n")
             "/discard-random" #(move %1 %2 (rand-nth (get-in @%1 [%2 :hand])) :discard)
+            "/dont-share-information"  dont-share-information
+            "/don't-share-information" dont-share-information
             "/draw"       #(draw %1 %2 (make-eid %1) (constrain-value value 0 1000))
             "/enable-card" #(resolve-ability %1 %2
                                              {:prompt "Choose a card to enable"
@@ -537,6 +551,7 @@
             "/save-replay" command-save-replay
             "/set-mark"   #(command-set-mark %1 %2 args)
             "/score"      command-score
+            "/share-information" share-information
             "/show-hand" #(resolve-ability %1 %2
                                            {:effect (effect (system-msg (str
                                                                           (if (= :corp %2)
