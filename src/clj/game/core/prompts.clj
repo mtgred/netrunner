@@ -22,7 +22,9 @@
 
 (defn update-selectable
   [prev-selectable choices]
-  (concat prev-selectable (filterv identity (map #(->> % :value :cid) choices))))
+  (if (or (string? choices) (keyword? choices))
+    prev-selectable
+    (concat (or prev-selectable []) (filterv identity (map #(->> % :value :cid) choices)))))
 
 (defn show-prompt
   "Engine-private method for displaying a prompt where a *function*, not a card ability, is invoked
