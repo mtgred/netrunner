@@ -908,7 +908,7 @@
     (take-credits state :runner)
     (is (:corp-phase-12 @state) "Corp is in Step 1.2")
     (end-phase-12 state :corp)
-    (is (= ["Clearinghouse" "Clearinghouse"] (prompt-titles :corp)))))
+    (is (= ["Clearinghouse" "Clearinghouse" "Done"] (prompt-titles :corp)))))
 
 (deftest clone-suffrage-movement
   ;; Clone Suffrage Movement
@@ -1453,7 +1453,7 @@
         (click-prompt state :corp "Carry on!")
         (is (= ["Enigma" "None"] (prompt-buttons :corp)))
         (click-prompt state :corp "Enigma")
-        (is (= ["Daily Business Show" "Jinja City Grid"] (prompt-titles :corp)))
+        (is (= ["Daily Business Show" "Jinja City Grid" "Done"] (prompt-titles :corp)))
         (click-prompt state :corp "Jinja City Grid")
         (is (= ["Ice Wall" "None"] (prompt-buttons :corp)))
         (click-prompt state :corp "Ice Wall")
@@ -4557,7 +4557,7 @@
         (take-credits state :runner)
         (is (:corp-phase-12 @state) "Corp is in Step 1.2")
         (end-phase-12 state :corp)
-        (is (= 2 (-> (prompt-map :corp) :choices count)) "Corp should have two abilities to trigger")
+        (is (= 3 (-> (prompt-map :corp) :choices count)) "Corp should have two abilities to trigger (+ Done)")
         (click-prompt state :corp "Marilyn Campaign")
         (click-prompt state :corp "Yes")
         (is (find-card "Marilyn Campaign" (:deck (get-corp))))
@@ -4611,7 +4611,7 @@
     (take-credits state :runner)
     (is (:corp-phase-12 @state) "Corp is in Step 1.2")
     (end-phase-12 state :corp)
-    (is (= ["Reaper Function" "Reaper Function"] (prompt-titles :corp)))))
+    (is (= ["Reaper Function" "Reaper Function" "Done"] (prompt-titles :corp)))))
 
 (deftest reconstruction-contract
   ;; Reconstruction Contract - place advancement token when runner takes meat damage
@@ -6220,7 +6220,7 @@
     (rez state :corp (get-content state :remote2 0))
     (take-credits state :corp)
     (take-credits state :runner)
-    (is (= ["Urban Renewal" "Urban Renewal"] (prompt-titles :corp)))))
+    (is (= ["Urban Renewal" "Urban Renewal" "Done"] (prompt-titles :corp)))))
 
 (deftest urtica-cipher
   ;; Urtica Cipher
