@@ -149,6 +149,7 @@
                                 (effect-completed state side eid)))}]
     {:flags {:runner-phase-12 (req true)}
      :events [{:event :runner-turn-begins
+               :skippable true
                :interactive (req true)
                :optional
                {:once :per-turn
@@ -168,6 +169,7 @@
                                       :async true
                                       :effect (req (draw state :runner eid 2))}}}
             {:event :runner-turn-ends
+             :automatic true
              :req (req tagged)
              :msg "place 1 power counter on itself"
              :async true
@@ -191,6 +193,7 @@
 (defcard "Archives Interface"
   {:events
    [{:event :breach-server
+     :automatic :pre-breach
      :async true
      :interactive (req true)
      :req (req (and (= target :archives)
@@ -539,6 +542,7 @@
     {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
      :events [(assoc ability
                      :event :runner-turn-begins
+                     :skippable true
                      :interactive (req true))]
      :abilities [ability]}))
 
@@ -675,6 +679,7 @@
 (defcard "Desperado"
   {:static-abilities [(mu+ 1)]
    :events [{:event :successful-run
+             :automatic :gain-credits
              :silent (req true)
              :async true
              :msg "gain 1 [Credits]"
@@ -824,6 +829,7 @@
     {:data {:counter {:power 3}}
      :static-abilities [(mu+ 2)]
      :events [{:event :successful-run
+               :automatic true
                :req (req (first-event? state :runner :successful-run))
                :msg "place 1 power counter on itself"
                :async true
@@ -846,6 +852,7 @@
         (fn [state card]
           (update! state :runner (assoc-in (get-card state card) [:special :flame-out-trigger] true)))
         maybe-turn-end {:async true
+                        :automatic :last
                         :req (req (:flame-out-trigger (:special (get-card state card))))
                         :effect (req (update! state side (assoc-in (get-card state card) [:special :flame-out-trigger] nil))
                                      (if-let [hosted (first (:hosted card))]
@@ -927,6 +934,7 @@
 
 (defcard "Friday Chip"
   (let [ability {:msg (msg "move 1 virus counter to " (:title target))
+                 :skippable true
                  :req (req (and (pos? (get-counters card :virus))
                                 (pos? (count-virus-programs state))))
                  :choices {:card virus-program?}
@@ -1151,6 +1159,7 @@
              :async true
              :effect (effect (lose-credits :corp eid 1))}
             {:event :successful-run
+             :skippable true
              :optional
              {:req (req (= :archives (target-server context)))
               :prompt (msg "Trash " (:title card) " to force the Corp to lose 3 [Credits]?")
@@ -1204,6 +1213,7 @@
                                                                                                                                                                     :install-source card}})))}}}
                             card nil))}
             {:event :runner-turn-ends
+             :automatic true
              :req (req (and
                          (installed? card)
                          (some #{:hq} (:successful-run runner-reg))
@@ -1242,6 +1252,7 @@
 (defcard "Knobkierie"
   {:static-abilities [(virus-mu+ 3)]
    :events [{:event :successful-run
+             :skippable true
              :interactive (req true)
              :optional {:req (req (and (first-event? state :runner :successful-run)
                                        (pos? (count-virus-programs state))))
@@ -1429,6 +1440,7 @@
   {:implementation "Power counters added automatically"
    :static-abilities [(mu+ 1)]
    :events [{:event :successful-run
+             :automatic true
              :silent (req true)
              :req (req (= :rd (target-server context)))
              :async true
@@ -1442,6 +1454,7 @@
 (defcard "Mirror"
   {:static-abilities [(mu+ 2)]
    :events [{:event :successful-run
+             :skippable true
              :async true
              :req (req (= :rd (target-server context)))
              :effect (effect (continue-ability
@@ -1478,6 +1491,7 @@
 (defcard "Mu Safecracker"
   {:implementation "Stealth credit restriction not enforced"
    :events [{:event :successful-run
+             :skippable true
              :optional
              {:req (req (and (= :hq (target-server context))
                              (some #(has-subtype? % "Stealth")
@@ -1489,6 +1503,7 @@
                :effect (effect (register-events
                                 card [(breach-access-bonus :hq 1 {:duration :end-of-run})]))}}}
             {:event :successful-run
+             :skippable true
              :optional
              {:req (req (and (= :rd (target-server context))
                              (some #(has-subtype? % "Stealth")
@@ -1580,6 +1595,7 @@
                 :msg "suffer 1 meat damage"
                 :effect (effect (damage eid :meat 1 {:unboostable true :card card}))}
    :events [{:event :successful-run
+             :automatic :drain-credits
              :req (req (and
                          (= :hq (first (:server target)))
                          (first-event? state side :successful-run #(= :hq (first (:server (first %)))))))
@@ -1621,6 +1637,7 @@
 (defcard "Paragon"
   {:static-abilities [(mu+ 1)]
    :events [{:event :successful-run
+             :automatic :pre-draw
              :interactive (get-autoresolve :auto-fire (complement never?))
              :silent (get-autoresolve :auto-fire never?)
              :optional
@@ -1730,6 +1747,7 @@
 (defcard "Pennyshaver"
   {:static-abilities [(mu+ 1)]
    :events [{:event :successful-run
+             :automatic true
              :silent (req true)
              :async true
              :msg "place 1 [Credits]"
@@ -2003,10 +2021,12 @@
                      :req (req (and (some #{:hand} (:previous-zone (:card context)))
                                     (zero? (count (:hand runner))))))
               {:event :runner-turn-begins
+               :automatic :draw-cards
                :req (req (empty? (:hand runner)))
                :async true
                :effect (effect (continue-ability ability card nil))}
               {:event :corp-turn-begins
+               :automatic :draw-cards
                :req (req (empty? (:hand runner)))
                :async true
                :effect (effect (continue-ability ability card nil))}]
@@ -2204,6 +2224,7 @@
 
 (defcard "Solidarity Badge"
   {:events [{:event :runner-turn-begins
+             :skippable true
              :req (req (pos? (get-counters (get-card state card) :power)))
              :async true
              :interactive (req (pos? (get-counters (get-card state card) :power)))
@@ -2314,6 +2335,7 @@
 (defcard "The Gauntlet"
   {:static-abilities [(mu+ 2)]
    :events [{:event :breach-server
+             :automatic :pre-breach
              :req (req (= :hq target))
              :effect (req (let [evs (run-events state side :subroutines-broken)
                                 relevant (filter #(let [context (first %)
@@ -2402,6 +2424,7 @@
   {:data {:counter {:power 1}}
    :req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
    :events [{:event :runner-turn-begins
+             :automatic :force-discard
              :async true
              :effect (req (if (<= 3 (get-counters (get-card state card) :power))
                             (wait-for (trash state side card {:cause-card card})
@@ -2472,6 +2495,7 @@
 
 (defcard "Ubax"
   (let [ability {:req (req (:runner-phase-12 @state))
+                 :automatic :draw-cards
                  :msg "draw 1 card"
                  :label "Draw 1 card (start of turn)"
                  :once :per-turn
@@ -2507,6 +2531,7 @@
 (defcard "Vigil"
   (let [ability {:req (req (and (:runner-phase-12 @state)
                                 (= (count (:hand corp)) (hand-size state :corp))))
+                 :automatic :draw-cards
                  :msg "draw 1 card"
                  :label "Draw 1 card (start of turn)"
                  :once :per-turn
@@ -2521,6 +2546,7 @@
    :events [mark-changed-event
             (assoc identify-mark-ability :event :runner-turn-begins)
             {:event :successful-run
+             :automatic true
              :req (req (and (:marked-server target)
                             (first-event? state side :successful-run #(:marked-server (first %)))))
              :async true
@@ -2548,11 +2574,13 @@
                 :msg "suffer 1 meat damage"
                 :effect (effect (damage eid :meat 1 {:unboostable true :card card}))}
    :events [{:event :successful-run
+             :automatic true
              :async true
              :req (req (= :hq (target-server context)))
              :msg "place 1 power counter on itself"
              :effect (req (add-counter state :runner eid card :power 1 {:placed true}))}
             {:event :breach-server
+             :automatic :pre-breach
              :async true
              :req (req (and (= :rd target)
                             (pos? (get-counters card :power))))
@@ -2587,6 +2615,7 @@
   {:on-install {:async true
                 :effect (effect (damage eid :brain 1 {:card card}))}
    :events [{:event :successful-run
+             :automatic :draw-cards
              :async true
              :req (req (and (is-central? (:server context))
                             (first-event? state side :successful-run

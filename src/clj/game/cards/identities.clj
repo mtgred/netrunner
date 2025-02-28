@@ -258,6 +258,7 @@
 
 (defcard "Akiko Nisei: Head Case"
   {:events [{:event :breach-server
+             :automatic :pre-breach
              :interactive (req true)
              :psi {:req (req (= target :rd))
                    :player :runner
@@ -269,6 +270,7 @@
 (defcard "Alice Merchant: Clan Agitator"
   {:events [{:event :successful-run
              :interactive (req true)
+             :automatic :force-discard
              :req (req (and (= :archives (target-server context))
                             (first-successful-run-on-server? state :archives)
                             (not-empty (:hand corp))))
@@ -552,6 +554,7 @@
                :req (req (= side :corp))
                :effect (effect (update! (assoc card :flipped false :face :front)))}
               {:event :successful-run
+               :automatic true
                :req (req (and (= :hq (target-server context))
                               (:flipped card)))
                :effect flip-effect}]
@@ -730,6 +733,7 @@
 
 (defcard "Gabriel Santiago: Consummate Professional"
   {:events [{:event :successful-run
+             :automatic :gain-credits
              :silent (req true)
              :req (req (and (= :hq (target-server context))
                             (first-successful-run-on-server? state :hq)))
@@ -902,6 +906,7 @@
                :req (req (= side :runner))
                :effect (effect (update! (assoc card :flipped false :face :front)))}
               {:event :runner-turn-ends
+               :automatic :gain-credits
                :interactive (req true)
                :async true
                :effect (req (cond
@@ -909,16 +914,15 @@
                                    (not (:accessed-cards runner-reg)))
                               (do (system-msg state :runner "flips [their] identity to Hoshiko Shiro: Untold Protagonist")
                                   (continue-ability state :runner {:effect flip-effect} card nil))
-
                               (and (not (:flipped card))
                                    (:accessed-cards runner-reg))
                               (wait-for (gain-credits state :runner 2)
                                         (system-msg state :runner "gains 2 [Credits] and flips [their] identity to Hoshiko Shiro: Mahou Shoujo")
                                         (continue-ability state :runner {:effect flip-effect} card nil))
-
                               :else
                               (effect-completed state side eid)))}
               {:event :runner-turn-begins
+               :automatic :lose-credits
                :req (req (:flipped card))
                :async true
                :effect (req (wait-for (draw state :runner 1)
@@ -959,6 +963,7 @@
 (defcard "Iain Stirling: Retired Spook"
   (let [ability {:req (req (> (:agenda-point corp) (:agenda-point runner)))
                  :once :per-turn
+                 :automatic :gain-credits
                  :msg "gain 2 [Credits]"
                  :async true
                  :effect (effect (gain-credits eid 2))}]
@@ -1114,6 +1119,7 @@
 
 (defcard "Jinteki: Restoring Humanity"
   {:events [{:event :corp-turn-ends
+             :automatic :gain-credits
              :req (req (pos? (count (remove :seen (:discard corp)))))
              :msg "gain 1 [Credits]"
              :async true
@@ -1197,6 +1203,7 @@
 
 (defcard "Laramy Fisk: Savvy Investor"
   {:events [{:event :successful-run
+             :skippable true
              :async true
              :interactive (get-autoresolve :auto-fire (complement never?))
              :silent (get-autoresolve :auto-fire never?)
@@ -1245,6 +1252,7 @@
 
 (defcard "Liza Talking Thunder: Prominent Legislator"
   {:events [{:event :successful-run
+             :automatic :draw-cards
              :async true
              :interactive (req true)
              :msg "draw 2 cards and take 1 tag"
@@ -1271,6 +1279,7 @@
                                "trash the top 2 cards from the stack and draw 1 card - but the stack is empty")))
                  :label "trash and draw cards"
                  :once :per-turn
+                 :automatic :post-draw-cards
                  :async true
                  :effect (req (wait-for (mill state :runner :runner 2)
                                         (draw state :runner eid 1)))}]
@@ -1283,6 +1292,7 @@
 
 (defcard "Mercury: Chrome Libertador"
   {:events [{:event :breach-server
+             :automatic :pre-breach
              :req (req (and run
                             (empty? (run-events state side :subroutines-broken))
                             (#{:hq :rd} target)))
@@ -1337,10 +1347,12 @@
                                 (continue-ability state side mm-ability (get-card state card) nil)
                                 (effect-completed state side eid))))}
               {:event :runner-turn-begins
+               :silent (req true)
                :effect (effect
                         (update! (assoc-in card [:special :mm-actions] []))
                         (update! (assoc-in (get-card state card) [:special :mm-click] false)))}
               {:event :corp-turn-ends
+               :silent (req true)
                :effect (effect
                         (update! (assoc-in card [:special :mm-actions] []))
                         (update! (assoc-in (get-card state card) [:special :mm-click] false)))}]
@@ -1418,6 +1430,7 @@
                  :once :per-turn
                  :interactive (req true)
                  :async true
+                 :automatic :pre-draw-cards
                  :effect (req (if (and (> 3 (count (:hand runner)))
                                        (:runner-phase-12 @state))
                                 (do (system-msg state :runner (str "uses " (:title card) " to gain 1 [Credits]"))
@@ -1621,6 +1634,7 @@
   {:events [mark-changed-event
             (assoc identify-mark-ability :event :runner-turn-begins)
             {:event :successful-run
+             :automatic :gain-clicks
              :interactive (req true)
              :req (req (and (:marked-server target)
                             (first-event? state side :successful-run #(:marked-server (first %)))))
@@ -1785,6 +1799,7 @@
 
 (defcard "Pravdivost Consulting: Political Solutions"
   {:events [{:event :successful-run
+             :skippable true
              :req (req (first-event? state side :successful-run))
              :interactive (req true)
              :async true
@@ -1874,6 +1889,7 @@
                   :msg (msg "install a card in a remote server and place 1 advancement token on it")
                   :effect (effect (continue-ability (install-card target) card nil))}]
      :events [{:event :corp-turn-begins
+               :silent (req true)
                :effect (req (clear-persistent-flag! state side card :can-rez))}]}))
 
 (defcard "Sebastião Souza Pessoa: Activist Organizer"
@@ -1910,6 +1926,7 @@
 
 (defcard "Silhouette: Stealth Operative"
   {:events [{:event :successful-run
+             :skippable true
              :interactive (req (some #(not (rezzed? %)) (all-installed state :corp)))
              :async true
              :req (req (and (= :hq (target-server context))
@@ -2045,6 +2062,7 @@
 
 (defcard "Steve Cambridge: Master Grifter"
   {:events [{:event :successful-run
+             :skippable true
              :optional
              {:req (req (and (= :hq (target-server context))
                              (first-successful-run-on-server? state :hq)
