@@ -32,18 +32,14 @@
       (play-from-hand state :runner "LLDS Energy Regulator")
       (core/add-counter state :runner (core/make-eid state) (get-program state 0) :virus 3)
       (take-credits state :runner)
-      (let [llds (get-program state 1)]
-        (is (changed? [(:credit (get-runner)) 0]
-              (purge state :corp)
-              (click-prompt state :runner "Yes"))
-            "Runner didn't get credits before deciding on LLDS")
-        (is (changed? [(:credit (get-runner)) -3]
-              (card-ability state :runner (refresh llds) 0))
-            "Runner pays 3 for LLDS")
-        (is (changed? [(:credit (get-runner)) 3]
-              (click-prompt state :runner "Done"))
-            "Runner got Acacia credits")
-        (is (zero? (count (:discard (get-runner)))) "Acacia has not been trashed"))))
+      (is (changed? [(:credit (get-runner)) 0]
+            (purge state :corp)
+            (click-prompt state :runner "Yes"))
+          "Runner didn't get credits before deciding on LLDS")
+      (is (changed? [(:credit (get-runner)) 0]
+            (click-prompt state :runner "3 [Credits]: LLDS Energy Regulator"))
+          "Runner pays 3 for LLDS, then gets acacia credits")
+        (is (zero? (count (:discard (get-runner)))) "Acacia has not been trashed")))
 
 (deftest acacia-effect-counts-both-runner-and-corp-virus-counters
     ;; Effect counts both Runner and Corp virus counters
@@ -112,7 +108,7 @@
       (run-on state :hq)
       (rez state :corp (get-ice state :hq 1))
       (run-continue state)
-      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "AirbladeX (JSRF Ed.)")
       (is (no-prompt? state :runner) "No Funhouse prompt")
       (is (= 2 (get-counters (refresh airbladex) :power)) "Spent 1 hosted power counter")
       (run-continue state)
@@ -121,7 +117,7 @@
       (run-continue state)
       (fire-subs state (get-ice state :hq 0))
       (is (changed? [(count (:hand (get-runner))) 0]
-            (card-ability state :runner airbladex 0))
+            (click-prompt state :runner "AirbladeX (JSRF Ed.)"))
           "1 net damage prevented")
       (is (= 1 (get-counters (refresh airbladex) :power)) "Spent 1 hosted power counter"))))
 
@@ -382,8 +378,9 @@
       (play-from-hand state :corp "SEA Source")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
-      (card-ability state :runner (-> (get-resource state 0) :hosted first) 0)
-      (click-prompt state :runner "Done")
+      (click-prompt state :runner "On the Lam")
+      (click-prompt state :runner "Yes")
+      (click-prompt state :runner "1")
       (is (zero? (count-tags state)) "Runner should avoid tag")
       (is (= 1 (-> (get-runner) :discard count)) "Runner should have 1 card in Heap")
       (is (zero? (count (:hand (get-runner)))) "Runner doesn't draw from Aniccam")))
@@ -1940,22 +1937,21 @@
       (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "Feedback Filter")
       (is (= 7 (:credit (get-runner))))
-      (let [ff (get-hardware state 0)]
-        (run-on state "Server 1")
-        (rez state :corp dm)
-        (run-continue state)
-        (card-subroutine state :corp dm 0)
-        (card-ability state :runner ff 0)
-        (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
-        (is (= 4 (:credit (get-runner))))
-        (run-continue state)
-        (click-prompt state :corp "Yes") ; pay 3 to fire Overwriter
-        (card-ability state :runner ff 1)
-        (click-prompt state :runner "Done")
-        (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash Overwriter for 0
-        (is (= 1 (:brain-damage (get-runner))) "2 of the 3 core damage prevented")
-        (is (= 2 (count (:hand (get-runner)))))
-        (is (empty? (get-hardware state)) "Feedback Filter trashed")))))
+      (run-on state "Server 1")
+      (rez state :corp dm)
+      (run-continue state)
+      (card-subroutine state :corp dm 0)
+      (click-prompt state :runner "Feedback Filter (Net)")
+      (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
+      (is (= 4 (:credit (get-runner))))
+      (run-continue state)
+      (click-prompt state :corp "Yes") ; pay 3 to fire Overwriter
+      (click-prompt state :runner "Feedback Filter (Core)")
+      (click-prompt state :runner "2")
+      (click-prompt state :runner "Pay 0 [Credits] to trash") ; trash Overwriter for 0
+      (is (= 1 (:brain-damage (get-runner))) "2 of the 3 core damage prevented")
+      (is (= 2 (count (:hand (get-runner)))))
+      (is (empty? (get-hardware state)) "Feedback Filter trashed"))))
 
 (deftest flame-out-basic-behavior
   ;; Basic behavior
@@ -2366,7 +2362,7 @@
      ;; expose and jack out
      (run-on state :hq)
      (card-ability state :runner gpi 0)
-     (is (last-log-contains? state "exposes Ice Wall") "Expose approached ice")
+     (is (last-log-contains? state "expose Ice Wall") "Expose approached ice")
      (is (= "Jack out?" (:msg (prompt-map :runner))) "Runner offered to jack out")
      (click-prompt state :runner "Yes")
      (is (nil? (get-run)) "Run has ended")
@@ -2401,30 +2397,20 @@
     (play-from-hand state :runner "Heartbeat")
     (is (= 5 (core/available-mu state)) "Gained 1 MU")
     (play-from-hand state :runner "Cache")
-    (let [hb (get-hardware state 0)
-          cache (get-program state 0)
+    (let [cache (get-program state 0)
           hbdown (get-runner-facedown state 0)]
       (damage state :corp :net 1)
-      (is (= (:msg (prompt-map :runner))
-             "Prevent 1 net damage?")
-          "Damage prevention message correct.")
-      (card-ability state :runner hb 0)
+      (click-prompt state :runner "Heartbeat")
       (click-card state :runner cache)
       (is (= 1 (count (:discard (get-runner)))) "Prevented 1 net damage")
       (is (= 2 (count (:hand (get-runner)))))
-      (is (second-last-log-contains? state "Runner trashes 1 installed card \\(Cache\\) to use Heartbeat to prevent 1 damage\\."))
+      (is (last-log-contains? state "Runner trashes 1 installed card \\(Cache\\) to use Heartbeat to prevent 1 net damage\\."))
       (damage state :corp :net 3)
-      (is (= (:msg (prompt-map :runner))
-             "Prevent any of the 3 net damage?")
-          "Damage prevention message correct.")
-      (card-ability state :runner hb 0)
+      (click-prompt state :runner "Heartbeat")
       (click-card state :runner hbdown)
-      (is (= (:msg (prompt-map :runner))
-             "Prevent any of the 3 net damage? (1/3 prevented)")
-          "Damage prevention message correct.")
-      (click-prompt state :runner "Done")
+      (click-prompt state :runner "Pass priority")
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card")
-      (is (last-n-log-contains? state 2 "Runner trashes 1 installed card \\(a facedown card\\) to use Heartbeat to prevent 1 damage\\.")))))
+      (is (last-n-log-contains? state 1 "Runner trashes 1 installed card \\(a facedown card\\) to use Heartbeat to prevent 1 net damage\\.")))))
 
 (deftest hermes
     (do-game
@@ -2991,9 +2977,7 @@
     (click-prompt state :corp "Yes")
     (click-card state :corp "IPO")
     (click-card state :corp "Extract")
-    (is (:run @state) "Run not ended yet")
-    (card-ability state :runner (get-hardware state 0) 0)
-    (click-prompt state :runner "Done")
+    (click-prompt state :runner "Lucky Charm")
     (is (:run @state) "Run prevented from ending")))
 
 (deftest lucky-charm-no-interference-with-runs-ending-successfully-or-by-jacking-out-and-batty-normal-etr-border-control-interaction
@@ -3039,7 +3023,7 @@
        (card-subroutine state :corp (refresh iw) 0)
        (is (:run @state) "Run not ended yet")
        (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
-       (click-prompt state :runner "Done")
+       (click-prompt state :runner "Allow the run to end")
        (is (not (:run @state)) "Run ended yet")
        (is (no-prompt? state :runner) "Prevent prompt gone")
        ;; run into border control, have its subroutine ETR, do use lucky charm
@@ -3048,8 +3032,7 @@
        (card-subroutine state :corp (refresh bc) 1)
        (is (:run @state) "Run not ended yet")
        (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
-       (card-ability state :runner (get-hardware state 0) 0)
-       (click-prompt state :runner "Done")
+       (click-prompt state :runner "Lucky Charm")
        (is (= 1 (count (:rfg (get-runner)))) "Lucky Charm RFGed")
        (is (:run @state) "Run prevented from ending")
        (is (no-prompt? state :runner) "Prevent prompt gone")
@@ -3062,8 +3045,7 @@
        (is (= 1 (count (:discard (get-corp)))) "Border Control trashed")
        (is (:run @state) "Run not ended yet")
        (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
-       (card-ability state :runner (get-hardware state 0) 0)
-       (click-prompt state :runner "Done")
+       (click-prompt state :runner "Lucky Charm")
        (is (= 2 (count (:rfg (get-runner)))) "2nd Lucky Charm RFGed")
        (is (:run @state) "Run prevented from ending")
        ;; win batty psi game and fire ice wall sub
@@ -3078,8 +3060,7 @@
        (click-prompt state :corp "End the run")
        (is (:run @state) "Run not ended yet")
        (is (not (no-prompt? state :runner)) "Runner prompted to ETR")
-       (card-ability state :runner (get-hardware state 0) 0)
-       (click-prompt state :runner "Done")
+       (click-prompt state :runner "Lucky Charm")
        (is (:run @state) "Run prevented from ending"))))
 
 (deftest mache
@@ -4067,10 +4048,10 @@
       (take-credits state :runner)
       (gain-tags state :runner 1)
       (play-from-hand state :corp "Scorched Earth")
-      (card-ability state :runner plas 0)
-      (card-ability state :runner plas 0)
-      (card-ability state :runner plas 0)
-      (card-ability state :runner plas 0)
+      (click-prompt state :runner "Plascrete Carapace")
+      (click-prompt state :runner "Plascrete Carapace")
+      (click-prompt state :runner "Plascrete Carapace")
+      (click-prompt state :runner "Plascrete Carapace")
       (is (= 1 (count (:hand (get-runner)))) "All meat damage prevented")
       (is (empty? (get-hardware state)) "Plascrete depleted and trashed"))))
 
@@ -4423,58 +4404,51 @@
 (deftest ramujan-reliant-550-bmi
   ;; Prevent up to X net or brain damage.
   (do-game
-      (new-game {:corp {:deck ["Data Mine" "Snare!"]}
-                 :runner {:deck [(qty "Sure Gamble" 5)]
-                          :hand [(qty "Ramujan-reliant 550 BMI" 4) "Sure Gamble"]}})
-      (play-from-hand state :corp "Data Mine" "New remote")
-      (play-from-hand state :corp "Snare!" "Server 1")
-      (let [dm (get-ice state :remote1 0)]
-        (take-credits state :corp)
-        (play-from-hand state :runner "Ramujan-reliant 550 BMI")
-        (play-from-hand state :runner "Ramujan-reliant 550 BMI")
-        (play-from-hand state :runner "Ramujan-reliant 550 BMI")
-        (let [rr1 (get-hardware state 0)
-              rr2 (get-hardware state 1)]
-          (run-on state "Server 1")
-          (rez state :corp dm)
-          (run-continue state)
-          (card-subroutine state :corp dm 0)
-          (card-ability state :runner rr1 0)
-          (click-prompt state :runner "1")
-          (is (last-n-log-contains? state 1 "Sure Gamble")
-              "Ramujan did log trashed card names")
-          (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented")
-          (run-continue state)
-          (click-prompt state :corp "No")
-          (click-prompt state :runner "No action")
-          (take-credits state :runner)
-          (take-credits state :corp)
-          (play-from-hand state :runner "Ramujan-reliant 550 BMI")
-          (run-empty-server state "Server 1")
-          (click-prompt state :corp "Yes")
-          (card-ability state :runner rr2 0)
-          (click-prompt state :runner "3")
-          (is (second-last-log-contains? state "Sure Gamble, Sure Gamble, and Sure Gamble")
-              "Ramujan did log trashed card names")
-          (is (= 1 (count (:hand (get-runner)))) "3 net damage prevented")))))
+    (new-game {:corp {:deck ["Data Mine" "Snare!"]}
+               :runner {:deck [(qty "Sure Gamble" 5)]
+                        :hand [(qty "Ramujan-reliant 550 BMI" 4) "Sure Gamble"]}})
+    (play-from-hand state :corp "Data Mine" "New remote")
+    (play-from-hand state :corp "Snare!" "Server 1")
+    (let [dm (get-ice state :remote1 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (run-on state "Server 1")
+      (rez state :corp dm)
+      (run-continue state)
+      (card-subroutine state :corp dm 0)
+      (click-prompt state :runner "Ramujan-reliant 550 BMI")
+      (click-prompt state :runner "1")
+      (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented")
+      (run-continue state)
+      (click-prompt state :corp "No")
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (run-empty-server state "Server 1")
+      (click-prompt state :corp "Yes")
+      (click-prompt state :runner "Ramujan-reliant 550 BMI")
+      (click-prompt state :runner "3")
+      (is (= 1 (count (:hand (get-runner)))) "3 net damage prevented"))))
 
 (deftest ramujan-reliant-550-bmi-prevent-up-to-x-net-or-brain-damage-empty-stack
-    ;; Prevent up to X net or brain damage. Empty stack
-    (do-game
-      (new-game {:corp {:deck ["Data Mine"]}
-                 :runner {:deck ["Ramujan-reliant 550 BMI" "Sure Gamble"]}})
-      (play-from-hand state :corp "Data Mine" "New remote")
-      (let [dm (get-ice state :remote1 0)]
-        (take-credits state :corp)
-        (play-from-hand state :runner "Ramujan-reliant 550 BMI")
-        (let [rr1 (get-hardware state 0)]
-          (run-on state "Server 1")
-          (rez state :corp dm)
-          (run-continue state)
-          (card-subroutine state :corp dm 0)
-          (card-ability state :runner rr1 0)
-          (click-prompt state :runner "Done")
-          (is (zero? (count (:hand (get-runner)))) "Not enough cards in Stack for Ramujan to work")))))
+  ;; Prevent up to X net or brain damage. Empty stack
+  (do-game
+    (new-game {:corp {:deck ["Data Mine"]}
+               :runner {:deck ["Ramujan-reliant 550 BMI" "Sure Gamble"]}})
+    (play-from-hand state :corp "Data Mine" "New remote")
+    (let [dm (get-ice state :remote1 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Ramujan-reliant 550 BMI")
+      (run-on state "Server 1")
+      (rez state :corp dm)
+      (run-continue state)
+      (card-subroutine state :corp dm 0)
+      (click-prompt state :runner "Ramujan-reliant 550 BMI")
+      (click-prompt state :runner "1")
+      (is (= 1 (count (:hand (get-runner)))) "Cards in stack don't actually matter"))))
 
 (deftest recon-drone
   ;; trash and pay X to prevent that much damage from a card you are accessing
@@ -4501,18 +4475,14 @@
     (play-from-hand state :runner "Recon Drone")
     (play-from-hand state :runner "Recon Drone")
     (play-from-hand state :runner "Recon Drone")
-    (let [rd1 (get-hardware state 0)
-          rd2 (get-hardware state 1)
-          rd3 (get-hardware state 2)
-          rd4 (get-hardware state 3)
-          hok (get-scored state :corp 0)]
+    (let [hok (get-scored state :corp 0)]
       (run-empty-server state "Server 2")
       (is (waiting? state :runner) "Runner has prompt to wait for Snare!")
       (click-prompt state :corp "Yes")
-      (card-ability state :runner rd1 0)
+      (click-prompt state :runner "Recon Drone")
       (click-prompt state :runner "3")
-      (click-prompt state :runner "No action")
       (is (= 5 (count (:hand (get-runner)))) "Runner took no net damage")
+      (click-prompt state :runner "No action")
       (run-empty-server state "Server 2")
       (is (waiting? state :runner) "Runner has prompt to wait for Snare!")
       (click-prompt state :corp "No")
@@ -4523,27 +4493,26 @@
       (run-empty-server state "Server 2")
       (is (waiting? state :runner) "Runner has prompt to wait for Snare!")
       (click-prompt state :corp "Yes")
-      (card-ability state :runner rd2 0)
+      (click-prompt state :runner "Recon Drone")
       (is (= 1 (:credit (get-runner))) "Runner has 1 credit")
       (is (= 1 (:number (:choices (prompt-map :runner)))) "Recon Drone choice limited to runner credits")
       (click-prompt state :runner "1")
-      (click-prompt state :runner "Done")
+      (click-prompt state :runner "Pass priority")
       (click-prompt state :runner "Pay 0 [Credits] to trash")
       (is (= 3 (count (:hand (get-runner)))) "Runner took 2 net damage from Snare!")
       (core/gain state :runner :credit 100)
       (run-empty-server state "Server 3")
       (is (waiting? state :runner) "Runner has prompt to wait for Prisec")
       (click-prompt state :corp "Yes")
-      (card-ability state :runner rd3 0)
+      (click-prompt state :runner "Recon Drone")
       (is (= 100 (:credit (get-runner))) "Runner has 100 credits")
-      (is (= 100 (:number (:choices (prompt-map :runner)))) "Recon Drone choice is not limited to 1 meat")
       (click-prompt state :runner "1")
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (= 3 (count (:hand (get-runner)))) "Runner took no meat damage")
       (run-empty-server state "Server 4")
       (is (waiting? state :runner) "Runner has prompt to wait for Cerebral Overwriter")
       (click-prompt state :corp "Yes")
-      (card-ability state :runner rd4 0)
+      (click-prompt state :runner "Recon Drone")
       (click-prompt state :runner "1")
       (is (= 3 (count (:hand (get-runner)))) "Runner took no core damage"))))
 
@@ -5754,6 +5723,8 @@
     (play-from-hand state :corp "Ice Wall" "Archives")
     (take-credits state :corp)
     (play-from-hand state :runner "Zamba")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-prompt state :runner "Always")
     (is (= 6 (core/available-mu state)) "Gain 2 memory")
     (is (= 1 (:credit (get-runner))) "At 1 credit")
     (play-from-hand state :runner "Infiltration")

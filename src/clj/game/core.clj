@@ -145,7 +145,6 @@
 
 (expose-vars
   [game.core.bad-publicity
-   bad-publicity-prevent
    gain-bad-publicity
    lose-bad-publicity])
 
@@ -281,9 +280,6 @@
    chosen-damage
    corp-can-choose-damage?
    damage
-   damage-bonus
-   damage-count
-   damage-prevent
    enable-corp-damage-choice
    enable-runner-damage-choice
    runner-can-choose-damage?])
@@ -388,8 +384,7 @@
 
 (expose-vars
   [game.core.expose
-   expose
-   expose-prevent])
+   expose])
 
 (expose-vars
   [game.core.finding
@@ -400,7 +395,6 @@
 
 (expose-vars
   [game.core.flags
-   ab-can-prevent?
    any-flag-fn?
    can-access-loud
    can-access?
@@ -411,10 +405,8 @@
    can-score?
    can-steal?
    can-trash?
-   card-can-prevent?
    card-flag-fn?
    card-flag?
-   cards-can-prevent?
    check-flag-types?
    clear-all-flags-for-card!
    clear-persistent-flag!
@@ -422,9 +414,6 @@
    clear-run-register!
    clear-turn-flag!
    clear-turn-register!
-   get-card-prevention
-   get-prevent-list
-   get-preventing-cards
    has-flag?
    in-corp-scored?
    in-runner-scored?
@@ -433,7 +422,6 @@
    persistent-flag?
    prevent-current
    prevent-draw
-   prevent-jack-out
    register-persistent-flag!
    register-run-flag!
    register-turn-flag!
@@ -594,7 +582,6 @@
    swap-installed
    trash
    trash-cards
-   trash-prevent
    uninstall])
 
 (expose-vars
@@ -707,7 +694,6 @@
    continue
    encounter-ends
    end-run
-   end-run-prevent
    force-ice-encounter
    gain-next-run-credits
    gain-run-credits
@@ -715,7 +701,6 @@
    get-runnable-zones
    handle-end-run
    jack-out
-   jack-out-prevent
    make-run
    pass-ice
    prevent-access
@@ -803,8 +788,7 @@
 (expose-vars
   [game.core.tags
    gain-tags
-   lose-tags
-   tag-prevent])
+   lose-tags])
 
 (expose-vars
   [game.core.threat

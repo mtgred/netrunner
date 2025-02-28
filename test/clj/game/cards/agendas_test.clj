@@ -2070,40 +2070,30 @@
 (deftest labyrinthine-servers
   ;; Labyrinthine Servers
   (do-game
-    (new-game {:corp {:deck [(qty "Labyrinthine Servers" 2)]}})
-    (play-and-score state "Labyrinthine Servers")
+    (new-game {:corp {:deck [(qty "Labyrinthine Servers" 1)]}})
     (play-and-score state "Labyrinthine Servers")
     (take-credits state :corp)
-    (let [ls1 (get-scored state :corp 0)
-          ls2 (get-scored state :corp 1)]
+    (let [ls1 (get-scored state :corp 0)]
       (is (= 2 (get-counters (refresh ls1) :power)))
-      (is (= 2 (get-counters (refresh ls2) :power)))
       (testing "Don't use token"
         (run-on state "HQ")
         (run-jack-out state)
         (is (:run @state) "Jack out prevent prompt")
-        (click-prompt state :corp "Done")
+        (click-prompt state :corp "Allow the Runner to jack out")
         (is (not (:run @state)) "Corp does not prevent the jack out, run ends"))
       (testing "Use token"
         (run-on state "HQ")
         (run-jack-out state)
-        (card-ability state :corp ls1 0)
-        (card-ability state :corp ls2 0)
-        (card-ability state :corp ls1 0)
-        (click-prompt state :corp "Done")
+        (click-prompt state :corp "Labyrinthine Servers")
         (is (:run @state) "Jack out prevented, run is still ongoing")
-        (is (get-in @state [:run :cannot-jack-out]) "Cannot jack out flag is in effect")
         (run-continue state)
         (is (not (:run @state))))
-      (testing "one Labyrinthine is empty but the other still has one token, ensure prompt still occurs"
-        (is (zero? (get-counters (refresh ls1) :power)))
-        (is (= 1 (get-counters (refresh ls2) :power)))
+      (testing "one counter left"
+        (is (= 1 (get-counters (refresh ls1) :power)))
         (run-on state "HQ")
         (run-jack-out state)
         (is (:run @state))
-        (card-ability state :corp ls2 0)
-        (click-prompt state :corp "Done")
-        (is (get-in @state [:run :cannot-jack-out]))
+        (click-prompt state :corp "Labyrinthine Servers")
         (run-continue state)
         (is (not (:run @state))))
       (testing "No more tokens"
@@ -3582,6 +3572,23 @@
     (click-card state :corp "Obokata Protocol")
     (is (= 5 (:agenda-point (get-corp))) "3+1+1 agenda points from obo + regen + regen")))
 
+(deftest regenesis-vs-marilyn-campaign-trash-replacement
+  ;; Regenesis - if no cards have been added to discard, reveal a face-down agenda
+  ;; and add it to score area
+  (do-game
+    (new-game {:corp {:deck ["Regenesis" "Marilyn Campaign"]
+                      :discard ["Obokata Protocol"]}})
+    (play-from-hand state :corp "Marilyn Campaign" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (dotimes [_ 4]
+      (take-credits state :corp)
+      (take-credits state :runner))
+    ;; marilyn should pop now
+    (click-prompt state :corp "Shuffle Marilyn Campaign into R&D")
+    (play-and-score state "Regenesis")
+    (click-card state :corp "Obokata Protocol")
+    (is (= 4 (:agenda-point (get-corp))) "3+1 agenda points from obo + regen")))
+
 (deftest regenesis-not-affected-by-subliminal-messaging
   ;; Regenesis - Leaving Subliminal Messaging in Archives doesn't interfere
   (do-game
@@ -4035,13 +4042,14 @@
       (rez state :corp viktor)
       (run-continue state)
       (card-subroutine state :corp viktor 0)
-      (click-prompt state :runner "Done")  ;; Don't prevent the brain damage
+      (click-prompt state :runner "Pass priority")  ;; Don't prevent the brain damage
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 1 (:brain-damage (get-runner))))
-      (click-prompt state :runner "Done")  ;; So we take the net, but don't prevent it either
+      (click-prompt state :runner "Pass priority")  ;; So we take the net, but don't prevent it either
       (is (= 2 (count (:discard (get-runner)))))
       (card-subroutine state :corp viktor 0)
-      (card-ability state :runner ff 1)  ;; Prevent the brain damage this time
+      (click-prompt state :runner "Feedback Filter (Core)")
+      (click-prompt state :runner "1") ;; Prevent the brain damage this time
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
 

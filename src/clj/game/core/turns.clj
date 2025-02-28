@@ -4,9 +4,9 @@
     [game.core.board :refer [all-active all-active-installed all-installed all-installed-and-scored]]
     [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
     [game.core.drawing :refer [draw]]
-    [game.core.effects :refer [unregister-lingering-effects any-effects]]
+    [game.core.effects :refer [unregister-lingering-effects update-lingering-effect-durations any-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [trigger-event trigger-event-simult unregister-floating-events]]
+    [game.core.engine :refer [trigger-event trigger-event-simult unregister-floating-events update-floating-event-durations]]
     [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
     [game.core.gaining :refer [gain lose]]
     [game.core.hand-size :refer [hand-size]]
@@ -41,6 +41,11 @@
              (unregister-floating-events state side :start-of-turn)
              (unregister-lingering-effects state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
              (unregister-floating-events state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
+             (if (= side :corp)
+               (do (update-lingering-effect-durations state side :until-next-corp-turn-begins :until-corp-turn-begins)
+                   (update-floating-event-durations state side :until-next-corp-turn-begins :until-corp-turn-begins))
+               (do (update-lingering-effect-durations state side :until-next-runner-turn-begins :until-runner-turn-begins)
+                   (update-floating-event-durations state side :until-next-runner-turn-begins :until-runner-turn-begins)))
              (if (= side :corp)
                (do (system-msg state side "makes [their] mandatory start of turn draw")
                    (wait-for (draw state side 1 nil)
@@ -147,6 +152,11 @@
                (unregister-floating-events state side :end-of-next-run)
                (unregister-lingering-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
                (unregister-floating-events state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
+               (if (= side :corp)
+                 (do (update-lingering-effect-durations state side :until-next-corp-turn-ends :until-corp-turn-ends)
+                     (update-floating-event-durations state side :until-next-corp-turn-ends :until-corp-turn-ends))
+                 (do (update-lingering-effect-durations state side :until-next-runner-turn-ends :until-runner-turn-ends)
+                   (update-floating-event-durations state side :until-next-runner-turn-ends :until-runner-turn-ends)))
                (clean-set-aside! state side)
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended

@@ -2874,7 +2874,8 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 5 [Credits] to trash")
       (let [dx (get-program state 0)]
-        (card-ability state :runner dx 1)
+        (click-prompt state :runner "Deus X")
+        (click-prompt state :runner "1")
         (is (= 2 (count (:hand (get-runner)))) "Deus X prevented one Hostile net damage"))))
 
 (deftest deus-x-vs-multiple-sources-of-net-damage
@@ -2889,7 +2890,8 @@
       (play-from-hand state :runner "Deus X")
       (run-empty-server state "Server 1")
       (let [dx (get-program state 0)]
-        (card-ability state :runner dx 1)
+        (click-prompt state :runner "Deus X")
+        (click-prompt state :runner "2")
         (click-prompt state :runner "Pay to steal")
         (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
         (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
@@ -4780,7 +4782,7 @@
         (run-continue-until state :approach-ice)
         (rez state :corp (get-ice state :rd 0))
         (run-continue state)
-        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Hunting Grounds")
         (card-ability state :runner inv 1)
         (card-ability state :runner inv 1)
         (card-ability state :runner inv 0)
@@ -6017,6 +6019,7 @@
         (is (= 1 (get-strength (refresh nanotk))) "Default strength")
         (run-on state "HQ")
         (rez state :corp susanoo)
+        (rez state :corp (get-ice state :archives 0))
         (run-continue state)
         (is (= 3 (get-strength (refresh nanotk))) "2 ice on HQ")
         (card-subroutine state :corp (refresh susanoo) 0)
@@ -7200,11 +7203,11 @@
       (play-from-hand state :runner "Fall Guy")
       (is (zero? (count (:hand (get-runner)))) "No cards in hand")
       ; No draw from Fall Guy trash as Reaver already fired this turn
-      (card-ability state :runner (get-resource state 0) 1)
+      (card-ability state :runner (get-resource state 0) 0)
       (is (zero? (count (:hand (get-runner)))) "No cards in hand")
       (take-credits state :runner)
       ; Draw from Fall Guy trash on corp turn
-      (card-ability state :runner (get-resource state 0) 1)
+      (card-ability state :runner (get-resource state 0) 0)
       (is (= 1 (count (:hand (get-runner)))) "One card in hand")))
 
 (deftest reaver-not-triggering-on-non-installed-cards

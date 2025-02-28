@@ -49,8 +49,8 @@
       :effect (req (doseq [c targets]
                      (move state side c :deck))
                    (shuffle! state side :deck))
-      :cancel-effect (req 
-                      (system-msg state side (str " uses " (:title card) " to shuffle R&D")) 
+      :cancel-effect (req
+                      (system-msg state side (str " uses " (:title card) " to shuffle R&D"))
                       (shuffle! state side :deck)
                       (effect-completed state side eid))}
      card nil)))

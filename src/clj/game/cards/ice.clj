@@ -19,14 +19,14 @@
                                   do-brain-damage do-net-damage offer-jack-out
                                   reorder-choice get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw draw-up-to]]
-   [game.core.effects :refer [get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-static-abilities update-disabled-cards]]
+   [game.core.effects :refer [any-effects get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-effect-by-uuid unregister-static-abilities update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.engine :refer [gather-events pay register-default-events register-events
                              resolve-ability trigger-event trigger-event-simult unregister-events
                              ]]
    [game.core.events :refer [first-event? run-events]]
    [game.core.finding :refer [find-cid]]
-   [game.core.flags :refer [can-rez? card-flag? prevent-draw prevent-jack-out
+   [game.core.flags :refer [can-rez? card-flag? prevent-draw
                             register-run-flag! register-turn-flag! run-flag? zone-locked?]]
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [hand-size]]
@@ -125,8 +125,7 @@
 ;;; Checks if the runner has active events that would force them to avoid/prevent a tag
 (defn forced-to-avoid-tags?
   [state side]
-  (let [cards (map :card (gather-events state side :pre-tag nil))]
-    (pos? (count (filter #(card-flag? % :forced-to-avoid-tag true) cards)))))
+  (any-effects state side :forced-to-avoid-tag))
 
 ;;; Break abilities on ice should only occur when encountering that ice
 (defn currently-encountering-card
@@ -1857,7 +1856,7 @@
                               (decapitalize target)))
                   :player :runner
                   :prompt "Choose one"
-                  :choices (req [(when-not (forced-to-avoid-tags? state side)
+                  :choices (req [(when-not (forced-to-avoid-tags? state :runner)
                                    "Take 1 tag")
                                  "End the run"])
                   :waiting-prompt true
@@ -2367,22 +2366,17 @@
                                     :value true})))}]))}
     {:msg "prevent the Runner from jacking out until after the next piece of ice"
      :effect
-     (req (prevent-jack-out state side)
-          (register-events
-           state side card
-           [{:event :encounter-ice
-             :duration :end-of-run
-             :unregister-once-resolved true
-             :effect
-             (req (let [encountered-ice (:ice context)]
-                    (register-events
-                     state side card
-                     [{:event :end-of-encounter
-                       :duration :end-of-encounter
-                       :unregister-once-resolved true
-                       :msg (msg "can jack out again after encountering " (:title encountered-ice))
-                       :effect (req (swap! state update :run dissoc :cannot-jack-out))
-                       :req (req (same-card? encountered-ice (:ice context)))}])))}]))}]})
+     (req (let [lingering (register-lingering-effect
+                            state side card
+                            {:type :cannot-jack-out
+                             :value true
+                             :duration :end-of-run})]
+            (register-events
+              state side card
+              [{:event :encounter-ice
+                :duration :end-of-run
+                :unregister-once-resolved true
+                :effect (req (unregister-effect-by-uuid state side lingering))}])))}]})
 
 (defcard "Information Overload"
   {:on-encounter (tag-trace 1)
@@ -2566,23 +2560,7 @@
                                            (encounter-ends state side eid)))}}}]})
 
 (defcard "Klevetnik"
-  ;; TODO - make this use a floating effect to disable cards
-  (let [re-enable-target
-        (fn [t] {:event :corp-turn-ends
-                 :unregister-once-resolved true
-                 :msg (msg "unblank " (:title t))
-                 :async true
-                 :effect (req (if (:disabled (get-card state t))
-                                (do (enable-card state :runner (get-card state t))
-                                    (if-let [reactivate-effect (:reactivate (card-def t))]
-                                      (resolve-ability state :runner eid reactivate-effect (get-card state t) nil)
-                                      (effect-completed state side eid)))
-                                (effect-completed state side eid)))})
-        register-corp-next-turn-end
-        (fn [t] {:event :corp-turn-ends ;; delayed registration to make it wait the Corp next turn end
-                 :unregister-once-resolved true
-                 :effect (effect (register-events card [(re-enable-target t)]))})
-        on-rez-ability {:prompt "Choose an installed resource"
+  (let [on-rez-ability {:prompt "Choose an installed resource"
                         :waiting-prompt true
                         :choices {:card #(and (installed? %)
                                               (resource? %))}
@@ -2590,16 +2568,18 @@
                         :msg (msg "let the Runner gain 2 [Credits] to"
                                   " blank the text box of " (:title target)
                                   " until the Corp next turn ends")
-                        :effect
-                        (req (let [t target]
-                               (wait-for (gain-credits state :runner 2)
-                                         (disable-card state :runner t)
-                                         (register-events
-                                           state side card
-                                           [(if (= (:active-player @state) :runner)
-                                              (re-enable-target t)
-                                              (register-corp-next-turn-end t))])
-                                         (effect-completed state side eid))))}]
+                        :effect (req (let [t target
+                                           duration (if (= :corp (:active-player @state))
+                                                      :until-next-corp-turn-ends
+                                                      :until-corp-turn-ends)]
+                                       (wait-for (gain-credits state :runner 2)
+                                                 (register-lingering-effect
+                                                   state side card
+                                                   {:type :disable-card
+                                                    :req (req (same-card? t target))
+                                                    :duration duration
+                                                    :value true})
+                                                 (effect-completed state side eid))))}]
     {:subroutines [end-the-run]
      :on-rez {:optional
               {:prompt "Let the Runner gain 2 [Credits]?"
@@ -3948,22 +3928,25 @@
 
 (defcard "Susanoo-no-Mikoto"
   {:subroutines [{:async true
-                  :req (req (not= (:server run) [:discard]))
                   :msg "make the Runner continue the run on Archives"
-                  :effect (req (if run
-                                 (do (prevent-jack-out state side)
-                                     (register-events
-                                      state side card
-                                      [{:event :encounter-ice
-                                        :duration :end-of-run
-                                        :unregister-once-resolved true
-                                        :effect (req (swap! state update :run dissoc :cannot-jack-out))}])
-                                     (if (and (= 1 (count (:encounters @state)))
-                                              (not= :success (:phase run)))
-                                       (do (redirect-run state side "Archives" :approach-ice)
-                                           (encounter-ends state side eid))
-                                       (effect-completed state side eid)))
-                                 (effect-completed state side eid)))}]})
+                  :change-in-game-state (req (and run
+                                                  (not= (:server run) [:discard])))
+                  :effect (req (let [lingering (register-lingering-effect
+                                                 state side card
+                                                 {:type :cannot-jack-out
+                                                  :value true
+                                                  :duration :end-of-run})]
+                                 (register-events
+                                   state side card
+                                   [{:event :encounter-ice
+                                     :duration :end-of-run
+                                     :unregister-once-resolved true
+                                     :effect (req (unregister-effect-by-uuid state side lingering))}])
+                                 (if (and (= 1 (count (:encounters @state)))
+                                          (not= :success (:phase run)))
+                                   (do (redirect-run state side "Archives" :approach-ice)
+                                       (encounter-ends state side eid))
+                                   (effect-completed state side eid))))}]})
 
 (defcard "Swarm"
   (let [sub {:player :runner
@@ -4509,7 +4492,11 @@
   {:subroutines [{:label "The Runner cannot jack out for the remainder of this run"
                   :msg "prevent the Runner from jacking out and trash itself"
                   :async true
-                  :effect (req (prevent-jack-out state side)
+                  :effect (req (register-lingering-effect
+                                 state side card
+                                 {:type :cannot-jack-out
+                                  :value true
+                                  :duration :end-of-run})
                                (wait-for (trash state :corp (make-eid state eid) card {:cause :subroutine})
                                          (encounter-ends state side eid)))}]})
 
