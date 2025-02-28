@@ -64,6 +64,7 @@
   ([ev] (mobile-sysop-event ev nil))
   ([ev callback]
    {:event ev
+    :skippable true
     :optional
     {:prompt (msg "Move " (:title card) " to another server?")
      :waiting-prompt true
@@ -486,6 +487,7 @@
                        :req (req (= (:server (second targets)) (unknown->kw (get-zone card))))
                        :value (req (repeat (get-counters card :power) [(->c :credit 1) (->c :click 1)]))}]
    :events [{:event :corp-turn-begins
+             :automatic :last ;; for warm reception shenanigans
              :req (req (pos? (get-counters card :power)))
              :msg "remove all hosted power counters"
              :async true
@@ -688,6 +690,7 @@
     {:derezzed-events [(assoc corp-rez-toast :event :runner-turn-ends)]
      :events [(assoc maybe-gain-counter :event :corp-turn-begins)
               {:event :successful-run
+               :automatic true
                :req (req (pos? (get-counters card :power)))
                :msg "remove 1 power counter from itself"
                :async true
@@ -706,6 +709,7 @@
                                  (get-in corp (get-zone card))))
                  :msg "gain 1 [Credits]"
                  :once :per-turn
+                 :automatic :gain-credits
                  :label "Gain 1 [Credits] (start of turn)"
                  :async true
                  :effect (effect (gain-credits eid 1))}]
@@ -876,6 +880,7 @@
 
 (defcard "Hokusai Grid"
   {:events [{:event :successful-run
+             :automatic :corp-damage
              :req (req this-server)
              :msg "do 1 net damage"
              :async true
@@ -1290,6 +1295,7 @@
                                                            :duration :end-of-run)]))})
         boost-access-by-3 {:req (req (= target (second (get-zone card))))
                            :msg "force the Runner to access 3 additional cards"
+                           :automatic true
                            :effect (req (let [bonus-server (-> card :zone second)]
 
                                           (access-bonus state :runner bonus-server 3)
@@ -1370,6 +1376,7 @@
 (defcard "Nihongai Grid"
   {:events [{:event :successful-run
              :interactive (req true)
+             :skippable true
              :optional
              {:req (req (and this-server
                              (or (< (total-available-credits state :runner eid card) 6)
@@ -1418,6 +1425,7 @@
                        :req (req (rezzed? card))
                        :value (req (second (get-zone card)))}]
    :events [{:event :successful-run
+             :automatic true
              :req (req (= :hq (target-server context)))
              :async true
              :msg "trash itself"
@@ -1538,6 +1546,7 @@
                        :req (req (= (:server (second targets)) (unknown->kw (get-zone card))))
                        :value (req (repeat (get-counters card :power) [(->c :credit 2)]))}]
    :events [{:event :successful-run
+             :automatic true
              :req (req (and (pos? (get-counters card :power))
                             (is-central? (:server context))))
              :msg "remove 1 hosted power counter"

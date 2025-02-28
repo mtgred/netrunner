@@ -700,7 +700,7 @@
     (click-prompt state :runner "No action")
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Apocalypse")
-    (is (= #{"Hostile Infrastructure" "Marilyn Campaign" "Calvin B4L3Y"}
+    (is (= #{"Done" "Hostile Infrastructure" "Marilyn Campaign" "Calvin B4L3Y"}
            (into #{} (prompt-titles :corp)))
         "Corp has the simultaneous prompt")
     (click-prompt state :corp "Marilyn Campaign")

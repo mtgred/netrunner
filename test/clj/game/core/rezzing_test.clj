@@ -37,7 +37,7 @@
         "Corp pays 1 credit to rez AAL")
     (is (waiting? state :runner))
     (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
-    (is (= ["Advanced Assembly Lines" "Surat City Grid"] (sort (prompt-titles :corp))))
+    (is (= ["Advanced Assembly Lines" "Done" "Surat City Grid"] (sort (prompt-titles :corp))))
     (is (changed? [(:credit (get-corp)) 3]
           (click-prompt state :corp "Advanced Assembly Lines"))
         "Corp gains 3 from choosing AAL first")

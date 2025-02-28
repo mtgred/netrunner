@@ -925,7 +925,7 @@
       (play-from-hand state :runner "Film Critic")
       (is (= 1 (count (:discard (get-runner)))) "By Any Means has been played")
       (run-empty-server state "HQ")
-      (is (= #{"Film Critic" "By Any Means"}
+      (is (= #{"Film Critic" "By Any Means" "Done"}
              (into #{} (prompt-titles :runner)))
           "A choice of which to trigger first")
       (click-prompt state :runner "Film Critic")
@@ -937,7 +937,7 @@
       (core/move state :runner (find-card "By Any Means" (:discard (get-runner))) :hand)
       (play-from-hand state :runner "By Any Means")
       (run-empty-server state "HQ")
-      (is (= #{"Film Critic" "By Any Means"}
+      (is (= #{"Film Critic" "By Any Means" "Done"}
              (into #{} (prompt-titles :runner)))
           "A choice of which to trigger first")
       (click-prompt state :runner "By Any Means")
@@ -5132,7 +5132,7 @@
      (trash-from-hand state :runner "Out of the Ashes")
      (take-credits state :runner)
      (take-credits state :corp)
-     (is (= `("Rezeki" "Data Folding" "Out of the Ashes") (prompt-titles :runner)) "Out of the Ashes reduced to a single choice")
+     (is (= `("Rezeki" "Data Folding" "Out of the Ashes" "Done") (prompt-titles :runner)) "Out of the Ashes reduced to a single choice")
      (click-prompt state :runner "Rezeki")
      (click-prompt state :runner "Out of the Ashes")
      (click-prompt state :runner "Yes")

@@ -252,7 +252,8 @@
       (is (changed? [(get-counters (get-content state :remote1 0) :power) -1]
             (run-empty-server state :remote2)
             (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
-            (is (= ["Embolus" "Giordano Memorial Field"] (map :title (prompt-buttons :corp))))
+            (is (= #{"Done" "Embolus" "Giordano Memorial Field"}
+                   (into #{} (prompt-titles :corp))))
             (click-prompt state :corp "Giordano Memorial Field")
             (click-prompt state :runner "End the run"))
           "Embolus loses a power counter even tho GMF is resolved first and ends the run")))

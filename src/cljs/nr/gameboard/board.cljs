@@ -170,10 +170,26 @@
         (:poison card)
         (:highlight-in-discard card))))
 
+(defn- prompt-button-from-card?
+  [clicked-card {:keys [card msg prompt-type choices] :as prompt-state}]
+  ;; HERE
+  (when-not (or (some #{:counter :card-title :number} choices)
+                (= choices "credit")
+                (= prompt-type "trace"))
+    (some (fn [{:keys [_ uuid value]}]
+            ;; (js/console.log (str "Value:" value))
+            ;; (js/console.log (str "Card:" clicked-card))
+            (when (= (:cid value) (:cid clicked-card)) uuid))
+          choices)))
+
 (defn handle-card-click [{:keys [type zone] :as card} shift-key-held]
   (let [side (:side @game-state)]
     (when (not-spectator?)
       (cond
+        ;; A prompt is open, and that card is among the prompt buttons
+        (prompt-button-from-card? card (get-in @game-state [side :prompt-state]))
+        (send-command "choice" {:choice {:uuid (prompt-button-from-card? card (get-in @game-state [side :prompt-state]))}})
+
         ;; Selecting card
         (= (get-in @game-state [side :prompt-state :prompt-type]) "select")
         (send-command "select" {:card (card-for-click card) :shift-key-held shift-key-held})
@@ -1764,6 +1780,7 @@
        :else
        (doall (for [{:keys [idx uuid value]} choices
                     :when (not= value "Hide")]
+                ;; HERE
                 [:button {:key idx
                           :on-click #(do (send-command "choice" {:choice {:uuid uuid}})
                                          (card-highlight-mouse-out % value button-channel))
