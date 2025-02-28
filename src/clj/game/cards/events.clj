@@ -2393,7 +2393,7 @@
                               {:type :prevention
                                :duration :until-runner-turn-begins
                                :req (req (= :runner side))
-                               :value {:prevents :pre-damage
+                               :value {:prevents :damage
                                        :type :floating
                                        :max-uses 1
                                        :card card
@@ -2404,8 +2404,8 @@
                                                  :req (req
                                                         (and (pos? (:remaining context))
                                                              (not (:unpreventable context))))
-                                                 :msg (msg "prevent " (:remaining context) " " (damage-name state :pre-damage) " damage")
-                                                 :effect (req (prevent-damage state side eid :pre-damage :all))}}}))}}}})
+                                                 :msg (msg "prevent " (:remaining context) " " (damage-name state :damage) " damage")
+                                                 :effect (req (prevent-damage state side eid :damage :all))}}}))}}}})
 
 (defcard "Levy AR Lab Access"
   {:on-play
@@ -3929,7 +3929,7 @@
                       {:type :cannot-pay-meat
                        :req (req run)
                        :value true}]
-   :prevention [{:prevents :pre-damage
+   :prevention [{:prevents :damage
                  :type :event
                  :max-uses 1
                  :mandatory true
@@ -3941,8 +3941,8 @@
                                     (pos? (:remaining context))
                                     (not (:unpreventable context))))
                            :condition :active
-                           :msg (msg "prevent " (:remaining context) " " (damage-name state :pre-damage) " damage")
-                           :effect (req (prevent-damage state side eid :pre-damage :all))}}]
+                           :msg (msg "prevent " (:remaining context) " " (damage-name state :damage) " damage")
+                           :effect (req (prevent-damage state side eid :damage :all))}}]
    :on-play {:async true
              :change-in-game-state (req (or (seq (:hand runner))
                                             (seq runnable-servers)))

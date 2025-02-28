@@ -448,7 +448,9 @@
                  :type :event
                  :max-uses 1
                  :mandatory true
-                 :ability {:trace {:base 3
+                 :ability {:req (req (and (pos? (:remaining context))
+                                          (not (:unpreventable context))))
+                           :trace {:base 3
                                    :successful {:msg "prevent all bad publicity"
                                                 :async true
                                                 :effect (req (prevent-bad-publicity state side eid :all))}}}}]})
@@ -3288,6 +3290,8 @@
                  :type :ability
                  :label "1 [Credit]: Zaibatsu Loyalty"
                  :ability {:cost [(->c :credit 1)]
+                           :req (req (and (seq (:remaining context))
+                                          (not (:unpreventable context))))
                            :msg "prevent a card from being exposed"
                            :async true
                            :effect (req (prevent-expose state side eid card))}}
@@ -3295,6 +3299,8 @@
                  :type :ability
                  :label "[trash]: Zaibatsu Loyalty"
                  :ability {:cost [(->c :trash-can)]
+                           :req (req (and (seq (:remaining context))
+                                          (not (:unpreventable context))))
                            :msg "prevent a card from being exposed"
                            :async true
                            :effect (req (prevent-expose state side eid card))}}]

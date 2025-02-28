@@ -729,6 +729,7 @@
                                   (and (or (= :brain (:type context))
                                            (= :core (:type context)))
                                        (first-event? state side :pre-damage-flag #(= :brain (:type (first %))))
+                                       (not= :all (:prevented context))
                                        (pos? (:remaining context))
                                        (not (:unboostable context))))
                            :msg "increase the pending core damage by 1"

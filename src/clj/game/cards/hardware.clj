@@ -113,6 +113,7 @@
                  :type :ability
                  :ability {:async true
                            :cost [(->c :power 1)]
+                           :req (req (pos? (:remaining context)))
                            :msg (msg "prevent the encounter ability on " (:title current-ice))
                            :effect (req (prevent-encounter state side eid))}}]
    :events [(trash-on-empty :power)]})
@@ -1347,6 +1348,7 @@
   {:prevention [{:prevents :end-run
                  :type :ability
                  :ability {:req (req (and (some #{:hq} (:successful-run runner-reg))
+                                          (pos? (:remaining context))
                                           (= :corp (get-in @state [:prevent :end-run :source-player]))))
                            :cost [(->c :remove-from-game)]
                            :async true
@@ -1537,7 +1539,7 @@
                                 card [(breach-access-bonus :rd 1 {:duration :end-of-run})]))}}}]})
 
 (defcard "Muresh Bodysuit"
-  {:prevention [{:prevents :pre-damage
+  {:prevention [{:prevents :damage
                  :type :event
                  :max-uses 1
                  :mandatory true
@@ -1549,7 +1551,7 @@
                                        (pos? (:remaining context))
                                        (not (:unpreventable context))))
                            :msg "reduce the pending meat damage by 1"
-                           :effect (req (prevent-damage state side eid :pre-damage 1))}}]})
+                           :effect (req (prevent-damage state side eid :damage 1))}}]})
 
 (defcard "Net-Ready Eyes"
   {:on-install {:async true
@@ -1948,6 +1950,7 @@
                    :ability {:async true
                              :cost [(->c :trash-can)]
                              :msg (msg "prevent up to " (max-trash state) " damage")
+                             :req (:req (prevent-up-to-n-damage 1 :damage #{:net :core :brain}))
                              :effect (req (let [prevented (:prevented context)]
                                             (wait-for (resolve-ability
                                                         state side

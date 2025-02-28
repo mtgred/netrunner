@@ -131,7 +131,9 @@
         option  (if (string? option)  option  (option state remainder))]
     (if (or (if (= data-type :sequential)
               (not (seq remainder))
-              (not (pos? remainder)))
+              nil)
+            ;;(not (pos? remainder))) -> the CR says these numbers can go to (or below) 0 withoutout actually closing the interrupt,
+            ;;even though most abilities cannot interact with them
             (get-in @state [:prevent key :passed]))
       (do (swap! state dissoc-in [:prevent key :passed])
           (effect-completed state side eid))

@@ -1208,6 +1208,8 @@
                            :msg "prevent the runner from jacking out for the remainder of this run"
                            :condition :active
                            :async true
+                           :req (req (and (pos? (:remaining context))
+                                          (not (:unpreventable context))))
                            :effect (req (wait-for (prevent-jack-out state side)
                                                   (register-lingering-effect
                                                     state side card
@@ -2252,8 +2254,8 @@
                            :condition :active
                            :req (req
                                   (and (= :meat (:type context))
+                                       (not= :all (:prevented context))
                                        (= :corp (:source-player context))
-                                       (pos? (:remaining context))
                                        (not (:unboostable context))))
                            :msg "increase the pending meat damage by 1"
                            :effect (req (damage-boost state side eid :pre-damage 1))}}]})
