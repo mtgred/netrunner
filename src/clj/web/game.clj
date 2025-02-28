@@ -7,7 +7,7 @@
    [cond-plus.core :refer [cond+]]
    [game.core.commands :refer [parse-command]]
    [game.core.diffs :as diffs]
-   [game.core.say :refer [make-system-message]]
+   [game.core.say :refer [make-message make-system-message]]
    [game.core.set-up :refer [init-game]]
    [game.main :as main]
    [jinteki.preconstructed :as preconstructed]
@@ -55,6 +55,57 @@
       (swap! state update :history conj (:hist-diff diffs))
       (send-state-diffs lobby diffs))))
 
+(defn switch-side
+  "Returns a new player map with the player's :side set to a new side"
+  [player]
+  (if (= "Corp" (get-in player [:side]))
+    (assoc player :side "Runner")
+    (assoc player :side "Corp")))
+
+(defn handle-swap-sides-in-prog [lobbies gameid]
+  (if-let [lobby (get lobbies gameid)]
+    (-> lobby
+        (update :players #(mapv switch-side %))
+        (->> (assoc lobbies gameid)))
+    lobbies))
+
+;; TODO - 1) ensure two players are playing
+;;        2) force the frontend to reload the interface
+;;        3) ensure double consent happens
+;;        4) log everything
+;;        5) allow revoked consent
+;;        6) clean up all this mess lmao
+(defn swap-sides-in-progress-game
+  [{:keys [state gameid] :as lobby} side user message]
+  (let [lobby (app-state/get-lobby gameid)
+        uid (:username user)
+        old-corp-player (get-in @state [:corp :user])
+        old-runner-player (get-in @state [:runner :user])]
+    ;; ideally this would be atomic
+    (swap! state assoc-in [:runner :user] old-corp-player)
+    (swap! state assoc-in [:corp :user] old-runner-player)
+    (let [new-app-state (swap! app-state/app-state
+                               update :lobbies
+                               #(-> %
+                                    (handle-swap-sides-in-prog gameid)
+                                    (lobby/handle-set-last-update gameid uid)))
+          lobby? (get-in new-app-state [:lobbies gameid])]
+      (lobby/send-lobby-state lobby?)
+      (lobby/broadcast-lobby-list))))
+
+
+(defn- handle-special-commands
+  [{:keys [state gameid] :as lobby} side user message]
+  ;; some special commands may need to manipulate the lobby itself
+  (println message)
+  (cond
+    (= message "/swap-sides")
+    (swap-sides-in-progress-game lobby side user message)
+
+
+    )
+  nil)
+
 (defn handle-message-and-send-diffs!
   "If the given message is a command, passes through to `update-and-send-diffs!`.
   Otherwise, adds the message to the log and only diffs the `:log`."
@@ -62,7 +113,8 @@
   (when (and state @state)
     (let [message (if (= (str/trim message) "null") " null" message)]
       (if (and side user (parse-command state message))
-        (update-and-send-diffs! main/handle-say lobby side user message)
+        (when-not (handle-special-commands lobby side user message)
+          (update-and-send-diffs! main/handle-say lobby side user message))
         ;; if side is nil, then it's a notification
         (let [f (if (some? side) main/handle-say main/handle-notification)
               old-state @state
