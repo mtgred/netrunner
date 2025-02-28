@@ -907,7 +907,6 @@
 (defn- handler-skippable?
   "This handler is safe to completely skip (as if the player declined)"
   [handler]
-  ;;(println handler)
   (->> handler :handler :ability :skippable))
 
 (defn- handler-automatic?
@@ -949,9 +948,6 @@
                                                       (card-for-ability state (:handler %))
                                                       (:context %))))
                               non-silent)]
-      (println "Skippable: " skippable-ct)
-      (println "Automatic: " automatic-ct)
-      (println "Handlers:  " (count handlers))
       (if (or (= 1 (count handlers))
               (empty? interactive)
               (<= (count non-silent) 1))
