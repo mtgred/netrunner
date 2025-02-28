@@ -626,7 +626,7 @@
   [state _ {:keys [card]}]
   (if-let [card (get-card state card)]
     (if (expendable? state card)
-      (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Expend")) ;;april fools we can make this "cast as a sorcery"
+      (swap! state assoc-in [:corp :install-list] (conj (installable-servers state card) "Cast as a Sorcery")) ;;april fools we can make this "cast as a sorcery"
       (swap! state assoc-in [:corp :install-list] (installable-servers state card)))
     (swap! state dissoc-in [:corp :install-list])))
 

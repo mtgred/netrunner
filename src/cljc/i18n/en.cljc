@@ -361,7 +361,7 @@
                  :score "score"
                  :rez "rez"
                  :derez "derez"
-                 :expend "Expend"
+                 :expend "Cast as a Sorcery"
                  :archives "Archives"
                  :hq "HQ"
                  :r-d "R&D"
