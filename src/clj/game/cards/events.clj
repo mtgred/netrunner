@@ -140,6 +140,7 @@
                                                                     :run-again attacked-server
                                                                     :run-again-ice ice))))}}}
             {:event :encounter-ice
+             :automatic true
              :once :per-run
              :req (req (and (get-in card [:special :run-again])
                             (same-card? (:ice context) (get-in card [:special :run-again-ice]))))
@@ -711,6 +712,7 @@
                :async true
                :effect (effect (make-run eid target card))}
      :events [{:event :encounter-ice
+               :skippable true
                :optional
                {:prompt "Install a program?"
                 :req (req (first-run-event? state side :encounter-ice))
@@ -1097,6 +1099,7 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
+             :skippable true
              :optional
              {:req (req (seq (filter program? (:hand runner))))
               :prompt "Install a program from the grip?"
@@ -1547,6 +1550,7 @@
              :change-in-game-state (req hq-runnable)
              :effect (req (make-run state side eid :hq card))}
    :events [{:event :encounter-ice
+             :automatic true
              :req (req (< (get-in card [:special :bypass-count] 0) 2))
              :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state)
@@ -2038,6 +2042,7 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
+             :automatic true
              :req (req (first-run-event? state side :encounter-ice))
              :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state))}]})
@@ -3196,6 +3201,7 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
+             :skippable true
              :optional (:optional (offer-jack-out
                                    {:req (req (first-run-event? state side :encounter-ice))}))}]})
 
@@ -3295,6 +3301,7 @@
                                card
                                (let [target-ice target]
                                  [{:event :encounter-ice
+                                   :automatic true
                                    :req (req (same-card? target-ice (:ice context)))
                                    :msg (msg "bypass " (:title (:ice context)))
                                    :effect (req (bypass-ice state))}]))
@@ -3476,11 +3483,13 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
+             :automatic true
              :req (req (first-run-event? state side :encounter-ice))
              :once :per-run
              :msg (msg "bypass " (card-str state current-ice))
              :effect (req (bypass-ice state))}
             {:event :encounter-ice
+             :skippable true
              :req (req (and (= 2 (count (run-events state side :encounter-ice)))
                             (threat-level 4 state)))
              :async true
@@ -3547,6 +3556,7 @@
 
 (defcard "Scrubbed"
   {:events [{:event :encounter-ice
+             :automatic true
              :once :per-turn
              :effect (effect
                        (register-lingering-effect
@@ -3670,6 +3680,7 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
+             :automatic true
              :req (req (= 1 run-position))
              :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state))}]})

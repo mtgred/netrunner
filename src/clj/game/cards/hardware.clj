@@ -125,7 +125,6 @@
 (defcard "Akamatsu Mem Chip"
   {:static-abilities [(mu+ 1)]})
 
-
 (defcard "Alarm Clock"
   (let [ability {:once :per-turn
                  :req (req (:runner-phase-12 @state))
@@ -135,6 +134,7 @@
                  :effect (req (register-events
                                   state side card
                                   [{:event :encounter-ice
+                                    :skippable true
                                     :unregister-once-resolved true
                                     :duration :end-of-run
                                     :optional
@@ -682,6 +682,7 @@
 
 (defcard "Devil Charm"
   {:events [{:event :encounter-ice
+             :skippable true
              :interactive (req true)
              :optional
              {:prompt "Remove Devil Charm from the game to give encountered ice -6 strength?"
@@ -2059,6 +2060,7 @@
   {:static-abilities [(mu+ 1)
                       (link+ 1)]
    :events [{:event :encounter-ice
+             :skippable true
              :interactive (req true)
              :optional
              {:prompt "Trace 5 to bypass current ice?"
@@ -2125,6 +2127,7 @@
                    (abs))))]
     {:static-abilities [(mu+ 2)]
      :events [{:event :encounter-ice
+               :skippable true
                :interactive (req true)
                :optional
                {:prompt "Lower your maximum hand size by 1 to reduce the strength of encountered ice to 0?"

@@ -1403,6 +1403,7 @@
                          (let [ice (:ice context)
                                cost (rez-cost state side ice)]
                            [{:event :encounter-ice
+                             :automatic true
                              :duration :end-of-encounter
                              :unregister-once-resolved true
                              :req (req (same-card? (:ice context) ice))
@@ -1504,6 +1505,7 @@
 
 (defcard "Nero Severn: Information Broker"
   {:events [{:event :encounter-ice
+             :skippable true
              :optional (:optional (offer-jack-out {:req (req (has-subtype? (:ice context) "Sentry"))
                                                    :once :per-turn}))}]})
 
@@ -1567,6 +1569,7 @@
 
 (defcard "Null: Whistleblower"
   {:events [{:event :encounter-ice
+             :skippable true
              :optional
              {:req (req (pos? (count (:hand runner))))
               :prompt "Trash a card in the grip to lower the strength of encountered ice by 2?"
@@ -1822,6 +1825,7 @@
 
 (defcard "Rielle \"Kit\" Peddler: Transhuman"
   {:events [{:event :encounter-ice
+             :automatic true
              :req (req (first-event? state side :encounter-ice))
              :msg (msg "make " (:title (:ice context))
                        " gain Code Gate until the end of the run")

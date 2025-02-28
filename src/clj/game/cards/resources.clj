@@ -452,6 +452,7 @@
     {:events [mark-changed-event
               (assoc identify-mark-ability :event :runner-turn-begins)
               {:event :encounter-ice
+               :skippable true
                :async true
                :interactive (req true)
                :optional
@@ -466,6 +467,7 @@
 
 (defcard "\"Baklan\" Bochkin"
   {:events [{:event :encounter-ice
+             :automatic true
              :req (req (first-run-event? state side :encounter-ice))
              :msg "place 1 power counter on itself"
              :async true
@@ -702,6 +704,7 @@
                                                        (register-events
                                                          state :runner card
                                                          [{:event :encounter-ice
+                                                           :automatic true
                                                            :req (req (and (same-card? ice (:ice context))
                                                                           (rezzed? (:ice context))))
                                                            :effect (req (bypass-ice state))}])
@@ -3684,6 +3687,7 @@
                                 (update! state side (assoc card :card-target target))))}]
     {:events [(assoc ability :event :runner-turn-begins)
               {:event :encounter-ice
+               :automatic true
                :req (req (and
                            (matches-server (:ice target) card state side)
                            (first-event? state side :encounter-ice #(matches-server (:ice (first %)) card state side))))

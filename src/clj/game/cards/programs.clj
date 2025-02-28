@@ -103,6 +103,7 @@
   {:abilities abilities
    :highlight-in-discard true
    :events [{:event :encounter-ice
+             :skippable true
              :async true
              :location :discard
              :req (req (and (in-discard? card)
@@ -269,6 +270,7 @@
   (auto-icebreaker
     {:abilities abilities
      :events [{:event :encounter-ice
+               :skippable true
                :req (req (and (not-used-once? state {:once :per-turn} card)
                               (not (has-subtype? (:ice context) ice-type))
                               (can-pay? state :runner eid card nil [(->c :credit 2)])))
@@ -408,6 +410,7 @@
 (defcard "Afterimage"
   (auto-icebreaker
     {:events [{:event :encounter-ice
+               :skippable true
                :interactive (req true)
                :optional
                {:req (req (and (has-subtype? (:ice context) "Sentry")
@@ -628,6 +631,7 @@
 
 (defcard "Berserker"
   (auto-icebreaker {:events [{:event :encounter-ice
+                              :automatic true
                               :req (req (has-subtype? (:ice context) "Barrier"))
                               :msg (msg "gain " (count (:subroutines (:ice context))) " strength")
                               :effect (effect (pump card (count (:subroutines (:ice context)))))}]
@@ -828,6 +832,7 @@
                          :req (req (same-card? target (:host card)))
                          :value (req (- (get-virus-counters state card)))}]
      :events [{:event :encounter-ice
+               :automatic true
                :req (req (same-card? (:ice context) (:host card)))
                :async true
                :effect (req (if (pos? (ice-strength state side (:ice context)))
@@ -1087,6 +1092,7 @@
                                 (strength-pump 1 1)]
                     :interactive (req true)
                     :events [{:event :encounter-ice
+                              :skippable true
                               :optional {:prompt (msg "Spend 3 power counters to bypass " (card-str state current-ice) "?")
                                          :waiting-prompt true
                                          :req (req (and
@@ -1460,6 +1466,7 @@
                      (register-events
                        state side card
                        [{:event :encounter-ice
+                         :skippable true
                          :interactive (req true)
                          :optional
                          {:req (req (and (same-card? ice (:ice context))
@@ -1966,6 +1973,7 @@
 
 (defcard "Laser Pointer"
   {:events [{:event :encounter-ice
+             :skippable true
              :req (req (has-any-subtype? current-ice ["AP" "Observer" "Destroyer"]))
              :async true
              :effect (effect (continue-ability
@@ -2085,6 +2093,7 @@
   {:data {:counter {:power 2}}
    :events [(rfg-on-empty :power)
             {:event :encounter-ice
+             :skippable true
              :interactive (req true)
              :ability-name "Malandragem (rfg)"
              :optional {:prompt "Remove this program from the game to bypass encountered ice?"
@@ -2093,6 +2102,7 @@
                                       :msg (msg "bypass " (card-str state current-ice))
                                       :effect (req (bypass-ice state))}}}
             {:event :encounter-ice
+             :skippable true
              :interactive (req true)
              :ability-name "Malandragem (Power counter)"
              :optional {:prompt "Remove 1 power counter to bypass encountered ice?"
@@ -2143,6 +2153,7 @@
                                   card
                                   (let [broken-ice (:ice context)]
                                     [{:event :encounter-ice
+                                      :automatic true
                                       :duration :end-of-run
                                       :unregister-once-resolved true
                                       :effect (req (doseq [sub (take 3 (:subroutines (:ice context)))]
@@ -2511,6 +2522,7 @@
 
 (defcard "Panchatantra"
   {:events [{:event :encounter-ice
+             :skippable true
              :optional
              {:prompt "Give encountered piece ice a subtype?"
               :req (req (not (get-in @state [:per-turn (:cid card)])))
@@ -2725,6 +2737,7 @@
                :effect (req (trash state :runner eid card {:cause :purge
                                                            :cause-card card}))}
               {:event :encounter-ice
+               :skippable true
                :optional {:prompt (msg "Pay " (count (:subroutines (get-card state current-ice)))
                                        " [Credits] to bypass encountered ice?")
                           :req (req (and (not (has-subtype? current-ice "Barrier"))
