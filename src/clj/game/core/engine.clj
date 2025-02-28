@@ -816,7 +816,9 @@
                                    (when (:unregister-once-resolved handler)
                                      (unregister-event-by-uuid state side (:uuid handler)))
                                    (register-once state nil (:ability handler) (:card handler)))
-                                 (let [auto-handlers (sort-by #(get automatic-priority (->> % :ability :automatic) 10) (filter (complement handler-skippable?) handlers))
+                                 (let [auto-handlers (->> (filter (complement handler-skippable?) handlers)
+                                                          (sort-by #(or (->> % :card :printed-title) ""))
+                                                          (sort-by #(get automatic-priority (->> % :ability :automatic) 10)))
                                        auto-handlers (map #(update-in % [:ability] merge {:silent (req true) :interactive nil}) auto-handlers)]
                                    (if (seq auto-handlers)
                                      (continue-ability
@@ -1012,7 +1014,9 @@
                                   (when (:unregister-once-resolved handler)
                                     (unregister-event-by-uuid state side (:uuid handler)))
                                   (register-once state nil (:ability handler) (:card handler)))
-                                (let [auto-handlers (sort-by #(get automatic-priority (->> % :handler :ability :automatic) 10) (filter (complement handler-skippable?) handlers))
+                                (let [auto-handlers (->> (filter (complement handler-skippable?) handlers)
+                                                         (sort-by #(or (->> % :handler :card :printed-title) ""))
+                                                         (sort-by #(get automatic-priority (->> % :handler :ability :automatic) 10)))
                                       auto-handlers (map #(update-in % [:handler :ability] merge {:silent (req true) :interactive nil}) auto-handlers)]
                                   (if (seq auto-handlers)
                                     (trigger-queued-event-player state side eid auto-handlers args)
