@@ -417,42 +417,31 @@
 
 (defn command-swap-sides
   [state side]
-  (lobby-command {:command :swap-sides
-                  :gameid (:gameid @state)})
-  (let [old-runner (get-in @state [:runner :user])
-        old-runner-options (get-in @state [:runner :options])]
-    ;;(system-msg state side "accepts the request to swap sides. Players swap sides")
-    (swap! state assoc-in [:runner :user] (get-in @state [:corp :user]))
-    (swap! state assoc-in [:runner :options] (get-in @state [:corp :options]))
-    (swap! state assoc-in [:corp :user] old-runner)
-    (swap! state assoc-in [:corp :options] old-runner-options)
-    (println (get-in @state [side :prompt]))))
-  ;; if you're requesting, you can't be ignoring too
-  ;; (swap! state dissoc-in [side :command-info :ignore-swap-sides])
-  ;; (if (get-in @state [(other-side side) :command-info :ignore-swap-sides])
-  ;;   ;; TODO - toast
-  ;;   nil
-  ;;   (resolve-ability
-  ;;     state (other-side side)
-  ;;     {:prompt "Your opponent wishes to swap sides"
-  ;;      :waiting-prompt true
-  ;;      :choices ["Accept" "Decline" "Don't ask me again"]
-  ;;      :effect (req (cond
-  ;;                     (= target "Decline")
-  ;;                     nil
-  ;;                     (= target "Don't ask me again")
-  ;;                     (swap! state assoc-in [side :command-info :ignore-swap-sides] true)
-  ;;                     (= target "Accept")
-  ;;                     (let [old-runner (get-in @state [:runner :user])
-  ;;                           old-runner-options (get-in @state [:runner :options])]
-  ;;                       (system-msg state side "accepts the request to swap sides. Players swap sides")
-  ;;                       (lobby-command {:command :swap-sides
-  ;;                                       :gameid (:gameid @state)})
-  ;;                       (swap! state assoc-in [:runner :user] (get-in @state [:corp :user]))
-  ;;                       (swap! state assoc-in [:runner :options] (get-in @state [:corp :options]))
-  ;;                       (swap! state assoc-in [:corp :user] old-runner)
-  ;;                       (swap! state assoc-in [:corp :options] old-runner-options))))}
-  ;;     nil nil)))
+  (swap! state dissoc-in [side :command-info :ignore-swap-sides])
+  (if (get-in @state [(other-side side) :command-info :ignore-swap-sides])
+    (toast state side "your opponent has indicated that they do not wish to swap sides")
+    (resolve-ability
+      state (other-side side)
+      {:prompt "Your opponent wishes to swap sides"
+       :waiting-prompt true
+       :choices ["Accept" "Decline" "Don't ask me again"]
+       :effect (req (cond
+                      (= target "Decline")
+                      (toast state (other-side side) "your opponent does not wish to swap sides at this time")
+                      (= target "Don't ask me again")
+                      (do (toast state (other-side side) "your opponent does not wish to swap sides")
+                          (swap! state assoc-in [side :command-info :ignore-swap-sides] true))
+                      (= target "Accept")
+                      (let [old-runner (get-in @state [:runner :user])
+                            old-runner-options (get-in @state [:runner :options])]
+                        (system-msg state side "accepts the request to swap sides. Players swap sides")
+                        (lobby-command {:command :swap-sides
+                                        :gameid (:gameid @state)})
+                        (swap! state assoc-in [:runner :user] (get-in @state [:corp :user]))
+                        (swap! state assoc-in [:runner :options] (get-in @state [:corp :options]))
+                        (swap! state assoc-in [:corp :user] old-runner)
+                        (swap! state assoc-in [:corp :options] old-runner-options))))}
+      nil nil)))
 
 (defn parse-command
   [state text]
