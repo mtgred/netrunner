@@ -533,8 +533,7 @@
                     :req (req (or (in-same-server? card target)
                                   (from-same-server? card target)))
                     :value (req (->c :add-random-from-hand-to-bottom-of-deck 2))}]
-    {:implementation "trash cost not displayed on dialogue"
-     :static-abilities [steal-cost]
+    {:static-abilities [steal-cost]
      :events [{:event :pre-access-card
                :req (req (and (rezzed? card)
                               (same-card? target card)))
@@ -551,7 +550,7 @@
      :on-trash {:async true
                 :interactive (req true)
                 :req (req (and run (= :runner side)))
-                :msg "force the Runner to add 2 random cards from the grip to the bottom of the stack as additional cost to steal agendas from this server or its root"
+                :msg "force the Runner to add 2 random cards from the grip to the bottom of the stack as additional cost to trash it"
                 :effect
                 (req (wait-for (pay state :runner (make-eid state eid) card [(->c :add-random-from-hand-to-bottom-of-deck 2)])
                                (system-msg state :runner (:msg async-result))
