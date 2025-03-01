@@ -5,7 +5,7 @@
     [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [active? agenda? asset? card-index condition-counter? convert-to-agenda corp? facedown? fake-identity? get-card get-title get-zone has-subtype? ice? in-hand? in-play-area? installed? program? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
+    [game.core.effects :refer [is-disabled-reg? register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.engine :as engine :refer [checkpoint dissoc-req register-pending-event queue-event register-default-events register-events should-trigger? trigger-event trigger-event-sync unregister-events]]
     [game.core.finding :refer [get-scoring-owner]]
@@ -374,7 +374,8 @@
          (reduce
            (fn [acc cur]
              (let [event (if (and (same-card? card (:card cur))
-                                  (= trash-event (:event cur)))
+                                  (= trash-event (:event cur))
+                                  (not (is-disabled-reg? state card)))
                            (assoc cur :duration trash-event)
                            cur)]
                (conj acc event)))
