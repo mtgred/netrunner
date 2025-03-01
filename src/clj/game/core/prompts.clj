@@ -49,7 +49,7 @@
            {:eid (select-keys eid [:eid])
             :card card
             :prompt-type :waiting
-            :msg (str "Waiting for " 
+            :msg (str "Waiting for "
                       (if (true? waiting-prompt)
                         (str (side-str side) " to make a decision")
                         waiting-prompt))}))
