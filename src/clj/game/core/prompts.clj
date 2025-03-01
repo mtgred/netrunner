@@ -22,7 +22,7 @@
 
 (defn update-selectable
   [prev-selectable choices]
-  (if (or (string? choices) (keyword? choices))
+  (if (or (not choices) (string? choices) (keyword? choices) (not (sequential? choices)))
     prev-selectable
     (concat (or prev-selectable []) (filterv identity (map #(->> % :value :cid) choices)))))
 
@@ -126,12 +126,11 @@
         (effect-completed state side (:eid (:ability selected)))))))
 
 (defn- compute-selectable
-  [state side card req-fn card-fn]
-  (->> (get-all-cards state)
-       (filter #(not= (:zone %) [:deck]))
-       (filter #(or (not card-fn) (card-fn %)))
-       (filter #(or (not req-fn) (req-fn state side nil card [%])))
-       (mapv :cid)))
+  [state side card ability req-fn card-fn]
+  (let [valid (filter #(not= (:zone %) [:deck]) (get-all-cards state))
+        valid (filter #(or (= nil card-fn) (card-fn %)) valid)
+        valid (if (nil? req-fn) valid (filter #(req-fn state side (make-eid state) card [%]) valid))]
+    (map :cid valid)))
 
 (defn show-select
   "A select prompt uses a targeting cursor so the user can click their desired target of the ability.
@@ -146,7 +145,7 @@
            ability (update-in ability [:choices :min] #(if (fn? %) (% state side (make-eid state) card targets) %))
            all (get-in ability [:choices :all])
            ability (if all (update-in ability [:choices] dissoc :min) ability) ; ignore :min if :all is set
-           selectable-cards (compute-selectable state side card (get-in ability [:choices :req]) (get-in ability [:choices :card]))
+           selectable-cards (compute-selectable state side card ability (get-in ability [:choices :req]) (get-in ability [:choices :card]))
            min-choices (get-in ability [:choices :min])
            max-choices (get-in ability [:choices :max])]
        (swap! state update-in [side :selected]

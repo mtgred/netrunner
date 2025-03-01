@@ -1681,12 +1681,15 @@
                                (not (same-card? target card))
                                (some #(and (not (rezzed? %))
                                            (not (agenda? %))
+                                           (corp? %)
                                            (can-pay-to-rez? state side (assoc eid :source card) % {:cost-bonus -2}))
                                      (all-installed state :corp)))))
               :prompt "Rez another card paying 2 [Credits] less?"
               :yes-ability {:prompt "Choose a card to rez"
                             :choices {:req (req (and (not (rezzed? target))
                                                      (not (agenda? target))
+                                                     (corp? target)
+                                                     (installed? target)
                                                      (can-pay-to-rez? state side (assoc eid :source card) target {:cost-bonus -2})))}
                             :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
                             :async true

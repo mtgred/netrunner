@@ -99,7 +99,7 @@
   ([state side eid card args]
    (let [eid (assoc eid :source-type :rez)
          card (get-card state card)
-         costs (get-rez-cost state side card args)
+         costs (or (get-rez-cost state side card args) 0)
          alternative-cost (when (and card
                                      (not (is-disabled? state side card)))
                             (:alternative-cost (card-def card)))]
