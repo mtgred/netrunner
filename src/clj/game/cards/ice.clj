@@ -4364,7 +4364,7 @@
   {:subroutines [(runner-loses-credits 2)
                  (gain-credits-sub 2)
                  (do-net-damage 2)
-                 (draw-up-to-sub 2)]})
+                 (draw-up-to-sub 2 {:allow-zero-draws true})]})
 
 (defcard "Vanilla"
   {:subroutines [end-the-run]})
