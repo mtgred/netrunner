@@ -5,7 +5,7 @@
    [clojure.stacktrace :as stacktrace]
    [clojure.string :as str]
    [cond-plus.core :refer [cond+]]
-   [game.core.commands :refer [parse-command]]
+   [game.core.commands :as commands :refer [parse-command]]
    [game.core.diffs :as diffs]
    [game.core.say :refer [make-system-message]]
    [game.core.set-up :refer [init-game]]
@@ -418,3 +418,35 @@
     (app-state/deregister-user! uid)
     (when ?reply-fn (?reply-fn true))
     (lobby/log-delay! timestamp id)))
+
+(defn switch-side
+  "Returns a new player map with the player's :side set to a new side"
+  [player]
+  (if (= "Corp" (get-in player [:side]))
+    (assoc player :side "Runner")
+    (assoc player :side "Corp")))
+
+(defn handle-swap-sides-in-prog [lobbies gameid]
+  (if-let [lobby (get lobbies gameid)]
+    (do
+      (-> lobby
+          ;; note - original-players needs to be updated so that you rejoin the game
+          ;; on the correct side if you leave/rejoin
+          (update :original-players #(mapv switch-side %))
+          (update :players #(mapv switch-side %))
+          (->> (assoc lobbies gameid))))
+    lobbies))
+
+(defn switch-side-for-lobby
+  [gameid]
+  (let [lobby (app-state/get-lobby gameid)
+	new-app-state (swap! app-state/app-state
+                             update :lobbies
+                             #(-> %
+                                  (handle-swap-sides-in-prog gameid)))
+        lobby? (get-in new-app-state [:lobbies gameid])]
+    (lobby/send-lobby-state lobby?)
+    (lobby/broadcast-lobby-list)))
+
+(defmethod commands/lobby-command :swap-sides [{:keys [gameid] :as args}]
+  (switch-side-for-lobby gameid))
