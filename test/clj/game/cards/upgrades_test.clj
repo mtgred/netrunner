@@ -4759,6 +4759,19 @@
         (click-card state :corp war)
         (is (no-prompt? state :corp) "Corp has no prompt"))))
 
+(deftest warroid-vs-light-the-fire
+  (do-game
+    (new-game {:corp {:hand ["Warroid Tracker"]}
+               :runner {:hand ["Rezeki" "Light the Fire!" "Ika"]}})
+    (play-from-hand state :corp "Warroid Tracker" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rezeki")
+    (play-from-hand state :runner "Light the Fire!")
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "Server 1")
+    (run-continue-until state :success)
+    (is (no-prompt? state :runner) "No prompt for warroid")))
+
 (deftest will-o-the-wisp
   ;; Will-o'-the-Wisp
   (do-game
