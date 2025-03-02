@@ -1210,7 +1210,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Code Siphon")
     (run-continue-until state :success)
-    (is (= ["Code Siphon" "Breach R&D"] (prompt-buttons :runner))
+    (is (= ["Code Siphon" "Breach R&D"] (prompt-titles :runner))
         "Replacement effect isn't mandatory")
     (click-prompt state :runner "Code Siphon")
     (let [credits (:credit (get-runner))]
