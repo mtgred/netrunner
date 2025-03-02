@@ -996,22 +996,23 @@
 
 (defcard "Hades Fragment"
   (let [abi {:prompt "Choose a card to add to the bottom of R&D"
-                :label "add card to bottom of R&D"
-                :show-discard true
-                :event :corp-turn-begins
-                :once :per-turn
-                :choices {:card #(and (corp? %)
-                                      (in-discard? %))}
-                :effect (effect (move target :deck))
-                :msg (msg "add "
-                          (if (:seen target)
-                            (:title target)
-                            "a card")
-                          " to the bottom of R&D")}]
-    {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard]))
+             :label "add card to bottom of R&D"
+             :show-discard true
+             :event :corp-turn-begins
+             :once :per-turn
+             :choices {:card #(and (corp? %)
+                                   (in-discard? %))}
+             :effect (effect (move target :deck))
+             :msg (msg "add "
+                       (if (:seen target)
+                         (:title target)
+                         "a card")
+                       " to the bottom of R&D")}]
+    {:flags {:corp-phase-12 (req (and (seq (:discard corp))
                                       (is-scored? state :corp card)))}
      :abilities [abi]
-     :events [abi]}))
+     :events [(assoc abi
+                     :change-in-game-state {:req (req (seq (:discard corp))) :silent (req true)})]}))
 
 (defcard "Helium-3 Deposit"
   {:on-score
