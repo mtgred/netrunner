@@ -804,6 +804,7 @@
 (defcard "Escalate Vitriol"
   {:abilities [{:action true
                 :label "Gain 1 [Credit] for each Runner tag"
+                :change-in-game-state {:req (req tagged)}
                 :cost [(->c :click 1)]
                 :once :per-turn
                 :msg (msg "gain " (count-tags state) " [Credits]")
@@ -833,7 +834,7 @@
                  :effect (effect (gain-credits :corp eid 5))}}}})
 
 (defcard "False Lead"
-  {:abilities [{:req (req (<= 2 (:click runner)))
+  {:abilities [{:change-in-game-state {:req (req (<= 2 (:click runner)))}
                 :label "runner loses [Click][Click]"
                 :msg "force the Runner to lose [Click][Click]"
                 :cost [(->c :forfeit-self)]
@@ -933,8 +934,8 @@
 (defcard "Glenn Station"
   {:abilities [{:action true
                 :label "Host a card from HQ"
-                :req (req (and (not-empty (:hand corp))
-                               (empty? (filter corp? (:hosted card)))))
+                :change-in-game-state {:req (req (and (not-empty (:hand corp))
+                                                      (empty? (filter corp? (:hosted card)))))}
                 :cost [(->c :click 1)]
                 :msg "host a card from HQ"
                 :prompt "Choose a card to host"
@@ -942,7 +943,7 @@
                 :effect (effect (host card target {:facedown true}))}
                {:action true
                 :label "Add a hosted card to HQ"
-                :req (req (not-empty (filter corp? (:hosted card))))
+                :change-in-game-state {:req (req (not-empty (filter corp? (:hosted card))))}
                 :cost [(->c :click 1)]
                 :msg "add a hosted card to HQ"
                 :prompt "Choose a hosted card"
@@ -994,11 +995,11 @@
       :effect (effect (continue-ability (graft 1) card nil))}}))
 
 (defcard "Hades Fragment"
-  {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard]))
-                                    (is-scored? state :corp card)))}
-   :abilities [{:prompt "Choose a card to add to the bottom of R&D"
+  (let [abi {:prompt "Choose a card to add to the bottom of R&D"
                 :label "add card to bottom of R&D"
                 :show-discard true
+                :event :corp-turn-begins
+                :once :per-turn
                 :choices {:card #(and (corp? %)
                                       (in-discard? %))}
                 :effect (effect (move target :deck))
@@ -1006,7 +1007,11 @@
                           (if (:seen target)
                             (:title target)
                             "a card")
-                          " to the bottom of R&D")}]})
+                          " to the bottom of R&D")}]
+    {:flags {:corp-phase-12 (req (and (not-empty (get-in @state [:corp :discard]))
+                                      (is-scored? state :corp card)))}
+     :abilities [abi]
+     :events [abi]}))
 
 (defcard "Helium-3 Deposit"
   {:on-score
@@ -1029,6 +1034,7 @@
               :silent (req true)}
    :abilities [{:action true
                 :cost [(->c :click 1) (->c :agenda 1)]
+                :change-in-game-state {:req (req (pos? (:credit runner)))}
                 :label "gain credits"
                 :msg (msg "gain " (:credit runner) " [Credits]")
                 :async true
@@ -1203,7 +1209,7 @@
               :effect (effect (add-counter eid card :power 2 nil))}
    :interactions {:prevent [{:type #{:jack-out}
                              :req (req (pos? (get-counters card :power)))}]}
-   :abilities [{:req (req (:run @state))
+   :abilities [{:change-in-game-state {:req (req (:run @state))}
                 :cost [(->c :power 1)]
                 :msg "prevent the Runner from jacking out"
                 :effect (effect (jack-out-prevent))}]})
@@ -1452,7 +1458,7 @@
   {:on-score {:silent (req true)
               :async true
               :effect (effect (add-counter eid card :agenda 1 nil))}
-   :abilities [{:req (req (:run @state))
+   :abilities [{:change-in-game-state {:req (req (:run @state))}
                 :cost [(->c :agenda 1)]
                 :msg "end the run"
                 :async true
@@ -1644,6 +1650,8 @@
                 :choices {:card #(and (ice? %)
                                       (rezzed? %))}
                 :cost [(->c :agenda 1)]
+                :change-in-game-state {:req (req (and run (some (every-pred ice? rezzed?)
+                                                                (all-installed state :corp))))}
                 :keep-menu-open :while-agenda-tokens-left
                 :msg (str "make a piece of ice gain \"[Subroutine] Do 1 net damage\" "
                           "after all its other subroutines for the remainder of the run")
@@ -2312,6 +2320,7 @@
               :async true
               :effect (effect (add-counter eid card :agenda 2 nil))}
    :abilities [{:cost [(->c :agenda 1)]
+                :once :per-turn
                 :req (req run)
                 :msg "prevent this run from becoming successful"
                 :effect (effect (register-lingering-effect
