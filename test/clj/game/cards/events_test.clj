@@ -2976,7 +2976,6 @@
         (rez state :corp treb)
         (run-continue state)
         (card-subroutine state :corp treb 0)
-        (click-prompt state :corp "Done")
         (card-subroutine state :corp treb 1)
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
