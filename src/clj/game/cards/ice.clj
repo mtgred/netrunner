@@ -3914,7 +3914,6 @@
                 :change-in-game-state {:req (req (seq (:hand runner)))}
                 :cost [(->c :power 1)]
                 :label "Reveal all cards in the grip and trash 1 card"
-                :change-in-game-state {:req (req (seq (:hand runner)))}
                 :async true
                 :effect (req (continue-ability
                                state side

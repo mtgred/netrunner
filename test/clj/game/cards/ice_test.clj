@@ -2372,8 +2372,7 @@
             (click-prompt state :runner "Pay 1 [Credits]"))
           "Paid 1c for subroutine")
       (card-subroutine state :corp fc1 1)
-      (is (= 1 (count (:choices (prompt-map :runner)))) "Only 1 choice in prompt")
-      (click-prompt state :runner "Trash an installed card")
+      (is (no-prompt? state :runner) "No prompt because we cannot pay!")
       (is (no-prompt? state :runner) "no lingering prompt"))))
 
 (deftest fairchild-2-0
