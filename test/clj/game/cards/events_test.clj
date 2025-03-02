@@ -2963,32 +2963,32 @@
         (is (= (+ discard 5) (count (:discard (get-corp)))) "Corp trashes 5 additional card"))))
 
 (deftest fear-the-masses-trebuchet-firing-incorrectly-prevents-fear-the-masses-effect-from-taking-place-issue-5294
-    ;; Trebuchet firing incorrectly prevents Fear The Masses effect from taking place. Issue #5294
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 50)]
-                        :hand ["Trebuchet"]}
-                :runner {:hand [(qty "Fear the Masses" 6)]}})
-      (play-from-hand state :corp "Trebuchet" "HQ")
-      (take-credits state :corp)
-      (let [discard (count (:discard (get-corp)))
-            treb (get-ice state :hq 0)]
-        (play-from-hand state :runner "Fear the Masses")
-        (rez state :corp treb)
-        (run-continue state)
-        (card-subroutine state :corp treb 0)
-        (card-subroutine state :corp treb 1)
-        (click-prompt state :corp "0")
-        (click-prompt state :runner "0")
-        (run-continue state)
-        (run-continue state)
-        (is (= (inc discard) (count (:discard (get-corp)))) "Corp trashes 1 card"))
-      (let [discard (count (:discard (get-corp)))]
-        (click-card state :runner (nth (:hand (get-runner)) 0))
-        (click-card state :runner (nth (:hand (get-runner)) 1))
-        (click-card state :runner (nth (:hand (get-runner)) 2))
-        (click-card state :runner (nth (:hand (get-runner)) 3))
-        (click-card state :runner (nth (:hand (get-runner)) 4))
-        (is (= (+ discard 5) (count (:discard (get-corp)))) "Corp trashes 5 additional card"))))
+  ;; Trebuchet firing incorrectly prevents Fear The Masses effect from taking place. Issue #5294
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 50)]
+                      :hand ["Trebuchet"]}
+               :runner {:hand [(qty "Fear the Masses" 6)]}})
+    (play-from-hand state :corp "Trebuchet" "HQ")
+    (take-credits state :corp)
+    (let [discard (count (:discard (get-corp)))
+          treb (get-ice state :hq 0)]
+      (play-from-hand state :runner "Fear the Masses")
+      (rez state :corp treb)
+      (run-continue state)
+      (card-subroutine state :corp treb 0)
+      (card-subroutine state :corp treb 1)
+      (click-prompt state :corp "0")
+      (click-prompt state :runner "0")
+      (run-continue state)
+      (run-continue state)
+      (is (= (inc discard) (count (:discard (get-corp)))) "Corp trashes 1 card"))
+    (let [discard (count (:discard (get-corp)))]
+      (click-card state :runner (nth (:hand (get-runner)) 0))
+      (click-card state :runner (nth (:hand (get-runner)) 1))
+      (click-card state :runner (nth (:hand (get-runner)) 2))
+      (click-card state :runner (nth (:hand (get-runner)) 3))
+      (click-card state :runner (nth (:hand (get-runner)) 4))
+      (is (= (+ discard 5) (count (:discard (get-corp)))) "Corp trashes 5 additional card"))))
 
 (deftest feint
   ;; Feint - bypass 2 pieces of ice on HQ, but access no cards

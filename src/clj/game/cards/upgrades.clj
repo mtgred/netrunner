@@ -178,6 +178,7 @@
                                                                            :display-origin true}}))}]
     {:events [{:event :agenda-scored
                :req (req (= (:previous-zone (:card context)) (get-zone card)))
+               :change-in-game-state {:silent true :req (req (seq (:hand corp)))}
                :interactive (req (some corp-installable-type? (:hand corp)))
                :silent (req (not-any? corp-installable-type? (:hand corp)))
                :async true
@@ -242,7 +243,7 @@
   {:install-req (req (filter #{"R&D"} targets))
    :abilities [{:action true
                 :cost [(->c :click 1)]
-                :req (req (pos? (count (:deck corp))))
+                :change-in-game-state {:req (req (pos? (count (:deck corp))))}
                 :async true
                 :msg (msg (str "reveal " (enumerate-str (map :title (take 3 (:deck corp)))) " from the top of R&D"))
                 :label "Add 1 card from top 3 of R&D to HQ"
@@ -299,7 +300,7 @@
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
    :advanceable :always
    :abilities [{:label "End the run"
-                :req (req (:run @state))
+                :change-in-game-state {:req (req (:run @state))}
                 :msg "end the run"
                 :async true
                 :cost [(->c :advancement 2) (->c :trash-can)]
@@ -486,6 +487,7 @@
                        :req (req (= (:server (second targets)) (unknown->kw (get-zone card))))
                        :value (req (repeat (get-counters card :power) [(->c :credit 1) (->c :click 1)]))}]
    :events [{:event :corp-turn-begins
+             :interactive (req true)
              :req (req (pos? (get-counters card :power)))
              :msg "remove all hosted power counters"
              :async true
@@ -680,7 +682,7 @@
                                                         :cost [(->c :credit 1)]
                                                         :msg "place 1 power counter on itself"}}}
                                         card nil))}
-        etr {:req (req this-server)
+        etr {:req (req (and this-server run))
              :cost [(->c :power 1)]
              :msg "end the run"
              :async true
@@ -789,14 +791,14 @@
              :interactive (req true)
              :async true
              :req (req this-server)
-             :effect (effect 
+             :effect (effect
                        (continue-ability
                          (let [credit-cost (* 2 (count (:scored runner)))]
                             {:player :runner
                              :async true
                              :waiting-prompt true
                              :prompt "Choose one"
-                             :choices [(when (can-pay? state :runner eid card nil (->c :credit credit-cost))  
+                             :choices [(when (can-pay? state :runner eid card nil (->c :credit credit-cost))
                                          (str "Pay " credit-cost " [Credits]"))
                                        "End the run"]
                              :msg (msg (if (= "End the run" target)
@@ -821,7 +823,7 @@
   {:abilities [{:label "All ice protecting this server has +2 strength until the end of the run"
                 :msg "increase the strength of all ice protecting this server until the end of the run"
                 :req (req (and this-server
-                               (pos? (count run-ices))
+                               run
                                (pos? (count (:hand corp)))))
                 :cost [(->c :trash-from-hand 1)]
                 :effect (effect (register-lingering-effect
@@ -1616,13 +1618,14 @@
   {:abilities
    [{:action true
      :cost [(->c :click 1)]
-     :msg "store 3 [Credits]"
+     :msg "place 3 [Credits]"
      :once :per-turn
      :async true
      :effect (effect (add-counter eid card :credit 3 nil))}
     {:action true
      :cost [(->c :click 1)]
      :msg (msg "gain " (get-counters card :credit) " [Credits]")
+     :change-in-game-state {:req (req (pos? (get-counters card :credit)))}
      :once :per-turn
      :label "Take all credits"
      :async true
@@ -1631,7 +1634,7 @@
 (defcard "Signal Jamming"
   {:abilities [{:label "Cards cannot be installed until the end of the run"
                 :msg "prevent cards being installed until the end of the run"
-                :req (req this-server)
+                :req (req (and this-server run))
                 :cost [(->c :trash-can)]
                 :effect (effect (register-run-flag! card :corp-lock-install (constantly true))
                                 (register-run-flag! card :runner-lock-install (constantly true))
