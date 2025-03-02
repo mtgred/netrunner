@@ -589,7 +589,7 @@
 (defn choose-replacement-ability
   [state handlers]
   (let [mandatory (some :mandatory handlers)
-        titles (into [] (keep #(get-in % [:card :title]) handlers))
+        titles (into [] (keep #(:card %) handlers))
         eid (make-phase-eid state nil)]
     (cond
       ;; If you can't access, there's nothing to replace
@@ -599,8 +599,7 @@
       (zero? (count titles))
       (wait-for (breach-server state :runner (make-eid state) (get-in @state [:run :server]))
                 (handle-end-run state :runner eid))
-      ;; If there's only 1 handler and it's mandatory
-      ;; just execute it
+      ;; If there's only 1 handler and it's mandatory, just execute it
       (and mandatory (= 1 (count titles)))
       (let [chosen (first handlers)
             ability (:ability chosen)
@@ -608,16 +607,17 @@
         (system-msg state :runner (str "uses the replacement effect from " (:title card)))
         (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])
                   (handle-end-run state :runner eid)))
-      ;; there are multiple handlers
+      ;; there are multiple handlers or the handler is optional
       (pos? (count titles))
       (resolve-ability
         state :runner
         {:prompt "Choose a breach replacement ability"
          :choices (if mandatory titles (conj titles (str "Breach " (zone->name (:server (:run @state))))))
          :async true
-         :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) handlers)
-                            ability (:ability chosen)
-                            card (:card chosen)]
+         :effect (req
+                   (let [chosen (some #(when (same-card? target (:card %)) %) handlers)
+                         ability (:ability chosen)
+                         card (:card chosen)]
                         (if chosen
                           (do (system-msg state :runner (str "uses the replacement effect from " (:title card)))
                               (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])
