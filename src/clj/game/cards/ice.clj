@@ -1363,6 +1363,8 @@
 (defcard "Crick"
   {:subroutines [{:label "install a card from Archives"
                   :prompt "Choose a card to install from Archives"
+                  :change-in-game-state {:silent (req true)
+                                         :req (req (seq (:discard corp)))}
                   :show-discard true
                   :async true
                   :choices {:card #(and (corp-installable-type? %)
@@ -1443,8 +1445,8 @@
   {:subroutines [{:msg "do 1 net damage and trash itself"
                   :async true
                   :effect (req (wait-for (damage state :runner :net 1 {:card card})
-                                         (trash state :corp (make-eid state eid) card {:cause :subroutine})
-                                         (encounter-ends state side eid)))}]})
+                                         (wait-for (trash state :corp  card {:cause :subroutine})
+                                                   (encounter-ends state side eid))))}]})
 
 (defcard "Data Raven"
   {:abilities [(power-counter-ability (give-tags 1))]
@@ -1466,7 +1468,7 @@
                   :msg (msg "force the runner to " (decapitalize target) " on encountering it")
                   :prompt "Choose one"
                   :waiting-prompt true
-                  :choices (req [(when (can-pay? state :runner eid card nil (->c :credit 3))  
+                  :choices (req [(when (can-pay? state :runner eid card nil (->c :credit 3))
                                    "Pay 3 [Credits]")
                                  "Take 1 tag"])
                   :async true
@@ -1608,11 +1610,16 @@
                  (do-brain-damage 1)
                  {:label "Trash a console"
                   :prompt "Choose a console to trash"
-                  :choices {:card #(has-subtype? % "Console")}
+                  :change-in-game-state {:silent (req true)
+                                         :req (req (some #(has-subtype? % "Console") (all-installed state :runner)))}
+                  :choices {:card #(and (has-subtype? % "Console")
+                                        (installed? %))}
                   :msg (msg "trash " (:title target))
                   :async true
                   :effect (effect (trash eid target {:cause :subroutine}))}
                  {:msg "trash all virtual resources"
+                  :change-in-game-state {:silent (req true)
+                                         :req (req (some #(and (has-subtype? % "Virtual") (resource? %)) (all-installed state :runner)))}
                   :async true
                   :effect (req (let [cards (filter #(has-subtype? % "Virtual") (all-active-installed state :runner))]
                                  (trash-cards state side eid cards {:cause :subroutine})))}]
@@ -1621,6 +1628,8 @@
 (defcard "Engram Flush"
   (let [sub {:async true
              :label "Reveal the grip"
+             :change-in-game-state {:silent (req true)
+                                    :req (req (:hand runner))}
              :msg (msg "reveal " (enumerate-str (map :title (:hand runner))) " from the grip")
              :effect (effect (reveal eid (:hand runner)))}]
     {:on-encounter {:prompt "Choose a card type"
@@ -1674,6 +1683,7 @@
                :req (req (same-card? card (:card context)))
                :effect subs-effect}]
      :subroutines [{:label "Trash this ice"
+                    :change-in-game-state {:req (req (installed? card)) :silent true}
                     :async true
                     :msg (msg "trash " (:title card))
                     :effect (effect (trash eid card {:cause :subroutine}))}]}))
@@ -1716,6 +1726,8 @@
                  (end-the-run-unless-runner-pays (->c :credit 4))
                  (end-the-run-unless-runner-pays (->c :trash-installed 1))
                  (end-the-run-unless-runner-pays (->c :brain 1))]})
+
+;; HERE
 
 (defcard "Fairchild 1.0"
   (let [sub {:label "Force the Runner to pay 1 [Credits] or trash an installed card"
