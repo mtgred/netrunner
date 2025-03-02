@@ -253,7 +253,7 @@
   "Places 1 power counter on a card."
   {:label "Place 1 power counter"
    :msg "place 1 power counter on itself"
-   :change-in-game-state {:silent (req true) :req (installed? card)}
+   :change-in-game-state {:silent (req true) :req (req (installed? card))}
    :async true
    :effect (req (add-counter state side eid card :power 1 {:placed true}))})
 
@@ -596,9 +596,10 @@
   ([pred label]
    (let [pred #(and (ice? %)
                     (rezzed? %)
+                    (>= (count (:subroutines %)) 1)
                     (pred %))]
      {:async true
-      :label label
+      :change-in-game-state {:silent (req true) :req (req (some pred (all-installed state :corp)))}
       :effect
       (effect
         (continue-ability
