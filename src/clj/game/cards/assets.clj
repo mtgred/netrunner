@@ -2716,9 +2716,9 @@
                 :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
                 :yes-ability {:async true
                               :cost [(->c :credit 4)]
-                              :msg "do 3 net damage and give the Runner 1 tag"
-                              :effect (req (wait-for (damage state side :net 3 {:card card})
-                                                     (gain-tags state :corp eid 1)))}}}})
+                              :msg "give the Runner 1 tag and do 3 net damage"
+                              :effect (req (wait-for (gain-tags state :corp 1 {:suppress-checkpoint true})
+                                                     (damage state side eid :net 3 {:card card})))}}}})
 
 (defcard "Space Camp"
   {:flags {:rd-reveal (req true)}
