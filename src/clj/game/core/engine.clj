@@ -324,8 +324,9 @@
 
 (defn do-nothing
   "Does nothing (loudly)"
-  [state side eid card]
-  (system-msg state side (str "uses " (:title card) " to do nothing"))
+  [state side eid ability card]
+  (when-not (:change-in-game-state-silent ability)
+    (system-msg state side (str "uses " (:title card) " to do nothing")))
   (effect-completed state side eid))
 
 (defn- change-in-game-state?
@@ -341,7 +342,7 @@
   (if-let [ability-effect (:effect ability)]
     (if (change-in-game-state? state side ability card targets)
       (ability-effect state side eid card targets)
-      (do-nothing state side eid card))
+      (do-nothing state side eid ability card))
     (effect-completed state side eid)))
 
 (defn merge-costs-paid
@@ -414,7 +415,7 @@
                  (select-keys [:cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
                  (assoc :targets targets))]
     (if-not (change-in-game-state? state side ability card targets)
-      (do-nothing state side eid card)
+      (do-nothing state side eid ability card)
       (if (map? choices)
         ;; Two types of choices use maps: select prompts, and :number prompts.
         (cond

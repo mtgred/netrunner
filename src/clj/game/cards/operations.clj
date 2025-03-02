@@ -437,7 +437,7 @@
                                         (all-installed state :corp)))
              :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
              :async true
-             :cancel-effect (req (do-nothing state side eid card))
+             :cancel-effect (req (do-nothing state side eid nil card))
              :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
                                     (install-as-condition-counter state side eid card (:card async-result))))}
    :events [{:event :end-of-encounter

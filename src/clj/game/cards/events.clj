@@ -1321,7 +1321,7 @@
                                    (filter (complement rezzed?)))))}
     :msg (msg "trash " (card-str state target))
     :async true
-    :cancel-effect (req (do-nothing state side eid card))
+    :cancel-effect (req (do-nothing state side eid nil card))
     :effect (effect (trash eid target {:cause-card card}))}})
 
 (defcard "Encore"
