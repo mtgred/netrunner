@@ -599,6 +599,7 @@
                     (>= (count (:subroutines %)) 1)
                     (pred %))]
      {:async true
+      :label label
       :change-in-game-state {:silent (req true) :req (req (some pred (all-installed state :corp)))}
       :effect
       (effect
@@ -615,7 +616,7 @@
                             :prompt "Choose the subroutine"
                             :choices (req (unbroken-subroutines-choice ice))
                             :msg (msg "resolve the subroutine (\"[subroutine] "
-                                                                              target "\") from " (:title ice))
+                                      target "\") from " (:title ice))
                             :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines ice)))]
                                            (continue-ability state side (:sub-effect sub) ice nil)))})
                          card nil))})
@@ -696,7 +697,7 @@
                                                               :duration :end-of-encounter}))}}})]
     {:on-encounter (encounter-ab)
      :subroutines [(corps-gains-and-runner-loses-credits 1 1)
-                  runner-trash-installed-sub]}))
+                   runner-trash-installed-sub]}))
 
 (defcard "Afshar"
   (let [breakable-fn (req (if (and (= :hq (second (get-zone card)))
@@ -769,6 +770,7 @@
                                                     (effect-completed state side eid)))))}
                       :no-ability {:effect (effect (system-msg :runner "does not draw 1 card"))}}}]
     {:subroutines [{:msg "rearrange the top 5 cards of R&D"
+                    :change-in-game-state {:silent (req true) :req (req (seq (:deck corp)))}
                     :async true
                     :waiting-prompt true
                     :effect (req (let [from (take 5 (:deck corp))]
@@ -814,6 +816,7 @@
 (defcard "Architect"
   {:flags {:untrashable-while-rezzed true}
    :subroutines [{:async true
+                  :change-in-game-state {:silent (req true) :req (req (seq (:deck corp)))}
                   :label "Look at the top 5 cards of R&D"
                   :msg "look at the top 5 cards of R&D"
                   :prompt (msg "The top cards of R&D are (top->bottom) " (enumerate-str (map :title (take 5 (:deck corp)))))
@@ -849,9 +852,6 @@
   (space-ice end-the-run))
 
 (defcard "Attini"
-  ;; TODO - this should provide an aura that prevents the runner from paying credits
-  ;; for paid abilities during subroutine resolution
-  ;; we can figure out how to do that type of thing some time in the future
   (let [sub {:label "Do 1 net damage unless the Runner pays 2 [Credits]"
              :async true
              :effect (req (if (and (threat-level 3 state)
@@ -1002,6 +1002,7 @@
 (defcard "Bloom"
   {:subroutines
    [{:label "Install a piece of ice from HQ protecting another server, ignoring all costs"
+     :change-in-game-state {:silent (req true) :req (req (seq (:hand corp)))}
      :prompt "Choose a piece of ice to install from HQ in another server"
      :async true
      :choices {:card #(and (ice? %)
@@ -1017,6 +1018,7 @@
                                                                                                  :display-origin true}}))}
                                       card nil)))}
     {:label "Install a piece of ice from HQ in the next innermost position, protecting this server, ignoring all costs"
+     :change-in-game-state {:silent (req true) :req (req (seq (:hand corp)))}
      :prompt "Choose a piece of ice to install from HQ in this server"
      :async true
      :choices {:card #(and (ice? %)
@@ -1039,6 +1041,7 @@
   {:abilities [{:label "End the run"
                 :msg "end the run"
                 :async true
+                :req (req this-server run)
                 :cost [(->c :trash-can)]
                 :effect (effect (end-run eid card))}]
    :subroutines [{:label "Gain 1 [Credits] for each ice protecting this server"
@@ -1053,15 +1056,16 @@
 (defcard "Boto"
   (let [discard-card-to-end-the-run-sub
         {:label "Trash 1 card from HQ to end the run"
+         :change-in-game-state {:silent (req true) :req (req (seq (:hand corp)))}
          :optional {:prompt "Trash 1 card from HQ to end the run?"
                     :yes-ability {:cost [(->c :trash-from-hand 1)]
                                   :msg "end the run"
                                   :async true
                                   :effect (effect (end-run eid card))}}}]
     {:static-abilities [(ice-strength-bonus (req (if (threat-level 4 state) 2 0)))]
-    :subroutines [(do-net-damage 2)
-                  discard-card-to-end-the-run-sub
-                  discard-card-to-end-the-run-sub]}))
+     :subroutines [(do-net-damage 2)
+                   discard-card-to-end-the-run-sub
+                   discard-card-to-end-the-run-sub]}))
 
 (defcard "Brainstorm"
   {:on-encounter {:effect (effect (gain-variable-subs card (count (:hand runner)) (do-brain-damage 1)))}
@@ -1143,8 +1147,8 @@
   {:static-abilities [(ice-strength-bonus (req (if (is-tagged? state) 2 0)))]
    :subroutines [{:label "Gain 1 [Credits] for each tag the Runner has"
                   :async true
+                  :change-in-game-state {:silent (req true) :req (req tagged)}
                   :msg (msg "gain " (count-tags state) " [Credits]")
-                  :req (req (pos? (count-tags state)))
                   :effect (effect (gain-credits :corp eid (count-tags state)))}
                  end-the-run]})
 
@@ -1309,6 +1313,11 @@
              {:label "Trash 1 program (Trash 1 program and 1 resource)"
               :async true
               :msg (msg "trash 1 program" (when (wonder-sub card 3) " and 1 resource"))
+              :change-in-game-state {:silent (req true)
+                                     :req (req (or (some program? (all-installed state :runner))
+                                                   (and
+                                                     (wonder-sub card 3)
+                                                     (some resource? all-installed state :runner))))}
               :effect (req (wait-for (resolve-ability state side trash-program-sub card nil)
                                      (if (wonder-sub card 3)
                                        (continue-ability
@@ -1346,6 +1355,8 @@
 (defcard "Cortex Lock"
   {:subroutines [{:label "Do 1 net damage for each unused memory unit the Runner has"
                   :msg (msg "do " (available-mu state) " net damage")
+                  :change-in-game-state {:silent (req true)
+                                         :req (req (pos? (available-mu state)))}
                   :async true
                   :effect (effect (damage eid :net (available-mu state) {:card card}))}]})
 
