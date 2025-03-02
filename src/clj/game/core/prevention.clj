@@ -131,9 +131,9 @@
         option  (if (string? option)  option  (option state remainder))]
     (if (or (if (= data-type :sequential)
               (not (seq remainder))
-              nil)
-            ;;(not (pos? remainder))) -> the CR says these numbers can go to (or below) 0 withoutout actually closing the interrupt,
-            ;;even though most abilities cannot interact with them
+              ;; only relevant for damage -> the CR says these numbers can go to (or below) 0 withoutout actually closing the interrupt,
+              ;; even though most abilities cannot interact with them - just brainchips and muresh bodysuit are relevant
+              (or (= key :pre-damage) (not (pos? remainder))))
             (get-in @state [:prevent key :passed]))
       (do (swap! state dissoc-in [:prevent key :passed])
           (effect-completed state side eid))

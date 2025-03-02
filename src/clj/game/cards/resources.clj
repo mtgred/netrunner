@@ -2424,7 +2424,8 @@
                            :msg "force the Corp to trace"
                            :req (req (and (= :net (:type context))
                                           (first-event? state side :pre-damage-flag #(= :net (:type (first %))))
-                                          (no-event? state side :runner-prevents-all-tags true?)
+                                          (no-event? state side :runner-prevents-all-tags)
+                                          (no-event? state side :runner-gain-tag)
                                           (not (:unpreventable context))
                                           (pos? (:remaining context))))
                            :effect (req (wait-for
@@ -2442,8 +2443,6 @@
                  :ability {:async true
                            :msg "force the Corp to trace"
                            :req (req (and (first-event? state side :tag-interrupt)
-                                          ;; note that the checkpoints are suppressed for both damage and tag when resolving a snare,
-                                          ;; (or at least they will be after the costs merge), so this should work
                                           (no-event? state side :all-damage-was-prevented #(= :net (:type (first %))))
                                           (no-event? state side :damage #(= :net (:damage-type (first %))))))
                            :effect (req (wait-for

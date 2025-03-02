@@ -4692,6 +4692,60 @@
         (click-prompt state :runner "1")
         (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented"))))))
 
+(deftest no-one-home-only-on-first-event
+  (doseq [[scenario-a scenario-b] [[:net :net] [:net :tag] [:tag :tag] [:tag :net]]]
+    (do-game
+      (new-game {:runner {:hand [(qty "Sure Gamble" 5) "No One Home" "No One Home"]}
+                 :corp {:hand [(qty "Public Trail" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "No One Home")
+      (play-from-hand state :runner "No One Home")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (if (= scenario-a :net)
+        (damage state :corp :net 1)
+        (do (play-from-hand state :corp "Public Trail")
+            (click-prompt state :runner "Take 1 tag")))
+      ;; avoid damage/tag
+      (click-prompts state :runner "No One Home" "Yes")
+      (click-prompt state :corp "0")
+      (click-prompts state :runner "0" "1")
+      (is (no-prompt? state :runner) "No lingering prompt")
+      (is (= 1 (count (:discard (get-runner)))) "Trashed NOH, no damage")
+      (is (= 0 (count-tags state)) "Not tagged")
+      (if (= scenario-b :net)
+        (damage state :corp :net 1)
+        (do (play-from-hand state :corp "Public Trail")
+            (click-prompt state :runner "Take 1 tag")))
+      (is (no-prompt? state :runner) (str "No prompt because it's already passed: (" scenario-a " -> " scenario-b ")")))))
+
+(deftest no-one-home-snare-can-prevent-either-trigger
+  (doseq [scenario [:net :tag :both]]
+    (do-game
+      (new-game {:runner {:hand [(qty "Sure Gamble" 5) "No One Home" "No One Home"]}
+                 :corp {:hand ["Snare!"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "No One Home")
+      (play-from-hand state :runner "No One Home")
+      (run-empty-server state :hq)
+      (click-prompt state :corp "Yes")
+      ;; tag first
+      (if (not= scenario :damage)
+        (do (click-prompts state :runner "No One Home" "Yes")
+            (click-prompt state :corp "0")
+            (click-prompts state :runner "0" "1")
+            (is (= 0 (count-tags state)) "0 tags"))
+        (do (click-prompt state :runner "Allow 1 remaining tag")
+            (is (= 1 (count-tags state)) "1 tag")))
+      (if (not= scenario :tag)
+        (do (click-prompts state :runner "No One Home" "Yes")
+            (click-prompt state :corp "0")
+            (click-prompts state :runner "0" "3")
+            (is (>= 2 (count (:discard (get-runner)))) "0 damage"))
+        (do (click-prompt state :runner "Pass priority")
+            (is (<= 3 (count (:discard (get-runner)))) "Took 3 damage"))))))
+
 (deftest off-campus-apartment-ability-shows-a-simultaneous-resolution-prompt-when-appropriate
     ;; ability shows a simultaneous resolution prompt when appropriate
     (do-game
