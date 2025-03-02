@@ -2053,7 +2053,7 @@
    :abilities [{:action true
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
-                :change-in-game-state (req (pos? (get-counters card :credit)))
+                :change-in-game-state {:req (req (pos? (get-counters card :credit)))}
                 :label "gain 4 [Credits]"
                 :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits]")
                 :async true
@@ -3228,7 +3228,7 @@
    :abilities [{:action true
                 :label "Take 3 [Credits] from this resource"
                 :cost [(->c :click 1)]
-                :change-in-game-state (req (pos? (get-counters card :credit)))
+                :change-in-game-state {:req (req (pos? (get-counters card :credit)))}
                 :once :per-turn
                 :msg "gain 3 [Credits]"
                 :async true

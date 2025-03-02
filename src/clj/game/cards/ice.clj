@@ -152,13 +152,15 @@
 (def end-the-run-if-tagged
   "ETR subroutine if tagged"
   {:label "End the run if the Runner is tagged"
-   :change-in-game-state (req tagged)
+   :change-in-game-state {:req (req tagged) :silent true}
    :msg "end the run"
    :async true
    :effect (effect (end-run :corp eid card))})
 
-;; helper for the faceup-archives-count cards
-(defn- faceup-archives-types [corp]
+
+(defn- faceup-archives-types
+  "helper for the faceup-archives-count cards"
+  [corp]
   (count (distinct (map :type (filter faceup? (:discard corp))))))
 
 (defn maybe-draw-sub
@@ -251,6 +253,7 @@
   "Places 1 power counter on a card."
   {:label "Place 1 power counter"
    :msg "place 1 power counter on itself"
+   :change-in-game-state {:silent (req true) :req (installed? card)}
    :async true
    :effect (req (add-counter state side eid card :power 1 {:placed true}))})
 
@@ -314,6 +317,7 @@
 (def runner-loses-click
   ; Runner loses a click effect
   {:label "Force the Runner to lose [Click]"
+   :change-in-game-state {:silent (req true) :req (req (pos? (:click runner)))}
    :msg "force the Runner to lose [Click], if able"
    :effect (effect (lose-clicks :runner 1))})
 
@@ -322,13 +326,14 @@
   [credits]
   {:label (str "Make the Runner lose " credits " [Credits]")
    :msg (str "force the Runner to lose " credits " [Credits]")
+   :change-in-game-state {:silent (req true) :req (req (pos? (:credit runner)))}
    :async true
    :effect (effect (lose-credits :runner eid credits))})
 
 (def add-runner-card-to-grip
   "Add 1 installed Runner card to the grip"
   {:label "Add an installed Runner card to the grip"
-   :change-in-game-state (req (seq (all-installed state :runner)))
+   :change-in-game-state {:silent true :req (req (seq (all-installed state :runner)))}
    :waiting-prompt true
    :prompt "Choose a card"
    :choices {:card #(and (installed? %)
@@ -343,7 +348,7 @@
    :label "Trash a program"
    :msg (msg "trash " (:title target))
    :waiting-prompt true
-   :change-in-game-state (req (seq (filter program? (all-installed state :runner))))
+   :change-in-game-state {:silent true :req (req (seq (filter program? (all-installed state :runner))))}
    :choices {:card #(and (installed? %)
                          (program? %))}
    :async true
@@ -356,7 +361,7 @@
    :msg (msg "force the runner to trash " (:title target))
    :display-side :corp
    :waiting-prompt true
-   :change-in-game-state (req (seq (filter program? (all-installed state :runner))))
+   :change-in-game-state {:silent true :req (req (seq (filter program? (all-installed state :runner))))}
    :choices {:card #(and (installed? %)
                          (program? %))}
    :async true
@@ -370,7 +375,7 @@
    :choices {:card #(and (installed? %)
                          (hardware? %))}
    :waiting-prompt true
-   :change-in-game-state (req (seq (filter hardware? (all-installed state :runner))))
+   :change-in-game-state {:silent true :req (req (seq (filter hardware? (all-installed state :runner))))}
    :async true
    :effect (effect (trash eid target {:cause :subroutine}))})
 
@@ -381,7 +386,7 @@
    :choices {:card #(and (installed? %)
                          (resource? %))}
    :waiting-prompt true
-   :change-in-game-state (req (seq (filter resource? (all-installed state :runner))))
+   :change-in-game-state {:silent true :req (req (seq (filter resource? (all-installed state :runner))))}
    :async true
    :effect (effect (trash eid target {:cause :subroutine}))})
 
@@ -391,7 +396,7 @@
    :label "Trash an installed Runner card"
    :msg (msg "trash " (:title target))
    :waiting-prompt true
-   :change-in-game-state (req (seq (all-installed state :runner)))
+   :change-in-game-state {:silent true :req (req (seq (all-installed state :runner)))}
    :choices {:card #(and (installed? %)
                          (runner? %))}
    :effect (effect (trash eid target {:cause :subroutine}))})
@@ -479,6 +484,7 @@
    :choices {:max 2
              :card grail-in-hand}
    :async true
+   :change-in-game-state {:silent true :req (req (seq (:hand corp)))}
    :effect (effect (reveal eid targets))
    :msg (let [sub-label #(:label (first (:subroutines (card-def %))))]
           (msg "reveal " (enumerate-str (map #(str (:title %) " (" (sub-label %) ")") targets))))})

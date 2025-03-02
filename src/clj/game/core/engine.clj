@@ -325,16 +325,16 @@
 (defn do-nothing
   "Does nothing (loudly)"
   [state side eid ability card]
-  (when-not (:change-in-game-state-silent ability)
+  (when-not (get-in ability [:change-in-game-state :silent])
     (system-msg state side (str "uses " (:title card) " to do nothing")))
   (effect-completed state side eid))
 
 (defn- change-in-game-state?
   "Concession for NCIGS going - uses a 'change-in-game-state' key to check when a card
   has no potential to do anything through resolving (different to req)"
-  [state side {:keys [change-in-game-state eid] :as ability} card targets]
-  (or (not (contains? ability :change-in-game-state))
-      (change-in-game-state state side eid card targets)))
+  [state side {:keys [eid] :as ability} card targets]
+  (or (= nil (get-in ability [:change-in-game-state :req]))
+      ((get-in ability [:change-in-game-state :req]) state side eid card targets)))
 
 (defn- do-effect
   "Trigger the effect"
