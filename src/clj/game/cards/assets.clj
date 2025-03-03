@@ -44,7 +44,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
-   [game.core.prevention :refer [damage-name prevent-bad-publicity prevent-damage prevent-expose]]
+   [game.core.prevention :refer [damage-name preventable? prevent-bad-publicity prevent-damage prevent-expose]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [end-run]]
@@ -448,8 +448,7 @@
                  :type :event
                  :max-uses 1
                  :mandatory true
-                 :ability {:req (req (and (pos? (:remaining context))
-                                          (not (:unpreventable context))))
+                 :ability {:req (req (preventable? context))
                            :trace {:base 3
                                    :successful {:msg "prevent all bad publicity"
                                                 :async true
@@ -2216,9 +2215,8 @@
                            :msg "prevent 1 net damage, place 1 counter on itself, and gain 3 [Credits]"
                            :req (req (and (= :net (:type context))
                                           (= :corp (:source-player context))
-                                          (not (:unpreventable context))
-                                          (pos? (:remaining context))))
-                           :effect (req (wait-for (prevent-damage state side :damage 1)
+                                          (preventable? context)))
+                           :effect (req (wait-for (prevent-damage state side 1)
                                                   (wait-for (add-counter state side card :power 1 {:suppress-checkpoint true})
                                                             (gain-credits state side eid 3))))}}]
    :abilities [{:action true
@@ -3290,8 +3288,7 @@
                  :type :ability
                  :label "1 [Credit]: Zaibatsu Loyalty"
                  :ability {:cost [(->c :credit 1)]
-                           :req (req (and (seq (:remaining context))
-                                          (not (:unpreventable context))))
+                           :req (req (preventable? context))
                            :msg "prevent a card from being exposed"
                            :async true
                            :effect (req (prevent-expose state side eid card))}}
@@ -3299,8 +3296,7 @@
                  :type :ability
                  :label "[trash]: Zaibatsu Loyalty"
                  :ability {:cost [(->c :trash-can)]
-                           :req (req (and (seq (:remaining context))
-                                          (not (:unpreventable context))))
+                           :req (req (preventable? context))
                            :msg "prevent a card from being exposed"
                            :async true
                            :effect (req (prevent-expose state side eid card))}}]

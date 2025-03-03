@@ -57,7 +57,7 @@
    [game.core.payment :refer [build-spend-msg can-pay? ->c]]
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [damage-name prevent-damage prevent-encounter prevent-tag prevent-trash-installed-by-type prevent-up-to-n-tags prevent-up-to-n-damage]]
+   [game.core.prevention :refer [damage-name prevent-damage preventable? prevent-encounter prevent-tag prevent-trash-installed-by-type prevent-up-to-n-tags prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -595,9 +595,9 @@
                            :req (req
                                   (and (> (:remaining context) 1)
                                        (= :net (:type context))
-                                       (not (:unpreventable context))))
-                           :msg (msg "prevent " (dec (:remaining context)) " " (damage-name state :damage) " damage")
-                           :effect (req (prevent-damage state side eid :damage (dec (:remaining context))))}}]})
+                                       (preventable? context)))
+                           :msg (msg "prevent " (dec (:remaining context)) " " (damage-name state) " damage")
+                           :effect (req (prevent-damage state side eid (dec (:remaining context))))}}]})
 
 (defcard "Biometric Spoofing"
   {:trash-icon true
@@ -606,11 +606,9 @@
                  :max-uses 1
                  :ability {:async true
                            :cost [(->c :trash-can)]
-                           :req (req
-                                  (and (pos? (:remaining context))
-                                       (not (:unpreventable context))))
-                           :msg (msg "prevent " (min 2 (:remaining context)) " " (damage-name state :damage) " damage")
-                           :effect (req (prevent-damage state side eid :damage (min 2 (:remaining context))))}}]})
+                           :req (req (preventable? context))
+                           :msg (msg "prevent " (min 2 (:remaining context)) " " (damage-name state) " damage")
+                           :effect (req (prevent-damage state side eid (min 2 (:remaining context))))}}]})
 
 (defcard "Blockade Runner"
   {:abilities [{:action true
@@ -668,11 +666,10 @@
                  :type :ability
                  :ability {:async true
                            :cost [(->c :credit 3)]
-                           :msg (msg "prevent 1 " (damage-name state :damage) " damage")
+                           :msg (msg "prevent 1 " (damage-name state) " damage")
                            :req (req (and (contains? #{:net :core :brain} (:type context))
-                                          (not (:unpreventable context))
-                                          (pos? (:remaining context))))
-                           :effect (req (prevent-damage state side eid :damage 1))}}]})
+                                          (preventable? context)))
+                           :effect (req (prevent-damage state side eid 1))}}]})
 
 (defcard "Charlatan"
   {:abilities [{:action true
@@ -752,12 +749,10 @@
                  :max-uses 1
                  :mandatory true
                  :ability {:async true
-                           :req (req
-                                  (and (pos? (:remaining context))
-                                       (has-subtype? (:source-card context) "Cybernetic")
-                                       (not (:unpreventable context))))
-                           :msg (msg "prevent " (:remaining context) " " (damage-name state :damage) " damage")
-                           :effect (req (prevent-damage state side eid :damage :all))}}]})
+                           :req (req (and (has-subtype? (:source-card context) "Cybernetic")
+                                          (preventable? context)))
+                           :msg (msg "prevent " (:remaining context) " " (damage-name state) " damage")
+                           :effect (req (prevent-damage state side eid :all))}}]})
 
 (defcard "Citadel Sanctuary"
   {:trash-icon true
@@ -766,12 +761,10 @@
                  :prompt "Use Citadel Sanctuary to prevent meat damage?"
                  :ability {:async true
                            :cost [(->c :trash-can) (->c :trash-entire-hand)]
-                           :req (req
-                                  (and (pos? (:remaining context))
-                                       (= :meat (:type context))
-                                       (not (:unpreventable context))))
-                           :msg (msg "prevent " (:remaining context) " " (damage-name state :damage) " damage")
-                           :effect (req (prevent-damage state side eid :damage :all))}}]
+                           :req (req (and (= :meat (:type context))
+                                          (preventable? context)))
+                           :msg (msg "prevent " (:remaining context) " " (damage-name state) " damage")
+                           :effect (req (prevent-damage state side eid :all))}}]
    :events [{:event :runner-turn-ends
              :interactive (req true)
              :msg "force the Corp to initiate a trace"
@@ -944,7 +937,7 @@
   {:trash-icon true
    :prevention [{:prevents :damage
                  :type :ability
-                 :ability (assoc (prevent-up-to-n-damage 3 :damage #{:meat})
+                 :ability (assoc (prevent-up-to-n-damage 3 #{:meat})
                                  :cost [(->c :trash-can)])}]
    :interactions {:pay-credits {:req (req (or (= :remove-tag (:source-type eid))
                                               (and (same-card? (:source eid) (:basic-action-card runner))
@@ -1178,8 +1171,7 @@
                  :ability {:async true
                            :cost [(->c :trash-can)]
                            :msg "avoid 1 tag"
-                           :req (req (and (pos? (:remaining context))
-                                          (not (:unpreventable context))))
+                           :req (req (preventable? context))
                            :effect (req (prevent-tag state :runner eid 1))}}]})
 
 (defcard "District 99"
@@ -1652,13 +1644,12 @@
                  :max-uses 1
                  :mandatory true
                  :ability {:async true
-                           :req (req
-                                  (and (pos? (:remaining context))
-                                       (or (= :meat (:type context))
-                                           (= :net (:type context)))
-                                       (not (:unpreventable context))))
-                           :msg (msg "prevent " (:remaining context) " " (damage-name state :damage) " damage")
-                           :effect (req (wait-for (prevent-damage state side :damage :all)
+                           :req (req (and (or (= :meat (:type context))
+                                              (= :net (:type context)))
+                                          (preventable? context)))
+
+                           :msg (msg "prevent " (:remaining context) " " (damage-name state) " damage")
+                           :effect (req (wait-for (prevent-damage state side :all)
                                                   (continue-ability
                                                     state side
                                                     {:msg (msg (if (= target "Trash Guru Davinder")
@@ -1748,8 +1739,7 @@
                  :type :event
                  :ability {:async true
                            :once :per-turn
-                           :req (req (and (pos? (:remaining context))
-                                          (not (:unpreventable context))
+                           :req (req (and (preventable? context)
                                           (not-used-once? state {:once :per-turn} card)))
                            :msg (msg "prevent the encounter ability on " (:title current-ice))
                            :effect (req (prevent-encounter state side eid))}}]
@@ -1886,10 +1876,9 @@
                  :ability {:async true
                            :cost [(->c :power 1)]
                            :msg "prevent 1 meat damage"
-                           :req (req (and (not (:unpreventable context))
-                                          (= :meat (:type context))
-                                          (pos? (:remaining context))))
-                           :effect (req (prevent-damage state side eid :damage 1))}}]})
+                           :req (req (and (= :meat (:type context))
+                                          (preventable? context)))
+                           :effect (req (prevent-damage state side eid 1))}}]})
 
 (defcard "John Masanori"
   {:events [{:event :successful-run
@@ -2395,8 +2384,7 @@
                  :ability {:async true
                            :cost [(->c :credit 2)]
                            :msg "avoid 1 tag"
-                           :req (req (and (pos? (:remaining context))
-                                          (not (:unpreventable context))))
+                           :req (req (preventable? context))
                            :effect (req (wait-for (prevent-tag state :runner 1)
                                                   (continue-ability state side (prevent-another-tag) card nil)))}}]
    :events [{:event :agenda-stolen
@@ -2426,8 +2414,7 @@
                                           (first-event? state side :pre-damage-flag #(= :net (:type (first %))))
                                           (no-event? state side :runner-prevents-all-tags)
                                           (no-event? state side :runner-gain-tag)
-                                          (not (:unpreventable context))
-                                          (pos? (:remaining context))))
+                                          (preventable? state :damage)))
                            :effect (req (wait-for
                                           (trash state side card {:unpreventable true :cause-card card})
                                           (continue-ability
@@ -2435,7 +2422,7 @@
                                             {:label "Trace 0 - if unsuccessful, the Runner prevents any amount of net damage"
                                              :trace {:base 0
                                                      :unsuccessful {:async true
-                                                                    :effect (req (continue-ability state :runner (prevent-up-to-n-damage :all :damage #{:net}) card nil))}}}
+                                                                    :effect (req (continue-ability state :runner (prevent-up-to-n-damage :all #{:net}) card nil))}}}
                                             card nil)))}}
                 {:prevents :tag
                  :type :event
@@ -2443,6 +2430,7 @@
                  :ability {:async true
                            :msg "force the Corp to trace"
                            :req (req (and (first-event? state side :tag-interrupt)
+                                          (preventable? state :tag)
                                           (no-event? state side :all-damage-was-prevented #(= :net (:type (first %))))
                                           (no-event? state side :damage #(= :net (:damage-type (first %))))))
                            :effect (req (wait-for
@@ -2574,12 +2562,10 @@
                  :max-uses 1
                  :mandatory true
                  :ability {:async true
-                           :req (req
-                                  (and (pos? (:remaining context))
-                                       (= :meat (:type context))
-                                       (not (:unpreventable context))))
-                           :msg (msg "prevent " (:remaining context) " " (damage-name state :damage) " damage")
-                           :effect (req (prevent-damage state side eid :damage :all))}}]
+                           :req (req (and (= :meat (:type context))
+                                          (preventable? context)))
+                           :msg (msg "prevent " (:remaining context) " " (damage-name state) " damage")
+                           :effect (req (prevent-damage state side eid :all))}}]
    :static-abilities [{:type :is-tagged
                        :value true}]})
 
@@ -2933,11 +2919,9 @@
                  :max-uses 1
                  :ability {:async true
                            :cost [(->c :trash-can)]
-                           :req (req
-                                  (and (pos? (:remaining context))
-                                       (not (:unpreventable context))))
-                           :msg (msg "prevent " (:remaining context) " " (damage-name state :damage) " damage")
-                           :effect (req (wait-for (prevent-damage state side :damage :all)
+                           :req (req (preventable? context))
+                           :msg (msg "prevent " (:remaining context) " " (damage-name state) " damage")
+                           :effect (req (wait-for (prevent-damage state side :all)
                                                   (let [cards (concat (get-in runner [:rig :hardware])
                                                                       (filter #(not (has-subtype? % "Virtual"))
                                                                               (get-in runner [:rig :resource]))

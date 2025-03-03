@@ -43,7 +43,7 @@
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
    [game.core.payment :refer [build-cost-string can-pay? cost-value ->c]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [damage-name damage-type prevent-damage prevent-encounter prevent-end-run prevent-tag prevent-up-to-n-damage]]
+   [game.core.prevention :refer [damage-name damage-type preventable? prevent-damage prevent-encounter prevent-end-run prevent-tag prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
@@ -105,10 +105,9 @@
                            :cost [(->c :power 1)]
                            :msg "prevent 1 net damage"
                            :req (req (and run
-                                          (not (:unpreventable context))
                                           (= :net (:type context))
-                                          (pos? (:remaining context))))
-                           :effect (req (prevent-damage state side eid :damage 1))}}
+                                          (preventable? context)))
+                           :effect (req (prevent-damage state side eid 1))}}
                 {:prevents :encounter
                  :type :ability
                  :ability {:async true
@@ -859,13 +858,12 @@
                            :cost [(->c :credit 3)]
                            :msg "prevent 1 net damage"
                            :req (req (and (= :net (:type context))
-                                          (not (:unpreventable context))
-                                          (pos? (:remaining context))))
-                           :effect (req (prevent-damage state side eid :damage 1))}}
+                                          (preventable? context)))
+                           :effect (req (prevent-damage state side eid 1))}}
                 {:prevents :damage
                  :type :ability
                  :label "Feedback Filter (Core)"
-                 :ability (assoc (prevent-up-to-n-damage 2 :damage #{:brain :core})
+                 :ability (assoc (prevent-up-to-n-damage 2 #{:brain :core})
                                  :cost [(->c :trash-can)])}]})
 
 (defcard "Flame-out"
@@ -1161,10 +1159,9 @@
                  :label "Heartbeat"
                  :ability {:async true
                            :cost [(->c :trash-installed 1)]
-                           :msg (msg "prevent 1 " (damage-name state :damage) " damage")
-                           :req (req (and (not (:unpreventable context))
-                                          (pos? (:remaining context))))
-                           :effect (req (prevent-damage state side eid :damage 1))}}]})
+                           :msg (msg "prevent 1 " (damage-name state) " damage")
+                           :req (req (preventable? context))
+                           :effect (req (prevent-damage state side eid 1))}}]})
 
 (defcard "Hermes"
   (let [ab {:interactive (req true)
@@ -1508,10 +1505,9 @@
                    :type :ability
                    :ability {:async true
                              :cost [(->c :trash-program-from-hand 1)]
-                             :msg (msg "prevent 1 " (damage-name state :damage) " damage")
+                             :msg (msg "prevent 1 " (damage-name state) " damage")
                              :req (req (and (not (= :meat (:type context)))
-                                            (not (:unpreventable context))
-                                            (pos? (:remaining context))))}}]}))
+                                            (preventable? context)))}}]}))
 
 (defcard "Mu Safecracker"
   {:implementation "Stealth credit restriction not enforced"
@@ -1544,14 +1540,12 @@
                  :max-uses 1
                  :mandatory true
                  :ability {:async true
-                           :req (req
-                                  (and (= :meat (:type context))
-                                       (first-event? state side :pre-damage-flag
-                                                     #(= :meat (:type (first %))))
-                                       (pos? (:remaining context))
-                                       (not (:unpreventable context))))
+                           :req (req (and (= :meat (:type context))
+                                          (first-event? state side :pre-damage-flag
+                                                        #(= :meat (:type (first %))))
+                                          (preventable? context)))
                            :msg "reduce the pending meat damage by 1"
-                           :effect (req (prevent-damage state side eid :damage 1))}}]})
+                           :effect (req (prevent-damage state side eid 1))}}]})
 
 (defcard "Net-Ready Eyes"
   {:on-install {:async true
@@ -1796,10 +1790,9 @@
                  :ability {:async true
                            :cost [(->c :power 1)]
                            :msg "prevent 1 meat damage"
-                           :req (req (and (not (:unpreventable context))
-                                          (= :meat (:type context))
-                                          (pos? (:remaining context))))
-                           :effect (req (prevent-damage state side eid :damage 1))}}]
+                           :req (req (and (preventable? context)
+                                          (= :meat (:type context))))
+                           :effect (req (prevent-damage state side eid 1))}}]
    :events [(trash-on-empty :power)]})
 
 (defcard "Poison Vial"
@@ -1950,12 +1943,12 @@
                    :ability {:async true
                              :cost [(->c :trash-can)]
                              :msg (msg "prevent up to " (max-trash state) " damage")
-                             :req (:req (prevent-up-to-n-damage 1 :damage #{:net :core :brain}))
+                             :req (:req (prevent-up-to-n-damage 1 #{:net :core :brain}))
                              :effect (req (let [prevented (:prevented context)]
                                             (wait-for (resolve-ability
                                                         state side
-                                                        (prevent-up-to-n-damage (max-trash state) :damage #{:net :core :brain})
-                                                        card nil)
+                                                        (prevent-up-to-n-damage (max-trash state) #{:net :core :brain})
+                                                        card targets)
                                                       (let [prevented-this-instance (- (get-in @state [:prevent :damage :prevented]) prevented)]
                                                         (system-msg state side (str "uses " (:title card) " to trash the top " prevented-this-instance " cards of the stack"))
                                                         (mill state :runner eid :runner prevented-this-instance)))))}}]}))
@@ -1965,15 +1958,14 @@
    :prevention [{:prevents :damage
                  :type :ability
                  :ability {:async true
-                           :req (req (and (pos? (:remaining context))
-                                          (not (:unpreventable context))
+                           :req (req (and (preventable? context)
                                           (same-card? (:source-card context) (:access @state))))
                            :effect (req (continue-ability
                                           state side
                                           {:cost [(->c :trash-can) (->c :x-credits 0 {:maximum (:remaining context)})]
-                                           :msg (msg "prevent " (cost-value eid :x-credits) " " (damage-type state :damage) " damage")
+                                           :msg (msg "prevent " (cost-value eid :x-credits) " " (damage-type state) " damage")
                                            :async true
-                                           :effect (req (prevent-damage state side eid :damage (cost-value eid :x-credits)))}
+                                           :effect (req (prevent-damage state side eid (cost-value eid :x-credits)))}
                                           card nil))}}]})
 
 (defcard "Record Reconstructor"

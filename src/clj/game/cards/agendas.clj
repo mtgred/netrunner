@@ -38,7 +38,7 @@
                              trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? ->c]]
-   [game.core.prevention :refer [damage-boost prevent-jack-out]]
+   [game.core.prevention :refer [damage-boost preventable? prevent-jack-out]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
@@ -1208,8 +1208,7 @@
                            :msg "prevent the runner from jacking out for the remainder of this run"
                            :condition :active
                            :async true
-                           :req (req (and (pos? (:remaining context))
-                                          (not (:unpreventable context))))
+                           :req (req (preventable? context))
                            :effect (req (wait-for (prevent-jack-out state side)
                                                   (register-lingering-effect
                                                     state side card
@@ -2258,7 +2257,7 @@
                                        (= :corp (:source-player context))
                                        (not (:unboostable context))))
                            :msg "increase the pending meat damage by 1"
-                           :effect (req (damage-boost state side eid :pre-damage 1))}}]})
+                           :effect (req (damage-boost state side eid 1))}}]})
 
 (defcard "The Future is Now"
   {:on-score {:interactive (req true)

@@ -50,7 +50,7 @@
                              swap-ice trash trash-cards]]
    [game.core.payment :refer [can-pay? ->c]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [damage-name prevent-damage prevent-up-to-n-tags prevent-up-to-n-damage]]
+   [game.core.prevention :refer [damage-name prevent-damage preventable? prevent-up-to-n-tags prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -2401,9 +2401,7 @@
                                        :ability {:async true
                                                  :card card
                                                  :condition :floating
-                                                 :req (req
-                                                        (and (pos? (:remaining context))
-                                                             (not (:unpreventable context))))
+                                                 :req (req (preventable? context))
                                                  :msg (msg "prevent " (:remaining context) " " (damage-name state :damage) " damage")
                                                  :effect (req (prevent-damage state side eid :damage :all))}}}))}}}})
 
@@ -2705,7 +2703,7 @@
                 {:prevents :damage
                  :type :ability
                  :prompt "Trash On the Lam to prevent up to 3 damage?"
-                 :ability (assoc (prevent-up-to-n-damage 3 :damage #{:net :meat :core :brain}) :cost [(->c :trash-can)])}]
+                 :ability (assoc (prevent-up-to-n-damage 3 #{:net :meat :core :brain}) :cost [(->c :trash-can)])}]
    :on-play {:prompt "Choose a resource to host On the Lam on"
              :choices {:card #(and (resource? %)
                                    (installed? %))}
@@ -3938,11 +3936,10 @@
                                   (and
                                     run
                                     (same-card? card (get-in @state [:runner :play-area 0]))
-                                    (pos? (:remaining context))
-                                    (not (:unpreventable context))))
+                                    (preventable? context)))
                            :condition :active
-                           :msg (msg "prevent " (:remaining context) " " (damage-name state :damage) " damage")
-                           :effect (req (prevent-damage state side eid :damage :all))}}]
+                           :msg (msg "prevent " (:remaining context) " " (damage-name state) " damage")
+                           :effect (req (prevent-damage state side eid :all))}}]
    :on-play {:async true
              :change-in-game-state (req (or (seq (:hand runner))
                                             (seq runnable-servers)))

@@ -43,7 +43,7 @@
    [game.core.moving :refer [flip-facedown mill move swap-cards swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve never?]]
    [game.core.payment :refer [build-cost-label can-pay? cost-target cost-value ->c value]]
-   [game.core.prevention :refer [damage-name prevent-damage prevent-end-run prevent-up-to-n-damage prevent-trash-installed-by-type]]
+   [game.core.prevention :refer [preventable? prevent-damage prevent-end-run prevent-up-to-n-damage prevent-trash-installed-by-type]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
@@ -1238,7 +1238,7 @@
 (defcard "Deus X"
   {:prevention [{:prevents :damage
                  :type :ability
-                 :ability (assoc (prevent-up-to-n-damage :all :damage #{:net})
+                 :ability (assoc (prevent-up-to-n-damage :all #{:net})
                                  :cost [(->c :trash-can)])}]
    :abilities [(break-sub [(->c :trash-can)] 0 "AP")]})
 
@@ -2372,10 +2372,9 @@
                            :cost [(->c :credit 1)]
                            :msg "prevent 1 net damage"
                            :req (req (and (= :net (:type context))
-                                          (not (:unpreventable context))
-                                          (first-event? state side :pre-damage-flag #(= :net (:type (first %))))
-                                          (pos? (:remaining context))))
-                           :effect (req (prevent-damage state side eid :damage 1))}}]})
+                                          (preventable? context)
+                                          (first-event? state side :pre-damage-flag #(= :net (:type (first %))))))
+                                          :effect (req (prevent-damage state side eid 1))}}]})
 
 (defcard "Nfr"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")]

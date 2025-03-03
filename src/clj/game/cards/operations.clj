@@ -733,7 +733,7 @@
                                        (pos? (:remaining context))
                                        (not (:unboostable context))))
                            :msg "increase the pending core damage by 1"
-                           :effect (req (damage-boost state side eid :pre-damage 1))}}]})
+                           :effect (req (damage-boost state side eid 1))}}]})
 
 (defcard "Digital Rights Management"
   {:on-play

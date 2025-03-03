@@ -19,12 +19,66 @@
    [game.macros :refer [msg req wait-for]]
    [jinteki.utils :refer [other-side]]))
 
-;; so how is this going to work?
-;; each player, starting with the active player, gets a chance to prevent effects
-;; we get a list of all cards that have prevention effects, and create a prompt with all the specific prevention abilities, along with:
-;;  * are they repeatable?
-;;  * the source card
-;;  * is it an ability, an interrupt, or a triggered event?
+;; DOCUMENTATION FOR THE PREVENTION SYSTEM
+;;   Interrupts/prevention abilities in the CR are awkward, because:
+;;   1) despite ncigs going, still have to obey ncigs (have to be relevant to the interrupt)
+;;   2) may be a mix of triggered events, static abilities, and paid abilities
+;;   3) Static abilities *should* be triggered first, but paid abilities and triggered events
+;;        may be resolved in any order
+;;   4) Some effects interact with paid abilities, so we need to ensure we differentiate between
+;;        paid abilities and events
+;;   5) Some of these may be floating effects from cards that are no longer in play (see leverage)
+;;   6) Some effects may only be used a limited number of times, some are repeatable (see prana)
+;;
+;; Sow how does this system work?
+;;   * Cards may have a :prevention list in their cdef
+;;   * This is a list of all prevention abilities on the card
+;;   * A prevention ability looks like this:
+;;
+;;   :prevention [{:prevents :tag
+;;                 :type :ability
+;;                 :prompt "Trash Decoy to avoid 1 tag?"
+;;                 :ability {:async true
+;;                           :cost [(->c :trash-can)]
+;;                           :msg "avoid 1 tag"
+;;                           :req (req (and (pos? (:remaining context))
+;;                                          (not (:unpreventable context))))
+;;                           :effect (req (prevent-tag state :runner eid 1))}}]})
+;;
+;;  KEYS:
+;;    :prevents - key, what this prevention is for (ie :tag, :damage, :pre-damage, :jack-out)
+;;    :type     - either :ability, or :event, for if this is a paid ability or a triggered event
+;;    :prompt   - string - optional - a prompt to be displayed when you click the button
+;;                if this isn't supplied, it will instead jump straight into the ability resolution
+;;                otherwise, it will be an `:optional {:prompt prompt :yes-ability ability}`
+;;    :label    - stribng - optional - the label for the button. If not supplied, it will just be the
+;;                name of the card (ie "Decoy"). I recommend only using this for handlers that
+;;                have ambiguity (ie feedback filter, dummy box, caldera, zaibatsu loyalty) as a way
+;;                of adding additional contextual information for the user.
+;;    :max-uses - int - optional - is there a maximum number of times this ability can trigger in one
+;;                instance? See: prana, muresh, cleaners, etc. If blank,
+;;                then this ability can be used any number of times so long as the req fn allows it
+;;    :ability  - the ability that gets triggered when you chose the prevention.
+;;                Write it like any other ability. It will hav access to a context map which
+;;                will typically have:
+;;                1) :remaining     - either numeric, or sequential, depending on prevention type
+;;                2) :count         - initial quantity of the thing to prevent (numeric)
+;;                3) :prevented     - either a numeric count, or the :all key for everything
+;;                4) :source-player - which player initiated this event (ie who did damage)
+;;                5) :source-card   - which card initiated this event (ie scorched earth)
+;;                6) :unpreventable - sometimes true, is this unpreventable?
+;;                7) :unboostable   - almost never true, is this unboostable?
+;;
+;;  FLOATING PREVENTIONS:
+;;    * register a lingering effect of :type :prevention
+;;    * :req should enforce the side - ie `:req (req (= :runner side))`
+;;    * :value is just a prevention map like normal
+;;    * in the :ability map, add `:condition :floating` so the engine will let us actually fire the
+;;        ability
+;;
+;;  Note: The `:req` fn of the given :ability is used for computing if the button should
+;;        show up, as well as wether or not you can pay the cost.
+
 
 (defn- relevant-prevention-abilities
   "selects all prevention abilities which are:
@@ -165,6 +219,14 @@
               (swap! state update-in [:prevent key :priority-passes] (fnil inc 1))
               (resolve-prevent-effects-with-priority state (other-side side) eid key prev-fn))))
 
+(defn preventable?
+  ([state key] (preventable? (get-in @state [:prevent key])))
+  ([{:keys [remaining unpreventable] :as context}]
+   (and (if (sequential? remaining)
+          (seq remaining)
+          (pos? remaining))
+        (not unpreventable))))
+
 ;; TRASH PREVENTION
 
 (defn prevent-trash-installed-by-type
@@ -220,19 +282,19 @@
 
 (defn resolve-trash-prevention
   [state side eid targets {:keys [unpreventable game-trash cause cause-card] :as args}]
-  (let [untrashable (keep identity (map #(cond
-                                           (and (not game-trash)
-                                                (untrashable-while-rezzed? %))
-                                           [%  "cannot be trashed while installed"]
-                                           (and (= side :runner)
-                                                (not (can-trash? state side %)))
-                                           [% "cannot be trashed"]
-                                           (and (= side :corp)
-                                                (untrashable-while-resources? %)
-                                                (> (count (filter resource? (all-active-installed state :runner))) 1))
-                                           [% "cannot be trashed while there are other resources installed"]
-                                           :else nil)
-                                        targets))
+  (let [untrashable (keep #(cond
+                             (and (not game-trash)
+                                  (untrashable-while-rezzed? %))
+                             [%  "cannot be trashed while installed"]
+                             (and (= side :runner)
+                                  (not (can-trash? state side %)))
+                             [% "cannot be trashed"]
+                             (and (= side :corp)
+                                  (untrashable-while-resources? %)
+                                  (> (count (filter resource? (all-active-installed state :runner))) 1))
+                             [% "cannot be trashed while there are other resources installed"]
+                             :else nil)
+                          targets)
         trashable (if untrashable
                     (vec (set/difference (set targets) (set (map first untrashable))))
                     (vec targets))
@@ -250,23 +312,35 @@
 
 ;; DAMAGE PREVENTION + PRE-DAMAGE PREVENTION
 
+(defn- damage-key
+  "pre-damage and damage are different events (this is dumb, but it's a concession we have to make)"
+  [state]
+  (cond
+    (get-in @state [:prevent :pre-damage])
+    :pre-damage
+    (get-in @state [:prevent :damage])
+    :damage
+    :else
+    (do (println "attempt to pick damage key when no damage prevention is active")
+        nil)))
+
 (defn damage-type
-  [state key]
-  (get-in @state [:prevent key :type]))
+  [state]
+  (get-in @state [:prevent (damage-key state) :type]))
 
 (defn damage-pending
-  [state key]
-  (get-in @state [:prevent key :remaining]))
+  [state]
+  (get-in @state [:prevent (damage-key state) :remaining]))
 
 (defn damage-boost
-  [state side eid key n]
-  (when (pos? (damage-pending state key))
-    (swap! state update-in [:prevent key :remaining] + n))
+  [state side eid n]
+  (when (pos? (damage-pending state))
+    (swap! state update-in [:prevent (damage-key state) :remaining] + n))
   (effect-completed state side eid))
 
 (defn damage-name
-  [state key]
-  (case (damage-type state key)
+  [state]
+  (case (damage-type state)
     :meat "meat"
     :brain "core"
     :core "core"
@@ -274,29 +348,28 @@
     "neat"))
 
 (defn prevent-damage
-  [state side eid key n]
-  (when (pos? (damage-pending state key))
+  [state side eid n]
+  (when (pos? (damage-pending state))
     (if (= n :all)
-      (swap! state update-in [:prevent key] merge {:remaining 0 :prevented :all})
-      (do (swap! state update-in [:prevent key :remaining] #(max 0 (- % n)))
-          (swap! state update-in [:prevent key :prevented] (fnil #(+ n %) n)))))
+      (swap! state update-in [:prevent (damage-key state)] merge {:remaining 0 :prevented :all})
+      (do (swap! state update-in [:prevent (damage-key state) :remaining] #(max 0 (- % n)))
+          (swap! state update-in [:prevent (damage-key state) :prevented] (fnil #(+ n %) n)))))
   (effect-completed state side eid))
 
 (defn prevent-up-to-n-damage
-  [n key types]
-  (letfn [(remainder [state] (get-in @state [:prevent key :remaining]))
+  [n types]
+  (letfn [(remainder [state] (get-in @state [:prevent (damage-key state) :remaining]))
           (max-to-avoid [state n] (if (= n :all) (remainder state) (min (remainder state) n)))]
-    {:prompt (msg "Choose how much " (damage-name state key) " damage prevent")
-     :req (req (and (pos? (get-in @state [:prevent key :remaining]))
-                    (not (get-in @state [:prevent key :unpreventable]))
+    {:prompt (msg "Choose how much " (damage-name state) " damage prevent")
+     :req (req (and (preventable? state (damage-key state))
                     (or (not types)
-                        (contains? types (get-in @state [:prevent key :type])))))
+                        (contains? types (get-in @state [:prevent (damage-key state) :type])))))
      :choices {:number (req (max-to-avoid state n))
                :default (req (max-to-avoid state n))}
      :async true
-     :msg (msg "prevent " target " " (damage-name state key) " damage")
-     :effect (req (prevent-damage state side eid key target))
-     :cancel-effect (req (prevent-damage state side eid key 0))}))
+     :msg (msg "prevent " target " " (damage-name state) " damage")
+     :effect (req (prevent-damage state side eid target))
+     :cancel-effect (req (prevent-damage state side eid 0))}))
 
 (defn resolve-pre-damage-for-side
   [state side eid]
@@ -304,8 +377,8 @@
     state side eid :pre-damage
     {:prompt (fn [state remainder]
                (if (= side :runner)
-                 (str "Prevent " (damage-pending state :pre-damage) " " (damage-name state :pre-damage) " damage?")
-                 (str "There is " (damage-pending state :pre-damage) " pending " (damage-name state :pre-damage) " damage")))
+                 (str "Prevent " (damage-pending state) " " (damage-name state) " damage?")
+                 (str "There is " (damage-pending state) " pending " (damage-name state) " damage")))
      :waiting "your opponent to resolve pre-damage triggers"
      :option "Pass priority"}))
 
@@ -318,8 +391,8 @@
     state side eid :damage
     {:prompt (fn [state remainder]
                (if (= side :runner)
-                 (str "Prevent " (damage-pending state :damage) " " (damage-name state :damage) " damage?")
-                 (str "There is " (damage-pending state :damage) " pending " (damage-name state :damage) " damage")))
+                 (str "Prevent " (damage-pending state) " " (damage-name state) " damage?")
+                 (str "There is " (damage-pending state) " pending " (damage-name state) " damage")))
      :waiting "your opponent to resolve damage triggers"
      :option "Pass priority"}))
 
