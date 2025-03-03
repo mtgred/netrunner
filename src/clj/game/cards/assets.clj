@@ -256,7 +256,6 @@
 
 (defcard "Anson Rose"
   (let [ability {:label "Place 1 advancement token (start of turn)"
-                 :automatic true
                  :once :per-turn
                  :msg "place 1 advancement token on itself"
                  :async true
@@ -472,7 +471,6 @@
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}]
    :events [{:event :corp-turn-begins
-             :automatic true
              :msg "place 2 [Credits] on itself"
              :req (req (>= (get-counters card :credit) 6))
              :async true
@@ -770,7 +768,6 @@
 
 (defcard "Corporate Town"
   (let [ability {:label "Trash a resource"
-                 :automatic true
                  :once :per-turn
                  :async true
                  :prompt "Choose a resource to trash"
@@ -932,7 +929,7 @@
 (defcard "Dr. Vientiane Keeling"
   {:static-abilities [(runner-hand-size+ (req (- (get-counters card :power))))]
    :on-rez gain-power-counter
-   :events [(assoc gain-power-counter :event :corp-turn-begins :automatic true)]})
+   :events [(assoc gain-power-counter :event :corp-turn-begins)]})
 
 (defcard "Drago Ivanov"
   {:advanceable :always
@@ -1063,7 +1060,6 @@
                :req (req (= (:cid target) (:ebc-rezzed (get-card state card))))}]
    :events [{:event :corp-turn-ends
              :silent (req true)
-             :automatic true
              :req (req (:ebc-rezzed card))
              :effect (effect (update! (dissoc card :ebc-rezzed)))}]
    :abilities [{:async true
@@ -1276,7 +1272,6 @@
                            (prevent-draw state :runner)))}
    :events [{:event :runner-turn-begins
              :silent (req true)
-             :automatic true
              :effect (effect (max-draw :runner 2))}]
    :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))})
 
@@ -1481,7 +1476,6 @@
 (defcard "Janaína \"JK\" Dumont Kindelán"
   (let [ability {:label "Place 3 [Credits] on this asset (start of turn)"
                  :once :per-turn
-                 :automatic true
                  :msg "place 3 [Credits] on itself"
                  :async true
                  :effect (effect (add-counter eid card :credit 3 {:placed true}))}]
@@ -1533,7 +1527,6 @@
                                 (effect-completed state side eid))))}
               {:event :corp-turn-ends
                :silent (req true)
-               :automatic true
                :effect cleanup}]}))
 
 (defcard "Kala Ghoda Real TV"
@@ -1677,7 +1670,6 @@
                 :async true
                 :effect (effect (gain-credits eid target))}]
    :events [{:event :corp-turn-begins
-             :automatic true
              :msg "place 2 [Credit] on itself"
              :async true
              :effect (req (add-counter state side eid card :credit 2))}]})
@@ -1910,7 +1902,6 @@
 (defcard "Mumbad Construction Co."
   {:derezzed-events [corp-rez-toast]
    :events [{:event :corp-turn-begins
-             :automatic true
              :silent (req true)
              :async true
              :effect (effect (add-prop eid card :advance-counter 1 {:placed true}))}]
@@ -2178,7 +2169,6 @@
 
 (defcard "Personalized Portal"
   {:events [{:event :corp-turn-begins
-             :automatic true
              :interactive (req true)
              :async true
              :effect (req (wait-for (draw state :runner 1)
@@ -2317,7 +2307,6 @@
   {:data {:counter {:power 3}}
    :derezzed-events [corp-rez-toast]
    :events [{:event :corp-turn-begins
-             :automatic true
              :req (req (pos? (get-counters card :power)))
              :async true
              :effect (effect (add-counter eid card :power -1 nil))}
@@ -2521,7 +2510,6 @@
                                   (lose-bad-publicity state side eid 1)
                                   (gain-credits state side eid 5)))}
         ability {:once :per-turn
-                 :automatic true
                  :req (req (:corp-phase-12 @state))
                  :label "Remove 1 counter (start of turn)"
                  :async true
@@ -2810,7 +2798,6 @@
             :effect (req (update! state side (assoc-in (get-card state card) [:special :borehole-valid] true))
                          (add-counter state side eid card :bad-publicity 6 nil))}
    :events [{:event :corp-turn-begins
-             :automatic true
              :msg (msg "take 1 bad publicity from " (:title card))
              :async true
              :effect (req (wait-for (add-counter state side card :bad-publicity -1 nil)
@@ -3245,7 +3232,6 @@
                                    (derez target {:source-card card}))}]
     {:derezzed-events [corp-rez-toast]
      :events [{:event :corp-turn-begins
-               :automatic true
                :interactive (req true)
                :async true
                :effect (req (wait-for (resolve-ability state side install card nil)

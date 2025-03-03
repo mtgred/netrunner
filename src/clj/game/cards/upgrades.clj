@@ -690,7 +690,6 @@
     {:derezzed-events [(assoc corp-rez-toast :event :runner-turn-ends)]
      :events [(assoc maybe-gain-counter :event :corp-turn-begins)
               {:event :successful-run
-               :automatic true
                :req (req (pos? (get-counters card :power)))
                :msg "remove 1 power counter from itself"
                :async true
@@ -1295,7 +1294,6 @@
                                                            :duration :end-of-run)]))})
         boost-access-by-3 {:req (req (= target (second (get-zone card))))
                            :msg "force the Runner to access 3 additional cards"
-                           :automatic true
                            :effect (req (let [bonus-server (-> card :zone second)]
 
                                           (access-bonus state :runner bonus-server 3)
@@ -1425,7 +1423,6 @@
                        :req (req (rezzed? card))
                        :value (req (second (get-zone card)))}]
    :events [{:event :successful-run
-             :automatic true
              :req (req (= :hq (target-server context)))
              :async true
              :msg "trash itself"
@@ -1546,7 +1543,6 @@
                        :req (req (= (:server (second targets)) (unknown->kw (get-zone card))))
                        :value (req (repeat (get-counters card :power) [(->c :credit 2)]))}]
    :events [{:event :successful-run
-             :automatic true
              :req (req (and (pos? (get-counters card :power))
                             (is-central? (:server context))))
              :msg "remove 1 hosted power counter"

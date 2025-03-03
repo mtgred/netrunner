@@ -169,7 +169,6 @@
                                       :async true
                                       :effect (req (draw state :runner eid 2))}}}
             {:event :runner-turn-ends
-             :automatic true
              :req (req tagged)
              :msg "place 1 power counter on itself"
              :async true
@@ -829,7 +828,6 @@
     {:data {:counter {:power 3}}
      :static-abilities [(mu+ 2)]
      :events [{:event :successful-run
-               :automatic true
                :req (req (first-event? state :runner :successful-run))
                :msg "place 1 power counter on itself"
                :async true
@@ -1213,7 +1211,6 @@
                                                                                                                                                                     :install-source card}})))}}}
                             card nil))}
             {:event :runner-turn-ends
-             :automatic true
              :req (req (and
                          (installed? card)
                          (some #{:hq} (:successful-run runner-reg))
@@ -1440,7 +1437,6 @@
   {:implementation "Power counters added automatically"
    :static-abilities [(mu+ 1)]
    :events [{:event :successful-run
-             :automatic true
              :silent (req true)
              :req (req (= :rd (target-server context)))
              :async true
@@ -1747,7 +1743,6 @@
 (defcard "Pennyshaver"
   {:static-abilities [(mu+ 1)]
    :events [{:event :successful-run
-             :automatic true
              :silent (req true)
              :async true
              :msg "place 1 [Credits]"
@@ -2546,7 +2541,6 @@
    :events [mark-changed-event
             (assoc identify-mark-ability :event :runner-turn-begins)
             {:event :successful-run
-             :automatic true
              :req (req (and (:marked-server target)
                             (first-event? state side :successful-run #(:marked-server (first %)))))
              :async true
@@ -2574,7 +2568,6 @@
                 :msg "suffer 1 meat damage"
                 :effect (effect (damage eid :meat 1 {:unboostable true :card card}))}
    :events [{:event :successful-run
-             :automatic true
              :async true
              :req (req (= :hq (target-server context)))
              :msg "place 1 power counter on itself"

@@ -938,7 +938,6 @@
              :change-in-game-state (req rd-runnable)
              :effect (req (make-run state side eid :rd card))}
    :events [{:event :successful-run
-             :automatic true
              :req (req (and (= :rd (target-server context))
                             this-card-run))
              :silent (req true)
@@ -1476,7 +1475,6 @@
                    :async true
                    :effect (effect (trash eid (assoc target :seen true) {:accessed true :cause-card card}))}}
    :events [{:event :successful-run
-             :automatic true
              :silent (req true)
              :req (req (and (= :hq (target-server context))
                             this-card-run))
@@ -1558,7 +1556,6 @@
              :effect (req (bypass-ice state)
                           (update! state side (update-in card [:special :bypass-count] (fnil inc 0))))}
             {:event :successful-run
-             :automatic true
              :effect (effect (prevent-access))}]})
 
 (defcard "Finality"
@@ -1568,7 +1565,6 @@
              :additional-cost [(->c :brain 1)]
              :effect (req (make-run state side eid :rd card))}
    :events [{:event :successful-run
-             :automatic true
              :silent (req true)
              :req (req (and (= :rd (target-server context))
                             this-card-run))
@@ -2079,7 +2075,6 @@
                :effect ab}
      :events [{:event :runner-turn-begins
                :silent (req true)
-               :automatic true
                :effect ab}]
      :leave-play (req (clear-all-flags-for-card! state side card))}))
 
@@ -2384,7 +2379,6 @@
              :change-in-game-state (req hq-runnable)
              :effect (req (make-run state side eid :hq card))}
    :events [{:event :successful-run
-             :automatic true
              :silent (req true)
              :req (req (and (= :hq (target-server context))
                             this-card-run))
@@ -3572,7 +3566,6 @@
 
 (defcard "Scrubbed"
   {:events [{:event :encounter-ice
-             :automatic true
              :once :per-turn
              :effect (effect
                        (register-lingering-effect
@@ -3597,7 +3590,6 @@
              :change-in-game-state (req rd-runnable)
              :effect (req (make-run state side eid :rd card))}
    :events [{:event :successful-run
-             :automatic true
              :req (req (and (= :rd (target-server context))
                             this-card-run))
              :silent (req true)
@@ -3922,7 +3914,6 @@
                                               (register-events
                                                 state side installed-card
                                                 [{:event :runner-turn-ends
-                                                  :automatic true
                                                   :duration :end-of-turn
                                                   :req (req (get-in (find-latest state installed-card) [:special :test-run]))
                                                   :msg (msg "move " (:title installed-card) " to the top of the stack")
@@ -3937,7 +3928,6 @@
              :change-in-game-state (req rd-runnable)
              :effect (req (make-run state side eid :rd card))}
    :events [{:event :successful-run
-             :automatic true
              :silent (req true)
              :req (req (and (= :rd (target-server context))
                             this-card-run))
@@ -4036,7 +4026,6 @@
                    (register-events
                      state side card
                      [{:event :runner-turn-ends
-                       :automatic true
                        :duration :end-of-turn
                        :unregister-once-resolved true
                        :effect (effect (remove-icon card t))}])))}})

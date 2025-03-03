@@ -554,7 +554,6 @@
                :req (req (= side :corp))
                :effect (effect (update! (assoc card :flipped false :face :front)))}
               {:event :successful-run
-               :automatic true
                :req (req (and (= :hq (target-server context))
                               (:flipped card)))
                :effect flip-effect}]
@@ -1415,7 +1414,6 @@
                          (let [ice (:ice context)
                                cost (rez-cost state side ice)]
                            [{:event :encounter-ice
-                             :automatic true
                              :duration :end-of-encounter
                              :unregister-once-resolved true
                              :req (req (same-card? (:ice context) ice))
@@ -1840,7 +1838,6 @@
 
 (defcard "Rielle \"Kit\" Peddler: Transhuman"
   {:events [{:event :encounter-ice
-             :automatic true
              :req (req (first-event? state side :encounter-ice))
              :msg (msg "make " (:title (:ice context))
                        " gain Code Gate until the end of the run")

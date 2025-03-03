@@ -22,12 +22,10 @@
     (system-msg state :runner (str "identifies [their] mark to be " (central->name new-mark)))))
 
 (def identify-mark-ability
-  {:automatic true
-   :effect (req (when (nil? (:mark @state)) (identify-mark state)))})
+  {:effect (req (when (nil? (:mark @state)) (identify-mark state)))})
 
 (def mark-changed-event
   {:event :mark-changed
-   :automatic true
    :silent (req true)
    :interactive (req false)
    :effect (req (update! state :runner (assoc card :card-target (central->name (:mark @state)))))})

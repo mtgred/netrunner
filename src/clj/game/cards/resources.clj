@@ -129,7 +129,6 @@
      :events [(assoc place-credit :event :runner-turn-begins)
               (assoc place-credit :event :agenda-stolen)
               {:event :runner-turn-ends
-               :automatic true
                :req (req (<= 3 (get-counters (get-card state card) :credit)))
                :async true
                :effect (effect (continue-ability turn-ends-ability card targets))}]
@@ -275,7 +274,6 @@
                 :async true
                 :effect (req (take-credits state side eid card :credit :all))}]
    :events [{:event :runner-turn-begins
-             :automatic true
              :req (req (>= (get-counters card :credit) 6))
              :msg "place 2 [Credit] on itself"
              :async true
@@ -290,7 +288,6 @@
 (defcard "Always Be Running"
   {:implementation "Run requirement not enforced"
    :events [{:event :runner-turn-begins
-             :automatic true
              :effect (req (toast state :runner "Reminder: Always Be Running requires a run on the first click" "info"))}]
    :abilities [(assoc (break-sub [(->c :lose-click 2)] 1 "All" {:req (req true)}) :once :per-turn)]})
 
@@ -1003,7 +1000,6 @@
 
 (defcard "Crypt"
   {:events [{:event :successful-run
-             :automatic true
              :silent (req true)
              :optional {:prompt (msg "Place 1 virus counter on " (:title card) "?")
                         :req (req (= :archives (target-server context)))
@@ -1394,7 +1390,6 @@
 
 (defcard "Enhanced Vision"
   {:events [{:event :successful-run
-             :automatic true
              :silent (req true)
              :async true
              :effect (req (let [target (first (shuffle (:hand corp)))]
@@ -1861,7 +1856,6 @@
   {:implementation "Credit gain must be manually triggered"
    :events [{:event :runner-turn-begins
              :silent (req true)
-             :automatic true
              :async true
              :effect (effect (add-counter :runner eid card :credit 1))}
             ;; TODO (NoahTheDuke, Oct 2020):
@@ -1947,7 +1941,6 @@
                           {:effect (effect (system-msg (str "declines to use " (:title card) " to gain [Click]"))
                                            (update! (assoc-in card [:special :joshua-b] false)))}}}
               {:event :runner-turn-ends
-               :automatic true
                :interactive (req true)
                :req (req (get-in card [:special :joshua-b]))
                :async true
@@ -2192,7 +2185,6 @@
                 :msg (msg "add " (:title target) " to [their] Grip")
                 :effect (effect (move target :hand))}]
    :events [{:event :runner-turn-ends
-             :automatic true
              :interactive (req true)
              :async true
              :effect (effect (trash-cards eid (filter program? (:hosted card)) {:cause-card card}))}]})
@@ -2257,7 +2249,6 @@
 
 (defcard "Motivation"
   (let [ability {:label "Look at the top card of the stack (start of turn)"
-                 :automatic true
                  :req (req (:runner-phase-12 @state))
                  :once :per-turn
                  :optional
@@ -2391,7 +2382,6 @@
 (defcard "Neutralize All Threats"
   {:events [(breach-access-bonus :hq 1)
             {:event :breach-server
-             :automatic true
              :req (req (and (= target :archives)
                             (seq (filter :trash (:discard corp)))))
              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
@@ -2608,7 +2598,6 @@
                                                    (= (zone->name (:server context))
                                                       (:card-target card)))))))))
               {:event :runner-turn-ends
-               :automatic true
                :silent (req true)
                :effect (effect (update! (dissoc (get-card state card) :card-target)))}]}))
 
@@ -3056,7 +3045,6 @@
                                                    (= (zone->name (:server context))
                                                       (:card-target card)))))))))
               {:event :runner-turn-ends
-               :automatic true
                :silent (req true)
                :effect (effect (update! (dissoc card :card-target)))}]
      :abilities [ability]}))
@@ -3396,7 +3384,6 @@
                                       (< (get-counters card :power) 3)))
                        :value true}]
    :events [{:event :runner-turn-begins
-             :automatic true
              :async true
              :effect (req (if (<= 2 (get-counters card :power))
                             (do (move state side card :rfg)
@@ -3588,7 +3575,6 @@
                  :req (req (= (:cid target) (:supplier-installed (get-card state card))))}]
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-turn-ends
-               :automatic true
                :silent (req true)
                :req (req (:supplier-installed card))
                :effect (effect (update! (dissoc card :supplier-installed)))}]}))
@@ -3747,7 +3733,6 @@
                                 (update! state side (assoc card :card-target target))))}]
     {:events [(assoc ability :event :runner-turn-begins)
               {:event :encounter-ice
-               :automatic true
                :req (req (and
                            (matches-server (:ice target) card state side)
                            (first-event? state side :encounter-ice #(matches-server (:ice (first %)) card state side))))
@@ -3763,7 +3748,6 @@
                                :effect (req (update-current-encounter state :replace-subroutine sub)
                                             (effect-completed state side eid))}])))}
               {:event :runner-turn-ends
-               :automatic true
                :silent (req true)
                :effect (effect (update! (dissoc card :card-target)))}]
      :abilities [ability]}))
@@ -3857,7 +3841,6 @@
 
 (defcard "Virus Breeding Ground"
   {:events [{:event :runner-turn-begins
-             :automatic true
              :async true
              :effect (effect (add-counter eid card :virus 1))}]
    :abilities [{:action true
