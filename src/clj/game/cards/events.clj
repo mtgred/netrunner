@@ -2695,8 +2695,7 @@
                    (draw state :runner eid 4)))}})
 
 (defcard "On the Lam"
-  {:trash-icon true
-   :prevention [{:prevents :tag
+  {:prevention [{:prevents :tag
                  :type :ability
                  :prompt "Trash On the Lam to avoid up to 3 tags?"
                  :ability (assoc (prevent-up-to-n-tags 3) :cost [(->c :trash-can)])}

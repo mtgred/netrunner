@@ -2003,9 +2003,8 @@
 (defcard "LLDS Energy Regulator"
   (letfn [(valid-context? [context] (and (not= :ability-cost (:cause context))
                                          (not (:game-trash context))))]
-    {:trash-icon true
-     :prevention [(prevent-trash-installed-by-type "3 [Credits]: LLDS Energy Regulator"  #{"Hardware"}  [(->c :credit 3)]   valid-context?)
-                  (prevent-trash-installed-by-type "[Trash]: LLDS Energy Regulator"      #{"Hardware"}  [(->c :trash-can 3)] valid-context?)]}))
+    {:prevention [(prevent-trash-installed-by-type "3 [Credits]: LLDS Energy Regulator"  #{"Hardware"}  [(->c :credit 3)]   valid-context?)
+                  (prevent-trash-installed-by-type "[Trash]: LLDS Energy Regulator"      #{"Hardware"}  [(->c :trash-can)] valid-context?)]}))
 
 (defcard "Lobisomem"
   (auto-icebreaker {:data {:counter {:power 1}}

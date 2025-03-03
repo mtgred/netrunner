@@ -110,11 +110,12 @@
 (defn has-trash-ability?
   [card]
   (let [abilities (:abilities (card-def card))
+        prevents  (map :ability (:prevention (card-def card)))
+        access-ab [(get-in (card-def card) [:interactions :access-ability])]
         events (:events (card-def card))]
-    (or (some :trash-icon (concat abilities events))
-        (:trash-icon (card-def card))
+    (or (some :trash-icon (concat abilities events prevents access-ab))
         (some #(= :trash-can (:cost/type %))
-              (->> abilities
+              (->> (concat abilities events prevents access-ab)
                    (map :cost)
                    (vec)
                    (merge-costs))))))

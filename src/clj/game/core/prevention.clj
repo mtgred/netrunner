@@ -246,6 +246,7 @@
                            (valid-context? context)
                            (can-pay? state side eid card nil cost)))
                :async true
+               :trash-icon (= cost [(->c :trash-can)])
                :effect (req
                          (wait-for (resolve-ability
                                      state side

@@ -586,8 +586,7 @@
              :effect (req (mill state :corp eid :corp 1))}]})
 
 (defcard "Bio-Modeled Network"
-  {:trash-icon true
-   :prevention [{:prevents :damage
+  {:prevention [{:prevents :damage
                  :type :ability
                  :max-uses 1
                  :ability {:async true
@@ -600,8 +599,7 @@
                            :effect (req (prevent-damage state side eid (dec (:remaining context))))}}]})
 
 (defcard "Biometric Spoofing"
-  {:trash-icon true
-   :prevention [{:prevents :damage
+  {:prevention [{:prevents :damage
                  :type :ability
                  :max-uses 1
                  :ability {:async true
@@ -755,8 +753,7 @@
                            :effect (req (prevent-damage state side eid :all))}}]})
 
 (defcard "Citadel Sanctuary"
-  {:trash-icon true
-   :prevention [{:prevents :damage
+  {:prevention [{:prevents :damage
                  :type :ability
                  :prompt "Use Citadel Sanctuary to prevent meat damage?"
                  :ability {:async true
@@ -934,8 +931,7 @@
                                   (make-run eid target card))}]}))
 
 (defcard "Crash Space"
-  {:trash-icon true
-   :prevention [{:prevents :damage
+  {:prevention [{:prevents :damage
                  :type :ability
                  :ability (assoc (prevent-up-to-n-damage 3 #{:meat})
                                  :cost [(->c :trash-can)])}]
@@ -1163,8 +1159,7 @@
                                 :type :credit}}})
 
 (defcard "Decoy"
-  {:trash-icon true
-   :prevention [{:prevents :tag
+  {:prevention [{:prevents :tag
                  :type :ability
                  :label "Decoy"
                  :prompt "Trash Decoy to avoid 1 tag?"
@@ -2913,8 +2908,7 @@
                       card nil))}]}))
 
 (defcard "Sacrificial Clone"
-  {:trash-icon true
-   :prevention [{:prevents :damage
+  {:prevention [{:prevents :damage
                  :type :ability
                  :max-uses 1
                  :ability {:async true
@@ -2943,8 +2937,7 @@
 (defcard "Sacrificial Construct"
   (letfn [(valid-context? [context] (and (not= :ability-cost (:cause context))
                                          (not (:game-trash context))))]
-    {:trash-icon true
-     :prevention [(prevent-trash-installed-by-type "Sacrificial Construct"  #{"Program" "Hardware"}  [(->c :trash-can)] valid-context?)]}))
+    {:prevention [(prevent-trash-installed-by-type "Sacrificial Construct"  #{"Program" "Hardware"}  [(->c :trash-can)] valid-context?)]}))
 
 (defcard "Safety First"
   {:static-abilities [(runner-hand-size+ -2)]
