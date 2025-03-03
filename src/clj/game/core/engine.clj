@@ -324,25 +324,30 @@
 
 (defn do-nothing
   "Does nothing (loudly)"
-  [state side eid card]
-  (system-msg state side (str "uses " (:title card) " to do nothing"))
-  (effect-completed state side eid))
+  ([state side eid ability card] (do-nothing state side eid ability card nil))
+  ([state side eid ability card payment-str]
+   (when-not (get-in ability [:change-in-game-state :silent])
+     (print-msg state side (assoc ability :msg "do nothing") card [] payment-str))
+   ;;(system-msg state side (str "uses " (:title card) " to do nothing")))
+   (effect-completed state side eid)))
 
 (defn- change-in-game-state?
   "Concession for NCIGS going - uses a 'change-in-game-state' key to check when a card
   has no potential to do anything through resolving (different to req)"
-  [state side {:keys [change-in-game-state eid] :as ability} card targets]
-  (or (not (contains? ability :change-in-game-state))
-      (change-in-game-state state side eid card targets)))
+  [state side {:keys [eid] :as ability} card targets]
+  (or (= nil (get-in ability [:change-in-game-state :req]))
+      ((get-in ability [:change-in-game-state :req]) state side eid card targets)))
 
 (defn- do-effect
   "Trigger the effect"
-  [state side {:keys [eid] :as ability} card targets]
-  (if-let [ability-effect (:effect ability)]
-    (if (change-in-game-state? state side ability card targets)
-      (ability-effect state side eid card targets)
-      (do-nothing state side eid card))
-    (effect-completed state side eid)))
+  [state side {:keys [eid] :as ability} card payment-str targets]
+  (if (change-in-game-state? state side ability card targets)
+      (do (print-msg state side ability card targets payment-str)
+          (if-let [ability-effect (:effect ability)]
+            (ability-effect state side eid card targets)
+            (effect-completed state side eid)))
+      (do (do-nothing state side eid ability card payment-str)
+          (effect-completed state side eid))))
 
 (defn merge-costs-paid
   ([cost-paid] cost-paid)
@@ -371,11 +376,9 @@
         ;; We still want the card if the card is trashed, so default to given
         ;; when the latest is gone.
         card (or (get-card state card) card)]
-    ;; Print the message
-    (print-msg state side ability card targets payment-str)
     ;; Trigger the effect
     (register-once state side ability card)
-    (do-effect state side ability card targets)
+    (do-effect state side ability card payment-str targets)
     ;; If the ability isn't async, complete it
     (when-not (:async ability)
       (effect-completed state side eid))))
@@ -414,7 +417,7 @@
                  (select-keys [:cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
                  (assoc :targets targets))]
     (if-not (change-in-game-state? state side ability card targets)
-      (do-nothing state side eid card)
+      (do-nothing state side eid ability card)
       (if (map? choices)
         ;; Two types of choices use maps: select prompts, and :number prompts.
         (cond

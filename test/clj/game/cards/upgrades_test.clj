@@ -3947,7 +3947,7 @@
   ;; Trash to stop installs for the rest of the run
   (do-game
     (new-game {:corp {:deck [(qty "Signal Jamming" 3)]}
-               :runner {:deck [(qty "Self-modifying Code" 3) "Reaver"]}})
+               :runner {:hand [(qty "Self-modifying Code" 3)] :deck ["Reaver"] :credits 10}})
     (starting-hand state :runner ["Self-modifying Code" "Self-modifying Code"])
     (play-from-hand state :corp "Signal Jamming" "HQ")
     (take-credits state :corp)
@@ -3960,7 +3960,8 @@
       (run-on state "HQ")
       (card-ability state :corp sj 0)
       (card-ability state :runner smc1 0)
-      (is (no-prompt? state :runner) "SJ blocking SMC")
+      (is (= ["Done"] (prompt-titles :runner)) "Can only shuffle")
+      (click-prompt state :runner "Done")
       (run-jack-out state)
       (card-ability state :runner smc2 0)
       (click-prompt state :runner "Reaver"))))
