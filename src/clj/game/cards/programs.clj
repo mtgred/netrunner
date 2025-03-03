@@ -492,6 +492,7 @@
                   :msg "make a run on R&D"
                   :makes-run true
                   :async true
+                  :change-in-game-state {:req (req rd-runnable)}
                   :effect (effect (register-events card [ability])
                                   (make-run eid :rd card))}]}))
 
@@ -910,6 +911,7 @@
                 :msg "make a run on R&D"
                 :makes-run true
                 :async true
+                :change-in-game-state {:req (req rd-runnable)}
                 :effect (req (make-run state side eid :rd card))}
                (set-autoresolve :auto-place-counter "Conduit placing virus counters on itself")]})
 
@@ -934,7 +936,7 @@
                                 ab (if (= 1 amt-trashed) sing-ab mult-ab)]
                             (continue-ability state side ab card targets)))}]
    :abilities [{:action true
-                :req (req (pos? (get-virus-counters state card)))
+                :change-in-game-state {:req (req (pos? (get-virus-counters state card)))}
                 :cost [(->c :click 1)]
                 :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters"
                 :async true
@@ -1298,6 +1300,7 @@
                        :no-mu true
                        :max-mu 3}]
    :abilities [{:action true
+                :change-in-game-state {:req (req (seq (:deck runner)))}
                 :label "Search the stack for a virus program and add it to the grip"
                 :prompt "Choose a Virus"
                 :msg (msg "add " (:title target) " from the stack to the grip")
@@ -1390,6 +1393,7 @@
                    :effect (effect (reveal eid (:hand corp)))}})]
     {:abilities [{:action true
                   :cost [(->c :click 1)]
+                  :change-in-game-state {:req (req hq-runnable)}
                   :msg "make a run on HQ"
                   :makes-run true
                   :async true
@@ -1484,7 +1488,7 @@
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}]
    :abilities [{:action true
-                :req (req (pos? (get-virus-counters state card)))
+                :change-in-game-state {:req (req (pos? (get-virus-counters state card)))}
                 :cost [(->c :click 1) (->c :trash-can)]
                 :label "Gain 2 [Credits] for each hosted virus counter"
                 :msg (msg (str "gain " (* 2 (get-virus-counters state card)) " [Credits]"))
@@ -1613,6 +1617,7 @@
      :abilities [{:action true
                   :async true
                   :cost [(->c :click 1) (->c :virus 1)]
+                  :change-in-game-state {:req (req (seq (:deck corp)))}
                   :keep-menu-open :while-virus-tokens-left
                   :msg "force the Corp to trash the top card of R&D"
                   :effect (effect (mill :corp eid :corp 1))}]}))
@@ -1705,7 +1710,7 @@
    :abilities [{:action true
                 :cost [(->c :click 1) (->c :virus 2)]
                 :keep-menu-open :while-2-virus-tokens-left
-                :req (req (pos? (count (:hand corp))))
+                :change-in-game-state {:req (req (seq (:hand corp)))}
                 :msg "force the Corp to trash 1 card from HQ"
                 :async true
                 :effect (req (continue-ability
@@ -1898,6 +1903,7 @@
                                    (trash eid (assoc target :seen true) {:cause-card card}))}})]
     {:abilities [{:action true
                   :cost [(->c :click 1)]
+                  :change-in-game-state {:req (req rd-runnable)}
                   :msg "make a run on R&D"
                   :makes-run true
                   :async true
@@ -2992,7 +2998,8 @@
   {:abilities [{:cost [(->c :credit 2)]
                 :label "Install a program"
                 :once :per-turn
-                :req (req (not (install-locked? state side)))
+                :change-in-game-state {:req (req (and (not (install-locked? state side))
+                                                      (seq (:hand runner))))}
                 :prompt "Choose a program to install"
                 :choices {:card #(and (program? %)
                                       (in-hand? %))}
@@ -3011,8 +3018,7 @@
              :effect (req (gain-credits state side eid 1))}]})
 
 (defcard "Self-modifying Code"
-  {:abilities [{:req (req (not (install-locked? state side)))
-                :label "Install a program from the stack"
+  {:abilities [{:label "Install a program from the stack"
                 :cost [(->c :trash-can) (->c :credit 2)]
                 :async true
                 :effect (effect
@@ -3022,6 +3028,7 @@
                                              (->> (:deck runner)
                                                   (filter
                                                     #(and (program? %)
+                                                          (not (install-locked? state side))
                                                           (can-pay? state side
                                                                     (assoc eid :source card :source-type :runner-install)
                                                                     % nil [(->c :credit (install-cost state side %))])))
@@ -3063,6 +3070,7 @@
 (defcard "Sneakdoor Beta"
   {:abilities [{:action true
                 :cost [(->c :click 1)]
+                :change-in-game-state {:req (req archives-runnable)}
                 :msg "make a run on Archives"
                 :makes-run true
                 :async true
@@ -3183,6 +3191,7 @@
                   :once :per-turn
                   :msg "make a run on R&D"
                   :makes-run true
+                  :change-in-game-state {:req (req rd-runnable)}
                   :async true
                   :effect (effect (register-events card [ability])
                                   (make-run eid :rd card))}]}))
@@ -3290,7 +3299,8 @@
     {:abilities [{:action true
                   :label "Make a run on targeted server"
                   :cost [(->c :click 1) (->c :credit 2)]
-                  :req (req (some #(= (:card-target card) %) runnable-servers))
+                  :change-in-game-state
+                  {:req (req (some #(= (:card-target card) %) runnable-servers))}
                   :msg (msg "make a run on " (:card-target card) ". Prevent the first subroutine that would resolve from resolving")
                   :async true
                   :effect (effect (register-events card [prevent-sub])
