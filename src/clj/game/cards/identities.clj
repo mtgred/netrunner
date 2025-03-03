@@ -282,6 +282,11 @@
              :async true
              :effect (effect (trash :corp eid target nil))}]})
 
+
+(defcard "Ampère: Cybernetics For Anyone"
+  ;; No special implementation
+  {})
+
 (defcard "Andromeda: Dispossessed Ristie"
   {:events [{:event :pre-start-game
              :req (req (= side :runner))
@@ -618,6 +623,7 @@
             (assoc ability :event :agenda-stolen :req (req true))]
    :abilities [{:action true
                 :label "Look at the top 3 cards of R&D"
+                :change-in-game-state {:req (req (seq (:deck corp)))}
                 :cost [(->c :click 1) (->c :power 1)]
                 :msg "look at the top 3 cards of R&D"
                 :async true
@@ -1124,6 +1130,7 @@
                 :label "Install a non-virus program from the stack, lowering the cost by 1 [Credit]"
                 :cost [(->c :click 1)]
                 :prompt "Choose a program"
+                :change-in-game-state {:req (req (seq (:deck runner)))}
                 :choices (req (cancellable
                                 (filter #(and (program? %)
                                               (not (has-subtype? % "Virus"))
@@ -1750,6 +1757,7 @@
                 :once :per-turn
                 :makes-run true
                 :async true
+                :change-in-game-state {:req (req archives-runnable)}
                 :effect (effect (update! (assoc-in card [:special :omar-run] true))
                                 (make-run eid :archives (get-card state card)))}]
    :events [{:event :pre-successful-run
@@ -1764,12 +1772,8 @@
             {:event :run-ends
              :effect (effect (update! (dissoc-in card [:special :omar-run])))}]})
 
-(defcard "Ampère: Cybernetics For Anyone"
-    ;; No special implementation
-  {})
-
 (defcard "Nova Initiumia: Catalyst & Impetus"
-      ;; No special implementation
+  ;; No special implementation
   {})
 
 (defcard "Pālanā Foods: Sustainable Growth"
@@ -1863,6 +1867,7 @@
                   :async true
                   :label "Install a card from HQ"
                   :cost [(->c :click 1) (->c :credit 1)]
+                  :change-in-game-state {:req (req (seq (:hand corp)))}
                   :prompt "Choose a card to install from HQ"
                   :choices {:card #(and (or (asset? %) (agenda? %) (upgrade? %))
                                         (corp? %)
