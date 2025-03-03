@@ -239,6 +239,7 @@
               :she "She/her"
               :sheit "She/it"
               :shethey "She/they"
+              :heshe "He/She/they"
               :he "He/him"
               :heit "He/it"
               :hethey "He/they"
