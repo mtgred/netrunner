@@ -337,7 +337,7 @@
       (is (:run @state) "Cannot use B-1001 ability during runs on its own server")
       (run-continue state)
       (click-prompt state :runner "No action")
-      (run-empty-server state :hq)
+      (run-on state :hq)
       (is (changed? [(count-tags state) -1]
             (card-ability state :corp b 0)
             (is (not (:run @state)) "Run ended"))
@@ -1264,13 +1264,14 @@
           "Took all hosted credits")
       (is (= 1 (count (:discard (get-corp)))) "Cybersand Harvester got trashed"))))
 
-(deftest cybersand-harvester-cant-be-trashed-when-no-credits
+(deftest cybersand-harvester-can-be-trashed-when-no-credits
   (do-game
     (new-game {:corp {:deck ["Cybersand Harvester"]}})
     (play-from-hand state :corp "Cybersand Harvester" "New remote")
     (rez state :corp (get-content state :remote1 0))
     (card-ability state :corp (get-content state :remote1 0) 0)
-    (is (= "Cybersand Harvester" (:title (get-content state :remote1 0))) "Cybersand Harveste was not trashed")))
+    (is (= "Cybersand Harvester" (->> (get-corp) :discard first :title))
+        "Cybersand Harvester was trashed")))
 
 (deftest daily-business-show-full-test
     ;; Full test
