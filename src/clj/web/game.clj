@@ -439,14 +439,21 @@
 
 (defn switch-side-for-lobby
   [gameid]
-  (let [lobby (app-state/get-lobby gameid)
-	new-app-state (swap! app-state/app-state
-                             update :lobbies
-                             #(-> %
-                                  (handle-swap-sides-in-prog gameid)))
-        lobby? (get-in new-app-state [:lobbies gameid])]
-    (lobby/send-lobby-state lobby?)
-    (lobby/broadcast-lobby-list)))
+  (let [{:keys [state] :as lobby} (app-state/get-lobby gameid)
+        old-runner (get-in @state [:runner :user])
+        old-runner-options (get-in @state [:runner :options])]
+    (swap! state assoc-in [:runner :user] (get-in @state [:corp :user]))
+    (swap! state assoc-in [:runner :options] (get-in @state [:corp :options]))
+    (swap! state assoc-in [:corp :user] old-runner)
+    (swap! state assoc-in [:corp :options] old-runner-options)
+    (lobby/lobby-thread
+      (let [new-app-state (swap! app-state/app-state
+                                 update :lobbies
+                                 #(-> %
+                                      (handle-swap-sides-in-prog gameid)))
+            lobby? (get-in new-app-state [:lobbies gameid])]
+        (lobby/send-lobby-state lobby?)
+        (lobby/broadcast-lobby-list)))))
 
 (defmethod commands/lobby-command :swap-sides [{:keys [gameid] :as args}]
   (switch-side-for-lobby gameid))
