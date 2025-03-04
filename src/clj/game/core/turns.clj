@@ -15,6 +15,7 @@
     [game.core.say :refer [system-msg]]
     [game.core.set-aside :refer [clean-set-aside!]]
     [game.core.toasts :refer [toast]]
+    [game.core.turmoil :as turmoil]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [flatline]]
     [game.macros :refer [continue-ability req wait-for]]
@@ -72,6 +73,10 @@
     (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
     (swap! state assoc :click-states [])
     (swap! state assoc :turn-state (dissoc @state :log :history :turn-state))
+
+    ;; resolve turmoil (april fools)
+    (when (get-in @state [:options :turmoil])
+      (turmoil/shuffle-cards-for-side state side))
 
     (when (= side :corp)
       (swap! state update-in [:turn] inc))

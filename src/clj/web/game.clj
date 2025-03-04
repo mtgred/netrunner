@@ -418,3 +418,34 @@
     (app-state/deregister-user! uid)
     (when ?reply-fn (?reply-fn true))
     (lobby/log-delay! timestamp id)))
+
+(defn switch-side
+  "Returns a new player map with the player's :side set to a new side"
+  [player]
+  (if (= "Corp" (get-in player [:side]))
+    (assoc player :side "Runner")
+    (assoc player :side "Corp")))
+
+(defn handle-swap-sides-in-prog [lobbies gameid]
+  (if-let [lobby (get lobbies gameid)]
+    (-> lobby
+        (update :players #(mapv switch-side %))
+        (->> (assoc lobbies gameid)))
+    lobbies))
+
+(defn switch-side-for-lobby
+  [gameid]
+  (let [lobby (app-state/get-lobby gameid)
+    ;; ideally this would be atomic
+	new-app-state (swap! app-state/app-state
+                             update :lobbies
+                             #(-> %
+                                  (handle-swap-sides-in-prog gameid)
+                                  ))
+        lobby? (get-in new-app-state [:lobbies gameid])]
+    (lobby/send-lobby-state lobby?)
+    (lobby/broadcast-lobby-list)))
+
+(defonce evil-hack-for-switching-sides
+  ;; for real, fuck the circular dependency requirement >:^U
+  (reset! game.core.turmoil/swap-sides-fn (fn [gameid] (switch-side-for-lobby gameid))))
