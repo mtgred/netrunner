@@ -1,5 +1,6 @@
 (ns game.core.diffs
   (:require
+   [clojure.string :as str]
    [cond-plus.core :refer [cond+]]
    [differ.core :as differ]
    [game.core.board :refer [installable-servers]]
@@ -178,8 +179,15 @@
 
 (declare cards-summary)
 
+(defn- is-public-or-shared?
+  [state side card]
+  (or (is-public? card side)
+      (let [c-side (keyword (str/lower-case (:side card)))]
+        (and (installed? card)
+             (get-in @state [c-side :share-information])))))
+
 (defn card-summary [card state side]
-  (if (is-public? card side)
+  (if (is-public-or-shared? state side card)
     (-> (cond-> card
           (:host card) (-> (dissoc-in [:host :hosted])
                            (update :host card-summary state side))
@@ -305,7 +313,7 @@
 (defn hand-summary
   "Is the player's hand publicly visible?"
   [hand state same-side? side player]
-  (if (or same-side? (:openhand player))
+  (if (or same-side? (:openhand player) (:share-information player))
     (cards-summary hand state side)
     []))
 
