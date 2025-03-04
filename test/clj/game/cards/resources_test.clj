@@ -868,7 +868,8 @@
       (gain-tags state :runner 1)
       (play-from-hand state :corp "Scorched Earth")
       (is (zero? (count (:discard (get-runner)))) "No cards have been discarded or trashed yet")
-      (card-ability state :runner (get-resource state 0) 0)
+      (click-prompt state :runner "Citadel Sanctuary")
+      (click-prompt state :runner "Yes")
       (is (= 3 (count (:discard (get-runner)))) "CS and all cards in grip are trashed")))
 
 (deftest citadel-sanctuary-end-of-turn-trace
@@ -1689,7 +1690,8 @@
     (click-prompt state :corp "0")
     (click-prompt state :runner "0")
     (is (not (no-prompt? state :runner)) "Runner prompted to avoid tag")
-    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "Decoy")
+    (click-prompt state :runner "Yes")
     (is (= 1 (count (:discard (get-runner)))) "Decoy trashed")
     (is (zero? (count-tags state)) "Tag avoided")))
 
@@ -2216,11 +2218,10 @@
       (play-from-hand state :runner "Dummy Box")
       (play-from-hand state :runner "Cache")
       (take-credits state :runner)
-      (trash state :runner (get-program state 0))
+      (trash state :corp (get-program state 0))
       (is (not (no-prompt? state :runner)) "Dummy Box prompting to prevent program trash")
-      (card-ability state :runner (get-resource state 0) 1)
+      (click-prompt state :runner "Dummy Box (Program)")
       (click-card state :runner (find-card "Clot" (:hand (get-runner))))
-      (click-prompt state :runner "Done")
       (is (= 1 (count (:discard (get-runner)))) "Clot trashed")
       (is (empty? (:hand (get-runner))) "Card trashed from hand")
       (is (= 1 (count (get-program state))) "Cache still installed")
@@ -2397,8 +2398,7 @@
     (play-from-hand state :runner "Environmental Testing")
     (play-from-hand state :runner "Fall Guy")
     (dotimes [_ 4] (play-from-hand state :runner "Ika"))
-    (card-ability state :runner (get-resource state 1) 0)
-    (click-prompt state :runner "Done")
+    (click-prompt state :runner "Fall Guy")
     (is (= 20 (:credit (get-runner))) "Got paid out twice")
     (is (= 2 (count (:discard (get-runner)))) "Env and fall guy both trashed")))
 
@@ -2774,7 +2774,7 @@
       (click-prompt state :runner "Pay 3 [Credits] to trash")
       (is (waiting? state :runner)
           "Runner has prompt to wait for Corp to shuffle Marilyn")
-      (is (= "Shuffle Marilyn Campaign into R&D?" (:msg (prompt-map :corp))) "Now Corp gets shuffle choice")
+      (is (= "Choose an interrupt" (:msg (prompt-map :corp))) "Now Corp gets shuffle choice")
       (is (= 2 (:credit (get-runner)))) #_ trashed_marilyn))
 
 (deftest friend-of-a-friend
@@ -3211,7 +3211,7 @@
       (run-on state "Server 1")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Hunting Grounds")
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
         (is (:run @state) "Run hasn't ended from not paying Tollbooth"))))
 
@@ -3227,7 +3227,7 @@
       (play-from-hand state :runner "Hunting Grounds")
       (run-on state "Server 1")
       (run-continue state)
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "Allow Tollbooth encounter")
       (is (zero? (:credit (get-runner))) "Runner loses credits to Tollbooth")
       (is (:run @state) "Run hasn't ended when paying Tollbooth")))
 
@@ -3248,7 +3248,7 @@
       (run-on state "Server 1")
       (let [credits (:credit (get-runner))]
         (run-continue state)
-        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Hunting Grounds")
         (run-continue-until state :encounter-ice)
         (is (= (- credits 3) (:credit (get-runner))) "Runner loses 3 credits to Tollbooth 2 "))))
 
@@ -3265,7 +3265,7 @@
       (let [credits (:credit (get-runner))]
         (run-on state "Server 1")
         (run-continue state)
-        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Hunting Grounds")
         (is (= credits (:credit (get-runner))) "Runner doesn't lose any credits to Tollbooth")
         (run-continue state :movement)
         (run-jack-out state))
@@ -4458,24 +4458,22 @@
     (is (no-prompt? state :runner) "No more prompt")))
 
 (deftest net-mercur-prevention-prompt-issue-4464
-    ;; Prevention prompt. Issue #4464
-    (do-game
-      (new-game {:runner {:hand ["Feedback Filter" "Net Mercur"]
-                          :credits 10}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Feedback Filter")
-      (play-from-hand state :runner "Net Mercur")
-      (let [nm (get-resource state 0)
-            ff (get-hardware state 0)]
-        (core/add-counter state :runner (make-eid state) (refresh nm) :credit 4)
-        (damage state :corp :net 2)
-        (card-ability state :runner ff 0)
-        (click-card state :runner nm)
-        (click-card state :runner nm)
-        (click-card state :runner nm)
-        (card-ability state :runner ff 0)
-        (click-prompt state :runner "Done")
-        (is (= 1 (get-counters (refresh nm) :credit)) "Net Mercur has lost 3 credits"))))
+  ;; Prevention prompt. Issue #4464
+  (do-game
+    (new-game {:runner {:hand ["Feedback Filter" "Net Mercur"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Feedback Filter")
+    (play-from-hand state :runner "Net Mercur")
+    (let [nm (get-resource state 0)]
+      (core/add-counter state :runner (make-eid state) (refresh nm) :credit 4)
+      (damage state :corp :net 2)
+      (click-prompt state :runner "Feedback Filter (Net)")
+      (click-card state :runner nm)
+      (click-card state :runner nm)
+      (click-card state :runner nm)
+      (click-prompt state :runner "Pass priority")
+      (is (= 1 (get-counters (refresh nm) :credit)) "Net Mercur has lost 3 credits"))))
 
 (deftest network-exchange
   ;; ice install costs 1 more except for inner most
@@ -4567,8 +4565,8 @@
         (play-from-hand state :corp "SEA Source")
         (click-prompt state :corp "0") ; default trace
         (click-prompt state :runner "0") ; Runner won't match
-        (card-ability state :runner nach 0)
-        (click-prompt state :runner "Done")
+        (click-prompt state :runner "New Angeles City Hall")
+        (click-prompt state :runner "Yes")
         (is (zero? (count-tags state)) "Avoided SEA Source tag")
         (is (= 4 (:credit (get-runner))) "Paid 2 credits")
         (take-credits state :corp)
@@ -4600,9 +4598,9 @@
       (click-prompt state :runner "Account Siphon")
       (let [nach (get-resource state 0)]
         (is (= 4 (:credit (get-runner))) "Have not gained Account Siphon credits until tag avoidance window closes")
-        (card-ability state :runner nach 0)
-        (card-ability state :runner nach 0)
-        (click-prompt state :runner "Done")
+        (click-prompt state :runner "New Angeles City Hall")
+        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Yes")
         (is (zero? (count-tags state)) "Tags avoided")
         (is (= 10 (:credit (get-runner))) "10 credits siphoned")
         (is (= 3 (:credit (get-corp))) "Corp lost 5 credits"))))
@@ -4638,15 +4636,16 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Sure Gamble")
       (play-from-hand state :runner "No One Home")
-      (let [dm (get-ice state :archives 0)
-            noh (get-resource state 0)]
+      (let [dm (get-ice state :archives 0)]
         (run-on state "Archives")
         (rez state :corp dm)
         (run-continue state)
         (card-subroutine state :corp dm 0)
-        (card-ability state :runner noh 0)
+        (click-prompt state :runner "No One Home")
+        (click-prompt state :runner "Yes")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
+        (click-prompt state :runner "1")
         (is (= 3 (count (:hand (get-runner)))) "1 net damage prevented")
         (run-continue state)
         (play-from-hand state :runner "No One Home")
@@ -4655,10 +4654,11 @@
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
         (is (not (no-prompt? state :runner)) "Runner prompted to avoid tag")
-        (card-ability state :runner (get-resource state 0) 0)
+        (click-prompt state :runner "No One Home")
+        (click-prompt state :runner "Yes")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
-        (click-prompt state :runner "Done")
+        (click-prompt state :runner "1")
         (is (= 3 (count (:discard (get-runner)))) "Two NOH trashed, 1 gamble played")
         (is (zero? (count-tags state)) "Tags avoided")
         (take-credits state :corp)
@@ -4666,7 +4666,7 @@
         (take-credits state :runner)
         (gain-tags state :runner 1)
         (is (not (no-prompt? state :runner)) "Runner prompted to avoid tag")
-        (click-prompt state :runner "Done")
+        (click-prompt state :runner "Allow 1 remaining tag")
         (core/gain state :corp :credit 4)
         (play-from-hand state :corp "Scorched Earth")
         (is (no-prompt? state :runner) "Runner not prompted to avoid meat damage"))
@@ -4685,10 +4685,66 @@
         (rez state :corp dm)
         (run-continue state)
         (card-subroutine state :corp dm 0)
-        (card-ability state :runner noh 0)
+        (click-prompt state :runner "No One Home")
+        (click-prompt state :runner "Yes")
         (click-prompt state :corp "0")
         (click-prompt state :runner "0")
+        (click-prompt state :runner "1")
         (is (= 2 (count (:hand (get-runner)))) "1 net damage prevented"))))))
+
+(deftest no-one-home-only-on-first-event
+  (doseq [[scenario-a scenario-b] [[:net :net] [:net :tag] [:tag :tag] [:tag :net]]]
+    (do-game
+      (new-game {:runner {:hand [(qty "Sure Gamble" 5) "No One Home" "No One Home"]}
+                 :corp {:hand [(qty "Public Trail" 2)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "No One Home")
+      (play-from-hand state :runner "No One Home")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "No action")
+      (take-credits state :runner)
+      (if (= scenario-a :net)
+        (damage state :corp :net 1)
+        (do (play-from-hand state :corp "Public Trail")
+            (click-prompt state :runner "Take 1 tag")))
+      ;; avoid damage/tag
+      (click-prompts state :runner "No One Home" "Yes")
+      (click-prompt state :corp "0")
+      (click-prompts state :runner "0" "1")
+      (is (no-prompt? state :runner) "No lingering prompt")
+      (is (= 1 (count (:discard (get-runner)))) "Trashed NOH, no damage")
+      (is (= 0 (count-tags state)) "Not tagged")
+      (if (= scenario-b :net)
+        (damage state :corp :net 1)
+        (do (play-from-hand state :corp "Public Trail")
+            (click-prompt state :runner "Take 1 tag")))
+      (is (no-prompt? state :runner) (str "No prompt because it's already passed: (" scenario-a " -> " scenario-b ")")))))
+
+(deftest no-one-home-snare-can-prevent-either-trigger
+  (doseq [scenario [:net :tag :both]]
+    (do-game
+      (new-game {:runner {:hand [(qty "Sure Gamble" 5) "No One Home" "No One Home"]}
+                 :corp {:hand ["Snare!"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "No One Home")
+      (play-from-hand state :runner "No One Home")
+      (run-empty-server state :hq)
+      (click-prompt state :corp "Yes")
+      ;; tag first
+      (if (not= scenario :damage)
+        (do (click-prompts state :runner "No One Home" "Yes")
+            (click-prompt state :corp "0")
+            (click-prompts state :runner "0" "1")
+            (is (= 0 (count-tags state)) "0 tags"))
+        (do (click-prompt state :runner "Allow 1 remaining tag")
+            (is (= 1 (count-tags state)) "1 tag")))
+      (if (not= scenario :tag)
+        (do (click-prompts state :runner "No One Home" "Yes")
+            (click-prompt state :corp "0")
+            (click-prompts state :runner "0" "3")
+            (is (>= 2 (count (:discard (get-runner)))) "0 damage"))
+        (do (click-prompt state :runner "Pass priority")
+            (is (<= 3 (count (:discard (get-runner)))) "Took 3 damage"))))))
 
 (deftest off-campus-apartment-ability-shows-a-simultaneous-resolution-prompt-when-appropriate
     ;; ability shows a simultaneous resolution prompt when appropriate
@@ -4963,8 +5019,7 @@
       (take-credits state :runner)
       (click-card state :runner (refresh misd))
       (is (not (no-prompt? state :runner)) "Prompt to prevent trashing with Sacrificial Construct")
-      (card-ability state :runner sac 0)
-      (click-prompt state :runner "Done")
+      (click-prompt state :runner "Sacrificial Construct")
       (take-credits state :corp)
       (is (changed? [(:credit (get-runner)) 0]
             (play-from-hand state :runner "Corroder")
@@ -5554,11 +5609,11 @@
     (trash state :runner (get-resource state 2))
     (is (no-prompt? state :runner) "Sac Con not prompting to prevent resource trash")
     (trash state :runner (get-program state 0))
-    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "Sacrificial Construct")
     (is (= 2 (count (:discard (get-runner)))) "Sac Con trashed")
     (is (= 1 (count (get-program state))) "Cache still installed")
     (trash state :runner (get-hardware state 0))
-    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "Sacrificial Construct")
     (is (= 3 (count (:discard (get-runner)))) "Sac Con trashed")
     (is (= 1 (count (get-hardware state))) "Astrolabe still installed")))
 
@@ -6270,7 +6325,7 @@
     (play-from-hand state :runner "Fall Guy")
     (is (= 4 (:credit (get-runner))))
     (let [fall (get-resource state 1)]
-      (card-ability state :runner fall 1)
+      (card-ability state :runner fall 0)
       (is (= 7 (:credit (get-runner)))))))
 
 (deftest technical-writer
@@ -7181,7 +7236,8 @@
       (take-credits state :runner)
       (is (= 3 (:credit (get-runner))) "Runner is now at 3 credits")
       (gain-tags state :corp 1)
-      (card-ability state :runner (get-resource state 1) 0)
+      (click-prompt state :runner "New Angeles City Hall")
+      (click-prompt state :runner "Yes")
       (click-card state :runner "Corroder")
       (is (zero? (:credit (get-runner))) "Runner paid one less to install")
       (is (= "Corroder" (:title (get-program state 0))) "Corroder is installed")))
@@ -7606,14 +7662,14 @@
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")
     (play-from-hand state :runner "Fall Guy")
-    (card-ability state :runner (get-resource state 1) 1)
+    (card-ability state :runner (get-resource state 1) 0)
     (is (= 2 (count (:discard (get-runner)))) "Fall Guy trashed")
     (is (= 3 (:credit (get-runner))) "Gained 2c from Fall Guy and 1c from Wasteland")
     (take-credits state :runner)
-    (card-ability state :runner (get-resource state 1) 1)
+    (card-ability state :runner (get-resource state 1) 0)
     (is (= 3 (count (:discard (get-runner)))) "Fall Guy trashed")
     (is (= 6 (:credit (get-runner))) "Gained 2c from Fall Guy and 1c from Wasteland")
-    (card-ability state :runner (get-resource state 1) 1)
+    (card-ability state :runner (get-resource state 1) 0)
     (is (= 4 (count (:discard (get-runner)))) "Fall Guy trashed")
     (is (= 8 (:credit (get-runner))) "Gained 2c from Fall Guy but no credits from Wasteland")))
 

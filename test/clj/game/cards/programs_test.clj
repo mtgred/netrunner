@@ -2874,7 +2874,8 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay 5 [Credits] to trash")
       (let [dx (get-program state 0)]
-        (card-ability state :runner dx 1)
+        (click-prompt state :runner "Deus X")
+        (click-prompt state :runner "1")
         (is (= 2 (count (:hand (get-runner)))) "Deus X prevented one Hostile net damage"))))
 
 (deftest deus-x-vs-multiple-sources-of-net-damage
@@ -2889,7 +2890,8 @@
       (play-from-hand state :runner "Deus X")
       (run-empty-server state "Server 1")
       (let [dx (get-program state 0)]
-        (card-ability state :runner dx 1)
+        (click-prompt state :runner "Deus X")
+        (click-prompt state :runner "2")
         (click-prompt state :runner "Pay to steal")
         (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
         (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
@@ -3684,7 +3686,7 @@
         (take-credits state :corp)
         (is (= 1 (get-strength (refresh gauss))) "Back to normal strength"))))
 
-(deftest god-of-war
+(deftest god-of-war-phase-12
   ;; God of War - Take 1 tag to place 2 virus counters
   (do-game
     (new-game {:runner {:deck ["God of War"]}})
@@ -3696,6 +3698,22 @@
       (card-ability state :runner gow 2)
       (is (= 1 (count-tags state)))
       (is (= 2 (get-counters (refresh gow) :virus)) "God of War has 2 virus counters"))))
+
+(deftest god-of-war-start-of-turn
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand [(qty "Ice Wall" 2)]}
+               :runner {:deck ["God of War"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "God of War")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [gow (get-program state 0)]
+      (end-phase-12 state :runner)
+      (click-prompt state :runner "Yes")
+      (is (= 1 (count-tags state)))
+      (is (= 2 (get-counters (refresh gow) :virus)) "God of War has 2 virus counters"))
+    (is (last-log-contains? state "Runner takes 1 tag to use God of War to place 2 virus counters on God of War."))))
 
 (deftest golden-automated-test
   (basic-program-test {:name "Golden"
@@ -4780,7 +4798,7 @@
         (run-continue-until state :approach-ice)
         (rez state :corp (get-ice state :rd 0))
         (run-continue state)
-        (click-prompt state :runner "Yes")
+        (click-prompt state :runner "Hunting Grounds")
         (card-ability state :runner inv 1)
         (card-ability state :runner inv 1)
         (card-ability state :runner inv 0)
@@ -6017,6 +6035,7 @@
         (is (= 1 (get-strength (refresh nanotk))) "Default strength")
         (run-on state "HQ")
         (rez state :corp susanoo)
+        (rez state :corp (get-ice state :archives 0))
         (run-continue state)
         (is (= 3 (get-strength (refresh nanotk))) "2 ice on HQ")
         (card-subroutine state :corp (refresh susanoo) 0)
@@ -7200,11 +7219,11 @@
       (play-from-hand state :runner "Fall Guy")
       (is (zero? (count (:hand (get-runner)))) "No cards in hand")
       ; No draw from Fall Guy trash as Reaver already fired this turn
-      (card-ability state :runner (get-resource state 0) 1)
+      (card-ability state :runner (get-resource state 0) 0)
       (is (zero? (count (:hand (get-runner)))) "No cards in hand")
       (take-credits state :runner)
       ; Draw from Fall Guy trash on corp turn
-      (card-ability state :runner (get-resource state 0) 1)
+      (card-ability state :runner (get-resource state 0) 0)
       (is (= 1 (count (:hand (get-runner)))) "One card in hand")))
 
 (deftest reaver-not-triggering-on-non-installed-cards

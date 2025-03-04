@@ -6,7 +6,7 @@
    [game.core.card :refer :all]
    [game.core.cost-fns :refer [card-ability-cost]]
    [game.core.engine :refer [can-trigger?]]
-   [game.core.effects :refer [is-disabled-reg?]]
+   [game.core.effects :refer [any-effects is-disabled-reg?]]
    [game.core.installing :refer [corp-can-pay-and-install?
                                  runner-can-pay-and-install?]]
    [game.core.payment :refer [can-pay? ->c]]
@@ -400,6 +400,7 @@
     (-> run
         (assoc :approached-ice-in-position? (when (= :approach-ice (:phase run))
                                               (some? (get-card state (:current-ice run)))))
+        (assoc :cannot-jack-out (any-effects state :corp :cannot-jack-out true?))
         (select-non-nil-keys run-keys))))
 
 (defn encounter-ice-summary

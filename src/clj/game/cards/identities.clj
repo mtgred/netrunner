@@ -11,11 +11,12 @@
                            has-any-subtype? ice? in-discard? in-deck? in-hand? in-play-area? in-rfg? installed? is-type?
                            operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [charge-ability]]
+   [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [install-cost play-cost
                                rez-additional-cost-bonus rez-cost]]
    [game.core.damage :refer [chosen-damage corp-can-choose-damage? damage
                              enable-corp-damage-choice]]
-   [game.core.def-helpers :refer [choose-one-helper corp-recur defcard offer-jack-out with-revealed-hand]]
+   [game.core.def-helpers :refer [corp-recur defcard offer-jack-out with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect is-disabled?]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
@@ -38,6 +39,7 @@
    [game.core.moving :refer [mill move swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
    [game.core.payment :refer [build-cost-label can-pay? cost->string merge-costs ->c]]
+   [game.core.prevention :refer [prevent-tag]]
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
@@ -51,7 +53,7 @@
    [game.core.servers :refer [central->name is-central? is-remote? name-zone
                               target-server zone->name]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck]]
-   [game.core.tags :refer [gain-tags lose-tags tag-prevent]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
@@ -109,7 +111,7 @@
                     :effect (req (if (not (can-pay? state :corp eid card nil (->c :credit 1)))
                                    (do
                                      (toast state :corp "Cannot afford to pay 1 [Credit] to block card exposure" "info")
-                                     (expose state :runner eid (:card context)))
+                                     (expose state :runner eid [(:card context)]))
                                    (continue-ability
                                      state side
                                      {:optional
@@ -118,7 +120,7 @@
                                        :player :corp
                                        :no-ability
                                        {:async true
-                                        :effect (effect (expose :runner eid (:card context)))}
+                                        :effect (effect (expose :runner eid [(:card context)]))}
                                        :yes-ability
                                        {:async true
                                         :effect
@@ -1031,12 +1033,14 @@
                  card nil))}]})
 
 (defcard "Jesminder Sareen: Girl Behind the Curtain"
-  {:flags {:forced-to-avoid-tag true}
-   :events [{:event :pre-tag
+  {:static-abilities [{:type :forced-to-avoid-tag
+                       :req (req (and run (zero? (run-event-count state side :tag-interrupt))))
+                       :value true}]
+   :events [{:event :tag-interrupt
              :async true
-             :req (req (and run (<= (run-event-count state side :pre-tag) 1)))
-             :msg "avoid the first tag during this run"
-             :effect (effect (tag-prevent :runner eid 1))}]})
+             :req (req (and run (<= (run-event-count state side :tag-interrupt) 1)))
+             :msg "avoid 1 tag"
+             :effect (effect (prevent-tag :runner eid 1))}]})
 
 (defcard "Jinteki Biotech: Life Imagined"
   {:events [{:event :pre-first-turn
@@ -1253,8 +1257,8 @@
                                           (fn [targets]
                                             (let [context (first targets)]
                                               (is-central? (:server context)))))))
-             :effect (req (wait-for (gain-tags state :runner 1)
-                                    (draw state :runner eid 2)))}]})
+             :effect (req (wait-for (draw state :runner 2 {:suppress-checkpoint true})
+                                    (gain-tags state :runner eid 1)))}]})
 
 (defcard "Los: Data Hijacker"
   {:events [{:event :rez
@@ -1912,8 +1916,7 @@
                             (first-successful-run-on-server? state :hq)))
              :choices {:card #(and (installed? %)
                                    (not (rezzed? %)))}
-             :msg "expose 1 card"
-             :effect (effect (expose eid target))}]})
+             :effect (effect (expose eid [target]))}]})
 
 (defcard "Skorpios Defense Systems: Persuasive Power"
   (let [set-resolution-mode
