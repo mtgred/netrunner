@@ -34,10 +34,13 @@
                         x))
            ;; cost->str for a choice
            costed-str (fn [x]
-                        (if-not (:cost x)
-                          (:option x)
-                          (let [cs (build-cost-string (:cost x))]
-                            (if-not (:option x) cs (str cs ": " (:option x))))))
+                        (let [choice-str (if-not (:cost x)
+                                           (:option x)
+                                           (let [cs (build-cost-string (:cost x))]
+                                             (if-not (:option x) cs (str cs ": " (:option x)))))]
+                          (if (:card x)
+                            (assoc (:card x) :title choice-str)
+                            choice-str)))
            ;; converts options to choices
            choices-fn (fn [x state side eid card targets]
                         (when (payable? x state side eid card targets)
@@ -57,7 +60,7 @@
                  (if-not (seq xs)
                    (effect-completed state side eid )
                    (if (= target (costed-str (first xs)))
-                     ;; allow for resolving multiple options, like decues wild
+                     ;; allow for resolving multiple options, like deuces wild
                      (wait-for
                        (resolve-ability
                          state side (make-eid state eid)
