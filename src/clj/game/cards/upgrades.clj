@@ -23,7 +23,6 @@
    [game.core.engine :refer [dissoc-req pay register-default-events
                              register-events resolve-ability unregister-events]]
    [game.core.events :refer [first-event? first-run-event? no-event? turn-events]]
-   [game.core.expose :refer [expose-prevent]]
    [game.core.finding :refer [find-cid find-latest]]
    [game.core.flags :refer [clear-persistent-flag! is-scored? register-persistent-flag!
                             register-run-flag!]]
@@ -535,8 +534,7 @@
                     :req (req (or (in-same-server? card target)
                                   (from-same-server? card target)))
                     :value (req (->c :add-random-from-hand-to-bottom-of-deck 2))}]
-    {:implementation "trash cost not displayed on dialogue"
-     :static-abilities [steal-cost]
+    {:static-abilities [steal-cost]
      :events [{:event :pre-access-card
                :req (req (and (rezzed? card)
                               (same-card? target card)))
@@ -553,7 +551,7 @@
      :on-trash {:async true
                 :interactive (req true)
                 :req (req (and run (= :runner side)))
-                :msg "force the Runner to add 2 random cards from the grip to the bottom of the stack as additional cost to steal agendas from this server or its root"
+                :msg "force the Runner to add 2 random cards from the grip to the bottom of the stack as additional cost to trash it"
                 :effect
                 (req (wait-for (pay state :runner (make-eid state eid) card [(->c :add-random-from-hand-to-bottom-of-deck 2)])
                                (system-msg state :runner (:msg async-result))
@@ -1751,31 +1749,17 @@
                                         (force-ice-encounter state side eid current-ice))))}}}]})
 
 (defcard "Tori Hanzō"
-  {:events [{:event :pre-resolve-damage
-             :optional
-             {:req (req (and this-server
-                             (= target :net)
-                             (= :corp (second targets))
-                             (pos? (last targets))
-                             (first-run-event? state side :pre-resolve-damage
-                                               (fn [[t s]]
-                                                 (and (= :net t)
-                                                      (= :corp s))))
-                             (can-pay? state :corp (assoc eid :source card :source-type :ability) card nil [(->c :credit 2)])))
-              :waiting-prompt true
-              :prompt "Pay 2 [Credits] to do 1 core damage?"
-              :player :corp
-              :yes-ability
-              {:async true
-               :msg "do 1 core damage instead of net damage"
-               :effect (req (swap! state update :damage dissoc :damage-replace :defer-damage)
-                            (wait-for (pay state :corp card (->c :credit 2))
-                                      (system-msg state side (:msg async-result))
-                                      (wait-for (damage state side :brain 1 {:card card})
-                                                (swap! state assoc-in [:damage :damage-replace] true)
-                                                (effect-completed state side eid))))}
-              :no-ability
-              {:effect (req (swap! state update :damage dissoc :damage-replace))}}}]})
+  {:prevention [{:prevents :damage
+                 :type :event
+                 :max-uses 1
+                 :prompt "Pay 2 [Credits] to do 1 core damage instead?"
+                 :ability {:cost [(->c :credit 2)]
+                           :msg "instead do 1 core damage"
+                           :req (req (and (= :net (:type context))
+                                          (= :corp (:source-player context))
+                                          (first-run-event? state side :pre-damage-flag #(= :net (:type (first %))))
+                                          (pos? (:remaining context))))
+                           :effect (req (swap! state update-in [:prevent :damage] merge {:type :brain :prevented 0 :count 1 :remaining 1 :source-card card}))}}]})
 
 (defcard "Traffic Analyzer"
   {:events [{:event :rez
@@ -1844,11 +1828,10 @@
                 :msg (msg "prevent a subroutine on " (:title current-ice) " from being broken")}]})
 
 (defcard "Underway Grid"
-  {:events [{:event :pre-expose
-             :req (req (same-server? card target))
-             :msg "prevent 1 card from being exposed"
-             :effect (effect (expose-prevent 1))}]
-   :static-abilities [{:type :bypass-ice
+  {:static-abilities [{:type :cannot-be-exposed
+                       :req (req (same-server? card target))
+                       :value true}
+                      {:type :bypass-ice
                        :req (req (same-server? card target))
                        :value false}]})
 
@@ -1981,7 +1964,7 @@
                                       (some #(:printed %) (:subroutines target))
                                       (not (:disabled target))))
                        :value (req {:async true
-                                    :ability-name "ZATO Ability"
+                                    :ability-name "ZATO City Grid"
                                     :interactive (req true)
                                     :optional
                                     {:waiting-prompt true

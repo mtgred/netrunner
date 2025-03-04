@@ -700,11 +700,13 @@
     (click-prompt state :runner "No action")
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Apocalypse")
-    (is (= #{"Done" "Hostile Infrastructure" "Marilyn Campaign" "Calvin B4L3Y"}
+    (is (= #{"Shuffle Marilyn Campaign into R&D" "Allow 3 cards to be trashed"}
            (into #{} (prompt-titles :corp)))
+        "Corp only has the marilyn interrupt")
+    (click-prompt state :corp "Shuffle Marilyn Campaign into R&D")
+    (is (= #{"Done" "Hostile Infrastructure""Calvin B4L3Y"}
+           (into #{} (prompt-buttons :corp)))
         "Corp has the simultaneous prompt")
-    (click-prompt state :corp "Marilyn Campaign")
-    (click-prompt state :corp "Yes")
     (click-prompt state :corp "Calvin B4L3Y")
     (click-prompt state :corp "Yes")))
 

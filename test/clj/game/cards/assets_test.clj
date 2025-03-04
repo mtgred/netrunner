@@ -435,11 +435,9 @@
       (play-from-hand state :runner "Feedback Filter")
       (take-credits state :runner)
       (let [ff (get-hardware state 0)]
-        (is (= 2 (count (:prompt (get-runner)))) "Runner has a single damage prevention prompt")
-        (card-ability state :runner ff 0)
+        (click-prompt state :runner "Feedback Filter (Net)")
         (is (zero? (count (:discard (get-runner)))) "Runner prevented damage")
-        (is (= 2 (count (:prompt (get-runner)))) "Runner has a next damage prevention prompt")
-        (click-prompt state :runner "Done")
+        (click-prompt state :runner "Pass priority")
         (is (= 1 (count (:discard (get-runner)))) "Runner took 1 net damage"))))
 
 (deftest bioroid-work-crew
@@ -3353,21 +3351,13 @@
       (play-from-hand state :corp "Marilyn Campaign" "New remote")
       (let [marilyn (get-content state :remote1 0)]
         (rez state :corp marilyn)
-        (is (= 8 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should start with 8 credits")
         (is (zero? (-> (get-corp) :deck count)) "R&D should be empty")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (is (= 6 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should lose 2 credits start of turn")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (is (= 4 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should lose 2 credits start of turn")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (is (= 2 (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should lose 2 credits start of turn")
-        (take-credits state :corp)
-        (take-credits state :runner)
-        (is (zero? (get-counters (refresh marilyn) :credit)) "Marilyn Campaign should lose 2 credits start of turn")
-        (click-prompt state :corp "Yes")
+        (doseq [cr [8 6 4 2 0]]
+          (is (= cr (get-counters (refresh marilyn) :credit)) (str "Marilyn Campaign should have " cr " credits"))
+          (when-not (= 0 cr)
+            (take-credits state :corp)
+            (take-credits state :runner)))
+        (click-prompt state :corp "Shuffle Marilyn Campaign into R&D")
         (is (= 1 (-> (get-corp) :hand count)) "HQ should have 1 card in it, after mandatory draw")
         (is (= "Marilyn Campaign" (-> (get-corp) :hand first :title)) "Marilyn Campaign should be in HQ, after mandatory draw"))))
 
@@ -3779,16 +3769,16 @@
       (is (= 1 (count (:hand (get-corp)))) "Corp hand size is 1 before run")
       (run-empty-server state "Server 1")
       (click-prompt state :corp "Yes") ; Ghost Branch ability
-      (card-ability state :runner nach 0)
+      (click-prompt state :runner "New Angeles City Hall")
+      (click-prompt state :runner "Yes")
       (click-prompt state :corp "Yes") ; Draw from Net Analytics
-      (click-prompt state :runner "Done")
       (click-prompt state :runner "No action")
       (is (no-prompt? state :runner) "Runner waiting prompt is cleared")
       (is (zero? (count-tags state)) "Avoided 1 Ghost Branch tag")
       (is (= 2 (count (:hand (get-corp)))) "Corp draw from NA")
       ; tag removal
       (gain-tags state :runner 1)
-      (click-prompt state :runner "Done") ; Don't prevent the tag
+      (click-prompt state :runner "Allow 1 remaining tag") ; Don't prevent the tag
       (remove-tag state :runner)
       (click-prompt state :corp "Yes") ; Draw from Net Analytics
       (is (= 3 (count (:hand (get-corp)))) "Corp draw from NA"))))
@@ -4160,18 +4150,18 @@
       (play-from-hand state :corp "Neural EMP")
       (let [corp-credits (:credit (get-corp))]
         (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-        (card-ability state :corp (refresh pc) 0)
+        (click-prompt state :corp "Prāna Condenser")
         (is (= 1 (get-counters (refresh pc) :power)) "Added 1 power counter")
         (is (= (+ 3 corp-credits) (:credit (get-corp))) "Gained 3 credits")
         (play-from-hand state :corp "Neural EMP")
         (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-        (card-ability state :corp pc 0)
+        (click-prompt state :corp "Prāna Condenser")
         (is (= 2 (get-counters (refresh pc) :power)) "Added another power counter")
         (is (= (+ 4 corp-credits) (:credit (get-corp))) "Gained another 3 credits (and paid 2 for EMP)")
         (is (= 5 (count (:hand (get-runner)))) "No damage dealt"))
       (take-credits state :corp)
       (take-credits state :runner)
-      (card-ability state :corp  pc 1)
+      (card-ability state :corp  pc 0)
       (is (= 3 (count (:hand (get-runner)))) "2 damage dealt"))))
 
 (deftest prana-condenser-refuse-to-prevent-damage
@@ -4188,7 +4178,7 @@
         (play-from-hand state :corp "Neural EMP")
         (let [corp-credits (:credit (get-corp))]
           (is (= 5 (count (:hand (get-runner)))) "No damage dealt")
-          (click-prompt state :corp "Done")
+          (click-prompt state :corp "Pass priority")
           (is (= 4 (count (:hand (get-runner)))) "1 net damage dealt")
           (is (= 0 (get-counters (refresh pc) :power)) "No power counter added")
           (is (= corp-credits (:credit (get-corp))) "No credits gained")))))
@@ -4206,7 +4196,7 @@
         (play-from-hand state :runner "Caldera")
         (is (= 4 (count (:hand (get-runner)))) "Runner starts with 4 cards in grip")
         (run-empty-server state :hq)
-        (card-ability state :runner (get-resource state 0) 0)
+        (click-prompt state :runner "Caldera")
         (is (= 4 (count (:hand (get-runner)))) "Runner took no damage")
         (is (no-prompt? state :corp) "No Prana prompt for Corp"))))
 
@@ -4260,7 +4250,7 @@
           (play-from-hand state :runner "PAD Tap")
           (play-from-hand state :runner "PAD Tap")
           (take-credits state :runner)
-          (card-ability state :corp (refresh pc) 0)
+          (click-prompt state :corp "Prāna Condenser")
           (is (= 9 (:credit (get-runner))) "Runner gained 3 credits from Prana"))))
 
 (deftest primary-transmission-dish
@@ -4559,7 +4549,7 @@
         (end-phase-12 state :corp)
         (is (= 3 (-> (prompt-map :corp) :choices count)) "Corp should have two abilities to trigger (+ Done)")
         (click-prompt state :corp "Marilyn Campaign")
-        (click-prompt state :corp "Yes")
+        (click-prompt state :corp "Shuffle Marilyn Campaign into R&D")
         (is (find-card "Marilyn Campaign" (:deck (get-corp))))
         (is (zero? (-> (get-corp) :hand count)) "Corp should have 3 cards in hand")
         (click-prompt state :corp "Yes")
@@ -6702,15 +6692,14 @@
       (is (some? (prompt-map :corp)) "Corp should get the option to rez Zaibatsu Loyalty before expose")
       (click-prompt state :corp "Yes")
       (is (rezzed? (refresh zai)) "Zaibatsu Loyalty should be rezzed")
-      (let [credits (:credit (get-corp))]
-        (card-ability state :corp zai 0)
-        (is (= (dec credits) (:credit (get-corp))) "Corp should lose 1 credit for stopping the expose")
-        (click-prompt state :corp "Done"))
+      (is (changed? [(:credit (get-corp)) -1]
+            (click-prompt state :corp "1 [Credit]: Zaibatsu Loyalty")))
       (card-ability state :runner code 0)
       (click-card state :runner (refresh iw))
       (is (some? (prompt-map :corp)) "Corp should be prompted to prevent")
       (is (zero? (-> (get-corp) :discard count)) "No trashed cards")
-      (card-ability state :corp zai 1)
+      (is (changed? [(:credit (get-corp)) 0]
+            (click-prompt state :corp "[trash]: Zaibatsu Loyalty")))
       (is (= 1 (-> (get-corp) :discard count)) "Zaibatsu Loyalty should be in discard after using ability"))))
 
 (deftest zealous-judge

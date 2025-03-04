@@ -4,7 +4,7 @@
             [game.core.card-defs :refer [card-def]]
             [game.core.eid :refer [make-eid]]
             [game.core.board :refer [get-all-cards]]
-            [game.utils :refer [same-card? to-keyword]]))
+            [game.utils :refer [remove-once same-card? to-keyword]]))
 
 (defn is-disabled-reg?
   [state card]
@@ -138,6 +138,21 @@
     (swap! state update :effects conj ability)
     (update-disabled-cards state)
     ability))
+
+(defn unregister-effect-by-uuid
+  "Removes a single effect handler with matching uuid"
+  [state _ {:keys [uuid] :as ability}]
+  (swap! state assoc :effects (remove-once #(= uuid (:uuid %)) (:effects @state))))
+
+(defn update-lingering-effect-durations
+  "updates all effects with a given duration to have another duration
+   ie: :until-next-corp-turn-begins -> :until-corp-turn-begins"
+  [state _ from-key to-key]
+  (swap! state assoc :effects
+         (->> (:effects @state)
+              (map #(if (= (:duration %) from-key) (assoc % :duration to-key) %))
+              (into [])))
+  (update-disabled-cards state))
 
 (defn unregister-lingering-effects
   [state _ duration]

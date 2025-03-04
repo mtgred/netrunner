@@ -239,6 +239,7 @@
               :she "She/her"
               :sheit "She/it"
               :shethey "She/they"
+              :heshe "He/She/they"
               :he "He/him"
               :heit "He/it"
               :hethey "He/they"
@@ -745,6 +746,7 @@
           :archives "Archives"
           :max-hand "Max hand size"
           :brain-damage "Core Damage"
+          :trash-like-cards "Offer to trash like cards"
           :tag-count (fn [[base additional total]] (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= total 1) "s" "")))
           :agenda-count (fn [[agenda-point]] (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s")))
           :agenda-point-req (fn [[agenda-point-req]] (if-not (= 7 agenda-point-req) (str " (" agenda-point-req " required)") ""))
