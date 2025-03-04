@@ -1885,8 +1885,7 @@
          [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
                             :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
           (cond
-            (and @prompt-state
-                 (not= "run" @prompt-type))
+            (and @prompt-state (not= "run" (get-in @prompt-state [:prompt-type])))
             [prompt-div me @prompt-state]
             (or @run
                 @encounters)
