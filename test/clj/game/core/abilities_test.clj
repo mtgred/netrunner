@@ -66,15 +66,13 @@
   "This ensures that every ability with a (->c :click ...) cost is marked as either :action true, or :action (otherwise)
    this is important for the functionality of undo-click, so it's worth ensuring"
   (doseq [card (vals @all-cards)
-          :when (not-empty (card-def card))]
-    ;;(println ":card: " (:title card))
-    (doseq [{:keys [cost] :as ab} (apply concat (vals (select-keys (card-def card) [:abilities :corp-abilities :runner-abilities])))]
-      ;;(println ":card: has abilities? " (:title card))
-      (when (and cost
-               (or (and (sequential? cost)
-                        (some #(= (:cost/type %) :click) cost))
-                   (= (:cost/type cost) :click)))
-        (is (contains? ab :action) (str (:title card) " may have unlabelled actions (use :action true) or (:action false/nil)"))))))
+          :let [cdef (card-def card)]
+          :when (not-empty cdef)
+          {:keys [cost] :as ab} (apply concat (vals (select-keys (card-def card) [:abilities :corp-abilities :runner-abilities])))
+          :when (and cost (or (and (sequential? cost)
+                                   (some #(= (:cost/type %) :click) cost))
+                              (= (:cost/type cost) :click)))]
+    (is (contains? ab :action) (str (:title card) " may have unlabelled actions (use :action true) or (:action false/nil)"))))
 
 (defn- x-has-labels
   [x-key x-name]
