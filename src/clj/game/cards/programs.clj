@@ -3114,7 +3114,7 @@
               :yes-ability
               {:async true
                :effect (req (wait-for
-                              (expose state side [(:ice context)] {:card card})
+                              (expose state side [(:ice context)])
                               (continue-ability state side (offer-jack-out) card nil)))}}}]})
 
 (defcard "Snowball"
@@ -3483,7 +3483,7 @@
                                    (not (rezzed? %)))}
              :async true
              :msg (str "name " chosen-subtype)
-             :effect (req (wait-for (expose state side [target] {:card card})
+             :effect (req (wait-for (expose state side [target])
                                     (when (and async-result (has-subtype? target chosen-subtype))
                                       (do (move state :corp target :hand)
                                           (system-msg state :runner

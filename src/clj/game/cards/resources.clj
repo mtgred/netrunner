@@ -2778,7 +2778,7 @@
                 :choices {:card installed?}
                 :async true
                 :cost [(->c :trash-can)]
-                :effect (effect (expose eid [target] {:card card}))}]})
+                :effect (effect (expose eid [target]))}]})
 
 (defcard "Reclaim"
   {:abilities

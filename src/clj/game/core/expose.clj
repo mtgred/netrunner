@@ -28,8 +28,9 @@
 (defn expose
   "Exposes the given cards."
   ([state side eid targets] (expose state side eid targets nil))
-  ([state side eid targets {:keys [unpreventable card] :as args}]
-   (let [targets (filterv #(not (or (rezzed? %)
+  ([state side eid targets {:keys [unpreventable] :as args}]
+   (let [args (assoc args :card (:source eid))
+         targets (filterv #(not (or (rezzed? %)
                                     (nil? %)
                                     (any-effects state side :cannot-be-exposed true? %)))
                           targets)]

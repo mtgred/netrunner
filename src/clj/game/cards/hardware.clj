@@ -1140,7 +1140,7 @@
                                (not (rezzed? current-ice))))
                 :label "expose approached ice"
                 :async true
-                :effect (req (wait-for (expose state side (make-eid state eid) [current-ice] {:card card})
+                :effect (req (wait-for (expose state side (make-eid state eid) [current-ice])
                                        (continue-ability state side (offer-jack-out) card nil)))}]})
 
 (defcard "Grimoire"
