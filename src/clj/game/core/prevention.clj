@@ -174,6 +174,7 @@
   "Builds a menu item for firing a prevention ability"
   [prevention key]
   {:option (or (:label prevention) (->> prevention :card :printed-title))
+   :card (:card prevention)
    :ability {:async true
              :effect (req (trigger-prevention state side eid key prevention))}})
 
