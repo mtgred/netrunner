@@ -704,7 +704,7 @@
            (into #{} (prompt-titles :corp)))
         "Corp only has the marilyn interrupt")
     (click-prompt state :corp "Shuffle Marilyn Campaign into R&D")
-    (is (= #{"Hostile Infrastructure""Calvin B4L3Y"}
+    (is (= #{"Done" "Hostile Infrastructure""Calvin B4L3Y"}
            (into #{} (prompt-titles :corp)))
         "Corp has the simultaneous prompt")
     (click-prompt state :corp "Calvin B4L3Y")

@@ -646,7 +646,7 @@
     (card-ability state :runner (get-hardware state 1) 0)
     (click-prompt state :runner "End the run")
     (run-continue-until state :success)
-    (is (= ["Boomerang" "Virtuoso"] (prompt-titles :runner)) "Boomerang only shows up once!")
+    (is (= ["Boomerang" "Virtuoso" "Done"] (prompt-titles :runner)) "Boomerang only shows up once!")
     (click-prompt state :runner "Virtuoso")
     (click-prompt state :runner "No action")
     (click-prompt state :runner "Yes")
@@ -1277,7 +1277,7 @@
              (damage state :runner :meat 1))]
       (testing "Buttons are displayed correctly"
         (do-game state
-          (is (= ["Buffer Drive" "I've Had Worse"] (sort (prompt-titles :runner))))))
+          (is (= ["Buffer Drive" "Done" "I've Had Worse"] (sort (prompt-titles :runner))))))
       (testing "Choosing I've Had Worse"
         (do-game state
           (is (changed? [(count (:hand (get-runner))) 3]

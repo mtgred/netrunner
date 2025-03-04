@@ -63,6 +63,7 @@
   ([ev] (mobile-sysop-event ev nil))
   ([ev callback]
    {:event ev
+    :skippable true
     :optional
     {:prompt (msg "Move " (:title card) " to another server?")
      :waiting-prompt true
@@ -485,6 +486,7 @@
                        :req (req (= (:server (second targets)) (unknown->kw (get-zone card))))
                        :value (req (repeat (get-counters card :power) [(->c :credit 1) (->c :click 1)]))}]
    :events [{:event :corp-turn-begins
+             :automatic :last ;; for warm reception shenanigans
              :req (req (pos? (get-counters card :power)))
              :msg "remove all hosted power counters"
              :async true
@@ -704,6 +706,7 @@
                                  (get-in corp (get-zone card))))
                  :msg "gain 1 [Credits]"
                  :once :per-turn
+                 :automatic :gain-credits
                  :label "Gain 1 [Credits] (start of turn)"
                  :async true
                  :effect (effect (gain-credits eid 1))}]
@@ -874,6 +877,7 @@
 
 (defcard "Hokusai Grid"
   {:events [{:event :successful-run
+             :automatic :corp-damage
              :req (req this-server)
              :msg "do 1 net damage"
              :async true
@@ -1368,6 +1372,7 @@
 (defcard "Nihongai Grid"
   {:events [{:event :successful-run
              :interactive (req true)
+             :skippable true
              :optional
              {:req (req (and this-server
                              (or (< (total-available-credits state :runner eid card) 6)
@@ -1670,12 +1675,15 @@
                                (not (same-card? target card))
                                (some #(and (not (rezzed? %))
                                            (not (agenda? %))
+                                           (corp? %)
                                            (can-pay-to-rez? state side (assoc eid :source card) % {:cost-bonus -2}))
                                      (all-installed state :corp)))))
               :prompt "Rez another card paying 2 [Credits] less?"
               :yes-ability {:prompt "Choose a card to rez"
                             :choices {:req (req (and (not (rezzed? target))
                                                      (not (agenda? target))
+                                                     (corp? target)
+                                                     (installed? target)
                                                      (can-pay-to-rez? state side (assoc eid :source card) target {:cost-bonus -2})))}
                             :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
                             :async true

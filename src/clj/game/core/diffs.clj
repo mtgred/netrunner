@@ -203,6 +203,7 @@
    :card
    :prompt-type
    :show-discard
+   :selectable
    ;; traces
    :player
    :base

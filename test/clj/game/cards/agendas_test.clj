@@ -3901,7 +3901,7 @@
       (take-credits state :runner)
       (play-and-score state "SDS Drone Deployment")
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
-      (is (= #{"SDS Drone Deployment" "Amani Senai" "Team Sponsorship"} (into #{} (map :title (prompt-buttons :corp)))))
+      (is (= #{"SDS Drone Deployment" "Amani Senai" "Team Sponsorship" "Done"} (into #{} (prompt-titles :corp))))
       (click-prompt state :corp "SDS Drone Deployment")
       (click-card state :corp "Cache")
       (click-prompt state :corp "Amani Senai")

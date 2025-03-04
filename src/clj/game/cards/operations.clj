@@ -235,11 +235,12 @@
 
 (defcard "Argus Crackdown"
   (lockdown
-  {:events [{:event :successful-run
-             :req (req (not-empty run-ices))
-             :msg "deal 2 meat damage"
-             :async true
-             :effect (effect (damage eid :meat 2 {:card card}))}]}))
+    {:events [{:event :successful-run
+               :automatic :corp-damage
+               :req (req (not-empty run-ices))
+               :msg "deal 2 meat damage"
+               :async true
+               :effect (effect (damage eid :meat 2 {:card card}))}]}))
 
 (defcard "Ark Lockdown"
   {:on-play
@@ -858,6 +859,7 @@
 
 (defcard "Door to Door"
   {:events [{:event :runner-turn-begins
+             :automatic :corp-damage
              :trace {:base 1
                      :label "Do 1 meat damage if Runner is tagged, or give the Runner 1 tag"
                      :successful {:msg (msg (if tagged
@@ -1969,6 +1971,7 @@
 
 (defcard "Paywall Implementation"
   {:events [{:event :successful-run
+             :automatic :gain-credits
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})

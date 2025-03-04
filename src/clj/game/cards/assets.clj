@@ -77,6 +77,7 @@
    (let [num-counters (fn [card] (min per-turn (get-counters card counter-type)))
          ability {:msg (msg "gain " (num-counters card) " [Credits]")
                   :once :per-turn
+                  :automatic :gain-credits
                   :req (req (:corp-phase-12 @state))
                   :label (str "Gain " per-turn " [Credits] (start of turn)")
                   :async true
@@ -381,6 +382,7 @@
 
 (defcard "Bio-Ethics Association"
   (let [ability {:req (req unprotected)
+                 :automatic :corp-damage
                  :async true
                  :label "Do 1 net damage (start of turn)"
                  :once :per-turn
@@ -411,6 +413,7 @@
   (let [ability {:msg "gain 1 [Credits]"
                  :label "Gain 1 [Credits] (start of turn)"
                  :once :per-turn
+                 :automatic :pre-gain-credits
                  :interactive (req true)
                  :async true
                  :effect (req (wait-for (gain-credits state side 1)
@@ -530,6 +533,7 @@
                          (gain-credits state side 4)
                          (draw state side eid 1))))}}}
         queue-ability {:interactive (req true)
+                       :skippable true
                        :event :corp-turn-begins
                        :req (req (and (not-used-once? state {:once :per-turn} card)
                                       (:corp-phase-12 @state)))
@@ -649,6 +653,7 @@
   {:flags {:corp-phase-12 (req true)}
    :derezzed-events [corp-rez-toast]
    :events [{:event :corp-turn-begins
+             :skippable true
              :prompt "Choose one"
              :interactive (req true)
              :choices (req [(when (seq (:hand corp)) "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
@@ -696,6 +701,7 @@
 
 (defcard "Commercial Bankers Group"
   (let [ability {:req (req unprotected)
+                 :automatic :gain-credits
                  :label "Gain 3 [Credits] (start of turn)"
                  :once :per-turn
                  :msg "gain 3 [Credits]"
@@ -796,6 +802,7 @@
   (let [ability {:once :per-turn
                  :async true
                  :label "Draw 1 card (start of turn)"
+                 :automatic :draw-cards
                  :interactive (req true)
                  :effect (effect (continue-ability
                                    {:optional
@@ -872,6 +879,7 @@
                                              (second (get-zone (:host card)))])
                                       (:successful-run runner-reg-last))))
                  :label "gain 3 [Credits] (start of turn)"
+                 :automatic :gain-credits
                  :msg "gain 3 [Credits]"
                  :async true
                  :effect (effect (gain-credits :corp eid 3))}]
@@ -1054,6 +1062,7 @@
    :suppress [{:event :corp-turn-begins
                :req (req (= (:cid target) (:ebc-rezzed (get-card state card))))}]
    :events [{:event :corp-turn-ends
+             :silent (req true)
              :req (req (:ebc-rezzed card))
              :effect (effect (update! (dissoc card :ebc-rezzed)))}]
    :abilities [{:async true
@@ -1127,6 +1136,7 @@
         {:once :per-turn
          :req (req (and (:corp-phase-12 @state)
                         (not-empty (:deck corp))))
+         :skippable true
          :interactive (req true)
          :label "Look at the top 3 cards of R&D (start of turn)"
          :async true
@@ -1225,6 +1235,7 @@
                                                (move state :corp target :hand)
                                                (effect-completed state side eid))))}
         ability {:once :per-turn
+                 :skippable true
                  :async true
                  :label "Search R&D for an operation (start of turn)"
                  :interactive (req true)
@@ -1263,6 +1274,7 @@
                          (when (zero? (remaining-draws state :runner))
                            (prevent-draw state :runner)))}
    :events [{:event :runner-turn-begins
+             :silent (req true)
              :effect (effect (max-draw :runner 2))}]
    :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))})
 
@@ -1301,6 +1313,7 @@
                    :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}
         ability {:req (req (:corp-phase-12 @state))
                  :label "Move 1 hosted advancement counter to another card you can advance (start of turn)"
+                 :skippable true
                  :once :per-turn
                  :waiting-prompt true
                  :prompt "Choose an installed card to move 1 hosted advancement counter from"
@@ -1395,6 +1408,7 @@
   (let [ability {:msg "gain 1 [Credits] and draw 1 card"
                  :label "Gain 1 [Credits] and draw 1 card (start of turn)"
                  :once :per-turn
+                 :automatic :draw-cards
                  :async true
                  :req (req (:corp-phase-12 @state))
                  :effect (req (wait-for (gain-credits state side 1)
@@ -1515,6 +1529,7 @@
                                 (resolve-ability state side eid ability card nil)
                                 (effect-completed state side eid))))}
               {:event :corp-turn-ends
+               :silent (req true)
                :effect cleanup}]}))
 
 (defcard "Kala Ghoda Real TV"
@@ -1571,6 +1586,7 @@
                              (update-all-agenda-points state)
                              (check-win-by-agenda state side))}]
    :events [{:event :corp-turn-begins
+             :automatic :last ;;so it goes after warm reception
              :async true
              :effect (effect (add-counter eid card :power 1 nil))}]})
 
@@ -1702,6 +1718,7 @@
                  :label (str "Gain 2 [Credits] (start of turn)")
                  :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
                  :async true
+                 :automatic :gain-credits
                  :effect (req (wait-for
                                 (take-credits state side card :credit 2)
                                 (if (not (pos? (get-counters (get-card state card) :credit)))
@@ -1737,6 +1754,7 @@
 (defcard "Marked Accounts"
   (let [ability {:msg "gain 1 [Credits]"
                  :label "Take 1 [Credits] (start of turn)"
+                 :automatic :gain-credits
                  :once :per-turn
                  :req (req (pos? (get-counters card :credit)))
                  :async true
@@ -1777,6 +1795,7 @@
 (defcard "Mental Health Clinic"
   (let [ability {:msg "gain 1 [Credits]"
                  :label "Gain 1 [Credits] (start of turn)"
+                 :automatic :gain-credits
                  :once :per-turn
                  :async true
                  :effect (effect (gain-credits eid 1))}]
@@ -1883,6 +1902,7 @@
 (defcard "Mumbad Construction Co."
   {:derezzed-events [corp-rez-toast]
    :events [{:event :corp-turn-begins
+             :silent (req true)
              :async true
              :effect (effect (add-prop eid card :advance-counter 1 {:placed true}))}]
    :abilities [{:cost [(->c :credit 2)]
@@ -1945,6 +1965,7 @@
 
 (defcard "NASX"
   (let [ability {:msg "gain 1 [Credits]"
+                 :automatic :gain-credits
                  :label "Gain 1 [Credits] (start of turn)"
                  :once :per-turn
                  :async true
@@ -2040,6 +2061,7 @@
         {:async true
          :interactive (req true)
          :once :per-turn
+         :automatic :draw-cards
          :label "Take 3 [Credits] (start of turn)"
          :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
          :req (req (:corp-phase-12 @state))
@@ -2102,6 +2124,7 @@
                  :label "Gain 1 [Credits] (start of turn)"
                  :once :per-turn
                  :async true
+                 :automatic :gain-credits
                  :effect (effect (gain-credits eid 1))}]
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
@@ -2135,6 +2158,7 @@
   (let [ability {:msg "make each player draw 1 card"
                  :label "Make each player draw 1 card (start of turn)"
                  :once :per-turn
+                 :automatic :draw-cards
                  :async true
                  :effect (req (wait-for (draw state :corp 1)
                                         (draw state :runner eid 1)))}]
@@ -2269,6 +2293,7 @@
   (let [ability {:once :per-turn
                  :label "Reveal the top card of R&D and gain 2 [Credits] (start of turn)"
                  :interactive (req true)
+                 :automatic :gain-credits
                  :msg (msg "reveal " (:title (first (:deck corp)))
                            " from the top of R&D"
                            " and gain 2 [Credits]")
@@ -2362,6 +2387,7 @@
 
 (defcard "Rashida Jaheem"
   (let [ability {:once :per-turn
+                 :skippable true
                  :async true
                  :label "Gain 3 [Credits] and draw 3 cards (start of turn)"
                  :req (req (:corp-phase-12 @state))
@@ -2389,6 +2415,7 @@
   (let [ability {:effect (effect (gain-credits eid (if tagged 2 1)))
                  :async true
                  :label "Gain credits (start of turn)"
+                 :automatic :gain-credits
                  :once :per-turn
                  :msg (msg (if tagged "gain 2 [Credits]" "gain 1 [Credits]"))}]
     {:on-rez {:msg "take 1 bad publicity"
@@ -2401,6 +2428,7 @@
   (let [ability {:async true
                  :once :per-turn
                  :label "Trash this asset to do 2 net damage (start of turn)"
+                 :automatic :corp-damage
                  :interactive (req true)
                  :req (req (:corp-phase-12 @state))
                  :effect
@@ -2447,6 +2475,7 @@
   (let [ability {:msg "gain 2 [Credits]"
                  :label "Gain 2 [Credits] (start of turn)"
                  :once :per-turn
+                 :automatic :gain-credits
                  :async true
                  :effect (effect (gain-credits eid 2))}]
     {:derezzed-events [corp-rez-toast]
@@ -2603,6 +2632,7 @@
   (let [ability {:effect (effect (gain-credits eid 2))
                  :async true
                  :once :per-turn
+                 :automatic :gain-credits
                  :label "Gain 2 [Credits] (start of turn)"
                  :msg "gain 2 [Credits]"}]
     {:derezzed-events [corp-rez-toast]
@@ -2919,6 +2949,7 @@
 
 (defcard "The News Now Hour"
   {:events [{:event :runner-turn-begins
+             :silent (req true)
              :effect (req (prevent-current state side))}]
    :on-rez {:effect (req (prevent-current state side))}
    :leave-play (req (swap! state assoc-in [:runner :register :cannot-play-current] false))})
@@ -3010,6 +3041,7 @@
 (defcard "Ubiquitous Vig"
   (let [ability {:msg (msg "gain " (get-counters card :advancement)  " [Credits]")
                  :label "Gain 1 [Credits] for each advancement counter (start of turn)"
+                 :automatic :corp-gain-credits
                  :once :per-turn
                  :async true
                  :effect (effect (gain-credits eid (get-counters card :advancement)))}]
@@ -3022,6 +3054,7 @@
   {:data {:counter {:power 3}}
    :derezzed-events [corp-rez-toast]
    :events [{:event :corp-turn-begins
+             :automatic :corp-damage
              :async true
              :interactive (req true)
              :effect (req (wait-for
@@ -3139,6 +3172,7 @@
                                        (continue-ability state side (choice (remove-once #(= % chosen-ability) abis) (dec n)) card nil)
                                        (effect-completed state side eid)))))}))
         ability {:async true
+                 :automatic :last ;; so it can go after rashida
                  :label "resolve an ability (start of turn)"
                  :once :per-turn
                  :effect (effect (continue-ability (choice all (if (< 1 (count (filter asset? (all-active-installed state :corp))))

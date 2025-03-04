@@ -104,6 +104,7 @@
   {:abilities abilities
    :highlight-in-discard true
    :events [{:event :encounter-ice
+             :skippable true
              :async true
              :location :discard
              :req (req (and (in-discard? card)
@@ -270,6 +271,7 @@
   (auto-icebreaker
     {:abilities abilities
      :events [{:event :encounter-ice
+               :skippable true
                :req (req (and (not-used-once? state {:once :per-turn} card)
                               (not (has-subtype? (:ice context) ice-type))
                               (can-pay? state :runner eid card nil [(->c :credit 2)])))
@@ -409,6 +411,7 @@
 (defcard "Afterimage"
   (auto-icebreaker
     {:events [{:event :encounter-ice
+               :skippable true
                :interactive (req true)
                :optional
                {:req (req (and (has-subtype? (:ice context) "Sentry")
@@ -432,6 +435,7 @@
 (defcard "Algernon"
   {:events
    [{:event :runner-turn-begins
+     :skippable true
      :optional
      {:prompt (msg "Pay 2 [Credits] to gain [Click]?")
       :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [(->c :credit 2)]))
@@ -815,6 +819,7 @@
                          :req (req (same-card? target (:host card)))
                          :value (req (- (get-virus-counters state card)))}]
      :events [{:event :encounter-ice
+               :automatic :pre-bypass
                :req (req (same-card? (:ice context) (:host card)))
                :async true
                :effect (req (if (pos? (ice-strength state side (:ice context)))
@@ -959,6 +964,7 @@
 (defcard "Cordyceps"
   {:data {:counter {:virus 2}}
    :events [{:event :successful-run
+             :skippable true
              :interactive (req true)
              :optional
              {:req (req (and (is-central? (target-server context))
@@ -1050,6 +1056,7 @@
              :msg (msg "host " (:title target) " on itself")
              :effect (req (host state side card (assoc target :seen true :installed false)))}
             {:event :breach-server
+             :automatic :pre-breach
              :async true
              :optional {:req (req (and (= :hq target)
                                        (seq (filter corp? (:hosted card)))))
@@ -1074,6 +1081,7 @@
                                 (strength-pump 1 1)]
                     :interactive (req true)
                     :events [{:event :encounter-ice
+                              :skippable true
                               :optional {:prompt (msg "Spend 3 power counters to bypass " (card-str state current-ice) "?")
                                          :waiting-prompt true
                                          :req (req (and
@@ -1446,6 +1454,7 @@
                      (register-events
                        state side card
                        [{:event :encounter-ice
+                         :skippable true
                          :interactive (req true)
                          :optional
                          {:req (req (and (same-card? ice (:ice context))
@@ -1520,6 +1529,7 @@
                :effect (req (add-counter state side eid card :virus 2 nil))}]
       {:flags {:runner-phase-12 (req true)}
        :events [{:event :runner-turn-begins
+                 :skippable true
                  :interactive (req true)
                  :optional
                  {:prompt "Take 1 tag: Place 2 virus counters on God of War"
@@ -1621,6 +1631,7 @@
 
 (defcard "Heliamphora"
   {:events [{:event :breach-server
+             :automatic :pre-breach
              :async true
              :interactive (req true)
              :req (req (and (= target :archives)
@@ -1935,6 +1946,7 @@
 
 (defcard "Lamprey"
   {:events [{:event :successful-run
+             :automatic :drain-credits
              :req (req (= :hq (target-server context)))
              :msg "force the Corp to lose 1 [Credits]"
              :async true
@@ -1947,6 +1959,7 @@
 
 (defcard "Laser Pointer"
   {:events [{:event :encounter-ice
+             :skippable true
              :req (req (has-any-subtype? current-ice ["AP" "Observer" "Destroyer"]))
              :async true
              :effect (effect (continue-ability
@@ -2062,6 +2075,7 @@
   {:data {:counter {:power 2}}
    :events [(rfg-on-empty :power)
             {:event :encounter-ice
+             :skippable true
              :interactive (req true)
              :ability-name "Malandragem (rfg)"
              :optional {:prompt "Remove this program from the game to bypass encountered ice?"
@@ -2070,6 +2084,7 @@
                                       :msg (msg "bypass " (card-str state current-ice))
                                       :effect (req (bypass-ice state))}}}
             {:event :encounter-ice
+             :skippable true
              :interactive (req true)
              :ability-name "Malandragem (Power counter)"
              :optional {:prompt "Remove 1 power counter to bypass encountered ice?"
@@ -2093,6 +2108,7 @@
                                 (break-sub [(->c :power 1)] 1)
                                 (strength-pump 2 2)]
                     :events [{:event :runner-turn-ends
+                              :silent (req true)
                               :effect (effect (update! (assoc-in card [:counter :power] 0)))}]}))
 
 (defcard "Mantle"
@@ -2192,6 +2208,7 @@
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}
             {:event :breach-server
+             :automatic :pre-breach
              :async true
              :req (req (= target :rd))
              :effect (effect (continue-ability
@@ -2350,6 +2367,7 @@
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}
             {:event :breach-server
+             :automatic :pre-breach
              :async true
              :req (req (= target :hq))
              :effect (effect (continue-ability
@@ -2386,23 +2404,24 @@
   {:data {:counter {:power 3}}
    :events [(trash-on-empty :power)
             {:event :successful-run
-            :interactive (get-autoresolve :auto-fire (complement never?))
-            :silent (get-autoresolve :auto-fire never?)
-            :optional
-            {:req (req (and (first-event? state side :successful-run)
-                            (pos? (get-counters card :power))))
-             :player :runner
-             :autoresolve (get-autoresolve :auto-fire)
-             :waiting-prompt true
-             :prompt "Remove 1 hosted power counter?"
-             :yes-ability
-             {:msg "remove 1 hosted power counter to sabotage 1"
-              :async true
-              :cost [(->c :power 1)]
-              :effect (effect (continue-ability
-                                (sabotage-ability 1)
-                                card nil))}
-             :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
+             :skippable true
+             :interactive (get-autoresolve :auto-fire (complement never?))
+             :silent (get-autoresolve :auto-fire never?)
+             :optional
+             {:req (req (and (first-event? state side :successful-run)
+                             (pos? (get-counters card :power))))
+              :player :runner
+              :autoresolve (get-autoresolve :auto-fire)
+              :waiting-prompt true
+              :prompt "Remove 1 hosted power counter?"
+              :yes-ability
+              {:msg "remove 1 hosted power counter to sabotage 1"
+               :async true
+               :cost [(->c :power 1)]
+               :effect (effect (continue-ability
+                                 (sabotage-ability 1)
+                                 card nil))}
+              :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
    :abilities [(set-autoresolve :auto-fire "Nga")]})
 
 (defcard "Ninja"
@@ -2415,6 +2434,7 @@
 (defcard "Nyashia"
   {:data {:counter {:power 3}}
    :events [{:event :breach-server
+             :skippable true
              :optional
              {:req (req (and (pos? (get-counters card :power))
                              (= target :rd)))
@@ -2490,6 +2510,7 @@
 
 (defcard "Panchatantra"
   {:events [{:event :encounter-ice
+             :skippable true
              :optional
              {:prompt "Give encountered piece ice a subtype?"
               :req (req (not (get-in @state [:per-turn (:cid card)])))
@@ -2704,6 +2725,7 @@
                :effect (req (trash state :runner eid card {:cause :purge
                                                            :cause-card card}))}
               {:event :encounter-ice
+               :skippable true
                :optional {:prompt (msg "Pay " (count (:subroutines (get-card state current-ice)))
                                        " [Credits] to bypass encountered ice?")
                           :req (req (and (not (has-subtype? current-ice "Barrier"))
@@ -2839,6 +2861,7 @@
 
 (defcard "Rezeki"
   {:events [{:event :runner-turn-begins
+             :automatic :gain-credits
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]})
@@ -3235,6 +3258,7 @@
 
 (defcard "Tapwrm"
   (let [ability {:label "Gain [Credits] (start of turn)"
+                 :automatic :gain-credits
                  :msg (msg "gain " (quot (:credit corp) 5) " [Credits]")
                  :once :per-turn
                  :req (req (:runner-phase-12 @state))
@@ -3275,6 +3299,7 @@
                                   (make-run eid (:card-target card) card))}]
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-turn-ends
+               :silent (req true)
                :effect (effect (update! (dissoc card :card-target)))}]}))
 
 (defcard "Tranquilizer"
@@ -3419,6 +3444,7 @@
                                                                                       (has-subtype? % "Icebreaker"))
                                                                                 (all-active-installed state :runner))))})]}))
 
+;; TODO - just make this an autoresolve
 (defcard "Upya"
   {:implementation "Power counters added automatically"
    :events [{:event :successful-run

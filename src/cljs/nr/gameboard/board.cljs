@@ -170,6 +170,15 @@
         (:poison card)
         (:highlight-in-discard card))))
 
+(defn- prompt-button-from-card?
+  [clicked-card {:keys [card msg prompt-type choices] :as prompt-state}]
+  (when-not (or (some #{:counter :card-title :number} choices)
+                (= choices "credit")
+                (= prompt-type "trace"))
+    (some (fn [{:keys [_ uuid value]}]
+            (when (= (:cid value) (:cid clicked-card)) uuid))
+          choices)))
+
 (defn handle-card-click [{:keys [type zone] :as card} shift-key-held]
   (let [side (:side @game-state)]
     (when (not-spectator?)
@@ -177,6 +186,10 @@
         ;; Selecting card
         (= (get-in @game-state [side :prompt-state :prompt-type]) "select")
         (send-command "select" {:card (card-for-click card) :shift-key-held shift-key-held})
+
+        ;; A selectable card is clicked outside of a select prompt (ie it's a button on a choices prompt)
+        (contains? (into #{} (get-in @game-state [side :prompt-state :selectable])) (:cid card))
+        (send-command "choice" {:choice {:uuid (prompt-button-from-card? card (get-in @game-state [side :prompt-state]))}})
 
         ;; Card is an identity of player's side
         (and (= (:type card) "Identity")
@@ -699,10 +712,12 @@
            subtype-target corp-abilities]
     :as card} flipped disable-click]
   (let [title (get-title card)]
-    [:div.card-frame.menu-container
-     [:div.blue-shade.card {:class (str (cond selected "selected"
-                                              (same-card? card (:button @app-state)) "hovered"
-                                              (same-card? card (-> @game-state :encounters :ice)) "encountered"
+    (r/with-let [prompt-state (r/cursor game-state [(keyword (lower-case side)) :prompt-state])]
+      [:div.card-frame.menu-container
+       [:div.blue-shade.card {:class (str (cond selected "selected"
+                                                (contains? (into #{} (get-in @prompt-state [:selectable])) (:cid card)) "selectable"
+                                                (same-card? card (:button @app-state)) "hovered"
+                                                (same-card? card (-> @game-state :encounters :ice)) "encountered"
                                               (and (not (any-prompt-open? side)) (playable? card)) "playable"
                                               ghost "ghost"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
@@ -791,7 +806,7 @@
            (for [card hosted]
              (let [flipped (draw-facedown? card)]
                ^{:key (:cid card)}
-               [card-view card flipped]))))])]))
+               [card-view card flipped]))))])])))
 
 (defn show-distinct-cards
   [distinct-cards]
@@ -1764,6 +1779,7 @@
        :else
        (doall (for [{:keys [idx uuid value]} choices
                     :when (not= value "Hide")]
+                ;; HERE
                 [:button {:key idx
                           :on-click #(do (send-command "choice" {:choice {:uuid uuid}})
                                          (card-highlight-mouse-out % value button-channel))

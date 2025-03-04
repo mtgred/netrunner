@@ -1447,7 +1447,7 @@
       (card-ability state :runner (get-hardware state 0) 0)
       (click-card state :runner (find-card "Customized Secretary" (:discard (get-runner))))
       ;; Make sure the simultaneous-resolution prompt is showing with 2 choices
-      (is (= 2 (count (prompt-buttons :runner))) "Simultaneous-resolution prompt is showing")
+      (is (= 3 (count (prompt-buttons :runner))) "Simultaneous-resolution prompt is showing")
       (click-prompt state :runner "Exile: Streethawk")
       (is (= 1 (count (:hand (get-runner)))) "Exile drew a card")))
 
@@ -3090,7 +3090,7 @@
       (take-credits state :runner)
       (score-agenda state :corp (get-content state :remote1 0))
       ;; Simultaneous prompt: Leela or Gang Sign
-      (is (= ["Leela Patel: Trained Pragmatist" "Gang Sign"] (map :title (prompt-buttons :runner))))
+      (is (= ["Leela Patel: Trained Pragmatist" "Gang Sign" "Done"] (prompt-titles :runner)))
       (click-prompt state :runner "Gang Sign")
       (click-prompt state :runner "Steal")
       (click-card state :runner (get-content state :remote2 0)) ; Bounce from Gang Sign steal

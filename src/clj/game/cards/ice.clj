@@ -927,6 +927,7 @@
                                          (register-events
                                            state side card
                                            [{:event :successful-run
+                                             :automatic :corp-lose-tag
                                              :duration :end-of-run
                                              :unregister-once-resolved true
                                              :async true
@@ -1161,6 +1162,7 @@
                                    :effect (effect (register-events
                                                      card
                                                      [{:event :successful-run
+                                                       :automatic :corp-damage
                                                        :duration :end-of-run
                                                        :async true
                                                        :msg "do 3 meat damage"
@@ -2110,6 +2112,7 @@
                           (effect-completed state side eid)))}
                 card nil)))}]
     {:events [{:event :corp-turn-begins
+               :skippable true
                :interactive (req true)
                :req (req (rezzed? card))
                :optional {:prompt (msg "Add " (card-str state card) " to HQ?")
@@ -4041,6 +4044,7 @@
 
 (defcard "Thimblerig"
   (let [ability {:interactive (req run)
+                 :skippable true
                  :optional
                  {:req (req (and (<= 2 (count (filter ice? (all-installed state :corp))))
                                  (if run (same-card? (:ice context) card) true)))

@@ -2387,7 +2387,7 @@
     (take-credits state :runner)
     (take-credits state :corp)
     (play-from-hand state :runner "Muse")
-    (is (= ["Environmental Testing" "Muse"] (sort (prompt-titles :runner)))
+    (is (= #{"Environmental Testing" "Muse" "Done"} (into #{} (prompt-titles :runner)))
         "Option to trigger either muse of environmental testing first")))
 
 (deftest environmental-testing-works-with-prevention
@@ -4760,7 +4760,7 @@
         (play-from-hand state :runner "Street Peddler")
         (click-prompt state :runner (:title oca))
         ;; Make sure the simultaneous-resolution prompt is showing with 2 choices
-        (is (= 2 (count (prompt-buttons :runner))) "Simultaneous-resolution prompt is showing")
+        (is (= 3 (count (prompt-buttons :runner))) "Simultaneous-resolution prompt is showing")
         (click-prompt state :runner "Off-Campus Apartment")
         (is (= 2 (count (:hand (get-runner)))) "Drew a card from OCA"))))
 
@@ -4971,7 +4971,7 @@
       (play-from-hand state :runner "Rolodex")
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner)))
           "Runner has simultaneous resolution prompt")
-      (is (= #{"Rolodex" "Paige Piper"} (set (prompt-titles :runner)))
+      (is (= #{"Rolodex" "Paige Piper" "Done"} (set (prompt-titles :runner)))
           "Both Rolodex and Paige Piper can be chosen")
       (click-prompt state :runner "Paige Piper")
       (click-prompt state :runner "Yes")

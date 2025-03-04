@@ -142,6 +142,7 @@
                                                                     :run-again attacked-server
                                                                     :run-again-ice ice))))}}}
             {:event :encounter-ice
+             :automatic :bypass
              :once :per-run
              :req (req (and (get-in card [:special :run-again])
                             (same-card? (:ice context) (get-in card [:special :run-again-ice]))))
@@ -713,6 +714,7 @@
                :async true
                :effect (effect (make-run eid target card))}
      :events [{:event :encounter-ice
+               :skippable true
                :optional
                {:prompt "Install a program?"
                 :req (req (first-run-event? state side :encounter-ice))
@@ -1099,6 +1101,7 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
+             :skippable true
              :optional
              {:req (req (seq (filter program? (:hand runner))))
               :prompt "Install a program from the grip?"
@@ -1549,6 +1552,7 @@
              :change-in-game-state (req hq-runnable)
              :effect (req (make-run state side eid :hq card))}
    :events [{:event :encounter-ice
+             :automatic :bypass
              :req (req (< (get-in card [:special :bypass-count] 0) 2))
              :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state)
@@ -1827,6 +1831,7 @@
              :change-in-game-state (req hq-runnable)
              :effect (req (make-run state side eid :hq card))}
    :events [{:event :successful-run
+             :automatic :gain-credits
              :async true
              :msg "gain 9 [Credits] and take 1 tag"
              :req (req (and (= :hq (target-server context))
@@ -1851,6 +1856,7 @@
              :change-in-game-state (req archives-runnable)
              :effect (req (make-run state side eid :archives card))}
    :events [{:event :breach-server
+             :automatic :pre-breach
              :async true
              :req (req (and (= target :archives)
                             ;; don't prompt unless there's at least 1 rezzed piece of ice matching one in Archives
@@ -2040,6 +2046,7 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
+             :automatic :bypass
              :req (req (first-run-event? state side :encounter-ice))
              :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state))}]})
@@ -2069,6 +2076,7 @@
     {:on-play {:msg "prevent the Corp from rezzing non-ice cards on the Runner's turn"
                :effect ab}
      :events [{:event :runner-turn-begins
+               :silent (req true)
                :effect ab}]
      :leave-play (req (clear-all-flags-for-card! state side card))}))
 
@@ -2131,6 +2139,7 @@
                                    :effect (effect (update! (update-in (get-card state card) [:special :how-deep-are-we] (fnil inc 0))))}])
                                (make-run eid target card))}
      :events [{:event :successful-run
+               :automatic :gain-credits
                :interactive (req true)
                :async true
                :req (req this-card-run)
@@ -2160,6 +2169,7 @@
              :async true
              :effect (req (make-run state side eid target card))}
    :events [{:event :successful-run
+             :automatic :draw-cards
              :silent (req true)
              :async true
              :msg "draw 1 card"
@@ -2174,6 +2184,7 @@
              :change-in-game-state (req rd-runnable)
              :effect (req (make-run state side eid :rd card))}
    :events [{:event :successful-run
+             :automatic :draw-cards
              :silent (req true)
              :async true
              :req (req (and (= :rd (target-server context))
@@ -2189,6 +2200,7 @@
              :choices (req runnable-servers)
              :effect (effect (make-run eid target card))}
    :events [{:event :successful-run
+             :automatic :draw-cards
              :req (req (and this-card-run
                             (not (zone-locked? state :runner :discard))))
              :prompt "Choose 1 card to add to the grip"
@@ -2589,6 +2601,7 @@
                                (make-run state side eid :rd card)
                                (effect-completed state side eid)))))}
    :events [{:event :successful-run
+             :automatic :gain-credits
              :req (req (and (get-in card [:special :run-again])
                             (= :rd (target-server context))))
              :msg "gain 4 [Credits]"
@@ -2740,6 +2753,7 @@
                :async true
                :effect (effect (make-run eid target card))}
      :events [{:event :runner-turn-begins
+               :skippable true
                :async true
                :interactive (req true)
                :silent (req (let [ashes (filter #(= "Out of the Ashes" (:title %))
@@ -3200,6 +3214,7 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
+             :skippable true
              :optional (:optional (offer-jack-out
                                    {:req (req (first-run-event? state side :encounter-ice))}))}]})
 
@@ -3299,6 +3314,7 @@
                                card
                                (let [target-ice target]
                                  [{:event :encounter-ice
+                                   :automatic :bypass
                                    :req (req (same-card? target-ice (:ice context)))
                                    :msg (msg "bypass " (:title (:ice context)))
                                    :effect (req (bypass-ice state))}]))
@@ -3396,6 +3412,7 @@
                :change-in-game-state (req hq-runnable)
                :effect (req (make-run state side eid :hq card))}
      :events [{:event :successful-run
+               :automatic :draw-cards
                :silent (req true)
                :req (req (and (= :hq (target-server context))
                               this-card-run))
@@ -3480,11 +3497,13 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
+             :automatic :bypass
              :req (req (first-run-event? state side :encounter-ice))
              :once :per-run
              :msg (msg "bypass " (card-str state current-ice))
              :effect (req (bypass-ice state))}
             {:event :encounter-ice
+             :skippable true
              :req (req (and (= 2 (count (run-events state side :encounter-ice)))
                             (threat-level 4 state)))
              :async true
@@ -3671,6 +3690,7 @@
              :async true
              :effect (effect (make-run eid target card))}
    :events [{:event :encounter-ice
+             :automatic :bypass
              :req (req (= 1 run-position))
              :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state))}]})
@@ -3999,6 +4019,7 @@
    {:effect (effect (register-events
                       card
                       [{:event :runner-turn-ends
+                        :automatic :gain-credits
                         :duration :end-of-turn
                         :unregister-once-resolved true
                         :msg (msg "gain " (* 2 (count (:successful-run runner-reg))) " [Credits]")
@@ -4020,7 +4041,8 @@
                     :value ["Sentry" "Code Gate" "Barrier"]}))
                  (add-icon state side card target "T" (faction-label card))
                  (let [t target]
-                   (register-events state side card
+                   (register-events
+                     state side card
                      [{:event :runner-turn-ends
                        :duration :end-of-turn
                        :unregister-once-resolved true
@@ -4079,6 +4101,7 @@
                       (update! state side (assoc-in card [:special :run-eid] eid))
                       (make-run state side eid :rd card))}
    :events [{:event :successful-run
+             :automatic :gain-credits
              :unregister-once-resolved true
              :silent (req true)
              :req (req (and (= :rd (target-server context))

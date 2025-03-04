@@ -593,6 +593,7 @@
 (defcard "Corporate Sales Team"
   (let [e {:req (req (pos? (get-counters card :credit)))
            :msg "gain 1 [Credits]"
+           :automatic :gain-credits
            :async true
            :effect (req (take-credits state side eid card :credit 1))}]
     {:on-score {:effect (req (add-counter state side eid card :credit 10 nil))
@@ -614,6 +615,7 @@
   (let [ability {:req (req tagged)
                  :async true
                  :label "Do 1 meat damage (start of turn)"
+                 :automatic :corp-damage
                  :once :per-turn
                  :msg "do 1 meat damage"
                  :effect (effect (damage eid :meat 1 {:card card}))}]
@@ -1765,6 +1767,7 @@
 
 (defcard "Puppet Master"
   {:events [{:event :successful-run
+             :skippable true
              :player :corp
              :interactive (req true)
              :waiting-prompt true
@@ -2086,6 +2089,7 @@
      :stolen add-credits-abi
      :on-score add-credits-abi
      :events [{:event :corp-turn-begins
+               :automatic :gain-credits
                :optional
                {:req (req (pos? (get-counters card :credit)))
                 :once :per-turn
