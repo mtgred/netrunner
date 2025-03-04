@@ -254,7 +254,9 @@
       (click-prompt state :corp "R&D")
       (click-prompt state :runner "Yes")
       (is (:run @state) "Run started")
-      (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
+      (run-continue-until state :movement)
+      (run-jack-out state)
+      (is (:run @state) "Did not jack out")
       (is (not (find-card "An Offer You Can't Refuse" (:scored (get-corp)))) "Offer isn't in score area")))
 
 (deftest anonymous-tip
@@ -1035,7 +1037,7 @@
       (is (= (inc corp-creds) (:credit (get-corp))) "Corp gained 1 when runner installed Aumakua")
       (play-from-hand state :runner "Fall Guy")
       (is (= (+ 2 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner installed Fall Guy")
-      (card-ability state :runner (get-resource state 0) 1)
+      (card-ability state :runner (get-resource state 0) 0)
       (is (= (+ 3 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner trashed Fall Guy")
       (run-empty-server state :remote1)
       (click-prompt state :runner "Pay 4 [Credits] to trash")
@@ -3218,12 +3220,10 @@
     (is (changed? [(count-tags state) 2]
           (play-from-hand state :corp "Oppo Research")
           (is (not (no-prompt? state :runner)) "Runner prompted to avoid tag")
-          (card-ability state :runner (get-resource state 0) 0)
-          (click-prompts state :corp
-                         "0"
-                         {:side :runner :choice "0"}
-                         {:side :runner :choice "Done"}
-                         "Yes"))
+          (click-prompts state :runner "No One Home" "Yes")
+          (click-prompt state :corp "0")
+          (click-prompts state :runner "0" "2")
+          (click-prompt state :corp "Yes"))
         "Runner prevented 2 tag")))
 
 (deftest oversight-ai-rez-at-no-cost
@@ -4557,7 +4557,7 @@
       (click-card state :corp (find-card "Scorched Earth" (:hand (get-corp))))
       (is (waiting? state :corp)
           "Corp does not have Subcontract prompt until damage prevention completes")
-      (click-prompt state :runner "Done")
+      (click-prompt state :runner "Pass priority")
       (is (not (no-prompt? state :corp)) "Corp can now play second Subcontract operation")))
 
 (deftest subcontract-interaction-with-terminal-operations
@@ -4981,9 +4981,8 @@
         (is (= 1 (count (:hand (get-corp)))) "Corp could not play All Seeing I when runner was not tagged")
         (gain-tags state :runner 1)
         (play-from-hand state :corp "The All-Seeing I")
-        (let [fall-guy (get-resource state 1)]
-          (card-ability state :runner fall-guy 0))
-        (click-prompt state :runner "Done")
+        (click-prompt state :runner "Fall Guy")
+        (click-prompt state :runner "Same Old Thing")
         (is (= 1 (res)) "One installed resource saved by Fall Guy")
         (is (= 2 (count (:discard (get-runner)))) "Two cards in heap"))))
 
@@ -5002,14 +5001,12 @@
     (gain-tags state :runner 1)
     (take-credits state :runner)
     (play-from-hand state :corp "The All-Seeing I")
-    (is (= "Prevent the trashing of Off-Campus Apartment?"
+    (is (= "Prevent any of Fall Guy, Fall Guy, or Off-Campus Apartment from being trashed?"
            (:msg (prompt-map :runner))))
-    (let [fall-guy (find-card "Fall Guy" (core/all-active-installed state :runner))]
-      (card-ability state :runner fall-guy 0))
-    (click-prompt state :runner "Done")
-    (is (= "Prevent the trashing of Fall Guy?"
-           (:msg (prompt-map :runner))))
-    (click-prompt state :runner "Done")
+    (click-prompt state :runner "Fall Guy")
+    (click-prompt state :runner "Off-Campus Apartment")
+    ;; no more valid targets, since fall guy can't target itself and can't target the
+    ;; OCA that is already off the trash list :)
     (is (= 1 (count (core/all-active-installed state :runner))) "One installed card (Off-Campus)")
     (is  (= 2 (count (:discard (get-runner)))) "Two cards in heap")))
 

@@ -11,11 +11,12 @@
 (defn ->c
   ([type] (->c type 1))
   ([type n] (->c type n nil))
-  ([type n {:keys [additional stealth] :as args}]
+  ([type n {:keys [additional stealth maximum] :as args}]
    {:cost/type type
     :cost/amount n
     :cost/additional (boolean additional)
     :cost/stealth stealth
+    :cost/maximum maximum
     :cost/args (not-empty (dissoc args :stealth :additional))}))
 
 (defmulti value :cost/type)

@@ -117,10 +117,11 @@
   "Joins a collection to a string, seperated by commas and 'and' in front of
   the last item. If collection only has one item, justs returns that item
   without seperators. Returns an empty string if coll is empty."
-  [strings]
-  (if (<= (count strings) 2)
-    (str/join " and " strings)
-    (str (apply str (interpose ", " (butlast strings))) ", and " (last strings))))
+  ([strings] (enumerate-str strings "and"))
+  ([strings sep]
+   (if (<= (count strings) 2)
+     (str/join (str " " sep " ") strings)
+    (str (apply str (interpose ", " (butlast strings))) (str ", " sep " ") (last strings)))))
 
 (defn in-coll?
   "true if coll contains elm"

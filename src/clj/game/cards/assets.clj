@@ -7,8 +7,7 @@
    [game.core.actions :refer [score]]
    [game.core.agendas :refer [update-all-advancement-requirements
                               update-all-agenda-points]]
-   [game.core.bad-publicity :refer [bad-publicity-prevent gain-bad-publicity
-                                    lose-bad-publicity]]
+   [game.core.bad-publicity :refer [gain-bad-publicity lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed all-installed-runner-type get-remotes
                             installable-servers]]
    [game.core.card :refer [agenda? asset? can-be-advanced? corp? event? corp-installable-type?
@@ -18,7 +17,7 @@
                            operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.checkpoint :refer [fake-checkpoint]]
-   [game.core.damage :refer [damage damage-prevent]]
+   [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
                                   reorder-choice spend-credits take-credits trash-on-empty get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
@@ -27,7 +26,6 @@
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
    [game.core.engine :refer [not-used-once? pay register-events resolve-ability trigger-event-sync]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
-   [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [lock-zone prevent-current
                             prevent-draw
                             register-turn-flag! release-zone]]
@@ -46,6 +44,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
+   [game.core.prevention :refer [damage-name preventable? prevent-bad-publicity prevent-damage prevent-expose]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [end-run]]
@@ -445,11 +444,15 @@
                                         (damage state side eid :meat 1 {:card card}))))}})
 
 (defcard "Broadcast Square"
-  {:events [{:event :pre-bad-publicity
-             :async true
-             :trace {:base 3
-                     :successful {:msg "prevents all bad publicity"
-                                  :effect (effect (bad-publicity-prevent Integer/MAX_VALUE))}}}]})
+  {:prevention [{:prevents :bad-publicity
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:req (req (preventable? context))
+                           :trace {:base 3
+                                   :successful {:msg "prevent all bad publicity"
+                                                :async true
+                                                :effect (req (prevent-bad-publicity state side eid :all))}}}}]})
 
 (defcard "C.I. Fund"
   {:derezzed-events [corp-rez-toast]
@@ -1707,16 +1710,13 @@
     {:derezzed-events [corp-rez-toast]
      :events [(assoc ability :event :corp-turn-begins)]
      :data {:counter {:credit 8}}
-     :abilities [(set-autoresolve :auto-reshuffle "Marilyn Campaign shuffling itself back into R&D")]
-     :on-trash {:interactive (req true)
-                :optional
-                {:waiting-prompt true
-                 :prompt (msg "Shuffle " (:title card) " into R&D?")
-                 :autoresolve (get-autoresolve :auto-reshuffle)
-                 :player :corp
-                 :yes-ability {:msg "shuffle itself back into R&D"
-                               :effect (effect (move :corp card :deck)
-                                               (shuffle! :corp :deck))}}}}))
+     :prevention [{:prevents :trash
+                   :type :event
+                   :label "Shuffle Marilyn Campaign into R&D"
+                   :max-uses 1
+                   :ability {:msg "shuffle itself into R&D instead of moving it to Archives"
+                             :req (req (some #(same-card? % card) (map :card (get-in @state  [:prevent :trash :remaining]))))
+                             :effect (req (swap! state update-in [:prevent :trash :remaining] (fn [ctx] (mapv #(if (same-card? card (:card %)) (assoc % :destination :deck :shuffle-rd true) %) ctx))))}}]}))
 
 (defcard "Mark Yale"
   {:events [{:event :agenda-counter-spent
@@ -2208,16 +2208,18 @@
                                 card nil)))}]}))
 
 (defcard "Prāna Condenser"
-  {:interactions {:prevent [{:type #{:net}
-                             :req (req (= :corp (:side target)))}]}
-   :abilities [{:label "Prevent 1 net damage to place power counter on Prāna Condenser"
-                :msg "prevent 1 net damage, place 1 power counter, and gain 3 [Credits]"
-                :async true
-                :req (req true)
-                :effect (req (damage-prevent state :corp :net 1)
-                             (wait-for (add-counter state side card :power 1 nil)
-                                       (gain-credits state :corp eid 3)))}
-               {:action true
+  {:prevention [{:prevents :damage
+                 :type :event
+                 :max-uses 1
+                 :ability {:async true
+                           :msg "prevent 1 net damage, place 1 counter on itself, and gain 3 [Credits]"
+                           :req (req (and (= :net (:type context))
+                                          (= :corp (:source-player context))
+                                          (preventable? context)))
+                           :effect (req (wait-for (prevent-damage state side 1)
+                                                  (wait-for (add-counter state side card :power 1 {:suppress-checkpoint true})
+                                                            (gain-credits state side eid 3))))}}]
+   :abilities [{:action true
                 :msg (msg "deal " (get-counters card :power) " net damage")
                 :label "deal net damage"
                 :cost [(->c :click 2) (->c :trash-can)]
@@ -2712,9 +2714,9 @@
                 :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
                 :yes-ability {:async true
                               :cost [(->c :credit 4)]
-                              :msg "do 3 net damage and give the Runner 1 tag"
-                              :effect (req (wait-for (damage state side :net 3 {:card card})
-                                                     (gain-tags state :corp eid 1)))}}}})
+                              :msg "give the Runner 1 tag and do 3 net damage"
+                              :effect (req (wait-for (gain-tags state :corp 1 {:suppress-checkpoint true})
+                                                     (damage state side eid :net 3 {:card card})))}}}})
 
 (defcard "Space Camp"
   {:flags {:rd-reveal (req true)}
@@ -3281,27 +3283,34 @@
                                        (rez state side eid (last (:hosted (get-card state card))) {:cost-bonus -2})))}]})
 
 (defcard "Zaibatsu Loyalty"
-  {:interactions {:prevent [{:type #{:expose}
-                             :req (req true)}]}
-   :derezzed-events [{:event :pre-expose
+  {:prevention [{:prevents :expose
+                 :type :ability
+                 :label "1 [Credit]: Zaibatsu Loyalty"
+                 :ability {:cost [(->c :credit 1)]
+                           :req (req (preventable? context))
+                           :msg "prevent a card from being exposed"
+                           :async true
+                           :effect (req (prevent-expose state side eid card))}}
+                {:prevents :expose
+                 :type :ability
+                 :label "[trash]: Zaibatsu Loyalty"
+                 :ability {:cost [(->c :trash-can)]
+                           :req (req (preventable? context))
+                           :msg "prevent a card from being exposed"
+                           :async true
+                           :effect (req (prevent-expose state side eid card))}}]
+   :derezzed-events [{:event :expose-interrupt
                       :async true
-                      :effect (req (let [etarget target]
+                      :effect (req (let [ctx context]
                                      (continue-ability
                                        state side
                                        {:optional
                                         {:req (req (not (rezzed? card)))
                                          :player :corp
-                                         :prompt (msg "The Runner is about to expose " (:title etarget) ". Rez Zaibatsu Loyalty?")
+                                         :prompt (msg "The Runner is about to expose " (enumerate-str (map #(card-str state % {:visible true}) (:cards ctx))) ". Rez Zaibatsu Loyalty?")
                                          :yes-ability {:async true
                                                        :effect (effect (rez eid card))}}}
-                                       card nil)))}]
-   :abilities [{:msg "prevent 1 card from being exposed"
-                :cost [(->c :credit 1)]
-                :effect (effect (expose-prevent 1))}
-               {:msg "prevent 1 card from being exposed"
-                :label "Prevent 1 card from being exposed"
-                :cost [(->c :trash-can)]
-                :effect (effect (expose-prevent 1))}]})
+                                       card nil)))}]})
 
 (defcard "Zealous Judge"
   {:rez-req (req tagged)

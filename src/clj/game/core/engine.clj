@@ -580,6 +580,15 @@
                  (into [])))
      (unregister-suppress state side card))))
 
+(defn update-floating-event-durations
+  "updates all effects with a given duration to have another duration
+   ie: :until-next-corp-turn-begins -> :until-corp-turn-begins"
+  [state _ from-key to-key]
+  (swap! state assoc :events
+         (->> (:events @state)
+              (map #(if (= (:duration %) from-key) (assoc % :duration to-key) %))
+              (into []))))
+
 (defn unregister-floating-events
   "Removes all event handlers with a non-persistent duration"
   [state _ duration]
@@ -614,11 +623,13 @@
           :active (active? card)
           :derezzed (and (installed? card)
                          (not (rezzed? card)))
+          :installed (installed? card)
           :facedown (and (installed? card)
                          (facedown? card))
           :faceup (and (installed? card)
                        (faceup? card))
           :hosted (:host card)
+          :floating true
           :inactive (not (active? card))
           :in-location (or (and (contains? location :discard)
                                 (in-discard? card))
