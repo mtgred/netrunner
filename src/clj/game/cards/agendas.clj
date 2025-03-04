@@ -15,7 +15,7 @@
                            in-scored? installed? operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.cost-fns :refer [rez-cost install-cost]]
-   [game.core.damage :refer [damage damage-bonus]]
+   [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [corp-recur defcard do-net-damage
                                   offer-jack-out reorder-choice take-credits get-x-fn]]
    [game.core.drawing :refer [draw draw-up-to]]
@@ -38,12 +38,13 @@
                              trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? ->c]]
+   [game.core.prevention :refer [damage-boost preventable? prevent-jack-out]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez]]
-   [game.core.runs :refer [end-run force-ice-encounter jack-out-prevent]]
+   [game.core.runs :refer [end-run force-ice-encounter]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck
@@ -1201,12 +1202,20 @@
   {:on-score {:silent (req true)
               :async true
               :effect (effect (add-counter eid card :power 2 nil))}
-   :interactions {:prevent [{:type #{:jack-out}
-                             :req (req (pos? (get-counters card :power)))}]}
-   :abilities [{:req (req (:run @state))
-                :cost [(->c :power 1)]
-                :msg "prevent the Runner from jacking out"
-                :effect (effect (jack-out-prevent))}]})
+   :prevention [{:prevents :jack-out
+                 :type :ability
+                 :ability {:cost [(->c :power 1)]
+                           :msg "prevent the runner from jacking out for the remainder of this run"
+                           :condition :active
+                           :async true
+                           :req (req (preventable? context))
+                           :effect (req (wait-for (prevent-jack-out state side)
+                                                  (register-lingering-effect
+                                                    state side card
+                                                    {:type :cannot-jack-out
+                                                     :value true
+                                                     :duration :end-of-run})
+                                                  (effect-completed state side eid)))}}]})
 
 (defcard "License Acquisition"
   {:on-score {:interactive (req true)
@@ -2236,11 +2245,19 @@
                :effect (effect (gain-tags eid 1))}})
 
 (defcard "The Cleaners"
-  {:events [{:event :pre-damage
-             :req (req (and (= :meat (:type context))
-                            (= :corp side)))
-             :msg "do 1 additional meat damage"
-             :effect (effect (damage-bonus :meat 1))}]})
+  {:prevention [{:prevents :pre-damage
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:async true
+                           :condition :active
+                           :req (req
+                                  (and (= :meat (:type context))
+                                       (not= :all (:prevented context))
+                                       (= :corp (:source-player context))
+                                       (not (:unboostable context))))
+                           :msg "increase the pending meat damage by 1"
+                           :effect (req (damage-boost state side eid 1))}}]})
 
 (defcard "The Future is Now"
   {:on-score {:interactive (req true)

@@ -13,17 +13,18 @@
                            in-discard? in-hand? installed? is-type? operation? program? resource?
                            rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.choose-one :refer [choose-one-helper cost-option]]
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
-   [game.core.damage :refer [damage damage-bonus]]
-   [game.core.def-helpers :refer [choose-one-helper corp-recur cost-option defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
+   [game.core.damage :refer [damage]]
+   [game.core.def-helpers :refer [corp-recur defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
    [game.core.engine :refer [do-nothing pay register-events resolve-ability should-trigger?]]
    [game.core.events :refer [event-count first-event? last-turn? no-event? not-last-turn? turn-events ]]
    [game.core.flags :refer [can-score? clear-persistent-flag! in-corp-scored?
-                            in-runner-scored? is-scored? prevent-jack-out
+                            in-runner-scored? is-scored?
                             register-persistent-flag! register-turn-flag! when-scored? zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-clicks
                               lose-credits]]
@@ -37,6 +38,7 @@
                              trash-cards]]
    [game.core.payment :refer [can-pay? cost-target ->c]]
    [game.core.play-instants :refer [play-instant]]
+   [game.core.prevention :refer [damage-boost]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
@@ -210,9 +212,13 @@
                   :player :runner
                   :yes-ability {:msg (str "let the Runner make a run on " serv)
                                 :async true
-                                :effect (effect (clear-wait-prompt :corp)
-                                                (make-run eid serv card)
-                                                (prevent-jack-out))}
+                                :effect (req (clear-wait-prompt state :corp)
+                                             (register-lingering-effect
+                                               state side card
+                                               {:type :cannot-jack-out
+                                                :value true
+                                                :duration :end-of-run})
+                                             (make-run state :runner eid serv card))}
                   :no-ability {:msg "add itself to [their] score area as an agenda worth 1 agenda point"
                                :effect (effect (clear-wait-prompt :corp)
                                                (as-agenda :corp card 1))}}})
@@ -713,11 +719,21 @@
                        true))))}})
 
 (defcard "Defective Brainchips"
-  {:events [{:event :pre-damage
-             :req (req (and (= (:type context) :brain)
-                            (first-event? state side :pre-damage #(= :brain (:type (first %))))))
-             :msg "do 1 additional core damage"
-             :effect (effect (damage-bonus :brain 1))}]})
+  {:prevention [{:prevents :pre-damage
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:async true
+                           :condition :active
+                           :req (req
+                                  (and (or (= :brain (:type context))
+                                           (= :core (:type context)))
+                                       (first-event? state side :pre-damage-flag #(= :brain (:type (first %))))
+                                       (not= :all (:prevented context))
+                                       (pos? (:remaining context))
+                                       (not (:unboostable context))))
+                           :msg "increase the pending core damage by 1"
+                           :effect (req (damage-boost state side eid 1))}}]})
 
 (defcard "Digital Rights Management"
   {:on-play

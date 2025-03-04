@@ -10,10 +10,11 @@
                            is-type? program? resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [charge-ability]]
+   [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
-   [game.core.damage :refer [damage damage-prevent]]
-   [game.core.def-helpers :refer [breach-access-bonus choose-one-helper defcard offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
+   [game.core.damage :refer [damage]]
+   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -39,15 +40,15 @@
    [game.core.link :refer [get-link]]
    [game.core.mark :refer [identify-mark-ability mark-changed-event]]
    [game.core.memory :refer [available-mu expected-mu update-mu]]
-   [game.core.moving :refer [flip-facedown mill move swap-cards swap-ice trash trash-cards
-                             trash-prevent]]
+   [game.core.moving :refer [flip-facedown mill move swap-cards swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve never?]]
    [game.core.payment :refer [build-cost-label can-pay? cost-target cost-value ->c value]]
+   [game.core.prevention :refer [preventable? prevent-damage prevent-end-run prevent-up-to-n-damage prevent-trash-installed-by-type]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
-   [game.core.runs :refer [active-encounter? bypass-ice continue end-run end-run-prevent
+   [game.core.runs :refer [active-encounter? bypass-ice continue end-run
                            get-current-encounter make-run successful-run-replace-breach
                            update-current-encounter]]
    [game.core.sabotage :refer [sabotage-ability]]
@@ -547,7 +548,7 @@
                               :effect (effect (add-counter eid card :virus 1 nil))}
                              {:event :expose
                               :async true
-                              :effect (effect (add-counter eid card :virus 1 nil))}]}))
+                              :effect (effect (add-counter eid card :virus (count (:cards context)) nil))}]}))
 
 (defcard "Aurora"
   (auto-icebreaker {:abilities [(break-sub 2 1 "Barrier")
@@ -592,29 +593,15 @@
                                  :msg (msg "prevent " (card-str state current-ice) " from ending the run this encounter")
                                  :effect (req
                                            (let [target-ice (:ice (get-current-encounter state))]
-                                             (register-lingering-effect
-                                               state side
-                                               card
-                                               {:type :auto-prevent-run-end
-                                                :duration :end-of-encounter
-                                                :req (req
-                                                       (let [target (second targets)]
-                                                         (and (same-card? target target-ice)
-                                                              ;;special case for border control/MIC
-                                                              ;; this is an ugly hack, but we have
-                                                              ;; no way of knowing which *ability*
-                                                              ;; actually ended the run
-                                                              ;; these seem like the safe hedge.
-                                                              ;; MIC is included for paint effects.
-                                                              ;; TODO - fix this, add :cause :subroutine to a bunch of
-                                                              ;; end the run effects
-                                                              (if (#{"Border Control" "M.I.C."} (:title target-ice))
-                                                                (not (some #(and
-                                                                              (same-card? target (:card (first %)))
-                                                                              (= (:cause (first %)) :ability-cost))
-                                                                           (run-events state :corp :corp-trash)))
-                                                                true))))
-                                                :value (req true)})))}]}))
+                                             (register-events
+                                               state side card
+                                               [{:event :end-run-interrupt
+                                                 :duration :end-of-encounter
+                                                 :async true
+                                                 :silent (req true)
+                                                 :req (req (= :subroutine (->> context :source-eid :source-type)))
+                                                 :msg "prevent the run from ending"
+                                                 :effect (req (prevent-end-run state side eid))}])))}]}))
 
 (defcard "Battering Ram"
   (auto-icebreaker {:abilities [(break-sub 2 2 "Barrier")
@@ -1249,12 +1236,11 @@
                    (strength-pump 2 3)))
 
 (defcard "Deus X"
-  {:interactions {:prevent [{:type #{:net}
-                             :req (req true)}]}
-   :abilities [(break-sub [(->c :trash-can)] 0 "AP")
-               {:msg "prevent any amount of net damage"
-                :cost [(->c :trash-can)]
-                :effect (effect (damage-prevent :net Integer/MAX_VALUE))}]})
+  {:prevention [{:prevents :damage
+                 :type :ability
+                 :ability (assoc (prevent-up-to-n-damage :all #{:net})
+                                 :cost [(->c :trash-can)])}]
+   :abilities [(break-sub [(->c :trash-can)] 0 "AP")]})
 
 (defcard "Dhegdheer"
   {:implementation "Discount not considered by any engine functions when checking if a program is playable"
@@ -2013,14 +1999,10 @@
                    (strength-pump 1 2)]})))
 
 (defcard "LLDS Energy Regulator"
-  {:interactions {:prevent [{:type #{:trash-hardware}
-                             :req (req true)}]}
-   :abilities [{:cost [(->c :credit 3)]
-                :msg "prevent a piece of hardware from being trashed"
-                :effect (effect (trash-prevent :hardware 1))}
-               {:cost [(->c :trash-can)]
-                :msg "prevent a piece of hardware from being trashed"
-                :effect (effect (trash-prevent :hardware 1))}]})
+  (letfn [(valid-context? [context] (and (not= :ability-cost (:cause context))
+                                         (not (:game-trash context))))]
+    {:prevention [(prevent-trash-installed-by-type "3 [Credits]: LLDS Energy Regulator"  #{"Hardware"}  [(->c :credit 3)]   valid-context?)
+                  (prevent-trash-installed-by-type "[Trash]: LLDS Energy Regulator"      #{"Hardware"}  [(->c :trash-can)] valid-context?)]}))
 
 (defcard "Lobisomem"
   (auto-icebreaker {:data {:counter {:power 1}}
@@ -2380,14 +2362,16 @@
                                card nil))}]})
 
 (defcard "Net Shield"
-  {:interactions {:prevent [{:type #{:net}
-                             :req (req true)}]}
-   ;; TODO - once a proper prevention system is set up, we can actually enforce the conditions
-   ;; on this card. nbkelly, 2024
-   :abilities [{:cost [(->c :credit 1)]
-                :once :per-turn
-                :msg "prevent the first net damage this turn"
-                :effect (effect (damage-prevent :net 1))}]})
+  {:prevention [{:prevents :damage
+                 :type :ability
+                 :max-uses 1
+                 :ability {:async true
+                           :cost [(->c :credit 1)]
+                           :msg "prevent 1 net damage"
+                           :req (req (and (= :net (:type context))
+                                          (preventable? context)
+                                          (first-event? state side :pre-damage-flag #(= :net (:type (first %))))))
+                                          :effect (req (prevent-damage state side eid 1))}}]})
 
 (defcard "Nfr"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")]
@@ -3127,9 +3111,8 @@
               :prompt "Expose approached piece of ice?"
               :yes-ability
               {:async true
-               :msg "expose the approached piece of ice"
                :effect (req (wait-for
-                              (expose state side (:ice context))
+                              (expose state side [(:ice context)])
                               (continue-ability state side (offer-jack-out) card nil)))}}}]})
 
 (defcard "Snowball"
@@ -3498,11 +3481,11 @@
                                    (not (rezzed? %)))}
              :async true
              :msg (str "name " chosen-subtype)
-             :effect (req (wait-for (expose state side target)
-                                    (when (has-subtype? async-result chosen-subtype)
-                                      (do (move state :corp async-result :hand)
+             :effect (req (wait-for (expose state side [target])
+                                    (when (and async-result (has-subtype? target chosen-subtype))
+                                      (do (move state :corp target :hand)
                                           (system-msg state :runner
-                                                      (str "add " (:title async-result) " to HQ"))))
+                                                      (str "add " (:title target) " to HQ"))))
                                     (effect-completed state side eid)))})]
     {:events [{:event :successful-run
                :interactive (req true)

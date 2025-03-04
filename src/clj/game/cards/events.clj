@@ -13,9 +13,10 @@
                            installed? is-type? operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [can-charge charge-ability charge-card]]
    [game.core.checkpoint :refer [fake-checkpoint]]
+   [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
-   [game.core.damage :refer [damage damage-prevent]]
-   [game.core.def-helpers :refer [breach-access-bonus choose-one-helper defcard offer-jack-out
+   [game.core.damage :refer [damage]]
+   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
                                   reorder-choice with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -49,6 +50,7 @@
                              swap-ice trash trash-cards]]
    [game.core.payment :refer [can-pay? ->c]]
    [game.core.play-instants :refer [play-instant]]
+   [game.core.prevention :refer [damage-name prevent-damage preventable? prevent-up-to-n-tags prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -63,7 +65,7 @@
                               zones->sorted-names]]
    [game.core.set-aside :refer [get-set-aside set-aside]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck]]
-   [game.core.tags :refer [gain-tags lose-tags tag-prevent]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.threat :refer [threat threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -1060,7 +1062,7 @@
               :choices {:card #(and (installed? %)
                                     (ice? %))}
               :async true
-              :effect (req (wait-for (expose state side target)
+              :effect (req (wait-for (expose state side [target])
                                      (continue-ability
                                        state side
                                        {:prompt "Choose a server"
@@ -1208,8 +1210,8 @@
                             (= (last (get-zone topmost)) :content)
                             (not (:rezzed %))))}
     :async true
-    :effect (req (wait-for (expose state side target)
-                           (if-let [target async-result]
+    :effect (req (wait-for (expose state side [target])
+                           (if-let [target (when async-result (first (:cards async-result)))]
                              (if (or (asset? target)
                                      (upgrade? target))
                                (do (system-msg state :runner (str "uses " (:title card) " to trash " (:title target)))
@@ -1498,7 +1500,7 @@
                                            (= (last (get-zone topmost)) :content)
                                            (not (rezzed? %))))}
                    :async true
-                   :effect (req (wait-for (expose state side target)
+                   :effect (req (wait-for (expose state side [target])
                                           (continue-ability
                                             state :runner
                                             (when (and async-result ;; expose was successful
@@ -1930,7 +1932,7 @@
                         {:choices {:card #(and (installed? %)
                                                (not (rezzed? %)))}
                          :async true
-                         :effect (effect (expose eid target))}
+                         :effect (effect (expose eid [target]))}
                         {:msg "gain 2 [Credits]"
                          :async true
                          :effect (effect (gain-credits eid 2))})
@@ -2379,22 +2381,29 @@
     {:req (req (some #{:hq} (:successful-run runner-reg)))
      :player :corp
      :prompt "Take 2 bad publicity?"
+     :waiting-prompt true
      :yes-ability {:player :corp
                    :msg "takes 2 bad publicity"
                    :effect (effect (gain-bad-publicity :corp 2))}
      :no-ability {:player :runner
                   :msg "is immune to damage until the beginning of the Runner's next turn"
-                  :effect (effect
-                            (register-events
-                              card
-                              [{:event :pre-damage
-                                :duration :until-runner-turn-begins
-                                :effect (effect (damage-prevent :net Integer/MAX_VALUE)
-                                                (damage-prevent :meat Integer/MAX_VALUE)
-                                                (damage-prevent :brain Integer/MAX_VALUE))}
-                               {:event :runner-turn-begins
-                                :duration :until-runner-turn-begins
-                                :effect (effect (unregister-floating-events :until-runner-turn-begins))}]))}}}})
+                  :effect (req
+                            (register-lingering-effect
+                              state side card
+                              {:type :prevention
+                               :duration :until-runner-turn-begins
+                               :req (req (= :runner side))
+                               :value {:prevents :damage
+                                       :type :floating
+                                       :max-uses 1
+                                       :card card
+                                       :mandatory true
+                                       :ability {:async true
+                                                 :card card
+                                                 :condition :floating
+                                                 :req (req (preventable? context))
+                                                 :msg (msg "prevent " (:remaining context) " " (damage-name state :damage) " damage")
+                                                 :effect (req (prevent-damage state side eid :damage :all))}}}))}}}})
 
 (defcard "Levy AR Lab Access"
   {:on-play
@@ -2686,26 +2695,21 @@
                    (draw state :runner eid 4)))}})
 
 (defcard "On the Lam"
-  {:on-play {:prompt "Choose a resource to host On the Lam on"
+  {:prevention [{:prevents :tag
+                 :type :ability
+                 :prompt "Trash On the Lam to avoid up to 3 tags?"
+                 :ability (assoc (prevent-up-to-n-tags 3) :cost [(->c :trash-can)])}
+                {:prevents :damage
+                 :type :ability
+                 :prompt "Trash On the Lam to prevent up to 3 damage?"
+                 :ability (assoc (prevent-up-to-n-damage 3 #{:net :meat :core :brain}) :cost [(->c :trash-can)])}]
+   :on-play {:prompt "Choose a resource to host On the Lam on"
              :choices {:card #(and (resource? %)
                                    (installed? %))}
              :change-in-game-state (req (some resource? (all-active-installed state :runner)))
              :async true
              :effect (req (system-msg state side (str "hosts On the Lam on " (:title target)))
-                          (install-as-condition-counter state side eid card target))}
-   :interactions {:prevent [{:type #{:net :brain :meat :tag}
-                             :req (req true)}]}
-   :abilities [{:label "Avoid 3 tags"
-                :msg "avoid up to 3 tags"
-                :async true
-                :cost [(->c :trash-can)]
-                :effect (effect (tag-prevent :runner eid 3))}
-               {:label "Prevent up to 3 damage"
-                :msg "prevent up to 3 damage"
-                :cost [(->c :trash-can)]
-                :effect (effect (damage-prevent :net 3)
-                                (damage-prevent :meat 3)
-                                (damage-prevent :brain 3))}]})
+                          (install-as-condition-counter state side eid card target))}})
 
 (defcard "Out of the Ashes"
   (let [ashes-run {:prompt "Choose a server"
@@ -3503,10 +3507,7 @@
     :async true
     :change-in-game-state (req (some (complement faceup?) (all-installed state :corp)))
     :effect (req (if (pos? (count targets))
-                   (wait-for (expose state side target)
-                             (if (= 2 (count targets))
-                               (expose state side eid (second targets))
-                               (effect-completed state side eid)))
+                   (expose state side eid targets)
                    (effect-completed state side eid)))}})
 
 (defcard "Scavenge"
@@ -3704,7 +3705,7 @@
                           (not (ice? %))
                           (corp? %))}
     :async true
-    :effect (req (wait-for (expose state side target)
+    :effect (req (wait-for (expose state side [target])
                            (continue-ability
                              state side
                              {:prompt "Choose a server"
@@ -3916,9 +3917,31 @@
 
 (defcard "The Noble Path"
   {:makes-run true
+   :static-abilities [{:type :cannot-pay-net
+                       :req (req run)
+                       :value true}
+                      {:type :cannot-pay-brain
+                       :req (req run)
+                       :value true}
+                      {:type :cannot-pay-meat
+                       :req (req run)
+                       :value true}]
+   :prevention [{:prevents :damage
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:async true
+                           :req (req
+                                  (and
+                                    run
+                                    (same-card? card (get-in @state [:runner :play-area 0]))
+                                    (preventable? context)))
+                           :condition :active
+                           :msg (msg "prevent " (:remaining context) " " (damage-name state) " damage")
+                           :effect (req (prevent-damage state side eid :all))}}]
    :on-play {:async true
              :change-in-game-state (req (or (seq (:hand runner))
-                                      (seq runnable-servers)))
+                                            (seq runnable-servers)))
              :effect (req (wait-for
                             (trash-cards state side (:hand runner) {:cause-card card})
                             (continue-ability
@@ -3929,12 +3952,7 @@
                                :msg (msg "trash [their] grip and make a run on " target
                                          ", preventing all damage")
                                :effect (effect (make-run eid target card))}
-                              card nil)))}
-   :events [{:event :pre-damage
-             :duration :end-of-run
-             :effect (effect (damage-prevent :net Integer/MAX_VALUE)
-                             (damage-prevent :meat Integer/MAX_VALUE)
-                             (damage-prevent :brain Integer/MAX_VALUE))}]})
+                              card nil)))}})
 
 (defcard "The Price"
   {:on-play {:async true
