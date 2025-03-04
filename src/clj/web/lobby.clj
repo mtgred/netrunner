@@ -636,17 +636,21 @@
         (->> (assoc lobbies gameid)))
     lobbies))
 
-(defn swap-text [players current-side]
-  (let [[player1 player2] (mapv swap-side players)
+(defn swap-text
+  "Returns an appropriate message indicating that the players have swapped sides, 
+  where `player1-side` is the side that host is switching to"
+  [players player1-side]
+  (let [[player1 player2] (if (> (count players) 1)
+                            (mapv swap-side players)
+                            (list (change-side (first players) player1-side)))
         player1-username (-> player1 :user :username)
         player2-username (-> player2 :user :username)]
     (str player1-username " has swapped sides. "
-         (if (= current-side "Any Side")
+         (if (= player1-side "Any Side")
            "Waiting for opponent."
            (str player1-username " is now " (:side player1) ". "))
          (when player2
            (str player2-username " is now " (:side player2) ".")))))
-
 
 (defmethod ws/-msg-handler :lobby/swap
   lobby--swap
