@@ -1513,20 +1513,18 @@
 (defcard "God of War"
   (auto-icebreaker
     (let [abi {:label "Take 1 tag to place 2 virus counters (start of turn)"
+               :cost [(->c :gain-tag)]
                :once :per-turn
                :async true
-               :effect (req (wait-for (gain-tags state :runner 1 {:unpreventable true})
-                                      (system-msg state side (str "takes 1 tag to place 2 virus counters on God of War"))
-                                      (add-counter state side eid card :virus 2 nil)))}]
+               :msg (msg "place 2 virus counters on " (:title card))
+               :effect (req (add-counter state side eid card :virus 2 nil))}]
       {:flags {:runner-phase-12 (req true)}
-       :events [(choose-one-helper
-                  {:event :runner-turn-begins
-                   :interactive (req true)
-                   :prompt "Take 1 tag: Place 2 virus counters on God of War"
-                   :req (req (not-used-once? state {:once :per-turn} card))}
-                  [{:option "Yes"
-                    :ability abi}
-                   {:option "No"}])]
+       :events [{:event :runner-turn-begins
+                 :interactive (req true)
+                 :optional
+                 {:prompt "Take 1 tag: Place 2 virus counters on God of War"
+                  :req (req (not-used-once? state {:once :per-turn} card))
+                  :yes-ability abi}}]
        :abilities [(break-sub [(->c :virus 1)] 1)
                    (strength-pump 2 1)
                    abi]})))

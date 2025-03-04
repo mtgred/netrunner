@@ -3686,7 +3686,7 @@
         (take-credits state :corp)
         (is (= 1 (get-strength (refresh gauss))) "Back to normal strength"))))
 
-(deftest god-of-war
+(deftest god-of-war-phase-12
   ;; God of War - Take 1 tag to place 2 virus counters
   (do-game
     (new-game {:runner {:deck ["God of War"]}})
@@ -3698,6 +3698,22 @@
       (card-ability state :runner gow 2)
       (is (= 1 (count-tags state)))
       (is (= 2 (get-counters (refresh gow) :virus)) "God of War has 2 virus counters"))))
+
+(deftest god-of-war-start-of-turn
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand [(qty "Ice Wall" 2)]}
+               :runner {:deck ["God of War"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "God of War")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (let [gow (get-program state 0)]
+      (end-phase-12 state :runner)
+      (click-prompt state :runner "Yes")
+      (is (= 1 (count-tags state)))
+      (is (= 2 (get-counters (refresh gow) :virus)) "God of War has 2 virus counters"))
+    (is (last-log-contains? state "Runner takes 1 tag to use God of War to place 2 virus counters on God of War."))))
 
 (deftest golden-automated-test
   (basic-program-test {:name "Golden"
