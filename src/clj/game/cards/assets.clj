@@ -131,6 +131,7 @@
    :abilities [{:label "Install a non-agenda card from HQ"
                 :async true
                 :prompt "Choose a non-agenda card to install from HQ"
+                :change-in-game-state {:req (req (seq (:hand corp)))}
                 :req (req (not (:run @state)))
                 :choices {:card #(and (corp-installable-type? %)
                                       (not (agenda? %))
@@ -310,8 +311,8 @@
              :effect (req (wait-for (gain-credits state side 1)
                                     (lose-credits state :runner eid 1)))}]})
 
-(defcard "B-1001"
-  {:abilities [{:req (req (not this-server))
+(defcard "B-1001" ;; note -> run restriction added by rules as errata
+  {:abilities [{:req (req (and run (not this-server)))
                 :async true
                 :cost [(->c :tag 1)]
                 :msg "end the run"
@@ -394,6 +395,7 @@
   {:implementation "Timing restriction of ability use not enforced"
    :abilities [{:label "Install 1 card, paying all costs"
                 :req (req (= (:active-player @state) :corp))
+                :change-in-game-state {:req (req (seq (:hand corp)))}
                 :prompt "Choose a card in HQ to install"
                 :choices {:card #(and (not (operation? %))
                                       (in-hand? %)
@@ -825,7 +827,7 @@
              :effect (effect (add-counter :corp eid card :credit 2 nil))}]
    :abilities [{:label "Take all hosted credits"
                 :cost [(->c :trash-can)]
-                :req (req (pos? (get-counters card :credit)))
+                :change-in-game-state {:req (req (pos? (get-counters card :credit)))}
                 :msg (msg "gain " (get-counters card :credit) " [Credits]")
                 :async true
                 :effect (effect (gain-credits eid (get-counters card :credit)))}
@@ -1041,6 +1043,7 @@
              :effect (effect (add-counter eid card :power 1 nil))}]
    :abilities [{:label "Draw 1 card and gain 2 [Credits] for each hosted power counter"
                 :cost [(->c :trash-can)]
+                :change-in-game-state {:req (req (pos? (get-counters card :power)))}
                 :async true
                 :effect (req (let [counters (get-counters card :power)
                                    credits (* 2 counters)]
@@ -1388,6 +1391,7 @@
                            :effect (effect (trash eid target {:cause-card card}))
                            :msg (msg "trash " (:title target) " from the grip")}))
         choose-ability {:label "Trash 1 card in the grip of a named type"
+                        :change-in-game-state {:req (req (seq (:hand runner))) :silent true}
                         :once :per-turn
                         :req (req (seq (:hand runner)))
                         :prompt "Choose a card type"
@@ -1587,6 +1591,7 @@
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (req true)}
    :abilities [{:msg "look at the top card of the stack"
+                :change-in-game-state {:req (req (seq (:deck runner)))}
                 :async true
                 :effect (effect (continue-ability
                                   {:prompt (req (->> runner :deck first :title (str "The top card of the stack is ")))

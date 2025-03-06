@@ -2076,8 +2076,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Flip Switch")
       (let [flip (get-hardware state 0)]
-        (card-ability state :runner (get-hardware state 0) 0)
-        (is (refresh flip) "Flip Switch hasn't been trashed")
         (run-on state "HQ")
         (card-ability state :runner (get-hardware state 0) 0)
         (is (= "Runner jacks out." (-> @state :log last :text)))
@@ -2093,10 +2091,7 @@
       (play-from-hand state :runner "Flip Switch")
       (is (zero? (count-tags state)) "Runner starts with 0 tags")
       (let [flip (get-hardware state 0)]
-        (card-ability state :runner flip 1)
-        (is (refresh flip) "Flip Switch hasn't been trashed")
         (gain-tags state :runner 1)
-        (is (= 1 (count-tags state)) "Runner starts with 0 tags")
         (card-ability state :runner flip 1)
         (is (zero? (count-tags state)) "Runner has lost 1 tag")
         (is (nil? (refresh flip)) "Flip Switch has been trashed")
@@ -4199,15 +4194,15 @@
         (card-ability state :runner (get-hardware state 0) 1)
         (is (last-log-contains? state "reveal Sure Gamble from the top of the stack") "Correctly prints the revealed card"))))
 
-(deftest prognostic-q-loop-doesn-t-fire-with-an-empty-deck
-    ;; Doesn't fire with an empty deck
-    (do-game
-      (new-game {:runner {:hand ["Prognostic Q-Loop"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Prognostic Q-Loop")
-      (card-ability state :runner (get-hardware state 0) 1)
-      (is (last-log-contains? state "Runner spends [Click] and pays 1 [Credits] to install Prognostic Q-Loop.")
-          "Shouldn't print anything to log as the stack is empty")))
+(deftest prognostic-q-loop-does-nothing-with-an-empty-deck
+  ;; Doesn't fire with an empty deck
+  (do-game
+    (new-game {:runner {:hand ["Prognostic Q-Loop"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Prognostic Q-Loop")
+    (card-ability state :runner (get-hardware state 0) 1)
+    (is (last-log-contains? state "Prognostic Q-Loop to do nothing.")
+        "Shouldn't print anything to log as the stack is empty")))
 
 (deftest prognostic-q-loop-orders-correctly-with-other-on-run-triggers-when-firing-first-issue-4973
     ;; Orders correctly with other on run triggers when firing first. Issue #4973
@@ -4934,7 +4929,8 @@
         (play-from-hand state :runner "Corroder")
         (play-from-hand state :runner "Simulchip")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (no-prompt? state :runner) "No Simulchip prompt"))))
+        (is (not (no-prompt? state :runner))
+            "Simulchip prompt (the great NCIGS paradigm shift)"))))
 
 (deftest simulchip-no-additional-cost-when-hosted-program-is-trashed-issue-4897
     ;; No additional cost when hosted program is trashed. Issue #4897
