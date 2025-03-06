@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -1201,7 +1201,7 @@
                                           (resource? %))
                                       (runner-can-install? state side % nil)
                                       (<= (install-cost state side %) (get-counters card :power)))
-                                (:hand runner)))
+                                (all-cards-in-hand* state :runner)))
                 :label "install a card from the grip"
                 :cost [(->c :trash-can)]
                 :async true
@@ -1209,7 +1209,7 @@
                           (continue-ability
                             {:waiting-prompt true
                              :prompt "Choose a card to install"
-                             :choices {:req (req (and (in-hand? target)
+                             :choices {:req (req (and (in-hand*? state target)
                                                       (or (hardware? target)
                                                           (program? target)
                                                           (resource? target))
@@ -1563,6 +1563,23 @@
                 :effect (effect (gain-credits eid (get-virus-counters state card)))
                 :msg (msg "gain " (get-virus-counters state card) " [Credits]")}]})
 
+(defcard "Gourmand"
+  {:interactions {:access-ability
+                  {:label "Trash card"
+                   :trash? true
+                   :req (req (and (can-trash? state :runner target)
+                                  (not (agenda? target))
+                                  (not (in-discard? target))))
+                   :cost [(->c :trash-can)]
+                   :trash-icon true
+                   :msg (msg "trash " (:title target))
+                   :async true
+                   :effect (req (wait-for
+                                  (trash state side (assoc target :seen true)
+                                         {:accessed true
+                                          :cause-card card})
+                                  (draw-loud state side eid card 1)))}}})
+
 (defcard "Grappling Hook"
   (let [break-subs (fn [state ice subroutines]
                      (doseq [sub subroutines]
@@ -1690,6 +1707,13 @@
                             (trash-cards state :corp (make-eid state eid)
                                          (take 2 (shuffle (:hand corp))) {:cause-card card})
                             (trash state :runner eid card {:cause :purge :cause-card card})))}]})
+
+(defcard "Hantu"
+  (auto-icebreaker
+    {:data {:counter {:virus 2}}
+     :abilities [(break-sub 1 1 "Sentry")
+                 (strength-pump [(->c :virus 1) 3] 2)]
+     :implementation "v8.2 - November 15 - trash is manual"}))
 
 (defcard "Hemorrhage"
   {:events [{:event :successful-run
@@ -2844,6 +2868,12 @@
              :async true
              :effect (effect (gain-credits eid 1))}]})
 
+(defcard "Rising Tide"
+  (auto-icebreaker
+    {:static-abilities [(breaker-strength-bonus (req (count (filter #(has-subtype? % "Fracter") (:discard runner)))))]
+     :abilities [(break-sub 1 1 "Barrier")
+                 (strength-pump 1 1)]}))
+
 (defcard "RNG Key"
   {:events [{:event :pre-access-card
              :req (req (get-in card [:special :rng-guess]))
@@ -2973,10 +3003,10 @@
                 :label "Install a program"
                 :once :per-turn
                 :change-in-game-state {:req (req (and (not (install-locked? state side))
-                                                      (seq (:hand runner))))}
+                                                      (seq (all-cards-in-hand* state :runner))))}
                 :prompt "Choose a program to install"
-                :choices {:card #(and (program? %)
-                                      (in-hand? %))}
+                :choices {:req (req (and (program? target)
+                                         (in-hand*? state target)))}
                 :async true
                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
                                                                                                                          :display-origin true

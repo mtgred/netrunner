@@ -4575,6 +4575,14 @@
       (is (has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate"))))
 
+(deftest ryo-phoenix-oro
+  (do-game
+    (subroutine-test "Neural Katana" 0 {:runner {:id "Ryō \"Phoenix\" Ōno" :hand 5} :corp {:hand ["IPO" "Hedge Fund"]}})
+    (run-continue-until state :success)
+    (click-card state :corp "IPO")
+    (is (= 6 (:credit (get-runner))) "Gained 1c")
+    (is (= "IPO" (->> (get-corp) :discard first :title)) "IPO Trashed")))
+
 (deftest saraswati-mnemonics-endless-exploration
   ;; Saraswati Mnemonics
   (do-game
@@ -5222,6 +5230,18 @@
       (click-prompt state :runner "Server 1")
       (is (= 1 (get-strength (refresh tithe))) "Tithe strength is not buffed")
       (is (= 2 (count (:subroutines (refresh tithe)))) "Tithe has 2 subroutines again"))))
+
+(deftest topan-basic-test
+  (do-game
+    (new-game {:runner {:id "Topan"
+                        :hand ["Earthrise Hotel" "Steelskin Scarring"] :deck [(qty "Sure Gamble" 10)]}})
+    (take-credits state :corp)
+    (card-ability state :runner (:identity (get-runner)) 0)
+    (is (changed? [(:credit (get-runner)) -2]
+          (click-card state :runner "Earthrise Hotel"))
+        "Spent 2 to install earthrise hotel")
+    (click-prompt state :runner "Yes")
+    (is (= 2 (count (:hand (get-runner)))) "Took damage, then drew up")))
 
 (deftest weyland-consortium-because-we-built-it-pay-credits-prompt
     ;; Pay-credits prompt

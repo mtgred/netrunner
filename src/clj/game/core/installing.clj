@@ -455,6 +455,9 @@
         hide-zero-cost (:hide-zero-cost msg-keys facedown)
         cost-str (if (and hide-zero-cost (= cost-str "pays 0 [Credits]")) nil cost-str)
         prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
+        display-origin (or (when-not (contains? msg-keys :display-origin)
+                             (not= (:previous-zone card) [:hand]))
+                           display-origin)
         discount-str (cond
                        ignore-all-cost " (ignoring all costs)"
                        ignore-install-cost " (ignoring it's install cost)"
@@ -497,7 +500,7 @@
 
 (defn runner-install-continue
   [state side eid card
-   {:keys [previous-zone host-card facedown no-mu no-msg payment-str] :as args}]
+   {:keys [previous-zone host-card facedown no-mu no-msg payment-str costs] :as args}]
   (let [c (if host-card
             (host state side host-card card)
             (move state side card
@@ -524,6 +527,7 @@
                (has-subtype? installed-card "Icebreaker"))
       (update-breaker-strength state side installed-card))
     (queue-event state :runner-install {:card (get-card state installed-card)
+                                        :costs costs
                                         :facedown facedown})
     (when-let [on-install (and (not facedown)
                                (:on-install (card-def installed-card)))]
@@ -600,6 +604,7 @@
                       (runner-install-continue
                         state side eid
                         played-card (assoc args
+                                           :costs costs
                                            :previous-zone (:zone card)
                                            :payment-str payment-str))
                       (let [returned-card (move state :runner played-card (:zone card) {:suppress-event true})]

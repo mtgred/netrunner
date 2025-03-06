@@ -21,7 +21,7 @@
                                trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard offer-jack-out
                                   reorder-choice spend-credits take-credits trash-on-empty do-net-damage]]
    [game.core.drawing :refer [draw click-draw-bonus]]
    [game.core.effects :refer [register-lingering-effect update-disabled-cards]]
@@ -105,7 +105,9 @@
                   :effect (effect (runner-install eid card {:ignore-all-cost true
                                                             :msg-keys {:display-origin true
                                                                        :install-source card}}))}})
-              :location :hand)]
+              :location :hand)
+            ;; TODO - this should work with bling
+            ]
    :abilities [{:async true
                 :cost [(->c :trash-can)]
                 :msg message
@@ -511,19 +513,19 @@
                                  (continue-ability state side (select-credits-ability card) card nil))))}})]})
 
 (defcard "Bazaar"
-  (letfn [(hardware-and-in-hand? [target runner]
+  (letfn [(hardware-and-in-hand? [target runner state]
             (and (hardware? target)
-                 (some #(same-card? :title % target) (:hand runner))))]
+                 (some #(same-card? :title % target) (all-cards-in-hand* state :runner))))]
     {:events [{:event :runner-install
-               :interactive (req (hardware-and-in-hand? (:card context) runner))
-               :silent (req (not (hardware-and-in-hand? (:card context) runner)))
+               :interactive (req (hardware-and-in-hand? (:card context) runner state))
+               :silent (req (not (hardware-and-in-hand? (:card context) runner state)))
                :async true
                :req (req (and (hardware? (:card context))
                               (= [:hand] (:previous-zone (:card context)))))
                :effect (effect (continue-ability
                                  (let [hw (:title (:card context))]
                                    {:optional
-                                    {:req (req (some #(when (= (:title %) hw) %) (:hand runner)))
+                                    {:req (req (some #(when (= (:title %) hw) %) (all-cards-in-hand* state :runner)))
                                      :prompt (msg "Install another copy of " hw "?")
                                      :yes-ability
                                      {:async true
@@ -681,6 +683,31 @@
                                           (preventable? context)))
                            :effect (req (prevent-damage state side eid 1))}}]})
 
+(defcard "Cacophony"
+  (let [ev {:silent (req true)
+            :async true
+            :effect (req (add-counter state side eid card :power 1))}]
+    {:events [{:silent (req true)
+               :async true
+               :effect (req (add-counter state side eid card :power 1))
+               :event :runner-trash
+               :req (req (letfn [(ctx-valid? [[ctx]] (corp? (:card ctx)))]
+                           (and (ctx-valid? [context])
+                                (first-event? state side :runner-trash ctx-valid?)
+                                (no-event? state :runner :agenda-stolen))))}
+              {:silent (req true)
+               :effect (req (add-counter state side card :power 1))
+               :event :agenda-stolen
+               :req (req (letfn [(ctx-valid? [[ctx]] (corp? (:card ctx)))]
+                           (and (no-event? state side :runner-trash ctx-valid?)
+                                (first-event? state :runner :agenda-stolen))))}
+              {:event :runner-turn-ends
+               :skippable true
+               :optional {:req (req (>= (get-counters card :power) 2))
+                          :prompt "Sabotage 3?"
+                          :waiting-prompt true
+                          :yes-ability (assoc (sabotage-ability 3) :cost [(->c :power 2)])}}]}))
+
 (defcard "Charlatan"
   {:abilities [{:action true
                 :cost [(->c :click 2)]
@@ -745,7 +772,7 @@
                 :choices
                 {:async true
                  :req (req (and (program? target)
-                                (in-hand? target)
+                                (in-hand*? state target)
                                 (can-pay? state :runner (assoc eid :source card :source-type :runner-install) target nil
                                           [(->c :credit (install-cost state side target
                                                                       {:cost-bonus (- (get-counters card :power))}))])))}
@@ -2922,6 +2949,15 @@
                 :makes-run true
                 :async true
                 :effect (effect (make-run eid target card))}]})
+
+(defcard "Rent-Reducing Rioters"
+  {:abilities [{:action true
+                :cost [(->c :click 3) (->c :trash-can)]
+                :keep-menu-open :while-clicks-left
+                :label "gain 9 [Credits]"
+                :msg (msg "gain 9 [Credits]")
+                :async true
+                :effect (req (gain-credits state side eid 9))}]})
 
 (defcard "Rogue Trading"
   {:data {:counter {:credit 18}}

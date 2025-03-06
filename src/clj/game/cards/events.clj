@@ -13,11 +13,12 @@
                            installed? is-type? operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.charge :refer [can-charge charge-ability charge-card]]
    [game.core.checkpoint :refer [fake-checkpoint]]
-   [game.core.choose-one :refer [choose-one-helper]]
+   [game.core.choose-one :refer [choose-one-helper cost-option]]
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
-                                  reorder-choice with-revealed-hand]]
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*?
+                                  breach-access-bonus defcard offer-jack-out
+                                  reorder-choice run-any-server-ability run-server-ability with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid
@@ -42,7 +43,7 @@
                                  enable-identity]]
    [game.core.initializing :refer [card-init make-card]]
    [game.core.installing :refer [install-as-condition-counter install-locked?
-                                 runner-can-install? runner-install]]
+                                 runner-can-install? runner-can-pay-and-install? runner-install]]
    [game.core.link :refer [get-link]]
    [game.core.mark :refer [identify-mark-ability mark-changed-event]]
    [game.core.memory :refer [available-mu]]
@@ -50,7 +51,7 @@
                              swap-ice trash trash-cards]]
    [game.core.payment :refer [can-pay? ->c cost-value]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [damage-name prevent-damage preventable? prevent-up-to-n-tags prevent-up-to-n-damage]]
+   [game.core.prevention :refer [damage-name prevent-damage preventable? prevent-end-run prevent-up-to-n-tags prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.revealing :refer [reveal reveal-loud]]
@@ -226,7 +227,7 @@
                                  :choices {:req (req (and (or (hardware? target)
                                                               (program? target)
                                                               (resource? target))
-                                                          (in-hand? target)
+                                                          (in-hand*? state target)
                                                           (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                                     [(->c :credit (install-cost state side target {:cost-bonus -1}))])))}
                                  :async true
@@ -515,9 +516,9 @@
 (defcard "Career Fair"
   {:on-play
    {:prompt "Choose a resource to install"
-    :change-in-game-state {:req (req (seq (:hand runner)))}
+    :change-in-game-state {:req (req (seq (all-cards-in-hand* state :runner)))}
     :choices {:req (req (and (resource? target)
-                             (in-hand? target)
+                             (in-hand*? state target)
                              (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                        [(->c :credit (install-cost state side target {:cost-bonus -3}))])))}
     :async true
@@ -608,6 +609,53 @@
                                 (when (pos? (count from))
                                   (cbi-choice from '() (count from) from)))
                               card nil))}})]}))
+
+(defcard "Charm Offensive"
+  (letfn [(trash-x-opt [t]
+            {:option (str "Trash a rezzed copy of " t)
+             :ability {:async true
+                       :prompt (msg "Choose a rezzed copy of " t " to trash")
+                       :choices {:card #(and (rezzed? %)
+                                             (= t (:title %)))}
+                       :msg (msg "trash " (card-str state target))
+                       :cancel-effect (req (effect-completed state side eid))
+                       :effect (effect (trash eid target {:cause-card card}))}})]
+    {:makes-run true
+     :on-play (run-server-ability :archives)
+     :events [{:event :breach-server
+               :req (req (= target :archives))
+               :silent (req true)
+               :effect (req (let [ts (distinct (map :title (:discard corp)))]
+                              (update! state side
+                                       (update-in card [:special :accessed] concat ts))))}
+              {:event :access-card
+               :req (req (in-discard? target))
+               :silent (req true)
+               :effect (req (update! state side
+                                     (update-in card [:special :accessed] conj (:title target))))}
+              {:event :run-ends
+               :req (req (seq (get-in card [:special :accessed])))
+               :async true
+               :interactive (req true)
+               :effect (req (let [rezzed-titles
+                                  (map :title (filter rezzed? (all-installed state :corp)))
+                                  isec (set/intersection
+                                         (into #{} rezzed-titles)
+                                         (into #{} (get-in card [:special :accessed])))]
+                              (if (seq isec)
+                                (continue-ability
+                                  state side
+                                  ;; note - the frontend will highlight all applicable cards
+                                  ;; if that wasn't so, this would be an unusable approach
+                                  {:async true
+                                   :prompt "Trash a rezzed copy of a card you accessed"
+                                   :choices {:card #(and (rezzed? %)
+                                                         (contains? isec (:title %)))}
+                                   :msg (msg "trash " (card-str state target))
+                                   :cancel-effect (req (effect-completed state side eid))
+                                   :effect (effect (trash eid target {:cause-card card}))}
+                                  card nil)
+                                (effect-completed state side eid))))}]}))
 
 (defcard "Chastushka"
   {:makes-run true
@@ -836,7 +884,7 @@
    {:req (req (some #{:hq :rd :archives} (:successful-run runner-reg)))
     :prompt "Choose a card to install"
     :choices {:req (req (and (not (event? target))
-                             (in-hand? target)
+                             (in-hand*? state target)
                              (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                        [(->c :credit (install-cost state side target {:cost-bonus -8}))])))}
     :async true
@@ -1101,13 +1149,13 @@
    :events [{:event :encounter-ice
              :skippable true
              :optional
-             {:req (req (seq (filter program? (:hand runner))))
+             {:req (req (seq (filter program? (all-cards-in-hand* state :runner))))
               :prompt "Install a program from the grip?"
               :yes-ability
               {:prompt "Choose a program to install"
                :async true
-               :choices {:card #(and (in-hand? %)
-                                     (program? %))}
+               :choices {:req (req (and (in-hand*? state target)
+                                        (program? target)))}
                :effect (effect (runner-install eid (assoc-in target [:special :diana-installed] true) {:ignore-all-cost true
                                                                                                        :msg-keys {:install-source card
                                                                                                                   :display-origin true}}))}}}
@@ -2514,10 +2562,10 @@
                :req (req (some #(and (program? %)
                                      (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
                                                [(->c :credit (install-cost state side %))]))
-                               (:hand runner)))
+                               (all-cards-in-hand* state :runner)))
                :prompt "Choose a program to install"
                :choices {:req (req (and (program? target)
-                                        (in-hand? target)
+                                        (in-hand*? state target)
                                         (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                   [(->c :credit (install-cost state side target))])))}
                :effect (req (wait-for (runner-install state side target {:msg-keys {:install-source card
@@ -2525,7 +2573,7 @@
                                       (continue-ability state side (mhelper (inc n)) card nil)))}))]
     {:on-play
      {:async true
-      :change-in-game-state {:req (req (seq (:hand runner)))}
+      :change-in-game-state {:silent true :req (req (seq (all-cards-in-hand* state :runner)))}
       :effect (effect (continue-ability (mhelper 0) card nil))}}))
 
 (defcard "Meeting of Minds"
@@ -2615,10 +2663,10 @@
 (defcard "Modded"
   {:on-play
    {:prompt "Choose a program or piece of hardware to install"
-    :change-in-game-state {:req (req (seq (:hand runner)))}
+    :change-in-game-state {:req (req (seq (all-cards-in-hand* state :runner)))}
     :choices {:req (req (and (or (hardware? target)
                                  (program? target))
-                             (in-hand? target)
+                             (in-hand*? state target)
                              (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                        [(->c :credit (install-cost state side target {:cost-bonus -3}))])))}
     :async true
@@ -3228,6 +3276,7 @@
                     :prompt "Choose a program or piece of hardware to install"
                     :choices
                     {:req (req (and (valid-target? target)
+                                    (in-hand*? state target)
                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                               [(->c :credit (install-cost state side target
                                                                      {:cost-bonus (- bonus)}))])))}
@@ -3347,10 +3396,10 @@
    {:prompt "Choose a program or piece of hardware to install"
     :choices {:req (req (and (or (hardware? target)
                                  (program? target))
-                             (in-hand? target)
+                             (in-hand*? state target)
                              (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                        [(->c :credit (install-cost state side target {:cost-bonus -3}))])))}
-    :change-in-game-state {:req (req (seq (:hand runner)))}
+    :change-in-game-state {:req (req (seq (all-cards-in-hand* state :runner)))}
     :async true
     :effect (req (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install}) target {:cost-bonus -3
                                                                                                                            :msg-keys {:install-source card
@@ -3545,7 +3594,7 @@
                         :show-discard  (not (zone-locked? state :runner :discard))
                         :choices
                         {:req (req (and (program? target)
-                                        (or (in-hand? target)
+                                        (or (in-hand*? state target)
                                             (and (in-discard? target)
                                                  (not (zone-locked? state :runner :discard))))
                                         (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
@@ -3557,6 +3606,38 @@
                         :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
                                                         target {:cost-bonus (- tcost)}))}
                        card nil))))}})
+
+(defcard "Scrounge"
+  {:on-play {:prompt "Choose a program to install"
+             :label "Install program from the heap"
+             :show-discard true
+             :req (req (some #(and (program? %)
+                                   (runner-can-pay-and-install?
+                                     state side
+                                     (assoc eid :source card) %
+                                     {:no-toast true}))
+                             (:discard runner)))
+             :choices {:req (req (and (program? target)
+                                      (in-discard? target)
+                                      (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                                                [(->c :credit (install-cost state side target))])))}
+             :cost [(->c :trash-can)(->c :click 1)]
+             :async true
+             :effect (req (wait-for
+                            (runner-install state side (assoc (make-eid state eid) :source card :source-type :runner-install) target {:msg-keys {:install-source card
+                                                                                                                                                 :display-origin true
+                                                                                                                                                 :include-cost-from-eid eid}})
+                            (continue-ability
+                              state side
+                              {:prompt "Put a card on the bottom of the stack?"
+                               :req (req (seq (filter program? (:discard runner))))
+                               :choices {:req (req (and (program? target)
+                                                        (in-discard? target)))}
+                               :async true
+                               :show-discard true
+                               :msg (msg "put " (:title target) " on the bottom of the stack")
+                               :effect (req (move state side target :deck))}
+                              card nil)))}})
 
 (defcard "Scrubbed"
   {:events [{:event :encounter-ice
@@ -3577,6 +3658,33 @@
                                       (= "Advance 1 installed card"
                                          (:label (:ability context)))))
                       :value (->c :credit 1)}]})
+
+;; TODO - adjust prevention so that we fetch the source card from the state as well as the event
+;; this will make it show up in the messages in the log, which it currently does not
+(defcard "Shred"
+  {:on-play run-any-server-ability
+   :makes-run true
+   :static-abilities [{:type :prevention
+                       :req (req (and run (first-run-event? state side :end-run-interrupt)))
+                       :value {:prevents :end-run
+                               :type :floating
+                               :max-uses 1
+                               :mandatory true
+                               :ability {:async true
+                                         :condition :floating
+                                         :req (req (preventable? context))
+                                         :effect (req (let [cards-in-server (count (:content run-server))]
+                                                        (continue-ability
+                                                          state side
+                                                          (when (pos? cards-in-server)
+                                                            (choose-one-helper
+                                                              {:player :corp}
+                                                              [(cost-option [(->c :reveal-and-randomly-trash-from-hand cards-in-server)] :corp)
+                                                               {:option "The run does not end"
+                                                                :ability {:display-side :runner
+                                                                          :effect (req (system-msg state side "uses Shred to prevent the run from ending")
+                                                                                       (prevent-end-run state side eid))}}]))
+                                                          card nil)))}}}]})
 
 (defcard "Showing Off"
   {:makes-run true
@@ -4256,26 +4364,16 @@
 
 (defcard "Window of Opportunity"
   (let [install-abi
-        {:async true
-         :effect
-         (req (let [targets-in-the-grip
-                    (filter #(or (hardware? %)
-                                 (program? %))
-                            (:hand runner))]
-                (continue-ability
-                  state side
-                  (if (seq targets-in-the-grip)
-                    {:prompt "Choose 1 program or piece of hardware"
-                     :waiting-prompt true
-                     :choices (req (cancellable targets-in-the-grip))
-                     :async true
-                     :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
-                                                                                                                              :display-origin true}}))}
-                    ;; else show a fake prompt so the corp can't infer that no legal targets exist
-                    {:prompt "You have no programs or pieces of hardware to install"
-                     :choices ["OK"]
-                     :prompt-type :bogus})
-                card nil)))}]
+        {:prompt "Choose 1 program or piece of hardware to install"
+         :waiting-prompt true
+         :change-in-game-state {:silent true :req (req (seq (all-cards-in-hand* state :runner)))}
+         :choices {:req (req (and (in-hand*? state target)
+                                  (or (hardware? target)
+                                      (program? target))
+                                  (runner-can-pay-and-install? state side (assoc eid :source card) target)))}
+         :async true
+         :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
+                                                                                                                  :display-origin true}}))}]
     {:makes-run true
      :events [{:event :run
                :async true

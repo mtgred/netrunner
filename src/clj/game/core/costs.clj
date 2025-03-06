@@ -736,6 +736,29 @@
                :paid/value (count async-result)
                :paid/targets async-result})))
 
+;; RevealAndRandomlyTrashFromHand
+(defmethod value :reveal-and-randomly-trash-from-hand [cost] (:cost/amount cost))
+(defmethod label :reveal-and-randomly-trash-from-hand [cost]
+  (str "trash " (quantify (value cost) "card") " randomly from your hand"))
+(defmethod payable? :reveal-and-randomly-trash-from-hand
+  [cost state side eid card]
+  (<= 0 (- (count (get-in @state [side :hand])) (value cost))))
+(defmethod handler :reveal-and-randomly-trash-from-hand
+  [cost state side eid card]
+  (let [to-trash (map #(assoc % :seen true) (take (value cost) (shuffle (get-in @state [side :hand]))))
+        hand (if (= :corp side) "HQ" "the grip")]
+    (wait-for (reveal state side to-trash)
+              (wait-for (trash-cards state side to-trash
+                                     {:unpreventable true :cause :ability-cost})
+                        (complete-with-result
+                          state side eid
+                          {:paid/msg (str "reveals and trashes " (quantify (count async-result) "card")
+                                          " (" (enumerate-str (map :title to-trash)) ")"
+                                          " from " hand)
+                           :paid/type :reveal-and-randomly-trash-from-hand
+                           :paid/value (count async-result)
+                           :paid/targets async-result})))))
+
 ;; TrashEntireHand
 (defmethod value :trash-entire-hand [cost] 1)
 (defmethod label :trash-entire-hand [cost] "trash all cards in your hand")

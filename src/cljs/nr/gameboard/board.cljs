@@ -179,6 +179,11 @@
             (when (= (:cid value) (:cid clicked-card)) uuid))
           choices)))
 
+(defn send-play-command [{:keys [type zone] :as card} shift-key-held]
+  (if (and (= "discard" (first zone)) (:flashback-playable card))
+    (send-command "flashback" {:card (card-for-click card) :shift-key-held shift-key-held})
+    (send-command "play" {:card (card-for-click card) :shift-key-held shift-key-held})))
+
 (defn handle-card-click [{:keys [type zone] :as card} shift-key-held]
   (let [side (:side @game-state)]
     (when (not-spectator?)
@@ -200,18 +205,24 @@
         (and (= side :runner)
              (= "Runner" (:side card))
              (not (any-prompt-open? side))
-             (= "hand" (first zone))
-             (playable? card))
-        (send-command "play" {:card (card-for-click card) :shift-key-held shift-key-held})
+             (or (and (= "hand" (first zone))
+                      (playable? card))
+                 (:playable-as-if-in-hand card)
+                 (and (= "discard" (first zone))
+                      (:flashback-playable card))))
+        (send-play-command (card-for-click card) shift-key-held)
 
         ;; Corp clicking on a corp card
         (and (= side :corp)
              (= "Corp" (:side card))
              (not (any-prompt-open? side))
-             (= "hand" (first zone))
-             (playable? card))
+             (or (and (= "hand" (first zone))
+                      (playable? card))
+                 (and (= "discard" (first zone))
+                      (= "Operation" type)
+                      (:flashback-playable card))))
         (if (= "Operation" type)
-          (send-command "play" {:card (card-for-click card)})
+          (send-play-command (card-for-click card) shift-key-held)
           (if (= (:cid card) (:source @card-menu))
             (do (send-command "generate-install-list" nil)
                 (close-card-menu))
@@ -715,7 +726,7 @@
   [{:keys [zone code type abilities counter
            subtypes strength current-strength selected hosted
            side facedown card-target icon new ghost runner-abilities subroutines
-           subtype-target corp-abilities]
+           subtype-target corp-abilities flashback-fake-in-hand flashback-playable]
     :as card} flipped disable-click]
   (let [title (get-title card)]
     (r/with-let [gs-prompt-state (r/cursor game-state [(keyword (lower-case side)) :prompt-state])
@@ -730,13 +741,15 @@
                                                 (same-card? card @gs-encounter-ice) "encountered"
                                               (and (not (any-prompt-open? side)) (playable? card)) "playable"
                                               ghost "ghost"
+                                              (and flashback-fake-in-hand (not (any-prompt-open? side)) flashback-playable) "playable flashback"
+                                              flashback-fake-in-hand "flashback"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
                                               new "new"))
                             :tab-index (when (and (not disable-click)
                                                   (or (active? card)
                                                       (playable? card)))
                                          0)
-                            :draggable (when (and (not-spectator?) (not disable-click)) true)
+                            :draggable (when (and (not-spectator?) (not disable-click) (not flashback-fake-in-hand)) true)
                             :on-touch-start #(handle-touchstart % card)
                             :on-touch-end   #(handle-touchend %)
                             :on-touch-move  #(handle-touchmove %)
@@ -901,9 +914,14 @@
 
 (defn hand-view []
   (let [s (r/atom {})]
-    (fn [side hand hand-size hand-count popup popup-direction]
-      (let [size (if (nil? @hand-count) (count @hand) @hand-count)
-            filled-hand (concat @hand (repeat (- size (count @hand)) {:side (if (= :corp side) "Corp" "Runner")}))]
+    (fn [side hand hand-size hand-count popup popup-direction discard]
+      (let [flashbacks (if discard (map #(assoc % :flashback-fake-in-hand true) (filter :flashback @discard))
+                           [])
+            printed-size (if (nil? @hand-count) (count @hand) @hand-count)
+            size (+ printed-size (count flashbacks))
+            filled-hand (concat (map #(dissoc % :flashback) @hand)
+                                flashbacks
+                                (repeat (- size (+ (count @hand) (count flashbacks))) {:side (if (= :corp side) "Corp" "Runner")}))]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
@@ -2317,7 +2335,7 @@
                                   :me me :opponent opponent :prompt-state prompt-state}])]]
 
                 [:div.me
-                 [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true]]]]
+                 [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true me-discard]]]]
               (when (:replay @game-state)
                 [:div.bottompane
                  [replay-panel]])])))})))

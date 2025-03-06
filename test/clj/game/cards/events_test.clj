@@ -1118,6 +1118,20 @@
     (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
+(deftest charm-offensive
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ice Wall"]
+                      :discard ["Ice Wall"]}
+               :runner {:hand ["Charm Offensive"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-run-event state "Charm Offensive" :archives)
+    (click-card state :runner (get-ice state :hq 0))
+    (is (not (get-ice state :hq 0)) "Ice Wall is trashed")
+    (is (= 2 (count (:discard (get-corp)))) "2 cards in trash now")))
+
 (deftest chastushka
   ;; Chastushka - run hq, replace breach with sabotage 4
   (do-game
@@ -6486,6 +6500,15 @@
         (is (= "Engolo" (:title (get-program state 0))) "Engolo is now installed")
         (is (= (+ credits 2 -5) (:credit (get-runner))) "Scavenge should give discount"))))
 
+(deftest scrounge
+  (do-game
+    (new-game {:runner {:hand ["Scrounge"] :deck ["Rezeki"] :discard ["Ika" "Mayfly"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Scrounge")
+    (click-card state :runner "Ika")
+    (click-card state :runner "Mayfly")
+    (is-deck? state :runner ["Rezeki" "Mayfly"])))
+
 (deftest scrubbed
   ;; First piece of ice encountered each turn has -2 Strength for remainder of the run
   (do-game
@@ -6558,6 +6581,30 @@
               (str "Accessing the card at index " n " of the bottom of the deck (" target-card ")")))
         (click-prompt state :runner "No action"))
       (is (no-prompt? state :runner) "No longer accessing cards"))))
+
+(deftest shred-test
+  (doseq [opt [(str "Trash 3 cards randomly from your hand") "The run does not end"]]
+    (do-game
+      (new-game {:runner {:hand ["Shred"]}
+                 :corp {:hand ["Prisec" "Ice Wall" "Ganked!" "PAD Campaign" "Hedge Fund" "IPO"
+                               "Restructure" "Rashida Jaheem"]}})
+      (core/gain state :corp :click 1)
+      (play-from-hand state :corp "Prisec" "New remote")
+      (play-from-hand state :corp "Ganked!" "Server 1")
+      (play-from-hand state :corp "PAD Campaign" "Server 1")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (rez state :corp (get-ice state :remote1 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Shred")
+      (click-prompt state :runner "Server 1")
+      (run-continue state :encounter-ice)
+      (card-subroutine state :corp (get-ice state :remote1 0) 0)
+      (click-prompt state :corp opt)
+      (if (= opt "The run does not end")
+        (do (is (no-prompt? state :runner) "no prompt")
+            (is (no-prompt? state :corp) "no prompt")
+            (is (:run @state) "still run"))
+        (is (not (:run @state)) "not run")))))
 
 (deftest singularity
   ;; Singularity - Run a remote; if successful, trash all contents at no cost
@@ -7624,9 +7671,8 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Window of Opportunity")
       (click-prompt state :runner "HQ")
-      (is (= 3 (-> (prompt-map :runner) :choices count)) "Runner has 3 choices (done is a choice)")
       (is (changed? [(:credit (get-runner)) -1]
-                    (click-prompt state :runner "Fermenter"))
+                    (click-card state :runner "Fermenter"))
           "Runner paid Fermenter install cost")
       (is (= "Fermenter" (:title (get-program state 0))) "Fermenter is installed")
       (is (= [:hq] (:server (:run @state))) "Running on HQ")
@@ -7641,15 +7687,6 @@
       (is (no-prompt? state :runner) "No Bloop prompt to derez an Harmonic ice")
       (is (rezzed? (refresh bloop))))))
 
-(deftest window-of-opportunity-bogus-prompt
-  (do-game
-    (new-game {:runner {:hand ["Window of Opportunity" "Smartware Distributor"]}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Window of Opportunity")
-    (click-prompt state :runner "HQ")
-    (click-prompt state :runner "OK")
-    (is (= [:hq] (:server (:run @state))) "Running on HQ")))
-
 (deftest window-of-opportunity-no-derez
   (do-game
     (new-game {:corp {:hand ["Vanilla"]}
@@ -7658,7 +7695,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Window of Opportunity")
     (click-prompt state :runner "Archives")
-    (click-prompt state :runner "Simulchip")
+    (click-card state :runner "Simulchip")
     (is (= "Simulchip" (:title (get-hardware state 0))) "Simulchip is installed")
     (is (= [:archives] (:server (:run @state))) "Running on Archives")
     (is (no-prompt? state :runner) "No Window of Opportunity prompt")))

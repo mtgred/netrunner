@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [install-cost rez-additional-cost-bonus rez-cost trash-cost]]
    [game.core.damage :refer [chosen-damage damage
                              enable-runner-damage-choice runner-can-choose-damage?]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard offer-jack-out
                                   reorder-choice spend-credits take-credits trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects register-lingering-effect
@@ -281,6 +281,30 @@
              :req (req (seq (:cards context)))
              :async true
              :effect (req (continue-ability state side (choose-a-card (:cards context)) card nil))}]}))
+
+(defcard "Bling"
+  (letfn [(is-no-creds? [costs]
+            (not-any? #(and
+                         (= (:cost/type %) :credit)
+                         (pos? (:cost/amount %)))
+                      costs))]
+    {:static-abilities [(mu+ 1)
+                        {:type :can-play-as-if-in-hand
+                         :req (req (same-card? (:host target) card))
+                         :value true}]
+     :events [{:event :runner-install
+               :skippable true
+               :optional {:waiting-prompt true
+                          :req (req (and (is-no-creds? (:costs context))
+                                         (seq (:deck runner))))
+                          :prompt "Host the top card of your stack on Bling?"
+                          :yes-ability {:msg (msg "host " (:title (first (:deck runner))))
+                                        :effect (req (host state side card (first (:deck runner))))}}}
+              {:event :runner-turn-ends
+               :req (req (seq (:hosted card)))
+               :msg (msg "trash " (enumerate-str (map :title (:hosted card))))
+               :async true
+               :effect (req (trash-cards state :runner eid (:hosted card)))}]}))
 
 (defcard "BMI Buffer"
   (let [grip-program-trash?
@@ -1424,12 +1448,12 @@
              {:req (req (some #(and (hardware? %)
                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) card %
                                               [(->c :credit (install-cost state side % {:cost-bonus 1}))]))
-                              (:hand runner)))
+                              (all-cards-in-hand* state :runner)))
               :prompt "Pay 1 [Credit] to install a piece of hardware?"
               :yes-ability {:async true
                             :prompt "Choose a piece of hardware"
                             :choices
-                            {:req (req (and (in-hand? target)
+                            {:req (req (and (in-hand*? state target)
                                             (hardware? target)
                                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                       [(->c :credit (install-cost state side target {:cost-bonus 1}))])))}
@@ -1523,7 +1547,7 @@
         (fn mh [n]
           {:prompt "Choose a program to install"
            :choices {:req (req (and (program? target)
-                                    (in-hand? target)
+                                    (in-hand*? state target)
                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                               [(->c :credit (install-cost state side target {:cost-bonus -4}))])))}
            :async true
@@ -1671,9 +1695,10 @@
         {:async true
          :prompt "Choose a card to install"
          :waiting-prompt true
-         :req (req (pos? (count (:hand runner))))
+
+         :change-in-game-state {:req (req (seq (all-cards-in-hand* state :runner))) :silent true}
          :choices {:req (req (and (runner? target)
-                                  (in-hand? target)
+                                  (in-hand*? state target)
                                   (not (event? target))
                                   (runner-can-pay-and-install? state side eid target {:no-toast true})))}
          :effect (effect (runner-install
@@ -1734,7 +1759,8 @@
                                                    (can-trigger? state side eid patchwork-ability card targets)))
 
                                     :prompt "Designate a card to play or install"
-                                    :choices {:card (every-pred runner? in-hand?)}
+                                    :choices {:req (req (and (runner? target)
+                                                             (in-hand*? state target)))}
                                     :waiting-prompt true
                                     :async true
                                     :effect

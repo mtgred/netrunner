@@ -4,6 +4,7 @@
    [differ.core :as differ]
    [game.core.board :refer [installable-servers]]
    [game.core.card :refer :all]
+   [game.core.card-defs :refer [card-def]]
    [game.core.cost-fns :refer [card-ability-cost]]
    [game.core.engine :refer [can-trigger?]]
    [game.core.effects :refer [any-effects is-disabled-reg?]]
@@ -18,7 +19,9 @@
 
 (defn playable? [card state side]
   (if (and ((if (= :corp side) corp? runner?) card)
-           (in-hand? card)
+           (or (in-hand? card)
+               (any-effects state side :can-play-as-if-in-hand true? card)
+               (:as-flashback card))
            (not (:corp-phase-12 @state))
            (not (:runner-phase-12 @state))
            (cond+
@@ -47,10 +50,26 @@
               (and (not (:run @state))
                    (can-play-instant?
                      state side {:source card :source-type :play}
-                     card {:base-cost [(->c :click 1)]
+                     card {:base-cost (if-not (:as-flashback card)
+                                        [(->c :click 1)]
+                                        (:flashback (card-def card)))
                            :silent true}))])
            true)
     (assoc card :playable true)
+    card))
+
+(defn flashback-playable? [card state side]
+  ;; TODO - can this be cleaned up?
+  (if-let [flashback-cost (when (in-discard? card) (:flashback (card-def card)))]
+    (let [adjusted-card (assoc card :as-flashback true)
+          adjusted-card (update adjusted-card :additional-cost concat flashback-cost)
+          adj (assoc card :flashback-playable (:playable (playable? adjusted-card state side)))]
+      adj)
+    card))
+
+(defn playable-as-if-in-hand? [card state side]
+  (if (any-effects state side :can-play-as-if-in-hand true? card)
+    (assoc card :playable-as-if-in-hand true)
     card))
 
 (defn ability-playable? [ability ability-idx state side card]
@@ -133,6 +152,7 @@
    :face
    :faces
    :facedown
+   :flashback-playable
    :host
    :hosted
    :icon
@@ -142,6 +162,7 @@
    :new
    :normalizedtitle
    :playable
+   :playable-as-if-in-hand
    :printed-title
    :rezzed
    :runner-abilities
@@ -185,6 +206,8 @@
                            (update :host card-summary state side))
           (:hosted card) (update :hosted cards-summary state side))
         (playable? state side)
+        (flashback-playable? state side)
+        (playable-as-if-in-hand? state side)
         (card-abilities-summary state side)
         (select-non-nil-keys card-keys))
     (-> (cond-> card

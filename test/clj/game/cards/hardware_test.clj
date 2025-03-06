@@ -503,6 +503,26 @@
         (click-card state :runner "Ice Wall")
         (click-prompt state :corp "No"))))
 
+(deftest bling
+  ;; TODO - add a unit test using modded or something
+  (do-game
+    (new-game {:corp {:hand ["IPO"]}
+               :runner {:hand ["Bling" "Spy Camera" "Rezeki" "Modded"]
+                        :deck ["Corroder" "Corroder"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bling")
+    (play-from-hand state :runner "Rezeki")
+    (is (no-prompt? state :runner) "Not prompted to host")
+    (play-from-hand state :runner "Spy Camera")
+    (click-prompt state :runner "Yes")
+    (is (= "Corroder" (->> (get-hardware state 0) :hosted first :title)) "Roadster hosted on bling")
+    (play-from-hand state :runner "Modded")
+    (click-card state :runner (->> (get-hardware state 0) :hosted first))
+    (click-prompt state :runner "Yes")
+    (is (= "Corroder" (->> (get-hardware state 0) :hosted first :title)) "Roadster hosted on bling again")
+    (take-credits state :runner)
+    (is (= "Corroder" (->> (get-runner) :discard second :title)) "Corroder trashed EOT")))
+
 (deftest bmi-buffer
   (do-game
     (new-game {:runner {:hand ["Abaasy" "BMI Buffer" "Freelance Coding Contract"]}})

@@ -16,11 +16,11 @@
                                rez-additional-cost-bonus rez-cost]]
    [game.core.damage :refer [chosen-damage corp-can-choose-damage? damage
                              enable-corp-damage-choice]]
-   [game.core.def-helpers :refer [corp-recur defcard offer-jack-out with-revealed-hand]]
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? corp-recur defcard offer-jack-out with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect is-disabled?]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
-   [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event]]
+   [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event unregister-event-by-uuid]]
    [game.core.events :refer [event-count first-event? first-trash?
                              first-successful-run-on-server? no-event? not-last-turn? run-events run-event-count turn-events]]
    [game.core.expose :refer [expose]]
@@ -301,8 +301,8 @@
                  :label "Install a card facedown (start of turn)"
                  :once :per-turn
                  :choices {:max 1
-                           :card #(and (runner? %)
-                                       (in-hand? %))}
+                           :req (req (and (runner? target)
+                                          (in-hand*? state target)))}
                  :req (req (and (pos? (count (:hand runner)))
                                 (:runner-phase-12 @state)))
                  :async true
@@ -353,7 +353,7 @@
                                                    (runner-can-pay-and-install?
                                                      state side
                                                      (assoc eid :source-type :runner-install) % {:no-toast true}))
-                                             (:hand runner))))
+                                             (all-cards-in-hand* state :runner))))
                      :async true
                      :effect (req (wait-for (runner-install state :runner
                                                             (assoc (make-eid state eid) :source card :source-type :runner-install)
@@ -872,13 +872,13 @@
              (effect (continue-ability
                        (let [itarget (:card context)
                              card-type (:type itarget)]
-                         (if (some #(is-type? % (:type itarget)) (:hand runner))
+                         (if (some #(is-type? % (:type itarget)) (all-cards-in-hand* state :runner))
                            {:optional
                             {:prompt (str "Install another " card-type " from the grip?")
                              :yes-ability
                              {:prompt (str "Choose a " card-type " to install")
-                              :choices {:card #(and (is-type? % card-type)
-                                                    (in-hand? %))}
+                              :choices {:req (req (and (is-type? target card-type)
+                                                       (in-hand*? state target)))}
                               :async true
                               :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
                                                                                                                                        :display-origin true}}))}}}
@@ -1199,7 +1199,7 @@
                                      (:hand runner))
                            {:prompt "Choose an icebreaker to install"
                             :choices
-                            {:req (req (and (in-hand? target)
+                            {:req (req (and (in-hand*? state target)
                                             (has-subtype? target "Icebreaker")
                                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                                       [(->c :credit (install-cost state side target {:cost-bonus -1}))])))}
@@ -1855,6 +1855,25 @@
                                   :req (req (same-card? ice target))
                                   :value "Code Gate"})))}]})
 
+(defcard "Ryō \"Phoenix\" Ōno"
+  ;; TODO - make this actually work with direct access, instead of relying on an OPT trigger
+  {:events [{:event :successful-run
+             :req (req (some identity (run-events state side :subroutine-fired)))
+	     :msg "gain 1 [Credits]"
+             :async true
+             :once :per-turn
+             :effect (req (wait-for (gain-credits state side 1)
+                                    (if-not (seq (:hand corp))
+                                      (effect-completed state side eid)
+                                      (continue-ability
+	                                state :corp
+                                        {:display-side :corp
+                                         :waiting-prompt true
+                                         :player :corp
+                                         :cost [(->c :trash-from-hand 1)]
+                                         :msg :cost}
+                                        card nil))))}]})
+
 (defcard "Saraswati Mnemonics: Endless Exploration"
   (letfn [(install-card [chosen]
             {:prompt "Choose a remote server"
@@ -1908,7 +1927,7 @@
              :choices
              {:req (req (and (has-subtype? target "Connection")
                              (resource? target)
-                             (in-hand? target)
+                             (in-hand*? state target)
                              (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
                                        [(->c :credit (install-cost state side target {:cost-bonus -2}))])))}
              :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -2
@@ -2341,6 +2360,36 @@
              :msg (msg "place 1 agenda counter on " (:title (:card context)))
              :async true
              :effect (effect (add-counter eid (:card context) :agenda 1 nil))}]})
+
+(defcard "Topan" ;;TODO - final card name will have the tagline on it
+  (letfn [(installable? [state side eid target]
+            (and (in-hand*? state target)
+                 (or (hardware? target)
+                     (resource? target)
+                     (program? target))
+                 (runner-can-pay-and-install? state side eid target {:cost-bonus -2})))]
+  {:abilities [{:cost [(->c :click 1)]
+                :action true
+                :once :per-turn
+                :async true
+                :prompt "Install a card, paying 2 [Credits] less"
+                :choices {:req (req (installable? state side eid target))}
+                :label "Install 1 card from your grip, paying 2{c} less. When you install that card, suffer 1 meat damage."
+                :effect (req (let [evs (register-events
+                                         state side card
+                                         [{:event :runner-install
+                                           :unregister-once-resolved true
+                                           :async true
+                                           :interactive (req true)
+                                           :msg "suffer 1 meat damage"
+                                           :effect (req (damage state side eid :meat 1))}])]
+                               (wait-for
+                                 (runner-install state side target {:cost-bonus -2
+                                                                    :msg-keys {:include-cost-from-eid eid
+                                                                               :install-source card}})
+                                 ;; just incase the install failed for some reason!
+                                 (unregister-event-by-uuid state side (:uuid (first evs)))
+                                 (effect-completed state side eid))))}]}))
 
 (defcard "Valencia Estevez: The Angel of Cayambe"
   {:events [{:event :pre-start-game

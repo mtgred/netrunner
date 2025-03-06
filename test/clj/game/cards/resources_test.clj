@@ -782,6 +782,26 @@
     (is (zero? (count (:discard (get-runner)))) "0 cards in discard")
     (is (= 1 (count (:rfg (get-runner)))) "1 card in rfg")))
 
+(deftest cacophany
+  (do-game
+    (new-game {:corp {:hand [(qty "Rashida Jaheem" 2)]
+                      :deck [(qty "Rashida Jaheem" 5)]}
+               :runner {:hand ["Cacophony"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cacophony")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (= 1 (get-counters (get-resource state 0) :power)) "Placed 1 counter")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (is (= 2 (get-counters (get-resource state 0) :power)) "Placed 1 counter")
+    (take-credits state :runner)
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "Done")
+    (is (= 5 (count (:discard (get-corp)))) "Sabotaged 3 (+ 2)")))
+
 (deftest charlatan
   ;; Charlatan
   (do-game
@@ -5512,6 +5532,19 @@
       (core/command-undo-click state :runner)
       (card-ability state :runner (refresh rt) 0)
       (is (= ["Archives" "R&D" "HQ" "Cancel"] (prompt-buttons :runner)) "All three options are there after undoing clicks"))))
+
+(deftest rent-rioters-test
+  (do-game
+    (new-game {:runner {:hand ["Rent-Reducing Rioters"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rent-Reducing Rioters")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (is (changed? [(:credit (get-runner)) 9
+                   (:click (get-runner)) -3]
+          (card-ability state :runner (get-resource state 0) 0))
+        "Gained 9c")
+    (is (= ["Rent-Reducing Rioters"] (map :title (:discard (get-runner)))))))
 
 (deftest rolodex
   ;; Rolodex - Full test

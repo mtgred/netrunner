@@ -3751,6 +3751,17 @@
           "Ability gains credits")
       (is (nil? (refresh gorman)) "Gorman is trashed"))))
 
+(deftest gourmand
+  (do-game
+    (new-game {:corp {:hand [(qty "Hedge Fund" 2)]}
+               :runner {:hand ["Gourmand"] :deck ["Imp"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Gourmand")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "[Gourmand] [trash]: Trash card")
+    (is (= 1 (count (:hand (get-runner)))) "Drew 1")
+    (is (= 1 (count (:discard (get-corp)))) "Trashed 1")))
+
 (deftest grappling-hook
   ;; Grappling Hook
   (do-game
@@ -3907,6 +3918,11 @@
       (trash state :runner (-> (get-runner) :rig :program first))
       (is (zero? (count (:discard (get-runner)))) "Harbinger not in heap")
       (is (-> (get-runner) :rig :facedown first :facedown) "Harbinger installed facedown")))
+
+(deftest hantu-automated-test
+  (basic-program-test
+    {:name "Hantu"
+     :break {:ab 0 :amount 1 :cost 1 :type "Sentry"}}))
 
 (deftest heliamphora-purge
   (do-game
@@ -7358,6 +7374,22 @@
     (let [credits (:credit (get-runner))]
       (take-credits state :corp)
       (is (= (:credit (get-runner)) (+ credits 1)) "Gain 1 from Rezeki"))))
+
+(deftest rising-tide-grows
+  (do-game
+    (new-game {:runner {:hand [(qty "Rising Tide" 1) (qty "Corroder" 3)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rising Tide")
+    (dotimes [_ 3]
+      (is (changed? [(get-strength (get-program state 0)) 1]
+                    (damage state :corp :net 1))
+          "+1 strength per Rising Tide in trash"))))
+
+(deftest tombstone-automated-test
+  (basic-program-test
+    {:name "Rising Tide"
+     :boost {:ab 1 :amount 1 :cost 1}
+     :break {:ab 0 :amount 1 :cost 1 :type "Barrier"}}))
 
 (deftest rng-key-basic-behaviour-first-successful-run-on-rd-hq-guess-a-number-gain-credits-or-cards-if-number-matches-card-cost
     ;; Basic behaviour - first successful run on RD/HQ, guess a number, gain credits or cards if number matches card cost
