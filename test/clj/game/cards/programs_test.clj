@@ -132,7 +132,7 @@
 
 (defn- basic-program-test
   "tests a program which has simple boost and break functionality"
-  [{:keys [name boost break threat counters-modify-strength run-event-bonus subtypes tags
+  [{:keys [name boost break threat counters-modify-strength run-event subtypes tags
            click-prompt-on-install click-prompt-on-encounter runner-trash-ev]}]
   ;; set threat level like {:threat 3}
   ;; set str modify counters like {:counters-modify-strength {:type :power
@@ -217,12 +217,10 @@
                   (add-counter state :runner (core/make-eid state) (refresh card) ctype (- counters))
                   (update-all-icebreakers state :runner)))))
 
-          (if-not run-event-bonus
+          (if-not run-event
             (run-on state :hq)
-            (is (changed? [(get-strength (refresh card)) run-event-bonus]
-                          (play-from-hand state :runner "Dirty Laundry")
-                          (click-prompt state :runner "HQ"))
-                (str (:title card) "should have run-event bonus of " run-event-bonus)))
+            (do (play-from-hand state :runner "Dirty Laundry")
+                (click-prompt state :runner "HQ")))
 
           (run-continue state :encounter-ice)
           (when click-prompt-on-encounter
@@ -7641,6 +7639,17 @@
   (basic-program-test {:name "Saker"
                        :break {:ab 0 :amount 1 :cost 1 :type "Barrier"}
                        :boost {:ab 1 :amount 2 :cost 2}}))
+
+(deftest sang-kancil-automated-test
+  (basic-program-test
+    {:name "Sang Kancil"
+     :boost {:ab 1 :amount 2 :cost 3}
+     :break {:ab 0 :amount 1 :cost 1 :type "Code Gate"}})
+  (basic-program-test
+    {:name "Sang Kancil"
+     :run-event true
+     :boost {:ab 1 :amount 2 :cost 1}
+     :break {:ab 0 :amount 1 :cost 1 :type "Code Gate"}}))
 
 (deftest savant
   ;; Savant

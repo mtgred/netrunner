@@ -4585,6 +4585,30 @@
         (is (= 3 (count (:discard (get-runner)))) "Heap should have 3 cards")
         (is (= "Levy AR Lab Access" (:title (get-rfg state :runner 0))) "Levy should be rfg'd")))
 
+(deftest lie-low-draw-4
+  (do-game
+    (new-game {:runner {:hand ["Lie Low" "Dirty Laundry"]
+                        :deck ["Sure Gamble" "Easy Mark" "Fermenter" "Rezeki"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Lie Low")
+    (is (changed? [(count (:hand (get-runner))) 4]
+          (click-prompt state :runner "Draw 4 cards"))
+        "Drew 4 cards")))
+
+(deftest lie-low-remove-tags
+  (doseq [n [0 1 2]]
+    (do-game
+      (new-game {:runner {:hand ["Lie Low"]}})
+      (gain-tags state :runner 2)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Lie Low")
+      (is (changed? [(count-tags state) (- n)]
+            (click-prompt state :runner "Remove up to 2 tags")
+            (if (= n 1)
+              (click-prompt state :runner "Remove 1 tag")
+              (click-prompt state :runner (str "Remove " n " tags"))))
+          (str "removed " n " tags")))))
+
 (deftest lucky-find
   ;; Lucky Find
   (do-game

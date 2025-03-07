@@ -3,7 +3,7 @@
    [game.core.access :refer [access-bonus max-access]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type
                             card->server server->zone]]
-   [game.core.card :refer [active? agenda? asset? card-index corp? facedown? faceup?
+   [game.core.card :refer [active? agenda? asset? card-index corp? event? facedown? faceup?
                            get-advancement-requirement get-card get-counters
                            get-nested-host get-title get-zone
                            hardware? has-subtype? has-any-subtype? in-hand? in-discard? ice? installed?
@@ -2991,6 +2991,13 @@
 (defcard "Saker"
   (return-and-derez (break-sub 1 1 "Barrier")
                     (strength-pump 2 2)))
+
+(defcard "Sang Kancil"
+  (auto-icebreaker
+    (let [discount-fn (req (when (some #(and (event? %) (has-subtype? % "Run")) (:play-area runner))
+                             [(->c :credit -2)]))]
+      {:abilities [(break-sub 1 1 "Code Gate")
+                   (strength-pump 3 2 :end-of-encounter {:cost-bonus discount-fn})]})))
 
 (defcard "Savant"
   (mu-based-strength [(break-multiple-types

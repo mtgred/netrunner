@@ -904,6 +904,17 @@
                   (play-from-hand state :runner "Easy Mark"))
         "Didn't gain any credits from azmari")))
 
+(deftest barry-baz-wong-tri-maf-contact
+  (do-game
+    (new-game
+      {:corp {:hand ["Vanilla"]}
+       :runner {:id "Barry \"Baz\" Wong" :hand ["Cyberfeeder"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (is (changed? [(:credit (get-runner) -2)]
+                  (click-card state :runner "Cyberfeeder")))))
+
 (deftest blue-sun-powering-the-future
   ;; Blue Sun - Pick up cards at start of turn
   (do-game
@@ -3556,6 +3567,26 @@
      (run-empty-server state "HQ")
      (is (waiting? state :runner) "Runner waiting on Mti ability")
      (click-prompt state :corp "Carry on!")))
+
+(deftest muslihat-draw
+  (do-game
+    (new-game {:runner {:id "MuslihaT"
+                        :hand []
+                        :deck ["Dirty Laundry"]}})
+    (take-credits state :corp)
+    (click-prompt state :runner "Yes")
+    (is (= 1 (count (:hand (get-runner)))))))
+
+(deftest muslihat-no-draw
+  (do-game
+    (new-game {:runner {:id "MuslihaT"
+                        :hand []
+                        :deck ["Dirty Laundry" "Jailbreak" "Marjanah"]}})
+    (take-credits state :corp)
+    (let [c (:title (first (:deck (get-runner))))]
+      (click-prompt state :runner "No")
+      (is (zero? (count (:hand (get-runner)))) "didn't draw")
+      (is (= c (:title (first (:deck (get-runner))))) "deck the same"))))
 
 (deftest issuaq-adaptics-sustaining-diversity
   ;; Issuaq Adaptics: Sustaining Diversity

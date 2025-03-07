@@ -1012,6 +1012,34 @@
        :paid/value (value cost)
        :paid/targets chosen})))
 
+;; AddHostedToHQ
+(defmethod value :hosted-to-hq [cost] (:cost/amount cost))
+(defmethod label :hosted-to-hq [cost]
+  (str "add " (quantify (value cost) "hosted card") " to HQ"))
+(defmethod payable? :hosted-to-hq
+  [cost state side eid card]
+  (<= 0 (- (count (filter corp? (:hosted (get-card state card)))) (value cost))))
+(defmethod handler :hosted-to-hq
+  [cost state side eid card]
+  (continue-ability
+    state side
+    {:prompt (str "Choose " (quantify (value cost) "card") " hosted on " (:title card)
+                  " to add to HQ")
+     :choices {:max (value cost)
+               :all true
+               :req (req (and (corp? target)
+                              (same-card? (:host target) card)))}
+     :async true
+     :effect (req (let [cards (keep #(move state :corp % :hand) targets)]
+                    (complete-with-result
+                      state side eid
+                      {:paid/msg (str "adds " (quantify (count cards) "hosted card")
+                                      " to HQ (" (enumerate-str (map :title cards)) ")")
+                       :paid/type :hosted-to-hq
+                       :paid/value (count cards)
+                       :paid/targets cards})))}
+    card nil))
+
 ;; AnyAgendaCounter
 (defmethod value :any-agenda-counter [cost] (:cost/amount cost))
 (defmethod label :any-agenda-counter [cost] "any agenda counter")

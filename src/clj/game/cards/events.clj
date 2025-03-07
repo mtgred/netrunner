@@ -2384,6 +2384,22 @@
     :effect (effect (shuffle-into-deck :hand :discard)
                     (draw eid 5))}})
 
+(defcard "Lie Low"
+  (letfn [(remove-tag-opt [x]
+            {:option (str "Remove " (quantify x "tag"))
+             :req (req (>= (count-tags state) x))
+             :ability {:msg (str "remove " (quantify x "tag"))
+                       :async true
+                       :effect (req (lose-tags state side eid x))}})]
+    {:on-play (choose-one-helper
+                {:change-in-game-state {:req (req (or (seq (:deck runner)) tagged))}}
+		[{:option "Draw 4 cards"
+                  :ability {:msg "draw 4 cards"
+                            :async true
+                            :effect (req (draw state side eid 4))}}
+                 {:option "Remove up to 2 tags"
+                  :ability (choose-one-helper (vec (map remove-tag-opt [0 1 2])))}])}))
+
 (defcard "Lucky Find"
   {:on-play
    {:msg "gain 9 [Credits]"

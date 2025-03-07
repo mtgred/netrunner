@@ -6,7 +6,7 @@
    [game.core.board :refer [all-active-installed all-installed card->server
                             get-all-cards get-remote-names get-remotes server->zone]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
-                           corp-installable-type? corp? faceup? get-advancement-requirement
+                           corp-installable-type? corp? event? faceup? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
                            has-any-subtype? ice? in-discard? in-deck? in-hand? in-play-area? in-rfg? installed? is-type?
                            operation? program? resource? rezzed? runner? upgrade?]]
@@ -44,7 +44,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
-   [game.core.revealing :refer [conceal-hand reveal reveal-hand]]
+   [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
    [game.core.rezzing :refer [rez]]
    [game.core.runs :refer [end-run get-current-encounter make-run redirect-run
                            set-next-phase start-next-phase total-cards-accessed]]
@@ -466,6 +466,22 @@
              :async true
              :effect (effect (gain-credits :corp eid 2))
              :msg (msg "gain 2 [Credits] from " (:card-target card))}]})
+
+(defcard "Barry \"Baz\" Wong"
+  {:events [{:async true
+             :prompt "Install a resource or piece of hardware"
+             :event :rez
+             :waiting-prompt true
+             :player :runner
+             :interactive (req true)
+             :skippable true
+             :req (req (ice? (:card context)))
+             ;; TODO - fix this on merge
+             ;;:change-in-game-state {:silent true :req (req (seq (all-cards-in-hand* state :runner)))}
+             :choices {:req (req (and (in-hand? target) ;; TODO - in-hand* for bling
+                                      (or (resource? target) (hardware? target))
+                                      (runner-can-pay-and-install? state side eid target)))}
+             :effect (effect (runner-install (assoc eid :source card) target {:msg-keys {:install-source card}}))}]})
 
 (defcard "Blue Sun: Powering the Future"
   {:flags {:corp-phase-12 (req (and (not (:disabled card))
@@ -1413,6 +1429,30 @@
                               :prompt-type :bogus
                               :effect (effect (effect-completed eid))}
                              card nil)))}]})
+
+(defcard "MuslihaT"
+  {:events [{:event :runner-turn-begins
+             :req (req (seq (:deck runner)))
+             :msg (msg "look at the top card of the stack")
+             :async true
+             :effect (req (let [top-card (first (:deck runner))]
+                            (continue-ability
+                              state side
+                              (if (or (and (event? top-card) (has-subtype? top-card "Run"))
+                                      (and (program? top-card) (has-subtype? top-card "Icebreaker")))
+                                {:optional
+                                 {:prompt (str "Add " (:title top-card) " to the grip?")
+                                  :waiting-prompt true
+                                  :yes-ability {:async true
+                                                :effect (req (wait-for
+                                                               (reveal-loud state side card {:and-then " and add it to the grip"} top-card)
+                                                               (move state side top-card :hand)
+                                                               (effect-completed state side eid)))}}}
+                                {:prompt (str "The top card of the deck is " (:title top-card))
+                                 :choices ["OK"]
+                                 :waiting-prompt true
+                                 :async true})
+                              card nil)))}]})
 
 (defcard "Nasir Meidan: Cyber Explorer"
   {:events [{:event :approach-ice

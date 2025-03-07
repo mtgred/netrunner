@@ -1602,6 +1602,19 @@
                 :async true
                 :effect (effect (draw eid 1))}]})
 
+(defcard "Fransofia Ward"
+  {:static-abilities [{:type :rez-cost
+                       :req (req (ice? target))
+                       :value 1}]
+   :events [{:event :encounter-ice
+             :interactive (req true)
+             :skippable true
+             :optional {:req (req (<= 15 (:credit corp)))
+                        :prompt (msg "Trash Fransofia Ward to bypass " (:title (:ice context)) "?")
+                        :yes-ability {:cost [(->c :trash-can)]
+                                      :msg (msg "bypass " (:title (:ice context)))
+                                      :effect (req (bypass-ice state))}}}]})
+
 (defcard "Friend of a Friend"
   {:abilities [{:action true
                 :label "Gain 5 [Credits] and remove 1 tag"
@@ -2563,6 +2576,25 @@
                 :msg "force the Corp to trash 2 random cards from HQ"
                 :async true
                 :effect (effect (trash-cards :corp eid (take 2 (shuffle (:hand corp))) {:cause-card card}))}]})
+
+(defcard "Open Market"
+  (let [ability {:once :per-turn
+                 :automatic :gain-credits
+                 :label "Take 1 [Credits] (start of turn)"
+                 :req (req (and (:runner-phase-12 @state)
+                                (pos? (get-counters card :credit))))
+                 :msg (msg "gain " (min 1 (get-counters card :credit)) " [Credits]")
+                 :async true
+                 :effect (req (take-credits state side eid card :credit 1))}]
+    {:data {:counter {:credit 6}}
+     :automatic :gain-credits
+     :flags {:drip-economy true}
+     :interactions {:pay-credits {:req (req (and (= :runner-install (:source-type eid))
+                                                 (has-any-subtype? target ["Job" "Connection"])))
+                                  :type :credit}}
+     :abilities [ability]
+     :events [(assoc ability :event :runner-turn-begins)
+              (trash-on-empty :credit)]}))
 
 (defcard "Oracle May"
   {:abilities [{:action true

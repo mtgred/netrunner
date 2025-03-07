@@ -1789,6 +1789,28 @@
     (let [adpt (first (:hosted (get-hardware state 0)))]
       (is (= 8 (get-strength adpt)) "Adept at 8 strength hosted"))))
 
+(deftest diplomat-breach
+  (do-game
+    (new-game {:runner {:hand ["Diplomat"]
+                        :deck [(qty "Easy Mark" 3)]}
+               :corp {:hand [(qty "IPO" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Diplomat")
+    (run-empty-server state :archives)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Yes")
+    (is (seq (:hosted (get-hardware state 0))) "Diplomat hosted IPO")
+    (click-prompt state :runner "No action")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Yes")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-card state :runner (first (:hosted (get-hardware state 0))))
+    (click-card state :runner (second (:hosted (get-hardware state 0))))
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "No action")))
+
 (deftest docklands-pass-corp-access-extra-card-on-hq-run
     ;; Corp access extra card on HQ run
     (do-game
@@ -3155,6 +3177,23 @@
         (card-ability state :runner polop 0)
         (click-card state :runner (refresh pad))
         (is (zero? (get-counters (refresh mache) :power)) "Mache should gain no counters from a trash outside of an access"))))
+
+(deftest maglectric-rapid-748
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Maglectric Rapid (748 Mod)"]}})
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Maglectric Rapid (748 Mod)")
+    (run-empty-server state :hq)
+    (is (no-prompt? state :runner) "no targets")
+    (rez state :corp (get-ice state :rd 0))
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Done")
+    (run-empty-server state :hq)
+    (click-card state :runner "Ice Wall")
+    (is (not (rezzed? (get-ice state :rd 0))) "not rezzed")
+    (is (= "Maglectric Rapid (748 Mod)" (get-in @state [:runner :discard 0 :title])) "Trashed Maglectric Rapid (748 Mod)")))
 
 (deftest marrow
   (do-game

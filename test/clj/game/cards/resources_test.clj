@@ -2775,6 +2775,21 @@
       (is (= "Choose an interrupt" (:msg (prompt-map :corp))) "Now Corp gets shuffle choice")
       (is (= 2 (:credit (get-runner)))) #_ trashed_marilyn))
 
+(deftest fransofia-ward
+  (do-game
+    (new-game {:corp {:credits 17 :hand ["Ice Wall"]}
+               :runner {:hand ["Fransofia Ward"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Fransofia Ward")
+    (is (changed? [(:credit (get-corp)) -2]
+          (rez state :corp (get-ice state :hq 0)))
+        "Spent 2 on ice wall")
+    (run-on state :hq)
+    (run-continue-until state :encounter-ice)
+    (click-prompt state :runner "Yes")
+    (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")))
+
 (deftest friend-of-a-friend
   (do-game
     (new-game {:runner {:hand [(qty "Friend of a Friend" 2)]}})
@@ -4829,6 +4844,21 @@
     (is (zero? (count (:hand (get-runner)))) "Took 1 meat damage")
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 2 (count (:discard (get-corp)))) "Two cards trashed from HQ")))
+
+(deftest open-market-test
+  (do-game
+    (new-game {:runner {:hand ["Open Market" "Bank Job"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Open Market")
+    (play-from-hand state :runner "Bank Job")
+    (click-card state :runner "Open Market")
+    (is (= "Bank Job" (:title (get-resource state 1))) "Installed bank job")
+    (dotimes [_ 5]
+      (take-credits state :runner)
+      (is (changed? [(:credit (get-runner)) 1]
+            (take-credits state :corp))
+          "gained 1c from Open Market"))
+    (is (= "Open Market" (->> (get-runner) :discard first :title)) "Trashed on empty")))
 
 (deftest order-of-sol-get-down-to-zero-credits-from-playing-oos
     ;; Get down to zero credits from playing OoS
