@@ -222,6 +222,8 @@
                  (checkpoint state nil eid {:duration :subroutine-currently-resolving})
                  (wait-for
                    (trigger-event-simult state side :subroutine-fired nil {:sub sub :ice ice})
+                   (when (:run @state)
+                     (swap! state update-in [:run :subroutines-fired] (fnil inc 0)))
                    (wait-for
                      (resolve-ability state side (make-eid state eid) (:sub-effect sub) (get-card state ice) nil)
                      (checkpoint state nil eid {:duration :subroutine-currently-resolving}))))))))

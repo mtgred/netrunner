@@ -504,7 +504,6 @@
         (click-prompt state :corp "No"))))
 
 (deftest bling
-  ;; TODO - add a unit test using modded or something
   (do-game
     (new-game {:corp {:hand ["IPO"]}
                :runner {:hand ["Bling" "Spy Camera" "Rezeki" "Modded"]
@@ -522,6 +521,23 @@
     (is (= "Corroder" (->> (get-hardware state 0) :hosted first :title)) "Roadster hosted on bling again")
     (take-credits state :runner)
     (is (= "Corroder" (->> (get-runner) :discard second :title)) "Corroder trashed EOT")))
+
+(deftest bling-with-fragments
+  (do-game
+    (new-game {:corp {:hand [] :deck []}
+               :runner {:hand ["Modded" "Bling"] :deck ["Utopia Shard" "Eden Shard" "Hades Shard"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Modded")
+    (click-card state :runner "Bling")
+    (dotimes [_ 3]
+      (click-prompt state :runner "Yes") ;; host the card
+      (let [active-shard (->> (get-hardware state 0) :hosted first :title)
+            target-server (case active-shard
+                            "Utopia Shard" :hq
+                            "Hades Shard"  :archives
+                            "Eden Shard"   :rd)]
+        (run-empty-server state target-server)
+        (click-prompt state :runner active-shard)))))
 
 (deftest bmi-buffer
   (do-game

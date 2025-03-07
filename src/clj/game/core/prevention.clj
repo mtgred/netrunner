@@ -8,7 +8,7 @@
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [card-ability-cost]]
    [game.core.eid :refer [complete-with-result effect-completed]]
-   [game.core.effects :refer [any-effects get-effects]]
+   [game.core.effects :refer [any-effects effect-pred gather-effects get-effect-value ]]
    [game.core.engine :refer [resolve-ability trigger-event-simult trigger-event-sync]]
    [game.core.flags :refer [can-trash? untrashable-while-resources? untrashable-while-rezzed?]]
    [game.core.payment :refer [->c can-pay?]]
@@ -79,7 +79,6 @@
 ;;  Note: The `:req` fn of the given :ability is used for computing if the button should
 ;;        show up, as well as wether or not you can pay the cost.
 
-
 (defn- relevant-prevention-abilities
   "selects all prevention abilities which are:
    1) relevant to the context
@@ -104,18 +103,24 @@
 
 (defn- floating-prevention-abilities
   [state side eid key]
-  (let [evs (get-effects state side :prevention)
-        abs (filter #(= (:prevents %) key) evs)
-        playable? (filter #(let [payable? (can-pay? state side eid (:card %) nil (seq (card-ability-cost state side (:ability %) (:card %) [])))
-                                 not-used-too-many-times? (or (not (:max-uses %))
-                                                              (not (get-in @state [:prevent key :uses (:cid (:card %))]))
-                                                              (< (get-in @state [:prevent key :uses (:cid (:card %))]) (:max-uses %)))
-                                 ability-req? (or (not (get-in % [:ability :req]))
-                                                  ((get-in % [:ability :req]) state side eid (:card %) [(get-in @state [:prevent key])]))]
+  (let [evs (gather-effects state side :prevention)
+        evs (filterv (effect-pred state side eid []) evs)
+        card-vals (mapv (fn [ev] {:card (:card ev) :value ((get-effect-value state side eid []) ev)}) evs)
+        abs (filter #(= (->> % :value :prevents) key) card-vals)
+        ;;_ (println abs)
+        playable? (filter #(let [card (or (:card %) (get-in % [:value :card]))
+                                 prev (get-in % [:value])
+                                 ability (get-in % [:value :ability])
+                                 payable? (can-pay? state side eid card nil (seq (card-ability-cost state side ability card [])))
+                                 not-used-too-many-times? (or (not (:max-uses prev))
+                                                              (not (get-in @state [:prevent key :uses (:cid card)]))
+                                                              (< (get-in @state [:prevent key :uses (:cid card)]) (:max-uses prev)))
+                                 ability-req? (or (not (get-in prev [:ability :req]))
+                                                  ((get-in prev [:ability :req]) state side eid card [(get-in @state [:prevent key])]))]
                              (and payable? not-used-too-many-times? ability-req?))
-                          abs)]
+                          abs)
+        playable? (mapv (fn [{:keys [card value]}] (assoc value :card card)) playable?)]
     (seq playable?)))
-
 
 (defn- gather-prevention-abilities
   [state side eid key]
@@ -445,11 +450,16 @@
   [state side eid {:keys [unpreventable card] :as args}]
   (push-prevention! state :end-run
                     {:count 1 :remaining 1 :prevented 0 :source-player side :source-card card :uses {}})
+  ;; this is specifically for banner, which doesn't fizzle the first time a run-end can be prevented
   (wait-for
-    (trigger-event-simult state side :end-run-interrupt nil {:card card :source-eid eid})
-    (if unpreventable
+    (trigger-event-simult state side :can-run-be-ended? nil {:card card :source-eid eid})
+    (if (zero? (get-in @state [:prevent :end-run :remaining]))
       (complete-with-result state side eid (fetch-and-clear! state :end-run))
-      (resolve-prevent-effects-with-priority state (:active-player @state) eid :end-run resolve-end-run-prevention-for-side))))
+      (wait-for
+        (trigger-event-simult state side :end-run-interrupt nil {:card card :source-eid eid})
+        (if unpreventable
+          (complete-with-result state side eid (fetch-and-clear! state :end-run))
+          (resolve-prevent-effects-with-priority state (:active-player @state) eid :end-run resolve-end-run-prevention-for-side))))))
 
 ;; JACK OUT PREVENTION
 

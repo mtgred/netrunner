@@ -1856,9 +1856,10 @@
                                   :value "Code Gate"})))}]})
 
 (defcard "Ryō \"Phoenix\" Ōno"
-  ;; TODO - make this actually work with direct access, instead of relying on an OPT trigger
   {:events [{:event :successful-run
-             :req (req (some identity (run-events state side :subroutine-fired)))
+             :req (req (letfn [(valid-ctx? [[ctx]] (pos? (or (:subroutines-fired ctx) 0)))]
+                         (and (valid-ctx? [context])
+                              (first-event? state side :successful-run valid-ctx?))))
 	     :msg "gain 1 [Credits]"
              :async true
              :once :per-turn

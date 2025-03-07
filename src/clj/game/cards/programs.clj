@@ -599,7 +599,7 @@
                                            (let [target-ice (:ice (get-current-encounter state))]
                                              (register-events
                                                state side card
-                                               [{:event :end-run-interrupt
+                                               [{:event :can-run-be-ended?
                                                  :duration :end-of-encounter
                                                  :async true
                                                  :silent (req true)

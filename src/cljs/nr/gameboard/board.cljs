@@ -744,6 +744,8 @@
                                               (and flashback-fake-in-hand (not (any-prompt-open? side)) flashback-playable) "playable flashback"
                                               flashback-fake-in-hand "flashback"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
+                                              ;; specifically, don't show cards as 'new' during selection prompts, so they dont look like selectable cards (we're running out of colors)
+                                            (and new (not (seq (get-in @gs-prompt-state [:selectable])))) "new"))
                                               new "new"))
                             :tab-index (when (and (not disable-click)
                                                   (or (active? card)

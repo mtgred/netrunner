@@ -3624,16 +3624,15 @@
              :cost [(->c :trash-can)(->c :click 1)]
              :async true
              :effect (req (wait-for
-                            (runner-install state side (assoc (make-eid state eid) :source card :source-type :runner-install) target {:msg-keys {:install-source card
-                                                                                                                                                 :display-origin true
-                                                                                                                                                 :include-cost-from-eid eid}})
+                            (runner-install state side target {:msg-keys {:install-source card
+                                                                          :display-origin true
+                                                                          :include-cost-from-eid eid}})
                             (continue-ability
                               state side
-                              {:prompt "Put a card on the bottom of the stack?"
+                              {:prompt "Put a program on the bottom of the stack?"
                                :req (req (seq (filter program? (:discard runner))))
                                :choices {:req (req (and (program? target)
                                                         (in-discard? target)))}
-                               :async true
                                :show-discard true
                                :msg (msg "put " (:title target) " on the bottom of the stack")
                                :effect (req (move state side target :deck))}
@@ -3659,8 +3658,6 @@
                                          (:label (:ability context)))))
                       :value (->c :credit 1)}]})
 
-;; TODO - adjust prevention so that we fetch the source card from the state as well as the event
-;; this will make it show up in the messages in the log, which it currently does not
 (defcard "Shred"
   {:on-play run-any-server-ability
    :makes-run true
@@ -3682,8 +3679,9 @@
                                                               [(cost-option [(->c :reveal-and-randomly-trash-from-hand cards-in-server)] :corp)
                                                                {:option "The run does not end"
                                                                 :ability {:display-side :runner
-                                                                          :effect (req (system-msg state side "uses Shred to prevent the run from ending")
-                                                                                       (prevent-end-run state side eid))}}]))
+                                                                          :async true
+                                                                          :msg "prevent the run from ending"
+                                                                          :effect (req (prevent-end-run state side eid))}}]))
                                                           card nil)))}}}]})
 
 (defcard "Showing Off"

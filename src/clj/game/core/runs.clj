@@ -678,7 +678,7 @@
                   ;; if the server is a mark, add it to the successful run
                   (let [marked (when (is-mark? state (first (:server (:run @state))))
                                  {:marked-server true})
-                        keys (conj (select-keys (:run @state) [:server :run-id]) marked)]
+                        keys (conj (select-keys (:run @state) [:server :run-id :subroutines-fired]) marked)]
                     (queue-event state :successful-run keys)
                     (checkpoint state nil eid))))))
 

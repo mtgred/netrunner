@@ -106,8 +106,17 @@
                                                             :msg-keys {:display-origin true
                                                                        :install-source card}}))}})
               :location :hand)
-            ;; TODO - this should work with bling
-            ]
+            ;; note - below allows the shards to work off an installed bling
+            (assoc
+              (successful-run-replace-breach
+                {:target-server target-server
+                 :ability
+                 {:async true
+                  :req (req (in-hand*? state card))
+                  :effect (effect (runner-install eid card {:ignore-all-cost true
+                                                            :msg-keys {:display-origin true
+                                                                       :install-source card}}))}})
+              :location :hosted)]
    :abilities [{:async true
                 :cost [(->c :trash-can)]
                 :msg message
@@ -696,7 +705,8 @@
                                 (first-event? state side :runner-trash ctx-valid?)
                                 (no-event? state :runner :agenda-stolen))))}
               {:silent (req true)
-               :effect (req (add-counter state side card :power 1))
+               :effect (req (add-counter state side eid card :power 1))
+               :async true
                :event :agenda-stolen
                :req (req (letfn [(ctx-valid? [[ctx]] (corp? (:card ctx)))]
                            (and (no-event? state side :runner-trash ctx-valid?)
@@ -2223,10 +2233,10 @@
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :prompt "Choose a non-virus program in the grip"
-                :change-in-game-state {:req (req (seq (:hand runner)))}
-                :choices {:card #(and (program? %)
-                                      (not (has-subtype? % "Virus"))
-                                      (in-hand? %))}
+                :change-in-game-state {:req (req (seq (all-cards-in-hand* state :runner)))}
+                :choices {:req (req (and (program? target)
+                                         (not (has-subtype? target "Virus"))
+                                         (in-hand*? state target)))}
                 :effect (effect (runner-install eid target {:host-card card :ignore-install-cost true
                                                             :msg-keys {:install-source card
                                                                        :include-cost-from-eid eid

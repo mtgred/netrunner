@@ -665,6 +665,8 @@
                                 (in-discard? card))
                            (and (contains? location :set-aside)
                                 (in-set-aside? card))
+                           (and (contains? location :hosted)
+                                (= (:zone card) [:onhost]))
                            (and (contains? location :hand)
                                 (in-hand? card)))
           :test-condition true)
