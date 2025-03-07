@@ -139,6 +139,10 @@
         animation: hovered-card 1s cubic-bezier(0.25,1,0.5,1) forwards
         border-color: blue-light
 
+    .card.flashback
+        filter: grayscale(80%);
+        animation: none
+
     .card
         &:not(.selected)
             &:focus

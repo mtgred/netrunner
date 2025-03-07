@@ -59,12 +59,9 @@
     card))
 
 (defn flashback-playable? [card state side]
-  ;; TODO - can this be cleaned up?
   (if-let [flashback-cost (when (in-discard? card) (:flashback (card-def card)))]
-    (let [adjusted-card (assoc card :as-flashback true)
-          adjusted-card (update adjusted-card :additional-cost concat flashback-cost)
-          adj (assoc card :flashback-playable (:playable (playable? adjusted-card state side)))]
-      adj)
+    (let [adjusted-card (assoc card :as-flashback true)]
+      (assoc card :flashback-playable (:playable (playable? adjusted-card state side))))
     card))
 
 (defn playable-as-if-in-hand? [card state side]

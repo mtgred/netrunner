@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as str]
    [game.core.actions :refer [click-advance click-credit click-draw click-run
-                              close-deck do-purge generate-install-list
+                              close-deck do-purge flashback generate-install-list
                               generate-runnable-zones move-card expend-ability
                               play play-ability play-corp-ability
                               play-dynamic-ability play-runner-ability play-subroutine play-unbroken-subroutines remove-tag
@@ -65,6 +65,7 @@
    "end-phase-12" #'end-phase-12
    "start-next-phase" #'start-next-phase
    "end-turn" #'end-turn
+   "flashback" #'flashback
    "generate-install-list" #'generate-install-list
    "generate-runnable-zones" #'generate-runnable-zones
    "indicate-action" #'indicate-action

@@ -107,7 +107,7 @@
       (cons "derez"))))
 
 (def click-card-keys
-  [:cid :side :host :type :zone :ghost])
+  [:cid :side :host :type :zone :ghost :flashback-fake-in-hand])
 
 (defn card-for-click [card]
   (select-non-nil-keys
@@ -180,7 +180,8 @@
           choices)))
 
 (defn send-play-command [{:keys [type zone] :as card} shift-key-held]
-  (if (and (= "discard" (first zone)) (:flashback-playable card))
+;;  (js/console.log (str card))
+  (if (and (= "discard" (first zone)) (:flashback-fake-in-hand card))
     (send-command "flashback" {:card (card-for-click card) :shift-key-held shift-key-held})
     (send-command "play" {:card (card-for-click card) :shift-key-held shift-key-held})))
 
@@ -917,7 +918,7 @@
 (defn hand-view []
   (let [s (r/atom {})]
     (fn [side hand hand-size hand-count popup popup-direction discard]
-      (let [flashbacks (if discard (map #(assoc % :flashback-fake-in-hand true) (filter :flashback @discard))
+      (let [flashbacks (if discard (map #(assoc % :flashback-fake-in-hand true) (filter :flashback-playable @discard))
                            [])
             printed-size (if (nil? @hand-count) (count @hand) @hand-count)
             size (+ printed-size (count flashbacks))
@@ -932,7 +933,7 @@
            [label filled-hand {:name (if (= :corp side)
                                        (tr [:game_hq "HQ"])
                                        (tr [:game_grip "Grip"]))
-                               :fn (fn [_] (str size "/" (:total @hand-size)))}]]
+                               :fn (fn [_] (str printed-size "/" (:total @hand-size)))}]]
           (when popup
             [:div.panel.blue-shade.hand-expand
              {:on-click #(-> (:hand-popup @s) js/$ .fadeToggle)}

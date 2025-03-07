@@ -1998,6 +1998,20 @@
                                 (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
                               0 (flatten (seq (:servers corp))))))}})
 
+(defcard "Petty Cash"
+  {:flashback [(->c :click 1)]
+   :on-play {:msg "gain 5 [credits]"
+             :async true
+             :req (req (no-event? state side :action-resolved))
+             :effect (req (wait-for
+                            (gain-credits state side 5)
+                            (continue-ability
+                              state side
+                              (when-not (some #{:hand} (:previous-zone card))
+                                {:msg "gain [Click]"
+                                 :effect (req (gain-clicks state side 1))})
+                              card nil)))}})
+
 (defcard "Pivot"
   ;; todo - it might be possible to pre-check the additional costs (consulting never did this)
   {:on-play {:prompt "Choose a card"

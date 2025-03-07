@@ -3330,6 +3330,21 @@
     (play-from-hand state :corp "Peak Efficiency")
     (is (= 7 (:credit (get-corp))) "Gained 3 credits for 3 rezzed pieces of ice; unrezzed ice ignored")))
 
+(deftest petty-cash
+  (do-game
+    (new-game {:corp {:hand ["Petty Cash"]}})
+    (is (changed? [(:credit (get-corp)) 2
+                   (:click (get-corp)) -1]
+                  (play-from-hand state :corp "Petty Cash"))
+        "Works from HQ")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (changed? [(:credit (get-corp)) 2
+                   (:click (get-corp)) 0]
+                  (flashback state :corp "Petty Cash"))
+        "Works from discard")
+    (is (= (get-in @state [:corp :rfg 0 :title]) "Petty Cash") "Removed Petty Cash from the game")))
+
 (deftest pivot-gets-operations
   (do-game
       (new-game {:corp {:hand ["Pivot"]

@@ -578,6 +578,18 @@
       (is' (core/process-action "play" state side {:card card :server server}))
       true)))
 
+(defn flashback-impl
+  [state side title]
+  (let [card (find-card title (get-in @state [side :discard]))]
+    (ensure-no-prompts state)
+    (is' (some? card) (str title " is in discard"))
+    (is' (core/process-action "flashback" state side {:card card :server nil}))))
+
+(defmacro flashback
+  "Play a card as a flashback based on its title"
+  ([state side title]
+   `(error-wrapper (flashback-impl ~state ~side ~title))))
+
 (defmacro play-from-hand
   "Play a card from hand based on its title. If installing a Corp card, also indicate
   the server to install into with a string."

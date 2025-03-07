@@ -1712,8 +1712,7 @@
   (auto-icebreaker
     {:data {:counter {:virus 2}}
      :abilities [(break-sub 1 1 "Sentry")
-                 (strength-pump [(->c :virus 1) 3] 2)]
-     :implementation "v8.2 - November 15 - trash is manual"}))
+                 (strength-pump [(->c :virus 1) 3] 2)]}))
 
 (defcard "Hemorrhage"
   {:events [{:event :successful-run

@@ -16,6 +16,7 @@
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string ->c]]
+    [game.core.play-instants :refer [play-instant]]
     [game.core.expend :refer [expend expendable?]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
@@ -100,9 +101,30 @@
     (let [card (get-card state card)
           eid (make-eid state {:source card :source-type :ability})
           expend-ab (expend (:expend (card-def card)))]
-      (resolve-ability state side eid expend-ab card nil))
+      (do-play-ability
+        state side eid
+        {:card card
+         :ability expend-ab
+         :ability-idx 0
+         :targets nil}))
     (toast state side (str "You cannot play abilities while other abilities are resolving.")
               "warning")))
+
+(defn flashback
+  "Called when the player clicks a flashback card from hand."
+  [state side {:keys [card] :as context}]
+  (when-let [card (get-card state card)]
+    (let [flashback-cost (:flashback (card-def card))
+          eid (make-eid state {:source card :source-type :ability})
+          card (assoc card :rfg-instead-of-trashing true :as-flashback true)]
+      (do-play-ability
+        state side eid
+        {:card card
+         :ability {:action true
+                   :async true
+                   :effect (req (play-instant state side eid (assoc card :rfg-instead-of-trashing true) {:base-cost flashback-cost}))}
+         :ability-idx 0
+         :targets []}))))
 
 (defn play
   "Called when the player clicks a card from hand."
