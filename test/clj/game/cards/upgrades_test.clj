@@ -1104,7 +1104,7 @@
                     (:click (get-runner)) 0]
                    (play-from-hand state :runner "Dirty Laundry")
                    (click-prompt state :runner "HQ")
-                   (is (second-last-log-contains? state "Runner spends [Click] and pays 2 [Credits] to play Dirty Laundry."))
+                   (is (last-n-log-contains? state 2 "Runner spends [Click] and pays 2 [Credits] to play Dirty Laundry."))
                    (core/command-undo-click state :runner))
          "Undo click undid the CSS costs")))
 
@@ -1121,7 +1121,7 @@
      (take-credits state :corp)
      (play-from-hand state :runner "Dirty Laundry")
      (click-prompt state :runner "HQ")
-     (is (second-last-log-contains? state "Runner spends [Click] and pays 2 [Credits] to play Dirty Laundry."))
+     (is (last-n-log-contains? state 2 "Runner spends [Click] and pays 2 [Credits] to play Dirty Laundry."))
      (is (last-log-contains? state "Runner spends [Click] and pays 1 [Credits] to make a run on HQ."))))
 
 (deftest corporate-troubleshooter

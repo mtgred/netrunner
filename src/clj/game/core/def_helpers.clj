@@ -187,12 +187,38 @@
   [server]
   {:async true
    :change-in-game-state {:req (req (can-run-server? state server))}
+   :msg (msg "make a run on " target)
    :effect (req (make-run state side eid server card))})
 
 (def run-any-server-ability
   {:async true
    :prompt "Choose a server"
    :choices (req runnable-servers)
+   :msg (msg "make a run on " target)
+   :effect (effect (make-run eid target card))})
+
+(def run-remote-server-ability
+  {:async true
+   :prompt "Choose a remote server"
+   :change-in-game-state {:req (req (seq (filter #(can-run-server? state %) remotes)))}
+   :choices (req (filter #(can-run-server? state %) remotes))
+   :msg (msg "make a run on " target)
+   :effect (effect (make-run eid target card))})
+
+(def run-central-server-ability
+  {:prompt "Choose a central server"
+   :choices (req (filter #{"HQ" "R&D" "Archives"} runnable-servers))
+   :change-in-game-state {:req (req (seq (filter #{"HQ" "R&D" "Archives"} runnable-servers)))}
+   :async true
+   :msg (msg "make a run on " target)
+   :effect (effect (make-run eid target card))})
+
+(defn run-server-from-choices-ability
+  [choices]
+  {:prompt "Choose a server"
+   :choices (req (filter #(can-run-server? state %) choices))
+   :change-in-game-state {:req (req (seq (filter (set choices) runnable-servers)))}
+   :async true
    :msg (msg "make a run on " target)
    :effect (effect (make-run eid target card))})
 
