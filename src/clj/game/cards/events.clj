@@ -674,6 +674,15 @@
                                                         (draw state :runner eid 1))}
                                           card nil)))))}})
 
+(defcard "Clean Getaway"
+  {:makes-run true
+   :on-play run-any-server-ability
+   :events [{:event :successful-run
+             :req (req this-card-run)
+             :msg "gain 6 [Credits]"
+             :async true
+             :effect (effect (gain-credits :runner eid 6))}]})
+
 (defcard "Code Siphon"
   (letfn [(rd-ice [state]
             (* -3 (count (get-in @state [:corp :servers :rd :ices]))))]
@@ -1812,6 +1821,32 @@
               :msg "draw 3 cards"
               :effect (effect (draw :runner eid 3))}})
 
+(defcard "Illumination"
+  (letfn [(install-fn [remaining]
+            {:prompt (str "install a card from the Grip, paying 1 [Credits] less ("
+                          remaining " remaining)")
+             :choices {:req (req (and (in-hand*? state target)
+                                      (or (hardware? target)
+                                          (resource? target)
+                                          (program? target))
+                                      (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus -1})))}
+             :async true
+             :effect (req (wait-for (runner-install state side target {:cost-bonus -1
+                                                                       :msg-keys {:install-source card
+                                                                                  :display-origin true}})
+                                    (if (> remaining 1)
+                                      (continue-ability
+                                        state side
+                                        (install-fn (dec remaining))
+                                        card nil)
+                                      (effect-completed state side eid))))})]
+  {:makes-run true
+   :on-play (run-server-ability :rd)
+   :events [(assoc (install-fn 3)
+                   :event :successful-run
+                   :interactive (req true)
+                   :req (req this-card-run))]}))
+
 (defcard "Immolation Script"
   {:makes-run true
    :on-play (run-server-ability :archives)
@@ -2369,6 +2404,16 @@
                             (do (system-msg state :runner
                                             (str "suffers 1 meat damage from Mad Dash"))
                                 (damage state side eid :meat 1 {:card card}))))}]})
+
+(defcard "Maintenance Access"
+  {:makes-run true
+   :events [{:event :pre-approach-server
+             :unregister-once-resolved true
+             :interactive (req true)
+             :msg "change the attacked server to HQ"
+             :req (req (= :archives (-> run :server first)))
+             :effect (req (swap! state assoc-in [:run :server] [:hq]))}]
+   :on-play (run-server-ability :archives)})
 
 (defcard "Making an Entrance"
   (letfn [(entrance-trash [cards]
@@ -3965,6 +4010,29 @@
                        :value (req (->> (:scored corp)
                                         (filter #(= (:title %) (:title target)))
                                         (count)))}]})
+
+(defcard "Transfer of Wealth"
+  (letfn [(drain [x]
+            {:async true
+             :msg (msg "force the Corp to lose " (min x (:credit corp))
+                       " [Credits] and gain " (* 2 (min x (:credit corp)))
+                       " [Credits]")
+             :effect (req (let [creds-lost (min x (:credit corp))]
+                            (wait-for
+                              (lose-credits state :corp creds-lost)
+                              (gain-credits state :runner eid (* 2 creds-lost)))))})]
+    {:on-play (run-server-ability :hq)
+     :makes-run true
+     :events [{:event :successful-run
+               :interactive (req true)
+               :automatic :drain-credits
+               :req (req this-card-run)
+               :msg "take 1 tag"
+               :effect (req (wait-for (gain-tags state :runner 1)
+                                      (continue-ability
+                                        state side
+                                        (drain 3)
+                                        card nil)))}]}))
 
 (defcard "Tread Lightly"
   {:on-play run-any-server-ability

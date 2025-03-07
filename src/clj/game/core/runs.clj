@@ -462,29 +462,32 @@
 (defn approach-server
   [state side eid]
   (set-current-ice state nil)
-  (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
-  (queue-event state :approach-server)
-  (wait-for (checkpoint state side
-                        (make-eid state)
+  (wait-for
+    (trigger-event-simult state side :pre-approach-server nil
+                          {:server (first (:server (:run @state)))})
+    (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
+    (queue-event state :approach-server)
+    (wait-for (checkpoint state side
+                          (make-eid state)
                           ;; Immediately end approach if:
                           ;; * run ends
                           ;; * phase changes
                           ;; * server becomes empty
-                        {:cancel-fn (fn [state]
-                                      (or (check-for-empty-server state)
-                                          (:ended (:end-run @state))
-                                          (get-in @state [:run :next-phase])))})
-            (cond
-              ;; end run
-              (or (check-for-empty-server state)
-                  (:ended (:end-run @state)))
-              (handle-end-run state side eid)
-              ;; phase changed
-              (get-in @state [:run :next-phase])
-              (start-next-phase state side eid)
-              ;; go to Success phase
-              :else (do (set-next-phase state :success)
-                        (start-next-phase state side eid)))))
+                          {:cancel-fn (fn [state]
+                                        (or (check-for-empty-server state)
+                                            (:ended (:end-run @state))
+                                            (get-in @state [:run :next-phase])))})
+              (cond
+                ;; end run
+                (or (check-for-empty-server state)
+                    (:ended (:end-run @state)))
+                (handle-end-run state side eid)
+                ;; phase changed
+                (get-in @state [:run :next-phase])
+                (start-next-phase state side eid)
+                ;; go to Success phase
+                :else (do (set-next-phase state :success)
+                          (start-next-phase state side eid))))))
 
 (defmethod continue :movement
   [state side _]

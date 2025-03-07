@@ -19,6 +19,7 @@
     [game.core.revealing :refer [conceal-hand reveal-hand reveal-loud]]
     [game.core.runs :refer [can-run-server? make-run jack-out]]
     [game.core.say :refer [system-msg system-say]]
+    [game.core.servers :refer [zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.macros :refer [continue-ability effect msg req wait-for]]
@@ -187,7 +188,7 @@
   [server]
   {:async true
    :change-in-game-state {:req (req (can-run-server? state server))}
-   :msg (msg "make a run on " target)
+   :msg (str "make a run on " (zone->name server))
    :effect (req (make-run state side eid server card))})
 
 (def run-any-server-ability

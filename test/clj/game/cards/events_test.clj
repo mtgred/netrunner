@@ -1200,6 +1200,17 @@
     (click-prompt state :corp "Done")
     (click-prompt state :runner "OK")))
 
+(deftest clean-getaway
+  (do-game
+    (new-game {:corp {:hand ["Project Atlas"]}
+               :runner {:hand ["Clean Getaway"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Clean Getaway")
+    (click-prompt state :runner "HQ")
+    (is (changed? [(:credit (get-runner)) 6]
+          (run-continue state :success))
+        "Got paid on success")))
+
 (deftest code-siphon
   ;; Code Siphon
   (do-game
@@ -3557,6 +3568,24 @@
       (play-from-hand state :runner "Apocalypse")
       (is (not= "Flatline" (:reason @state)) "Win condition does not report flatline")))
 
+(deftest illumination-test
+  (do-game
+    (new-game {:runner {:hand ["Illumination" "Daily Casts" "Orca" "Fermenter"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Illumination")
+    (run-continue state :success)
+    (is (changed? [(:credit (get-runner)) -2]
+                  (click-card state :runner "Daily Casts"))
+        "Saved 1 to install casts")
+    (is (changed? [(:credit (get-runner)) 0]
+                  (click-card state :runner "Orca"))
+        "No orca install")
+    (is (changed? [(:credit (get-runner)) 0]
+                  (click-card state :runner "Fermenter"))
+        "Free fermenter install")
+    (click-prompt state :runner "Done")
+    (is (not (:run @state)))))
+
 (deftest immolation-script
   ;; Immolation Script
   (do-game
@@ -4582,6 +4611,16 @@
     (click-prompt state :runner "Steal")
     (is (= 2 (count (:scored (get-runner)))) "Mad Dash moved to score area")
     (is (= 3 (:agenda-point (get-runner))) "Mad Dash scored for 1 agenda point")))
+
+(deftest maintainance-access-test
+  (do-game
+    (new-game {:corp {:hand ["Project Atlas"] :deck ["Mavirus"] :discard ["Mavirus"]
+                      :score-area ["SSL Endorsement"]}
+               :runner {:hand ["Maintenance Access"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Maintenance Access")
+    (run-continue-until state :success)
+    (click-prompt state :runner "Steal")))
 
 (deftest making-an-entrance
   ;; Making an Entrance - Full test
@@ -7276,6 +7315,19 @@
       (is (has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (not (has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have Code Gate")
       (is (not (has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have Sentry"))))
+
+(deftest transfer-of-wealth
+  (do-game
+    (new-game {:runner {:hand ["Transfer of Wealth"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Transfer of Wealth")
+    (is (changed? [(:credit (get-corp)) -3
+                   (:credit (get-runner)) +6
+                   (count-tags state) +1
+                   (:click (get-runner)) 0]
+          (run-continue state))
+        "Siphoned bigly")
+    (click-prompt state :runner "No action")))
 
 (deftest trade-in
   ;; Trade-in - trash an installed Hardware, gain credits equal to half of install cost,
