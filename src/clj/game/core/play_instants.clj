@@ -32,11 +32,11 @@
 ;;; Playing cards.
 (defn- complete-play-instant
   "Completes the play of the event / operation that the player can play for"
-  [state side eid {:keys [title] :as card} payment-str ignore-cost]
+  [state side eid {:keys [title] :as card} payment-str ignore-cost as-flashback]
   (let [play-msg (if ignore-cost
                    "play "
                    (build-spend-msg payment-str "play"))]
-    (system-msg state side (str play-msg title (when ignore-cost " at no cost")))
+    (system-msg state side (str play-msg title  (when as-flashback (str " from " (when (= side :corp) "Archives" "the heap"))) (when ignore-cost " at no cost")))
     (implementation-msg state card)
     (if-let [sfx (:play-sound (card-def card))]
       (play-sfx state side sfx)
@@ -137,7 +137,7 @@
        true))))
 
 (defn continue-play-instant
-  [state side eid card costs {:keys [ignore-cost] :as args}]
+  [state side eid card costs {:keys [ignore-cost as-flashback] :as args}]
   (let [original-zone (:zone card)
         moved-card (move state side (assoc card :seen true) :play-area)]
     (wait-for (pay state side (make-eid state (assoc eid :action :play-instant)) moved-card costs)
@@ -147,7 +147,7 @@
                 (if payment-str
                   (do
                     (update! state side (assoc moved-card :special (:special (card-def moved-card))))
-                    (complete-play-instant state side eid moved-card payment-str ignore-cost))
+                    (complete-play-instant state side eid moved-card payment-str ignore-cost as-flashback))
                   ;; could not pay the card's price; put it back and mark the effect as being over.
                   (let [returned-card (move state side moved-card original-zone)]
                     (continue-ability

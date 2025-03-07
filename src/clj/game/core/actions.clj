@@ -116,13 +116,13 @@
   (when-let [card (get-card state card)]
     (let [flashback-cost (:flashback (card-def card))
           eid (make-eid state {:source card :source-type :ability})
-          card (assoc card :rfg-instead-of-trashing true :as-flashback true)]
+          card (assoc card :rfg-instead-of-trashing true)]
       (do-play-ability
         state side eid
         {:card card
          :ability {:action true
                    :async true
-                   :effect (req (play-instant state side eid (assoc card :rfg-instead-of-trashing true) {:base-cost flashback-cost}))}
+                   :effect (req (play-instant state side eid (assoc card :rfg-instead-of-trashing true) {:base-cost flashback-cost :as-flashback true}))}
          :ability-idx 0
          :targets []}))))
 
