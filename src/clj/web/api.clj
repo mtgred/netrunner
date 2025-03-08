@@ -61,7 +61,7 @@
        ["" {:get #'data/cards-handler}]
        ["/version" {:get #'data/cards-version-handler}]
        ["/altarts" {:get #'data/alt-arts-handler}]
-       ["/lang/:lang" {:get #'data/lang-handler}]]
+       ["/lang/:lang" {:get #'data/card-lang-handler}]]
       ["/news" {:get #'data/news-handler}]
       ["/sets" {:get #'data/sets-handler}]
       ["/mwl" {:get #'data/mwl-handler}]
@@ -75,7 +75,8 @@
       ["/api-keys" {:middleware [::auth]}
        ["" {:get #'api-keys/api-keys-handler
             :post #'api-keys/api-keys-create-handler}]
-       ["/:id" {:delete #'api-keys/api-keys-delete-handler}]]]
+       ["/:id" {:delete #'api-keys/api-keys-delete-handler}]]
+      ["/language/:lang" {:get #'data/lang-handler}]]
      ["/chat/config" {:get #'chat/config-handler :middleware [::forgery]}]
      ["/messages/:channel" {:get #'chat/messages-handler :middleware [::forgery]}]
      ["/reset/:token" {:get #'pages/reset-password-page

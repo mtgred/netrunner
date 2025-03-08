@@ -1,6 +1,11 @@
 (ns nr.appstate
-  (:require [jinteki.utils :refer [str->int]]
-            [reagent.core :as r]))
+  (:require
+   [cljs.core.async :refer [<!] :refer-macros [go]]
+   [cljs.core.async.interop :refer-macros [<p!]]
+   [jinteki.utils :refer [str->int]]
+   [nr.ajax :refer [GET]]
+   [i18n.core]
+   [reagent.core :as r]))
 
 (defn- get-local-value
   "Read the value of the given key from localStorage. Return the default-value if no matching key found"
@@ -68,6 +73,11 @@
            :channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
                       :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}
            :games [] :current-game nil}))
+
+(go (let [lang (or (:language @app-state) "en")
+          response (<! (GET (str "/data/language/" lang)))]
+      (when (= 200 (:status response))
+        (i18n.core/insert-lang! (keyword lang) (:json response)))))
 
 (defn current-gameid [app-state]
   (get-in @app-state [:current-game :gameid]))

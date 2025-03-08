@@ -23,15 +23,15 @@
     401 (non-game-toast (tr [:settings.invalid-password]) "error" nil)
     404 (non-game-toast (tr [:settings.invalid-email]) "error" nil)
     ;; else
-    (do (non-game-toast (tr [:settings.updated]) "success" nil)
-        (when-let [json (:json response)]
+    (do (when-let [json (:json response)]
           (when (and (:i18n json) (:content json))
-            (i18n.core/insert-lang! (:i18n json) (:content json))))))
+            (i18n.core/insert-lang! (:i18n json) (:content json))))
+        (non-game-toast (tr [:settings.updated]) "success" nil)))
   (swap! s assoc :flash-message ""))
 
 (defn post-options [callback]
   (let [params (:options @app-state)
-        params (if (get @i18n.core/fluent-dictionary (keyword (:language params)))
+        params (if (i18n.core/get-bundle (:language params))
                  params
                  (assoc params :i18n (:language params)))]
     (go (let [response (<! (PUT "/profile" params :json))]

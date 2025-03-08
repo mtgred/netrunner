@@ -193,7 +193,7 @@
                   resp (cond-> resp
                          lang
                          (assoc :i18n lang
-                                :content (:content (get @i18n.core/fluent-dictionary (keyword lang)))))]
+                                :content (i18n.core/get-content (keyword lang))))]
               (response 200 resp)))
         (response 404 {:message "Account not found"}))
       (response 401 {:message "Unauthorized"}))))
