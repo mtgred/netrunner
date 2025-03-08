@@ -20,13 +20,13 @@
 
 (defn post-response [s response]
   (case (:status response)
-    401 (non-game-toast (tr [:settings.invalid-password]) "error" nil)
-    404 (non-game-toast (tr [:settings.invalid-email]) "error" nil)
+    401 (non-game-toast (tr [:settings.invalid-password "Invalid login or password"]) "error" nil)
+    404 (non-game-toast (tr [:settings.invalid-email "No account with that email address exists"]) "error" nil)
     ;; else
     (do (when-let [json (:json response)]
           (when (and (:i18n json) (:content json))
             (i18n.core/insert-lang! (:i18n json) (:content json))))
-        (non-game-toast (tr [:settings.updated]) "success" nil)))
+        (non-game-toast (tr [:settings.updated "Profile updated - Please refresh your browser"]) "success" nil)))
   (swap! s assoc :flash-message ""))
 
 (defn post-options [callback]
