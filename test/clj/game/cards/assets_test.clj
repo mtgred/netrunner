@@ -2726,6 +2726,24 @@
       (is (= 1 (count (:discard (get-corp)))) "Overwrote first Hostile")
       (is (zero? (count (:discard (get-runner)))) "Runner doesn't take damage")))
 
+(deftest humanoid-resources
+  (do-game
+    (new-game {:corp {:hand ["Humanoid Resources"]
+                      :deck ["Hedge Fund" "Vanilla" "Enigma"]}})
+    (play-from-hand state :corp "Humanoid Resources" "New remote")
+    (core/gain state :corp :click 1)
+    (rez state :corp (get-content state :remote1 0))
+    (is (changed? [(:click (get-corp)) -3
+                   (:credit (get-corp)) 4
+                   (count (:hand (get-corp))) 3]
+          (card-ability state :corp (get-content state :remote1 0) 0))
+        "Gained 4, drew 3")
+    (is (changed? [(:credit (get-corp)) 4
+                   (count (:hand (get-corp))) -3]
+          (click-prompts state :corp "Vanilla" "New remote" "Enigma" "HQ" "Hedge Fund"))
+        "Gained 4c and installed two cards")
+    (is (no-prompt? state :corp))))
+
 (deftest hyoubu-research-facility
   ;; Hyoubu Research Facility
   (do-game
@@ -4058,6 +4076,24 @@
       (click-card state :corp (find-card "Ice Wall" (:hand (get-corp))))
       (is (= 2 (-> @state :corp :deck count)) "Two cards should remain in R&D")
       (is (= "Ice Wall" (-> @state :corp :deck first :title)) "Top card in R&D should be Ice Wall"))))
+
+(deftest otto-campaign
+  (do-game
+    (new-game {:corp {:deck ["Otto Campaign"]}})
+    (play-from-hand state :corp "Otto Campaign" "New remote")
+    (let [launch (get-content state :remote1 0)]
+      (rez state :corp launch)
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 7 (:credit (get-corp))))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 12 (:credit (get-corp))))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (= 17 (:credit (get-corp))))
+      (is (= (+ 3 2) (:click (get-corp))) "gained 2 clicks")
+      (is (= 1 (count (:discard (get-corp)))) "trashed otto"))))
 
 (deftest pad-campaign
   ;; PAD Campaign

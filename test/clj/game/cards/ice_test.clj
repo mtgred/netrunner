@@ -445,7 +445,7 @@
         (rez state :corp ansel)
         (run-continue state :encounter-ice)
         (card-subroutine state :corp ansel 1)
-        (is (= "Choose a card to install from Archives or HQ" (:msg (prompt-map :corp))))
+        (is (= "Choose a card to install from HQ or Archives" (:msg (prompt-map :corp))))
         (is (= :select (prompt-type :corp)))
         (click-card state :corp "NGO Front")
         (is (= "Choose a location to install NGO Front" (:msg (prompt-map :corp))))
@@ -459,7 +459,7 @@
         (rez state :corp ansel)
         (run-continue state :encounter-ice)
         (card-subroutine state :corp ansel 1)
-        (is (= "Choose a card to install from Archives or HQ" (:msg (prompt-map :corp))))
+        (is (= "Choose a card to install from HQ or Archives" (:msg (prompt-map :corp))))
         (is (= :select (prompt-type :corp)))
         (click-card state :corp "Adonis Campaign")
         (is (= "Choose a location to install Adonis Campaign" (:msg (prompt-map :corp))))
@@ -1351,6 +1351,27 @@
       (card-subroutine state :corp bran 0)
       (click-prompt state :corp "Done")
       (is (last-log-contains? state declined-msg) "Log should indicate the corp declined to install a card"))))
+
+(deftest bumi-1-0-full-test
+  (do-game
+    (subroutine-test "Bumi 1.0" 0 nil {:rig ["Rezeki"]})
+    (click-card state :corp "Rezeki")
+    (is (= 1 (count (:discard (get-runner)))))
+    (is (no-prompt? state :corp)))
+  (do-game
+    (subroutine-test "Bumi 1.0" 1 {:runner {:hand ["Rezeki"]}})
+    (is (= 1 (count (:discard (get-runner)))))
+    (is (no-prompt? state :corp)))
+  (do-game
+    (new-game {:runner {:hand ["Ika"]}
+               :corp {:hand ["Bumi 1.0"]}})
+    (play-from-hand state :corp "Bumi 1.0" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ika")
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (click-card state :corp "Ika")
+    (is-discard? state :runner ["Ika"])))
 
 (deftest bullfrog
   ;; Bullfrog - Win psi to move to outermost position of another server and continue run there
@@ -6549,6 +6570,14 @@
     (fire-subs state (core/get-current-ice state))
     (click-card state :corp "Corroder")
     (is (nil? (get-program state 0)) "Corroder is trashed")))
+
+(deftest scatter-field-subs-test
+  (do-game (subroutine-test "Scatter Field" 0 {:corp {:hand ["Rashida Jaheem"]}})
+           (click-card state :corp "Rashida Jaheem")
+           (click-prompt state :corp "New remote")
+           (is (= 4 (get-strength (get-ice state :hq 0))) "4 str")))
+  ;; TODO - this helper is in another pr
+  ;;(do-game (new-game (etr-sub "Scatter Field" 1))))
 
 (deftest searchlight
   ;; Searchlight - Trace bace equal to advancement counters

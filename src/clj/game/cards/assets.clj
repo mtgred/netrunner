@@ -17,14 +17,15 @@
                            operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.checkpoint :refer [fake-checkpoint]]
+   [game.core.cost-fns :refer [play-cost]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-recur corp-rez-toast defcard
+   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard
                                   reorder-choice spend-credits take-credits trash-on-empty get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
    [game.core.effects :refer [is-disabled-reg? register-lingering-effect update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
-   [game.core.engine :refer [not-used-once? pay register-events resolve-ability trigger-event-sync]]
+   [game.core.engine :refer [not-used-once? pay register-events resolve-ability trigger-event-sync should-trigger?]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
    [game.core.flags :refer [in-corp-scored? in-runner-scored? lock-zone prevent-current
                             prevent-draw
@@ -1371,6 +1372,33 @@
              :msg "do 1 net damage"
              :effect (effect (damage :corp eid :net 1 {:card card}))}]})
 
+(defcard "Humanoid Resources"
+  (let [play-an-instant
+        {:prompt "Choose an operation"
+         :choices (req (conj (filter #(and (operation? %)
+                                           (should-trigger? state :corp (assoc eid :source % :source-type :play) % nil (or (:on-play (card-def %)) {}))
+                                           (can-pay? state side (assoc eid :source % :source-type :play) % nil [(->c :credit (play-cost state side % nil))]))
+                                     (:hand corp))
+                             "Done"))
+         :async true
+         :effect (req (if (= target "Done")
+                        (effect-completed state side eid)
+                        (play-instant state side eid target nil)))}]
+    {:abilities [{:cost [(->c :click 3)(->c :trash-can 1)]
+                  :action true
+                  :label "Gain 4 [Credits] and draw 3 cards"
+                  :msg "gain 4 [Credits] and draw 3 cards"
+                  :async true
+                  :effect (req (wait-for
+                                 (gain-credits state side 4 {:suppress-checkpoint true})
+                                 (wait-for (draw state side 3)
+                                   (wait-for
+                                     (resolve-ability
+                                       state side
+                                       (corp-install-up-to-n-cards 2)
+                                       card nil)
+                                     (continue-ability state side play-an-instant card nil)))))}]}))
+
 (defcard "Hyoubu Research Facility"
   {:events [{:event :reveal-spent-credits
              :req (req (and (some? (first targets))
@@ -2194,6 +2222,33 @@
                                :effect (effect (move target :deck {:front true})
                                                (effect-completed eid))}
                               card nil)))}]})
+
+(defcard "Otto Campaign"
+  (let [ability {:once :per-turn
+                 :interactive (req (>= 2 (get-counters card :credit)))
+                 :event :corp-turn-begins
+                 :req (req (:corp-phase-12 @state))
+                 :label (str "Gain 2 [Credits] (start of turn)")
+                 :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
+                 :async true
+                 :automatic :gain-credits
+                 :effect (req (wait-for
+                                (take-credits state side card :credit 2)
+                                (if (not (pos? (get-counters (get-card state card) :credit)))
+                                  (continue-ability
+                                    state side
+                                    {:msg "trash itself and gain [click][click]"
+                                     :async true
+                                     :effect (req (wait-for
+                                                    (trash state side card {:source-card card})
+                                                    (gain-clicks state side 2)
+                                                    (effect-completed state side eid)))}
+                                    card nil)
+                                  (effect-completed state side eid))))}]
+    {:data {:counter {:credit 6}}
+     :events [ability]
+     :derezzed-events [corp-rez-toast]
+     :abilities [ability]}))
 
 (defcard "PAD Campaign"
   (let [ability {:msg "gain 1 [Credits]"

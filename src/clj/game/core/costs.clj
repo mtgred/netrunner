@@ -2,7 +2,7 @@
   (:require
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type]]
-   [game.core.card :refer [active? agenda? corp? facedown? get-card get-counters hardware? has-subtype? ice? in-hand? installed? program? resource? rezzed? runner?]]
+   [game.core.card :refer [active? agenda? corp? facedown? get-card get-counters get-zone hardware? has-subtype? ice? in-hand? installed? program? resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.damage :refer [damage]]
    [game.core.eid :refer [complete-with-result make-eid]]
@@ -664,6 +664,39 @@
                                :paid/type :ice
                                :paid/value (count async-result)
                                :paid/targets targets})))}
+    card nil))
+
+(defmethod value :bioroid-run-server [cost] (:cost/amount cost))
+(defmethod label :bioroid-run-server [cost]
+  (str "trash " (quantify (value cost) "rezzed Bioroid")))
+(defmethod payable? :bioroid-run-server
+  [cost state side eid card]
+  (and (:run @state)
+       (<= 0 (- (count (filter (every-pred installed? rezzed?
+                                           (fn [x] (has-subtype? x "Bioroid"))
+                                           (fn [x] (= (second (get-zone x)) (first (:server (:run @state))))))
+                               (all-installed state :corp))) (value cost)))))
+(defmethod handler :bioroid-run-server
+  [cost state side eid card]
+  (continue-ability
+    state side
+    {:prompt (str "Choose " (quantify (value cost) " rezzed Bioroid" "") " to trash")
+     :choices {:all true
+               :max (value cost)
+               :req (req (and (installed? target)
+                              (rezzed? target)
+                              (has-subtype? target "Bioroid")
+                              (= (second (get-zone target)) (first (:server (:run @state))))))}
+     :async true
+     :effect (req (wait-for (trash-cards state side targets {:cause :ability-cost
+                                                             :unpreventable true})
+                            (complete-with-result
+                              state side eid
+                              {:cost/msg (str "trashes " (quantify (count async-result) " rezzed Bioroid" "")
+                                         " (" (enumerate-str (map #(card-str state %) targets)) ")")
+                               :cost/type :bioroid-run-server
+                               :cost/value (count async-result)
+                               :cost/targets targets})))}
     card nil))
 
 ;; TrashFromDeck

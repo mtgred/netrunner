@@ -106,6 +106,32 @@
         (run-on state :archives)
         (is (no-prompt? state :corp) "No prompt as it's once per turn")))))
 
+(deftest aggressive-trendsetting-pay-click
+  (do-game
+    (new-game {:corp {:score-area ["Aggressive Trendsetting"] :hand ["PAD Campaign"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
+    (is (changed? [(:click (get-runner)) -1]
+          (click-prompt state :runner "Yes"))
+        "Spent click")
+    (take-credits state :runner)
+    (is (= 3 (:click (get-corp))) "Only got 3 clicks")))
+
+(deftest aggressive-trendsetting-gain-click
+  (do-game
+    (new-game {:corp {:score-area ["Aggressive Trendsetting"] :hand ["PAD Campaign"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
+    (is (changed? [(:click (get-runner)) 0]
+          (click-prompt state :runner "No"))
+        "Did not spend click")
+    (take-credits state :runner)
+    (is (= 4 (:click (get-corp))) "got +1 clicks")))
+
 (deftest ancestral-imager
   ;; Ancestral Imager
   (do-game
@@ -1283,6 +1309,29 @@
       (card-ability state :corp eu-scored 0)
       (is (= 4 (:click (get-corp))) "Should gain 2 clicks, not 3")
       (is (= 1 (get-counters (refresh eu-scored) :agenda)) "Should still have 1 agenda counter"))))
+
+(deftest embedded-reporting
+  (dotimes [oa 5]
+    (do-game
+      (new-game {:corp {:hand ["Embedded Reporting" "Beanstalk Royalties"]
+                        :deck ["IPO" (qty "Restructure" 15)]}})
+      (play-from-hand state :corp "Embedded Reporting" "New remote")
+      (core/gain state :corp :click 10 :credit 10)
+      (let [gpp (get-content state :remote1 0)]
+        (advance state gpp (+ 3 oa))
+        (is (= (+ 3 oa) (get-counters (refresh gpp) :advancement)) (str "Embedded Reporting should have " (+ oa 3) " advancement tokens"))
+        (score state :corp (refresh gpp)))
+      (let [gpp-scored (get-scored state :corp 0)]
+        (is (= (* 2 oa) (get-counters (refresh gpp-scored) :agenda)) (str "Embedded Reporting should have " oa " agenda counters"))
+        (take-credits state :corp)
+        (when-not (zero? oa)
+          (is (changed? [(get-counters (refresh gpp-scored) :agenda) -1]
+		(click-prompt state :corp "Yes")
+                (click-prompt state :corp "IPO")
+                ;; TODO - this is in another pr
+                ;;(is-deck-stacked? state :corp ["IPO" "Restructure"])
+                )
+              "Stacked the deck"))))))
 
 (deftest eminent-domain
   (do-game
@@ -2727,6 +2776,20 @@
             (play-and-score state "Offworld Office"))
           "Corp gains 7 credits from Offworld Office")))
 
+(deftest off-the-books
+  (do-game
+    (new-game {:corp {:hand ["Off the Books"] :deck ["Project Atlas"]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Off the Books" "New remote")
+    (let [pr (get-content state :remote1 0)]
+      (advance state pr 5)
+      (score state :corp (refresh pr)))
+    (let [scored (get-scored state :corp 0)]
+      (is (= 2 (get-counters (refresh scored) :agenda)) "should have 2 agenda counters")
+      (take-credits state :corp)
+      (click-prompts state :corp "Yes" "Project Atlas" "Install Project Atlas" "New remote")
+      (is (= "Project Atlas" (:title (get-content state :remote2 0)))))))
+
 (deftest ontological-dependence
   ;; Ontological Dependence
   (do-game
@@ -3030,6 +3093,23 @@
       (advance state pb2 5)
       (score state :corp (refresh pb2))
       (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points"))))
+
+(deftest project-ingatan
+  (dotimes [oa 5]
+    (do-game
+      (new-game {:corp {:hand ["Project Ingatan"] :discard ["Ice Wall"]}})
+      (play-from-hand state :corp "Project Ingatan" "New remote")
+      (core/gain state :corp :click 10 :credit 10)
+      (let [ing (get-content state :remote1 0)]
+        (advance state ing (+ 3 oa))
+        (is (= (+ 3 oa) (get-counters (refresh ing) :advancement)) (str "Project Ingatan should have " (+ oa 3) " advancement tokens"))
+        (score state :corp (refresh ing)))
+      (let [ing-scored (get-scored state :corp 0)]
+        (is (= oa (get-counters (refresh ing-scored) :agenda)) (str "Project Ingatan should have " oa " agenda counters"))
+        (when-not (zero? oa)
+          (take-credits state :corp)
+          (click-card state :corp "Ice Wall")
+          (click-prompt state :corp "HQ"))))))
 
 (deftest project-kusanagi
   ;; Project Kusanagi
@@ -4048,6 +4128,24 @@
       (click-prompt state :runner "1") ;; Prevent the brain damage this time
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
+
+(deftest sericulture-expansion
+  (do-game
+    (new-game {:corp {:hand ["Sericulture Expansion" "NGO Front"]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Sericulture Expansion" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (let [pr (get-content state :remote1 0)]
+      (advance state pr 5)
+      (score state :corp (refresh pr)))
+    (let [scored (get-scored state :corp 0)]
+      (is (= 2 (get-counters (refresh scored) :agenda)) "should have 2 agenda counters")
+      (is (changed? [(get-counters (refresh scored) :agenda) -1]
+            (take-credits state :corp)
+            (click-card state :corp "NGO Front")
+            (is (= 2 (get-counters (get-content state :remote2 0) :advancement)) "Placed 2 counters"))
+          "Spent to place counters")
+    (is (no-prompt? state :runner) "No lingering prompt"))))
 
 (deftest show-of-force
   ;; Show of Force

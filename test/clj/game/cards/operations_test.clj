@@ -2985,6 +2985,14 @@
    (is (= 2 (count-tags state)) "Runner should have two tags from MAD")
    (is (= 3 (count (:discard (get-corp)))) "MAD + 2 cards in discard")))
 
+(deftest nanomanagement
+  ;; Biotic Labor - Gain 2 clicks
+  (do-game
+    (new-game {:corp {:hand ["Nanomanagement"]}})
+    (play-from-hand state :corp "Nanomanagement")
+    (is (= 1 (:credit (get-corp))))
+    (is (= 4 (:click (get-corp))) "Spent 1 click to gain 2 additional clicks")))
+
 (deftest napd-cordon
   ;; NAPD Cordon
   (do-game
@@ -5156,6 +5164,19 @@
       (play-from-hand state :corp "Too Big to Fail")
       (is (= bp (count-bad-pub state)) "Corp shouldn't gain any more bad pub")
       (is (= credits (:credit (get-corp))) "Corp shouldn't gain any more as over 10 credits"))))
+
+(deftest shipment-from-shipment-basic-test
+  (do-game
+    (new-game {:corp {:hand ["Top-Down Solutions" "Enigma" "Vanilla"]
+                      :deck [(qty "IPO" 5)]}})
+    (is (changed? [(count (:hand (get-corp))) 1]
+          (play-from-hand state :corp "Top-Down Solutions"))
+        "Drew 2 cards")
+    (click-card state :corp "Enigma")
+    (click-prompt state :corp "HQ")
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "HQ")
+    (is (no-prompt? state :corp) "No lingering prompts")))
 
 (deftest traffic-accident
   ;; Traffic Accident

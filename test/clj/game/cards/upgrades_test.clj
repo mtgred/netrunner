@@ -2626,6 +2626,18 @@
         (is (zero? (virus-counters (find-card "Medium" (get-program state))))
             "Medium has no counters"))))
 
+(deftest mercia-ballard-test
+  (doseq [[targ serv] [["Archives" :archives] ["R&D" :rd] ["HQ" :hq] ["New remote" :remote1]]]
+    (do-game
+      (new-game {:corp {:hand [(qty "Hedge Fund" 5) "Mercia B4ll4rd" "Ping"]}})
+      (play-from-hand state :corp "Mercia B4ll4rd" "HQ")
+      (rez state :corp (get-content state :hq 0))
+      (take-credits state :corp)
+      (click-card state :corp "Ping")
+      (click-prompt state :corp targ)
+      (is (= "Ping" (:title (get-ice state serv 0))) (str "installed ping on " targ))
+      (is (= "Mercia B4ll4rd" (:title (get-content state serv 0))) (str "Moved to " targ " post-install")))))
+
 (deftest midori
   ;; Midori
   (do-game

@@ -3,7 +3,7 @@
     [clojure.string :as str]
     [game.core.access :refer [access-bonus]]
     [game.core.board :refer [all-installed get-all-cards]]
-    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? runner? in-hand?]]
+    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? in-hand? operation? runner? ]]
     [game.core.card-defs :as card-defs]
     [game.core.damage :refer [damage]]
     [game.core.drawing :refer [draw]]
@@ -11,6 +11,7 @@
     [game.core.engine :refer [queue-event register-events resolve-ability trigger-event-sync unregister-event-by-uuid]]
     [game.core.effects :refer [any-effects is-disabled-reg?]]
     [game.core.gaining :refer [gain-credits]]
+    [game.core.installing :refer [corp-install]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-cost-string can-pay?]]
     [game.core.play-instants :refer [async-rfg]]
@@ -341,6 +342,19 @@
   "There's either a card on the field that can be advanced, or a card that has the potential to be an advancable card (hidden info)"
   [state]
   (some #(or (not (faceup? %)) (can-be-advanced? state %)) (all-installed state :corp)))
+
+(defn corp-install-up-to-n-cards
+  "Ability to install up to n corp cards"
+  ([n] (corp-install-up-to-n-cards n nil))
+  ([n args]
+   {:prompt (str "install a card from HQ" (when (> n 1) (str " (" n " remaining)")))
+    :choices {:card (every-pred corp? in-hand? (complement operation?))}
+    :async true
+    :effect (req (wait-for
+                   (corp-install state side target nil (merge {:msg-keys {:install-source card}} args))
+                   (if (> n 1)
+                     (continue-ability state side (corp-install-up-to-n-cards (dec n)) card nil)
+                     (effect-completed state side eid))))}))
 
 (defn corp-recur
   ([] (corp-recur (constantly true)))

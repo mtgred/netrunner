@@ -3107,6 +3107,19 @@
       (click-card state :runner (get-content state :remote3 0)) ; Bounce from Hostile score
       (is (= 2 (count (:hand (get-corp)))) "Corp should have 2 cards in hand now")))
 
+(deftest leo-construction
+  (do-game
+    (new-game {:corp {:id "LEO Construction"
+                      :hand ["Eli 1.0" "Project Atlas"]}})
+    (play-from-hand state :corp "Eli 1.0" "R&D")
+    (rez state :corp (get-ice state :rd 0))
+    (take-credits state :corp)
+    (run-on state (if true :rd :hq))
+    (card-ability state :corp (:identity (get-corp)) 0)
+    (click-card state :corp "Eli 1.0")
+    (is (nil? (:run @state)) "Ended the run")
+    (is (= "Eli 1.0" (:title (first (:discard (get-corp))))) "trashed eli")))
+
 (deftest liza-talking-thunder-prominent-legislator
   ;; Liza Talking Thunder: Prominent Legislator
   (do-game
@@ -4464,6 +4477,27 @@
         (run-continue state)
         (is (no-prompt? state :corp))
         (is (no-prompt? state :runner)))))
+
+(deftest poetri-luxury-brands-score
+  (do-game
+    (new-game {:corp {:id "Poétrï Luxury Brands"
+                      :hand ["Hostile Takeover"]
+                      :deck ["Archer" "Enigma" "Vanilla"]}})
+    (play-and-score state "Hostile Takeover")
+    (click-prompts state :corp "Poétrï Luxury Brands" "Yes" "Install Archer, ignoring the install cost" "New remote")
+    (is (no-prompt? state :corp))
+    (is (= 2 (count (:deck (get-corp)))))))
+
+(deftest poetri-luxury-brands-steal
+  (do-game
+    (new-game {:corp {:id "Poétrï Luxury Brands"
+                      :hand ["PAD Campaign"]
+                      :deck ["Hostile Takeover"]}})
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (click-prompt state :runner "Steal")
+    (click-prompts state :corp "PAD Campaign" "New remote")
+    (is (= "PAD Campaign" (:title (get-content state :remote1 0))) "installed other in new remote")))
 
 (deftest pravdivost-consulting-fake-prompt
   ;; Pravdivost Consulting: Political Solutions

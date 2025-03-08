@@ -362,11 +362,34 @@
          :label "Force the Runner to trash an installed card"
          :msg (msg "force the Runner to trash " (:title target))))
 
+(defn install-from-hq-sub
+  ([] (install-from-hq-sub nil))
+  ([args]
+   {:label "Install a card from HQ"
+    :prompt "Choose a card to install from HQ"
+    :show-discard true
+    :choices {:card #(and (corp-installable-type? %)
+                          (in-hand? %))}
+    :async true
+    :effect (effect (corp-install eid target nil (assoc args :msg-keys {:install-source card})))}))
+
+(defn install-from-archives-sub
+  ([] (install-from-archives-sub nil))
+  ([args]
+   {:label "Install a card from Archives"
+    :prompt "Choose a card to install from Archives"
+    :show-discard true
+    :choices {:card #(and (corp-installable-type? %)
+                          (in-discard? %))}
+    :async true
+    :effect (effect (corp-install eid target nil (assoc args :msg-keys {:install-source card
+                                                                        :display-origin true})))}))
+
 (defn install-from-hq-or-archives-sub
   ([] (install-from-hq-or-archives-sub nil))
   ([args]
    {:label "Install a card from HQ or Archives"
-    :prompt "Choose a card to install from Archives or HQ"
+    :prompt "Choose a card to install from HQ or Archives"
     :show-discard true
     :choices {:card #(and (corp-installable-type? %)
                           (or (in-hand? %)
@@ -1050,6 +1073,20 @@
      :subroutines [sub
                    sub]}))
 
+(defcard "Bumi 1.0"
+  {:subroutines [trash-program-sub
+                 (do-brain-damage 1)]
+   :runner-abilities [(bioroid-break 1 1)]
+   :on-rez {:prompt "Trash a trojan program"
+            :choices {:card #(and (installed? %)
+                                  (program? %)
+                                  (has-subtype? % "Trojan"))}
+            :req (req (and run this-server
+                           (some #(has-subtype? % "Trojan") (all-installed state :runner))))
+            :msg (msg "trash " (:title target))
+            :async true
+            :effect (req (trash state side eid target {:cause-card card}))}})
+
 (defcard "Brân 1.0"
   {:subroutines [{:async true
                   :label "Install an ice from HQ or Archives"
@@ -1325,16 +1362,7 @@
                   :effect (effect (damage eid :net (available-mu state) {:card card}))}]})
 
 (defcard "Crick"
-  {:subroutines [{:label "install a card from Archives"
-                  :prompt "Choose a card to install from Archives"
-                  :change-in-game-state {:silent (req true)
-                                         :req (req (seq (:discard corp)))}
-                  :show-discard true
-                  :async true
-                  :choices {:card #(and (corp-installable-type? %)
-                                        (in-discard? %))}
-                  :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
-                                                                           :display-origin true}}))}]
+  {:subroutines [(install-from-archives-sub)]
    :static-abilities [(ice-strength-bonus (req (protecting-archives? card)) 3)]})
 
 (defcard "Curtain Wall"
@@ -3218,16 +3246,7 @@
                                                  state side card eid))}]}))
 
 (defcard "NEXT Opal"
-  (let [sub {:label "Install a card from HQ, paying all costs"
-             :prompt "Choose a card in HQ to install"
-             :change-in-game-state {:silent true
-                                    :req (req (seq (:hand corp)))}
-             :choices {:card #(and (corp-installable-type? %)
-                                   (in-hand? %))}
-             :async true
-             :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
-                                                                      :display-origin true}}))}]
-    (next-ice-variable-subs sub)))
+  (next-ice-variable-subs (install-from-hq-sub)))
 
 (defcard "NEXT Sapphire"
   {:x-fn (req (next-ice-count corp))
@@ -3638,6 +3657,11 @@
                :req (req (not (in-discard? card)))
                :msg "force the Runner to encounter Sapper"
                :effect (req (force-ice-encounter state side eid card))}})
+
+(defcard "Scatter Field"
+  {:static-abilities [(ice-strength-bonus (req (= 1 (count (get-in @state [:corp :servers (second (get-zone card)) :ices])))) 4)]
+   :subroutines [(install-from-hq-sub)
+                 end-the-run]})
 
 (defcard "Searchlight"
   (let [sub {:label "Trace X - Give the Runner 1 tag"

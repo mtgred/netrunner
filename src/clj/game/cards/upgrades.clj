@@ -27,7 +27,7 @@
    [game.core.flags :refer [clear-persistent-flag! is-scored? register-persistent-flag!
                             register-run-flag!]]
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
-   [game.core.hand-size :refer [corp-hand-size+]]
+   [game.core.hand-size :refer [corp-hand-size+ update-hand-size]]
    [game.core.ice :refer [all-subs-broken? get-run-ices pump-ice resolve-subroutine!
                           unbroken-subroutines-choice update-all-ice update-all-icebreakers]]
    [game.core.installing :refer [corp-install]]
@@ -1185,6 +1185,30 @@
                 :cost [(->c :trash-can)]
                 :async true
                 :effect (effect (purge eid))}]})
+
+(defcard "Mercia B4ll4rd"
+  {:events [{:event :corp-action-phase-ends
+             :req (req (seq (:hand corp)))
+             :prompt "Install an ice, paying 1 [Credits] less"
+             :waiting-prompt true
+             :choices {:card (every-pred ice? in-hand?)}
+             :async true
+             :effect (req (wait-for
+                            (corp-install state side target nil {:cost-bonus -1
+                                                                 :msg-keys {:install-source card}})
+                            (update-hand-size state :corp)
+                            (if-let [moved-card async-result]
+                              (let [target-server (-> moved-card :zone second)
+                                    target-zone [:servers target-server :content]
+                                    target-name (zone->name target-server)]
+                                (continue-ability
+                                  state side
+                                  {:msg (msg "move itself to " target-name)
+                                   :effect (req (unregister-events state side card)
+                                                (let [c (move state side card target-zone)]
+                                                  (register-default-events state side c)))}
+                                  card nil))
+                              (effect-completed state side eid))))}]})
 
 (defcard "Midori"
   {:events [{:event :approach-ice

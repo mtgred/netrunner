@@ -1250,7 +1250,7 @@
              :interactive (req true)
              :async true
              :effect
-             (effect (continue-ability 
+             (effect (continue-ability
                        {:optional {:req (req (= (count (:hand runner)) (count (:hand corp))))
                         :autoresolve (get-autoresolve :auto-fire)
                         :waiting-prompt true
@@ -1273,6 +1273,14 @@
                :effect (effect (move :corp target :hand))}]
     {:events [(assoc leela :event :agenda-scored)
               (assoc leela :event :agenda-stolen)]}))
+
+(defcard "LEO Construction"
+  {:abilities [{:cost [(->c :bioroid-run-server 1)]
+                :once :per-turn
+                :label "end the run"
+                :msg "end the run"
+                :async true
+                :effect (req (end-run state side eid card))}]})
 
 (defcard "Liza Talking Thunder: Prominent Legislator"
   {:events [{:event :successful-run
@@ -1840,6 +1848,51 @@
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
+
+(defcard "Poétrï Luxury Brands"
+  (let [remote-choice
+        (fn [chosen]
+          {:async true
+           :waiting-prompt true
+           :effect (req (let [target-position (first (positions #{chosen} (take 3 (:deck corp))))]
+                          (corp-install state side eid chosen nil
+                                        {:msg-keys {:install-source card
+                                                    :origin-index target-position
+                                                    :display-origin true}})))})
+        opts-fn (fn [cards]
+                  (mapv #(when (and (not (operation? %))
+                                    (not (agenda? %)))
+                           {:option (str "Install " (:title %) ", ignoring the install cost")
+                            :ability (remote-choice %)})
+                        cards))
+        ev {:prompt (msg "The top of R&D is (in order): "
+                         (enumerate-str (map :title (take 3 (:deck corp)))))
+            :async true
+            :msg (msg "look at the top 3 cards of R&D")
+            :effect (req (let [top-3 (take 3 (:deck corp))]
+                           (continue-ability
+                             state side
+                             (choose-one-helper
+                               {:prompt (str "The top of R&D is (in order): "
+                                             (enumerate-str (map :title top-3)))
+                                :optional true}
+                               (opts-fn top-3))
+                             card nil)))}
+        score-ev {:event :agenda-scored
+                  :skippabe true
+                  :interactive (req true)
+                  :optional {:prompt "Look at the top 3 cards of R&D?"
+                             :req (req (seq (:deck corp)))
+                             :yes-ability ev}}]
+    {:events [{:event :agenda-stolen
+               :interactive (req true)
+               :skippable true
+               :async true
+               :prompt "Install a non-agenda from HQ?"
+               :change-in-game-state {:silent true :req (req (seq (:hand corp)))}
+               :choices {:card (every-pred corp? in-hand? (complement agenda?) (complement operation?))}
+               :effect (req (corp-install state side eid target nil {:msg-keys {:install-source card}}))}
+              score-ev]}))
 
 (defcard "Pravdivost Consulting: Political Solutions"
   {:events [{:event :successful-run

@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-recur defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
+   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -1843,6 +1843,11 @@
     :effect (req (wait-for (trash-cards state side targets {:cause-card card})
                            (gain-tags state :corp eid (count targets))))}})
 
+(defcard "Nanomanagement"
+  {:on-play
+   {:msg "gain [Click][Click]"
+    :effect (effect (gain-clicks 2))}})
+
 (defcard "NAPD Cordon"
   (lockdown
     {:static-abilities
@@ -2699,10 +2704,7 @@
                :effect (req (wait-for (corp-install state side target nil {:msg-keys {:install-source card
                                                                                       :display-origin true}})
                                       (continue-ability state side (shelper (inc n)) card nil)))}))]
-    {:on-play
-     {:async true
-      :change-in-game-state {:req (req (seq (:hand corp)))}
-      :effect (effect (continue-ability (shelper 0) card nil))}}))
+    {:on-play (corp-install-up-to-n-cards 3)}))
 
 (defcard "Shipment from SanSan"
   {:on-play
@@ -3116,6 +3118,14 @@
     :async true
     :effect (req (wait-for (gain-credits state side 7)
                            (gain-bad-publicity state :corp eid 1)))}})
+
+(defcard "Top-Down Solutions"
+  {:on-play
+   {:async true
+    :msg "draw 2 cards"
+    :effect (req (wait-for
+                   (draw state side 2)
+                   (continue-ability state side (corp-install-up-to-n-cards 2) card nil)))}})
 
 (defcard "Traffic Accident"
   {:on-play
