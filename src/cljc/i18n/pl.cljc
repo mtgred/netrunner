@@ -359,7 +359,7 @@
           :actions "Akcje"
           :fire-unbroken "Użycie niezłamanych poleceń"
           :stack "Stos"
-          :r&d "DBR"
+          :rnd "DBR"
           :shuffle "Przetasowanie"
           :show "Pokazanie"
           :close-shuffle "Zamknięcie i przetasowanie"

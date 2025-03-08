@@ -5,6 +5,7 @@
    [clojure.string :as s]
    [goog.dom :as gdom]
    [jinteki.cards :refer [all-cards]]
+   [medley.core :as m]
    [nr.ajax :refer [DELETE GET POST PUT]]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [valid-email?]]
@@ -13,76 +14,98 @@
    [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top]]
+   [i18n.core :as i18n]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]))
 
 (defn post-response [s response]
   (case (:status response)
-    401 (non-game-toast  (tr [:settings.invalid-password "Invalid login or password"]) "error" nil)
-    404 (non-game-toast  (tr [:settings.invalid-email "No account with that email address exists"]) "error" nil)
+    401 (non-game-toast (tr [:settings.invalid-password]) "error" nil)
+    404 (non-game-toast (tr [:settings.invalid-email]) "error" nil)
     ;; else
-    (non-game-toast (tr [:settings.updated "Profile updated - Please refresh your browser"]) "success" nil))
+    (do (non-game-toast (tr [:settings.updated]) "success" nil)
+        (when-let [json (:json response)]
+          (when (and (:i18n json) (:content json))
+            (i18n.core/insert-lang! (:i18n json) (:content json))))))
   (swap! s assoc :flash-message ""))
 
-(defn post-options [url callback]
-  (let [params (:options @app-state)]
-    (go (let [response (<! (PUT url params :json))]
+(defn post-options [callback]
+  (let [params (:options @app-state)
+        params (if (get @i18n.core/fluent-dictionary (keyword (:language params)))
+                 params
+                 (assoc params :i18n (:language params)))]
+    (go (let [response (<! (PUT "/profile" params :json))]
           (callback response)))))
 
-(defn handle-post [event url s]
+(defn save-to-local-storage!
+  [k v]
+  (when-not (nil? v)
+    (.setItem js/localStorage k v)))
+
+(defn handle-post [event s]
   (.preventDefault event)
   (swap! s assoc :flash-message (tr [:settings.updating "Updating profile..."]))
-  (swap! app-state assoc-in [:options :pronouns] (:pronouns @s))
-  (swap! app-state assoc-in [:options :bespoke-sounds] (:bespoke-sounds @s))
-  (swap! app-state assoc-in [:options :language] (:language @s))
-  (swap! app-state assoc-in [:options :sounds] (:sounds @s))
-  (swap! app-state assoc-in [:options :default-format] (:default-format @s))
-  (swap! app-state assoc-in [:options :lobby-sounds] (:lobby-sounds @s))
-  (swap! app-state assoc-in [:options :sounds-volume] (:volume @s))
-  (swap! app-state assoc-in [:options :background] (:background @s))
-  (swap! app-state assoc-in [:options :custom-bg-url] (:custom-bg-url @s))
-  (swap! app-state assoc-in [:options :card-back] (:card-back @s))
-  (swap! app-state assoc-in [:options :card-zoom] (:card-zoom @s))
-  (swap! app-state assoc-in [:options :pin-zoom] (:pin-zoom @s))
-  (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
-  (swap! app-state assoc-in [:options :card-resolution] (:card-resolution @s))
-  (swap! app-state assoc-in [:options :pass-on-rez] (:pass-on-rez @s))
-  (swap! app-state assoc-in [:options :player-stats-icons] (:player-stats-icons @s))
-  (swap! app-state assoc-in [:options :stacked-cards] (:stacked-cards @s))
-  (swap! app-state assoc-in [:options :ghost-trojans] (:ghost-trojans @s))
-  (swap! app-state assoc-in [:options :display-encounter-info] (:display-encounter-info @s))
-  (swap! app-state assoc-in [:options :sides-overlap] (:sides-overlap @s))
-  (swap! app-state assoc-in [:options :log-timestamps] (:log-timestamps @s))
-  (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
-  (swap! app-state assoc-in [:options :log-width] (:log-width @s))
-  (swap! app-state assoc-in [:options :log-top] (:log-top @s))
-  (swap! app-state assoc-in [:options :log-player-highlight] (:log-player-highlight @s))
-  (swap! app-state assoc-in [:options :blocked-users] (:blocked-users @s))
-  (swap! app-state assoc-in [:options :alt-arts] (:alt-arts @s))
-  (swap! app-state assoc-in [:options :gamestats] (:gamestats @s))
-  (swap! app-state assoc-in [:options :deckstats] (:deckstats @s))
-  (swap! app-state assoc-in [:options :disable-websockets] (:disable-websockets @s))
-  (.setItem js/localStorage "sounds" (:sounds @s))
-  (.setItem js/localStorage "default-format" (:default-format @s))
-  (.setItem js/localStorage "lobby_sounds" (:lobby-sounds @s))
-  (.setItem js/localStorage "custom_bg_url" (:custom-bg-url @s))
-  (.setItem js/localStorage "sounds_volume" (:volume @s))
-  (.setItem js/localStorage "log-width" (:log-width @s))
-  (.setItem js/localStorage "log-top" (:log-top @s))
-  (.setItem js/localStorage "log-player-highlight" (:log-player-highlight @s))
-  (.setItem js/localStorage "pass-on-rez" (:pass-on-rez @s))
-  (.setItem js/localStorage "player-stats-icons" (:player-stats-icons @s))
-  (.setItem js/localStorage "stacked-cards" (:stacked-cards @s))
-  (.setItem js/localStorage "ghost-trojans" (:ghost-trojans @s))
-  (.setItem js/localStorage "display-encounter-info" (:display-encounter-info @s))
-  (.setItem js/localStorage "sides-overlap" (:sides-overlap @s))
-  (.setItem js/localStorage "log-timestamps" (:log-timestamps @s))
-  (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
-  (.setItem js/localStorage "card-back" (:card-back @s))
-  (.setItem js/localStorage "card-zoom" (:card-zoom @s))
-  (.setItem js/localStorage "pin-zoom" (:pin-zoom @s))
-  (.setItem js/localStorage "disable-websockets" (:disable-websockets @s))
-  (post-options url (partial post-response s)))
+  (let [{:keys [pronouns bespoke-sounds language sounds default-format
+                lobby-sounds volume background custom-bg-url card-back card-zoom
+                pin-zoom show-alt-art card-resolution pass-on-rez
+                player-stats-icons stacked-cards ghost-trojans
+                display-encounter-info sides-overlap log-timestamps
+                runner-board-order log-width log-top log-player-highlight
+                blocked-users alt-arts gamestats deckstats disable-websockets]} @s]
+    (swap! app-state update :options
+           (fn [options]
+             (m/assoc-some options
+                           :pronouns pronouns
+                           :bespoke-sounds bespoke-sounds
+                           :language language
+                           :sounds sounds
+                           :default-format default-format
+                           :lobby-sounds lobby-sounds
+                           :volume volume
+                           :background background
+                           :custom-bg-url custom-bg-url
+                           :card-back card-back
+                           :card-zoom card-zoom
+                           :pin-zoom pin-zoom
+                           :show-alt-art show-alt-art
+                           :card-resolution card-resolution
+                           :pass-on-rez pass-on-rez
+                           :player-stats-icons player-stats-icons
+                           :stacked-cards stacked-cards
+                           :ghost-trojans ghost-trojans
+                           :display-encounter-info display-encounter-info
+                           :sides-overlap sides-overlap
+                           :log-timestamps log-timestamps
+                           :runner-board-order runner-board-order
+                           :log-width log-width
+                           :log-top log-top
+                           :log-player-highlight log-player-highlight
+                           :blocked-users blocked-users
+                           :alt-arts alt-arts
+                           :gamestats gamestats
+                           :deckstats deckstats
+                           :disable-websockets disable-websockets)))
+    (save-to-local-storage! "sounds" sounds)
+    (save-to-local-storage! "default-format" default-format)
+    (save-to-local-storage! "lobby_sounds" lobby-sounds)
+    (save-to-local-storage! "custom_bg_url" custom-bg-url)
+    (save-to-local-storage! "sounds_volume" volume)
+    (save-to-local-storage! "log-width" log-width)
+    (save-to-local-storage! "log-top" log-top)
+    (save-to-local-storage! "log-player-highlight" log-player-highlight)
+    (save-to-local-storage! "pass-on-rez" pass-on-rez)
+    (save-to-local-storage! "player-stats-icons" player-stats-icons)
+    (save-to-local-storage! "stacked-cards" stacked-cards)
+    (save-to-local-storage! "ghost-trojans" ghost-trojans)
+    (save-to-local-storage! "display-encounter-info" display-encounter-info)
+    (save-to-local-storage! "sides-overlap" sides-overlap)
+    (save-to-local-storage! "log-timestamps" log-timestamps)
+    (save-to-local-storage! "runner-board-order" runner-board-order)
+    (save-to-local-storage! "card-back" card-back)
+    (save-to-local-storage! "card-zoom" card-zoom)
+    (save-to-local-storage! "pin-zoom" pin-zoom)
+    (save-to-local-storage! "disable-websockets" disable-websockets))
+  (post-options #(post-response s %)))
 
 (defn add-user-to-block-list
   [user s]
@@ -263,13 +286,15 @@
      (fn [user s _]
        [:div#profile-form.panel.blue-shade.content-page {:ref "profile-form"}
          [:h2 (tr [:nav.settings "Settings"])]
-         [:form {:on-submit #(handle-post % "/profile" s)}
+         [:form {:on-submit #(handle-post % s)}
           [:button.float-right (tr [:settings.update-profile "Update Profile"])]
           [:section
            [:h3 (tr [:settings.email "Email"])]
-           [:a {:href "" :on-click #(do
-                                      (.preventDefault %)
-                                      (reagent-modals/modal! [change-email s]))} (tr [:settings.change-email "Change email"])]]
+           [:a {:href ""
+                :on-click #(do
+                             (.preventDefault %)
+                             (reagent-modals/modal! [change-email s]))}
+            (tr [:settings.change-email "Change email"])]]
           [:section
            [:h3 (tr [:settings.avatar "Avatar"])]
            [avatar @user {:opts {:size 38}}]
@@ -292,7 +317,7 @@
                             {:name (tr [:pronouns.hethey "He/they"]) :ref "hethey"}
                             {:name (tr [:pronouns.heshe "He/She/they"]) :ref "heshe"}
                             {:name (tr [:pronouns.it "It"]) :ref "it"}
-                            {:name (tr [:pronouns.ne "Fae/faer"]) :ref "faefaer"}
+                            {:name (tr [:pronouns.faefaer "Fae/faer"]) :ref "faefaer"}
                             {:name (tr [:pronouns.ne "Ne/nem"]) :ref "ne"}
                             {:name (tr [:pronouns.ve "Ve/ver"]) :ref "ve"}
                             {:name (tr [:pronouns.ey "Ey/em"]) :ref "ey"}
@@ -387,13 +412,13 @@
                              :value true
                              :checked (:ghost-trojans @s)
                              :on-change #(swap! s assoc-in [:ghost-trojans] (.. % -target -checked))}]
-             (tr [:settings.display-encounter-info "Display ghosts for hosted programs"])]]
+             (tr [:settings.ghost-trojans "Display ghosts for hosted programs"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:display-encounter-info @s)
                              :on-change #(swap! s assoc-in [:display-encounter-info] (.. % -target -checked))}]
-             (tr [:settings.display-encounter-info "Always display encounter info dialog"])]]
+             (tr [:settings.display-encounter-info "Always display encounter info"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
@@ -405,7 +430,7 @@
                              :value true
                              :checked (:log-timestamps @s)
                              :on-change #(swap! s assoc-in [:log-timestamps] (.. % -target -checked))}]
-             (tr [:settings.log-timestamps "Show log timestamps"])]]
+             (tr [:settings.toggle-log-timestamps "Show log timestamps"])]]
 
            [:br]
            [:h4 (tr [:settings.runner-layout "Runner layout from Corp perspective"])]
@@ -508,7 +533,7 @@
             [:label [:input {:type "checkbox"
                              :name "pin-zoom"
                              :checked (:pin-zoom @s)
-                             :on-change #(swap! s assoc-in [:pin-zoom] (.. % -target -checked))}]
+                             :on-change #(swap! s assoc :pin-zoom (.. % -target -checked))}]
              (tr [:settings.pin-zoom "Keep zoomed cards on screen"])]]]
 
           [:section
@@ -617,38 +642,17 @@
 (defn account []
   (let [user (r/cursor app-state [:user])
         scroll-top (atom 0)
-        state (r/atom {:flash-message ""
-                       :background (get-in @app-state [:options :background])
-                       :custom-bg-url (get-in @app-state [:options :custom-bg-url])
-                       :card-back (get-in @app-state [:options :card-back])
-                       :card-zoom (get-in @app-state [:options :card-zoom])
-                       :pin-zoom (get-in @app-state [:options :pin-zoom])
-                       :pronouns (get-in @app-state [:options :pronouns])
-                       :bespoke-sounds (get-in @app-state [:options :bespoke-sounds])
-                       :language (get-in @app-state [:options :language])
-                       :sounds (get-in @app-state [:options :sounds])
-                       :default-format (get-in @app-state [:options :default-format])
-                       :lobby-sounds (get-in @app-state [:options :lobby-sounds])
-                       :volume (get-in @app-state [:options :sounds-volume])
-                       :show-alt-art (get-in @app-state [:options :show-alt-art])
-                       :alt-arts (get-in @app-state [:options :alt-arts])
-                       :all-art-select "wc2015"
-                       :card-resolution (get-in @app-state [:options :card-resolution])
-                       :stacked-cards (get-in @app-state [:options :stacked-cards])
-                       :ghost-trojans (get-in @app-state [:options :ghost-trojans])
-                       :display-encounter-info (get-in @app-state [:options :display-encounter-info])
-                       :sides-overlap (get-in @app-state [:options :sides-overlap])
-                       :pass-on-rez (get-in @app-state [:options :pass-on-rez])
-                       :log-timestamps (get-in @app-state [:options :log-timestamps])
-                       :player-stats-icons (get-in @app-state [:options :player-stats-icons])
-                       :runner-board-order (get-in @app-state [:options :runner-board-order])
-                       :log-width (get-in @app-state [:options :log-width])
-                       :log-top (get-in @app-state [:options :log-top])
-                       :log-player-highlight (get-in @app-state [:options :log-player-highlight])
-                       :gamestats (get-in @app-state [:options :gamestats])
-                       :deckstats (get-in @app-state [:options :deckstats])
-                       :blocked-users (sort (get-in @app-state [:options :blocked-users]))
-                       :disable-websockets (get-in @app-state [:options :disable-websockets])})]
+        state (r/atom
+               (-> (:options @app-state)
+                   (select-keys [:pronouns :bespoke-sounds :language :sounds :default-format
+                                 :lobby-sounds :volume :background :custom-bg-url :card-back :card-zoom
+                                 :pin-zoom :show-alt-art :card-resolution :pass-on-rez
+                                 :player-stats-icons :stacked-cards :ghost-trojans
+                                 :display-encounter-info :sides-overlap :log-timestamps
+                                 :runner-board-order :log-width :log-top :log-player-highlight
+                                 :blocked-users :alt-arts :gamestats :deckstats :disable-websockets])
+                   (assoc :flash-message ""
+                          :all-art-select "wc2015")))]
 
     (go (let [response (<! (GET "/profile/email"))]
           (when (= 200 (:status response))

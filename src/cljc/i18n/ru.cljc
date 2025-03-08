@@ -775,7 +775,7 @@
           :fire-unbroken "Выполнить несломанные подпрограммы"
           :actions "Действия"
           :stack "Стек"
-          :r&d "R&D"
+          :rnd "R&D"
           :shuffle "Перемешать"
           :show "Показать"
           :close-shuffle "Закрыть и перемешать"

@@ -47,7 +47,7 @@
     (println "Finished!")))
 
 (comment
-  (missing-translations :fr))
+  (missing-translations))
 
 (defn undefined-translations
   [& _args]
@@ -133,3 +133,35 @@
 
 (comment
   (unused-translations))
+
+;; should be a one-off
+(defn convert-edn-to-fluent
+  []
+  (let [dict (tr.core/translation-dictionary)]
+    (doseq [lang (keys dict)]
+      (let [translation
+            (with-out-str
+              (doseq [path-ns (->> (get-nodes :en)
+                                   (group-by first)
+                                   (sort-by key))
+                      ; slit each group by a newline
+                      :let [_ (newline)]
+                      path (->> path-ns
+                                (val)
+                                (sort))
+                      :let [identifier (->> path
+                                            (map #(str (symbol %)))
+                                            (str/join "_"))
+                            node (get-in dict (cons lang path))
+                            node (if (string? node)
+                                   (-> node
+                                       (str/replace "{" "{\"{\"RRR")
+                                       (str/replace "}" "{\"}\"}")
+                                       (str/replace "RRR" "}"))
+                                   node)]]
+                (printf "%s = %s\n" identifier node)))]
+        (spit (io/file "resources" "public" "i18n" (str (symbol lang) ".ftl"))
+          (str/triml translation))))))
+
+(comment
+  (convert-edn-to-fluent))

@@ -359,7 +359,7 @@
           :actions "Ações"
           :fire-unbroken "Executar sub-rotinas"
           :stack "Pilha"
-          :r&d "P&D"
+          :rnd "P&D"
           :shuffle "Embaralhar"
           :show "Mostrar"
           :close-shuffle "Fechar & Embaralhar"

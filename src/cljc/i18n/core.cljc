@@ -1,5 +1,7 @@
 (ns i18n.core
   (:require
+   [clojure.string :as str]
+   [i18n.fluent :as i18n]
    [i18n.en]
    [i18n.fr]
    [i18n.ja]
@@ -10,6 +12,13 @@
    [i18n.ru]
    [i18n.zh-simp]
    [taoensso.tempura :as tempura]))
+
+(def fluent-dictionary
+  (atom nil))
+
+(defn insert-lang! [lang content]
+  (swap! fluent-dictionary assoc (keyword lang) {:content content
+                                                 :ftl (i18n/build lang content)}))
 
 (defn translation-dictionary []
   {:en i18n.en/translations
@@ -25,5 +34,13 @@
 (def opts {:dict (translation-dictionary)})
 
 (defn tr-impl [app-state resource & params]
-  (let [lang (keyword (get-in @app-state [:options :language] :en))]
-    (tempura/tr opts [lang :en] resource (vec params))))
+  (let [lang (keyword (get-in @app-state [:options :language] :en))
+        id (-> (first resource)
+               (symbol)
+               (str)
+               (str/replace "." "_"))
+        bundle (get-in @fluent-dictionary [lang :ftl])]
+    (prn :bundle lang id bundle)
+    (or (when bundle
+          (i18n/format bundle id))
+        #_(tempura/tr opts [lang :en] resource (vec params)))))

@@ -32,7 +32,7 @@
                             :custom-bg-url (get-local-value "custom_bg_url" "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
                             :card-back (get-local-value "card-back" "nsg")
                             :card-zoom (get-local-value "card-zoom" "image")
-                            :pin-zoom (get-local-value "pin-zoom" false)
+                            :pin-zoom (= (get-local-value "pin-zoom" "false") "true")
                             :pronouns "none"
                             :language "en"
                             :default-format (get-local-value "default-format" "standard")

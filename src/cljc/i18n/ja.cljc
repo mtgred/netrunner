@@ -362,7 +362,7 @@
           :actions "アクション"
           :fire-unbroken "未ブレイクサブルーチンを解決する"
           :stack "スタック"
-          :r&d "R&D"
+          :rnd "R&D"
           :shuffle "シャッフルする"
           :show "中を確認する"
           :close-shuffle "閉じてシャフルする"

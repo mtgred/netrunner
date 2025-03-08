@@ -18,7 +18,7 @@
                  :init-ns web.dev
                  :init (go)}
 
-  :dependencies [[org.clojure/clojure "1.11.2"]
+  :dependencies [[org.clojure/clojure "1.12.0"]
                  [org.clojure/clojurescript "1.11.132"
                   :exclusions [org.clojure/google-closure-library
                                org.clojure/data.json
@@ -65,7 +65,9 @@
                  [integrant "0.8.0"]
                  [com.widdindustries/cljc.java-time "0.1.21"]
                  [time-literals "0.1.5"]
-                 [metosin/reitit "0.5.18"]]
+                 [metosin/reitit "0.7.2"]
+                 [net.xyzsd.fluent/fluent-base "0.70"]
+                 [net.xyzsd.fluent/fluent-functions-cldr "0.70"]]
 
   :test-selectors {:default (fn [m] (not (:kaocha/pending m)))}
 

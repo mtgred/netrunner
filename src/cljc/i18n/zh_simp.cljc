@@ -765,7 +765,7 @@
           :fire-unbroken "结算未破解的子进程"
           :actions "操作"
           :stack "存储栈"
-          :r&d "研发中心"
+          :rnd "研发中心"
           :shuffle "洗牌"
           :show "显示"
           :close-shuffle "关闭并洗牌"

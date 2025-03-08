@@ -359,7 +359,7 @@
           :actions "Actions"
           :fire-unbroken "Déclencher les routines non neutralisées"
           :stack "Pile"
-          :r&d "R&D"
+          :rnd "R&D"
           :shuffle "Mélanger"
           :show "Montrer"
           :close-shuffle "Fermer et Mélanger"

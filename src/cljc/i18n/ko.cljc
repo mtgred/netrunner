@@ -347,7 +347,7 @@
           :actions "행동"
           :fire-unbroken "깨지지 않은 서브루틴 격발"
           :stack "스택"
-          :r&d "연구개발부(R&D)"
+          :rnd "연구개발부(R&D)"
           :shuffle "섞기"
           :show "보기"
           :close-shuffle "닫고 섞는다"

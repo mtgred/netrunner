@@ -341,7 +341,7 @@
           :actions "Actionsyay"
           :fire-unbroken "Irefay unbrokenyay ubroutinessay"
           :stack "Ackstay"
-          :r&d "R&DYAY"
+          :rnd "R&DYAY"
           :shuffle "Uffleshay"
           :show "Owshay"
           :close-shuffle "Osecla & Uffleshay"

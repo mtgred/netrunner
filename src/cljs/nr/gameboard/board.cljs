@@ -1080,7 +1080,7 @@
      [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]
      [:div.stats-area
       (ctrl :agenda-point [:div (tr [:game.agenda-count] @agenda-point)
-                           (tr [:game.agenda-point-req (if-not (= 7 agenda-point-req) (str " (" agenda-point-req " required)") "")] @agenda-point-req)])]]))
+                           (tr [:game.agenda-point-req] (if-not (= 7 agenda-point-req) (str " (" agenda-point-req " required)") "") @agenda-point-req)])]]))
 
 (defn run-arrow [run]
   [:div.run-arrow [:div {:class (cond

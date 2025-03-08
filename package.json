@@ -13,6 +13,7 @@
 		"stylus": "^0.55.0"
 	},
 	"dependencies": {
+		"@fluent/bundle": "^0.18.0",
 		"@js-joda/core": "3.2.0",
 		"@js-joda/locale_en-us": "^4.4.0",
 		"howler": "^2.2.3",

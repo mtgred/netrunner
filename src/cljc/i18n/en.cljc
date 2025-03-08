@@ -505,6 +505,7 @@
               :player-stats-icons "Use icons for player stats"
               :stacked-cards "Card stacking (on by default)"
               :ghost-trojans "Display ghosts for hosted programs"
+              :display-encounter-info "Always display encounter info"
               :sides-overlap "Runner and Corp board may overlap"
               :runner-layout "Runner layout from Corp perspective"
               :runner-classic "Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)"
@@ -513,6 +514,8 @@
               :log-player-highlight "Log player highlight"
               :log-player-highlight-red-blue "Corp: Blue / Runner: Red"
               :log-player-highlight-none "None"
+              :toggle-log-timestamps "Show log timestamps"
+              :log-timestamps "Log timestamps"
               :card-preview-zoom "Card preview zoom"
               :card-iamge "Card Image"
               :card-text "Card Text"
@@ -556,12 +559,19 @@
               :bespoke-sounds
               {:archer "Archer"
                :harmonics "Harmonics Suite (Bloop, Echo, Pulse, Wave)"
-               :end-of-the-line "End of the Line"}}
-   :ingame-settings {:card-stacking "Card settings"
+               :end-of-the-line "End of the Line"}
+              :connection "Connection"
+              :disable-websockets "Disable websockets - requires browser refresh after clicking Update Profile [Not Recommended!]"}
+   :ingame-settings {:game-settings "Gameplay settings"
+                     :card-stacking "Card settings"
                      :stack-cards "Stack cards"
                      :label-unrezzed-cards "Label unrezzed cards"
                      :label-faceup-cards "Label face up cards"
                      :ghost-trojans "Display hosted trojans in rig"
+                     :display-encounter-info "Always display encounter info"
+                     :log-timestamps "Log timestamps"
+                     :toggle-log-timestamps "Show log timestamps"
+                     :pass-on-rez "Pass priority when rezzing ice"
                      :card-sorting "Sorting"
                      :sort-archives "Sort Archives"
                      :sort-heap "Sort Heap"
@@ -779,7 +789,7 @@
           :fire-unbroken "Fire unbroken subroutines"
           :actions "Actions"
           :stack "Stack"
-          :r&d "R&D"
+          :rnd "R&D"
           :shuffle "Shuffle"
           :show "Show"
           :close-shuffle "Close & Shuffle"
@@ -812,6 +822,7 @@
           :minutes "m:"
           :seconds "s"
           :seconds-remaining "s remaining"
+          :timeout-soon "Game will time out within 30 seconds for inactivity"
           :time-taken (fn [[t]] (str "Time taken: " t " minutes"))
           :win-decked (fn [[turn]] (str "wins due to the Corp being decked on turn " turn))
           :win-flatlined (fn [[turn]] (str "wins by flatline on turn " turn))

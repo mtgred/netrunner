@@ -106,7 +106,7 @@
                    (= -1 (.indexOf current-blocked-list blocked-user)))
           (let [new-block-list (conj current-blocked-list blocked-user)]
             (swap! app-state assoc-in [:options :blocked-users] new-block-list)
-            (account/post-options "/profile" (partial post-response blocked-user))))))))
+            (account/post-options (partial post-response blocked-user))))))))
 
 (defn send-msg [s channel]
   (authenticated

@@ -47,7 +47,7 @@
                         :value true
                         :checked (get-in @app-state [:options :pass-on-rez])
                         :on-change #(swap! app-state assoc-in [:options :pass-on-rez] (.. % -target -checked))}]
-        (tr [:ingame-settings.game-settings "Pass priority when rezzing ice"])]]]
+        (tr [:ingame-settings.pass-on-rez "Pass priority when rezzing ice"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings.card-sorting "Sorting"])]
@@ -82,7 +82,7 @@
                         :value true
                         :checked (get-in @app-state [:options :log-timestamps])
                         :on-change #(swap! app-state assoc-in [:options :log-timestamps] (.. % -target -checked))}]
-        (tr [:ingame-settings.log-timestamps "Show log timestamps"])]]]
+        (tr [:ingame-settings.toggle-log-timestamps "Show log timestamps"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings.board-overlap "Board overlap"])]
@@ -139,4 +139,4 @@
                         :checked (get-in @app-state [:options :show-alt-art])
                         :on-change #(swap! app-state assoc-in [:options :show-alt-art] (.. % -target -checked))}]
         (tr [:ingame-settings.show-alt "Show alternate card arts"])]]]
-     [:button {:on-click #(post-options "/profile" (constantly nil))} (tr [:ingame-settings.save "Save"])]]))
+     [:button {:on-click #(post-options (constantly nil))} (tr [:ingame-settings.save "Save"])]]))
