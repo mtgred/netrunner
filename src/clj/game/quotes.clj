@@ -3,7 +3,6 @@
     [clojure.edn :as edn]
     [clojure.java.io :as io]))
 
-
 (def quotes-corp-filename "data/quotes-corp.edn")
 (def quotes-runner-filename "data/quotes-runner.edn")
 (def generic-key "Default")

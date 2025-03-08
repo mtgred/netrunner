@@ -291,7 +291,7 @@
                    is-old-card (assoc alts code-kw (:code card))
                    :else (dissoc alts code-kw))] ; remove the key entirely if the newest card is selected
     (swap! app-state assoc-in [:options :alt-arts] new-alts)
-    (nr.account/post-options "/profile" (partial post-response))))
+    (nr.account/post-options (partial post-response))))
 
 (defn- text-class-for-status
   [status]
