@@ -28,7 +28,6 @@
                  [com.google.javascript/closure-compiler-unshaded "v20211006"]
                  [org.clojure/core.async "1.5.644"]
                  [com.taoensso/sente "1.19.2" :exclusions [org.clojure/tools.reader]]
-                 [com.taoensso/tempura "1.2.1"]
                  [ring/ring-core "1.9.4"]
                  [ring/ring-devel "1.9.4" :exclusions [org.clojure/java.classpath]]
                  [ring/ring-anti-forgery "1.3.0"]
