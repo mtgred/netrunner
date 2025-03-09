@@ -372,6 +372,13 @@
 
 (def card-defs-cache (atom {}))
 
+(def trash-on-purge
+  {:event :purge
+   :async true
+   :msg "trash itself"
+   :effect (req (trash state :runner eid card {:cause :purge
+                                               :cause-card card}))})
+
 (defn with-revealed-hand
   "Resolves an ability while a player has their hand revealed (so you can click cards in their hand)
   You can set the side that triggers the reveal (event-side) and if it displays as a forced reveal

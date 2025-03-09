@@ -3338,6 +3338,29 @@
     (play-from-hand state :corp "Peak Efficiency")
     (is (= 7 (:credit (get-corp))) "Gained 3 credits for 3 rezzed pieces of ice; unrezzed ice ignored")))
 
+(deftest peer-review-basic
+  (do-game
+    (new-game {:corp {:deck ["Peer Review" "PAD Campaign" "Tithe"]}})
+    (play-from-hand state :corp "Peer Review")
+    (is (changed? [(:credit (get-corp)) 7]
+                  (click-card state :corp "PAD Campaign"))
+        "gained 7 after selecting a target")
+    (click-card state :corp "PAD Campaign")
+    (is (changed? [(count (:hand (get-corp))) -1]
+                  (click-prompt state :corp "New remote"))
+        "hand reduced after install")))
+
+(deftest peer-review-small-hand
+  (do-game
+    (new-game {:corp {:deck ["Peer Review" "PAD Campaign"]}})
+    (is (changed? [(:credit (get-corp)) (- 7 4)]
+                  (play-from-hand state :corp "Peer Review"))
+        "gained 7 after playing event")
+    (click-card state :corp "PAD Campaign")
+    (is (changed? [(count (:hand (get-corp))) -1]
+                  (click-prompt state :corp "New remote"))
+        "hand reduced after install")))
+
 (deftest petty-cash
   (do-game
     (new-game {:corp {:hand ["Petty Cash"]}})

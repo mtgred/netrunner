@@ -28,7 +28,7 @@
                             register-run-flag!]]
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ update-hand-size]]
-   [game.core.ice :refer [all-subs-broken? get-run-ices pump-ice resolve-subroutine!
+   [game.core.ice :refer [all-subs-broken? get-current-ice get-run-ices pump-ice resolve-subroutine!
                           unbroken-subroutines-choice update-all-ice update-all-icebreakers]]
    [game.core.installing :refer [corp-install]]
    [game.core.moving :refer [mill move remove-from-currently-drawing
@@ -1238,6 +1238,30 @@
                                       ; during a run on this server
                                       this-server))
                        :value (->c :credit 1)}]})
+
+(defcard "Mitra Aman"
+  {:events [{:event :approach-ice
+             :skippable true
+             :interactive (req true)
+             :optional {:req (req this-server)
+                        :prompt "Trash Mitra Aman to gain 3 [Credits]?"
+                        :yes-ability {:cost [(->c :trash-can 1)]
+                                      :msg "gain 3 [Credits]"
+                                      :async true
+                                      :effect (req (wait-for
+                                                     (gain-credits state side 3)
+                                                     (continue-ability
+                                                       state side
+                                                       {:async true
+                                                        :show-discard true
+                                                        :prompt "Swap the approached ice with another ice?"
+                                                        :choices {:card #(and (ice? %)
+                                                                              (or (in-hand? %)
+                                                                                  (in-discard? %)))}
+                                                        :effect (req
+                                                                  (let [approached-ice (get-current-ice state)]
+                                                                    (swap-cards-async state side eid approached-ice target)))}
+                                                       card nil)))}}}]})
 
 (defcard "Mr. Hendrik"
   (installed-access-trigger

@@ -643,6 +643,20 @@
         (is (= 8 (- (:credit (get-corp)) credits)))
         (is (zero? (get-counters (refresh ci) :credit)))))))
 
+(deftest byte
+  (;; pay 4 on access, and do 3 net damage and give 1 tag
+    do-game
+      (new-game {:corp {:deck [(qty "Byte!" 3)]}})
+      (play-from-hand state :corp "Byte!" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state "Server 1")
+      (is (waiting? state :runner)
+          "Runner has prompt to wait for Byte!")
+      (click-prompt state :corp "Yes")
+      (is (= 3 (:credit (get-corp))) "Corp had 7 and paid 4 for Snare! 1 left")
+      (is (= 1 (count-tags state)) "Runner has 1 tag")
+      (is (zero? (count (:hand (get-runner)))) "Runner took 3 net damage")))
+
 (deftest calvin-b4l3y
   ;; Calvin B4L3Y
   (do-game
@@ -4194,6 +4208,24 @@
      (is (= 6 (:credit (get-corp))) "Corp only gained 5/2 = 2 credits, not 3")
      (is (no-prompt? state :runner) "Runner not prompted")
      (is (no-prompt? state :corp) "Corp not waiting for Runner to be classy")))
+
+(deftest phat-john-bautista
+  (do-game
+    (new-game {:corp {:hand ["Phật Gioan Baotixita" "Hostile Takeover"]}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "Phật Gioan Baotixita" "New remote")
+    (let [tvm (get-content state :remote1 0)]
+      (rez state :corp tvm)
+      (take-credits state :corp)
+      (is (= (get-counters (refresh tvm) :power) 2))
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (is (= (get-counters (refresh tvm) :power) 3))
+      (take-credits state :runner)
+      (play-and-score state "Hostile Takeover")
+      (click-prompt state :corp "Phật Gioan Baotixita")
+      (click-prompt state :corp "3 hosted power counters: Do 3 net damage")
+      (is (= 3 (count (:discard (get-runner)))) "Took 3 net"))))
 
 (deftest plan-b
   ;; Plan B - score agenda with adv cost <= # of adv counters

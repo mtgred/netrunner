@@ -3492,6 +3492,15 @@
     (click-prompt state :corp "Done")
     (is (no-prompt? state :runner) "Runner's waiting prompt resolved")))
 
+(deftest proprionegation-test
+  (do-game
+    (new-game {:corp {:hand ["Proprionegation"]}})
+    (play-and-score state "Proprionegation")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (is (= [:archives] (get-in @state [:run :server])) "Running on 'chives")))
+
 (deftest quantum-predictive-model
   ;; Quantum Predictive Model
   (do-game

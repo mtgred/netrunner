@@ -17,6 +17,7 @@
                            operation? program? resource? rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.checkpoint :refer [fake-checkpoint]]
+   [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [play-cost]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard
@@ -457,6 +458,19 @@
                                    :successful {:msg "prevent all bad publicity"
                                                 :async true
                                                 :effect (req (prevent-bad-publicity state side eid :all))}}}}]})
+
+(defcard "Byte!"
+  {:flags {:rd-reveal (req true)}
+   :on-access {:optional
+               {:req (req (not (in-discard? card)))
+                :waiting-prompt true
+                :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
+                :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
+                :yes-ability {:async true
+                              :cost [(->c :credit 4)]
+                              :msg "give the Runner 1 tag and do 3 net damage"
+                              :effect (req (wait-for (gain-tags state :corp 1 {:suppress-checkpoint true})
+                                                     (damage state side eid :net 3 {:card card})))}}}})
 
 (defcard "C.I. Fund"
   {:derezzed-events [corp-rez-toast]
@@ -2318,6 +2332,33 @@
                                                           :async true
                                                           :effect (req (gain-credits state side eid creds-to-gain))}}}
                                 card nil))))}]})
+
+(defcard "Phật Gioan Baotixita"
+  (let [place {:silent (req true)
+               :async true
+               :effect (req (add-counter state side eid card :power 1 {:placed true}))}
+        opt (fn [x]
+              {:option (str "Do " x " net damage")
+               :ability {:msg (str "do " x " net damage")
+                         :async true
+                         :effect (req (wait-for (damage state :corp :net x)
+                                                (continue-ability state side place card nil)))}
+               :cost [(->c :power x)]})
+        abi (choose-one-helper
+              {:req (req (and (or (and (first-event? state :corp :agenda-scored)
+                                       (no-event? state :runner :agenda-stolen))
+                                  (and (first-event? state :runner :agenda-stolen)
+                                       (no-event? state :corp :agenda-scored)))
+                              (pos? (get-counters card :power))))
+               :player :corp
+               :side :corp
+               :optional true
+               :interactive (req true)}
+              (vec (map opt [1 2 3])))]
+    {:on-rez place
+     :events [(assoc abi :event :agenda-scored)
+              (assoc place :event :corp-turn-ends)
+              (assoc abi :event :agenda-stolen)]}))
 
 (defcard "Plan B"
   (advance-ambush

@@ -2735,6 +2735,28 @@
             (click-prompt state :runner "End the run"))
           "Runner loses 3 credits, 2 for cradle 1 for midway")))
 
+(deftest mitra-aman
+  (doseq [opt [:rez :swap-hand :swap-discard]]
+    (do-game
+      (new-game {:corp {:hand ["Mitra Aman" "Ice Wall" "Enigma"]
+                        :discard ["Whitespace"]}})
+      (play-from-hand state :corp "Mitra Aman" "New remote")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (is (changed? [(:credit (get-corp)) 3]
+            (click-prompt state :corp "Yes")))
+      (cond
+        (= opt :rez)
+        (click-prompt state :corp "Done")
+        (= opt :swap-hand)
+        (click-card state :corp "Enigma")
+        (= opt :swap-discard)
+        (click-card state :corp "Whitespace"))
+      (is (no-prompt? state :corp) "No lingering prompt")
+      (is (no-prompt? state :runner) "No lingering prompt"))))
+
 (deftest mr-hendrik-corp-declines
   ;; Pay 2: runner suffers core or loses all (at least 1) clicks
   (do-game

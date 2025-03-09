@@ -2139,6 +2139,18 @@
       (is (= 1 (get-counters (refresh e3) :power)) "Placed 1 counter on unrezzed Echo")
       (is (= 3 (count (:subroutines (refresh e1)))) "Should have 3 subroutine"))))
 
+(deftest empiricist-subs-test
+  (do-game
+    (subroutine-test "Empiricist" 0 {:corp {:hand ["Restructure"] :deck ["IPO" "Hedge Fund"]}})
+    (is (= (+ 1 1) (count (:hand (get-corp)))) (str "drew 1 card"))
+    (click-card state :corp "Restructure")
+    (is (= "Restructure" (get-in @state [:corp :deck 0 :title])) "Restructure ontop"))
+  ;; (do-game (does-damage-sub "Empiricist" 1 1)
+  ;;          (is (= 1 (count-tags state)) "tagged"))
+  ;; (do-game (does-damage-sub "Empiricist" 2 2)))
+  ;; TODO - does-damage-sub is in another PR
+  )
+
 (deftest endless-eula-runner-side-ability
   ;; Runner side ability
   (do-game
@@ -5523,6 +5535,32 @@
       (is (has-subtype? (refresh mg) "Code Gate") "Mother Goddess has Code Gate")
       (is (has-subtype? (refresh mg) "NEXT") "Mother Goddess has NEXT"))))
 
+(deftest mycoweb-code-gate-test
+  (do-game
+    (subroutine-test "Mycoweb" 0 {:corp {:discard ["Enigma"]}})
+    (click-card state :corp "Enigma")
+    (click-prompt state :corp "HQ")
+    (card-subroutine state :corp (get-ice state :hq 0) 1)
+    (click-card state :corp "Enigma")
+    (is (rezzed? (get-ice state :hq 1)) "Enigma rezzed")
+    (card-subroutine state :corp (get-ice state :hq 0) 3)
+    (click-card state :corp "Enigma")
+    (click-prompt state :corp "End the run")
+    (is (not (:run @state)) "Run ended by enigma")))
+
+(deftest extruder-sentry-test
+  (do-game
+    (subroutine-test "Mycoweb" 0 {:corp {:discard ["Guard"]}})
+    (click-card state :corp "Guard")
+    (click-prompt state :corp "HQ")
+    (card-subroutine state :corp (get-ice state :hq 0) 1)
+    (click-card state :corp "Guard")
+    (is (rezzed? (get-ice state :hq 1)) "Guard rezzed")
+    (card-subroutine state :corp (get-ice state :hq 0) 2)
+    (click-card state :corp "Guard")
+    (click-prompt state :corp "End the run")
+    (is (not (:run @state)) "Run ended by Guard")))
+
 (deftest negotiator-subroutines-fire-correctly
   ;; Subroutines fire correctly.
   (do-game
@@ -6681,6 +6719,17 @@
       (is (= 2 (get-strength (refresh sacw))) "Self-Adapting Code Wall strength increased")
       (take-credits state :corp)
       (is (= 2 (get-strength (refresh sacw))) "Self-Adapting Code Wall strength increased"))))
+
+(deftest semak-samun-sub-0-etr-unless-runner-suffers-3-net-damage
+  (do-game
+    (subroutine-test "Semak-samun" 0 {:runner {:hand 4}})
+    (click-prompt state :runner "End the run")
+    (is (not (:run @state)) "Run ended"))
+  (do-game
+    (subroutine-test "Semak-samun" 0 {:runner {:hand 4}})
+    (click-prompt state :runner "Suffer 3 net damage")
+    (is (:run @state) "Run ended")
+    (is (and (= 1 (count (:hand (get-runner)))) (= 3 (count (:discard (get-runner))))) "Took 3 net")))
 
 (deftest sensei
   ;; Sensei

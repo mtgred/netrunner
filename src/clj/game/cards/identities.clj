@@ -181,6 +181,57 @@
                                                          (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
                                          card nil)))}})
 
+(defcard "Âu Cơ"
+  (let [abi {:msg (msg "place 1 power counter on itself")
+             :label "Manually place 1 power counter"
+             :once-per-instance true
+             :async true
+             :effect (req (add-counter state side eid card :power 1))}
+        start-of-turn-ability
+        {:interactive (req true)
+         :skippable true
+         :event :corp-turn-begins
+         :change-in-game-state {:silent true :req (req (<= 2 (get-counters card :power)))}
+         :label "Look at the top 3 cards of R&D"
+         :optional {:req (req (and (seq (:deck corp))
+                                   (:corp-phase-12 @state)))
+                    :prompt "Look at the top 3 cards of R&D?"
+                    :yes-ability {:cost [(->c :power 2)]
+                                  :async true
+                                  :msg "look at the top 3 cards of R&D"
+                                  :effect (req (let [top-3 (take 3 (:deck corp))
+                                                     to-draw (dec (count top-3))]
+                                                 (continue-ability
+                                                   state side
+                                                   {:async true
+                                                    :prompt (str "The top of R&D is (top->bottom): " (enumerate-str (map :title top-3)) ". Choose a card to trash")
+                                                    :not-distinct true
+                                                    :choices (req top-3)
+                                                    :msg (msg (let [target-position (first (positions #{target} (take 3 (:deck corp))))
+                                                                    position (case target-position
+                                                                               0 "top "
+                                                                               1 "second "
+                                                                               2 "third "
+                                                                               "this-should-not-happen ")]
+                                                                (str "trash the " position "card from R&D"))
+                                                              (when (pos? to-draw)
+                                                                (str " and draw " to-draw " cards")))
+                                                    :effect (req (wait-for (trash state :corp target {:cause-card card :suppress-checkpoint (pos? to-draw)})
+                                                                           (if (pos? to-draw)
+                                                                             (draw state side eid to-draw)
+                                                                             (effect-completed state side eid))))}
+                                                   card nil)))}}}]
+    {:events [(assoc abi :event :damage :req (req (= :corp (:from-side target))))
+              (assoc abi :event :corp-trash
+                     :req (req
+                            (letfn [(valid-ctx? [ctx]
+                                      (and ((every-pred corp? in-hand?) (:card ctx))
+                                           (or (:cause ctx) (:cause-card ctx))))]
+                              (some valid-ctx? targets))))
+              start-of-turn-ability]
+     :abilities [abi
+                 start-of-turn-ability]}))
+
 (defcard "Acme Consulting: The Truth You Need"
   (letfn [(outermost? [state ice]
             (let [server-ice (:ices (card->server state ice))]
@@ -1901,12 +1952,31 @@
              :interactive (req true)
              :async true
              :waiting-prompt true
-             :prompt "Choose a card that can be advanced to place 1 advancement token on"
+             :prompt "Choose a card that can be advanced to place 1 advancement counter on"
              :choices {:req (req (and (installed? target) (can-be-advanced? state target)))}
-             :msg (msg "place 1 advancement token on " (card-str state target))
+             :msg (msg "place 1 advancement counter on " (card-str state target))
              :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))
              :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                     (effect-completed eid))}]})
+
+(defcard "PT Untaian"
+  {:interactive (req true)
+   :events [{:event :corp-turn-ends
+             :interactive (req true)
+             :skippable true
+             :req (req (<= (count (:hand corp)) 3))
+             :change-in-game-state {:silent true
+                                    :req (req (some #(or ((complement rezzed?) %)
+                                                         (can-be-advanced? state %))
+                                                    (all-installed state :corp)))}
+             :prompt "Pay 1 [Credits]: place 1 advancement counter on an unrezzed advanceable card?"
+             :choices {:req (req (and (installed? target)
+                                      (not (rezzed? target))
+                                      (can-be-advanced? state target)))}
+             :cost [(->c :credit 1)]
+             :async true
+             :msg (msg "place 1 advancement counter on " (card-str state target))
+             :effect (req (add-prop state side eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Quetzal: Free Spirit"
   {:abilities [(assoc (break-sub nil 1 "Barrier" {:repeatable false}) :once :per-turn)]})

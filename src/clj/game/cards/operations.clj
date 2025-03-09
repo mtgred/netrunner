@@ -749,8 +749,11 @@
                 (str "reveal " (:title target) " from R&D and add it to HQ")))
     :async true
     :effect (let [end-effect (req (system-msg state side "can not score agendas for the remainder of the turn")
-                                  (swap! state assoc-in [:corp :register :cannot-score]
-                                         (filter agenda? (all-installed state :corp)))
+                                  (register-lingering-effect
+                                    state side card
+                                    {:type :cannot-score
+                                     :duration :end-of-turn
+                                     :value true})
                                   (register-events
                                     state side card
                                     [{:event :corp-install
@@ -2002,6 +2005,44 @@
                       (reduce (fn [c server]
                                 (+ c (count (filter (fn [ice] (:rezzed ice)) (:ices server)))))
                               0 (flatten (seq (:servers corp))))))}})
+
+(defcard "Peer Review"
+  (let [gain-abi {:msg (msg "gain 7 [credits]")
+                  :async true
+                  :effect (req (wait-for
+                                 (gain-credits state side 7)
+                                 (continue-ability
+                                   state side
+                                   {:prompt "Choose a card in HQ to install"
+                                    :choices {:card #(and (in-hand? %)
+                                                          (corp? %)
+                                                          (not (ice? %))
+                                                          (not (operation? %)))}
+                                    :async true
+                                    :waiting-prompt true
+                                    :effect (req (wait-for (resolve-ability
+                                                             state side
+                                                             (let [card-to-install target]
+                                                               {:prompt "Choose a server"
+                                                                :choices (remove #{"HQ" "R&D" "Archives"} (installable-servers state card-to-install))
+                                                                :async true
+                                                                :effect (effect (corp-install eid card-to-install target nil))})
+                                                             target nil)
+                                                           (effect-completed state side eid)))}
+                                   card nil)))}]
+    {:on-play {:async true
+               :effect (effect (continue-ability
+                                (if (>= (count (:hand corp)) 2)
+                                  {:prompt "Choose a card in HQ to keep private"
+                                   :choices {:req (req (and (in-hand? target)
+                                                            (corp? target)))
+                                             :all true}
+                                   :async true
+                                   :effect (req (wait-for
+                                                  (reveal-loud state side card nil (remove #(same-card? % target) (:hand corp)))
+                                                  (continue-ability state side gain-abi card nil)))}
+                                  gain-abi)
+                                card nil))}}))
 
 (defcard "Petty Cash"
   {:flashback [(->c :click 1)]

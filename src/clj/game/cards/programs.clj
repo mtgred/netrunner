@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out trash-on-empty trash-on-purge get-x-fn rfg-on-empty]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -846,21 +846,13 @@
                                 :type :recurring}}})
 
 (defcard "Clot"
-  {:on-install
-   {:effect (req (let [agendas (->> (turn-events state :corp :corp-install)
-                                    (map #(:card (first %)))
-                                    (filter agenda?))]
-                   (swap! state assoc-in [:corp :register :cannot-score] agendas)))}
-   :events [{:event :purge
-             :async true
-             :msg "trash itself"
-             :effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
-                          (trash state :runner eid card {:cause :purge
-                                                         :cause-card card}))}
+  {:static-abilities [{:type :cannot-score
+                       :req (req (= :this-turn (installed? (:card context))))
+                       :value true}]
+   :events [trash-on-purge
             {:event :corp-install
              :req (req (agenda? (:card context)))
-             :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons (:card context) %)))}]
-   :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))})
+             :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons (:card context) %)))}]})
 
 (defcard "Coalescence"
   {:abilities [{:cost [(->c :power 1)]
@@ -1277,11 +1269,7 @@
                        :req (req (let [serv (:server (second targets))]
                                    (= serv (:card-target card))))
                        :value 1}]
-   :events [{:event :purge
-             :async true
-             :msg "trash itself"
-             :effect (req (trash state :runner eid card {:cause :purge
-                                                         :cause-card card}))}]})
+   :events [trash-on-purge]})
 
 (defcard "Djinn"
   {:static-abilities [{:type :can-host
@@ -1367,11 +1355,7 @@
 
 (defcard "eXer"
   {:events [(breach-access-bonus :rd 1)
-            {:event :purge
-             :async true
-             :msg "trash itself"
-             :effect (req (trash state :runner eid card {:cause :purge
-                                                         :cause-card card}))}]})
+            trash-on-purge]})
 
 (defcard "Expert Schedule Analyzer"
   (let [ability (successful-run-replace-breach
@@ -1864,10 +1848,7 @@
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 1))}
-            {:event :purge
-             :async true
-             :msg "trash itself"
-             :effect (req (trash state :runner eid card {:cause :purge :cause-card card}))}]})
+            trash-on-purge]})
 
 (defcard "K2CP Turbine"
   {:static-abilities [{:type :breaker-strength
@@ -1953,11 +1934,7 @@
              :msg "force the Corp to lose 1 [Credits]"
              :async true
              :effect (effect (lose-credits :corp eid 1))}
-            {:event :purge
-             :async true
-             :msg "trash itself"
-             :effect (req (trash state :runner eid card {:cause :purge
-                                                         :cause-card card}))}]})
+            trash-on-purge]})
 
 (defcard "Laser Pointer"
   {:events [{:event :encounter-ice
@@ -2720,11 +2697,7 @@
 
 (defcard "Physarum Entangler"
   (trojan
-    {:events [{:event :purge
-               :async true
-               :msg "trash itself"
-               :effect (req (trash state :runner eid card {:cause :purge
-                                                           :cause-card card}))}
+    {:events [trash-on-purge
               {:event :encounter-ice
                :skippable true
                :optional {:prompt (msg "Pay " (count (:subroutines (get-card state current-ice)))
@@ -3302,10 +3275,7 @@
      :flags {:drip-economy true}
      :abilities [ability]
      :events [(assoc ability :event :runner-turn-begins)
-              {:event :purge
-               :async true
-               :msg "trash itself"
-               :effect (req (trash state :runner eid card {:cause :purge :cause-card card}))}]}))
+              trash-on-purge]}))
 
 (defcard "Torch"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")

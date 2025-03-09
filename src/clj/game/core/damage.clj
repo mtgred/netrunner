@@ -90,6 +90,7 @@
                               (queue-event state :damage {:amount n
                                                           :card card
                                                           :damage-type dmg-type
+                                                          :from-side side
                                                           :cause cause
                                                           :cards-trashed cards-trashed})
                               (if suppress-checkpoint

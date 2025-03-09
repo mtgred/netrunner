@@ -200,6 +200,62 @@
     (click-card state :corp "Tatu-Bola")
     (click-prompt state :corp "New remote")))
 
+(deftest au-co-counter-from-cost
+  (do-game
+    (new-game {:corp {:hand ["Anemone" "IPO"]
+                      :deck ["Hedge Fund" "Ice Wall" "NGO Front"]
+                      :id "Âu Cơ"}})
+    (play-from-hand state :corp "Anemone" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "IPO")
+    (is (= 2 (get-counters (:identity (get-corp)) :power)))
+    (run-continue-until state :success)
+    (take-credits state :runner)
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Ice Wall")
+    (is (= 2 (count (:hand (get-corp)))) "Drew 2")))
+
+(deftest au-co-works-with-start-of-turn
+  (do-game
+    (new-game {:corp {:hand ["Cohort Guidance Program" "IPO" "Bladderwort"]
+                      :credits 3
+                      :deck [(qty "Restructure" 5)]
+                      :id "Âu Cơ"}})
+    (play-from-hand state :corp "Cohort Guidance Program" "New remote")
+    (play-from-hand state :corp "Bladderwort" "New remote")
+    (take-credits state :corp)
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote2 0))
+    (take-credits state :runner)
+    (end-phase-12 state :corp)
+    (click-prompt state :corp "Bladderwort")
+    (click-prompt state :corp "Cohort Guidance Program")
+    (is (changed? [(:credit (get-corp)) 2
+                   (count (:discard (get-corp))) 1
+                   (count (:hand (get-corp))) 0]
+            (click-prompt state :corp "Trash 1 card from HQ to gain 2 [Credits] and draw 1 card")
+            (click-card state :corp "IPO"))
+        "Corp discarded 1 card, gained 2 credits, and drew 1 card")
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Restructure")
+    (is (= 4 (count (:hand (get-corp)))) "Drew 2")))
+
+(deftest au-co-works-with-john-bautista
+  (do-game
+    (new-game {:corp {:hand ["Phật Gioan Baotixita"] :deck ["Hostile Takeover"]:id "Âu Cơ"}
+               :runner {:hand ["Sure Gamble"]}})
+    (play-from-hand state :corp "Phật Gioan Baotixita" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-empty-server state :rd)
+    (click-prompt state :runner "Steal")
+    (is (= 0 (get-counters (:identity (get-corp)) :power)))
+    (click-prompt state :corp "Hosted power counter: Do 1 net damage")
+    (is (= 1 (get-counters (:identity (get-corp)) :power)))))
+
 (deftest acme-consulting-the-truth-you-need-tag-gain-when-rezzing-outermost-ice
     ;; Tag gain when rezzing outermost ice
     (do-game
@@ -4521,6 +4577,44 @@
     (run-continue state)
     (click-card state :corp "NGO Front")
     (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "NGO was advanced")))
+
+(deftest pt-untaian-adv
+  (do-game
+    (new-game {:corp {:id "PT Untaian"
+                      :hand [(qty "Hedge Fund" 3) "Project Atlas"]}})
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (take-credits state :corp)
+    (is (changed? [(:credit (get-corp)) -1]
+          (click-card state :corp "Project Atlas"))
+        "Spent 1c to place")
+    (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "placed 1 adv counter")))
+
+(deftest pt-untaian-decline
+  (do-game
+    (new-game {:corp {:id "PT Untaian"
+                      :hand [(qty "Hedge Fund" 3) "Project Atlas"]}})
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (take-credits state :corp)
+    (is (changed? [(:credit (get-corp)) 0]
+          (click-prompt state :corp "Done"))
+        "Spent 0c to skip")
+    (is (= 0 (get-counters (get-content state :remote1 0) :advancement)) "placed 0 adv counter")))
+
+(deftest pt-untaian-do-nothing-ncigs
+  (do-game
+    (new-game {:corp {:id "PT Untaian"
+                      :hand [(qty "Hedge Fund" 3)]}})
+    (is (changed? [(:credit (get-corp)) 3]
+          (take-credits state :corp)
+          (is (no-prompt? state :corp) "No cigs no prompt"))
+        "no payment")))
+
+(deftest pt-untaian-hand-size
+  (do-game
+    (new-game {:corp {:id "PT Untaian"
+                      :hand [(qty "Hedge Fund" (+ 3 1))]}})
+    (take-credits state :corp)
+    (is (no-prompt? state :corp))))
 
 (deftest quetzal-free-spirit
   ;; Quetzal

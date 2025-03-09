@@ -45,7 +45,7 @@
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez rez-multiple-cards]]
-   [game.core.runs :refer [end-run force-ice-encounter]]
+   [game.core.runs :refer [end-run force-ice-encounter redirect-run]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
    [game.core.set-aside :refer [set-aside-for-me]]
@@ -1895,6 +1895,17 @@
              :msg (msg "place 1 advancement token on " (card-str state target))
              :async true
              :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))}]})
+
+(defcard "Proprionegation"
+  {:on-score {:silent (req true)
+              :async true
+              :effect (effect (add-counter eid card :agenda 1))}
+   :abilities [{:req (req (:run @state))
+                ;; NOTE - this doesn't work during forced encounters, or outside of a run - address that later
+                :cost [(->c :agenda 1)]
+                :label "Redirect runner to archives"
+                :msg "make the Runner continue the run on Archives"
+                :effect (req (redirect-run state side "Archives" :approach-ice))}]})
 
 (defcard "Quantum Predictive Model"
   {:flags {:rd-reveal (req true)}

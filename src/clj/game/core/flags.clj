@@ -291,7 +291,7 @@
      ;; An effect hasn't be flagged as unable to be scored (Dedication Ceremony)
      (check-flag-types? state side card :can-score [:current-turn :persistent])
      ;; An effect hasn't set a card as unable to be scored (Clot)
-     (empty? (filter #(same-card? card %) (get-in @state [:corp :register :cannot-score])))
+     (not (any-effects state side :cannot-score true? {:card card}))
      ;; A terminal operation hasn't been played
      (not (get-in @state [:corp :register :terminal])))))
 

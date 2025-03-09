@@ -48,7 +48,7 @@
    [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal reveal-loud]]
-   [game.core.rezzing :refer [derez get-rez-cost rez]]
+   [game.core.rezzing :refer [can-pay-to-rez? derez get-rez-cost rez]]
    [game.core.runs :refer [bypass-ice encounter-ends end-run
                            force-ice-encounter get-current-encounter prevent-access
                            redirect-run set-next-phase]]
@@ -211,6 +211,22 @@
    :change-in-game-state {:silent (req true) :req (req (installed? card))}
    :async true
    :effect (req (add-counter state side eid card :power 1 {:placed true}))})
+
+(defn rez-an-ice
+  ([] (rez-an-ice nil))
+  ([{:keys [cost-bonus] :as args}]
+   (let [tag-str (str "Rez an ice" (cond
+                                     (or (not cost-bonus) (zero? cost-bonus))  nil
+                                     (pos? cost-bonus) (str ", paying " cost-bonus " more")
+                                     (neg? cost-bonus) (str ", paying " (- cost-bonus) " less")))]
+     {:label tag-str
+      :prompt tag-str
+      :async true
+      :change-in-game-state {:silent true :req (req (some #(and (ice? %) (not (rezzed? %))) (all-installed state :corp)))}
+      :choices {:req (req (and (installed? target)
+                               (ice? target)
+                               (can-pay-to-rez? state side eid target args)))}
+      :effect (req (rez state side eid target args))})))
 
 (defn trace-ability
   "Run a trace with specified base strength.
@@ -585,33 +601,36 @@
   "For cards like Orion or Upayoga."
   ([] (resolve-another-subroutine (constantly true) "Resolve a subroutine on another ice"))
   ([pred] (resolve-another-subroutine pred "Resolve a subroutine on another ice"))
-  ([pred label]
-   (let [pred #(and (ice? %)
-                    (rezzed? %)
-                    (>= (count (:subroutines %)) 1)
-                    (pred %))]
+  ([pred label] (resolve-another-subroutine pred label nil))
+  ([pred label allow-same-card?]
+   (let [pred (fn [card target]
+                (and (ice? target)
+                     (rezzed? target)
+                     (>= (count (:subroutines target)) 1)
+                     (or allow-same-card? (not (same-card? card target)))
+                     (pred target)))]
      {:async true
       :label label
-      :change-in-game-state {:silent (req true) :req (req (some pred (all-installed state :corp)))}
+      :change-in-game-state {:silent (req true) :req (req (some #(pred card %)
+                                                                (all-installed state :corp)))}
       :effect
       (effect
         (continue-ability
-          (when (< 1 (count (filter pred (all-active-installed state :corp))))
-            {:async true
-             :prompt "Choose the ice"
-             :choices {:card pred
-                       :all true}
-             :effect (effect
-                       (continue-ability
-                         (let [ice target]
-                           {:async true
-                            :prompt "Choose the subroutine"
-                            :choices (req (unbroken-subroutines-choice ice))
-                            :msg (msg "resolve the subroutine (\"[subroutine] "
-                                      target "\") from " (:title ice))
-                            :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines ice)))]
-                                           (continue-ability state side (:sub-effect sub) ice nil)))})
-                         card nil))})
+          {:async true
+           :prompt "Choose the ice"
+           :choices {:req (req (pred card target))
+                     :all true}
+           :effect (effect
+                     (continue-ability
+                       (let [ice target]
+                         {:async true
+                          :prompt "Choose the subroutine"
+                          :choices (req (unbroken-subroutines-choice ice))
+                          :msg (msg "resolve the subroutine (\"[subroutine] "
+                                    target "\") from " (:title ice))
+                          :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines ice)))]
+                                         (continue-ability state side (:sub-effect sub) ice nil)))})
+                       card nil))}
           card nil))})))
 
 ;;; Helper function for adding implementation notes to ice defined with functions
@@ -1555,6 +1574,30 @@
                  end-the-run]
    :abilities [(set-autoresolve :auto-fire "Eli 2.0 drawing cards")]
    :runner-abilities [(bioroid-break 2 2)]})
+
+(defcard "Empiricist"
+  {:subroutines [{:label "Draw 1 card. You may add 1 card from HQ to the top of R&D."
+                  :msg "draw 1 card"
+                  :async true
+                  :effect (req (wait-for (draw state side 1)
+                                         (continue-ability
+                                           state side
+                                           {:req (req (pos? (count (:hand corp))))
+                                            :prompt "Place a card in HQ on the top of R&D?"
+                                            :msg "add 1 card in HQ to the top of R&D"
+                                            :choices {:card #(and (in-hand? %)
+                                                                  (corp? %))}
+                                            :async true
+                                            :effect (effect (move target :deck {:front true})
+                                                            (effect-completed eid))}
+                                           card nil)))}
+                 {:label "Do 1 net damage and give the Runner 1 tag"
+                  :msg "do 1 net damage and give the Runner 1 tag"
+                  :async true
+                  :effect (req (wait-for
+                                 (damage state side :net 1 {:card card :suppress-checkpoint true})
+                                 (gain-tags state :corp eid 1)))}
+                 (do-net-damage 2)]})
 
 (defcard "Endless EULA"
   (let [sub (end-the-run-unless-runner-pays (->c :credit 1))]
@@ -3168,6 +3211,23 @@
                  (tag-trace 3)
                  end-the-run-if-tagged]})
 
+(defcard "Mycoweb"
+  {:subroutines [{:label "Install an ice from Archives, ignoring all costs"
+                  :show-discard true
+                  :choices {:req (req (and (ice? target)
+                                           (in-discard? target)))}
+                  :waiting-prompt true
+                  :async true
+                  :msg (msg (corp-install-msg target))
+                  :effect (effect (corp-install eid target nil {:ignore-install-cost true}))}
+                 (rez-an-ice {:cost-bonus -2})
+                 (resolve-another-subroutine
+                   #(has-subtype? % "Sentry")
+                   "Resolve subroutine on another rezzed Sentry")
+                 (resolve-another-subroutine
+                   #(has-subtype? % "Code Gate")
+                   "Resolve subroutine on another rezzed Code Gate")]})
+
 (defcard "Najja 1.0"
   {:subroutines [end-the-run end-the-run]
    :runner-abilities [(bioroid-break 1 1)]})
@@ -3683,6 +3743,12 @@
                        :value true}]
    :subroutines [end-the-run]})
 
+(defcard "Semak-samun"
+  {:static-abilities [{:type :cannot-break-subs-on-ice
+                       :req (req (and (same-card? card (:ice context))
+                                      (has-subtype? (:icebreaker context) "Fracter")))
+                       :value true}]
+   :subroutines [(end-the-run-unless-runner-pays (->c :net 3))]})
 
 (defcard "Sensei"
   {:subroutines [{:label "Give encountered ice \"End the run\""
@@ -4318,7 +4384,8 @@
   {:subroutines [(do-psi (runner-loses-credits 2))
                  (resolve-another-subroutine
                    #(has-subtype? % "Psi")
-                   "Resolve a subroutine on a rezzed psi ice")]})
+                   "Resolve a subroutine on a rezzed psi ice"
+                   true)]})
 
 (defcard "Uroboros"
   {:subroutines [(trace-ability 4 {:label "Prevent the Runner from making another run"
