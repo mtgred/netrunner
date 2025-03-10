@@ -233,12 +233,15 @@
           (not (or user-blocked-players? players-blocked-user?))))
       lobbies)))
 
-(defn sorted-lobbies [lobbies]
-  "ideally we only sort these once"
-  (->> (map lobby-summary lobbies)
-       (sort-by :date)
-       (reverse)
-       (sort-by :started)))
+(defn sorted-lobbies
+  "Sorts `lobbies` into a list with opened games on top, and other games below.
+  Open games will be sorted oldest to newest, other games will be sorted newest to oldest."
+  [lobbies]
+  (let [grouped-lobbies (group-by :started (->> (map lobby-summary lobbies)
+                                                (sort-by :date)))
+        started (get grouped-lobbies true)
+        open (get grouped-lobbies nil)]
+    (concat open (reverse started))))
 
 (comment
   (->> (for [x (range 5 10)]
