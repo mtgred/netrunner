@@ -1770,26 +1770,24 @@
                :effect (req (corp-install state side eid target nil))}]}))
 
 (defcard "Project Kusanagi"
-  {:on-score {:silent (req true)
-              :async true
-              :effect (effect (add-counter eid card :agenda (- (get-counters (:card context) :advancement) 2) nil))}
-   :abilities [{:label "Give a piece of ice \"[Subroutine] Do 1 net damage\""
-                :prompt "Choose a piece of ice"
-                :choices {:card #(and (ice? %)
-                                      (rezzed? %))}
-                :cost [(->c :agenda 1)]
-                :change-in-game-state {:req (req (and run (some (every-pred ice? rezzed?)
-                                                                (all-installed state :corp))))}
-                :keep-menu-open :while-agenda-tokens-left
-                :msg (str "make a piece of ice gain \"[Subroutine] Do 1 net damage\" "
-                          "after all its other subroutines for the remainder of the run")
-                :effect  (effect (register-lingering-effect
-                                   card
-                                   (let [t target]
-                                     {:type :additional-subroutines
-                                      :duration :end-of-run
-                                      :req (req (same-card? target t))
-                                      :value {:subroutines [(do-net-damage 1)]}})))}]})
+  (project-agenda-helper
+    {:abilities [{:label "Give a piece of ice \"[Subroutine] Do 1 net damage\""
+                  :prompt "Choose a piece of ice"
+                  :choices {:card #(and (ice? %)
+                                        (rezzed? %))}
+                  :cost [(->c :agenda 1)]
+                  :change-in-game-state {:req (req (and run (some (every-pred ice? rezzed?)
+                                                                  (all-installed state :corp))))}
+                  :keep-menu-open :while-agenda-tokens-left
+                  :msg (str "make a piece of ice gain \"[Subroutine] Do 1 net damage\" "
+                            "after all its other subroutines for the remainder of the run")
+                  :effect  (effect (register-lingering-effect
+                                     card
+                                     (let [t target]
+                                       {:type :additional-subroutines
+                                        :duration :end-of-run
+                                        :req (req (same-card? target t))
+                                        :value {:subroutines [(do-net-damage 1)]}})))}]}))
 
 (defcard "Project Vacheron"
   {:flags {:has-events-when-stolen true}
