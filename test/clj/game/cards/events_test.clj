@@ -6316,6 +6316,15 @@
       (run-continue state)
       (is (no-prompt? state :runner) "Rip Deal prompt did not come up")))
 
+(deftest ritual-test
+  (do-game
+    (new-game {:runner {:hand [(qty "Ritual" 4)]
+                        :deck [(qty "Sure Gamble" 15)]}})
+    (take-credits state :corp)
+    (doseq [rc [3 2 1 0]]
+      (is (changed? [(count (:hand (get-runner))) (- rc 1)]
+                    (play-from-hand state :runner "Ritual"))))))
+
 (deftest rumor-mill-full-test
     ;; Full test
     (do-game

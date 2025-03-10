@@ -13,6 +13,7 @@
                            program? protecting-a-central? protecting-archives? protecting-hq? protecting-rd?
                            resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.choose-one :refer [cost-option choose-one-helper]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [combine-abilities corp-recur defcard
@@ -111,7 +112,6 @@
    :msg "end the run"
    :async true
    :effect (effect (end-run :corp eid card))})
-
 
 (defn- faceup-archives-types
   "helper for the faceup-archives-count cards"
@@ -248,6 +248,24 @@
   "Trace ability for giving a tag, at specified base strength"
   ([base] (tag-trace base 1))
   ([base n] (trace-ability base (give-tags n))))
+
+(defn tag-or-pay-credits
+  "Give the runner a tag unless they pay X credits"
+  [x]
+  {:label (str "Give the Runner 1 tag unless they pay " x " [Credits]")
+   :async true
+   :effect (req (continue-ability
+                  state side
+                  (if (can-pay? state :runner eid card nil [(->c :credit x)])
+                    (choose-one-helper
+                      {:player :runner}
+                      [{:option "Take 1 tag"
+                        :ability (give-tags 1)}
+                       (cost-option [(->c :credit x)] :runner)])
+                    {:msg "give the Runner 1 tag"
+                     :effect (req (gain-tags state side eid 1))
+                     :async true})
+                  card nil))})
 
 (defn gain-credits-sub
   "Gain specified amount of credits"
@@ -1887,6 +1905,12 @@
                                                        (end-run state side eid card)))}
                         card nil))})]})
 
+(defcard "Flyswatter"
+  {:on-rez {:req (req (and run this-server))
+            :msg (msg "purge virus counters")
+            :effect (req (purge state side eid))}
+   :subroutines [end-the-run]})
+
 (defcard "Formicary"
   {:derezzed-events
    [{:event :approach-server
@@ -1933,22 +1957,7 @@
                   :effect (req (if (= target "Take 1 tag")
                                  (gain-tags state :runner eid 1 {:unpreventable true})
                                  (end-run state :runner eid card)))}
-   :subroutines [{:player :runner
-                  :async true
-                  :label "Give the Runner 1 tag unless they pay 4 [Credits]"
-                  :prompt "Choose one"
-                  :waiting-prompt true
-                  :choices (req ["Take 1 tag"
-                                 (when (can-pay? state :runner eid card nil [(->c :credit 4)])
-                                   "Pay 4 [Credits]")])
-                  :msg (msg (if (= target "Pay 4 [Credits]")
-                              (str "force the runner to " (decapitalize target))
-                              "give the runner 1 tag"))
-                  :effect (req (if (= "Take 1 tag" target)
-                                 (gain-tags state :corp eid 1)
-                                 (wait-for (pay state side (make-eid state eid) card (->c :credit 4))
-                                           (system-msg state side (:msg async-result))
-                                           (effect-completed state side eid))))}]})
+   :subroutines [(tag-or-pay-credits 4)]})
 
 (defcard "Galahad"
   (grail-ice end-the-run))
@@ -2687,6 +2696,27 @@
                   :effect (req (wait-for (trash state side target {:cause :subroutine})
                                          (trash state :corp (make-eid state eid) card {:cause :subroutine})
                                          (encounter-ends state side eid)))}]})
+
+(defcard "Lamplighter"
+  (let [trash-self {:async true
+                    :interactive (req true)
+                    :automatic :pre-draw-cards
+                    :req (req
+                           (let [target-zone (or (second (:previous-zone (:card context)))
+                                                 ;; stolen from central...
+                                                 (first (:previous-zone (:card context))))
+                                 target-zone (cond
+                                               (= target-zone :deck) :rd
+                                               (= target-zone :hand) :hq
+                                               (= target-zone :discard) :archives
+                                               :else target-zone)]
+                             (= target-zone (second (get-zone card)))))
+                    :msg (msg "trash itself")
+                    :effect (effect (trash :corp eid card {:cause-card card :cause :effect}))}]
+    {:subroutines [(tag-or-pay-credits 3)
+                   end-the-run-if-tagged]
+     :events [(assoc trash-self :event :agenda-scored)
+              (assoc trash-self :event :agenda-stolen)]}))
 
 (defcard "Lancelot"
   (grail-ice trash-program-sub))

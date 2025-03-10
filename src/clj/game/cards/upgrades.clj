@@ -1072,6 +1072,33 @@
                                              (continue-ability state :runner (offer-jack-out) card nil)))}}}}}]
    :abilities [(set-autoresolve :auto-fire "Letheia Nisei")]})
 
+(defcard "Mahkota Langit Grid"
+  {:recurring 2
+   :interactions {:pay-credits {:req (req (and (= :rez (:source-type eid))
+                                               (or (ice? target) (asset? target))
+                                               (same-server? card target)))
+                                :type :recurring}}
+   :static-abilities [{:type :trash-cost
+                       :req (req (and (installed? target)
+                                      (asset? target)
+                                      (same-server? card target)))
+                       :value 2}]
+   :on-trash  {:req (req (and (= :runner side)
+                              (:run @state)))
+               :effect (req
+                         (register-lingering-effect
+                           state side card
+                           {:type :trash-cost
+                            :duration :end-of-run
+                            :req (req (and
+                                        run
+                                        (or (= (:previous-zone card)
+                                               (:zone target))
+                                            (= (central->zone (:zone target))
+                                               (butlast (:previous-zone card))))
+                                        (asset? target)))
+                            :value 2}))}})
+
 (defcard "Malapert Data Vault"
   {:events [{:event :agenda-scored
              :interactive (req true)

@@ -2371,6 +2371,24 @@
        (is (empty? (:run @state)))
        (is (not (last-log-contains? state "Runner approaches Vanilla protecting R&D at position 1")) "Run has ended"))))
 
+(deftest mahkota-langit-grid-full-test
+  (do-game
+    (new-game {:corp {:hand ["Mahkota Langit Grid" "Tithe" "PAD Campaign"]}
+               :runner {:credits 7}})
+    (play-from-hand state :corp "Mahkota Langit Grid" "New remote")
+    (play-from-hand state :corp "Tithe" "Server 1")
+    (play-from-hand state :corp "PAD Campaign" "Server 1")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-ice state :remote1 0) {:expect-rez false})
+    (click-card state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote1 1) {:expect-rez false})
+    (click-card state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-on state :remote1)
+    (run-continue-until state :success)
+    (click-card state :runner (get-content state :remote1 1))
+    (click-prompt state :runner "Pay 6 [Credits] to trash")))
+
 (deftest malapert-data-vault
   ;; Malapert Data Vault
   (do-game

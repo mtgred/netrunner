@@ -859,9 +859,7 @@
   {:data {:counter {:power 4}}
    :static-abilities [{:type :forced-to-avoid-tag
                        :value true
-                       ;; TODO - replace this with a 'this-card-is-run-source- fn, it's in playtest
-                       ;; note that this needs to account for the card being trashed mid-run? oh no
-                       :req (req (= (get-in run [:source-card :title]) (:title card)))}]
+                       :req (req this-card-is-run-source)}]
    :events [{:event :tag-interrupt
              :req (req (= (get-in run [:source-card :title]) (:title card)))
              :async true

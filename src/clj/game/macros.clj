@@ -44,6 +44,8 @@
       this-card-run (and (get-in card [:special :run-id])
                          (= (get-in card [:special :run-id])
                             (:run-id (first targets))))
+      ;; intended to check if the current card is the source of an active run
+      this-card-is-run-source (and (:run @state) (= (:cid card) (get-in @state [:run :source-card :cid])))
       this-server (let [s (game.core.card/get-zone card)
                         r (:server (:run @state))]
                     (= (second s) (first r)))

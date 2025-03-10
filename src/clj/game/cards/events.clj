@@ -3354,6 +3354,13 @@
                                   :req (req (= :hq context))
                                   :effect (effect (continue-ability add-cards-from-heap card nil))}]))}]}))
 
+(defcard "Ritual"
+  {:on-play {:async true
+             :change-in-game-state (req (and (seq (:deck runner))
+                                             (pos? (get-in @state [:runner :click] 0))))
+             :msg (msg "draw " (quantify (get-in @state [:runner :click]) "cards"))
+             :effect (req (draw state side eid (get-in @state [:runner :click] 0)))}})
+
 (defcard "Rumor Mill"
   (letfn [(eligible? [card] (and (:uniqueness card)
                                  (or (asset? card)

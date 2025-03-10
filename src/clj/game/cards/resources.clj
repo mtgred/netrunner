@@ -3210,6 +3210,24 @@
              :msg (msg "destroy itself")
              :effect (req (move state side card :destroyed))}]})
 
+(defcard "Side Hustle"
+  {:data {:counter {:credit 1}}
+   :events [{:event :run
+             :async true
+             :interactive (req (>= (get-counters card :credit) 5))
+             :effect (req (add-counter state side eid card :credit 1 nil))}
+            {:event :counter-added
+             :async true
+             :interactive (req true)
+             :req (req (<= 6 (get-counters (get-card state card) :credit)))
+             :automatic :draw-cards
+             :msg (msg "gain " (get-counters (get-card state card) :credit) " [Credits], draw 1 card, and trash itself")
+             :effect (req
+                       (wait-for
+                         (take-credits state side card :credit :all {:suppress-checkpoint true})
+                         (wait-for (draw state side 1 {:suppress-checkpoint true})
+                                   (trash state side eid card {:cause-card card}))))}]})
+
 (defcard "Smartware Distributor"
   (let [start-of-turn-ability {:once :per-turn
                                :automatic :gain-credits

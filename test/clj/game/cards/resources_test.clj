@@ -5867,6 +5867,20 @@
     (is (= ["Shadow Team" "Shadow Team"] (map :title (get-in @state [:runner :destroyed])))
         "Destroyed both shadow teams")))
 
+(deftest side-hustle-test
+  (do-game
+    (new-game {:runner {:hand ["Side Hustle"] :deck ["Ika" "Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Side Hustle")
+    (core/gain state :runner :click 6)
+    (doseq [x [0 0 0 0 6]]
+      (is (changed? [(:credit (get-runner)) x]
+            (run-on state :hq)
+            (run-jack-out state))
+          (str "took " x " dollars")))
+    (is-hand? state :runner ["Ika"])
+    (is (not (waiting? state :corp)) "not waiting on a prompt")))
+
 (deftest slipstream-there-is-an-ice-at-the-correct-position
     ;; There is an ice at the correct position
     (do-game

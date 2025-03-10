@@ -2517,6 +2517,21 @@
       (is (= 3 (count (:discard (get-runner)))) "Clone Chip plus 2 cards lost from damage in discard")
       (is (not (:run @state)) "Run ended"))))
 
+(deftest flyswatter-purge
+  (do-game
+    (new-game {:corp {:hand ["Flyswatter"]}
+               :runner {:hand ["Lamprey"]}})
+    (play-from-hand state :corp "Flyswatter" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Lamprey")
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (is (= "Lamprey" (get-in @state [:runner :discard 0 :title])) "Trashed due to purge")))
+
+;; (deftest flyswatter-etr-sub
+;;   ;; TODO - fix on merge
+;;   (do-game (etr-sub "Flyswatter" 0)))
+
 (deftest formicary-verifies-basic-functionality
   ;; Verifies basic functionality
   (do-game
@@ -4469,6 +4484,40 @@
       (is (= (refresh konjin) (core/get-current-ice state)) "The runner should be back to encountering Konjin")
       (is (no-prompt? state :runner) "No repeat psi prompt")
       (is (no-prompt? state :corp) "No repeat psi prompt"))))
+
+(deftest lamplighter-subs-test
+  (do-game
+    (subroutine-test "Lamplighter" 0)
+    (click-prompt state :runner "Take 1 tag")
+    (is (= 1 (count-tags state))))
+  (do-game
+    (subroutine-test "Lamplighter" 0)
+    (click-prompt state :runner "Pay 3 [Credits]")
+    (is (= 2 (:credit (get-runner))))
+    (is (= 0 (count-tags state))))
+  (do-game
+    (subroutine-test "Lamplighter" 1 nil)
+    (is (:run @state) "Run not ended"))
+  (do-game
+    (subroutine-test "Lamplighter" 1 {:runner {:tags 1}})
+    (is (not (:run @state)) "Run ended")))
+
+(deftest lamplighter-steal-trash
+  (do-game
+    (subroutine-test "Lamplighter" 0 {:corp {:hand ["Hostile Takeover"]}})
+    (click-prompt state :runner "Take 1 tag")
+    (run-continue-until state :success)
+    (click-prompt state :runner "Steal")
+    (is (= 1 (count (:discard (get-corp)))) "Trashed pickpocket")))
+
+(deftest lamplighter-score-trash
+  (do-game
+    (new-game {:corp {:hand ["Lamplighter" "Project Atlas"]}})
+    (play-from-hand state :corp "Lamplighter" "New remote")
+    (rez state :corp (get-ice state :remote1 0))
+    (play-from-hand state :corp "Project Atlas" "Server 1")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (is (= 1 (count (:discard (get-corp)))) "Trashed pickpocket")))
 
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
