@@ -3968,6 +3968,28 @@
    (is (= "Chum" (:title (get-ice state :remote2 0))))
    (is (= "Ballista" (:title (get-ice state :remote1 0))))))
 
+(deftest nebula-talent-management-flippy
+  (do-game
+    (new-game {:corp {:id "Nebula Talent Management"
+                      :hand [(qty "Beanstalk Royalties" 4) "Hedge Fund"]
+                      :deck []}})
+    (play-from-hand state :corp "Beanstalk Royalties")
+    (is (changed? [(:credit (get-corp)) 3]
+          (take-credits state :corp)
+          (is (:flipped (:identity (get-corp))) "flipped"))
+        "Gained 2+1")
+    (run-empty-server state :rd)
+    (is (not (:flipped (:identity (get-corp)))) "unflipped")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Beanstalk Royalties")
+    (take-credits state :corp)
+    (is (:flipped (:identity (get-corp))) "flipped")
+    (take-credits state :runner)
+    (is (changed? [(:credit (get-corp)) 3
+                   (:click (get-corp)) 0]
+                  (play-from-hand state :corp "Beanstalk Royalties")
+        "Got the free click"))))
+
 (deftest nero-severn-information-broker
   ;; Nero Severn: Information Broker
   (do-game
@@ -5087,6 +5109,29 @@
       (rez state :corp i2)
       (take-credits state :runner)
       (is (no-prompt? state :corp) "Corp not prompted to trigger Strategic Innovations"))))
+
+(deftest synapse-global-test
+  (do-game
+    (new-game {:corp {:id "Synapse Global"
+                      :hand ["Ice Wall"]}})
+    (core/gain state :runner :tag 1)
+    (is (changed? [(:credit (get-corp)) +2]
+          (card-ability state :corp (:identity (get-corp)) 0)
+          (click-card state :corp "Ice Wall")
+	  (click-prompt state :corp "HQ"))
+        "Spent a tag to gain 2")))
+
+(deftest synapse-global-install
+  (do-game
+    (new-game {:corp {:id "Synapse Global"
+                      :hand ["Ice Wall"]}
+               :runner {:hand ["Networking"]}})
+    (core/gain state :runner :tag 1)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Networking")
+    (click-prompt state :corp "Done")
+    (click-prompt state :runner "No")
+    (is (no-prompt? state :runner) "Panopticon got cancelled, no prompt")))
 
 (deftest sync-everything-everywhere
   ;; SYNC: Everything, Everywhere

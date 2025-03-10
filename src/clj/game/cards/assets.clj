@@ -55,6 +55,7 @@
    [game.core.shuffling :refer [shuffle! shuffle-into-deck
                                 shuffle-into-rd-effect]]
    [game.core.tags :refer [gain-tags]]
+   [game.core.threat :refer [threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
@@ -1446,6 +1447,21 @@
      :derezzed-events [corp-rez-toast]
      :abilities [choose-ability]}))
 
+(defcard "Idiosyncresis"
+  (letfn [(adv  [card]        (get-counters card :advancement))
+          (lose [card runner] (min (* 2 (adv card)) (:credit runner)))
+          (gain [card]        (* 3 (adv card)))]
+    {:advanceable :always
+     :events [{:event :corp-turn-begins
+               :interactive (req true)
+               :skippable true
+               :optional {:prompt "Trash Idiosyncresis?"
+                          :yes-ability {:async true
+                                        :msg (msg "force the runner to lose " (lose card runner) " [Credits], and then gain " (gain card) " [Credits]")
+                                        :cost [(->c :trash-can)]
+                                        :effect (req (wait-for (lose-credits state :runner (lose card runner))
+                                                               (gain-credits state side eid (gain card))))}}}]}))
+
 (defcard "Illegal Arms Factory"
   (let [ability {:msg "gain 1 [Credits] and draw 1 card"
                  :label "Gain 1 [Credits] and draw 1 card (start of turn)"
@@ -2469,6 +2485,21 @@
                              card nil)))}]
     {:on-expose ab
      :on-access ab}))
+
+(defcard "Public Access Plaza"
+  (let [ability {:msg "gain 1 [Credits]"
+                 :label "Gain 1 [Credits] (start of turn)"
+                 :once :per-turn
+                 :async true
+                 :effect (effect (gain-credits eid 1))}]
+    {:derezzed-events [corp-rez-toast]
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]
+     :on-trash {:async true
+                :req (req (and (= :runner side)
+                               (threat-level 2 state)))
+                :msg "give the Runner 1 tag"
+                :effect (req (gain-tags state side eid 1))}}))
 
 (defcard "Public Health Portal"
   (let [ability {:once :per-turn

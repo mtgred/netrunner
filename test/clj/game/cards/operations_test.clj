@@ -573,6 +573,22 @@
     (is (= 4 (get-counters (get-content state :remote1 0) :advancement)))
     (is (no-prompt? state :corp))))
 
+(deftest bigger-picture-full-test
+  (do-game
+    (new-game {:corp {:hand [(qty "Bigger Picture" 2)]} :runner {:credits 15}})
+    (play-from-hand state :corp "Bigger Picture")
+    (is (no-prompt? state :corp) "Couldn't play Bigger Picture")
+    (is (= 2 (count (:hand (get-corp)))) "Couldn't play Bigger Picture")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Bigger Picture")
+    (click-prompt state :corp "Remove any number of tags")
+    (is (= 1 (count-tags state)))
+    (is (changed? [(:credit (get-corp)) 5
+                   (:credit (get-runner)) (- 5)
+                   (count-tags state) -1]
+          (click-prompt state :corp "1"))
+        "6 tempos gained")))
+
 (deftest bioroid-efficiency-research
   ;; Eli 1.0
   (do-game
@@ -2479,6 +2495,28 @@
     (click-prompt state :corp "0") ; default trace
     (click-prompt state :runner "2") ; Runner matches
     (is (= 1 (count-bad-pub state)))))
+
+(deftest ip-enforcement-no-counter
+  (do-game
+    (new-game {:corp {:hand ["IP Enforcement"] :credits 11}
+               :runner {:score-area ["City Works Project"] :tags 3}})
+    (play-from-hand state :corp "IP Enforcement")
+    (click-prompt state :corp "3")
+    (click-card state :corp "City Works Project")
+    (click-prompt state :corp "New remote")
+    (is (= "City Works Project" (:title (get-content state :remote1 0))) "CWP installed")
+    (is (= 0 (get-counters (get-content state :remote1 0) :advancement)) "with 0 adv counter")))
+
+(deftest ip-enforcement-with-counter
+  (do-game
+    (new-game {:corp {:hand ["IP Enforcement"] :credits 11}
+               :runner {:score-area ["City Works Project"] :tags 4}})
+    (play-from-hand state :corp "IP Enforcement")
+    (click-prompt state :corp "3")
+    (click-card state :corp "City Works Project")
+    (click-prompt state :corp "New remote")
+    (is (= "City Works Project" (:title (get-content state :remote1 0))) "CWP installed")
+    (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "with 1 adv counter")))
 
 (deftest ipo
   ;; IPO - credits with Terminal operations
@@ -5188,7 +5226,7 @@
       (is (= bp (count-bad-pub state)) "Corp shouldn't gain any more bad pub")
       (is (= credits (:credit (get-corp))) "Corp shouldn't gain any more as over 10 credits"))))
 
-(deftest shipment-from-shipment-basic-test
+(deftest top-down-solutions-basic-test
   (do-game
     (new-game {:corp {:hand ["Top-Down Solutions" "Enigma" "Vanilla"]
                       :deck [(qty "IPO" 5)]}})
@@ -5200,6 +5238,17 @@
     (click-card state :corp "Vanilla")
     (click-prompt state :corp "HQ")
     (is (no-prompt? state :corp) "No lingering prompts")))
+
+(deftest touch-ups
+  ;; Touch Ups
+  (do-game
+    (new-game {:corp {:hand ["Touch-ups" "Hostile Takeover"]}
+               :runner {:hand ["Corroder" "Ika" "Sure Gamble"]}})
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Touch-ups")
+    (click-prompts state :corp "Hostile Takeover" "Program" "Corroder" "Ika")
+    (is (no-prompt? state :corp) "No prompt left")
+    (is (= 1 (count (:hand (get-runner)))) "2 cards gone from hand")))
 
 (deftest traffic-accident
   ;; Traffic Accident

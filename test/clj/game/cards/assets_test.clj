@@ -2806,6 +2806,23 @@
         (end-phase-12 state :corp)
         (is (= (inc i) (-> (get-runner) :discard count)))))))
 
+(deftest idiosyncresis-test
+  (dotimes [x 3]
+    (do-game
+      (new-game {:corp {:hand ["Idiosyncresis"]}})
+      (play-from-hand state :corp "Idiosyncresis" "New remote")
+      (dotimes [y x]
+        (core/gain state :corp :click 1 :credit 1)
+        (click-advance state :corp (get-content state :remote1 0)))
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (changed? [(:credit (get-runner)) (- (* 2 x))
+                     (:credit (get-corp)) (* 3 x)]
+                    (click-prompt state :corp "Yes"))
+          (str "Corp siphoned the runner for " (* 2 x) " using Idiosyncresis"))
+      (is (= 1 (count (:discard (get-corp))))))))
+
 (deftest illegal-arms-factory
   ;; Illegal Arms Factory; draw a card, gain a credit, bad pub when trashed while rezzed
   (do-game
@@ -4544,6 +4561,38 @@
       (take-credits state :runner)
       (is (second-last-log-contains? state "Aiki") "Public Health Portal should reveal Aiki")
       (is (= "Ben Musashi" (-> @state :corp :deck first :title)) "Top card in R&D should be Ben Musashi"))))
+
+(deftest public-access-plaza-no-threat
+  (do-game
+    (new-game {:corp {:hand ["Public Access Plaza"]}})
+    (play-from-hand state :corp "Public Access Plaza" "New remote")
+    (let [pad (get-content state :remote1 0)]
+      (rez state :corp pad)
+      (take-credits state :corp)
+      (let [credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (is (= (inc credits) (:credit (get-corp))) "Should gain 1 credit at start of turn from Public Access Plaza"))
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (run-continue-until state :success)
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (is (= 0 (count-tags state)) "Took a tag from trashing my Public Access Plaza (despite threat)"))))
+
+(deftest public-access-plaza-test-threat-2
+  (do-game
+    (new-game {:corp {:hand ["Public Access Plaza"] :score-area ["Project Atlas"]}})
+    (play-from-hand state :corp "Public Access Plaza" "New remote")
+    (let [pad (get-content state :remote1 0)]
+      (rez state :corp pad)
+      (take-credits state :corp)
+      (let [credits (:credit (get-corp))]
+        (take-credits state :runner)
+        (is (= (inc credits) (:credit (get-corp))) "Should gain 1 credit at start of turn from Public Access Plaza"))
+      (take-credits state :corp)
+      (run-on state "Server 1")
+      (run-continue-until state :success)
+      (click-prompt state :runner "Pay 2 [Credits] to trash")
+      (is (= 1 (count-tags state)) "Took a tag from trashing my Public Access Plaza"))))
 
 (deftest public-support
   ;; Public support scoring and trashing

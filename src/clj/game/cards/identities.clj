@@ -1622,6 +1622,45 @@
                              :effect (effect (draw :corp eid 1))}])
                           (effect-completed state side eid))))}]})
 
+(defcard "Nebula Talent Management"
+  (let [flip-effect
+        {:effect (effect (update! (if (:flipped card)
+                                    (assoc card
+                                           :flipped false
+                                           :face :front
+                                           :code (subs (:code card) 0 5))
+                                    (assoc card
+                                           :flipped true
+                                           :face :back
+                                           :code (str (subs (:code card) 0 5) "flip")))))}]
+    {:abilities [(assoc flip-effect
+                        :label "Manually flip identity"
+                        :msg "Manually flip identity"
+                        :force-menu true)]
+     :events [{:event :pre-first-turn
+               :req (req (= side :corp))
+               :effect (effect (update! (assoc card :flipped false :face :front)))}
+              {:event :corp-turn-ends
+               :req (req (and (not (no-event? state side :play-operation))
+                              (not (:flipped card))))
+               :msg (msg "flip [their] identity and gain 1 [Credits]")
+               :async true
+               :effect (req (wait-for (gain-credits state side 1)
+                                      (continue-ability state side flip-effect card nil)))}
+              {:event :successful-run
+               :req (req (and (or (= :rd (target-server context)) (= :hq (target-server context)))
+                              (:flipped card)))
+               :msg (msg "flip [their] identity")
+               :async true
+               :effect (req (continue-ability state side flip-effect card targets))}
+              {:event :play-operation-resolved
+               :req (req (and (first-event? state side :play-operation-resolved)
+                              (not (has-subtype? (:card context) "Terminal"))
+                              (:flipped card)))
+               :interactive (req true)
+               :msg (msg "gain [click]")
+               :effect (req (gain-clicks state :corp 1))}]}))
+
 (defcard "Nero Severn: Information Broker"
   {:events [{:event :encounter-ice
              :skippable true
@@ -2329,6 +2368,25 @@
                                (update! state side (-> card (assoc :sync-flipped true :face :back :code "sync")))))
                 :label "Flip this identity"
                 :msg (msg "flip [their] identity")}]})
+
+(defcard "Synapse Global"
+  {:events [{:event :runner-lose-tag
+             ;; :player :corp
+             ;; :side :corp
+             :prompt "Reveal and install a card from HQ?"
+             :change-in-game-state {:req (req (seq (:hand corp))) :silent true}
+             :choices {:req (req (and (corp? target)
+                                      (in-hand? target)
+                                      (not (operation? target))))}
+             :async true
+             :effect (req (wait-for (reveal-loud state side card nil [target])
+                                    (corp-install state side eid target nil {:ignore-install-cost true
+                                                                             :msg-keys {:install-source card}})))}]
+   :abilities [{:label "Gain 2 [Credits]"
+                :action :true
+                :async true
+                :cost [(->c :tag 1) (->c :click 1)]
+                :effect (req (gain-credits state side eid 2))}]})
 
 (defcard "Synthetic Systems: The World Re-imagined"
   (let [abi {:prompt "Choose 2 installed pieces of ice to swap"

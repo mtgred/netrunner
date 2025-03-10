@@ -2040,6 +2040,26 @@
         (fire-subs state diviner)
         (is (not (get-run)) "Sure Gamble has an odd cost, so run ends")))))
 
+(deftest doomscroll-full-test
+  ;; give the runner a tag
+  (do-game
+    (subroutine-test "Doomscroll" 0 {:runner {:hand 3}})
+    (is (= 1 (count-tags state)) "Took 1 tag"))
+  ;; Do 1 net damage
+  (do-game
+    (subroutine-test "Doomscroll" 1 {:runner {:hand 10 :tags 0}})
+    (is (= 1 (count (:discard (get-runner)))) "Took 1 damage"))
+  (do-game
+    (subroutine-test "Doomscroll" 1 {:runner {:hand 10 :tags 1}})
+    (is (= 1 (count (:discard (get-runner)))) "Took 1 damage"))
+  ;; Do 2 net if 2 tag
+  (do-game
+    (subroutine-test "Doomscroll" 2 {:runner {:hand 10 :tags 1}})
+    (is (= 0 (count (:discard (get-runner)))) "Took 0 damage"))
+  (do-game
+    (subroutine-test "Doomscroll" 2 {:runner {:hand 10 :tags 2}})
+    (is (= 2 (count (:discard (get-runner)))) "Took 2 damage")))
+
 (deftest draco
   ;; Dracō - Pay credits when rezzed to increase strength; trace to give 1 tag and end the run
   (do-game
@@ -5548,7 +5568,7 @@
     (click-prompt state :corp "End the run")
     (is (not (:run @state)) "Run ended by enigma")))
 
-(deftest extruder-sentry-test
+(deftest mycoweb-sentry-test
   (do-game
     (subroutine-test "Mycoweb" 0 {:corp {:discard ["Guard"]}})
     (click-card state :corp "Guard")
@@ -5560,6 +5580,20 @@
     (click-card state :corp "Guard")
     (click-prompt state :corp "End the run")
     (is (not (:run @state)) "Run ended by Guard")))
+
+(deftest n-pot-full-subs-test
+  ;; TODO - this is in another pr
+  ;;(do-game (etr-sub "N-Pot" 0))
+  ;; threat 2 - etr
+  (do-game (subroutine-test "N-Pot" 1 nil {:threat 1})
+           (is (:run @state) "Run not ended"))
+  (do-game (subroutine-test "N-Pot" 1 nil {:threat 2})
+           (is (not (:run @state)) "Run ended"))
+  ;; threat 4 - etr
+  (do-game (subroutine-test "N-Pot" 2 nil {:threat 3})
+           (is (:run @state) "Run not ended"))
+  (do-game (subroutine-test "N-Pot" 2 nil {:threat 4})
+           (is (not (:run @state)) "Run ended")))
 
 (deftest negotiator-subroutines-fire-correctly
   ;; Subroutines fire correctly.

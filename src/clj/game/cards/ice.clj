@@ -1527,6 +1527,14 @@
                    sub
                    sub]}))
 
+(defcard "Doomscroll"
+  {:subroutines [(give-tags 1)
+                 (do-net-damage 1)
+                 (assoc (do-net-damage 2)
+                        :label "Do 2 net damage if the runner has 2 tags"
+                        :change-in-game-state {:silent true
+                                               :req (req (>= (count-tags state) 2))})]})
+
 (defcard "Dracō"
   {:on-rez {:prompt "How many power counters do you want to place?"
             :choices :credit
@@ -3227,6 +3235,18 @@
                  (resolve-another-subroutine
                    #(has-subtype? % "Code Gate")
                    "Resolve subroutine on another rezzed Code Gate")]})
+
+(defcard "N-Pot"
+  (letfn [(etr-if-threat-x [x]
+            (assoc end-the-run
+                   :label (str "If threat >=" x ", End the run")
+                   :change-in-game-state {:silent true
+                                          :req (req (threat-level x state))}))]
+    {:subroutines [end-the-run
+                   (etr-if-threat-x 2)
+                   (etr-if-threat-x 4)]
+     :runner-abilities [(break-sub [(->c :credit 3)] 1 nil
+                                   {:req (req (currently-encountering-card card state))})]}))
 
 (defcard "Najja 1.0"
   {:subroutines [end-the-run end-the-run]

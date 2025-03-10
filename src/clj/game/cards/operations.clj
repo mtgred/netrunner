@@ -50,7 +50,7 @@
    [game.core.servers :refer [is-remote? remote->name zone->name]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck
                                 shuffle-into-rd-effect]]
-   [game.core.tags :refer [gain-tags]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.threat :refer [threat threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -434,6 +434,36 @@
                                                :effect (effect (score eid (get-card state card-to-score)))}
                                  :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to score " (card-str state card-to-score))))}}}
                                card nil))))}})
+
+;; TODO - write a helper for "drain X credits to gain Y credits"
+(defcard "Bigger Picture"
+  {:on-play (choose-one-helper
+              {:req (req tagged)}
+              [{:option "Give the runner 1 tag"
+                :ability {:msg "give the Runner 1 tag"
+                          :effect (req (gain-tags state side eid 1))
+                          :async true}}
+               {:option "Remove any number of tags"
+                :ability {:req (req tagged)
+                          :prompt "Remove how many tags?"
+                          :choices {:number (req (count-tags state))}
+                          :msg (msg
+                                 (let [drained (min (:credit runner) (* 5 target))]
+                                   (str "remove " target " tags to force the runner to lose " drained
+                                        " [Credits]")))
+                          :async true
+                          ;; TODO - should this be treated like a cost? probably
+                          :effect (req (wait-for
+                                         (lose-tags state side target)
+                                         (let [drained (min (:credit runner) (* 5 target))]
+                                           (wait-for
+                                             (lose-credits state :runner drained)
+                                             (continue-ability
+                                               state side
+                                               {:async true
+                                                :msg (str "gain " drained " [Credits]")
+                                                :effect (req (gain-credits state side eid drained))}
+                                               card nil)))))}}])})
 
 (defcard "Bioroid Efficiency Research"
   {:on-play {:choices {:card #(and (ice? %)
@@ -1506,6 +1536,41 @@
        :unsuccessful {:msg "take 1 bad publicity"
                       :async true
                       :effect (effect (gain-bad-publicity :corp eid 1))}}}}))
+
+(defcard "IP Enforcement"
+  (letfn [(valid-agenda [state c x]
+            (and (agenda? c)
+                 (= (:zone c) [:scored])
+                 (= (:scored-side c) :runner)
+                 (:title c)
+                 ;; fake agendas do not have titles!
+                 (= (:agendapoints c) x)))
+          (fixed-cost-abi [x]
+            {:cost [(->c :tag x) (->c :credit x)]
+             :prompt (str "Choose an agenda with " x " printed agenda points")
+             :choices {:req (req (valid-agenda state target x))}
+             :msg (msg "install " (:title target) " from the Runner score area")
+             :async true
+             :effect (req (corp-install state side eid target nil
+                                        {:msg-keys {:install-source card
+                                                    :known true
+                                                    :display-origin true}
+                                         :counters {:advance-counter (if tagged 1 0)}}))
+             :cancel-effect (req (system-msg state side (str "uses IP Enforcement to " (:latest-payment-str eid)))
+                                 (effect-completed state side eid))})]
+    {:on-play {:prompt "Remove how many tags?"
+               :choices {:number (req (min (count-tags state)
+                                           (total-available-credits state side
+                                                                    (assoc eid :source-type :play)
+                                                                    card)))
+                         :default (req 0)}
+               :async true
+               :effect (req (continue-ability state side (fixed-cost-abi target) card nil))
+               :cancel-effect (req (resolve-ability
+                                     state side
+                                     (assoc eid :source-type :play)
+                                     (fixed-cost-abi 0) card nil))}}))
+
 
 (defcard "IPO"
   {:on-play
@@ -3275,6 +3340,33 @@
                                (continue-ability ability card nil))
                :effect (req (wait-for (trash state side target {:cause-card card})
                                       (continue-ability state side ability card nil)))}}))
+
+(defcard "Touch-ups"
+  (let [name-abi {:prompt "Choose a card type"
+                  :waiting-prompt true
+                  :choices ["Event" "Hardware" "Program" "Resource"]
+                  :async true
+                  :msg (msg "choose " target)
+                  :effect (req (let [chosen-type target]
+                                 (continue-ability
+                                   state side
+                                   (with-revealed-hand :runner {:event-side :corp}
+                                     {:prompt (str "Shuffle up to two " chosen-type " cards into the stack")
+                                      :choices {:req (req (and (in-hand? target)
+                                                               (runner? target)
+                                                               (= (:type target) chosen-type)))
+                                                :max 2}
+                                      :effect (req (doseq [t targets]
+                                                     (move state :runner t :deck))
+                                                   (shuffle! state :runner :deck))
+                                      :msg (msg "shuffle " (enumerate-str (map :title targets)) " into the Stack")})
+                                     card nil)))}]
+    {:on-play {:async true
+               :change-in-game-state {:req (req (some #(or (not (rezzed? %)) (can-be-advanced? state %)) (all-installed state :corp)))}
+               :choices {:req (req (can-be-advanced? state target))}
+               :msg (msg "place 2 advancement counters on " (card-str state target))
+               :effect (req (wait-for (add-prop state side target :advance-counter 2 {:placed true})
+                                      (continue-ability state side name-abi card nil)))}}))
 
 (defcard "Ultraviolet Clearance"
   {:on-play

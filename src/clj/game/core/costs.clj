@@ -333,6 +333,41 @@
                                                   :paid/type :tag
                                                   :paid/value (value cost)})))
 
+;; X Tags
+(defmethod value :x-tags [_] 0)
+(defmethod label :x-tags [_] "remove X tags")
+;; it is allowed to pay 0 tags
+(defmethod payable? :x-tags
+  [cost state side eid card]
+  true)
+(defmethod handler :x-tags
+  [cost state side eid card]
+  (if (<= (get-in @state [:runner :tag :base] 0) 0)
+    (complete-with-result
+      state side eid
+      {:paid/msg "removes 0 tags"
+       :paid/type :x-tags
+       :paid/value 0})
+    (continue-ability
+      state side
+      {:async true
+       :prompt "How many tags do you want to remove?"
+       :choices {:number (req (get-in @state [:runner :tag :base] 0))}
+       :effect (req (let [cost target]
+                      (if (zero? target)
+                        (complete-with-result
+                          state side eid
+                          {:paid/msg "removes 0 tags"
+                           :paid/type :x-tags
+                           :paid/value 0})
+                        (wait-for (lose-tags state side eid target {:suppress-checkpoint true})
+                                  (complete-with-result
+                                    state side eid
+                                    {:paid/msg (str "removes " (quantify cost "tag"))
+                                     :paid/type :x-tags
+                                     :paid/value cost})))))}
+      card nil)))
+
 ;; Tag-or-bad-pub
 (defmethod value :tag-or-bad-pub [cost] (:cost/amount cost))
 (defmethod label :tag-or-bad-pub [cost] (str "remove " (quantify (value cost) "tag") " or take " (value cost) " bad publicity"))
