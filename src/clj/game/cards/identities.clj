@@ -35,7 +35,7 @@
    [game.core.installing :refer [corp-install install-locked? runner-can-pay-and-install? runner-install]]
    [game.core.link :refer [link+ update-link]]
    [game.core.mark :refer [identify-mark-ability mark-changed-event]]
-   [game.core.memory :refer [mu+]]
+   [game.core.memory :refer [available-mu mu+]]
    [game.core.moving :refer [mill move swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
    [game.core.payment :refer [build-cost-label can-pay? cost->string merge-costs ->c]]
@@ -608,6 +608,48 @@
 
 (defcard "Cybernetics Division: Humanity Upgraded"
   {:static-abilities [(hand-size+ -1)]})
+
+(defcard "Dewi Subrotoputri"
+  (let [flip-effect {:effect (effect (update! (if (:flipped card)
+                                                (assoc card
+                                                       :flipped false
+                                                       :face :front
+                                                       :code (subs (:code card) 0 5))
+                                                (assoc card
+                                                       :flipped true
+                                                       :face :back
+                                                       :code (str (subs (:code card) 0 5) "flip")))))}
+        maybe-flip {:event :successful-run
+                    :skippable true
+                    :optional {:prompt "Flip your ID?"
+                               :req (req (or
+                                           (and (:flipped card) (pos? (available-mu state)))
+                                           (and (not (:flipped card)) (zero? (available-mu state)))))
+                               :yes-ability {:async true
+                                             :effect (req
+                                                       (if (:flipped card)
+                                                         (if (pos? (available-mu state))
+                                                           (wait-for
+                                                             (draw state :runner 1)
+                                                             (system-msg state side
+                                                                         "draws 1 card and flips [their] identity")
+                                                             (continue-ability state side flip-effect card targets))
+                                                           (effect-completed state side eid))
+                                                         (if (zero? (available-mu state))
+                                                           (wait-for
+                                                             (gain-credits state :runner 1)
+                                                             (system-msg
+                                                               state side
+                                                               "gain 1 [Credits] and flips [their] identity")
+                                                             (continue-ability state :runner flip-effect card nil))
+                                                           (effect-completed state side eid))))}}}]
+    {:events [{:event :pre-first-turn
+               :req (req (= side :runner))
+               :effect (effect (update! (assoc card :flipped false :face :front)))}
+              maybe-flip]
+     :abilities [(assoc flip-effect :label "Manually flip identity"
+                        :force-menu true
+                        :msg "manually flip [their] identity")]}))
 
 (defcard "Earth Station: SEA Headquarters"
   (let [flip-effect (effect (update! (if (:flipped card)
@@ -1354,6 +1396,25 @@
              :msg "gain 2 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 2))}]})
+
+(defcard "Magdalene Keino-Chemutai"
+  {:events [{:event :runner-discard-to-hand-size
+             :async true
+             :effect (req (let [installable (filterv (fn [c]
+                                                       (and (or (hardware? c) (program? c))
+                                                            (runner-can-pay-and-install?
+                                                              state :runner eid c {:no-toast true})))
+                                                     (:cards context))]
+                            (if (seq installable)
+                              (continue-ability
+                                state side
+                                {:prompt "Install a discard program or hardware?"
+                                 :choices (req (cancellable installable :sorted))
+                                 :async true
+                                 :effect (req (runner-install state side eid target {:msg-keys {:install-source card
+                                                                                                :display-origin true}}))}
+                                card nil)
+                              (effect-completed state side eid))))}]})
 
 (defcard "MaxX: Maximum Punk Rock"
   (let [ability {:msg (msg (let [deck (:deck runner)]

@@ -2084,6 +2084,26 @@
              :async true
              :effect (effect (gain-credits eid 2))}]})
 
+(defcard "\"Knickknack\" O'Brian"
+  {:events [{:async true
+             :once :per-turn
+             :event :run
+             :interactive (req true)
+             :req (req (and (>= (count (all-installed state :runner)) 2)
+                            (first-event? state side :run)))
+             :waiting-prompt true
+             :skippable true
+             :choices {:not-self nil
+                       :req (req (and (runner? target)
+                                      (installed? target)))}
+             :msg (msg "trash " (:title target) " to gain " (:cost target)
+                       " [Credits] and draw a card")
+             :effect (req (wait-for
+                            (trash state side target {:unpreventable true :cause-card card})
+                            (wait-for
+                              (gain-credits state side (:cost target))
+                              (draw state side eid 1))))}]})
+
 (defcard "Kongamato"
   (bitey-boi 'first))
 

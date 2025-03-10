@@ -6,7 +6,7 @@
     [game.core.drawing :refer [draw]]
     [game.core.effects :refer [unregister-lingering-effects update-lingering-effect-durations any-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [trigger-event trigger-event-simult unregister-floating-events update-floating-event-durations]]
+    [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-simult unregister-floating-events update-floating-event-durations]]
     [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
     [game.core.gaining :refer [gain lose]]
     [game.core.hand-size :refer [hand-size]]
@@ -127,6 +127,7 @@
              :choices {:card in-hand?
                        :max (- cur-hand-size (max (hand-size state side) 0))
                        :all true}
+             :waiting-prompt true
              :async true
              :effect (req (system-msg state side
                                       (str "discards "
@@ -135,9 +136,10 @@
                                              (quantify (count targets) "card"))
                                            " from " (if (= :runner side) "[their] Grip" "HQ")
                                            " at end of turn"))
-                          (doseq [t targets]
-                            (move state side t :discard))
-                          (effect-completed state side eid))}
+                          (let [discard (seq (map #(move state side % :discard) targets))
+                                ev (if (= side :runner) :runner-discard-to-hand-size :corp-discard-to-hand-size)]
+                            (queue-event state ev {:cards discard})
+                            (checkpoint state nil eid {:durations [ev]})))}
             nil nil)
           :else
           (effect-completed state side eid))))

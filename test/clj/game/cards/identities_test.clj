@@ -1116,6 +1116,30 @@
       (is (no-prompt? state :corp) "No choice because grip is empty")
       (is (= :corp (:winner @state)))))
 
+(deftest dewi-flippy
+  (do-game
+    (new-game {:runner {:id "Dewi Subrotoputri"
+                        :hand ["Fermenter" "Mayfly" "Marjanah"]
+                        :deck [(qty "Sure Gamble" 15)]}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (play-from-hand state :runner "Fermenter")
+    (run-empty-server state :archives)
+    (is (not (:flipped (:identity (get-runner)))) "not flipped yet")
+    (play-from-hand state :runner "Mayfly")
+    (play-from-hand state :runner "Marjanah")
+    (is (changed? [(:credit (get-runner)) 1]
+          (run-empty-server state :archives)
+          (click-prompt state :runner "Yes")
+          (is (:flipped (:identity (get-runner))) "flipped yet"))
+        "Gained 1 from the ID")
+    (card-ability state :runner (get-program state 0) 0)
+    (is (changed? [(:credit (get-runner)) 0
+                   (count (:hand (get-runner))) 1]
+          (run-empty-server state :archives)
+          (click-prompt state :runner "Yes")
+        "Drew 1 card from the flip back"))))
+
 (deftest earth-station-sea-headquarters-front-side-additional-cost-to-run-hq
       ;; Additional cost to run HQ
     (do-game
@@ -3251,6 +3275,18 @@
         (is (changed? [(:credit (get-runner)) 0]
               (rez state :corp (get-ice state :rd 0)))
             "Does not gain")))))
+
+(deftest magdalene-keino-chemutai-test
+  (do-game
+    (new-game {:runner {:id "Magdalene Keino-Chemutai"
+                        :hand ["Corroder" (qty "Sure Gamble" 5)]}})
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-card state :runner "Corroder")
+    (is (changed? [(:credit (get-runner)) -2]
+                  (click-prompt state :runner "Corroder"))
+        "Paid 2 to install corroder")
+    (is (= "Corroder" (:title (get-program state 0))))))
 
 (deftest maxx-maximum-punk-rock
   ;; MaxX

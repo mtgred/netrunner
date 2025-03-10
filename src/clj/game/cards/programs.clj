@@ -559,6 +559,11 @@
   (auto-icebreaker {:abilities [(break-sub 2 1 "Barrier")
                                 (strength-pump 2 3)]}))
 
+(defcard "Azimat"
+  {:recurring 2
+   :interactions {:pay-credits {:req (req (= :runner-trash-corp-cards (:source-type eid)))
+                                :type :recurring}}})
+
 (defcard "Baba Yaga"
   (let [gain-abis (req (let [new-abis (mapcat (comp ability-init card-def) (:hosted card))]
                          (update! state :runner (assoc card :abilities new-abis))))]
@@ -826,6 +831,14 @@
                                   (add-counter state side eid card :virus 1 nil))
                               (do (system-msg state side (str "uses " (:title card) " to trash " (card-str state (:ice context))))
                                   (trash state side eid (:ice context) {:cause-card card}))))}]}))
+
+(defcard "Chromatophores"
+  (trojan
+    {:on-install {:msg (msg "make " (card-str state (:host card))
+                            " gain Barrier, Code Gate and Sentry subtypes")}
+     :static-abilities [{:type :gain-subtype
+                         :req (req (same-card? target (:host card)))
+                         :value ["Barrier" "Code Gate" "Sentry"]}]}))
 
 (defcard "Cat's Cradle"
   (auto-icebreaker
@@ -1241,6 +1254,21 @@
                  :ability (assoc (prevent-up-to-n-damage :all #{:net})
                                  :cost [(->c :trash-can)])}]
    :abilities [(break-sub [(->c :trash-can)] 0 "AP")]})
+
+(defcard "Devadatta Drone"
+  {:data {:counter {:power 2}}
+   :events [{:event :breach-server
+             :skippable true
+             :optional
+             {:req (req (and (pos? (get-counters card :power))
+                             (= target :rd)))
+              :waiting-prompt true
+              :prompt "Spend 1 hosted power counter to access 1 additional card?"
+              :autoresolve (get-autoresolve :auto-fire)
+              :yes-ability {:msg "access 1 additional card from R&D"
+                            :cost [(->c :power 1)]
+                            :effect (effect (access-bonus :rd 1))}}}]
+   :abilities [(set-autoresolve :auto-fire "Devadatta Drone")]})
 
 (defcard "Dhegdheer"
   {:implementation "Discount not considered by any engine functions when checking if a program is playable"
@@ -2420,9 +2448,8 @@
               :prompt "Spend 1 hosted power counter to access 1 additional card?"
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability {:msg "access 1 additional card from R&D"
-                            :async true
-                            :effect (effect (access-bonus :rd 1)
-                                            (add-counter eid card :power -1 nil))}}}]
+                            :cost [(->c :power 1)]
+                            :effect (effect (access-bonus :rd 1))}}}]
    :abilities [(set-autoresolve :auto-fire "Nyashia")]})
 
 (defcard "Odore"
@@ -2773,6 +2800,12 @@
                                                 (not-used-once? state (once card) card)))})]
                      (assoc base :effect (req (register-once state side (once card) card)
                                               ((:effect base) state side eid card targets))))]})))
+
+(defcard "Principia"
+  (auto-icebreaker
+    {:install-cost-bonus (req (- (count (filter #(has-subtype? % "Icebreaker") (all-installed state :runner)))))
+     :abilities [(break-sub 1 1 "Barrier")
+                 (strength-pump 2 2)]}))
 
 (defcard "Progenitor"
   {:static-abilities [{:type :can-host

@@ -784,6 +784,19 @@
             (run-continue state))
           "Slee did not gain counters for ankusa bounce"))))
 
+(deftest azimat-basic
+  (do-game
+    (new-game {:corp {:hand ["PAD Campaign"]}
+               :runner {:hand ["Azimat"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Azimat")
+    (run-on state :hq)
+    (run-continue state)
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
+    (click-card state :runner (get-program state 0))
+    (click-card state :runner (get-program state 0))
+    (is (not (:run @state)))))
+
 (deftest battering-ram-automated-test
   (basic-program-test {:name "Atman"
                        :click-prompt-on-install "0"
@@ -1903,6 +1916,25 @@
         (is (nil? (refresh iw)) "Ice Wall should be trashed")
         (is (nil? (refresh chisel)) "Chisel should likewise be trashed"))))
 
+(deftest chromatophores
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Mother Goddess"]}
+               :runner {:hand [(qty "Chromatophores" 2)]}})
+    (play-from-hand state :corp "Mother Goddess" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (let [mg (get-ice state :hq 0)]
+      (take-credits state :corp)
+      (play-from-hand state :runner "Chromatophores")
+      (click-card state :runner mg)
+      (is (has-subtype? (refresh mg) "Barrier"))
+      (is (has-subtype? (refresh mg) "Code Gate"))
+      (is (has-subtype? (refresh mg) "Sentry"))
+      (trash state :runner (first (:hosted (refresh mg))))
+      (is (not (has-subtype? (refresh mg) "Barrier")))
+      (is (not (has-subtype? (refresh mg) "Code Gate")))
+      (is (not (has-subtype? (refresh mg) "Sentry"))))))
+
 (deftest cats-cradle
   ;; cats cradle: 1str decoder, 1/1 break, code gates cost 1 more
   (do-game
@@ -2896,6 +2928,19 @@
         (click-prompt state :runner "Pay to steal")
         (is (= 3 (count (:hand (get-runner)))) "Deus X prevented net damage from accessing Fetal AI, but not from Personal Evolution")
         (is (= 1 (count (:scored (get-runner)))) "Fetal AI stolen"))))
+
+(deftest devadatta-drone
+  ;; Nyashia
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Hedge Fund"]}
+               :runner {:deck ["Devadatta Drone"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Devadatta Drone")
+    (run-on state "R&D")
+    (run-continue state)
+    (click-prompt state :runner "Yes")
+    (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :rd nil))))))
 
 (deftest dhegdheer-with-credit-savings
   ;; with credit savings
@@ -7156,6 +7201,24 @@
             ;; second pump shouldn't be allowed
             (card-ability state :runner (refresh ps) 2))
           "Runner spent 2 credits to match ice strength"))))
+
+(deftest principia-discount
+  (do-game
+    (new-game {:runner {:credits 20
+                        :hand [(qty "Principia" 4)]}})
+    (take-credits state :corp)
+    (let [base-cost (:cost (first (:hand (get-runner))))]
+      (dotimes [n 4]
+        (is (changed?
+              [(:credit (get-runner)) (- (max 0 (- base-cost n)))]
+              (play-from-hand state :runner "Principia"))
+            (str "Got a discount of " n))))))
+
+(deftest principia-automated-test
+  (basic-program-test
+    {:name "Principia"
+     :boost {:ab 1 :amount 2 :cost 2}
+     :break {:ab 0 :amount 1 :cost 1 :type "Barrier"}}))
 
 (deftest progenitor-hosting-hivemind-using-virus-breeding-ground-issue-738
   ;; Hosting Hivemind, using Virus Breeding Ground. Issue #738

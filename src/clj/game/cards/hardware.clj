@@ -1171,6 +1171,32 @@
                                                                          (continue-ability state side (shuffle-next set-aside-cards nil nil) card nil)))))}
                                              card nil))))}]}))
 
+(defcard "GAMEDRAGON™ Pro"
+  (let [abi {:prompt "Choose an icebreaker to host GAMEDRAGON™ Pro"
+             :event :runner-turn-begins
+             :choices {:req (req (and
+                                   (installed? target)
+                                   (program? target)
+                                   (has-subtype? target "Icebreaker")))}
+             :effect (req (host state side target card))
+             :msg (msg "host itself on " (:title target))}]
+    {:on-install abi
+     :events [abi
+              {:event :pump-breaker
+               :req (req (same-card? (:card context) (:host card)))
+               :effect
+               (req (let [new-pump (assoc (:effect context)
+                                          :duration :end-of-run)]
+                      (swap! state assoc :effects
+                             (->> (:effects @state)
+                                  (remove #(= (:uuid %) (:uuid new-pump)))
+                                  (#(conj % new-pump))
+                                  (into []))))
+                    (update-breaker-strength state side (:card context)))}]
+     :static-abilities [{:type :breaker-strength
+                         :req (req (same-card? target (:host card)))
+                         :value 1}]}))
+
 (defcard "Gebrselassie"
   {:abilities [{:action true
                 :msg "host itself on an installed non-AI icebreaker"
@@ -1468,6 +1494,26 @@
                                                             " on itself"))
                                     (add-counter state side eid card :power cost))
                                 (effect-completed state side eid))))}]}))
+
+(defcard "Madani"
+  {:static-abilities []
+   :abilities [{:cost [(->c :click 1)]
+                :label "Host any number of programs"
+                :prompt "Choose any number of program"
+                :action true
+                :choices {:req (req (and (in-hand? target) (program? target) ))
+                          :max (req (count (filter program? (:hand runner))))}
+                :msg (msg "host " (enumerate-str (map :title targets)))
+                :effect (req (doseq [t targets] (host state side card t)))}
+               {:cost [(->c :credit 0)]
+                :label "Install a hosted program"
+                :async true
+                :once :per-turn
+                :prompt "Choose a hosted program to install"
+                :choices {:req (req (and (program? target)
+                                         (same-card? (:host target) card)))}
+                :effect (req (runner-install state side eid target {:display-origin true
+                                                                    :install-source card}))}]})
 
 (defcard "Maglectric Rapid (748 Mod)"
   {:events [{:event :successful-run

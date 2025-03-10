@@ -3843,6 +3843,21 @@
             (click-card state :runner "Chimera"))
           "No credit gain a second time"))))
 
+(deftest knicknack-o-brian-triggered-at-start-of-run
+  (do-game
+    (new-game {:runner {:hand ["\"Knickknack\" O'Brian" "Daily Casts"]
+			:deck [(qty "Sure Gamble" 5)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "\"Knickknack\" O'Brian")
+    (play-from-hand state :runner "Daily Casts")
+    (run-on state :hq)
+    (let [dc (get-resource state 1)]
+      (is (changed? [(:credit (get-runner)) 3
+                     (count (:hand (get-runner))) 1]
+                    (click-card state :runner dc))
+          "sells casts for 3 credits and a card")
+      (is (= (refresh dc) nil) "Daily Casts should be in Heap"))))
+
 (deftest kongamato
   ;; Kongamato
   (do-game

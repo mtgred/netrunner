@@ -2353,6 +2353,30 @@
       (click-prompt state :runner "DDoS")
       (is (= "DDoS" (:title (get-resource state 0))) "DDoS is installed")))
 
+(deftest gamedragon-tm-pro
+  (do-game
+    (new-game {:corp {:hand ["Fire Wall"]}
+               :runner {:hand ["GAMEDRAGON™ Pro" "Corroder"] :credits 10}})
+    (play-from-hand state :corp "Fire Wall" "HQ")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :runner "Corroder")
+    (let [cor (get-program state 0)]
+      (play-from-hand state :runner "GAMEDRAGON™ Pro")
+      (click-card state :runner "Corroder")
+      (run-on state :hq)
+      (is (= 3 (get-strength (refresh cor))) "Corroder got +1")
+      (run-continue state :encounter-ice)
+      (card-ability state :runner (refresh cor) 1)
+      (card-ability state :runner (refresh cor) 1)
+      (is (= 5 (get-strength (refresh cor))) "Stayed at 5")
+      (card-ability state :runner (refresh cor) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state :movement)
+      (is (= 5 (get-strength (refresh cor))) "Stayed at 5")
+      (run-jack-out state)
+      (is (= 3 (get-strength (refresh cor))) "reset to 2"))))
+
 (deftest gebrselassie
   ;; Gebrselassie
   (do-game
@@ -3194,6 +3218,19 @@
     (click-card state :runner "Ice Wall")
     (is (not (rezzed? (get-ice state :rd 0))) "not rezzed")
     (is (= "Maglectric Rapid (748 Mod)" (get-in @state [:runner :discard 0 :title])) "Trashed Maglectric Rapid (748 Mod)")))
+
+(deftest madani-test
+  (do-game
+    (new-game {:runner {:hand ["Madani" "Ika" "Fermenter" "Rezeki"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Madani")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-prompts state :runner "Ika" "Fermenter" "Rezeki")
+    (is (no-prompt? state :runner))
+    (is (= 3 (count (:hosted (get-hardware state 0)))) "3 hosted cards")
+    (card-ability state :runner (get-hardware state 0) 1)
+    (click-card state :runner "Ika")
+    (is (= "Ika" (:title (get-program state 0))) "Intsalled ika")))
 
 (deftest marrow
   (do-game
