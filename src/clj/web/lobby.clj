@@ -233,15 +233,24 @@
           (not (or user-blocked-players? players-blocked-user?))))
       lobbies)))
 
+(defn categorize-lobby
+  "Identifies if `lobby` is: open, started-allowing spectators, or started-not allowing spectators"
+  [lobby]
+  (if (not (:started lobby))
+    :open
+    (if (:allow-spectator lobby)
+      :allowing-spectators
+      :no-spectators)))
+
 (defn sorted-lobbies
   "Sorts `lobbies` into a list with opened games on top, and other games below.
   Open games will be sorted oldest to newest, other games will be sorted newest to oldest."
   [lobbies]
-  (let [grouped-lobbies (group-by :started (->> (map lobby-summary lobbies)
-                                                (sort-by :date)))
-        started (get grouped-lobbies true)
-        open (get grouped-lobbies nil)]
-    (concat open (reverse started))))
+  (let [grouped-lobbies (group-by #(categorize-lobby %)
+                                  (->> (map lobby-summary lobbies)
+                                       (sort-by :date)))
+        {:keys [open allowing-spectators no-spectators]} grouped-lobbies]
+    (concat open (reverse allowing-spectators) (reverse no-spectators))))
 
 (comment
   (->> (for [x (range 5 10)]
