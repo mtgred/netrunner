@@ -252,13 +252,6 @@
         {:keys [open allowing-spectators no-spectators]} grouped-lobbies]
     (concat open (reverse allowing-spectators) (reverse no-spectators))))
 
-(comment
-  (->> (for [x (range 5 10)]
-         {:date (doto (java.util.Calendar/getInstance)
-                  (.set (+ 2000 (+ (rand-int x) (rand-int x))) 1 2))
-          :started (rand-nth [true false])})
-       (summaries-for-lobbies)))
-
 (defn prepare-lobby-list
   [lobbies users]
   (let [in-order-lobbies (sorted-lobbies lobbies)]
