@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
+   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur defcard gain-credits-ability do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -348,10 +348,7 @@
                           (update-mu state))}})
 
 (defcard "Beanstalk Royalties"
-  {:on-play
-   {:msg "gain 3 [Credits]"
-    :async true
-    :effect (effect (gain-credits eid 3))}})
+  {:on-play (gain-credits-ability 3)})
 
 (defcard "Best Defense"
   {:on-play
@@ -1244,10 +1241,7 @@
                            (shuffle-into-rd-effect state side eid card 4)))}})
 
 (defcard "Government Subsidy"
-  {:on-play
-   {:msg "gain 15 [Credits]"
-    :async true
-    :effect (effect (gain-credits eid 15))}})
+  {:on-play (gain-credits-ability 15)})
 
 (defcard "Greasing the Palm"
   {:on-play
@@ -1382,10 +1376,7 @@
              :effect (effect (move :runner target :hand true))}}}})
 
 (defcard "Hedge Fund"
-  {:on-play
-   {:msg "gain 9 [Credits]"
-    :async true
-    :effect (effect (gain-credits eid 9))}})
+  {:on-play (gain-credits-ability 9)})
 
 (defcard "Hellion Alpha Test"
   {:on-play
@@ -1573,10 +1564,7 @@
 
 
 (defcard "IPO"
-  {:on-play
-   {:msg "gain 13 [Credits]"
-    :async true
-    :effect (effect (gain-credits eid 13))}})
+  {:on-play (gain-credits-ability 13)})
 
 (defcard "Kakurenbo"
   (let [install-abi {:async true
@@ -1609,6 +1597,44 @@
                             (update! state side (assoc-in c [:seen] false)))
                           (shuffle! state :corp :discard)
                           (continue-ability state side install-abi card nil))}}))
+
+(defcard "Key Performance Indicators"
+  {:on-play (choose-one-helper
+              {:count 2
+               :optional true}
+              [{:option "Gain 2 [Credit]"
+                :ability (gain-credits-ability 2)}
+               {:option "Install 1 piece of ice from HQ, ignoring all costs"
+                :req (req (some ice? (:hand corp)))
+                :ability {:choices {:card (every-pred ice? corp? in-hand?)}
+                          :async true
+                          :effect (req (corp-install state side eid target nil {:ignore-all-cost true
+                                                                                :install-source card}))}}
+               {:option "Place 1 advancement counter"
+                :req (req (some can-be-advanced? (all-installed state :corp)))
+                :ability {:choices {:req (req (and (corp? target)
+                                                   (installed? target)
+                                                   (can-be-advanced? state target)))}
+                          ;; note - this is sokka's champ card, so I'm throwing this tiny easter egg in - nbk, 2025
+                          :msg (msg "place 1 " (when (= (get-in @state [side :user :username]) "Sokka234") "solid gold ") "advancement counter on " (card-str state target))
+                          :async true
+                          :effect (req (add-prop state side eid target :advance-counter 1 {:placed true}))}}
+               {:option "Draw 1 card. Shuffle 1 card from HQ into R&D"
+                :req (req (>= (count (:hand corp)) 1))
+                :ability {:msg "draw 1 card"
+                          :async true
+                          :effect (req (wait-for (draw state side 1)
+                                                 (if (seq (:hand corp))
+                                                   (continue-ability
+                                                     state side
+                                                     {:prompt "Shuffle 1 card into R&D"
+                                                      :choices {:card (every-pred corp? in-hand?)
+                                                                :mandatory true}
+                                                      :msg "shuffle 1 card from HQ into R&D"
+                                                      :effect (req (move state side target :deck)
+                                                                   (shuffle! state :corp :deck))}
+                                                     card nil)
+                                                   (effect-completed state side eid))))}}])})
 
 (defcard "Kill Switch"
   (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title (or (:card context) target)))
@@ -1738,6 +1764,18 @@
                        :effect (effect (system-msg :runner (str "spends [Click] and 2 [Credits] to trash "
                                                                 (card-str state (:host card))))
                                        (trash :runner eid (get-card state (:host card)) {:cause-card (:host card)}))}]})
+
+(defcard "Measured Response"
+  {:on-play (choose-one-helper
+              {:req (req (last-turn? state :runner :successful-run))
+               :change-in-game-state {:req (req (threat-level 4 state))}
+               :player :runner}
+              [(cost-option [(->c :credit 8)] :runner)
+               {:option "Corp does 4 meat damage"
+                :ability {:msg (msg "do 4 meat damage")
+                          :display-side :corp
+                          :async true
+                          :effect (req (damage state :corp eid :meat 4))}}])})
 
 (defcard "Media Blitz"
   {:on-play
@@ -2544,10 +2582,7 @@
                      (trash state side eid target {:cause-card card}))))}})
 
 (defcard "Restructure"
-  {:on-play
-   {:msg "gain 15 [Credits]"
-    :async true
-    :effect (effect (gain-credits eid 15))}})
+  {:on-play (gain-credits-ability 15)})
 
 (defcard "Retribution"
   {:on-play
@@ -3083,11 +3118,7 @@
       :effect (effect (advance-n-times eid card target (get-advancement-requirement (cost-target eid :forfeit))))}}))
 
 (defcard "Successful Demonstration"
-  {:on-play
-   {:req (req (last-turn? state :runner :unsuccessful-run))
-    :msg "gain 7 [Credits]"
-    :async true
-    :effect (effect (gain-credits eid 7))}})
+  {:on-play (assoc (gain-credits-ability 7) :req (req (last-turn? state :runner :unsuccessful-run)))})
 
 (defcard "Sunset"
   (letfn [(sun [serv]

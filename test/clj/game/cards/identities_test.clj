@@ -991,6 +991,42 @@
     (play-from-hand state :corp "Reduced Service" "New remote")
     (is (zero? (get-counters (get-content state :remote2 0) :power)) "Reduced Service should have 0 counters on itself after reinstall")))
 
+(deftest bangun
+  (do-game
+    (new-game {:runner {:hand [(qty "Sure Gamble" 3)]}
+               :corp {:id "BANGUN" :hand ["Hostile Takeover"]}})
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (click-prompt state :corp "Yes")
+    (is (:seen (get-content state :remote1 0)) "HT is seen")
+    (is (:rezzed (get-content state :remote1 0)) "HT is considered rezzed")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (is (= 1 (count-tags state)) "Tagged")
+    (is (= 2 (count (:discard (get-runner)))) "Trashed 2")
+    (click-prompt state :runner "Steal")))
+
+(deftest bangun-archives
+  (do-game
+    (new-game {:runner {:hand [(qty "Sure Gamble" 3)]}
+               :corp {:id "BANGUN" :discard ["Hostile Takeover"]}})
+    (take-credits state :corp)
+    (run-empty-server state :archives)
+    (click-prompt state :runner "Steal")
+    (is (= 0 (count-tags state)) "not Tagged")
+    (is (= 0 (count (:discard (get-runner)))) "not Trashed 2")))
+
+(deftest bangun-normal-case
+  (do-game
+    (new-game {:runner {:hand [(qty "Sure Gamble" 3)]}
+               :corp {:id "BANGUN" :hand ["Hostile Takeover"]}})
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (click-prompt state :corp "No")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (is (= 0 (count-tags state)) "Not Tagged")
+    (is (= 0 (count (:discard (get-runner)))) "Not Trashed 2")
+    (click-prompt state :runner "Steal")))
+
 (deftest captain-padma-isbister-intrepid-explorer
   (do-game
     (new-game {:runner {:id "Captain Padma Isbister: Intrepid Explorer"
@@ -5337,6 +5373,54 @@
       (score-agenda state :corp (get-content state :remote1 0))
       (is (= 2 (count-bad-pub state)) "Take 1 bad publicity")
       (is (= (+ 5 7 3) (:credit (get-corp))) "Gain 7 from Hostile Takeover + 3 from The Outfit")))
+
+(deftest the-zwicky-group-operation
+  (do-game
+    (new-game {:corp {:id "The Zwicky Group"
+                      :hand [(qty "Predictive Planogram" 3)]
+                      :deck [(qty "Hedge Fund" 10)]}})
+    (play-from-hand state :corp "Predictive Planogram")
+    (click-prompt state :corp "Draw 3 cards")
+    (is (no-prompt? state :corp))
+    (play-from-hand state :corp "Predictive Planogram")
+    (click-prompt state :corp "Gain 3 [Credits]")
+    (is (= "Draw 1 card?" (:msg (get-prompt state :corp))))
+    (is (changed? [(count (:hand (get-corp))) 1]
+          (click-prompt state :corp "Yes")))
+    (play-from-hand state :corp "Predictive Planogram")
+    (click-prompt state :corp "Gain 3 [Credits]")
+    (is (no-prompt? state :corp))))
+
+(deftest the-zwicky-group-agenda
+  (do-game
+    (new-game {:corp {:id "The Zwicky Group"
+                      :hand ["Orbital Superiority" (qty "Offworld Office" 2)]
+                      :deck [(qty "Hedge Fund" 10)]}})
+    (play-and-score state "Orbital Superiority")
+    (is (no-prompt? state :corp))
+    (play-and-score state "Offworld Office")
+    (is (= "Draw 1 card?" (:msg (get-prompt state :corp))))
+    (is (changed? [(count (:hand (get-corp))) 1]
+                  (click-prompt state :corp "Yes")))
+    (play-and-score state "Offworld Office")
+    (is (no-prompt? state :corp))))
+
+(deftest the-zwicky-group-plutus
+  (do-game
+    (new-game {:corp {:id "The Zwicky Group"
+                      :credits 10
+                      :score-area ["Hostile Takeover"]
+                      :hand ["Hedge Fund" "Plutus"]
+                      :deck [(qty "Ice Wall" 10)]}})
+    (play-from-hand state :corp "Hedge Fund")
+    (click-prompt state :corp "No")
+    (play-from-hand state :corp "Plutus" "New remote")
+    (rez state :corp (get-content state :remote1 0) {:expect-rez false})
+    (click-card state :corp "Hostile Takeover")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-card state :corp "Hedge Fund")
+    (is (= "Draw 1 card?" (:msg (get-prompt state :corp))))))
 
 (deftest titan-transnational-investing-in-your-future-add-a-counter-to-a-scored-agenda
     ;; Add a counter to a scored agenda

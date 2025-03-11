@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [rez-cost install-cost]]
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-recur defcard do-net-damage
+   [game.core.def-helpers :refer [corp-recur defcard do-net-damage gain-credits-ability
                                   offer-jack-out reorder-choice take-credits get-x-fn]]
    [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -415,9 +415,7 @@
 
 (defcard "Bellona"
   {:steal-cost-bonus (req [(->c :credit 5)])
-   :on-score {:async true
-              :msg "gain 5 [Credits]"
-              :effect (effect (gain-credits :corp eid 5))}})
+   :on-score (gain-credits-ability 5)})
 
 (defcard "Better Citizen Program"
   {:events [{:event :play-event
@@ -903,10 +901,7 @@
    :on-access {:optional
                {:waiting-prompt true
                 :prompt "Gain 5 [Credits]?"
-                :yes-ability
-                {:msg "gain 5 [Credits]"
-                 :async true
-                 :effect (effect (gain-credits :corp eid 5))}}}})
+                :yes-ability (gain-credits-ability 5)}}})
 
 (defcard "Evidence Collection"
   {:events [{:event :win
@@ -1081,6 +1076,13 @@
       :msg "add up to 3 cards from R&D to HQ"
       :effect (effect (continue-ability (graft 1) card nil))}}))
 
+(defcard "Greenmail"
+  ;; "When you score this agenda, gain 2{c}.
+  ;; {interrupt} → When you would
+  ;; forfeit this agenda, gain 4{c}."
+  {:on-score   (gain-credits-ability 2)
+   :on-forfeit (gain-credits-ability 4)})
+
 (defcard "Hades Fragment"
   (let [abi {:prompt "Choose a card to add to the bottom of R&D"
              :label "add card to bottom of R&D"
@@ -1175,11 +1177,8 @@
                                      (effect-completed eid))}})
 
 (defcard "Hyperloop Extension"
-  (let [he {:msg "gain 3 [Credits]"
-            :async true
-            :effect (effect (gain-credits eid 3))}]
-    {:on-score he
-     :stolen he}))
+  {:on-score (gain-credits-ability 3)
+   :stolen   (gain-credits-ability 3)})
 
 (defcard "Ikawah Project"
   {:steal-cost-bonus (req [(->c :click 1) (->c :credit 2)])})
@@ -1572,10 +1571,7 @@
   {:steal-cost-bonus (req [(->c :net 4)])})
 
 (defcard "Offworld Office"
-  {:on-score
-   {:async true
-    :msg "gain 7 [Credits]"
-    :effect (effect (gain-credits :corp eid 7))}})
+  {:on-score (gain-credits-ability 7)})
 
 (defcard "Off the Books"
   (project-agenda-helper

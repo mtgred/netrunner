@@ -42,7 +42,7 @@
                              swap-agendas swap-cards swap-installed trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? cost-value ->c]]
-   [game.core.play-instants :refer [play-instant]]
+   [game.core.play-instants :refer [can-play-instant? play-instant]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
    [game.core.prevention :refer [damage-name preventable? prevent-bad-publicity prevent-damage prevent-expose]]
@@ -289,6 +289,22 @@
                                                     (effect-completed state side eid))))}}}
                                 card nil)))}]
      :abilities [ability]}))
+
+(defcard "Anthill Excavation Contract"
+  (let [ability {:once :per-turn
+                 :label "Take 4 [Credits] and draw a card (start of turn)"
+                 :req (req (:corp-phase-12 @state))
+                 :msg (msg "gain " (min 4 (get-counters card :credit)) " [Credits] and draw a card")
+                 :async true
+                 :automatic :draw-cards
+                 :interactive (req true)
+                 :effect (req (wait-for (draw state side 1 {:suppress-checkpoint true})
+                                        (take-credits state side eid card :credit 4)))}]
+    {:data {:counter {:credit 8}}
+     :flags {:drip-economy true}
+     :abilities [ability]
+     :events [(assoc ability :event :corp-turn-begins)
+              (trash-on-empty :credit)]}))
 
 (defcard "API-S Keeper Isobel"
   (letfn [(counters-available? [state] (some #(pos? (get-counters % :advancement)) (all-installed state :corp)))]
@@ -1604,7 +1620,7 @@
                   :label "Take all hosted credits and add this asset to HQ. Install 1 card from HQ"
                   :async true
                   :msg (msg "gain " (get-counters (get-card state card) :credit) " [Credits] and add itself to HQ")
-                  :effect (req (wait-for (take-credits state side  card :credit :all)
+                  :effect (req (wait-for (take-credits state side card :credit :all)
                                          (move state :corp card :hand)
                                          (continue-ability
                                            state side
@@ -2389,6 +2405,29 @@
      :msg (msg "score " (:title target))
      :async true
      :effect (effect (score eid target {:no-req true :ignore-turn true}))}))
+
+(defcard "Plutus"
+  (let [abi {:once :per-turn
+             :label "Play a transaction from Archives?"
+             :prompt "Play a transaction from Archives?"
+             :show-discard true
+             ;; TODO - ncigs check
+             :choices {:req (req (and (operation? target)
+                                      (has-subtype? target "Transaction")
+                                      (can-play-instant? state side eid target nil)))}
+             :async true
+             :msg (msg "play " (:title target) " from Archives")
+             :effect (req (play-instant
+                            state side
+                            (assoc eid :source target :source-type :play :source-info {:ability-targets [target]})
+                            (assoc-in
+                              (assoc target :rfg-instead-of-trashing true)
+                              [:special :rfg-when-trashed] true)
+                            nil))}]
+    {:derezzed-events [corp-rez-toast]
+     :events [(assoc abi :event :corp-turn-begins)]
+     :abilities [abi]
+     :additional-cost [(->c :forfeit-or-trash-x-from-hand 3)]}))
 
 (defcard "Political Dealings"
   (letfn [(pdhelper [agendas]

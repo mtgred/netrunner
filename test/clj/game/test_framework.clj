@@ -1133,7 +1133,7 @@
        (when counters
          ;; counters of the form :counter {:power x :credit x}
          (doseq [[c-type c-count] counters]
-           (core/add-counter state :corp (get-ice state server-key 0) c-type c-count)))
+           (core/add-counter state :corp (core/make-eid state) (get-ice state server-key 0) c-type c-count)))
        ;; ensure we start with the specified credit count (default 5)
        ;; by not actually clicking for creds
        (core/lose state :corp :click 2)

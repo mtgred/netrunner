@@ -80,14 +80,25 @@
   (req (update! state side (assoc-in card [:counter counter-type] (dec (get-counters card counter-type))))
        (complete-with-result state side eid 1)))
 
+(defn- use-card [uses card async-res]
+  (if (and async-res (pos? async-res))
+    (if (get uses (:cid card))
+      (update-in uses [(:cid card) :used] inc)
+      (assoc uses (:cid card) {:used 1 :max-uses (or (-> card card-def :interactions :pay-credits :max-uses) 99)}))
+    uses))
+
 (defn pick-credit-reducers
   "Similar to pick-credit-providing-cards, but this happens first and is (currently) only used for patchwork"
   ([provider-func outereid] (pick-credit-reducers provider-func outereid nil 0 (hash-map)))
   ([provider-func outereid target-count] (pick-credit-reducers provider-func outereid target-count 0 (hash-map)))
   ([provider-func outereid target-count stealth-target] (pick-credit-reducers provider-func outereid target-count stealth-target (hash-map)))
-  ([provider-func outereid target-count stealth-target selected-cards]
+  ([provider-func outereid target-count stealth-target selected-cards] (pick-credit-reducers provider-func outereid target-count stealth-target selected-cards {}))
+  ([provider-func outereid target-count stealth-target selected-cards uses]
    (let [counter-count (reduce + 0 (map #(:number (second %) 0) selected-cards))
          provider-cards (provider-func)
+         ;; dont select the same card more than once (for the custom ones with wierd rules - take it up with nsg)
+         all-used-up? (fn [cid] (>= (get-in uses [cid :used] 0) (get-in uses [cid :max-uses] 1)))
+         provider-cards (filter #(not (all-used-up? (:cid %))) provider-cards)
          discount-provider (filter #(get-in (card-def %) [:interactions :pay-credits :cost-reduction]) provider-cards)]
      (if (empty? discount-provider)
        {:async true
@@ -109,7 +120,8 @@
                                                    (pick-credit-reducers
                                                      provider-func eid target-count stealth-target
                                                      (update selected-cards (:cid providing-card)
-                                                             #(assoc % :card providing-card :number (+ (:number % 0) async-result))))
+                                                             #(assoc % :card providing-card :number (+ (:number % 0) async-result)))
+                                                     (use-card uses providing-card async-result))
                                                    card targets))))
         :cancel-effect (req (complete-with-result state side eid {:reduction counter-count
                                                                   :targets (keep #(:card (second %)) selected-cards)}))}))))
@@ -120,13 +132,16 @@
   ([provider-func outereid target-count] (pick-credit-providing-cards provider-func outereid target-count 0 (hash-map)))
   ([provider-func outereid target-count stealth-target] (pick-credit-providing-cards provider-func outereid target-count stealth-target (hash-map)))
   ([provider-func outereid target-count stealth-target selected-cards] (pick-credit-providing-cards provider-func outereid target-count stealth-target selected-cards nil))
-  ([provider-func outereid target-count stealth-target selected-cards pre-chosen]
+  ([provider-func outereid target-count stealth-target selected-cards pre-chosen] (pick-credit-providing-cards provider-func outereid target-count stealth-target selected-cards pre-chosen {}))
+  ([provider-func outereid target-count stealth-target selected-cards pre-chosen uses]
    (let [counter-count (reduce + 0 (map #(:number (second %) 0) selected-cards))
          selected-stealth (filter #(has-subtype? (:card (second %)) "Stealth") selected-cards)
          stealth-count (reduce + 0 (map #(:number (second %) 0) selected-stealth))
          provider-cards (if (= (- counter-count target-count) (- stealth-count stealth-target))
                           (filter #(has-subtype? % "Stealth") (provider-func))
                           (provider-func))
+         all-used-up? (fn [cid] (>= (get-in uses [cid :used] 0) (get-in uses [cid :max-uses] 99)))
+         provider-cards (filter #(not (all-used-up? (:cid %))) provider-cards)
          provider-cards (filter #(not (get-in (card-def %) [:interactions :pay-credits :cost-reduction])) provider-cards)
          ;; note - this allows holding the shift key while clicking a card to keep picking that card while possible
          ;; ie: taking 5cr from miss bones with one click, instead of waiting for 5 server round-trips
@@ -157,7 +172,7 @@
                                     (pick-counter-triggers state side eid selected-cards selected-cards :credit target-count message))))
                       (continue-ability
                         state side
-                        (pick-credit-providing-cards provider-func eid target-count stealth-target selected-cards)
+                        (pick-credit-providing-cards provider-func eid target-count stealth-target selected-cards uses)
                         card nil)))]
      (if (or (not (pos? target-count))        ; there is a limit
              (<= target-count counter-count)  ; paid everything
@@ -207,6 +222,7 @@
                                                        provider-func eid target-count stealth-target
                                                        (update selected-cards (:cid providing-card)
                                                                #(assoc % :card providing-card :number (+ (:number % 0) async-result)))
-                                                       (when (should-auto-repeat? state side) target))
+                                                       (when (should-auto-repeat? state side) target)
+                                                       (use-card uses providing-card async-result))
                                                      card targets))))
           :cancel-effect pay-rest})))))

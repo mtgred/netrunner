@@ -1805,6 +1805,17 @@
                  [2 1]
                  [3 0]]))))
 
+(deftest greenmail-test
+  (do-game
+    (new-game {:corp {:hand ["Greenmail" "Archer"]}})
+    (is (changed? [(:credit (get-corp)) 2]
+          (play-and-score state "Greenmail")))
+    (play-from-hand state :corp "Archer" "HQ")
+    (rez state :corp (get-ice state :hq 0) {:expect-rez false})
+    (is (changed? [(:credit (get-corp)) +4]
+          (click-card state :corp "Greenmail"))
+        "Gained 4 for the forfeit")))
+
 (deftest hades-fragment
   ;; Hades Fragment
   (do-game

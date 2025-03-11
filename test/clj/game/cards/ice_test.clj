@@ -1042,7 +1042,7 @@
       (run-on state "HQ")
       (run-continue state)
       (fire-subs state ball)
-      (is (= ["End the run"] (prompt-buttons :corp)) "Corp should have 1 option")
+      (is (= ["Do nothing" "End the run"] (prompt-buttons :corp)) "Corp should have 2 options, but it's clear the first does nothing")
       (click-prompt state :corp "End the run")
       (is (not (:run @state)) "Run ended"))))
 
@@ -4254,6 +4254,11 @@
       (click-prompt state :runner "No action")
       (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use"))))
 
+;; TODO - fix this one merge
+;; (deftest kessleroid-subs-test
+;;   (do-game (new-game (etr-sub "Kessleroid" 0)))
+;;   (do-game (new-game (etr-sub "Kessleroid" 1))))
+
 (deftest kitsune-trash-after-use
   ;; Trash after use
   (do-game
@@ -6283,6 +6288,35 @@
       (is (= ["End the run"] (prompt-buttons :runner))
           "Runner has no click left to spend"))))
 
+(deftest predator-discount
+  (do-game
+    (new-game {:corp {:score-area ["Project Atlas"]
+                      :credits 5
+                      :hand ["Predator"]}})
+    (play-from-hand state :corp "Predator" "HQ")
+    (rez state :corp (get-ice state :hq 0) {:expect-rez false})
+    (is (changed? [(:credit (get-corp)) -4]
+          (click-prompts state :corp "Predator" "Project Atlas"))
+        "Paid 4 + atlas to rez")
+    (is (rezzed? (get-ice state :hq 0)) "No rezzed")))
+
+(deftest predator-subs-tests
+  ;; trash program or etr
+  (do-game
+    (subroutine-test "Predator" 0 nil {:rig ["Fermenter"] :disable true})
+    (click-prompt state :corp "Trash a program")
+    (click-card state :corp "Fermenter")
+    (is (= 1 (count (:discard (get-runner)))) (str "Trashed prog")))
+  ;; trash hardware or etr
+  (do-game
+    (subroutine-test "Predator" 1 nil {:rig ["Kati Jones"] :disable true})
+    (click-prompt state :corp "Trash a resource")
+    (click-card state :corp "Kati Jones")
+    (is (= 1 (count (:discard (get-runner)))) (str "Trashed kati"))))
+  ;; etr
+  ;; TODO - fix on merge
+  ;;(do-game (etr-sub "Predator" 2)))
+
 (deftest quicksand
   (do-game
     (run-and-encounter-ice-test "Quicksand")
@@ -7562,6 +7596,23 @@
               "Done"]
              (prompt-buttons :runner))))))
 
+(deftest syailendra-wonder-encounter
+  (do-game
+    (run-and-encounter-ice-test "Syailendra" nil {:counters [[:advancement 3]]})
+    (click-card state :corp "Syailendra")
+    (is (= 4 (get-counters (get-ice state :hq 0) :advancement)) "Placed 1 more")))
+
+(deftest syailendra-subs-test
+  (do-game
+    (subroutine-test "Syailendra" 0)
+    (click-card state :corp (get-ice state :hq 0))
+    (is (= 1 (get-counters (get-ice state :hq 0) :advancement)) "Placed 1"))
+  (do-game
+    (subroutine-test "Syailendra" 1 {:runner {:credits (inc 2)}})
+    (is (= 1 (:credit (get-runner))) "lost 2 credits")))
+  ;; TODO - fix this
+  ;;(do-game (does-damage-sub "Syailendra" 2 1)))
+
 (deftest tatu-bola
   (do-game
     (new-game {:corp {:hand ["Tatu-Bola" "Guard"]}})
@@ -8459,7 +8510,6 @@
       (rez state :corp vas)
       (run-continue state)
       (is (changed? [(:credit (get-corp)) -1]
-            (click-prompt state :corp "Yes")
             (click-card state :corp (refresh ngo))
             (is (= 1 (get-counters (refresh ngo) :advancement)) "ngo has a counter"))
           "paid 1c to place a token on ngo front")

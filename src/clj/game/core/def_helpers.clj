@@ -356,6 +356,11 @@
                      (continue-ability state side (corp-install-up-to-n-cards (dec n)) card nil)
                      (effect-completed state side eid))))}))
 
+(defn gain-credits-ability [x]
+  {:msg (str "gain " x " [Credits]")
+   :async true
+   :effect (req (gain-credits state side eid x))})
+
 (defn corp-recur
   ([] (corp-recur (constantly true)))
   ([pred]

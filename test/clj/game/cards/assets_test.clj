@@ -265,6 +265,26 @@
       (is (zero? (get-counters (refresh ar) :advancement)) "Anson Rose should lose all advancement counters")
       (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall should gain 2 advancement counter"))))
 
+(deftest anthill-excavation-contract
+  (do-game
+    (new-game {:corp {:hand ["Anthill Excavation Contract"]
+                      :deck [(qty "IPO" 15)]}})
+    (play-from-hand state :corp "Anthill Excavation Contract" "New remote")
+    (let [agg (get-content state :remote1 0)]
+      (rez state :corp agg)
+      (take-credits state :corp)
+      (is (changed?
+            [(:credit (get-corp)) 4
+             (count (:hand (get-corp))) 2]
+            (take-credits state :runner))
+          "Corp gained 4 credits and drew 1 card")
+      (take-credits state :corp)
+      (is (changed?
+            [(:credit (get-corp)) 4
+             (count (:hand (get-corp))) 2]
+            (take-credits state :runner))
+          "Corp gained 4 credits and drew 1 card"))))
+
 (deftest api-s-keeper-isobel
   ;; API-S Keeper Isobel
   (do-game
@@ -4263,6 +4283,30 @@
     ;; Pick Brain Trust, scores
     (click-card state :corp (find-card "Braintrust" (:hand (get-corp))))
     (is (find-card "Braintrust" (:scored (get-corp))) "Braintrust is scored")))
+
+(deftest plutus-full-test
+  (doseq [[scenario prompt-opt score-area hand]
+          [[:forfeit nil ["Hostile Takeover"] ["Plutus"]]
+           [:discard nil [] ["Plutus" "IPO" "PAD Campaign" "NGO Front"]]
+           [:forfeit "Forfeit an Agenda" ["Hostile Takeover"] ["Plutus" "IPO" "PAD Campaign" "NGO Front"]]
+           [:discard "Reveal and trash 3 cards from HQ" ["Hostile Takeover"] ["Plutus" "IPO" "PAD Campaign" "NGO Front"]]]]
+    (do-game
+      (new-game {:corp {:score-area score-area
+                        :hand hand
+                        :discard ["Hedge Fund"]
+                        :deck [(qty "Ice Wall" 10)]}})
+      (play-from-hand state :corp "Plutus" "New remote")
+      (rez state :corp (get-content state :remote1 0) {:expect-rez false})
+      (when prompt-opt (click-prompt state :corp prompt-opt))
+      (if (= scenario :forfeit)
+        (click-card state :corp "Hostile Takeover")
+        (click-prompts state :corp "IPO" "PAD Campaign" "NGO Front"))
+      (is (rezzed? (get-content state :remote1 0)) "Rezzed after paying the cost")
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (changed? [(:credit (get-corp)) 4]
+            (click-card state :corp "Hedge Fund"))
+          "Played a hedge"))))
 
 (deftest political-dealings-full-test
     ;; Full test

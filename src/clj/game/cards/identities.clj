@@ -6,7 +6,7 @@
    [game.core.board :refer [all-active-installed all-installed card->server
                             get-all-cards get-remote-names get-remotes server->zone]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
-                           corp-installable-type? corp? event? faceup? get-advancement-requirement
+                           condition-counter? corp-installable-type? corp? event? faceup? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
                            has-any-subtype? ice? in-discard? in-deck? in-hand? in-play-area? in-rfg? installed? is-type?
                            operation? program? resource? rezzed? runner? upgrade?]]
@@ -17,7 +17,7 @@
    [game.core.damage :refer [chosen-damage corp-can-choose-damage? damage
                              enable-corp-damage-choice]]
    [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? corp-recur defcard offer-jack-out with-revealed-hand]]
-   [game.core.drawing :refer [draw]]
+   [game.core.drawing :refer [draw maybe-draw]]
    [game.core.effects :refer [register-lingering-effect is-disabled?]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event unregister-event-by-uuid]]
@@ -533,6 +533,52 @@
                                       (or (resource? target) (hardware? target))
                                       (runner-can-pay-and-install? state side eid target)))}
              :effect (effect (runner-install (assoc eid :source card) target {:msg-keys {:install-source card}}))}]})
+
+(defcard "BANGUN"
+  ;; todo - this technically doesn't match the id, but it's good enough for online play. Maybe somebody can tweak it in a few years.
+  {:abilities [{:label "Manually turn an agenda faceup"
+	        :choices {:req (req (and (agenda? target)
+                                         (installed? target)))}
+		:msg (msg "turn " (card-str state target {:visible true}) " faceup")
+                :effect (req (update! state side (assoc target
+                                                        :seen true
+                                                        :rezzed true)))}]
+   :events [{:event :access
+             :req (req ((every-pred faceup? installed? agenda? :was-seen) target))
+             :interactive (req true)
+             :msg (msg "do 2 meat damage and give the Runner a tag")
+             :async true
+             :effect (req (wait-for (damage state :corp :meat 2 {:card card :suppress-checkpoint true})
+                                    (gain-tags state :corp eid 1)))}
+            {:event :corp-install
+             :interactive (req true)
+             :skippable true
+             ;; note, since this is a lot of stuff:
+             ;; if it's ice or a condition counter, or already faceup, we don't care
+             ;; and if it's on a central, we don't care
+             ;; if there's already a faceup asset or agenda in the slot, we also don't care
+             :req (req (and (not (ice? (:card target)))
+                            (not (condition-counter? (:card target)))
+                            (not (rezzed? (:card context)))
+                            (not (#{:face-up} (:install-state context)))
+                            (let [cards-in-slot (filter #(= (:zone %) (:zone (:card context))) (all-installed state :corp))]
+                              (not (some #(and (or (asset? %) (agenda? %))
+                                               (or (rezzed? %) (:face-up %)))
+                                         cards-in-slot)))))
+             :async true
+             :effect (req (let [tcard (:card target)]
+                            (continue-ability
+                              state side
+                              (if (agenda? tcard)
+                                {:optional
+                                 {:prompt (str "Turn " (:title tcard) " faceup?")
+                                  :waiting-prompt true
+                                  :yes-ability {:msg (str "turn " (card-str state tcard {:visible true}) " faceup")
+                                                :effect (req (update! state side (assoc tcard :seen true :rezzed true)))}}}
+                                {:prompt "You didn't install an agenda, but your opponent probably doesn't know that"
+                                 :waiting-prompt true
+                                 :choices ["OK"]})
+                              card nil)))}]})
 
 (defcard "Blue Sun: Powering the Future"
   {:flags {:corp-phase-12 (req (and (not (:disabled card))
@@ -2573,6 +2619,15 @@
 (defcard "The Syndicate: Profit over Principle"
   ;; No special implementation
   {})
+
+(defcard "The Zwicky Group"
+  {:events [{:event :corp-credit-gain
+             :async true
+             :req (req (letfn [(valid-ctx? [[ctx]]
+                                 (or (agenda? (:source ctx))
+                                     (operation? (:source ctx))))]
+                         (and (valid-ctx? targets) (first-event? state side :corp-credit-gain valid-ctx?))))
+             :effect (effect (maybe-draw eid card 1))}]})
 
 (defcard "Thule Subsea: Safety Below"
   {:events [{:event :agenda-stolen

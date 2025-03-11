@@ -2601,6 +2601,34 @@
       (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")
       (is (no-prompt? state :corp) "No more prompts")))
 
+(deftest key-performance-indicators-test
+  (dotimes [_ 24]
+    (do-game
+      (new-game {:corp {:hand ["Key Performance Indicators" "Ice Wall" "Enigma" "NGO Front" "Hedge Fund"]
+                        :deck ["IPO"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Key Performance Indicators")
+      (doseq [action (take 2 (shuffle [:cred :install :advance :shuffle]))]
+        (case action
+          :cred (is (changed? [(:credit (get-corp)) 2]
+                      (click-prompt state :corp "Gain 2 [Credit]"))
+                    "Gained 2 creds")
+          :install (is (changed? [(:credit (get-corp)) 0]
+                         (click-prompt state :corp "Install 1 piece of ice from HQ, ignoring all costs")
+                         (click-card state :corp "Enigma")
+                         (click-prompt state :corp "HQ"))
+                       "Installed enigma, ignoring it's cost")
+          :advance (is (changed? [(get-counters (get-ice state :hq 0) :advancement) 1]
+                         (click-prompt state :corp "Place 1 advancement counter")
+                         (click-card state :corp (get-ice state :hq 0)))
+                       "Placed 1 adv on ice wall")
+          :shuffle (is (changed? [(count (:hand (get-corp))) 0
+                                  (count (:deck (get-corp))) 0]
+                         (click-prompt state :corp "Draw 1 card. Shuffle 1 card from HQ into R&D")
+                         (click-card state :corp "Hedge Fund"))
+                       "Drew 1, shuffled 1")))
+      (is (no-prompt? state :corp) "No lingering prompts")
+      (is (no-prompt? state :runner) "No lingering prompts"))))
 
 (deftest kill-switch
   ;; Kill Switch
@@ -2790,6 +2818,45 @@
       (card-side-ability state :runner (-> (get-resource state 0) :hosted first) 0)
       (is (nil? (get-resource state 0)) "Beth should now be trashed")
       (is (= (- credits 2) (:credit (get-runner))) "Runner should pay 2 credits to trash MCA"))))
+
+(deftest measured-response-test
+  (doseq [opt ["Pay 8 [Credits]" "Corp does 4 meat damage"]]
+    (do-game
+      (new-game {:corp {:hand ["Measured Response" "Hostile Takeover"] :score-area ["Vanity Project"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (click-advance state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Steal")
+      (take-credits state :runner)
+      (is (changed? [(:credit (get-runner)) 0]
+            (play-from-hand state :corp "Measured Response"))
+          "Stole 8c")
+      (if (= opt "Pay 8 [Credits]")
+        (is (changed? [(count (:hand (get-runner))) 0
+                       (:credit (get-runner)) -8]
+              (click-prompt state :runner opt))
+            "Paid 8c")
+        (is (changed? [(count (:hand (get-runner))) -4
+                       (:credit (get-runner)) 0]
+              (click-prompt state :runner opt))
+            "Suffered 4 damage")))))
+
+(deftest measured-response-no-threat
+  (doseq [opt ["Pay 8 [Credits]" "Corp does 4 meat damage"]]
+    (do-game
+      (new-game {:corp {:hand ["Measured Response" "Hostile Takeover"] :score-area ["City Works Project"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (click-advance state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Steal")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Measured Response")
+      (is (no-prompt? state :corp) "No prompt because no threat")
+      (is (no-prompt? state :runner) "No prompt because no threat"))))
 
 (deftest media-blitz
   ;; Hostile Takeover

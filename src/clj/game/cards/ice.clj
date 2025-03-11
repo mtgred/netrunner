@@ -21,13 +21,13 @@
                                   reorder-choice get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw draw-up-to]]
    [game.core.effects :refer [any-effects get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-effect-by-uuid unregister-static-abilities update-disabled-cards]]
-   [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+   [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
    [game.core.engine :refer [gather-events pay register-default-events register-events
                              resolve-ability trigger-event trigger-event-simult unregister-events
                              ]]
    [game.core.events :refer [first-event? run-events]]
    [game.core.finding :refer [find-cid]]
-   [game.core.flags :refer [can-rez? card-flag? prevent-draw
+   [game.core.flags :refer [can-rez? card-flag? in-corp-scored? prevent-draw
                             register-run-flag! register-turn-flag! run-flag? zone-locked?]]
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [hand-size]]
@@ -40,7 +40,7 @@
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.memory :refer [available-mu init-mu-cost]]
-   [game.core.moving :refer [as-agenda mill move swap-cards swap-cards-async
+   [game.core.moving :refer [as-agenda forfeit mill move swap-cards swap-cards-async
                              swap-ice swap-installed trash
                              trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
@@ -227,6 +227,18 @@
                                (ice? target)
                                (can-pay-to-rez? state side eid target args)))}
       :effect (req (rez state side eid target args))})))
+
+(defn place-advancement-counter
+  [advanceable-only]
+  {:label (if advanceable-only
+            "Place 1 advancement counter on a card that can be advanced"
+            "Place 1 advancement counter on a card")
+   :choices {:req (req (and (corp? target)
+                            (installed? target)
+                            (or (not advanceable-only) (can-be-advanced? state target))))}
+   :msg (msg "place 1 advancement counter on " (card-str state target))
+   :async true
+   :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))})
 
 (defn trace-ability
   "Run a trace with specified base strength.
@@ -531,6 +543,25 @@
   [ability]
   {:on-encounter reveal-grail
    :subroutines [ability]})
+
+(defn trash-type-or-end-the-run
+  [type-name type-fn sub]
+  {:label (str "Trash 1 " type-name " or end the run")
+   :prompt "Choose one"
+   :waiting-prompt true
+   :choices (req [(if (empty? (filter type-fn (all-active-installed state :runner)))
+                    "Do nothing"
+                    (str "Trash a " type-name))
+                  "End the run"])
+   :async true
+   :effect (req
+             (continue-ability
+               state side
+               (cond
+                 (= target "End the run") end-the-run
+                 (= target "Do nothing") nil
+                 :else sub)
+               card nil))})
 
 ;;; For NEXT ice and Tour Guide
 (defn variable-subs-ice
@@ -939,19 +970,7 @@
      :subroutines [end-the-run]}))
 
 (defcard "Ballista"
-  {:subroutines [{:label "Trash 1 program or end the run"
-                  :prompt "Choose one"
-                  :waiting-prompt true
-                  :choices (req [(when (not-empty (filter program? (all-active-installed state :runner)))
-                                   "Trash a program")
-                                 "End the run"])
-                  :async true
-                  :effect (effect
-                            (continue-ability
-                              (if (= target "Trash a program")
-                                trash-program-sub
-                                end-the-run)
-                              card nil))}]})
+  {:subroutines [(trash-type-or-end-the-run "program" program? trash-program-sub)]})
 
 (defcard "Bandwidth"
   {:subroutines [{:msg "give the Runner 1 tag"
@@ -2616,6 +2635,14 @@
                                          (continue-ability state side (offer-jack-out) card nil)))}
                  (do-net-damage 2)]})
 
+(defcard "Kessleroid"
+  {:static-abilities [{:type :cannot-be-trashed
+                       :req (req (and (same-card? card target)
+                                      (= :runner side)))
+                       :value true}]
+   :subroutines [end-the-run
+                 end-the-run]})
+
 (defcard "Kitsune"
   {:subroutines [{:label "Force the Runner to access a card in HQ"
                   :optional
@@ -3020,11 +3047,7 @@
                   :effect (effect (add-prop eid card :advance-counter 1 {:placed true}))}))
 
 (defcard "Matrix Analyzer"
-  {:on-encounter {:cost [(->c :credit 1)]
-                  :choices {:req (req (can-be-advanced? state target))}
-                  :msg (msg "place 1 advancement token on " (card-str state target))
-                  :async true
-                  :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}
+  {:on-encounter (assoc (place-advancement-counter true) :cost [(->c :credit 1)])
    :subroutines [(tag-trace 2)]})
 
 (defcard "Mausolus"
@@ -3552,6 +3575,32 @@
 (defcard "Pop-up Window"
   {:on-encounter (gain-credits-sub 1)
    :subroutines [(end-the-run-unless-runner-pays (->c :credit 1))]})
+
+(defcard "Predator"
+  {:subroutines [(trash-type-or-end-the-run "program" program? trash-program-sub)
+                 (trash-type-or-end-the-run "resource" resource? trash-resource-sub)
+                 end-the-run]
+   :interactions {:pay-credits
+                  {:req (req (and (#{:rez} (:source-type eid))
+                                  (seq (get-in @state [:corp :scored]))
+                                  (same-card? card target)))
+                   :custom-amount 10
+                   :max-uses 1
+                   :custom (req (let [cost-type "rez"
+                                      targetcard target]
+                                  (continue-ability
+                                    state side
+                                    {:prompt (str "Forfiet an agenda to pay for 10 [Credits] of the rez cost?")
+                                     :async true
+                                     :choices {:req (req (in-corp-scored? state side target))}
+                                     :msg (msg "forfeit " (:title target) " to pay for 10 [Credits] its rez cost")
+                                     :effect (req (wait-for (forfeit state side target)
+                                                            (effect-completed state side (make-result eid 10))))
+                                     :cancel-effect (effect (effect-completed (make-result eid 0)))}
+                                    card nil)))
+                   :type :custom
+                   :while-inactive true}}})
+
 
 (defcard "Pulse"
   {:rez-sound "pulse"
@@ -4118,6 +4167,21 @@
                                    :msg "reduce cards accessed for this run by 1"
                                    :effect (effect (access-bonus :total -1))})]})
 
+(defcard "Syailendra"
+  ;; "You can advance this ice.
+  ;; When the Runner encounters this ice, if it has 3 or more hosted advancement
+  ;; counters, place 1 advancement counter on an installed card you can advance.
+  ;; {sub} Place 1 advancement counter on an installed card you can advance.
+  ;; {sub} The Runner loses 2{c}.
+  ;; {sub} Do 1 net damage."
+  {:advanceable :always
+   :on-encounter (assoc (place-advancement-counter true) :interactive (req true) :req (req (>= (get-counters card :advancement) 3)))
+   :prompt "Place 1 advancement counter on an installed card"
+   :subroutines [(place-advancement-counter true)
+                 (runner-loses-credits 2)
+                 (do-net-damage 1)]})
+
+
 (defcard "Tapestry"
   {:subroutines [runner-loses-click
                  {:label "Draw 1 card"
@@ -4461,22 +4525,7 @@
   {:subroutines [end-the-run]})
 
 (defcard "Vasilisa"
-  {:on-encounter
-   {:optional {:prompt "Pay 1 [Credits] to place 1 advancement counter on a card that can be advanced?"
-               :waiting-prompt true
-               :req (req (and (can-pay? state side eid card nil [(->c :credit 1)])
-                              (some #(or (not (rezzed? %))
-                                         (can-be-advanced? state %))
-                                    (all-installed state :corp))))
-               :yes-ability {:cost [(->c :credit 1)]
-                             :choices {:req (req (can-be-advanced? state target))}
-                             :prompt "Choose a card that can be advanced"
-                             :msg (msg "place 1 advancement counter on " (card-str state target))
-                             :async true
-                             :effect (req (add-prop state side eid target :advance-counter 1 {:placed true}))
-                             :cancel-effect (effect (system-msg :corp (str "declines to use " (:title card)))
-                                                    (effect-completed eid))}
-               :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}
+  {:on-encounter (assoc (place-advancement-counter true) :cost [(->c :credit 1)])
    :subroutines [(give-tags 1)]})
 
 (defcard "Veritas"

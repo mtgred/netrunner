@@ -358,7 +358,7 @@
   "Trigger access effects, then move into trash/steal choice."
   [state side eid c title args]
   (let [cdef (card-def c)
-        c (assoc c :seen (or (:seen c) (not (in-discard? c))))
+        c (assoc c :was-seen (:seen c) :seen (or (:seen c) (not (in-discard? c))))
         access-effect (access-ability c cdef)]
     (swap! state assoc-in [:runner :register :accessed-cards] true)
     (wait-for (msg-handle-access state side c title args)
