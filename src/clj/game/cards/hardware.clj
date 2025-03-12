@@ -51,7 +51,7 @@
    [game.core.runs :refer [bypass-ice end-run
                            get-current-encounter jack-out make-run
                            successful-run-replace-breach total-cards-accessed]]
-   [game.core.say :refer [system-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [target-server is-central?]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags]]
@@ -299,7 +299,10 @@
                                          (seq (:deck runner))))
                           :prompt "Host the top card of your stack on Bling?"
                           :yes-ability {:msg (msg "host " (:title (first (:deck runner))))
-                                        :effect (req (host state side card (first (:deck runner))))}}}
+                                        :effect (req (trigger-event state side :bling-hosted)
+                                                     (let [times-hosted (min (event-count state nil :bling-hosted) 10)]
+                                                       (play-sfx state side (str "bling-" times-hosted)))
+                                                     (host state side card (first (:deck runner))))}}}
               {:event :runner-turn-ends
                :req (req (seq (:hosted card)))
                :msg (msg "trash " (enumerate-str (map :title (:hosted card))))
