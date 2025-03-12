@@ -56,7 +56,7 @@
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
    [game.core.payment :refer [build-spend-msg can-pay? ->c]]
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
-   [game.core.play-instants :refer [play-instant]]
+   [game.core.play-instants :refer [can-play-instant? play-instant]]
    [game.core.prevention :refer [damage-name prevent-damage preventable? prevent-encounter prevent-tag prevent-trash-installed-by-type prevent-up-to-n-tags prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter add-icon remove-icon]]
@@ -3174,8 +3174,9 @@
                 :prompt "Choose an event in the heap"
                 :msg (msg "play " (:title target))
                 :show-discard true
-                :choices {:card #(and (event? %)
-                                      (in-discard? %))}
+                :choices {:req (req (and (event? target)
+                                         (in-discard? target)
+                                         (can-play-instant? state side eid target {:base-cost [(->c :click 2)]})))}
                 :effect (effect (play-instant eid target))}]})
 
 (defcard "Scrubber"

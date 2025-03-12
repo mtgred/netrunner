@@ -2411,7 +2411,13 @@
              :label "Play a transaction from Archives?"
              :prompt "Play a transaction from Archives?"
              :show-discard true
-             ;; TODO - ncigs check
+             :change-in-game-state
+             {:silent (req true)
+              :req (req (some #(or (not (:seen %))
+                                   (and (operation? %)
+                                        (has-subtype? % "Transaction")
+                                        (can-play-instant? state side eid % nil)))
+                              (:discard corp)))}
              :choices {:req (req (and (operation? target)
                                       (has-subtype? target "Transaction")
                                       (can-play-instant? state side eid target nil)))}

@@ -3480,19 +3480,23 @@
                                                                                       (has-subtype? % "Icebreaker"))
                                                                                 (all-active-installed state :runner))))})]}))
 
-;; TODO - just make this an autoresolve
 (defcard "Upya"
-  {:implementation "Power counters added automatically"
+  {:special {:auto-place-counters :always}
    :events [{:event :successful-run
-             :silent (req true)
-             :req (req (= :rd (target-server context)))
-             :async true
-             :effect (effect (add-counter eid card :power 1 nil))}]
+             :optional
+             {:player :runner
+              :req (req (= :rd (target-server context)))
+              :waiting-prompt true
+              :autoresolve (get-autoresolve :auto-place-counters)
+              :prompt (msg "Place 1 power counter on " (:title card) "?")
+              :yes-ability {:async true
+                            :effect (effect (add-counter eid card :power 1 nil))}}}]
    :abilities [{:action true
                 :cost [(->c :click 1) (->c :power 3)]
                 :once :per-turn
                 :msg "gain [Click][Click]"
-                :effect (effect (gain-clicks 2))}]})
+                :effect (effect (gain-clicks 2))}
+               (set-autoresolve :auto-place-counters "Upya placing counters on itself")]})
 
 (defcard "Utae"
   (let [break-req (:break-req (break-sub 1 1 "Code Gate"))]

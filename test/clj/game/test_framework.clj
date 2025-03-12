@@ -1194,6 +1194,29 @@
      (fire-subs state ice)
      state)))
 
+
+(defn is-deck-stacked-impl
+  [state side expected-deck]
+  (let [expected-deck (seq (flatten expected-deck))
+        deck (seq (map :title (take (count expected-deck) (get-in @state [side :deck]))))]
+    (is' (= expected-deck deck) (str "deck is not " expected-deck))))
+
+(defmacro is-deck-stacked?
+  [state side expected-deck]
+  `(error-wrapper (is-deck-stacked-impl ~state ~side ~expected-deck)))
+
+(defn provides-mu-impl
+  [cname x]
+  (let [state (new-game {:runner {:hand [cname] :credits 15}})] ;; todo - install-free
+    (take-credits state :corp)
+    (play-from-hand state :runner cname)
+    (is' (= (+ 4 x) (core/available-mu state)) (str cname " provided " x " memory"))
+    state))
+
+(defmacro provides-mu
+  [cname x]
+  `(error-wrapper (provides-mu-impl ~cname ~x)))
+
 (defn bad-usage [n]
   `(throw (new IllegalArgumentException (str ~n " should only be used inside 'is'"))))
 

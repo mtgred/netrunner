@@ -1927,6 +1927,7 @@
 (defcard "Flyswatter"
   {:on-rez {:req (req (and run this-server))
             :msg (msg "purge virus counters")
+            :async true
             :effect (req (purge state side eid))}
    :subroutines [end-the-run]})
 

@@ -1328,9 +1328,7 @@
           (is (changed? [(get-counters (refresh gpp-scored) :agenda) -1]
 		(click-prompt state :corp "Yes")
                 (click-prompt state :corp "IPO")
-                ;; TODO - this is in another pr
-                ;;(is-deck-stacked? state :corp ["IPO" "Restructure"])
-                )
+                (is-deck-stacked? state :corp ["IPO" "Restructure"]))
               "Stacked the deck"))))))
 
 (deftest eminent-domain

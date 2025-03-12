@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [all-cards-in-hand* in-hand*?
-                                  breach-access-bonus defcard offer-jack-out
+                                  breach-access-bonus defcard drain-credits offer-jack-out
                                   reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -99,16 +99,7 @@
    :events [(successful-run-replace-breach
               {:target-server :hq
                :this-card-run true
-               :ability
-               {:async true
-                :msg (msg "force the Corp to lose " (min 5 (:credit corp))
-                          " [Credits], gain " (* 2 (min 5 (:credit corp)))
-                          " [Credits] and take 2 tags")
-                :effect (req (let [creds-lost (min 5 (:credit corp))]
-                               (wait-for
-                                (lose-credits state :corp creds-lost)
-                                (wait-for (gain-tags state :runner 2)
-                                          (gain-credits state :runner eid (* 2 creds-lost))))))}})]})
+               :ability (drain-credits :runner :corp 5 2 2)})]})
 
 (defcard "Always Have a Backup Plan"
   {:makes-run true
@@ -1175,19 +1166,12 @@
              :effect (effect (gain-credits :runner eid 5))}]})
 
 (defcard "Diversion of Funds"
-  (letfn [(five-or-all [corp] (min 5 (:credit corp)))]
     {:makes-run true
      :on-play (run-server-ability :hq)
      :events [(successful-run-replace-breach
                 {:target-server :hq
                  :this-card-run true
-                 :ability
-                 {:msg (msg "force the Corp to lose " (five-or-all corp)
-                            " [Credits], and gain " (five-or-all corp)
-                            " [Credits]")
-                  :async true
-                  :effect (req (wait-for (gain-credits state :runner (five-or-all corp))
-                                         (lose-credits state :corp eid (five-or-all corp))))}})]}))
+                 :ability (drain-credits :runner :corp 5 1)})]})
 
 (defcard "Divide and Conquer"
   {:makes-run true
@@ -4008,7 +3992,7 @@
                        :effect (effect (remove-icon card t))}])))}})
 
 (defcard "Trade-In"
-  ;; TODO: look at me plz
+  ;; TODO: look at me plz 👀
   (letfn [(trashed-hw [state] (last (get-in @state [:runner :discard])))]
     {:on-play
      {:additional-cost [(->c :hardware 1)]
@@ -4035,27 +4019,19 @@
                                         (count)))}]})
 
 (defcard "Transfer of Wealth"
-  (letfn [(drain [x]
-            {:async true
-             :msg (msg "force the Corp to lose " (min x (:credit corp))
-                       " [Credits] and gain " (* 2 (min x (:credit corp)))
-                       " [Credits]")
-             :effect (req (let [creds-lost (min x (:credit corp))]
-                            (wait-for
-                              (lose-credits state :corp creds-lost)
-                              (gain-credits state :runner eid (* 2 creds-lost)))))})]
-    {:on-play (run-server-ability :hq)
-     :makes-run true
-     :events [{:event :successful-run
-               :interactive (req true)
-               :automatic :drain-credits
-               :req (req this-card-run)
-               :msg "take 1 tag"
-               :effect (req (wait-for (gain-tags state :runner 1)
-                                      (continue-ability
-                                        state side
-                                        (drain 3)
-                                        card nil)))}]}))
+  {:on-play (run-server-ability :hq)
+   :makes-run true
+   :events [{:event :successful-run
+             :interactive (req true)
+             :automatic :drain-credits
+             :req (req this-card-run)
+             :msg "take 1 tag"
+             :async true
+             :effect (req (wait-for (gain-tags state :runner 1)
+                                    (continue-ability
+                                      state side
+                                      (drain-credits :runner :corp 3 2)
+                                      card nil)))}]})
 
 (defcard "Tread Lightly"
   {:on-play run-any-server-ability

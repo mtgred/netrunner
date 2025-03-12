@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur defcard gain-credits-ability do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
+   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur defcard drain-credits gain-credits-ability do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -449,18 +449,11 @@
                                    (str "remove " target " tags to force the runner to lose " drained
                                         " [Credits]")))
                           :async true
-                          ;; TODO - should this be treated like a cost? probably
-                          :effect (req (wait-for
-                                         (lose-tags state side target)
-                                         (let [drained (min (:credit runner) (* 5 target))]
-                                           (wait-for
-                                             (lose-credits state :runner drained)
-                                             (continue-ability
-                                               state side
-                                               {:async true
-                                                :msg (str "gain " drained " [Credits]")
-                                                :effect (req (gain-credits state side eid drained))}
-                                               card nil)))))}}])})
+                          :effect (req (continue-ability
+                                         state side
+                                         (assoc (drain-credits :corp :runner (* 5 target))
+                                                :cost [(->c :tag target)])
+                                         card nil))}}])})
 
 (defcard "Bioroid Efficiency Research"
   {:on-play {:choices {:card #(and (ice? %)
@@ -1722,18 +1715,9 @@
                                   :effect (effect (gain-tags eid 1))}}}]})
 
 (defcard "Market Forces"
-  (letfn [(credit-diff [state]
-            (min (* 3 (count-tags state))
-                 (get-in @state [:runner :credit])))]
-    {:on-play
-     {:req (req tagged)
-      :change-in-game-state {:req (req (pos? (:credit runner)))}
-      :msg (msg (let [c (credit-diff state)]
-                  (str "make the runner lose " c " [Credits], and gain " c " [Credits]")))
-      :async true
-      :effect (req (let [c (credit-diff state)]
-                     (wait-for (lose-credits state :runner (make-eid state eid) c)
-                               (gain-credits state :corp eid c))))}}))
+  {:on-play (assoc (drain-credits :corp :runner (req (* 3 (count-tags state))))
+                   :req (req tagged)
+                   :change-in-game-state {:req (req (pos? (:credit runner)))})})
 
 (defcard "Mass Commercialization"
   {:on-play

@@ -2054,7 +2054,6 @@
                 :req (req (:runner-phase-12 @state))
                 :cost [(->c :lose-click 1)]
                 :msg "avoid the first tag received until [their] next turn"
-                ;; TODO - I should do this to fix klevetnik, lmao
                 :effect (req (let [current-turn (:turn @state)
                                    lingering (register-lingering-effect
                                                state side card

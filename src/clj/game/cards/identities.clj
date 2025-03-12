@@ -527,9 +527,8 @@
              :interactive (req true)
              :skippable true
              :req (req (ice? (:card context)))
-             ;; TODO - fix this on merge
-             ;;:change-in-game-state {:silent true :req (req (seq (all-cards-in-hand* state :runner)))}
-             :choices {:req (req (and (in-hand? target) ;; TODO - in-hand* for bling
+             :change-in-game-state {:silent true :req (req (seq (all-cards-in-hand* state :runner)))}
+             :choices {:req (req (and (in-hand*? state target)
                                       (or (resource? target) (hardware? target))
                                       (runner-can-pay-and-install? state side eid target)))}
              :effect (effect (runner-install (assoc eid :source card) target {:msg-keys {:install-source card}}))}]})

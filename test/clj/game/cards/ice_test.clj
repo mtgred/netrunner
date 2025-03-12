@@ -3,7 +3,29 @@
    [clojure.test :refer :all]
    [game.core :as core]
    [game.core.card :refer :all]
+   [game.utils-test :refer [error-wrapper is']]
    [game.test-framework :refer :all]))
+
+(defn does-damage-sub-impl
+  [cname sub damage]
+  (let [state (subroutine-test cname sub {:runner {:hand [(qty "Ika" (inc damage))]}})]
+    (is' (= (count (get-in @state [:runner :discard])) damage)
+         (str cname " did " damage " damage"))
+    state))
+
+(defmacro does-damage-sub
+  [cname sub damage]
+  `(error-wrapper (does-damage-sub-impl ~cname ~sub ~damage)))
+
+(defn etr-sub-impl
+  [cname sub]
+  (let [state (subroutine-test cname sub)]
+    (is' (not (:run @state)) (str cname " ended the run"))
+    state))
+
+(defmacro etr-sub
+  [cname sub]
+  `(error-wrapper (etr-sub-impl ~cname ~sub)))
 
 (deftest ablative-barrier-no-threat
   (do-game
@@ -2165,11 +2187,9 @@
     (is (= (+ 1 1) (count (:hand (get-corp)))) (str "drew 1 card"))
     (click-card state :corp "Restructure")
     (is (= "Restructure" (get-in @state [:corp :deck 0 :title])) "Restructure ontop"))
-  ;; (do-game (does-damage-sub "Empiricist" 1 1)
-  ;;          (is (= 1 (count-tags state)) "tagged"))
-  ;; (do-game (does-damage-sub "Empiricist" 2 2)))
-  ;; TODO - does-damage-sub is in another PR
-  )
+  (do-game (does-damage-sub "Empiricist" 1 1)
+           (is (= 1 (count-tags state)) "tagged"))
+  (do-game (does-damage-sub "Empiricist" 2 2)))
 
 (deftest endless-eula-runner-side-ability
   ;; Runner side ability
@@ -2528,9 +2548,7 @@
     (rez state :corp (get-ice state :hq 0))
     (is (= "Lamprey" (get-in @state [:runner :discard 0 :title])) "Trashed due to purge")))
 
-;; (deftest flyswatter-etr-sub
-;;   ;; TODO - fix on merge
-;;   (do-game (etr-sub "Flyswatter" 0)))
+(deftest flyswatter-etr-sub (do-game (etr-sub "Flyswatter" 0)))
 
 (deftest formicary-verifies-basic-functionality
   ;; Verifies basic functionality
@@ -2827,9 +2845,10 @@
       (run-on state "HQ")
       (run-continue state)
       (click-prompt state :runner "Take 1 tag")
-      (fire-subs state tt)
-      (is (= 1 (:credit (get-runner))))
-      (is (= ["Take 1 tag"] (prompt-buttons :runner)) "Runner should have 1 option"))))
+      (is (changed? [(count-tags state) 1]
+            (fire-subs state tt)
+            (is (= 1 (:credit (get-runner)))))
+          "Skipped prompt if no option to pay"))))
 
 (deftest funhouse-vs-jesminder
   (do-game
@@ -4254,10 +4273,9 @@
       (click-prompt state :runner "No action")
       (is (= "Kitsune" (-> (get-corp) :discard first :title)) "Kitsune was trashed after use"))))
 
-;; TODO - fix this one merge
-;; (deftest kessleroid-subs-test
-;;   (do-game (new-game (etr-sub "Kessleroid" 0)))
-;;   (do-game (new-game (etr-sub "Kessleroid" 1))))
+(deftest kessleroid-subs-test
+  (do-game (etr-sub "Kessleroid" 0))
+  (do-game (etr-sub "Kessleroid" 1)))
 
 (deftest kitsune-trash-after-use
   ;; Trash after use
@@ -5636,8 +5654,7 @@
     (is (not (:run @state)) "Run ended by Guard")))
 
 (deftest n-pot-full-subs-test
-  ;; TODO - this is in another pr
-  ;;(do-game (etr-sub "N-Pot" 0))
+  (do-game (etr-sub "N-Pot" 0))
   ;; threat 2 - etr
   (do-game (subroutine-test "N-Pot" 1 nil {:threat 1})
            (is (:run @state) "Run not ended"))
@@ -6312,10 +6329,9 @@
     (subroutine-test "Predator" 1 nil {:rig ["Kati Jones"] :disable true})
     (click-prompt state :corp "Trash a resource")
     (click-card state :corp "Kati Jones")
-    (is (= 1 (count (:discard (get-runner)))) (str "Trashed kati"))))
+    (is (= 1 (count (:discard (get-runner)))) (str "Trashed kati")))
   ;; etr
-  ;; TODO - fix on merge
-  ;;(do-game (etr-sub "Predator" 2)))
+  (do-game (etr-sub "Predator" 2)))
 
 (deftest quicksand
   (do-game
@@ -6730,9 +6746,8 @@
   (do-game (subroutine-test "Scatter Field" 0 {:corp {:hand ["Rashida Jaheem"]}})
            (click-card state :corp "Rashida Jaheem")
            (click-prompt state :corp "New remote")
-           (is (= 4 (get-strength (get-ice state :hq 0))) "4 str")))
-  ;; TODO - this helper is in another pr
-  ;;(do-game (new-game (etr-sub "Scatter Field" 1))))
+           (is (= 4 (get-strength (get-ice state :hq 0))) "4 str"))
+  (do-game (new-game (etr-sub "Scatter Field" 1))))
 
 (deftest searchlight
   ;; Searchlight - Trace bace equal to advancement counters
@@ -7609,9 +7624,8 @@
     (is (= 1 (get-counters (get-ice state :hq 0) :advancement)) "Placed 1"))
   (do-game
     (subroutine-test "Syailendra" 1 {:runner {:credits (inc 2)}})
-    (is (= 1 (:credit (get-runner))) "lost 2 credits")))
-  ;; TODO - fix this
-  ;;(do-game (does-damage-sub "Syailendra" 2 1)))
+    (is (= 1 (:credit (get-runner))) "lost 2 credits"))
+  (do-game (does-damage-sub "Syailendra" 2 1)))
 
 (deftest tatu-bola
   (do-game

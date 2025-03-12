@@ -10,7 +10,7 @@
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [queue-event register-events resolve-ability trigger-event-sync unregister-event-by-uuid]]
     [game.core.effects :refer [any-effects is-disabled-reg?]]
-    [game.core.gaining :refer [gain-credits]]
+    [game.core.gaining :refer [gain-credits lose-credits]]
     [game.core.installing :refer [corp-install]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-cost-string can-pay?]]
@@ -23,6 +23,7 @@
     [game.core.servers :refer [zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
+    [game.core.tags :refer [gain-tags]]
     [game.macros :refer [continue-ability effect msg req wait-for]]
     [game.utils :refer [enumerate-str remove-once same-card? server-card to-keyword quantify]]
     [jinteki.utils :refer [other-side]]))
@@ -360,6 +361,33 @@
   {:msg (str "gain " x " [Credits]")
    :async true
    :effect (req (gain-credits state side eid x))})
+
+(defn drain-credits
+  ([draining-side victim-side qty] (drain-credits draining-side victim-side qty 1))
+  ([draining-side victim-side qty multiplier] (drain-credits draining-side victim-side qty multiplier 0))
+  ([draining-side victim-side qty multiplier tags-to-gain]
+   (letfn [(to-drain [state] (let [qty (if (number? qty)
+                                         qty
+                                         (qty state draining-side (make-eid state) nil nil))]
+                               (min (get-in @state [victim-side :credit] 0) qty)))
+           (to-gain [state] (* (to-drain state) multiplier))]
+     {:msg (msg "force the " (str/capitalize (name victim-side)) " to lose "
+                (to-drain state) " [Credits], " (when (zero? tags-to-gain) " and ")
+                "gain " (to-gain state) " [Credits]"
+                (when (pos? tags-to-gain)
+                  (str (if (= :corp draining-side)
+                         ", and give Runner "
+                         ", and take ")
+                       (quantify tags-to-gain "tag"))))
+      :async true
+      :effect (req (let [c-drain (to-drain state)
+                         c-gain (to-gain state)]
+                     (if (zero? tags-to-gain)
+                       (wait-for (lose-credits state victim-side c-drain {:suppress-checkpoint true})
+                                 (gain-credits state draining-side eid c-gain))
+                       (wait-for (gain-tags state :draining-side tags-to-gain)
+                                 (wait-for (lose-credits state victim-side c-drain {:suppress-checkpoint true})
+                                           (gain-credits state draining-side eid c-gain))))))})))
 
 (defn corp-recur
   ([] (corp-recur (constantly true)))
