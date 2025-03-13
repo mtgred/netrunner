@@ -11,7 +11,8 @@
   "For use in :static-abilities and register-lingering-effect.
   Returns an effect map for :available-mu.
   Takes either the mu value or a :req 5-fn and the value.
-  If :value is a function, it must return [:regular N] where N is a number."
+  The mu value can just the amount of (regular) mu,
+  or a vector of the mu type and amount or a function that returns that vector."
   ([value] (mu+ (constantly true) value))
   ([req value]
    {:type :available-mu
@@ -22,26 +23,16 @@
              [:else (throw (Exception. (str "mu+ needs a vector, number, or function: " value)))])}))
 
 (defn virus-mu+
-  "For use in :static-abilities and register-lingering-effect.
-  Returns an effect map for :available-mu
-  Takes either the mu value or a :req 5-fn and the value.
-  If :value is a function, it must return [:virus N] where N is a number."
-  ([value] (virus-mu+ (constantly true) value))
-  ([req value] (mu+ req (cond+
-                          [(or (vector? value) (fn? value)) value]
-                          [(number? value) [:virus value]]
-                          [:else (throw (Exception. (str "virus-mu+ needs a vector, number, or function: " value)))]))))
+  "Provide a wrapper to mu+ for fixed virus only mu.
+  Takes either the mu amount or a :req 5-fn and the mu amount."
+  ([amount] (virus-mu+ (constantly true) amount))
+  ([req amount] (mu+ req [:virus amount])))
 
 (defn caissa-mu+
-  "For use in :static-abilities and register-lingering-effect.
-  Returns an effect map for :available-mu.
-  Takes either the mu value or a :req 5-fn and the value.
-  If :value is a function, it must return [:caissa N] where N is a number."
-  ([value] (caissa-mu+ (constantly true) value))
-  ([req value] (mu+ req (cond+
-                          [(or (vector? value) (fn? value)) value]
-                          [(number? value) [:caissa value]]
-                          [:else (throw (Exception. (str "caissa-mu+ needs a vector, number, or function: " value)))]))))
+  "Provide a wrapper to mu+ for fixed caissa only mu.
+  Takes either the mu amount or a :req 5-fn and the mu amount."
+  ([amount] (caissa-mu+ (constantly true) amount))
+  ([req amount] (mu+ req [:caissa amount])))
 
 (defn available-mu
   "Returns the available MU the runner has"
