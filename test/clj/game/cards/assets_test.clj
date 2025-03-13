@@ -3170,7 +3170,11 @@
   ;; Lakshmi Smartfabrics - Gain power counter when rezzing a card; use counters to protect agenda in HQ
   (do-game
     (new-game {:corp {:deck ["Lakshmi Smartfabrics" "Vanilla"
-                             "Marked Accounts" "Elective Upgrade"]}})
+                             "Marked Accounts" "Elective Upgrade"]}
+               :runner {:hand ["Rezeki"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rezeki")
+    (take-credits state :runner)
     (play-from-hand state :corp "Lakshmi Smartfabrics" "New remote")
     (let [lak (get-content state :remote1 0)]
       (rez state :corp lak)

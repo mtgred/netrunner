@@ -1603,26 +1603,26 @@
                 :async true
                 :cost [(->c :x-power)]
                 :keep-menu-open :while-power-tokens-left
-                :effect
-                (effect
-                  (continue-ability
-                    {:prompt "Choose an agenda in HQ to reveal"
-                     :choices {:req (req (and (agenda? target)
-                                              (<= (:agendapoints target) (cost-value eid :x-power))))}
-                     :msg (msg "reveal " (:title target) " from HQ")
-                     :async true
-                     :effect (req (wait-for (reveal state side target)
-                                            (let [title (:title target)]
-                                              (register-turn-flag!
-                                                state side
-                                                card :can-steal
-                                                (fn [state _side card]
-                                                  (if (= (:title card) title)
-                                                    ((constantly false)
-                                                     (toast state :runner "Cannot steal due to Lakshmi Smartfabrics." "warning"))
-                                                    true)))
-                                              (effect-completed state side eid))))}
-                    card nil))}]})
+                :effect (req (let [value (cost-value eid :x-power)]
+                               (continue-ability
+                                 state side
+                                 {:prompt "Choose an agenda in HQ to reveal"
+                                  :choices {:req (req (and (agenda? target)
+                                                           (<= (:agendapoints target) value)))}
+                                  :msg (msg "reveal " (:title target) " from HQ")
+                                  :async true
+                                  :effect (req (wait-for (reveal state side target)
+                                                         (let [title (:title target)]
+                                                           (register-turn-flag!
+                                                             state side
+                                                             card :can-steal
+                                                             (fn [state _side card]
+                                                               (if (= (:title card) title)
+                                                                 ((constantly false)
+                                                                  (toast state :runner "Cannot steal due to Lakshmi Smartfabrics." "warning"))
+                                                                 true)))
+                                                           (effect-completed state side eid))))}
+                                 card nil)))}]})
 
 (defcard "Launch Campaign"
   (campaign 6 2))
