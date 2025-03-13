@@ -12,7 +12,7 @@
 (defn current-game-count [user games connected?]
   (r/with-let [c (r/track (fn [] (count (filter-games @user @games (:visible-formats @app-state)))))]
     [:div.float-right
-     (tr [:nav/game-count] @c)
+     (tr [:nav.game-count] {:cnt @c})
      (when (not @connected?)
        [:a.reconnect-button {:on-click #(ws/chsk-reconnect!)} (tr [:game.attempt-reconnect "Attempt reconnect"])])]))
 

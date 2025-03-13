@@ -132,15 +132,14 @@
   (load-quotes!))
 
 (defmethod ig/init-key :web/i18n [_ _opts]
-  (prn :loading :web/i18n)
   (let [langs (->> (io/file "resources/public/i18n")
-                  (file-seq)
-                  (filter #(.isFile ^java.io.File %))
-                  (filter #(str/includes? (str %) ".ftl"))
-                  (map (fn [^java.io.File f]
-                         (let [n (str/replace (.getName f) ".ftl" "")
-                               content (slurp f)]
-                           [n content]))))]
+                   (file-seq)
+                   (filter #(.isFile ^java.io.File %))
+                   (filter #(str/includes? (str %) ".ftl"))
+                   (map (fn [^java.io.File f]
+                          (let [n (str/replace (.getName f) ".ftl" "")
+                                content (slurp f)]
+                            [n content]))))]
     (doseq [[lang content] langs]
       (i18n.core/insert-lang! lang content))))
 

@@ -3,7 +3,7 @@
    ["@fluent/bundle" :refer [FluentBundle FluentResource]]))
 
 (defn build [locale-str resource & resources]
-  (let [builder (FluentBundle. locale-str)]
+  (let [builder (FluentBundle. (clj->js locale-str))]
     (doseq [r (cons resource resources)
             :let [ftl-res (FluentResource. resource)
                   errors (.addResource builder ftl-res)]]
@@ -19,9 +19,9 @@
          message (.getMessage bundle entry)]
      (when-let [v (and message (.-value message))]
        (try (.formatPattern bundle v (clj->js args))
-            (catch :default _))))))
+            (catch :default _ nil))))))
 
-(do
+(comment
   (let [input "# Simple things are simple.
 hello-world = Hello, world!
 hello-user = Hello, {$user-name}!

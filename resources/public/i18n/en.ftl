@@ -32,24 +32,31 @@ card-browser_trash-cost = Trash cost
 card-browser_type = Type
 card-browser_update-failure = Failed to Update Art
 card-browser_update-success = Updated Art
-card-browser_sort-by_cost = Cost
-card-browser_sort-by_faction = Faction
-card-browser_sort-by_influence = Influence
-card-browser_sort-by_name = Name
-card-browser_sort-by_set-number = Set number
-card-browser_sort-by_type = Type
 
-card-type_agenda = Agenda
-card-type_all = All
-card-type_asset = Asset
-card-type_event = Event
-card-type_hardware = Hardware
-card-type_ice = Ice
-card-type_identity = Identity
-card-type_operation = Operation
-card-type_program = Program
-card-type_resource = Resource
-card-type_upgrade = Upgrade
+card-browser_sort-by = {$by ->
+    [cost] Cost
+    [faction] Faction
+    [influence] Influence
+    [name] Name
+    [set-number] Set number
+    [type] Type
+    *[unknown] Unknown sort-by option ({$by})
+}
+
+card-type_name = {$type ->
+    [agenda] Agenda
+    [all] All
+    [asset] Asset
+    [event] Event
+    [hardware] Hardware
+    [ice] Ice
+    [identity] Identity
+    [operation] Operation
+    [program] Program
+    [resource] Resource
+    [upgrade] Upgrade
+    *[unknown] Unkonwn card type ({$type})
+}
 
 chat_block = Block User
 chat_cancel = Cancel
@@ -57,7 +64,8 @@ chat_channels = Channels
 chat_delete = Delete Message
 chat_delete-all = Delete All Messages From User
 chat_length-exceeded = Length exceeded
-chat_message-blocked = (fn [[reason-str]] (str "Message Blocked" (when reason-str (str ": " reason-str))))
+chat_message-blocked = Message blocked
+chat_message-blocked-reason = Message blocked: {$reason-str}
 chat_placeholder = Say something...
 chat_rate-exceeded = Rate exceeded
 chat_send = Send
@@ -75,7 +83,11 @@ deck-builder_confirm-delete = Confirm Delete
 deck-builder_copy = Copy
 deck-builder_create-game = Create Game
 deck-builder_deck-copy-suffix = copy
-deck-builder_deck-count = (fn [[cnt]] (str cnt (if (= 1 cnt) " Deck" " Decks")))
+deck-builder_deck-count = {$cnt ->
+    [zero] No Decks
+    [one] {$cnt} Deck
+    *[other] {$cnt} Decks
+}
 deck-builder_deck-name = Deck name
 deck-builder_deck-notes = Deck notes
 deck-builder_deck-points = Deck points
@@ -102,7 +114,6 @@ deck-builder_min = minimum
 deck-builder_new-corp = New Corp deck
 deck-builder_new-deck = New Deck
 deck-builder_new-runner = New Runner deck
-deck-builder_no-decks = No decks
 deck-builder_notes = Notes
 deck-builder_reset = Reset
 deck-builder_save = Save
@@ -182,59 +193,86 @@ diagrams_turn_runner-discard-phase-d = The Runners turn formally ends. Turn end 
 diagrams_turn_runner-discard-phase-e = Proceed to the Corporation turn
 diagrams_turn_runner-turn = Runner Turn
 
-faction_adam = Adam
-faction_all = All
-faction_anarch = Anarch
-faction_any-faction = Any Faction
-faction_apex = Apex
-faction_criminal = Criminal
-faction_haas-bioroid = Haas-Bioroid
-faction_jinteki = Jinteki
-faction_nbn = NBN
-faction_neutral = Neutral
-faction_shaper = Shaper
-faction_sunny-lebeau = Sunny Lebeau
-faction_weyland-consortium = Weyland Consortium
+faction_name = {$faction ->
+    [adam] Adam
+    [all] All
+    [anarch] Anarch
+    [any-faction] Any Faction
+    [apex] Apex
+    [criminal] Criminal
+    [haas-bioroid] Haas-Bioroid
+    [jinteki] Jinteki
+    [nbn] NBN
+    [neutral] Neutral
+    [shaper] Shaper
+    [sunny-lebeau] Sunny Lebeau
+    [weyland-consortium] Weyland Consortium
+    *[other] Unknown faction
+}
 
-format_all = All
-format_any-format = Any Format
-format_casual = Casual
-format_classic = Classic
-format_core-experience = Core Experience
-format_eternal = Eternal
-format_neo = Neo
-format_preconstructed = Preconstructed
-format_snapshot = Snapshot
-format_snapshot-plus = Snapshot Plus
-format_socr = SOCR
-format_standard = Standard
-format_startup = Startup
-format_sunset = Sunset
-format_system-gateway = System Gateway
-format_throwback = Throwback
+format_name = {$format ->
+    [all] All
+    [any-format] Any Format
+    [casual] Casual
+    [classic] Classic
+    [core-experience] Core Experience
+    [eternal] Eternal
+    [neo] Neo
+    [preconstructed] Preconstructed
+    [snapshot] Snapshot
+    [snapshot-plus] Snapshot Plus
+    [socr] SOCR
+    [standard] Standard
+    [startup] Startup
+    [sunset] Sunset
+    [system-gateway] System Gateway
+    [throwback] Throwback
+    *[other] Unknown format
+}
+
 
 game_abilities = Abilities
 game_actions = Actions
-game_agenda-count = (fn [[agenda-point]] (str agenda-point " Agenda Point" (when (not= agenda-point 1) "s")))
-game_agenda-point-req = (fn [[agenda-point-req]] (if-not (= 7 agenda-point-req) (str " (" agenda-point-req " required)") ""))
+game_agenda-count = {$agenda-point ->
+    [one] Agenda Point
+    *[other] {$agenda-point} Agenda Points
+}
+game_agenda-count-with-req = {$agenda-point ->
+    [one] Agenda Point
+    *[other] {$agenda-point} Agenda Points
+} ({$agenda-point-req} required)
 game_approach-ice = Approach ice
-game_archives = Archives
+game_archives = Archives{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
 game_attempt-reconnect = Attempt reconnect
 game_auto-pass = Auto-pass priority
-game_bad-pub-count = (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Bad Publicity"))
+game_bad-pub-count = {$base} Bad Publicity
+game_bad-pub-count-additional = {$base} + {$additional} Bad Publicity
 game_beat-trace = Beat Trace
 game_brain-damage = Core Damage
 game_breach-server = Breach server
 game_card = Card
-game_card-count = (fn [[size]] (str size " card" (when (not= 1 size) "s") "."))
-game_click-count = (fn [[click]] (str click " Click" (if (not= click 1) "s" "")))
+game_card-count = {$size ->
+    [one] {$size} card
+    *[other] {$size} cards
+}
+game_click-count = {$click ->
+    [one] {$click} card
+    *[other] {$click} cards
+}
 game_close = Close
 game_close-shuffle = Close & Shuffle
 game_concede = Concede
 game_continue = Continue
 game_continue-to = Continue to
 game_corp-view = Corp View
-game_credit-count = (fn [[credit run-credit]] (str credit " Credit" (if (not= credit 1) "s" "") (when (pos? run-credit) (str " (" run-credit " for run)"))))
+game_credit-count = {$credit ->
+    [one] {$credit} Credit
+    *[other] {$credit} Credits
+}
+game_credit-count-with-run-credits = {$credit ->
+    [one] {$credit} Credit
+    *[other] {$credit} Credits
+} ({$run-credit} for run)
 game_credits = credits
 game_current = Current
 game_current-phase = Current phase
@@ -242,7 +280,10 @@ game_draw = Draw
 game_encounter-ice = Encounter ice
 game_end-turn = End Turn
 game_error = Internal Server Error. Please type /bug in the chat and follow the instructions.
-game_face-down-count = (fn [[total face-up]] (str total " cards, " (- total face-up) " face-down."))
+game_face-down-count = {$total ->
+    [one] {$total} card, {$facedown} face-down.
+    *[other] {$total} cards, {$facedown} face-down.
+}
 game_fire-unbroken = Fire unbroken subroutines
 game_gain-credit = Gain Credit
 game_game-start = Game start
@@ -264,7 +305,7 @@ game_mandatory-draw = Mandatory Draw
 game_max-hand = Max hand size
 game_minutes = m:
 game_movement = Movement
-game_mu-count = (fn [[unused available]] (str unused " of " available " MU unused"))
+game_mu-count = {$unused} of {$available} MU unused
 game_mulligan = Mulligan
 game_mute = Mute spectators
 game_no-current-run = No current run
@@ -290,18 +331,31 @@ game_set-aside = Set aside
 game_show = Show
 game_show-decklists = Show/Hide decklists
 game_shuffle = Shuffle
-game_spec-count = (fn [[c]] (str c " Spectator" (when (> c 1) "s")))
+game_spec-count = {$cnt ->
+    [one] Spectator
+    *[other] {$cnt} Spectators
+}
 game_spec-view = Spectator View
-game_special-mu-count = (fn [[unused available mu-type]] (str unused " of " available " " mu-type " MU unused"))
+game_special-mu-count = {$unused} of {$available} {$mu-type} MU unused
 game_stack = Stack
 game_start = Start Game
 game_start-turn = Start Turn
 game_stop-auto-pass = Stop auto-passing priority
 game_subs = Subroutines
 game_success = Success
-game_tag-count = (fn [[base additional total]] (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= total 1) "s" "")))
+game_tag-count = {$base ->
+    [one] {$base} Tag
+    *[other] {$base} Tags
+}
+game_tag-count-additional = {$total ->
+    [one] {$base} + {$additional} Tag
+    *[other] {$base} + {$additional} Tags
+}
 game_take-clicks = Take Clicks
-game_time-taken = (fn [[t]] (str "Time taken: " t " minutes"))
+game_time-taken = Time taken: {$time ->
+    [one] {$time} minute
+    *[other] {$time} minutes
+}
 game_timeout-soon = Game will time out within 30 seconds for inactivity
 game_trace = Trace
 game_trash-like-cards = Offer to trash like cards
@@ -310,34 +364,36 @@ game_unbeatable = Make unbeatable
 game_unimplemented = Unimplemented
 game_unknown-phase = Unknown phase
 game_unmute = Unmute spectators
-game_up-down-count = (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
-game_win-claimed = (fn [[turn]] (str "wins by claim on turn " turn))
-game_win-conceded = (fn [[turn]] (str "wins by concession on turn " turn))
-game_win-decked = (fn [[turn]] (str "wins due to the Corp being decked on turn " turn))
-game_win-flatlined = (fn [[turn]] (str "wins by flatline on turn " turn))
-game_win-other = (fn [[turn reason]] (str "wins by " reason " on turn " turn))
-game_win-points = (fn [[turn]] (str "wins by scoring agenda points on turn " turn))
+game_win-claimed = {$winner} ({$side}) wins by claim on turn {$turn}
+game_win-conceded = {$winner} ({$side}) wins by concession on turn {$turn}
+game_win-decked = {$winner} ({$side}) wins due to the Corp being decked on turn {$turn}
+game_win-flatlined = {$winner} ({$side}) wins by flatline on turn {$turn}
+game_win-points = {$winner} ({$side}) wins by scoring agenda points on turn {$turn}
+game_win-other = {$winner} ({$side}) wins by {$reason} on turn {$turn}
 
-game-prompt_advance = advance
-game-prompt_archives = Archives
-game-prompt_derez = derez
-game-prompt_expend = Expend
-game-prompt_hq = HQ
-game-prompt_new-remote = New Remote
-game-prompt_r-d = R&D
-game-prompt_rez = rez
-game-prompt_score = score
-game-prompt_server-1 = Server 1
-game-prompt_server-10 = Server 10
-game-prompt_server-2 = Server 2
-game-prompt_server-3 = Server 3
-game-prompt_server-4 = Server 4
-game-prompt_server-5 = Server 5
-game-prompt_server-6 = Server 6
-game-prompt_server-7 = Server 7
-game-prompt_server-8 = Server 8
-game-prompt_server-9 = Server 9
-game-prompt_trash = trash
+game_prompt = {$msg ->
+    [advance] advance
+    [archives] Archives
+    [derez] derez
+    [expend] Expend
+    [hq] HQ
+    [new-remote] New Remote
+    [r-d] R&D
+    [rez] rez
+    [score] score
+    [server-1] Server 1
+    [server-10] Server 10
+    [server-2] Server 2
+    [server-3] Server 3
+    [server-4] Server 4
+    [server-5] Server 5
+    [server-6] Server 6
+    [server-7] Server 7
+    [server-8] Server 8
+    [server-9] Server 9
+    [trash] trash
+    *[unknown] Unknown game prompt ({$msg})
+}
 
 ingame-settings_alt-art = Alt arts
 ingame-settings_board-overlap = Board overlap
@@ -367,8 +423,15 @@ ingame-settings_sort-heap = Sort Heap
 ingame-settings_stack-cards = Stack cards
 ingame-settings_toggle-log-timestamps = Show log timestamps
 
+lobby_type = {$type ->
+    [angel-arena] Angel Arena
+    [casual] Casual
+    [competitive] Competitive
+    [tournament] Tournament
+    *[other] Unknown lobby type
+}
+
 lobby_aborted = Connection aborted
-lobby_angel-arena = Angel Arena
 lobby_api-access = Allow API access to game information
 lobby_api-access-details = This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings.
 lobby_api-requires-key = (Requires an API Key in Settings)
@@ -376,10 +439,8 @@ lobby_as-corp = As Corp
 lobby_as-runner = As Runner
 lobby_both-perspective = Both
 lobby_cancel = Cancel
-lobby_casual = Casual
 lobby_chat = Chat
 lobby_closed-msg = Game lobby closed due to inactivity
-lobby_competitive = Competitive
 lobby_completion-rate = Game Completion Rate
 lobby_corp-perspective = Corp Perspective
 lobby_create = Create
@@ -389,7 +450,10 @@ lobby_delete = Delete Game
 lobby_filter = Filter
 lobby_filtered = (filtered)
 lobby_format = Format
-lobby_game-count = (fn [[cnt]] (str cnt (if (= 1 cnt) " Game" " Games")))
+lobby_game-count = {$cnt ->
+    [one] {$cnt} Game
+    *[other] {$cnt} Games
+}
 lobby_hidden = Make players' hidden information visible to spectators
 lobby_hidden-details = This will reveal both players' hidden information to ALL spectators of your game, including hand and face-down cards.
 lobby_hidden-password = We recommend using a password to prevent strangers from spoiling the game.
@@ -428,7 +492,10 @@ lobby_singleton-b = (singleton)
 lobby_singleton-details = This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities.
 lobby_singleton-example = 1) Nova Initiumia: Catalyst & Impetus 2) Ampere: Cybernetics For Anyone
 lobby_singleton-restriction = This lobby is running in singleton mode. This means decklists will be restricted to only those which do not contain any duplicate cards.
-lobby_spectator-count = (fn [[cnt]] (str cnt " Spectator" (when (not= cnt 1) "s")))
+lobby_spectator-count = {$cnt ->
+    [one] {$cnt} Spectator
+    *[other] {$cnt} Spectators
+}
 lobby_spectators = Allow spectators
 lobby_start = Start
 lobby_start-replay = Start replay
@@ -439,16 +506,19 @@ lobby_timer-length = Timer length (minutes)
 lobby_title = Title
 lobby_title-error = Please fill a game title.
 lobby_too-little-data = Too little data
-lobby_tournament = Tournament
 lobby_waiting = Waiting players deck selection
 lobby_watch = Watch
-lobby_gateway-format_beginner = Beginner
-lobby_gateway-format_beginner-info = This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points.
-lobby_gateway-format_beginner-ul = System Gateway - Beginner Teaching Decks
-lobby_gateway-format_constructed = Constructed
-lobby_gateway-format_intermediate = Intermediate
-lobby_gateway-format_intermediate-info = This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points.
-lobby_gateway-format_intermediate-ul = System Gateway - Intermediate Teaching Decks
+
+lobby_gateway-format = {$format ->
+    [beginner] Beginner
+    [beginner-info] This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points.
+    [beginner-ul] System Gateway - Beginner Teaching Decks
+    [constructed] Constructed
+    [intermediate] Intermediate
+    [intermediate-info] This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points.
+    [intermediate-ul] System Gateway - Intermediate Teaching Decks
+    *[unknown] Unknown Gateway Format ({$format})
+}
 
 log_annotating = Annotating
 log_game-log = Game Log
@@ -472,7 +542,10 @@ nav_cards = Cards
 nav_chat = Chat
 nav_deck-builder = Deck Builder
 nav_features = Features
-nav_game-count = (fn [[cnt]] (str cnt " Game" (when (not= cnt 1) "s")))
+nav_game-count = {$cnt ->
+    [one] {$cnt} Game
+    *[other] {$cnt} Games
+}
 nav_help = Help
 nav_play = Play
 nav_settings = Settings
@@ -566,129 +639,134 @@ preconstructed_worlds-2023-b-tag = cableCarnage (C) vs. William Huang (R)
 preconstructed_worlds-2023-b-ul = Worlds 2023: tableCarnage vs. You *do* always come back!
 preconstructed_worlds-2023-info = 254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 9 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative.
 
-pronouns_any = Any
-pronouns_blank = [blank]
-pronouns_ey = Ey/em
-pronouns_faefaer = Fae/Faer
-pronouns_he = He/him
-pronouns_heit = He/it
-pronouns_heshe = He/She/they
-pronouns_hethey = He/they
-pronouns_it = It
-pronouns_myodb = Prefer not to say
-pronouns_ne = Ne/nem
-pronouns_none = Unspecified
-pronouns_she = She/her
-pronouns_sheit = She/it
-pronouns_shethey = She/they
-pronouns_they = They/them
-pronouns_ve = Ve/ver
-pronouns_xe = Xe/xem
-pronouns_xi = Xi/xir
-pronouns_zehir = Ze/hir
-pronouns_zezir = Ze/zir
+pronouns = {$pronoun ->
+    [any] Any
+    [blank] [blank]
+    [ey] Ey/em
+    [faefaer] Fae/Faer
+    [he] He/him
+    [heit] He/it
+    [heshe] He/She/they
+    [hethey] He/they
+    [it] It
+    [myodb] Prefer not to say
+    [ne] Ne/nem
+    *[none] Unspecified
+    [she] She/her
+    [sheit] She/it
+    [shethey] She/they
+    [they] They/them
+    [ve] Ve/ver
+    [xe] Xe/xem
+    [xi] Xi/xir
+    [zehir] Ze/hir
+    [zezir] Ze/zir
+}
 
-set_23-seconds = 23 Seconds
-set_a-study-in-static = A Study in Static
-set_all = All
-set_all-that-remains = All That Remains
-set_alt-art = Alt Art
-set_alternate = Alternate
-set_ashes-cycle = Ashes Cycle
-set_blood-and-water = Blood and Water
-set_blood-money = Blood Money
-set_borealis-cycle = Borealis Cycle
-set_breaker-bay = Breaker Bay
-set_business-first = Business First
-set_championship-2019 = Championship 2019
-set_championship-2020 = Championship 2020
-set_chrome-city = Chrome City
-set_core-set = Core Set
-set_council-of-the-crest = Council of the Crest
-set_creation-and-control = Creation and Control
-set_crimson-dust = Crimson Dust
-set_cyber-exodus = Cyber Exodus
-set_daedalus-complex = Daedalus Complex
-set_data-and-destiny = Data and Destiny
-set_democracy-and-dogma = Democracy and Dogma
-set_double-time = Double Time
-set_down-the-white-nile = Down the White Nile
-set_downfall = Downfall
-set_draft = Draft
-set_draft-cycle = Draft Cycle
-set_earth-s-scion = Earth's Scion
-set_escalation = Escalation
-set_fear-and-loathing = Fear and Loathing
-set_fear-the-masses = Fear the Masses
-set_first-contact = First Contact
-set_flashpoint-cycle = Flashpoint Cycle
-set_free-mars = Free Mars
-set_future-proof = Future Proof
-set_genesis-cycle = Genesis Cycle
-set_gnk-2019 = GNK 2019
-set_honor-and-profit = Honor and Profit
-set_humanity-s-shadow = Humanity's Shadow
-set_intervention = Intervention
-set_kala-ghoda = Kala Ghoda
-set_kampala-ascendent = Kampala Ascendent
-set_kitara-cycle = Kitara Cycle
-set_kysra-alt-arts = Kysra Alt Arts
-set_liberation-cycle = Liberation Cycle
-set_lunar-cycle = Lunar Cycle
-set_magnum-opus = Magnum Opus
-set_magnum-opus-reprint = Magnum Opus Reprint
-set_mala-tempora = Mala Tempora
-set_martial-law = Martial Law
-set_midnight-sun = Midnight Sun
-set_midnight-sun-booster-pack = Midnight Sun Booster Pack
-set_mumbad-cycle = Mumbad Cycle
-set_napd-multiplayer = NAPD Multiplayer
-set_ntscape-navigator-alt-arts = Ntscape Navigator Alt Arts
-set_old-hollywood = Old Hollywood
-set_opening-moves = Opening Moves
-set_order-and-chaos = Order and Chaos
-set_parhelion = Parhelion
-set_plural-and-miniplural-alt-arts = Plural and MiniPlural Alt Arts
-set_previous-versions = Previous Versions
-set_quorum = Quorum
-set_rebellion-without-rehearsal = Rebellion Without Rehearsal
-set_red-sand-cycle = Red Sand Cycle
-set_reign-and-reverie = Reign and Reverie
-set_revised-core-set = Revised Core Set
-set_salsette-island = Salsette Island
-set_salvaged-memories = Salvaged Memories
-set_sansan-cycle = SanSan Cycle
-set_second-thoughts = Second Thoughts
-set_signed-championship-2020 = Signed Championship 2020
-set_sovereign-sight = Sovereign Sight
-set_spin-cycle = Spin Cycle
-set_station-one = Station One
-set_system-core-2019 = System Core 2019
-set_system-gateway = System Gateway
-set_system-update-2021 = System Update 2021
-set_terminal-directive-campaign = Terminal Directive Campaign
-set_terminal-directive-cards = Terminal Directive Cards
-set_terminal-directive-cycle = Terminal Directive Cycle
-set_the-automata-initiative = The Automata Initiative
-set_the-devil-and-the-dragon = The Devil and the Dragon
-set_the-liberated-mind = The Liberated Mind
-set_the-source = The Source
-set_the-spaces-between = The Spaces Between
-set_the-underway = The Underway
-set_the-universe-of-tomorrow = The Universe of Tomorrow
-set_the-valley = The Valley
-set_trace-amount = Trace Amount
-set_true-colors = True Colors
-set_unreleased = Unreleased
-set_up-and-over = Up and Over
-set_uprising = Uprising
-set_uprising-booster-pack = Uprising Booster Pack
-set_upstalk = Upstalk
-set_what-lies-ahead = What Lies Ahead
-set_whispers-in-nalubaale = Whispers in Nalubaale
-set_world-champion-2015 = World Champion 2015
-set_world-champion-2016 = World Champion 2016
-set_world-champion-2017 = World Champion 2017
+set_name = {$name ->
+    [a23-seconds] 23 Seconds
+    [a-study-in-static] A Study in Static
+    [all] All
+    [all-that-remains] All That Remains
+    [alt-art] Alt Art
+    [alternate] Alternate
+    [ashes-cycle] Ashes Cycle
+    [blood-and-water] Blood and Water
+    [blood-money] Blood Money
+    [borealis-cycle] Borealis Cycle
+    [breaker-bay] Breaker Bay
+    [business-first] Business First
+    [championship-2019] Championship 2019
+    [championship-2020] Championship 2020
+    [chrome-city] Chrome City
+    [core-set] Core Set
+    [council-of-the-crest] Council of the Crest
+    [creation-and-control] Creation and Control
+    [crimson-dust] Crimson Dust
+    [cyber-exodus] Cyber Exodus
+    [daedalus-complex] Daedalus Complex
+    [data-and-destiny] Data and Destiny
+    [democracy-and-dogma] Democracy and Dogma
+    [double-time] Double Time
+    [down-the-white-nile] Down the White Nile
+    [downfall] Downfall
+    [draft] Draft
+    [draft-cycle] Draft Cycle
+    [earth-s-scion] Earth's Scion
+    [escalation] Escalation
+    [fear-and-loathing] Fear and Loathing
+    [fear-the-masses] Fear the Masses
+    [first-contact] First Contact
+    [flashpoint-cycle] Flashpoint Cycle
+    [free-mars] Free Mars
+    [future-proof] Future Proof
+    [genesis-cycle] Genesis Cycle
+    [gnk-2019] GNK 2019
+    [honor-and-profit] Honor and Profit
+    [humanity-s-shadow] Humanity's Shadow
+    [intervention] Intervention
+    [kala-ghoda] Kala Ghoda
+    [kampala-ascendent] Kampala Ascendent
+    [kitara-cycle] Kitara Cycle
+    [kysra-alt-arts] Kysra Alt Arts
+    [liberation-cycle] Liberation Cycle
+    [lunar-cycle] Lunar Cycle
+    [magnum-opus] Magnum Opus
+    [magnum-opus-reprint] Magnum Opus Reprint
+    [mala-tempora] Mala Tempora
+    [martial-law] Martial Law
+    [midnight-sun] Midnight Sun
+    [midnight-sun-booster-pack] Midnight Sun Booster Pack
+    [mumbad-cycle] Mumbad Cycle
+    [napd-multiplayer] NAPD Multiplayer
+    [ntscape-navigator-alt-arts] Ntscape Navigator Alt Arts
+    [old-hollywood] Old Hollywood
+    [opening-moves] Opening Moves
+    [order-and-chaos] Order and Chaos
+    [parhelion] Parhelion
+    [plural-and-miniplural-alt-arts] Plural and MiniPlural Alt Arts
+    [previous-versions] Previous Versions
+    [quorum] Quorum
+    [rebellion-without-rehearsal] Rebellion Without Rehearsal
+    [red-sand-cycle] Red Sand Cycle
+    [reign-and-reverie] Reign and Reverie
+    [revised-core-set] Revised Core Set
+    [salsette-island] Salsette Island
+    [salvaged-memories] Salvaged Memories
+    [sansan-cycle] SanSan Cycle
+    [second-thoughts] Second Thoughts
+    [signed-championship-2020] Signed Championship 2020
+    [sovereign-sight] Sovereign Sight
+    [spin-cycle] Spin Cycle
+    [station-one] Station One
+    [system-core-2019] System Core 2019
+    [system-gateway] System Gateway
+    [system-update-2021] System Update 2021
+    [terminal-directive-campaign] Terminal Directive Campaign
+    [terminal-directive-cards] Terminal Directive Cards
+    [terminal-directive-cycle] Terminal Directive Cycle
+    [the-automata-initiative] The Automata Initiative
+    [the-devil-and-the-dragon] The Devil and the Dragon
+    [the-liberated-mind] The Liberated Mind
+    [the-source] The Source
+    [the-spaces-between] The Spaces Between
+    [the-underway] The Underway
+    [the-universe-of-tomorrow] The Universe of Tomorrow
+    [the-valley] The Valley
+    [trace-amount] Trace Amount
+    [true-colors] True Colors
+    [unreleased] Unreleased
+    [up-and-over] Up and Over
+    [uprising] Uprising
+    [uprising-booster-pack] Uprising Booster Pack
+    [upstalk] Upstalk
+    [what-lies-ahead] What Lies Ahead
+    [whispers-in-nalubaale] Whispers in Nalubaale
+    [world-champion-2015] World Champion 2015
+    [world-champion-2016] World Champion 2016
+    [world-champion-2017] World Champion 2017
+    *[unknown] Unknown Set {$name}
+}
 
 settings_alt-art = Alt arts
 settings_always = Always
@@ -774,10 +852,13 @@ settings_bespoke-sounds_archer = Archer
 settings_bespoke-sounds_end-of-the-line = End of the Line
 settings_bespoke-sounds_harmonics = Harmonics Suite (Bloop, Echo, Pulse, Wave)
 
-side_all = All
-side_any-side = Any Side
-side_corp = Corp
-side_runner = Runner
+side_name = {$side ->
+    [all] All
+    [any-side] Any Side
+    [corp] Corp
+    [runner] Runner
+    *[other] Unknown side
+}
 
 stats_all-games = Show all games
 stats_cards-accessed = Cards Accessed
@@ -796,12 +877,22 @@ stats_damage-done = Damage Done
 stats_download = Download replay
 stats_ended = Ended
 stats_events-played = Events Played
-stats_filtered = (filtered)
 stats_format = Format
 stats_game-stats = Game Stats
+stats_game-title = {$title} ({$cnt ->
+    [one] {$cnt} turn
+    *[other] {$cnt} turns
+})
 stats_launch = Launch Replay
 stats_lobby = Lobby
-stats_log-count = (fn [[cnt]] (str cnt " Log" (when (not= cnt 1) "s")))
+stats_log-count = {$cnt ->
+    [one] {$cnt} Log
+    *[other] {$cnt} Logs
+}
+stats_log-count-filtered = {$cnt ->
+    [one] {$cnt} Log
+    *[other] {$cnt} Logs
+} (filtered)
 stats_lost = Lost
 stats_no-games = No games
 stats_no-log = No log available
@@ -813,6 +904,7 @@ stats_psi-game-total-bid-1 = Psi Game: Bid 1
 stats_psi-game-total-bid-2 = Psi Game: Bid 2
 stats_psi-game-total-wins = Psi Game: Wins
 stats_rashida-count = Rashida Count
+stats_replay-shared = Replay shared
 stats_runner-stats = Runner Stats
 stats_runs-made = Runs Made
 stats_share = Share replay
@@ -820,7 +912,6 @@ stats_shared-games = Only show shared
 stats_shuffle-count = Shuffle Count
 stats_started = Started
 stats_tags-gained = Tags Gained
-stats_turn-count = (fn [[cnt]] (str cnt " turn" (when (not= cnt 1) "s")))
 stats_unavailable = Replay unavailable
 stats_unique-accesses = Unique Cards Accessed
 stats_view-games = Return to stats screen

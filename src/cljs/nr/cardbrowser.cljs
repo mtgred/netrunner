@@ -10,7 +10,7 @@
    [nr.account :refer [alt-art-name]]
    [nr.ajax :refer [GET]]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr tr-faction tr-format tr-set tr-side tr-sort tr-type tr-data]]
+   [nr.translations :refer [tr tr-faction tr-format tr-set tr-side tr-type tr-data fix-string]]
    [nr.utils :refer [banned-span deck-points-card-span faction-icon
                      format->slug get-image-path image-or-face influence-dots
                      non-game-toast render-icons restricted-span rotated-span set-scroll-top slug->format
@@ -305,8 +305,13 @@
   (let [title (tr-data :title card)
         icon (faction-icon (:faction card) title)
         uniq (when (:uniqueness card) "◇ ")
-        subtypes (or (tr-data :keywords card) (or (when (seq (:subtypes card)) (s/join " - " (tr-data :subtypes card))) (tr-data :subtype card)))
-        impl (when (and (:implementation card) (not= (:implementation card) "full")) (:implementation card))]
+        subtypes (or (tr-data :keywords card)
+                     (when (seq (:subtypes card))
+                       (s/join " - " (tr-data :subtypes card)))
+                     (tr-data :subtype card))
+        impl (when (and (:implementation card)
+                        (not= (:implementation card) "full"))
+               (:implementation card))]
     [:div
      [:h4 uniq title icon
       (when-let [influence (:factioncost card)]
@@ -433,7 +438,6 @@
 
 (defn selected-set-name [state]
   (-> (:set-filter @state)
-      (s/replace "&nbsp;&nbsp;&nbsp;&nbsp;" "")
       (s/replace " Cycle" "")))
 
 (defn handle-scroll [_ state]
@@ -523,8 +527,8 @@
     (doall
       (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
         [:option {:value field
-                  :key field
-                  :dangerouslySetInnerHTML #js {:__html (tr-sort field)}}]))]])
+                  :key field}
+         (tr [:card-browser.sort-by] {:by (fix-string field)})]))]])
 
 (defn simple-filter-builder
   [title state state-key options translator]
@@ -536,12 +540,8 @@
       (for [option (cons "All" options)]
         ^{:key option}
         [:option {:value option
-                  :key option
-                  :dangerouslySetInnerHTML #js {:__html (translator option)}}]))]])
-
-(defn format-set-name [pack-name]
-  (str "&nbsp;&nbsp;&nbsp;&nbsp;" pack-name))
-
+                  :key option}
+         (translator option)]))]])
 
 (defn dropdown-builder
   [state]
@@ -554,29 +554,40 @@
         cycles-list (filter #(not (= (:size %) 1)) cycles-list-all)
         sets-list (map #(if (not (or (:bigbox %)
                                      (= (:id %) (:cycle_code %))))
-                          (update-in % [:name] format-set-name)
+                          (assoc % :indent true)
                           %)
                        @sets)
-        set-names (map :name
-                       (sort-by (juxt :cycle_position :position)
-                                (concat cycles-list sets-list)))
-        alt-art-sets (cons "Alt Art"
-                           (map #(format-set-name (:name %))
-                                (sort-by :position (:alt-info @app-state))))
+        set-names (sort-by (juxt :cycle_position :position)
+                           (concat cycles-list sets-list))
+        alt-art-sets (delay
+                       (->> (:alt-info @app-state)
+                            (sort-by :position)
+                            (map #(assoc % :indent true))
+                            (cons {:name "Alt Art"})))
         sets-to-display (if (show-alt-art? true)
-                          (concat set-names alt-art-sets)
+                          (concat set-names @alt-art-sets)
                           set-names)
-        formats (-> format->slug keys butlast)]
+        formats (-> format->slug keys sort)]
     [:div
-     (doall
-       (for [[title state-key options translator]
-             [[(tr [:card-browser.format "Format"]) :format-filter formats tr-format]
-              [(tr [:card-browser.set "Set"]) :set-filter sets-to-display tr-set]
-              [(tr [:card-browser.side "Side"]) :side-filter ["Corp" "Runner"] tr-side]
-              [(tr [:card-browser.faction "Faction"]) :faction-filter (factions (:side-filter @state)) tr-faction]
-              [(tr [:card-browser.type "Type"]) :type-filter (types (:side-filter @state)) tr-type]]]
-         ^{:key title}
-         [simple-filter-builder title state state-key options translator]))]))
+     [simple-filter-builder (tr [:card-browser.format "Format"])
+      state :format-filter formats tr-format]
+     [:div
+      [:h4 (tr [:card-browser.set "Set"])]
+      [:select {:value (:set-filter @state)
+                :on-change #(swap! state assoc :set-filter (.. % -target -value))}
+       (doall
+        (for [{n :name indent :indent} (cons {:name "All"} sets-to-display)]
+          ^{:key n}
+          [:option {:value n :key n}
+           (if indent
+             (str "* " (tr-set n))
+             (tr-set n))]))]]
+     [simple-filter-builder (tr [:card-browser.side "Side"])
+      state :side-filter ["Corp" "Runner"] tr-side]
+     [simple-filter-builder (tr [:card-browser.faction "Faction"])
+      state :faction-filter (factions (:side-filter @state)) tr-faction]
+     [simple-filter-builder (tr [:card-browser.type "Type"])
+      state :type-filter (types (:side-filter @state)) tr-type]]))
 
 (defn clear-filters [state]
   [:p [:button

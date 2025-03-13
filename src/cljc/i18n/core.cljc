@@ -1,10 +1,14 @@
 (ns i18n.core
+  (:refer-clojure :exclude [format])
   (:require
    [clojure.string :as str]
-   [i18n.fluent :as i18n]))
+   [i18n.fluent :as i18n]
+   #?(:cljs
+     [reagent.core :as r])))
 
-(def fluent-dictionary
-  (atom nil))
+(defonce fluent-dictionary
+  #?(:clj (atom nil)
+     :cljs (r/atom {})))
 
 (defn insert-lang! [lang content]
   (swap! fluent-dictionary assoc (keyword lang) {:content content
@@ -18,14 +22,17 @@
   [lang]
   (get-in @fluent-dictionary [(keyword lang) :ftl]))
 
-(defn tr-impl [app-state resource & params]
-  (let [lang (get-in @app-state [:options :language] "en")
-        [id fallback] resource
-        id (-> id
-               (symbol)
-               (str)
-               (str/replace "." "_"))
-        bundle (get-bundle lang)]
-    (or (when bundle
-          (i18n/format bundle id))
-        fallback)))
+(defn format
+  ([app-state resource] (format app-state resource nil))
+  ([app-state resource params]
+   (let [lang (get-in @app-state [:options :language] "en")
+         resource (if (string? resource) [resource] resource)
+         [raw-id fallback] resource
+         id (-> raw-id
+                (symbol)
+                (str)
+                (str/replace "." "_"))
+         bundle (get-bundle lang)]
+     (or (when bundle
+           (i18n/format bundle id params))
+         fallback))))

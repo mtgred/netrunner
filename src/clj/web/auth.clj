@@ -182,7 +182,7 @@
     {username :username :as user} :user
     body :body}]
   (let [options (select-non-nil-keys body profile-keys)
-        lang (:i18n body)]
+        lang (:lang body)]
     (if (active-user? user)
       (if (acknowledged? (mc/update db "users"
                                     {:username username}
@@ -192,7 +192,7 @@
             (let [resp {:message "Refresh your browser"}
                   resp (cond-> resp
                          lang
-                         (assoc :i18n lang
+                         (assoc :lang lang
                                 :content (i18n.core/get-content (keyword lang))))]
               (response 200 resp)))
         (response 404 {:message "Account not found"}))

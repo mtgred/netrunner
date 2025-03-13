@@ -25,7 +25,7 @@
    [nr.gameboard.right-pane :refer [content-pane]]
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
-   [nr.translations :refer [tr tr-side tr-game-prompt]]
+   [nr.translations :refer [tr tr-game-prompt]]
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
                      image-or-face map-longest render-icons render-message]]
    [nr.ws :as ws]
@@ -648,7 +648,7 @@
                                        "score" false
                                        false)]
                   ^{:key action}
-                  [card-menu-item (capitalize (tr-game-prompt action))
+                  [card-menu-item (tr-game-prompt action)
                    #(do (send-command action {:card card})
                         (if keep-menu-open
                           (swap! card-menu assoc :keep-menu-open keep-menu-open)
@@ -1009,16 +1009,19 @@
                                       "darkbg"))}
            (let [total (count @discard)
                  face-up (count (filter faceup? @discard))]
-             (str (tr [:game.archives "Archives"])
-                  ;; use non-breaking space to keep counts on same line
-                  " (" (tr [:game.up-down-count] total face-up) ")"))]]
+             (str (tr [:game.archives "Archives"]
+                      {:faceup face-up
+                       :facedown (- total face-up)})))]]
          [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                        :class (if (= (:side @game-state) :runner) "opponent" "me")}
           [:div
            [:a {:on-click #(close-popup % (:popup @s) nil false false)} (tr [:game.close "Close"])]
-           [:label (let [total (count @discard)
-                         face-up (count (filter faceup? @discard))]
-                     (tr [:game.face-down-count] total face-up))]]
+           [:label (let [d @discard
+                         total (count d)
+                         face-up (count (filter faceup? d))]
+                     (tr [:game.face-down-count]
+                         {:total total
+                          :facedown (- total face-up)}))]]
           (doall
             (for [[idx c] (map-indexed vector (if (sort-archives?) (sort-archives @discard) @discard))]
               ^{:key idx}
@@ -1069,7 +1072,8 @@
 
 (defn scored-view [scored agenda-point agenda-point-req me?]
   (let [size (count @scored)
-        ctrl (if me? stat-controls (fn [key content] content))]
+        ctrl (if me? stat-controls (fn [key content] content))
+        point-req @agenda-point-req]
     [:div.panel.blue-shade.scored.squeeze
      (doall
        (map-indexed (fn [i card]
@@ -1079,8 +1083,12 @@
                     @scored))
      [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]
      [:div.stats-area
-      (ctrl :agenda-point [:div (tr [:game.agenda-count] @agenda-point)
-                           (tr [:game.agenda-point-req] (if-not (= 7 agenda-point-req) (str " (" agenda-point-req " required)") "") @agenda-point-req)])]]))
+      (ctrl :agenda-point [:div (if (= 7 point-req)
+                                  (tr [:game.agenda-count] 
+                                      {:agenda-point @agenda-point})
+                                  (tr [:game.agenda-count-with-req] 
+                                      {:agenda-point @agenda-point
+                                       :agenda-point-req point-req}))])]]))
 
 (defn run-arrow [run]
   [:div.run-arrow [:div {:class (cond
@@ -1296,45 +1304,37 @@
         (let [winner (:winner @game-state)
               winning-user (:winning-user @game-state)
               turn (:turn @game-state)
-              reason (:reason @game-state)
-              time (get-in @game-state [:stats :time :elapsed])]
+              reason (capitalize (:reason @game-state))
+              time (get-in @game-state [:stats :time :elapsed])
+              args {:winner winning-user
+                    :side winner
+                    :reason reason
+                    :turn turn}]
           [:div.win.centered.blue-shade
            [:div
-            winning-user
-            " (" (capitalize (tr-side winner)) ") "
-            (cond
-              (= "Decked" (capitalize reason))
-              (tr [:game.win-decked] turn)
-
-              (= "Flatline" (capitalize reason))
-              (tr [:game.win-flatlined] turn)
-
-              (= "Concede" (capitalize reason))
-              (tr [:game.win-conceded] turn)
-
-              (= "Claim" (capitalize reason))
-              (tr [:game.win-claimed] turn)
-
-              (= "Agenda" (capitalize reason))
-              (tr [:game.win-points] turn)
-
-              :else
-              (tr [:game.win-other] turn reason))]
+            (case reason
+              "Decked" (tr [:game.win-decked] args)
+              "Flatline" (tr [:game.win-flatlined] args)
+              "Concede" (tr [:game.win-conceded] args)
+              "Claim" (tr [:game.win-claimed] args)
+              "Agenda" (tr [:game.win-points] args)
+              #_:else (tr [:game.win-other] args))]
            [:div (tr [:game.time-taken] time)]
            [:br]
            [build-game-stats (get-in @game-state [:stats :corp]) (get-in @game-state [:stats :runner])]
            (when (not= :spectator (:side @game-state))
-             [:br]
-             [:div {:class "end-of-game-buttons"}
-              (when (= :corp (:side @game-state))
-                [:button#rez-all
-                 {:on-click #(ws/ws-send! [:game/say {:gameid (current-gameid app-state)
-                                                      :msg "/rez-all"}])}
-                 (tr [:game.rez-all "Rez All"])])
-              [:button#reveal-hand
-               {:on-click #(ws/ws-send! [:game/say {:gameid (current-gameid app-state)
-                                                    :msg "/show-hand"}])}
-               (tr [:game.reveal-my-hand "Reveal My Hand"])]])
+             [:<>
+              [:br]
+              [:div {:class "end-of-game-buttons"}
+               (when (= :corp (:side @game-state))
+                 [:button#rez-all
+                  {:on-click #(ws/ws-send! [:game/say {:gameid (current-gameid app-state)
+                                                       :msg "/rez-all"}])}
+                  (tr [:game.rez-all "Rez All"])])
+               [:button#reveal-hand
+                {:on-click #(ws/ws-send! [:game/say {:gameid (current-gameid app-state)
+                                                     :msg "/show-hand"}])}
+                (tr [:game.reveal-my-hand "Reveal My Hand"])]]])
            [:button.win-right {:on-click #(reset! win-shown true) :type "button"} "✘"]])))))
 
 (defn- build-in-game-decklists

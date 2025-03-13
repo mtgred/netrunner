@@ -4,7 +4,7 @@
    [jinteki.preconstructed :refer [all-matchups matchup-by-key]]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [authenticated] :as auth]
-   [nr.translations :refer [tr tr-string tr-format tr-side]]
+   [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [slug->format]]
    [nr.ws :as ws]
    [reagent.core :as r]))
@@ -71,7 +71,7 @@
                   :value option
                   :on-change #(reset! side-state (.. % -target -value))
                   :checked (= @side-state option)}]
-         (tr-side option)]]))])
+         (tr [:side.name] {:side option})]]))])
 
 (defn singleton-only [options fmt-state]
   [:label
@@ -97,7 +97,7 @@
                         :value option
                         :on-change #(reset! gateway-type (.. % -target -value))
                         :checked (= @gateway-type option)}]
-              (str (tr-string "lobby.gateway-format" option) "    ")]]))])
+              (str (tr [:lobby.gateway-format] {:format option}) "    ")]]))])
 
 (defn precon-choice [fmt-state precon]
   [:div

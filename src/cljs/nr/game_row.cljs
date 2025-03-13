@@ -175,7 +175,7 @@
         (when (:password game) (str "[" (tr [:lobby.private "PRIVATE"]) "] "))
         (:title game)
         (let [c (count (:spectators game))]
-          (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")"))))])
+          (when (pos? c) (str " (" (tr [:lobby.spectator-count] {:cnt c}) ")"))))])
 
 (defn- precon-span [precon]
   (when precon

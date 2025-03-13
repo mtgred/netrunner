@@ -1,7 +1,7 @@
 (ns nr.password-game
   (:require
    [nr.auth :refer [authenticated]]
-   [nr.translations :refer [tr tr-watch-join]]
+   [nr.translations :refer [tr tr-room-type]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [taoensso.sente :as sente]))
@@ -46,7 +46,7 @@
        [:p
         [:button {:type "button"
                   :on-click #(join-game lobby-state state @game @action @request-side)}
-         (tr-watch-join @action)]
+         (tr-room-type @action)]
         [:span.fake-link {:on-click #(do
                                        (swap! lobby-state dissoc :password-game)
                                        (reset! state {:error-msg nil :password nil}))}

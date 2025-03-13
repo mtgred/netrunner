@@ -279,7 +279,7 @@
         (faction-icon faction identity)
 
         side
-        (str " (" (tr-side side) ")")))
+        (str " (" (tr [:side.name] {:side side}) ")")))
     (when-let [{:keys [wins losses]} (:run-info player)]
       [:span.standings wins "-" losses])]))
 
@@ -305,7 +305,7 @@
        [:h4
         (str (when (:save-replay game) "🟢")
              (:title game)
-             (when (pos? c) (str " (" (tr [:lobby.spectator-count] c) ")")))])
+             (when (pos? c) (str " (" (tr [:lobby.spectator-count] {:cnt c}) ")")))])
 
      [:div {:class "game-format"}
       [:span.format-label (tr [:lobby.default-game-format "Default game format"]) ":  "]

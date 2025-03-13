@@ -24,8 +24,8 @@
     404 (non-game-toast (tr [:settings.invalid-email "No account with that email address exists"]) "error" nil)
     ;; else
     (do (when-let [json (:json response)]
-          (when (and (:i18n json) (:content json))
-            (i18n.core/insert-lang! (:i18n json) (:content json))))
+          (when (and (:lang json) (:content json))
+            (i18n.core/insert-lang! (:lang json) (:content json))))
         (non-game-toast (tr [:settings.updated "Profile updated - Please refresh your browser"]) "success" nil)))
   (swap! s assoc :flash-message ""))
 
@@ -33,7 +33,7 @@
   (let [params (:options @app-state)
         params (if (i18n.core/get-bundle (:language params))
                  params
-                 (assoc params :i18n (:language params)))]
+                 (assoc params :lang (:language params)))]
     (go (let [response (<! (PUT "/profile" params :json))]
           (callback response)))))
 

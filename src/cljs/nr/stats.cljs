@@ -9,7 +9,7 @@
    [nr.auth :refer [authenticated] :as auth]
    [nr.avatar :refer [avatar]]
    [nr.end-of-game-stats :refer [build-game-stats]]
-   [nr.translations :refer [tr tr-format tr-lobby tr-side]]
+   [nr.translations :refer [tr tr-format tr-room-type tr-side]]
    [nr.utils :refer [day-word-with-time-formatter faction-icon format-date-time
                      notnum->zero num->percent player-highlight-option-class
                      render-message render-player-highlight set-scroll-top store-scroll-top]]
@@ -53,9 +53,9 @@
      [:h4 (:title game) (when (:has-replay game) (if (:replay-shared game) " ⭐" " 🟢"))]
      [:div
       [:div.game-details-table
-       [:div (str (tr [:stats.lobby "Lobby"]) ": " (capitalize (tr-lobby (:room game))))]
-       [:div (str (tr [:stats.format "Format"]) ": " (capitalize (tr-format (:format game))))]
-       [:div (str (tr [:stats.winner "Winner"]) ": " (capitalize (tr-side (:winner game))))]
+       [:div (str (tr [:stats.lobby "Lobby"]) ": " (tr-room-type (:room game)))]
+       [:div (str (tr [:stats.format "Format"]) ": " (tr-format (:format game)))]
+       [:div (str (tr [:stats.winner "Winner"]) ": " (tr-side (:winner game)))]
        [:div (str (tr [:stats.win-method "Win method"]) ": " (:reason game))]
        [:div (str (tr [:stats.started "Started"]) ": " (format-date-time day-word-with-time-formatter (:start-date game)))]
        [:div (str (tr [:stats.ended "Ended"]) ": " (format-date-time day-word-with-time-formatter (:end-date game)))]]
@@ -172,8 +172,11 @@
                     (reset! log-scroll-top 0))}
       (tr [:stats.view-log "View log"])]
      [:h4.log-title
-      {:title (when replay-shared "Replay shared")}
-      title " (" (tr [:stats.turn-count] turn-count) ")" (when has-replay (if replay-shared " ⭐" " 🟢"))]
+      (when replay-shared
+        {:title (tr [:stats.replay-shared "Replay shared"])})
+      (tr [:stats.game-title] {:title title
+                               :cnt turn-count})
+      (when has-replay (if replay-shared " ⭐" " 🟢"))]
 
      [:div.log-date (format-date-time day-word-with-time-formatter start-date)]
 
@@ -208,8 +211,9 @@
              (if (:filter-replays @state)
                (tr [:stats.all-games "Show all games"])
                (tr [:stats.shared-games "Only show shared"]))]
-            [:span.log-count (str (tr [:stats.log-count] cnt) (when (:filter-replays @state)
-                                                                (str " " (tr [:stats.filtered "(filtered)"]))))]]
+            [:span.log-count (if (:filter-replays @state)
+                               (tr [:stats.log-count-filtered] {:cnt cnt})
+                               (tr [:stats.log-count] {:cnt cnt}))]]
            (if (empty? games)
              [:h4 (tr [:stats.no-games "No games"])]
              (doall

@@ -639,20 +639,16 @@
                faction-filter (r/cursor state [:faction-filter])
                fmt-filter (r/cursor state [:format-filter])]
     (when-not (:edit @state)
-      (cond
+      (if
         (not @decks-loaded)
         [:div.deck-collection
          [:h4 (tr [:deck-builder.loading-msg "Loading deck collection..."])]]
-        (empty? @decks)
-        [:div.deck-collection
-         [:h4 (tr [:deck-builder.no-decks "No decks"])]]
-        :else
         (let [filtered-decks (->> @decks
                                   (filter-side side-filter)
                                   (filter-faction faction-filter)
                                   (filter-format fmt-filter))
               n (count filtered-decks)
-              deck-str (tr [:deck-builder.deck-count] n)]
+              deck-str (tr [:deck-builder.deck-count "poop"] {:cnt n})]
           [:<>
            [:div.deck-count
             [:h4 (str deck-str (when (filter-selected side-filter faction-filter fmt-filter)
@@ -1020,15 +1016,15 @@
      (for [option options]
        ^{:key option}
        [:option.deckfilter-option {:value option
-                                   :key option
-                                   :dangerouslySetInnerHTML #js {:__html (translator option)}}]))])
+                                   :key option}
+        (translator option)]))])
 
 (defn- handle-side-changed [state]
   (swap! state assoc :faction-filter all-factions-filter))
 
 (defn- filter-builder
   [state decks-loaded scroll-top]
-  (let [formats (-> format->slug keys butlast)]
+  (let [formats (-> format->slug keys sort)]
     [:div.deckfilter
      (doall
        (for [[state-key options callback translator]
@@ -1042,8 +1038,7 @@
                :on-click #(reset-deck-filters state)}
       (tr [:deck-builder.reset "Reset"])]]))
 
-(defn- zoom-card-view [card state]
-  [card state]
+(defn- zoom-card-view [card]
   (when-let [url (image-url card)]
     [:div.card-preview.blue-shade
      [:img {:src url
@@ -1061,7 +1056,7 @@
         (let [art (:art line)
               id (:id line)
               updated-card (add-params-to-card (:card line) id art)]
-          [zoom-card-view updated-card s]))]]))
+          [zoom-card-view updated-card]))]]))
 
 (defn- class-for-state [s]
   (r/with-let [edit (r/cursor s [:edit])

@@ -181,7 +181,7 @@
   (let [{:keys [allow-spectator spectators]} @current-game]
     (when allow-spectator
       [:div.spectators
-       [:h3 (tr [:lobby.spectator-count "Spectators"] (count spectators))]
+       [:h3 (tr [:lobby.spectator-count "Spectators"] {:cnt (count spectators)})]
        (for [spectator spectators
              :let [_id (get-in spectator [:user :_id])]]
          ^{:key _id}

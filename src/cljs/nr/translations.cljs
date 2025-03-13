@@ -2,34 +2,31 @@
   (:require
    [clojure.string :as str]
    [i18n.core :as tr]
-   [jinteki.utils :refer [slugify]]
    [nr.appstate :refer [app-state]]))
 
-(defn tr [resource & params]
-  (apply tr/tr-impl app-state resource params))
+(defn tr
+  ([resource] (tr resource nil))
+  ([resource params]
+   (tr/format app-state resource params)))
 
-(defn tr-string [prefix s]
-  (let [side (str/lower-case (str/replace (or s "") " " "-"))
-        kw (keyword (str prefix "." side))]
-    (tr [kw "Unknown"])))
+(defn fix-string
+  [s]
+  (let [s (-> (or s "")
+              (str/replace " " "-")
+              (str/replace "&" "-")
+              (str/lower-case))]
+    (if (#{"0" "1" "2" "3" "4" "5" "6" "7" "8" "9"} (first s))
+      (str "a" s)
+      s)))
 
-(defn tr-string-s [prefix s]
-  (let [s-trim (-> (or s "")
-              (str/replace "&nbsp;&nbsp;&nbsp;&nbsp;" ""))
-        side (slugify s-trim)
-        kw (keyword (str prefix "." side))]
-    (str/replace (or s "") s-trim (tr [kw s-trim]))))
-
-(defn tr-type [s] (tr-string "card-type" s))
-(defn tr-side [s] (tr-string "side" s))
-(defn tr-faction [s] (tr-string "faction" s))
-(defn tr-format [s] (tr-string "format" s))
-(defn tr-sort [s] (tr-string "card-browser.sort-by" s))
-(defn tr-lobby [s] (tr-string "lobby" s))
-(defn tr-pronouns [s] (tr-string "pronouns" s))
-(defn tr-watch-join [s] (tr-string "lobby" s))
-(defn tr-set [s] (tr-string-s "set" s))
-(defn tr-game-prompt [s] (tr-string-s "game-prompt" s))
+(defn tr-type [s] (tr [:card-type.name] {:type (fix-string s)}))
+(defn tr-side [s] (tr [:side.name] {:side (fix-string s)}))
+(defn tr-faction [s] (tr [:faction.name] {:faction (fix-string s)}))
+(defn tr-format [s] (tr [:format.name] {:format (fix-string s)}))
+(defn tr-room-type [s] (tr [:lobby.type] {:type (fix-string s)}))
+(defn tr-pronouns [s] (tr [:pronouns] {:pronoun (fix-string s)}))
+(defn tr-set [s] (tr [:set.name] {:name (fix-string s)}))
+(defn tr-game-prompt [s] (tr [:game.prompt] {:msg (fix-string s)}))
 
 (defn tr-data [k data]
   (or (get-in data [:localized k]) (k data)))
