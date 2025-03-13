@@ -55,7 +55,7 @@ card-type_name = {$type ->
     [program] Program
     [resource] Resource
     [upgrade] Upgrade
-    *[unknown] Unkonwn card type ({$type})
+    *[unknown] Unknown card type ({$type})
 }
 
 chat_block = Block User
@@ -76,7 +76,10 @@ deck-builder_add-to-deck = Add to deck
 deck-builder_agenda-points = Agenda points
 deck-builder_cancel = Cancel
 deck-builder_card-name = Card name
-deck-builder_cards = cards
+deck-builder_card-count = {$cnt ->
+    [one] 1 card
+    *[other] {$cnt} cards
+}
 deck-builder_clear-stats = Clear Stats
 deck-builder_completed = Completed
 deck-builder_confirm-delete = Confirm Delete
@@ -87,6 +90,11 @@ deck-builder_deck-count = {$cnt ->
     [zero] No Decks
     [one] {$cnt} Deck
     *[other] {$cnt} Decks
+}
+deck-builder_deck-count-filtered = {$cnt ->
+    [zero] No Decks (filtered)
+    [one] {$cnt} Deck (filtered)
+    *[other] {$cnt} Decks (filtered)
 }
 deck-builder_deck-name = Deck name
 deck-builder_deck-notes = Deck notes
@@ -111,6 +119,7 @@ deck-builder_loading-msg = Loading deck collection...
 deck-builder_lost = Lost
 deck-builder_max = maximum
 deck-builder_min = minimum
+deck-builder_min-deck-size = (minimum {$cnt})
 deck-builder_new-corp = New Corp deck
 deck-builder_new-deck = New Deck
 deck-builder_new-runner = New Runner deck
@@ -248,7 +257,7 @@ game_auto-pass = Auto-pass priority
 game_bad-pub-count = {$base} Bad Publicity
 game_bad-pub-count-additional = {$base} + {$additional} Bad Publicity
 game_beat-trace = Beat Trace
-game_brain-damage = Core Damage
+game_brain-damage = {$dmg} Core Damage
 game_breach-server = Breach server
 game_card = Card
 game_card-count = {$size ->
@@ -448,11 +457,14 @@ lobby_deck-selected = Deck selected
 lobby_default-game-format = Default game format
 lobby_delete = Delete Game
 lobby_filter = Filter
-lobby_filtered = (filtered)
 lobby_format = Format
 lobby_game-count = {$cnt ->
     [one] {$cnt} Game
     *[other] {$cnt} Games
+}
+lobby_game-count-filtered = {$cnt ->
+    [one] {$cnt} Game (filtered)
+    *[other] {$cnt} Games (filtered)
 }
 lobby_hidden = Make players' hidden information visible to spectators
 lobby_hidden-details = This will reveal both players' hidden information to ALL spectators of your game, including hand and face-down cards.
@@ -528,11 +540,11 @@ log_settings = Settings
 log_shared = Shared Annotations
 log_turn-timing = Turn Timing
 
-menu_admin = :en.nav/admin
+menu_admin = { nav_admin }
 menu_donor = Donor
 menu_logout = Jack out
 menu_moderator = Moderator
-menu_settings = :en.nav/settings
+menu_settings ={ nav_settings }
 
 missing = :en missing text
 
@@ -774,7 +786,6 @@ settings_apex-bg = Apex
 settings_api-keys = API Keys
 settings_avatar = Avatar
 settings_background = Game board background
-settings_bespoke-sounds-header = Card-Specific Sounds
 settings_block = Block user
 settings_blocked = Blocked users
 settings_cancel = Cancel
@@ -790,6 +801,7 @@ settings_connection = Connection
 settings_create-api-key = Create API Key
 settings_current-email = Current email
 settings_custom-bg = Custom BG
+settings_custom-bg-with-url = Custom BG (input URL below)
 settings_deck-stats = Deck statistics
 settings_delete-api-key = Delete
 settings_desired-email = Desired email
@@ -809,7 +821,6 @@ settings_get-log-top = Get current log top
 settings_get-log-width = Get current log width
 settings_ghost-trojans = Display ghosts for hosted programs
 settings_high-res = Enable high-resolution card images
-settings_input-url-below = (input URL below)
 settings_invalid-email = No account with that email address exists
 settings_invalid-password = Invalid login or password
 settings_language = Language
@@ -848,16 +859,21 @@ settings_updating = Updating profile...
 settings_user-name = User name
 settings_volume = Volume
 settings_worlds2020-bg = Worlds 2020
-settings_bespoke-sounds_archer = Archer
-settings_bespoke-sounds_end-of-the-line = End of the Line
-settings_bespoke-sounds_harmonics = Harmonics Suite (Bloop, Echo, Pulse, Wave)
+
+settings_bespoke-sounds = {$sound ->
+    [archer] Archer
+    [end-of-the-line] End of the Line
+    [harmonics] Harmonics Suite (Bloop, Echo, Pulse, Wave)
+    [header] Card-Specific Sounds
+    *[unknown] Unknown bespoke sound ({$sound})
+}
 
 side_name = {$side ->
     [all] All
     [any-side] Any Side
     [corp] Corp
     [runner] Runner
-    *[other] Unknown side
+    *[unknown] Unknown side ({$side})
 }
 
 stats_all-games = Show all games

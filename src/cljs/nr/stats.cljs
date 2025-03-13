@@ -49,27 +49,27 @@
 (defn game-details [state]
   (let [game (:view-game @state)]
     [:div.games.panel
-     [:p.return-button [:button {:on-click #(swap! state dissoc :view-game)} (tr [:stats.view-games "Return to stats screen"])]]
+     [:p.return-button [:button {:on-click #(swap! state dissoc :view-game)} [tr [:stats_view-games "Return to stats screen"]]]]
      [:h4 (:title game) (when (:has-replay game) (if (:replay-shared game) " ⭐" " 🟢"))]
      [:div
       [:div.game-details-table
-       [:div (str (tr [:stats.lobby "Lobby"]) ": " (tr-room-type (:room game)))]
-       [:div (str (tr [:stats.format "Format"]) ": " (tr-format (:format game)))]
-       [:div (str (tr [:stats.winner "Winner"]) ": " (tr-side (:winner game)))]
-       [:div (str (tr [:stats.win-method "Win method"]) ": " (:reason game))]
-       [:div (str (tr [:stats.started "Started"]) ": " (format-date-time day-word-with-time-formatter (:start-date game)))]
-       [:div (str (tr [:stats.ended "Ended"]) ": " (format-date-time day-word-with-time-formatter (:end-date game)))]]
+       [:div (str [tr [:stats_lobby "Lobby"]] ": " (tr-room-type (:room game)))]
+       [:div (str [tr [:stats_format "Format"]] ": " (tr-format (:format game)))]
+       [:div (str [tr [:stats_winner "Winner"]] ": " (tr-side (:winner game)))]
+       [:div (str [tr [:stats_win-method "Win method"]] ": " (:reason game))]
+       [:div (str [tr [:stats_started "Started"]] ": " (format-date-time day-word-with-time-formatter (:start-date game)))]
+       [:div (str [tr [:stats_ended "Ended"]] ": " (format-date-time day-word-with-time-formatter (:end-date game)))]]
       (when (:stats game)
         [build-game-stats (get-in game [:stats :corp]) (get-in game [:stats :runner])])
       [:p
        (when (and (:has-replay game)
                   (not (:replay-shared game)))
-         [:button {:on-click #(share-replay state (:gameid game))} (tr [:stats.share "Share replay"])])
+         [:button {:on-click #(share-replay state (:gameid game))} [tr [:stats_share "Share replay"]]])
        (if (:has-replay game)
          [:span
-          [:button {:on-click #(launch-replay game)} (tr [:stats.launch "Launch Replay"])]
-          [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} (tr [:stats.download "Download replay"])]]
-         (tr [:stats.unavailable "Replay unavailable"]))]
+          [:button {:on-click #(launch-replay game)} [tr [:stats_launch "Launch Replay"]]]
+          [:a.button {:href (str "/profile/history/full/" (:gameid game)) :download (str (:title game) ".json")} [tr [:stats_download "Download replay"]]]]
+         [tr [:stats_unavailable "Replay unavailable"]])]
       (when (:replay-shared game)
         [:p [:input.share-link {:type "text" :read-only true :value (replay-link game)}]])]]))
 
@@ -90,32 +90,32 @@
                incomplete (notnum->zero (- started completed))
                pi (notnum->zero (num->percent incomplete started))]
     [:section
-     [:div (tr [:stats.started "Started"]) ": " started]
-     [:div (tr [:stats.completed "Completed"]) ": " completed " (" pc "%)"]
-     [:div (tr [:stats.not-completed "Not completed"]) ": " incomplete  " (" pi "%)"]
+     [:div [tr [:stats_started "Started"]] ": " started]
+     [:div [tr [:stats_completed "Completed"]] ": " completed " (" pc "%)"]
+     [:div [tr [:stats_not-completed "Not completed"]] ": " incomplete  " (" pi "%)"]
      (when-not (= "none" (get-in @app-state [:options :gamestats]))
-       [:div [:div (tr [:stats.won "Won"]) ": " win  " (" pw "%)"]
-        [:div (tr [:stats.lost "Lost"]) ": " lose  " (" pl "%)"]])]))
+       [:div [:div [tr [:stats_won "Won"]] ": " win  " (" pw "%)"]
+        [:div [tr [:stats_lost "Lost"]] ": " lose  " (" pl "%)"]])]))
 
 (defn stats-panel [stats]
   [:div.games.panel
    [:div.games
     [:div
-     [:h3 (tr [:stats.game-stats "Game Stats"])]
+     [:h3 [tr [:stats_game-stats "Game Stats"]]]
      [stat-view {:stats @stats
                  :start-key :games-started :complete-key :games-completed
                  :win-key :wins :lose-key :loses}]]
     [:div
-     [:h3 (tr [:stats.corp-stats "Corp Stats"])]
+     [:h3 [tr [:stats_corp-stats "Corp Stats"]]]
      [stat-view {:stats @stats
                  :start-key :games-started-corp :complete-key :games-completed-corp
                  :win-key :wins-corp :lose-key :loses-corp}]]
     [:div
-     [:h3 (tr [:stats.runner-stats "Runner Stats"])]
+     [:h3 [tr [:stats_runner-stats "Runner Stats"]]]
      [stat-view {:stats @stats
                  :start-key :games-started-runner :complete-key :games-completed-runner
                  :win-key :wins-runner :lose-key :loses-runner}]]]
-   [:p [:button {:on-click #(clear-user-stats)} (tr [:stats.clear-stats "Clear Stats"])]]] )
+   [:p [:button {:on-click #(clear-user-stats)} [tr [:stats_clear-stats "Clear Stats"]]]]] )
 
 (defn left-panel [state stats]
   (if (:view-game @state)
@@ -146,7 +146,7 @@
                               [:div.username (get-in msg [:user :username])]
                               [:div (render-message (:text msg))]]])))
                       (:log game)))
-             [:h4 (tr [:stats.no-log "No log available"])])]]))}))
+             [:h4 [tr [:stats_no-log "No log available"]]])]]))}))
 
 (def faction-icon-memo (memoize faction-icon))
 
@@ -170,11 +170,11 @@
       {:on-click #(do
                     (fetch-log state game)
                     (reset! log-scroll-top 0))}
-      (tr [:stats.view-log "View log"])]
+      [tr [:stats_view-log "View log"]]]
      [:h4.log-title
       (when replay-shared
-        {:title (tr [:stats.replay-shared "Replay shared"])})
-      (tr [:stats.game-title] {:title title
+        {:title [tr [:stats_replay-shared "Replay shared"]]})
+      (tr [:stats_game-title] {:title title
                                :cnt turn-count})
       (when has-replay (if replay-shared " ⭐" " 🟢"))]
 
@@ -193,7 +193,7 @@
        (faction-icon-memo (:faction runner-id) (:title runner-id)) " " (:title runner-id)]]
 
      (when winner
-       [:h4 (tr [:stats.winner "Winner"]) ": " (tr-side winner) (str user-win)])]))
+       [:h4 [tr [:stats_winner "Winner"]] ": " (tr-side winner) (str user-win)])]))
 
 (defn history [_state list-scroll-top _log-scroll-top]
   (r/create-class
@@ -209,13 +209,13 @@
            [:div.controls
             [:button {:on-click #(swap! state update :filter-replays not)}
              (if (:filter-replays @state)
-               (tr [:stats.all-games "Show all games"])
-               (tr [:stats.shared-games "Only show shared"]))]
+               [tr [:stats_all-games "Show all games"]]
+               [tr [:stats_shared-games "Only show shared"]])]
             [:span.log-count (if (:filter-replays @state)
-                               (tr [:stats.log-count-filtered] {:cnt cnt})
-                               (tr [:stats.log-count] {:cnt cnt}))]]
+                               (tr [:stats_log-count-filtered] {:cnt cnt})
+                               (tr [:stats_log-count] {:cnt cnt}))]]
            (if (empty? games)
-             [:h4 (tr [:stats.no-games "No games"])]
+             [:h4 [tr [:stats_no-games "No games"]]]
              (doall
                (for [game games]
                  ^{:key (:gameid game)}

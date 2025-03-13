@@ -33,11 +33,11 @@
   [{:keys [format] :as deck-status} tooltip? violation-details?]
   (let [format (or format :standard)
         status (check-deck-status deck-status)
-        message (str (tr-format (get slug->format (:format deck-status) "Standard"))
+        message [:<> (tr-format (get slug->format (:format deck-status) "Standard"))
                      " "
                      (if (= "invalid" status)
-                       (tr [:deck-builder.illegal "illegal"])
-                       (tr [:deck-builder.legal "legal"])))]
+                       [tr [:deck-builder_illegal "illegal"]]
+                       [tr [:deck-builder_legal "legal"]])]]
     [:<>
      [:span.deck-status.shift-tooltip {:class status} message
       (when tooltip?
@@ -46,7 +46,7 @@
        (when (and tooltip? (= "invalid" status))
          [:span.deck-status.shift-tooltip.invalid-explanation
           {:class status}
-          (tr [:deck-builder.why "Why?"])
+          [tr [:deck-builder_why "Why?"]]
           [:span.status-tooltip.blue-shade
            [:span.invalid reason]]]))]))
 

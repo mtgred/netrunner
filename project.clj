@@ -25,8 +25,8 @@
                                org.clojure/tools.reader
                                com.cognitect/transit-clj
                                com.cognitect/transit-java]]
-                 [com.google.javascript/closure-compiler-unshaded "v20211006"]
-                 [org.clojure/core.async "1.5.644"]
+                 [com.google.javascript/closure-compiler-unshaded "v20240317"]
+                 [org.clojure/core.async "1.7.701"]
                  [com.taoensso/sente "1.19.2" :exclusions [org.clojure/tools.reader]]
                  [ring/ring-core "1.9.4"]
                  [ring/ring-devel "1.9.4" :exclusions [org.clojure/java.classpath]]
@@ -49,7 +49,7 @@
                  [com.draines/postal "2.0.5"]
                  [throttler "1.0.1"]
                  [clj-http "3.12.3"]
-                 [reagent "1.1.0"]
+                 [reagent "1.3.0"]
                  [org.clojure/tools.analyzer "1.1.0"]
                  [org.clojure/tools.analyzer.jvm "1.2.1"]
                  [org.clojars.frozenlock/reagent-modals "0.2.8"]
@@ -65,6 +65,7 @@
                  [com.widdindustries/cljc.java-time "0.1.21"]
                  [time-literals "0.1.5"]
                  [metosin/reitit "0.7.2"]
+                 [org.flatland/ordered "1.15.12"]
                  [net.xyzsd.fluent/fluent-base "0.70"]
                  [net.xyzsd.fluent/fluent-functions-cldr "0.70"]]
 
@@ -78,7 +79,7 @@
                                   [instaparse "1.5.0"]
                                   [integrant/repl "0.3.2"]
                                   [lambdaisland/kaocha "1.68.1059"]
-                                  [thheller/shadow-cljs "2.16.8"]]
+                                  [thheller/shadow-cljs "2.28.21"]]
                    :plugins [[lein-eftest "0.6.0"]
                              [cider/cider-nrepl "0.47.1"]]
                    :eftest {:report eftest.report.pretty/report

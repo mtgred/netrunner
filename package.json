@@ -9,7 +9,7 @@
 		"release": "npm run css:release && npm run cljs:release"
 	},
 	"devDependencies": {
-		"shadow-cljs": "^2.16.8",
+		"shadow-cljs": "^2.28.21",
 		"stylus": "^0.55.0"
 	},
 	"dependencies": {

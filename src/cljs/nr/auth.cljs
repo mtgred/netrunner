@@ -47,13 +47,13 @@
      [:b.caret]]
     [:div.dropdown-menu.blue-shade.float-right
      (when (:isadmin user)
-       [:a.block-link {:href "/admin"} (str "[" (tr [:menu/admin "Admin"]) "]")])
+       [:a.block-link {:href "/admin"} "[" [tr [:menu_admin "Admin"]] "]"])
      (when (:ismoderator user)
-       [:a.block-link (str "[" (tr [:menu/moderator "Moderator"]) "]")])
+       [:a.block-link "[" [tr [:menu_moderator "Moderator"]] "]"])
      (when (:special user)
-       [:a.block-link (str "[" (tr [:menu/donor "Donor"]) "]")])
-     [:a.block-link {:href "/account"} (tr [:menu/settings "Settings"])]
-     [:a.block-link {:on-click #(handle-logout %)} (tr [:menu/logout "Jack out"])]]]])
+       [:a.block-link "[" [tr [:menu_donor "Donor"]] "]"])
+     [:a.block-link {:href "/account"} [tr [:menu_settings "Settings"]]]
+     [:a.block-link {:on-click #(handle-logout %)} [tr [:menu_logout "Jack out"]]]]]])
 
 (defn unlogged-menu []
   [:ul

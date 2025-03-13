@@ -13,7 +13,7 @@
 
 (defn get-nodes [lang]
   (->> lang
-       (get (tr.core/translation-dictionary))
+       (get (tr.core/fluent-dictionary))
        (encore/node-paths)
        (remove #(= :angel-arena (first %)))
        (into #{} (map (comp vec butlast)))))
@@ -32,7 +32,7 @@
   Ignores :angel-arena entries because that's being phased out."
   [& args]
   (let [en-nodes (get-nodes :en)
-        other-langs (keys (dissoc (tr.core/translation-dictionary) :en))]
+        other-langs (keys (dissoc (tr.core/fluent-dictionary) :en))]
     (doseq [lang (or (seq (map to-keyword args)) other-langs)
             :let [lang-nodes (get-nodes lang)]]
       (println "Checking" lang)
@@ -51,7 +51,7 @@
 
 (defn undefined-translations
   [& _args]
-  (let [en-nodes (->> (get (tr.core/translation-dictionary) :en)
+  (let [en-nodes (->> (get (tr.core/fluent-dictionary) :en)
                       (encore/node-paths)
                       (map #(vector (vec (butlast %)) (last %)))
                       (into {}))
@@ -110,7 +110,7 @@
 
 (defn unused-translations
   [& _args]
-  (let [regexen (->> (get (tr.core/translation-dictionary) :en)
+  (let [regexen (->> (get (tr.core/fluent-dictionary) :en)
                      (dissoc-programmatic-keys)
                      (encore/node-paths)
                      (map #(vec (butlast %)))
@@ -137,7 +137,7 @@
 ;; should be a one-off
 (defn convert-edn-to-fluent
   []
-  (let [dict (tr.core/translation-dictionary)]
+  (let [dict (tr.core/fluent-dictionary)]
     (doseq [lang (keys dict)]
       (let [translation
             (with-out-str

@@ -4,13 +4,13 @@
    [cljc.java-time.format.date-time-formatter :as formatter]
    [cljc.java-time.zoned-date-time :as zdt]
    [cljc.java-time.zone-id :as zone]
-   [cljc.java-time.instant :as inst]
    [clojure.string :refer [join] :as s]
    [goog.object :as gobject]
    [goog.string :as gstring]
    [goog.string.format]
    [nr.appstate :refer [app-state]]
    [nr.translations :refer [tr-data]]
+   [flatland.ordered.map :refer [ordered-map]]
    [reagent.dom :as rd]))
 
 ;; Dot definitions
@@ -120,7 +120,8 @@
         (apply map-longest f default (map rest colls))))))
 
 (def slug->format
-  {"standard" "Standard"
+  (ordered-map
+   "standard" "Standard"
    "throwback" "Throwback"
    "startup" "Startup"
    "system-gateway" "System Gateway"
@@ -130,10 +131,11 @@
    "snapshot" "Snapshot"
    "snapshot-plus" "Snapshot Plus"
    "neo" "Neo"
-   "casual" "Casual"})
+   "casual" "Casual"))
 
 (def format->slug
-  {"Standard" "standard"
+  (ordered-map
+   "Standard" "standard"
    "Throwback" "throwback"
    "Startup" "startup"
    "System Gateway" "system-gateway"
@@ -143,7 +145,7 @@
    "Snapshot" "snapshot"
    "Snapshot Plus" "snapshot-plus"
    "Neo" "neo"
-   "Casual" "casual"})
+   "Casual" "casual"))
 
 (defn regex-escape
   "Escape characters in a string which have special meanings in regexes"
@@ -371,6 +373,7 @@
 (defn set-scroll-top
   "Set the scrollTop parameter of a reagent component"
   [this scroll-top]
+  (prn this)
   (let [node (rd/dom-node this)]
     (set! (.-scrollTop node) scroll-top)))
 

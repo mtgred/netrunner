@@ -34,9 +34,9 @@
 (defmethod ws/event-msg-handler :chat/blocked
   [{{:keys [reason]} :?data}]
   (let [reason-str (case reason
-                     :rate-exceeded (tr [:chat.rate-exceeded "Rate exceeded"])
-                     :length-exceeded (tr [:chat.length-exceeded "Length exceeded"]))]
-    (non-game-toast (tr [:chat.message-blocked] reason-str)
+                     :rate-exceeded [tr [:chat_rate-exceeded "Rate exceeded"]]
+                     :length-exceeded [tr [:chat_length-exceeded "Length exceeded"]])]
+    (non-game-toast (tr [:chat_message-blocked] reason-str)
                     "warning" nil)))
 
 (defn current-block-list []
@@ -137,12 +137,12 @@
                                   (when-not (illegal-message s)
                                     (send-msg s channel)))}
    [:input {:type "text" :ref #(swap! chat-state assoc :msg-input %)
-            :placeholder (tr [:chat/placeholder "Say something..."]) :accessKey "l" :value (:msg @s)
+            :placeholder (tr [:chat_placeholder "Say something..."]) :accessKey "l" :value (:msg @s)
             :on-change #(swap! s assoc :msg (-> % .-target .-value))}]
    (let [disabled (illegal-message s)]
      [:button {:disabled disabled
                :class (if disabled "disabled" "")}
-      (tr [:chat/send "Send"])])])
+      [tr [:chat_send "Send"]]])])
 
 (defn channel-view [{:keys [channel active-channel]} s]
   [:div.block-link {:class (if (= active-channel channel) "active" "")
@@ -179,15 +179,15 @@
              (when (or (:isadmin user) (:ismoderator user))
                [:div {:on-click #(do
                                    (delete-message message)
-                                   (hide-block-menu msg-state))} (tr [:chat.delete "Delete Message"])])
+                                   (hide-block-menu msg-state))} [tr [:chat_delete "Delete Message"]]])
              (when (or (:isadmin user) (:ismoderator user))
                [:div {:on-click #(do
                                    (delete-all-messages (:username message))
-                                   (hide-block-menu msg-state))} (tr [:chat.delete-all "Delete All Messages From User"])])
+                                   (hide-block-menu msg-state))} [tr [:chat_delete-all "Delete All Messages From User"]]])
              [:div {:on-click #(do
                                  (block-user (:username message))
-                                 (hide-block-menu msg-state))} (tr [:chat.block "Block User"])]
-             [:div {:on-click #(hide-block-menu msg-state)} (tr [:chat.cancel "Cancel"])]]))
+                                 (hide-block-menu msg-state))} [tr [:chat_block "Block User"]]]
+             [:div {:on-click #(hide-block-menu msg-state)} [tr [:chat_cancel "Cancel"]]]]))
          [:span.date (format-date-time day-word-with-time-formatter (:date message))]]
        [:div
         {:on-mouse-over #(card-preview-mouse-over % (:zoom-ch @s))
@@ -265,7 +265,7 @@
     (fn [s curr-msg old scroll-top]
       [:div#chat.chat-app
        [:div.blue-shade.panel.channel-list
-        [:h4 (tr [:chat.channels "Channels"])]
+        [:h4 [tr [:chat_channels "Channels"]]]
         (doall
           (for
             [ch [:general :america :europe :asia-pacific :united-kingdom :français :español :italia :polska
@@ -298,7 +298,7 @@
     (fn []
       [:div.container
        [:div.home-bg]
-       [:h1 (tr [:chat.title "Play Netrunner in your browser"])]
+       [:h1 [tr [:chat_title "Play Netrunner in your browser"]]]
        [news]
        [chat s curr-msg old scroll-top]
        [:div#version [:span (str "Version " (or (get @app-state :app-version) "Unknown"))]]])))
