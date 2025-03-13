@@ -145,7 +145,8 @@
   "Prints the correct install message."
   [state side card server install-state cost-str {:keys [counters msg-keys] :as args}]
   (when (:display-message args true)
-    (let [{:keys [display-origin install-source origin-index known]} msg-keys
+    (let [{:keys [display-origin install-source origin-index known set-zone]} msg-keys
+          prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
           card-name (if (or (#{:rezzed :rezzed-no-cost :face-up} install-state)
                             ;; note that cards which the corp is instructed to rez, but cannot
                             ;; (or chooses not to rez) are revealed, so they're safe to name here
@@ -160,11 +161,18 @@
           origin (if display-origin
                    (str " from "
                         (when origin-index (str " position " (inc origin-index) " of "))
-                        (name-zone :corp (:zone card)))
+                        (or set-zone (name-zone :corp (:zone card))))
                    "")
+          pre-lhs (when (every? (complement string/blank?) [cost-str prepend-cost-str])
+                    (str prepend-cost-str ", and then "))
+          modified-cost-str (if (string/blank? cost-str)
+                              prepend-cost-str
+                              (if (string/blank? pre-lhs)
+                                cost-str
+                                (str cost-str ",")))
           lhs (if install-source
-                (str (build-spend-msg cost-str "use") (:title install-source) " to install ")
-                (build-spend-msg cost-str "install"))]
+                (str (build-spend-msg modified-cost-str "use") (:title install-source) " to install ")
+                (build-spend-msg modified-cost-str "install"))]
       (system-msg state side (str lhs card-name origin
                                   (if (ice? card) " protecting " " in the root of ") server-name
                                   (format-counters-msg counters)))
@@ -518,7 +526,9 @@
       (runner-install-message state side installed-card payment-str args))
     (when-not facedown
       (implementation-msg state card))
-    (play-sfx state side "install-runner")
+    (if-let [install-sound (when-not facedown (:install-sound (card-def card)))]
+      (play-sfx state side install-sound)
+      (play-sfx state side "install-runner"))
     (update-disabled-cards state)
     (when (and (not facedown)
                (resource? card))

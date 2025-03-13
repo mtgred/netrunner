@@ -15,6 +15,8 @@
    "archer" {:grouping :archer :default "rez-ice"}
    "bloop" {:grouping :harmonics :default "rez-ice"}
    "echo" {:grouping :harmonics :default "rez-ice"}
+   "illumination" {:grouping :illumination :default "play-instant"}
+   ;; admittedly, this looks silly, but it's actually really cool, trust me - nbk
    "bling-1" {:grouping :bling :default nil}
    "bling-2" {:grouping :bling :default nil}
    "bling-3" {:grouping :bling :default nil}

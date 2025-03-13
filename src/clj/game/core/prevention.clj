@@ -291,7 +291,7 @@
   [state side eid targets {:keys [unpreventable game-trash cause cause-card] :as args}]
   (let [untrashable (keep #(cond
                              (and (not game-trash)
-                                  (untrashable-while-rezzed? %))
+                                  (untrashable-while-rezzed? state side %))
                              [%  "cannot be trashed while installed"]
                              (and (= side :runner)
                                   (not (can-trash? state side %)))

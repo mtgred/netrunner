@@ -1467,16 +1467,20 @@
   (letfn [(adv  [card]        (get-counters card :advancement))
           (lose [card runner] (min (* 2 (adv card)) (:credit runner)))
           (gain [card]        (* 3 (adv card)))]
-    {:advanceable :always
-     :events [{:event :corp-turn-begins
+    (let [abi {:event :corp-turn-begins
                :interactive (req true)
                :skippable true
+               :label "Trash Idiosyncresis"
                :optional {:prompt "Trash Idiosyncresis?"
+                          :req (req (:corp-phase-12 @state))
                           :yes-ability {:async true
                                         :msg (msg "force the runner to lose " (lose card runner) " [Credits], and then gain " (gain card) " [Credits]")
                                         :cost [(->c :trash-can)]
                                         :effect (req (wait-for (lose-credits state :runner (lose card runner))
-                                                               (gain-credits state side eid (gain card))))}}}]}))
+                                                               (gain-credits state side eid (gain card))))}}}]
+      {:advanceable :always
+       :events [abi]
+       :abilities [abi]})))
 
 (defcard "Illegal Arms Factory"
   (let [ability {:msg "gain 1 [Credits] and draw 1 card"
@@ -1733,12 +1737,12 @@
                 :async true
                 :cost [(->c :x-power)]
                 :keep-menu-open :while-power-tokens-left
-                :effect (req (let [value (cost-value eid :x-power)]
+                :effect (req (let [paid-amt (cost-value eid :x-power)]
                                (continue-ability
                                  state side
                                  {:prompt "Choose an agenda in HQ to reveal"
                                   :choices {:req (req (and (agenda? target)
-                                                           (<= (:agendapoints target) value)))}
+                                                           (<= (:agendapoints target) paid-amt)))}
                                   :msg (msg "reveal " (:title target) " from HQ")
                                   :async true
                                   :effect (req (wait-for (reveal state side target)

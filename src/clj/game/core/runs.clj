@@ -169,8 +169,9 @@
                      (wait-for
                        (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-initiation)
                        (if (pos? (get-in @state [:run :position] 0))
-                         (do (set-next-phase state :approach-ice)
-                             (start-next-phase state side nil))
+                         (do
+                           (set-next-phase state :movement);;:approach-ice)
+                           (start-next-phase state side nil))
                          (do (set-next-phase state :movement)
                              (start-next-phase state side nil))))))))))))))
 

@@ -1177,9 +1177,17 @@
 (defcard "GAMEDRAGON™ Pro"
   (let [abi {:prompt "Choose an icebreaker to host GAMEDRAGON™ Pro"
              :event :runner-turn-begins
+             :change-in-game-state {:silent true
+                                    :req (req (some #(and (program? %)
+                                                          (not (has-subtype? % "AI"))
+                                                          (not (same-card? % (:host card)))
+                                                          (has-subtype? % "Icebreaker"))
+                                                    (all-installed state :runner)))}
+             :waiting-prompt true
              :choices {:req (req (and
                                    (installed? target)
                                    (program? target)
+                                   (not (has-subtype? target "AI"))
                                    (has-subtype? target "Icebreaker")))}
              :effect (req (host state side target card))
              :msg (msg "host itself on " (:title target))}]
@@ -1514,17 +1522,18 @@
                 :once :per-turn
                 :prompt "Choose a hosted program to install"
                 :choices {:req (req (and (program? target)
+                                         (runner-can-pay-and-install? state side eid target {:no-toast true})
                                          (same-card? (:host target) card)))}
                 :effect (req (runner-install state side eid target {:display-origin true
                                                                     :install-source card}))}]})
 
 (defcard "Maglectric Rapid (748 Mod)"
   {:events [{:event :successful-run
-             :prompt "Derez an ice?"
+             :prompt "Derez a card?"
              :skippable true
              :req (req (and
                          (= :hq (target-server context))
-                         (some (every-pred installed? rezzed? ice?) (all-installed state :corp))))
+                         (some rezzed? (all-installed state :corp))))
              :choices {:card (every-pred installed? corp? rezzed? ice?)}
              :msg (msg "derez " (card-str state target))
              :cost [(->c :trash-can 1)]

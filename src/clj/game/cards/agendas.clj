@@ -106,10 +106,10 @@
                           state side eid card type
                           (* quantity
                              (max 0
-                                  (quot (- (get-counters (:card context) :advancement)
-                                           (if (= mode :computed)
-                                             (get-advancement-requirement card) ;; TODO - does this actually work?
-                                             (:advancementcost card)))
+                                  (quot (if (= mode :computed)
+                                          (max 0 (- (:advancement-tokens context) (:advancement-requirement context)))
+                                          (max 0 (- (:advancement-tokens context)
+                                                    (:advancementcost card))))
                                         granularity)))))})))
 
 (defn- agenda-counters
@@ -1524,6 +1524,7 @@
                                  (continue-ability
                                    state side
                                    {:prompt "Shuffle any number of cards into R&D"
+                                    :waiting-prompt true
                                     :choices {:max c-hand
                                               :card (every-pred corp? in-hand?)}
                                     :msg (msg "shuffle " (quantify (count targets) "card")
@@ -1581,7 +1582,6 @@
                :optional {:req (req (and (pos? (get-counters card :agenda))
                                          (seq (:deck corp))))
                           :prompt "Search R&D for a card?"
-                          :skippable true
                           :yes-ability {:cost [(->c :agenda 1)]
                                         :choices (req (cancellable (:deck corp) :sorted))
                                         :prompt "Tutor a card"
@@ -1760,9 +1760,12 @@
                :label "Install a card from Archives"
                :prompt "Install a card from Archives"
                :show-discard true
+               :change-in-game-state {:silent true
+                                      :req (req (some #(or (not (:seen %))
+                                                           (not (operation? %)))
+                                                      (:discard corp)))}
                :choices {:req (req (and (not (operation? target))
                                         (in-discard? target)))}
-	       :req (req (= (:active-player @state) :corp))
                :async true
                :effect (req (corp-install state side eid target nil))}]}))
 

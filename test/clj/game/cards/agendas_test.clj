@@ -6,6 +6,20 @@
    [game.core.eid :refer [make-eid]]
    [game.test-framework :refer :all]))
 
+(deftest dividents-vs-sansan-city-grid
+  ;; note - the divends agendas scale off excess advancement counters,
+  ;; so cards like sansan will make them more valuable where they don't make beales better
+  (do-game
+    (new-game {:corp {:credits 15 :hand ["SanSan City Grid" "Off the Books"]}})
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "SanSan City Grid" "New remote")
+    (play-from-hand state :corp "Off the Books" "Server 1")
+    (dotimes [_ 3]
+      (click-advance state :corp (get-content state :remote1 1)))
+    (rez state :corp (get-content state :remote1 0))
+    (score state :corp (get-content state :remote1 1))
+    (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Got 1 from sansan")))
+
 (deftest ^{:card-title "15-minutes"}
   fifteen-minutes
   ;; 15 Minutes - check if it works correctly from both sides

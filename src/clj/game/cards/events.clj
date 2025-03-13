@@ -1824,12 +1824,13 @@
                                         (install-fn (dec remaining))
                                         card nil)
                                       (effect-completed state side eid))))})]
-  {:makes-run true
-   :on-play (run-server-ability :rd)
-   :events [(assoc (install-fn 3)
-                   :event :successful-run
-                   :interactive (req true)
-                   :req (req this-card-run))]}))
+    {:makes-run true
+     :play-sound "illumination"
+     :on-play (run-server-ability :rd)
+     :events [(assoc (install-fn 3)
+                     :event :successful-run
+                     :interactive (req true)
+                     :req (req this-card-run))]}))
 
 (defcard "Immolation Script"
   {:makes-run true
@@ -3471,35 +3472,33 @@
                        card nil))))}})
 
 (defcard "Scrounge"
-  {:on-play {:prompt "Choose a program to install"
-             :label "Install program from the heap"
-             :show-discard true
-             :req (req (some #(and (program? %)
-                                   (runner-can-pay-and-install?
-                                     state side
-                                     (assoc eid :source card) %
-                                     {:no-toast true}))
-                             (:discard runner)))
-             :choices {:req (req (and (program? target)
-                                      (in-discard? target)
-                                      (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                                [(->c :credit (install-cost state side target))])))}
-             :cost [(->c :trash-can)(->c :click 1)]
-             :async true
-             :effect (req (wait-for
-                            (runner-install state side target {:msg-keys {:install-source card
-                                                                          :display-origin true
-                                                                          :include-cost-from-eid eid}})
-                            (continue-ability
-                              state side
-                              {:prompt "Put a program on the bottom of the stack?"
-                               :req (req (seq (filter program? (:discard runner))))
-                               :choices {:req (req (and (program? target)
-                                                        (in-discard? target)))}
-                               :show-discard true
-                               :msg (msg "put " (:title target) " on the bottom of the stack")
-                               :effect (req (move state side target :deck))}
-                              card nil)))}})
+  (let [bottom-one-program {:prompt "Put a program on the bottom of the stack?"
+                            :req (req (seq (filter program? (:discard runner))))
+                            :choices {:req (req (and (program? target)
+                                                     (in-discard? target)))}
+                            :show-discard true
+                            :msg (msg "put " (:title target) " on the bottom of the stack")
+                            :effect (req (move state side target :deck))}]
+    {:on-play {:prompt "Choose a program to install"
+               :label "Install program from the heap"
+               :show-discard true
+               :req (req (some #(and (program? %)
+                                     (runner-can-pay-and-install?
+                                       state side
+                                       (assoc eid :source card) %
+                                       {:no-toast true}))
+                               (:discard runner)))
+               :choices {:req (req (and (program? target)
+                                        (in-discard? target)
+                                        (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
+                                                  [(->c :credit (install-cost state side target))])))}
+               :async true
+               :effect (req (wait-for
+                              (runner-install state side target {:msg-keys {:install-source card
+                                                                            :display-origin true
+                                                                            :include-cost-from-eid eid}})
+                              (continue-ability state side bottom-one-program card nil)))
+               :cancel-effect (req (continue-ability state side bottom-one-program card nil))}}))
 
 (defcard "Scrubbed"
   {:events [{:event :encounter-ice

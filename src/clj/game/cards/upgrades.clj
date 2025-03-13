@@ -1228,13 +1228,15 @@
                               (let [target-server (-> moved-card :zone second)
                                     target-zone [:servers target-server :content]
                                     target-name (zone->name target-server)]
-                                (continue-ability
-                                  state side
-                                  {:msg (msg "move itself to " target-name)
-                                   :effect (req (unregister-events state side card)
-                                                (let [c (move state side card target-zone)]
-                                                  (register-default-events state side c)))}
-                                  card nil))
+                                (if-not (same-server? moved-card card)
+                                  (continue-ability
+                                    state side
+                                    {:msg (msg "move itself to " target-name)
+                                     :effect (req (unregister-events state side card)
+                                                  (let [c (move state side card target-zone)]
+                                                    (register-default-events state side c)))}
+                                    card nil)
+                                  (effect-completed state side eid)))
                               (effect-completed state side eid))))}]})
 
 (defcard "Midori"
@@ -1272,6 +1274,7 @@
              :interactive (req true)
              :optional {:req (req this-server)
                         :prompt "Trash Mitra Aman to gain 3 [Credits]?"
+                        :waiting-prompt true
                         :yes-ability {:cost [(->c :trash-can 1)]
                                       :msg "gain 3 [Credits]"
                                       :async true

@@ -663,7 +663,7 @@
         (is (= 8 (- (:credit (get-corp)) credits)))
         (is (zero? (get-counters (refresh ci) :credit)))))))
 
-(deftest byte
+(deftest byte-test
   (;; pay 4 on access, and do 3 net damage and give 1 tag
     do-game
       (new-game {:corp {:deck [(qty "Byte!" 3)]}})

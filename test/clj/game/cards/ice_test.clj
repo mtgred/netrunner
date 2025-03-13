@@ -328,7 +328,8 @@
       (card-subroutine state :corp anansi 1)
       (click-prompt state :corp "No")
       (is (changed? [(count (:hand (get-runner))) 0]
-            (click-prompt state :runner "Yes"))
+            (is (= ["No"] (prompt-buttons :runner)) "No option to pay")
+            (click-prompt state :runner "No"))
           "No new card from Anansi")
       (is (no-prompt? state :corp) "corp has no prompts from Anansi"))))
 

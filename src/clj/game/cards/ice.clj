@@ -53,7 +53,7 @@
    [game.core.runs :refer [bypass-ice encounter-ends end-run
                            force-ice-encounter get-current-encounter prevent-access
                            redirect-run set-next-phase]]
-   [game.core.say :refer [system-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name protecting-same-server?
                               target-server zone->name]]
    [game.core.shuffling :refer [shuffle!]]
@@ -231,6 +231,9 @@
 (defn place-advancement-counter
   [advanceable-only]
   {:label (if advanceable-only
+            "Place 1 advancement counter on a card that can be advanced"
+            "Place 1 advancement counter on a card")
+   :prompt (if advanceable-only
             "Place 1 advancement counter on a card that can be advanced"
             "Place 1 advancement counter on a card")
    :choices {:req (req (and (corp? target)
@@ -414,6 +417,7 @@
    {:label "Install a card from HQ"
     :prompt "Choose a card to install from HQ"
     :show-discard true
+    :waiting-prompt true
     :choices {:card #(and (corp-installable-type? %)
                           (in-hand? %))}
     :async true
@@ -425,6 +429,7 @@
    {:label "Install a card from Archives"
     :prompt "Choose a card to install from Archives"
     :show-discard true
+    :waiting-prompt true
     :choices {:card #(and (corp-installable-type? %)
                           (in-discard? %))}
     :async true
@@ -437,6 +442,7 @@
    {:label "Install a card from HQ or Archives"
     :prompt "Choose a card to install from HQ or Archives"
     :show-discard true
+    :waiting-prompt true
     :choices {:card #(and (corp-installable-type? %)
                           (or (in-hand? %)
                               (in-discard? %)))}
@@ -822,13 +828,10 @@
                       :prompt "Pay 2 [Credits] to draw 1 card?"
                       :yes-ability
                       {:async true
-                       :effect (req (wait-for (pay state :runner (make-eid state eid) card [(->c :credit 2)])
-                                              (if (:cost-paid async-result)
-                                                (do (system-msg state :runner "pays 2 [Credits] to draw 1 card")
-                                                    (draw state :runner eid 1))
-                                                (do (system-msg state :runner "does not draw 1 card")
-                                                    (effect-completed state side eid)))))}
-                      :no-ability {:effect (effect (system-msg :runner "does not draw 1 card"))}}}]
+                       :cost [(->c :credit 2)]
+                       :msg "draw 1 card"
+                       :effect (req (draw state :runner eid 1))}
+                      :no-ability {:msg "does not draw 1 card"}}}]
     {:subroutines [{:msg "rearrange the top 5 cards of R&D"
                     :change-in-game-state {:silent (req true) :req (req (seq (:deck corp)))}
                     :async true
@@ -873,7 +876,9 @@
                  end-the-run]})
 
 (defcard "Architect"
-  {:flags {:untrashable-while-rezzed true}
+  {:static-abilities [{:type :cannot-be-trashed
+                       :req (req (same-card? card target))
+                       :value true}]
    :subroutines [{:async true
                   :change-in-game-state {:silent (req true) :req (req (seq (:deck corp)))}
                   :label "Look at the top 5 cards of R&D"
@@ -1925,10 +1930,15 @@
                         card nil))})]})
 
 (defcard "Flyswatter"
-  {:on-rez {:req (req (and run this-server))
+  ;; special note - this will make flyswatter play the purge sound on rez when it purges, instead of the rez sound
+  ;; I think it's a neat feature - nbkelly
+  {:suppress-rez-sound (req (and run this-server (not (is-disabled-reg? state card))))
+   :on-rez {:req (req (and run this-server))
             :msg (msg "purge virus counters")
             :async true
-            :effect (req (purge state side eid))}
+            :effect (req
+                      (play-sfx state side "virus-purge")
+                      (purge state side eid))}
    :subroutines [end-the-run]})
 
 (defcard "Formicary"

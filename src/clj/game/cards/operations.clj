@@ -1522,26 +1522,32 @@
                       :effect (effect (gain-bad-publicity :corp eid 1))}}}}))
 
 (defcard "IP Enforcement"
-  (letfn [(valid-agenda [state c x]
+  (letfn [(valid-agenda? [state c x]
             (and (agenda? c)
                  (= (:zone c) [:scored])
                  (= (:scored-side c) :runner)
+                 ;; Note: fake agendas do not have titles, but will have agendapoints keys
+                 ;; with the way our system is set up (they use a printed title only)
                  (:title c)
-                 ;; fake agendas do not have titles!
                  (= (:agendapoints c) x)))
-          (fixed-cost-abi [x]
-            {:cost [(->c :tag x) (->c :credit x)]
-             :prompt (str "Choose an agenda with " x " printed agenda points")
-             :choices {:req (req (valid-agenda state target x))}
-             :msg (msg "install " (:title target) " from the Runner score area")
-             :async true
-             :effect (req (corp-install state side eid target nil
-                                        {:msg-keys {:install-source card
-                                                    :known true
-                                                    :display-origin true}
-                                         :counters {:advance-counter (if tagged 1 0)}}))
-             :cancel-effect (req (system-msg state side (str "uses IP Enforcement to " (:latest-payment-str eid)))
-                                 (effect-completed state side eid))})]
+          (resolve-fixed-cost-abi [state side eid card x]
+            (continue-ability
+              state side
+              (if (some #(valid-agenda? state % x) (get-in @state [:runner :scored]))
+                {:cost [(->c :tag x) (->c :credit x)]
+                 :prompt (str "Choose an agenda with " x " printed agenda points")
+                 :choices {:req (req (valid-agenda? state target x))}
+                 :async true
+                 :effect (req (corp-install state side eid target nil
+                                            {:msg-keys {:install-source card
+                                                        :known true
+                                                        :include-cost-from-eid eid
+                                                        :set-zone "the Runner score area"
+                                                        :display-origin true}
+                                             :counters {:advance-counter (if tagged 1 0)}}))}
+                {:cost [(->c :tag x) (->c :credit x)]
+                 :change-in-game-state {:req (req false)}})
+              card nil))]
     {:on-play {:prompt "Remove how many tags?"
                :choices {:number (req (min (count-tags state)
                                            (total-available-credits state side
@@ -1549,11 +1555,8 @@
                                                                     card)))
                          :default (req 0)}
                :async true
-               :effect (req (continue-ability state side (fixed-cost-abi target) card nil))
-               :cancel-effect (req (resolve-ability
-                                     state side
-                                     (assoc eid :source-type :play)
-                                     (fixed-cost-abi 0) card nil))}}))
+               :effect (req (resolve-fixed-cost-abi state side eid card target))
+               :cancel-effect (req (resolve-fixed-cost-abi state side eid card 0))}}))
 
 
 (defcard "IPO"
@@ -2100,7 +2103,8 @@
                                  (gain-credits state side 7)
                                  (continue-ability
                                    state side
-                                   {:prompt "Choose a card in HQ to install"
+                                   {:prompt "Install a card from HQ in the root of a remote server"
+                                    ;; todo - filter out "cental only" cards
                                     :choices {:card #(and (in-hand? %)
                                                           (corp? %)
                                                           (not (ice? %))

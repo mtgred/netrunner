@@ -95,11 +95,15 @@
                       (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
                                          Please rez prior to clicking Start Turn in the future." "warning"
                              {:time-out 0 :close-button true}))
-                    (let [rez-byte (:rez-sound (card-def card))]
+                    (let [rez-byte (:rez-sound (card-def card))
+                          ;; note - this is a special case for cards which might want to contextually play a special sound on rez
+                          ;; ie, flyswatter wants to play a purge sound (I think it's neat) when it purges - nbkelly
+                          suppress-rez-sound (or (:silent args) (when-let [suppress-req (:suppress-rez-sound (card-def card))]
+                                                                  (suppress-req state side eid card nil)))]
                       (if (ice? card)
                         (do (update-ice-strength state side card)
-                            (when-not (:silent args) (play-sfx state side (or rez-byte "rez-ice"))))
-                      (when-not (:silent args) (play-sfx state side (or rez-byte "rez-other")))))
+                            (when-not suppress-rez-sound (play-sfx state side (or rez-byte "rez-ice"))))
+                      (when-not suppress-rez-sound (play-sfx state side (or rez-byte "rez-other")))))
                     (swap! state update-in [:stats :corp :cards :rezzed] (fnil inc 0))
                     (when-let [card-ability (:on-rez cdef)]
                       (register-pending-event state :rez card card-ability))

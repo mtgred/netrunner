@@ -196,6 +196,7 @@
          :optional {:req (req (and (seq (:deck corp))
                                    (:corp-phase-12 @state)))
                     :prompt "Look at the top 3 cards of R&D?"
+                    :waiting-prompt true
                     :yes-ability {:cost [(->c :power 2)]
                                   :async true
                                   :msg "look at the top 3 cards of R&D"
@@ -666,7 +667,7 @@
                                                        :code (str (subs (:code card) 0 5) "flip")))))}
         maybe-flip {:event :successful-run
                     :skippable true
-                    :optional {:prompt "Flip your ID?"
+                    :optional {:prompt (msg "Flip your ID (" (if (:flipped card) "draw 1 card)?" "gain 1 [Credits])?"))
                                :req (req (or
                                            (and (:flipped card) (pos? (available-mu state)))
                                            (and (not (:flipped card)) (zero? (available-mu state)))))
@@ -1453,7 +1454,7 @@
                             (if (seq installable)
                               (continue-ability
                                 state side
-                                {:prompt "Install a discard program or hardware?"
+                                {:prompt "Install a discarded program or piece of hardware?"
                                  :choices (req (cancellable installable :sorted))
                                  :async true
                                  :effect (req (runner-install state side eid target {:msg-keys {:install-source card
@@ -1613,7 +1614,7 @@
                                                                (reveal-loud state side card {:and-then " and add it to the grip"} top-card)
                                                                (move state side top-card :hand)
                                                                (effect-completed state side eid)))}}}
-                                {:prompt (str "The top card of the deck is " (:title top-card))
+                                {:prompt (str "The top card of the stack is " (:title top-card))
                                  :choices ["OK"]
                                  :waiting-prompt true
                                  :async true})
@@ -2115,6 +2116,7 @@
                                                          (can-be-advanced? state %))
                                                     (all-installed state :corp)))}
              :prompt "Pay 1 [Credits]: place 1 advancement counter on an unrezzed advanceable card?"
+             :waiting-prompt true
              :choices {:req (req (and (installed? target)
                                       (not (rezzed? target))
                                       (can-be-advanced? state target)))}
@@ -2477,8 +2479,7 @@
 
 (defcard "Synapse Global"
   {:events [{:event :runner-lose-tag
-             ;; :player :corp
-             ;; :side :corp
+             :req (req (first-event? state side :runner-lose-tag))
              :prompt "Reveal and install a card from HQ?"
              :change-in-game-state {:req (req (seq (:hand corp))) :silent true}
              :choices {:req (req (and (corp? target)
@@ -2710,6 +2711,7 @@
                 :once :per-turn
                 :async true
                 :prompt "Install a card, paying 2 [Credits] less"
+                :waiting-prompt true
                 :choices {:req (req (installable? state side eid target))}
                 :label "Install 1 card from your grip, paying 2{c} less. When you install that card, suffer 1 meat damage."
                 :effect (req (let [evs (register-events

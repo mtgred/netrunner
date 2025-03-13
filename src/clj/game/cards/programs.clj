@@ -25,7 +25,7 @@
                              first-successful-run-on-server? no-event? turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid]]
-   [game.core.flags :refer [can-host? can-trash? card-flag? lock-zone release-zone zone-locked?]]
+   [game.core.flags :refer [can-host? can-trash? card-flag? lock-zone release-zone untrashable-while-rezzed? zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-credits]]
    [game.core.hosting :refer [host]]
    [game.core.identities :refer [disable-card enable-card]]
@@ -1674,7 +1674,7 @@
                             {:optional
                              {:prompt "Host a card on this program instead of accessing it?"
                               :yes-ability {:prompt "Choose a card in Archives"
-                                            :choices (req (:discard corp))
+                                            :choices (req (cancellable (:discard corp) :sorted))
                                             :msg (msg "host " (:title target) " on itself instead of accessing it")
                                             :effect (effect
                                                       (update! (assoc-in card [:special :host-available] false))
@@ -2579,7 +2579,7 @@
                :effect (req (add-counter state side eid card :virus 1 nil))}
               {:event :ice-strength-changed
                :req (req (and (same-card? (:card context) (:host card))
-                              (not (card-flag? (:host card) :untrashable-while-rezzed true))
+                              (not (untrashable-while-rezzed? state side (:host card)))
                               (<= (get-strength (:card context)) 0)))
                :async true
                :effect (req (unregister-events state side card)
@@ -3393,7 +3393,7 @@
   (let [trash-if-5 (req (let [h (get-card state (:host card))]
                           (if (and h
                                    (>= (get-virus-counters state card) 5)
-                                   (not (and (card-flag? h :untrashable-while-rezzed true)
+                                   (not (and (untrashable-while-rezzed? state side (:host card))
                                              (rezzed? h))))
                             (do (system-msg state :runner (str "uses " (:title card) " to trash " (card-str state h)))
                                 (unregister-events state side card)

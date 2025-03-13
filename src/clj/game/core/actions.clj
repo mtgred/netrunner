@@ -5,7 +5,7 @@
     [clojure.string :as string]
     [game.core.agendas :refer [update-advancement-requirement update-all-advancement-requirements update-all-agenda-points]]
     [game.core.board :refer [installable-servers]]
-    [game.core.card :refer [get-agenda-points get-card]]
+    [game.core.card :refer [get-advancement-requirement get-agenda-points get-card get-counters]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost card-ability-cost score-additional-cost-bonus]]
     [game.core.effects :refer [any-effects is-disabled-reg?]]
@@ -559,7 +559,10 @@
          cannot-play (or (:disabled card)
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
      (when-not cannot-play
-       (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
+       (do-play-ability state side eid {:ability ability
+                                        :card card
+                                        :ability-idx ability-idx
+                                        :tagets nil})))));;(assoc args :ability-idx ability-idx :ability ability))))))
 
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
@@ -684,7 +687,7 @@
 
 (defn resolve-score
   "resolves the actual 'scoring' of an agenda (after costs/can-steal has been worked out)"
-  [state side eid card]
+  [state side eid card {:keys [advancement-tokens advancement-requirement]}]
   (let [moved-card (move state :corp card :scored)
         c (card-init state :corp moved-card {:resolve-effect false
                                              :init-data true})
@@ -701,6 +704,8 @@
     (when-let [on-score (:on-score (card-def c))]
       (register-pending-event state :agenda-scored c on-score))
     (queue-event state :agenda-scored {:card c
+                                       :advancement-requirement advancement-requirement
+                                       :advancement-tokens advancement-tokens
                                        :points points})
     (checkpoint state nil eid {:duration :agenda-scored})))
 
@@ -711,10 +716,14 @@
    (if-not (can-score? state side card {:no-req no-req :ignore-turn ignore-turn})
      (effect-completed state side eid)
      (let [cost (score-additional-cost-bonus state side card)
+           adv-cost (if (or no-req ignore-adv)
+                      0
+                      (get-advancement-requirement card))
+           adv-tokens (get-counters card :advancement)
            cost-strs (build-cost-string cost)
            can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs cost)) card (:title card) cost)]
        (cond
-         (string/blank? cost-strs) (resolve-score state side eid card)
+         (string/blank? cost-strs) (resolve-score state side eid card {:advancement-requirement adv-cost :advancement-tokens adv-tokens})
          (not can-pay) (effect-completed state side eid)
          :else (wait-for (pay state side (make-eid state
                                                    (assoc eid
@@ -727,4 +736,4 @@
                              (effect-completed state side eid)
                              (do
                                (system-msg state side (str (:msg payment-result) " to score " (:title card)))
-                               (resolve-score state side eid card))))))))))
+                               (resolve-score state side eid card {:advancement-requirement adv-cost :advancement-tokens adv-tokens}))))))))))
