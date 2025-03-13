@@ -96,7 +96,7 @@
           :brain-damage
           [:div (str brain-damage " " (tr [:game.brain-damage "Core Damage"]))])
          (when (= (:side @game-state) :runner)
-           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :delta (.. % -target -checked)})]
+           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :value (.. % -target -checked)})]
              [:div [:label [:input {:type "checkbox"
                                     :value true
                                     :checked trash-like-cards
@@ -119,7 +119,7 @@
          (let [{:keys [base additional]} bad-publicity]
            (ctrl :bad-publicity [:div (tr [:game.bad-pub-count] base additional)]))
          (when (= (:side @game-state) :corp)
-           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :delta (.. % -target -checked)})]
+           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :value (.. % -target -checked)})]
              [:div [:label [:input {:type "checkbox"
                                     :value true
                                     :checked trash-like-cards
