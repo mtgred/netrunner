@@ -11,7 +11,7 @@
    [nr.game-row :refer [join-game]]
    [nr.player-view :refer [user-status-span]]
    [nr.sounds :refer [resume-sound]]
-   [nr.translations :refer [tr tr-format tr-pronouns tr-side]]
+   [nr.translations :refer [tr tr-format tr-pronouns]]
    [nr.utils :refer [cond-button faction-icon format-zoned-date-time
                      mdy-formatter slug->format time-span-string tristate-button]]
    [nr.ws :as ws]

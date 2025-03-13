@@ -174,8 +174,8 @@
      [:h4.log-title
       (when replay-shared
         {:title [tr [:stats_replay-shared "Replay shared"]]})
-      (tr [:stats_game-title] {:title title
-                               :cnt turn-count})
+      [tr [:stats_game-title] {:title title
+                               :cnt turn-count}]
       (when has-replay (if replay-shared " ⭐" " 🟢"))]
 
      [:div.log-date (format-date-time day-word-with-time-formatter start-date)]
@@ -212,8 +212,8 @@
                [tr [:stats_all-games "Show all games"]]
                [tr [:stats_shared-games "Only show shared"]])]
             [:span.log-count (if (:filter-replays @state)
-                               (tr [:stats_log-count-filtered] {:cnt cnt})
-                               (tr [:stats_log-count] {:cnt cnt}))]]
+                               [tr [:stats_log-count-filtered] {:cnt cnt}]
+                               [tr [:stats_log-count] {:cnt cnt}])]]
            (if (empty? games)
              [:h4 [tr [:stats_no-games "No games"]]]
              (doall

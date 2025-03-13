@@ -331,32 +331,30 @@
 (defn render-player-highlight
   ([message corp runner] (render-player-highlight message corp runner nil))
   ([message corp runner timestamp]
-  (render-input message (player-highlight-patterns corp runner timestamp)))
-  )
+  (render-input message (player-highlight-patterns corp runner timestamp))))
 
 (defn player-highlight-option-class []
-  (case (get-in @app-state [:options :log-player-highlight])
-    "blue-red" "log-player-highlight-red-blue"
-               nil))
+  (when (= "blue-red" (get-in @app-state [:options :log-player-highlight]))
+    "log-player-highlight-red-blue"))
 
 (defn cond-button
   [text cond f]
   (if cond
-    [:button {:on-click f :key text} text]
-    [:button.disabled {:key text} text]))
+    [:button {:on-click f :key (hash text)} text]
+    [:button.disabled {:key (hash text)} text]))
 
 (defn checkbox-button [on-text off-text on-cond f]
   (if on-cond
-    [:button.on {:on-click f :key on-text} on-text]
-    [:button.off {:on-click f :key off-text} off-text]))
+    [:button.on {:on-click f :key (hash on-text)} on-text]
+    [:button.off {:on-click f :key (hash off-text)} off-text]))
 
 (defn tristate-button [on-text off-text on-cond disable-cond f]
   (let [text (if on-cond on-text off-text)]
     (if disable-cond
-      [:button.disabled {:key text} text]
+      [:button.disabled {:key (hash text)} text]
       (if on-cond
-        [:button.on {:on-click f :key text} text]
-        [:button.off {:on-click f :key text} text]))))
+        [:button.on {:on-click f :key (hash text)} text]
+        [:button.off {:on-click f :key (hash text)} text]))))
 
 (defn notnum->zero
   "Converts a non-positive-number value to zero.  Returns the value if already a number"
@@ -373,7 +371,6 @@
 (defn set-scroll-top
   "Set the scrollTop parameter of a reagent component"
   [this scroll-top]
-  (prn this)
   (let [node (rd/dom-node this)]
     (set! (.-scrollTop node) scroll-top)))
 

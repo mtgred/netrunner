@@ -42,7 +42,7 @@
        (let [{:keys [available used only-for]} memory
              unused (- available used)
              label (if icon? [:<> unused "/" available " " [:span.anr-icon.mu]]
-                       (tr [:game_mu-count] {:unused unused :available available}))]
+                       [tr [:game_mu-count] {:unused unused :available available}])]
          (ctrl :memory [:div label (when (neg? unused) [:div.warning "!"])]))))))
 
 (defn- display-special-memory
@@ -59,10 +59,10 @@
                    mu-type-name (capitalize (name mu-type))]]
          ^{:key mu-type-name}
          [:div (if icon? [:<> unused "/" available " " mu-type-name " " [:span.anr-icon.mu]]
-                   (tr [:game_special-mu-count]
+                   [tr [:game_special-mu-count]
                        {:unused unused
                         :available available
-                        :mu-type mu-type-name}))]))])))
+                        :mu-type mu-type-name}])]))])))
 
 (defmulti stats-area
   (fn [player] (get-in @player [:identity :side])))
@@ -85,12 +85,12 @@
              (ctrl :link [:div link " " [:span.anr-icon.link]])]
             [display-special-memory memory true]]
            [:<>
-            (ctrl :click [:div (tr [:game_click-count] click)])
+            (ctrl :click [:div [tr [:game_click-count] click]])
             (ctrl :credit [:div (if (pos? run-credit)
-                                  (tr [:game_credit-count-with-run-credits]
+                                  [tr [:game_credit-count-with-run-credits]
                                       {:credit credit
-                                       :run-credit run-credit})
-                                  (tr [:game_credit-count] {:credit credit}))])
+                                       :run-credit run-credit}]
+                                  [tr [:game_credit-count] {:credit credit}])])
             [display-memory memory]
             [display-special-memory memory]
             (ctrl :link [:div (str link " " [tr [:game_link-strength "Link Strength"]])])])
@@ -98,11 +98,11 @@
                additional (- total base)
                show-tagged (or is-tagged (pos? total))]
            (ctrl :tag [:div (if (pos? additional)
-                              (tr [:game_tag-count-additional]
+                              [tr [:game_tag-count-additional]
                                   {:base base
                                    :additional additional
-                                   :total total})
-                              (tr [:game_tag-count] {:base base}))
+                                   :total total}]
+                              [tr [:game_tag-count] {:base base}])
                        (when show-tagged [:div.warning "!"])]))
          (ctrl
           :brain-damage
@@ -118,7 +118,7 @@
 (defmethod stats-area "Corp" [corp]
   (let [ctrl (stat-controls-for-side :corp)]
     (fn [corp]
-      (let [{:keys [user click credit bad-publicity active trash-like-cards]} @corp
+      (let [{:keys [click credit bad-publicity active trash-like-cards]} @corp
             icons? (get-in @app-state [:options :player-stats-icons] true)]
         [:div.stats-area
          (if icons?
@@ -126,14 +126,14 @@
             (ctrl :click [:div click " " [:span.anr-icon.click]])
             (ctrl :credit [:div credit " " [:span.anr-icon.credit]])]
            [:<>
-            (ctrl :click [:div (tr [:game_click-count] click)])
-            (ctrl :credit [:div (tr [:game_credit-count] {:credit credit})])])
+            (ctrl :click [:div [tr [:game_click-count] click]])
+            (ctrl :credit [:div [tr [:game_credit-count] {:credit credit}]])])
          (let [{:keys [base additional]} bad-publicity]
            (ctrl :bad-publicity [:div (if (pos? additional)
-                                        (tr [:game_bad-pub-count] {:base base})
-                                        (tr [:game_bad-pub-count-additional]
+                                        [tr [:game_bad-pub-count] {:base base}]
+                                        [tr [:game_bad-pub-count-additional]
                                             {:base base
-                                             :additional additional}))]))
+                                             :additional additional}])]))
          (when (= (:side @game-state) :corp)
            (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :delta (.. % -target -checked)})]
              [:div [:label [:input {:type "checkbox"

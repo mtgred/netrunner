@@ -858,12 +858,12 @@
   (.stopPropagation event))
 
 (defn label [cursor opts]
-  (let [fn (or (get-in opts [:opts :fn]) count)
+  (let [fn (or (:fn opts) count)
         classes (str (when (pos? (count cursor)) "darkbg ")
-                     (get-in opts [:opts :classes]))]
+                     (:classes opts))]
     [:div.header {:class classes}
-     (get-in opts [:opts :name])
-     (when (not (get-in opts [:opts :hide-cursor])) (str " (" (fn cursor) ")"))]))
+     (:name opts)
+     (when-not (:hide-cursor opts) (str " (" (fn cursor) ")"))]))
 
 (defn- this-user?
   [user]
@@ -899,10 +899,10 @@
           [:div.panel.blue-shade.hand
            (drop-area (if (= :corp side) "HQ" "the Grip") {:class (when (> size 6) "squeeze")})
            [build-hand-card-view filled-hand size "card-wrapper"]
-           [label filled-hand {:opts {:name (if (= :corp side)
-                                              (tr [:game_hq "HQ"])
-                                              (tr [:game_grip "Grip"]))
-                                      :fn (fn [_] (str size "/" (:total @hand-size)))}}]]
+           [label filled-hand {:name (if (= :corp side)
+                                       (tr [:game_hq "HQ"])
+                                       (tr [:game_grip "Grip"]))
+                               :fn (fn [_] (str size "/" (:total @hand-size)))}]]
           (when popup
             [:div.panel.blue-shade.hand-expand
              {:on-click #(-> (:hand-popup @s) js/$ .fadeToggle)}
@@ -1042,7 +1042,7 @@
                                                  :style {:left (when (> size 1) (* (/ 128 size) i))}}
                               [:div [card-view card nil noclick]]])
                            @cards))
-            [label @cards {:opts {:name name}}]
+            [label @cards {:name name}]
             (when popup
               [:div.panel.blue-shade.popup {:ref #(swap! dom assoc :rfg-popup %)
                                             :class "opponent"}
@@ -1068,7 +1068,7 @@
                              [card-view card]
                              [facedown-card (:side card)])])
                         @cards))
-         [label @cards {:opts {:name name}}]]))))
+         [label @cards {:name name}]]))))
 
 (defn scored-view [scored agenda-point agenda-point-req me?]
   (let [size (count @scored)
@@ -1081,7 +1081,7 @@
                                           :style {:left (when (> size 1) (* (/ 128 (dec size)) i))}}
                        [:div [card-view card]]])
                     @scored))
-     [label @scored {:opts {:name [tr [:game_scored-area "Scored Area"]]}}]
+     [label @scored {:name [tr [:game_scored-area "Scored Area"]]}]
      [:div.stats-area
       (ctrl :agenda-point [:div (if (= 7 point-req)
                                   [tr [:game_agenda-count] 
@@ -1141,7 +1141,7 @@
                                                        (and (< 1 (count content)) (not is-first)))
                                                "shift"))}
                [card-view card flipped]]))))
-      [label content (update-in opts [:opts] assoc :classes "server-label" :hide-cursor true)]]]))
+      [label content (assoc opts :classes "server-label" :hide-cursor true)]]]))
 
 (defn stacked-label [cursor similar-servers opts]
   (let [similar-server-names (->> similar-servers
@@ -1149,7 +1149,7 @@
                                   (map remote->name))
         full-server-names (cons (get-in opts [:opts :name]) similar-server-names)
         numbers (map #(second (split % " ")) full-server-names)]
-    [label full-server-names (update-in opts [:opts] assoc
+    [label full-server-names (assoc opts
                                         :classes "server-label"
                                         :name (str "Servers " (join ", " numbers))
                                         :hide-cursor true)]))
