@@ -850,8 +850,7 @@
                      state side
                      {:async true
                       :prompt (str "Choose a card to rez, paying " discount " [Credits] less")
-                      :choices {:req (req (and (every-pred installed? corp? (complement rezzed?)
-                                                           installed? (complement agenda?))
+                      :choices {:req (req (and ((every-pred installed? corp? (complement rezzed?) (complement agenda?)) target)
                                                (can-pay-to-rez? state side (assoc eid :source card)
                                                                 target {:cost-bonus (- discount)})))}
                       :effect (req (rez state side eid target {:cost-bonus (- discount)}))}
