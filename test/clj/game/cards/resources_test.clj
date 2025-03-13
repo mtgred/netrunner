@@ -7200,6 +7200,19 @@
       (click-prompt state :runner "No action")
       (is (no-prompt? state :runner) "No prompt left over"))))
 
+(deftest twinning-only-gets-one-counter-from-multiple-credit-sources
+  (do-game
+    (new-game {:runner {:hand ["The Twinning" "Public Terminal" "Prepaid VoicePAD" "Dirty Laundry"]
+                        :credits 15}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Twinning")
+    (play-from-hand state :runner "Public Terminal")
+    (play-from-hand state :runner "Prepaid VoicePAD")
+    (play-from-hand state :runner "Dirty Laundry")
+    (is (changed? [(get-counters (get-resource state 0) :power) 1]
+          (click-prompts state :runner "Prepaid VoicePAD" "Public Terminal" "HQ"))
+        "Only got one counter")))
+
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool
   (do-game

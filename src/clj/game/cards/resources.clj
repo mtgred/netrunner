@@ -3636,8 +3636,10 @@
 (defcard "The Twinning"
   {:events [{:event :spent-credits-from-card
              :req (req (let [valid-ctx? (fn [[{:keys [card] :as ctx}]] (and (runner? card)
-                                                                           (installed? card)))]
-                         (and (valid-ctx? [context]) (first-event? state side :spent-credits-from-card valid-ctx?))))
+                                                                            (installed? card)))]
+                         (and (some #(valid-ctx? [%]) targets)
+                              (first-event? state side :spent-credits-from-card valid-ctx?))))
+             :once-per-instance true
              :async true
              :msg "place a power counter on itself"
              :effect (req (add-counter state :runner eid card :power 1 {:placed true}))}
