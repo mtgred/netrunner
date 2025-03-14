@@ -3273,6 +3273,21 @@
         (click-prompt state :corp "8")
         (is (= (+ credits 8) (:credit (get-corp))) "Corp should gain 8 credits from Long-Term Investment ability")))))
 
+(deftest malia-icon-goes-away-with-cupellation
+  (do-game
+    (new-game {:corp {:hand ["Malia Z0L0K4"]}
+               :runner {:hand ["Daily Casts" "Cupellation"]}})
+    (play-from-hand state :corp "Malia Z0L0K4" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Daily Casts")
+    (rez state :corp (get-content state :remote1 0))
+    (click-card state :corp "Daily Casts")
+    (is (:icon (refresh (get-resource state 0))) "Daily Cast has an icon")
+    (play-from-hand state :runner "Cupellation")
+    (run-empty-server state :remote1)
+    (click-prompt state :runner "[Cupellation] 1 [Credits]: Host card")
+    (is (not (:icon (refresh (get-resource state 0)))) "Daily Cast does not have an icon anymore")))
+
 (deftest malia-z0l0k4
   ;; Malia Z0L0K4 - blank an installed non-virtual runner resource
   (do-game
