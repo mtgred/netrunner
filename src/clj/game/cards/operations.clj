@@ -36,6 +36,7 @@
    [game.core.memory :refer [mu+ update-mu]]
    [game.core.moving :refer [as-agenda mill move swap-agendas swap-ice trash
                              trash-cards]]
+   [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? cost-target ->c]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prevention :refer [damage-boost]]
@@ -687,16 +688,16 @@
     :effect (effect (purge eid))}})
 
 (defcard "Death and Taxes"
-  {:implementation "Credit gain mandatory to save on wait-prompts, adjust credits manually if credit not wanted."
-   :events [{:event :runner-install
-             :msg "gain 1 [Credits]"
-             :async true
-             :effect (effect (gain-credits :corp eid 1))}
-            {:event :runner-trash
-             :req (req (installed? (:card target)))
-             :msg "gain 1 [Credits]"
-             :async true
-             :effect (effect (gain-credits :corp eid 1))}]})
+  (let [maybe-gain-credit {:prompt "Gain 1 [Credits]?"
+                           :waiting-prompt true
+                           :autoresolve (get-autoresolve :auto-fire)
+                           :yes-ability {:msg "gain 1 [Credits]"
+                                         :async true
+                                         :effect (effect (gain-credits :corp eid 1))}}]
+    {:special {:auto-fire :always}
+     :abilities [(set-autoresolve :auto-fire "Death and Taxes")]
+     :events [{:event :runner-install :optional maybe-gain-credit}
+              {:event :runner-trash :optional (assoc maybe-gain-credit :req (req (installed? (:card target))))}]}))
 
 (defcard "Dedication Ceremony"
   {:on-play
