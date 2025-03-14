@@ -233,19 +233,24 @@
           (not (or user-blocked-players? players-blocked-user?))))
       lobbies)))
 
-(defn sorted-lobbies [lobbies]
-  "ideally we only sort these once"
-  (->> (map lobby-summary lobbies)
-       (sort-by :date)
-       (reverse)
-       (sort-by :started)))
+(defn categorize-lobby
+  "Identifies if `lobby` is: open, started-allowing spectators, or started-not allowing spectators"
+  [lobby]
+  (if (not (:started lobby))
+    :open
+    (if (:allow-spectator lobby)
+      :allowing-spectators
+      :no-spectators)))
 
-(comment
-  (->> (for [x (range 5 10)]
-         {:date (doto (java.util.Calendar/getInstance)
-                  (.set (+ 2000 (+ (rand-int x) (rand-int x))) 1 2))
-          :started (rand-nth [true false])})
-       (summaries-for-lobbies)))
+(defn sorted-lobbies
+  "Sorts `lobbies` into a list with opened games on top, and other games below.
+  Open games will be sorted oldest to newest, other games will be sorted newest to oldest."
+  [lobbies]
+  (let [grouped-lobbies (group-by #(categorize-lobby %)
+                                  (->> (map lobby-summary lobbies)
+                                       (sort-by :date)))
+        {:keys [open allowing-spectators no-spectators]} grouped-lobbies]
+    (concat open (reverse allowing-spectators) (reverse no-spectators))))
 
 (defn prepare-lobby-list
   [lobbies users]
