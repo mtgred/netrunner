@@ -66,7 +66,7 @@
    (let [filename (.getName f)]
      (if (str/includes? filename "-")
        (add-flip-card-image db base-path lang resolution art-set filename)
-       (let [code (first (str/split filename #"\."))
+       (let [code (first (str/split filename #"[a-zA-Z]*\."))
              k (str/join "." ["images" (name lang) (name resolution) (name art-set)])
              prev-k-root (if (= :stock art-set) code (name art-set))
              prev-k (str/join "." ["images" (name lang) (name resolution) prev-k-root])
