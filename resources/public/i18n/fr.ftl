@@ -289,7 +289,10 @@ game_draw = Piocher une carte
 game_encounter-ice = Rencontrer la glace
 game_end-turn = Terminer le tour
 # game_error = null
-game_face-down-count = (fn [[total face-up]] (str total " cartes, " (- total face-up) " face cachée."))
+game_face-down-count = {$total ->
+    [one] {$total} carte, {$facedown} face cachée.
+    *[other] {$total} cartes, {$facedown} face cachée.
+}
 game_fire-unbroken = Déclencher les routines non neutralisées
 game_gain-credit = Gagner un crédit
 game_game-start = Démarrer la partie
@@ -311,7 +314,10 @@ game_mandatory-draw = Pioche obligatoire
 game_max-hand = Taille de main maximale
 # game_minutes = null
 game_movement = Mouvement
-game_mu-count = (fn [[unused available]] (str unused " de " available " UM inutilisée(s)"))
+game_mu-count = {$available ->
+    [one] {$unused} de {$available} UM inutilisée
+    *[other] {$unused} de {$available} UM inutilisées
+}
 game_mulligan = Mulligan
 game_mute = Désactiver le son des spectateurs
 game_no-current-run = Pas de piratage en cours
@@ -337,18 +343,34 @@ game_server = Serveur
 game_show = Montrer
 # game_show-decklists = null
 game_shuffle = Mélanger
-game_spec-count = (fn [[c]] (str c " Spectateur" (when (> c 1) "s")))
+game_spec-count = {$cnt ->
+    [one] Spectateur
+    *[other] {$cnt} Spectateurs
+}
 game_spec-view = Vue Spectateur
-game_special-mu-count = (fn [[unused available mu-type]] (str unused " de " available " " mu-type " UM inutilisée(s)"))
+game_mu-count = {$available ->
+    [one] {$unused} de {$available} {$mu-type} UM inutilisée
+    *[other] {$unused} de {$available} {$mu-type} UM inutilisées
+}
 game_stack = Pile
 game_start = Démarrer la partie
 game_start-turn = Commencer le tour
 game_stop-auto-pass = Désactiver le passage automatique
 game_subs = Routines
 game_success = Piratage réussi
-game_tag-count = (fn [[base additional total]] (str base (when (pos? additional) (str " + " additional)) " Tag" (if (not= total 1) "s" "")))
+game_tag-count = {$base ->
+    [one] {$base} Tag
+    *[other] {$base} Tags
+}
+game_tag-count-additional = {$total ->
+    [one] {$base} + {$additional} Tag
+    *[other] {$base} + {$additional} Tags
+}
 game_take-clicks = Prendre des clics
-game_time-taken = (fn [[t]] (str "Temps écoulé: " t " minutes"))
+game_time-taken = Temps écoulé: {$time ->
+    [one] {$time} minute
+    *[other] {$time} minutes
+}
 # game_timeout-soon = null
 game_trace = Traque
 # game_trash-like-cards = null
@@ -357,34 +379,36 @@ game_trash-resource = Effacer une ressource
 game_unimplemented = Non implementé
 game_unknown-phase = Phase inconnue
 game_unmute = Réactiver le son des spectateurs
-game_up-down-count = (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
-game_win-claimed = (fn [[turn]] (str "gagne par réclamation au tour " turn))
-game_win-conceded = (fn [[turn]] (str "gagne par abandon au tour " turn))
-game_win-decked = (fn [[turn]] (str "gagne par épuisement du deck Corpo au tour " turn))
-game_win-flatlined = (fn [[turn]] (str "gagne par mort clinique au tour " turn))
-game_win-other = (fn [[turn reason]] (str "gagne par " reason " au tour " turn))
-game_win-points = (fn [[turn]] (str "gagne aux points de projet au tour " turn))
+game_win-claimed = {$winner} ({$side}) gagne par réclamation au tour {$turn}
+game_win-conceded =  {$winner} ({$side}) gagne par abandon au tour {$turn}
+game_win-decked = {$winner} ({$side}) gagne par épuisement du deck Corpo au tour {$turn}
+game_win-flatlined = {$winner} ({$side}) gagne par mort clinique au tour {$turn}
+game_win-points = {$winner} ({$side}) gagne aux points de projet au tour {$turn}
+game_win-other = {$winner} ({$side}) gagne par {$reason} au tour {$turn}
 
-# game-prompt_advance = null
-# game-prompt_archives = null
-# game-prompt_derez = null
-# game-prompt_expend = null
-# game-prompt_hq = null
-# game-prompt_new-remote = null
-# game-prompt_r-d = null
-# game-prompt_rez = null
-# game-prompt_score = null
-# game-prompt_server-1 = null
-# game-prompt_server-10 = null
-# game-prompt_server-2 = null
-# game-prompt_server-3 = null
-# game-prompt_server-4 = null
-# game-prompt_server-5 = null
-# game-prompt_server-6 = null
-# game-prompt_server-7 = null
-# game-prompt_server-8 = null
-# game-prompt_server-9 = null
-# game-prompt_trash = null
+# game_prompt = {$msg ->
+#     [advance] null
+#     [archives] null
+#     [derez] null
+#     [expend] null
+#     [hq] null
+#     [new-remote] null
+#     [r-d] null
+#     [rez] null
+#     [score] null
+#     [server-1] null
+#     [server-10] null
+#     [server-2] null
+#     [server-3] null
+#     [server-4] null
+#     [server-5] null
+#     [server-6] null
+#     [server-7] null
+#     [server-8] null
+#     [server-9] null
+#     [trash] null
+#     *[unknown] Unknown game prompt ({$msg})
+# }
 
 # ingame-settings_alt-art = null
 # ingame-settings_board-overlap = null
@@ -414,8 +438,15 @@ game_win-points = (fn [[turn]] (str "gagne aux points de projet au tour " turn))
 # ingame-settings_stack-cards = null
 # ingame-settings_toggle-log-timestamps = null
 
+lobby_type = {$type ->
+    [angel-arena] Angel Arena
+    [casual] Amical
+    [competitive] Compétition
+    [tournament] Tournois
+    *[other] Unknown lobby type
+}
+
 lobby_aborted = Connexion interrompue
-# lobby_angel-arena = null
 lobby_api-access = Autoriser l'accès API aux informations de la partie
 # lobby_api-access-details = null
 lobby_api-requires-key = (Nécessite un clé API dans les réglages)
@@ -423,10 +454,8 @@ lobby_as-corp = En tant que Corpo
 lobby_as-runner = En tant que Runner
 # lobby_both-perspective = null
 lobby_cancel = Annuler
-lobby_casual = Amical
 lobby_chat = Discuter
 lobby_closed-msg = Salle d'attente fermée pour cause d'inactivité
-lobby_competitive = Compétition
 lobby_completion-rate = Taux de parties achevées
 # lobby_corp-perspective = null
 lobby_create = Créer
@@ -436,7 +465,14 @@ lobby_delete = Effacer la partie
 # lobby_filter = null
 lobby_filtered = (filtres activés)
 lobby_format = Format
-lobby_game-count = (fn [[cnt]] (str cnt (if (= 1 cnt) " Partie" " Parties")))
+lobby_game-count = {$cnt ->
+    [one] {$cnt} Partie
+    *[other] {$cnt} Parties
+}
+lobby_game-count-filtered = {$cnt ->
+    [one] {$cnt} Partie (filtres activés)
+    *[other] {$cnt} Parties (filtres activés)
+}
 lobby_hidden = Rendre les informations cachées du joueur visibles aux spectateurs
 # lobby_hidden-details = null
 # lobby_hidden-password = null
@@ -475,7 +511,10 @@ lobby_side = Camp
 # lobby_singleton-details = null
 # lobby_singleton-example = null
 # lobby_singleton-restriction = null
-lobby_spectator-count = (fn [[cnt]] (str cnt " Spectateur" (when (not= cnt 1) "s")))
+lobby_spectator-count = {$cnt ->
+    [one] Spectateur
+    *[other] {$cnt} Spectateurs
+}
 lobby_spectators = Autoriser les spectateurs
 lobby_start = Commencer
 lobby_start-replay = Lancer le replay
@@ -486,7 +525,6 @@ lobby_swap = Changer de camp
 lobby_title = Nom de la partie
 lobby_title-error = Veuillez saisir un nom de partie.
 lobby_too-little-data = Trop peu de données
-lobby_tournament = Tournois
 lobby_waiting = En attente de la sélection des decks
 lobby_watch = Regarder
 # lobby_gateway-format_beginner = null
@@ -505,11 +543,11 @@ log_remote-annotations-fail = Impossible d'obtenir les annotations distantes
 log_shared = Annotations partagées
 # log_turn-timing = null
 
-menu_admin = :fr.nav/admin
+menu_admin = { nav_admin }
 # menu_donor = null
 menu_logout = Débrancher
 menu_moderator = Modérateur
-menu_settings = :fr.nav/settings
+menu_settings = { nav_settings }
 
 missing = :fr texte manquant
 
@@ -519,7 +557,10 @@ nav_cards = Cartes
 nav_chat = Discussion
 nav_deck-builder = Constructeur de decks
 nav_features = Caractéristiques
-nav_game-count = (fn [[cnt]] (str cnt " Partie" (when (not= cnt 1) "s")))
+nav_game-count = {$cnt ->
+    [one] {$cnt} Partie
+    *[other] {$cnt} Parties
+}
 nav_help = Aide
 nav_play = Jouer
 nav_settings = Réglages
@@ -846,9 +887,16 @@ stats_ended = Terminée
 stats_filtered = (filtres activés)
 stats_format = Format
 stats_game-stats = Statistiques de jeu
+stats_game-title = {$title} ({$cnt ->
+    [one] {$cnt} tour
+    *[other] {$cnt} tours
+})
 stats_launch = Démarrer le replay
 stats_lobby = Hall
-stats_log-count = (fn [[cnt]] (str cnt " " (if (<= cnt 1) "Journal" "Journaux")))
+stats_log-count = {$cnt ->
+    [one] {$cnt} Journal
+    *[other] {$cnt} Journaux
+}
 stats_lost = Perdues
 stats_no-games = Pas de parties
 stats_no-log = Pas de journal disponible
@@ -867,7 +915,6 @@ stats_shared-games = Montrer seulement les parties partagées
 # stats_shuffle-count = null
 stats_started = Commencées
 stats_tags-gained = Tags reçus
-stats_turn-count = (fn [[cnt]] (str cnt " tour" (when (not= cnt 1) "s")))
 stats_unavailable = Pas de replay disponible
 # stats_unique-accesses = null
 stats_view-games = Retourner aux statistiques
