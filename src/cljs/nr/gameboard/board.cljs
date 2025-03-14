@@ -25,7 +25,7 @@
    [nr.gameboard.right-pane :refer [content-pane]]
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
-   [nr.translations :refer [tr tr-game-prompt]]
+   [nr.translations :refer [tr tr-game-prompt tr-side]]
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
                      image-or-face map-longest render-icons render-message]]
    [nr.ws :as ws]
@@ -931,7 +931,9 @@
 
 (defn deck-view [render-side player-side identity deck deck-count]
   (let [is-runner (= :runner render-side)
-        title (if is-runner (tr [:game_stack "Stack"]) (tr [:game_r-d "R&D"]))
+        title (if is-runner
+                (tr [:game_stack "Stack"])
+                (tr [:game_rnd "R&D"]))
         ref (if is-runner "stack" "rd")
         menu-ref (keyword (str ref "-menu"))
         content-ref (keyword (str ref "-content"))]
@@ -1350,8 +1352,8 @@
      [:table.decklists.table
       [:tbody
        [:tr.win.th
-        [:td.win.th [tr [:side_corp "Corp"]]] [:td.win.th]
-        [:td.win.th [tr [:side_runner "Runner"]]] [:td.win.th]]
+        [:td.win.th [tr-side "Corp"]] [:td.win.th]
+        [:td.win.th [tr-side "Runner"]] [:td.win.th]]
        (doall (map-indexed
                 (fn [i [corp runner]]
                   [:tr {:key i}
@@ -1651,7 +1653,7 @@
        (if (nil? strength)
          (if (= "corp" player)
            ;; This is a trace prompt for the corp, show runner link + credits
-           [:div.info [tr [:side_runner "Runner"]] ": " link [:span {:class "anr-icon link"}]
+           [:div.info [tr-side "Runner"] ": " link [:span {:class "anr-icon link"}]
             " + " runner-credits [:span {:class "anr-icon credit"}]]
            ;; Trace in which the runner pays first, showing base trace strength and corp credits
            [:div.info [tr [:game_trace "Trace"]] ": " (if bonus (+ base bonus) base)
@@ -1667,11 +1669,11 @@
           (if (= "corp" player)
             (let [strength (if bonus (+ base bonus) base)]
               [:span (str strength " + ")])
-            [:span link " " [:span {:class "anr-icon link"}] (str " + " )])
+            [:span link " " [:span {:class "anr-icon link"}] " + " ])
           (if (= "corp" player)
-            [:span link " " [:span {:class "anr-icon link"}] (str " + " )]
+            [:span link " " [:span {:class "anr-icon link"}] " + " ]
             (let [strength (if bonus (+ base bonus) base)]
-              [:span (str strength " + ")]))))
+              [:span strength " + "]))))
       [:select#credit {:value @!value
                        :on-change #(reset! !value (.. % -target -value))
                        :onKeyUp #(when (= "Enter" (.-key %))

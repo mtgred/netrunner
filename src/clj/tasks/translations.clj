@@ -9,14 +9,52 @@
    [i18n.core :as tr.core]
    [taoensso.encore :as encore])
   (:import
-   [java.io File]))
+   (java.io File)
+   (fluent.bundle FluentBundle FluentBundle$Builder FluentResource)
+   (fluent.functions.cldr CLDRFunctionFactory)
+   (fluent.syntax.parser FTLParser FTLStream)
+   (java.util Locale Optional)
+   [fluent.syntax.AST PatternElement PatternElement$TextElement Identifiable Message Term Pattern]))
 
-(defn get-nodes [lang]
+(def fluent-dictionary
+  (atom {}))
+
+(defn build
+  [locale-str ^String resource]
+  (let [locale-str (if (= "la-pig" locale-str) "en" locale-str)
+        locale (Locale/forLanguageTag locale-str)
+        builder (FluentBundle/builder locale CLDRFunctionFactory/INSTANCE)
+        ftl-res (FTLParser/parse (FTLStream/of resource))
+        entries (into {} (comp (filter #(or (instance? Message %) (instance? Term %)))
+                               (map (fn [e] [(.name ^Identifiable e) e])))
+                      (FluentResource/.entries ftl-res))]
+    (when (FluentResource/.hasErrors ftl-res)
+      (let [errors (.errors ftl-res)
+            err (first errors)]
+        (throw (ex-info (str "Error adding resource: " (ex-message err))
+                        {:locale locale-str
+                         :errors (mapv ex-message errors)}
+                        err))))
+    (FluentBundle$Builder/.addResource builder ftl-res)
+    (FluentBundle$Builder/.build builder)
+    entries))
+
+(let [langs (->> (io/file "resources/public/i18n")
+                 (file-seq)
+                 (filter #(.isFile ^java.io.File %))
+                 (filter #(str/ends-with? (str %) ".ftl"))
+                 (map (fn [^java.io.File f]
+                        (let [n (str/replace (.getName f) ".ftl" "")
+                              content (slurp f)]
+                          [n content]))))]
+  (doseq [[lang content] langs]
+    (swap! fluent-dictionary assoc (keyword lang) (build lang content))))
+
+(defn get-messages [lang]
   (->> lang
-       (get (tr.core/fluent-dictionary))
-       (encore/node-paths)
-       (remove #(= :angel-arena (first %)))
-       (into #{} (map (comp vec butlast)))))
+       (get @fluent-dictionary)
+       (remove #(str/starts-with? "angel-arena" (first %)))
+       (into {})))
 
 (defn to-keyword [s]
   (cond
@@ -27,101 +65,113 @@
 (defn missing-translations
   "Treat :en as the single source of truth. Compare each other language against it.
   Print when the other language is missing entries, and also print when the other
-  language has defined entries not in :en.
-
-  Ignores :angel-arena entries because that's being phased out."
+  language has defined entries not in :en."
   [& args]
-  (let [en-nodes (get-nodes :en)
-        other-langs (keys (dissoc (tr.core/fluent-dictionary) :en))]
-    (doseq [lang (or (seq (map to-keyword args)) other-langs)
-            :let [lang-nodes (get-nodes lang)]]
+  (let [en-keys (->> (get-messages :en)
+                     (keys)
+                     (remove (fn [k]
+                               (some #(str/starts-with? k %)
+                                     ["preconstructed_"
+                                      "diagrams_"]))))]
+    (doseq [lang (or (seq (map to-keyword args))
+                     (keys (dissoc @fluent-dictionary :en)))
+            :let [lang-keys (keys (get-messages lang))]]
       (println "Checking" lang)
-      (when-let [diff (seq (set/difference en-nodes lang-nodes))]
+      (when-let [diff (seq (set/difference (set en-keys) (set lang-keys)))]
         (println "Missing from" lang)
         (pp/pprint (sort diff))
         (newline))
-      (when-let [diff (seq (set/difference lang-nodes en-nodes))]
+      #_(when-let [diff (seq (set/difference (set lang-keys) (set en-keys)))]
         (println "Missing from :en")
         (pp/pprint (sort diff))
         (newline)))
     (println "Finished!")))
 
 (comment
-  (missing-translations))
+  (missing-translations :fr))
+
+(defn get-value
+  [message]
+  (when-let [elements (some-> message
+                              (Message/.pattern)
+                              (Optional/.orElse nil)
+                              (Pattern/.elements)
+                              (seq)
+                              vec)]
+    (when (every? #(instance? PatternElement$TextElement %) elements)
+      (->> elements
+           (map PatternElement$TextElement/.value)
+           (str/join " ")))))
 
 (defn undefined-translations
   [& _args]
-  (let [en-nodes (->> (get (tr.core/fluent-dictionary) :en)
-                      (encore/node-paths)
-                      (map #(vector (vec (butlast %)) (last %)))
-                      (into {}))
-        files (->> (io/file "src")
-                   (file-seq)
+  (let [en-map (get-messages :en)
+        files (->> (concat (file-seq (io/file "src/cljs"))
+                           (file-seq (io/file "src/cljc")))
                    (filter #(.isFile ^File %))
                    (filter #(str/includes? (str %) ".clj"))
-                   (map (juxt str slurp)))]
-    (doseq [[file-name contents] files
-            :let [used
-                  (->> contents
-                       (re-seq #"\(tr \[:(.*?)( \"(.*?)\")?\]")
-                       (mapv (fn [[_ k _ default]]
-                               [(mapv keyword (str/split k #"[/\.]"))
-                                (when default
-                                  (str/trim default))]))
-                       (sort))]
-            [k default] used
-            :let [en-node (get en-nodes k)]
-            :when (not (or (fn? en-node)
-                           (keyword? en-node)))
-            :when (if (and k default)
-                    (not= (when en-node (str/lower-case en-node))
-                          (str/lower-case default))
-                    (not en-node))]
+                   (remove #(str/includes? (str %) "angel_arena"))
+                   (map (juxt str slurp)))
+        finds
+        (for [[file-name contents] files
+              :let [used
+                    (->> contents
+                         (re-seq #"tr \[:([a-zA-Z0-9_-]*?)( \"(.*?)\")?\]")
+                         (mapv (fn [[_ k _ default]]
+                                 [(keyword k)
+                                  (when default
+                                    (str/trim default))]))
+                         (sort))]
+              [k default] used
+              :let [entry (get en-map (name k))
+                    message (get-value entry)]
+              :when (not entry)
+              :when (if (and k default)
+                      (not= (when message (str/lower-case message))
+                            (str/lower-case default))
+                      true)]
+          {:file-name file-name
+           :entry k
+           :msg [message default]})
+        grouped-finds (group-by :file-name finds)]
+    (doseq [file-name (keys grouped-finds)
+            {:keys [entry msg]} (get grouped-finds file-name)]
       (println file-name)
-      (pp/pprint [k (when (or en-node default)
-                      [en-node default])]))
+      (pp/pprint [entry msg]))
     (println "Finished!")))
 
 (comment
   (undefined-translations))
 
 (def keys-to-dissoc
-  #{:missing ; default text
-    :card-type ; handled by tr-type
-    :side ; handled by tr-side
-    :faction ; handled by tr-faction
-    :format ; handled by tr-format
-    :lobby ; handled by tr-lobby and tr-watch-join
-    :pronouns ; handled by tr-pronouns
-    :set ; handled by tr-set
-    :game-prompt ; handled by tr-game-prompt
+  #{"missing" ; default text
+    "card-type_" ; handled by tr-type
+    "side_" ; handled by tr-side
+    "faction_" ; handled by tr-faction
+    "format_" ; handled by tr-format
+    "lobby_" ; handled by tr-lobby and tr-watch-join
+    "pronouns" ; handled by tr-pronouns
+    "set_" ; handled by tr-set
+    "game_prompt" ; handled by tr-game-prompt
+    "card-browser_sort-by"
+    "preconstructed_"
     })
-
-(def nested-keys-to-dissoc
-  #{[:card-browser :sort-by] ; handled by tr-sort
-    [:card-browser :influence] ; currently unused
-    [:deck-builder :hash] ; currently unused
-    })
-
-(defn dissoc-programmatic-keys [dict]
-  (reduce dissoc-in
-          (apply dissoc dict keys-to-dissoc)
-          nested-keys-to-dissoc))
 
 (defn unused-translations
   [& _args]
-  (let [regexen (->> (get (tr.core/fluent-dictionary) :en)
-                     (dissoc-programmatic-keys)
-                     (encore/node-paths)
-                     (map #(vec (butlast %)))
-                     (map #(let [s (str/join "." (map name %))
-                                 patt (str "\\(tr \\[(:" s ")( \\\"(.*?)\\\")?\\]")]
+  (let [regexen (->> (get-messages :en)
+                     (keys)
+                     (remove (fn [k]
+                               (some #(str/starts-with? k %)
+                                     keys-to-dissoc)))
+                     (map #(let [patt (str "tr \\[(:" % ")( \\\"(.*?)\\\")?\\]")]
                              [% (re-pattern patt)]))
                      (into #{}))
-        files (->> (io/file "src")
-                   (file-seq)
+        files (->> (concat (file-seq (io/file "src/cljs"))
+                           (file-seq (io/file "src/cljc")))
                    (filter #(.isFile ^File %))
                    (filter #(str/includes? (str %) ".clj"))
+                   (remove #(str/includes? (str %) "angel_arena"))
                    (map (juxt str slurp)))]
     (doseq [[path regex] (sort regexen)
             :when (->> files
@@ -141,7 +191,7 @@
     (doseq [lang (keys dict)]
       (let [translation
             (with-out-str
-              (doseq [path-ns (->> (get-nodes :en)
+              (doseq [path-ns (->> (get-messages :en)
                                    (group-by first)
                                    (sort-by key))
                       ; slit each group by a newline

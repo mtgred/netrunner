@@ -165,7 +165,7 @@
      [:p
       [:input.game-title {:on-change #(swap! options assoc :password (.. % -target -value))
                           :value (:password @options)
-                          :placeholder [tr [:lobby_password "Password"]]
+                          :placeholder (tr [:lobby_password "Password"])
                           :maxLength "30"}]])])
 
 (defn add-timer [options]

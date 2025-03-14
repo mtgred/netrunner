@@ -318,7 +318,8 @@
       (when-let [influence (:factioncost card)]
         (when-let [faction (:faction card)]
            [:span.influence
-            {:class (slugify faction)}
+            {:class (slugify faction)
+             :title (str (tr [:card-browser_influence "Influence"]) ": " influence)}
             (influence-dots influence)]))]
      (when-let [memory (:memoryunits card)]
        (if (< memory 3)

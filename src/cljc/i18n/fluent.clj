@@ -12,20 +12,19 @@
 (set! *warn-on-reflection* true)
 
 (defn build
-  ^FluentBundle [locale-str ^String resource & resources]
+  [locale-str ^String resource]
   (let [locale-str (if (= "la-pig" locale-str) "en" locale-str)
         locale (Locale/forLanguageTag locale-str)
-        builder (FluentBundle/builder locale CLDRFunctionFactory/INSTANCE)]
-    (doseq [^String r (cons resource resources)
-            :let [ftl-res (FTLParser/parse (FTLStream/of r))]]
-      (when (FluentResource/.hasErrors ftl-res)
-        (let [errors (.errors ftl-res)
-              err (first errors)]
-          (throw (ex-info (str "Error adding resource: " (ex-message err))
-                          {:locale locale-str
-                           :errors (mapv ex-message errors)}
-                          err))))
-      (FluentBundle$Builder/.addResource builder ftl-res))
+        builder (FluentBundle/builder locale CLDRFunctionFactory/INSTANCE)
+        ftl-res (FTLParser/parse (FTLStream/of resource))]
+    (when (FluentResource/.hasErrors ftl-res)
+      (let [errors (.errors ftl-res)
+            err (first errors)]
+        (throw (ex-info (str "Error adding resource: " (ex-message err))
+                        {:locale locale-str
+                         :errors (mapv ex-message errors)}
+                        err))))
+    (FluentBundle$Builder/.addResource builder ftl-res)
     (try (FluentBundle$Builder/.build builder)
          (catch ParseException ex
            (println (ex-message ex))))))
@@ -52,6 +51,7 @@
 
 (comment
   (let [input "# Simple things are simple.
+-poop = poop
 hello-world = Hello, world!
 hello-user = Hello, {$user-name}!
 

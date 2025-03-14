@@ -135,7 +135,7 @@
   (let [langs (->> (io/file "resources/public/i18n")
                    (file-seq)
                    (filter #(.isFile ^java.io.File %))
-                   (filter #(str/includes? (str %) ".ftl"))
+                   (filter #(str/ends-with? (str %) ".ftl"))
                    (map (fn [^java.io.File f]
                           (let [n (str/replace (.getName f) ".ftl" "")
                                 content (slurp f)]

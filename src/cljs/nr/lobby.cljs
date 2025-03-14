@@ -213,9 +213,8 @@
         (doall (for [[k] slug->format]
                  ^{:key k}
                  [format-toggle k (contains? visible-formats k)]))]]
-     [room-tab user s games "casual" [tr [:lobby_casual "Casual"]]]
-     ;; [room-tab user s games "angel-arena" [tr [:lobby_angel-arena "Angel Arena"]]]
-     [room-tab user s games "competitive" [tr [:lobby_tournament "Tournament"]]]]
+     [room-tab user s games "casual" [tr [:lobby_type "Casual"] {:type "casual"}]]
+     [room-tab user s games "competitive" [tr [:lobby_type "Tournament"] {:type "tournament"}]]]
     (when-not (= "angel-arena" (:room @s))
       [:div.lobby-buttons
        [new-game-button s games current-game user]

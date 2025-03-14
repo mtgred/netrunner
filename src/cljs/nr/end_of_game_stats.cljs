@@ -1,5 +1,5 @@
 (ns nr.end-of-game-stats
-  (:require [nr.translations :refer [tr]]
+  (:require [nr.translations :refer [tr tr-side]]
             [nr.utils :refer [map-longest]]))
 
 (defn computed-stat
@@ -73,8 +73,8 @@
      [:table.win.table
       [:tbody
        [:tr.win.th
-        [:td.win.th [tr [:side_corp "Corp"]]] [:td.win.th]
-        [:td.win.th [tr [:side_runner "Runner"]]] [:td.win.th]]
+        [:td.win.th [tr-side "Corp"]] [:td.win.th]
+        [:td.win.th [tr-side "Runner"]] [:td.win.th]]
        (doall (map-indexed
                 (fn [i [corp runner]]
                   [:tr {:key i}

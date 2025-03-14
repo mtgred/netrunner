@@ -64,8 +64,7 @@ chat_channels = Channels
 chat_delete = Delete Message
 chat_delete-all = Delete All Messages From User
 chat_length-exceeded = Length exceeded
-chat_message-blocked = Message blocked
-chat_message-blocked-reason = Message blocked: {$reason-str}
+chat_message-blocked = Message blocked: {$reason-str}
 chat_placeholder = Say something...
 chat_rate-exceeded = Rate exceeded
 chat_send = Send
@@ -103,7 +102,6 @@ deck-builder_decklist = Decklist
 deck-builder_decklist-inst = (Type or paste a decklist, it will be parsed)
 deck-builder_delete = Delete
 deck-builder_edit = Edit
-deck-builder_filtered = (filtered)
 deck-builder_format = Format
 deck-builder_games = Games
 deck-builder_hash = Tournament hash
@@ -239,11 +237,10 @@ format_name = {$format ->
     *[other] Unknown format
 }
 
-
 game_abilities = Abilities
 game_actions = Actions
 game_agenda-count = {$agenda-point ->
-    [one] Agenda Point
+    [one] 1 Agenda Point
     *[other] {$agenda-point} Agenda Points
 }
 game_agenda-count-with-req = {$agenda-point ->
@@ -265,8 +262,8 @@ game_card-count = {$size ->
     *[other] {$size} cards
 }
 game_click-count = {$click ->
-    [one] {$click} card
-    *[other] {$click} cards
+    [one] {$click} click
+    *[other] {$click} clicks
 }
 game_close = Close
 game_close-shuffle = Close & Shuffle
@@ -419,6 +416,7 @@ ingame-settings_high-res = Enable high resolution card images
 ingame-settings_label-faceup-cards = Label face up cards
 ingame-settings_label-unrezzed-cards = Label unrezzed cards
 ingame-settings_log-timestamps = Log timestamps
+ingame-settings_log-timestamps-toggle = Show log timestamps
 ingame-settings_pass-on-rez = Pass priority when rezzing ice
 ingame-settings_preview-zoom = Card preview zoom
 ingame-settings_runner-board-order = Runner board order
@@ -430,7 +428,6 @@ ingame-settings_sides-overlap = Runner and Corp may overlap
 ingame-settings_sort-archives = Sort Archives
 ingame-settings_sort-heap = Sort Heap
 ingame-settings_stack-cards = Stack cards
-ingame-settings_toggle-log-timestamps = Show log timestamps
 
 lobby_type = {$type ->
     [angel-arena] Angel Arena
@@ -544,7 +541,7 @@ menu_admin = { nav_admin }
 menu_donor = Donor
 menu_logout = Jack out
 menu_moderator = Moderator
-menu_settings ={ nav_settings }
+menu_settings = { nav_settings }
 
 missing = :en missing text
 

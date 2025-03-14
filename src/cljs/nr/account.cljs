@@ -375,7 +375,8 @@
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
 
           [:section
-           [:h3 [tr [:settings_bespoke-sounds-header "Card-Specific Sounds"]]]
+           [:h3 [tr [:settings_bespoke-sounds "Card-Specific Sounds"]
+                 {:sound "header"}]]
            (doall
              (for [grouping (distinct (map :grouping (vals bespoke-sounds)))]
                ^{:key grouping}

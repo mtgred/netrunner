@@ -36,7 +36,7 @@
   (let [reason-str (case reason
                      :rate-exceeded [tr [:chat_rate-exceeded "Rate exceeded"]]
                      :length-exceeded [tr [:chat_length-exceeded "Length exceeded"]])]
-    (non-game-toast (tr [:chat_message-blocked] reason-str)
+    (non-game-toast (tr [:chat_message-blocked] {:reason-str reason-str})
                     "warning" nil)))
 
 (defn current-block-list []

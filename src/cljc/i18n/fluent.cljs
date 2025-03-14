@@ -2,14 +2,13 @@
   (:require
    ["@fluent/bundle" :refer [FluentBundle FluentResource]]))
 
-(defn build [locale-str resource & resources]
-  (let [builder (FluentBundle. (clj->js locale-str))]
-    (doseq [r (cons resource resources)
-            :let [ftl-res (FluentResource. resource)
-                  errors (.addResource builder ftl-res)]]
-      (when (seq errors)
-        (throw (ex-info "Errors adding resources:" {:resource r
-                                                    :errors errors}))))
+(defn build [locale-str resource]
+  (let [builder (FluentBundle. (clj->js locale-str))
+        ftl-res (FluentResource. resource)
+        errors (.addResource builder ftl-res)]
+    (when (seq errors)
+      (throw (ex-info "Errors adding resources:" {:resource resource
+                                                  :errors errors})))
     builder))
 
 (defn format
