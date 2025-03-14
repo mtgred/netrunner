@@ -145,7 +145,9 @@
                     cost-paid (merge-costs-paid (:cost-paid eid) (:cost-paid async-result))
                     eid (assoc eid :cost-paid cost-paid :source-type :ability)]
                 (if payment-str
-                  (complete-play-instant state side eid moved-card payment-str ignore-cost)
+                  (do
+                    (update! state side (assoc moved-card :special (:special (card-def moved-card))))
+                    (complete-play-instant state side eid moved-card payment-str ignore-cost))
                   ;; could not pay the card's price; put it back and mark the effect as being over.
                   (let [returned-card (move state side moved-card original-zone)]
                     (continue-ability
@@ -153,11 +155,11 @@
                       {:msg (msg "reveal that they are unable to play " (:title card))
                        :cost (when (:base-cost args) [(:base-cost args)])
                        :async true
-                       :effect (req (update! state :runner (-> returned-card
-                                               (dissoc :seen)
-                                               (assoc
-                                                 :cid (:cid card)
-                                                 :previous-zone (:previous-zone card))))
+                       :effect (req (update! state side (-> returned-card
+                                                            (dissoc :seen)
+                                                            (assoc
+                                                              :cid (:cid card)
+                                                              :previous-zone (:previous-zone card))))
                                     (reveal state side eid card))}
                       card nil)))))))
 

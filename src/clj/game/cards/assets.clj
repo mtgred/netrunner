@@ -2168,16 +2168,25 @@
      :abilities [ability]}))
 
 (defcard "Personalized Portal"
-  {:events [{:event :corp-turn-begins
+  {:special {:auto-fire :always}
+   :abilities [(set-autoresolve :auto-fire "Personalized Portal (gain credits)")]
+   :events [{:event :corp-turn-begins
              :interactive (req true)
              :async true
-             :effect (req (wait-for (draw state :runner 1)
-                                    (let [cnt (count (get-in @state [:runner :hand]))
-                                          credits (quot cnt 2)]
-                                      (system-msg state :corp
-                                                  (str "uses " (:title card) " to force the runner to draw "
-                                                       "1 card and gain " credits " [Credits]"))
-                                      (gain-credits state :corp eid credits))))}]})
+             :msg "force the runner to draw 1 card"
+             :effect (req (wait-for
+                            (draw state :runner 1)
+                            (let [creds-to-gain (quot (count (get-in @state [:runner :hand])) 2)]
+                              (continue-ability
+                                state side
+                                {:optional {:prompt (str "Gain " creds-to-gain " [Credits]?")
+                                            :autoresolve (get-autoresolve :auto-fire)
+                                            :req (req (pos? creds-to-gain))
+                                            :waiting-prompt true
+                                            :yes-ability {:msg (str "gain " creds-to-gain " [Credits]")
+                                                          :async true
+                                                          :effect (req (gain-credits state side eid creds-to-gain))}}}
+                                card nil))))}]})
 
 (defcard "Plan B"
   (advance-ambush
@@ -2895,16 +2904,21 @@
                 (hardware? card)
                 (and (resource? card)
                      (has-subtype? card "Virtual"))))]
-    {:static-abilities [{:type :install-cost
+    {:special {:auto-fire :always}
+     :abilities [(set-autoresolve :auto-fire "TechnoCo")]
+     :static-abilities [{:type :install-cost
                          :req (req (and (is-techno-target target)
                                         (not (:facedown (second targets)))))
                          :value 1}]
      :events [{:event :runner-install
-               :req (req (and (is-techno-target (:card context))
-                              (not (:facedown context))))
-               :msg "gain 1 [Credits]"
-               :async true
-               :effect (effect (gain-credits :corp eid 1))}]}))
+               :optional {:req (req (and (is-techno-target (:card context))
+                                         (not (:facedown context))))
+                          :prompt "Gain 1 [Credit]?"
+                          :waiting-prompt true
+                          :autoresolve (get-autoresolve :auto-fire)
+                          :yes-ability {:msg "gain 1 [Credits]"
+                                        :async true
+                                        :effect (effect (gain-credits :corp eid 1))}}}]}))
 
 (defcard "Tenma Line"
   {:abilities [{:action true
