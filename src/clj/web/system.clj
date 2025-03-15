@@ -16,8 +16,8 @@
    [game.cards.upgrades]
    [game.quotes :refer [load-quotes!]]
    [integrant.core :as ig]
-   [i18n.core :as i18n]
    [jinteki.cards :as cards]
+   [jinteki.i18n :as i18n]
    [medley.core :refer [deep-merge]]
    [monger.collection :as mc]
    [monger.core :as mg]
@@ -25,7 +25,6 @@
    [taoensso.sente :as sente]
    [time-literals.data-readers]
    [time-literals.read-write :as read-write]
-   ;; [web.angel-arena :as angel-arena]
    [web.api :refer [make-app make-dev-app]]
    [web.app-state :as app-state]
    [web.game]
@@ -33,8 +32,7 @@
    [web.telemetry]
    [web.utils :refer [tick]]
    [web.versions :refer [banned-msg frontend-version]]
-   [web.ws :refer [ch-chsk event-msg-handler]]
-   [clojure.string :as str]))
+   [web.ws :refer [ch-chsk event-msg-handler]]))
 
 (read-write/print-time-literals-clj!)
 

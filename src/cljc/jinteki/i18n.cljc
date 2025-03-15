@@ -1,7 +1,7 @@
-(ns i18n.core
+(ns jinteki.i18n
   (:refer-clojure :exclude [format])
   (:require
-   [i18n.fluent :as fluent]
+   [jinteki.i18n.fluent :as fluent]
    #?@(:clj [[clojure.java.io :as io]
              [clojure.string :as str]])
    #?(:cljs

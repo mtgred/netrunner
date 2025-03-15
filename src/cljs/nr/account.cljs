@@ -11,10 +11,10 @@
    [nr.auth :refer [valid-email?]]
    [nr.avatar :refer [avatar]]
    [nr.sounds :refer [bespoke-sounds play-sfx random-sound select-random-from-grouping]]
-   [nr.translations :refer [tr tr-format tr-pronouns]]
+   [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top]]
-   [i18n.core :as i18n]
+   [jinteki.i18n :as i18n]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]))
 
@@ -25,13 +25,13 @@
     ;; else
     (do (when-let [json (:json response)]
           (when (and (:lang json) (:content json))
-            (i18n.core/insert-lang! (:lang json) (:content json))))
+            (i18n/insert-lang! (:lang json) (:content json))))
         (non-game-toast (tr [:settings_updated "Profile updated - Please refresh your browser"]) "success" nil)))
   (swap! s assoc :flash-message ""))
 
 (defn post-options [callback]
   (let [params (:options @app-state)
-        params (if (i18n.core/get-bundle (:language params))
+        params (if (i18n/get-bundle (:language params))
                  params
                  (assoc params :lang (:language params)))]
     (go (let [response (<! (PUT "/profile" params :json))]

@@ -1,10 +1,9 @@
 (ns nr.appstate
   (:require
    [cljs.core.async :refer [<!] :refer-macros [go]]
-   [cljs.core.async.interop :refer-macros [<p!]]
    [jinteki.utils :refer [str->int]]
    [nr.ajax :refer [GET]]
-   [i18n.core]
+   [jinteki.i18n :as i18n]
    [reagent.core :as r]))
 
 (defn- get-local-value
@@ -77,7 +76,7 @@
 (go (let [lang (or (:language @app-state) "en")
           response (<! (GET (str "/data/language/" lang)))]
       (when (= 200 (:status response))
-        (i18n.core/insert-lang! (keyword lang) (:json response)))))
+        (i18n/insert-lang! (keyword lang) (:json response)))))
 
 (defn current-gameid [app-state]
   (get-in @app-state [:current-game :gameid]))

@@ -1,13 +1,13 @@
 (ns nr.translations
   (:require
    [clojure.string :as str]
-   [i18n.core :as tr]
+   [jinteki.i18n :as i18n]
    [nr.appstate :refer [app-state]]))
 
 (defn tr
   ([resource] (tr resource nil))
   ([resource params]
-   (tr/format app-state resource params)))
+   (i18n/format app-state resource params)))
 
 (defn clean-input
   [s]

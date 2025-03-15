@@ -1,4 +1,4 @@
-(ns i18n.fluent
+(ns jinteki.i18n.fluent
   (:require
    ["@fluent/bundle" :refer [FluentBundle FluentResource]]))
 

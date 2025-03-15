@@ -1,4 +1,4 @@
-(ns i18n.fluent
+(ns jinteki.i18n.fluent
   (:refer-clojure :exclude [format])
   (:require
    [clojure.core :as cc])

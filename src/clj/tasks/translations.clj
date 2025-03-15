@@ -4,38 +4,42 @@
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
    [clojure.set :as set]
-   [clojure.string :as str]
-   [i18n.core :as i18n])
+   [clojure.string :as str])
   (:import
-   (java.io File)
    (fluent.bundle FluentBundle FluentBundle$Builder FluentResource)
    (fluent.functions.cldr CLDRFunctionFactory)
+   (fluent.syntax.AST Identifiable Message Pattern PatternElement$TextElement Term)
    (fluent.syntax.parser FTLParser FTLStream)
-   (java.util Locale Optional)
-   [fluent.syntax.AST PatternElement$TextElement Identifiable Message Term Pattern]))
+   (java.io File)
+   (java.util Locale Optional)))
 
 (def fluent-dictionary
   (atom {}))
 
 (defn build
   [locale-str ^String resource]
-  (let [locale-str (if (= "la-pig" locale-str) "en" locale-str)
-        locale (Locale/forLanguageTag locale-str)
-        builder (FluentBundle/builder locale CLDRFunctionFactory/INSTANCE)
-        ftl-res (FTLParser/parse (FTLStream/of resource))
-        entries (into {} (comp (filter #(or (instance? Message %) (instance? Term %)))
-                               (map (fn [e] [(.name ^Identifiable e) e])))
-                      (FluentResource/.entries ftl-res))]
-    (when (FluentResource/.hasErrors ftl-res)
-      (let [errors (.errors ftl-res)
-            err (first errors)]
-        (throw (ex-info (str "Error adding resource: " (ex-message err))
-                        {:locale locale-str
-                         :errors (mapv ex-message errors)}
-                        err))))
-    (FluentBundle$Builder/.addResource builder ftl-res)
-    (FluentBundle$Builder/.build builder)
-    entries))
+  (try
+    (let [locale-str (if (= "la-pig" locale-str) "en" locale-str)
+          locale (Locale/forLanguageTag locale-str)
+          builder (FluentBundle/builder locale CLDRFunctionFactory/INSTANCE)
+          ftl-res (FTLParser/parse (FTLStream/of resource))
+          entries (into {} (comp (filter #(or (instance? Message %) (instance? Term %)))
+                                 (map (fn [e] [(.name ^Identifiable e) e])))
+                        (FluentResource/.entries ftl-res))]
+      (when (FluentResource/.hasErrors ftl-res)
+        (let [errors (.errors ftl-res)
+              err (first errors)]
+          (throw (ex-info (str "Error in " locale-str " adding resource: " (ex-message err))
+                          {:locale locale-str
+                           :errors (mapv ex-message errors)}
+                          err))))
+      (FluentBundle$Builder/.addResource builder ftl-res)
+
+      (FluentBundle$Builder/.build builder)
+      entries)
+    (catch Throwable err
+      (println (str "Error in " locale-str " adding resource: " (ex-message err)))
+      (throw err))))
 
 (let [langs (->> (io/file "resources/public/i18n")
                  (file-seq)
@@ -85,7 +89,17 @@
     (println "Finished!")))
 
 (comment
-  (missing-translations "pt"))
+  (do
+    (println "these should be empty")
+    (missing-translations "fr" "ko" "ja" "pt")
+    (newline)
+    (println "these need to be worked on")
+    (missing-translations "pl"
+                          #_"ru"
+                          #_"zh-simp"
+                          #_"la-pig"
+                          )
+    ))
 
 (defn get-value
   [message]

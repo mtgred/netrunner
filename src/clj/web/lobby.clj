@@ -12,7 +12,7 @@
    [jinteki.utils :refer [select-non-nil-keys side-from-str superuser?]]
    [jinteki.preconstructed :refer [all-matchups]]
    [jinteki.validator :as validator]
-   [medley.core :refer [find-first random-uuid]]
+   [medley.core :refer [find-first]]
    [monger.collection :as mc]
    [time-literals.read-write :as read-write]
    [web.app-state :as app-state]
@@ -233,8 +233,9 @@
           (not (or user-blocked-players? players-blocked-user?))))
       lobbies)))
 
-(defn sorted-lobbies [lobbies]
+(defn sorted-lobbies
   "ideally we only sort these once"
+  [lobbies]
   (->> (map lobby-summary lobbies)
        (sort-by :date)
        (reverse)
@@ -243,9 +244,9 @@
 (comment
   (->> (for [x (range 5 10)]
          {:date (doto (java.util.Calendar/getInstance)
-                  (.set (+ 2000 (+ (rand-int x) (rand-int x))) 1 2))
+                  (.set (+ 2000 (rand-int x) (rand-int x)) 1 2))
           :started (rand-nth [true false])})
-       (summaries-for-lobbies)))
+       (sorted-lobbies)))
 
 (defn prepare-lobby-list
   [lobbies users]
@@ -383,7 +384,7 @@
 (defn close-lobby!
   "Closes the given game lobby, booting all players and updating stats."
   ([db lobby] (close-lobby! db lobby nil))
-  ([db {:keys [gameid players pool started on-close] :as lobby} skip-on-close]
+  ([db {:keys [gameid pool started on-close] :as lobby} skip-on-close]
    (when started
      (stats/game-finished db lobby)
      (stats/update-deck-stats db lobby)
@@ -430,7 +431,7 @@
 (defn find-deck
   [db opts]
   (assert (:_id opts) ":_id is required")
-  (mc/find-one-as-map db :decks opts))
+  (mc/find-one-as-map db "decks" opts))
 
 (defn find-deck-for-user [db deck-id user]
   (let [username (:username user)]
@@ -688,7 +689,7 @@
               new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :title] (str player-name "'s game"))]
           (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
           (broadcast-lobby-list)
-          (mc/insert db :moderator_actions
+          (mc/insert db "moderator_actions"
                      {:moderator (:username user)
                       :action :rename-game
                       :game-name bad-name
@@ -709,7 +710,7 @@
       (when (and (superuser? user) lobby)
         (close-lobby! db lobby)
         (broadcast-lobby-list)
-        (mc/insert db :moderator_actions
+        (mc/insert db "moderator_actions"
                    {:moderator (:username user)
                     :action :delete-game
                     :game-name bad-name
@@ -801,8 +802,7 @@
 
 (defmethod ws/-msg-handler :lobby/pause-updates
   lobby--pause-updates
-  [{{user :user} :ring-req
-    uid :uid
+  [{uid :uid
     id :id
     timestamp :timestamp}]
   (lobby-thread (app-state/pause-lobby-updates uid)
@@ -810,8 +810,7 @@
 
 (defmethod ws/-msg-handler :lobby/continue-updates
   lobby--continue-updates
-  [{{user :user} :ring-req
-    uid :uid
+  [{uid :uid
     id :id
     timestamp :timestamp}]
   (lobby-thread

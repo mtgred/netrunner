@@ -1,7 +1,7 @@
 (ns web.data
   (:require [web.utils :refer [response mongo-time-to-utc-string]]
             [monger.collection :as mc]
-            [i18n.core]
+            [jinteki.i18n :as i18n]
             [monger.query :as mq]
             [game.core.initializing :refer [card-implemented]]
             [clojure.edn :as edn]))
@@ -42,7 +42,7 @@
     (response 200 {})))
 
 (defn lang-handler [{{lang :lang} :path-params}]
-  (let [content (i18n.core/get-content lang)]
+  (let [content (i18n/get-content lang)]
     (response 200 (pr-str content))))
 
 (defn alt-arts-handler [{db :system/db}]

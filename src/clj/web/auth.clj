@@ -1,22 +1,22 @@
 (ns web.auth
   (:require
    [buddy.sign.jwt :as jwt]
-   [cljc.java-time.temporal.chrono-unit :as chrono]
    [cljc.java-time.instant :as inst]
+   [cljc.java-time.temporal.chrono-unit :as chrono]
    [clojure.string :as str]
    [crypto.password.bcrypt :as password]
+   [jinteki.i18n :as i18n]
+   [jinteki.utils :refer [select-non-nil-keys]]
    [monger.collection :as mc]
    [monger.operators :refer :all]
    [monger.result :refer [acknowledged?]]
    [postal.core :as mail]
    [ring.util.response :refer [redirect]]
    [web.app-state :as app-state]
-   [web.mongodb :refer [find-one-as-map-case-insensitive ->object-id]]
-   [web.user :refer [active-user? valid-username? within-char-limit-username? create-user user-keys]]
-   [web.utils :refer [response md5]]
-   [web.versions :refer [banned-msg]]
-   [i18n.core]
-   [jinteki.utils :refer [select-non-nil-keys]])
+   [web.mongodb :refer [->object-id find-one-as-map-case-insensitive]]
+   [web.user :refer [active-user? create-user user-keys valid-username?]]
+   [web.utils :refer [md5 response]]
+   [web.versions :refer [banned-msg]])
   (:import
    java.security.SecureRandom))
 
@@ -193,7 +193,7 @@
                   resp (cond-> resp
                          lang
                          (assoc :lang lang
-                                :content (i18n.core/get-content (keyword lang))))]
+                                :content (i18n/get-content (keyword lang))))]
               (response 200 resp)))
         (response 404 {:message "Account not found"}))
       (response 401 {:message "Unauthorized"}))))
