@@ -76,7 +76,7 @@
         (println "Missing from" lang)
         (pp/pprint (sort diff))
         (newline))
-      #_(when-let [diff (seq (set/difference
+      (when-let [diff (seq (set/difference
                             (set lang-keys)
                             (set en-keys)))]
         (println "Missing from :en")
@@ -85,7 +85,7 @@
     (println "Finished!")))
 
 (comment
-  (missing-translations #_"ja"))
+  (missing-translations "pt"))
 
 (defn get-value
   [message]

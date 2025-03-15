@@ -240,11 +240,11 @@ format_name = {$format ->
 game_abilities = Abilities
 game_actions = Actions
 game_agenda-count = {$agenda-point ->
-    [one] 1 Agenda Point
+    [one] {$agenda-point} Agenda Point
     *[other] {$agenda-point} Agenda Points
 }
 game_agenda-count-with-req = {$agenda-point ->
-    [one] Agenda Point
+    [one] {$agenda-point} Agenda Point
     *[other] {$agenda-point} Agenda Points
 } ({$agenda-point-req} required)
 game_approach-ice = Approach ice
@@ -375,8 +375,8 @@ game_win-claimed = {$winner} ({$side}) wins by claim on turn {$turn}
 game_win-conceded = {$winner} ({$side}) wins by concession on turn {$turn}
 game_win-decked = {$winner} ({$side}) wins due to the Corp being decked on turn {$turn}
 game_win-flatlined = {$winner} ({$side}) wins by flatline on turn {$turn}
-game_win-points = {$winner} ({$side}) wins by scoring agenda points on turn {$turn}
 game_win-other = {$winner} ({$side}) wins by {$reason} on turn {$turn}
+game_win-points = {$winner} ({$side}) wins by scoring agenda points on turn {$turn}
 
 game_prompt = {$msg ->
     [advance] advance

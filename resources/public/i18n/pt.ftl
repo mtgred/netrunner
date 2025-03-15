@@ -32,24 +32,31 @@ card-browser_trash-cost = Custo de exclusão
 card-browser_type = Tipo
 card-browser_update-failure = Falha ao atualizar Arte
 card-browser_update-success = Atualizar Arte
-card-browser_sort-by_cost = Custo
-card-browser_sort-by_faction = Facção
-card-browser_sort-by_influence = Influencia
-card-browser_sort-by_name = Nome
-card-browser_sort-by_set-number = Numero do set
-card-browser_sort-by_type = Tipo
 
-card-type_agenda = Agenda
-card-type_all = Todos
-card-type_asset = Ativo
-card-type_event = Evento
-card-type_hardware = Hardware
-card-type_ice = GELO
-card-type_identity = Identidade
-card-type_operation = Operação
-card-type_program = Programa
-card-type_resource = Recurso
-card-type_upgrade = Upgrade
+card-browser_sort-by = {$by ->
+    [cost] Custo
+    [faction] Facção
+    [influence] Influencia
+    [name] Nome
+    [set-number] Numero do set
+    [type] Tipo
+    *[unknown] undefined
+}
+
+card-type_name = {$type ->
+    [agenda] Agenda
+    [all] Todos
+    [asset] Ativo
+    [event] Evento
+    [hardware] Hardware
+    [ice] GELO
+    [identity] Identidade
+    [operation] Operação
+    [program] Programa
+    [resource] Recurso
+    [upgrade] Upgrade
+    *[unknown] undefined
+}
 
 chat_block = Bloquear Usuário
 chat_cancel = Cancelar
@@ -68,14 +75,23 @@ deck-builder_add-to-deck = Adicionar ao baralho
 deck-builder_agenda-points = Pontos de Agenda
 deck-builder_cancel = Cancelar
 deck-builder_card-name = Nome da carta
-deck-builder_cards = cards
+deck-builder_card-count = undefined
 deck-builder_clear-stats = Limpar estatísticas
 deck-builder_completed = Completas
 deck-builder_confirm-delete = Confirmar exclusão
 deck-builder_copy = Copiar
 deck-builder_create-game = Criar Partida
 deck-builder_deck-copy-suffix = cópia
-deck-builder_deck-count = (fn [[cnt]] (str cnt (if (= 1 cnt) " Baralho" " Baralhos")))
+deck-builder_deck-count = {$cnt ->
+    [zero] Não há baralhos
+    [one] {$cnt} Baralho
+    *[other] {$cnt} Baralhos
+}
+deck-builder_deck-count-filtered = {$cnt ->
+    [zero] Não há baralhos (filtrado)
+    [one] {$cnt} Baralho (filtrado)
+    *[other] {$cnt} Baralhos (filtrado)
+}
 deck-builder_deck-name = Nome do Baralho
 deck-builder_deck-notes = Notas do baralho
 deck-builder_deck-points = Pontos do Baralho
@@ -83,7 +99,6 @@ deck-builder_decklist = Lista
 deck-builder_decklist-inst = (Digite ou cole a lista do baralho, ela sera filtrada)
 deck-builder_delete = Deletar
 deck-builder_edit = Editar
-deck-builder_filtered = (filtered)
 deck-builder_format = Formato
 deck-builder_games = Partidas
 deck-builder_hash = Hash do torneio
@@ -99,10 +114,10 @@ deck-builder_loading-msg = Carregando coleção de baralhos...
 deck-builder_lost = Derrotas
 deck-builder_max = maximo
 deck-builder_min = minimo
+deck-builder_min-deck-size = undefined
 deck-builder_new-corp = Novo baralho de Corp
 deck-builder_new-deck = undefined
 deck-builder_new-runner = Novo baralho de Runner
-deck-builder_no-decks = Não há baralhos
 deck-builder_notes = Notas
 deck-builder_reset = Resetar
 deck-builder_save = Salvar
@@ -182,59 +197,86 @@ diagrams_turn_runner-discard-phase-d = undefined
 diagrams_turn_runner-discard-phase-e = undefined
 diagrams_turn_runner-turn = undefined
 
-faction_adam = Adam
-faction_all = Todos
-faction_anarch = Anarquista
-faction_any-faction = Qualquer facção
-faction_apex = Apex
-faction_criminal = Criminosos
-faction_haas-bioroid = Haas-Bioroid
-faction_jinteki = Jinteki
-faction_nbn = NBN
-faction_neutral = Neutro
-faction_shaper = Modeladores
-faction_sunny-lebeau = Sunny Lebeau
-faction_weyland-consortium = Consórcio Weyland
 
-format_all = All
-format_any-format = Qualquer Formato
-format_casual = Casual
-format_classic = Classico
-format_core-experience = Core Experience
-format_eternal = Eternal
-format_neo = undefined
-format_preconstructed = undefined
-format_snapshot = Snapshot
-format_snapshot-plus = Snapshot Plus
-format_socr = SOCR
-format_standard = Standard
-format_startup = Startup
-format_sunset = undefined
-format_system-gateway = System Gateway
-format_throwback = undefined
+faction_name = {$faction ->
+    [adam] Adam
+    [all] Todos
+    [anarch] Anarquista
+    [any-faction] Qualquer facção
+    [apex] Apex
+    [criminal] Criminosos
+    [haas-bioroid] Haas-Bioroid
+    [jinteki] Jinteki
+    [nbn] NBN
+    [neutral] Neutro
+    [shaper] Modeladores
+    [sunny-lebeau] Sunny Lebeau
+    [weyland-consortium] Consórcio Weyland
+    *[other] undefined
+}
+
+format_name = {$format ->
+    [all] All
+    [any-format] Qualquer Formato
+    [casual] Casual
+    [classic] Classico
+    [core-experience] Core Experience
+    [eternal] Eternal
+    [neo] undefined
+    [preconstructed] undefined
+    [snapshot] Snapshot
+    [snapshot-plus] Snapshot Plus
+    [socr] SOCR
+    [standard] Standard
+    [startup] Startup
+    [sunset] undefined
+    [system-gateway] System Gateway
+    [throwback] undefined
+    *[other] undefined
+}
 
 game_abilities = Habilidades
 game_actions = Ações
-game_agenda-count = (fn [[agenda-point]] (str agenda-point " Pontos de Agenda" (when (not= agenda-point 1) "s")))
-game_agenda-point-req = undefined
+game_agenda-count = {$agenda-point ->
+    [one] {$agenda-point} Pontos de Agenda
+    *[other] {$agenda-point} Pontos de Agendas
+}
+game_agenda-count-with-req = {$agenda-point ->
+    [one] {$agenda-point} Pontos de Agenda
+    *[other] {$agenda-point} Pontos de Agendas
+} ({$agenda-point-req} required)
 game_approach-ice = Aproximar do gelo
-game_archives = Arquivos
+game_archives = Arquivos{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
 game_attempt-reconnect = undefined
 game_auto-pass = Passar prioridade automaticamente
-game_bad-pub-count = (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Publicidade Negativa"))
+game_bad-pub-count = {$base} Publicidade Negativa
+game_bad-pub-count-additional = {$base} + {$additional} Publicidade Negativa
 game_beat-trace = undefined
 game_brain-damage = Dano Letal
 game_breach-server = Violar servidor
 game_card = Carta
-game_card-count = (fn [[size]] (str size " carta" (when (not= 1 size) "s") "."))
-game_click-count = (fn [[click]] (str click " Click" (if (not= click 1) "s" "")))
+game_card-count = {$cnt ->
+    [one] {$cnt} carta
+    *[other] {$cnt} cartas
+}
+game_click-count = {$cnt ->
+    [one] {$cnt} click
+    *[other] {$cnt} click
+}
 game_close = Fechar
 game_close-shuffle = Fechar & Embaralhar
 game_concede = Conceder
 game_continue = Continuar
 game_continue-to = Continuar para
 game_corp-view = Visão de Corp
-game_credit-count = (fn [[credit run-credit]] (str credit " Crédito" (if (not= credit 1) "s" "") (when (pos? run-credit) (str " (" run-credit " para corre)"))))
+game_credit-count = {$credit ->
+    [one] {$credit} Crédito
+    *[other] {$credit} Créditos
+}
+game_credit-count-with-run-credits = {$credit ->
+    [one] {$credit} Crédito
+    *[other] {$credit} Créditos
+} ({$run-credit} para corre)
 game_credits = creditos
 game_current = Current
 game_current-phase = Current phase
@@ -242,7 +284,7 @@ game_draw = Comprar
 game_encounter-ice = Encontrar gelo
 game_end-turn = Fim do Turno
 game_error = undefined
-game_face-down-count = (fn [[total face-up]] (str total " cartas, " (- total face-up) " virada para baixo."))
+game_face-down-count = {$total} cartas, {$facedown} virada para baixo
 game_fire-unbroken = Executar sub-rotinas
 game_gain-credit = Ganhar Crédito
 game_game-start = Começar partida
@@ -263,8 +305,9 @@ game_lost-connection = undefined
 game_mandatory-draw = Compra obrigatória
 game_max-hand = Tamanho de mão máximo
 game_minutes = undefined
+game_mu-count = {$unused} de {$available} MU não utilizada
 game_movement = Movivemento
-game_mu-count = (fn [[unused available]] (str unused " of " available " MU unused"))
+game_mu-count = undefined
 game_mulligan = Mulligan
 game_mute = Mutar espectadores
 game_no-current-run = Sem corre no momento
@@ -290,18 +333,28 @@ game_set-aside = undefined
 game_show = Mostrar
 game_show-decklists = undefined
 game_shuffle = Embaralhar
-game_spec-count = (fn [[c]] (str c " Espectador" (when (> c 1) "es")))
+game_spec-count = {$cnt ->
+    [one] Espectador
+    *[other] Espectadores
+}
 game_spec-view = Visão de Espectador
-game_special-mu-count = (fn [[unused available mu-type]] (str unused " de " available " " mu-type " MU não utilizada"))
+game_special-mu-count = {$unused} de {$available} {$mu-type} MU não utilizada
 game_stack = Pilha
 game_start = Começar Partida
 game_start-turn = Iniciar Turno
 game_stop-auto-pass = Para de passar prioridade
 game_subs = Sub-rotinas
 game_success = Successo
-game_tag-count = (fn [[base additional total]] (str base (when (pos? additional) (str " + " additional)) " Marca" (if (not= total 1) "s" "")))
+game_tag-count = {$base ->
+    [one] {$base} Marca
+    *[other] {$base} Marcas
+}
+game_tag-count-additional = {$base ->
+    [one] {$base} + {$additional} Marca
+    *[other] {$base} + {$additional} Marcas
+}
 game_take-clicks = Receber Clicks
-game_time-taken = (fn [[t]] (str "Tempo consumido: " t " minutos"))
+game_time-taken = Tempo consumido: {$time} minutos
 game_timeout-soon = undefined
 game_trace = Rastrear
 game_trash-like-cards = undefined
@@ -310,34 +363,15 @@ game_unbeatable = undefined
 game_unimplemented = Não implementado
 game_unknown-phase = Unknown phase
 game_unmute = Desmutar espectadores
-game_up-down-count = (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
-game_win-claimed = (fn [[turn]] (str "venceu por objetivo no turno " turn))
-game_win-conceded = (fn [[turn]] (str "venceu por concessão no turno " turn))
-game_win-decked = (fn [[turn]] (str "venceu pois a Corp zerou o deck no turno " turn))
-game_win-flatlined = (fn [[turn]] (str "venceu por linha reta no turno " turn))
-game_win-other = (fn [[turn reason]] (str "venceu por " reason " no turno " turn))
-game_win-points = (fn [[turn]] (str "venceu por pontos de agenda no turno " turn))
 
-game-prompt_advance = undefined
-game-prompt_archives = undefined
-game-prompt_derez = undefined
-game-prompt_expend = undefined
-game-prompt_hq = undefined
-game-prompt_new-remote = undefined
-game-prompt_r-d = undefined
-game-prompt_rez = undefined
-game-prompt_score = undefined
-game-prompt_server-1 = undefined
-game-prompt_server-10 = undefined
-game-prompt_server-2 = undefined
-game-prompt_server-3 = undefined
-game-prompt_server-4 = undefined
-game-prompt_server-5 = undefined
-game-prompt_server-6 = undefined
-game-prompt_server-7 = undefined
-game-prompt_server-8 = undefined
-game-prompt_server-9 = undefined
-game-prompt_trash = undefined
+game_win-claimed = {$winner} ({$side}) venceu por objetivo no turno {$turn}
+game_win-conceded = {$winner} ({$side}) venceu por concessão no turno {$turn}
+game_win-decked = {$winner} ({$side}) venceu pois a Corp zerou o deck no turno {$turn}
+game_win-flatlined = {$winner} ({$side}) venceu por linha reta no turno {$turn}
+game_win-other = {$winner} ({$side}) venceu por {$reason} no turno {$turn}
+game_win-points = {$winner} ({$side}) venceu por pontos de agenda no turno {$turn}
+
+game_prompt = undefined
 
 ingame-settings_alt-art = undefined
 ingame-settings_board-overlap = undefined
@@ -354,6 +388,7 @@ ingame-settings_high-res = undefined
 ingame-settings_label-faceup-cards = undefined
 ingame-settings_label-unrezzed-cards = undefined
 ingame-settings_log-timestamps = undefined
+ingame-settings_log-timestamps-toggle = undefined
 ingame-settings_pass-on-rez = undefined
 ingame-settings_preview-zoom = undefined
 ingame-settings_runner-board-order = undefined
@@ -365,10 +400,16 @@ ingame-settings_sides-overlap = undefined
 ingame-settings_sort-archives = undefined
 ingame-settings_sort-heap = undefined
 ingame-settings_stack-cards = undefined
-ingame-settings_toggle-log-timestamps = undefined
+
+lobby_type = {$type ->
+    [angel-arena] undefined
+    [casual] Casual
+    [competitive] Competitivo
+    [tournament] Torneio
+    *[other] Unknown lobby type
+}
 
 lobby_aborted = Conecção abortada
-lobby_angel-arena = undefined
 lobby_api-access = Permitir acesso API para informações do jogo
 lobby_api-access-details = undefined
 lobby_api-requires-key = (Requer uma Chave de API nas Configurações)
@@ -376,10 +417,8 @@ lobby_as-corp = Como Corp
 lobby_as-runner = Como Runner
 lobby_both-perspective = undefined
 lobby_cancel = Cancelar
-lobby_casual = Casual
 lobby_chat = Chat
 lobby_closed-msg = Lobby fechado por inatividade
-lobby_competitive = Competitivo
 lobby_completion-rate = Taxa de finalização de jogos
 lobby_corp-perspective = undefined
 lobby_create = Criar
@@ -387,9 +426,15 @@ lobby_deck-selected = Baralho selecionado
 lobby_default-game-format = undefined
 lobby_delete = Deletar Jogo
 lobby_filter = undefined
-lobby_filtered = (filtrado)
 lobby_format = Formato
-lobby_game-count = (fn [[cnt]] (str cnt (if (= 1 cnt) " Jogo" " Jogos")))
+lobby_game-count = {$cnt ->
+    [one] {$cnt} Jogo
+    *[other] {$cnt} Jogos
+}
+lobby_game-count-filtered = {$cnt ->
+    [one] {$cnt} Jogo
+    *[other] {$cnt} Jogos
+} (filtrado)
 lobby_hidden = Tornar infomrações escondidas dos jogadores visivel para os espectadores
 lobby_hidden-details = undefined
 lobby_hidden-password = undefined
@@ -428,7 +473,10 @@ lobby_singleton-b = undefined
 lobby_singleton-details = undefined
 lobby_singleton-example = undefined
 lobby_singleton-restriction = undefined
-lobby_spectator-count = (fn [[cnt]] (str cnt " Espectador" (when (not= cnt 1) "es")))
+lobby_spectator-count = {$cnt ->
+    [one] Espectador
+    *[other] Espectadores
+}
 lobby_spectators = Permitir espectadore
 lobby_start = Começar
 lobby_start-replay = Começar replay
@@ -439,16 +487,10 @@ lobby_timer-length = undefined
 lobby_title = Titulo
 lobby_title-error = Por favor insira o titulo do jogo.
 lobby_too-little-data = Falta de dados
-lobby_tournament = Torneio
 lobby_waiting = Eseprando jogador selecionar baralho
 lobby_watch = Assistir
-lobby_gateway-format_beginner = undefined
-lobby_gateway-format_beginner-info = undefined
-lobby_gateway-format_beginner-ul = undefined
-lobby_gateway-format_constructed = undefined
-lobby_gateway-format_intermediate = undefined
-lobby_gateway-format_intermediate-info = undefined
-lobby_gateway-format_intermediate-ul = undefined
+
+lobby_gateway-format = undefined
 
 log_annotating = Anotações
 log_game-log = Game Log
@@ -458,11 +500,11 @@ log_settings = undefined
 log_shared = Anotações compartilhadas
 log_turn-timing = undefined
 
-menu_admin = :pt.nav/admin
+menu_admin = { nav_admin }
 menu_donor = Doadores
 menu_logout = Ejetar
 menu_moderator = Moderadores
-menu_settings = :pt.nav/settings
+menu_settings = { nav_settings }
 
 missing = :pt missing text
 
@@ -472,7 +514,10 @@ nav_cards = Cartas
 nav_chat = Chat
 nav_deck-builder = Construtor de Baralhos
 nav_features = Features
-nav_game-count = (fn [[cnt]] (str cnt " Jogo" (when (not= cnt 1) "s")))
+nav_game-count = {$cnt ->
+    [one] {$cnt} Jogo
+    *[other] {$cnt} Jogos
+}
 nav_help = Ajuda
 nav_play = Jogar
 nav_settings = Configurações
@@ -566,137 +611,37 @@ preconstructed_worlds-2023-b-tag = undefined
 preconstructed_worlds-2023-b-ul = undefined
 preconstructed_worlds-2023-info = undefined
 
-pronouns_any = Qualquer
-pronouns_blank = [blank]
-pronouns_ey = Ey/em
-pronouns_faefaer = undefined
-pronouns_he = Ele/Dele
-pronouns_heit = undefined
-pronouns_heshe = undefined
-pronouns_hethey = Ele/Delu
-pronouns_it = Elx
-pronouns_myodb = Prefiro não especificar
-pronouns_ne = Ne/nem
-pronouns_none = Não especificado
-pronouns_she = Ela/Dela
-pronouns_sheit = undefined
-pronouns_shethey = Ela/Delu
-pronouns_they = Elu/Delu
-pronouns_ve = Ve/ver
-pronouns_xe = Xe/xem
-pronouns_xi = undefined
-pronouns_zehir = Ze/hir
-pronouns_zezir = Ze/zir
+pronouns = {$pronoun ->
+    [any] Qualquer
+    [blank] [blank]
+    [ey] Ey/em
+    [faefaer] undefined
+    [he] Ele/Dele
+    [heit] undefined
+    [heshe] undefined
+    [hethey] Ele/Delu
+    [it] Elx
+    [myodb] Prefiro não especificar
+    [ne] Ne/nem
+    *[none] Não especificado
+    [she] Ela/Dela
+    [sheit] undefined
+    [shethey] Ela/Delu
+    [they] Elu/Delu
+    [ve] Ve/ver
+    [xe] Xe/xem
+    [xi] undefined
+    [zehir] Ze/hir
+    [zezir] Ze/zir
+}
 
-set_23-seconds = undefined
-set_a-study-in-static = undefined
-set_all = undefined
-set_all-that-remains = undefined
-set_alt-art = undefined
-set_alternate = undefined
-set_ashes-cycle = undefined
-set_blood-and-water = undefined
-set_blood-money = undefined
-set_borealis-cycle = undefined
-set_breaker-bay = undefined
-set_business-first = undefined
-set_championship-2019 = undefined
-set_championship-2020 = undefined
-set_chrome-city = undefined
-set_core-set = undefined
-set_council-of-the-crest = undefined
-set_creation-and-control = undefined
-set_crimson-dust = undefined
-set_cyber-exodus = undefined
-set_daedalus-complex = undefined
-set_data-and-destiny = undefined
-set_democracy-and-dogma = undefined
-set_double-time = undefined
-set_down-the-white-nile = undefined
-set_downfall = undefined
-set_draft = undefined
-set_draft-cycle = undefined
-set_earth-s-scion = undefined
-set_escalation = undefined
-set_fear-and-loathing = undefined
-set_fear-the-masses = undefined
-set_first-contact = undefined
-set_flashpoint-cycle = undefined
-set_free-mars = undefined
-set_future-proof = undefined
-set_genesis-cycle = undefined
-set_gnk-2019 = undefined
-set_honor-and-profit = undefined
-set_humanity-s-shadow = undefined
-set_intervention = undefined
-set_kala-ghoda = undefined
-set_kampala-ascendent = undefined
-set_kitara-cycle = undefined
-set_kysra-alt-arts = undefined
-set_liberation-cycle = undefined
-set_lunar-cycle = undefined
-set_magnum-opus = undefined
-set_magnum-opus-reprint = undefined
-set_mala-tempora = undefined
-set_martial-law = undefined
-set_midnight-sun = undefined
-set_midnight-sun-booster-pack = undefined
-set_mumbad-cycle = undefined
-set_napd-multiplayer = undefined
-set_ntscape-navigator-alt-arts = undefined
-set_old-hollywood = undefined
-set_opening-moves = undefined
-set_order-and-chaos = undefined
-set_parhelion = undefined
-set_plural-and-miniplural-alt-arts = undefined
-set_previous-versions = undefined
-set_quorum = undefined
-set_rebellion-without-rehearsal = undefined
-set_red-sand-cycle = undefined
-set_reign-and-reverie = undefined
-set_revised-core-set = undefined
-set_salsette-island = undefined
-set_salvaged-memories = undefined
-set_sansan-cycle = undefined
-set_second-thoughts = undefined
-set_signed-championship-2020 = undefined
-set_sovereign-sight = undefined
-set_spin-cycle = undefined
-set_station-one = undefined
-set_system-core-2019 = undefined
-set_system-gateway = undefined
-set_system-update-2021 = undefined
-set_terminal-directive-campaign = undefined
-set_terminal-directive-cards = undefined
-set_terminal-directive-cycle = undefined
-set_the-automata-initiative = undefined
-set_the-devil-and-the-dragon = undefined
-set_the-liberated-mind = undefined
-set_the-source = undefined
-set_the-spaces-between = undefined
-set_the-underway = undefined
-set_the-universe-of-tomorrow = undefined
-set_the-valley = undefined
-set_trace-amount = undefined
-set_true-colors = undefined
-set_unreleased = undefined
-set_up-and-over = undefined
-set_uprising = undefined
-set_uprising-booster-pack = undefined
-set_upstalk = undefined
-set_what-lies-ahead = undefined
-set_whispers-in-nalubaale = undefined
-set_world-champion-2015 = undefined
-set_world-champion-2016 = undefined
-set_world-champion-2017 = undefined
+set_name = undefined
 
 settings_alt-art = Artes Alternativas
 settings_always = Sempre
-settings_apex-bg = undefined
 settings_api-keys = API Keys
 settings_avatar = Avatar
 settings_background = Background da partida
-settings_bespoke-sounds-header = undefined
 settings_block = Bloquear usuário
 settings_blocked = Usuários bloqueados
 settings_cancel = Cancelar
@@ -711,7 +656,6 @@ settings_comp-only = Apenas Lobby Competitivo
 settings_connection = undefined
 settings_create-api-key = Criar API Key
 settings_current-email = Email atual
-settings_custom-bg = undefined
 settings_deck-stats = Estatísticas dos Decks
 settings_delete-api-key = Deletar
 settings_desired-email = Email desejado
@@ -724,14 +668,11 @@ settings_enable-game-sounds = Permitir sons do jogo
 settings_enable-lobby-sounds = Permitir sons do lobby
 settings_enter-valid = Por favor, insira um endereço de email válido
 settings_ffg = FFG
-settings_find-the-truth-bg = undefined
-settings_freelancer-bg = undefined
 settings_game-stats = Estatísticas de Vitória/Derrota em Jogo
 settings_get-log-top = Puxando topo do log atual
 settings_get-log-width = Puxando largura atual do log
 settings_ghost-trojans = undefined
 settings_high-res = Habilitar imagem das cartas em alta resolução
-settings_input-url-below = undefined
 settings_invalid-email = Nenhuma conta com esse email existe
 settings_invalid-password = Usuário ou senha inválidos
 settings_language = Idioma
@@ -741,16 +682,12 @@ settings_log-player-highlight-none = undefined
 settings_log-player-highlight-red-blue = undefined
 settings_log-size = undefined
 settings_log-timestamps = undefined
-settings_monochrome-bg = undefined
-settings_mushin-no-shin-bg = undefined
 settings_none = Nenhum
 settings_nsg = undefined
 settings_pin-zoom = undefined
 settings_player-stats-icons = undefined
 settings_pronouns = Pronomes
-settings_push-your-luck-bg = undefined
 settings_reset = Reset All to Official Art
-settings_rumor-mill-bg = undefined
 settings_runner-classic = Layout do rig do Runner é o clássico da JNet (De cima para baixo: Programas, Hardware, Recursos)
 settings_runner-layout = Layout de Runner na perspectiva da Corp
 settings_runner-reverse = Layout do rig do Runner invertido (De cima para baixo: Recursos, Hardware, Programas)
@@ -760,24 +697,25 @@ settings_show-alt = Mostrar artes alternativas das cartas
 settings_sides-overlap = undefined
 settings_sounds = Soms
 settings_stacked-cards = Empilhar cartas (ativo automaticamente)
-settings_the-root-bg = undefined
 settings_toggle-log-timestamps = undefined
-settings_traffic-jam-bg = undefined
 settings_update = Atualizar
 settings_update-profile = Atualizar Perfil
 settings_updated = Perfil atualizar - Favor atualizar a página
 settings_updating = Atualizando perfil...
 settings_user-name = Nome de usuário
 settings_volume = Volume
-settings_worlds2020-bg = undefined
-settings_bespoke-sounds_archer = undefined
-settings_bespoke-sounds_end-of-the-line = undefined
-settings_bespoke-sounds_harmonics = undefined
 
-side_all = Todos
-side_any-side = Qualquer lado
-side_corp = Corp
-side_runner = Runner
+settings_bg = undefined
+
+settings_bespoke-sounds = undefined
+
+side_name = {$side ->
+    [all] Todos
+    [any-side] Qualquer lado
+    [corp] Corp
+    [runner] Runner
+    *[unknown] undefined
+}
 
 stats_all-games = Mostrar todas partidas
 stats_cards-accessed = Cartas Acessadas
@@ -796,12 +734,22 @@ stats_damage-done = Dano Causado
 stats_download = Baixar replay
 stats_ended = Terminadas
 stats_events-played = undefined
-stats_filtered = (filtrado)
 stats_format = Formato
 stats_game-stats = Estatísticas de Jogo
+stats_game-title = {$title} ({$cnt ->
+    [one] {$cnt} turno
+    *[other] {$cnt} turnos
+})
 stats_launch = Carregar Replay
 stats_lobby = Lobby
-stats_log-count = (fn [[cnt]] (str cnt " Log" (when (not= cnt 1) "s")))
+stats_log-count = {$cnt ->
+    [one] {$cnt} Log
+    *[other] {$cnt} Logs
+}
+stats_log-count-filtered = {$cnt ->
+    [one] {$cnt} Log (filtrado)
+    *[other] {$cnt} Logs (filtrado)
+}
 stats_lost = Derrotas
 stats_no-games = Sem partidass
 stats_no-log = Nenhum log disponível
@@ -813,6 +761,7 @@ stats_psi-game-total-bid-1 = undefined
 stats_psi-game-total-bid-2 = undefined
 stats_psi-game-total-wins = undefined
 stats_rashida-count = undefined
+stats_replay-shared = undefined
 stats_runner-stats = Estatísticas de Runner
 stats_runs-made = Corres Feitos
 stats_share = Compartilhar replay
@@ -820,7 +769,6 @@ stats_shared-games = Mostrar apenas compartilhadas
 stats_shuffle-count = undefined
 stats_started = Iniciadas
 stats_tags-gained = Marcas Recebidas
-stats_turn-count = (fn [[cnt]] (str cnt " turno" (when (not= cnt 1) "s")))
 stats_unavailable = Replay indisponível
 stats_unique-accesses = undefined
 stats_view-games = Retornar para Estatísticas
