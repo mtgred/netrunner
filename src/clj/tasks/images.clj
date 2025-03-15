@@ -72,8 +72,8 @@
              prev-k (str/join "." ["images" (name lang) (name resolution) prev-k-root])
              path (str/join "/" [base-path (name lang) (name resolution) (name art-set) filename])]
          (when-not (some #(= % code) cards-to-skip)
-           (mc/update db card-collection {:code code} {$set {k path}})
-           (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$set {prev-k path}})))))))
+           (mc/update db card-collection {:code code} {$addToSet {k path}})
+           (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$addToSet {prev-k path}})))))))
 
 (defn- add-alt-images
   "All all images in the specified alt directory"
