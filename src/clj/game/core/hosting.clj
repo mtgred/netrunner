@@ -26,11 +26,11 @@
 (defn handle-card-is-uninstalled
   "If a card is hosted (uninstalled) from being installed and active, then call it's `leave-play` fn"
   [state side card {:keys [installed] :as target}]
-  (when-let [leave-play-fn (and (active? (get-card state target))
-                                (not installed)
-                                (installed? (get-card state target))
-                                (:leave-play (card-def target)))]
-    (leave-play-fn state (keyword (clojure.string/lower-case (:side target))) (make-eid state) target nil)))
+  (when-let [leave-play (:leave-play (card-def target))]
+    (when (and (not installed)
+               (installed? (get-card state target))
+               (active? (get-card state target)))
+      (leave-play state (keyword (clojure.string/lower-case (:side target))) (make-eid state) target nil))))
 
 (defn host
   "Host the target onto the card."
