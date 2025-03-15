@@ -91,11 +91,10 @@
 (comment
   (do
     (println "these should be empty")
-    (missing-translations "fr" "ko" "ja" "pt")
+    (missing-translations "fr" "ko" "ja" "pl" "pt")
     (newline)
     (println "these need to be worked on")
-    (missing-translations "pl"
-                          #_"ru"
+    (missing-translations "ru"
                           #_"zh-simp"
                           #_"la-pig"
                           )

@@ -25,12 +25,16 @@
                       (map (fn [^java.io.File f]
                              (let [n (str/replace (.getName f) ".ftl" "")
                                    content (slurp f)]
-                               [n content]))))]
-       (doseq [[lang content] langs]
+                               [n content]))))
+           errors (volatile! [])]
+       (doseq [[lang content] langs
+               :when (not @errors)]
          (try (insert-lang! lang content)
               (catch Throwable t
                 (println "Error inserting i18n data for" lang)
-                (println (ex-message t))))))))
+                (println (ex-message t))
+                (vswap! errors conj lang))))
+       @errors)))
 
 #?(:clj
    (comment

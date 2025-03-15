@@ -32,24 +32,31 @@ card-browser_trash-cost = Koszt skasowania
 card-browser_type = Typ
 card-browser_update-failure = Nieudana aktualizacja grafiki
 card-browser_update-success = Grafiki zaktualizowane
-card-browser_sort-by_cost = Koszt
-card-browser_sort-by_faction = Frakcja
-card-browser_sort-by_influence = Wpływ
-card-browser_sort-by_name = Nazwa
-card-browser_sort-by_set-number = Numer w zestawie
-card-browser_sort-by_type = Typ
 
-card-type_agenda = Projekt
-card-type_all = Wszystkie
-card-type_asset = Aktywa
-card-type_event = Wydarzenie
-card-type_hardware = Sprzęt
-card-type_ice = Lód
-card-type_identity = Tożsamość
-card-type_operation = Operacja
-card-type_program = Program
-card-type_resource = Zasób
-card-type_upgrade = Ulepszenie
+card-browser_sort-by = {$by ->
+    [cost] Koszt
+    [faction] Frakcja
+    [influence] Wpływ
+    [name] Nazwa
+    [set-number] Numer w zestawie
+    [type] Typ
+    *[unknown] undefined
+}
+
+card-type_name = {$type ->
+    [agenda] Projekt
+    [all] Wszystkie
+    [asset] Aktywa
+    [event] Wydarzenie
+    [hardware] Sprzęt
+    [ice] Lód
+    [identity] Tożsamość
+    [operation] Operacja
+    [program] Program
+    [resource] Zasób
+    [upgrade] Ulepszenie
+    *[unknown] undefined
+}
 
 chat_block = Zablokuj użytkownika
 chat_cancel = Anuluj
@@ -68,14 +75,21 @@ deck-builder_add-to-deck = Dodaj do talii
 deck-builder_agenda-points = Punkty projektów
 deck-builder_cancel = Anuluj
 deck-builder_card-name = Nazwa karty
-deck-builder_cards = karty
+deck-builder_card-count = karty: {$cnt}
 deck-builder_clear-stats = Usuń statystyki
 deck-builder_completed = Ukończone
 deck-builder_confirm-delete = Potwierdź usunięcie
 deck-builder_copy = undefined
 deck-builder_create-game = Stwórz stół
 deck-builder_deck-copy-suffix = undefined
-deck-builder_deck-count = (fn [[cnt]] (str "Talie: " cnt))
+deck-builder_deck-count = {$cnt ->
+    [zero] Brak talii
+    *[other] Talie: {$cnt}
+}
+deck-builder_deck-count-filtered = {$cnt ->
+    [zero] Brak talii (filtrowane)
+    *[other] Talie: {$cnt} (filtrowane)
+}
 deck-builder_deck-name = Nazwa talii
 deck-builder_deck-notes = Notatki
 deck-builder_deck-points = Punkty talii
@@ -83,7 +97,6 @@ deck-builder_decklist = Lista kart
 deck-builder_decklist-inst = (Wpisz lub wklej listę kart z talii, zostanie przeanalizowana)
 deck-builder_delete = Usuń
 deck-builder_edit = Edytuj
-deck-builder_filtered = (filtrowane)
 deck-builder_format = Format
 deck-builder_games = Gry
 deck-builder_hash = Kod turniejowy
@@ -99,10 +112,10 @@ deck-builder_loading-msg = Ładowanie kolekcji talii...
 deck-builder_lost = Przegrane
 deck-builder_max = maks.
 deck-builder_min = min.
+deck-builder_min-deck-size = undefined
 deck-builder_new-corp = Nowa talia Korpo
 deck-builder_new-deck = undefined
 deck-builder_new-runner = Nowa talia Runnera
-deck-builder_no-decks = Brak talii
 deck-builder_notes = Notatki
 deck-builder_reset = Zresetuj
 deck-builder_save = Zapisz
@@ -182,59 +195,67 @@ diagrams_turn_runner-discard-phase-d = undefined
 diagrams_turn_runner-discard-phase-e = undefined
 diagrams_turn_runner-turn = undefined
 
-faction_adam = Adam
-faction_all = Wszystkie
-faction_anarch = Anarchowie
-faction_any-faction = Dowolna frakcja
-faction_apex = Apex
-faction_criminal = Kryminale
-faction_haas-bioroid = Haas-Bioroid
-faction_jinteki = Jinteki
-faction_nbn = NBN
-faction_neutral = Neutralne
-faction_shaper = Kształcerze
-faction_sunny-lebeau = Sunny Lebeau
-faction_weyland-consortium = Weyland Consortium
+faction_name = {$faction ->
+    [adam] Adam
+    [all] Wszystkie
+    [anarch] Anarchowie
+    [any-faction] Dowolna frakcja
+    [apex] Apex
+    [criminal] Kryminale
+    [haas-bioroid] Haas-Bioroid
+    [jinteki] Jinteki
+    [nbn] NBN
+    [neutral] Neutralne
+    [shaper] Kształcerze
+    [sunny-lebeau] Sunny Lebeau
+    [weyland-consortium] Weyland Consortium
+    *[unknown] undefined
+}
 
-format_all = All
-format_any-format = Dowolny format
-format_casual = Niekompetytywny
-format_classic = Classic
-format_core-experience = Core Experience
-format_eternal = Eternal
-format_neo = Neo
-format_preconstructed = undefined
-format_snapshot = Snapshot
-format_snapshot-plus = Snapshot Plus
-format_socr = SOCR
-format_standard = Standard
-format_startup = Startup
-format_sunset = Sunset
-format_system-gateway = Wejście do Systemu
-format_throwback = undefined
+format_name = {$format ->
+    [all] All
+    [any-format] Dowolny format
+    [casual] Niekompetytywny
+    [classic] Classic
+    [core-experience] Core Experience
+    [eternal] Eternal
+    [neo] Neo
+    [preconstructed] undefined
+    [snapshot] Snapshot
+    [snapshot-plus] Snapshot Plus
+    [socr] SOCR
+    [standard] Standard
+    [startup] Startup
+    [sunset] Sunset
+    [system-gateway] Wejście do Systemu
+    [throwback] undefined
+    *[unknown] undefined
+}
 
 game_abilities = Opcje
 game_actions = Akcje
-game_agenda-count = (fn [[agenda-point]] (str "Punkty projektów: " agenda-point))
-game_agenda-point-req = undefined
+game_agenda-count = Punkty projektów: {$agenda-point}
+game_agenda-count-with-req = undefined
 game_approach-ice = Zbliżenie do lodu
-game_archives = Archiwum
+game_archives = Archiwum{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
 game_attempt-reconnect = undefined
 game_auto-pass = Priorytet auto-mijania
-game_bad-pub-count = (fn [[base additional]] (str "Zła prasa: " base (when (pos? additional) (str " + " additional))))
+game_bad-pub-count = Zła prasa: {$base}
+game_bad-pub-count-additional = Zła prasa: {$base} + {$additional}
 game_beat-trace = undefined
 game_brain-damage = Obrażenia mózgu
 game_breach-server = Przebicie do serwera
 game_card = Karta
-game_card-count = (fn [[size]] (str "Karty: " size "."))
-game_click-count = (fn [[click]] (str "Kliki: " click))
+game_card-count = Karty: {$size}
+game_click-count = Kliki: {$click}
 game_close = Zamknięcie
 game_close-shuffle = Zamknięcie i przetasowanie
 game_concede = Poddanie się
 game_continue = Kontynuacja
 game_continue-to = Kontynuacja do:
 game_corp-view = Perspektyw Korpo
-game_credit-count = (fn [[credit run-credit]] (str "Kredyty: " credit (when (pos? run-credit) (str " (" run-credit " na włam)"))))
+game_credit-count = Kredyty: {$credit}
+game_credit-count-with-run-credits = Kredyty: {$credit} ({$run-credit} na włam)
 game_credits = kred.
 game_current = Wątek
 game_current-phase = Aktualna faza
@@ -242,7 +263,7 @@ game_draw = Dobranie karty
 game_encounter-ice = Napotkanie lodu
 game_end-turn = Zakończenie tury
 game_error = undefined
-game_face-down-count = (fn [[total face-up]] (str "Karty: " total ", awersem w dół:" (- total face-up) "."))
+game_face-down-count = Karty: {$total}, awersem w dół: {$facedown}
 game_fire-unbroken = Użycie niezłamanych poleceń
 game_gain-credit = Zyskanie 1 kredytu
 game_game-start = Rozpoczęcie gry
@@ -264,7 +285,7 @@ game_mandatory-draw = Przymusowe dobranie
 game_max-hand = Maks. ilość kart
 game_minutes = undefined
 game_movement = Ruch
-game_mu-count = (fn [[unused available]] (str "Wolne: " unused " z " available " JP"))
+game_mu-count = Wolne: {$unused} z {$available} JP
 game_mulligan = Wymiana
 game_mute = Wyłączenie czat widowni
 game_no-current-run = Brak włamu w toku
@@ -290,18 +311,19 @@ game_set-aside = undefined
 game_show = Pokazanie
 game_show-decklists = undefined
 game_shuffle = Przetasowanie
-game_spec-count = (fn [[c]] (str "Widownia: " c))
+game_spec-count = Widownia: {$cnt}
 game_spec-view = Perspektywa widowni
-game_special-mu-count = (fn [[unused available mu-type]] (str "Wolne: " unused " z " available " " mu-type " JP"))
+game_special-mu-count = Wolne: {$unused} z {$available} {$mu-type} JP
 game_stack = Stos
 game_start = Rozpoczęcie gry
 game_start-turn = Rozpoczęcie tury
 game_stop-auto-pass = Wyłączenie priorytetu auto-mijania
 game_subs = Polecenia
 game_success = Sukces
-game_tag-count = (fn [[base additional total]] (str "Namiar :" base (when (pos? additional) (str " + " additional))))
+game_tag-count = Namiar : {$base}
+game_tag-count-additional = Namiar : {$base} + {$additional}
 game_take-clicks = Rozpoczęcie kliknięć
-game_time-taken = (fn [[t]] (str "Czas gry: " t " min."))
+game_time-taken = Czas gry: {$time} min
 game_timeout-soon = undefined
 game_trace = Namiar
 game_trash-like-cards = undefined
@@ -310,34 +332,15 @@ game_unbeatable = undefined
 game_unimplemented = Niezautomatyzowana
 game_unknown-phase = Nieznana faza
 game_unmute = Włączenie czat widowni
-game_up-down-count = (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
-game_win-claimed = (fn [[turn]] (str "wygrywa przez zgłoszenie wygranej w " turn " turze."))
-game_win-conceded = (fn [[turn]] (str "wygrywa przez poddanie się przeciwnika w " turn " turze."))
-game_win-decked = (fn [[turn]] (str "wygrywa, ponieważ Korpo skończyły się karty w " turn " turze."))
-game_win-flatlined = (fn [[turn]] (str "wygrywa przez wypłaszczenie w " turn " turze."))
-game_win-other = (fn [[turn reason]] (str "wygrywa przez " reason " w " turn " turze."))
-game_win-points = (fn [[turn]] (str "wygrywa przez zdobycie punktów zwycięstwa w " turn " turze."))
 
-game-prompt_advance = undefined
-game-prompt_archives = undefined
-game-prompt_derez = undefined
-game-prompt_expend = undefined
-game-prompt_hq = undefined
-game-prompt_new-remote = undefined
-game-prompt_r-d = undefined
-game-prompt_rez = undefined
-game-prompt_score = undefined
-game-prompt_server-1 = undefined
-game-prompt_server-10 = undefined
-game-prompt_server-2 = undefined
-game-prompt_server-3 = undefined
-game-prompt_server-4 = undefined
-game-prompt_server-5 = undefined
-game-prompt_server-6 = undefined
-game-prompt_server-7 = undefined
-game-prompt_server-8 = undefined
-game-prompt_server-9 = undefined
-game-prompt_trash = undefined
+game_win-claimed = {$winner} ({$side}) wygrywa przez zgłoszenie wygranej w {$turn} turze
+game_win-conceded = {$winner} ({$side}) wygrywa przez poddanie się przeciwnika w {$turn} turze
+game_win-decked = {$winner} ({$side}) wygrywa, ponieważ Korpo skończyły się karty w {$turn} turze
+game_win-flatlined = {$winner} ({$side}) wygrywa przez wypłaszczenie w {$turn} turze
+game_win-other = {$winner} ({$side}) wygrywa przez {$reason} w {$turn} turze
+game_win-points = {$winner} ({$side}) wygrywa przez zdobycie punktów zwycięstwa w {$turn} turze
+
+game_prompt = undefined
 
 ingame-settings_alt-art = undefined
 ingame-settings_board-overlap = undefined
@@ -354,6 +357,7 @@ ingame-settings_high-res = undefined
 ingame-settings_label-faceup-cards = undefined
 ingame-settings_label-unrezzed-cards = undefined
 ingame-settings_log-timestamps = undefined
+ingame-settings_log-timestamps-toggle = undefined
 ingame-settings_pass-on-rez = undefined
 ingame-settings_preview-zoom = undefined
 ingame-settings_runner-board-order = undefined
@@ -365,10 +369,8 @@ ingame-settings_sides-overlap = undefined
 ingame-settings_sort-archives = undefined
 ingame-settings_sort-heap = undefined
 ingame-settings_stack-cards = undefined
-ingame-settings_toggle-log-timestamps = undefined
 
 lobby_aborted = Połączenie przerwane
-lobby_angel-arena = undefined
 lobby_api-access = Zezwól na dostęp API do danych rozgrywki
 lobby_api-access-details = undefined
 lobby_api-requires-key = (Wymaga podania klucza API w ustawieniach)
@@ -376,10 +378,8 @@ lobby_as-corp = jako Korpo
 lobby_as-runner = jako Runner
 lobby_both-perspective = undefined
 lobby_cancel = Anuluj
-lobby_casual = Niekompetytywne
 lobby_chat = Czat
 lobby_closed-msg = Poczekalnia zamknięta z powodu braku aktywności
-lobby_competitive = Kompetytywne
 lobby_completion-rate = Procent zakończonych gier
 lobby_corp-perspective = undefined
 lobby_create = Stwórz
@@ -387,9 +387,9 @@ lobby_deck-selected = Talia wybrana
 lobby_default-game-format = undefined
 lobby_delete = Usuń stół
 lobby_filter = undefined
-lobby_filtered = (filtrowane)
 lobby_format = Format
-lobby_game-count = (fn [[cnt]] (str "Gry: " cnt))
+lobby_game-count = Gry: {$cnt}
+lobby_game-count-filtered = Gry: {$cnt} (filtrowane)
 lobby_hidden = Ukryte informacje graczy widoczne dla widzów
 lobby_hidden-details = undefined
 lobby_hidden-password = undefined
@@ -404,7 +404,7 @@ lobby_open-decklists = undefined
 lobby_open-decklists-b = undefined
 lobby_options = Opcje
 lobby_password = Hasło
-lobby_password-error = Wpisz hasło.
+lobby_password-error = Wpisz hasło
 lobby_password-for = Hasło dla
 lobby_password-protected = Ochrona hasłem
 lobby_players = Gracze
@@ -428,7 +428,7 @@ lobby_singleton-b = undefined
 lobby_singleton-details = undefined
 lobby_singleton-example = undefined
 lobby_singleton-restriction = undefined
-lobby_spectator-count = (fn [[cnt]] (str "Widownia: " cnt))
+lobby_spectator-count = Widownia: {$cnt}
 lobby_spectators = Dozwoleni widzowie
 lobby_start = Rozpocznij
 lobby_start-replay = Rozpocznij powtórkę
@@ -439,16 +439,17 @@ lobby_timer-length = undefined
 lobby_title = Tytuł
 lobby_title-error = Wpisz nazwę dla stołu.
 lobby_too-little-data = Zbyt mało danych
-lobby_tournament = Wydarzenia
 lobby_waiting = Oczekiwanie na wybór talii
 lobby_watch = Oglądaj
-lobby_gateway-format_beginner = undefined
-lobby_gateway-format_beginner-info = undefined
-lobby_gateway-format_beginner-ul = undefined
-lobby_gateway-format_constructed = undefined
-lobby_gateway-format_intermediate = undefined
-lobby_gateway-format_intermediate-info = undefined
-lobby_gateway-format_intermediate-ul = undefined
+
+lobby_type = {$type ->
+    [competitive] Kompetytywne
+    [casual] Niekompetytywne
+    [tournament] Wydarzenia
+    *[unknown] undefined
+}
+
+lobby_gateway-format = undefined
 
 log_annotating = Notatki
 log_game-log = Dziennik gry
@@ -472,7 +473,7 @@ nav_cards = Karty
 nav_chat = Czat
 nav_deck-builder = Tworzenie talii
 nav_features = Cechy
-nav_game-count = (fn [[cnt]] (str "Gry: " cnt))
+nav_game-count = Gry: {$cnt}
 nav_help = Pomoc
 nav_play = Graj
 nav_settings = Ustawienia
@@ -566,137 +567,38 @@ preconstructed_worlds-2023-b-tag = undefined
 preconstructed_worlds-2023-b-ul = undefined
 preconstructed_worlds-2023-info = undefined
 
-pronouns_any = dowolne
-pronouns_blank = [puste]
-pronouns_ey = ey/em
-pronouns_faefaer = undefined
-pronouns_he = on/jego
-pronouns_heit = undefined
-pronouns_heshe = undefined
-pronouns_hethey = on/ich
-pronouns_it = ono
-pronouns_myodb = bez szczegółów
-pronouns_ne = ne/nem
-pronouns_none = nieokreślone
-pronouns_she = ona/jej
-pronouns_sheit = undefined
-pronouns_shethey = ona/ich
-pronouns_they = oni/ich
-pronouns_ve = ve/ver
-pronouns_xe = xe/xem
-pronouns_xi = undefined
-pronouns_zehir = ze/hir
-pronouns_zezir = ze/zir
+pronouns = {$pronoun ->
+    [any] dowolne
+    [blank] [puste]
+    [ey] ey/em
+    [faefaer] undefined
+    [he] on/jego
+    [heit] undefined
+    [heshe] undefined
+    [hethey] on/ich
+    [it] ono
+    [myodb] bez szczegółów
+    [ne] ne/nem
+    [none] nieokreślone
+    [she] ona/jej
+    [sheit] undefined
+    [shethey] ona/ich
+    [they] oni/ich
+    [ve] ve/ver
+    [xe] xe/xem
+    [xi] undefined
+    [zehir] ze/hir
+    [zezir] ze/zir
+    *[unknown] undefined
+}
 
-set_23-seconds = undefined
-set_a-study-in-static = undefined
-set_all = undefined
-set_all-that-remains = undefined
-set_alt-art = undefined
-set_alternate = undefined
-set_ashes-cycle = undefined
-set_blood-and-water = undefined
-set_blood-money = undefined
-set_borealis-cycle = undefined
-set_breaker-bay = undefined
-set_business-first = undefined
-set_championship-2019 = undefined
-set_championship-2020 = undefined
-set_chrome-city = undefined
-set_core-set = undefined
-set_council-of-the-crest = undefined
-set_creation-and-control = undefined
-set_crimson-dust = undefined
-set_cyber-exodus = undefined
-set_daedalus-complex = undefined
-set_data-and-destiny = undefined
-set_democracy-and-dogma = undefined
-set_double-time = undefined
-set_down-the-white-nile = undefined
-set_downfall = undefined
-set_draft = undefined
-set_draft-cycle = undefined
-set_earth-s-scion = undefined
-set_escalation = undefined
-set_fear-and-loathing = undefined
-set_fear-the-masses = undefined
-set_first-contact = undefined
-set_flashpoint-cycle = undefined
-set_free-mars = undefined
-set_future-proof = undefined
-set_genesis-cycle = undefined
-set_gnk-2019 = undefined
-set_honor-and-profit = undefined
-set_humanity-s-shadow = undefined
-set_intervention = undefined
-set_kala-ghoda = undefined
-set_kampala-ascendent = undefined
-set_kitara-cycle = undefined
-set_kysra-alt-arts = undefined
-set_liberation-cycle = undefined
-set_lunar-cycle = undefined
-set_magnum-opus = undefined
-set_magnum-opus-reprint = undefined
-set_mala-tempora = undefined
-set_martial-law = undefined
-set_midnight-sun = undefined
-set_midnight-sun-booster-pack = undefined
-set_mumbad-cycle = undefined
-set_napd-multiplayer = undefined
-set_ntscape-navigator-alt-arts = undefined
-set_old-hollywood = undefined
-set_opening-moves = undefined
-set_order-and-chaos = undefined
-set_parhelion = undefined
-set_plural-and-miniplural-alt-arts = undefined
-set_previous-versions = undefined
-set_quorum = undefined
-set_rebellion-without-rehearsal = undefined
-set_red-sand-cycle = undefined
-set_reign-and-reverie = undefined
-set_revised-core-set = undefined
-set_salsette-island = undefined
-set_salvaged-memories = undefined
-set_sansan-cycle = undefined
-set_second-thoughts = undefined
-set_signed-championship-2020 = undefined
-set_sovereign-sight = undefined
-set_spin-cycle = undefined
-set_station-one = undefined
-set_system-core-2019 = undefined
-set_system-gateway = undefined
-set_system-update-2021 = undefined
-set_terminal-directive-campaign = undefined
-set_terminal-directive-cards = undefined
-set_terminal-directive-cycle = undefined
-set_the-automata-initiative = undefined
-set_the-devil-and-the-dragon = undefined
-set_the-liberated-mind = undefined
-set_the-source = undefined
-set_the-spaces-between = undefined
-set_the-underway = undefined
-set_the-universe-of-tomorrow = undefined
-set_the-valley = undefined
-set_trace-amount = undefined
-set_true-colors = undefined
-set_unreleased = undefined
-set_up-and-over = undefined
-set_uprising = undefined
-set_uprising-booster-pack = undefined
-set_upstalk = undefined
-set_what-lies-ahead = undefined
-set_whispers-in-nalubaale = undefined
-set_world-champion-2015 = undefined
-set_world-champion-2016 = undefined
-set_world-champion-2017 = undefined
+set_name = undefined
 
 settings_alt-art = Alternatywne grafiki
 settings_always = Zawsze
-settings_apex-bg = undefined
 settings_api-keys = Klucze API
 settings_avatar = Awatar
 settings_background = Tło stołu
-settings_bespoke-sounds-header = undefined
 settings_block = Zablokuj użytkownika
 settings_blocked = Zablokowani użytkownicy
 settings_cancel = Anuluj
@@ -711,7 +613,6 @@ settings_comp-only = Tylko w grach kompetytywnych
 settings_connection = undefined
 settings_create-api-key = Stwórz klucz API
 settings_current-email = Aktualny e-mail
-settings_custom-bg = undefined
 settings_deck-stats = Statystyki talii
 settings_delete-api-key = Usuń
 settings_desired-email = Nowy e-mail
@@ -724,14 +625,11 @@ settings_enable-game-sounds = Włącz dźwięki gry
 settings_enable-lobby-sounds = Włącz dźwięki poczekalni
 settings_enter-valid = Podaj poprawny adres e-mail
 settings_ffg = FFG
-settings_find-the-truth-bg = undefined
-settings_freelancer-bg = undefined
 settings_game-stats = Statystyki wygranych/przegranych
 settings_get-log-top = Pobierz aktualną wysokość dziennika
 settings_get-log-width = Pobierz aktualną szerokość dziennika
 settings_ghost-trojans = undefined
 settings_high-res = Użyj obrazów kart o wysokiej rozdzielczości
-settings_input-url-below = undefined
 settings_invalid-email = Brak konta z tym adresem e-mail
 settings_invalid-password = Nieprawidłowa nazwa lub hasło
 settings_language = Język
@@ -741,16 +639,12 @@ settings_log-player-highlight-none = undefined
 settings_log-player-highlight-red-blue = undefined
 settings_log-size = undefined
 settings_log-timestamps = undefined
-settings_monochrome-bg = undefined
-settings_mushin-no-shin-bg = undefined
 settings_none = Nigdy
 settings_nsg = NSG
 settings_pin-zoom = undefined
 settings_player-stats-icons = undefined
 settings_pronouns = Zaimki osobowe
-settings_push-your-luck-bg = undefined
 settings_reset = Zresetuj wszystko do oficjalnych grafik
-settings_rumor-mill-bg = undefined
 settings_runner-classic = Karty Runnera w klasycznym stylu (od góry: Programy, Sprzęt, Zasoby)
 settings_runner-layout = Układ stołu Runnera ze strony Korpo
 settings_runner-reverse = Karty Runnera w odwróconym stylu (od góry: Zasoby, Sprzęt, Programy)
@@ -760,24 +654,25 @@ settings_show-alt = Pokaż alternatywne grafiki kart
 settings_sides-overlap = undefined
 settings_sounds = Dźwięki
 settings_stacked-cards = Grupowanie kart (domyślnie włączone)
-settings_the-root-bg = undefined
 settings_toggle-log-timestamps = undefined
-settings_traffic-jam-bg = undefined
 settings_update = Aktualizuj
 settings_update-profile = Aktualizuj profil
 settings_updated = Profil zaktualizowany - odśwież okno przeglądarki
 settings_updating = Aktualizacja profilu...
 settings_user-name = Nazwa użytkownika
 settings_volume = Głośność
-settings_worlds2020-bg = undefined
-settings_bespoke-sounds_archer = undefined
-settings_bespoke-sounds_end-of-the-line = undefined
-settings_bespoke-sounds_harmonics = undefined
 
-side_all = Wszystkie
-side_any-side = Dowolna
-side_corp = Korpo
-side_runner = Runner
+settings_bespoke-sounds = undefined
+
+settings_bg = undefined
+
+side_name = {$side ->
+    [all] Wszystkie
+    [any-side] Dowolna
+    [corp] Korpo
+    [runner] Runner
+    *[unknown] undefined
+}
 
 stats_all-games = Pokaż wszystkie gry
 stats_cards-accessed = Dostępy do kart
@@ -796,12 +691,13 @@ stats_damage-done = Zadane obrażenia
 stats_download = Pobierz powtórkę
 stats_ended = Zakończono
 stats_events-played = undefined
-stats_filtered = (filtrowane)
 stats_format = Format
 stats_game-stats = Statystyki gier
+stats_game-title = {$title} (Tura: {$cnt})
 stats_launch = Uruchom powtórkę
 stats_lobby = Poczekalnia
-stats_log-count = (fn [[cnt]] (str "Dzienniki: " cnt))
+stats_log-count = Dzienniki: {$cnt}
+stats_log-count-filtered = Dzienniki: {$cnt} (filtrowane)
 stats_lost = Przegrano
 stats_no-games = Brak gier
 stats_no-log = Brak dziennika
@@ -813,6 +709,7 @@ stats_psi-game-total-bid-1 = undefined
 stats_psi-game-total-bid-2 = undefined
 stats_psi-game-total-wins = undefined
 stats_rashida-count = undefined
+stats_replay-shared = undefined
 stats_runner-stats = Statystyki: Runner
 stats_runs-made = Rozpoczęte włamów
 stats_share = Udostępnij powtórkę
@@ -820,7 +717,6 @@ stats_shared-games = Pokaż jedynie udostępnione
 stats_shuffle-count = undefined
 stats_started = Rozpoczęteo
 stats_tags-gained = Otrzymane znaczniki namiaru
-stats_turn-count = (fn [[cnt]] (str "Tura: " cnt))
 stats_unavailable = Powtórka niemożliwa
 stats_unique-accesses = undefined
 stats_view-games = Powrót do ekranu statystyk
