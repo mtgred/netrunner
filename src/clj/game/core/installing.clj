@@ -103,7 +103,7 @@
      :async true
      :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
                   (if (get-card state prev-card) ; make sure they didn't trash the card themselves
-                    (trash state :corp eid prev-card {:keep-server-alive true})
+                    (trash state :corp eid prev-card {:keep-server-alive true :suppress-checkpoint true})
                     (effect-completed state :corp eid)))}
     nil nil))
 
@@ -356,7 +356,7 @@
                                              :effect (req (if (>= (count targets) need-to-trash)
                                                             (do (system-msg state side (str "trashes " (enumerate-str (map #(card-str state %) targets))))
                                                                 (wait-for
-                                                                  (trash-cards state side targets {:keep-server-alive true})
+                                                                  (trash-cards state side targets {:keep-server-alive true :suppress-checkpoint true})
                                                                   (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true))))
                                                             (do (toast state :corp (str "You must either trash at least " need-to-trash " ice, or trash none of them"))
                                                                 (continue-ability state side (trash-all-or-none) card targets))))
@@ -372,7 +372,7 @@
                  :waiting-prompt true
                  :effect (req (do (system-msg state side (str "trashes " (enumerate-str (map #(card-str state %) targets))))
                                   (wait-for
-                                    (trash-cards state side targets {:keep-server-alive true})
+                                    (trash-cards state side targets {:keep-server-alive true :suppress-checkpoint true})
                                     (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true)))))
                  :cancel-effect (req (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true)))}
                 card nil)
@@ -584,7 +584,7 @@
                                  (not (has-ancestor? % host-card))
                                  (program? %))}
            :async true
-           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true})
+           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true :suppress-checkpoint true})
                                   (update-mu state)
                                   (runner-install-pay state side eid card (assoc args :resolved-optional-trash true))))
            :cancel-effect (req (update-mu state)
@@ -651,7 +651,7 @@
            ;; the total selection is worth X memory, since the req function must be satisfied at
            ;; every point of the selection --nbkelly, jun 2024
            :effect (req (wait-for
-                          (trash-cards state side (make-eid state eid) targets {:unpreventable true})
+                          (trash-cards state side (make-eid state eid) targets {:unpreventable true :suppress-checkpoint true})
                           (update-mu state)
                           (runner-host-enforce-specific-memory state side eid card
                                                                (get-card state potential-host)
@@ -678,7 +678,7 @@
                      :min to-destroy
                      :max (count relevant-cards)}
            :async true
-           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true})
+           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true :suppress-checkpoint true})
                                   (update-mu state)
                                   (runner-host-enforce-specific-memory state side eid card
                                                                        (get-card state potential-host) args)))}
