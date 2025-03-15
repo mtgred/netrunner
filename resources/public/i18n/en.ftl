@@ -76,7 +76,7 @@ deck-builder_agenda-points = Agenda points
 deck-builder_cancel = Cancel
 deck-builder_card-name = Card name
 deck-builder_card-count = {$cnt ->
-    [one] 1 card
+    [one] {$cnt} card
     *[other] {$cnt} cards
 }
 deck-builder_clear-stats = Clear Stats
@@ -214,7 +214,7 @@ faction_name = {$faction ->
     [shaper] Shaper
     [sunny-lebeau] Sunny Lebeau
     [weyland-consortium] Weyland Consortium
-    *[other] Unknown faction
+    *[other] Unknown faction ({$faction})
 }
 
 format_name = {$format ->
@@ -234,7 +234,7 @@ format_name = {$format ->
     [sunset] Sunset
     [system-gateway] System Gateway
     [throwback] Throwback
-    *[other] Unknown format
+    *[other] Unknown format ({$format})
 }
 
 game_abilities = Abilities
@@ -370,6 +370,7 @@ game_unbeatable = Make unbeatable
 game_unimplemented = Unimplemented
 game_unknown-phase = Unknown phase
 game_unmute = Unmute spectators
+
 game_win-claimed = {$winner} ({$side}) wins by claim on turn {$turn}
 game_win-conceded = {$winner} ({$side}) wins by concession on turn {$turn}
 game_win-decked = {$winner} ({$side}) wins due to the Corp being decked on turn {$turn}
@@ -779,7 +780,6 @@ set_name = {$name ->
 
 settings_alt-art = Alt arts
 settings_always = Always
-settings_apex-bg = Apex
 settings_api-keys = API Keys
 settings_avatar = Avatar
 settings_background = Game board background
@@ -797,8 +797,6 @@ settings_comp-only = Competitive Lobby Only
 settings_connection = Connection
 settings_create-api-key = Create API Key
 settings_current-email = Current email
-settings_custom-bg = Custom BG
-settings_custom-bg-with-url = Custom BG (input URL below)
 settings_deck-stats = Deck statistics
 settings_delete-api-key = Delete
 settings_desired-email = Desired email
@@ -811,8 +809,6 @@ settings_enable-game-sounds = Enable game sounds
 settings_enable-lobby-sounds = Enable lobby sounds
 settings_enter-valid = Please enter a valid email address
 settings_ffg = FFG
-settings_find-the-truth-bg = Find The Truth
-settings_freelancer-bg = Freelancer
 settings_game-stats = Game Win/Lose statistics
 settings_get-log-top = Get current log top
 settings_get-log-width = Get current log width
@@ -827,16 +823,12 @@ settings_log-player-highlight-none = None
 settings_log-player-highlight-red-blue = Corp: Blue / Runner: Red
 settings_log-size = Log size
 settings_log-timestamps = Log timestamps
-settings_monochrome-bg = Monochrome
-settings_mushin-no-shin-bg = Mushin No Shin
 settings_none = None
 settings_nsg = NSG
 settings_pin-zoom = Keep zoomed cards on screen
 settings_player-stats-icons = Use icons for player stats
 settings_pronouns = Pronouns
-settings_push-your-luck-bg = Push Your Luck
 settings_reset = Reset All to Official Art
-settings_rumor-mill-bg = Rumor Mill
 settings_runner-classic = Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)
 settings_runner-layout = Runner layout from Corp perspective
 settings_runner-reverse = Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)
@@ -846,16 +838,27 @@ settings_show-alt = Show alternate card arts
 settings_sides-overlap = Runner and Corp board may overlap
 settings_sounds = Sounds
 settings_stacked-cards = Card stacking (on by default)
-settings_the-root-bg = The Root
 settings_toggle-log-timestamps = Show log timestamps
-settings_traffic-jam-bg = Traffic Jam
 settings_update = Update
 settings_update-profile = Update Profile
 settings_updated = Profile updated - Please refresh your browser
 settings_updating = Updating profile...
 settings_user-name = User name
 settings_volume = Volume
-settings_worlds2020-bg = Worlds 2020
+
+settings_bg = {$slug ->
+    [apex-bg] Apex
+    [custom-with-url] Custom BG (input URL below)
+    [find-the-truth-bg] Find The Truth
+    [freelancer-bg] Freelancer
+    [monochrome-bg] Monochrome
+    [mushin-no-shin-bg] Mushin No Shin
+    [push-your-luck-bg] Push Your Luck
+    [rumor-mill-bg] Rumor Mill
+    [the-root-bg] The Root
+    [traffic-jam-bg] Traffic Jam
+    *[worlds2020-bg] Worlds 2020
+}
 
 settings_bespoke-sounds = {$sound ->
     [archer] Archer

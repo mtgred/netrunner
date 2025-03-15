@@ -300,6 +300,18 @@
    ["Xe/xem" "xe"]
    ["Xi/xir" "xi"]])
 
+(def background-list
+  [["Apex" "apex"]
+   ["Custom BG (input URL below)" "custom"]
+   ["Find The Truth" "find-the-truth"]
+   ["Freelancer" "freelancer"]
+   ["Monochrome" "monochrome"]
+   ["Mushin No Shin" "mushin-no-shin"]
+   ["Push Your Luck" "push-your-luck"]
+   ["Rumor Mill" "rumor-mill"]
+   ["The Root" "the-root"]
+   ["Traffic Jam" "traffic-jam"]
+   ["Worlds 2020" "worlds2020"]])
 
 (defn account-content [_ _ scroll-top]
   (r/create-class
@@ -488,30 +500,9 @@
                 custom-bg-url (r/atom (:custom-bg-url @s))]
             [:section
              [:h3  [tr [:settings_background "Game board background"]]]
-             (doall (for [option [{:name [tr [:settings_the-root-bg "The Root"]]
-                                   :ref "lobby-bg"}
-                                  {:name [tr [:settings_freelancer-bg "Freelancer"]]
-                                   :ref "freelancer-bg"}
-                                  {:name [tr [:settings_mushin-no-shin-bg "Mushin No Shin"]]
-                                   :ref "mushin-no-shin-bg"}
-                                  {:name [tr [:settings_traffic-jam-bg "Traffic Jam"]]
-                                   :ref "traffic-jam-bg"}
-                                  {:name [tr [:settings_rumor-mill-bg "Rumor Mill"]]
-                                   :ref "rumor-mill-bg"}
-                                  {:name [tr [:settings_find-the-truth-bg "Find The Truth"]]
-                                   :ref "find-the-truth-bg"}
-                                  {:name [tr [:settings_push-your-luck-bg "Push Your Luck"]]
-                                   :ref "push-your-luck-bg"}
-                                  {:name [tr [:settings_apex-bg "Apex"]]
-                                   :ref "apex-bg"}
-                                  {:name [tr [:settings_worlds2020-bg "Worlds 2020"]]
-                                   :ref "worlds2020"}
-                                  {:name [tr [:settings_monochrome-bg "Monochrome"]]
-                                   :ref "monochrome-bg"}
-                                  {:name (if custom-bg-selected
-                                           (tr [:settings_custom-bg-with-url "Custom BG (input URL below)"])
-                                           (tr [:settings_custom-bg "Custom BG"]))
-                                   :ref "custom-bg"}]]
+             (doall (for [[title slug] background-list
+                          :let [option {:name [tr [:settings_bg title] {:slug slug}]
+                                        :ref (str slug "-bg")}]]
                       [:div.radio {:key (:name option)}
                        [:label [:input {:type "radio"
                                         :name "background"

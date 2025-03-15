@@ -16,8 +16,7 @@
    [game.cards.upgrades]
    [game.quotes :refer [load-quotes!]]
    [integrant.core :as ig]
-   [i18n.core]
-   [i18n.fluent :as i18n]
+   [i18n.core :as i18n]
    [jinteki.cards :as cards]
    [medley.core :refer [deep-merge]]
    [monger.collection :as mc]
@@ -132,19 +131,10 @@
   (load-quotes!))
 
 (defmethod ig/init-key :web/i18n [_ _opts]
-  (let [langs (->> (io/file "resources/public/i18n")
-                   (file-seq)
-                   (filter #(.isFile ^java.io.File %))
-                   (filter #(str/ends-with? (str %) ".ftl"))
-                   (map (fn [^java.io.File f]
-                          (let [n (str/replace (.getName f) ".ftl" "")
-                                content (slurp f)]
-                            [n content]))))]
-    (doseq [[lang content] langs]
-      (i18n.core/insert-lang! lang content))))
+  (i18n/load-dictionary! "resources/public/i18n"))
 
 (defmethod ig/halt-key! :web/i18n [_ _opts]
-  (reset! i18n.core/fluent-dictionary nil))
+  (reset! i18n/fluent-dictionary nil))
 
 (defn- format-card-key->string
   [fmt]

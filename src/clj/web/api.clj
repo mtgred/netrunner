@@ -201,7 +201,7 @@
 
 (defn make-dev-app [system]
   (ring/ring-handler
-    (merge-routes)
+    (merge-routes (base-routes) (api-routes))
     (make-default-routes)
     (update (make-middleware system) :middleware #(vec (cons wrap-stacktrace %)))))
 

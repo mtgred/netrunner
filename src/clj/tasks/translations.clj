@@ -5,16 +5,14 @@
    [clojure.pprint :as pp]
    [clojure.set :as set]
    [clojure.string :as str]
-   [game.utils :refer [dissoc-in]]
-   [i18n.core :as tr.core]
-   [taoensso.encore :as encore])
+   [i18n.core :as i18n])
   (:import
    (java.io File)
    (fluent.bundle FluentBundle FluentBundle$Builder FluentResource)
    (fluent.functions.cldr CLDRFunctionFactory)
    (fluent.syntax.parser FTLParser FTLStream)
    (java.util Locale Optional)
-   [fluent.syntax.AST PatternElement PatternElement$TextElement Identifiable Message Term Pattern]))
+   [fluent.syntax.AST PatternElement$TextElement Identifiable Message Term Pattern]))
 
 (def fluent-dictionary
   (atom {}))
@@ -47,48 +45,47 @@
                         (let [n (str/replace (.getName f) ".ftl" "")
                               content (slurp f)]
                           [n content]))))]
+  (reset! fluent-dictionary {})
   (doseq [[lang content] langs]
-    (swap! fluent-dictionary assoc (keyword lang) (build lang content))))
+    (swap! fluent-dictionary assoc lang (build lang content)))
+  (println "Loaded"))
 
 (defn get-messages [lang]
-  (->> lang
-       (get @fluent-dictionary)
+  (->> (get @fluent-dictionary lang)
        (remove #(str/starts-with? "angel-arena" (first %)))
        (into {})))
 
-(defn to-keyword [s]
-  (cond
-    (keyword? s) s
-    (str/starts-with? s ":") (keyword (subs s 1))
-    :else (keyword s)))
+(defn to-string [s]
+  (if (string? s) s (name s)))
 
 (defn missing-translations
   "Treat :en as the single source of truth. Compare each other language against it.
   Print when the other language is missing entries, and also print when the other
   language has defined entries not in :en."
   [& args]
-  (let [en-keys (->> (get-messages :en)
-                     (keys)
-                     (remove (fn [k]
-                               (some #(str/starts-with? k %)
-                                     ["preconstructed_"
-                                      "diagrams_"]))))]
-    (doseq [lang (or (seq (map to-keyword args))
-                     (keys (dissoc @fluent-dictionary :en)))
+  (let [en-keys (keys (get-messages "en"))]
+    (doseq [lang (or (seq (map to-string args))
+                     (keys (dissoc @fluent-dictionary "en")))
             :let [lang-keys (keys (get-messages lang))]]
       (println "Checking" lang)
-      (when-let [diff (seq (set/difference (set en-keys) (set lang-keys)))]
+      (when-let [diff (seq (set/difference
+                            (->> en-keys
+                                 (remove #(str/starts-with? % "preconstructed_"))
+                                 (set))
+                            (set lang-keys)))]
         (println "Missing from" lang)
         (pp/pprint (sort diff))
         (newline))
-      #_(when-let [diff (seq (set/difference (set lang-keys) (set en-keys)))]
+      #_(when-let [diff (seq (set/difference
+                            (set lang-keys)
+                            (set en-keys)))]
         (println "Missing from :en")
         (pp/pprint (sort diff))
         (newline)))
     (println "Finished!")))
 
 (comment
-  (missing-translations :fr))
+  (missing-translations #_"ja"))
 
 (defn get-value
   [message]
@@ -105,7 +102,7 @@
 
 (defn undefined-translations
   [& _args]
-  (let [en-map (get-messages :en)
+  (let [en-map (get-messages "en")
         files (->> (concat (file-seq (io/file "src/cljs"))
                            (file-seq (io/file "src/cljc")))
                    (filter #(.isFile ^File %))
@@ -159,7 +156,7 @@
 
 (defn unused-translations
   [& _args]
-  (let [regexen (->> (get-messages :en)
+  (let [regexen (->> (get-messages "en")
                      (keys)
                      (remove (fn [k]
                                (some #(str/starts-with? k %)
@@ -183,35 +180,3 @@
 
 (comment
   (unused-translations))
-
-;; should be a one-off
-(defn convert-edn-to-fluent
-  []
-  (let [dict (tr.core/fluent-dictionary)]
-    (doseq [lang (keys dict)]
-      (let [translation
-            (with-out-str
-              (doseq [path-ns (->> (get-messages :en)
-                                   (group-by first)
-                                   (sort-by key))
-                      ; slit each group by a newline
-                      :let [_ (newline)]
-                      path (->> path-ns
-                                (val)
-                                (sort))
-                      :let [identifier (->> path
-                                            (map #(str (symbol %)))
-                                            (str/join "_"))
-                            node (get-in dict (cons lang path))
-                            node (if (string? node)
-                                   (-> node
-                                       (str/replace "{" "{\"{\"RRR")
-                                       (str/replace "}" "{\"}\"}")
-                                       (str/replace "RRR" "}"))
-                                   node)]]
-                (printf "%s = %s\n" identifier node)))]
-        (spit (io/file "resources" "public" "i18n" (str (symbol lang) ".ftl"))
-          (str/triml translation))))))
-
-(comment
-  (convert-edn-to-fluent))
