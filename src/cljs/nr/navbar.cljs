@@ -9,49 +9,49 @@
    goog.history.Html5History))
 
 (def navbar-links
-  [{:title (tr [:nav/welcome "Welcome"])
+  [{:title [tr [:nav_welcome "Welcome"]]
     :cls "landing"
     :route "/"}
-    {:title (tr [:nav/chat "Chat"])
+    {:title [tr [:nav_chat "Chat"]]
     :cls "chat"
     :route "/chat"}
-   {:title (tr [:nav/cards "Cards"])
+   {:title [tr [:nav_cards "Cards"]]
     :cls "card"
     :route "/cards"}
-   {:title (tr [:nav/deck-builder "Deck Builder"])
+   {:title [tr [:nav_deck-builder "Deck Builder"]]
     :cls "deckbuilder"
     :route "/deckbuilder"}
-   {:title (tr [:nav/play "Play"])
+   {:title [tr [:nav_play "Play"]]
     :cls "play"
     :route "/play"}
-   {:title (tr [:nav/help "Help"])
+   {:title [tr [:nav_help "Help"]]
     :cls "help"
     :route "/help"}
-   {:title (tr [:nav/settings "Settings"])
+   {:title [tr [:nav_settings "Settings"]]
     :cls "settings"
     :route "/account"
     :show? :user}
-   {:title (tr [:nav/stats "Stats"])
+   {:title [tr [:nav_stats "Stats"]]
     :cls "stats"
     :route "/stats"
     :show? :user}
-   {:title (tr [:nav/about "About"])
+   {:title [tr [:nav_about "About"]]
     :cls "about"
     :route "/about"}
-   {:title (tr [:nav/tournaments "Tournaments"])
+   {:title [tr [:nav_tournaments "Tournaments"]]
     :cls "tournaments"
     :route "/tournament"
     :show? #(:tournament-organizer (:user %))}
-   {:title (tr [:nav/admin "Admin"])
+   {:title [tr [:nav_admin "Admin"]]
     :cls "admin"
     :route "/admin"
     :show? #(:isadmin (:user %))}
-   {:title (tr [:nav/users "Users"])
+   {:title [tr [:nav_users "Users"]]
     :cls "users"
     :route "/users"
     :show? #(or (:isadmin (:user %))
                 (:ismoderator (:user %)))}
-   {:title (tr [:nav/features "Features"])
+   {:title [tr [:nav_features "Features"]]
     :cls "features"
     :route "/features"
     :show? #(:isadmin (:user %))}])

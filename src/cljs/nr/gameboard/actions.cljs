@@ -51,19 +51,19 @@
 (declare toast)
 (defn handle-timeout [gameid]
   (when (= gameid (current-gameid app-state))
-    (toast (tr [:game.inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})
+    (toast (tr [:game_inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})
     (leave-game!)))
 
 (defn handle-timeout-soon [gameid]
   (when (= gameid (current-gameid app-state))
     (play-sfx ["time-out"])
-    (toast (tr [:game.timeout-soon "Game will time out within 30 seconds for inactivity"])
+    (toast (tr [:game_timeout-soon "Game will time out within 30 seconds for inactivity"])
            "error"
            {:time-out 29000
             :close-button true})))
 
 (defn handle-error []
-  (toast (tr [:game.error "Internal Server Error. Please type /bug in the chat and follow the instructions."])
+  (toast (tr [:game_error "Internal Server Error. Please type /bug in the chat and follow the instructions."])
          "error"
          {:time-out 0
           :close-button true})

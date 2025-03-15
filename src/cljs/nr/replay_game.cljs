@@ -39,14 +39,14 @@
         [:button {:type "button"
                   :on-click #(do (.preventDefault %)
                                  (create-game state))}
-         (tr [:lobby.start-replay "Start replay"])]
+         [tr [:lobby_start-replay "Start replay"]]]
         [:button {:type "button"
                   :on-click #(do (.preventDefault %)
                                  (swap! lobby-state dissoc :replay))}
-         (tr [:lobby.cancel "Cancel"])]]
+         [tr [:lobby_cancel "Cancel"]]]]
        (when (:flash-message @state)
          [:p.flash-message
-          (tr [:lobby.replay-invalid-file "Select a valid replay file."])])
+          [tr [:lobby_replay-invalid-file "Select a valid replay file."]]])
        [:div [:input {:field :file
                       :type :file
                       :on-change #(swap! state assoc :replay-file (aget (.. % -target -files) 0))}]]])))

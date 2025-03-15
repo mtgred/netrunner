@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+set -eux -o pipefail
+docker-compose down server
+docker-compose up -d --build server

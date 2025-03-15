@@ -16,6 +16,7 @@
    [game.cards.upgrades]
    [game.quotes :refer [load-quotes!]]
    [integrant.core :as ig]
+   [i18n.core :as i18n]
    [jinteki.cards :as cards]
    [medley.core :refer [deep-merge]]
    [monger.collection :as mc]
@@ -32,7 +33,8 @@
    [web.telemetry]
    [web.utils :refer [tick]]
    [web.versions :refer [banned-msg frontend-version]]
-   [web.ws :refer [ch-chsk event-msg-handler]]))
+   [web.ws :refer [ch-chsk event-msg-handler]]
+   [clojure.string :as str]))
 
 (read-write/print-time-literals-clj!)
 
@@ -128,13 +130,21 @@
 (defmethod ig/init-key :game/quotes [_ _opts]
   (load-quotes!))
 
+(defmethod ig/init-key :web/i18n [_ _opts]
+  (i18n/load-dictionary! "resources/public/i18n"))
+
+(defmethod ig/halt-key! :web/i18n [_ _opts]
+  (reset! i18n/fluent-dictionary nil))
+
 (defn- format-card-key->string
   [fmt]
   (assoc fmt :cards
-         (reduce-kv
-           (fn [m k v]
-             (assoc m (name k) v))
-           {} (:cards fmt))))
+         (->> (:cards fmt)
+              (reduce-kv
+               (fn [m k v]
+                 (assoc! m (name k) v))
+               (transient {}))
+              (persistent!))))
 
 (defmethod ig/init-key :jinteki/cards [_ {{:keys [db]} :mongo}]
   (let [cards (mc/find-maps db "cards" nil)

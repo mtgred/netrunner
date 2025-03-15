@@ -13,6 +13,8 @@ services:
       - "./resources/public:/usr/src/app/resources/public"
       - "./resources/dev.edn:/usr/src/app/resources/dev.edn"
       - "./resources/logback.xml:/usr/src/app/resources/logback.xml"
+      - "./project.clj:/usr/src/app/project.clj"
+      - "./package.json:/usr/src/app/package.json"
       - "./src:/usr/src/app/src"
       - "./test:/usr/src/app/test"
       - "./docker/docker-prod.edn:/usr/src/app/resources/prod.edn" # Override server configs

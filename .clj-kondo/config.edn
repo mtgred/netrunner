@@ -69,4 +69,5 @@
            monger.query/with-collection clojure.core/->
            }
  :config-paths ["rewrite-clj/rewrite-clj"]
+ :output {:langs true}
  }
