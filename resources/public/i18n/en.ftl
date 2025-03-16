@@ -435,7 +435,7 @@ lobby_type = {$type ->
     [casual] Casual
     [competitive] Competitive
     [tournament] Tournament
-    *[other] Unknown lobby type
+    *[unknown] Unknown lobby type
 }
 
 lobby_aborted = Connection aborted

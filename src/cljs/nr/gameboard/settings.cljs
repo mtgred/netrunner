@@ -82,7 +82,7 @@
                         :value true
                         :checked (get-in @app-state [:options :log-timestamps])
                         :on-change #(swap! app-state assoc-in [:options :log-timestamps] (.. % -target -checked))}]
-        [tr [:ingame-settings_toggle-log-timestamps "Show log timestamps"]]]]]
+        [tr [:ingame-settings_log-timestamps-toggle "Show log timestamps"]]]]]
 
      [:section
       [:h4 [tr [:ingame-settings_board-overlap "Board overlap"]]]

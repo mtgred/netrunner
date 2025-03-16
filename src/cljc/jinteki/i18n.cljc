@@ -27,8 +27,7 @@
                                    content (slurp f)]
                                [n content]))))
            errors (volatile! [])]
-       (doseq [[lang content] langs
-               :when (not @errors)]
+       (doseq [[lang content] langs]
          (try (insert-lang! lang content)
               (catch Throwable t
                 (println "Error inserting i18n data for" lang)

@@ -32,24 +32,31 @@ card-browser_trash-cost = 销毁费用
 card-browser_type = 类别
 card-browser_update-failure = 卡面更换失败
 card-browser_update-success = 卡面已更换
-card-browser_sort-by_cost = 费用
-card-browser_sort-by_faction = 派系
-card-browser_sort-by_influence = 影响力
-card-browser_sort-by_name = 牌名
-card-browser_sort-by_set-number = 系列编号
-card-browser_sort-by_type = 类别
 
-card-type_agenda = 议案
-card-type_all = 全部
-card-type_asset = 资产
-card-type_event = 事件
-card-type_hardware = 硬件
-card-type_ice = 防火墙
-card-type_identity = 特性（ID）
-card-type_operation = 事务
-card-type_program = 程序
-card-type_resource = 资源
-card-type_upgrade = 升级
+card-browser_sort-by = {$by ->
+    [cost] 费用
+    [faction] 派系
+    [influence] 影响力
+    [name] 牌名
+    [set-number] 系列编号
+    [type] 类别
+    *[unknown] undefined
+}
+
+card-type_name = {$type ->
+    [agenda] 议案
+    [all] 全部
+    [asset] 资产
+    [event] 事件
+    [hardware] 硬件
+    [ice] 防火墙
+    [identity] 特性（ID）
+    [operation] 事务
+    [program] 程序
+    [resource] 资源
+    [upgrade] 升级
+    *[unknown] undefined
+}
 
 chat_block = 屏蔽用户
 chat_cancel = 取消
@@ -57,7 +64,7 @@ chat_channels = 频道
 chat_delete = 删除消息
 chat_delete-all = 删除该用户发送的所有消息
 chat_length-exceeded = 超出长度
-chat_message-blocked = (fn [[reason-str]] (str "消息堵塞" (when reason-str (str ": " reason-str))))
+chat_message-blocked = 消息堵塞: {$reason-str}
 chat_placeholder = 说点什么吧
 chat_rate-exceeded = 超出速率
 chat_send = 发送
@@ -68,14 +75,21 @@ deck-builder_add-to-deck = 添加到牌组
 deck-builder_agenda-points = 议案分数
 deck-builder_cancel = 取消
 deck-builder_card-name = 卡牌名称
-deck-builder_cards = 张卡牌
+deck-builder_card-count = undefined
 deck-builder_clear-stats = 清除统计数据
 deck-builder_completed = 完成
 deck-builder_confirm-delete = 确认删除
 deck-builder_copy = 复制
 deck-builder_create-game = 创建对战
 deck-builder_deck-copy-suffix = 复制
-deck-builder_deck-count = (fn [[cnt]] (str cnt "套牌组"))
+deck-builder_deck-count = {$cnt ->
+    [zero] 没有牌组
+    *[other] 套牌组
+}
+deck-builder_deck-count-filtered = {$cnt ->
+    [zero] 没有牌组（过滤后）
+    *[other] 套牌组（过滤后）
+}
 deck-builder_deck-name = 牌组名称
 deck-builder_deck-notes = 牌组备注
 deck-builder_deck-points = 牌组点数
@@ -83,7 +97,6 @@ deck-builder_decklist = 牌表
 deck-builder_decklist-inst = （在此输入或粘贴牌表，系统会自动解析）
 deck-builder_delete = 删除
 deck-builder_edit = 编辑
-deck-builder_filtered = （过滤后）
 deck-builder_format = 赛制
 deck-builder_games = 局数
 deck-builder_hash = 卡组hash（比赛用）
@@ -91,7 +104,7 @@ deck-builder_identity = 特性（ID）
 deck-builder_illegal = 不可用
 deck-builder_import = 导入
 deck-builder_import-button = 导入牌组
-deck-builder_import-placeholder = undefined
+deck-builder_import-placeholder = NRDB ID
 deck-builder_import-title = 请输入NRDB上公开牌组的ID或URL
 deck-builder_influence = 影响力
 deck-builder_legal = 可用
@@ -99,10 +112,10 @@ deck-builder_loading-msg = 牌组加载中……
 deck-builder_lost = 败北
 deck-builder_max = 最多
 deck-builder_min = 最少
+deck-builder_min-deck-size = undefined
 deck-builder_new-corp = 新建公司牌组
 deck-builder_new-deck = 新建牌组
 deck-builder_new-runner = 新建潜袭者牌组
-deck-builder_no-decks = 没有牌组
 deck-builder_notes = 备注
 deck-builder_reset = 重置
 deck-builder_save = 保存
@@ -182,59 +195,67 @@ diagrams_turn_runner-discard-phase-d = 潜袭者回合正式结束。回合结�
 diagrams_turn_runner-discard-phase-e = 进入到公司回合
 diagrams_turn_runner-turn = 潜袭者回合
 
-faction_adam = 亚当
-faction_all = 全部
-faction_anarch = 反叛者
-faction_any-faction = 任意派系
-faction_apex = 尖峰
-faction_criminal = 逆法者
-faction_haas-bioroid = 哈斯生化
-faction_jinteki = 人间会社
-faction_nbn = 网际传媒
-faction_neutral = 中立
-faction_shaper = 塑造者
-faction_sunny-lebeau = 桑妮·勒博
-faction_weyland-consortium = 威兰财团
+faction_name = {$faction ->
+    [adam] 亚当
+    [all] 全部
+    [anarch] 反叛者
+    [any-faction] 任意派系
+    [apex] 尖峰
+    [criminal] 逆法者
+    [haas-bioroid] 哈斯生化
+    [jinteki] 人间会社
+    [nbn] 网际传媒
+    [neutral] 中立
+    [shaper] 塑造者
+    [sunny-lebeau] 桑妮·勒博
+    [weyland-consortium] 威兰财团
+    *[unknown] undefined
+}
 
-format_all = 全部
-format_any-format = 任意赛制
-format_casual = 休闲
-format_classic = 经典
-format_core-experience = 核心体验
-format_eternal = 永久
-format_neo = undefined
-format_preconstructed = 预构筑
-format_snapshot = 快照
-format_snapshot-plus = 快照+
-format_socr = undefined
-format_standard = 标准
-format_startup = 新启
-format_sunset = 落日
-format_system-gateway = 核心网关
-format_throwback = undefined
+format_name = {$format ->
+    [all] 全部
+    [any-format] 任意赛制
+    [casual] 休闲
+    [classic] 经典
+    [core-experience] 核心体验
+    [eternal] 永久
+    [neo] Neo
+    [preconstructed] 预构筑
+    [snapshot] 快照
+    [snapshot-plus] 快照+
+    [socr] SOCR
+    [standard] 标准
+    [startup] 新启
+    [sunset] 落日
+    [system-gateway] 核心网关
+    [throwback] undefined
+    *[unknown] undefined
+}
 
 game_abilities = 能力
 game_actions = 操作
-game_agenda-count = (fn [[agenda-point]] (str agenda-point " 议案分数"))
-game_agenda-point-req = undefined
+game_agenda-count = agenda-point 议案分数
+game_agenda-count-with-req = undefined
 game_approach-ice = 接驳防火墙
-game_archives = 档案库
+game_archives = 档案库{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
 game_attempt-reconnect = 尝试重新连接
 game_auto-pass = 自动让过优先权
-game_bad-pub-count = (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " 负面声誉"))
+game_bad-pub-count = {$base} 负面声誉
+game_bad-pub-count-additional = {$base} 负面声誉 + {$additional} 负面声誉
 game_beat-trace = 击败追踪
 game_brain-damage = 脑部伤害
 game_breach-server = 侵入服务器
 game_card = 卡牌
-game_card-count = (fn [[size]] (str size "张卡牌。"))
-game_click-count = (fn [[click]] (str click " 时点"))
+game_card-count = {$size} 张卡牌。
+game_click-count = {$click} 时点
 game_close = 关闭
 game_close-shuffle = 关闭并洗牌
 game_concede = 投降
 game_continue = 继续
 game_continue-to = 继续：
 game_corp-view = 公司视图
-game_credit-count = (fn [[credit run-credit]] (str credit " 信用点" (when (pos? run-credit) (str " （" run-credit "个本次潜袭专用）"))))
+game_credit-count = {$credit} 信用点
+game_credit-count-with-run-credits = {$credit} 信用点（{$run-credit} 个本次潜袭专用）
 game_credits = 个信用点
 game_current = 局势
 game_current-phase = 当前阶段
@@ -242,7 +263,7 @@ game_draw = 抽牌
 game_encounter-ice = 遭遇防火墙
 game_end-turn = 结束回合
 game_error = 内部服务器错误。请在聊天中键入/bug并按照说明操作。
-game_face-down-count = (fn [[total face-up]] (str total "张卡牌，" (- total face-up) "张牌面朝下。"))
+game_face-down-count = {$total}张卡牌，{$facedown}张牌面朝下。
 game_fire-unbroken = 结算未破解的子进程
 game_gain-credit = 获得信用点
 game_game-start = 对战开始时间
@@ -264,12 +285,12 @@ game_mandatory-draw = 回合开始抽牌
 game_max-hand = 手牌上限
 game_minutes = 分:
 game_movement = 移动
-game_mu-count = (fn [[unused available]] (str unused " / " available " 空闲内存"))
+game_mu-count = {$unused} / {$available} 空闲内存
 game_mulligan = 调度
 game_mute = 禁止旁观者发言
 game_no-current-run = 当前无潜袭进行中
 game_no-further = 没有响应
-game_ok = undefined
+game_ok = OK
 game_play-area = 出牌区
 game_purge = 清除病毒指示物
 game_reconnected-to-server = 已重新连接到服务器
@@ -290,18 +311,19 @@ game_set-aside = 设置一旁
 game_show = 显示
 game_show-decklists = undefined
 game_shuffle = 洗牌
-game_spec-count = (fn [[c]] (str c " 位观众"))
+game_spec-count = {$cnt} 位观众
 game_spec-view = 旁观者视图
-game_special-mu-count = (fn [[unused available mu-type]] (str unused " / " available " " mu-type " 空闲内存"))
+game_special-mu-count = {$unused} / {$available} {$mu-type} 空闲内存
 game_stack = 存储栈
 game_start = 开始对战
 game_start-turn = 开始回合
 game_stop-auto-pass = 取消自动让过优先权
 game_subs = 子进程
 game_success = 成功
-game_tag-count = (fn [[base additional total]] (str base (when (pos? additional) (str " + " additional)) " 锁定标记"))
+game_tag-count = {$base} 锁定标记
+game_tag-count-additional = {$base} + {$additional} 锁定标记
 game_take-clicks = 进入行动阶段
-game_time-taken = (fn [[t]] (str "对战用时：" t "分钟"))
+game_time-taken = 对战用时：{$time}分钟
 game_timeout-soon = undefined
 game_trace = 追踪强度
 game_trash-like-cards = undefined
@@ -310,34 +332,36 @@ game_unbeatable = 使不可击败
 game_unimplemented = 功能未实现
 game_unknown-phase = 未知阶段
 game_unmute = 允许旁观者发言
-game_up-down-count = (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
-game_win-claimed = (fn [[turn]] (str "于第" turn "回合因声明而获胜"))
-game_win-conceded = (fn [[turn]] (str "于第" turn "回合因对手投降而获胜"))
-game_win-decked = (fn [[turn]] (str "于第" turn "回合因公司无牌可抽而获胜"))
-game_win-flatlined = (fn [[turn]] (str "于第" turn "回合通过杀死潜袭者而获胜"))
-game_win-other = (fn [[turn reason]] (str "于第" turn "回合因" reason "而获胜"))
-game_win-points = (fn [[turn]] (str "于第" turn "回合因议案分数而获胜"))
+game_win-claimed = {$winner} ({$side})于第{$turn}回合因声明而获胜
+game_win-conceded = {$winner} ({$side})于第{$turn}回合因对手投降而获胜
+game_win-decked = {$winner} ({$side})于第{$turn}回合因公司无牌可抽而获胜
+game_win-flatlined = {$winner} ({$side})于第{$turn}回合通过杀死潜袭者而获胜
+game_win-other = {$winner} ({$side})于第{$turn}回合因{$reason}而获胜
+game_win-points = {$winner} ({$side})于第{$turn}回合因议案分数而获胜
 
-game-prompt_advance = 推进
-game-prompt_archives = 档案库
-game-prompt_derez = 关闭
-game-prompt_expend = 消耗
-game-prompt_hq = 总部
-game-prompt_new-remote = 新远程
-game-prompt_r-d = 研发中心
-game-prompt_rez = 激活
-game-prompt_score = 计分
-game-prompt_server-1 = 服务器 1
-game-prompt_server-10 = 服务器 10
-game-prompt_server-2 = 服务器 2
-game-prompt_server-3 = 服务器 3
-game-prompt_server-4 = 服务器 4
-game-prompt_server-5 = 服务器 5
-game-prompt_server-6 = 服务器 6
-game-prompt_server-7 = 服务器 7
-game-prompt_server-8 = 服务器 8
-game-prompt_server-9 = 服务器 9
-game-prompt_trash = 销毁
+game_prompt = {$msg ->
+    [advance] 推进
+    [archives] 档案库
+    [derez] 关闭
+    [expend] 消耗
+    [hq] 总部
+    [new-remote] 新远程
+    [r-d] 研发中心
+    [rez] 激活
+    [score] 计分
+    [server-1] 服务器 1
+    [server-10] 服务器 10
+    [server-2] 服务器 2
+    [server-3] 服务器 3
+    [server-4] 服务器 4
+    [server-5] 服务器 5
+    [server-6] 服务器 6
+    [server-7] 服务器 7
+    [server-8] 服务器 8
+    [server-9] 服务器 9
+    [trash] 销毁
+    *[unknown] undefined
+}
 
 ingame-settings_alt-art = 异画卡
 ingame-settings_board-overlap = 面板重叠
@@ -365,10 +389,9 @@ ingame-settings_sides-overlap = 潜袭者和公司面板可以重叠
 ingame-settings_sort-archives = 排序档案库
 ingame-settings_sort-heap = 排序堆阵
 ingame-settings_stack-cards = 启用服务器堆叠
-ingame-settings_toggle-log-timestamps = undefined
+ingame-settings_log-timestamps-toggle = undefined
 
 lobby_aborted = 连接已中断
-lobby_angel-arena = 天使竞技场
 lobby_api-access = 允许 API 访问游戏信息
 lobby_api-access-details = 这允许第三方扩展访问有关你游戏的信息。需要在“设置”中创建API密钥
 lobby_api-requires-key = (需要设置 API 密钥)
@@ -376,10 +399,8 @@ lobby_as-corp = 作为公司
 lobby_as-runner = 作为潜袭者
 lobby_both-perspective = 双方视角
 lobby_cancel = 取消
-lobby_casual = 休闲
 lobby_chat = 聊天
 lobby_closed-msg = 房间因长期无活动而关闭
-lobby_competitive = 竞技
 lobby_completion-rate = 游戏完成率
 lobby_corp-perspective = 公司视角
 lobby_create = 创建
@@ -387,9 +408,9 @@ lobby_deck-selected = 牌组已选择
 lobby_default-game-format = 默认游戏赛制
 lobby_delete = 删除房间
 lobby_filter = 过滤
-lobby_filtered = （过滤后）
 lobby_format = 赛制
-lobby_game-count = (fn [[cnt]] (str cnt "局对战"))
+lobby_game-count = {$cnt} 局对战
+lobby_game-count-filtered = {$cnt} 局对战（过滤后）
 lobby_hidden = 允许旁观者查看玩家的隐藏信息
 lobby_hidden-details = 这将向游戏的所有观众揭示两名玩家的隐藏信息，包括手牌和面朝下的牌。
 lobby_hidden-password = 我们建议使用密码来防止陌生人破坏游戏。
@@ -428,7 +449,7 @@ lobby_singleton-b = (单张卡牌)
 lobby_singleton-details = 这将限制牌组中每种同名卡牌仅限1张。建议你使用下列基于此模式的特性ID组建的牌组。
 lobby_singleton-example = 1) 复始：触媒&促力 2) 安培：全民的义体
 lobby_singleton-restriction = 这局要求为单张卡牌模式。这意味着牌组中每种同名卡牌限1张。
-lobby_spectator-count = (fn [[cnt]] (str cnt "位观众"))
+lobby_spectator-count = {$cnt} 位观众
 lobby_spectators = 允许旁观
 lobby_start = 开始
 lobby_start-replay = 开始回放
@@ -439,16 +460,27 @@ lobby_timer-length = 计时器长度（分钟）
 lobby_title = 房间名
 lobby_title-error = 请设置房间名。
 lobby_too-little-data = 数据不足
-lobby_tournament = 比赛
 lobby_waiting = 等待玩家选择牌组
 lobby_watch = 观战
-lobby_gateway-format_beginner = 初学者
-lobby_gateway-format_beginner-info = 此大厅为公司和潜袭者使用核心网关初学者牌组而准备。建议你在初次游戏中使用这些牌组。游戏按6点议案分数进行。
-lobby_gateway-format_beginner-ul = 核心网关 - 初学者教学牌组
-lobby_gateway-format_constructed = 构筑
-lobby_gateway-format_intermediate = 进阶
-lobby_gateway-format_intermediate-info = 此大厅为公司和潜袭者使用核心网关进阶牌组而准备。这些牌组比初学者牌组稍大。游戏按7点议案分数进行。
-lobby_gateway-format_intermediate-ul = 核心网关 - 进阶教学牌组
+
+lobby_type = {$type ->
+    [casual] 休闲
+    [competitive] 竞技
+    [angel-arena] 天使竞技场
+    [tournament] 比赛
+    *[unknown] undefined
+}
+
+lobby_gateway-format = {$format ->
+    [beginner] 初学者
+    [beginner-info] 此大厅为公司和潜袭者使用核心网关初学者牌组而准备。建议你在初次游戏中使用这些牌组。游戏按6点议案分数进行。
+    [beginner-ul] 核心网关 - 初学者教学牌组
+    [constructed] 构筑
+    [intermediate] 进阶
+    [intermediate-info] 此大厅为公司和潜袭者使用核心网关进阶牌组而准备。这些牌组比初学者牌组稍大。游戏按7点议案分数进行。
+    [intermediate-ul] 核心网关 - 进阶教学牌组
+    *[unknown] undefined
+}
 
 log_annotating = 注释
 log_game-log = 游戏日志
@@ -462,7 +494,7 @@ menu_admin = 网站管理员
 menu_donor = 捐赠人
 menu_logout = 退出
 menu_moderator = 管理员
-menu_settings = :zh-simp.nav/settings
+menu_settings =  { nav_settings }
 
 missing = :zh-simp missing text
 
@@ -472,7 +504,7 @@ nav_cards = 卡牌
 nav_chat = 聊天
 nav_deck-builder = 牌组构筑
 nav_features = 站点功能
-nav_game-count = (fn [[cnt]] (str cnt "局对战"))
+nav_game-count = {$cnt} 局对战
 nav_help = 帮助
 nav_play = 对战
 nav_settings = 设置
@@ -566,137 +598,140 @@ preconstructed_worlds-2023-b-tag = cableCarnage (C) vs. William Huang (R)
 preconstructed_worlds-2023-b-ul = Worlds 2023: tableCarnage vs. You *do* always come back!
 preconstructed_worlds-2023-info = 254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 8 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative.
 
-pronouns_any = 随意
-pronouns_blank = [空白]
-pronouns_ey = undefined
-pronouns_faefaer = undefined
-pronouns_he = 他（He/him）
-pronouns_heit = undefined
-pronouns_heshe = undefined
-pronouns_hethey = 他（He/they）
-pronouns_it = 它（It）
-pronouns_myodb = 不愿透露
-pronouns_ne = undefined
-pronouns_none = 未设定
-pronouns_she = 她（She/her）
-pronouns_sheit = undefined
-pronouns_shethey = 她（She/they）
-pronouns_they = undefined
-pronouns_ve = undefined
-pronouns_xe = undefined
-pronouns_xi = undefined
-pronouns_zehir = undefined
-pronouns_zezir = undefined
+pronouns = {$pronoun ->
+    [any] 随意
+    [blank] [空白]
+    [ey] Ey/em
+    [faefaer] undefined
+    [he] 他（He/him）
+    [heit] undefined
+    [heshe] undefined
+    [hethey] 他（He/they）
+    [it] 它（It）
+    [myodb] 不愿透露
+    [ne] Ne/nem
+    *[none] 未设定
+    [she] 她（She/her）
+    [sheit] undefined
+    [shethey] 她（She/they）
+    [they] They/them
+    [ve] Ve/ver
+    [xe] Xe/xem
+    [xi] undefined
+    [zehir] Ze/hir
+    [zezir] Ze/zir
+}
 
-set_23-seconds = 二十三秒
-set_a-study-in-static = 静态研究
-set_all = 全部
-set_all-that-remains = 遗迹之地
-set_alt-art = 异画系列
-set_alternate = 替代
-set_ashes-cycle = 余烬循环
-set_blood-and-water = 水债血偿
-set_blood-money = 不义之财
-set_borealis-cycle = 北极光循环
-set_breaker-bay = 碎浪湾
-set_business-first = 商务为先
-set_championship-2019 = 冠军2019
-set_championship-2020 = 冠军2020
-set_chrome-city = 铬金城
-set_core-set = 核心系列
-set_council-of-the-crest = 巅峰议会
-set_creation-and-control = 创造与掌控
-set_crimson-dust = 绯红之尘
-set_cyber-exodus = 赛博迁徙
-set_daedalus-complex = 代达罗斯
-set_data-and-destiny = 数据与命运
-set_democracy-and-dogma = 民主与教条
-set_double-time = 双重时刻
-set_down-the-white-nile = 白尼罗河畔
-set_downfall = 坍落
-set_draft = 轮抽系列
-set_draft-cycle = 轮抽循环
-set_earth-s-scion = 地球子孙
-set_escalation = 事态升级
-set_fear-and-loathing = 恐惧与憎恶
-set_fear-the-masses = 群众可畏
-set_first-contact = 初遇之际
-set_flashpoint-cycle = 闪点循环
-set_free-mars = 自由火星
-set_future-proof = 未来考验
-set_genesis-cycle = 创纪元循环
-set_gnk-2019 = GNK 2019
-set_honor-and-profit = 荣誉与利益
-set_humanity-s-shadow = 人性阴影
-set_intervention = 介入冲突
-set_kala-ghoda = 卡拉哥达
-set_kampala-ascendent = 坎帕拉盛势
-set_kitara-cycle = 基塔拉循环
-set_kysra-alt-arts = undefined
-set_liberation-cycle = 解放循环
-set_lunar-cycle = 月行循环
-set_magnum-opus = 巨作
-set_magnum-opus-reprint = 巨作重印版
-set_mala-tempora = 脑叶癫痫
-set_martial-law = 军事管制
-set_midnight-sun = 极昼
-set_midnight-sun-booster-pack = 极昼推广包
-set_mumbad-cycle = 孟巴德循环
-set_napd-multiplayer = undefined
-set_ntscape-navigator-alt-arts = undefined
-set_old-hollywood = 老莱坞
-set_opening-moves = 起手开局
-set_order-and-chaos = 秩序与混沌
-set_parhelion = 幻日
-set_plural-and-miniplural-alt-arts = undefined
-set_previous-versions = 先前版本
-set_quorum = 共商出路
-set_rebellion-without-rehearsal = 即兴叛乱
-set_red-sand-cycle = 红砂循环
-set_reign-and-reverie = 统治与幻想
-set_revised-core-set = 修订版核心系列
-set_salsette-island = 撒尔塞特
-set_salvaged-memories = 唤醒回忆
-set_sansan-cycle = 圣加州循环
-set_second-thoughts = 深思熟虑
-set_signed-championship-2020 = 签名版冠军2020
-set_sovereign-sight = 主权之光
-set_spin-cycle = 扭曲真相循环
-set_station-one = 一号车站
-set_system-core-2019 = 系统核心2019
-set_system-gateway = 核心网关
-set_system-update-2021 = 系统革新2021
-set_terminal-directive-campaign = 终极指令战役
-set_terminal-directive-cards = 终极指令卡牌
-set_terminal-directive-cycle = 终极指令循环
-set_the-automata-initiative = 自动机倡议
-set_the-devil-and-the-dragon = 恶魔与龙
-set_the-liberated-mind = 自由心智
-set_the-source = 代码之源
-set_the-spaces-between = 往来之隙
-set_the-underway = 暗底区
-set_the-universe-of-tomorrow = 未来域
-set_the-valley = 生科谷
-set_trace-amount = 重重追踪
-set_true-colors = 真实面目
-set_unreleased = 未发布
-set_up-and-over = 攀越之路
-set_uprising = 起义
-set_uprising-booster-pack = 起义推广包
-set_upstalk = 上行之夜
-set_what-lies-ahead = 前途未卜
-set_whispers-in-nalubaale = 纳鲁巴勒低语
-set_world-champion-2015 = 世界冠军2015
-set_world-champion-2016 = 世界冠军2016
-set_world-champion-2017 = 世界冠军2017
+set_name = {$name ->
+    [a23-seconds] 二十三秒
+    [a-study-in-static] 静态研究
+    [all] 全部
+    [all-that-remains] 遗迹之地
+    [alt-art] 异画系列
+    [alternate] 替代
+    [ashes-cycle] 余烬循环
+    [blood-and-water] 水债血偿
+    [blood-money] 不义之财
+    [borealis-cycle] 北极光循环
+    [breaker-bay] 碎浪湾
+    [business-first] 商务为先
+    [championship-2019] 冠军2019
+    [championship-2020] 冠军2020
+    [chrome-city] 铬金城
+    [core-set] 核心系列
+    [council-of-the-crest] 巅峰议会
+    [creation-and-control] 创造与掌控
+    [crimson-dust] 绯红之尘
+    [cyber-exodus] 赛博迁徙
+    [daedalus-complex] 代达罗斯
+    [data-and-destiny] 数据与命运
+    [democracy-and-dogma] 民主与教条
+    [double-time] 双重时刻
+    [down-the-white-nile] 白尼罗河畔
+    [downfall] 坍落
+    [draft] 轮抽系列
+    [draft-cycle] 轮抽循环
+    [earth-s-scion] 地球子孙
+    [escalation] 事态升级
+    [fear-and-loathing] 恐惧与憎恶
+    [fear-the-masses] 群众可畏
+    [first-contact] 初遇之际
+    [flashpoint-cycle] 闪点循环
+    [free-mars] 自由火星
+    [future-proof] 未来考验
+    [genesis-cycle] 创纪元循环
+    [gnk-2019] GNK 2019
+    [honor-and-profit] 荣誉与利益
+    [humanity-s-shadow] 人性阴影
+    [intervention] 介入冲突
+    [kala-ghoda] 卡拉哥达
+    [kampala-ascendent] 坎帕拉盛势
+    [kitara-cycle] 基塔拉循环
+    [kysra-alt-arts] Kysra 异画
+    [liberation-cycle] 解放循环
+    [lunar-cycle] 月行循环
+    [magnum-opus] 巨作
+    [magnum-opus-reprint] 巨作重印版
+    [mala-tempora] 脑叶癫痫
+    [martial-law] 军事管制
+    [midnight-sun] 极昼
+    [midnight-sun-booster-pack] 极昼推广包
+    [mumbad-cycle] 孟巴德循环
+    [napd-multiplayer] NAPD 多人
+    [ntscape-navigator-alt-arts] Ntscape Navigator 异画
+    [old-hollywood] 老莱坞
+    [opening-moves] 起手开局
+    [order-and-chaos] 秩序与混沌
+    [parhelion] 幻日
+    [plural-and-miniplural-alt-arts] Plural and MiniPlural 异画
+    [previous-versions] 先前版本
+    [quorum] 共商出路
+    [rebellion-without-rehearsal] 即兴叛乱
+    [red-sand-cycle] 红砂循环
+    [reign-and-reverie] 统治与幻想
+    [revised-core-set] 修订版核心系列
+    [salsette-island] 撒尔塞特
+    [salvaged-memories] 唤醒回忆
+    [sansan-cycle] 圣加州循环
+    [second-thoughts] 深思熟虑
+    [signed-championship-2020] 签名版冠军2020
+    [sovereign-sight] 主权之光
+    [spin-cycle] 扭曲真相循环
+    [station-one] 一号车站
+    [system-core-2019] 系统核心2019
+    [system-gateway] 核心网关
+    [system-update-2021] 系统革新2021
+    [terminal-directive-campaign] 终极指令战役
+    [terminal-directive-cards] 终极指令卡牌
+    [terminal-directive-cycle] 终极指令循环
+    [the-automata-initiative] 自动机倡议
+    [the-devil-and-the-dragon] 恶魔与龙
+    [the-liberated-mind] 自由心智
+    [the-source] 代码之源
+    [the-spaces-between] 往来之隙
+    [the-underway] 暗底区
+    [the-universe-of-tomorrow] 未来域
+    [the-valley] 生科谷
+    [trace-amount] 重重追踪
+    [true-colors] 真实面目
+    [unreleased] 未发布
+    [up-and-over] 攀越之路
+    [uprising] 起义
+    [uprising-booster-pack] 起义推广包
+    [upstalk] 上行之夜
+    [what-lies-ahead] 前途未卜
+    [whispers-in-nalubaale] 纳鲁巴勒低语
+    [world-champion-2015] 世界冠军2015
+    [world-champion-2016] 世界冠军2016
+    [world-champion-2017] 世界冠军2017
+    *[unknown] undefined
+}
 
 settings_alt-art = 异画卡
 settings_always = 总是
-settings_apex-bg = 尖峰
-settings_api-keys = undefined
+settings_api-keys = API密钥
 settings_avatar = 头像
 settings_background = 游戏背景
-settings_bespoke-sounds-header = 卡牌特定声音
 settings_block = 屏蔽
 settings_blocked = 黑名单
 settings_cancel = 取消
@@ -711,7 +746,6 @@ settings_comp-only = 仅竞技厅
 settings_connection = undefined
 settings_create-api-key = 创建API密钥
 settings_current-email = 旧邮箱
-settings_custom-bg = 自定义背景
 settings_deck-stats = 牌组统计
 settings_delete-api-key = 删除
 settings_desired-email = 新邮箱
@@ -723,15 +757,12 @@ settings_email-title = 更换电子邮件地址
 settings_enable-game-sounds = 开启游戏内音效
 settings_enable-lobby-sounds = 开启大厅内音效
 settings_enter-valid = 请输入合法的电子邮件地址
-settings_ffg = undefined
-settings_find-the-truth-bg = 找出真相
-settings_freelancer-bg = 自由职业者
+settings_ffg = FFG
 settings_game-stats = 对战胜负统计
 settings_get-log-top = 获取当前日志框顶部坐标
 settings_get-log-width = 获取当前日志框宽度
 settings_ghost-trojans = 对于被负载的程序显示鬼影
 settings_high-res = 启用高分辨率卡牌图像
-settings_input-url-below = （在下方输入URL）
 settings_invalid-email = 没有使用该邮箱地址的账号
 settings_invalid-password = 用户名或密码无效
 settings_language = 语言
@@ -741,16 +772,12 @@ settings_log-player-highlight-none = 无
 settings_log-player-highlight-red-blue = 公司：蓝色 / 潜袭者：红色
 settings_log-size = 日志栏尺寸
 settings_log-timestamps = undefined
-settings_monochrome-bg = 纯黑
-settings_mushin-no-shin-bg = 无心之心
 settings_none = 关闭
-settings_nsg = undefined
+settings_nsg = NSG
 settings_pin-zoom = 在屏幕上保持缩放卡牌
 settings_player-stats-icons = 使用图标显示玩家统计
 settings_pronouns = 代词
-settings_push-your-luck-bg = 豪赌一把
 settings_reset = 将所有卡牌重设为原始卡面
-settings_rumor-mill-bg = 谣言工厂
 settings_runner-classic = 经典jnet布局（自上而下：程序、硬件、资源）
 settings_runner-layout = 潜袭者布局（公司视角）
 settings_runner-reverse = 反转布局（自上而下：资源、硬件、程序）
@@ -760,24 +787,44 @@ settings_show-alt = 显示异画卡
 settings_sides-overlap = 潜袭者和公司面板可以重叠
 settings_sounds = 音效
 settings_stacked-cards = 默认启用服务器堆叠
-settings_the-root-bg = 根基
 settings_toggle-log-timestamps = undefined
-settings_traffic-jam-bg = 交通阻塞
 settings_update = 更换
 settings_update-profile = 保存设置
 settings_updated = 设置已保存——请刷新页面
 settings_updating = 设置保存中……
 settings_user-name = 用户名
 settings_volume = 音量
-settings_worlds2020-bg = 世界2020
-settings_bespoke-sounds_archer = 射手
-settings_bespoke-sounds_end-of-the-line = 穷途末路
-settings_bespoke-sounds_harmonics = 和声组合（海洋怪声，回声，脉动，波动）
 
-side_all = 全部
-side_any-side = 任意阵营
-side_corp = 公司
-side_runner = 潜袭者
+settings_bg = {$slug ->
+    [apex-bg] 尖峰
+    [custom-bg] 自定义背景
+    [find-the-truth-bg] 找出真相
+    [freelancer-bg] 自由职业者
+    [monochrome-bg] 纯黑
+    [mushin-no-shin-bg] 无心之心
+    [push-your-luck-bg] 豪赌一把
+    [rumor-mill-bg] 谣言工厂
+    [the-root-bg] 根基
+    [traffic-jam-bg] 交通阻塞
+    [worlds2020-bg] 世界2020
+    *[unknown] undefined
+}
+
+settings_bespoke-sounds = {$sound ->
+    [bespoke-sounds-header] 卡牌特定声音
+    [archer] 射手
+    [end-of-the-line] 穷途末路
+    [harmonics] 和声组合（海洋怪声，回声，脉动，波动）
+    *[unknown] undefined
+}
+
+side_name = {$side ->
+    [all] 全部
+    [any-side] 任意阵营
+    [corp] 公司
+    [runner] 潜袭者
+    *[unknown] undefined
+}
 
 stats_all-games = 显示所有记录
 stats_cards-accessed = 读取卡牌数量
@@ -796,12 +843,13 @@ stats_damage-done = 造成伤害量
 stats_download = 下载录像
 stats_ended = 结束时间
 stats_events-played = 事件打出数量
-stats_filtered = （过滤后）
 stats_format = 赛制
 stats_game-stats = 胜负统计
+stats_game-title = {$title} ({$cnt} 个回合)
 stats_launch = 播放录像
 stats_lobby = 大厅
-stats_log-count = (fn [[cnt]] (str cnt "条记录"))
+stats_log-count = {$cnt} 条记录
+stats_log-count-filtered = {$cnt} 条记录（过滤后）
 stats_lost = 败北
 stats_no-games = 没有对战记录
 stats_no-log = 无日志信息
@@ -813,6 +861,7 @@ stats_psi-game-total-bid-1 = 灵能赌博：出价1次数
 stats_psi-game-total-bid-2 = 灵能赌博：出价2次数
 stats_psi-game-total-wins = 灵能赌博：胜利次数
 stats_rashida-count = 拉什达次数
+stats_replay-shared = undefined
 stats_runner-stats = 潜袭者统计
 stats_runs-made = 潜袭次数
 stats_share = 分享录像
@@ -820,7 +869,6 @@ stats_shared-games = 只显示已分享的录像
 stats_shuffle-count = 洗牌次数
 stats_started = 开始
 stats_tags-gained = 获得锁定标记数量
-stats_turn-count = (fn [[cnt]] (str cnt "个回合"))
 stats_unavailable = 未保存录像
 stats_unique-accesses = 读取独有卡牌数量
 stats_view-games = 返回统计界面

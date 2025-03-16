@@ -91,13 +91,10 @@
 (comment
   (do
     (println "these should be empty")
-    (missing-translations "fr" "ko" "ja" "pl" "pt" "ru")
+    (missing-translations "fr" "ko" "ja" "pl" "pt" "ru" "zh-simp")
     (newline)
     (println "these need to be worked on")
-    (missing-translations "zh-simp"
-                          #_"la-pig"
-                          )
-    ))
+    (missing-translations "la-pig")))
 
 (defn get-value
   [message]
