@@ -194,13 +194,15 @@
    :spectatorhands
    :started
    :timer
-   :title])
+   :title
+   :old])
 
 (defn lobby-summary
   "Strips private server information from a game map, preparing to send the game to clients."
   ([lobby] (lobby-summary lobby nil))
   ([lobby participating?]
    (-> lobby
+       (assoc :old (> (count (or (:messages lobby) [])) 10)) 
        (update :password boolean)
        (update :players #(prepare-players lobby %))
        (update :spectators #(prepare-players lobby %))
@@ -234,13 +236,13 @@
       lobbies)))
 
 (defn categorize-lobby
-  "Identifies if `lobby` is: open, started-allowing spectators, or started-not allowing spectators"
+  "Categorizes the lobby into one of the following categoris:
+  open-recent, open-old, started-allowing-spectators, or started-no-spectators"
   [lobby]
-  (if (not (:started lobby))
-    :open
-    (if (:allow-spectator lobby)
-      :allowing-spectators
-      :no-spectators)))
+  (cond
+    (not (:started lobby)) (if (:old lobby) :open-old :open-recent)
+    (:allow-spectator lobby) :allowing-spectators
+    :else :no-spectators))
 
 (defn sorted-lobbies
   "Sorts `lobbies` into a list with opened games on top, and other games below.
@@ -249,8 +251,8 @@
   (let [grouped-lobbies (group-by #(categorize-lobby %)
                                   (->> (map lobby-summary lobbies)
                                        (sort-by :date)))
-        {:keys [open allowing-spectators no-spectators]} grouped-lobbies]
-    (concat open (reverse allowing-spectators) (reverse no-spectators))))
+        {:keys [open-recent open-old allowing-spectators no-spectators]} grouped-lobbies]
+    (concat open-recent open-old (reverse allowing-spectators) (reverse no-spectators))))
 
 (defn prepare-lobby-list
   [lobbies users]
