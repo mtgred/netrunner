@@ -3236,7 +3236,8 @@
                                 (strength-pump (->c :credit 1 {:stealth 1}) 7 :end-of-encounter)]}))
 
 (defcard "Takobi"
-  {:events [{:event :subroutines-broken
+  {:special {:auto-place-counter :always}
+   :events [{:event :subroutines-broken
              :optional {:req (req (:all-subs-broken target))
                         :prompt (msg "Place 1 power counter on " (:title card) "?")
                         :autoresolve (get-autoresolve :auto-place-counter)

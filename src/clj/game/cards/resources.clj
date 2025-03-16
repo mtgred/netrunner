@@ -860,6 +860,7 @@
              :interactive (req true)
              :optional {:prompt "Place 1 virus counter?"
                         :req (req (has-subtype? (:card context) "Virus"))
+                        :waiting-prompt true
                         :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability {:msg (msg "place 1 virus counter on " (card-str state (:card context)))
                                       :async true
@@ -1536,23 +1537,12 @@
                                  (effect-completed state side eid)))}]}))
 
 (defcard "Find the Truth"
-  {:implementation "Corporation can click Find the Truth for explicit card reveals"
-   :events [{:event :post-runner-draw
+  {:events [{:event :post-runner-draw
              :msg (msg "reveal that they drew "
                        (enumerate-str (map :title runner-currently-drawing)))
              :async true
              :effect (req (let [current-draws runner-currently-drawing]
-                            (reveal state side eid current-draws)
-                            ;; If the corp wants explicit reveals from FTT, then show a prompt with
-                            ;; the card names in it
-                            (when  (= (get-in (get-card state card) [:special :explicit-reveal])
-                                      :yes)
-                              (continue-ability
-                               state :corp
-                               {:prompt (msg "The runner reveals that they drew "
-                                             (enumerate-str (map :title current-draws)))
-                                :choices ["OK"]}
-                               card nil))))}
+                            (reveal state side eid current-draws)))}
             {:event :successful-run
              :interactive (get-autoresolve :auto-peek (complement never?))
              :silent (get-autoresolve :auto-peek never?)
@@ -1563,15 +1553,7 @@
                         :yes-ability {:prompt (req (->> corp :deck first :title (str "The top card of R&D is ")))
                                       :msg "look at the top card of R&D"
                                       :choices ["OK"]}}}]
-   :abilities [(set-autoresolve :auto-peek "Find the Truth looking at the top card of R&D")]
-   :corp-abilities [{:label "Explicitly reveal drawn cards"
-                     :prompt "Explicitly reveal cards the Runner draws?"
-                     :choices ["Yes" "No"]
-                     :effect (effect (update! (assoc-in card [:special :explicit-reveal](keyword (str/lower-case target))))
-                                     (toast (str "From now on, " (:title card) " will "
-                                                 (when (= target "No") "Not")
-                                                 "explicitly reveal cards the Runner draws")
-                                            "info"))}]})
+   :abilities [(set-autoresolve :auto-peek "Find the Truth looking at the top card of R&D")]})
 
 (defcard "First Responders"
   {:abilities [{:cost [(->c :credit 2)]
@@ -1961,7 +1943,8 @@
                                 (effect-completed state side eid))))}]})
 
 (defcard "Kasi String"
-  {:events [{:event :run-ends
+  {:special {:auto-place-counter :always}
+   :events [{:event :run-ends
              :optional
              {:req (req (and (first-event? state :runner :run-ends #(is-remote? (:server (first %))))
                              (not (:did-steal target))
@@ -2254,7 +2237,8 @@
                   {:prompt (req (->> runner :deck first :title (str "The top card of the stack is ")))
                    :msg "look at the top card of the stack"
                    :choices ["OK"]}}}]
-    {:flags {:runner-turn-draw true
+    {:special {:auto-fire :always}
+     :flags {:runner-turn-draw true
              :runner-phase-12 (req (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner)))}
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability (set-autoresolve :auto-fire "Motivation")]}))
@@ -2522,15 +2506,20 @@
               (assoc ability :event :runner-spent-credits)]}))
 
 (defcard "PAD Tap"
-  {:events [{:event :corp-credit-gain
-             :req (req (and (not= (:action context) :corp-click-credit)
-                            (= 1 (->> (turn-events state :corp :corp-credit-gain)
-                                      (remove (fn [[context]]
-                                                (= (:action context) :corp-click-credit)))
-                                      count))))
-             :msg "gain 1 [Credits]"
-             :async true
-             :effect (effect (gain-credits :runner eid 1))}]
+  {:special {:auto-fire :always}
+   :events [{:event :corp-credit-gain
+             :optional {:prompt "Gain 1 [Credit]?"
+                        :req (req (and (not= (:action context) :corp-click-credit)
+                                       (= 1 (->> (turn-events state :corp :corp-credit-gain)
+                                                 (remove (fn [[context]]
+                                                           (= (:action context) :corp-click-credit)))
+                                                 count))))
+                        :waiting-prompt true
+                        :autoresolve (get-autoresolve :auto-fire)
+                        :yes-ability {:msg "gain 1 [Credits]"
+                                      :async true
+                                      :effect (effect (gain-credits :runner eid 1))}}}]
+   :abilities [(set-autoresolve :auto-fire "PAD Tap")]
    :corp-abilities [{:action true
                      :label "Trash PAD Tap"
                      :async true
@@ -2785,7 +2774,8 @@
                                        (draw state side eid 1)))}]})
 
 (defcard "Psych Mike"
-  {:events [{:event :run-ends
+  {:special {:auto-fire :always}
+   :events [{:event :run-ends
              :optional {:req (req (and (= :rd (target-server context))
                                        (first-successful-run-on-server? state :rd)
                                        (pos? (total-cards-accessed target :deck))))
@@ -3636,8 +3626,10 @@
 (defcard "The Twinning"
   {:events [{:event :spent-credits-from-card
              :req (req (let [valid-ctx? (fn [[{:keys [card] :as ctx}]] (and (runner? card)
-                                                                           (installed? card)))]
-                         (and (valid-ctx? [context]) (first-event? state side :spent-credits-from-card valid-ctx?))))
+                                                                            (installed? card)))]
+                         (and (some #(valid-ctx? [%]) targets)
+                              (first-event? state side :spent-credits-from-card valid-ctx?))))
+             :once-per-instance true
              :async true
              :msg "place a power counter on itself"
              :effect (req (add-counter state :runner eid card :power 1 {:placed true}))}

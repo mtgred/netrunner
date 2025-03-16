@@ -8373,7 +8373,6 @@
         (run-continue state)
         (card-ability state :runner corr 0)
         (click-prompt state :runner "End the run")
-        (click-prompt state :runner "Yes")
         (run-continue state)
         (is (= 1 (get-counters (refresh tako) :power)) "Counter gained from breaking all subs"))))
 
