@@ -430,14 +430,6 @@ ingame-settings_sort-archives = Sort Archives
 ingame-settings_sort-heap = Sort Heap
 ingame-settings_stack-cards = Stack cards
 
-lobby_type = {$type ->
-    [angel-arena] Angel Arena
-    [casual] Casual
-    [competitive] Competitive
-    [tournament] Tournament
-    *[unknown] Unknown lobby type
-}
-
 lobby_aborted = Connection aborted
 lobby_api-access = Allow API access to game information
 lobby_api-access-details = This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings.
@@ -518,6 +510,14 @@ lobby_title-error = Please fill a game title.
 lobby_too-little-data = Too little data
 lobby_waiting = Waiting players deck selection
 lobby_watch = Watch
+
+lobby_type = {$type ->
+    [angel-arena] Angel Arena
+    [casual] Casual
+    [competitive] Competitive
+    [tournament] Tournament
+    *[unknown] Unknown lobby type
+}
 
 lobby_gateway-format = {$format ->
     [beginner] Beginner

@@ -32,24 +32,31 @@ card-browser_trash-cost = Ashtray ostcay
 card-browser_type = Etypay
 card-browser_update-failure = Ailedfay otay Updateyay Artyay
 card-browser_update-success = Updatedyay Artyay
-card-browser_sort-by_cost = Ostcay
-card-browser_sort-by_faction = Actionfay
-card-browser_sort-by_influence = Influenceyay
-card-browser_sort-by_name = Amenay
-card-browser_sort-by_set-number = Etsay umbernay
-card-browser_sort-by_type = Etypay
 
-card-type_agenda = Agendayay
-card-type_all = Allyay
-card-type_asset = Assetyay
-card-type_event = Eventyay
-card-type_hardware = Ardwarehay
-card-type_ice = Iceyay
-card-type_identity = Identityay
-card-type_operation = Operationyay
-card-type_program = Ogrampray
-card-type_resource = Esourceray
-card-type_upgrade = Upgradeyay
+card-browser_sort-by = {$by ->
+    [cost] Ostcay
+    [faction] Actionfay
+    [influence] Influenceyay
+    [name] Amenay
+    [set-number] Etsay umbernay
+    [type] Etypay
+    *[unknown] undefined
+}
+
+card-type_name = {$type ->
+    [agenda] Agendayay
+    [all] Allyay
+    [asset] Assetyay
+    [event] Eventyay
+    [hardware] Ardwarehay
+    [ice] Iceyay
+    [identity] Identityay
+    [operation] Operationyay
+    [program] Ogrampray
+    [resource] Esourceray
+    [upgrade] Upgradeyay
+    *[unknown] undefined
+}
 
 chat_block = Ockblay Useryay
 chat_cancel = Ancelcay
@@ -68,14 +75,23 @@ deck-builder_add-to-deck = Addyay otay eckday
 deck-builder_agenda-points = Agendayay ointspay
 deck-builder_cancel = Ancelcay
 deck-builder_card-name = Ardcay amenay
-deck-builder_cards = ardscay
+deck-builder_card-count = ardscay
 deck-builder_clear-stats = Earclay Atsstay
 deck-builder_completed = Ompletedcay
 deck-builder_confirm-delete = Onfirmcay Eleteday
 deck-builder_copy = undefined
 deck-builder_create-game = Eatecray Amegay
 deck-builder_deck-copy-suffix = undefined
-deck-builder_deck-count = (fn [[cnt]] (str cnt (if (= 1 cnt) " Eckday" " Ecksday")))
+deck-builder_deck-count = {$cnt ->
+    [zero] Ohnay Ecksday
+    [one] {$cnt} Eckday
+    *[other] {$cnt} Ecksday
+}
+deck-builder_deck-count-filtered = {$cnt ->
+    [zero] Ohnay Ecksday (ilteredfay)
+    [one] {$cnt} Eckday (ilteredfay)
+    *[other] {$cnt} Ecksday (ilteredfay)
+}
 deck-builder_deck-name = Eckday Amenay
 deck-builder_deck-notes = Eckday otesnay
 deck-builder_deck-points = Eckday ointspay
@@ -83,7 +99,6 @@ deck-builder_decklist = Ecklistday
 deck-builder_decklist-inst = (Ypetay oryay astepay ayay ecklistday, ityay illway ebay arsedpay)
 deck-builder_delete = Eleteday
 deck-builder_edit = Edityay
-deck-builder_filtered = (ilteredfay)
 deck-builder_format = Ormatfay
 deck-builder_games = Amesgay
 deck-builder_hash = Ournamenttay ashhay
@@ -99,10 +114,10 @@ deck-builder_loading-msg = Oadinglay eckday ollectioncay...
 deck-builder_lost = Ostlay
 deck-builder_max = aximummay
 deck-builder_min = inimummay
+deck-builder_min-deck-size = Inimummay eckday izesay
 deck-builder_new-corp = Ewnay Orpcay eckday
 deck-builder_new-deck = undefined
 deck-builder_new-runner = Ewnay Unnerray eckday
-deck-builder_no-decks = Onay ecksday
 deck-builder_notes = Otesnay
 deck-builder_reset = Esetray
 deck-builder_save = Avesay
@@ -182,59 +197,87 @@ diagrams_turn_runner-discard-phase-d = undefined
 diagrams_turn_runner-discard-phase-e = undefined
 diagrams_turn_runner-turn = undefined
 
-faction_adam = Adamyay
-faction_all = Allyay
-faction_anarch = Anarchyay
-faction_any-faction = Anyay Actionfay
-faction_apex = Apexyay
-faction_criminal = Iminalcrimay
-faction_haas-bioroid = Aashay-Ioroidbay
-faction_jinteki = Intekijay
-faction_nbn = NBNYAY
-faction_neutral = Eutralnay
-faction_shaper = Apershay
-faction_sunny-lebeau = Unnsay Ebeaulay
-faction_weyland-consortium = Eylandway Onsortiumcay
+faction_name = {$faction ->
+    [adam] Adamyay
+    [all] Allyay
+    [anarch] Anarchyay
+    [any-faction] Anyay Actionfay
+    [apex] Apexyay
+    [criminal] Iminalcrimay
+    [haas-bioroid] Aashay-Ioroidbay
+    [jinteki] Intekijay
+    [nbn] NBNYAY
+    [neutral] Eutralnay
+    [shaper] Apershay
+    [sunny-lebeau] Unnsay Ebeaulay
+    [weyland-consortium] Eylandway Onsortiumcay
+    *[unknown] undefined
+}
 
-format_all = Allyay
-format_any-format = Anyay Ormatfay
-format_casual = Asualcay
-format_classic = Assicclay
-format_core-experience = Orecay Experienceyay
-format_eternal = Eternalyay
-format_neo = Neoyay
-format_preconstructed = undefined
-format_snapshot = Apshotsnay
-format_snapshot-plus = Apshotsnay Usplay
-format_socr = SOCRYAY
-format_standard = Andardstay
-format_startup = Artupstay
-format_sunset = Sunset
-format_system-gateway = Emsystay Atewaygay
-format_throwback = undefined
+format_name = {$format ->
+    [all] Allyay
+    [any-format] Anyay Ormatfay
+    [casual] Asualcay
+    [classic] Assicclay
+    [core-experience] Orecay Experienceyay
+    [eternal] Eternalyay
+    [neo] Neoyay
+    [preconstructed] undefined
+    [snapshot] Apshotsnay
+    [snapshot-plus] Apshotsnay Usplay
+    [socr] SOCRYAY
+    [standard] Andardstay
+    [startup] Artupstay
+    [sunset] Sunset
+    [system-gateway] Emsystay Atewaygay
+    [throwback] undefined
+    *[unknown] undefined
+}
 
 game_abilities = Abilitiesyay
 game_actions = Actionsyay
-game_agenda-count = (fn [[agenda-point]] (str agenda-point " Agendayay Ointpay" (when (not= agenda-point 1) "s")))
-game_agenda-point-req = undefined
+game_agenda-count = {$agenda-point ->
+    [one] {$agenda-point} Agendayay Ointpay
+    *[other] {$agenda-point} Agendayay Ointspay
+}
+game_agenda-count-with-req = {$agenda-point ->
+    [one] {$agenda-point} Agendayay Ointpay ({$agenda-point-req} equiredray)
+    *[other] {$agenda-point} Agendayay Ointspay ({$agenda-point-req} equiredray)
+}
 game_approach-ice = Approachyay iceyay
-game_archives = Archivesyay
+game_archives = Archivesyay{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
 game_attempt-reconnect = undefined
 game_auto-pass = Autoyay-asspay ioritypriay
-game_bad-pub-count = (fn [[base additional]] (str base (when (pos? additional) (str " + " additional)) " Adbay Ublicitypay"))
+game_bad-pub-count = {$base} Adbay Ublicitypay
+game_bad-pub-count-additional = {$base} + {$additional} Adbay Ublicitypay
 game_beat-trace = undefined
 game_brain-damage = Ainbray Amageday
 game_breach-server = Eachbray erversay
 game_card = Ardcay
-game_card-count = (fn [[size]] (str size " ardcay" (when (not= 1 size) "s") "."))
-game_click-count = (fn [[click]] (str click " Ickclay" (if (not= click 1) "s" "")))
+game_card-count = {$size ->
+    [one] {$size} ardcay
+    *[other] {$size} ardscay
+}
+game_click-count = {$click ->
+    [one] {$size} Ickclay
+    *[other] {$size} Icksclay
+}
 game_close = Oseclay
 game_close-shuffle = Osecla & Uffleshay
 game_concede = Oncedecay
 game_continue = Ontinuecay
 game_continue-to = Ontinuecay otay
 game_corp-view = Orpcay Iewvay
-game_credit-count = (fn [[credit run-credit]] (str credit " Editcray" (if (not= credit 1) "s" "") (when (pos? run-credit) (str " (" run-credit " orfay unray)"))))
+game_credit-count = {$credit ->
+    [one] Editcray
+    *[other] Editscray
+
+}
+game_credit-count-with-run-credits = {$credit ->
+    [one] Editcray ({$run-credit} orfay unray)
+    *[other] Editscray ({$run-credit} orfay unray)
+
+} 
 game_credits = editscray
 game_current = Urrentcay
 game_current-phase = Urrentcay asephay
@@ -242,7 +285,7 @@ game_draw = Awdray
 game_encounter-ice = Encounteryay iceyay
 game_end-turn = Endyay Urntay
 game_error = undefined
-game_face-down-count = (fn [[total face-up]] (str total " ardscay, " (- total face-up) " acefay-ownday."))
+game_face-down-count = {$total} ardscay, {$facedown} acefay-ownday.
 game_fire-unbroken = Irefay unbrokenyay ubroutinessay
 game_gain-credit = Aingay Editcray
 game_game-start = Amegay Artstay
@@ -300,8 +343,12 @@ game_stop-auto-pass = Opstay autoyay-assingpay ioritypray
 game_subs = Ubroutinessay
 game_success = Uccesssay
 game_tag-count = (fn [[base additional total]] (str base (when (pos? additional) (str " + " additional)) " Agtay" (if (not= total 1) "s" "")))
+game_tag-count-additional = {$additional ->
+    [one] {$base} + {$additional} Agtay
+    *[others] {$base} + {$additional} Agtays
+}
 game_take-clicks = Aketay Icksclay
-game_time-taken = (fn [[t]] (str "Imetay akentay: " t " inutesmay"))
+game_time-taken = Imetay akentay: {$time} inutesmay
 game_timeout-soon = undefined
 game_trace = Acetray
 game_trash-like-cards = undefined
@@ -310,34 +357,36 @@ game_unbeatable = undefined
 game_unimplemented = Unimplementedyay
 game_unknown-phase = Unknownyay asephay
 game_unmute = Unmuteyay ectatorsspay
-game_up-down-count = (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
-game_win-claimed = (fn [[turn]] (str "insway ybay laimcay onyay urntay " turn))
-game_win-conceded = (fn [[turn]] (str "insway ybay oncessionay onyay urntay " turn))
-game_win-decked = (fn [[turn]] (str "insway ueday otay ethay Orpcay eingbay eckedday onyay urntay " turn))
-game_win-flatlined = (fn [[turn]] (str "insway ybay atlineflay onyay urntay " turn))
-game_win-other = (fn [[turn reason]] (str "insway ybay " reason " onyay urntay " turn))
-game_win-points = (fn [[turn]] (str "insway ybay oringcay agendayay ointspay onyay urntay " turn))
+game_win-claimed = {$winner} ({$side}) insway ybay laimcay onyay urntay {$turn}
+game_win-conceded = {$winner} ({$side}) insway ybay oncessionay onyay urntay {$turn}
+game_win-decked = {$winner} ({$side}) insway ueday otay ethay Orpcay eingbay eckedday onyay urntay {$turn}
+game_win-flatlined = {$winner} ({$side}) insway ybay atlineflay onyay urntay {$turn}
+game_win-other = {$winner} ({$side}) insway ybay {$reason} onyay urntay {$turn}
+game_win-points = {$winner} ({$side}) insway ybay oringcay agendayay ointspay onyay urntay {$turn}
 
-game-prompt_advance = undefined
-game-prompt_archives = undefined
-game-prompt_derez = undefined
-game-prompt_expend = undefined
-game-prompt_hq = undefined
-game-prompt_new-remote = undefined
-game-prompt_r-d = undefined
-game-prompt_rez = undefined
-game-prompt_score = undefined
-game-prompt_server-1 = undefined
-game-prompt_server-10 = undefined
-game-prompt_server-2 = undefined
-game-prompt_server-3 = undefined
-game-prompt_server-4 = undefined
-game-prompt_server-5 = undefined
-game-prompt_server-6 = undefined
-game-prompt_server-7 = undefined
-game-prompt_server-8 = undefined
-game-prompt_server-9 = undefined
-game-prompt_trash = undefined
+game_prompt = {$msg ->
+    [advance] advanceyay
+    [archives] Archivesyay
+    [derez] erezday
+    [expend] Expendyay
+    [hq] HQYAY
+    [new-remote] Ewnay Emoteray
+    [r-d] R&DYAY
+    [rez] ezray
+    [score] orescay
+    [server-1] Erversay 1
+    [server-10] Erversay 10
+    [server-2] Erversay 2
+    [server-3] Erversay 3
+    [server-4] Erversay 4
+    [server-5] Erversay 5
+    [server-6] Erversay 6
+    [server-7] Erversay 7
+    [server-8] Erversay 8
+    [server-9] Erversay 9
+    [trash] ashtray
+    *[unknown] undefined
+}
 
 ingame-settings_alt-art = undefined
 ingame-settings_board-overlap = undefined
@@ -354,6 +403,7 @@ ingame-settings_high-res = undefined
 ingame-settings_label-faceup-cards = undefined
 ingame-settings_label-unrezzed-cards = undefined
 ingame-settings_log-timestamps = undefined
+ingame-settings_log-timestamps-toggle = undefined
 ingame-settings_pass-on-rez = undefined
 ingame-settings_preview-zoom = undefined
 ingame-settings_runner-board-order = undefined
@@ -365,10 +415,8 @@ ingame-settings_sides-overlap = undefined
 ingame-settings_sort-archives = undefined
 ingame-settings_sort-heap = undefined
 ingame-settings_stack-cards = undefined
-ingame-settings_toggle-log-timestamps = undefined
 
 lobby_aborted = Onnectioncay abortedyay
-lobby_angel-arena = undefined
 lobby_api-access = undefined
 lobby_api-access-details = undefined
 lobby_api-requires-key = undefined
@@ -376,10 +424,8 @@ lobby_as-corp = undefined
 lobby_as-runner = undefined
 lobby_both-perspective = undefined
 lobby_cancel = Ancelcay
-lobby_casual = Asualcay
 lobby_chat = Atchay
 lobby_closed-msg = Amegay obbylay osedclay ueday otay inactivityay
-lobby_competitive = Ompetitivecay
 lobby_completion-rate = Amegay Ompletioncay Ateray
 lobby_corp-perspective = undefined
 lobby_create = Eatecray
@@ -387,9 +433,15 @@ lobby_deck-selected = Eckday electedsay
 lobby_default-game-format = undefined
 lobby_delete = Eleteday Amegay
 lobby_filter = undefined
-lobby_filtered = undefined
 lobby_format = Ormatfay
-lobby_game-count = undefined
+lobby_game-count = {$cnt ->
+    [one] {$cnt} Amegay
+    *[other] {$cnt} Amesgay
+}
+lobby_game-count-filtered = {$cnt ->
+    [one] {$cnt} Amegay (ilteredfay)
+    *[other] {$cnt} Amesgay (ilteredfay)
+}
 lobby_hidden = Akemay ayersplay iddenhay informationyay isiblevay otay ectatorsspay
 lobby_hidden-details = undefined
 lobby_hidden-password = undefined
@@ -439,16 +491,27 @@ lobby_timer-length = undefined
 lobby_title = Itletay
 lobby_title-error = Easeplay illfay ayay amegay itletay.
 lobby_too-little-data = Ootay ittlelay ataday
-lobby_tournament = Ournamenttay
 lobby_waiting = Aitingway ayersplay eckday electionsay
 lobby_watch = Atchway
-lobby_gateway-format_beginner = undefined
-lobby_gateway-format_beginner-info = undefined
-lobby_gateway-format_beginner-ul = undefined
-lobby_gateway-format_constructed = undefined
-lobby_gateway-format_intermediate = undefined
-lobby_gateway-format_intermediate-info = undefined
-lobby_gateway-format_intermediate-ul = undefined
+
+lobby_type = {$type ->
+    [angel-arena] Angelyay Arenayay
+    [casual] Asualcay
+    [competitive] Ompetitivecay
+    [tournament] Ournamenttay
+    *[unknown] undefined
+}
+
+lobby_gateway-format = {$format ->
+    [beginner] eginnerbay
+    [beginner-info] Isthay obbylay isyay usingyay ethay emsystay atewaygay eginnerbay ecksday orfay ethay orporationcay andyay unnerray . esethay ecksday areyay ecommendedray orfay ouryay irstfay amesgay . amesgay areyay ayedplay otay 6 agendayay ointspay.
+    [beginner-ul] Emsystay atewaygay - eginnerbay eachingtay decks
+    [constructed] Onstructedcay
+    [intermediate] Intermediateyay
+    [intermediate-info] Isthay obbylay isyay usingyay ethay emsystay atewaygay intermediateyay ecksday orfay ethay orporationcay andyay unnerray. esethay ecksday avehay ightlyslay oremay angeray anthay ethay eginnerbay ecksday. amesgay areyay ayedplay otay 7 agendayay ointspay.
+    [intermediate-ul] Emsystay atewaygay - intermediateyay eachingtay decks
+    *[unknown] undefined
+}
 
 log_annotating = undefined
 log_game-log = undefined
@@ -458,11 +521,11 @@ log_settings = undefined
 log_shared = undefined
 log_turn-timing = undefined
 
-menu_admin = :la-pig.nav/admin
+menu_admin = {nav_admin}
 menu_donor = Onorday
 menu_logout = Ackjay outyay
 menu_moderator = Oderatormay
-menu_settings = :la-pig.nav/settings
+menu_settings = {nav_settings}
 
 missing = :la-pig missing text
 
@@ -472,7 +535,10 @@ nav_cards = Ardscay
 nav_chat = Atchay
 nav_deck-builder = Eckday Uilderbay
 nav_features = Eaturesfay
-nav_game-count = (fn [[cnt]] (str cnt (if (= 1 cnt) " Amegay" " Amesgay")))
+nav_game-count = {$cnt ->
+    [one] {$cnt} Amegay
+    *[other] {$cnt} Amesgay
+}
 nav_help = Elphay
 nav_play = Ayplay
 nav_settings = Ettingssay
@@ -566,137 +632,140 @@ preconstructed_worlds-2023-b-tag = undefined
 preconstructed_worlds-2023-b-ul = undefined
 preconstructed_worlds-2023-info = undefined
 
-pronouns_any = Anyay
-pronouns_blank = [ankblay]
-pronouns_ey = Eyay/emay
-pronouns_faefaer = undefined
-pronouns_he = Ehay/imhay
-pronouns_heit = undefined
-pronouns_heshe = undefined
-pronouns_hethey = Ehay/eythay
-pronouns_it = Ityay
-pronouns_myodb = Eferpray otnay otay aysay
-pronouns_ne = Enay/emnay
-pronouns_none = Unspecifiedyay
-pronouns_she = Eshay/erhay
-pronouns_sheit = undefined
-pronouns_shethey = Eshay/eythay
-pronouns_they = Eythay/emthay
-pronouns_ve = Evay/ervay
-pronouns_xe = Exay/emxay
-pronouns_xi = undefined
-pronouns_zehir = Ezay/irhay
-pronouns_zezir = Ezay/irzay
+pronouns = {$pronoun ->
+    [any] Anyay
+    [blank] [ankblay]
+    [ey] Eyay/emay
+    [faefaer] undefined
+    [he] Ehay/imhay
+    [heit] undefined
+    [heshe] undefined
+    [hethey] Ehay/eythay
+    [it] Ityay
+    [myodb] Eferpray otnay otay aysay
+    [ne] Enay/emnay
+    *[none] Unspecifiedyay
+    [she] Eshay/erhay
+    [sheit] undefined
+    [shethey] Eshay/eythay
+    [they] Eythay/emthay
+    [ve] Evay/ervay
+    [xe] Exay/emxay
+    [xi] undefined
+    [zehir] Ezay/irhay
+    [zezir] Ezay/irzay
+}
 
-set_23-seconds = undefined
-set_a-study-in-static = undefined
-set_all = undefined
-set_all-that-remains = undefined
-set_alt-art = undefined
-set_alternate = undefined
-set_ashes-cycle = undefined
-set_blood-and-water = undefined
-set_blood-money = undefined
-set_borealis-cycle = undefined
-set_breaker-bay = undefined
-set_business-first = undefined
-set_championship-2019 = undefined
-set_championship-2020 = undefined
-set_chrome-city = undefined
-set_core-set = undefined
-set_council-of-the-crest = undefined
-set_creation-and-control = undefined
-set_crimson-dust = undefined
-set_cyber-exodus = undefined
-set_daedalus-complex = undefined
-set_data-and-destiny = undefined
-set_democracy-and-dogma = undefined
-set_double-time = undefined
-set_down-the-white-nile = undefined
-set_downfall = undefined
-set_draft = undefined
-set_draft-cycle = undefined
-set_earth-s-scion = undefined
-set_escalation = undefined
-set_fear-and-loathing = undefined
-set_fear-the-masses = undefined
-set_first-contact = undefined
-set_flashpoint-cycle = undefined
-set_free-mars = undefined
-set_future-proof = undefined
-set_genesis-cycle = undefined
-set_gnk-2019 = undefined
-set_honor-and-profit = undefined
-set_humanity-s-shadow = undefined
-set_intervention = undefined
-set_kala-ghoda = undefined
-set_kampala-ascendent = undefined
-set_kitara-cycle = undefined
-set_kysra-alt-arts = undefined
-set_liberation-cycle = undefined
-set_lunar-cycle = undefined
-set_magnum-opus = undefined
-set_magnum-opus-reprint = undefined
-set_mala-tempora = undefined
-set_martial-law = undefined
-set_midnight-sun = undefined
-set_midnight-sun-booster-pack = undefined
-set_mumbad-cycle = undefined
-set_napd-multiplayer = undefined
-set_ntscape-navigator-alt-arts = undefined
-set_old-hollywood = undefined
-set_opening-moves = undefined
-set_order-and-chaos = undefined
-set_parhelion = undefined
-set_plural-and-miniplural-alt-arts = undefined
-set_previous-versions = undefined
-set_quorum = undefined
-set_rebellion-without-rehearsal = undefined
-set_red-sand-cycle = undefined
-set_reign-and-reverie = undefined
-set_revised-core-set = undefined
-set_salsette-island = undefined
-set_salvaged-memories = undefined
-set_sansan-cycle = undefined
-set_second-thoughts = undefined
-set_signed-championship-2020 = undefined
-set_sovereign-sight = undefined
-set_spin-cycle = undefined
-set_station-one = undefined
-set_system-core-2019 = undefined
-set_system-gateway = undefined
-set_system-update-2021 = undefined
-set_terminal-directive-campaign = undefined
-set_terminal-directive-cards = undefined
-set_terminal-directive-cycle = undefined
-set_the-automata-initiative = undefined
-set_the-devil-and-the-dragon = undefined
-set_the-liberated-mind = undefined
-set_the-source = undefined
-set_the-spaces-between = undefined
-set_the-underway = undefined
-set_the-universe-of-tomorrow = undefined
-set_the-valley = undefined
-set_trace-amount = undefined
-set_true-colors = undefined
-set_unreleased = undefined
-set_up-and-over = undefined
-set_uprising = undefined
-set_uprising-booster-pack = undefined
-set_upstalk = undefined
-set_what-lies-ahead = undefined
-set_whispers-in-nalubaale = undefined
-set_world-champion-2015 = undefined
-set_world-champion-2016 = undefined
-set_world-champion-2017 = undefined
+set_name = {$name ->
+    [a23-seconds] undefined
+    [a-study-in-static] undefined
+    [all] undefined
+    [all-that-remains] undefined
+    [alt-art] undefined
+    [alternate] undefined
+    [ashes-cycle] undefined
+    [blood-and-water] undefined
+    [blood-money] undefined
+    [borealis-cycle] undefined
+    [breaker-bay] undefined
+    [business-first] undefined
+    [championship-2019] undefined
+    [championship-2020] undefined
+    [chrome-city] undefined
+    [core-set] undefined
+    [council-of-the-crest] undefined
+    [creation-and-control] undefined
+    [crimson-dust] undefined
+    [cyber-exodus] undefined
+    [daedalus-complex] undefined
+    [data-and-destiny] undefined
+    [democracy-and-dogma] undefined
+    [double-time] undefined
+    [down-the-white-nile] undefined
+    [downfall] undefined
+    [draft] undefined
+    [draft-cycle] undefined
+    [earth-s-scion] undefined
+    [escalation] undefined
+    [fear-and-loathing] undefined
+    [fear-the-masses] undefined
+    [first-contact] undefined
+    [flashpoint-cycle] undefined
+    [free-mars] undefined
+    [future-proof] undefined
+    [genesis-cycle] undefined
+    [gnk-2019] undefined
+    [honor-and-profit] undefined
+    [humanity-s-shadow] undefined
+    [intervention] undefined
+    [kala-ghoda] undefined
+    [kampala-ascendent] undefined
+    [kitara-cycle] undefined
+    [kysra-alt-arts] undefined
+    [liberation-cycle] undefined
+    [lunar-cycle] undefined
+    [magnum-opus] undefined
+    [magnum-opus-reprint] undefined
+    [mala-tempora] undefined
+    [martial-law] undefined
+    [midnight-sun] undefined
+    [midnight-sun-booster-pack] undefined
+    [mumbad-cycle] undefined
+    [napd-multiplayer] undefined
+    [ntscape-navigator-alt-arts] undefined
+    [old-hollywood] undefined
+    [opening-moves] undefined
+    [order-and-chaos] undefined
+    [parhelion] undefined
+    [plural-and-miniplural-alt-arts] undefined
+    [previous-versions] undefined
+    [quorum] undefined
+    [rebellion-without-rehearsal] undefined
+    [red-sand-cycle] undefined
+    [reign-and-reverie] undefined
+    [revised-core-set] undefined
+    [salsette-island] undefined
+    [salvaged-memories] undefined
+    [sansan-cycle] undefined
+    [second-thoughts] undefined
+    [signed-championship-2020] undefined
+    [sovereign-sight] undefined
+    [spin-cycle] undefined
+    [station-one] undefined
+    [system-core-2019] undefined
+    [system-gateway] undefined
+    [system-update-2021] undefined
+    [terminal-directive-campaign] undefined
+    [terminal-directive-cards] undefined
+    [terminal-directive-cycle] undefined
+    [the-automata-initiative] undefined
+    [the-devil-and-the-dragon] undefined
+    [the-liberated-mind] undefined
+    [the-source] undefined
+    [the-spaces-between] undefined
+    [the-underway] undefined
+    [the-universe-of-tomorrow] undefined
+    [the-valley] undefined
+    [trace-amount] undefined
+    [true-colors] undefined
+    [unreleased] undefined
+    [up-and-over] undefined
+    [uprising] undefined
+    [uprising-booster-pack] undefined
+    [upstalk] undefined
+    [what-lies-ahead] undefined
+    [whispers-in-nalubaale] undefined
+    [world-champion-2015] undefined
+    [world-champion-2016] undefined
+    [world-champion-2017] undefined
+    *[unknown] undefined
+}
 
 settings_alt-art = Altyay artsyay
 settings_always = Alwaysyay
-settings_apex-bg = undefined
 settings_api-keys = APIYAY Eyskay
 settings_avatar = Avataryay
 settings_background = Amegay oardbay ackgroundbay
-settings_bespoke-sounds-header = undefined
 settings_block = Ockblay useryay
 settings_blocked = Ockedblay usersyay
 settings_cancel = Ancelcay
@@ -711,7 +780,6 @@ settings_comp-only = Ompetitivecay Obbylay Onlyay
 settings_connection = undefined
 settings_create-api-key = Eatecray APIYAY Eykay
 settings_current-email = Urrentcay emailyay
-settings_custom-bg = undefined
 settings_deck-stats = Eckday atisticsstay
 settings_delete-api-key = Eleteday
 settings_desired-email = Esiredday emailyay
@@ -724,14 +792,11 @@ settings_enable-game-sounds = Enableyay amegay oundssay
 settings_enable-lobby-sounds = Enableyay obbylay oundssay
 settings_enter-valid = Easeplay enteryay ayay alidvay emailyay addressyay
 settings_ffg = FFGYAY
-settings_find-the-truth-bg = undefined
-settings_freelancer-bg = undefined
 settings_game-stats = Amegay Inway/Oselay atisticsstay
 settings_get-log-top = Etgay urrentcay oglay optay
 settings_get-log-width = Etgay urrentcay oglay idthway
 settings_ghost-trojans = undefined
 settings_high-res = Enabley ighhay-esolutionray ardcay imagesyay
-settings_input-url-below = undefined
 settings_invalid-email = Onay accountyay ithway atthay emailyay addressyay existsyay
 settings_invalid-password = Nvalidiay oginlay oryay asswordpay
 settings_language = Anguagelay
@@ -741,16 +806,12 @@ settings_log-player-highlight-none = undefined
 settings_log-player-highlight-red-blue = undefined
 settings_log-size = undefined
 settings_log-timestamps = undefined
-settings_monochrome-bg = undefined
-settings_mushin-no-shin-bg = undefined
 settings_none = Onenay
 settings_nsg = NSGYAY
 settings_pin-zoom = undefined
 settings_player-stats-icons = undefined
 settings_pronouns = Onounspray
-settings_push-your-luck-bg = undefined
 settings_reset = Esetray Allyay otay Officialyay Artyay
-settings_rumor-mill-bg = undefined
 settings_runner-classic = Unnerray igray ayoutlay isyay assicclay etjnay (Optay otay ottombay: Ogramspr, Ardwarehay, Esourcesray)
 settings_runner-layout = Unnerray ayoutlay omfray Orpcay erspectivepray
 settings_runner-reverse = Unnerray iray ayoutlay isyay eversedray (Optay otay ottombay: Esourcesray, Ardwarehay, Ogramspray)
@@ -760,24 +821,43 @@ settings_show-alt = Owshay alternateyay ardcay artsyay
 settings_sides-overlap = undefined
 settings_sounds = Oundssay
 settings_stacked-cards = Ardcay ackingstay (onyay ybyay efaultday)
-settings_the-root-bg = undefined
 settings_toggle-log-timestamps = undefined
-settings_traffic-jam-bg = undefined
 settings_update = Updateyay
 settings_update-profile = Updateyay Ofilepray
 settings_updated = Ofilepray updatedyay - Leasepay efreshray ouryay owserbray
 settings_updating = Updatingyay ofilepray...
 settings_user-name = Useryay amenay
 settings_volume = Olumevay
-settings_worlds2020-bg = undefined
-settings_bespoke-sounds_archer = undefined
-settings_bespoke-sounds_end-of-the-line = undefined
-settings_bespoke-sounds_harmonics = undefined
 
-side_all = Allyay
-side_any-side = Anyay Idesay
-side_corp = Orpcay
-side_runner = Unnerray
+settings_bg = {$slug ->
+    [apex-bg] Apex
+    [custom-with-url] Ustomcay GBay (inputyay URLyay elowbay)
+    [find-the-truth-bg] Indfay Ethay Uthtray
+    [freelancer-bg] Eelancerfray
+    [monochrome-bg] Onochromay
+    [mushin-no-shin-bg] Ushinmay Onay Inshay
+    [push-your-luck-bg] Ushpay Ouryay Ucklay
+    [rumor-mill-bg] Umoray Illmay
+    [the-root-bg] Ethay Ootray
+    [traffic-jam-bg] Affictray Amjay
+    *[worlds2020-bg] Orldsway 2020
+}
+
+settings_bespoke-sounds = {$sound ->
+    [archer] Archeryay
+    [end-of-the-line] Endyay ofyf ethay Inelay
+    [harmonics] Armonicshay Uitesay (Oopblay, Echoyay, Ulsepay, Aveway)
+    [header] Ardcay-Cificspay Oundssay
+    *[unknown] Unknownyay espokebay oundssay ({$sound})
+}
+
+side_name = {$side ->
+    [all] Allyay
+    [any-side] Anyay Idesay
+    [corp] Orpcay
+    [runner] Unnerray
+    *[unknown] undefined
+}
 
 stats_all-games = Owshay allyay amesgay
 stats_cards-accessed = Ardscay Accessedyay
@@ -796,12 +876,22 @@ stats_damage-done = Amageday Oneday
 stats_download = Ownloadday eplayray
 stats_ended = Endedyay
 stats_events-played = undefined
-stats_filtered = (ilteredfay)
 stats_format = Ormatfay
 stats_game-stats = Amegay Atsstay
+stats_game-title = {$title} ({$cnt ->
+    [one] {$cnt} urntay
+    *[other] {$cnt} urnstay
+})
 stats_launch = Aunchlay Eplayray
 stats_lobby = Obbylay
-stats_log-count = (fn [[cnt]] (str cnt " Oglay" (when (not= cnt 1) "s")))
+stats_log-count = {$cnt ->
+    [one] {$cnt} Oglay
+    *[other] {$cnt} Ogslay
+}
+stats_log-count-filtered = {$cnt ->
+    [one] {$cnt} Oglay
+    *[other] {$cnt} Ogslay
+} (ilteredfay)
 stats_lost = Ostlay
 stats_no-games = Onay amesgay
 stats_no-log = Onay oglay availableyay
@@ -813,6 +903,7 @@ stats_psi-game-total-bid-1 = undefined
 stats_psi-game-total-bid-2 = undefined
 stats_psi-game-total-wins = undefined
 stats_rashida-count = undefined
+stats_replay-shared = Eeplayray aredshay
 stats_runner-stats = Unnerray Atsstay
 stats_runs-made = Unsray Ademay
 stats_share = Areshay eplayray
@@ -820,7 +911,6 @@ stats_shared-games = Onlyay owshay aredshay
 stats_shuffle-count = undefined
 stats_started = Artedstay
 stats_tags-gained = Agstay Ainedgay
-stats_turn-count = (fn [[cnt]] (str cnt " urntay" (when (not= cnt 1) "s")))
 stats_unavailable = Eplayray unavailableyay
 stats_unique-accesses = undefined
 stats_view-games = Eturnray otay atsstay eenscray
