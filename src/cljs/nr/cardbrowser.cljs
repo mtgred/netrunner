@@ -336,7 +336,7 @@
      (when-let [agenda-point (:agendapoints card)]
        [:div.heading [tr [:card-browser_agenda-points "Agenda points"]] ": " agenda-point])
      (when-let [min-deck-size (:minimumdecksize card)]
-       [:div.heading [tr [:card-browser_min-deck "Minimum deck size"]] ": " min-deck-size])
+       [:div.heading [tr [:card-browser_min-deck-size "Minimum deck size"]] ": " min-deck-size])
      (when-let [influence-limit (:influencelimit card)]
        [:div.heading [tr [:card-browser_inf-limit "Influence limit"]] ": " influence-limit])
 

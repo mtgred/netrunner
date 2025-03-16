@@ -19,7 +19,7 @@ card-browser_implementation-note = undefined
 card-browser_inf-limit = Предел влияния
 card-browser_influence = Влияние
 card-browser_memory = Память
-card-browser_min-deck = Минимальный размер колоды
+card-browser_min-deck-size = Минимальный размер колоды
 card-browser_more-info = Больше информации
 card-browser_search-hint = Искать карты
 card-browser_select-art = Выбрать изображение
@@ -32,24 +32,31 @@ card-browser_trash-cost = Цена сноса
 card-browser_type = Тип
 card-browser_update-failure = Ошибка обновления изображения
 card-browser_update-success = Изображение обновлено
-card-browser_sort-by_cost = Цена
-card-browser_sort-by_faction = Фракция
-card-browser_sort-by_influence = Влияние
-card-browser_sort-by_name = Название
-card-browser_sort-by_set-number = Номер в наборе
-card-browser_sort-by_type = Тип
 
-card-type_agenda = Проект
-card-type_all = Все
-card-type_asset = Актив
-card-type_event = Событие
-card-type_hardware = Устройство
-card-type_ice = Лёд
-card-type_identity = Роль
-card-type_operation = Операция
-card-type_program = Программа
-card-type_resource = Ресурс
-card-type_upgrade = Улучшение
+card-browser_sort-by = {$by ->
+    [cost] Цена
+    [faction] Фракция
+    [influence] Влияние
+    [name] Название
+    [set-number] Номер в наборе
+    [type] Тип
+    *[unknown] undefined
+}
+
+card-type_name = {$type ->
+    [agenda] Проект
+    [all] Все
+    [asset] Актив
+    [event] Событие
+    [hardware] Устройство
+    [ice] Лёд
+    [identity] Роль
+    [operation] Операция
+    [program] Программа
+    [resource] Ресурс
+    [upgrade] Улучшение
+    *[unknown] undefined
+}
 
 chat_block = Заблокировать пользователя
 chat_cancel = Отмена
@@ -57,7 +64,7 @@ chat_channels = Каналы
 chat_delete = Удалить сообщение
 chat_delete-all = Удалить все сообщения пользователя
 chat_length-exceeded = Превышена длина
-chat_message-blocked = (fn [[reason-str]] (str "Сообщение заблокировано" (when reason-str (str ": " reason-str))))
+chat_message-blocked = Сообщение заблокировано: {$reason-str}
 chat_placeholder = Напишите что-нибудь...
 chat_rate-exceeded = Превышена частота
 chat_send = Отправить
@@ -68,14 +75,32 @@ deck-builder_add-to-deck = Добавить в колоду
 deck-builder_agenda-points = Победные очки
 deck-builder_cancel = Отмена
 deck-builder_card-name = Название карты
-deck-builder_cards = карты
+deck-builder_card-count = {$cnt ->
+    *[one] {$cnt} карты
+    [few] {$cnt} карты
+    [many] {$cnt} карты
+    [other] {$cnt} карты
+}
 deck-builder_clear-stats = Сбросить статистику
 deck-builder_completed = Зав.
 deck-builder_confirm-delete = Подтвердить удаление
 deck-builder_copy = Скопировать
 deck-builder_create-game = Создать игру
 deck-builder_deck-copy-suffix = копия
-deck-builder_deck-count = (ru-quant "колод" "колода" "колоды")
+deck-builder_deck-count = {$cnt ->
+    [zero] Нет колод
+    *[one] {$cnt} колода
+    [few] {$cnt} колоды
+    [many] {$cnt} колод
+    [other] {$cnt} колод
+}
+deck-builder_deck-count-filtered = {$cnt ->
+    [zero] Нет колод (Фильтр)
+    *[one] {$cnt} колода (Фильтр)
+    [few] {$cnt} колоды (Фильтр)
+    [many] {$cnt} колод (Фильтр)
+    [other] {$cnt} колод (Фильтр)
+}
 deck-builder_deck-name = Название колоды
 deck-builder_deck-notes = Примечания
 deck-builder_deck-points = Очки колоды
@@ -83,7 +108,6 @@ deck-builder_decklist = Список карт
 deck-builder_decklist-inst = (Напишите или вставьте список карт, он будет распознан)
 deck-builder_delete = Удалить
 deck-builder_edit = Изменить
-deck-builder_filtered = (filtered)
 deck-builder_format = Формат
 deck-builder_games = Игр
 deck-builder_hash = Турнирный хеш
@@ -99,10 +123,10 @@ deck-builder_loading-msg = Загрузка коллекции колод...
 deck-builder_lost = Пор.
 deck-builder_max = максимум
 deck-builder_min = минимум
+deck-builder_min-deck-size = Минимальный размер колоды
 deck-builder_new-corp = Создать Корпу
 deck-builder_new-deck = Новая колода
 deck-builder_new-runner = Создать Бегущего
-deck-builder_no-decks = Нет колод
 deck-builder_notes = Примечания
 deck-builder_reset = Сброс
 deck-builder_save = Сохранить
@@ -182,59 +206,107 @@ diagrams_turn_runner-discard-phase-d = Ход Бегущего формальн�
 diagrams_turn_runner-discard-phase-e = Перейдите к ходу Корпорации
 diagrams_turn_runner-turn = Ход Бегущего
 
-faction_adam = Адам
-faction_all = Все
-faction_anarch = Анарх
-faction_any-faction = Все фракции
-faction_apex = Апекс
-faction_criminal = Криминал
-faction_haas-bioroid = Хаас-Биороид
-faction_jinteki = Джинтеки
-faction_nbn = undefined
-faction_neutral = Нейтральные
-faction_shaper = Шейпер
-faction_sunny-lebeau = Санни Лебо
-faction_weyland-consortium = Консорциум Вейланда
+faction_name = {$faction ->
+    [adam] Адам
+    [all] Все
+    [anarch] Анарх
+    [any-faction] Все фракции
+    [apex] Апекс
+    [criminal] Криминал
+    [haas-bioroid] Хаас-Биороид
+    [jinteki] Джинтеки
+    [nbn] undefined
+    [neutral] Нейтральные
+    [shaper] Шейпер
+    [sunny-lebeau] Санни Лебо
+    [weyland-consortium] Консорциум Вейланда
+    *[unknown] undefined
+}
 
-format_all = Все
-format_any-format = Любой формат
-format_casual = Свободный
-format_classic = Классический
-format_core-experience = undefined
-format_eternal = Вечный
-format_neo = Нео
-format_preconstructed = Чемпионский
-format_snapshot = undefined
-format_snapshot-plus = undefined
-format_socr = undefined
-format_standard = Стандарт
-format_startup = Стартап
-format_sunset = Закат
-format_system-gateway = Врата Системы
-format_throwback = undefined
+format_name = {$format ->
+    [all] Все
+    [any-format] Любой формат
+    [casual] Свободный
+    [classic] Классический
+    [core-experience] undefined
+    [eternal] Вечный
+    [neo] Нео
+    [preconstructed] Чемпионский
+    [snapshot] undefined
+    [snapshot-plus] undefined
+    [socr] undefined
+    [standard] Стандарт
+    [startup] Стартап
+    [sunset] Закат
+    [system-gateway] Врата Системы
+    [throwback] undefined
+    *[unknown] undefined
+}
 
 game_abilities = Способности
 game_actions = Действия
-game_agenda-count = (ru-quant "победных очков" "победное очко" "победных очка")
-game_agenda-point-req = undefined
+game_agenda-count = {$cnt ->
+    *[one] {$cnt} победное очко
+    [few] {$cnt} победных очка
+    [many] {$cnt} победных очков
+    [other] {$cnt} победных очков
+}
+game_agenda-count-with-req = undefined
 game_approach-ice = Приближение ко льду
-game_archives = Архивы
+game_archives = Архивы{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
 game_attempt-reconnect = Переподключиться
 game_auto-pass = Автопередача приоритета
-game_bad-pub-count = (let [bp-quant (ru-quant "плохих репутаций" "плохая репутация" "плохих репутации")] (fn [[base additional]] (str (bp-quant [base]) (when (pos? additional) (str " + " additional)))))
+game_bad-pub-count = {$cnt ->
+    *[one] {$cnt} плохая репутация
+    [few] {$cnt} плохих репутации
+    [many] {$cnt} плохих репутаций
+    [other] {$cnt} плохих репутаций
+}
+game_bad-pub-count-additional = {$cnt ->
+    *[one] {$cnt} плохая репутация + {$additional}
+    [few] {$cnt} плохих репутации + {$additional}
+    [many] {$cnt} плохих репутаций + {$additional}
+    [other] {$cnt} плохих репутаций + {$additional}
+}
 game_beat-trace = Перебить слежку
-game_brain-damage = (ru-quant "критических уронов" "критический урон" "критического урона")
+game_brain-damage = {$cnt ->
+    *[one] {$cnt} критический урон
+    [few] {$cnt} критического урона
+    [many] {$cnt} критических уронов
+    [other] {$cnt} критических уронов
+}
 game_breach-server = Взломать сервер
 game_card = Карта
-game_card-count = (ru-quant "карт" "карта" "карты")
-game_click-count = (ru-quant "кликов" "клик" "клика")
+game_card-count = {$cnt ->
+    *[one] {$cnt} карта
+    [few] {$cnt} карты
+    [many] {$cnt} карт
+    [other] {$cnt} карт
+}
+game_click-count = {$cnt ->
+    *[one] {$cnt} клик
+    [few] {$cnt} клика
+    [many] {$cnt} кликов
+    [other] {$cnt} кликов
+}
 game_close = Закрыть
 game_close-shuffle = Закрыть и перемешать
 game_concede = Сдаться
 game_continue = Продолжить
 game_continue-to = Продолжить к фазе:
 game_corp-view = Перспектива Корпорации
-game_credit-count = (let [credit-quant (ru-quant "кредитов" "кредит" "кредита")] (fn [[credit run-credit]] (str (credit-quant [credit]) (when (pos? run-credit) (str " (" run-credit " для забега)")))))
+game_credit-count = {$cnt ->
+    *[one] {$cnt} кредит
+    [few] {$cnt} кредита
+    [many] {$cnt} кредитов
+    [other] {$cnt} кредитов
+}
+game_credit-count-with-run-credits = {$cnt ->
+    *[one] {$cnt} кредит ({$run-credit} для забега)
+    [few] {$cnt} кредита ({$run-credit} для забега)
+    [many] {$cnt} кредитов ({$run-credit} для забега)
+    [other] {$cnt} кредитов ({$run-credit} для забега)
+}
 game_credits = кредитов
 game_current = Течение
 game_current-phase = Текущая фаза
@@ -242,7 +314,12 @@ game_draw = Взять карту
 game_encounter-ice = Встреча со льдом
 game_end-turn = Закончить ход
 game_error = Внутренняя ошибка сервера. Пожалуйста, напишите /bug в чат и следуйте инструкциям.
-game_face-down-count = (let [facedown-quant (ru-quant "карт" "карта" "карты")] (fn [[total face-up]] (str (facedown-quant [total]) ", " (- total face-up) " лицом вниз.")))
+game_face-down-count = {$cnt ->
+    *[one] {$cnt} карта, {$facedown} лицом вниз
+    [few] {$cnt} карты, {$facedown} лицом вниз
+    [many] {$cnt} карт, {$facedown} лицом вниз
+    [other] {$cnt} карт, {$facedown} лицом вниз
+}
 game_fire-unbroken = Выполнить несломанные подпрограммы
 game_gain-credit = Получить кредит
 game_game-start = Начало игры
@@ -264,7 +341,7 @@ game_mandatory-draw = Карта за начало хода
 game_max-hand = Макс. размер руки
 game_minutes = м:
 game_movement = Движение
-game_mu-count = (fn [[unused available]] (str unused " из " available " свободных ЯП"))
+game_mu-count = {$unused} из {$available} свободных ЯП
 game_mulligan = Пересдать
 game_mute = Выключить сообщения зрителей
 game_no-current-run = Нет активного забега
@@ -290,18 +367,34 @@ game_set-aside = Отложить в сторону
 game_show = Показать
 game_show-decklists = undefined
 game_shuffle = Перемешать
-game_spec-count = (ru-quant "зрителей" "зритель" "зрителя")
+game_spec-count = {$cnt ->
+    *[one] {$cnt} зритель
+    [few] {$cnt} зрителя
+    [many] {$cnt} зрителей
+    [other] {$cnt} зрителей
+}
 game_spec-view = Перспектива зрителя
-game_special-mu-count = (fn [[unused available mu-type]] (str unused " из " available " " mu-type " свободных ЯП"))
+game_special-mu-count = {$unused} из {$available} {$mu-type} свободных ЯП
 game_stack = Стек
 game_start = Начать игру
 game_start-turn = Начать ход
 game_stop-auto-pass = Прекратить автопередачу приоритета
 game_subs = Подпрограммы
 game_success = Успех
-game_tag-count = (let [tag-quant (ru-quant "меток" "метка" "метки")] (fn [[base additional]] (str (tag-quant [base]) (when (pos? additional) (str " + " additional)))))
+game_tag-count = {$cnt ->
+    *[one] {$cnt} метка
+    [few] {$cnt} метки
+    [many] {$cnt} меток
+    [other] {$cnt} меток
+}
+game_tag-count-additional = {$cnt ->
+    *[one] {$cnt} метка + {$additional}
+    [few] {$cnt} метки + {$additional}
+    [many] {$cnt} меток + {$additional}
+    [other] {$cnt} меток + {$additional}
+}
 game_take-clicks = Получить клики
-game_time-taken = (fn [[t]] (str "Затраченное время: " t " минут"))
+game_time-taken = Затраченное время: {$time} минут
 game_timeout-soon = undefined
 game_trace = Отследить
 game_trash-like-cards = undefined
@@ -310,34 +403,37 @@ game_unbeatable = Сделать неперебиваемой
 game_unimplemented = Не реализовано
 game_unknown-phase = Неизвестная фаза
 game_unmute = Включить сообщения зрителей
-game_up-down-count = (fn [[total face-up]] (str face-up "↑ " (- total face-up) "↓"))
-game_win-claimed = (fn [[turn]] (str "объявляет победу на  " turn " ходу"))
-game_win-conceded = (fn [[turn]] (str "побеждает. Соперник сдался на " turn " ходу"))
-game_win-decked = (fn [[turn]] (str "побеждает. Соперник не смог взять карту из R&D на " turn " ходу"))
-game_win-flatlined = (fn [[turn]] (str "побеждает. Соперник получил флетлайн на " turn " ходу"))
-game_win-other = (fn [[turn reason]] (str "побеждает из-за " reason " на " turn " ходу"))
-game_win-points = (fn [[turn]] (str "побеждает, засчитав победные очки на " turn " ходу"))
 
-game-prompt_advance = продвинуть
-game-prompt_archives = Архивы
-game-prompt_derez = свернуть
-game-prompt_expend = Израсходовать
-game-prompt_hq = undefined
-game-prompt_new-remote = Новый сервер
-game-prompt_r-d = undefined
-game-prompt_rez = развернуть
-game-prompt_score = засчитать
-game-prompt_server-1 = Сервер 1
-game-prompt_server-10 = Сервер 10
-game-prompt_server-2 = Сервер 2
-game-prompt_server-3 = Сервер 3
-game-prompt_server-4 = Сервер 4
-game-prompt_server-5 = Сервер 5
-game-prompt_server-6 = Сервер 6
-game-prompt_server-7 = Сервер 7
-game-prompt_server-8 = Сервер 8
-game-prompt_server-9 = Сервер 9
-game-prompt_trash = снести
+game_win-claimed = {$winner} ({$side}) объявляет победу на  {$turn} ходу
+game_win-conceded = {$winner} ({$side}) побеждает. Соперник сдался на {$turn} ходу
+game_win-decked = {$winner} ({$side}) побеждает. Соперник не смог взять карту из R&D на {$turn} ходу
+game_win-flatlined = {$winner} ({$side}) побеждает. Соперник получил флетлайн на {$turn} ходу
+game_win-other = побеждает из-за {$reason} на {$turn} ходу
+game_win-points = {$winner} ({$side}) побеждает, засчитав победные очки на {$turn} ходу
+
+game_prompt = {$msg ->
+    [advance] продвинуть
+    [archives] Архивы
+    [derez] свернуть
+    [expend] Израсходовать
+    [hq] undefined
+    [new-remote] Новый сервер
+    [r-d] undefined
+    [rez] развернуть
+    [score] засчитать
+    [server-1] Сервер 1
+    [server-10] Сервер 10
+    [server-2] Сервер 2
+    [server-3] Сервер 3
+    [server-4] Сервер 4
+    [server-5] Сервер 5
+    [server-6] Сервер 6
+    [server-7] Сервер 7
+    [server-8] Сервер 8
+    [server-9] Сервер 9
+    [trash] снести
+    *[unknown] undefined
+}
 
 ingame-settings_alt-art = Альтернативные изображения
 ingame-settings_board-overlap = Пересечение столов
@@ -365,10 +461,9 @@ ingame-settings_sides-overlap = Карты Бегущего и Корпорац�
 ingame-settings_sort-archives = Отсортировать Архивы
 ingame-settings_sort-heap = Отсортировать Кучу
 ingame-settings_stack-cards = Складывать одинаковые карты вместе
-ingame-settings_toggle-log-timestamps = undefined
+ingame-settings_log-timestamps-toggle = undefined
 
 lobby_aborted = Соединение разорвано
-lobby_angel-arena = Арена Ангелов
 lobby_api-access = Разрешить доступ к данным игры через API
 lobby_api-access-details = Данная опция даёт доступ к информации о вашей игре расширенияим от сторонних разработчиков. Требует создание ключа API в Настройках.
 lobby_api-requires-key = (Требуется ключ API в Настройках)
@@ -376,10 +471,8 @@ lobby_as-corp = За Корпорацию
 lobby_as-runner = За Бегущего
 lobby_both-perspective = Перспектива обоих
 lobby_cancel = Отмена
-lobby_casual = Обычные
 lobby_chat = Чат
 lobby_closed-msg = Лобби закрыто из-за отсутствия активности
-lobby_competitive = Соревновательные
 lobby_completion-rate = Процент завершённых игр
 lobby_corp-perspective = Перспектива Корпорации
 lobby_create = Создать
@@ -387,9 +480,19 @@ lobby_deck-selected = Колода выбрана
 lobby_default-game-format = Формат по умолчанию
 lobby_delete = Удалить игру
 lobby_filter = Фильтр
-lobby_filtered = (с фильтром)
 lobby_format = Формат
-lobby_game-count = (ru-quant "игр" "игра" "игры")
+lobby_game-count = {$cnt ->
+    *[one] {$cnt} игра
+    [few] {$cnt} игры
+    [many] {$cnt} игр
+    [other] {$cnt} игр
+}
+lobby_game-count-filtered = {$cnt ->
+    *[one] {$cnt} игра (с фильтром)
+    [few] {$cnt} игры (с фильтром)
+    [many] {$cnt} игр (с фильтром)
+    [other] {$cnt} игр (с фильтром)
+}
 lobby_hidden = Раскрыть зрителям скрытую информацию
 lobby_hidden-details = Данная опция раскроет всю скрытую информацию обеих сторон для ВСЕХ зрителей вашей игры, в том числе руки и карты лицом вниз.
 lobby_hidden-password = Мы рекомендуем использовать пароль, чтобы посторонние не помешали вашей игре.
@@ -428,7 +531,12 @@ lobby_singleton-b = (синглтон)
 lobby_singleton-details = С данной опцией играть можно только колодами без повторяющихся карт. Рекомендуется использовать следующие карты ролей.
 lobby_singleton-example = 1) Nova Initiumia: Catalyst & Impetus 2) Ampere: Cybernetics For Anyone
 lobby_singleton-restriction = Данное лобби запущено в режиме "Синглтон". Играть можно только колодами без повторяющихся карт.
-lobby_spectator-count = (ru-quant "зрителей" "зритель" "зрителя")
+lobby_spectator-count = {$cnt ->
+    *[one] {$cnt} зритель
+    [few] {$cnt} зрителя
+    [many] {$cnt} зрителей
+    [other] {$cnt} зрителей
+}
 lobby_spectators = Допускать зрителей
 lobby_start = Начать
 lobby_start-replay = Запустить запись
@@ -439,16 +547,27 @@ lobby_timer-length = Продолжительность таймера (мину
 lobby_title = Название
 lobby_title-error = Пожалуйста, введите название игры.
 lobby_too-little-data = Слишком мало данных
-lobby_tournament = Турнирные
 lobby_waiting = Игроки выбирают колоды
 lobby_watch = Смотреть
-lobby_gateway-format_beginner = Новичок
-lobby_gateway-format_beginner-info = В этом лобби можно играть стартовыми колодами Корпорации и Бегущего из набора Врата Cистемы. С этих колод рекомендуется начинать знакомство с игрой. Игра ведётся до 6 победных очков.
-lobby_gateway-format_beginner-ul = Врата Системы - Стартовые обучающие колоды
-lobby_gateway-format_constructed = Свои колоды
-lobby_gateway-format_intermediate = Продвинутый
-lobby_gateway-format_intermediate-info = В этом лобби можно играть продвинутыми колодами Корпорации и Бегущего из набора Врата Cистемы. В этих колодах больше опций и механик, чем в стартовых. Игра ведётся до 7 победных очков.
-lobby_gateway-format_intermediate-ul = Врата Системы - Продвинутые обучающие колоды
+
+lobby_type = {$type ->
+    [angel-arena] Арена Ангелов
+    [casual] Обычные
+    [competitive] Соревновательные
+    [tournament] Турнирные
+    *[unknown] undefined
+}
+
+lobby_gateway-format = {$format ->
+    [beginner] Новичок
+    [beginner-info] В этом лобби можно играть стартовыми колодами Корпорации и Бегущего из набора Врата Cистемы. С этих колод рекомендуется начинать знакомство с игрой. Игра ведётся до 6 победных очков.
+    [beginner-ul] Врата Системы - Стартовые обучающие колоды
+    [constructed] Свои колоды
+    [intermediate] Продвинутый
+    [intermediate-info] В этом лобби можно играть продвинутыми колодами Корпорации и Бегущего из набора Врата Cистемы. В этих колодах больше опций и механик, чем в стартовых. Игра ведётся до 7 победных очков.
+    [intermediate-ul] Врата Системы - Продвинутые обучающие колоды
+    *[unknown] undefined
+}
 
 log_annotating = Аннотации
 log_game-log = Журнал
@@ -458,11 +577,11 @@ log_settings = Настройки
 log_shared = Опубликованные аннотации
 log_turn-timing = Фазы хода
 
-menu_admin = :ru.nav/admin
+menu_admin = { nav_admin }
 menu_donor = Спонсор
 menu_logout = Отключиться
 menu_moderator = Модератор
-menu_settings = :ru.nav/settings
+menu_settings = { nav_settings }
 
 missing = :ru missing text
 
@@ -472,7 +591,12 @@ nav_cards = Карты
 nav_chat = Чат
 nav_deck-builder = Колоды
 nav_features = Возможности
-nav_game-count = (ru-quant "игр" "игра" "игры")
+nav_game-count = {$cnt ->
+    *[one] {$cnt} игра
+    [few] {$cnt} игры
+    [many] {$cnt} игр
+    [other] {$cnt} игр
+}
 nav_help = Помощь
 nav_play = Играть
 nav_settings = Настройки
@@ -566,137 +690,140 @@ preconstructed_worlds-2023-b-tag = cableCarnage (К) против Уильяма
 preconstructed_worlds-2023-b-ul = ЧМ 2023: tableCarnage против You *do* always come back!
 preconstructed_worlds-2023-info = Во втором Чемпионате мира по Netrunner под крылом Null Signal Games приняли участие 254 игрока. Турнир проходил в Барселоне, Испания, и состоял из 9 раундов по швейцарской системе, переходящих в топ кат на 16 участников. Последний легальный набор: The Automata Initiative.
 
-pronouns_any = Любые
-pronouns_blank = [пусто]
-pronouns_ey = undefined
-pronouns_faefaer = undefined
-pronouns_he = Он/его
-pronouns_heit = undefined
-pronouns_heshe = undefined
-pronouns_hethey = Он/они
-pronouns_it = Оно
-pronouns_myodb = Не хочу указывать
-pronouns_ne = undefined
-pronouns_none = Не указаны
-pronouns_she = Она/её
-pronouns_sheit = undefined
-pronouns_shethey = Она/они
-pronouns_they = Они/их
-pronouns_ve = undefined
-pronouns_xe = undefined
-pronouns_xi = undefined
-pronouns_zehir = undefined
-pronouns_zezir = undefined
+pronouns = {$pronoun ->
+    [any] Любые
+    [blank] [пусто]
+    [ey] undefined
+    [faefaer] undefined
+    [he] Он/его
+    [heit] undefined
+    [heshe] undefined
+    [hethey] Он/они
+    [it] Оно
+    [myodb] Не хочу указывать
+    [ne] undefined
+    *[none] Не указаны
+    [she] Она/её
+    [sheit] undefined
+    [shethey] Она/они
+    [they] Они/их
+    [ve] undefined
+    [xe] undefined
+    [xi] undefined
+    [zehir] undefined
+    [zezir] undefined
+}
 
-set_23-seconds = 23 Seconds
-set_a-study-in-static = undefined
-set_all = Все
-set_all-that-remains = undefined
-set_alt-art = Альтернативные арты
-set_alternate = Альтернативные
-set_ashes-cycle = undefined
-set_blood-and-water = undefined
-set_blood-money = undefined
-set_borealis-cycle = undefined
-set_breaker-bay = undefined
-set_business-first = undefined
-set_championship-2019 = Championship 2019
-set_championship-2020 = Championship 2020
-set_chrome-city = undefined
-set_core-set = undefined
-set_council-of-the-crest = undefined
-set_creation-and-control = undefined
-set_crimson-dust = undefined
-set_cyber-exodus = undefined
-set_daedalus-complex = undefined
-set_data-and-destiny = undefined
-set_democracy-and-dogma = undefined
-set_double-time = undefined
-set_down-the-white-nile = undefined
-set_downfall = undefined
-set_draft = undefined
-set_draft-cycle = undefined
-set_earth-s-scion = undefined
-set_escalation = undefined
-set_fear-and-loathing = undefined
-set_fear-the-masses = undefined
-set_first-contact = undefined
-set_flashpoint-cycle = undefined
-set_free-mars = undefined
-set_future-proof = undefined
-set_genesis-cycle = undefined
-set_gnk-2019 = GNK 2019
-set_honor-and-profit = undefined
-set_humanity-s-shadow = undefined
-set_intervention = undefined
-set_kala-ghoda = undefined
-set_kampala-ascendent = undefined
-set_kitara-cycle = undefined
-set_kysra-alt-arts = Альт-арты от Kysra
-set_liberation-cycle = undefined
-set_lunar-cycle = undefined
-set_magnum-opus = undefined
-set_magnum-opus-reprint = undefined
-set_mala-tempora = undefined
-set_martial-law = undefined
-set_midnight-sun = undefined
-set_midnight-sun-booster-pack = undefined
-set_mumbad-cycle = undefined
-set_napd-multiplayer = undefined
-set_ntscape-navigator-alt-arts = Альт-арты от Ntscape Navigator
-set_old-hollywood = undefined
-set_opening-moves = undefined
-set_order-and-chaos = undefined
-set_parhelion = undefined
-set_plural-and-miniplural-alt-arts = Альт-арты от Plural и MiniPlural
-set_previous-versions = Предыдущие версии
-set_quorum = undefined
-set_rebellion-without-rehearsal = undefined
-set_red-sand-cycle = undefined
-set_reign-and-reverie = undefined
-set_revised-core-set = undefined
-set_salsette-island = undefined
-set_salvaged-memories = undefined
-set_sansan-cycle = undefined
-set_second-thoughts = undefined
-set_signed-championship-2020 = Signed Championship 2020
-set_sovereign-sight = undefined
-set_spin-cycle = undefined
-set_station-one = undefined
-set_system-core-2019 = System Core 2019
-set_system-gateway = Врата Системы
-set_system-update-2021 = Обновление Системы 2021
-set_terminal-directive-campaign = undefined
-set_terminal-directive-cards = undefined
-set_terminal-directive-cycle = undefined
-set_the-automata-initiative = undefined
-set_the-devil-and-the-dragon = undefined
-set_the-liberated-mind = undefined
-set_the-source = undefined
-set_the-spaces-between = undefined
-set_the-underway = undefined
-set_the-universe-of-tomorrow = undefined
-set_the-valley = undefined
-set_trace-amount = undefined
-set_true-colors = undefined
-set_unreleased = Не выпущенные
-set_up-and-over = undefined
-set_uprising = undefined
-set_uprising-booster-pack = undefined
-set_upstalk = undefined
-set_what-lies-ahead = undefined
-set_whispers-in-nalubaale = undefined
-set_world-champion-2015 = Чемпион мира 2015
-set_world-champion-2016 = Чемпион мира 2016
-set_world-champion-2017 = Чемпион мира 2017
+set_name = {$name ->
+    [a23-seconds] 23 Seconds
+    [a-study-in-static] undefined
+    [all] Все
+    [all-that-remains] undefined
+    [alt-art] Альтернативные арты
+    [alternate] Альтернативные
+    [ashes-cycle] undefined
+    [blood-and-water] undefined
+    [blood-money] undefined
+    [borealis-cycle] undefined
+    [breaker-bay] undefined
+    [business-first] undefined
+    [championship-2019] Championship 2019
+    [championship-2020] Championship 2020
+    [chrome-city] undefined
+    [core-set] undefined
+    [council-of-the-crest] undefined
+    [creation-and-control] undefined
+    [crimson-dust] undefined
+    [cyber-exodus] undefined
+    [daedalus-complex] undefined
+    [data-and-destiny] undefined
+    [democracy-and-dogma] undefined
+    [double-time] undefined
+    [down-the-white-nile] undefined
+    [downfall] undefined
+    [draft] undefined
+    [draft-cycle] undefined
+    [earth-s-scion] undefined
+    [escalation] undefined
+    [fear-and-loathing] undefined
+    [fear-the-masses] undefined
+    [first-contact] undefined
+    [flashpoint-cycle] undefined
+    [free-mars] undefined
+    [future-proof] undefined
+    [genesis-cycle] undefined
+    [gnk-2019] GNK 2019
+    [honor-and-profit] undefined
+    [humanity-s-shadow] undefined
+    [intervention] undefined
+    [kala-ghoda] undefined
+    [kampala-ascendent] undefined
+    [kitara-cycle] undefined
+    [kysra-alt-arts] Альт-арты от Kysra
+    [liberation-cycle] undefined
+    [lunar-cycle] undefined
+    [magnum-opus] undefined
+    [magnum-opus-reprint] undefined
+    [mala-tempora] undefined
+    [martial-law] undefined
+    [midnight-sun] undefined
+    [midnight-sun-booster-pack] undefined
+    [mumbad-cycle] undefined
+    [napd-multiplayer] undefined
+    [ntscape-navigator-alt-arts] Альт-арты от Ntscape Navigator
+    [old-hollywood] undefined
+    [opening-moves] undefined
+    [order-and-chaos] undefined
+    [parhelion] undefined
+    [plural-and-miniplural-alt-arts] Альт-арты от Plural и MiniPlural
+    [previous-versions] Предыдущие версии
+    [quorum] undefined
+    [rebellion-without-rehearsal] undefined
+    [red-sand-cycle] undefined
+    [reign-and-reverie] undefined
+    [revised-core-set] undefined
+    [salsette-island] undefined
+    [salvaged-memories] undefined
+    [sansan-cycle] undefined
+    [second-thoughts] undefined
+    [signed-championship-2020] Signed Championship 2020
+    [sovereign-sight] undefined
+    [spin-cycle] undefined
+    [station-one] undefined
+    [system-core-2019] System Core 2019
+    [system-gateway] Врата Системы
+    [system-update-2021] Обновление Системы 2021
+    [terminal-directive-campaign] undefined
+    [terminal-directive-cards] undefined
+    [terminal-directive-cycle] undefined
+    [the-automata-initiative] undefined
+    [the-devil-and-the-dragon] undefined
+    [the-liberated-mind] undefined
+    [the-source] undefined
+    [the-spaces-between] undefined
+    [the-underway] undefined
+    [the-universe-of-tomorrow] undefined
+    [the-valley] undefined
+    [trace-amount] undefined
+    [true-colors] undefined
+    [unreleased] Не выпущенные
+    [up-and-over] undefined
+    [uprising] undefined
+    [uprising-booster-pack] undefined
+    [upstalk] undefined
+    [what-lies-ahead] undefined
+    [whispers-in-nalubaale] undefined
+    [world-champion-2015] Чемпион мира 2015
+    [world-champion-2016] Чемпион мира 2016
+    [world-champion-2017] Чемпион мира 2017
+    *[unknown] undefined
+}
 
 settings_alt-art = Альтернативные изображения карт
 settings_always = Всегда
-settings_apex-bg = undefined
 settings_api-keys = Ключи API
 settings_avatar = Аватар
 settings_background = Фон игрового поля
-settings_bespoke-sounds-header = Звуки для отдельных карт
 settings_block = Заблокировать пользователя
 settings_blocked = Заблокированные пользователи
 settings_cancel = Отмена
@@ -711,7 +838,6 @@ settings_comp-only = Только в соревновательном лобби
 settings_connection = undefined
 settings_create-api-key = Создать ключ API
 settings_current-email = Текущий адрес
-settings_custom-bg = Индивидуальный фон
 settings_deck-stats = Учёт статистики колод
 settings_delete-api-key = Удалить
 settings_desired-email = Новый адрес
@@ -724,14 +850,11 @@ settings_enable-game-sounds = Включить звуки в игре
 settings_enable-lobby-sounds = Включить звуки в лобби
 settings_enter-valid = Пожалуйста, введите корректный адрес электронной почты
 settings_ffg = undefined
-settings_find-the-truth-bg = undefined
-settings_freelancer-bg = undefined
 settings_game-stats = Учёт статистики побед/поражений
 settings_get-log-top = Записать текущую высоту журнала
 settings_get-log-width = Записать текущую ширину журнала
 settings_ghost-trojans = Отображать бледные дубликаты программ-троянов, установленных на карты-носители
 settings_high-res = Включить загрузку изображений высокого разрешения
-settings_input-url-below = (вставьте ссылку ниже)
 settings_invalid-email = Учётной записи с таким адресом электронной почты не существует
 settings_invalid-password = Неправильный логин или пароль
 settings_language = Язык
@@ -741,16 +864,12 @@ settings_log-player-highlight-none = Не подсвечивать
 settings_log-player-highlight-red-blue = Корпорация: Синий / Бегущий: Красный
 settings_log-size = Размер журнала
 settings_log-timestamps = undefined
-settings_monochrome-bg = Монотонный
-settings_mushin-no-shin-bg = undefined
 settings_none = Не учитывать
 settings_nsg = undefined
 settings_pin-zoom = Оставлять последнюю увеличенную карту на экране
 settings_player-stats-icons = Использовать иконки в игровой статистике
 settings_pronouns = Местоимения
-settings_push-your-luck-bg = undefined
 settings_reset = Сбросить до официальных изображений
-settings_rumor-mill-bg = undefined
 settings_runner-classic = Классическая раскладка Бегущего (Сверху вниз: Программы, Устройства, Ресурсы)
 settings_runner-layout = Раскладка Бегущего при игре за Корпорацию
 settings_runner-reverse = Обратная раскладка Бегущего (Сверху вниз: Ресурсы, Устройства, Программы)
@@ -760,24 +879,36 @@ settings_show-alt = Показывать альтернативные изобр
 settings_sides-overlap = Карты Бегущего и Корпорации могут перекрывать друг друга
 settings_sounds = Звуки
 settings_stacked-cards = Складывать вместе одинаковые карты (по умолчанию включено)
-settings_the-root-bg = undefined
 settings_toggle-log-timestamps = undefined
-settings_traffic-jam-bg = undefined
 settings_update = Сохранить
 settings_update-profile = Сохранить настройки
 settings_updated = Настройки сохранены. Пожалуйста, перезагрузите страницу браузера
 settings_updating = Сохранение настроек...
 settings_user-name = Имя пользователя
 settings_volume = Громкость
-settings_worlds2020-bg = Чемпионат мира 2020
-settings_bespoke-sounds_archer = Лучник
-settings_bespoke-sounds_end-of-the-line = undefined
-settings_bespoke-sounds_harmonics = Гармонические льды (Bloop, Echo, Pulse, Wave)
 
-side_all = Все
-side_any-side = Обе стороны
-side_corp = Корпорация
-side_runner = Бегущий
+settings_bespoke-sounds = {$sound ->
+    [bespoke-sounds-header] Звуки для отдельных карт
+    [archer] Лучник
+    [end-of-the-line] undefined
+    [harmonics] Гармонические льды (Bloop, Echo, Pulse, Wave)
+    *[unknown] undefined
+}
+
+settings_bg = {$slug ->
+    [custom-bg] Индивидуальный фон
+    [monochrome-bg] Монотонный
+    [worlds2020-bg] Чемпионат мира 2020
+    *[unknown] undefined
+}
+
+side_name = {$side ->
+    [all] Все
+    [any-side] Обе стороны
+    [corp] Корпорация
+    [runner] Бегущий
+    *[unknown] undefined
+}
 
 stats_all-games = Показать все игры
 stats_cards-accessed = Карт в доступе
@@ -796,12 +927,28 @@ stats_damage-done = Нанесено урона
 stats_download = Скачать запись
 stats_ended = Закончено
 stats_events-played = Разыграно событий
-stats_filtered = (отфильтровано)
 stats_format = Формат
 stats_game-stats = Игровая статистика
+stats_game-title = {$title} ({$cnt ->
+    *[one] {$cnt} ход
+    [few] {$cnt} хода
+    [many] {$cnt} ходов
+    [other] {$cnt} ходов
+})
 stats_launch = Запустить запись
 stats_lobby = Лобби
-stats_log-count = (ru-quant "журналов" "журнал" "журнала")
+stats_log-count = {$cnt ->
+    *[one] {$cnt} журнал
+    [few] {$cnt} журнала
+    [many] {$cnt} журналов
+    [other] {$cnt} журналов
+}
+stats_log-count-filtered = {$cnt ->
+    *[one] {$cnt} журнал (отфильтровано)
+    [few] {$cnt} журнала (отфильтровано)
+    [many] {$cnt} журналов (отфильтровано)
+    [other] {$cnt} журналов (отфильтровано)
+}
 stats_lost = Проиграно
 stats_no-games = Нет игр
 stats_no-log = Журнал недоступен
@@ -813,6 +960,7 @@ stats_psi-game-total-bid-1 = Пси-игры: Ставка 1
 stats_psi-game-total-bid-2 = Пси-игры: Ставка 2
 stats_psi-game-total-wins = Пси-игры: Побед
 stats_rashida-count = Разыграно карт Rashida Jaheem
+stats_replay-shared = undefined
 stats_runner-stats = Статистика за Бегущего
 stats_runs-made = Совершено забегов
 stats_share = Поделиться записью
@@ -820,7 +968,6 @@ stats_shared-games = Показать игры с публичными запи�
 stats_shuffle-count = Перемешиваний колоды
 stats_started = Начато
 stats_tags-gained = Получено меток
-stats_turn-count = (ru-quant "ходов" "ход" "хода")
 stats_unavailable = Запись недоступна
 stats_unique-accesses = Уникальных карт в доступе
 stats_view-games = Вернуться к статистике
