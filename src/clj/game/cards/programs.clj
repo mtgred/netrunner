@@ -691,16 +691,16 @@
                    (strength-pump 3 3 :end-of-encounter {:cost-bonus discount-fn})]})))
 
 (defcard "Botulus"
-  (auto-icebreaker
-    (trojan
-      {:implementation "[Erratum] Program: Virus - Trojan"
-       :data {:counter {:virus 1}}
-       :events [{:event :runner-turn-begins
-                 :async true
-                 :effect (effect (add-counter eid card :virus 1 nil))}]
-       :abilities [(break-sub
-                     [(->c :virus 1)] 1 "All"
-                     {:req (req (same-card? current-ice (:host card)))})]})))
+  auto-icebreaker
+  trojan
+  {:implementation "[Erratum] Program: Virus - Trojan"
+   :data {:counter {:virus 1}}
+   :events [{:event :runner-turn-begins
+             :async true
+             :effect (effect (add-counter eid card :virus 1 nil))}]
+   :abilities [(break-sub
+                 [(->c :virus 1)] 1 "All"
+                {:req (req (same-card? current-ice (:host card)))})]})
 
 (defcard "Brahman"
   (auto-icebreaker {:abilities [(break-sub 1 2 "All")
@@ -1318,14 +1318,13 @@
                                 (strength-pump 3 2)]}))
 
 (defcard "Egret"
-  (trojan
-    {:rezzed true}
-    {:implementation "[Erratum] Program: Trojan"
-     :on-install {:msg (msg "make " (card-str state (:host card))
-                            " gain Barrier, Code Gate and Sentry subtypes")}
-     :static-abilities [{:type :gain-subtype
-                         :req (req (same-card? target (:host card)))
-                         :value ["Barrier" "Code Gate" "Sentry"]}]}))
+  (trojan {:rezzed true})
+  {:implementation "[Erratum] Program: Trojan"
+   :on-install {:msg (msg "make " (card-str state (:host card))
+                          " gain Barrier, Code Gate and Sentry subtypes")}
+   :static-abilities [{:type :gain-subtype
+                       :req (req (same-card? target (:host card)))
+                       :value ["Barrier" "Code Gate" "Sentry"]}]})
 
 (defcard "Endless Hunger"
   {:implementation "ETR restriction not implemented"
@@ -1353,13 +1352,13 @@
                                 (reveal state side topcard)
                                 (system-msg state :runner (str "reveals " topcard
                                                                " from the top of R&D"))
-                                (continue-ability state side (force-draw topcard) card nil))))}}}]
-    {:events [{:event :successful-run
-               :req (req (= :rd (target-server context)))
-               :async true
-               :interactive (req true)
-               :waiting-prompt true
-               :effect (effect (continue-ability rvl card nil))}]}))
+                                (continue-ability state side (force-draw topcard) card nil))))}}}])
+  {:events [{:event :successful-run
+             :req (req (= :rd (target-server context)))
+             :async true
+             :interactive (req true)
+             :waiting-prompt true
+             :effect (effect (continue-ability rvl card nil))}]})
 
 (defcard "Euler"
   (auto-icebreaker {:abilities [(break-sub 0 1 "Code Gate" {:req (req (= :this-turn (installed? card)))})
