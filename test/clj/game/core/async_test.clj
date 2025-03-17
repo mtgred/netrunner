@@ -26,7 +26,7 @@
 (def clojure-grammar
   (insta/parser
     "clojure  = form+
-    <form>      = <ws> (anon-fn | fn | list | vector | map | set | symbol | literal | metadata | comment | unquote) <ws>
+    <form>      = <ws> (anon-fn | fn | list | vector | map | set | symbol | literal | metadata | comment | splice | unquote) <ws>
     fn          = <'(' ws> form* <ws ')'>
     <anon-fn>   = <ws '#'> fn
     list        = <ws ('\\''|'`')> fn
@@ -35,8 +35,9 @@
     set         = <'#{' ws> form* <'}'>
     comment     = <'#_' form>
     unquote     = <'~' form>
+    splice      = <'~@'form>
     <symbol>    = <('#\\''|'@')?> identifier
-    <identifier>  = #'[\\'&%a-zA-Z_+\\-*/<>=?!\\.][%a-zA-Z0-9_+\\-*/<>=?!\\.#]*'
+    <identifier>= #'[\\'&%a-zA-Z_+\\-*/<>=?!\\.][%a-zA-Z0-9_+\\-*/<>=?!\\.#]*'
     (* throw away the content of everything except for keywords and strings *)
     <literal>   = number | string | truthy | keyword | character
     number      = <#'-?[0-9]+'>
