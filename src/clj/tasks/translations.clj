@@ -357,7 +357,7 @@
   (-ftl-print
    [this ctx]
    (let [current-ns (volatile! nil)
-         entries (sort-by get-id (FluentResource/.entries this))]
+         entries (FluentResource/.entries this)]
      (doseq [entry entries]
        (if (or (instance? Commentary$Comment entry)
                (instance? Commentary$GroupComment entry)
