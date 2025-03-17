@@ -405,4 +405,4 @@ game_archives = Archives{\"\u00A0\"}({$faceup} ↑ {$facedown} ↓)") false)]
       (spit f formatted-file))))
 
 (comment
-  (format-i18n-files "en"))
+  (format-i18n-files))

@@ -27,12 +27,6 @@ card-browser_selected-art = Arte Alternativa Selecionada
 card-browser_set = Set
 card-browser_side = Lado
 card-browser_sort = Ordenar por
-card-browser_strength = Força
-card-browser_trash-cost = Custo de exclusão
-card-browser_type = Tipo
-card-browser_update-failure = Falha ao atualizar Arte
-card-browser_update-success = Atualizar Arte
-
 card-browser_sort-by = {$by ->
     [cost] Custo
     [faction] Facção
@@ -42,6 +36,11 @@ card-browser_sort-by = {$by ->
     [type] Tipo
     *[unknown] undefined
 }
+card-browser_strength = Força
+card-browser_trash-cost = Custo de exclusão
+card-browser_type = Tipo
+card-browser_update-failure = Falha ao atualizar Arte
+card-browser_update-success = Atualizar Arte
 
 card-type_name = {$type ->
     [agenda] Agenda
@@ -74,8 +73,8 @@ deck-builder_add-cards = Adicionar cartas
 deck-builder_add-to-deck = Adicionar ao baralho
 deck-builder_agenda-points = Pontos de Agenda
 deck-builder_cancel = Cancelar
-deck-builder_card-name = Nome da carta
 deck-builder_card-count = undefined
+deck-builder_card-name = Nome da carta
 deck-builder_clear-stats = Limpar estatísticas
 deck-builder_completed = Completas
 deck-builder_confirm-delete = Confirmar exclusão
@@ -197,7 +196,6 @@ diagrams_turn_runner-discard-phase-d = undefined
 diagrams_turn_runner-discard-phase-e = undefined
 diagrams_turn_runner-turn = undefined
 
-
 faction_name = {$faction ->
     [adam] Adam
     [all] Todos
@@ -313,6 +311,7 @@ game_no-current-run = Sem corre no momento
 game_no-further = Sem mais ações
 game_ok = undefined
 game_play-area = Área de Jogo
+game_prompt = undefined
 game_purge = Expurgar
 game_reconnected-to-server = undefined
 game_remove-tag = Remover Marca
@@ -362,15 +361,12 @@ game_unbeatable = undefined
 game_unimplemented = Não implementado
 game_unknown-phase = Unknown phase
 game_unmute = Desmutar espectadores
-
 game_win-claimed = {$winner} ({$side}) venceu por objetivo no turno {$turn}
 game_win-conceded = {$winner} ({$side}) venceu por concessão no turno {$turn}
 game_win-decked = {$winner} ({$side}) venceu pois a Corp zerou o deck no turno {$turn}
 game_win-flatlined = {$winner} ({$side}) venceu por linha reta no turno {$turn}
 game_win-other = {$winner} ({$side}) venceu por {$reason} no turno {$turn}
 game_win-points = {$winner} ({$side}) venceu por pontos de agenda no turno {$turn}
-
-game_prompt = undefined
 
 ingame-settings_alt-art = undefined
 ingame-settings_board-overlap = undefined
@@ -400,14 +396,6 @@ ingame-settings_sort-archives = undefined
 ingame-settings_sort-heap = undefined
 ingame-settings_stack-cards = undefined
 
-lobby_type = {$type ->
-    [angel-arena] undefined
-    [casual] Casual
-    [competitive] Competitivo
-    [tournament] Torneio
-    *[other] Unknown lobby type
-}
-
 lobby_aborted = Conecção abortada
 lobby_api-access = Permitir acesso API para informações do jogo
 lobby_api-access-details = undefined
@@ -434,6 +422,7 @@ lobby_game-count-filtered = {$cnt ->
     [one] {$cnt} Jogo
     *[other] {$cnt} Jogos
 } (filtrado)
+lobby_gateway-format = undefined
 lobby_hidden = Tornar infomrações escondidas dos jogadores visivel para os espectadores
 lobby_hidden-details = undefined
 lobby_hidden-password = undefined
@@ -486,10 +475,15 @@ lobby_timer-length = undefined
 lobby_title = Titulo
 lobby_title-error = Por favor insira o titulo do jogo.
 lobby_too-little-data = Falta de dados
+lobby_type = {$type ->
+    [angel-arena] undefined
+    [casual] Casual
+    [competitive] Competitivo
+    [tournament] Torneio
+    *[other] Unknown lobby type
+}
 lobby_waiting = Eseprando jogador selecionar baralho
 lobby_watch = Assistir
-
-lobby_gateway-format = undefined
 
 log_annotating = Anotações
 log_game-log = Game Log
@@ -499,11 +493,11 @@ log_settings = undefined
 log_shared = Anotações compartilhadas
 log_turn-timing = undefined
 
-menu_admin = { nav_admin }
+menu_admin = {nav_admin}
 menu_donor = Doadores
 menu_logout = Ejetar
 menu_moderator = Moderadores
-menu_settings = { nav_settings }
+menu_settings = {nav_settings}
 
 missing = :pt missing text
 
@@ -641,6 +635,8 @@ settings_always = Sempre
 settings_api-keys = API Keys
 settings_avatar = Avatar
 settings_background = Background da partida
+settings_bespoke-sounds = undefined
+settings_bg = undefined
 settings_block = Bloquear usuário
 settings_blocked = Usuários bloqueados
 settings_cancel = Cancelar
@@ -703,10 +699,6 @@ settings_updated = Perfil atualizar - Favor atualizar a página
 settings_updating = Atualizando perfil...
 settings_user-name = Nome de usuário
 settings_volume = Volume
-
-settings_bg = undefined
-
-settings_bespoke-sounds = undefined
 
 side_name = {$side ->
     [all] Todos

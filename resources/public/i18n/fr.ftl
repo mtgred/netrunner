@@ -27,12 +27,6 @@ card-browser_selected-art = Sélectionner l'illustration alternatiive
 card-browser_set = Extension
 card-browser_side = Camp
 card-browser_sort = Trier par
-card-browser_strength = Force
-card-browser_trash-cost = Cout d'effacement
-card-browser_type = Type
-card-browser_update-failure = Échec de la mise à jour de l'illustration
-card-browser_update-success = Illustration mise à jour
-
 card-browser_sort-by = {$by ->
     [cost] Cout
     [faction] Faction
@@ -42,6 +36,11 @@ card-browser_sort-by = {$by ->
     [type] Type
     *[unknown] Unknown sort-by option ({$by})
 }
+card-browser_strength = Force
+card-browser_trash-cost = Cout d'effacement
+card-browser_type = Type
+card-browser_update-failure = Échec de la mise à jour de l'illustration
+card-browser_update-success = Illustration mise à jour
 
 card-type_name = {$type ->
     [agenda] Projet
@@ -74,11 +73,11 @@ deck-builder_add-cards = Ajouter des cartes
 deck-builder_add-to-deck = Ajouter au deck
 deck-builder_agenda-points = Points de projet
 deck-builder_cancel = Annuler
-deck-builder_card-name = Nom de la carte
 deck-builder_card-count = {$cnt ->
     [one] 1 card
     *[other] {$cnt} cards
 }
+deck-builder_card-name = Nom de la carte
 deck-builder_clear-stats = Effacer les statistiques
 deck-builder_completed = Terminées
 deck-builder_confirm-delete = Confirmer l'effacement
@@ -269,7 +268,7 @@ game_close = Fermer
 game_close-shuffle = Fermer et Mélanger
 game_concede = Abandonner
 game_continue = Continuer
-game_continue-to = Continuer vers : 
+game_continue-to = Continuer vers :
 game_corp-view = Vue Corpo
 game_credit-count = {$credit ->
     [one] {$credit} Crédit
@@ -321,6 +320,7 @@ game_no-current-run = Pas de piratage en cours
 game_no-further = Pas d'autre action
 game_ok = undefined
 game_play-area = Zone de jeu
+game_prompt = undefined
 game_purge = Nettoyer les pions virus
 game_reconnected-to-server = undefined
 game_remove-tag = Retirer des tags
@@ -374,13 +374,11 @@ game_unimplemented = Non implementé
 game_unknown-phase = Phase inconnue
 game_unmute = Réactiver le son des spectateurs
 game_win-claimed = {$winner} ({$side}) gagne par réclamation au tour {$turn}
-game_win-conceded =  {$winner} ({$side}) gagne par abandon au tour {$turn}
+game_win-conceded = {$winner} ({$side}) gagne par abandon au tour {$turn}
 game_win-decked = {$winner} ({$side}) gagne par épuisement du deck Corpo au tour {$turn}
 game_win-flatlined = {$winner} ({$side}) gagne par mort clinique au tour {$turn}
-game_win-points = {$winner} ({$side}) gagne aux points de projet au tour {$turn}
 game_win-other = {$winner} ({$side}) gagne par {$reason} au tour {$turn}
-
-game_prompt = undefined
+game_win-points = {$winner} ({$side}) gagne aux points de projet au tour {$turn}
 
 ingame-settings_alt-art = undefined
 ingame-settings_board-overlap = undefined
@@ -410,14 +408,6 @@ ingame-settings_sort-archives = undefined
 ingame-settings_sort-heap = undefined
 ingame-settings_stack-cards = undefined
 
-lobby_type = {$type ->
-    [angel-arena] Angel Arena
-    [casual] Amical
-    [competitive] Compétition
-    [tournament] Tournois
-    *[other] Unknown lobby type
-}
-
 lobby_aborted = Connexion interrompue
 lobby_api-access = Autoriser l'accès API aux informations de la partie
 lobby_api-access-details = undefined
@@ -444,6 +434,7 @@ lobby_game-count-filtered = {$cnt ->
     [one] {$cnt} Partie (filtres activés)
     *[other] {$cnt} Parties (filtres activés)
 }
+lobby_gateway-format = undefined
 lobby_hidden = Rendre les informations cachées du joueur visibles aux spectateurs
 lobby_hidden-details = undefined
 lobby_hidden-password = undefined
@@ -496,10 +487,15 @@ lobby_timer-length = undefined
 lobby_title = Nom de la partie
 lobby_title-error = Veuillez saisir un nom de partie.
 lobby_too-little-data = Trop peu de données
+lobby_type = {$type ->
+    [angel-arena] Angel Arena
+    [casual] Amical
+    [competitive] Compétition
+    [tournament] Tournois
+    *[other] Unknown lobby type
+}
 lobby_waiting = En attente de la sélection des decks
 lobby_watch = Regarder
-
-lobby_gateway-format = undefined
 
 log_annotating = Annoter
 log_game-log = Journal de partie
@@ -509,11 +505,11 @@ log_settings = undefined
 log_shared = Annotations partagées
 log_turn-timing = undefined
 
-menu_admin = { nav_admin }
+menu_admin = {nav_admin}
 menu_donor = undefined
 menu_logout = Débrancher
 menu_moderator = Modérateur
-menu_settings = { nav_settings }
+menu_settings = {nav_settings}
 
 missing = :fr texte manquant
 
@@ -651,6 +647,8 @@ settings_always = Toujours
 settings_api-keys = Clés API
 settings_avatar = Avatar
 settings_background = Arrière-plan de la zone de jeu
+settings_bespoke-sounds = undefined
+settings_bg = undefined
 settings_block = Bloquer l'utilisateur·trice
 settings_blocked = Utilisateur·trice·s bloqué·e·s
 settings_cancel = Annuler
@@ -667,7 +665,7 @@ settings_create-api-key = Créer une clé API
 settings_current-email = E-mail actuel
 settings_deck-stats = Statistiques de deck
 settings_delete-api-key = Effacer
-settings_desired-email = Nouvel e-mail 
+settings_desired-email = Nouvel e-mail
 settings_disable-websockets = undefined
 settings_display-encounter-info = undefined
 settings_email = E-mail
@@ -713,9 +711,6 @@ settings_updated = Profil mis à jour - veuillez actualiser votre navigateur
 settings_updating = Mise à jour du profil…
 settings_user-name = Nom d'utilisateur·trice
 settings_volume = Volume
-
-settings_bg = undefined
-settings_bespoke-sounds = undefined
 
 side_name = {$side ->
     [all] Les deux camps

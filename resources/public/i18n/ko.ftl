@@ -27,12 +27,6 @@ card-browser_selected-art = 대체 아트가 선택됨
 card-browser_set = 세트
 card-browser_side = 사이드
 card-browser_sort = 정렬 기준
-card-browser_strength = 힘
-card-browser_trash-cost = 폐기 비용
-card-browser_type = 타입
-card-browser_update-failure = 아트 갱신 실패
-card-browser_update-success = 아트가 갱신됨
-
 card-browser_sort-by = {$by ->
     [cost] 비용
     [faction] 세력
@@ -42,6 +36,11 @@ card-browser_sort-by = {$by ->
     [type] 타입
     *[unknown] undefined
 }
+card-browser_strength = 힘
+card-browser_trash-cost = 폐기 비용
+card-browser_type = 타입
+card-browser_update-failure = 아트 갱신 실패
+card-browser_update-success = 아트가 갱신됨
 
 card-type_name = {$type ->
     [agenda] 아젠다
@@ -74,8 +73,8 @@ deck-builder_add-cards = 카드 삽입
 deck-builder_add-to-deck = 덱에 삽입
 deck-builder_agenda-points = 아젠다 점수
 deck-builder_cancel = 취소
-deck-builder_card-name = 카드 이름
 deck-builder_card-count = undefined
+deck-builder_card-name = 카드 이름
 deck-builder_clear-stats = 기록 초기화
 deck-builder_completed = 완료됨
 deck-builder_confirm-delete = 삭제 확인
@@ -292,6 +291,7 @@ game_no-current-run = 현재 런 없음
 game_no-further = 더 이상 행동 없음
 game_ok = undefined
 game_play-area = 발동 영역
+game_prompt = undefined
 game_purge = 퇴치
 game_reconnected-to-server = undefined
 game_remove-tag = 태그 제거
@@ -338,30 +338,6 @@ game_win-decked = undefined
 game_win-flatlined = undefined
 game_win-other = undefined
 game_win-points = undefined
-
-game_prompt = {$msg ->
-    [advance] undefined
-    [archives] undefined
-    [derez] undefined
-    [expend] undefined
-    [hq] undefined
-    [new-remote] undefined
-    [r-d] undefined
-    [rez] undefined
-    [score] undefined
-    [server-1] undefined
-    [server-10] undefined
-    [server-2] undefined
-    [server-3] undefined
-    [server-4] undefined
-    [server-5] undefined
-    [server-6] undefined
-    [server-7] undefined
-    [server-8] undefined
-    [server-9] undefined
-    [trash] undefined
-    *[unknown] undefined
-}
 
 ingame-settings_alt-art = undefined
 ingame-settings_board-overlap = undefined
@@ -411,6 +387,7 @@ lobby_filter = undefined
 lobby_format = 포맷
 lobby_game-count = {$cnt} 게임
 lobby_game-count-filtered = {$cnt} 게임 (filtered)
+lobby_gateway-format = undefined
 lobby_hidden = 관전자가 플레이어의 숨겨진 정보를 볼 수 있게 하기
 lobby_hidden-details = undefined
 lobby_hidden-password = undefined
@@ -460,9 +437,6 @@ lobby_timer-length = undefined
 lobby_title = 방 제목
 lobby_title-error = 게임 제목을 입력해주십시오.
 lobby_too-little-data = 데이터가 너무 적음
-lobby_waiting = 플레이어가 덱을 고르고 있습니다
-lobby_watch = 관전
-
 lobby_type = {$type ->
     [angel-arena] undefined
     [casual] 캐주얼
@@ -470,8 +444,8 @@ lobby_type = {$type ->
     [tournament] 토너먼트
     *[other] undefined
 }
-
-lobby_gateway-format = undefined
+lobby_waiting = 플레이어가 덱을 고르고 있습니다
+lobby_watch = 관전
 
 log_annotating = 주석
 log_game-log = 게임 로그
@@ -620,6 +594,8 @@ settings_always = 항상 기록
 settings_api-keys = undefined
 settings_avatar = 아바타
 settings_background = 게임판 배경
+settings_bespoke-sounds = undefined
+settings_bg = undefined
 settings_block = 사용자 차단
 settings_blocked = 차단한 사용자
 settings_cancel = 취소
@@ -682,9 +658,6 @@ settings_updated = 프로필 갱신됨 - 브라우저를 새로고침 하십시�
 settings_updating = 프로필 갱신중...
 settings_user-name = 사용자 이름
 settings_volume = 볼륨
-
-settings_bespoke-sounds = undefined
-settings_bg = undefined
 
 side_name = {$side ->
     [all] 모두

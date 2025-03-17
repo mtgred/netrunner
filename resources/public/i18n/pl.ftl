@@ -27,12 +27,6 @@ card-browser_selected-art = Wybrano grafiki alt.
 card-browser_set = Zestaw
 card-browser_side = Strona
 card-browser_sort = Porządkowanie
-card-browser_strength = Siła
-card-browser_trash-cost = Koszt skasowania
-card-browser_type = Typ
-card-browser_update-failure = Nieudana aktualizacja grafiki
-card-browser_update-success = Grafiki zaktualizowane
-
 card-browser_sort-by = {$by ->
     [cost] Koszt
     [faction] Frakcja
@@ -42,6 +36,11 @@ card-browser_sort-by = {$by ->
     [type] Typ
     *[unknown] undefined
 }
+card-browser_strength = Siła
+card-browser_trash-cost = Koszt skasowania
+card-browser_type = Typ
+card-browser_update-failure = Nieudana aktualizacja grafiki
+card-browser_update-success = Grafiki zaktualizowane
 
 card-type_name = {$type ->
     [agenda] Projekt
@@ -74,8 +73,8 @@ deck-builder_add-cards = Dodaj karty
 deck-builder_add-to-deck = Dodaj do talii
 deck-builder_agenda-points = Punkty projektów
 deck-builder_cancel = Anuluj
-deck-builder_card-name = Nazwa karty
 deck-builder_card-count = karty: {$cnt}
+deck-builder_card-name = Nazwa karty
 deck-builder_clear-stats = Usuń statystyki
 deck-builder_completed = Ukończone
 deck-builder_confirm-delete = Potwierdź usunięcie
@@ -292,6 +291,7 @@ game_no-current-run = Brak włamu w toku
 game_no-further = Brak dalszych działań
 game_ok = undefined
 game_play-area = Zagrywane
+game_prompt = undefined
 game_purge = Usunięcie wirusów
 game_reconnected-to-server = undefined
 game_remove-tag = Usunięcie 1 namiaru
@@ -332,15 +332,12 @@ game_unbeatable = undefined
 game_unimplemented = Niezautomatyzowana
 game_unknown-phase = Nieznana faza
 game_unmute = Włączenie czat widowni
-
 game_win-claimed = {$winner} ({$side}) wygrywa przez zgłoszenie wygranej w {$turn} turze
 game_win-conceded = {$winner} ({$side}) wygrywa przez poddanie się przeciwnika w {$turn} turze
 game_win-decked = {$winner} ({$side}) wygrywa, ponieważ Korpo skończyły się karty w {$turn} turze
 game_win-flatlined = {$winner} ({$side}) wygrywa przez wypłaszczenie w {$turn} turze
 game_win-other = {$winner} ({$side}) wygrywa przez {$reason} w {$turn} turze
 game_win-points = {$winner} ({$side}) wygrywa przez zdobycie punktów zwycięstwa w {$turn} turze
-
-game_prompt = undefined
 
 ingame-settings_alt-art = undefined
 ingame-settings_board-overlap = undefined
@@ -390,6 +387,7 @@ lobby_filter = undefined
 lobby_format = Format
 lobby_game-count = Gry: {$cnt}
 lobby_game-count-filtered = Gry: {$cnt} (filtrowane)
+lobby_gateway-format = undefined
 lobby_hidden = Ukryte informacje graczy widoczne dla widzów
 lobby_hidden-details = undefined
 lobby_hidden-password = undefined
@@ -439,17 +437,14 @@ lobby_timer-length = undefined
 lobby_title = Tytuł
 lobby_title-error = Wpisz nazwę dla stołu.
 lobby_too-little-data = Zbyt mało danych
-lobby_waiting = Oczekiwanie na wybór talii
-lobby_watch = Oglądaj
-
 lobby_type = {$type ->
     [competitive] Kompetytywne
     [casual] Niekompetytywne
     [tournament] Wydarzenia
     *[unknown] undefined
 }
-
-lobby_gateway-format = undefined
+lobby_waiting = Oczekiwanie na wybór talii
+lobby_watch = Oglądaj
 
 log_annotating = Notatki
 log_game-log = Dziennik gry
@@ -599,6 +594,8 @@ settings_always = Zawsze
 settings_api-keys = Klucze API
 settings_avatar = Awatar
 settings_background = Tło stołu
+settings_bespoke-sounds = undefined
+settings_bg = undefined
 settings_block = Zablokuj użytkownika
 settings_blocked = Zablokowani użytkownicy
 settings_cancel = Anuluj
@@ -661,10 +658,6 @@ settings_updated = Profil zaktualizowany - odśwież okno przeglądarki
 settings_updating = Aktualizacja profilu...
 settings_user-name = Nazwa użytkownika
 settings_volume = Głośność
-
-settings_bespoke-sounds = undefined
-
-settings_bg = undefined
 
 side_name = {$side ->
     [all] Wszystkie

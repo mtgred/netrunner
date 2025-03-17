@@ -27,12 +27,6 @@ card-browser_selected-art = 已选卡面
 card-browser_set = 系列
 card-browser_side = 阵营
 card-browser_sort = 排序方式
-card-browser_strength = 强度
-card-browser_trash-cost = 销毁费用
-card-browser_type = 类别
-card-browser_update-failure = 卡面更换失败
-card-browser_update-success = 卡面已更换
-
 card-browser_sort-by = {$by ->
     [cost] 费用
     [faction] 派系
@@ -42,6 +36,11 @@ card-browser_sort-by = {$by ->
     [type] 类别
     *[unknown] undefined
 }
+card-browser_strength = 强度
+card-browser_trash-cost = 销毁费用
+card-browser_type = 类别
+card-browser_update-failure = 卡面更换失败
+card-browser_update-success = 卡面已更换
 
 card-type_name = {$type ->
     [agenda] 议案
@@ -74,8 +73,8 @@ deck-builder_add-cards = 添加卡牌
 deck-builder_add-to-deck = 添加到牌组
 deck-builder_agenda-points = 议案分数
 deck-builder_cancel = 取消
-deck-builder_card-name = 卡牌名称
 deck-builder_card-count = undefined
+deck-builder_card-name = 卡牌名称
 deck-builder_clear-stats = 清除统计数据
 deck-builder_completed = 完成
 deck-builder_confirm-delete = 确认删除
@@ -292,6 +291,29 @@ game_no-current-run = 当前无潜袭进行中
 game_no-further = 没有响应
 game_ok = OK
 game_play-area = 出牌区
+game_prompt = {$msg ->
+    [advance] 推进
+    [archives] 档案库
+    [derez] 关闭
+    [expend] 消耗
+    [hq] 总部
+    [new-remote] 新远程
+    [r-d] 研发中心
+    [rez] 激活
+    [score] 计分
+    [server-1] 服务器 1
+    [server-10] 服务器 10
+    [server-2] 服务器 2
+    [server-3] 服务器 3
+    [server-4] 服务器 4
+    [server-5] 服务器 5
+    [server-6] 服务器 6
+    [server-7] 服务器 7
+    [server-8] 服务器 8
+    [server-9] 服务器 9
+    [trash] 销毁
+    *[unknown] undefined
+}
 game_purge = 清除病毒指示物
 game_reconnected-to-server = 已重新连接到服务器
 game_remove-tag = 移除锁定标记
@@ -339,30 +361,6 @@ game_win-flatlined = {$winner} ({$side})于第{$turn}回合通过杀死潜袭者
 game_win-other = {$winner} ({$side})于第{$turn}回合因{$reason}而获胜
 game_win-points = {$winner} ({$side})于第{$turn}回合因议案分数而获胜
 
-game_prompt = {$msg ->
-    [advance] 推进
-    [archives] 档案库
-    [derez] 关闭
-    [expend] 消耗
-    [hq] 总部
-    [new-remote] 新远程
-    [r-d] 研发中心
-    [rez] 激活
-    [score] 计分
-    [server-1] 服务器 1
-    [server-10] 服务器 10
-    [server-2] 服务器 2
-    [server-3] 服务器 3
-    [server-4] 服务器 4
-    [server-5] 服务器 5
-    [server-6] 服务器 6
-    [server-7] 服务器 7
-    [server-8] 服务器 8
-    [server-9] 服务器 9
-    [trash] 销毁
-    *[unknown] undefined
-}
-
 ingame-settings_alt-art = 异画卡
 ingame-settings_board-overlap = 面板重叠
 ingame-settings_card-backs = 卡背
@@ -378,6 +376,7 @@ ingame-settings_high-res = 启用高分辨率卡牌图像
 ingame-settings_label-faceup-cards = 贴标签于面朝上卡牌
 ingame-settings_label-unrezzed-cards = 贴标签于未激活卡牌
 ingame-settings_log-timestamps = undefined
+ingame-settings_log-timestamps-toggle = undefined
 ingame-settings_pass-on-rez = undefined
 ingame-settings_preview-zoom = 卡牌预览缩放
 ingame-settings_runner-board-order = 潜袭者面板顺序
@@ -389,7 +388,6 @@ ingame-settings_sides-overlap = 潜袭者和公司面板可以重叠
 ingame-settings_sort-archives = 排序档案库
 ingame-settings_sort-heap = 排序堆阵
 ingame-settings_stack-cards = 启用服务器堆叠
-ingame-settings_log-timestamps-toggle = undefined
 
 lobby_aborted = 连接已中断
 lobby_api-access = 允许 API 访问游戏信息
@@ -411,6 +409,16 @@ lobby_filter = 过滤
 lobby_format = 赛制
 lobby_game-count = {$cnt} 局对战
 lobby_game-count-filtered = {$cnt} 局对战（过滤后）
+lobby_gateway-format = {$format ->
+    [beginner] 初学者
+    [beginner-info] 此大厅为公司和潜袭者使用核心网关初学者牌组而准备。建议你在初次游戏中使用这些牌组。游戏按6点议案分数进行。
+    [beginner-ul] 核心网关 - 初学者教学牌组
+    [constructed] 构筑
+    [intermediate] 进阶
+    [intermediate-info] 此大厅为公司和潜袭者使用核心网关进阶牌组而准备。这些牌组比初学者牌组稍大。游戏按7点议案分数进行。
+    [intermediate-ul] 核心网关 - 进阶教学牌组
+    *[unknown] undefined
+}
 lobby_hidden = 允许旁观者查看玩家的隐藏信息
 lobby_hidden-details = 这将向游戏的所有观众揭示两名玩家的隐藏信息，包括手牌和面朝下的牌。
 lobby_hidden-password = 我们建议使用密码来防止陌生人破坏游戏。
@@ -460,9 +468,6 @@ lobby_timer-length = 计时器长度（分钟）
 lobby_title = 房间名
 lobby_title-error = 请设置房间名。
 lobby_too-little-data = 数据不足
-lobby_waiting = 等待玩家选择牌组
-lobby_watch = 观战
-
 lobby_type = {$type ->
     [casual] 休闲
     [competitive] 竞技
@@ -470,17 +475,8 @@ lobby_type = {$type ->
     [tournament] 比赛
     *[unknown] undefined
 }
-
-lobby_gateway-format = {$format ->
-    [beginner] 初学者
-    [beginner-info] 此大厅为公司和潜袭者使用核心网关初学者牌组而准备。建议你在初次游戏中使用这些牌组。游戏按6点议案分数进行。
-    [beginner-ul] 核心网关 - 初学者教学牌组
-    [constructed] 构筑
-    [intermediate] 进阶
-    [intermediate-info] 此大厅为公司和潜袭者使用核心网关进阶牌组而准备。这些牌组比初学者牌组稍大。游戏按7点议案分数进行。
-    [intermediate-ul] 核心网关 - 进阶教学牌组
-    *[unknown] undefined
-}
+lobby_waiting = 等待玩家选择牌组
+lobby_watch = 观战
 
 log_annotating = 注释
 log_game-log = 游戏日志
@@ -494,7 +490,7 @@ menu_admin = 网站管理员
 menu_donor = 捐赠人
 menu_logout = 退出
 menu_moderator = 管理员
-menu_settings =  { nav_settings }
+menu_settings = {nav_settings}
 
 missing = :zh-simp missing text
 
@@ -732,6 +728,27 @@ settings_always = 总是
 settings_api-keys = API密钥
 settings_avatar = 头像
 settings_background = 游戏背景
+settings_bespoke-sounds = {$sound ->
+    [bespoke-sounds-header] 卡牌特定声音
+    [archer] 射手
+    [end-of-the-line] 穷途末路
+    [harmonics] 和声组合（海洋怪声，回声，脉动，波动）
+    *[unknown] undefined
+}
+settings_bg = {$slug ->
+    [apex-bg] 尖峰
+    [custom-bg] 自定义背景
+    [find-the-truth-bg] 找出真相
+    [freelancer-bg] 自由职业者
+    [monochrome-bg] 纯黑
+    [mushin-no-shin-bg] 无心之心
+    [push-your-luck-bg] 豪赌一把
+    [rumor-mill-bg] 谣言工厂
+    [the-root-bg] 根基
+    [traffic-jam-bg] 交通阻塞
+    [worlds2020-bg] 世界2020
+    *[unknown] undefined
+}
 settings_block = 屏蔽
 settings_blocked = 黑名单
 settings_cancel = 取消
@@ -794,29 +811,6 @@ settings_updated = 设置已保存——请刷新页面
 settings_updating = 设置保存中……
 settings_user-name = 用户名
 settings_volume = 音量
-
-settings_bg = {$slug ->
-    [apex-bg] 尖峰
-    [custom-bg] 自定义背景
-    [find-the-truth-bg] 找出真相
-    [freelancer-bg] 自由职业者
-    [monochrome-bg] 纯黑
-    [mushin-no-shin-bg] 无心之心
-    [push-your-luck-bg] 豪赌一把
-    [rumor-mill-bg] 谣言工厂
-    [the-root-bg] 根基
-    [traffic-jam-bg] 交通阻塞
-    [worlds2020-bg] 世界2020
-    *[unknown] undefined
-}
-
-settings_bespoke-sounds = {$sound ->
-    [bespoke-sounds-header] 卡牌特定声音
-    [archer] 射手
-    [end-of-the-line] 穷途末路
-    [harmonics] 和声组合（海洋怪声，回声，脉动，波动）
-    *[unknown] undefined
-}
 
 side_name = {$side ->
     [all] 全部

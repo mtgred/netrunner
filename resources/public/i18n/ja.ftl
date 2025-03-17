@@ -27,12 +27,6 @@ card-browser_selected-art = undefined
 card-browser_set = カードセット
 card-browser_side = プレイヤーサイド
 card-browser_sort = 並び順
-card-browser_strength = 強度
-card-browser_trash-cost = トラッシュコスト
-card-browser_type = カードタイプ
-card-browser_update-failure = undefined
-card-browser_update-success = undefined
-
 card-browser_sort-by = {$by ->
     [cost] コスト
     [faction] 派閥
@@ -42,6 +36,11 @@ card-browser_sort-by = {$by ->
     [type] タイプ
     *[unknown] Unknown sort-by option ({$by})
 }
+card-browser_strength = 強度
+card-browser_trash-cost = トラッシュコスト
+card-browser_type = カードタイプ
+card-browser_update-failure = undefined
+card-browser_update-success = undefined
 
 card-type_name = {$type ->
     [agenda] 計画書
@@ -292,6 +291,7 @@ game_no-current-run = ラン以外
 game_no-further = これ以上アクションしない
 game_ok = undefined
 game_play-area = プレイエリア
+game_prompt = undefined
 game_purge = ウィルスカウンター破棄
 game_reconnected-to-server = undefined
 game_remove-tag = タグを除去
@@ -332,15 +332,12 @@ game_unbeatable = undefined
 game_unimplemented = 未実装
 game_unknown-phase = 不明フェーズ
 game_unmute = undefined
-
 game_win-claimed = {$winner} ({$side}) wins by claim on turn {$turn}
 game_win-conceded = {$winner} ({$side}) 降参による勝利 {$turn} ターン
 game_win-decked = {$winner} ({$side}) コーポのデッキ切れによる勝利 {$turn} ターン
 game_win-flatlined = {$winner} ({$side}) (fn [[turn]] (str "フラットラインによる勝利 {$turn} ターン
 game_win-other = {$winner} ({$side}) wins by {$reason} on turn {$turn}
 game_win-points = {$winner} ({$side}) 計画ポイントによる勝利 {$turn} ターン
-
-game_prompt = undefined
 
 ingame-settings_alt-art = undefined
 ingame-settings_board-overlap = undefined
@@ -370,14 +367,6 @@ ingame-settings_sort-archives = undefined
 ingame-settings_sort-heap = undefined
 ingame-settings_stack-cards = undefined
 
-lobby_type = {$type ->
-    [angel-arena] Angel Arena
-    [casual] Casual
-    [competitive] Competitive
-    [tournament] Tournament
-    *[other] Unknown lobby type
-}
-
 lobby_aborted = undefined
 lobby_api-access = undefined
 lobby_api-access-details = undefined
@@ -398,6 +387,7 @@ lobby_filter = undefined
 lobby_format = フォーマット
 lobby_game-count = ルーム数 {$cnt}
 lobby_game-count-filtered = ルーム数 {$cnt} (絞り込み)
+lobby_gateway-format = undefined
 lobby_hidden = 非公開情報を観戦者に公開
 lobby_hidden-details = undefined
 lobby_hidden-password = undefined
@@ -447,9 +437,15 @@ lobby_timer-length = undefined
 lobby_title = ルーム名
 lobby_title-error = ルーム名を修正してください。
 lobby_too-little-data = undefined
+lobby_type = {$type ->
+    [angel-arena] Angel Arena
+    [casual] Casual
+    [competitive] Competitive
+    [tournament] Tournament
+    *[other] Unknown lobby type
+}
 lobby_waiting = デッキ選択待ち
 lobby_watch = 観戦
-lobby_gateway-format = undefined
 
 log_annotating = undefined
 log_game-log = undefined
@@ -459,11 +455,11 @@ log_settings = undefined
 log_shared = undefined
 log_turn-timing = undefined
 
-menu_admin = { nav_admin }
+menu_admin = {nav_admin}
 menu_donor = undefined
 menu_logout = ジャックアウト
 menu_moderator = undefined
-menu_settings = { nav_settings }
+menu_settings = {nav_settings}
 
 missing = :ja missing text
 
@@ -491,6 +487,8 @@ settings_always = undefined
 settings_api-keys = undefined
 settings_avatar = undefined
 settings_background = undefined
+settings_bespoke-sounds = undefined
+settings_bg = undefined
 settings_block = undefined
 settings_blocked = undefined
 settings_cancel = undefined
@@ -553,9 +551,6 @@ settings_updated = undefined
 settings_updating = undefined
 settings_user-name = undefined
 settings_volume = undefined
-
-settings_bg = undefined
-settings_bespoke-sounds = undefined
 
 side_name = {$side ->
     [all] 全部

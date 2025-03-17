@@ -27,12 +27,6 @@ card-browser_selected-art = Electedsay Altyay Artyay
 card-browser_set = Etsay
 card-browser_side = Idesay
 card-browser_sort = Ortsay ybay
-card-browser_strength = Engthstr
-card-browser_trash-cost = Ashtray ostcay
-card-browser_type = Etypay
-card-browser_update-failure = Ailedfay otay Updateyay Artyay
-card-browser_update-success = Updatedyay Artyay
-
 card-browser_sort-by = {$by ->
     [cost] Ostcay
     [faction] Actionfay
@@ -42,6 +36,11 @@ card-browser_sort-by = {$by ->
     [type] Etypay
     *[unknown] undefined
 }
+card-browser_strength = Engthstr
+card-browser_trash-cost = Ashtray ostcay
+card-browser_type = Etypay
+card-browser_update-failure = Ailedfay otay Updateyay Artyay
+card-browser_update-success = Updatedyay Artyay
 
 card-type_name = {$type ->
     [agenda] Agendayay
@@ -74,8 +73,8 @@ deck-builder_add-cards = Addyay ardscay
 deck-builder_add-to-deck = Addyay otay eckday
 deck-builder_agenda-points = Agendayay ointspay
 deck-builder_cancel = Ancelcay
-deck-builder_card-name = Ardcay amenay
 deck-builder_card-count = ardscay
+deck-builder_card-name = Ardcay amenay
 deck-builder_clear-stats = Earclay Atsstay
 deck-builder_completed = Ompletedcay
 deck-builder_confirm-delete = Onfirmcay Eleteday
@@ -271,13 +270,11 @@ game_corp-view = Orpcay Iewvay
 game_credit-count = {$credit ->
     [one] Editcray
     *[other] Editscray
-
 }
 game_credit-count-with-run-credits = {$credit ->
     [one] Editcray ({$run-credit} orfay unray)
     *[other] Editscray ({$run-credit} orfay unray)
-
-} 
+}
 game_credits = editscray
 game_current = Urrentcay
 game_current-phase = Urrentcay asephay
@@ -314,6 +311,29 @@ game_no-current-run = Onay urrentcay unray
 game_no-further = Onay urtherfay actionsyay
 game_ok = undefined
 game_play-area = Ayplay Areayay
+game_prompt = {$msg ->
+    [advance] advanceyay
+    [archives] Archivesyay
+    [derez] erezday
+    [expend] Expendyay
+    [hq] HQYAY
+    [new-remote] Ewnay Emoteray
+    [r-d] R&DYAY
+    [rez] ezray
+    [score] orescay
+    [server-1] Erversay 1
+    [server-10] Erversay 10
+    [server-2] Erversay 2
+    [server-3] Erversay 3
+    [server-4] Erversay 4
+    [server-5] Erversay 5
+    [server-6] Erversay 6
+    [server-7] Erversay 7
+    [server-8] Erversay 8
+    [server-9] Erversay 9
+    [trash] ashtray
+    *[unknown] undefined
+}
 game_purge = Urgepay
 game_reconnected-to-server = undefined
 game_remove-tag = Emoveray Agtay
@@ -363,30 +383,6 @@ game_win-decked = {$winner} ({$side}) insway ueday otay ethay Orpcay eingbay eck
 game_win-flatlined = {$winner} ({$side}) insway ybay atlineflay onyay urntay {$turn}
 game_win-other = {$winner} ({$side}) insway ybay {$reason} onyay urntay {$turn}
 game_win-points = {$winner} ({$side}) insway ybay oringcay agendayay ointspay onyay urntay {$turn}
-
-game_prompt = {$msg ->
-    [advance] advanceyay
-    [archives] Archivesyay
-    [derez] erezday
-    [expend] Expendyay
-    [hq] HQYAY
-    [new-remote] Ewnay Emoteray
-    [r-d] R&DYAY
-    [rez] ezray
-    [score] orescay
-    [server-1] Erversay 1
-    [server-10] Erversay 10
-    [server-2] Erversay 2
-    [server-3] Erversay 3
-    [server-4] Erversay 4
-    [server-5] Erversay 5
-    [server-6] Erversay 6
-    [server-7] Erversay 7
-    [server-8] Erversay 8
-    [server-9] Erversay 9
-    [trash] ashtray
-    *[unknown] undefined
-}
 
 ingame-settings_alt-art = undefined
 ingame-settings_board-overlap = undefined
@@ -442,6 +438,16 @@ lobby_game-count-filtered = {$cnt ->
     [one] {$cnt} Amegay (ilteredfay)
     *[other] {$cnt} Amesgay (ilteredfay)
 }
+lobby_gateway-format = {$format ->
+    [beginner] eginnerbay
+    [beginner-info] Isthay obbylay isyay usingyay ethay emsystay atewaygay eginnerbay ecksday orfay ethay orporationcay andyay unnerray . esethay ecksday areyay ecommendedray orfay ouryay irstfay amesgay . amesgay areyay ayedplay otay 6 agendayay ointspay.
+    [beginner-ul] Emsystay atewaygay - eginnerbay eachingtay decks
+    [constructed] Onstructedcay
+    [intermediate] Intermediateyay
+    [intermediate-info] Isthay obbylay isyay usingyay ethay emsystay atewaygay intermediateyay ecksday orfay ethay orporationcay andyay unnerray. esethay ecksday avehay ightlyslay oremay angeray anthay ethay eginnerbay ecksday. amesgay areyay ayedplay otay 7 agendayay ointspay.
+    [intermediate-ul] Emsystay atewaygay - intermediateyay eachingtay decks
+    *[unknown] undefined
+}
 lobby_hidden = Akemay ayersplay iddenhay informationyay isiblevay otay ectatorsspay
 lobby_hidden-details = undefined
 lobby_hidden-password = undefined
@@ -491,9 +497,6 @@ lobby_timer-length = undefined
 lobby_title = Itletay
 lobby_title-error = Easeplay illfay ayay amegay itletay.
 lobby_too-little-data = Ootay ittlelay ataday
-lobby_waiting = Aitingway ayersplay eckday electionsay
-lobby_watch = Atchway
-
 lobby_type = {$type ->
     [angel-arena] Angelyay Arenayay
     [casual] Asualcay
@@ -501,17 +504,8 @@ lobby_type = {$type ->
     [tournament] Ournamenttay
     *[unknown] undefined
 }
-
-lobby_gateway-format = {$format ->
-    [beginner] eginnerbay
-    [beginner-info] Isthay obbylay isyay usingyay ethay emsystay atewaygay eginnerbay ecksday orfay ethay orporationcay andyay unnerray . esethay ecksday areyay ecommendedray orfay ouryay irstfay amesgay . amesgay areyay ayedplay otay 6 agendayay ointspay.
-    [beginner-ul] Emsystay atewaygay - eginnerbay eachingtay decks
-    [constructed] Onstructedcay
-    [intermediate] Intermediateyay
-    [intermediate-info] Isthay obbylay isyay usingyay ethay emsystay atewaygay intermediateyay ecksday orfay ethay orporationcay andyay unnerray. esethay ecksday avehay ightlyslay oremay angeray anthay ethay eginnerbay ecksday. amesgay areyay ayedplay otay 7 agendayay ointspay.
-    [intermediate-ul] Emsystay atewaygay - intermediateyay eachingtay decks
-    *[unknown] undefined
-}
+lobby_waiting = Aitingway ayersplay eckday electionsay
+lobby_watch = Atchway
 
 log_annotating = undefined
 log_game-log = undefined
@@ -766,6 +760,26 @@ settings_always = Alwaysyay
 settings_api-keys = APIYAY Eyskay
 settings_avatar = Avataryay
 settings_background = Amegay oardbay ackgroundbay
+settings_bespoke-sounds = {$sound ->
+    [archer] Archeryay
+    [end-of-the-line] Endyay ofyf ethay Inelay
+    [harmonics] Armonicshay Uitesay (Oopblay, Echoyay, Ulsepay, Aveway)
+    [header] Ardcay-Cificspay Oundssay
+    *[unknown] Unknownyay espokebay oundssay ({$sound})
+}
+settings_bg = {$slug ->
+    [apex-bg] Apex
+    [custom-with-url] Ustomcay GBay (inputyay URLyay elowbay)
+    [find-the-truth-bg] Indfay Ethay Uthtray
+    [freelancer-bg] Eelancerfray
+    [monochrome-bg] Onochromay
+    [mushin-no-shin-bg] Ushinmay Onay Inshay
+    [push-your-luck-bg] Ushpay Ouryay Ucklay
+    [rumor-mill-bg] Umoray Illmay
+    [the-root-bg] Ethay Ootray
+    [traffic-jam-bg] Affictray Amjay
+    *[worlds2020-bg] Orldsway 2020
+}
 settings_block = Ockblay useryay
 settings_blocked = Ockedblay usersyay
 settings_cancel = Ancelcay
@@ -828,28 +842,6 @@ settings_updated = Ofilepray updatedyay - Leasepay efreshray ouryay owserbray
 settings_updating = Updatingyay ofilepray...
 settings_user-name = Useryay amenay
 settings_volume = Olumevay
-
-settings_bg = {$slug ->
-    [apex-bg] Apex
-    [custom-with-url] Ustomcay GBay (inputyay URLyay elowbay)
-    [find-the-truth-bg] Indfay Ethay Uthtray
-    [freelancer-bg] Eelancerfray
-    [monochrome-bg] Onochromay
-    [mushin-no-shin-bg] Ushinmay Onay Inshay
-    [push-your-luck-bg] Ushpay Ouryay Ucklay
-    [rumor-mill-bg] Umoray Illmay
-    [the-root-bg] Ethay Ootray
-    [traffic-jam-bg] Affictray Amjay
-    *[worlds2020-bg] Orldsway 2020
-}
-
-settings_bespoke-sounds = {$sound ->
-    [archer] Archeryay
-    [end-of-the-line] Endyay ofyf ethay Inelay
-    [harmonics] Armonicshay Uitesay (Oopblay, Echoyay, Ulsepay, Aveway)
-    [header] Ardcay-Cificspay Oundssay
-    *[unknown] Unknownyay espokebay oundssay ({$sound})
-}
 
 side_name = {$side ->
     [all] Allyay
