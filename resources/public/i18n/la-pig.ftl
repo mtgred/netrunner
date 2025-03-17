@@ -8,26 +8,12 @@ annotations_publish = undefined
 annotations_save-local = undefined
 annotations_turn-placeholder = undefined
 
-card-browser_advancement = Advancementyay equirementray
-card-browser_agenda-points = Agendayay ointspay
-card-browser_artist-info = undefined
-card-browser_clear = Earclay
-card-browser_cost = Ostcay
-card-browser_faction = Actionfay
-card-browser_format = Ormatfay
-card-browser_implementation-note = undefined
-card-browser_inf-limit = Influenceyay Imitlay
-card-browser_influence = Influenceyay
-card-browser_memory = Emorymay
-card-browser_min-deck-size = Inimummay eckday izesay
-card-browser_more-info = undefined
-card-browser_search-hint = Earchsay ardscay
-card-browser_select-art = Electsay Artyay
-card-browser_selected-art = Electedsay Altyay Artyay
-card-browser_set = Etsay
-card-browser_side = Idesay
-card-browser_sort = Ortsay ybay
-card-browser_sort-by = {$by ->
+card-browser-form_faction = Actionfay
+card-browser-form_format = Ormatfay
+card-browser-form_search-hint = Earchsay ardscay
+card-browser-form_side = Idesay
+card-browser-form_sort = Ortsay ybay
+card-browser-form_sort-by = {$by ->
     [cost] Ostcay
     [faction] Actionfay
     [influence] Influenceyay
@@ -36,9 +22,24 @@ card-browser_sort-by = {$by ->
     [type] Etypay
     *[unknown] undefined
 }
-card-browser_strength = Engthstr
-card-browser_trash-cost = Ashtray ostcay
-card-browser_type = Etypay
+card-browser-form_type = Etypay
+
+card-browser_advancement = Advancementyay equirementray: {$requirement}
+card-browser_agenda-points = Agendayay ointspay: {$points}
+card-browser_artist-info = undefined
+card-browser_clear = Earclay
+card-browser_cost = Ostcay: {$cost}
+card-browser_implementation-note = undefined
+card-browser_inf-limit = Influenceyay Imitlay: {$inf-limit}
+card-browser_influence = Influenceyay: {$influence}
+card-browser_memory = Emorymay: {$memory}
+card-browser_min-deck-size = Inimummay eckday izesay: {$min-deck-size}
+card-browser_more-info = undefined
+card-browser_select-art = Electsay Artyay
+card-browser_selected-art = Electedsay Altyay Artyay
+card-browser_set = Etsay
+card-browser_strength = Engthstr: {$strength}
+card-browser_trash-cost = Ashtray ostcay: {$trash-cost}
 card-browser_update-failure = Ailedfay otay Updateyay Artyay
 card-browser_update-success = Updatedyay Artyay
 

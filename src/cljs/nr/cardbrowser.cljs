@@ -319,29 +319,30 @@
         (when-let [faction (:faction card)]
            [:span.influence
             {:class (slugify faction)
-             :title (str (tr [:card-browser_influence "Influence"]) ": " influence)}
+             :title (str (tr [:card-browser_influence "Influence"] {:influence influence}))}
             (influence-dots influence)]))]
      (when-let [memory (:memoryunits card)]
        (if (< memory 3)
          [:div.anr-icon {:class (str "mu" memory)} ""]
-         [:div.heading [tr [:card-browser_memory "Memory"]] ": " memory [:span.anr-icon.mu]]))
+         [:div.heading [tr [:card-browser_memory "Memory"] {:memory memory}] [:span.anr-icon.mu]]))
      (when-let [cost (:cost card)]
-       [:div.heading [tr [:card-browser_cost "Cost"]] ": " cost])
+       [:div.heading [tr [:card-browser_cost "Cost"] {:cost cost}]])
      (when-let [trash-cost (:trash card)]
-       [:div.heading [tr [:card-browser_trash-cost "Trash cost"]] ": " trash-cost])
+       [:div.heading (tr [:card-browser_trash-cost "Trash cost"] {:trash-cost trash-cost})])
      (when-let [strength (:strength card)]
-       [:div.heading [tr [:card-browser_strength "Strength"]] ": " strength])
+       (prn :strength strength (tr [:card-browser_strength "Strength"] {:strength strength}))
+       [:div.heading (tr [:card-browser_strength "Strength"] {:strength strength})])
      (when-let [requirement (:advancementcost card)]
-       [:div.heading [tr [:card-browser_advancement "Advancement requirement"]] ": " requirement])
+       [:div.heading [tr [:card-browser_advancement "Advancement requirement"] {:requirement requirement}]])
      (when-let [agenda-point (:agendapoints card)]
-       [:div.heading [tr [:card-browser_agenda-points "Agenda points"]] ": " agenda-point])
+       [:div.heading [tr [:card-browser_agenda-points "Agenda points"] {:points agenda-point}]])
      (when-let [min-deck-size (:minimumdecksize card)]
-       [:div.heading [tr [:card-browser_min-deck-size "Minimum deck size"]] ": " min-deck-size])
+       [:div.heading [tr [:card-browser_min-deck-size "Minimum deck size"] {:min-deck-size min-deck-size}]])
      (when-let [influence-limit (:influencelimit card)]
-       [:div.heading [tr [:card-browser_inf-limit "Influence limit"]] ": " influence-limit])
+       [:div.heading [tr [:card-browser_inf-limit "Influence limit"] {:inf-limit influence-limit}]])
 
      (when impl
-       [:div.heading [tr [:card-browser_implementation-note "Implementation note"]] ": " impl])
+       [:div.heading [tr [:card-browser_implementation-note "Implementation note"] {:impl impl}]])
 
      [:div.text.card-body
       [:p [:span.type (tr-type (:type card))]
@@ -518,19 +519,19 @@
                               :on-click #(swap! state assoc :search-query "")}])
      [:input.search {:on-change #(handle-search % state)
                      :type "text"
-                     :placeholder (tr [:card-browser_search-hint "Search cards"])
+                     :placeholder (tr [:card-browser-form_search-hint "Search cards"])
                      :value query}]]))
 
 (defn sort-by-builder [state]
   [:div
-   [:h4 [tr [:card-browser_sort "Sort by"]]]
+   [:h4 [tr [:card-browser-form_sort "Sort by"]]]
    [:select {:value (:sort-field @state)
              :on-change #(swap! state assoc :sort-field (.. % -target -value))}
     (doall
      (for [field ["Faction" "Name" "Type" "Influence" "Cost" "Set number"]]
        [:option {:value field
                  :key field}
-        (tr [:card-browser_sort-by field] {:by (clean-input field)})]))]])
+        (tr [:card-browser-form_sort-by field] {:by (clean-input field)})]))]])
 
 (defn simple-filter-builder
   [title state state-key options translator]
@@ -571,7 +572,7 @@
                           set-names)
         formats (-> format->slug keys butlast)]
     [:div
-     [simple-filter-builder [tr [:card-browser_format "Format"]]
+     [simple-filter-builder [tr [:card-browser-form_format "Format"]]
       state :format-filter formats tr-format]
      [:div
       [:h4 [tr [:card-browser_set "Set"]]]
@@ -584,11 +585,11 @@
            (if indent
              (str "* " (tr-set n))
              (tr-set n))]))]]
-     [simple-filter-builder [tr [:card-browser_side "Side"]]
+     [simple-filter-builder [tr [:card-browser-form_side "Side"]]
       state :side-filter ["Corp" "Runner"] tr-side]
-     [simple-filter-builder [tr [:card-browser_faction "Faction"]]
+     [simple-filter-builder [tr [:card-browser-form_faction "Faction"]]
       state :faction-filter (factions (:side-filter @state)) tr-faction]
-     [simple-filter-builder [tr [:card-browser_type "Type"]]
+     [simple-filter-builder [tr [:card-browser-form_type "Type"]]
       state :type-filter (types (:side-filter @state)) tr-type]]))
 
 (defn clear-filters [state]

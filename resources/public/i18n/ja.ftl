@@ -8,26 +8,12 @@ annotations_publish = undefined
 annotations_save-local = undefined
 annotations_turn-placeholder = undefined
 
-card-browser_advancement = アドバンス要求
-card-browser_agenda-points = 計画ポイント
-card-browser_artist-info = undefined
-card-browser_clear = クリア
-card-browser_cost = コスト
-card-browser_faction = 派閥
-card-browser_format = フォーマット
-card-browser_implementation-note = undefined
-card-browser_inf-limit = 影響値上限
-card-browser_influence = 影響値
-card-browser_memory = undefined
-card-browser_min-deck-size = 最小デッキ枚数
-card-browser_more-info = undefined
-card-browser_search-hint = カード名検索
-card-browser_select-art = undefined
-card-browser_selected-art = undefined
-card-browser_set = カードセット
-card-browser_side = プレイヤーサイド
-card-browser_sort = 並び順
-card-browser_sort-by = {$by ->
+card-browser-form_faction = 派閥
+card-browser-form_format = フォーマット
+card-browser-form_search-hint = カード名検索
+card-browser-form_side = プレイヤーサイド
+card-browser-form_sort = 並び順
+card-browser-form_sort-by = {$by ->
     [cost] コスト
     [faction] 派閥
     [influence] 影響値
@@ -36,9 +22,24 @@ card-browser_sort-by = {$by ->
     [type] タイプ
     *[unknown] Unknown sort-by option ({$by})
 }
-card-browser_strength = 強度
-card-browser_trash-cost = トラッシュコスト
-card-browser_type = カードタイプ
+card-browser-form_type = カードタイプ
+
+card-browser_advancement = アドバンス要求: {$requirement}
+card-browser_agenda-points = 計画ポイント: {$points}
+card-browser_artist-info = undefined
+card-browser_clear = クリア
+card-browser_cost = コスト: {$cost}
+card-browser_implementation-note = undefined
+card-browser_inf-limit = 影響値上限: {$inf-limit}
+card-browser_influence = 影響値: {$influence}
+card-browser_memory = undefined
+card-browser_min-deck-size = 最小デッキ枚数: {$min-deck-size}
+card-browser_more-info = undefined
+card-browser_select-art = undefined
+card-browser_selected-art = undefined
+card-browser_set = カードセット
+card-browser_strength = 強度: {$strength}
+card-browser_trash-cost = トラッシュコスト: {$trash-cost}
 card-browser_update-failure = undefined
 card-browser_update-success = undefined
 

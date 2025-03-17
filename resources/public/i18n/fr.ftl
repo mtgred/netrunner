@@ -8,26 +8,12 @@ annotations_publish = Publier
 annotations_save-local = Sauvegarder
 annotations_turn-placeholder = Notes pour ce tour
 
-card-browser_advancement = Valeur d'avancement
-card-browser_agenda-points = Points de projet
-card-browser_artist-info = undefined
-card-browser_clear = Réinitialiser
-card-browser_cost = Cout
-card-browser_faction = Faction
-card-browser_format = Format
-card-browser_implementation-note = undefined
-card-browser_inf-limit = Limite d'influence
-card-browser_influence = Influence
-card-browser_memory = Mémoire
-card-browser_min-deck-size = Taille minimale de deck
-card-browser_more-info = undefined
-card-browser_search-hint = Rechercher des cartes
-card-browser_select-art = Sélectionner l'illustration
-card-browser_selected-art = Sélectionner l'illustration alternatiive
-card-browser_set = Extension
-card-browser_side = Camp
-card-browser_sort = Trier par
-card-browser_sort-by = {$by ->
+card-browser-form_faction = Faction
+card-browser-form_format = Format
+card-browser-form_search-hint = Rechercher des cartes
+card-browser-form_side = Camp
+card-browser-form_sort = Trier par
+card-browser-form_sort-by = {$by ->
     [cost] Cout
     [faction] Faction
     [influence] Influence
@@ -36,9 +22,24 @@ card-browser_sort-by = {$by ->
     [type] Type
     *[unknown] Unknown sort-by option ({$by})
 }
-card-browser_strength = Force
-card-browser_trash-cost = Cout d'effacement
-card-browser_type = Type
+card-browser-form_type = Type
+
+card-browser_advancement = Valeur d'avancement: {$requirement}
+card-browser_agenda-points = Points de projet: {$points}
+card-browser_artist-info = undefined
+card-browser_clear = Réinitialiser
+card-browser_cost = Cout: {$cost}
+card-browser_implementation-note = undefined
+card-browser_inf-limit = Limite d'influence: {$inf-limit}
+card-browser_influence = Influence: {$influence}
+card-browser_memory = Mémoire: {$memory}
+card-browser_min-deck-size = Taille minimale de deck: {$min-deck-size}
+card-browser_more-info = undefined
+card-browser_select-art = Sélectionner l'illustration
+card-browser_selected-art = Sélectionner l'illustration alternatiive
+card-browser_set = Extension
+card-browser_strength = Force: {$strength}
+card-browser_trash-cost = Cout d'effacement: {$trash-cost}
 card-browser_update-failure = Échec de la mise à jour de l'illustration
 card-browser_update-success = Illustration mise à jour
 

@@ -8,26 +8,12 @@ annotations_publish = Опубликовать
 annotations_save-local = Сохранить
 annotations_turn-placeholder = Заметки к этому ходу
 
-card-browser_advancement = Требование к продвижению
-card-browser_agenda-points = Победные очки
-card-browser_artist-info = Информация о художнике
-card-browser_clear = Сбросить
-card-browser_cost = Цена
-card-browser_faction = Фракция
-card-browser_format = Формат
-card-browser_implementation-note = undefined
-card-browser_inf-limit = Предел влияния
-card-browser_influence = Влияние
-card-browser_memory = Память
-card-browser_min-deck-size = Минимальный размер колоды
-card-browser_more-info = Больше информации
-card-browser_search-hint = Искать карты
-card-browser_select-art = Выбрать изображение
-card-browser_selected-art = Выбранное изображение
-card-browser_set = Набор
-card-browser_side = Сторона
-card-browser_sort = Сортировать по
-card-browser_sort-by = {$by ->
+card-browser-form_faction = Фракция
+card-browser-form_format = Формат
+card-browser-form_search-hint = Искать карты
+card-browser-form_side = Сторона
+card-browser-form_sort = Сортировать по
+card-browser-form_sort-by = {$by ->
     [cost] Цена
     [faction] Фракция
     [influence] Влияние
@@ -36,9 +22,24 @@ card-browser_sort-by = {$by ->
     [type] Тип
     *[unknown] undefined
 }
-card-browser_strength = Сила
-card-browser_trash-cost = Цена сноса
-card-browser_type = Тип
+card-browser-form_type = Тип
+
+card-browser_advancement = Требование к продвижению: {$requirement}
+card-browser_agenda-points = Победные очки: {$points}
+card-browser_artist-info = Информация о художнике
+card-browser_clear = Сбросить
+card-browser_cost = Цена: {$cost}
+card-browser_implementation-note = undefined
+card-browser_inf-limit = Предел влияния: {$inf-limit}
+card-browser_influence = Влияние: {$influence}
+card-browser_memory = Память: {$memory}
+card-browser_min-deck-size = Минимальный размер колоды: {$min-deck-size}
+card-browser_more-info = Больше информации
+card-browser_select-art = Выбрать изображение
+card-browser_selected-art = Выбранное изображение
+card-browser_set = Набор
+card-browser_strength = Сила: {$strength}
+card-browser_trash-cost = Цена сноса: {$trash-cost}
 card-browser_update-failure = Ошибка обновления изображения
 card-browser_update-success = Изображение обновлено
 

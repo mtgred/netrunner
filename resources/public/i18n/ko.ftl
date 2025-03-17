@@ -8,26 +8,12 @@ annotations_publish = 발행
 annotations_save-local = 저장
 annotations_turn-placeholder = 이 차례에 대한 메모
 
-card-browser_advancement = 필요 발전 정도
-card-browser_agenda-points = 아젠다 점수
-card-browser_artist-info = undefined
-card-browser_clear = 지우기
-card-browser_cost = 비용
-card-browser_faction = 세력
-card-browser_format = 포맷
-card-browser_implementation-note = undefined
-card-browser_inf-limit = 영향력 제한
-card-browser_influence = 영향력
-card-browser_memory = 메모리
-card-browser_min-deck-size = 최소 덱 사이즈
-card-browser_more-info = undefined
-card-browser_search-hint = 카드 찾기
-card-browser_select-art = 아트 선택
-card-browser_selected-art = 대체 아트가 선택됨
-card-browser_set = 세트
-card-browser_side = 사이드
-card-browser_sort = 정렬 기준
-card-browser_sort-by = {$by ->
+card-browser-form_faction = 세력
+card-browser-form_format = 포맷
+card-browser-form_search-hint = 카드 찾기
+card-browser-form_side = 사이드
+card-browser-form_sort = 정렬 기준
+card-browser-form_sort-by = {$by ->
     [cost] 비용
     [faction] 세력
     [influence] 영향력
@@ -36,9 +22,24 @@ card-browser_sort-by = {$by ->
     [type] 타입
     *[unknown] undefined
 }
-card-browser_strength = 힘
-card-browser_trash-cost = 폐기 비용
-card-browser_type = 타입
+card-browser-form_type = 타입
+
+card-browser_advancement = 필요 발전 정도: {$requirement}
+card-browser_agenda-points = 아젠다 점수: {$points}
+card-browser_artist-info = undefined
+card-browser_clear = 지우기
+card-browser_cost = 비용: {$cost}
+card-browser_implementation-note = undefined
+card-browser_inf-limit = 영향력 제한: {$inf-limit}
+card-browser_influence = 영향력: {$influence}
+card-browser_memory = 메모리: {$memory}
+card-browser_min-deck-size = 최소 덱 사이즈: {$min-deck-size}
+card-browser_more-info = undefined
+card-browser_select-art = 아트 선택
+card-browser_selected-art = 대체 아트가 선택됨
+card-browser_set = 세트
+card-browser_strength = 힘: {$strength}
+card-browser_trash-cost = 폐기 비용: {$trash-cost}
 card-browser_update-failure = 아트 갱신 실패
 card-browser_update-success = 아트가 갱신됨
 

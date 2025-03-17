@@ -8,26 +8,12 @@ annotations_publish = 发布
 annotations_save-local = 保存
 annotations_turn-placeholder = 关于此回合的注释
 
-card-browser_advancement = 推进需求
-card-browser_agenda-points = 议案分数
-card-browser_artist-info = 艺术家
-card-browser_clear = 清除
-card-browser_cost = 费用
-card-browser_faction = 派系
-card-browser_format = 赛制
-card-browser_implementation-note = 实施笔记
-card-browser_inf-limit = 影响力上限
-card-browser_influence = 影响力
-card-browser_memory = 内存
-card-browser_min-deck-size = 牌组张数下限
-card-browser_more-info = 更多信息
-card-browser_search-hint = 搜索卡牌
-card-browser_select-art = 选择卡面
-card-browser_selected-art = 已选卡面
-card-browser_set = 系列
-card-browser_side = 阵营
-card-browser_sort = 排序方式
-card-browser_sort-by = {$by ->
+card-browser-form_faction = 派系
+card-browser-form_format = 赛制
+card-browser-form_search-hint = 搜索卡牌
+card-browser-form_side = 阵营
+card-browser-form_sort = 排序方式
+card-browser-form_sort-by = {$by ->
     [cost] 费用
     [faction] 派系
     [influence] 影响力
@@ -36,9 +22,24 @@ card-browser_sort-by = {$by ->
     [type] 类别
     *[unknown] undefined
 }
-card-browser_strength = 强度
-card-browser_trash-cost = 销毁费用
-card-browser_type = 类别
+card-browser-form_type = 类别
+
+card-browser_advancement = 推进需求: {$requirement}
+card-browser_agenda-points = 议案分数: {$points}
+card-browser_artist-info = 艺术家
+card-browser_clear = 清除
+card-browser_cost = 费用: {$cost}
+card-browser_implementation-note = 实施笔记: {$impl}
+card-browser_inf-limit = 影响力上限: {$inf-limit}
+card-browser_influence = 影响力: {$influence}
+card-browser_memory = 内存: {$memory}
+card-browser_min-deck-size = 牌组张数下限: {$min-deck-size}
+card-browser_more-info = 更多信息
+card-browser_select-art = 选择卡面
+card-browser_selected-art = 已选卡面
+card-browser_set = 系列
+card-browser_strength = 强度: {$strength}
+card-browser_trash-cost = 销毁费用: {$trash-cost}
 card-browser_update-failure = 卡面更换失败
 card-browser_update-success = 卡面已更换
 

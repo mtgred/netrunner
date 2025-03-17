@@ -8,26 +8,12 @@ annotations_publish = Publikuj
 annotations_save-local = Zapisz
 annotations_turn-placeholder = Notatki do tej tury
 
-card-browser_advancement = Wymagany poziom rozwoju
-card-browser_agenda-points = Punkty projektów
-card-browser_artist-info = undefined
-card-browser_clear = Wyczyść
-card-browser_cost = Koszt
-card-browser_faction = Frakcja
-card-browser_format = Format
-card-browser_implementation-note = undefined
-card-browser_inf-limit = Limit wpływu
-card-browser_influence = Wpływ
-card-browser_memory = Pamięć
-card-browser_min-deck-size = Minimalny rozmiar talii
-card-browser_more-info = undefined
-card-browser_search-hint = Szukaj kart
-card-browser_select-art = Wybierz grafiki
-card-browser_selected-art = Wybrano grafiki alt.
-card-browser_set = Zestaw
-card-browser_side = Strona
-card-browser_sort = Porządkowanie
-card-browser_sort-by = {$by ->
+card-browser-form_faction = Frakcja
+card-browser-form_format = Format
+card-browser-form_search-hint = Szukaj kart
+card-browser-form_side = Strona
+card-browser-form_sort = Porządkowanie
+card-browser-form_sort-by = {$by ->
     [cost] Koszt
     [faction] Frakcja
     [influence] Wpływ
@@ -36,9 +22,24 @@ card-browser_sort-by = {$by ->
     [type] Typ
     *[unknown] undefined
 }
-card-browser_strength = Siła
-card-browser_trash-cost = Koszt skasowania
-card-browser_type = Typ
+card-browser-form_type = Typ
+
+card-browser_advancement = Wymagany poziom rozwoju: {$requirement}
+card-browser_agenda-points = Punkty projektów: {$points}
+card-browser_artist-info = undefined
+card-browser_clear = Wyczyść
+card-browser_cost = Koszt: {$cost}
+card-browser_implementation-note = undefined
+card-browser_inf-limit = Limit wpływu: {$inf-limit}
+card-browser_influence = Wpływ: {$influence}
+card-browser_memory = Pamięć: {$memory}
+card-browser_min-deck-size = Minimalny rozmiar talii: {$min-deck-size}
+card-browser_more-info = undefined
+card-browser_select-art = Wybierz grafiki
+card-browser_selected-art = Wybrano grafiki alt.
+card-browser_set = Zestaw
+card-browser_strength = Siła: {$strength}
+card-browser_trash-cost = Koszt skasowania: {$trash-cost}
 card-browser_update-failure = Nieudana aktualizacja grafiki
 card-browser_update-success = Grafiki zaktualizowane
 

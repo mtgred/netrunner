@@ -8,26 +8,12 @@ annotations_publish = Publish
 annotations_save-local = Save
 annotations_turn-placeholder = Notes for this turn
 
-card-browser_advancement = Advancement requirement
-card-browser_agenda-points = Agenda points
-card-browser_artist-info = Artist Info
-card-browser_clear = Clear
-card-browser_cost = Cost
-card-browser_faction = Faction
-card-browser_format = Format
-card-browser_implementation-note = Implementation Note
-card-browser_inf-limit = Influence Limit
-card-browser_influence = Influence
-card-browser_memory = Memory
-card-browser_min-deck-size = Minimum deck size
-card-browser_more-info = More Info
-card-browser_search-hint = Search cards
-card-browser_select-art = Select Art
-card-browser_selected-art = Selected Alt Art
-card-browser_set = Set
-card-browser_side = Side
-card-browser_sort = Sort by
-card-browser_sort-by = {$by ->
+card-browser-form_faction = Faction
+card-browser-form_format = Format
+card-browser-form_search-hint = Search cards
+card-browser-form_side = Side
+card-browser-form_sort = Sort by
+card-browser-form_sort-by = {$by ->
     [cost] Cost
     [faction] Faction
     [influence] Influence
@@ -36,9 +22,24 @@ card-browser_sort-by = {$by ->
     [type] Type
     *[unknown] Unknown sort-by option ({$by})
 }
-card-browser_strength = Strength
-card-browser_trash-cost = Trash cost
-card-browser_type = Type
+card-browser-form_type = Type
+
+card-browser_advancement = Advancement requirement: {$requirement}
+card-browser_agenda-points = Agenda points: {$points}
+card-browser_artist-info = Artist Info
+card-browser_clear = Clear
+card-browser_cost = Cost: {$cost}
+card-browser_implementation-note = Implementation Note: {$impl}
+card-browser_inf-limit = Influence Limit: {$inf-limit}
+card-browser_influence = Influence: {$influence}
+card-browser_memory = Memory: {$memory}
+card-browser_min-deck-size = Minimum deck size: {$min-deck-size}
+card-browser_more-info = More Info
+card-browser_select-art = Select Art
+card-browser_selected-art = Selected Alt Art
+card-browser_set = Set
+card-browser_strength = Strength: {$strength}
+card-browser_trash-cost = Trash cost: {$trash-cost}
 card-browser_update-failure = Failed to Update Art
 card-browser_update-success = Updated Art
 

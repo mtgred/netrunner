@@ -8,26 +8,12 @@ annotations_publish = Publicar
 annotations_save-local = Salvar
 annotations_turn-placeholder = Notas para este turno
 
-card-browser_advancement = Avanços necessarios
-card-browser_agenda-points = Pontos de Agenda
-card-browser_artist-info = undefined
-card-browser_clear = Limapr
-card-browser_cost = Custo
-card-browser_faction = Facção
-card-browser_format = Formato
-card-browser_implementation-note = undefined
-card-browser_inf-limit = Limite de Influencia
-card-browser_influence = Influencia
-card-browser_memory = Memória
-card-browser_min-deck-size = Tamanho minimo de baralho
-card-browser_more-info = undefined
-card-browser_search-hint = Procure cartas
-card-browser_select-art = Selecionar Arte
-card-browser_selected-art = Arte Alternativa Selecionada
-card-browser_set = Set
-card-browser_side = Lado
-card-browser_sort = Ordenar por
-card-browser_sort-by = {$by ->
+card-browser-form_faction = Facção
+card-browser-form_format = Formato
+card-browser-form_search-hint = Procure cartas
+card-browser-form_side = Lado
+card-browser-form_sort = Ordenar por
+card-browser-form_sort-by = {$by ->
     [cost] Custo
     [faction] Facção
     [influence] Influencia
@@ -36,9 +22,24 @@ card-browser_sort-by = {$by ->
     [type] Tipo
     *[unknown] undefined
 }
-card-browser_strength = Força
-card-browser_trash-cost = Custo de exclusão
-card-browser_type = Tipo
+card-browser-form_type = Tipo
+
+card-browser_advancement = Avanços necessarios: {$requirement}
+card-browser_agenda-points = Pontos de Agenda: {$points}
+card-browser_artist-info = undefined
+card-browser_clear = Limapr
+card-browser_cost = Custo: {$cost}
+card-browser_implementation-note = undefined
+card-browser_inf-limit = Limite de Influencia: {$inf-limit}
+card-browser_influence = Influencia: {$influence}
+card-browser_memory = Memória: {$memory}
+card-browser_min-deck-size = Tamanho minimo de baralho: {$min-deck-size}
+card-browser_more-info = undefined
+card-browser_select-art = Selecionar Arte
+card-browser_selected-art = Arte Alternativa Selecionada
+card-browser_set = Set
+card-browser_strength = Força: {$strength}
+card-browser_trash-cost = Custo de exclusão: {$trash-cost}
 card-browser_update-failure = Falha ao atualizar Arte
 card-browser_update-success = Atualizar Arte
 

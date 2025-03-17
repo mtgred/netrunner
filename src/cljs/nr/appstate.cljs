@@ -76,7 +76,7 @@
 (go (let [lang (or (:language @app-state) "en")
           response (<! (GET (str "/data/language/" lang)))]
       (when (= 200 (:status response))
-        (i18n/insert-lang! (keyword lang) (:json response)))))
+        (i18n/insert-lang! lang (:json response)))))
 
 (defn current-gameid [app-state]
   (get-in @app-state [:current-game :gameid]))
