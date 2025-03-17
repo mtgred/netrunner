@@ -8,13 +8,25 @@
   (:import
    (fluent.bundle FluentBundle FluentBundle$Builder FluentResource)
    (fluent.functions.cldr CLDRFunctionFactory)
-   (fluent.syntax.AST Identifiable Message Pattern PatternElement$TextElement Term)
+   (fluent.syntax.AST 
+    Commentary$Comment
+    Commentary$GroupComment
+    Commentary$ResourceComment
+    Identifiable Identifier InlineExpression$MessageReference InlineExpression$TermReference InlineExpression$VariableReference Literal$StringLiteral Message
+    Pattern PatternElement$Placeable PatternElement$TextElement SelectExpression Term Variant Attribute CallArguments NamedArgument)
    (fluent.syntax.parser FTLParser FTLStream)
    (java.io File)
    (java.util Locale Optional)))
 
+(set! *warn-on-reflection* true)
+
 (def fluent-dictionary
   (atom {}))
+
+(defn get-id
+  [entry]
+  (when (instance? Identifiable entry)
+    (.name ^Identifiable entry)))
 
 (defn build
   [locale-str ^String resource]
@@ -23,8 +35,7 @@
           locale (Locale/forLanguageTag locale-str)
           builder (FluentBundle/builder locale CLDRFunctionFactory/INSTANCE)
           ftl-res (FTLParser/parse (FTLStream/of resource))
-          entries (into {} (comp (filter #(or (instance? Message %) (instance? Term %)))
-                                 (map (fn [e] [(.name ^Identifiable e) e])))
+          entries (into {} (keep (fn [e] (when-let [id (get-id e)] [id e])))
                         (FluentResource/.entries ftl-res))]
       (when (FluentResource/.hasErrors ftl-res)
         (let [errors (.errors ftl-res)
@@ -34,7 +45,6 @@
                            :errors (mapv ex-message errors)}
                           err))))
       (FluentBundle$Builder/.addResource builder ftl-res)
-
       (FluentBundle$Builder/.build builder)
       entries)
     (catch Throwable err
@@ -189,3 +199,210 @@
 
 (comment
   (unused-translations))
+
+;; formatting
+
+(defn- indent [ctx]
+  (print (str/join (repeat (:indent ctx) "    "))))
+
+(defprotocol FTLPrinter
+  (-ftl-print [this ctx]))
+
+(extend-protocol FTLPrinter
+  Commentary$Comment
+  (-ftl-print
+   [this _ctx]
+   (print "# ")
+   (print (Commentary$Comment/.text this)))
+
+  Commentary$GroupComment
+  (-ftl-print
+   [this _ctx]
+   (newline)
+   (print "## ")
+   (print (Commentary$GroupComment/.text this)))
+
+  Commentary$ResourceComment
+  (-ftl-print
+   [this _ctx]
+   (newline)
+   (print "### ")
+   (print (Commentary$ResourceComment/.text this)))
+
+  Literal$StringLiteral
+  (-ftl-print
+   [this _ctx]
+   (pr (Literal$StringLiteral/.value this)))
+
+  Identifier
+  (-ftl-print
+   [this _ctx]
+   (print (Identifier/.key this)))
+
+  InlineExpression$MessageReference
+  (-ftl-print
+   [this ctx]
+   (-ftl-print (InlineExpression$MessageReference/.identifier this) ctx))
+
+  InlineExpression$TermReference
+  (-ftl-print
+   [this ctx]
+   (print "{-")
+   (-ftl-print (InlineExpression$TermReference/.identifier this) ctx)
+   (when-let [attr (Optional/.orElse (InlineExpression$TermReference/.attributeID this) nil)]
+     (-ftl-print attr ctx))
+   (when-let [args (not-empty (some-> (Optional/.orElse (InlineExpression$TermReference/.arguments this) nil)
+                                      (CallArguments/.named)))]
+     (print "(")
+     (let [ctx (assoc ctx :arg true)]
+       (run! (fn [arg] (-ftl-print arg ctx)) args))
+     (print ")"))
+   (print "}"))
+
+  NamedArgument
+  (-ftl-print
+   [this ctx]
+   (-ftl-print (NamedArgument/.name this) ctx)
+   (print ": ")
+   (-ftl-print (NamedArgument/.value this) ctx))
+
+  InlineExpression$VariableReference
+  (-ftl-print
+   [this ctx]
+   (print "$")
+   (-ftl-print (InlineExpression$VariableReference/.identifier this) ctx))
+
+  Variant
+  (-ftl-print
+   [this ctx]
+   (when (Variant/.isDefault this)
+     (print "*"))
+   (print "[")
+   (-ftl-print (Variant/.keyable this) ctx)
+   (print "]")
+   (print " ")
+   (-ftl-print (Variant/.value this) ctx))
+
+  SelectExpression
+  (-ftl-print
+   [this ctx]
+   (-ftl-print (SelectExpression/.selector this) ctx)
+   (print " ->")
+   (newline)
+   (run! (fn [variant]
+           (indent ctx)
+           (-ftl-print variant ctx)
+           (newline))
+         (SelectExpression/.variants this))
+   (indent (update ctx :indent #(max 0 (dec %)))))
+
+  PatternElement$TextElement
+  (-ftl-print
+   [this ctx]
+   (let [s (PatternElement$TextElement/.value this)]
+     (print s)
+     (when (str/includes? s "\n")
+       (indent ctx))))
+
+  PatternElement$Placeable
+  (-ftl-print
+   [this ctx]
+   (print "{")
+   (-ftl-print (PatternElement$Placeable/.expression this) ctx)
+   (print "}"))
+
+  Pattern
+  (-ftl-print
+   [this ctx]
+   (let [ctx (update ctx :indent inc)]
+     (run! (fn [pat] (-ftl-print pat ctx)) (Pattern/.elements this))))
+
+  Attribute
+  (-ftl-print
+   [this ctx]
+   (let [ctx (update ctx :indent inc)]
+     (indent ctx)
+     (print ".")
+     (-ftl-print (Attribute/.identifier this) ctx)
+     (print " = ")
+     (-ftl-print (Attribute/.pattern this) ctx)
+     (newline)))
+
+  Term
+  (-ftl-print
+   [this ctx]
+   (Optional/.map (Term/.comment this) (fn [cmnt]
+                                         (-ftl-print cmnt ctx)
+                                         (newline)))
+   (print "-")
+   (-ftl-print (Term/.identifier this) ctx)
+   (print " = ")
+   (-ftl-print (Term/.value this) ctx)
+   (when-let [attrs (not-empty (Term/.attributes this))]
+     (newline)
+     (run! (fn [attr] (-ftl-print attr ctx)) attrs))
+   (newline))
+
+  Message
+  (-ftl-print
+   [this ctx]
+   (Optional/.map (Message/.comment this) (fn [cmnt]
+                                            (-ftl-print cmnt ctx)
+                                            (newline)))
+   (-ftl-print (Message/.identifier this) ctx)
+   (print " = ")
+   (-ftl-print (Optional/.orElseThrow (Message/.pattern this)) ctx))
+
+  FluentResource
+  (-ftl-print
+   [this ctx]
+   (let [current-ns (volatile! nil)
+         entries (sort-by get-id (FluentResource/.entries this))]
+     (doseq [entry entries]
+       (if (or (instance? Commentary$Comment entry)
+               (instance? Commentary$GroupComment entry)
+               (instance? Commentary$ResourceComment entry))
+         (vreset! current-ns nil)
+         (when-let [new-ns (get-id entry)]
+           (let [[new-ns] (str/split new-ns #"_")]
+             (if @current-ns
+               (when-not (= new-ns @current-ns)
+                 (vreset! current-ns new-ns)
+                 (newline))
+               (vreset! current-ns new-ns)))))
+       (-ftl-print entry ctx)
+       (newline)))))
+
+(comment
+  (let [res (FTLParser/parse (FTLStream/of "
+## two
+# one
+game_archives = Archives{\"\u00A0\"}({$faceup} ↑ {$facedown} ↓)") false)]
+    (prn res)
+    (-ftl-print res {:indent 0})))
+
+(defn ftl-print
+  ([resource]
+   (ftl-print resource {:indent 0}))
+  ([resource config]
+   (-ftl-print resource config)))
+
+(defn format-i18n-files
+  [& args]
+  (let [langs (or (seq (map to-string args))
+                  (keys @fluent-dictionary))]
+    (doseq [lang langs
+            :let [f (io/file "resources" "public" "i18n" (str lang ".ftl"))
+                  contents (-> (slurp f)
+                               (str/replace "\\u" "__u")
+                               (str/replace "\\U" "__U"))
+                  ast (FTLParser/parse (FTLStream/of contents) false)
+                  formatted-file (-> (with-out-str (ftl-print ast))
+                                     (str/replace "__u" "\\u")
+                                     (str/replace "__U" "\\U")
+                                     (str/trim)
+                                     (str "\n"))]]
+      (spit f formatted-file))))
+
+(comment
+  (format-i18n-files "en"))

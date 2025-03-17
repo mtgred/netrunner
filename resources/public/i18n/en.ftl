@@ -27,12 +27,6 @@ card-browser_selected-art = Selected Alt Art
 card-browser_set = Set
 card-browser_side = Side
 card-browser_sort = Sort by
-card-browser_strength = Strength
-card-browser_trash-cost = Trash cost
-card-browser_type = Type
-card-browser_update-failure = Failed to Update Art
-card-browser_update-success = Updated Art
-
 card-browser_sort-by = {$by ->
     [cost] Cost
     [faction] Faction
@@ -42,6 +36,11 @@ card-browser_sort-by = {$by ->
     [type] Type
     *[unknown] Unknown sort-by option ({$by})
 }
+card-browser_strength = Strength
+card-browser_trash-cost = Trash cost
+card-browser_type = Type
+card-browser_update-failure = Failed to Update Art
+card-browser_update-success = Updated Art
 
 card-type_name = {$type ->
     [agenda] Agenda
@@ -74,11 +73,11 @@ deck-builder_add-cards = Add cards
 deck-builder_add-to-deck = Add to deck
 deck-builder_agenda-points = Agenda points
 deck-builder_cancel = Cancel
-deck-builder_card-name = Card name
 deck-builder_card-count = {$cnt ->
     [one] {$cnt} card
     *[other] {$cnt} cards
 }
+deck-builder_card-name = Card name
 deck-builder_clear-stats = Clear Stats
 deck-builder_completed = Completed
 deck-builder_confirm-delete = Confirm Delete
@@ -318,6 +317,29 @@ game_no-current-run = No current run
 game_no-further = No further actions
 game_ok = OK
 game_play-area = Play Area
+game_prompt = {$msg ->
+    [advance] advance
+    [archives] Archives
+    [derez] derez
+    [expend] Expend
+    [hq] HQ
+    [new-remote] New Remote
+    [r-d] R&D
+    [rez] rez
+    [score] score
+    [server-1] Server 1
+    [server-10] Server 10
+    [server-2] Server 2
+    [server-3] Server 3
+    [server-4] Server 4
+    [server-5] Server 5
+    [server-6] Server 6
+    [server-7] Server 7
+    [server-8] Server 8
+    [server-9] Server 9
+    [trash] trash
+    *[unknown] Unknown game prompt ({$msg})
+}
 game_purge = Purge
 game_reconnected-to-server = Reconnected to server
 game_remove-tag = Remove Tag
@@ -370,37 +392,12 @@ game_unbeatable = Make unbeatable
 game_unimplemented = Unimplemented
 game_unknown-phase = Unknown phase
 game_unmute = Unmute spectators
-
 game_win-claimed = {$winner} ({$side}) wins by claim on turn {$turn}
 game_win-conceded = {$winner} ({$side}) wins by concession on turn {$turn}
 game_win-decked = {$winner} ({$side}) wins due to the Corp being decked on turn {$turn}
 game_win-flatlined = {$winner} ({$side}) wins by flatline on turn {$turn}
 game_win-other = {$winner} ({$side}) wins by {$reason} on turn {$turn}
 game_win-points = {$winner} ({$side}) wins by scoring agenda points on turn {$turn}
-
-game_prompt = {$msg ->
-    [advance] advance
-    [archives] Archives
-    [derez] derez
-    [expend] Expend
-    [hq] HQ
-    [new-remote] New Remote
-    [r-d] R&D
-    [rez] rez
-    [score] score
-    [server-1] Server 1
-    [server-10] Server 10
-    [server-2] Server 2
-    [server-3] Server 3
-    [server-4] Server 4
-    [server-5] Server 5
-    [server-6] Server 6
-    [server-7] Server 7
-    [server-8] Server 8
-    [server-9] Server 9
-    [trash] trash
-    *[unknown] Unknown game prompt ({$msg})
-}
 
 ingame-settings_alt-art = Alt arts
 ingame-settings_board-overlap = Board overlap
@@ -456,6 +453,16 @@ lobby_game-count-filtered = {$cnt ->
     [one] {$cnt} Game (filtered)
     *[other] {$cnt} Games (filtered)
 }
+lobby_gateway-format = {$format ->
+    [beginner] Beginner
+    [beginner-info] This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points.
+    [beginner-ul] System Gateway - Beginner Teaching Decks
+    [constructed] Constructed
+    [intermediate] Intermediate
+    [intermediate-info] This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points.
+    [intermediate-ul] System Gateway - Intermediate Teaching Decks
+    *[unknown] Unknown Gateway Format ({$format})
+}
 lobby_hidden = Make players' hidden information visible to spectators
 lobby_hidden-details = This will reveal both players' hidden information to ALL spectators of your game, including hand and face-down cards.
 lobby_hidden-password = We recommend using a password to prevent strangers from spoiling the game.
@@ -508,9 +515,6 @@ lobby_timer-length = Timer length (minutes)
 lobby_title = Title
 lobby_title-error = Please fill a game title.
 lobby_too-little-data = Too little data
-lobby_waiting = Waiting players deck selection
-lobby_watch = Watch
-
 lobby_type = {$type ->
     [angel-arena] Angel Arena
     [casual] Casual
@@ -518,17 +522,8 @@ lobby_type = {$type ->
     [tournament] Tournament
     *[unknown] Unknown lobby type
 }
-
-lobby_gateway-format = {$format ->
-    [beginner] Beginner
-    [beginner-info] This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points.
-    [beginner-ul] System Gateway - Beginner Teaching Decks
-    [constructed] Constructed
-    [intermediate] Intermediate
-    [intermediate-info] This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points.
-    [intermediate-ul] System Gateway - Intermediate Teaching Decks
-    *[unknown] Unknown Gateway Format ({$format})
-}
+lobby_waiting = Waiting players deck selection
+lobby_watch = Watch
 
 log_annotating = Annotating
 log_game-log = Game Log
@@ -538,11 +533,11 @@ log_settings = Settings
 log_shared = Shared Annotations
 log_turn-timing = Turn Timing
 
-menu_admin = { nav_admin }
+menu_admin = {nav_admin}
 menu_donor = Donor
 menu_logout = Jack out
 menu_moderator = Moderator
-menu_settings = { nav_settings }
+menu_settings = {nav_settings}
 
 missing = :en missing text
 
@@ -783,6 +778,26 @@ settings_always = Always
 settings_api-keys = API Keys
 settings_avatar = Avatar
 settings_background = Game board background
+settings_bespoke-sounds = {$sound ->
+    [archer] Archer
+    [end-of-the-line] End of the Line
+    [harmonics] Harmonics Suite (Bloop, Echo, Pulse, Wave)
+    [header] Card-Specific Sounds
+    *[unknown] Unknown bespoke sound ({$sound})
+}
+settings_bg = {$slug ->
+    [apex-bg] Apex
+    [custom-with-url] Custom BG (input URL below)
+    [find-the-truth-bg] Find The Truth
+    [freelancer-bg] Freelancer
+    [monochrome-bg] Monochrome
+    [mushin-no-shin-bg] Mushin No Shin
+    [push-your-luck-bg] Push Your Luck
+    [rumor-mill-bg] Rumor Mill
+    [the-root-bg] The Root
+    [traffic-jam-bg] Traffic Jam
+    *[worlds2020-bg] Worlds 2020
+}
 settings_block = Block user
 settings_blocked = Blocked users
 settings_cancel = Cancel
@@ -845,28 +860,6 @@ settings_updated = Profile updated - Please refresh your browser
 settings_updating = Updating profile...
 settings_user-name = User name
 settings_volume = Volume
-
-settings_bg = {$slug ->
-    [apex-bg] Apex
-    [custom-with-url] Custom BG (input URL below)
-    [find-the-truth-bg] Find The Truth
-    [freelancer-bg] Freelancer
-    [monochrome-bg] Monochrome
-    [mushin-no-shin-bg] Mushin No Shin
-    [push-your-luck-bg] Push Your Luck
-    [rumor-mill-bg] Rumor Mill
-    [the-root-bg] The Root
-    [traffic-jam-bg] Traffic Jam
-    *[worlds2020-bg] Worlds 2020
-}
-
-settings_bespoke-sounds = {$sound ->
-    [archer] Archer
-    [end-of-the-line] End of the Line
-    [harmonics] Harmonics Suite (Bloop, Echo, Pulse, Wave)
-    [header] Card-Specific Sounds
-    *[unknown] Unknown bespoke sound ({$sound})
-}
 
 side_name = {$side ->
     [all] All
