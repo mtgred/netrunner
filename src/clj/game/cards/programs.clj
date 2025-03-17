@@ -700,7 +700,7 @@
              :effect (effect (add-counter eid card :virus 1 nil))}]
    :abilities [(break-sub
                  [(->c :virus 1)] 1 "All"
-                {:req (req (same-card? current-ice (:host card)))})]})
+                 {:req (req (same-card? current-ice (:host card)))})]})
 
 (defcard "Brahman"
   (auto-icebreaker {:abilities [(break-sub 1 2 "All")
