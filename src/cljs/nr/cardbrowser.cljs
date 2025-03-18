@@ -330,7 +330,6 @@
      (when-let [trash-cost (:trash card)]
        [:div.heading (tr [:card-browser_trash-cost "Trash cost"] {:trash-cost trash-cost})])
      (when-let [strength (:strength card)]
-       (prn :strength strength (tr [:card-browser_strength "Strength"] {:strength strength}))
        [:div.heading (tr [:card-browser_strength "Strength"] {:strength strength})])
      (when-let [requirement (:advancementcost card)]
        [:div.heading [tr [:card-browser_advancement "Advancement requirement"] {:requirement requirement}]])

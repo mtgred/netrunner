@@ -15,7 +15,7 @@
     [nr.utils :refer [alliance-dots banned-span cond-button
                       deck-points-card-span dots-html format->slug format-date-time
                       influence-dot influence-dots mdy-formatter non-game-toast num->percent
-                      restricted-span rotated-span set-scroll-top slug->format store-scroll-top render-message]]
+                      restricted-span rotated-span set-scroll-top slug->format store-scroll-top render-message safe-divide]]
     [nr.ws :as ws]
     [reagent-modals.modals :as reagent-modals]
     [reagent.core :as r]
@@ -579,10 +579,10 @@
             losses (or (:loses stats) 0)]
         [:p
          ; adding key :games to handle legacy stats before adding started vs completed
-         "  " [tr [:deck-builder_games "Games"]] ": " (+ started games)
-         " - " [tr [:deck-builder_completed "Completed"]] ": " (+ completed games)
-         " - " [tr [:deck-builder_won "Won"]] ": " wins " (" (num->percent wins (+ wins losses)) "%)"
-         " - " [tr [:deck-builder_lost "Lost"]] ": " losses]))))
+         "  " [tr [:deck-builder_games "Games"] {:games (+ started games)}]
+         " - " [tr [:deck-builder_completed "Completed"] {:completed (+ completed games)}]
+         " - " [tr [:deck-builder_won "Won"] {:won wins :percent (safe-divide wins (+ wins losses))}]
+         " - " [tr [:deck-builder_lost "Lost"] {:lost losses}]]))))
 
 (defn deck-entry [s deck]
   (r/with-let [state-deck (r/cursor s [:deck])]

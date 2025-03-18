@@ -1,9 +1,20 @@
 (ns jinteki.i18n.fluent
   (:require
-   ["@fluent/bundle" :refer [FluentBundle FluentResource]]))
+   ["@fluent/bundle" :refer [FluentBundle FluentDateTime FluentNone FluentNumber FluentResource]]))
+
+(defn custom-functions [_locale-str]
+  {:NUMBER (fn NUMBER
+             [[arg] opts]
+             (cond
+               (instance? FluentNone arg) (FluentNone. (str "NUMBER(" (.valueOf arg) ")"))
+               (instance? FluentNumber arg) (FluentNumber. (.valueOf arg) opts)
+               (instance? FluentDateTime arg) (FluentDateTime. (.valueOf arg) opts)
+               :else (throw (js/TypeError. (str "Invalid argument to NUMBER: " arg)))))})
 
 (defn build [locale-str resource]
-  (let [builder (FluentBundle. (clj->js locale-str))
+  (let [locale-str (if (= "la-pig" locale-str) "en" locale-str)
+        builder (FluentBundle. (clj->js locale-str)
+                               (clj->js {:functions (custom-functions locale-str)}))
         ftl-res (FluentResource. resource)
         errors (.addResource builder ftl-res)]
     (when (seq errors)
@@ -17,24 +28,10 @@
    (let [entry (clj->js entry)
          message (.getMessage bundle entry)]
      (when-let [v (and message (.-value message))]
-       (try (.formatPattern bundle v (clj->js args))
-            (catch :default _ nil))))))
+       (.formatPattern bundle v (clj->js args))))))
 
 (comment
-  (let [input "# Simple things are simple.
-hello-world = Hello, world!
-hello-user = Hello, {$user-name}!
-
-# Complex things are possible.
-shared-photos =
-    {$user-name} {$photo-count ->
-        [one] added a new photo
-       *[other] added {$photo-count} new photos
-    } to {$user-gender ->
-        [male] his stream
-        [female] her stram
-       *[other] their stream
-    }."
-        bundle (build "en-US" input)]
-    (println (format bundle "hello-world"))
-    (println (format bundle :hello-user {:user-name "Noah"}))))
+  (let [input "hello-world = {NUMBER($percent, style: \"percent\")}"
+        bundle (build "de" input)]
+    (prn :prn (format bundle "hello-world" {:percent 0.89}))
+    (println :println (format bundle "hello-world" {:percent 0.89}))))

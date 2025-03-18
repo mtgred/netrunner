@@ -2,7 +2,6 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
    [cljs.core.async :refer [<!] :as async]
-   [clojure.string :refer [capitalize]]
    [jinteki.cards :refer [all-cards]]
    [nr.ajax :refer [DELETE GET]]
    [nr.appstate :refer [app-state]]
@@ -11,7 +10,7 @@
    [nr.end-of-game-stats :refer [build-game-stats]]
    [nr.translations :refer [tr tr-format tr-room-type tr-side]]
    [nr.utils :refer [day-word-with-time-formatter faction-icon format-date-time
-                     notnum->zero num->percent player-highlight-option-class
+                     notnum->zero safe-divide player-highlight-option-class
                      render-message render-player-highlight set-scroll-top store-scroll-top]]
    [nr.ws :as ws]
    [reagent.core :as r]))
@@ -82,20 +81,21 @@
 (defn stat-view [{:keys [start-key complete-key win-key lose-key stats]}]
   (r/with-let [started (notnum->zero (start-key stats))
                completed (notnum->zero (complete-key stats))
-               pc (notnum->zero (num->percent completed started))
+               pc (safe-divide completed started)
                win (notnum->zero (win-key stats))
                lose (notnum->zero (lose-key stats))
-               pw (notnum->zero (num->percent win (+ win lose)))
-               pl (notnum->zero (num->percent lose (+ win lose)))
+               pw (safe-divide win (+ win lose))
+               pl (safe-divide lose (+ win lose))
                incomplete (notnum->zero (- started completed))
-               pi (notnum->zero (num->percent incomplete started))]
+               pi (safe-divide incomplete started)
+               gamestats (r/cursor app-state [:options :gamestats])]
     [:section
-     [:div [tr [:stats_started "Started"]] ": " started]
-     [:div [tr [:stats_completed "Completed"]] ": " completed " (" pc "%)"]
-     [:div [tr [:stats_not-completed "Not completed"]] ": " incomplete  " (" pi "%)"]
-     (when-not (= "none" (get-in @app-state [:options :gamestats]))
-       [:div [:div [tr [:stats_won "Won"]] ": " win  " (" pw "%)"]
-        [:div [tr [:stats_lost "Lost"]] ": " lose  " (" pl "%)"]])]))
+     [:div [tr [:stats_started "Started"] {:started started}]]
+     [:div [tr [:stats_completed "Completed"] {:completed completed :percent pc}]]
+     [:div [tr [:stats_not-completed "Not completed"] {:completed incomplete :percent pi}]]
+     (when-not (= "none" @gamestats)
+       [:div [:div [tr [:stats_won "Won"] {:won win :percent pw}]]
+        [:div [tr [:stats_lost "Lost"] {:lost lose :percent pl}]]])]))
 
 (defn stats-panel [stats]
   [:div.games.panel

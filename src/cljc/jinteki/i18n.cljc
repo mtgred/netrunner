@@ -55,9 +55,9 @@
         ret))))
 
 (defn format
-  ([app-state resource] (format app-state resource nil))
-  ([app-state resource params]
-   (let [lang (get-in @app-state [:options :language] "en")
+  ([lang-cursor resource] (format lang-cursor resource nil))
+  ([lang-cursor resource params]
+   (let [lang (or @lang-cursor "en")
          resource (if (vector? resource) resource [resource])
          [raw-id fallback] resource
          id (name raw-id)

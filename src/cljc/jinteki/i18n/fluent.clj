@@ -50,21 +50,8 @@
                                                                 :args args}))))))))
 
 (comment
-  (let [input "# Simple things are simple.
--poop = poop
-hello-world = Hello, world!
-hello-user = Hello, {$user-name}!
-
-# Complex things are possible.
-shared-photos =
-    {$user-name} {$photo-count ->
-        [one] added a new photo
-       *[other] added {$photo-count} new photos
-    } to {$user-gender ->
-        [male] his stream
-        [female] her stream
-       *[other] their stream
-    }."
+  (let [input "hello-world = {NUMBER($percent, style:\"percent\")}"
         bundle (build "en" input)]
-    (println (format bundle "hello-world"))
-    (println (format bundle :hello-user {:uer-name "Noah"}))))
+    (println (format bundle "hello-world" {:percent 0.8
+                                           :style "percent"}))
+    #_(println (format bundle :hello-user {:uer-name "Noah"}))))

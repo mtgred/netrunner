@@ -2,12 +2,16 @@
   (:require
    [clojure.string :as str]
    [jinteki.i18n :as i18n]
-   [nr.appstate :refer [app-state]]))
+   [nr.appstate :refer [app-state]]
+   [reagent.core :as r]))
+
+(def language-cursor
+  (r/cursor app-state [:options :language]))
 
 (defn tr
   ([resource] (tr resource nil))
   ([resource params]
-   (i18n/format app-state resource params)))
+   (i18n/format language-cursor resource params)))
 
 (defn clean-input
   [s]

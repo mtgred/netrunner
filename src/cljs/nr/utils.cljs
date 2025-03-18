@@ -361,6 +361,11 @@
   [input]
   (if (pos? (int input)) input 0))
 
+(defn safe-divide
+  "Divide two numbers iff the second number is positive"
+  [num1 num2]
+  (if (pos? num2) (/ (double num1) (double num2)) 0.0))
+
 (defn num->percent
   "Converts an input number to a percent of the second input number for display"
   [num1 num2]

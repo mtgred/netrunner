@@ -193,7 +193,7 @@
                   resp (cond-> resp
                          lang
                          (assoc :lang lang
-                                :content (i18n/get-content (keyword lang))))]
+                                :content (i18n/get-content lang)))]
               (response 200 resp)))
         (response 404 {:message "Account not found"}))
       (response 401 {:message "Unauthorized"}))))

@@ -85,6 +85,7 @@
                            :gamestats gamestats
                            :deckstats deckstats
                            :disable-websockets disable-websockets)))
+    (save-to-local-storage! "language" language)
     (save-to-local-storage! "sounds" sounds)
     (save-to-local-storage! "default-format" default-format)
     (save-to-local-storage! "lobby_sounds" lobby-sounds)

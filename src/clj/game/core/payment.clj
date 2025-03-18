@@ -171,10 +171,7 @@
           (#{:click :lose-click} cost-type) (str "spend " cost-string)
           (= :credit cost-type) (str "pay " cost-string)
           :else cost-string)))
-    (try (cost->string (first cost))
-         (catch Throwable t
-           (prn cost)
-           (throw t)))))
+    (cost->string (first cost))))
 
 (defn build-cost-string
   "Gets the complete cost-str for specified costs"

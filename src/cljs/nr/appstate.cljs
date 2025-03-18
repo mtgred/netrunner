@@ -1,9 +1,9 @@
 (ns nr.appstate
   (:require
    [cljs.core.async :refer [<!] :refer-macros [go]]
+   [jinteki.i18n :as i18n]
    [jinteki.utils :refer [str->int]]
    [nr.ajax :refer [GET]]
-   [jinteki.i18n :as i18n]
    [reagent.core :as r]))
 
 (defn- get-local-value
@@ -38,7 +38,7 @@
                             :card-zoom (get-local-value "card-zoom" "image")
                             :pin-zoom (= (get-local-value "pin-zoom" "false") "true")
                             :pronouns "none"
-                            :language "en"
+                            :language (get-local-value "language" js/navigator.language)
                             :default-format (get-local-value "default-format" "standard")
                             :show-alt-art true
                             :card-resolution "default"
@@ -73,7 +73,7 @@
                       :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}
            :games [] :current-game nil}))
 
-(go (let [lang (or (:language @app-state) "en")
+(go (let [lang (get-in @app-state [:options :language] "en")
           response (<! (GET (str "/data/language/" lang)))]
       (when (= 200 (:status response))
         (i18n/insert-lang! lang (:json response)))))
