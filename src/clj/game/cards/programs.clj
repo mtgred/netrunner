@@ -1352,13 +1352,13 @@
                                 (reveal state side topcard)
                                 (system-msg state :runner (str "reveals " topcard
                                                                " from the top of R&D"))
-                                (continue-ability state side (force-draw topcard) card nil))))}}}])
-  {:events [{:event :successful-run
-             :req (req (= :rd (target-server context)))
-             :async true
-             :interactive (req true)
-             :waiting-prompt true
-             :effect (effect (continue-ability rvl card nil))}]})
+                                (continue-ability state side (force-draw topcard) card nil))))}}}]
+    {:events [{:event :successful-run
+               :req (req (= :rd (target-server context)))
+               :async true
+               :interactive (req true)
+               :waiting-prompt true
+               :effect (effect (continue-ability rvl card nil))}]}))
 
 (defcard "Euler"
   (auto-icebreaker {:abilities [(break-sub 0 1 "Code Gate" {:req (req (= :this-turn (installed? card)))})
