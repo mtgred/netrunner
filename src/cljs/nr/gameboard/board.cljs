@@ -310,7 +310,7 @@
 
 (defn remote->name [server]
   (let [num (remote->num server)]
-    (str [tr [:game_server "Server"]] " " num)))
+    [tr [:game_server "Server"] {:num num}]))
 
 (defn zone->sort-key [zone]
   (case (if (keyword? zone) zone (last zone))
@@ -372,9 +372,9 @@
       (case implemented
         (:full "full") nil
         [:div.panel.blue-shade.implementation {:style {:right (get-in @app-state [:options :log-width])}}
-         (case implemented
-           nil [:span.unimplemented [tr [:game_unimplemented "Unimplemented"]]]
-           [:span.impl-msg implemented])]))))
+         (if implemented
+           [:span.impl-msg implemented]
+           [:span.unimplemented [tr [:game_unimplemented "Unimplemented"]]])]))))
 
 (defn card-zoom-display
   [zoom-card img-side]
@@ -590,7 +590,7 @@
     [:div.panel.blue-shade.encounter-info {:style {:display "inline"}}
      [:span.active.float-center (get-title ice)]
      [:span.info {:style {:display "block"}} (join " - " subtypes)]
-     [:span.float-center [tr [:card-browser_strength] "Strength"] ": " current-strength]
+     [:span.float-center [tr [:card-browser_strength "Strength"] {:strength current-strength}]]
      [:hr]
      (when (seq subroutines)
        [:span.float-center [tr [:game_subs "Subroutines"]] ":"])
@@ -913,7 +913,7 @@
              [:a {:on-click #(close-popup % (:hand-popup @s) nil false false)} [tr [:game_close "Close"]]]
              [:label [tr [:game_card-count] size]]
              (let [{:keys [total]} @hand-size]
-               (stat-controls :hand-size [:div.hand-size (str total " " [tr [:game_max-hand "Max hand size"]])]))
+               (stat-controls :hand-size [:div.hand-size [tr [:game_max-hand "Max hand size"] {:total total}]]))
              [build-hand-card-view filled-hand size "card-popup-wrapper"]]])]))))
 
 (defn show-deck [event ref]
@@ -954,8 +954,10 @@
          (when (and (= render-side player-side) (not (is-replay?)))
            [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
             [:div {:on-click #(do (send-command "shuffle")
-                                  (-> (menu-ref @board-dom) js/$ .fadeOut))} [tr [:game_shuffle "Shuffle"]]]
-            [:div {:on-click #(show-deck % ref)} [tr [:game_show "Show"]]]])
+                                  (-> (menu-ref @board-dom) js/$ .fadeOut))}
+             [tr [:game_shuffle "Shuffle"]]]
+            [:div {:on-click #(show-deck % ref)}
+             [tr [:game_show "Show"]]]])
          (when (and (= render-side player-side) (not (is-replay?)))
            [:div.panel.blue-shade.popup {:ref #(swap! board-dom assoc content-ref %)}
             [:div
@@ -979,11 +981,12 @@
                                   (if (some graveyard-highlight-card? @discard)
                                     "graveyard-highlight-bg"
                                     "darkbg"))}
-         [tr [:game_heap "Heap"]] " (" (count @discard) ")"]]
+         [tr [:game_heap "Heap"] {:cnt (count @discard)}]]]
        [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                      :class (if (= player-side :runner) "me" "opponent")}
         [:div
-         [:a {:on-click #(close-popup % (:popup @s) nil false false)} [tr [:game_close "Close"]]]]
+         [:a {:on-click #(close-popup % (:popup @s) nil false false)}
+          [tr [:game_close "Close"]]]]
         (doall
           (for [card (if (sort-heap?) (sort-heap @discard) @discard)]
             ^{:key (:cid card)}
@@ -1017,7 +1020,8 @@
          [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
                                        :class (if (= (:side @game-state) :runner) "opponent" "me")}
           [:div
-           [:a {:on-click #(close-popup % (:popup @s) nil false false)} [tr [:game_close "Close"]]]
+           [:a {:on-click #(close-popup % (:popup @s) nil false false)}
+            [tr [:game_close "Close"]]]
            [:label (let [d @discard
                          total (count d)
                          face-up (count (filter faceup? d))]
@@ -1050,7 +1054,7 @@
                                             :class "opponent"}
                [:div
                 [:a {:on-click #(close-popup % (:rfg-popup @dom) nil false false)} [tr [:game_close "Close"]]]
-                [:label [tr [:game_card-count] size]]]
+                [:label [tr [:game_card-count] {:cnt size}]]]
                (doall
                  (for [c @cards]
                    ^{:key (:cid c)}
@@ -1437,7 +1441,8 @@
               (if (or (= :spectator @my-side)
                       (and @my-keep @op-keep))
                 [cond-button (if (= :spectator @my-side)
-                               [tr [:game_close "Close"]] [tr [:game_start "Start Game"]])
+                               [tr [:game_close "Close"]]
+                               [tr [:game_start "Start Game"]])
                  true #(swap! app-state assoc :start-shown true)]
                 (list ^{:key "keepbtn"} [cond-button [tr [:game_keep "Keep"]]
                                          (= "mulligan" (:prompt-type @prompt-state))
@@ -1520,7 +1525,7 @@
        (and (= "approach-ice" (:phase @run))
             ice)
        [cond-button
-        (str [tr [:game_rez "Rez"]] " " (get-title ice))
+        (str (tr [:game_rez "Rez"]) " " (get-title ice))
         (not (rezzed? ice))
         #(send-command "rez" {:card ice
                               :press-continue (get-in @app-state [:options :pass-on-rez])})]
@@ -1542,7 +1547,7 @@
                             (= 1 (:encounter-count @encounters)))]
          [cond-button
           (if pass-ice?
-            (str [tr [:game_continue-to "Continue to"]] " " (phase->next-phase-title run))
+            [tr [:game_continue-to "Continue to"] {:phase (phase->next-phase-title run)}]
             [tr [:game_continue "Continue"]])
           (not= "corp" (:no-action @encounters))
           #(send-command "continue")])
@@ -1551,7 +1556,7 @@
         (if (or (:next-phase @run)
                 (zero? (:position @run)))
           [tr [:game_no-further "No further actions"]]
-          (str [tr [:game_continue-to "Continue to"]] " " (phase->next-phase-title run)))
+          [tr [:game_continue-to "Continue to"] {:phase (phase->next-phase-title run)}])
         (and (not= "initiation" (:phase @run))
              (not= "success" (:phase @run))
              (not= "corp" (:no-action @run)))
@@ -1599,7 +1604,7 @@
             (not (zero? (:position @run)))
             (not @encounters))
        [cond-button
-        (str [tr [:game_continue-to "Continue to"]] " " (phase->next-phase-title run))
+        [tr [:game_continue-to "Continue to"] {:phase (phase->next-phase-title run)}]
         (not= "runner" (:no-action @run))
         #(send-command "continue")]
 
@@ -1624,7 +1629,7 @@
      (when @encounters
        [cond-button
         (if pass-ice?
-          (str [tr [:game_continue-to "Continue to"]] " " (phase->next-phase-title run))
+          [tr [:game_continue-to "Continue to"] {:phase (phase->next-phase-title run)}]
           [tr [:game_continue "Continue"]])
         (not= "runner" (:no-action @encounters))
         #(send-command "continue")])
@@ -1680,7 +1685,7 @@
                                    (-> "#trace-submit" js/$ .click)
                                    (.stopPropagation %))}
        (doall (for [i (range (inc choices))]
-                [:option {:value i :key i} i]))] (str " " [tr [:game_credits "credits"]])]
+                [:option {:value i :key i} i]))] [tr [:game_credits "credits"]]]
      (when (or unbeatable beat-trace)
        (let [beat-str (if unbeatable
                         [tr [:game_unbeatable "Make Unbeatable"]]
@@ -1772,7 +1777,7 @@
                                         (-> "#counter-submit" js/$ .click)
                                         (.stopPropagation %))}
             (doall (for [i (range (inc num-counters))]
-                     [:option {:key i :value i} i]))] (str " " [tr [:game_credits "credits"]])]
+                     [:option {:key i :value i} i]))] [tr [:game_credits "credits"]]]
           [:button#counter-submit {:on-click #(send-command "choice"
                                              {:choice (-> "#credit" js/$ .val str->int)})}
            [tr [:game_ok "OK"]]]])
@@ -1985,8 +1990,7 @@
     (fn []
       [:div.panel.blue-shade.timestamp
        [:span.float-center
-        [tr [:game_game-start "Game start"]]
-        ": " (.toLocaleTimeString (js/Date. start-date))]
+        [tr [:game_game-start "Game start"] {:timestamp (js/Date. start-date)}]]
        [:<>
         [:span.pm {:on-click #(swap! hide-timer not)}
          (if @hide-timer "+" "-")]

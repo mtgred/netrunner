@@ -257,7 +257,7 @@ game_beat-trace = Beat Trace
 game_brain-damage = {$dmg} Core Damage
 game_breach-server = Breach server
 game_card = Card
-game_card-count = {$size ->
+game_card-count = {$cnt ->
     [one] {$size} card
     *[other] {$size} cards
 }
@@ -269,7 +269,7 @@ game_close = Close
 game_close-shuffle = Close & Shuffle
 game_concede = Concede
 game_continue = Continue
-game_continue-to = Continue to
+game_continue-to = Continue to {$phase}
 game_corp-view = Corp View
 game_credit-count = {$credit ->
     [one] {$credit} Credit
@@ -292,9 +292,9 @@ game_face-down-count = {$total ->
 }
 game_fire-unbroken = Fire unbroken subroutines
 game_gain-credit = Gain Credit
-game_game-start = Game start
+game_game-start = Game start: {$timestamp}
 game_grip = Grip
-game_heap = Heap
+game_heap = Heap ({$cnt})
 game_hq = HQ
 game_inactivity = Game closed due to inactivity
 game_indicate-action = Indicate paid ability
@@ -308,7 +308,7 @@ game_let-subs-fire = Let unbroken subroutines fire
 game_link-strength = Link Strength
 game_lost-connection = Lost connection to server. Reconnecting.
 game_mandatory-draw = Mandatory Draw
-game_max-hand = Max hand size
+game_max-hand = {$total} Max hand size
 game_minutes = m:
 game_movement = Movement
 game_mu-count = {$unused} of {$available} MU unused
@@ -355,7 +355,7 @@ game_runner-view = Runner View
 game_scored-area = Scored Area
 game_seconds = s
 game_seconds-remaining = s remaining
-game_server = Server
+game_server = Server {$num}
 game_set-aside = Set aside
 game_show = Show
 game_show-decklists = Show/Hide decklists

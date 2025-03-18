@@ -257,9 +257,9 @@ game_beat-trace = undefined
 game_brain-damage = {$dmg} Dégât sévère
 game_breach-server = Fracturer le serveur
 game_card = Carte
-game_card-count = {$size ->
-    [one] {$size} carte
-    *[other] {$size} cartes
+game_card-count = {$cnt ->
+    [one] {$cnt} carte
+    *[other] {$cnt} cartes
 }
 game_click-count = {$click ->
     [one] {$click} Clic
@@ -269,7 +269,7 @@ game_close = Fermer
 game_close-shuffle = Fermer et Mélanger
 game_concede = Abandonner
 game_continue = Continuer
-game_continue-to = Continuer vers :
+game_continue-to = Continuer vers {$phase}
 game_corp-view = Vue Corpo
 game_credit-count = {$credit ->
     [one] {$credit} Crédit
@@ -292,9 +292,9 @@ game_face-down-count = {$total ->
 }
 game_fire-unbroken = Déclencher les routines non neutralisées
 game_gain-credit = Gagner un crédit
-game_game-start = Démarrer la partie
+game_game-start = Démarrer la partie: {$timestamp}
 game_grip = Main
-game_heap = Tas
+game_heap = Tas ({$cnt})
 game_hq = QG
 game_inactivity = Partie fermée pour cause d'inactivé
 game_indicate-action = Indiquer une action
@@ -308,7 +308,7 @@ game_let-subs-fire = Laisser la Corpo déclencher les routines non neutralisées
 game_link-strength = Force d'évasion
 game_lost-connection = undefined
 game_mandatory-draw = Pioche obligatoire
-game_max-hand = Taille de main maximale
+game_max-hand = {$total} Taille de main maximale
 game_minutes = undefined
 game_movement = Mouvement
 game_mu-count = {$available ->
@@ -336,7 +336,7 @@ game_runner-view = Vue Runner
 game_scored-area = Zone de score
 game_seconds = undefined
 game_seconds-remaining = undefined
-game_server = Serveur
+game_server = Serveur {$num}
 game_set-aside = undefined
 game_show = Montrer
 game_show-decklists = undefined

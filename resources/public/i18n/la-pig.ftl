@@ -254,19 +254,19 @@ game_beat-trace = undefined
 game_brain-damage = Ainbray Amageday
 game_breach-server = Eachbray erversay
 game_card = Ardcay
-game_card-count = {$size ->
-    [one] {$size} ardcay
-    *[other] {$size} ardscay
+game_card-count = {$cnt ->
+    [one] {$cnt} ardcay
+    *[other] {$cnt} ardscay
 }
 game_click-count = {$click ->
-    [one] {$size} Ickclay
-    *[other] {$size} Icksclay
+    [one] {$click} Ickclay
+    *[other] {$click} Icksclay
 }
 game_close = Oseclay
 game_close-shuffle = Osecla & Uffleshay
 game_concede = Oncedecay
 game_continue = Ontinuecay
-game_continue-to = Ontinuecay otay
+game_continue-to = Ontinuecay otay {$phase}
 game_corp-view = Orpcay Iewvay
 game_credit-count = {$credit ->
     [one] Editcray
@@ -286,9 +286,9 @@ game_error = undefined
 game_face-down-count = {$total} ardscay, {$facedown} acefay-ownday.
 game_fire-unbroken = Irefay unbrokenyay ubroutinessay
 game_gain-credit = Aingay Editcray
-game_game-start = Amegay Artstay
+game_game-start = Amegay Artstay: {$timestamp}
 game_grip = Ipgray
-game_heap = Eaphay
+game_heap = Eaphay ({$cnt})
 game_hq = HQYAY
 game_inactivity = Amegay osedclay ueday otay inactivityay
 game_indicate-action = Indicateyay actionyay
@@ -302,7 +302,7 @@ game_let-subs-fire = Etlay allyay okenunbray ubroutinessay irefay
 game_link-strength = Inklay Engthstray
 game_lost-connection = undefined
 game_mandatory-draw = Andatorymay Awdray
-game_max-hand = Axmay andhay izesay
+game_max-hand = {$total} Axmay andhay izesay
 game_minutes = undefined
 game_movement = Ovementmay
 game_mu-count = (fn [[unused available]] (str unused " ofyay " available " UMYAY unusedyay"))
@@ -349,7 +349,7 @@ game_runner-view = Unnerray Iewvay
 game_scored-area = Oredscay Areayay
 game_seconds = undefined
 game_seconds-remaining = undefined
-game_server = Erversay
+game_server = Erversay {$num}
 game_set-aside = undefined
 game_show = Owshay
 game_show-decklists = undefined
