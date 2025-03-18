@@ -5,15 +5,16 @@
     [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [active? agenda? asset? card-index condition-counter? convert-to-agenda corp? facedown? fake-identity? get-card get-title get-zone has-subtype? ice? in-hand? in-play-area? installed? program? resource? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
+    [game.core.effects :refer [is-disabled-reg? register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.engine :as engine :refer [checkpoint dissoc-req register-pending-event queue-event register-default-events register-events should-trigger? trigger-event trigger-event-sync unregister-events]]
     [game.core.finding :refer [get-scoring-owner]]
-    [game.core.flags :refer [can-trash? card-flag? cards-can-prevent? get-prevent-list untrashable-while-resources? untrashable-while-rezzed? zone-locked?]]
+    [game.core.flags :refer [can-trash? card-flag? untrashable-while-resources? untrashable-while-rezzed? zone-locked?]]
     [game.core.hosting :refer [remove-from-host]]
     [game.core.ice :refer [get-current-ice set-current-ice update-breaker-strength]]
     [game.core.initializing :refer [card-init deactivate reset-card]]
     [game.core.memory :refer [init-mu-cost]]
+    [game.core.prevention :refer [resolve-trash-prevention]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [enforce-msg system-msg]]
     [game.core.servers :refer [is-remote? same-server? target-server type->rig-zone]]
@@ -263,55 +264,6 @@
       (move state side card to))))
 
 ;;; Trashing
-(defn trash-prevent
-  [state _ type n]
-  (swap! state update-in [:trash :trash-prevent type] (fnil #(+ % n) 0)))
-
-(defn- prevent-trash-impl
-  [state side eid {:keys [zone type] :as card} {:keys [unpreventable cause game-trash] :as args}]
-  (if (and card (not-any? #{:discard} zone))
-    (cond
-      (and (not game-trash)
-           (untrashable-while-rezzed? card))
-      (do (enforce-msg state card "cannot be trashed while installed")
-          (effect-completed state side eid))
-      (and (= side :runner)
-           (not (can-trash? state side card)))
-      (do (enforce-msg state card "cannot be trashed")
-          (effect-completed state side eid))
-      (and (= side :corp)
-           (untrashable-while-resources? card)
-           (> (count (filter resource? (all-active-installed state :runner))) 1))
-      (do (enforce-msg state card "cannot be trashed while there are other resources installed")
-          (effect-completed state side eid))
-      ;; Card is not enforced untrashable
-      :else
-      (let [ktype (keyword (string/lower-case type))]
-        (when (and (not unpreventable)
-                   (not= cause :ability-cost))
-          (swap! state update-in [:trash :trash-prevent] dissoc ktype))
-        (let [type (->> ktype name (str "trash-") keyword)
-              prevent (get-prevent-list state :runner type)]
-          ;; Check for prevention effects
-          (if (and (not unpreventable)
-                   (not= cause :ability-cost)
-                   (cards-can-prevent? state :runner prevent type card args))
-            (do (system-msg state :runner "has the option to prevent trash effects")
-                (show-wait-prompt state :corp "Runner to prevent trash effects")
-                (show-prompt state :runner nil
-                             (str "Prevent the trashing of " (:title card) "?") ["Done"]
-                             (fn [_]
-                               (clear-wait-prompt state :corp)
-                               (if-let [_ (get-in @state [:trash :trash-prevent ktype])]
-                                 (do (system-msg state :runner (str "prevents the trashing of " (:title card)))
-                                     (swap! state update-in [:trash :trash-prevent] dissoc ktype)
-                                     (effect-completed state side eid))
-                                 (do (system-msg state :runner (str "will not prevent the trashing of " (:title card)))
-                                     (complete-with-result state side eid card))))
-                             {:prompt-type :prevent}))
-            ;; No prevention effects: add the card to the trash-list
-            (complete-with-result state side eid card)))))
-    (effect-completed state side eid)))
 
 (defn update-current-ice-to-trash
   "If the current ice is going to be trashed, update it with any changes"
@@ -325,16 +277,6 @@
   [state c]
   (when-let [card (get-card state c)]
     (assoc card :seen (:seen c))))
-
-(defn- prevent-trash
-  ([state side eid cs args] (prevent-trash state side eid cs args []))
-  ([state side eid cs args acc]
-   (if (seq cs)
-     (wait-for (prevent-trash-impl state side (make-eid state eid) (get-card? state (first cs)) args)
-               (if-let [card async-result]
-                 (prevent-trash state side eid (rest cs) args (conj acc card))
-                 (prevent-trash state side eid (rest cs) args acc)))
-     (complete-with-result state side eid acc))))
 
 (defn get-trash-effect
   "Criteria for abilities that trigger when the card is trashed."
@@ -374,7 +316,8 @@
          (reduce
            (fn [acc cur]
              (let [event (if (and (same-card? card (:card cur))
-                                  (= trash-event (:event cur)))
+                                  (= trash-event (:event cur))
+                                  (not (is-disabled-reg? state card)))
                            (assoc cur :duration trash-event)
                            cur)]
                (conj acc event)))
@@ -402,51 +345,66 @@
   ([state side eid cards {:keys [accessed cause cause-card keep-server-alive game-trash suppress-checkpoint] :as args}]
    (if (empty? (filter identity cards))
      (effect-completed state side eid)
-     (wait-for (prevent-trash state side (make-eid state eid) cards args)
-               (let [trashlist async-result
-                     _ (update-current-ice-to-trash state trashlist)
-                     trash-event (get-trash-event side game-trash)
-                     ;; No card should end up in the opponent's discard pile, so instead
-                     ;; of using `side`, we use the card's `:side`.
-                     move-card (fn [card]
-                                 (move state (to-keyword (:side card)) card :discard {:keep-server-alive keep-server-alive}))
-                     ;; If the trashed card is installed, update all of the indicies
-                     ;; of the other installed cards in the same location
-                     update-indicies (fn [card]
-                                       (when (installed? card)
-                                         (update-installed-card-indices state side (:zone card))))
-                     ;; Perform the move of the cards from their current location to
-                     ;; the discard. At the same time, gather their `:trash-effect`s
-                     ;; to be used in the simult event later.
-                     moved-cards (reduce
-                                   (fn [acc card]
-                                     (if-let [card (get-card? state card)]
-                                       (let [_ (set-duration-on-trash-events state card trash-event)
-                                             moved-card (move-card card)
-                                             trash-effect (get-trash-effect state side eid card args)]
-                                         (update-indicies card)
-                                         (conj acc [moved-card trash-effect]))
-                                       acc))
-                                   []
-                                   trashlist)]
-                 (swap! state update-in [:trash :trash-list] dissoc eid)
-                 (when (and side (seq (remove #{side} (map #(to-keyword (:side %)) trashlist))))
-                   (swap! state assoc-in [side :register :trashed-card] true))
-                 ;; Pseudo-shuffle archives. Keeps seen cards in play order and shuffles unseen cards.
-                 (swap! state assoc-in [:corp :discard]
-                        (vec (sort-by #(if (:seen %) -1 1) (get-in @state [:corp :discard]))))
-                 (let [eid (make-result eid (mapv first moved-cards))]
-                   (doseq [[card trash-effect] moved-cards
-                           :when trash-effect]
-                     (register-pending-event state trash-event card trash-effect))
-                   (doseq [trashed-card trashlist]
-                     (queue-event state trash-event {:card trashed-card
-                                                     :cause cause
-                                                     :cause-card (trim-cause-card cause-card)
-                                                     :accessed accessed}))
-                   (if suppress-checkpoint
-                     (effect-completed state nil eid)
-                     (checkpoint state nil eid {:duration trash-event}))))))))
+     (wait-for (resolve-trash-prevention state side cards args)
+               (let [trashlist (:remaining async-result)
+                     ;;_ (println "async result: " trashlist)
+                     _ (update-current-ice-to-trash state (map :card trashlist))]
+                 (wait-for
+                   (trigger-event-sync state side :pre-trash-interrupt (map :card trashlist))
+                   (let [trash-event (get-trash-event side game-trash)
+                         ;; No card should end up in the opponent's discard pile, so instead
+                         ;; of using `side`, we use the card's `:side`.
+                         move-card (fn [card dest]
+                                     (move state (to-keyword (:side card)) card dest {:keep-server-alive keep-server-alive}))
+                         should-shuffle-rd? (some :shuffle-rd trashlist)
+                         ;; If the trashed card is installed, update all of the indicies
+                         ;; of the other installed cards in the same location
+                         update-indicies (fn [card]
+                                           (when (installed? card)
+                                             (update-installed-card-indices state side (:zone card))))
+                         ;; Perform the move of the cards from their current location to
+                         ;; the discard. At the same time, gather their `:trash-effect`s
+                         ;; to be used in the simult event later.
+                         moved-cards (reduce
+                                       (fn [acc {:keys [card destination]}]
+                                         (if-let [card (get-card? state card)]
+                                           (let [_ (set-duration-on-trash-events state card trash-event)
+                                                 moved-card (move-card card destination)
+                                                 trash-effect (get-trash-effect state side eid card args)]
+                                             (update-indicies card)
+                                             (conj acc {:moved-card moved-card
+                                                        :trash-effect trash-effect
+                                                        :old-card card}))
+                                           (conj acc {:old-card card})))
+                                       [] trashlist)]
+                     (when should-shuffle-rd?
+                       ;; foiled by the circular dependency restriction once again
+                       ;; see: shuffling.clj for clarification
+                       (when (and (:access @state)
+                                  (:run @state))
+                         (swap! state assoc-in [:run :shuffled-during-access :rd] true))
+                       (swap! state update-in [:stats :corp :shuffle-count] (fnil + 0) 1)
+                       (swap! state update-in [:corp :deck] shuffle)
+                       (trigger-event state side :corp-shuffle-deck))
+                     (swap! state update-in [:trash :trash-list :card] dissoc eid)
+                     (when (and side (seq (remove #{side} (map #(to-keyword (:side %)) (map :card trashlist)))))
+                       (swap! state assoc-in [side :register :trashed-card] true))
+                     ;; Pseudo-shuffle archives. Keeps seen cards in play order and shuffles unseen cards.
+                     (swap! state assoc-in [:corp :discard]
+                            (vec (sort-by #(if (:seen %) -1 1) (get-in @state [:corp :discard]))))
+                     (let [eid (make-result eid (vec (keep :moved-card moved-cards)))]
+                       (doseq [{:keys [moved-card trash-effect]} moved-cards
+                               :when trash-effect]
+                         (register-pending-event state trash-event moved-card trash-effect))
+                       (doseq [{:keys [old-card moved-card]} moved-cards]
+                         (queue-event state trash-event {:card old-card
+                                                         :moved-card moved-card
+                                                         :cause cause
+                                                         :cause-card (trim-cause-card cause-card)
+                                                         :accessed accessed}))
+                       (if suppress-checkpoint
+                         (effect-completed state nil eid)
+                         (checkpoint state nil eid {:duration trash-event}))))))))))
 
 (defmethod engine/move* :trash-cards [state side eid _action cards args]
   (trash-cards state side eid cards args))
@@ -460,15 +418,17 @@
 
 (defn mill
   "Force the discard of n cards from the deck by trashing them"
-  [state from-side eid to-side n]
-  (let [cards (take n (get-in @state [to-side :deck]))]
-    (trash-cards state from-side eid cards {:unpreventable true})))
+  ([state from-side eid to-side n] (mill state from-side eid to-side n nil))
+  ([state from-side eid to-side n args]
+   (let [cards (take n (get-in @state [to-side :deck]))]
+     (trash-cards state from-side eid cards (assoc args :unpreventable true)))))
 
 (defn discard-from-hand
   "Force the discard of n cards from the hand by trashing them"
-  [state from-side eid to-side n]
-  (let [cards (take n (shuffle (get-in @state [to-side :hand])))]
-    (trash-cards state from-side eid cards {:unpreventable true})))
+  ([state from-side eid to-side n] (discard-from-hand state from-side eid to-side n nil))
+  ([state from-side eid to-side n args]
+   (let [cards (take n (shuffle (get-in @state [to-side :hand])))]
+     (trash-cards state from-side eid cards (assoc args :unpreventable true)))))
 
 (defn swap-legal?
   "checks that swapping two installed corp cards is legal"

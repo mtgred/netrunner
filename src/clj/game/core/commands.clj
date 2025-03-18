@@ -37,7 +37,9 @@
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer [dissoc-in enumerate-str quantify safe-split
                        same-card? same-side? server-card string->num]]
-   [jinteki.utils :refer [str->int]]))
+   [jinteki.utils :refer [other-side str->int]]))
+
+(defmulti lobby-command :command)
 
 (defn- constrain-value
   "Constrain value to [min-value max-value]"
@@ -413,6 +415,28 @@
        :effect (effect (trash eid target {:unpreventable true}))}
       nil nil)))
 
+(defn command-swap-sides
+  [state side]
+  (swap! state dissoc-in [side :command-info :ignore-swap-sides])
+  (if (get-in @state [(other-side side) :command-info :ignore-swap-sides])
+    (toast state side "your opponent has indicated that they do not wish to swap sides")
+    (resolve-ability
+      state (other-side side)
+      {:prompt "Your opponent wishes to swap sides"
+       :waiting-prompt true
+       :choices ["Accept" "Decline" "Don't ask me again"]
+       :effect (req (cond
+                      (= target "Decline")
+                      (toast state (other-side side) "your opponent does not wish to swap sides at this time")
+                      (= target "Don't ask me again")
+                      (do (toast state (other-side side) "your opponent does not wish to swap sides")
+                          (swap! state assoc-in [side :command-info :ignore-swap-sides] true))
+                      (= target "Accept")
+                      (do (system-msg state side "accepts the request to swap sides. Players swap sides")
+                          (lobby-command {:command :swap-sides
+                                          :gameid (:gameid @state)}))))}
+      nil nil)))
+
 (defn parse-command
   [state text]
   (let [[command & args] (safe-split text #" ")
@@ -566,6 +590,7 @@
                                                                  (not (ice? c))))}
                                     :effect (effect (swap-installed (first targets) (second targets)))}
                                    (make-card {:title "/swap-installed command"}) nil))
+            "/swap-sides" #(command-swap-sides %1 %2)
             "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (constrain-value value 0 1000))
             "/take-core" #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :brain (constrain-value value 0 1000)
                                                        {:card (make-card {:title "/damage command" :side %2})}))

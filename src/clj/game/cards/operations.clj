@@ -13,17 +13,18 @@
                            in-discard? in-hand? installed? is-type? operation? program? resource?
                            rezzed? runner? upgrade?]]
    [game.core.card-defs :refer [card-def]]
+   [game.core.choose-one :refer [choose-one-helper cost-option]]
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
-   [game.core.damage :refer [damage damage-bonus]]
-   [game.core.def-helpers :refer [choose-one-helper corp-recur cost-option defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
+   [game.core.damage :refer [damage]]
+   [game.core.def-helpers :refer [corp-recur defcard do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
    [game.core.engine :refer [do-nothing pay register-events resolve-ability should-trigger?]]
    [game.core.events :refer [event-count first-event? last-turn? no-event? not-last-turn? turn-events ]]
    [game.core.flags :refer [can-score? clear-persistent-flag! in-corp-scored?
-                            in-runner-scored? is-scored? prevent-jack-out
+                            in-runner-scored? is-scored?
                             register-persistent-flag! register-turn-flag! when-scored? zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-clicks
                               lose-credits]]
@@ -35,13 +36,15 @@
    [game.core.memory :refer [mu+ update-mu]]
    [game.core.moving :refer [as-agenda mill move swap-agendas swap-ice trash
                              trash-cards]]
+   [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? cost-target ->c]]
    [game.core.play-instants :refer [play-instant]]
+   [game.core.prevention :refer [damage-boost]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal reveal-loud]]
-   [game.core.rezzing :refer [derez rez]]
+   [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [end-run make-run]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? remote->name zone->name]]
@@ -210,9 +213,13 @@
                   :player :runner
                   :yes-ability {:msg (str "let the Runner make a run on " serv)
                                 :async true
-                                :effect (effect (clear-wait-prompt :corp)
-                                                (make-run eid serv card)
-                                                (prevent-jack-out))}
+                                :effect (req (clear-wait-prompt state :corp)
+                                             (register-lingering-effect
+                                               state side card
+                                               {:type :cannot-jack-out
+                                                :value true
+                                                :duration :end-of-run})
+                                             (make-run state :runner eid serv card))}
                   :no-ability {:msg "add itself to [their] score area as an agenda worth 1 agenda point"
                                :effect (effect (clear-wait-prompt :corp)
                                                (as-agenda :corp card 1))}}})
@@ -229,11 +236,12 @@
 
 (defcard "Argus Crackdown"
   (lockdown
-  {:events [{:event :successful-run
-             :req (req (not-empty run-ices))
-             :msg "deal 2 meat damage"
-             :async true
-             :effect (effect (damage eid :meat 2 {:card card}))}]}))
+    {:events [{:event :successful-run
+               :automatic :corp-damage
+               :req (req (not-empty run-ices))
+               :msg "deal 2 meat damage"
+               :async true
+               :effect (effect (damage eid :meat 2 {:card card}))}]}))
 
 (defcard "Ark Lockdown"
   {:on-play
@@ -519,15 +527,20 @@
 (defcard "Business As Usual"
   (let [faux-purge {:choices {:req (req (and (installed? target)
                                              (pos? (get-counters target :virus))))}
-                    :effect (effect (add-counter target :virus (* -1 (get-counters target :virus))))
+                    :async true
+                    :effect (effect (add-counter eid target :virus (* -1 (get-counters target :virus)) nil))
                     :msg (msg "remove all virus counters from " (card-str state target))}
         kaguya {:choices {:max 2
                           :req (req (and (corp? target)
                                          (installed? target)
                                          (can-be-advanced? state target)))}
                 :msg (msg "place 1 advancement counter on " (quantify (count targets) "card"))
-                :effect (req (doseq [t targets]
-                               (add-prop state :corp t :advance-counter 1 {:placed true})))}]
+                :async true
+                :effect (req (let [[f1 f2] targets]
+                               (if f2
+                                 (wait-for (add-prop state :corp f1 :advance-counter 1 {:placed true})
+                                           (add-prop state :corp eid f2 :advance-counter 1 {:placed true}))
+                                 (add-prop state :corp eid f1 :advance-counter 1 {:placed true}))))}]
     {:on-play (choose-one-helper
                 {:optional :after-first
                  :change-in-game-state (req (or (something-can-be-advanced? state)
@@ -675,16 +688,16 @@
     :effect (effect (purge eid))}})
 
 (defcard "Death and Taxes"
-  {:implementation "Credit gain mandatory to save on wait-prompts, adjust credits manually if credit not wanted."
-   :events [{:event :runner-install
-             :msg "gain 1 [Credits]"
-             :async true
-             :effect (effect (gain-credits :corp eid 1))}
-            {:event :runner-trash
-             :req (req (installed? (:card target)))
-             :msg "gain 1 [Credits]"
-             :async true
-             :effect (effect (gain-credits :corp eid 1))}]})
+  (let [maybe-gain-credit {:prompt "Gain 1 [Credits]?"
+                           :waiting-prompt true
+                           :autoresolve (get-autoresolve :auto-fire)
+                           :yes-ability {:msg "gain 1 [Credits]"
+                                         :async true
+                                         :effect (effect (gain-credits :corp eid 1))}}]
+    {:special {:auto-fire :always}
+     :abilities [(set-autoresolve :auto-fire "Death and Taxes")]
+     :events [{:event :runner-install :optional maybe-gain-credit}
+              {:event :runner-trash :optional (assoc maybe-gain-credit :req (req (installed? (:card target))))}]}))
 
 (defcard "Dedication Ceremony"
   {:on-play
@@ -697,20 +710,32 @@
                                   (:host %))
                               (not (facedown? %))))}
     :msg (msg "place 3 advancement tokens on " (card-str state target))
-    :effect (effect (add-counter target :advancement 3 {:placed true})
-                    (register-turn-flag!
-                      target :can-score
-                      (fn [state _ card]
-                        (if (same-card? card target)
-                          ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
-                          true))))}})
+    :async true
+    :effect (req (add-counter state side eid target :advancement 3 {:placed true})
+                 (register-turn-flag!
+                   state side
+                   target :can-score
+                   (fn [state _ card]
+                     (if (same-card? card target)
+                       ((constantly false) (toast state :corp "Cannot score due to Dedication Ceremony." "warning"))
+                       true))))}})
 
 (defcard "Defective Brainchips"
-  {:events [{:event :pre-damage
-             :req (req (and (= (:type context) :brain)
-                            (first-event? state side :pre-damage #(= :brain (:type (first %))))))
-             :msg "do 1 additional core damage"
-             :effect (effect (damage-bonus :brain 1))}]})
+  {:prevention [{:prevents :pre-damage
+                 :type :event
+                 :max-uses 1
+                 :mandatory true
+                 :ability {:async true
+                           :condition :active
+                           :req (req
+                                  (and (or (= :brain (:type context))
+                                           (= :core (:type context)))
+                                       (first-event? state side :pre-damage-flag #(= :brain (:type (first %))))
+                                       (not= :all (:prevented context))
+                                       (pos? (:remaining context))
+                                       (not (:unboostable context))))
+                           :msg "increase the pending core damage by 1"
+                           :effect (req (damage-boost state side eid 1))}}]})
 
 (defcard "Digital Rights Management"
   {:on-play
@@ -821,20 +846,20 @@
     :async true
     :effect (req (doseq [c targets]
                    (derez state side c {:source-card card}))
-                 (let [discount (* -3 (count targets))]
+                 (let [discount (* 3 (count targets))]
                    (continue-ability
                      state side
                      {:async true
-                      :prompt "Choose a card to rez"
-                      :choices {:card #(and (installed? %)
-                                            (corp? %)
-                                            (not (rezzed? %))
-                                            (not (agenda? %)))}
-                      :effect (req (rez state side eid target {:cost-bonus discount}))}
+                      :prompt (str "Choose a card to rez, paying " discount " [Credits] less")
+                      :choices {:req (req (and ((every-pred installed? corp? (complement rezzed?) (complement agenda?)) target)
+                                               (can-pay-to-rez? state side (assoc eid :source card)
+                                                                target {:cost-bonus (- discount)})))}
+                      :effect (req (rez state side eid target {:cost-bonus (- discount)}))}
                      card nil)))}})
 
 (defcard "Door to Door"
   {:events [{:event :runner-turn-begins
+             :automatic :corp-damage
              :trace {:base 1
                      :label "Do 1 meat damage if Runner is tagged, or give the Runner 1 tag"
                      :successful {:msg (msg (if tagged
@@ -1054,7 +1079,8 @@
                                                        {:msg (msg "place " (quantify c " advancement token") " on "
                                                                   (card-str state target))
                                                         :choices {:card installed?}
-                                                        :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                                        :async true
+                                                        :effect (effect (add-prop eid target :advance-counter c {:placed true}))}
                                                        card nil))
                                            (effect-completed state side eid))))}))
                        card nil)))}})
@@ -1217,7 +1243,8 @@
                                                                        :waiting-prompt true
                                                                        :yes-ability {:msg (msg "removes 1 tag to place 1 advancement counter on " (card-str state installed-card))
                                                                                      :cost [(->c :tag 1)]
-                                                                                     :effect (req (add-prop state :corp installed-card :advance-counter 1 {:placed true}))}}}
+                                                                                     :async true
+                                                                                     :effect (req (add-prop state :corp eid installed-card :advance-counter 1 {:placed true}))}}}
                                                            card nil)
                                                          (effect-completed state side eid)))))}
                              card nil)))}})
@@ -1944,6 +1971,7 @@
 
 (defcard "Paywall Implementation"
   {:events [{:event :successful-run
+             :automatic :gain-credits
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
@@ -2138,7 +2166,8 @@
                                    {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
                                     :change-in-game-state (req (something-can-be-advanced? state))
                                     :choices {:req (req (can-be-advanced? state target))}
-                                    :effect (effect (add-prop target :advance-counter c {:placed true}))}
+                                    :async true
+                                    :effect (effect (add-prop eid target :advance-counter c {:placed true}))}
                                    card nil)))
                      (effect-completed state side eid))))}})
 
@@ -2300,21 +2329,27 @@
       :effect (effect (continue-ability (choice all false) card nil))}}))
 
 (defcard "Red Planet Couriers"
-  {:on-play
-   {:prompt "Choose an installed card that can be advanced"
-    :choices {:req (req (can-be-advanced? state target))}
-    :change-in-game-state (req (something-can-be-advanced? state))
-    :async true
-    :effect (req (let [installed (get-all-installed state)
-                       total-adv (reduce + (map #(get-counters % :advancement) installed))]
-                   (doseq [c installed]
-                     (add-prop state side c :advance-counter (- (get-counters c :advancement)) {:placed true}))
-                   (add-prop state side target :advance-counter total-adv {:placed true})
-                   (update-all-ice state side)
-                   (system-msg state side (str "uses " (:title card) " to move "
-                                               (quantify total-adv "advancement counter")
-                                               " to " (card-str state target)))
-                   (effect-completed state side eid)))}})
+  (letfn [(clear-counters [state side eid [c :as installed]]
+            (if (seq installed)
+              (wait-for (add-prop state side c :advance-counter (- (get-counters c :advancement)) {:placed true :suppress-checkpoint true})
+                        (clear-counters state side eid (rest installed)))
+              (effect-completed state side eid)))]
+    {:on-play
+     {:prompt "Choose an installed card that can be advanced"
+      :choices {:req (req (can-be-advanced? state target))}
+      :change-in-game-state (req (something-can-be-advanced? state))
+      :async true
+      :effect (req (let [installed (get-all-installed state)
+                         total-adv (reduce + (map #(get-counters % :advancement) installed))]
+                     (wait-for
+                       (clear-counters state side installed)
+                       (wait-for
+                         (add-prop state side target :advance-counter total-adv {:placed true})
+                         (update-all-ice state side)
+                         (system-msg state side (str "uses " (:title card) " to move "
+                                                     (quantify total-adv "advancement counter")
+                                                     " to " (card-str state target)))
+                         (effect-completed state side eid)))))}}))
 
 (defcard "Replanting"
   (letfn [(replant [n]
@@ -2482,7 +2517,8 @@
              :condition :hosted
              :req (req (same-card? (:ice context) (:host card)))
              :msg "place 1 power counter on itself"
-             :effect (effect (add-counter card :power 1))}]})
+             :async true
+             :effect (effect (add-counter eid card :power 1 nil))}]})
 
 (defcard "Sacrifice"
   {:on-play
@@ -2623,8 +2659,12 @@
                              (can-be-advanced? state target)))}
     :change-in-game-state (req (something-can-be-advanced? state))
     :msg (msg "place 1 advancement token on " (quantify (count targets) "card"))
-    :effect (req (doseq [t targets]
-                   (add-prop state :corp t :advance-counter 1 {:placed true})))}})
+    :async true
+    :effect (req (let [[f1 f2] targets]
+                               (if f2
+                                 (wait-for (add-prop state :corp f1 :advance-counter 1 {:placed true})
+                                           (add-prop state :corp eid f2 :advance-counter 1 {:placed true}))
+                                 (add-prop state :corp eid f1 :advance-counter 1 {:placed true}))))}})
 
 (defcard "Shipment from MirrorMorph"
   (letfn [(shelper [n]
@@ -2653,7 +2693,8 @@
                      state side
                      {:choices {:req (req (can-be-advanced? state target))}
                       :msg (msg "place " (quantify c "advancement token") " on " (card-str state target))
-                      :effect (effect (add-prop :corp target :advance-counter c {:placed true}))}
+                      :async true
+                      :effect (effect (add-prop :corp eid target :advance-counter c {:placed true}))}
                      card nil)))}})
 
 (defcard "Shipment from Tennin"
@@ -2662,7 +2703,8 @@
     :choices {:card #(and (corp? %)
                           (installed? %))}
     :msg (msg "place 2 advancement tokens on " (card-str state target))
-    :effect (effect (add-prop target :advance-counter 2 {:placed true}))}})
+    :async true
+    :effect (effect (add-prop eid target :advance-counter 2 {:placed true}))}})
 
 (defcard "Shipment from Vladisibirsk"
   (letfn [(ability [x]
@@ -3115,8 +3157,10 @@
                                   :choices (take (inc (get-counters source :advancement)) ["0" "1" "2"])
                                   :msg (msg "move " target " advancement counters from "
                                             (card-str state source) " to " (card-str state card-to-advance))
-                                  :effect (effect (add-prop :corp card-to-advance :advance-counter (str->int target) {:placed true})
-                                                  (add-prop :corp source :advance-counter (- (str->int target)) {:placed true}))})
+                                  :async true
+                                  :effect (req (wait-for
+                                                 (add-prop state :corp card-to-advance :advance-counter (str->int target) {:placed true :suppress-checkpoint true})
+                                                 (add-prop state :corp eid source :advance-counter (- (str->int target)) {:placed true})))})
                                card nil))})
                 card nil))}})
 

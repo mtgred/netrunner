@@ -61,15 +61,17 @@
                                    (corp-can-pay-and-install?
                                      state side eid
                                      target-card server {:base-cost [(->c :click 1)]
-                                                    :action :corp-click-install
-                                                    :no-toast true})
+                                                         :ignore-ice-cost true
+                                                         :action :corp-click-install
+                                                         :no-toast true})
                                    (some
                                      (fn [server]
                                        (corp-can-pay-and-install?
                                          state side eid
                                          target-card server {:base-cost [(->c :click 1)]
-                                                        :action :corp-click-install
-                                                        :no-toast true}))
+                                                             :ignore-ice-cost true
+                                                             :action :corp-click-install
+                                                             :no-toast true}))
                                      (installable-servers state target-card))))))
                 :effect (req (let [{target-card :card server :server} context]
                                (corp-install
@@ -93,9 +95,8 @@
                 :async true
                 :msg (msg "advance " (card-str state (:card context)))
                 :effect (effect (update-advancement-requirement (:card context))
-                                (add-prop (get-card state (:card context)) :advance-counter 1)
                                 (play-sfx "click-advance")
-                                (effect-completed eid))}
+                                (add-prop eid (get-card state (:card context)) :advance-counter 1))}
                {:action true
                 :label "Trash 1 resource if the Runner is tagged"
                 :cost [(->c :click 1) (->c :credit 2)]

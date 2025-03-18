@@ -6,11 +6,12 @@
    [game.core.card :refer :all]
    [game.core.cost-fns :refer [card-ability-cost]]
    [game.core.engine :refer [can-trigger?]]
-   [game.core.effects :refer [is-disabled-reg?]]
+   [game.core.effects :refer [any-effects is-disabled-reg?]]
    [game.core.installing :refer [corp-can-pay-and-install?
                                  runner-can-pay-and-install?]]
    [game.core.payment :refer [can-pay? ->c]]
    [game.core.play-instants :refer [can-play-instant?]]
+   [game.core.winning :refer [agenda-points-required-to-win]]
    [game.utils :refer [dissoc-in]]
    [jinteki.utils :refer [select-non-nil-keys]]
    [medley.core :refer [update-existing]]))
@@ -202,6 +203,7 @@
    :card
    :prompt-type
    :show-discard
+   :selectable
    ;; traces
    :player
    :base
@@ -256,6 +258,7 @@
    :hand-size
    :keep
    :quote
+   :trash-like-cards
    :prompt-state
    :agenda-point
    :agenda-point-req])
@@ -272,6 +275,7 @@
       (update :set-aside cards-summary state side)
       (update :prompt-state prompt-summary same-side?)
       (update :toast toast-summary same-side?)
+      (assoc :agenda-point-req (agenda-points-required-to-win state side))
       (select-non-nil-keys (into player-keys additional-keys))))
 
 (def corp-keys
@@ -397,6 +401,7 @@
     (-> run
         (assoc :approached-ice-in-position? (when (= :approach-ice (:phase run))
                                               (some? (get-card state (:current-ice run)))))
+        (assoc :cannot-jack-out (any-effects state :corp :cannot-jack-out true?))
         (select-non-nil-keys run-keys))))
 
 (defn encounter-ice-summary

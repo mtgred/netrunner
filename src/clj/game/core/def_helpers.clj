@@ -7,7 +7,7 @@
     [game.core.card-defs :as card-defs]
     [game.core.damage :refer [damage]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [register-events resolve-ability trigger-event-sync unregister-event-by-uuid]]
+    [game.core.engine :refer [queue-event register-events resolve-ability trigger-event-sync unregister-event-by-uuid]]
     [game.core.effects :refer [is-disabled-reg?]]
     [game.core.gaining :refer [gain-credits]]
     [game.core.moving :refer [move trash]]
@@ -149,7 +149,7 @@
   "Used in :event maps for effects like Malandragem"
   [counter-type]
   {:event :counter-added
-   :req (req (and (same-card? card target)
+   :req (req (and (same-card? card (:card context))
                   (not (get-in card [:special :skipped-loading]))
                   (not (pos? (get-counters card counter-type)))))
    :effect (effect (system-msg (str "removes " (:title card) " from the game"))
@@ -159,12 +159,41 @@
   "Used in :event maps for effects like Daily Casts"
   [counter-type]
   {:event :counter-added
-   :req (req (and (same-card? card target)
+   :req (req (and (same-card? card (:card context))
                   (not (get-in card [:special :skipped-loading]))
                   (not (pos? (get-counters card counter-type)))))
    :async true
    :effect (effect (system-msg (str "trashes " (:title card)))
                    (trash eid card {:unpreventable true :source-card card}))})
+
+(defn take-credits
+  "Take n counters from a card and place them in your credit pool as if they were credits (if possible)"
+  ([state side eid card type n] (take-credits state side eid card type n nil))
+  ([state side eid card type n args]
+   (if-let [card (get-card state card)]
+     (let [n (if (= :all n) (get-counters card type) n)
+           n (min n (get-counters card type))]
+       (if (pos? n)
+         (wait-for (add-counter state side card type (- n) {:placed true :suppress-checkpoint true})
+                   ;; (queue-event state side :spent-credits-from-card card)
+                   (gain-credits state side eid n args))
+         (effect-completed state side eid)))
+     (effect-completed state side eid))))
+
+;; NOTE - update this as the above (take credits) is updated
+(defn spend-credits
+  "Take n counters from a card and place them in your credit pool (if possible) - and trigger an event as if the credits were spent"
+  ([state side eid card type n] (spend-credits state side eid card type n nil))
+  ([state side eid card type n args]
+   (if-let [card (get-card state card)]
+     (let [n (if (= :all n) (get-counters card type) n)
+           n (min n (get-counters card type))]
+       (if (pos? n)
+         (wait-for (add-counter state side card type (- n) {:placed true :suppress-checkpoint true})
+                   (queue-event state :spent-credits-from-card {:card card})
+                   (gain-credits state side eid n args))
+         (effect-completed state side eid)))
+     (effect-completed state side eid))))
 
 (defn make-recurring-ability
   [ability]
@@ -173,9 +202,7 @@
           {:msg "take 1 [Recurring Credits]"
            :req (req (pos? (get-counters card :recurring)))
            :async true
-           :effect (req (add-counter state side card :recurring -1)
-                        (wait-for (gain-credits state side 1)
-                                  (trigger-event-sync state side eid :spent-credits-from-card (get-card state card))))}]
+           :effect (req (spend-credits state side eid card :recurring 1))}]
       (update ability :abilities #(conj (into [] %) recurring-ability)))
     ability))
 
@@ -258,92 +285,6 @@
     :effect (effect (move :corp target :hand))}))
 
 (def card-defs-cache (atom {}))
-
-(defn choose-one-helper
-  ;; keys unique to this function:
-  ;;   no-prune: can I select the same option more than once?
-  ;;   no-wait-msg: do we hide the wait message from the runner?
-  ;;   count: number of choices we're allowed to pick
-  ([xs] (choose-one-helper nil xs))
-  ([{:keys [prompt count optional no-prune no-wait-msg interactive require-meaningful-choice] :as args} xs]
-   ;;the 'prompt' key cant compute 5-fns, so this needs to be disambiguated
-   (if (fn? (:count args))
-     {:async true
-      :effect (req (let [new-count ((:count args) state side eid card targets)]
-                     (continue-ability
-                       state side
-                       (choose-one-helper (assoc args :count new-count) xs)
-                       card nil)))}
-     ;; xs of the form {:option ... :req (req ...) :cost ... :ability ..}
-     (let [next-optional (= optional :after-first)
-           apply-optional (and optional (not next-optional))
-           xs (if-not apply-optional xs (conj xs {:option "Done"}))
-           base-map (select-keys args [:action :player :once :unregister-once-resolved :event
-                                       :label :change-in-game-state :location :additional-cost])
-           ;; is a choice payable
-           payable? (fn [x state side eid card targets]
-                      (when (or (not (:cost x))
-                                (can-pay? state (or (:player args) side) eid card nil (:cost x)))
-                        x))
-           ;; cost->str for a choice
-           costed-str (fn [x]
-                        (if-not (:cost x)
-                          (:option x)
-                          (let [cs (build-cost-string (:cost x))]
-                            (if-not (:option x) cs (str cs ": " (:option x))))))
-           ;; converts options to choices
-           choices-fn (fn [x state side eid card targets]
-                        (when (payable? x state side eid card targets)
-                          (if-not (:req x)
-                            (costed-str x)
-                            (when ((:req x) state side eid card targets)
-                              (costed-str x)))))
-           ;; this lets us selectively skip the prompt if 'done' is the only choice
-           meaningful-req? (when require-meaningful-choice
-                             (req (let [cs (keep #(choices-fn % state side eid card targets) xs)]
-                                    (and (not= cs ["Done"])
-                                         (or (nil? (:req args))
-                                             ((:req args) state side eid card targets))))))]
-       ;; function for resolving choices: pick the matching choice, pay, resolve it, and continue
-       ;; when applicable
-       (letfn [(resolve-choices [xs full state side eid card target]
-                 (if-not (seq xs)
-                   (effect-completed state side eid )
-                   (if (= target (costed-str (first xs)))
-                     ;; allow for resolving multiple options, like decues wild
-                     (wait-for
-                       (resolve-ability
-                         state side (make-eid state eid)
-                         (assoc (:ability (first xs)) :cost (:cost (first xs)))
-                         card nil) ;; below is maybe superflous
-                       (if (and count (> count 1) (not= target "Done"))
-                         ;; the 'Done' is already there, so can dissoc optional
-                         (let [args (assoc args :count (dec count) :optional next-optional)
-                               xs (if no-prune full
-                                      (vec (remove #(= target (costed-str %)) full)))]
-                           (continue-ability state side (choose-one-helper args xs) card nil))
-                         (effect-completed state side eid)))
-                     (resolve-choices (rest xs) full state side eid card target))))]
-         (merge
-           base-map
-           {:choices (req (into [] (map #(choices-fn % state side eid card targets) xs)))
-            :waiting-prompt (not no-wait-msg)
-            :prompt (str (or (:prompt args) "Choose one")
-                         ;; if we are resolving multiple
-                         (when (and count (pos? count)) (str " (" count " remaining)")))
-            :req (or meaningful-req? (:req args))
-            ;; resolve-choices demands async
-            :async true
-            ;; interactive expects a 5-fn or nil
-            ;; but I want to just be able to say True or False
-            :interactive (when interactive (if-not (fn? interactive) (req interactive) interactive))
-            :effect (req (resolve-choices xs xs state side eid card target))}))))))
-
-(defn cost-option
-  [cost side]
-  {:cost cost
-   :ability {:display-side side
-             :msg :cost}})
 
 (defn with-revealed-hand
   "Resolves an ability while a player has their hand revealed (so you can click cards in their hand)

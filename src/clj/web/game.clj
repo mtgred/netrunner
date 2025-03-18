@@ -5,7 +5,7 @@
    [clojure.stacktrace :as stacktrace]
    [clojure.string :as str]
    [cond-plus.core :refer [cond+]]
-   [game.core.commands :refer [parse-command]]
+   [game.core.commands :as commands :refer [parse-command]]
    [game.core.diffs :as diffs]
    [game.core.say :refer [make-system-message]]
    [game.core.set-up :refer [init-game]]
@@ -258,37 +258,37 @@
     {:keys [gameid command args]} :?data
     id :id
     timestamp :timestamp}]
-  (try
-    (let [{:keys [state] :as lobby} (app-state/get-lobby gameid)
-          player (lobby/player? uid lobby)
-          spectator (lobby/spectator? uid lobby)]
-      (lobby/game-thread
-        lobby
-        (cond
-          (and state player)
-          (let [old-state @state
-                side (side-from-str (:side player))]
-            (try
-              (swap! app-state/app-state
-                     update :lobbies lobby/handle-set-last-update gameid uid)
-              (update-and-send-diffs! main/handle-action lobby side command args)
-              (catch Exception e
-                (reset! state old-state)
-                (throw e))))
-          (and (not spectator) (not= command "toast"))
-          (throw (ex-info "handle-game-action unknown state or side"
-                          {:gameid gameid
-                           :uid uid
-                           :players (map #(select-keys % [:uid :side]) (:players lobby))
-                           :spectators (map #(select-keys % [:uid]) (:spectators lobby))
-                           :command command
-                           :args args})))
-        (lobby/log-delay! timestamp id)))
-    (catch Exception e
-      (ws/chsk-send! uid [:game/error])
-      (println (str "Caught exception"
-                    "\nException Data: " (or (ex-data e) (.getMessage e))
-                    "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100)))))))
+  (let [{:keys [state] :as lobby} (app-state/get-lobby gameid)]
+    (lobby/game-thread
+      lobby
+      (try
+        (let [player (lobby/player? uid lobby)
+              spectator (lobby/spectator? uid lobby)]
+          (cond
+            (and state player)
+            (let [old-state @state
+                  side (side-from-str (:side player))]
+              (try
+                (swap! app-state/app-state
+                       update :lobbies lobby/handle-set-last-update gameid uid)
+                (update-and-send-diffs! main/handle-action lobby side command args)
+                (catch Exception e
+                  (reset! state old-state)
+                  (throw e))))
+            (and (not spectator) (not= command "toast"))
+            (throw (ex-info "handle-game-action unknown state or side"
+                            {:gameid gameid
+                             :uid uid
+                             :players (map #(select-keys % [:uid :side]) (:players lobby))
+                             :spectators (map #(select-keys % [:uid]) (:spectators lobby))
+                             :command command
+                             :args args})))
+          (lobby/log-delay! timestamp id))
+        (catch Exception e
+          (ws/chsk-send! uid [:game/error])
+          (println (str "Caught exception"
+                        "\nException Data: " (or (ex-data e) (.getMessage e))
+                        "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100)))))))))
 
 (defmethod ws/-msg-handler :game/resync
   game--resync
@@ -428,24 +428,32 @@
 
 (defn handle-swap-sides-in-prog [lobbies gameid]
   (if-let [lobby (get lobbies gameid)]
-    (-> lobby
-        (update :players #(mapv switch-side %))
-        (->> (assoc lobbies gameid)))
+    (do
+      (-> lobby
+          ;; note - original-players needs to be updated so that you rejoin the game
+          ;; on the correct side if you leave/rejoin
+          (update :original-players #(mapv switch-side %))
+          (update :players #(mapv switch-side %))
+          (->> (assoc lobbies gameid))))
     lobbies))
 
 (defn switch-side-for-lobby
   [gameid]
-  (let [lobby (app-state/get-lobby gameid)
-    ;; ideally this would be atomic
-	new-app-state (swap! app-state/app-state
-                             update :lobbies
-                             #(-> %
-                                  (handle-swap-sides-in-prog gameid)
-                                  ))
-        lobby? (get-in new-app-state [:lobbies gameid])]
-    (lobby/send-lobby-state lobby?)
-    (lobby/broadcast-lobby-list)))
+  (let [{:keys [state] :as lobby} (app-state/get-lobby gameid)
+        old-runner (get-in @state [:runner :user])
+        old-runner-options (get-in @state [:runner :options])]
+    (swap! state assoc-in [:runner :user] (get-in @state [:corp :user]))
+    (swap! state assoc-in [:runner :options] (get-in @state [:corp :options]))
+    (swap! state assoc-in [:corp :user] old-runner)
+    (swap! state assoc-in [:corp :options] old-runner-options)
+    (lobby/lobby-thread
+      (let [new-app-state (swap! app-state/app-state
+                                 update :lobbies
+                                 #(-> %
+                                      (handle-swap-sides-in-prog gameid)))
+            lobby? (get-in new-app-state [:lobbies gameid])]
+        (lobby/send-lobby-state lobby?)
+        (lobby/broadcast-lobby-list)))))
 
-(defonce evil-hack-for-switching-sides
-  ;; for real, fuck the circular dependency requirement >:^U
-  (reset! game.core.turmoil/swap-sides-fn (fn [gameid] (switch-side-for-lobby gameid))))
+(defmethod commands/lobby-command :swap-sides [{:keys [gameid] :as args}]
+  (switch-side-for-lobby gameid))

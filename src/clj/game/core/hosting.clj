@@ -1,6 +1,6 @@
 (ns game.core.hosting
   (:require
-    [game.core.card :refer [assoc-host-zones corp? get-card program? rezzed? runner?]]
+    [game.core.card :refer [active? assoc-host-zones corp? get-card program? installed? rezzed? runner?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [make-eid]]
@@ -23,11 +23,21 @@
   [card target]
   (when (and card target) (or (same-card? card target) (has-ancestor? (:host card) target))))
 
+(defn handle-card-is-uninstalled
+  "If a card is hosted (uninstalled) from being installed and active, then call it's `leave-play` fn"
+  [state side card {:keys [installed] :as target}]
+  (when-let [leave-play (:leave-play (card-def target))]
+    (when (and (not installed)
+               (installed? (get-card state target))
+               (active? (get-card state target)))
+      (leave-play state (keyword (clojure.string/lower-case (:side target))) (make-eid state) target nil))))
+
 (defn host
   "Host the target onto the card."
   ([state side card target] (host state side card target nil))
   ([state side card {:keys [zone cid host installed] :as target} {:keys [facedown no-mu]}]
    (when (not= cid (:cid card))
+     (handle-card-is-uninstalled state side card target)
      (unregister-events state side target)
      (unregister-static-abilities state side target)
      (doseq [s [:runner :corp]]

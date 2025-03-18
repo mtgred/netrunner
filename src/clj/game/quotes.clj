@@ -10,23 +10,20 @@
 
 (def identity-quotes (atom {}))
 
+(defn- load-quote-file [filename]
+  (let [file (io/file filename)]
+    (when (.exists file)
+      (edn/read-string (slurp file)))))
+
 (defn load-quotes! []
-  (let [quotes-corp (when (.exists (io/file quotes-corp-filename))
-                      (-> (io/file quotes-corp-filename)
-                          (slurp)
-                          (edn/read-string)))
-        quotes-runner (when (.exists (io/file quotes-runner-filename))
-                        (-> (io/file quotes-runner-filename)
-                            (slurp)
-                            (edn/read-string)))]
-    (reset! identity-quotes (merge quotes-corp quotes-runner))))
+  (reset! identity-quotes (merge (load-quote-file quotes-corp-filename)
+                                 (load-quote-file quotes-runner-filename))))
 
 (defn- choose-and-repeat [options qty]
   (when (not-empty options)
     (repeat qty (first (shuffle options)))))
 
 (defn make-quote [{player-ident :title} {opp-ident :title opp-faction :faction}]
-
   (let [generic (get-in @identity-quotes [player-ident generic-key])
         opp-faction (get-in @identity-quotes [player-ident opp-faction])
         opp-specific (get-in @identity-quotes [player-ident opp-ident])
@@ -37,5 +34,3 @@
     (if (not-empty non-blank)
       (first (shuffle non-blank))
       "NO QUOTE SRY")))
-
-

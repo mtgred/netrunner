@@ -170,13 +170,26 @@
         (:poison card)
         (:highlight-in-discard card))))
 
-(defn handle-card-click [{:keys [type zone] :as card}]
+(defn- prompt-button-from-card?
+  [clicked-card {:keys [card msg prompt-type choices] :as prompt-state}]
+  (when-not (or (some #{:counter :card-title :number} choices)
+                (= choices "credit")
+                (= prompt-type "trace"))
+    (some (fn [{:keys [_ uuid value]}]
+            (when (= (:cid value) (:cid clicked-card)) uuid))
+          choices)))
+
+(defn handle-card-click [{:keys [type zone] :as card} shift-key-held]
   (let [side (:side @game-state)]
     (when (not-spectator?)
       (cond
         ;; Selecting card
         (= (get-in @game-state [side :prompt-state :prompt-type]) "select")
-        (send-command "select" {:card (card-for-click card)})
+        (send-command "select" {:card (card-for-click card) :shift-key-held shift-key-held})
+
+        ;; A selectable card is clicked outside of a select prompt (ie it's a button on a choices prompt)
+        (contains? (into #{} (get-in @game-state [side :prompt-state :selectable])) (:cid card))
+        (send-command "choice" {:choice {:uuid (prompt-button-from-card? card (get-in @game-state [side :prompt-state]))}})
 
         ;; Card is an identity of player's side
         (and (= (:type card) "Identity")
@@ -189,7 +202,7 @@
              (not (any-prompt-open? side))
              (= "hand" (first zone))
              (playable? card))
-        (send-command "play" {:card (card-for-click card)})
+        (send-command "play" {:card (card-for-click card) :shift-key-held shift-key-held})
 
         ;; Corp clicking on a corp card
         (and (= side :corp)
@@ -202,7 +215,8 @@
           (if (= (:cid card) (:source @card-menu))
             (do (send-command "generate-install-list" nil)
                 (close-card-menu))
-            (do (send-command "generate-install-list" {:card (card-for-click card)})
+            (do (send-command "generate-install-list" {:card (card-for-click card)
+                                                       :shift-key-held shift-key-held})
                 (open-card-menu (:cid card)))))
 
         :else
@@ -698,10 +712,12 @@
            subtype-target corp-abilities]
     :as card} flipped disable-click]
   (let [title (get-title card)]
-    [:div.card-frame.menu-container
-     [:div.blue-shade.card {:class (str (cond selected "selected"
-                                              (same-card? card (:button @app-state)) "hovered"
-                                              (same-card? card (-> @game-state :encounters :ice)) "encountered"
+    (r/with-let [prompt-state (r/cursor game-state [(keyword (lower-case side)) :prompt-state])]
+      [:div.card-frame.menu-container
+       [:div.blue-shade.card {:class (str (cond selected "selected"
+                                                (contains? (into #{} (get-in @prompt-state [:selectable])) (:cid card)) "selectable"
+                                                (same-card? card (:button @app-state)) "hovered"
+                                                (same-card? card (-> @game-state :encounters :ice)) "encountered"
                                               (and (not (any-prompt-open? side)) (playable? card)) "playable"
                                               ghost "ghost"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
@@ -722,13 +738,13 @@
                                                (put-game-card-in-channel card zoom-channel))
                             :on-mouse-leave #(put! zoom-channel false)
                             :on-click #(when (not disable-click)
-                                         (handle-card-click card))
+                                         (handle-card-click card (.-shiftKey %)))
                             :on-key-down #(when (and (= "Enter" (.-key %))
                                                      (not disable-click))
-                                            (handle-card-click card))
+                                            (handle-card-click card (.-shiftKey %)))
                             :on-key-up #(when (and (= " " (.-key %))
                                                    (not disable-click))
-                                          (handle-card-click card))}
+                                          (handle-card-click card (.-shiftKey %)))}
       (if (or (not code) flipped facedown)
         (let [facedown-but-known (or (not (or (not code) flipped facedown))
                                      (spectator-view-hidden?)
@@ -790,7 +806,7 @@
            (for [card hosted]
              (let [flipped (draw-facedown? card)]
                ^{:key (:cid card)}
-               [card-view card flipped]))))])]))
+               [card-view card flipped]))))])])))
 
 (defn show-distinct-cards
   [distinct-cards]
@@ -1051,7 +1067,7 @@
                         @cards))
          [label @cards {:opts {:name name}}]]))))
 
-(defn scored-view [scored agenda-point me?]
+(defn scored-view [scored agenda-point agenda-point-req me?]
   (let [size (count @scored)
         ctrl (if me? stat-controls (fn [key content] content))]
     [:div.panel.blue-shade.scored.squeeze
@@ -1063,7 +1079,8 @@
                     @scored))
      [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]
      [:div.stats-area
-      (ctrl :agenda-point [:div (tr [:game.agenda-count] @agenda-point)])]]))
+      (ctrl :agenda-point [:div (tr [:game.agenda-count] @agenda-point)
+                           (tr [:game.agenda-point-req (if-not (= 7 agenda-point-req) (str " (" agenda-point-req " required)") "")] @agenda-point-req)])]]))
 
 (defn run-arrow [run]
   [:div.run-arrow [:div {:class (cond
@@ -1762,6 +1779,7 @@
        :else
        (doall (for [{:keys [idx uuid value]} choices
                     :when (not= value "Hide")]
+                ;; HERE
                 [:button {:key idx
                           :on-click #(do (send-command "choice" {:choice {:uuid uuid}})
                                          (card-highlight-mouse-out % value button-channel))
@@ -1867,8 +1885,7 @@
          [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
                             :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
           (cond
-            (and @prompt-state
-                 (not= "run" @prompt-type))
+            (and @prompt-state (not= "run" (get-in @prompt-state [:prompt-type])))
             [prompt-div me @prompt-state]
             (or @run
                 @encounters)
@@ -2191,6 +2208,8 @@
                  op-scored (r/cursor game-state [op-side :scored])
                  me-agenda-point (r/cursor game-state [me-side :agenda-point])
                  op-agenda-point (r/cursor game-state [op-side :agenda-point])
+                 me-agenda-point-req (r/cursor game-state [me-side :agenda-point-req])
+                 op-agenda-point-req (r/cursor game-state [op-side :agenda-point-req])
                  ;; servers
                  corp-servers (r/cursor game-state [:corp :servers])
                  runner-rig (r/cursor game-state [:runner :rig])
@@ -2242,9 +2261,9 @@
                  [:div.left-inner-leftpane
                   [:div
                    [stats-view opponent]
-                   [scored-view op-scored op-agenda-point false]]
+                   [scored-view op-scored op-agenda-point op-agenda-point-req false]]
                   [:div
-                   [scored-view me-scored me-agenda-point true]
+                   [scored-view me-scored me-agenda-point me-agenda-point-req true]
                    [stats-view me]]]
 
                  [:div.right-inner-leftpane

@@ -288,6 +288,9 @@
    {:name "/swap-installed"
     :usage "/swap-installed"
     :help "Swap the position of two installed non-ice (Corp only)"}
+   {:name "/swap-sides"
+    :usage "/swap-sides"
+    :help "Request to swap sides with your opponent"}
    {:name "/tag"
     :has-args :required
     :usage "/tag n"

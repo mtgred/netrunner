@@ -402,7 +402,7 @@
               :runner {:hand ["Sure Gamble" "Sure Gamble" "Sure Gamble"]}})
    (play-from-hand state :corp "Azef Protocol" "New remote")
    (play-from-hand state :corp "PAD Campaign" "New remote")
-   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
+   (core/add-prop state :corp (core/make-eid state) (get-content state :remote1 0) :advance-counter 3)
    (score state :corp (get-content state :remote1 0))
    ;; check not scored yet
    (is (= 0 (count (:scored (get-corp)))) "Azef Protocol requires a cost be paid")
@@ -437,7 +437,7 @@
               :runner {:hand ["Sure Gamble" "Sure Gamble" "Sure Gamble"]}})
    (play-from-hand state :corp "Azef Protocol" "New remote")
    (play-from-hand state :corp "PAD Campaign" "New remote")
-   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
+   (core/add-prop state :corp (core/make-eid state) (get-content state :remote1 0) :advance-counter 3)
    (score state :corp (get-content state :remote1 0))
    (is (= 0 (count (:scored (get-corp)))) "Azef Protocol requires a cost be paid")
    (is (not (no-prompt? state :corp)) "Azef Protocol prompt active")
@@ -599,7 +599,7 @@
                :runner {:hand [(qty "Sure Gamble" 4)]}})
     (play-from-hand state :corp "Blood in the Water" "New remote")
     (let [blood (get-content state :remote1 0)]
-      (core/add-prop state :corp blood :advance-counter 2)
+      (core/add-prop state :corp (core/make-eid state) blood :advance-counter 2)
       (score state :corp (refresh blood))
       (is (= 0 (:agenda-point (get-corp))) "Can't score Blood in the Water (X = 4)")
       (damage state :corp :net 1)
@@ -628,7 +628,7 @@
     (new-game {:corp {:deck ["Braintrust" "Ichi 1.0"]}})
     (play-from-hand state :corp "Braintrust" "New remote")
     (let [bt (get-content state :remote1 0)]
-      (core/add-prop state :corp bt :advance-counter 7)
+      (core/add-prop state :corp (core/make-eid state) bt :advance-counter 7)
       (score state :corp (refresh bt))
       (let [scored-bt (get-scored state :corp 0)]
         (is (= 2 (get-counters (refresh scored-bt) :agenda))
@@ -2070,40 +2070,30 @@
 (deftest labyrinthine-servers
   ;; Labyrinthine Servers
   (do-game
-    (new-game {:corp {:deck [(qty "Labyrinthine Servers" 2)]}})
-    (play-and-score state "Labyrinthine Servers")
+    (new-game {:corp {:deck [(qty "Labyrinthine Servers" 1)]}})
     (play-and-score state "Labyrinthine Servers")
     (take-credits state :corp)
-    (let [ls1 (get-scored state :corp 0)
-          ls2 (get-scored state :corp 1)]
+    (let [ls1 (get-scored state :corp 0)]
       (is (= 2 (get-counters (refresh ls1) :power)))
-      (is (= 2 (get-counters (refresh ls2) :power)))
       (testing "Don't use token"
         (run-on state "HQ")
         (run-jack-out state)
         (is (:run @state) "Jack out prevent prompt")
-        (click-prompt state :corp "Done")
+        (click-prompt state :corp "Allow the Runner to jack out")
         (is (not (:run @state)) "Corp does not prevent the jack out, run ends"))
       (testing "Use token"
         (run-on state "HQ")
         (run-jack-out state)
-        (card-ability state :corp ls1 0)
-        (card-ability state :corp ls2 0)
-        (card-ability state :corp ls1 0)
-        (click-prompt state :corp "Done")
+        (click-prompt state :corp "Labyrinthine Servers")
         (is (:run @state) "Jack out prevented, run is still ongoing")
-        (is (get-in @state [:run :cannot-jack-out]) "Cannot jack out flag is in effect")
         (run-continue state)
         (is (not (:run @state))))
-      (testing "one Labyrinthine is empty but the other still has one token, ensure prompt still occurs"
-        (is (zero? (get-counters (refresh ls1) :power)))
-        (is (= 1 (get-counters (refresh ls2) :power)))
+      (testing "one counter left"
+        (is (= 1 (get-counters (refresh ls1) :power)))
         (run-on state "HQ")
         (run-jack-out state)
         (is (:run @state))
-        (card-ability state :corp ls2 0)
-        (click-prompt state :corp "Done")
-        (is (get-in @state [:run :cannot-jack-out]))
+        (click-prompt state :corp "Labyrinthine Servers")
         (run-continue state)
         (is (not (:run @state))))
       (testing "No more tokens"
@@ -2311,14 +2301,14 @@
   (do-game
    (new-game {:corp {:deck ["Luminal Transubstantiation" "Project Vitruvius"]}})
    (play-from-hand state :corp "Luminal Transubstantiation" "New remote")
-   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 3)
+   (core/add-prop state :corp (core/make-eid state) (get-content state :remote1 0) :advance-counter 3)
    (is (changed? [(:click (get-corp)) 3]
          (score state :corp (get-content state :remote1 0)))
        "Corp gains 3 clicks from Luminal Transubstantiation")
    (is (find-card "Luminal Transubstantiation" (:scored (get-corp))))
    (is (= 1 (count (:scored (get-corp)))))
    (play-from-hand state :corp "Project Vitruvius" "New remote")
-   (core/add-prop state :corp (get-content state :remote2 0) :advance-counter 3)
+   (core/add-prop state :corp (core/make-eid state) (get-content state :remote2 0) :advance-counter 3)
    (score state :corp (get-content state :remote2 0))
    (is (= 1 (count (:scored (get-corp)))) "Cannot be scored because Luminal Transubstantiation")))
 
@@ -3582,6 +3572,23 @@
     (click-card state :corp "Obokata Protocol")
     (is (= 5 (:agenda-point (get-corp))) "3+1+1 agenda points from obo + regen + regen")))
 
+(deftest regenesis-vs-marilyn-campaign-trash-replacement
+  ;; Regenesis - if no cards have been added to discard, reveal a face-down agenda
+  ;; and add it to score area
+  (do-game
+    (new-game {:corp {:deck ["Regenesis" "Marilyn Campaign"]
+                      :discard ["Obokata Protocol"]}})
+    (play-from-hand state :corp "Marilyn Campaign" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (dotimes [_ 4]
+      (take-credits state :corp)
+      (take-credits state :runner))
+    ;; marilyn should pop now
+    (click-prompt state :corp "Shuffle Marilyn Campaign into R&D")
+    (play-and-score state "Regenesis")
+    (click-card state :corp "Obokata Protocol")
+    (is (= 4 (:agenda-point (get-corp))) "3+1 agenda points from obo + regen")))
+
 (deftest regenesis-not-affected-by-subliminal-messaging
   ;; Regenesis - Leaving Subliminal Messaging in Archives doesn't interfere
   (do-game
@@ -3635,8 +3642,8 @@
     (play-from-hand state :corp "Regulatory Capture" "New remote")
     (let [r1 (get-content state :remote1 0)
           r2 (get-content state :remote1 0)]
-      (core/add-prop state :corp (refresh r1) :advance-counter 4)
-      (core/add-prop state :corp (refresh r2) :advance-counter 1)
+      (core/add-prop state :corp (core/make-eid state) (refresh r1) :advance-counter 4)
+      (core/add-prop state :corp (core/make-eid state) (refresh r2) :advance-counter 1)
       (score state :corp (refresh r1))
       (is (some? (get-content state :remote1 0))
           "Corp can't score with 4 advancements because of 0 BP")
@@ -3894,7 +3901,7 @@
       (take-credits state :runner)
       (play-and-score state "SDS Drone Deployment")
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :corp))))
-      (is (= #{"SDS Drone Deployment" "Amani Senai" "Team Sponsorship"} (into #{} (map :title (prompt-buttons :corp)))))
+      (is (= #{"SDS Drone Deployment" "Amani Senai" "Team Sponsorship" "Done"} (into #{} (prompt-titles :corp))))
       (click-prompt state :corp "SDS Drone Deployment")
       (click-card state :corp "Cache")
       (click-prompt state :corp "Amani Senai")
@@ -4035,13 +4042,14 @@
       (rez state :corp viktor)
       (run-continue state)
       (card-subroutine state :corp viktor 0)
-      (click-prompt state :runner "Done")  ;; Don't prevent the brain damage
+      (click-prompt state :runner "Pass priority")  ;; Don't prevent the brain damage
       (is (= 1 (count (:discard (get-runner)))))
       (is (= 1 (:brain-damage (get-runner))))
-      (click-prompt state :runner "Done")  ;; So we take the net, but don't prevent it either
+      (click-prompt state :runner "Pass priority")  ;; So we take the net, but don't prevent it either
       (is (= 2 (count (:discard (get-runner)))))
       (card-subroutine state :corp viktor 0)
-      (card-ability state :runner ff 1)  ;; Prevent the brain damage this time
+      (click-prompt state :runner "Feedback Filter (Core)")
+      (click-prompt state :runner "1") ;; Prevent the brain damage this time
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
 
@@ -4844,7 +4852,7 @@
                  :runner {:deck [(qty "Sure Gamble" 3)]}})
       (starting-hand state :runner ["Sure Gamble" "Sure Gamble"])
       (play-from-hand state :corp "Plan B" "New remote")
-      (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 4)
+      (core/add-prop state :corp (core/make-eid state) (get-content state :remote1 0) :advance-counter 4)
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :corp "Yes")
@@ -4885,7 +4893,7 @@
                    :runner {:deck [(qty "Sure Gamble" 3)]
                             :hand ["Sure Gamble" "Sure Gamble" "The Class Act"]}})
         (play-from-hand state :corp "Plan B" "New remote")
-        (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 4)
+        (core/add-prop state :corp (core/make-eid state) (get-content state :remote1 0) :advance-counter 4)
         (take-credits state :corp)
         (play-from-hand state :runner "The Class Act")
         (run-empty-server state "Server 1")
@@ -4940,10 +4948,10 @@
    (new-game {:corp {:deck ["Vulnerability Audit" "Project Atlas"]}})
    (play-from-hand state :corp "Vulnerability Audit" "New remote")
    (play-from-hand state :corp "Project Atlas" "New remote")
-   (core/add-prop state :corp (get-content state :remote1 0) :advance-counter 4)
+   (core/add-prop state :corp (core/make-eid state) (get-content state :remote1 0) :advance-counter 4)
    (score state :corp (get-content state :remote1 0))
    (is (= 0 (count (:scored (get-corp)))) "Cannot be scored on installed turn")
-   (core/add-prop state :corp (get-content state :remote2 0) :advance-counter 3)
+   (core/add-prop state :corp (core/make-eid state) (get-content state :remote2 0) :advance-counter 3)
    (score state :corp (get-content state :remote2 0))
    (is (= 1 (count (:scored (get-corp)))) "Can score other agendas just fine")
    (take-credits state :corp)
