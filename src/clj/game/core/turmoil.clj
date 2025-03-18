@@ -68,7 +68,7 @@
 
 (def replacement-factor
   "how often should we replace these cards?"
-  {:hand 4 :deck 8 :id 4 :side 50 :card-type-cross-contam 10 :icebreaker-cross-contam 10 :econ-cross-contam 10})
+  {:hand 4 :deck 8  :discard 3 :id 4 :side 50 :card-type-cross-contam 10 :icebreaker-cross-contam 10 :econ-cross-contam 10})
 
 (defn- should-replace?
   ([key] (-> (key replacement-factor 25) rand-int zero?))
@@ -117,6 +117,13 @@
                        (get-in @state [side :hand]))]
     (swap! state assoc-in [side :hand] new-hand)))
 
+(defn- replace-discard [state side]
+  (let [new-discard (mapv #(if (should-replace? :discard)
+                             (assoc (build-card (pick-replacement-card %)) :zone [:discard] :seen (:seen %))
+                             %)
+                       (get-in @state [side :discard]))]
+    (swap! state assoc-in [side :discard] new-discard)))
+
 (defn- replace-deck [state side]
   (let [new-deck (mapv #(if (should-replace? :deck)
                           (assoc (build-card (pick-replacement-card %)) :zone [:deck])
@@ -157,6 +164,7 @@
   [state side]
   (do (replace-hand state side)
       (replace-deck state side)
+      (replace-discard state side)
       (replace-id state side)
       ;; 1 in 50 chance at the start of each turn to swap the sides you're playing on
       ;; realistically, this should happen on average about 2 games in 4
