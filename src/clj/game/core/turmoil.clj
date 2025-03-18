@@ -1,6 +1,7 @@
 (ns game.core.turmoil
   (:require
    [game.core.card :refer [agenda? asset? event? has-subtype? hardware? resource? program? upgrade? ice? operation? identity? corp? runner?]]
+   [game.core.commands :refer [lobby-command]]
    [game.core.identities :refer [disable-identity]]
    [game.core.initializing :refer [card-init make-card]]
    [game.core.hosting :refer [host]]
@@ -19,7 +20,6 @@
 (defonce program-by-icebreaker (atom {}))
 (defonce cards-by-type (atom {}))
 (defonce has-been-set? (atom nil))
-(defonce swap-sides-fn (atom (fn [gameid] (println "Whoops! not set up yet!"))))
 
 (defn- is-econ?
   "Is a card an economy card?
@@ -148,14 +148,10 @@
 
 (defn- transpose-sides
   [state side]
+  ;; this is kosher I promise -> Emphyrio, Jack Vance (it's a neat book, I recommend it)
   (system-msg state side "FINUKA TRANSPOSES")
-  (let [old-runner (get-in @state [:runner :user])
-        old-runner-options (get-in @state [:runner :options])]
-    (@swap-sides-fn (:gameid @state))
-    (swap! state assoc-in [:runner :user] (get-in @state [:corp :user]))
-    (swap! state assoc-in [:runner :options] (get-in @state [:corp :options]))
-    (swap! state assoc-in [:corp :user] old-runner)
-    (swap! state assoc-in [:corp :options] old-runner-options)))
+  (lobby-command {:command :swap-sides
+                  :gameid (:gameid @state)}))
 
 (defn shuffle-cards-for-side
   [state side]
@@ -163,7 +159,7 @@
       (replace-deck state side)
       (replace-id state side)
       ;; 1 in 50 chance at the start of each turn to swap the sides you're playing on
-      ;; realistically, this should happen on average about 3 games in 4
-      ;; and 1.5 of those games will have 2+ swaps
+      ;; realistically, this should happen on average about 2 games in 4
+      ;; and 0.75 of those games will have 2+ swaps
       (when (should-replace? :side)
         (transpose-sides state side))))
