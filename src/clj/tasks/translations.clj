@@ -8,12 +8,27 @@
   (:import
    (fluent.bundle FluentBundle FluentBundle$Builder FluentResource)
    (fluent.functions.cldr CLDRFunctionFactory)
-   (fluent.syntax.AST 
+   (fluent.syntax.AST
+    Attribute
+    CallArguments
     Commentary$Comment
     Commentary$GroupComment
     Commentary$ResourceComment
-    Identifiable Identifier InlineExpression$MessageReference InlineExpression$TermReference InlineExpression$VariableReference Literal$StringLiteral Message
-    Pattern PatternElement$Placeable PatternElement$TextElement SelectExpression Term Variant Attribute CallArguments NamedArgument)
+    Identifiable
+    Identifier
+    InlineExpression$FunctionReference
+    InlineExpression$MessageReference
+    InlineExpression$TermReference
+    InlineExpression$VariableReference
+    Literal$StringLiteral
+    Message
+    NamedArgument
+    Pattern
+    PatternElement$Placeable
+    PatternElement$TextElement
+    SelectExpression
+    Term
+    Variant)
    (fluent.syntax.parser FTLParser FTLStream)
    (java.io File)
    (java.util Locale Optional)))
@@ -251,13 +266,48 @@
    (-ftl-print (InlineExpression$TermReference/.identifier this) ctx)
    (when-let [attr (Optional/.orElse (InlineExpression$TermReference/.attributeID this) nil)]
      (-ftl-print attr ctx))
-   (when-let [args (not-empty (some-> (Optional/.orElse (InlineExpression$TermReference/.arguments this) nil)
-                                      (CallArguments/.named)))]
-     (print "(")
-     (let [ctx (assoc ctx :arg true)]
-       (run! (fn [arg] (-ftl-print arg ctx)) args))
-     (print ")"))
+   (when-let [args (Optional/.orElse (InlineExpression$TermReference/.arguments this) nil)]
+     (let [positional (not-empty (CallArguments/.positional args))
+           named (not-empty (CallArguments/.named args))]
+       (print "(")
+       (let [ctx (assoc ctx :arg true)]
+         (when positional
+           (run! (fn [arg] (if (string? arg)
+                             (print arg)
+                             (-ftl-print arg ctx)))
+                 (interpose ", " positional)))
+         (when (and positional named)
+           (print ", "))
+         (when named
+           (run! (fn [arg] (if (string? arg)
+                             (print arg)
+                             (-ftl-print arg ctx)))
+                 (interpose ", " named))))
+       (print ")")))
    (print "}"))
+
+  InlineExpression$FunctionReference
+  (-ftl-print
+   [this ctx]
+   (-ftl-print (InlineExpression$FunctionReference/.identifier this) ctx)
+   (when-let [args (Optional/.orElse (InlineExpression$FunctionReference/.arguments this) nil)]
+     (let [positional (not-empty (CallArguments/.positional args))
+           named (not-empty (CallArguments/.named args))]
+       (print "(")
+       (let [ctx (assoc ctx :arg true)]
+         (when positional
+           (run! (fn [arg] (if (string? arg)
+                             (print arg)
+                             (-ftl-print arg ctx)))
+                 (interpose ", " positional)))
+         (when (and positional named)
+           (print ", "))
+         (when named
+           (run! (fn [arg] (if (string? arg)
+                             (print arg)
+                             (-ftl-print arg ctx)))
+                 (interpose ", " named))))
+       (print ")"))))
 
   NamedArgument
   (-ftl-print
@@ -374,10 +424,7 @@
        (newline)))))
 
 (comment
-  (let [res (FTLParser/parse (FTLStream/of "
-## two
-# one
-game_archives = Archives{\"\u00A0\"}({$faceup} ↑ {$facedown} ↓)") false)]
+  (let [res (FTLParser/parse (FTLStream/of "a = {NUMBER($percent, style:\"percent\")}") false)]
     (prn res)
     (-ftl-print res {:indent 0})))
 
