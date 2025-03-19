@@ -2833,6 +2833,21 @@
         "Scored hostile")
     (is (= "Hostile Takeover" (get-in @state [:corp :scored 0 :title])))))
 
+(deftest investigator-inez-delgado-a-2
+  (do-game
+    (new-game {:corp {:hand ["Project Atlas" "Investigator Inez Delgado A 2" "Hostile Takeover"]}})
+    (play-from-hand state :corp "Investigator Inez Delgado A 2" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-and-score state "Project Atlas")
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Steal")
+    (is (changed? [(:credit (get-corp)) 7]
+          (click-prompt state :corp "Yes"))
+        "Scored ability for hostile")
+    (click-card state :corp "Project Atlas")
+    (is (= "Hostile Takeover" (get-in @state [:corp :scored 0 :title])))))
+
 (deftest isabel-mcguire
   ;; Isabel McGuire
   (do-game
