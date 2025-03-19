@@ -448,16 +448,16 @@
              :cancel-effect (req (do-nothing state side eid card))
              :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
                                     (install-as-condition-counter state side eid card (:card async-result))))}
-   :events [{:event :end-of-encounter
+   :events [{:event :subroutines-broken
              :condition :hosted
              :async true
              :req (req (and (same-card? (:ice context) (:host card))
-                            (empty? (remove :broken (:subroutines (:ice context))))))
-             :effect (effect (system-msg :corp
-                                         (str "derezzes " (:title (:ice context))
-                                              " and trashes Bioroid Efficiency Research"))
-                             (derez :corp (:ice context) {:source-card card})
-                             (trash :corp eid card {:unpreventable true :cause-card card}))}]})
+                            (:all-subs-broken context)))
+             :effect (req (wait-for
+                            (derez state side (:ice context)
+                                   {:msg-keys {:and-then " and trash itself"}
+                                    :suppress-checkpoint true})
+                            (trash state :corp eid card {:cause-card card})))}]})
 
 (defcard "Biotic Labor"
   {:on-play
@@ -844,18 +844,18 @@
               :max (req (count (filter rezzed? (all-installed state :corp))))}
     :change-in-game-state (req (seq (all-installed state :corp)))
     :async true
-    :effect (req (doseq [c targets]
-                   (derez state side c {:source-card card}))
-                 (let [discount (* 3 (count targets))]
-                   (continue-ability
-                     state side
-                     {:async true
-                      :prompt (str "Choose a card to rez, paying " discount " [Credits] less")
-                      :choices {:req (req (and ((every-pred installed? corp? (complement rezzed?) (complement agenda?)) target)
-                                               (can-pay-to-rez? state side (assoc eid :source card)
-                                                                target {:cost-bonus (- discount)})))}
-                      :effect (req (rez state side eid target {:cost-bonus (- discount)}))}
-                     card nil)))}})
+    :effect (req (wait-for
+                   (derez state side targets)
+                   (let [discount (* 3 (count targets))]
+                     (continue-ability
+                       state side
+                       {:async true
+                        :prompt (str "Choose a card to rez, paying " discount " [Credits] less")
+                        :choices {:req (req (and ((every-pred installed? corp? (complement rezzed?) (complement agenda?)) target)
+                                                 (can-pay-to-rez? state side (assoc eid :source card)
+                                                                  target {:cost-bonus (- discount)})))}
+                        :effect (req (rez state side eid target {:cost-bonus (- discount)}))}
+                       card nil))))}})
 
 (defcard "Door to Door"
   {:events [{:event :runner-turn-begins

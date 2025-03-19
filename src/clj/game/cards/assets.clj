@@ -2938,22 +2938,24 @@
                 :effect (req (apply swap-installed state side targets))}]})
 
 (defcard "Test Ground"
-  (letfn [(derez-card [advancements]
-            (when (pos? advancements)
-              {:async true
-               :waiting-prompt true
-               :prompt "Derez a card"
-               :choices {:card #(and (installed? %)
-                                     (rezzed? %))}
-               :effect (req (derez state side target {:source-card card})
-                            (continue-ability state side (derez-card (dec advancements)) card nil))}))]
-    {:advanceable :always
-     :abilities [{:label "Derez 1 card for each advancement token"
-                  :req (req (pos? (get-counters card :advancement)))
-                  :msg (msg "derez " (quantify (get-counters card :advancement) "card"))
-                  :cost [(->c :trash-can)]
-                  :async true
-                  :effect (req (continue-ability state side (derez-card (get-counters card :advancement)) card nil))}]}))
+  {:advanceable :always
+   :abilities [{:label "Derez 1 card for each advancement token"
+                :req (req (pos? (get-counters card :advancement)))
+                :cost [(->c :trash-can)]
+                :async true
+                :effect (req (let [cards-to-pick (min (count (filter #(and (rezzed? %) (not (agenda? %))) (all-installed state :corp)))
+                                                      (get-counters card :advancement))
+                                   payment-eid eid]
+                               (continue-ability
+                                 state side
+                                 {:prompt (str "derez " cards-to-pick " cards")
+                                  :waiting-prompt true
+                                  :choices {:card (every-pred installed? rezzed? (complement agenda?))
+                                            :max cards-to-pick
+                                            :all true}
+                                  :async true
+                                  :effect (req (derez state side eid targets {:msg-keys {:include-cost-from-eid payment-eid}}))}
+                                 card nil)))}]})
 
 (defcard "The Board"
   {:on-trash executive-trash-effect
@@ -3243,9 +3245,8 @@
                    :prompt "Choose another card to derez"
                    :choices {:not-self true
                              :card #(rezzed? %)}
-                   :msg (msg "derez itself to derez " (card-str state target))
-                   :effect (effect (derez card {:source-card card})
-                                   (derez target {:source-card card}))}]
+                   :async true
+                   :effect (req (derez state side eid [card target]))}]
     {:derezzed-events [corp-rez-toast]
      :events [{:event :corp-turn-begins
                :interactive (req true)

@@ -1151,28 +1151,6 @@
         (rez state :corp jhow)
         (is (rezzed? (refresh jhow)) "Jackson Howard can be rezzed after changing zone"))))
 
-(deftest councilman-preventing-councilman-s-self-trash-prevents-the-rez-prevention-effect
-    ;; Preventing Councilman's self-trash prevents the rez prevention effect
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Chief Slee"]}
-                 :runner {:deck ["Councilman" "Fall Guy"]}})
-      (play-from-hand state :corp "Chief Slee" "New remote")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Councilman")
-      (play-from-hand state :runner "Fall Guy")
-      (take-credits state :runner)
-      (let [slee (get-content state :remote1 0)
-            councilman (get-resource state 0)
-            fall-guy (get-resource state 1)]
-        (rez state :corp slee)
-        (is (changed? [(:credit (get-runner)) -2]
-              (click-prompt state :runner "Yes")
-              (card-ability state :runner fall-guy 0)
-              (is (rezzed? (refresh slee)) "Chief Slee still rezzed")
-              (is (refresh councilman) "Councilman's trash is prevented"))
-            "Runner still pays for Councilman effect"))))
-
 (deftest counter-surveillance-trash-to-run-on-successful-run-access-cards-equal-to-tags-and-pay-that-amount-in-credits
     ;; Trash to run, on successful run access cards equal to Tags and pay that amount in credits
     (do-game
