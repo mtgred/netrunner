@@ -4556,7 +4556,8 @@
       (is (refresh kati) "Kati Jones still installed")
       (click-card state :corp "Kati Jones")
       (click-prompt state :runner "No")
-      (is (nil? (refresh kati)) "Kati Jones no longer installed"))))
+      (is (nil? (refresh kati)) "Kati Jones no longer installed"))
+    (print-log state)))
 
 (deftest private-contracts
   ;; Private Contracts
@@ -5736,7 +5737,8 @@
       (is (= 1 (get-counters (refresh bore) :bad-publicity)) "1 bp counters")
       (take-credits state :runner)
       (is (= 0 (get-counters (refresh bore) :bad-publicity)) "1 bp counters")
-      (is (= "Superdeep Borehole" (:reason @state)) "Win condition reports borehole"))))
+      (is (= "Superdeep Borehole" (:reason @state)) "Win condition reports borehole")
+      (print-log state))))
 
 (deftest superdeep-borehole-doesn't-instantly-win
   (do-game

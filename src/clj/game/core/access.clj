@@ -255,7 +255,7 @@
                       ;; Can't steal or pay, or won't pay additional costs to steal
                       (= target "No action")
                       (do (when-not (find-cid (:cid card) (:deck corp))
-                            (system-msg state side (str "decides to not pay to steal " (:title card))))
+                            (system-msg state side (str "declines to pay to steal " (:title card))))
                           (access-end state side eid card))
 
                       ;; Steal normally

@@ -126,7 +126,7 @@
   ([strings sep]
    (if (<= (count strings) 2)
      (str/join (str " " sep " ") strings)
-    (str (apply str (interpose ", " (butlast strings))) (str ", " sep " ") (last strings)))))
+    (str (apply str (interpose ", " (butlast strings))) ", " sep " " (last strings)))))
 
 (defn enumerate-cards
   "Enumerates a collection of cards, optionally in sorted order"

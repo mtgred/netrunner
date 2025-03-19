@@ -52,6 +52,7 @@
             (click-prompt state :runner "Yes")
             (select-bad-pub state nil))
           "Spent 1 + 1 from bad pub")
+      (print-log state)
       (is (= 2 (:credit (get-runner))) "Runner has 2 credits left")
       (click-prompt state :runner "Yes")
       (is (zero? (count-tags state)) "Runner did not take any tags")

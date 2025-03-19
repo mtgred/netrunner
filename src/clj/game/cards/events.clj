@@ -61,7 +61,7 @@
                            make-run prevent-access successful-run-replace-breach
                            total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [system-msg]]
+   [game.core.say :refer [system-msg ->use-card-msg ->fragment]]
    [game.core.servers :refer [central->name is-central? is-remote? remote->name
                               target-server unknown->kw zone->name
                               zones->sorted-names]]
@@ -176,7 +176,9 @@
                      :unsuccessful
                      {:async true
                       :effect (effect (gain-credits state :runner eid (+ (:agenda-point runner) (:agenda-point corp))))
-                      :msg (msg (str "gain " (+ (:agenda-point runner) (:agenda-point corp)) " [Credits]"))}}}]})
+                      :msg (effect
+                            (->use-card-msg state :runner card (:cost-paid eid)
+                                       (->fragment :gain-credits (+ (:agenda-point runner) (:agenda-point corp)))))}}}]})
 
 (defcard "Apocalypse"
   (let [corp-trash {:async true
@@ -1307,7 +1309,7 @@
             {:async true
              :prompt "Choose a piece of hardware or program to install"
              :msg (msg "trash " (if (empty? to-trash) "no cards" (enumerate-cards to-trash :sorted))
-                       " and install " (:title target) " from the Stack, "
+                       " and install " (:title target) " from the Stack,"
                        " lowering the cost by " trash-cost)
              :choices (effect (cancellable (filter #(and (or (program? %)
                                                           (hardware? %))
@@ -2228,7 +2230,6 @@
                                                       (str x " [Credit]: "
                                                            (quantify (get current-values x 0) "card"))))
                                  :effect (effect
-                                          (prn target)
                                           (complete-with-result
                                             state side eid
                                             [(str->int (first (str/split target #" ")))
@@ -2422,7 +2423,7 @@
      :prompt "Take 2 bad publicity?"
      :waiting-prompt true
      :yes-ability {:player :corp
-                   :msg "takes 2 bad publicity"
+                   :msg "take 2 bad publicity"
                    :effect (effect (gain-bad-publicity state :corp 2))}
      :no-ability {:player :runner
                   :msg "is immune to damage until the beginning of the Runner's next turn"
@@ -3054,8 +3055,8 @@
                             (wait-for
                               (lose-credits state :runner (make-eid state eid) spent)
                               (system-msg state :runner (str "spends " spent " [Credit]"))
-                              (system-msg state :corp (str (if correct-guess " " " in")
-                                                           "correctly guesses " (decapitalize target)))
+                              (system-msg state :corp (str (if correct-guess "correctly" "incorrectly")
+                                                           " guesses " (decapitalize target)))
                               (wait-for
                                 (trigger-event-simult state side :reveal-spent-credits nil {:runner-credits spent})
                                 (if correct-guess
@@ -3665,7 +3666,7 @@
             {:async true
              :effect (effect (wait-for
                             (reveal-loud state side card
-                                         {:and-then "shuffle the Stack"} revealed-cards)
+                                         {:and-then " and shuffle the Stack"} revealed-cards)
                             (shuffle! state side :deck)
                             (effect-completed state side eid)))})
           (install-program [state side eid card revealed-card revealed-cards]
@@ -3909,7 +3910,7 @@
    :events [{:event :successful-run
              :req (req (#{:hq :rd} (target-server context))
                             (pos? (or (:subroutines-fired context) 0)))
-             :msg "force the Corp to take 1 Bad Publicity"
+             :msg "force the Corp to take 1 bad publicity"
              :async true
              :effect (effect (gain-bad-publicity state :corp eid 1 {:card card}))}]})
 

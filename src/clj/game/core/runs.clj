@@ -670,7 +670,7 @@
             {:prompt (str "You are prevented from breaching " (zone->name server) " this run.")
              :choices ["OK"]
              :async true
-             :effect (effect (system-msg state :runner (str "is prevented from breaching " (zone->name server) " this run."))
+             :effect (effect (system-msg state :runner (str "is prevented from breaching " (zone->name server) " this run"))
                              (handle-end-run state side eid))}
             nil nil)
 

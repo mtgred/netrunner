@@ -1435,7 +1435,8 @@
       (play-from-hand state :runner "Aniccam")
       (damage state :corp :net 1)
       (click-prompts state :runner "Strike Fund" "Yes" "Buffer Drive" "Strike Fund")
-      (is-hand? state :runner ["Strike Fund"])))
+      (is-hand? state :runner ["Strike Fund"])
+      (print-log state)))
 
 (deftest capstone
   ;; Capstone

@@ -8357,6 +8357,18 @@
     (is-hand? state :corp ["Ice Wall"])))
 
 
+(deftest tollbooth
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Tollbooth"]
+                      :credits 20}})
+    (play-from-hand state :corp "Tollbooth" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (run-continue state :encounter-ice)
+    (print-log state)))
+
 (deftest tour-guide-rez-before-other-assets
   ;; Rez before other assets
   (do-game

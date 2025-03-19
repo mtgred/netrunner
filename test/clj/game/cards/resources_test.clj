@@ -3948,7 +3948,9 @@
             (click-card state :runner dc))
           "sells casts for 3 credits and a card")
       (is (is-discard? state :runner ["Daily Casts"]))
-      (is (= (refresh dc) nil) "Daily Casts should be in Heap"))))
+      (is (= (refresh dc) nil) "Daily Casts should be in Heap"))
+    (binding [*print-namespace-maps* false]
+      (clojure.pprint/pprint (mapcat (comp :payment first) (core/turn-events state nil :costs-paid))))))
 
 (deftest kongamato
   ;; Kongamato

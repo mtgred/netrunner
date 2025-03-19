@@ -6,6 +6,7 @@
    [game.core.card :refer :all]
    [game.core.commands :refer [parse-command]]
    [game.core.mark :refer :all]
+   [game.core.say :as sut]
    [game.test-framework :refer :all]
    [jinteki.utils :refer [command-info]]))
 
@@ -405,3 +406,58 @@
           (is (zero? (count (:hand (get-runner)))) "Both cards have been installed")
           (is (= 2 (count (get-resource state))))
           (is (every? #(= "Wireless Net Pavilion" (:title %)) (get-resource state))))))))
+
+(deftest i18n-tests
+  (is (= "CoolRunner uses \"Knickknack\" O'Brian to trash Daily Casts and gain 3 [Credit] and draw 1 card."
+         (sut/build-msg
+          {:msg/type :use-card
+           :username "CoolRunner"
+           :title "\"Knickknack\" O'Brian"
+           :msg/effects [{:msg/type :trash-card
+                          :title "Daily Casts"}
+                         {:msg/type :gain-credits
+                          :value 3}
+                         {:msg/type :draw-cards
+                          :value 1}]})))
+  (is (= "BadRunner spends 1 [Click] and pays 0 [Credit] to use \"Knickknack\" O'Brian to trash Daily Casts and gain 3 [Credit] and draw 1 card."
+         (sut/build-msg
+          {:msg/type :pay-use-card
+           :username "BadRunner"
+           :title "\"Knickknack\" O'Brian"
+           :msg/payments [{:paid/type :click
+                           :paid/value 1}
+                          {:paid/type :credit
+                           :paid/value 0}]
+           :msg/effects [{:msg/type :trash-card
+                          :title "Daily Casts"}
+                         {:msg/type :gain-credits
+                          :value 3}
+                         {:msg/type :draw-cards
+                          :value 1}]})))
+  (is (= "SillyCorp pays 6 [Credit] from credit pool and pays 3 [Credit] from Primary Transmission Dish to increase trace strength to 12."
+         (sut/build-msg
+          {:msg/type :increase-trace-strength
+           :username "SillyCorp"
+           :value 12
+           :msg/payments [{:paid/type :credit
+                           :paid/value 9
+                           :paid/targets [{:pick-counters/type :credit-pool
+                                           :value 6}
+                                          {:pick-counters/type :card
+                                           :title "Primary Transmission Dish"
+                                           :value 3}]}]})))
+  (is (= "AngryRunner pays 1 [Credit] from credit pool and pays 1 [Credit] from bad publicity to use New Angeles City Hall to avoid 1 tag."
+         (sut/build-msg
+          {:msg/type :pay-use-card
+           :username "AngryRunner"
+           :title "New Angeles City Hall"
+           :msg/effects [{:msg/type :avoid-tags
+                          :value 1}]
+           :msg/payments [{:paid/type :credit
+                           :paid/value 2
+                           :paid/targets [{:pick-counters/type :credit-pool
+                                           :value 1}
+                                          {:pick-counters/type :bad-publicity
+                                           :value 1}]}]})))
+
+  )
