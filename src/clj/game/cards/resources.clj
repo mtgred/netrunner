@@ -74,7 +74,7 @@
                               zone->name zones->sorted-names]]
    [game.core.set-aside :refer [set-aside set-aside-for-me]]
    [game.core.shuffling :refer [shuffle!]]
-   [game.core.tags :refer [gain-tags lose-tags]]
+   [game.core.tags :refer [gain-tags gain-tags-ability lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.threat :refer [threat-level]]
@@ -473,18 +473,17 @@
   {:events [{:event :encounter-ice
              :automatic :pre-bypass
              :req (req (first-run-event? state side :encounter-ice))
-             :msg "place 1 power counter on itself"
              :async true
              :effect (req (add-counter state side eid card :power 1))}]
    :abilities [{:label "Derez a piece of ice currently being encountered"
-                :msg "derez a piece of ice currently being encountered and take 1 tag"
                 :req (req (and (get-current-encounter state)
                                (rezzed? current-ice)
                                (<= (get-strength current-ice) (get-counters (get-card state card) :power))))
                 :cost [(->c :trash-can)]
                 :async true
-                :effect (effect (derez current-ice {:source-card card})
-                                (gain-tags eid 1))}]})
+                :effect (req (wait-for
+                               (derez state side current-ice {:msg-keys {:include-cost-from-eid eid :source-card card}})
+                               (continue-ability state side (gain-tags-ability 1) card nil)))}]})
 
 (defcard "Bank Job"
   {:data {:counter {:credit 8}}

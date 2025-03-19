@@ -143,23 +143,41 @@
        (effect-completed state side eid)))))
 
 ;; TODO: make async
+(defn- derez-message
+  [state side eid cards {:keys [source-card] :as msg-keys}]
+  (let [card-strs (enumerate-str (map #(card-str state % {:visible true}) cards))
+        prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])]
+    (system-msg
+      state side
+      (cond
+        (not source-card) (str "derezzes " card-strs)
+        prepend-cost-str (str prepend-cost-str " to use " (:title source-card) " to derez " card-strs)
+        :else (str "uses " (:title source-card) " to derez " card-strs)))))
+
 (defn derez
-  "Derez a corp card."
-  ([state side card] (derez state side card nil))
-  ([state side card {:keys [source-card no-msg] :as args}]
-   (let [card (get-card state card)]
-     (when-not no-msg
-       (system-msg state side (str (if source-card
-                                     (str "uses " (:title source-card) " to derez ")
-                                     "derezzes ")
-                                   (:title card))))
-     (unregister-events state side card)
-     (update! state :corp (deactivate state :corp card true))
-     (let [cdef (card-def card)]
-       (when-let [derez-effect (:derez-effect cdef)]
-         (resolve-ability state side derez-effect (get-card state card) nil))
-       (when-let [derezzed-events (:derezzed-events cdef)]
-         (register-events state side card (map #(assoc % :condition :derezzed) derezzed-events))))
-     (unregister-static-abilities state side card)
+  "Derez a number of corp cards."
+  ([state side eid cards] (derez state side eid cards nil))
+  ([state side eid cards {:keys [source-card suppress-checkpoint no-event msg-keys] :as args}]
+   (let [cards (if (sequential? cards)
+                 (filterv #(get-card state %) (flatten cards))
+                 [cards])]
+     (doseq [c cards]
+       (unregister-events state side c)
+       (update! state :corp (deactivate state :corp c true))
+       (let [cdef (card-def c)]
+         (when-let [derez-effect (:derez-effect cdef)]
+           ;; this is currently only for lycian fixing subtypes on derez
+           ;; should happen even if the card is disabled - nbk
+           (resolve-ability state side derez-effect (get-card state c) cdef))
+         (when-let [derezzed-events (:derezzed-events cdef)]
+           (register-events state side c (map #(assoc % :condition :derezzed) derezzed-events))))
+       (unregister-static-abilities state side c))
      (update-disabled-cards state)
-     (trigger-event state side :derez {:card card :side side}))))
+     (when-not no-event
+       (queue-event state :derez {:cards cards
+                                  :side side}))
+     (update-disabled-cards state)
+     (derez-message state side eid cards msg-keys)
+     (if suppress-checkpoint
+       (effect-completed state side eid)
+       (checkpoint state side eid)))))
