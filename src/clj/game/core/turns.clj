@@ -212,7 +212,7 @@
                  (when (pos? extra-turns)
                    (start-turn state side nil)
                    (swap! state update-in [side :extra-turns] dec)
-                   (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining."]))))
+                   (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining"]))))
                (effect-completed state side eid)))))
 
 (defn post-discard-pass-priority

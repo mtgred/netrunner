@@ -708,14 +708,17 @@
 
 (deftest stinson-ignores-all-costs
   (do-game
-    (new-game {:corp {:hand ["Bryan Stinson"] :discard ["Ultraviolet Clearance"]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Bryan Stinson"]
+                      :discard ["Ultraviolet Clearance"]}})
     (play-from-hand state :corp "Bryan Stinson" "HQ")
     (rez state :corp (get-content state :hq 0))
     (is (changed? [(:click (get-corp)) -1
                   (:credit (get-corp)) 10]
           (card-ability state :corp (get-content state :hq 0) 0)
           (click-prompt state :corp "Ultraviolet Clearance"))
-        "Gained 10c in one click (ignoring the req and extra 2 clicks)")))
+        "Gained 10c in one click (ignoring the req and extra 2 clicks)")
+    (print-log state)))
 
 (deftest calibration-testing
   ;; Calibration Testing - advanceable / non-advanceable

@@ -2086,9 +2086,9 @@
                                        (first-event? state side :corp-install #(and (not (ice? (:card (first %))))
                                                                                     (not (condition-counter? (:card (first %)))))))
                         :yes-ability {:msg (msg (if (seq (:deck runner))
-                                                  (str "trash "
+                                                  (str "trash the top card ("
                                                        (:title (first (:deck runner)))
-                                                       " from the stack and draw 1 card")
+                                                       ") from the stack and draw 1 card")
                                                   "trash no cards from the stack (it is empty)"))
                                       :async true
                                       :effect (effect (wait-for (mill state :runner :runner 1)
@@ -3104,7 +3104,7 @@
                                     card (move state :corp target :rfg)]
                                 (system-msg state side
                                             (str payment-str
-                                                 " and remove " (:title target)
+                                                 " to remove " (:title target)
                                                  " from the game"))
                                 (complete-with-result state side eid card)))))}}})
 
@@ -3301,7 +3301,7 @@
   {:events [{:event :runner-turn-begins
              :async true
              :msg (msg (if (>= (get-counters card :power) 2)
-                         "takes 1 core damage"
+                         "take 1 core damage"
                          "gain [Click]"))
              :effect (effect (if (>= (get-counters card :power) 2)
                             (wait-for (add-counter state side card :power (- (get-counters card :power)))

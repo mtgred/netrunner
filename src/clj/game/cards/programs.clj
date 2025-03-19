@@ -2211,7 +2211,7 @@
     {:abilities [(break-sub
                    1 1 "All"
                    {:additional-ability
-                    {:msg "will trash itself when this run ends"
+                    {:msg "to trash itself when this run ends"
                      :effect (effect
                                (register-events
                                  state :runner (get-card state card)
@@ -3172,7 +3172,7 @@
                                      (map unknown->kw)
                                      (filter is-remote?)
                                      (map remote->name))))
-                :msg "make a run on a remote server"
+                :msg (msg "make a run on " target)
                 :makes-run true
                 :async true
                 :effect (effect (let [initial-server target]
@@ -3196,7 +3196,7 @@
                                      (map unknown->kw)
                                      (filter is-central?)
                                      (map central->name))))
-                :msg "make a run on central server"
+                :msg (msg "make a run on " target)
                 :makes-run true
                 :async true
                 :effect (effect (let [initial-server target]
@@ -3250,16 +3250,16 @@
                                    :prompt "Choose a card to trash"
                                    :not-distinct true
                                    :choices (effect (take 3 (:deck corp)))
-                                   :msg (msg (let [card-titles (map :title (take 3 (:deck corp)))
-                                                   target-position (first (positions #{target} (take 3 (:deck corp))))
-                                                   position (case target-position
-                                                              0 "top "
-                                                              1 "middle "
-                                                              2 "bottom "
-                                                              "this-should-not-happen ")]
-                                               (if (= 1 (count (filter #{(:title target)} card-titles)))
-                                                 (str "trash " (:title target))
-                                                 (str "trash " position (:title target)))))
+                                    :msg (msg (let [card-titles (map :title (take 3 (:deck corp)))
+                                                    target-position (first (positions #{target} (take 3 (:deck corp))))
+                                                    position (case target-position
+                                                               0 "top "
+                                                               1 "middle "
+                                                               2 "bottom "
+                                                               "this-should-not-happen ")]
+                                                (if (= 1 (count (filter #{(:title target)} card-titles)))
+                                                  (str "trash " (:title target))
+                                                  (str "trash " position (:title target)))))
                                    :effect (effect (trash state :runner eid (assoc target :seen true) {:cause-card card}))}
                                   card nil)))}})]
     {:abilities [(run-server-ability :rd {:action true

@@ -592,36 +592,36 @@
                                                                 card ice))
                            message (when (seq broken-subs)
                                      (break-subroutines-msg ice broken-subs breaker args))]
-                       (wait-for (pay state side card total-cost)
-                                 (if-let [payment-str (:msg async-result)]
-                                   (do (when (not (string/blank? message))
-                                         (system-msg state :runner (str payment-str " to " message)))
-                                       (doseq [sub broken-subs]
-                                         (break-subroutine! state (get-card state ice) sub breaker)
-                                         (resolve-ability state side (make-eid state {:source card
-                                                                                      :source-type :ability})
-                                                          (:additional-ability args)
-                                                          card nil))
-                                       (let [ice (get-card state ice)
-                                             on-break-subs (when ice (:on-break-subs (card-def ice)))
-                                             event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
-                                         (when (same-card? ice (get-current-ice state))
-                                           (set-current-ice state ice))
-                                         (if (seq broken-subs)
-                                           (wait-for
-                                             (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice broken-subs breaker))
-                                             (let [ice (get-card state ice)
-                                                   card (get-card state card)]
-                                               (if (and ice
-                                                        card
-                                                        (not early-exit)
-                                                        (:repeatable args)
-                                                        (pos? (count (unbroken-subroutines-choice ice)))
-                                                        (can-pay? state side eid (get-card state card) nil cost))
-                                                 (continue-ability state side (break-subroutines ice breaker cost n args) card nil)
-                                                 (effect-completed state side eid))))
-                                           (effect-completed state side eid))))
-                                   (effect-completed state side eid))))))})))
+                       (wait-for [payment (pay state side card total-cost)]
+                         (if-not payment
+                           (effect-completed state side eid)
+                           (do (when (not (string/blank? message))
+                                 (system-msg state :runner (str (:msg payment) " to " message)))
+                               (doseq [sub broken-subs]
+                                 (break-subroutine! state (get-card state ice) sub breaker)
+                                 (resolve-ability state side (make-eid state {:source card
+                                                                              :source-type :ability})
+                                   (:additional-ability args)
+                                   card nil))
+                               (let [ice (get-card state ice)
+                                     on-break-subs (when ice (:on-break-subs (card-def ice)))
+                                     event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
+                                 (when (same-card? ice (get-current-ice state))
+                                   (set-current-ice state ice))
+                                 (if (seq broken-subs)
+                                   (wait-for
+                                     (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice broken-subs breaker))
+                                     (let [ice (get-card state ice)
+                                           card (get-card state card)]
+                                       (if (and ice
+                                                card
+                                                (not early-exit)
+                                                (:repeatable args)
+                                                (pos? (count (unbroken-subroutines-choice ice)))
+                                                (can-pay? state side eid (get-card state card) nil cost))
+                                         (continue-ability state side (break-subroutines ice breaker cost n args) card nil)
+                                         (effect-completed state side eid))))
+                                   (effect-completed state side eid)))))))))})))
 
 (defn add-stealth-to-label [cost]
   (when-let [cost (find-first #(= :credit (:cost/type %)) (flatten [cost]))]

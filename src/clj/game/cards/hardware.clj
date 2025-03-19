@@ -51,7 +51,7 @@
    [game.core.runs :refer [bypass-ice end-run
                            get-current-encounter jack-out make-run
                            successful-run-replace-breach total-cards-accessed]]
-   [game.core.say :refer [play-sfx system-msg]]
+   [game.core.say :refer [play-sfx system-msg ->use-card-msg ->fragment]]
    [game.core.servers :refer [target-server is-central? zone->name]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags]]
@@ -173,7 +173,8 @@
                                           (some #(event? (:card %)) targets))]
                                   (first-trash? state event-targets?)))
                  :change-in-game-state {:silent true :req (req (seq (:deck runner)))}
-                 :msg "draw 1 card"
+                 :msg (effect (->use-card-msg state :runner card
+                                              (->fragment :draw-cards 1)))
                  :effect (effect (draw state :runner eid 1))}]
     {:static-abilities [(mu+ 1)]
      :events [(assoc ability :event :corp-trash)
@@ -1078,8 +1079,12 @@
 
 (defcard "Gachapon"
   (letfn [(shuffle-end [remove-from-game shuffle-back]
-            {:msg (msg "shuffle " (enumerate-cards shuffle-back :sorted) " into the stack"
-                       " and remove " (enumerate-cards remove-from-game :sorted) " from the game")
+            {:msg (msg (when shuffle-back
+                         (str "shuffle " (enumerate-cards shuffle-back :sorted) " into the stack"))
+                       (when (and shuffle-back remove-from-game)
+                         " and ")
+                       (when remove-from-game
+                         (str "remove " (enumerate-cards remove-from-game :sorted) " from the game")))
              :effect (effect
                        (doseq [c remove-from-game]
                          (move state side c :rfg))
@@ -1111,7 +1116,7 @@
                :effect (effect (if finished?
                               (if (= "Done" target)
                                 (continue-ability state side
-                                                  (shuffle-end set-aside-cards to-shuffle)
+                                                  (shuffle-end (seq set-aside-cards) (seq to-shuffle))
                                                   card nil)
                                 (continue-ability state side
                                                   (shuffle-next (sort-by :title (concat set-aside-cards to-shuffle)) nil nil)
@@ -1771,8 +1776,7 @@
                         :msg (msg "trash " (card-str state (first (filter program? (:hosted card)))) " for violating hosting restrictions")
                         :async true
                         :effect (effect (let [first-program (first (filter program? (:hosted card)))]
-                                       (system-msg state nil (card-str state (first (filter program? (:hosted card)))) " is trashed for violating hosting restrictions")
-                                       (trash-cards state side eid [first-program] {:unpreventable true :game-trash true})))}
+                                          (trash-cards state side eid [first-program] {:unpreventable true :game-trash true})))}
    :static-abilities [{:type :can-host
                        :req (req (program? target)
                                       (<= (expected-mu state target) 1))

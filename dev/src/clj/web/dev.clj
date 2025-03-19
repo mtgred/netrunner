@@ -22,3 +22,16 @@
   (nrdb/fetch-data {:db true})
   (system/stop :jinteki/cards)
   (system/start :jinteki/cards))
+
+(comment
+  (require 'game.cards.agendas-test
+           'game.cards.assets-test
+           'game.cards.basic-test
+           'game.cards.events-test
+           'game.cards.hardware-test
+           'game.cards.identities-test
+           'game.cards.operations-test
+           'game.cards.programs-test
+           'game.cards.resources-test
+           'game.cards.upgrades-test
+           ))

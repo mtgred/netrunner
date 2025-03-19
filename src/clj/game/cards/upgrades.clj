@@ -930,11 +930,11 @@
                                      (no-event? state side :agenda-stolen))
                           -6
                           0))
-   :abilities [{:label "Place 1 advancement token on a card in this server"
+   :abilities [{:label "Place 1 advancement counter on a card in this server"
                 :async true
                 :prompt "Choose a card in this server"
                 :choices {:req (req (in-same-server? card target))}
-                :msg (msg "place an advancement token on " (card-str state target))
+                :msg (msg "place an advancement counter on " (card-str state target))
                 :cost [(->c :trash-can)]
                 :effect (effect (add-prop state side eid target :advance-counter 1 {:placed true}))}]})
 
@@ -1528,7 +1528,7 @@
                                 state side (when-let [rdc target]
                                   {:prompt "Choose a card in HQ"
                                    :choices {:card in-hand?}
-                                   :msg "swap a card from the top 5 of R&D with a card in HQ"
+                                   :msg "swap a card from the top 5 cards of R&D with a card in HQ"
                                    :effect (effect (move state side rdc :hand)
                                                 (move state side target :deck {:index (:index rdc)}))})
                                 card nil))}

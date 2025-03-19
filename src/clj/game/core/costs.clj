@@ -265,7 +265,7 @@
                                                        :paid/x-value (- cost offset)
                                                        :paid/value cost}))
              :else
-             (complete-with-result state side eid {:paid/msg (str "pays 0 [Credits]")
+             (complete-with-result state side eid {:paid/msg "pays 0 [Credits]"
                                                    :paid/type :x-credits
                                                    :paid/x-value (- offset)
                                                    :paid/value 0}))))}
@@ -402,7 +402,7 @@
                                            :paid/type :trash-from-hand
                                            :paid/value (count async-result)
                                            :paid/targets async-result}))))}
-                forfeit-an-agenda {:prompt (str "Choose an Agenda to forfeit")
+                forfeit-an-agenda {:prompt "Choose an Agenda to forfeit"
                                    :async true
                                    :choices {:max 1
                                              :all true
@@ -1297,7 +1297,7 @@
             (complete-with-result
               state side eid
               {:paid/msg (str "spends "
-                              (quantify (value cost) (str "hosted advancement counter"))
+                              (quantify (value cost) "hosted advancement counter")
                               " from on " (:title card))
                :paid/type :advancement
                :paid/value (value cost)})))

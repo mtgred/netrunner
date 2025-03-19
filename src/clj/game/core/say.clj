@@ -1,8 +1,12 @@
 (ns game.core.say
   (:require
    [cljc.java-time.instant :as inst]
+   [clojure.java.io :as io]
    [clojure.string :as str]
-   [game.core.toasts :refer [toast]]))
+   [game.core.card :refer [get-title]]
+   [game.core.toasts :refer [toast]]
+   [jinteki.cards :refer [all-cards]]
+   [noahtheduke.fluent :as fluent]))
 
 (defn make-message
   "Create a message map, along with timestamp if none is provided."
@@ -87,12 +91,230 @@
   (let [message (make-system-message text)]
     (log state {:public message})))
 
+(defonce store (atom #{}))
+
+(comment
+  (reset! store #{}))
+
+(def card-names
+  (->> (keys @all-cards)
+       (sort)
+       (reverse)
+       (str/join "|")
+       (#(str "(" % ")"))
+       (re-pattern)))
+
+(def type-names
+  (->> (vals @all-cards)
+       (map :type)
+       (sort)
+       (reverse)
+       (str/join "|")
+       (#(str "(" % ")"))
+       (re-pattern)))
+
+(def en-msgs
+  (let [content (io/resource (str (io/file "public" "i18n" "messages" "en.ftl")))]
+    (fluent/build "en" (slurp content))))
+
+(defn en-format
+  ([id] (fluent/format en-msgs id))
+  ([id args] (fluent/format en-msgs id args)))
+
+(defn join-with-and [ms]
+  (str/join (en-format :join-with-and) ms))
+
+(defn format-msg [m]
+  (en-format (:msg/type m) m))
+
+(defn format-paid [{:paid/keys [type value targets]}]
+  (if (some #(contains? % :pick-counters/type) targets)
+    (->> (for [pick (filter #(contains? % :pick-counters/type) targets)]
+           (case (:pick-counters/type pick)
+             :card {:paid-type "paid-hosted-credit"
+                    :paid-value (:value pick)
+                    :title (:title pick)}
+             :bad-publicity {:paid-type "paid-bad-publicity"
+                             :paid-value (:value pick)}
+             :credit-pool {:paid-type "paid-credit-pool"
+                           :paid-value (:value pick)}))
+         (mapv #(en-format (:paid-type %) %)))
+    (let [m {:paid-type (str "paid-" (name type))
+             :paid-value value}]
+      [(en-format (:paid-type m) m)])))
+
+(defn build-pay-msg [ms]
+  (when-let [ms (seq ms)]
+    (->> ms
+         (mapcat format-paid)
+         (join-with-and))))
+
+(defn build-base-msg [m]
+  (let [do-ability (join-with-and
+                     (mapv format-msg (:msg/fragments m)))
+        pay-msg (not-empty (build-pay-msg (:msg/payments m)))]
+    (cond-> (assoc m :do-ability do-ability)
+      pay-msg (assoc :payment pay-msg))))
+
+(defn build-msg [m]
+  (format-msg (build-base-msg m)))
+
+(defn ->use-card-msg
+  ([state side card fragments] (->use-card-msg state side card nil fragments))
+  ([state side card payments fragments]
+   (let [fragments (cond (vector? fragments) fragments
+                         (nil? fragments) (throw (IllegalArgumentException. "Requires a fragment or vector of fragments"))
+                         :else [fragments])]
+     (cond-> {:msg/type :use-card
+              :username (get-in @state [side :user :username])
+              :title (get-title card)
+              :msg/fragments fragments}
+       (seq payments) (assoc :msg/payments payments)))))
+
+(defn ->fragment
+  ([type value]
+   {:msg/type type
+    :value value})
+  ([type value args]
+   (merge (->fragment type value) args)))
+
+(comment
+  (->> @store
+       (filter #(str/includes? % "and draw")))
+
+  (->> @store
+       (map #(-> %
+
+                 ;; names
+                 (str/replace "realloc()" "{$card}")
+                 (str/replace "Ghost Runner" "{$card}")
+                 (str/replace "Masterwork (v37)" "{$card}")
+                 (str/replace "Gemilang Arena: Burning Bright" "{$card}")
+                 (str/replace "AirbladeX (JSRF Ed.)" "{$card}")
+                 (str/replace #"Dewi Subrotoputri: (Pedagogical Dhalang|Shadow Guide)" "{\\$card}")
+                 (str/replace #"Hoshiko Shiro: (Untold Protagonist|Mahou Shoujo)" "{\\$card}")
+                 (str/replace #"(Subsurface Labs|Tenure Floors|Disposal Grounds): Méliès U" "{\\$card}")
+                 (str/replace #"[Cc]orp  ?" "{\\$side} ")
+                 (str/replace #"[Rr]unner  ?" "{\\$side} ")
+                 (str/replace card-names "{\\$card}")
+                 (str/replace type-names "{\\$types}")
+                 (str/replace #"\{\$type\}s" "{\\$types}")
+                 ; (str/replace subtype-names "{\\$subtype}")
+                 (str/replace #"(the )?[Gg]rip" "the grip")
+                 (str/replace #"(the )?[Ss]tack" "the stack")
+                 (str/replace #"(the )?[Hh]eap" "the heap")
+                 (str/replace #"(Archives|HQ|R&D)" "{\\$central}")
+                 (str/replace #"Server \d+" "{\\$server}")
+
+                 ;; common subtypes
+                 (str/replace #"(Code Gate|Barrier|Sentry|Harmonic)" "{\\$subtype}")
+
+                 ;; contains numbers
+                 (str/replace #"position \d+" "{\\$position}")
+                 (str/replace #"turn \d+" "{\\$turn}")
+                 (str/replace #"sabotage \d+" "{\\$sabotage}")
+                 (str/replace #"guess \d+" "{\\$guess}")
+                 (str/replace #"(-|\+)?\d+-cost card" "{\\$target-cost-card}")
+
+                 ;; quantities
+                 (str/replace #"\d+ +\[[Cc]redits?\]" "{\\$credits}")
+                 (str/replace #" all +\[[Cc]redits?\]" " {\\$all-credits}")
+                 (str/replace #"\d+ *\[[Rr]ecurring [Cc]redits?\]" "{\\$recurring-credits}")
+                 (str/replace #"(-|\+)?\d+ fewer (\[[Cc]licks?\])+" "{\\$fewer-clicks}")
+                 (str/replace #"(-|\+)?\d+ allotted (\[[Cc]licks?\])+" "{\\$allotted-clicks}")
+                 (str/replace #" all +(\[[Cc]licks?\])+" " {\\$all-clicks}")
+                 (str/replace #" all +remaining +(\[[Cc]licks?\])+" " {\\$all-remaining-clicks}")
+                 (str/replace #" ((\d+|a) )?(\[[Cc]licks?\])+" " {\\$clicks}")
+                 (str/replace #"\d+ +(\[tags?\])+" "{\\$tags}")
+                 (str/replace #" (\d+|a) +cards?" " {\\$cards}")
+                 (str/replace #"\d+ +(\[cards?\])+" "{\\$cards}")
+                 (str/replace #"\d+ +random +(\[cards?\])+" "{\\$random-cards}")
+                 (str/replace #"\d+ +random +cards?" "{\\$random-cards}")
+                 (str/replace #"\d+ +(copy|copies)" "{\\$copies}")
+                 (str/replace #" all +(\[cards?\])+" " {\\$all-cards}")
+                 (str/replace #"\d+ +virus counters?" "{\\$virus-counters}")
+                 (str/replace #"\d+ +(meat) damage" "{\\$meat-damages}")
+                 (str/replace #"\d+ +(net) damage" "{\\$net-damages}")
+                 (str/replace #"\d+ +(brain|core) damage" "{\\$core-damages}")
+                 (str/replace #"\d+ +tags?" "{\\$tags}")
+                 (str/replace #" all +tags?" " {\\$all-tags}")
+                 (str/replace #"\d+ +turns?" "{\\$turns}")
+                 (str/replace #"\d+ +extra turns?" "{\\$extra-turns}")
+                 (str/replace #" (\d+|a) +additional turns?" " {\\$additional-turns}")
+                 (str/replace #" all( +\d+)? +subroutines?" " {\\$all-subroutines}")
+                 (str/replace #"\d+ +subroutines?" "{\\$subroutines}")
+                 (str/replace #"\d+ +unbroken +subroutines? on \{\$card\} \(.*?\)" "{\\$unbroken-subroutines} on {\\$card} ({\\$subs})")
+                 (str/replace #"\d+ +\{\$subtype\} ice" "{\\$subtype} {\\$ices}")
+                 (str/replace #"\d+ +\{\$subtype\} subroutines?" "{\\$subtype} {\\$subroutines}")
+                 (str/replace #"\d+ +bad publicity" "{\\$bad-publicity}")
+                 (str/replace #" all +bad publicity" " {\\$all-bad-publicity}")
+                 (str/replace #" (\d+|an) additional +bad publicity" " {\\$additional-bad-publicity}")
+                 (str/replace #"\d +installed cards?" "{\\$installed-cards}")
+                 (str/replace #"\d +installed programs?" "{\\$installed-programs}")
+                 (str/replace #" (-|\+)?(\d+|an) +agenda( points?)?" " {\\$agendas}")
+                 (str/replace #" \{\$agendas\} worth \{\$agendas\}" " {\\$type} worth {\\$agenda-points}")
+                 (str/replace #" an \{\$type\} worth \d+ points" " an agenda worth {\\$agenda-points}")
+                 (str/replace #" ((\d+|a) )?pieces? of ice" " {\\$ices}")
+                 (str/replace #" (\d|an) +installed non-ice" " {\\$installed-non-ice}")
+                 (str/replace #" (\d+|an) +advancement counters?" " {\\$advancement-counters}")
+                 (str/replace #" (\d+|an) +additional advancement counters?" " {\\$advancement-counters}")
+                 (str/replace #" (\d+|a) +hosted advancement counters?" " {\\$hosted-advancement-counters}")
+                 (str/replace #" all +hosted advancement counters?" " {\\$all-hosted-advancement-counters}")
+                 (str/replace #" (\d+|a) +agenda counters?" " {\\$agenda-counters}")
+                 (str/replace #" all +agenda counters?" " {\\$all-agenda-counters}")
+                 (str/replace #" (\d+|a) +hosted agenda counters?" " {\\$hosted-agenda-counters}")
+                 (str/replace #" all +hosted agenda counters?" " {\\$all-hosted-agenda-counters}")
+                 (str/replace #" (\d+|a) +charge counters?" " {\\$charge-counters}")
+                 (str/replace #" (\d+|a) +power counters?" " {\\$power-counters}")
+                 (str/replace #" (\d+|a) +hosted power counters?" " {\\$hosted-power-counters}")
+                 (str/replace #" all +hosted power counters?" " {\\$all-hosted-power-counters}")
+                 (str/replace #" (\d+|a) +hosted virus counters?" " {\\$virus-counters}")
+                 (str/replace #" all virus counters?" " {\\$all-virus-counters}")
+                 (str/replace #" (\d+|an) +additional cards?" " {\\$additional-cards}")
+                 (str/replace #" (\d|a) +counter" " {\\$counters}")
+
+                 ;; phrases
+                 (str/replace #"(for|at) no cost" "at no cost")
+                 (str/replace #"(-|\+)?\d+ strength" "{\\$str}")
+                 (str/replace #"give \{\$card\} (-|\+)?\d+ strength" "give {\\$card} {\\$str}")
+                 (str/replace #"link strength to \d+" "link strength to {\\$link-str}")
+                 (str/replace #"trash( the)? top (cards?|\{\$cards?\})( (of|from) (\{\$central\}|the stack))?"
+                              "trash the top {\\$cards} from {\\$deck}")
+                 (str/replace #"trashes \d+ installed rezzed ice" "trashes {\\$installed-rezzed-ices}")
+                 (str/replace #"start a psi game \(.*?\)" "start a psi game ({\\$ability-text})")
+                 (str/replace #"increase( its)? strength from \d+ to \d+" "increase its strength from {\\$start-str} to {\\$end-str}")
+                 (str/replace #"increase( the)? strength of \{\$card\} to \d+" "increase the strength of {\\$card} to {\\$end-str}")
+                 (str/replace #"increase( the)? strength of \{\$card\} from \d+ to \d+" "increase the strength of {\\$card} from {\\$start-str} to {\\$end-str}")
+
+                 (str/replace #"\{\$card\}(,?( and)? \{\$card\})+" "{\\$enumerated-cards}")
+
+                 ;; subroutines
+                 (str/replace #"to break( \d+)? \{\$subroutines\} on \{\$card\} \((.*?)\)\." "to break {\\$subroutines} on {\\$card} ({\\$subroutine-text}).")
+                 (str/replace #"to break( \d+)? \{\$subtype\} \{\$subroutines\} on \{\$card\} \((.*?)\)\." "to break {\\$subtype} {\\$subroutines} on {\\$card} ({\\$subroutine-text}).")
+                 (str/replace #"to resolve the subroutine \((.*?)\) from" "to resolve the subroutine ({\\$subroutine-text}) from")
+
+                 ;; traces
+                 (str/replace #"initiate a trace with strength \d+ \((.*)\)" "initiate a trace with {\\$trace-strength} ({\\$trace-text})")
+                 (str/replace #"initiate a trace with strength \d+" "initiate a trace with {\\$trace-strength}")
+                 (str/replace #"increase trace strength to \d+" "increase trace strength to {\\$trace-strength}")
+
+                 ))
+       (sort)
+       (distinct)
+       (vec)
+       (clojure.pprint/pprint)))
+
 (defn system-msg
   "Prints a message to the log without a username."
   ([state side text] (system-msg state side text nil))
   ([state side text args]
-   (let [username (get-in @state [side :user :username])]
-     (system-say state side (str username " " text ".") args))))
+   (if (map? text)
+     (system-say state side (build-msg text) args)
+     (let [username (get-in @state [side :user :username])
+           msg (str username " " text ".")]
+       (when-not (:log-side args)
+         (swap! store conj msg))
+       (system-say state side msg args)))))
 
 (defn multi-msg
   [state side message-map]
