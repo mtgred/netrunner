@@ -4313,8 +4313,7 @@
                                        :prompt (str "Rez " (card-str state chosen-ice) ", ignoring all costs?")
                                        :yes-ability {:async true
                                                      :effect
-                                                     (req 
-                                                       (system-msg state :corp (str "rezzes " (card-str state chosen-ice) ", ignoring all costs"))
+                                                     (req
                                                        (rez state :corp eid chosen-ice {:ignore-cost :all-costs}))}}}])
                                   (derez state side target {:source-card card})
                                   (effect-completed state side eid)))}

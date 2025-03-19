@@ -998,10 +998,10 @@
   {:abilities [{:action true
                 :cost [(->c :click 3)]
                 :keep-menu-open :while-3-clicks-left
-                :choices {:card #(not (:rezzed %))}
-                :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at no cost")
+                :label "Rez a card, ignoring all costs"
+                :choices {:card (every-pred corp? installed? (complement agenda?) (complement rezzed?))}
                 :async true
-                :effect (effect (rez eid target {:ignore-cost :all-costs}))}]})
+                :effect (effect (rez eid target {:ignore-cost :all-costs :msg-keys {:include-cost-from-eid eid}}))}]})
 
 (defcard "Elizabeth Mills"
   {:on-rez {:msg "remove 1 bad publicity"
@@ -1072,7 +1072,6 @@
                                          (can-pay-to-rez? state side (assoc eid :source card)
                                                           target {:cost-bonus -1})))}
                 :label "Rez a card, lowering the cost by 1 [Credits] (start of turn)"
-                :msg (msg "rez " (:title target))
                 :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus -1})
                                        (update! state side (assoc card :ebc-rezzed (:cid target)))
                                        (effect-completed state side eid)))}
@@ -2335,7 +2334,6 @@
                                       (can-pay-to-rez? state side (assoc eid :source card)
                                                        target {:cost-bonus (- discount)})
                                       (not (rezzed? target))))}
-             :msg (msg "rez " (:title target))
              :waiting-prompt true
              :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus (- discount)})
                                     (if (< cnt 3)
