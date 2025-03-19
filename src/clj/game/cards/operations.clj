@@ -455,8 +455,7 @@
                             (:all-subs-broken context)))
              :effect (req (wait-for
                             (derez state side (:ice context)
-                                   {:msg-keys {:source-card card
-                                               :and-then " and trash itself"}
+                                   {:msg-keys {:and-then " and trash itself"}
                                     :suppress-checkpoint true})
                             (trash state :corp eid card {:cause-card card})))}]})
 
@@ -846,7 +845,7 @@
     :change-in-game-state (req (seq (all-installed state :corp)))
     :async true
     :effect (req (wait-for
-                   (derez state side targets {:msg-keys {:source-card card}})
+                   (derez state side targets)
                    (let [discount (* 3 (count targets))]
                      (continue-ability
                        state side

@@ -718,7 +718,7 @@
     :async true
     :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
-    :effect (req (derez state side eid target {:msg-keys {:source-card card}}))}})
+    :effect (req (derez state side eid target))}})
 
 (defcard "Eden Fragment"
   {:static-abilities [{:type :ignore-install-cost
@@ -2025,7 +2025,7 @@
                                              :unregister-once-resolved true
                                              :duration :end-of-turn
                                              :async true
-                                             :effect (effect (derez eid c {:msg-keys {:source-card card}}))}])
+                                             :effect (effect (derez eid c))}])
                                          (effect-completed state side eid))))}]})
 
 (defcard "Sentinel Defense Program"
@@ -2148,8 +2148,7 @@
                          :once :per-turn
                          :async true
                          :effect (req (wait-for
-                                        (derez state side target {:msg-keys {:source-card card
-                                                                             :and-then " and gain 1 [Credits]"}})
+                                        (derez state side target {:msg-keys {:and-then " and gain 1 [Credits]"}})
                                         (gain-credits state side eid 1)))})
                       card nil)))}
             {:event :derez

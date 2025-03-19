@@ -482,7 +482,7 @@
                 :cost [(->c :trash-can)]
                 :async true
                 :effect (req (wait-for
-                               (derez state side current-ice {:msg-keys {:include-cost-from-eid eid :source-card card}})
+                               (derez state side current-ice {:msg-keys {:include-cost-from-eid eid}})
                                (continue-ability state side (gain-tags-ability 1) card nil)))}]})
 
 (defcard "Bank Job"
@@ -892,7 +892,7 @@
                    {:cost [(->c :credit (rez-cost state :corp (:card context))) (->c :trash-can)]
                     :async true
                     :effect (req (wait-for
-                                   (derez state :runner (:card context) {:msg-keys {:source-card card}})
+                                   (derez state :runner (:card context) {:msg-keys {:source-card card :and-then " and prevent the Corp from rezzing it for the remainder of this turn."}})
                                    (register-turn-flag!
                                      state side card :can-rez
                                      (fn [state _ card]
@@ -2207,8 +2207,7 @@
                 :label "Derez a piece of ice protecting a remote server"
                 :cost [(->c :trash-can)]
                 :async true
-                :effect (req (derez state side eid target {:msg-keys {:source-card card
-                                                                      :include-cost-from-eid eid}}))}]})
+                :effect (req (derez state side eid target {:msg-keys {:include-cost-from-eid eid}}))}]})
 
 (defcard "Miss Bones"
   {:data {:counter {:credit 12}}
@@ -2275,7 +2274,7 @@
                                       (rezzed? %))
                           :all true}
                 :async true
-                :effect (req (derez state :corp eid target {:msg-keys {:source-card card}}))}
+                :effect (req (derez state :corp (assoc eid :source card) target))}
    :uninstall
    (effect
      (continue-ability

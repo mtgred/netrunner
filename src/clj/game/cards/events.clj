@@ -422,8 +422,7 @@
                                        {:choices {:req (req (some #(same-card? % target) valid-ice))
                                                   :all true}
                                         :async true
-                                        :effect (req (derez state side eid target {:msg-keys {:source-card card
-                                                                                              :include-cost-from-eid payment-eid}}))}
+                                        :effect (req (derez state side eid target {:msg-keys {:include-cost-from-eid payment-eid}}))}
                                        card nil)
                                      (do (system-msg state side (str (if (pos? amount-spent)
                                                                        (str (:latest-payment-str eid) " to use ")
@@ -1277,7 +1276,7 @@
     :choices {:card #(and (ice? %)
                           (rezzed? %))}
     :async true
-    :effect (req (derez state side eid target {:msg-keys {:source-card card}}))}})
+    :effect (req (derez state side eid target))}})
 
 (defcard "Emergent Creativity"
   (letfn [(ec [trash-cost to-trash]
@@ -1423,7 +1422,7 @@
               :card #(and (rezzed? %)
                           (ice? %))}
     :async true
-    :effect (req (derez state side eid targets {:msg-keys {:source-card card}}))}})
+    :effect (req (derez state side eid targets))}})
 
 (defcard "Exploratory Romp"
   {:makes-run true
@@ -2372,7 +2371,7 @@
                                                         (when (ice? card)
                                                           (get-card state card))))
                                                 (filter rezzed?))]
-                            (derez state :runner eid rezzed-ice {:msg-keys {:source-card card}})))}]})
+                            (derez state :runner eid rezzed-ice)))}]})
 
 (defcard "Legwork"
   {:makes-run true
@@ -4315,7 +4314,7 @@
                                                      (req
                                                        (system-msg state :corp (str "rezzes " (card-str state chosen-ice) ", ignoring all costs"))
                                                        (rez state :corp eid chosen-ice {:ignore-cost :all-costs}))}}}])
-                                  (derez state side eid target {:msg-keys {:source-card card}})))}
+                                  (derez state side eid target)))}
                           card nil)
                         (effect-completed state side eid))))}]
      :on-play {:async true

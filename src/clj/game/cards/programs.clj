@@ -335,8 +335,7 @@
                                    (has-subtype? current-ice ice-type)
                                    (all-subs-broken-by-card? current-ice card)))
                     :async true
-                    :effect (req (derez state side eid current-ice {:msg-keys {:source-card card
-                                                                               :include-cost-from-eid eid}}))}]})))
+                    :effect (req (derez state side eid current-ice {:msg-keys {:include-cost-from-eid eid}}))}]})))
 
 (defn- trash-to-bypass
   "Trash to bypass current ice
@@ -1017,8 +1016,7 @@
                 :label "derez an ice"
                 :cost [(->c :trash-can)]
                 :async true
-                :effect (req (derez state side eid current-ice {:msg-keys {:source-card card
-                                                                           :include-cost-from-eid eid}}))}]})
+                :effect (req (derez state side eid current-ice {:msg-keys {:include-cost-from-eid eid}}))}]})
 
 (defcard "Crowbar"
   (break-and-enter "Code Gate"))
@@ -1496,8 +1494,7 @@
                                  :req (req (and (get-current-encounter state)
                                                 (has-subtype? current-ice "Sentry")))
                                  :async true
-                                 :effect (req (derez state side eid current-ice {:msg-keys {:source-card card
-                                                                                            :include-cost-from-eid eid}}))}
+                                 :effect (req (derez state side eid current-ice {:msg-keys {:include-cost-from-eid eid}}))}
                                 (strength-pump 1 1)]}))
 
 (defcard "Flux Capacitor"
@@ -3314,7 +3311,7 @@
                       (add-counter state side card :virus 1 nil)
                       (if (and (rezzed? (get-card state (:host card)))
                                  (<= 3 (get-virus-counters state (get-card state card))))
-                        (derez state side eid (get-card state (:host card)) {:msg-keys {:source-card card}})
+                        (derez state side eid (get-card state (:host card)))
                         (effect-completed state side eid))))]
     (trojan
       {:on-install {:interactive (req true)

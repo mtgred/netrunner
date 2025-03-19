@@ -484,8 +484,7 @@
               :yes-ability
               {:async true
                :cost [(->c :remove-from-game)]
-               :effect (req (derez state side eid target {:msg-keys {:source-card card
-                                                                     :include-cost-from-eid eid}}))}}}]})
+               :effect (req (derez state side eid target {:msg-keys {:include-cost-from-eid eid}}))}}}]})
 
 (defcard "Carnivore"
   {:static-abilities [(mu+ 1)]
@@ -2072,6 +2071,7 @@
   {:abilities [{:action true
                 :cost [(->c :click 1)(->c :x-credits)]
                 :label "Derez a piece of ice rezzed this turn"
+                ;; TODO - once elevation is out and the ncigs changes are in, add an ncigs catch for if the player just wastes their money
                 :once :per-turn
                 :async true
                 :effect (req (let [payment-eid eid
@@ -2082,8 +2082,7 @@
                                                            (= :this-turn (:rezzed target))
                                                            (<= (rez-cost state :corp target nil) spent-credits)))}
                                   :async true
-                                  :effect (req (derez state side eid target {:msg-keys {:source-card card
-                                                                                        :include-cost-from-eid payment-eid}}))}
+                                  :effect (req (derez state side eid target {:msg-keys {:include-cost-from-eid payment-eid}}))}
                                  card nil)))}]})
 
 (defcard "Security Chip"

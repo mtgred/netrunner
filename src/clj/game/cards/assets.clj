@@ -2954,8 +2954,7 @@
                                             :max cards-to-pick
                                             :all true}
                                   :async true
-                                  :effect (req (derez state side eid targets {:msg-keys {:source-card card
-                                                                                         :include-cost-from-eid payment-eid}}))}
+                                  :effect (req (derez state side eid targets {:msg-keys {:include-cost-from-eid payment-eid}}))}
                                  card nil)))}]})
 
 (defcard "The Board"
@@ -3247,7 +3246,7 @@
                    :choices {:not-self true
                              :card #(rezzed? %)}
                    :async true
-                   :effect (req (derez state side eid [card target] {:msg-keys {:source-card card}}))}]
+                   :effect (req (derez state side eid [card target]))}]
     {:derezzed-events [corp-rez-toast]
      :events [{:event :corp-turn-begins
                :interactive (req true)

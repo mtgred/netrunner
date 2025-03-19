@@ -1150,7 +1150,7 @@
                                                             (make-eid state eid)
                                                             (offer-jack-out) card nil)
                                            (wait-for
-                                             (derez state side card {:msg-keys {:source-card card}})
+                                             (derez state side card)
                                              (encounter-ends state side eid)))))}]})
 
 (defcard "Changeling"
@@ -1190,11 +1190,11 @@
    :events [{:event :runner-turn-ends
              :req (req (rezzed? card))
              :async true
-             :effect (req (derez state side eid card {:msg-keys {:source-card card}}))}
+             :effect (req (derez state side eid card))}
             {:event :corp-turn-ends
              :req (req (rezzed? card))
              :async true
-             :effect (req (derez state side eid card {:msg-keys {:source-card card}}))}]
+             :effect (req (derez state side eid card))}]
    :subroutines [end-the-run]})
 
 (defcard "Chiyashi"
@@ -2020,7 +2020,7 @@
                                    (effect-completed eid))
             :async true
             :effect (req (wait-for
-                           (derez state side target {:msg-keys {:source-card card}})
+                           (derez state side target)
                            (system-msg state side "prevents the runner from using printed abilities on bioroid ice for the rest of the turn")
                            (register-lingering-effect
                              state side card
@@ -2301,8 +2301,7 @@
                                   :duration :end-of-run
                                   :async true
                                   :effect (req (wait-for (derez state side new-ice {:suppress-checkpoint true
-                                                                                    :msg-keys {:source-card card
-                                                                                               :and-then " and trash itself"}})
+                                                                                    :msg-keys {:and-then " and trash itself"}})
                                                          (trash state side eid card {:cause :subroutine})))}])
                               (effect-completed state side eid))))}]})
 
@@ -2769,11 +2768,11 @@
      :events [{:event :runner-turn-ends
                :req (req (rezzed? card))
                :async true
-               :effect (effect (derez :corp eid card {:msg-keys {:source-card card}}))}
+               :effect (effect (derez :corp eid card))}
               {:event :corp-turn-ends
                :req (req (rezzed? card))
                :async true
-               :effect (effect (derez :corp eid card {:msg-keys {:source-card card}}))}]
+               :effect (effect (derez :corp eid card))}]
      :subroutines [{:label "(Code Gate) Force the Runner to lose [Click] and 1 [Credit]"
                     :msg "force the Runner to lose [Click] and 1 [Credit]"
                     :req (req (has-subtype? card "Code Gate"))
@@ -3085,7 +3084,7 @@
                                                      (make-eid state eid)
                                                      (offer-jack-out)
                                                      card nil)
-                                    (derez state side eid card {:msg-keys {:source-card card}})))}]
+                                    (derez state side eid card)))}]
    :subroutines [{:async true
                   :label "Draw 1 card, then shuffle 1 card from HQ into R&D"
                   :effect (req (wait-for (resolve-ability
@@ -4141,7 +4140,7 @@
                     :msg "keep TMI rezzed"
                     :label "Keep TMI rezzed"
                     :unsuccessful {:async true
-                                   :effect (effect (derez eid card {:msg-keys {:source-card card}}))}}}
+                                   :effect (effect (derez eid card))}}}
    :subroutines [end-the-run]})
 
 (defcard "Tollbooth"
