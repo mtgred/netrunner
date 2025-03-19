@@ -113,11 +113,11 @@
   (let [blocked-user (:block-user-input @s)
         my-user-name (:username user)
         current-blocked-list (:blocked-users @s)]
-    (swap! s assoc-in [:block-user-input] "")
+    (swap! s assoc :block-user-input "")
     (when (and (not (s/blank? blocked-user))
                (not= my-user-name blocked-user)
                (= -1 (.indexOf current-blocked-list blocked-user)))
-      (swap! s assoc-in [:blocked-users] (conj current-blocked-list blocked-user)))))
+      (swap! s assoc :blocked-users (conj current-blocked-list blocked-user)))))
 
 (defn remove-user-from-block-list
   [evt s]
@@ -126,7 +126,7 @@
         user-name (gdom/getTextContent next-sib)
         current-blocked-list (:blocked-users @s)]
     (when user-name
-      (swap! s assoc-in [:blocked-users] (vec (remove #(= % user-name) current-blocked-list))))))
+      (swap! s assoc :blocked-users (vec (remove #(= % user-name) current-blocked-list))))))
 
 (defn- all-alt-art-types
   []
@@ -160,7 +160,7 @@
         (add-card-art card art s)))))
 
 (defn- clear-card-art [s]
-  (swap! s assoc-in [:alt-arts] {}))
+  (swap! s assoc :alt-arts {}))
 
 (defn- reset-card-art [s]
   (let [art (:all-art-select @s)
@@ -175,11 +175,11 @@
       [:div
        [:input {:type "number"
                 :min 100 :max 2000
-                :on-change #(do (swap! s assoc-in [:log-width] (.. % -target -value))
+                :on-change #(do (swap! s assoc :log-width (.. % -target -value))
                                 (reset! log-width (.. % -target -value)))
                 :value @log-width}]
        [:button.update-log-width {:type "button"
-                                  :on-click #(do (swap! s assoc-in [:log-width] (get-in @app-state [:options :log-width]))
+                                  :on-click #(do (swap! s assoc :log-width (get-in @app-state [:options :log-width]))
                                                  (reset! log-width (get-in @app-state [:options :log-width])))}
         (tr [:settings_get-log-width "Get current log width"])]])))
 
@@ -189,11 +189,11 @@
       [:div
        [:input {:type "number"
                 :min 100 :max 2000
-                :on-change #(do (swap! s assoc-in [:log-top] (.. % -target -value))
+                :on-change #(do (swap! s assoc :log-top (.. % -target -value))
                                 (reset! log-top (.. % -target -value)))
                 :value @log-top}]
        [:button.update-log-width {:type "button"
-                                  :on-click #(do (swap! s assoc-in [:log-top] (get-in @app-state [:options :log-top]))
+                                  :on-click #(do (swap! s assoc :log-top (get-in @app-state [:options :log-top]))
                                                  (reset! log-top (get-in @app-state [:options :log-top])))}
         (tr [:settings_get-log-top "Get current log top"])]])))
 
@@ -371,26 +371,27 @@
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:lobby-sounds @s)
-                             :on-change #(swap! s assoc-in [:lobby-sounds] (.. % -target -checked))}]
+                             :on-change #(swap! s assoc :lobby-sounds (.. % -target -checked))}]
              (tr [:settings_enable-lobby-sounds "Enable lobby sounds"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:sounds @s)
-                             :on-change #(swap! s assoc-in [:sounds] (.. % -target -checked))}]
+                             :on-change #(swap! s assoc :sounds (.. % -target -checked))}]
              (tr [:settings_enable-game-sounds "Enable game sounds"])]]
            [:div (tr [:settings_volume "Volume"])
             [:input {:type "range"
                      :min 1 :max 100 :step 1
                      :on-mouse-up #(play-sfx [(random-sound)] {:volume (int (.. % -target -value))})
-                     :on-change #(swap! s assoc-in [:volume] (.. % -target -value))
+                     :on-change #(swap! s assoc :volume (.. % -target -value))
                      :value (or (:volume @s) 50)
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
 
           [:section
            [:h3 (tr [:settings_bespoke-sounds "Card-Specific Sounds"] {:sound "header"})]
            (doall
-             (for [grouping (distinct (map :grouping (vals bespoke-sounds)))]
+             (for [grouping (distinct (map :grouping (vals bespoke-sounds)))
+                   :let [group-name (name grouping)]]
                ^{:key grouping}
                [:div
                 [:label [:input {:type "checkbox"
@@ -402,13 +403,13 @@
                                                            {:volume (or (:volume @s) 50)
                                                             :force true}))
                                                (swap! s assoc-in [:bespoke-sounds grouping] checked))}]
-                 (tr [:settings_bespoke-sounds (name grouping)] {:sound (name grouping)})]]))]
+                 (tr [:settings_bespoke-sounds group-name] {:sound group-name})]]))]
 
           [:section
            [:h3 (tr [:lobby_default-game-format "Default game format"])]
            [:select.format
             {:value (or (:default-format @s) "standard")
-             :on-change #(swap! s assoc-in [:default-format] (.. % -target -value))}
+             :on-change #(swap! s assoc :default-format (.. % -target -value))}
             (doall
              (for [[k v] slug->format]
                ^{:key k}
@@ -420,37 +421,37 @@
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:player-stats-icons @s)
-                             :on-change #(swap! s assoc-in [:player-stats-icons] (.. % -target -checked))}]
+                             :on-change #(swap! s assoc :player-stats-icons (.. % -target -checked))}]
              (tr [:settings_player-stats-icons "Use icons for player stats"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:stacked-cards @s)
-                             :on-change #(swap! s assoc-in [:stacked-cards] (.. % -target -checked))}]
+                             :on-change #(swap! s assoc :stacked-cards (.. % -target -checked))}]
              (tr [:settings_stacked-cards "Card stacking (on by default)"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:ghost-trojans @s)
-                             :on-change #(swap! s assoc-in [:ghost-trojans] (.. % -target -checked))}]
+                             :on-change #(swap! s assoc :ghost-trojans (.. % -target -checked))}]
              (tr [:settings_ghost-trojans "Display ghosts for hosted programs"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:display-encounter-info @s)
-                             :on-change #(swap! s assoc-in [:display-encounter-info] (.. % -target -checked))}]
+                             :on-change #(swap! s assoc :display-encounter-info (.. % -target -checked))}]
              (tr [:settings_display-encounter-info "Always display encounter info"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:sides-overlap @s)
-                             :on-change #(swap! s assoc-in [:sides-overlap] (.. % -target -checked))}]
+                             :on-change #(swap! s assoc :sides-overlap (.. % -target -checked))}]
              (tr [:settings_sides-overlap "Runner and Corp board may overlap"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:log-timestamps @s)
-                             :on-change #(swap! s assoc-in [:log-timestamps] (.. % -target -checked))}]
+                             :on-change #(swap! s assoc :log-timestamps (.. % -target -checked))}]
              (tr [:settings_toggle-log-timestamps "Show log timestamps"])]]
 
            [:br]
@@ -554,7 +555,7 @@
                      [:label [:input {:type "radio"
                                       :name "gamestats"
                                       :value (:ref option)
-                                      :on-change #(swap! s assoc-in [:gamestats] (.. % -target -value))
+                                      :on-change #(swap! s assoc :gamestats (.. % -target -value))
                                       :checked (= (:gamestats @s) (:ref option))}]
                       (:name option)]]))]
 
@@ -567,7 +568,7 @@
                      [:label [:input {:type "radio"
                                       :name "deckstats"
                                       :value (:ref option)
-                                      :on-change #(swap! s assoc-in [:deckstats] (.. % -target -value))
+                                      :on-change #(swap! s assoc :deckstats (.. % -target -value))
                                       :checked (= (:deckstats @s) (:ref option))}]
                       (:name option)]]))]
 
@@ -577,7 +578,7 @@
             [:label [:input {:type "checkbox"
                              :name "use-high-res"
                              :checked (= "high" (:card-resolution @s))
-                             :on-change #(swap! s assoc-in [:card-resolution] (if (.. % -target -checked) "high" "default"))}]
+                             :on-change #(swap! s assoc :card-resolution (if (.. % -target -checked) "high" "default"))}]
              (tr [:settings_high-res "Enable high-resolution card images"])]]]
 
           [:section {:id "alt-art"}
@@ -586,7 +587,7 @@
             [:label [:input {:type "checkbox"
                              :name "show-alt-art"
                              :checked (:show-alt-art @s)
-                             :on-change #(swap! s assoc-in [:show-alt-art] (.. % -target -checked))}]
+                             :on-change #(swap! s assoc :show-alt-art (.. % -target -checked))}]
              (tr [:settings_show-alt "Show alternate card arts"])]]
            [:br]
 
@@ -596,7 +597,7 @@
                (tr [:settings_set-all "Set all cards to"]) ": "
                [:select {:ref "all-art-select"
                          :value (:all-art-select @s)
-                         :on-change #(swap! s assoc-in [:all-art-select] (-> % .-target .-value))}
+                         :on-change #(swap! s assoc :all-art-select (-> % .-target .-value))}
                 (doall (for [t (all-alt-art-types)]
                          (when (not= "prev" t)
                            [:option {:value t :key t} (alt-art-name t)])))]
@@ -616,7 +617,7 @@
          [:section
           [:h3 (tr [:settings_blocked "Blocked users"])]
           [:div
-           [:input {:on-change #(swap! s assoc-in [:block-user-input] (-> % .-target .-value))
+           [:input {:on-change #(swap! s assoc :block-user-input (-> % .-target .-value))
                     :on-key-down (fn [e]
                                    (when (= e.keyCode 13)
                                      (.preventDefault e)
@@ -641,7 +642,7 @@
            [:label [:input {:type "checkbox"
                             :name "disable-websockets"
                             :checked (:disable-websockets @s)
-                            :on-change #(swap! s assoc-in [:disable-websockets] (.. % -target -checked))}]
+                            :on-change #(swap! s assoc :disable-websockets (.. % -target -checked))}]
             (tr [:settings_disable-websockets "Disable websockets - requires browser refresh after clicking Update Profile [Not Recommended!]"])]]]
 
      [api-keys s]
