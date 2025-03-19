@@ -25,6 +25,7 @@
                 ((:req ex) state side eid card targets)
                 true)))
      :async true
+     :action true
      :effect (req
                (wait-for
                  (resolve-ability state :corp (assoc ex :cost merged-cost) card nil)

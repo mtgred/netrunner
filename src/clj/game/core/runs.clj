@@ -8,11 +8,12 @@
     [game.core.effects :refer [any-effects get-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
     [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event trigger-event-simult]]
-    [game.core.flags :refer [can-run? cards-can-prevent? clear-run-register! get-prevent-list prevent-jack-out]]
+    [game.core.flags :refer [can-run? clear-run-register!]]
     [game.core.gaining :refer [gain-credits]]
-    [game.core.ice :refer [active-ice? get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
+    [game.core.ice :refer [active-ice? break-subs-event-context get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.mark :refer [is-mark?]]
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs ->c]]
+    [game.core.prevention :refer [resolve-encounter-prevention resolve-end-run-prevention resolve-jack-out-prevention]]
     [game.core.prompts :refer [clear-run-prompts clear-wait-prompt show-run-prompts show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [is-remote? target-server unknown->kw zone->name]]
@@ -324,20 +325,28 @@
   [abi ice]
   {:async true
    :interactive (req true)
-   :ability-name (or (:ability-name abi) (str (:title ice) " Ability"))
-   :effect (req (swap! state assoc-in [:run :prevent-encounter-ability] nil)
-                (wait-for (trigger-event-simult state :runner :prevent-encounter-ability nil {:ability-name (:ability-name abi)})
-                          (if (get-in @state [:run :prevent-encounter-ability])
-                            (effect-completed state side eid)
+   :ability-name (str (or (:ability-name abi) (:title ice)) " encounter")
+   :effect (req (wait-for (resolve-encounter-prevention state side {:title (str (or (:ability-name abi) (:title ice)) " encounter") :card ice})
+                          (if (pos? (:remaining async-result))
                             (do (register-pending-event state :resolve-ice-encounter-abi ice abi)
                                 (queue-event state :resolve-ice-encounter-abi {:ice ice})
-                                (checkpoint state side eid)))))})
+                                (checkpoint state side eid))
+                            (effect-completed state side eid))))})
 
 (defn encounter-ice
+  ;; note: as far as I can tell, this deliberately leaves on open eid (the run eid).
+  ;; Attempting to change that breaks a very large number of tests, so I'm leaving this
+  ;; note here to remind me when I look at this later. -nbk, 2025
+  ;;
+  ;; TODO: rewrite forced encounter to use it's own version of encounter-ice,
+  ;; then we can close the eids on this. Right now, closing the eids breaks
+  ;; forced encounters and nothing else.
   [state side eid ice]
   (swap! state update :encounters conj {:eid eid
                                         :ice ice})
   (check-auto-no-action state)
+  ;; step 6.9.3a: The encounter begins. Conditions relating to the Runner encountering
+  ;; this ice are met (this is on-encounter effects, etc)
   (let [on-encounter (:on-encounter (card-def ice))
         applied-encounters (get-effects state nil :gain-encounter-ability ice)
         all-encounters (map #(preventable-encounter-abi % ice) (remove nil? (conj applied-encounters on-encounter)))]
@@ -349,8 +358,18 @@
                           (make-eid state)
                           {:cancel-fn (fn [state]
                                         (should-end-encounter? state side ice))})
-              (when (should-end-encounter? state side ice)
-                (encounter-ends state side eid)))))
+              (if (should-end-encounter? state side ice)
+                (encounter-ends state side eid)
+                ;; step 6.9.3b: if there are no subroutines on the ice,
+                ;; the runner is considered to have broken all the subroutines on this ice.
+                ;; This should fire an event, so it can get picked up with cards like hippo
+                ;; or knifed.
+                (when-let [c-ice (get-current-ice state)]
+                  (when (and (same-card? c-ice ice) (zero? (count (:subroutines c-ice))))
+                    (wait-for
+                      (trigger-event-simult state side :subroutines-broken nil (break-subs-event-context state c-ice [] (get-in @state [:runner :basic-action-card])))
+                      (when (should-end-encounter? state side ice)
+                        (encounter-ends state side eid)))))))))
 
 (defmethod start-next-phase :encounter-ice
   [state side _]
@@ -375,9 +394,11 @@
                (if (and (not (:run @state))
                         (empty? (:encounters @state)))
                  (forced-encounter-cleanup state :runner eid)
-                 (do (when (and new-state (= new-state (get-in @state [:run :phase])))
-                       (set-phase state old-state))
-                     (effect-completed state side eid)))))))
+                 (do
+                   (when (and new-state (= new-state (get-in @state [:run :phase])))
+                     (set-phase state old-state))
+                   (set-current-ice state)
+                   (effect-completed state side eid)))))))
 
 (defmethod continue :encounter-ice
   [state side _]
@@ -568,7 +589,7 @@
 (defn choose-replacement-ability
   [state handlers]
   (let [mandatory (some :mandatory handlers)
-        titles (into [] (keep #(get-in % [:card :title]) handlers))
+        titles (into [] (keep #(:card %) handlers))
         eid (make-phase-eid state nil)]
     (cond
       ;; If you can't access, there's nothing to replace
@@ -578,8 +599,7 @@
       (zero? (count titles))
       (wait-for (breach-server state :runner (make-eid state) (get-in @state [:run :server]))
                 (handle-end-run state :runner eid))
-      ;; If there's only 1 handler and it's mandatory
-      ;; just execute it
+      ;; If there's only 1 handler and it's mandatory, just execute it
       (and mandatory (= 1 (count titles)))
       (let [chosen (first handlers)
             ability (:ability chosen)
@@ -587,13 +607,14 @@
         (system-msg state :runner (str "uses the replacement effect from " (:title card)))
         (wait-for (resolve-ability state :runner ability card [(select-keys (:run @state) [:server :run-id])])
                   (handle-end-run state :runner eid)))
-      ;; there are multiple handlers
+      ;; there are multiple handlers or the handler is optional
       (pos? (count titles))
       (resolve-ability
         state :runner
         {:prompt "Choose a breach replacement ability"
          :choices (if mandatory titles (conj titles (str "Breach " (zone->name (:server (:run @state))))))
-         :effect (req (let [chosen (some #(when (= target (get-in % [:card :title])) %) handlers)
+         :async true
+         :effect (req (let [chosen (some #(when (same-card? target (:card %)) %) handlers)
                             ability (:ability chosen)
                             card (:card chosen)]
                         (if chosen
@@ -630,6 +651,7 @@
             state :runner eid
             {:prompt (str "You are prevented from breaching " (zone->name server) " this run.")
              :choices ["OK"]
+             :async true
              :effect (effect (system-msg :runner (str "is prevented from breaching " (zone->name server) " this run."))
                              (handle-end-run eid))}
             nil nil)
@@ -668,10 +690,6 @@
     (wait-for (register-successful-run state side (make-phase-eid state nil) (get-in @state [:run :server]))
               (complete-run state side))))
 
-(defn end-run-prevent
-  [state _]
-  (swap! state update-in [:end-run :end-run-prevent] (fnil inc 0)))
-
 (defn- register-unsuccessful-run
   [state side eid]
   (let [run (:run @state)]
@@ -689,77 +707,43 @@
      (handle-end-run state side eid)
      (register-unsuccessful-run state side eid))))
 
-;; todo - ideally we should be able to know not just the card ending the run, but the cause as well
-;; ie subroutine, card ability (like the trash on bc), or something else
-;; this matters for cards like banner
 (defn end-run
   "After checking for prevents, end this run, and set it as UNSUCCESSFUL."
   ([state side eid card] (end-run state side eid card nil))
   ([state side eid card {:keys [unpreventable] :as args}]
    (if (or (:run @state)
            (get-current-encounter state))
-     (do (swap! state update-in [:end-run] dissoc :end-run-prevent)
-         (let [prevent (get-prevent-list state :runner :end-run)
-               auto-prevent (any-effects state side :auto-prevent-run-end true? card [card])]
-           (if auto-prevent
-             (do (end-run-prevent state side)
-                 (system-msg state (other-side side) "prevents the run from ending")
-                 (effect-completed state side eid))
-             (if (and (not unpreventable)
-                      (cards-can-prevent? state :runner prevent :end-run nil {:card-cause card}))
-               (do (system-msg state :runner "has the option to prevent the run from ending")
-                   (show-wait-prompt state :corp "Runner to prevent the run from ending")
-                   (show-prompt state :runner nil
-                                (str "Prevent the run from ending?") ["Done"]
-                                (fn [_]
-                                  (clear-wait-prompt state :corp)
-                                  (if-let [_ (get-in @state [:end-run :end-run-prevent])]
-                                    (effect-completed state side eid)
-                                    (do (system-msg state :runner "will not prevent the run from ending")
-                                        (resolve-end-run state side eid))))
-                                {:prompt-type :prevent}))
-               (resolve-end-run state side eid)))))
+     (wait-for (resolve-end-run-prevention state side (assoc args :card card))
+               (if (pos? (:remaining async-result))
+                 (resolve-end-run state side eid)
+                 (effect-completed state side eid)))
      (effect-completed state side eid))))
-
-(defn jack-out-prevent
-  [state side]
-  (swap! state update-in [:jack-out :jack-out-prevent] (fnil inc 0))
-  (prevent-jack-out state side))
 
 (defn- resolve-jack-out
   [state side eid]
   (queue-event state :jack-out nil)
   (system-msg state side "jacks out")
-  (end-run state side eid {:unpreventable true}))
+  (end-run state side eid nil {:unpreventable true}))
 
 (defn jack-out
   "The runner decides to jack out."
   ([state side eid]
-   (swap! state update-in [:jack-out] dissoc :jack-out-prevent)
-   (let [cost (jack-out-cost state side)]
-     (if (can-pay? state side eid nil "jack out" cost)
-       (wait-for (pay state :runner nil cost)
-                 (if-let [payment-str (:msg async-result)]
-                   (let [prevent (get-prevent-list state :corp :jack-out)]
-                     (if (cards-can-prevent? state :corp prevent :jack-out)
-                       (do (system-msg state :runner (str (build-spend-msg payment-str "attempt to" "attempts to") "jack out"))
-                           (system-msg state :corp "has the option to prevent the Runner from jacking out")
-                           (show-wait-prompt state :runner "Corp to prevent the jack out")
-                           (show-prompt state :corp nil
-                                        (str "Prevent the Runner from jacking out?") ["Done"]
-                                        (fn [_]
-                                          (clear-wait-prompt state :runner)
-                                          (if-let [_ (get-in @state [:jack-out :jack-out-prevent])]
-                                            (effect-completed state side (make-result eid false))
-                                            (do (system-msg state :corp "will not prevent the Runner from jacking out")
-                                                (resolve-jack-out state side eid))))
-                                        {:prompt-type :prevent}))
-                       (do (when-not (string/blank? payment-str)
-                             (system-msg state :runner (str payment-str " to jack out")))
-                           (resolve-jack-out state side eid))))
-                   (complete-with-result state side eid false)))
-       (do (system-msg state :runner (str "attempts to jack out but can't pay (" (build-cost-string cost) ")"))
-           (complete-with-result state side eid false))))))
+   (if (any-effects state side :cannot-jack-out true?)
+     (do (system-msg state :runner "cannot jack out this run")
+         (complete-with-result state side eid false))
+     (let [cost (jack-out-cost state side)]
+       (if (can-pay? state side eid nil "jack out" cost)
+         (wait-for (pay state :runner nil cost)
+                   (if-let [payment-str (:msg async-result)]
+                     (do (when-not (string/blank? payment-str)
+                           (system-msg state :runner (str payment-str " to jack out")))
+                         (wait-for (resolve-jack-out-prevention state side nil)
+                                   (if (pos? (:remaining async-result))
+                                     (resolve-jack-out state side eid)
+                                     (complete-with-result state side eid false))))
+                     (complete-with-result state side eid false)))
+         (do (system-msg state :runner (str "attempts to jack out but can't pay (" (build-cost-string cost) ")"))
+             (complete-with-result state side eid false)))))))
 
 (defn- run-end-fx
   [state side {:keys [eid successful unsuccessful]}]

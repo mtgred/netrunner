@@ -39,6 +39,8 @@
 (defonce corp-prompt-state (r/cursor game-state [:corp :prompt :prompt-state]))
 (defonce runner-prompt-state (r/cursor game-state [:runner :prompt :prompt-state]))
 
+(defn is-replay? [] (= "local-replay" (:gameid @app-state [:gameid])))
+
 (defn- any-prompt-open?
   [side]
   (if (= side :corp)
@@ -168,13 +170,26 @@
         (:poison card)
         (:highlight-in-discard card))))
 
-(defn handle-card-click [{:keys [type zone] :as card}]
+(defn- prompt-button-from-card?
+  [clicked-card {:keys [card msg prompt-type choices] :as prompt-state}]
+  (when-not (or (some #{:counter :card-title :number} choices)
+                (= choices "credit")
+                (= prompt-type "trace"))
+    (some (fn [{:keys [_ uuid value]}]
+            (when (= (:cid value) (:cid clicked-card)) uuid))
+          choices)))
+
+(defn handle-card-click [{:keys [type zone] :as card} shift-key-held]
   (let [side (:side @game-state)]
     (when (not-spectator?)
       (cond
         ;; Selecting card
         (= (get-in @game-state [side :prompt-state :prompt-type]) "select")
-        (send-command "select" {:card (card-for-click card)})
+        (send-command "select" {:card (card-for-click card) :shift-key-held shift-key-held})
+
+        ;; A selectable card is clicked outside of a select prompt (ie it's a button on a choices prompt)
+        (contains? (into #{} (get-in @game-state [side :prompt-state :selectable])) (:cid card))
+        (send-command "choice" {:choice {:uuid (prompt-button-from-card? card (get-in @game-state [side :prompt-state]))}})
 
         ;; Card is an identity of player's side
         (and (= (:type card) "Identity")
@@ -187,7 +202,7 @@
              (not (any-prompt-open? side))
              (= "hand" (first zone))
              (playable? card))
-        (send-command "play" {:card (card-for-click card)})
+        (send-command "play" {:card (card-for-click card) :shift-key-held shift-key-held})
 
         ;; Corp clicking on a corp card
         (and (= side :corp)
@@ -200,7 +215,8 @@
           (if (= (:cid card) (:source @card-menu))
             (do (send-command "generate-install-list" nil)
                 (close-card-menu))
-            (do (send-command "generate-install-list" {:card (card-for-click card)})
+            (do (send-command "generate-install-list" {:card (card-for-click card)
+                                                       :shift-key-held shift-key-held})
                 (open-card-menu (:cid card)))))
 
         :else
@@ -696,10 +712,12 @@
            subtype-target corp-abilities]
     :as card} flipped disable-click]
   (let [title (get-title card)]
-    [:div.card-frame.menu-container
-     [:div.blue-shade.card {:class (str (cond selected "selected"
-                                              (same-card? card (:button @app-state)) "hovered"
-                                              (same-card? card (-> @game-state :encounters :ice)) "encountered"
+    (r/with-let [prompt-state (r/cursor game-state [(keyword (lower-case side)) :prompt-state])]
+      [:div.card-frame.menu-container
+       [:div.blue-shade.card {:class (str (cond selected "selected"
+                                                (contains? (into #{} (get-in @prompt-state [:selectable])) (:cid card)) "selectable"
+                                                (same-card? card (:button @app-state)) "hovered"
+                                                (same-card? card (-> @game-state :encounters :ice)) "encountered"
                                               (and (not (any-prompt-open? side)) (playable? card)) "playable"
                                               ghost "ghost"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
@@ -708,7 +726,7 @@
                                                   (or (active? card)
                                                       (playable? card)))
                                          0)
-                            :draggable (when (not-spectator?) true)
+                            :draggable (when (and (not-spectator?) (not disable-click)) true)
                             :on-touch-start #(handle-touchstart % card)
                             :on-touch-end   #(handle-touchend %)
                             :on-touch-move  #(handle-touchmove %)
@@ -720,13 +738,13 @@
                                                (put-game-card-in-channel card zoom-channel))
                             :on-mouse-leave #(put! zoom-channel false)
                             :on-click #(when (not disable-click)
-                                         (handle-card-click card))
+                                         (handle-card-click card (.-shiftKey %)))
                             :on-key-down #(when (and (= "Enter" (.-key %))
                                                      (not disable-click))
-                                            (handle-card-click card))
+                                            (handle-card-click card (.-shiftKey %)))
                             :on-key-up #(when (and (= " " (.-key %))
                                                    (not disable-click))
-                                          (handle-card-click card))}
+                                          (handle-card-click card (.-shiftKey %)))}
       (if (or (not code) flipped facedown)
         (let [facedown-but-known (or (not (or (not code) flipped facedown))
                                      (spectator-view-hidden?)
@@ -788,7 +806,7 @@
            (for [card hosted]
              (let [flipped (draw-facedown? card)]
                ^{:key (:cid card)}
-               [card-view card flipped]))))])]))
+               [card-view card flipped]))))])])))
 
 (defn show-distinct-cards
   [distinct-cards]
@@ -879,7 +897,7 @@
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
-           (drop-area (if (= :corp side) "HQ" "Grip") {:class (when (> size 6) "squeeze")})
+           (drop-area (if (= :corp side) "HQ" "the Grip") {:class (when (> size 6) "squeeze")})
            [build-hand-card-view filled-hand size "card-wrapper"]
            [label filled-hand {:opts {:name (if (= :corp side)
                                               (tr [:game.hq "HQ"])
@@ -912,41 +930,41 @@
       (str title " (" hand-count ")")]]))
 
 (defn deck-view [render-side player-side identity deck deck-count]
-   (let [is-runner (= :runner render-side)
-         title (if is-runner (tr [:game.stack "Stack"]) (tr [:game.r&d "R&D"]))
-         ref (if is-runner "stack" "rd")
-         menu-ref (keyword (str ref "-menu"))
-         content-ref (keyword (str ref "-content"))]
-     (fn [render-side player-side identity deck]
-       ; deck-count is only sent to live games and does not exist in the replay
-       (let [deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)]
-         [:div.deck-container (drop-area title {})
-          [:div.blue-shade.deck {:on-click (when (and (= render-side player-side) (not-spectator?))
-                                             #(let [popup-display (-> (content-ref @board-dom) .-style .-display)]
-                                                (if (or (empty? popup-display)
-                                                        (= "none" popup-display))
-                                                  (-> (menu-ref @board-dom) js/$ .toggle)
-                                                  (close-popup % (content-ref @board-dom) "stops looking at their deck" false true))))}
-           (when (pos? deck-count-number)
-             [facedown-card (:side @identity) ["bg"] nil])
-           [:div.header {:class "darkbg server-label"}
-            (str title " (" deck-count-number ")")]]
-          (when (= render-side player-side)
-            [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
-             [:div {:on-click #(do (send-command "shuffle")
-                                   (-> (menu-ref @board-dom) js/$ .fadeOut))} (tr [:game.shuffle "Shuffle"])]
-             [:div {:on-click #(show-deck % ref)} (tr [:game.show "Show"])]])
-          (when (= render-side player-side)
-            [:div.panel.blue-shade.popup {:ref #(swap! board-dom assoc content-ref %)}
-             [:div
-              [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" false true)}
-               (tr [:game.close "Close"])]
-              [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" true true)}
-               (tr [:game.close-shuffle "Close & Shuffle"])]]
-             (doall
-               (for [card @deck]
-                 ^{:key (:cid card)}
-                 [card-view card]))])]))))
+  (let [is-runner (= :runner render-side)
+        title (if is-runner (tr [:game.stack "Stack"]) (tr [:game.r&d "R&D"]))
+        ref (if is-runner "stack" "rd")
+        menu-ref (keyword (str ref "-menu"))
+        content-ref (keyword (str ref "-content"))]
+    (fn [render-side player-side identity deck]
+      ;; deck-count is only sent to live games and does not exist in the replay
+      (let [deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)]
+        [:div.deck-container (drop-area title {})
+         [:div.blue-shade.deck {:on-click (when (and (= render-side player-side) (not-spectator?))
+                                            #(let [popup-display (-> (content-ref @board-dom) .-style .-display)]
+                                               (if (or (empty? popup-display)
+                                                       (= "none" popup-display))
+                                                 (-> (menu-ref @board-dom) js/$ .toggle)
+                                                 (close-popup % (content-ref @board-dom) "stops looking at their deck" false true))))}
+          (when (pos? deck-count-number)
+            [facedown-card (:side @identity) ["bg"] nil])
+          [:div.header {:class "darkbg server-label"}
+           (str title " (" deck-count-number ")")]]
+         (when (and (= render-side player-side) (not (is-replay?)))
+           [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
+            [:div {:on-click #(do (send-command "shuffle")
+                                  (-> (menu-ref @board-dom) js/$ .fadeOut))} (tr [:game.shuffle "Shuffle"])]
+            [:div {:on-click #(show-deck % ref)} (tr [:game.show "Show"])]])
+         (when (and (= render-side player-side) (not (is-replay?)))
+           [:div.panel.blue-shade.popup {:ref #(swap! board-dom assoc content-ref %)}
+            [:div
+             [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" false true)}
+              (tr [:game.close "Close"])]
+             [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" true true)}
+              (tr [:game.close-shuffle "Close & Shuffle"])]]
+            (doall
+              (for [card @deck]
+                ^{:key (:cid card)}
+                [card-view card]))])]))))
 
 (defn discard-view-runner [player-side discard]
   (let [s (r/atom {})]
@@ -1006,30 +1024,32 @@
               ^{:key idx}
               [:div (draw-card c false)]))]]))))
 
-(defn rfg-view [cards name popup]
-  (let [dom (atom {})]
-    (fn [cards name popup]
-      (when-not (empty? @cards)
-        (let [size (count @cards)]
-          [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")
-                                      :on-click (when popup #(-> (:rfg-popup @dom) js/$ .fadeToggle))}
-           (doall
-             (map-indexed (fn [i card]
-                            [:div.card-wrapper {:key i
-                                                :style {:left (when (> size 1) (* (/ 128 size) i))}}
-                             [:div [card-view card]]])
-                          @cards))
-           [label @cards {:opts {:name name}}]
-           (when popup
-             [:div.panel.blue-shade.popup {:ref #(swap! dom assoc :rfg-popup %)
-                                           :class "opponent"}
-              [:div
-               [:a {:on-click #(close-popup % (:rfg-popup @dom) nil false false)} (tr [:game.close "Close"])]
-               [:label (tr [:game.card-count] size)]]
-              (doall
-                (for [c @cards]
-                  ^{:key (:cid c)}
-                  [card-view c]))])])))))
+(defn rfg-view
+  ([cards name popup] (rfg-view cards name popup nil))
+  ([cards name popup noclick]
+   (let [dom (atom {})]
+     (fn [cards name popup]
+       (when-not (empty? @cards)
+         (let [size (count @cards)]
+           [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")
+                                       :on-click (when popup #(-> (:rfg-popup @dom) js/$ .fadeToggle))}
+            (doall
+              (map-indexed (fn [i card]
+                             [:div.card-wrapper {:key i
+                                                 :style {:left (when (> size 1) (* (/ 128 size) i))}}
+                              [:div [card-view card nil noclick]]])
+                           @cards))
+            [label @cards {:opts {:name name}}]
+            (when popup
+              [:div.panel.blue-shade.popup {:ref #(swap! dom assoc :rfg-popup %)
+                                            :class "opponent"}
+               [:div
+                [:a {:on-click #(close-popup % (:rfg-popup @dom) nil false false)} (tr [:game.close "Close"])]
+                [:label (tr [:game.card-count] size)]]
+               (doall
+                 (for [c @cards]
+                   ^{:key (:cid c)}
+                   [card-view c]))])]))))))
 
 (defn play-area-view [user name cards]
   (fn [user name cards]
@@ -1047,7 +1067,7 @@
                         @cards))
          [label @cards {:opts {:name name}}]]))))
 
-(defn scored-view [scored agenda-point me?]
+(defn scored-view [scored agenda-point agenda-point-req me?]
   (let [size (count @scored)
         ctrl (if me? stat-controls (fn [key content] content))]
     [:div.panel.blue-shade.scored.squeeze
@@ -1059,7 +1079,8 @@
                     @scored))
      [label @scored {:opts {:name (tr [:game.scored-area "Scored Area"])}}]
      [:div.stats-area
-      (ctrl :agenda-point [:div (tr [:game.agenda-count] @agenda-point)])]]))
+      (ctrl :agenda-point [:div (tr [:game.agenda-count] @agenda-point)
+                           (tr [:game.agenda-point-req (if-not (= 7 agenda-point-req) (str " (" agenda-point-req " required)") "")] @agenda-point-req)])]]))
 
 (defn run-arrow [run]
   [:div.run-arrow [:div {:class (cond
@@ -1222,7 +1243,7 @@
 (defn- find-hosted-programs
   "finds all programs hosted on ice, and makes them have the 'ghost' key"
   [servers]
-  (let [servers (concat [(:archives @servers) (:rd @servers) (:hq @servers)] (get-remotes @servers))
+  (let [servers (concat [(:archives @servers) (:rd @servers) (:hq @servers)] (map second (get-remotes @servers)))
         ices (mapcat :ices servers)
         hosted (mapcat :hosted ices)
         hosted-programs (filter program? hosted)]
@@ -1758,6 +1779,7 @@
        :else
        (doall (for [{:keys [idx uuid value]} choices
                     :when (not= value "Hide")]
+                ;; HERE
                 [:button {:key idx
                           :on-click #(do (send-command "choice" {:choice {:uuid uuid}})
                                          (card-highlight-mouse-out % value button-channel))
@@ -1863,8 +1885,7 @@
          [:div.button-pane {:on-mouse-over #(card-preview-mouse-over % zoom-channel)
                             :on-mouse-out  #(card-preview-mouse-out % zoom-channel)}
           (cond
-            (and @prompt-state
-                 (not= "run" @prompt-type))
+            (and @prompt-state (not= "run" (get-in @prompt-state [:prompt-type])))
             [prompt-div me @prompt-state]
             (or @run
                 @encounters)
@@ -2152,7 +2173,7 @@
        :reagent-render
        (fn []
         (when (and @corp @runner @side true)
-          (let [me-side (if (= :spectator @side)
+           (let [me-side (if (= :spectator @side)
                           (or (spectate-side) :corp)
                           @side)
                  op-side (utils/other-side me-side)
@@ -2187,6 +2208,8 @@
                  op-scored (r/cursor game-state [op-side :scored])
                  me-agenda-point (r/cursor game-state [me-side :agenda-point])
                  op-agenda-point (r/cursor game-state [op-side :agenda-point])
+                 me-agenda-point-req (r/cursor game-state [me-side :agenda-point-req])
+                 op-agenda-point-req (r/cursor game-state [op-side :agenda-point-req])
                  ;; servers
                  corp-servers (r/cursor game-state [:corp :servers])
                  runner-rig (r/cursor game-state [:runner :rig])
@@ -2238,9 +2261,9 @@
                  [:div.left-inner-leftpane
                   [:div
                    [stats-view opponent]
-                   [scored-view op-scored op-agenda-point false]]
+                   [scored-view op-scored op-agenda-point op-agenda-point-req false]]
                   [:div
-                   [scored-view me-scored me-agenda-point true]
+                   [scored-view me-scored me-agenda-point me-agenda-point-req true]
                    [stats-view me]]]
 
                  [:div.right-inner-leftpane
@@ -2249,6 +2272,7 @@
                         op-destroyed (r/cursor game-state [op-side :destroyed])
                         op-current (r/cursor game-state [op-side :current])
                         op-play-area (r/cursor game-state [op-side :play-area])
+                        last-revealed (r/cursor game-state [:last-revealed])
                         me-rfg (r/cursor game-state [me-side :rfg])
                         me-set-aside (r/cursor game-state [me-side :set-aside])
                         me-destroyed (r/cursor game-state [me-side :destroyed])
@@ -2266,13 +2290,14 @@
                      [play-area-view op-user (tr [:game.play-area "Play Area"]) op-play-area]
                      [play-area-view me-user (tr [:game.play-area "Play Area"]) me-play-area]
                      [rfg-view op-current (tr [:game.current "Current"]) false]
-                     [rfg-view me-current (tr [:game.current "Current"]) false]])
+                     [rfg-view me-current (tr [:game.current "Current"]) false]
+                     [rfg-view last-revealed (tr [:game.last-revealed "Last Revealed"]) false true]])
                   (when (or (not= @side :spectator)
                             (and (spectator-view-hidden?) (spectate-side)))
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters
                                   :end-turn end-turn :runner-phase-12 runner-phase-12
                                   :corp-phase-12 corp-phase-12 :corp corp :runner runner
-                                  :me            me :opponent opponent :prompt-state prompt-state}])]]
+                                  :me me :opponent opponent :prompt-state prompt-state}])]]
 
                 [:div.me
                  [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true]]]]

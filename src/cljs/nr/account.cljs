@@ -61,6 +61,7 @@
   (swap! app-state assoc-in [:options :alt-arts] (:alt-arts @s))
   (swap! app-state assoc-in [:options :gamestats] (:gamestats @s))
   (swap! app-state assoc-in [:options :deckstats] (:deckstats @s))
+  (swap! app-state assoc-in [:options :disable-websockets] (:disable-websockets @s))
   (.setItem js/localStorage "sounds" (:sounds @s))
   (.setItem js/localStorage "default-format" (:default-format @s))
   (.setItem js/localStorage "lobby_sounds" (:lobby-sounds @s))
@@ -80,6 +81,7 @@
   (.setItem js/localStorage "card-back" (:card-back @s))
   (.setItem js/localStorage "card-zoom" (:card-zoom @s))
   (.setItem js/localStorage "pin-zoom" (:pin-zoom @s))
+  (.setItem js/localStorage "disable-websockets" (:disable-websockets @s))
   (post-options url (partial post-response s)))
 
 (defn add-user-to-block-list
@@ -288,7 +290,9 @@
                             {:name (tr [:pronouns.he "He/him"]) :ref "he"}
                             {:name (tr [:pronouns.heit "He/it"]) :ref "heit"}
                             {:name (tr [:pronouns.hethey "He/they"]) :ref "hethey"}
+                            {:name (tr [:pronouns.heshe "He/She/they"]) :ref "heshe"}
                             {:name (tr [:pronouns.it "It"]) :ref "it"}
+                            {:name (tr [:pronouns.ne "Fae/faer"]) :ref "faefaer"}
                             {:name (tr [:pronouns.ne "Ne/nem"]) :ref "ne"}
                             {:name (tr [:pronouns.ve "Ve/ver"]) :ref "ve"}
                             {:name (tr [:pronouns.ey "Ey/em"]) :ref "ey"}
@@ -596,6 +600,15 @@
                                                  :on-click #(remove-user-from-block-list % s)} "X" ]
                     [:span.blocked-user-name (str "  " bu)]]))]
 
+         [:section
+          [:h3  (tr [:settings.connection "Connection"])]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :name "disable-websockets"
+                            :checked (:disable-websockets @s)
+                            :on-change #(swap! s assoc-in [:disable-websockets] (.. % -target -checked))}]
+            (tr [:settings.disable-websockets "Disable websockets - requires browser refresh after clicking Update Profile [Not Recommended!]"])]]]
+
      [api-keys s]
 
      [:section
@@ -634,7 +647,8 @@
                        :log-player-highlight (get-in @app-state [:options :log-player-highlight])
                        :gamestats (get-in @app-state [:options :gamestats])
                        :deckstats (get-in @app-state [:options :deckstats])
-                       :blocked-users (sort (get-in @app-state [:options :blocked-users]))})]
+                       :blocked-users (sort (get-in @app-state [:options :blocked-users]))
+                       :disable-websockets (get-in @app-state [:options :disable-websockets])})]
 
     (go (let [response (<! (GET "/profile/email"))]
           (when (= 200 (:status response))

@@ -3,9 +3,11 @@
    [clojure.string :as str]
    [clojure.test :refer :all]
    [game.core :as core]
+   [game.core.eid :refer [make-eid]]
    [game.core.card :refer :all]
    [game.core.mark :refer [is-mark?]]
    [game.core.servers :refer [unknown->kw zone->name]]
+   [game.core.winning :refer [agenda-points-required-to-win]]
    [game.test-framework :refer :all]
    [game.utils :as utils]))
 
@@ -13,106 +15,106 @@
   FourHundredAndNineTeen-amoral-scammer
   ;; 419
   (do-game
-      (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
-                        :deck ["PAD Campaign" "The Cleaners" (qty "Pup" 3) "Oaktown Renovation"]}
-                 :runner {:id "419: Amoral Scammer"}})
-      (is (= 5 (:credit (get-corp))) "Starts with 5 credits")
-      (play-from-hand state :corp "Pup" "HQ")
-      (click-prompt state :runner "Yes")
-      (click-prompt state :corp "Yes")
-      (is (= 4 (:credit (get-corp))) "Pays 1 credit to not expose card")
-      (play-from-hand state :corp "Pup" "HQ")
-      (is (no-prompt? state :runner) "No option on second install")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Pup" "Archives")
-      (click-prompt state :runner "No")
-      (is (no-prompt? state :corp) "No prompt if Runner chooses No")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "The Cleaners" "New remote")
-      (click-prompt state :runner "Yes")
-      (click-prompt state :corp "No")
-      (is (last-log-contains? state "exposes The Cleaners") "Installed card was exposed")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Oaktown Renovation" "New remote")
-      (is (no-prompt? state :corp) "Cannot expose faceup agendas")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (core/lose state :corp :credit (:credit (get-corp)))
-      (is (zero? (:credit (get-corp))) "Corp has no credits")
-      (play-from-hand state :corp "PAD Campaign" "New remote")
-      (click-prompt state :runner "Yes")
-      (is (no-prompt? state :corp) "No prompt if Corp has no credits")
-      (is (last-log-contains? state "exposes PAD Campaign") "Installed card was exposed")))
+    (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
+                      :deck ["PAD Campaign" "The Cleaners" (qty "Pup" 3) "Oaktown Renovation"]}
+               :runner {:id "419: Amoral Scammer"}})
+    (is (= 5 (:credit (get-corp))) "Starts with 5 credits")
+    (play-from-hand state :corp "Pup" "HQ")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "Yes")
+    (is (= 4 (:credit (get-corp))) "Pays 1 credit to not expose card")
+    (play-from-hand state :corp "Pup" "HQ")
+    (is (no-prompt? state :runner) "No option on second install")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Pup" "Archives")
+    (click-prompt state :runner "No")
+    (is (no-prompt? state :corp) "No prompt if Runner chooses No")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "The Cleaners" "New remote")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "No")
+    (is (last-log-contains? state "expose The Cleaners") "Installed card was exposed")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Oaktown Renovation" "New remote")
+    (is (no-prompt? state :corp) "Cannot expose faceup agendas")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (core/lose state :corp :credit (:credit (get-corp)))
+    (is (zero? (:credit (get-corp))) "Corp has no credits")
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (click-prompt state :runner "Yes")
+    (is (no-prompt? state :corp) "No prompt if Corp has no credits")
+    (is (last-log-contains? state "expose PAD Campaign") "Installed card was exposed")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-verify-expose-can-be-blocked
-    ;; Verify expose can be blocked
-    (do-game
-      (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
-                        :deck ["Underway Grid" "Pup"]}
-                 :runner {:id "419: Amoral Scammer"}})
-      (play-from-hand state :corp "Underway Grid" "New remote")
-      (click-prompt state :runner "No")
-      (take-credits state :corp)
-      (take-credits state :runner)
-      (play-from-hand state :corp "Pup" "Server 1")
-      (click-prompt state :runner "Yes")
-      (let [ug (get-in @state [:corp :servers :remote1 :content 0])]
-        (rez state :corp ug)
-        (click-prompt state :corp "No")
-        (is (last-log-contains? state "uses Underway Grid to prevent 1 card from being exposed") "Exposure was prevented"))))
+  ;; Verify expose can be blocked
+  (do-game
+    (new-game {:corp {:id "Weyland Consortium: Builder of Nations"
+                      :deck ["Underway Grid" "Pup"]}
+               :runner {:id "419: Amoral Scammer"}})
+    (play-from-hand state :corp "Underway Grid" "New remote")
+    (click-prompt state :runner "No")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Pup" "Server 1")
+    (click-prompt state :runner "Yes")
+    (let [ug (get-in @state [:corp :servers :remote1 :content 0])]
+      (rez state :corp ug)
+      (click-prompt state :corp "No")
+      (is (not (last-log-contains? state "expose Pup")) "Exposure was prevented"))))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-ixodidae-shouldn-t-trigger-off-419-s-ability
-    ;; Ixodidae shouldn't trigger off 419's ability
-    (do-game
-      (new-game {:corp {:deck ["PAD Campaign"]}
-                 :runner {:id "419: Amoral Scammer"
-                          :deck ["Ixodidae"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Ixodidae")
-      (take-credits state :runner)
-      (play-from-hand state :corp "PAD Campaign" "New remote")
-      (let [corp-credits (:credit (get-corp))
-            runner-credits (:credit (get-runner))]
-        (click-prompt state :runner "Yes")
-        (click-prompt state :corp "Yes")
-        (is (= 1 (- corp-credits (:credit (get-corp)))) "Should lose 1 credit from 419 ability")
-        (is (zero? (- runner-credits (:credit (get-runner)))) "Should not gain any credits from Ixodidae"))))
+  ;; Ixodidae shouldn't trigger off 419's ability
+  (do-game
+    (new-game {:corp {:deck ["PAD Campaign"]}
+               :runner {:id "419: Amoral Scammer"
+                        :deck ["Ixodidae"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ixodidae")
+    (take-credits state :runner)
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (let [corp-credits (:credit (get-corp))
+          runner-credits (:credit (get-runner))]
+      (click-prompt state :runner "Yes")
+      (click-prompt state :corp "Yes")
+      (is (= 1 (- corp-credits (:credit (get-corp)))) "Should lose 1 credit from 419 ability")
+      (is (zero? (- runner-credits (:credit (get-runner)))) "Should not gain any credits from Ixodidae"))))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-419-vs-asa-group-double-install-corp-s-turn
-    ;; 419 vs Asa Group double install, Corp's turn
-    (do-game
-      (new-game {:corp {:id "Asa Group: Security Through Vigilance"
-                        :deck [(qty "Hedge Fund" 5)]
-                        :hand ["PAD Campaign" "Ice Wall"]}
-                 :runner {:id "419: Amoral Scammer"}})
-      (play-from-hand state :corp "PAD Campaign" "New remote")
-      (click-card state :corp "Ice Wall")
-      (click-prompt state :runner "Yes")
-      (click-prompt state :corp "No")
-      (is (last-log-contains? state "exposes PAD Campaign in Server 1") "Installed card was exposed")))
+  ;; 419 vs Asa Group double install, Corp's turn
+  (do-game
+    (new-game {:corp {:id "Asa Group: Security Through Vigilance"
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["PAD Campaign" "Ice Wall"]}
+               :runner {:id "419: Amoral Scammer"}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (click-card state :corp "Ice Wall")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "No")
+    (is (last-log-contains? state "expose PAD Campaign in Server 1") "Installed card was exposed")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-419-vs-asa-group-double-install-runner-s-turn
-    ;; 419 vs Asa Group double install, Runner's turn
-    (do-game
-      (new-game {:corp {:id "Asa Group: Security Through Vigilance"
-                        :deck [(qty "Hedge Fund" 5)]
-                        :hand ["PAD Campaign" "Ice Wall" "Advanced Assembly Lines"]}
-                 :runner {:id "419: Amoral Scammer"}})
-      (play-from-hand state :corp "Advanced Assembly Lines" "New remote")
-      (click-prompt state :corp "Done")
-      (click-prompt state :runner "No")
-      (take-credits state :corp)
-      (rez state :corp (get-content state :remote1 0))
-      (card-ability state :corp (get-content state :remote1 0) 0)
-      (click-card state :corp "PAD Campaign")
-      (click-prompt state :corp "New remote")
-      (click-prompt state :runner "Yes")
-      (click-prompt state :corp "No")
-      (is (last-log-contains? state "exposes PAD Campaign in Server 2") "Installed card was exposed")
-      (is (prompt-is-type? state :corp :select) "Corp should still have select prompt")))
+  ;; 419 vs Asa Group double install, Runner's turn
+  (do-game
+    (new-game {:corp {:id "Asa Group: Security Through Vigilance"
+                      :deck [(qty "Hedge Fund" 5)]
+                      :hand ["PAD Campaign" "Ice Wall" "Advanced Assembly Lines"]}
+               :runner {:id "419: Amoral Scammer"}})
+    (play-from-hand state :corp "Advanced Assembly Lines" "New remote")
+    (click-prompt state :corp "Done")
+    (click-prompt state :runner "No")
+    (take-credits state :corp)
+    (rez state :corp (get-content state :remote1 0))
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (click-card state :corp "PAD Campaign")
+    (click-prompt state :corp "New remote")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "No")
+    (is (last-log-contains? state "expose PAD Campaign in Server 2") "Installed card was exposed")
+    (is (prompt-is-type? state :corp :select) "Corp should still have select prompt")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-interation-with-install-and-rez-effects-issue-4485
   ;; interation with 'install and rez' effects. Issue #4485
@@ -128,27 +130,27 @@
     (is (not (no-prompt? state :runner)) "419 does trigger on installed and rezzed cards")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-419-vs-sportsmetal-jinja-grid-issue-3806
-    ;; 419 vs Sportsmetal Jinja Grid. Issue #3806
-    (do-game
-      (new-game {:corp {:id "Sportsmetal: Go Big or Go Home"
-                        :deck [(qty "Ice Wall" 5)]
-                        :hand ["Domestic Sleepers" "Jinja City Grid"]}
-                 :runner {:id "419: Amoral Scammer"}})
-      (play-from-hand state :corp "Jinja City Grid" "New remote")
-      (rez state :corp (get-content state :remote1 0))
-      (click-prompt state :runner "No")
-      (take-credits state :corp)
-      (run-empty-server state :hq)
-      (click-prompt state :runner "Steal")
-      (click-prompt state :corp "Draw 2 cards")
-      (is (waiting? state :runner) "During Jinja, Runner should wait")
-      (click-prompt state :corp (first (prompt-buttons :corp)))
-      (is (= 2 (count (prompt-buttons :runner))) "419 can trigger ability with 2 options")
-      (is (waiting? state :corp) "Corp is waiting for runner ability")
-      (click-prompt state :runner "Yes")
-      (click-prompt state :corp "No")
-      (is (= 2 (count (prompt-buttons :corp))) "Corp should have prompt back with 2 options")
-      (is (waiting? state :runner) "Runner should wait again")))
+  ;; 419 vs Sportsmetal Jinja Grid. Issue #3806
+  (do-game
+    (new-game {:corp {:id "Sportsmetal: Go Big or Go Home"
+                      :deck [(qty "Ice Wall" 5)]
+                      :hand ["Domestic Sleepers" "Jinja City Grid"]}
+               :runner {:id "419: Amoral Scammer"}})
+    (play-from-hand state :corp "Jinja City Grid" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (click-prompt state :runner "No")
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Steal")
+    (click-prompt state :corp "Draw 2 cards")
+    (is (waiting? state :runner) "During Jinja, Runner should wait")
+    (click-prompt state :corp (first (prompt-buttons :corp)))
+    (is (= 2 (count (prompt-buttons :runner))) "419 can trigger ability with 2 options")
+    (is (waiting? state :corp) "Corp is waiting for runner ability")
+    (click-prompt state :runner "Yes")
+    (click-prompt state :corp "No")
+    (is (= 2 (count (prompt-buttons :corp))) "Corp should have prompt back with 2 options")
+    (is (waiting? state :runner) "Runner should wait again")))
 
 (deftest FourHundredAndNineTeen-amoral-scammer-419-vs-expose-timing-rules-change
   ;; 419 vs Sportsmetal Jinja Grid. Issue #3806
@@ -947,11 +949,18 @@
   ;; Cerebral Imaging - Maximum hand size equal to credits
   (do-game
     (new-game {:corp {:id "Cerebral Imaging: Infinite Frontiers"
-                      :deck [(qty "Hedge Fund" 3)]}})
+                      :deck [(qty "Hedge Fund" 3) "Scarcity of Resources"]}
+               :runner {:hand ["Employee Strike"]}})
     (play-from-hand state :corp "Hedge Fund")
     (play-from-hand state :corp "Hedge Fund")
     (is (= 13 (:credit (get-corp))) "Has 13 credits")
-    (is (= 13 (hand-size :corp)) "Max hand size is 13")))
+    (is (= 13 (hand-size :corp)) "Max hand size is 13")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Employee Strike")
+    (is (= 5 (hand-size :corp)) "Hand size is 5 while striked")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Scarcity of Resources")
+    (is (= 13 (hand-size :corp)) "Hand size is big again")))
 
 (deftest chaos-theory-wunderkind
   ;; Chaos Theory, start with +1 MU
@@ -973,25 +982,24 @@
   (do-game
       (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
                         :hand [(qty "Neural EMP" 2)]}
-                 :runner {:deck [(qty "Imp" 3)]}})
+                 :runner {:deck ["Imp" "Ika" "Inti"]}})
       (take-credits state :corp)
       (damage state :corp :net 1)
       (click-prompt state :corp "Yes")
-      (let [imp (find-card "Imp" (:hand (get-runner)))]
-        (click-prompt state :corp imp)
-        (is (= 1 (count (:discard (get-runner)))))
-        (damage state :corp :net 1)
-        (is (no-prompt? state :corp) "No choice on second net damage")
-        (is (= 2 (count (:discard (get-runner)))))
-        (run-empty-server state "Archives")
-        (take-credits state :runner)
-        (core/move state :runner (find-card "Imp" (:discard (get-runner))) :hand)
-        (play-from-hand state :corp "Neural EMP")
-        (click-prompt state :corp "No")
-        (is (= 2 (count (:discard (get-runner)))) "Damage dealt after declining ability")
-        (play-from-hand state :corp "Neural EMP")
-        (is (no-prompt? state :corp) "No choice after declining on first damage")
-        (is (= 3 (count (:discard (get-runner))))))))
+      (click-card state :corp "Imp")
+      (is (= 1 (count (:discard (get-runner)))))
+      (damage state :corp :net 1)
+      (is (no-prompt? state :corp) "No choice on second net damage")
+      (is (= 2 (count (:discard (get-runner)))))
+      (run-empty-server state "Archives")
+      (take-credits state :runner)
+      (core/move state :runner (find-card "Imp" (:discard (get-runner))) :hand)
+      (play-from-hand state :corp "Neural EMP")
+      (click-prompt state :corp "No")
+      (is (= 2 (count (:discard (get-runner)))) "Damage dealt after declining ability")
+      (play-from-hand state :corp "Neural EMP")
+      (is (no-prompt? state :corp) "No choice after declining on first damage")
+      (is (= 3 (count (:discard (get-runner)))))))
 
 (deftest chronos-protocol-selective-mind-mapping-with-obokata-pay-4-net-damage-to-steal-only-3-damage-left-after-chronos-no-trigger-of-damage-prevent
     ;; with Obokata: Pay 4 net damage to steal. Only 3 damage left after Chronos. No trigger of damage prevent.
@@ -1006,7 +1014,7 @@
       (run-empty-server state "Server 1")
       (click-prompt state :runner "Pay to steal")
       (click-prompt state :corp "Yes")
-      (click-prompt state :corp (find-card "Inti" (:hand (get-runner))))
+      (click-card state :corp "Inti")
       (is (no-prompt? state :runner) "Feedback Filter net damage prevention opportunity not given")
       (is (= 4 (count (:discard (get-runner)))) "Runner paid 4 net damage")))
 
@@ -1439,7 +1447,7 @@
       (card-ability state :runner (get-hardware state 0) 0)
       (click-card state :runner (find-card "Customized Secretary" (:discard (get-runner))))
       ;; Make sure the simultaneous-resolution prompt is showing with 2 choices
-      (is (= 2 (count (prompt-buttons :runner))) "Simultaneous-resolution prompt is showing")
+      (is (= 3 (count (prompt-buttons :runner))) "Simultaneous-resolution prompt is showing")
       (click-prompt state :runner "Exile: Streethawk")
       (is (= 1 (count (:hand (get-runner)))) "Exile drew a card")))
 
@@ -1650,7 +1658,7 @@
       (is (= 1 (count (prompt-buttons :runner))) "Runner doesn't have enough credits to trash")
       (click-prompt state :runner "No action")
       (play-from-hand state :runner "Imp")
-      (core/add-counter state :runner (get-program state 0) :virus 5)
+      (core/add-counter state :runner (make-eid state) (get-program state 0) :virus 5)
       (play-from-hand state :runner "Skulljack")
       (take-credits state :runner)
       (take-credits state :corp)
@@ -1707,7 +1715,7 @@
       (play-from-hand state :corp "Sandstone" "R&D")
       (let [sandstone (get-ice state :rd 0)]
         (rez state :corp sandstone)
-        (core/add-counter state :corp sandstone :virus 1)
+        (core/add-counter state :corp (make-eid state) sandstone :virus 1)
         (take-credits state :corp)
         (run-empty-server state "HQ")
         (is (= 1 (get-counters (refresh sandstone) :virus)) "Sandstone has 1 virus counter")
@@ -2417,7 +2425,7 @@
       (take-credits state :runner)
       (score-agenda state :corp hok)
       (is (= 0 (get-counters (refresh issuaq) :power)) "Issuaq has no power counters")
-      (is (= 7 (:agenda-point-req (get-corp))) "Corp still requires 7 points to win"))))
+      (is (= 7 (agenda-points-required-to-win state :corp)) "Corp still requires 7 points to win"))))
 
 (deftest issuaq-adaptics-single-score
   ;; Issuaq Adaptics - Adjust point requirement when a single agenda is scored
@@ -2432,7 +2440,7 @@
       (play-from-hand state :corp "Seamless Launch")
       (click-card state :corp pk)
       (score state :corp (refresh pk))
-      (is (= 6 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 1")
+      (is (= 6 (agenda-points-required-to-win state :corp)) "Corp Agenda point requirement reduced by 1")
       (is (= 1 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 1 power counter"))))
 
 (deftest issuaq-adaptics-multiple-score
@@ -2453,7 +2461,7 @@
         (click-card state :corp pk2)
         (score state :corp (refresh pk1))
         (score state :corp (refresh pk2))
-        (is (= 5 (:agenda-point-req (get-corp))) "Corp Agenda point requirement reduced by 2")
+        (is (= 5 (agenda-points-required-to-win state :corp)) "Corp Agenda point requirement reduced by 2")
         (is (= 2 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 2 power counters"))))
 
 (deftest jemison-astronautics-sacrifice-audacity-success
@@ -2496,7 +2504,7 @@
       (let [gs (get-content state :remote1 0)
             arch (get-ice state :hq 0)
             iwall (get-ice state :rd 0)]
-        (core/add-counter state :corp gs :advancement 3)
+        (core/add-counter state :corp (make-eid state) gs :advancement 3)
         (rez state :corp (refresh gs))
         (card-ability state :corp (refresh gs) 0)
         (is (nil? (get-content state :remote1 0)) "Gene Splicer is no longer in remote")
@@ -2682,6 +2690,7 @@
     (take-credits state :corp)
     (run-on state :remote1)
     (run-continue-until state :movement)
+    (click-prompt state :corp "Tori Hanzō")
     (click-prompt state :corp "Yes")
     (is (= ["Sure Gamble"] (map :title (:discard (get-runner)))) "Gamble trashed, easy mark not milled")
     (is (= 1 (:brain-damage (get-runner))))))
@@ -3081,7 +3090,7 @@
       (take-credits state :runner)
       (score-agenda state :corp (get-content state :remote1 0))
       ;; Simultaneous prompt: Leela or Gang Sign
-      (is (= ["Leela Patel: Trained Pragmatist" "Gang Sign"] (map :title (prompt-buttons :runner))))
+      (is (= ["Leela Patel: Trained Pragmatist" "Gang Sign" "Done"] (prompt-titles :runner)))
       (click-prompt state :runner "Gang Sign")
       (click-prompt state :runner "Steal")
       (click-card state :runner (get-content state :remote2 0)) ; Bounce from Gang Sign steal
@@ -4060,7 +4069,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Cookbook")
     (play-from-hand state :runner "Gravedigger")
-    (click-prompt state :runner "Yes")
     (is (changed? [(:credit (get-corp)) 0]
           (card-ability state :runner (get-program state 0) 0))
         "Nuvem should not fire on Runner's turn")))
@@ -4669,25 +4677,20 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Feedback Filter")
       (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
-      (let [psychic (get-content state :remote1 0)
-            ff (get-hardware state 0)]
+      (let [psychic (get-content state :remote1 0)]
         (run-empty-server state :hq)
         (is (:run @state) "On successful run trigger effects")
         (click-card state :runner psychic)
         (is (= 1 (count (:hand (get-runner)))) "Runner has 1 card in hand")
         (click-prompt state :corp "2 [Credits]")
         (click-prompt state :runner "0 [Credits]")
-        (card-ability state :runner ff 0)
+        (click-prompt state :runner "Feedback Filter (Net)")
         (is (zero? (:credit (get-runner))) "Runner has no more credits left")
-        (is (= 1 (count (:hand (get-runner)))) "Prevented 1 net damage")
-        (is (empty? (:discard (get-runner))) "No cards discarded")
-        (is (:run @state) "On run access phase")
-        (click-prompt state :runner "Done")
         (is (empty? (:hand (get-runner))) "Suffered 1 net damage due to accessing Fetal AI")
         (is (= 1 (count (:discard (get-runner)))) "Discarded 1 card due to net damage")
         (is (:run @state) "Resolving access triggers")
-        (click-prompt state :runner "No action")
         (is (zero? (count (:scored (get-runner)))) "Runner has no credits to be able to steal Fetal AI")
+        (click-prompt state :runner "No action")
         (is (not (:run @state)) "Run has now ended")
         (is (= "Flatline" (:reason @state)) "Win condition reports flatline"))))
 
@@ -4718,7 +4721,7 @@
       (is (= 12 (:credit (get-runner))) "Gained 4cr")
       (is (= 12 (get-counters (get-resource state 0) :credit)) "12 cr on Temujin")))
 
-(deftest skorpios-defense-systems-persuasive-power
+(deftest skorpios-defense-systems-persuasive-power-manual-usage
   ; Remove a card from game when it moves to discard once per round
   (do-game
     (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"
@@ -4727,11 +4730,13 @@
     (play-from-hand state :corp "Hedge Fund")
     (dotimes [_ 4] (core/move state :corp (first (:hand (get-corp))) :deck))
     (take-credits state :corp)
+    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (click-prompt state :corp "Manual")
     (play-from-hand state :runner "Lucky Find")
     (play-from-hand state :runner "The Maker's Eye")
     (is (= [:rd] (:server (get-run))))
     ; Don't allow a run-event in progress to be targeted #2963
-    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (card-ability state :corp (get-in @state [:corp :identity]) 1)
     (is (empty? (filter #(= "The Maker's Eye" (:title %)) (-> (get-corp) :prompt first :choices))) "No Maker's Eye choice")
     (click-prompt state :corp "Cancel")
     (run-continue state)
@@ -4742,11 +4747,20 @@
     (is (accessing state "Quandary"))
     (click-prompt state :runner "No action")
     (is (not (:run @state)))
-    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (card-ability state :corp (get-in @state [:corp :identity]) 1)
     (click-prompt state :corp (find-card "The Maker's Eye" (:discard (get-runner))))
     (is (= 1 (count (get-in @state [:runner :rfg]))) "One card RFGed")
-    (card-ability state :corp (get-in @state [:corp :identity]) 0)
+    (card-ability state :corp (get-in @state [:corp :identity]) 1)
     (is (no-prompt? state :corp) "Cannot use Skorpios twice")))
+
+(deftest skorpios-smart-test
+  (do-game
+    (new-game {:corp {:id "Skorpios Defense Systems: Persuasive Power"}
+               :runner {:deck ["Corroder"]}})
+    (damage state :corp :brain 1)
+    (click-prompt state :corp "Corroder")
+    (is (= 1 (count (get-in @state [:runner :rfg]))) "One card RFGed")))
+
 
 (deftest spark-agency-worldswide-reach
   ;; Spark Agency - Rezzing advertisements

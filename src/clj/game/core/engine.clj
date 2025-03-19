@@ -580,6 +580,15 @@
                  (into [])))
      (unregister-suppress state side card))))
 
+(defn update-floating-event-durations
+  "updates all effects with a given duration to have another duration
+   ie: :until-next-corp-turn-begins -> :until-corp-turn-begins"
+  [state _ from-key to-key]
+  (swap! state assoc :events
+         (->> (:events @state)
+              (map #(if (= (:duration %) from-key) (assoc % :duration to-key) %))
+              (into []))))
+
 (defn unregister-floating-events
   "Removes all event handlers with a non-persistent duration"
   [state _ duration]
@@ -595,6 +604,33 @@
   (swap! state assoc :events (remove-once #(= uuid (:uuid %)) (:events @state))))
 
 ;; triggering events
+(defn- handler-skippable?
+  "This handler is safe to completely skip (as if the player declined)"
+  [handler]
+  (or (->> handler :handler :ability :skippable)
+      (->> handler :ability :skippable)))
+
+(def automatic-priority
+  {:pre-bypass 1 ;; chisel, baklan, etc, should fire before bypass
+   :corp-damage 1
+   :force-discard 1
+   :lose-clicks 1
+   :gain-clicks 2
+   :drain-credits 4
+   :bypass 4
+   :lose-credits 4
+   :pre-gain-credits 5 ;; bladderwort, etc
+   :gain-credits 6
+   :pre-draw-cards 7
+   :draw-cards 8
+   :post-draw-cards 9
+   :pre-breach 9
+   true 10
+   :trace 11
+   :corp-lose-tag 11
+   :last 999 ;; pretty mary wants to trigger last always
+   })
+
 (defn- get-side
   [ability]
   (to-keyword (get-in ability [:card :side])))
@@ -614,11 +650,13 @@
           :active (active? card)
           :derezzed (and (installed? card)
                          (not (rezzed? card)))
+          :installed (installed? card)
           :facedown (and (installed? card)
                          (facedown? card))
           :faceup (and (installed? card)
                        (faceup? card))
           :hosted (:host card)
+          :floating true
           :inactive (not (active? card))
           :in-location (or (and (contains? location :discard)
                                 (in-discard? card))
@@ -729,7 +767,7 @@
             (should-continue [state handlers]
               (and (< 1 (count handlers))
                    (not (and cancel-fn (cancel-fn state)))))
-            (choose-handler [handlers]
+            (choose-handler [handlers done?]
               (let [handlers (when-not (and cancel-fn (cancel-fn state))
                                (filter #(and (card-for-ability state %)
                                              (not (:disabled (card-for-ability state %))))
@@ -745,6 +783,7 @@
                                     (assoc card :title abi-name)
                                     card))
                                 non-silent)
+                    titles (concat titles ["Done"])
                     interactive (filter #(let [interactive-fn (:interactive (:ability %))
                                                card (card-for-ability state %)]
                                            (and interactive-fn
@@ -773,36 +812,53 @@
                                                               the-card event-targets)
                                              (if (should-continue state handlers)
                                                (continue-ability state side
-                                                                 (choose-handler remaining-handlers) nil event-targets)
+                                                                 (choose-handler remaining-handlers done?)
+                                                                 nil event-targets)
                                                (effect-completed state side eid)))))}
                       {:async true
                        :effect (req (if (should-continue state handlers)
-                                      (continue-ability state side (choose-handler (rest handlers)) nil event-targets)
+                                      (continue-ability state side (choose-handler (rest handlers) done?) nil event-targets)
                                       (effect-completed state side eid)))}))
                   {:prompt "Choose a trigger to resolve"
                    :choices titles
                    :async true
-                   :effect (req (let [same-card-ability? (fn [chosen-card {:keys [ability card]}]
-                                                           (if-let [abi-name (:ability-name ability)]
-                                                             (= abi-name (:title chosen-card))
-                                                             (same-card? chosen-card card)))
-                                      to-resolve (some #(when (same-card-ability? target %) %) handlers)
-                                      ability-to-resolve (dissoc-req (:ability to-resolve))
-                                      the-card (card-for-ability state to-resolve)
-                                      new-eid (make-eid state (assoc eid :source the-card :source-type :ability))]
-                                  (when (:unregister-once-resolved to-resolve)
-                                    (unregister-event-by-uuid state side (:uuid to-resolve)))
-                                  (wait-for
-                                    (resolve-ability state (to-keyword (:side the-card))
-                                                     new-eid
-                                                     ability-to-resolve the-card event-targets)
-                                    (if (should-continue state handlers)
-                                      (continue-ability state side
-                                                        (choose-handler
-                                                          (remove-once #(same-card-ability? target %) handlers))
-                                                        nil event-targets)
-                                      (effect-completed state side eid)))))})))]
-      (continue-ability state side (choose-handler handlers) nil event-targets))
+                   :effect (req
+                             (if (= target "Done")
+                               (do
+                                 (doseq [{:keys [handler]} (filter handler-skippable? handlers)]
+                                   (when (:unregister-once-resolved handler)
+                                     (unregister-event-by-uuid state side (:uuid handler)))
+                                   (register-once state nil (:ability handler) (:card handler)))
+                                 (let [auto-handlers (->> (filter (complement handler-skippable?) handlers)
+                                                          (sort-by #(or (->> % :card :printed-title) ""))
+                                                          (sort-by #(get automatic-priority (->> % :ability :automatic) 10)))
+                                       auto-handlers (map #(update-in % [:ability] merge {:silent (req true) :interactive nil}) auto-handlers)]
+                                   (if (seq auto-handlers)
+                                     (continue-ability
+                                       state side
+                                       (choose-handler auto-handlers true)
+                                       card nil)
+                                       (effect-completed state side eid))))
+                               (let [same-card-ability? (fn [chosen-card {:keys [ability card]}]
+                                                          (if-let [abi-name (:ability-name ability)]
+                                                            (= abi-name (:title chosen-card))
+                                                            (same-card? chosen-card card)))
+                                     to-resolve (some #(when (same-card-ability? target %) %) handlers)
+                                     ability-to-resolve (dissoc-req (:ability to-resolve))
+                                     the-card (card-for-ability state to-resolve)
+                                     new-eid (make-eid state (assoc eid :source the-card :source-type :ability))]
+                                 (when (:unregister-once-resolved to-resolve)
+                                   (unregister-event-by-uuid state side (:uuid to-resolve)))
+                                 (wait-for
+                                   (resolve-ability state (to-keyword (:side the-card))
+                                                    new-eid
+                                                    ability-to-resolve the-card event-targets)
+                                   (if (should-continue state handlers)
+                                     (continue-ability state side
+                                                       (choose-handler (remove-once #(same-card-ability? target %) handlers) done?)
+                                                       nil event-targets)
+                                     (effect-completed state side eid))))))})))]
+      (continue-ability state side (choose-handler handlers nil) nil event-targets))
     (effect-completed state side eid)))
 
 (defn ability-as-handler
@@ -928,7 +984,7 @@
           choices-map (map #(vector (or (:ability-name (:ability (:handler %)))
                                         (card-for-ability state (:handler %)))
                                     %) cards-with-titles)
-          choices-titles (map first choices-map)
+          choices-titles (concat (map first choices-map) ["Done"])
           interactive (filter #(let [interactive-fn (:interactive (:ability (:handler %)))]
                                  (and interactive-fn
                                       (interactive-fn state side
@@ -966,24 +1022,36 @@
             {:async true
              :prompt "Choose a trigger to resolve"
              :choices choices-titles
-             :effect (req (let [choice-target (first (filter #(or (= target (first %))
-                                                                  (same-card? target (first %))) choices-map))
-                                handler (second choice-target)
-                                to-resolve (:handler handler)
-                                ability (:ability to-resolve)
-                                context (:context handler)
-                                ability-card (card-for-ability state to-resolve)
-                                new-eid (make-eid state (assoc eid :source ability-card :source-type :ability))]
-                            (when (:unregister-once-resolved to-resolve)
-                              (unregister-event-by-uuid state side (:uuid to-resolve)))
-                            (wait-for
-                              (resolve-ability state (to-keyword (:side ability-card))
-                                               new-eid
-                                               (dissoc-req ability)
-                                               ability-card
-                                               context)
-                              (let [remaining-handlers (remove-once #(= handler %) handlers)]
-                                (trigger-queued-event-player state side eid remaining-handlers args)))))})
+             :effect (req (if (= target "Done")
+                            (do (doseq [{:keys [handler]} (filter handler-skippable? handlers)]
+                                  (when (:unregister-once-resolved handler)
+                                    (unregister-event-by-uuid state side (:uuid handler)))
+                                  (register-once state nil (:ability handler) (:card handler)))
+                                (let [auto-handlers (->> (filter (complement handler-skippable?) handlers)
+                                                         (sort-by #(or (->> % :handler :card :printed-title) ""))
+                                                         (sort-by #(get automatic-priority (->> % :handler :ability :automatic) 10)))
+                                      auto-handlers (map #(update-in % [:handler :ability] merge {:silent (req true) :interactive nil}) auto-handlers)]
+                                  (if (seq auto-handlers)
+                                    (trigger-queued-event-player state side eid auto-handlers args)
+                                    (effect-completed state side eid))))
+                            (let [choice-target (first (filter #(or (= target (first %))
+                                                                    (same-card? target (first %))) choices-map))
+                                  handler (second choice-target)
+                                  to-resolve (:handler handler)
+                                  ability (:ability to-resolve)
+                                  context (:context handler)
+                                  ability-card (card-for-ability state to-resolve)
+                                  new-eid (make-eid state (assoc eid :source ability-card :source-type :ability))]
+                              (when (:unregister-once-resolved to-resolve)
+                                (unregister-event-by-uuid state side (:uuid to-resolve)))
+                              (wait-for
+                                (resolve-ability state (to-keyword (:side ability-card))
+                                                 new-eid
+                                                 (dissoc-req ability)
+                                                 ability-card
+                                                 context)
+                                (let [remaining-handlers (remove-once #(= handler %) handlers)]
+                                  (trigger-queued-event-player state side eid remaining-handlers args))))))})
           nil nil)))))
 
 (defn- is-player

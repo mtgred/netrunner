@@ -143,7 +143,6 @@
         from-str (card-str state c)
         s (if (#{"HQ" "R&D" "Archives"} server) :corp :runner)]
     ;; allow moving from play-area always, otherwise only when same side, and to valid zone
-    ;; here!
     (when (and (not= src server)
                (same-side? s (:side card))
                (not= :select (get-in @state [side :prompt-state :prompt-type]))
@@ -168,7 +167,7 @@
                     (log-move "discards"))
                 (do (trash state s (make-eid state) c {:unpreventable true})
                     (log-move "trashes"))))
-          ("Grip" "HQ")
+          ("the Grip" "HQ")
           (do (move-card-to :hand {:force true})
               (log-move "moves" "to " server))
           ("Stack" "R&D")
@@ -194,6 +193,7 @@
     (pay state side eid card (->c :credit (min choice (get-in @state [side :credit]))))
     (effect-completed state side eid)))
 
+;; TODO - resolve-prompt does some evil things with eids, maybe we can fix it later - nbk, 2025
 (defn resolve-prompt
   "Resolves a prompt by invoking its effect function with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
@@ -214,7 +214,7 @@
               (wait-for (maybe-pay state side eid card choices choice)
                         (when (:counter choices)
                           ;; :Counter prompts deduct counters from the card
-                          (add-counter state side card (:counter choices) (- choice)))
+                          (add-counter state side (make-eid state eid) card (:counter choices) (- choice)))
                         ;; trigger the prompt's effect function
                         (when effect
                           (effect (or choice card)))
@@ -258,13 +258,14 @@
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
   if the max number of cards has been selected."
-  [state side {:keys [card]}]
+  [state side {:keys [card shift-key-held]}]
   (let [target (get-card state card)
         prompt (first (get-in @state [side :selected]))
         ability (:ability prompt)
         card-req (:req prompt)
         card-condition (:card prompt)
         cid (:not-self prompt)]
+    (swap! state assoc-in [side :shift-key-select] shift-key-held)
     (when (and (not= (:cid target) cid)
                (cond
                  card-condition (card-condition target)
@@ -402,7 +403,7 @@
                             (continue state side nil)))))))
 
 (defn- play-auto-pump-and-break-impl
-  [state side sub-groups-to-break current-ice break-ability]
+  [state side payment-eid sub-groups-to-break current-ice break-ability]
   {:async true
    :effect (req
              (let [subs-to-break (first sub-groups-to-break)
@@ -414,12 +415,12 @@
                      event-args (when on-break-subs
                                   {:card-abilities (ability-as-handler ice on-break-subs)})]
                (wait-for
-                 (resolve-ability state side (make-eid state {:source card :source-type :ability})
+                 (resolve-ability state side (make-eid state payment-eid)
                                   (:additional-ability break-ability) (get-card state card) nil)
                  (wait-for (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice subs-to-break card))
                            (if (empty? sub-groups-to-break)
                              (effect-completed state side eid)
-                             (continue-ability state side (play-auto-pump-and-break-impl state side sub-groups-to-break current-ice break-ability) card nil)))))))})
+                             (continue-ability state side (play-auto-pump-and-break-impl state side payment-eid sub-groups-to-break current-ice break-ability) card nil)))))))})
 
 (defn play-auto-pump-and-break
   "Use play-auto-pump and then break all available subroutines"
@@ -488,11 +489,12 @@
         (wait-for (pay state side (make-eid state eid) card total-cost)
                   (dotimes [_ times-pump]
                     (resolve-ability state side (dissoc pump-ability :cost :msg) (get-card state card) nil))
-                  (let [payment-str (:msg async-result)
+                  (let [payment-eid async-result
+                        payment-str (:msg payment-eid)
                         sub-groups-to-break (if (pos? subs-broken-at-once)
                                               (partition subs-broken-at-once subs-broken-at-once nil (remove :broken (:subroutines current-ice)))
                                               [(remove :broken (:subroutines current-ice))])]
-                    (wait-for (resolve-ability state side (play-auto-pump-and-break-impl state side sub-groups-to-break current-ice break-ability) card nil)
+                    (wait-for (resolve-ability state side (play-auto-pump-and-break-impl state side payment-eid sub-groups-to-break current-ice break-ability) card nil)
                               (system-msg state side
                                           (if (pos? times-pump)
                                             (str (build-spend-msg payment-str "increase")
@@ -651,9 +653,10 @@
                  (if-let [payment-str (:msg async-result)]
                    (do (system-msg state side (str (build-spend-msg payment-str "advance") (card-str state card)))
                        (update-advancement-requirement state card)
-                       (add-prop state side (get-card state card) :advance-counter 1)
-                       (play-sfx state side "click-advance")
-                       (effect-completed state side eid))
+                       (wait-for
+                         (add-prop state side (get-card state card) :advance-counter 1)
+                         (play-sfx state side "click-advance")
+                         (effect-completed state side eid)))
                    (effect-completed state side eid)))
        (effect-completed state side eid)))))
 

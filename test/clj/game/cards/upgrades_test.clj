@@ -2467,25 +2467,56 @@
 (deftest marcus-batty
   ;; Marcus Batty
   (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Marcus Batty" "Ice Wall"]
-                        :credits 10}})
-      (play-from-hand state :corp "Ice Wall" "HQ")
-      (play-from-hand state :corp "Marcus Batty" "HQ")
-      (let [iw (get-ice state :hq 0)
-            mb (get-content state :hq 0)]
-        (rez state :corp mb)
-        (take-credits state :corp)
-        (run-on state "HQ")
-        (rez state :corp iw)
-        (card-ability state :corp mb 0)
-        (is (= :psi (prompt-type :corp)))
-        (click-prompt state :corp "1 [Credits]")
-        (click-prompt state :runner "0 [Credits]")
-        (click-card state :corp iw)
-        (click-prompt state :corp "End the run")
-        (is (not (:run @state)) "Run has ended")
-        (is (nil? (refresh mb)) "Marcus Batty is trashed"))))
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Marcus Batty" "Ice Wall"]
+                      :credits 10}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (play-from-hand state :corp "Marcus Batty" "HQ")
+    (let [iw (get-ice state :hq 0)
+          mb (get-content state :hq 0)]
+      (rez state :corp mb)
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (rez state :corp iw)
+      (card-ability state :corp mb 0)
+      (is (= :psi (prompt-type :corp)))
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "0 [Credits]")
+      (click-card state :corp iw)
+      (click-prompt state :corp "End the run")
+      (is (not (:run @state)) "Run has ended")
+      (is (nil? (refresh mb)) "Marcus Batty is trashed"))))
+
+(deftest marcus-batty-doesnt-mark-subs-as-fired
+  ;; Marcus Batty
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Marcus Batty" "Funhouse"]
+                      :credits 10}})
+    (play-from-hand state :corp "Funhouse" "HQ")
+    (play-from-hand state :corp "Marcus Batty" "HQ")
+    (let [iw (get-ice state :hq 0)
+          mb (get-content state :hq 0)]
+      (rez state :corp mb)
+      (take-credits state :corp)
+      (run-on state "HQ")
+      (rez state :corp iw)
+      (run-continue state :encounter-ice)
+      (click-prompt state :runner "Take 1 tag")
+      (is (= 1 (count-tags state)))
+      (card-ability state :corp mb 0)
+      (is (= :psi (prompt-type :corp)))
+      (click-prompt state :corp "1 [Credits]")
+      (click-prompt state :runner "0 [Credits]")
+      (click-card state :corp iw)
+      (click-prompt state :corp "Give the Runner 1 tag unless they pay 4 [Credits]")
+      (click-prompt state :runner "Take 1 tag")
+      (is (= 2 (count-tags state)))
+      (is (not (-> iw refresh :subroutines first :fired)) "sub not considered fired (External trigger)")
+      (is (nil? (refresh mb)) "Marcus Batty is trashed")
+      (fire-subs state (refresh iw))
+      (click-prompt state :runner "Take 1 tag")
+      (is (-> iw refresh :subroutines first :fired) "sub is now considered fired (regular trigger)"))))
 
 (deftest mason-bellamy
   (do-game
@@ -3141,7 +3172,7 @@
       (play-from-hand state :corp "NGO Front" "Server 1")
       (let [navi (get-content state :remote1 0)
             ngo  (get-content state :remote1 1)]
-        (core/add-counter state :corp ngo :advancement 2)
+        (core/add-counter state :corp (core/make-eid state) ngo :advancement 2)
         (take-credits state :corp)
         (run-on state :remote1)
         (rez state :corp navi)
@@ -4149,18 +4180,16 @@
       (play-from-hand state :runner "Net Shield")
       (run-on state "HQ")
       (let [pup (get-ice state :hq 0)
-            tori (get-content state :hq 0)
-            nshld (get-program state 0)]
+            tori (get-content state :hq 0)]
         (rez state :corp pup)
         (rez state :corp tori)
         (run-continue state)
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Suffer 1 net damage")
-        (card-ability state :runner nshld 0)
+        (click-prompt state :runner "Net Shield")
         (is (empty? (:discard (get-runner))) "1 net damage prevented")
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Suffer 1 net damage")
-        (click-prompt state :runner "Done") ; decline to prevent
         (is (= 1 (count (:discard (get-runner)))) "1 net damage; previous prevention stopped Tori ability")
         (run-continue state :movement)
         (run-jack-out state)
@@ -4168,7 +4197,7 @@
         (run-continue state)
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Suffer 1 net damage")
-        (click-prompt state :runner "Done")
+        (click-prompt state :corp "Tori Hanzō")
         (click-prompt state :corp "Yes")
         (is (= 2 (count (:discard (get-runner)))) "1 core damage suffered")
         (is (= 1 (:brain-damage (get-runner)))))))
@@ -4187,14 +4216,15 @@
         (rez state :corp hg)
         (rez state :corp tori)
         (run-continue state)
-        (click-prompt state :corp "No") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+        (click-prompt state :corp "Pass priority") ;; Tori prompt to pay 2c to replace 1 net with 1 brain
         (is (= 1 (count (:discard (get-runner)))) "1 net damage suffered")
         (click-prompt state :runner "Hokusai Grid")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
         (is (no-prompt? state :corp) "No prompts, run ended")
         (run-empty-server state "Archives")
-        (click-prompt state :corp "Yes") ; Tori prompt to pay 2c to replace 1 net with 1 brain
+        (click-prompt state :corp "Tori Hanzō")
+        (click-prompt state :corp "Yes") ;; Tori prompt to pay 2c to replace 1 net with 1 brain
         (is (= 2 (count (:discard (get-runner)))))
         (is (= 1 (:brain-damage (get-runner))) "1 core damage suffered")
         (click-prompt state :runner "Hokusai Grid")
@@ -4218,6 +4248,7 @@
         (run-continue state)
         (card-subroutine state :corp pup 0)
         (click-prompt state :runner "Suffer 1 net damage")
+        (click-prompt state :corp "Tori Hanzō")
         (click-prompt state :corp "Yes") ; pay 2c to replace 1 net with 1 brain
         (is (= 1 (count (:discard (get-runner)))) "1 core damage suffered")
         (is (= 1 (:brain-damage (get-runner))))
@@ -4571,7 +4602,7 @@
             cor (get-program state 0)
             mem (get-hardware state 0)]
         (rez state :corp war)
-        (core/add-counter state :runner clv :power 2)
+        (core/add-counter state :runner (core/make-eid state) clv :power 2)
         (card-ability state :runner (refresh clv) 0)
         ;; Prompt choice checks there is a trace prompt from Warroid
         (click-prompt state :corp "0")
@@ -4728,6 +4759,19 @@
         (click-card state :corp war)
         (is (no-prompt? state :corp) "Corp has no prompt"))))
 
+(deftest warroid-vs-light-the-fire
+  (do-game
+    (new-game {:corp {:hand ["Warroid Tracker"]}
+               :runner {:hand ["Rezeki" "Light the Fire!" "Ika"]}})
+    (play-from-hand state :corp "Warroid Tracker" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rezeki")
+    (play-from-hand state :runner "Light the Fire!")
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "Server 1")
+    (run-continue-until state :success)
+    (is (no-prompt? state :runner) "No prompt for warroid")))
+
 (deftest will-o-the-wisp
   ;; Will-o'-the-Wisp
   (do-game
@@ -4776,13 +4820,13 @@
     (rez state :corp (get-ice state :remote1 0))
     (rez state :corp (get-content state :remote1 0))
     (run-continue state :encounter-ice)
-    (click-prompt state :corp "ZATO Ability")
+    (click-prompt state :corp "ZATO City Grid encounter")
     (click-prompt state :corp "No")
     (click-prompt state :runner "End the run")
     (is (not (:run @state)) "Run ended")
     (run-on state :remote1)
     (run-continue state :encounter-ice)
-    (click-prompt state :corp "Funhouse Ability")
+    (click-prompt state :corp "Funhouse encounter")
     (click-prompt state :runner "End the run")
     (is (not (:run @state)) "Run ended")
     (is (no-prompt? state :corp))))

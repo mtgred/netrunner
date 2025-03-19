@@ -15,7 +15,7 @@
         (sente/make-channel-socket-client!
           "/chsk"
           ?csrf-token
-          {:type :auto
+          {:type (if (get-in @app-state [:options :disable-websockets]) :ajax :auto)
            :wrap-recv-evs? false})]
     (def chsk chsk)
     (def ch-chsk ch-recv)

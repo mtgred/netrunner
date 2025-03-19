@@ -1,12 +1,13 @@
 (ns game.core.prompts
   (:require
-    [clj-uuid :as uuid]
-    [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
-    [game.core.toasts :refer [toast]]
-    [game.macros :refer [when-let*]]
-    [game.utils :refer [pluralize side-str]]
-    [medley.core :refer [find-first]]))
+   [clj-uuid :as uuid]
+   [game.core.board :refer [get-all-cards]]
+   [game.core.eid :refer [effect-completed make-eid]]
+   [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
+   [game.core.toasts :refer [toast]]
+   [game.macros :refer [when-let*]]
+   [game.utils :refer [pluralize side-str]]
+   [medley.core :refer [find-first]]))
 
 (defn choice-parser
   [choices]
@@ -19,20 +20,29 @@
          :uuid (uuid/v4)
          :idx idx}))))
 
+(defn update-selectable
+  [prev-selectable choices]
+  (if (or (not choices) (string? choices) (keyword? choices) (not (sequential? choices)))
+    prev-selectable
+    (concat (or prev-selectable []) (filterv identity (map #(->> % :value :cid) choices)))))
+
 (defn show-prompt
   "Engine-private method for displaying a prompt where a *function*, not a card ability, is invoked
   when the prompt is resolved. All prompts flow through this method."
   ([state side card message choices f] (show-prompt state side (make-eid state) card message choices f nil))
   ([state side card message choices f args] (show-prompt state side (make-eid state) card message choices f args))
   ([state side eid card message choices f
-    {:keys [waiting-prompt prompt-type show-discard cancel-effect end-effect targets]}]
+    {:keys [waiting-prompt prompt-type show-discard cancel-effect end-effect targets selectable]}]
    (let [prompt (if (string? message) message (message state side eid card targets))
          choices (choice-parser choices)
-         newitem {:eid eid
+         selectable (update-selectable selectable choices)
+         newitem ^:ignore-async-check
+                 {:eid eid
                   :msg prompt
                   :choices choices
                   :effect f
                   :card card
+                  :selectable selectable
                   :prompt-type (or prompt-type :other)
                   :show-discard show-discard
                   :cancel-effect cancel-effect
@@ -48,7 +58,7 @@
            {:eid (select-keys eid [:eid])
             :card card
             :prompt-type :waiting
-            :msg (str "Waiting for " 
+            :msg (str "Waiting for "
                       (if (true? waiting-prompt)
                         (str (side-str side) " to make a decision")
                         waiting-prompt))}))
@@ -115,6 +125,13 @@
         (cancel-effect nil)
         (effect-completed state side (:eid (:ability selected)))))))
 
+(defn- compute-selectable
+  [state side card ability req-fn card-fn]
+  (let [valid (filter #(not= (:zone %) [:deck]) (get-all-cards state))
+        valid (filter #(or (= nil card-fn) (card-fn %)) valid)
+        valid (if (nil? req-fn) valid (filter #(req-fn state side (make-eid state) card [%]) valid))]
+    (map :cid valid)))
+
 (defn show-select
   "A select prompt uses a targeting cursor so the user can click their desired target of the ability.
   The preferred method for showing a select prompt is through resolve-ability."
@@ -128,6 +145,7 @@
            ability (update-in ability [:choices :min] #(if (fn? %) (% state side (make-eid state) card targets) %))
            all (get-in ability [:choices :all])
            ability (if all (update-in ability [:choices] dissoc :min) ability) ; ignore :min if :all is set
+           selectable-cards (compute-selectable state side card ability (get-in ability [:choices :req]) (get-in ability [:choices :card]))
            min-choices (get-in ability [:choices :min])
            max-choices (get-in ability [:choices :max])]
        (swap! state update-in [side :selected]
@@ -179,6 +197,7 @@
                                             update! resolve-ability)))))
                     (-> args
                         (assoc :prompt-type :select
+                               :selectable selectable-cards
                                :show-discard (:show-discard ability))
                         (wrap-function :cancel-effect)))))))
 

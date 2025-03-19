@@ -214,11 +214,7 @@
                       :hand ["Ad Blitz" "Launch Campaign"]
                       :discard ["Pop-up Window"]}})
     (play-from-hand state :corp "Ad Blitz")
-    (click-prompt state :corp "2")
-    (click-card state :corp "Launch Campaign")
-    (click-prompt state :corp "New remote")
-    (click-card state :corp "Pop-up Window")
-    (click-prompt state :corp "Server 1")
+    (click-prompts state :corp "2" "Launch Campaign" "New remote" "Pop-up Window" "Server 1")
     (is (zero? (count (:hand (get-corp)))) "Corp should have no cards in HQ")
     (is (= ["Ad Blitz"] (->> (get-corp) :discard (map :title))) "Corp should have only Ad Blitz in Archives")))
 
@@ -258,7 +254,9 @@
       (click-prompt state :corp "R&D")
       (click-prompt state :runner "Yes")
       (is (:run @state) "Run started")
-      (is (get-in @state [:run :cannot-jack-out]) "Runner cannot jack out")
+      (run-continue-until state :movement)
+      (run-jack-out state)
+      (is (:run @state) "Did not jack out")
       (is (not (find-card "An Offer You Can't Refuse" (:scored (get-corp)))) "Offer isn't in score area")))
 
 (deftest anonymous-tip
@@ -834,7 +832,7 @@
       (new-game {:corp {:deck ["Commercialization"
                                "Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (core/add-counter state :corp (refresh (get-ice state :hq 0)) :advancement 1)
+      (core/add-counter state :corp (core/make-eid state) (refresh (get-ice state :hq 0)) :advancement 1)
       (play-from-hand state :corp "Commercialization")
       (click-card state :corp (refresh (get-ice state :hq 0)))
       (is (= 6 (:credit (get-corp))) "Gained 1 for single advanced ice from Commercialization")))
@@ -845,7 +843,7 @@
       (new-game {:corp {:deck ["Commercialization"
                                "Ice Wall"]}})
       (play-from-hand state :corp "Ice Wall" "HQ")
-      (core/add-counter state :corp (refresh (get-ice state :hq 0)) :advancement 2)
+      (core/add-counter state :corp (core/make-eid state) (refresh (get-ice state :hq 0)) :advancement 2)
       (play-from-hand state :corp "Commercialization")
       (click-card state :corp (refresh (get-ice state :hq 0)))
       (is (= 7 (:credit (get-corp))) "Gained 2 for double advanced ice from Commercialization")))
@@ -927,7 +925,7 @@
       (new-game {:corp {:id "Chronos Protocol: Selective Mind-mapping"
                         :deck [(qty "Hedge Fund" 5)]
                         :hand ["Complete Image" "Priority Requisition"]}
-                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+                 :runner {:hand ["Ika" (qty "Sure Gamble" 4)]}})
       (play-from-hand state :corp "Priority Requisition" "New remote")
       (take-credits state :corp)
       (run-empty-server state :remote1)
@@ -935,15 +933,13 @@
       (take-credits state :runner)
       (play-from-hand state :corp "Complete Image")
       (is (-> (get-runner) :discard count zero?) "heap should be empty")
-      (click-prompt state :corp "Sure Gamble") ;; Complete Image
+      (click-prompt state :corp "Ika") ;; Complete Image
       (is (not (no-prompt? state :corp)) "Corp guessed right so should have another choice")
       (click-prompt state :corp "Yes") ;; Chronos Protocol
-      (click-prompt state :corp "Sure Gamble") ;; Chronos Protocol
-      (click-prompt state :corp "Sure Gamble") ;; Complete Image
-      (click-prompt state :corp "Sure Gamble") ;; Complete Image
-      (click-prompt state :corp "Sure Gamble") ;; Complete Image
+      (click-card state :corp "Ika") ;; Chronos Protocol
+      (dotimes [_ 4]
+        (click-prompt state :corp "Sure Gamble")) ;; Complete Image
       (is (not (no-prompt? state :corp)) "Even when the runner has no cards in hand, Corp must choose again")
-      (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (click-prompt state :corp "Sure Gamble") ;; Complete Image
       (is (no-prompt? state :corp) "Runner is flatlined so no more choices")
       (is (= 5 (-> (get-runner) :discard count)) "heap should have 5 cards")))
@@ -1019,7 +1015,7 @@
                :runner {:hand ["Datasucker"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Datasucker")
-    (core/add-counter state :runner (get-program state 0) :virus 2)
+    (core/add-counter state :runner (core/make-eid state) (get-program state 0) :virus 2)
     (take-credits state :runner)
     (play-from-hand state :corp "Cyberdex Trial")
     (is (zero? (get-counters (get-program state 0) :virus)) "Datasucker should have no virus countes left")))
@@ -1041,7 +1037,7 @@
       (is (= (inc corp-creds) (:credit (get-corp))) "Corp gained 1 when runner installed Aumakua")
       (play-from-hand state :runner "Fall Guy")
       (is (= (+ 2 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner installed Fall Guy")
-      (card-ability state :runner (get-resource state 0) 1)
+      (card-ability state :runner (get-resource state 0) 0)
       (is (= (+ 3 corp-creds) (:credit (get-corp))) "Corp gained 1 when runner trashed Fall Guy")
       (run-empty-server state :remote1)
       (click-prompt state :runner "Pay 4 [Credits] to trash")
@@ -3224,10 +3220,9 @@
     (is (changed? [(count-tags state) 2]
           (play-from-hand state :corp "Oppo Research")
           (is (not (no-prompt? state :runner)) "Runner prompted to avoid tag")
-          (card-ability state :runner (get-resource state 0) 0)
+          (click-prompts state :runner "No One Home" "Yes")
           (click-prompt state :corp "0")
-          (click-prompt state :runner "0")
-          (click-prompt state :runner "Done")
+          (click-prompts state :runner "0" "2")
           (click-prompt state :corp "Yes"))
         "Runner prevented 2 tag")))
 
@@ -3700,9 +3695,9 @@
            gr (get-content state :remote2 0)
            iw1 (get-ice state :hq 0)
            iw2 (get-ice state :rd 0)]
-       (core/add-prop state :corp gr :advance-counter 3)
-       (core/add-prop state :corp iw1 :advance-counter 2)
-       (core/add-prop state :corp iw2 :advance-counter 1)
+       (core/add-prop state :corp (core/make-eid state) gr :advance-counter 3)
+       (core/add-prop state :corp (core/make-eid state) iw1 :advance-counter 2)
+       (core/add-prop state :corp (core/make-eid state) iw2 :advance-counter 1)
        (play-from-hand state :corp "Red Planet Couriers")
        (click-card state :corp gt)
        (is (zero? (get-counters (refresh gr) :advancement)) "Advancements removed")
@@ -3722,7 +3717,7 @@
            mas-rd (get-ice state :rd 0)]
        (rez state :corp mas-hq)
        (rez state :corp mas-rd)
-       (core/add-prop state :corp mas-hq :advance-counter 2)
+       (core/add-prop state :corp (core/make-eid state) mas-hq :advance-counter 2)
        (play-from-hand state :corp "Red Planet Couriers")
        (click-card state :corp (refresh mas-rd))
        (is (zero? (get-counters (refresh mas-hq) :advancement)) "Advancements removed")
@@ -3813,9 +3808,9 @@
       (play-from-hand state :runner "Virus Breeding Ground")
       (play-from-hand state :runner "Datasucker")
       (take-credits state :runner)
-      (core/add-counter state :corp (get-ice state :hq 0) :virus 3)
-      (core/add-counter state :runner (get-resource state 0) :virus 3)
-      (core/add-counter state :runner (get-program state 0) :virus 3)
+      (core/add-counter state :corp (core/make-eid state) (get-ice state :hq 0) :virus 3)
+      (core/add-counter state :runner (core/make-eid state) (get-resource state 0) :virus 3)
+      (core/add-counter state :runner (core/make-eid state) (get-program state 0) :virus 3)
       (play-from-hand state :corp "Reverse Infection")
       (click-prompt state :corp "Purge virus counters")
       (is (= 7 (:credit (get-corp))) "Corp did not gain credits")
@@ -3835,9 +3830,9 @@
       (play-from-hand state :runner "Virus Breeding Ground")
       (play-from-hand state :runner "Datasucker")
       (take-credits state :runner)
-      (core/add-counter state :corp (get-ice state :hq 0) :virus 3)
-      (core/add-counter state :runner (get-resource state 0) :virus 3)
-      (core/add-counter state :runner (get-program state 0) :virus 3)
+      (core/add-counter state :corp (core/make-eid state) (get-ice state :hq 0) :virus 3)
+      (core/add-counter state :runner (core/make-eid state) (get-resource state 0) :virus 3)
+      (core/add-counter state :runner (core/make-eid state) (get-program state 0) :virus 3)
       (play-from-hand state :corp "Reverse Infection")
       (click-prompt state :corp "Purge virus counters")
       (is (last-log-contains? state "Corp uses Reverse Infection to purge 9 virus counters and trash 3 cards from the top of the stack.") "Should write correct log")))
@@ -4562,7 +4557,7 @@
       (click-card state :corp (find-card "Scorched Earth" (:hand (get-corp))))
       (is (waiting? state :corp)
           "Corp does not have Subcontract prompt until damage prevention completes")
-      (click-prompt state :runner "Done")
+      (click-prompt state :runner "Pass priority")
       (is (not (no-prompt? state :corp)) "Corp can now play second Subcontract operation")))
 
 (deftest subcontract-interaction-with-terminal-operations
@@ -4986,9 +4981,8 @@
         (is (= 1 (count (:hand (get-corp)))) "Corp could not play All Seeing I when runner was not tagged")
         (gain-tags state :runner 1)
         (play-from-hand state :corp "The All-Seeing I")
-        (let [fall-guy (get-resource state 1)]
-          (card-ability state :runner fall-guy 0))
-        (click-prompt state :runner "Done")
+        (click-prompt state :runner "Fall Guy")
+        (click-prompt state :runner "Same Old Thing")
         (is (= 1 (res)) "One installed resource saved by Fall Guy")
         (is (= 2 (count (:discard (get-runner)))) "Two cards in heap"))))
 
@@ -5007,14 +5001,12 @@
     (gain-tags state :runner 1)
     (take-credits state :runner)
     (play-from-hand state :corp "The All-Seeing I")
-    (is (= "Prevent the trashing of Off-Campus Apartment?"
+    (is (= "Prevent any of Fall Guy, Fall Guy, or Off-Campus Apartment from being trashed?"
            (:msg (prompt-map :runner))))
-    (let [fall-guy (find-card "Fall Guy" (core/all-active-installed state :runner))]
-      (card-ability state :runner fall-guy 0))
-    (click-prompt state :runner "Done")
-    (is (= "Prevent the trashing of Fall Guy?"
-           (:msg (prompt-map :runner))))
-    (click-prompt state :runner "Done")
+    (click-prompt state :runner "Fall Guy")
+    (click-prompt state :runner "Off-Campus Apartment")
+    ;; no more valid targets, since fall guy can't target itself and can't target the
+    ;; OCA that is already off the trash list :)
     (is (= 1 (count (core/all-active-installed state :runner))) "One installed card (Off-Campus)")
     (is  (= 2 (count (:discard (get-runner)))) "Two cards in heap")))
 
@@ -5195,9 +5187,7 @@
         (advance state (refresh ngo) 2)
         (is (= 2 (get-counters (refresh ngo) :advancement)) "NGO Front should have 2 counters")
         (play-from-hand state :corp "Trick of Light")
-        (click-card state :corp iw)
-        (click-card state :corp ngo)
-        (click-prompt state :corp "2")
+        (click-prompts state :corp iw ngo "2")
         (is (= 2 (get-counters (refresh iw) :advancement)) "Ice Wall is now advanced")
         (is (zero? (get-counters (refresh ngo) :advancement)) "NGO Front should have 0 counters"))))
 

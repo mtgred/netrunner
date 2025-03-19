@@ -67,7 +67,7 @@
 (defmethod stats-area "Runner" [runner]
   (let [ctrl (stat-controls-for-side :runner)]
     (fn [runner]
-      (let [{:keys [user click credit run-credit memory link tag
+      (let [{:keys [user click credit run-credit memory link tag trash-like-cards
                     brain-damage active]} @runner
             base-credit (- credit run-credit)
             plus-run-credit (when (pos? run-credit) (str "+" run-credit))
@@ -94,12 +94,19 @@
                        (when show-tagged [:div.warning "!"])]))
          (ctrl
           :brain-damage
-          [:div (str brain-damage " " (tr [:game.brain-damage "Core Damage"]))])]))))
+          [:div (str brain-damage " " (tr [:game.brain-damage "Core Damage"]))])
+         (when (= (:side @game-state) :runner)
+           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :value (.. % -target -checked)})]
+             [:div [:label [:input {:type "checkbox"
+                                    :value true
+                                    :checked trash-like-cards
+                                    :on-click toggle-offer-trash}]
+                    (tr [:game.trash-like-cards "Offer to trash like cards"])]]))]))))
 
 (defmethod stats-area "Corp" [corp]
   (let [ctrl (stat-controls-for-side :corp)]
     (fn [corp]
-      (let [{:keys [user click credit bad-publicity active]} @corp
+      (let [{:keys [user click credit bad-publicity active trash-like-cards]} @corp
             icons? (get-in @app-state [:options :player-stats-icons] true)]
         [:div.stats-area
          (if icons?
@@ -110,11 +117,21 @@
             (ctrl :click [:div (tr [:game.click-count] click)])
             (ctrl :credit [:div (tr [:game.credit-count] credit -1)])])
          (let [{:keys [base additional]} bad-publicity]
-           (ctrl :bad-publicity [:div (tr [:game.bad-pub-count] base additional)]))]))))
+           (ctrl :bad-publicity [:div (tr [:game.bad-pub-count] base additional)]))
+         (when (= (:side @game-state) :corp)
+           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :value (.. % -target -checked)})]
+             [:div [:label [:input {:type "checkbox"
+                                    :value true
+                                    :checked trash-like-cards
+                                    :on-click toggle-offer-trash}]
+                    (tr [:game.trash-like-cards "Offer to trash like cards"])]]))]))))
 
 (defn stats-view
   [player]
   (fn [player]
     [:div.panel.blue-shade.stats {:class (when (:active @player) "active-player")}
      (name-area (:user @player))
-     [stats-area player]]))
+     ;; note: react doesn't like defmulti much, and caches the first hit
+     ;; when it redoes stats - so it needs a key to re-render if sides
+     ;; change (ie playing a corp game after playing a runner game) - nbk
+     ^{:key (get-in @player [:identity :side])} [stats-area player]]))

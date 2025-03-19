@@ -1,7 +1,8 @@
 (ns game.core.revealing
   (:require
    [clojure.string :as string]
-   [game.core.engine :refer [trigger-event-sync]]
+   [game.core.eid :refer [effect-completed]]
+   [game.core.engine :refer [queue-event checkpoint]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [name-zone]]
    [game.utils :refer [enumerate-str]]
@@ -17,14 +18,22 @@
   [state side]
   (swap! state update side dissoc :openhand))
 
+;; TODO - find a way to condense these into one fn
+(defn reveal-and-queue-event
+  [state side & targets]
+  (let [cards (flatten targets)]
+    (swap! state assoc :last-revealed cards)
+    (queue-event state (if (= :corp side) :corp-reveal :runner-reveal) {:cards cards})))
+
 (defn reveal
   "Trigger the event for revealing one or more cards."
   [state side eid & targets]
-  (apply trigger-event-sync state side eid (if (= :corp side) :corp-reveal :runner-reveal) (flatten targets)))
+  (reveal-and-queue-event state side [targets])
+  (checkpoint state side eid))
 
 (defn reveal-loud
   "Trigger the event for revealing one or more cards, and also handle the log printout"
-  [state side eid card {:keys [forced and-then] :as args} & targets]
+  [state side eid card {:keys [forced and-then no-event] :as args} & targets]
   (let [cards-by-zone (group-by #(select-keys % [:side :zone]) (flatten targets))
         strs (map #(str (enumerate-str (map :title (get cards-by-zone %)))
                         " from " (name-zone (:side %) (:zone %)))
@@ -39,4 +48,6 @@
                                                (string/capitalize (name side)) " to reveal "
                                                (enumerate-str strs) follow-up))
       (system-msg state side (str "uses " (:title card) " to reveal " (enumerate-str strs) follow-up)))
-    (reveal state side eid targets)))
+    (if-not no-event
+      (reveal state side eid targets)
+      (effect-completed state side eid))))

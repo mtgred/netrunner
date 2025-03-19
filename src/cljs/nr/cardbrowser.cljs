@@ -88,6 +88,7 @@
       (assoc-in [:format :standard] {:banned true})
       (assoc-in [:format :startup] {:banned true})
       (assoc-in [:format :sunset] {:banned true})
+      (assoc-in [:format :throwback] {:banned true})
       (assoc-in [:format :eternal] {:banned true})
       (assoc-in [:format :snapshot] {:banned true})
       (assoc-in [:format :snapshot-plus] {:banned true})

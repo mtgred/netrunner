@@ -7,6 +7,7 @@
     [game.core.card :refer [agenda? asset? condition-counter? convert-to-condition-counter  corp? event? get-card get-zone has-subtype? ice? installed? operation? program? resource? rezzed? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
+    [game.core.costs :refer [total-available-credits]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [checkpoint register-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
     [game.core.effects :refer [is-disabled-reg? register-static-abilities unregister-static-abilities update-disabled-cards]]
@@ -27,7 +28,7 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
-    [game.utils :refer [dissoc-in in-coll? same-card? to-keyword quantify]]
+    [game.utils :refer [dissoc-in enumerate-str in-coll? same-card? to-keyword quantify]]
     [medley.core :refer [find-first]]))
 
 (defn install-locked?
@@ -102,7 +103,7 @@
      :async true
      :effect (req (system-msg state :corp (str "trashes " (card-str state prev-card)))
                   (if (get-card state prev-card) ; make sure they didn't trash the card themselves
-                    (trash state :corp eid prev-card {:keep-server-alive true})
+                    (trash state :corp eid prev-card {:keep-server-alive true :suppress-checkpoint true})
                     (effect-completed state :corp eid)))}
     nil nil))
 
@@ -165,7 +166,7 @@
                 (str (build-spend-msg cost-str "use") (:title install-source) " to install ")
                 (build-spend-msg cost-str "install"))]
       (system-msg state side (str lhs card-name origin
-                                  (if (ice? card) " protecting " " in ") server-name
+                                  (if (ice? card) " protecting " " in the root of ") server-name
                                   (format-counters-msg counters)))
       (when (and (= :face-up install-state)
                  (agenda? card))
@@ -287,13 +288,14 @@
 
 (defn corp-install-cost
   [state side card server
-   {:keys [base-cost ignore-install-cost ignore-all-cost cost-bonus cached-costs] :as args}]
+   {:keys [base-cost ignore-install-cost ignore-all-cost cost-bonus cached-costs ignore-ice-cost] :as args}]
   (or cached-costs
       (let [slot (get-slot state card server args)
             dest-zone (get-in @state (cons :corp slot))
             ice-cost (if (and (ice? card)
                               (not ignore-install-cost)
                               (not ignore-all-cost)
+                              (not ignore-ice-cost)
                               (not (ignore-install-cost? state side card)))
                        (count dest-zone)
                        0)
@@ -316,7 +318,7 @@
 
 (defn- corp-install-pay
   "Used by corp-install to pay install costs"
-  [state side eid card server {:keys [action] :as args}]
+  [state side eid card server {:keys [action resolved-optional-trash] :as args}]
   (let [slot (get-slot state card server args)
         costs (corp-install-cost state side card server (dissoc args :cached-costs))
         credcost (or (value (find-first #(= :credit (:cost/type %)) costs)) 0)
@@ -324,18 +326,57 @@
         appldisc (if (and (not (zero? credcost)) (not (zero? discount)))
                    (if (>= credcost discount) discount credcost) 0)
         args (if discount (assoc args :cost-bonus (- appldisc discount)) args)
-        costs (conj costs (->c :credit (- 0 appldisc)))]
-      ;; get a functional discount and apply it to
-    (if (corp-can-pay-and-install? state side eid card server (assoc args :cached-costs costs))
-      (wait-for (pay state side (make-eid state (assoc eid :action action)) card costs)
-                (if-let [payment-str (:msg async-result)]
-                  (if (= server "New remote")
-                    (wait-for (trigger-event-simult state side :server-created nil card)
-                              (make-rid state)
-                              (corp-install-continue state side eid card server args slot payment-str))
-                    (corp-install-continue state side eid card server args slot payment-str))
-                  (effect-completed state side eid)))
-      (effect-completed state side eid))))
+        costs (conj costs (->c :credit (- 0 appldisc)))
+        corp-wants-to-trash? (and (get-in @state [:corp :trash-like-cards])
+                                  (seq (get-in @state (concat [:corp] slot)))
+                                  (not resolved-optional-trash))]
+    (if (and (not corp-wants-to-trash?) (corp-can-pay-and-install? state side eid card server (assoc args :cached-costs costs)))
+      (wait-for
+        (pay state side (make-eid state (assoc eid :action action)) card costs)
+        (if-let [payment-str (:msg async-result)]
+          (if (= server "New remote")
+            (wait-for (trigger-event-simult state side :server-created nil card)
+                      (make-rid state)
+                      (corp-install-continue state side eid card server args slot payment-str))
+            (corp-install-continue state side eid card server args slot payment-str))
+          (effect-completed state side eid)))
+      ;; NOTE - Diwan and Network Exchange both alter the cost of installs
+      ;; if it's not ice AND we can't afford it, there's nothing we can do
+      ;; Diwan will get accounted for, but Network Exchange wont (oh well) - nbk, 2025
+      (let [shortfall (- (or (value (find-first #(= :credit (:cost/type %)) costs)) 0) (total-available-credits state side eid card))
+            need-to-trash (max 0 shortfall)
+            cards-in-slot (count (get-in @state (concat [:corp] slot)))
+            possible? (and (ice? card) (>= cards-in-slot need-to-trash))]
+        (cond (and possible? (pos? need-to-trash))
+              (letfn [(trash-all-or-none [] {:prompt (str "Trash ice protecting " (name-zone :corp slot) " (minimum " need-to-trash ")")
+                                             :choices {:req (req (= (:zone target) slot))
+                                                       :max cards-in-slot}
+                                             :waiting-prompt true
+                                             :async true
+                                             :effect (req (if (>= (count targets) need-to-trash)
+                                                            (do (system-msg state side (str "trashes " (enumerate-str (map #(card-str state %) targets))))
+                                                                (wait-for
+                                                                  (trash-cards state side targets {:keep-server-alive true :suppress-checkpoint true})
+                                                                  (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true))))
+                                                            (do (toast state :corp (str "You must either trash at least " need-to-trash " ice, or trash none of them"))
+                                                                (continue-ability state side (trash-all-or-none) card targets))))
+                                             :cancel-effect (req (effect-completed state side eid))})]
+                (continue-ability state side (trash-all-or-none) card nil))
+              (and corp-wants-to-trash? (zero? need-to-trash))
+              (continue-ability
+                state side
+                {:prompt (str "Trash any number of " (if (ice? card) "ice protecting " "cards in ") (name-zone :corp slot))
+                 :choices {:req (req (= (:zone target) slot))
+                           :max cards-in-slot}
+                 :async true
+                 :waiting-prompt true
+                 :effect (req (do (system-msg state side (str "trashes " (enumerate-str (map #(card-str state %) targets))))
+                                  (wait-for
+                                    (trash-cards state side targets {:keep-server-alive true :suppress-checkpoint true})
+                                    (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true)))))
+                 :cancel-effect (req (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true)))}
+                card nil)
+              :else (effect-completed state side eid))))))
 
 (defn corp-install
   "Installs a card in the chosen server. If server is nil, asks for server to install in.
@@ -457,8 +498,7 @@
 (defn runner-install-continue
   [state side eid card
    {:keys [previous-zone host-card facedown no-mu no-msg payment-str] :as args}]
-  (let [
-        c (if host-card
+  (let [c (if host-card
             (host state side host-card card)
             (move state side card
                   [:rig (if facedown :facedown (to-keyword (:type card)))]))
@@ -519,17 +559,22 @@
           true))))
 
 (defn runner-install-pay
-  [state side eid card {:keys [no-mu facedown host-card] :as args}]
+  [state side eid card {:keys [no-mu facedown host-card resolved-optional-trash] :as args}]
   (let [costs (runner-install-cost state side (assoc card :facedown facedown) (dissoc args :cached-costs))
-        available-mem (available-mu state)]
+        available-mem (available-mu state)
+        runner-wants-to-trash? (and (get-in @state [:runner :trash-like-cards])
+                                    (not resolved-optional-trash))]
     (if-not (runner-can-pay-and-install? state side eid card (assoc args :cached-costs costs))
       (effect-completed state side eid)
       (if (and (program? card)
                (not facedown)
-               (not (or no-mu (sufficient-mu? state card))))
+               (or (not (or no-mu (sufficient-mu? state card)))
+                   runner-wants-to-trash?))
         (continue-ability
           state side
-          {:prompt (format "Insufficient MU to install %s. Trash installed programs?" (:title card))
+          {:prompt (if (and runner-wants-to-trash? (or no-mu (sufficient-mu? state card)))
+                     (format "Trash installed programs before installing %s?" (:title card))
+                     (format "Insufficient MU to install %s. Trash installed programs?" (:title card)))
            :choices {:max (count (filter #(and (program? %) (not (has-ancestor? % host-card))) (all-installed state :runner)))
                      :card #(and (installed? %)
                                  ;; note: rules team says we can't create illegal gamestates by
@@ -539,13 +584,15 @@
                                  (not (has-ancestor? % host-card))
                                  (program? %))}
            :async true
-           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true})
+           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true :suppress-checkpoint true})
                                   (update-mu state)
-                                  (runner-install-pay state side eid card args)))
+                                  (runner-install-pay state side eid card (assoc args :resolved-optional-trash true))))
            :cancel-effect (req (update-mu state)
-                               (if (= available-mem (available-mu state))
+                               (if (and (= available-mem (available-mu state))
+                                        ;;(not runner-wants-to-trash?)
+                                        (not (or no-mu (sufficient-mu? state card))))
                                  (effect-completed state side eid)
-                                 (runner-install-pay state side eid card args)))}
+                                 (runner-install-pay state side eid card (assoc args :resolved-optional-trash true))))}
           card nil)
         (let [played-card (move state side (assoc card :facedown facedown) :play-area {:suppress-event true})]
           (wait-for (pay state side (make-eid state eid) card costs)
@@ -604,7 +651,7 @@
            ;; the total selection is worth X memory, since the req function must be satisfied at
            ;; every point of the selection --nbkelly, jun 2024
            :effect (req (wait-for
-                          (trash-cards state side (make-eid state eid) targets {:unpreventable true})
+                          (trash-cards state side (make-eid state eid) targets {:unpreventable true :suppress-checkpoint true})
                           (update-mu state)
                           (runner-host-enforce-specific-memory state side eid card
                                                                (get-card state potential-host)
@@ -631,7 +678,7 @@
                      :min to-destroy
                      :max (count relevant-cards)}
            :async true
-           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true})
+           :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true :suppress-checkpoint true})
                                   (update-mu state)
                                   (runner-host-enforce-specific-memory state side eid card
                                                                        (get-card state potential-host) args)))}

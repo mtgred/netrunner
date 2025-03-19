@@ -6,7 +6,7 @@
   ["A little danger here to be sure. A thin veil for the vast amount of credits inside."]
   "NBN"
   ["Me and them, we lie a lot of time. They just keep getting paid more for that.\n"]
-  "Weyland" ["The biggest bully in the hood... and with a bazooka on top of that."]}
+  "Weyland Consortium" ["The biggest bully in the hood... and with a bazooka on top of that."]}
  "Adam: Compulsive Hacker"
  {"Acme Consulting: The Truth You Need"
   ["The truth I need? Could it be this obvious... I shall find out."]
@@ -15,7 +15,7 @@
   "Jinteki"
   ["Unorthodox minds create unorthodox truths. These will help me in my search."]
   "NBN" ["To find the truth, one sometimes has to sift through the gutters."]
-  "Weyland"
+  "Weyland Consortium"
   ["Building up and up and up, but they keep so much below. A dive here may reveal the unexpected."]}
  "Akiko Nisei: Head Case"
  {"Default"
@@ -29,7 +29,7 @@
              "Strange. It feels familiar, yet different."
              "Satoshi, have you lost your way, or was this always your intent?"]
   "NBN" ["How can you have so many eyes and still see so little?"]
-  "Weyland"
+  "Weyland Consortium"
   ["Countless black suits and blank faces. "
    "Armed and armored, infesting ever hole like pests, waiting for a signal to strike."]}
  "Alice Merchant: Clan Agitator"
@@ -39,7 +39,7 @@
   ["They think a neural pinch here or there will stop the likes of us? They'll learn the clans are made of tougher stuff."]
   "NBN"
   ["The Clans don't need Earth's propaganda. We will not tolerate their falsehoods in our homes."]
-  "Weyland"
+  "Weyland Consortium"
   ["They got us here only to keep a tighter grip on any money-making scheme they can cook up on our brave new world."]}
  "Andromeda: Dispossessed Ristie"
  {"Default" ["A handsome executive like you is more than meets the eye? Tell me more!"]
@@ -49,7 +49,7 @@
   ["Their company culture embraces honor and loyalty, but I know a few other things they seem to enjoy."]
   "NBN"
   ["They seem to be building a profile on me. They won't miss it, they have plenty more. "]
-  "Weyland"
+  "Weyland Consortium"
   ["A decentralised command structure only means they have so many more charming employees to unlock the doors for me."]}
  "Apex: Invasive Predator"
  {"AgInfusion: New Miracles for a New World"
@@ -62,7 +62,7 @@
   "Information Dynamics: All You Need To Know" ["Not all. but some. "]
   "Jinteki" [". . : ... ..... ::: ............. "]
   "NBN" ["..   ... . .    :.:: ::: ..:"]
-  "Weyland" ["... : ..... : ..... :::::::"]}
+  "Weyland Consortium" ["... : ..... : ..... :::::::"]}
  "Armand \"Geist\" Walker: Tech Lord"
  {"Default"
   ["Looks like that Muertos tip-off was right on the money. Let's get to work."]
@@ -72,7 +72,7 @@
   "NBN"
   [""
    " The big screen news are just a cover-up of all the dirt and blood we deal with every day in the streets.\n"]
-  "Weyland"
+  "Weyland Consortium"
   ["Let's find out where the next \"renovation\" is happening. Muertos pays good money to defend their turf."]}
  "Ayla \"Bios\" Rahim: Simulant Specialist"
  {"Default" ["These datastreams have changed overnight! What will I cultivate today?"]
@@ -81,7 +81,7 @@
   ["Why would anyone limit the potential we are prime examples of... for profit?"]
   "NBN"
   ["They wrap their tendrils around so many young minds, only to rot them... If only they'd let them bloom..."]
-  "Weyland"
+  "Weyland Consortium"
   ["Their destruction and sterile construction disgust me. Can't they see beauty can sprout from anywhere?"]}
  "Az McCaffrey: Mechanical Prodigy"
  {"Cybernetics Division: Humanity Upgraded"
@@ -106,7 +106,7 @@
   "NBN: The World is Yours*" ["Why yes, the world is mine. "]
   "Skorpios Defense Systems: Persuasive Power"
   ["Bringin' out the big guns, eh? Why don't we see whose are bigger?"]
-  "Weyland" ["Babe, I'm the highest profile target there is. Need some proof? "]}
+  "Weyland Consortium" ["Babe, I'm the highest profile target there is. Need some proof? "]}
  "Boris \"Syfr\" Kovac: Crafty Veteran"
  {"Default" ["They don't call me \"100% win rate on Jnet\" for nothing."]}
  "Chaos Theory: Wünderkind"
@@ -115,7 +115,7 @@
   "Jinteki"
   ["Sharp sharp sharp! Careful Dino! They might poke your eye out! Yes, the other one..."]
   "NBN" ["Sticks and stones only work in meatspace. Now, let's get in without a trace!"]
-  "Weyland" ["Ohhh! Big bada boom! Cut the blue wire Dino!"]}
+  "Weyland Consortium" ["Ohhh! Big bada boom! Cut the blue wire Dino!"]}
  "Edward Kim: Humanity's Hammer"
  {"Argus Security: Protection Guaranteed" ["I've had worse."]
   "Default"
@@ -127,7 +127,7 @@
   ["For all their experiments, the only thing they've figured out is how to dehumanize us all. It ends today."]
   "NBN"
   ["They may not build Androids, but every day they promote and advertise them, normalising their existence to the blind masses.&&What are their psychographic profiles but digital caricatures of humanity? They are as guilty as the rest."]
-  "Weyland" ["The very epitome of profit over people. They will crumble!"]}
+  "Weyland Consortium" ["The very epitome of profit over people. They will crumble!"]}
  "Ele \"Smoke\" Scovak: Cynosure of the Net"
  {"Default"
   ["Hey folx, Smoke here with another run, brought to you live, unfiltered, and uncensored!"]
@@ -139,8 +139,14 @@
   ["Good evening New Angeles;\n\nThis is Net Mercur. Looks like i'm not the only one throwing down smoke and mirrors. Despite their attempts to distract us, a tip off came in that something big is coming down the pipes at Jinteki. Lets find a way to share what they wont...\n"]
   "NBN"
   ["Good morning New Angeles;\n\nSmoke here for Net Mercur with another run, brought to you live, unfiltered, and uncensored!\n\nSo, to get things rolling, let's see what news NBN _isn't_ telling you this week..."]
-  "Weyland"
+  "Weyland Consortium"
   ["Good evening New Angeles;\n\nSmoke here for Net Mercur. God in Heinlein, I'm so tired today.\n\nIt's hard not to die, sometimes. Let me tell you about this one time when a bunch of thugs in suits decided to cross one line too many..."]}
+ "Esâ Afontov: Eco-Insurrectionist"
+ {"Default" ["The tyranny of capital over life ends here."]
+  "Haas-Bioroid" ["The future isn't made in your designs. It's created through our collective struggle."]
+  "Jinteki" ["They think they can be in control of life itself. But every living thing has the potential to resist."]
+  "NBN" ["They call us terrorists, yet it's them who keep the people in fear and confusion."]
+  "Weyland Consortium" ["They can always escalate the violence. We can always hit them where it hurts."]}
  "Exile: Streethawk"
  {"Default" ["I don't know why I do this anymore. Maybe it's so I don't forget."]
   "Haas-Bioroid"
@@ -149,7 +155,7 @@
   ["The real danger is losing a peice of yourself down in their servers... I just need to figure out a way to bring her back."]
   "NBN"
   ["Archiving user's personal data without their consent is illegal, but too profitable not to do. Let's hope they kept better tabs on her than I ever could. This could be her last trace."]
-  "Weyland"
+  "Weyland Consortium"
   ["Whether they are building up or tearing down, they always leave choice peices of scrap."]}
  "Freedom Khumalo: Crypto-Anarchist"
  {"Default"
@@ -160,7 +166,7 @@
   ["From their Ivory tower they toy with the building blocks of life! Let it crumble down upon them."]
   "NBN"
   ["An impressive number of servers. How long until they realize that they'll all be working against them, I wonder."]
-  "Weyland" ["Today they will taste the fruit of their devastation."]}
+  "Weyland Consortium" ["Today they will taste the fruit of their devastation."]}
  "Gabriel Santiago: Consummate Professional"
  {"Default"
   ["No matter how advanced their toys are, they're still a load of gullible idiots with secrets to be found. You wouldn't believe the amount of discretionary funds they leave hanging around their offices."]
@@ -170,7 +176,7 @@
   ["I take great care with the Jinteki Corporation. That's why I'm still alive. Being a great thief is about knowing what risks are worth taking"]
   "NBN"
   ["Billions of viewers watching trillions of ads, culminating in over a quadrillion transactions a cycle. Ever seen that old vid from the 1900's, Superman 3?"]
-  "Weyland"
+  "Weyland Consortium"
   ["Easiest way to land a big score? Take it from somebody who won't even notice it's gone."]}
  "Hayley Kaplan: Universal Scholar"
  {"Default"
@@ -181,15 +187,15 @@
   ["50 credits to access \"Modern Foundations of Genomics\"? I think I'll find another way, thanks."]
   "NBN"
   ["Such an astounding amount of data they collect and process. I think the professor would quite enjoy a term paper on this. Lets get to research!"]
-  "Weyland" ["300% uptick in their strike force mobilisations? Oops...Did I do that?"]}
- "Hoshiko Shiro: Next Level Shut-In"
+  "Weyland Consortium" ["300% uptick in their strike force mobilisations? Oops...Did I do that?"]}
+ "Hoshiko Shiro: Untold Protagonist"
  {"Default" ["Do i have to?"]
   "Haas-Bioroid"
   ["Keiko! If we can figure out the new brain-taping algos and customize them to my rig, the immersion will be... NEXT LEVEL! "]
   "Jinteki" ["Stims are red, holos are blue,\nお前はもう死んでいる"]
   "NBN"
   ["Gotta go in blind! Can't get spoiled on the next season of Digi Fantasy: Battle of the Dragoonoids!"]
-  "Weyland" ["I got a bad feeling about this one Keiko..."]}
+  "Weyland Consortium" ["I got a bad feeling about this one Keiko..."]}
  "Iain Stirling: Retired Spook"
  {"Default"
   ["The preparations are finalized for this investigation. Jeeves, fetch me a scotch while we see what kind of move they make."]
@@ -199,7 +205,7 @@
   ["No amount of honor can cover up the dirt on Jinteki. Just need to give the fascade a nice scrape and their misdeeds come tumbling out."]
   "NBN"
   ["It's nothing personal, but I do wish they hadn't cancelled \"Neo-Miami Vice\"..."]
-  "Weyland" ["Another day, another weyland controversy. Now to turn it into cash."]}
+  "Weyland Consortium" ["Another day, another weyland controversy. Now to turn it into cash."]}
  "Jamie \"Bzzz\" Micken: Techno Savant" {"Default"
                                          ["All this gear ain't just for show, kid."]}
  "Jesminder Sareen: Girl Behind the Curtain"
@@ -212,7 +218,7 @@
   "NBN" ["They think they know everything about us, but I'll give them the slip."]
   "NBN: Controlling the Message"
   ["I know their tricks, i'll get out before they learn mine."]
-  "Weyland"
+  "Weyland Consortium"
   ["They claim to trade in bricks but their ledgers are full of blood, they must be revealed for who they are."]}
  "Kabonesa Wu: Netspace Thrillseeker"
  {"Argus Security: Protection Guaranteed" ["Can you think of anywhere more fun to run?"]
@@ -225,7 +231,7 @@
   ["You can tell they really don't want anyone visiting, I blew a net sheild just logging in... It must mean they are up to a lot of mischief!"]
   "NBN"
   ["Shiny lights and vidcams, oh my! All that glitters will turn to gold once I compile my Magnum Opus!"]
-  "Weyland"
+  "Weyland Consortium"
   ["Up up up the beanstalk, that's where the Titans keep their treasure! Over the wall and under the their ears, lets find their golden goose!"]}
  "Kate \"Mac\" McCaffrey: Digital Tinker"
  {"Default"
@@ -237,7 +243,7 @@
   "Haas-Bioroid" ["Got no time for hanging out with bioroids, sorry."]
   "Jinteki" ["Once, I was your slave. Now I'm taking back every penny you owe me."]
   "NBN" ["I'm way faster than their Breaking News reports."]
-  "Weyland"
+  "Weyland Consortium"
   ["Even I'm not fast enough to outrun their bullets. Outfoxing their sec squads is child's play though."]}
  "Khan: Savvy Skiptracer"
  {"Default" ["Target located. Swooping in."]
@@ -249,7 +255,7 @@
   ["Track me? I'm the best in the biz at that, maybe they'll catch on to a couple of things once I'm done here."]
   "The Outfit: Family Owned and Operated"
   ["Doesn't matter how well they dress up, mobsters are always easy pickings."]
-  "Weyland"
+  "Weyland Consortium"
   ["They are dealing with more than a few questionable subcontractors. Time to bring them in!"]}
  "Laramy Fisk: Savvy Investor"
  {"Azmari EdTech: Shaping the Future"
@@ -261,7 +267,7 @@
   ["Medicine is your business and health is your product. It seems like an easy product to sell. Let me give you a hand with that."]
   "NBN"
   ["A sound investment strategy starts with the right information. You have to use what you know to get what you want."]
-  "Weyland"
+  "Weyland Consortium"
   ["Your whole corporate structure is too top-heavy. In today's market you need a sleaker, more agile organization. I have a few ideas on how to slim down."]}
  "Lat: Ethical Freelancer"
  {"Default"
@@ -272,7 +278,7 @@
   ["They grow and they twist and they clone, never with any concern. I maintain they should have several concerns. Let's put ourselves on their radar as a warning. "]
   "NBN"
   ["Their technologies can be put to a greater purpose. Someone needs to show them how. "]
-  "Weyland"
+  "Weyland Consortium"
   ["Take my kampung from me, will you? No amount of jobs will bring my home back."]}
  "Leela Patel: Trained Pragmatist"
  {"Default"
@@ -283,7 +289,7 @@
   "Jinteki" ["Oh they'll fall for this trap, I'm sure. Over and over again. "]
   "NBN"
   ["Find me? Yeah. Sometimes they do come knocking. You just have to knock back harder."]
-  "Weyland"
+  "Weyland Consortium"
   ["They keep their ice between here and the satellites, never expecting anyone to hack into the satellites directly. "]}
  "Liza Talking Thunder: Prominent Legislator"
  {"Default"
@@ -294,7 +300,7 @@
   ["Naughty little Hiro, setting up shop here without abiding to my rather generous tax code? Time to seek some punitive damages."]
   "NBN"
   ["Looking to make this humble public servant a celebrity? I wonder what we'll find when we shine the spotlight right back at them."]
-  "Weyland"
+  "Weyland Consortium"
   ["These private partnership contracts always look legitimate at a glance. Lets take a closer look."]}
  "Los: Data Hijacker"
  {"Default"
@@ -304,14 +310,14 @@
   ["You'd be surprised at how much a my friends will pay for a few zetabytes of unencrypted genome."]
   "NBN"
   ["They think they are good at turning data into profits? I'll give them a run for their money."]
-  "Weyland" ["Lets see what you have going on up here now that we're alone."]}
+  "Weyland Consortium" ["Lets see what you have going on up here now that we're alone."]}
  "MaxX: Maximum Punk Rock"
  {"Default" ["All right f**kers. Buckle up."]
   "Haas-Bioroid" ["Time to show these golems how to rock!"]
   "Jinteki" ["Bring on the neural tickles, motherf****rs!"]
   "NBN" ["Trace this, scumbags!"]
   "Skorpios Defense Systems: Persuasive Power" ["F**K."]
-  "Weyland" ["I'll break your defences and then I'll break your balls."]}
+  "Weyland Consortium" ["I'll break your defences and then I'll break your balls."]}
  "Nasir Meidan: Cyber Explorer"
  {"Default"
   ["The unknown brought me here. The boundless net holds infinite secrets, and every discovery propels us further."]
@@ -324,7 +330,7 @@
   "NBN"
   ["Follow me all you want. That's the advantage of being an explorer: everyone can know where I've been, but no one knows where I'm going."]
   "Near-Earth Hub: Broadcast Center" ["Once more up the beanstalk."]
-  "Weyland"
+  "Weyland Consortium"
   ["In the kingdoms of the Builders of Worlds, so many secrets and hidden passages await... and so does danger."]}
  "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
  {"Default" ["I don't need much to make a big difference. O bicho vai pegar!\n"]
@@ -334,7 +340,7 @@
   ["Now let's see if that scrub was as gullible as he sounded.... Jackpot, i'm in!"]
   "NBN"
   ["Loc-spoofed and loaded. If i run in bare, they'll never see me with the naked eye."]
-  "Weyland" ["Some real serious types here. Lets make a game of it!"]}
+  "Weyland Consortium" ["Some real serious types here. Lets make a game of it!"]}
  "Nero Severn: Information Broker"
  {"AgInfusion: New Miracles for a New World"
   ["Food feeds the masses. Information feeds the mind, and pays the bills."]
@@ -343,7 +349,7 @@
   "Jinteki"
   ["My, my, they are looking rather sharp tonight. Let me get my faerie and dress to the nines, they can wait to be dealt with.\n"]
   "NBN" ["Spy vs spy? I'll match them eye for eye. "]
-  "Weyland"
+  "Weyland Consortium"
   ["Who knows, I may end up selling some of what I find back to the owners, repackaged. It's a fair deal."]}
  "Noise: Hacker Extraordinaire"
  {"Default" ["Even if I did do it, how would they ever prove it? "]
@@ -351,7 +357,7 @@
   ["They'll have to pull some strings to get you back for where you are going, byebye little bioroid! "]
   "Jinteki"
   ["I found the last clone to be completely satisfactory. Let's see what I find this time."]
-  "Weyland" ["I like suits. I like to watch them burn."]}
+  "Weyland Consortium" ["I like suits. I like to watch them burn."]}
  "Null: Whistleblower"
  {"Default"
   ["I can't keep these secrets any longer. The world must know what I've learned, no matter the consequences."]
@@ -360,8 +366,14 @@
   "Jinteki"
   ["They tinker with the very core of humanity, with no oversight or accountability. Time to lift the veil!"]
   "NBN" ["Lies and smokescreens. They are hiding something big. Time to find out what."]
-  "Weyland"
+  "Weyland Consortium"
   ["No matter how much they build, they'll never bury their secrets deep enough."]}
+ "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"
+ {"Default" ["Every day, my mission is simple. Acquire credits or starve."]
+  "Haas-Bioroid" ["Do Bioroids dream of electric sheep?"]
+  "Jinteki" ["I wonder what patterns your clones will display today."]
+  "NBN" ["What lies will you peddle today?"]
+  "Weyland Consortium" ["Your credits are better spent putting a roof over my head and blini in my stomach."]}
  "Omar Keung: Conspiracy Theorist"
  {"Default"
   ["All my unanswered questions have lead me here. I know it's all connected; here is where the truth will be uncovered. Let's begin."]
@@ -373,7 +385,7 @@
   ["What horrors have they commited in their effort to refine their understanding of genetics? Their hands have been bloody from day one, we only need to prove it."]
   "NBN"
   ["The control of information is something the elite always does, particularly in a despotic form of government. Information, knowledge, is power. If you can control information, you can control people."]
-  "Weyland"
+  "Weyland Consortium"
   ["They did not bury their secrets deep. But woe to the one who digs up their demons unprepared."]}
  "Quetzal: Free Spirit"
  {"Default" ["Humanity is a cage. Break free, join me, I have so much to show you all."]
@@ -385,7 +397,7 @@
   ["Exploring the possibilities of humanity is one thing. Enslaving it is unforgivable."]
   "NBN"
   ["People are so much more than a row of labels and a series of tags. Their psychographics fail us all, in more ways than we can know."]
-  "Weyland" ["They keep building walls? I will keep breaking through."]}
+  "Weyland Consortium" ["They keep building walls? I will keep breaking through."]}
  "Reina Roja: Freedom Fighter"
  {"Default"
   ["Launch the operation. They willingly sacrifice us in the name of progress, we will show them the true cost of their deeds."]
@@ -396,7 +408,7 @@
   ["This will not be the first time that profitable slavery will be abolished by the hands of the courageous few."]
   "NBN"
   ["Lies, propaganda, slander. And you keep paying for it willingly. Let me show you what's behind the curtain."]
-  "Weyland"
+  "Weyland Consortium"
   ["If you think Weyland is working for your good without blood on their hands, think again."]
   "Weyland Consortium: Because We Built It" ["They cower behind their walls"]}
  "René \"Loup\" Arcemont: Party Animal"
@@ -417,7 +429,7 @@
   ["All their fire and fury cannot possibly defend against the purity of our consciousness."]
   "The Foundry: Refining the Process"
   ["Creating minds as if they were ingots to be stacked. They've truly lost their humanity."]
-  "Weyland"
+  "Weyland Consortium"
   ["They threaten my body, but cannot reach my Soul. We will deliver them a message."]}
  "Silhouette: Stealth Operative"
  {"Default"
@@ -427,7 +439,7 @@
   ["I don't feel good about this... But good gear and preparation beat all bad hunches."]
   "NBN"
   ["The only news they'll get out of this is how weak their 86th floor security is."]
-  "Weyland" ["We've had our good and bad times together. Now it's time to pay up."]}
+  "Weyland Consortium" ["We've had our good and bad times together. Now it's time to pay up."]}
  "Steve Cambridge: Master Grifter"
  {"Default" ["New day, new mark, new exploit. Time to get paid."]
   "Haas-Bioroid"
@@ -439,7 +451,7 @@
   ["\"Good morning, it's Tom York from the ChiLo office. Tomorrow's reports didn't show up on our server, please resend them to the new address here.\""]
   "Titan Transnational: Investing In Your Future"
   ["Well, looks like I've hit the motherlode. I got a couple of tools I think they'll like."]
-  "Weyland"
+  "Weyland Consortium"
   ["\"Hi buddy, this is Peter London from accounts. I need to review the R&D budget but it won't accept my password. Could I just use yours for a few minutes?\""]}
  "Sunny Lebeau: Security Specialist"
  {"Default"
@@ -456,7 +468,7 @@
   ["Big mouths, big screens, little hearts. I would never let my children watch any of that nonsense."]
   "Titan Transnational: Investing In Your Future"
   ["Their books are always kept clean. Thats why we need to dig deeper."]
-  "Weyland"
+  "Weyland Consortium"
   ["I did get quite a few contracts from Weyland's divisions over the years... The amount of dirt they're buried under must equal many ancient civilizations."]}
  "Tāo Salonga: Telepresence Magician"
  {"Default" ["Just don't ask me how I do it."]
@@ -491,7 +503,7 @@
   ["Is it science? Undoubtedly yes. Is it for the common good? We'll decide for ourselves..."]
   "NBN"
   ["They might control the net, but academia created it. Let's see if they've caught on to all our tricks yet. \n"]
-  "Weyland"
+  "Weyland Consortium"
   ["Here is a prime example of post-post-post-capitalist economy running rampant. Will they even care if we expose their actions? "]}
  "Valencia Estevez: The Angel of Cayambe"
  {"AgInfusion: New Miracles for a New World"
@@ -508,7 +520,7 @@
   "NBN" ["Consider this my official resignation from your payroll."]
   "Tennin Institute: The Secrets Within"
   ["Secrets in secrets in secrets. Someone must find the truth."]
-  "Weyland"
+  "Weyland Consortium"
   ["I'd love to expose all your dirty truths to the world. Unfortunately, I don't have a year to spare."]
   "Weyland Consortium: Builder of Nations"
   ["They eradicate culture to build their towers. The only nation they've ever built is a throne for the highest bidder to oppress the masses."]}
@@ -519,7 +531,7 @@
   "Jinteki"
   ["I can smell a cheater from a mile, and there's something fishy about staying one step ahead of others most of the time, isn't there?\n"]
   "NBN" ["You're looking for the wrong person in all the wrong places. Keep looking."]
-  "Weyland"
+  "Weyland Consortium"
   ["Now, these people don't know how to play fair. And they're bad losers, at that."]}
  "Wyvern: Chemically Enhanced" {"Default" ["Burning cortex? There's a pill for that."]}
  "Zahya Sadeghi: Versatile Smuggler"

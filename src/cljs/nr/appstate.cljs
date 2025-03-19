@@ -13,6 +13,7 @@
   []
   (let [default-visible-formats #{"standard"
                                   "system-gateway"
+                                  "throwback"
                                   "startup"
                                   "sunset"
                                   "eternal"
@@ -53,7 +54,8 @@
                             :log-player-highlight (get-local-value "log-player-highlight" "blue-red")
                             :sounds (= (get-local-value "sounds" "true") "true")
                             :lobby-sounds (= (get-local-value "lobby_sounds" "true") "true")
-                            :sounds-volume (str->int (get-local-value "sounds_volume" "100"))}
+                            :sounds-volume (str->int (get-local-value "sounds_volume" "100"))
+                            :disable-websockets (= (get-local-value "disable-websockets" "false") "true")}
                            (:options (js->clj js/user :keywordize-keys true)))
 
            :cards-loaded false
