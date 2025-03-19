@@ -484,8 +484,7 @@
               :yes-ability
               {:async true
                :cost [(->c :remove-from-game)]
-               :effect (effect (derez target {:source-card card})
-                               (effect-completed eid))}}}]})
+               :effect (req (derez state side eid target {:msg-keys {:include-cost-from-eid eid}}))}}}]})
 
 (defcard "Carnivore"
   {:static-abilities [(mu+ 1)]
@@ -2070,20 +2069,21 @@
 
 (defcard "Rubicon Switch"
   {:abilities [{:action true
-                :cost [(->c :click 1)]
+                :cost [(->c :click 1)(->c :x-credits)]
                 :label "Derez a piece of ice rezzed this turn"
+                ;; TODO - once elevation is out and the ncigs changes are in, add an ncigs catch for if the player just wastes their money
                 :once :per-turn
                 :async true
-                :prompt "How many credits do you want to spend?"
-                :choices :credit
-                :effect (effect (continue-ability
-                                  (let [spent-credits target]
-                                    {:choices {:card #(and (ice? %)
-                                                           (= :this-turn (:rezzed %))
-                                                           (<= (:cost %) target))}
-                                     :effect (effect (derez target {:source-card card}))
-                                     :msg (msg "spend " spent-credits "[Credits] and derez " (:title target))})
-                                  card nil))}]})
+                :effect (req (let [payment-eid eid
+                                   spent-credits (cost-value eid :x-credits)]
+                               (continue-ability
+                                 state side
+                                 {:choices {:req (req (and (ice? target)
+                                                           (= :this-turn (:rezzed target))
+                                                           (<= (rez-cost state :corp target nil) spent-credits)))}
+                                  :async true
+                                  :effect (req (derez state side eid target {:msg-keys {:include-cost-from-eid payment-eid}}))}
+                                 card nil)))}]})
 
 (defcard "Security Chip"
   {:abilities [{:label "Add [Link] strength to a non-Cloud icebreaker until the end of the run"

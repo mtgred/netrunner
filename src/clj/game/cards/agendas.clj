@@ -718,8 +718,7 @@
     :async true
     :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
-    :effect (effect (derez target {:source-card card})
-                    (effect-completed eid))}})
+    :effect (req (derez state side eid target))}})
 
 (defcard "Eden Fragment"
   {:static-abilities [{:type :ignore-install-cost
@@ -2017,7 +2016,8 @@
                                            [{:event ev
                                              :unregister-once-resolved true
                                              :duration :end-of-turn
-                                             :effect (effect (derez c {:source-card card}))}])
+                                             :async true
+                                             :effect (effect (derez eid c))}])
                                          (effect-completed state side eid))))}]})
 
 (defcard "Sentinel Defense Program"
@@ -2138,16 +2138,16 @@
                          :waiting-prompt true
                          :choices {:req (req (some #{target} rezzed-targets))}
                          :once :per-turn
-                         :msg (msg "derez " (card-str state target) " to gain 1 [Credits]")
                          :async true
-                         :effect (effect (derez target {:no-msg true})
-                                         (gain-credits eid 1))})
+                         :effect (req (wait-for
+                                        (derez state side target {:msg-keys {:and-then " and gain 1 [Credits]"}})
+                                        (gain-credits state side eid 1)))})
                       card nil)))}
             {:event :derez
              :req (req (and run
                             (first-run-event?
                               state side :derez
-                              (fn [[context]] (ice? (:card context))))))
+                              (fn [[context]] (some ice? (:cards context))))))
              :msg "lower strength of each installed icebreaker by 2"}]
    :leave-play (effect (update-all-icebreakers))
    :static-abilities [{:type :breaker-strength
@@ -2156,7 +2156,7 @@
                                       (has-subtype? target "Icebreaker")
                                       (<= 1 (run-event-count
                                               state side :derez
-                                              (fn [[context]] (ice? (:card context)))))))}]})
+                                              (fn [[context]] (some ice? (:cards context)))))))}]})
 
 (defcard "Sting!"
   (letfn [(count-opp-stings [state side]

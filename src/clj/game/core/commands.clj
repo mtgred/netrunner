@@ -401,7 +401,8 @@
      state side
      {:prompt "Choose a card to derez"
       :choices {:card #(rezzed? %)}
-      :effect (effect (derez target))}
+      :async true
+      :effect (effect (derez eid target {:no-event true}))}
      nil nil)))
 
 (defn command-trash

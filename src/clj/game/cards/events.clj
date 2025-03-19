@@ -48,7 +48,7 @@
    [game.core.memory :refer [available-mu]]
    [game.core.moving :refer [as-agenda flip-facedown forfeit mill move
                              swap-ice trash trash-cards]]
-   [game.core.payment :refer [can-pay? ->c]]
+   [game.core.payment :refer [can-pay? ->c cost-value]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prevention :refer [damage-name prevent-damage preventable? prevent-up-to-n-tags prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
@@ -65,7 +65,7 @@
                               zones->sorted-names]]
    [game.core.set-aside :refer [get-set-aside set-aside]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck]]
-   [game.core.tags :refer [gain-tags lose-tags]]
+   [game.core.tags :refer [gain-tags gain-tags-ability lose-tags]]
    [game.core.threat :refer [threat threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -404,32 +404,32 @@
 (defcard "Brute-Force-Hack"
   {:on-play
    {:async true
-    :effect
-    (req (let [affordable-ice
-               (seq (filter
-                      identity
-                      (for [ice (all-installed state :corp)
-                            :when (and (ice? ice)
-                                       (rezzed? ice))
-                            :let [cost (rez-cost state side ice)]]
-                        (when (can-pay? state side eid card nil [(->c :credit cost)])
-                          [(:cid ice) cost]))))
-               eid (assoc eid :x-cost true)]
-           (continue-ability
-             state side
-             {:prompt "How many credits do you want to spend?"
-              :choices :credit
-              :msg (msg "spends " target " [Credit] on Brute-Force-Hack")
-              :async true
-              :effect (effect (continue-ability
-                                {:choices {:card #(and (rezzed? %)
-                                                       (some (fn [c] (and (= (first c)
-                                                                             (:cid %))
-                                                                          (<= (second c) target)))
-                                                             affordable-ice))}
-                                 :effect (effect (derez target {:source-card card}))}
-                                card nil))}
-             card nil)))}})
+    ;; TODO - can we just give the ability an `:x-cost` tag instead of this dereffing?
+    :effect (req (resolve-ability
+                   state side (assoc eid :x-cost true)
+                   {:prompt "How many credits do you want to spend?"
+                    :cost [(->c :x-credits)]
+                    :async true
+                    :effect (req (let [payment-eid eid
+                                       amount-spent (cost-value eid :x-credits)
+                                       valid-ice (filter #(and (rezzed? %)
+                                                               (ice? %)
+                                                               (<= (rez-cost state :corp % nil) amount-spent))
+                                                         (all-installed state :corp))]
+                                   (if (seq valid-ice)
+                                     (continue-ability
+                                       state side
+                                       {:choices {:req (req (some #(same-card? % target) valid-ice))
+                                                  :all true}
+                                        :async true
+                                        :effect (req (derez state side eid target {:msg-keys {:include-cost-from-eid payment-eid}}))}
+                                       card nil)
+                                     (do (system-msg state side (str (if (pos? amount-spent)
+                                                                       (str (:latest-payment-str eid) " to use ")
+                                                                       "uses ")
+                                                                     (:title card) " to do nothing"))
+                                         (effect-completed state side eid)))))}
+                   card nil))}})
 
 (defcard "Build Script"
   {:on-play
@@ -1275,7 +1275,8 @@
     :change-in-game-state (req (some (every-pred ice? rezzed?) (all-installed state :corp)))
     :choices {:card #(and (ice? %)
                           (rezzed? %))}
-    :effect (effect (derez target {:source-card card}))}})
+    :async true
+    :effect (req (derez state side eid target))}})
 
 (defcard "Emergent Creativity"
   (letfn [(ec [trash-cost to-trash]
@@ -1420,9 +1421,8 @@
     :choices {:max 3
               :card #(and (rezzed? %)
                           (ice? %))}
-    :msg (msg "derez " (enumerate-str (map :title targets)))
-    :effect (req (doseq [c targets]
-                   (derez state side c {:no-msg true})))}})
+    :async true
+    :effect (req (derez state side eid targets))}})
 
 (defcard "Exploratory Romp"
   {:makes-run true
@@ -2365,15 +2365,13 @@
              :async true
              :effect (req (make-run state side eid target (get-card state card)))}
    :events [{:event :run-ends
+             :async true
              :effect (req (let [rezzed-ice (->> (run-events target :rez)
                                                 (keep (fn [[{:keys [card]}]]
                                                         (when (ice? card)
                                                           (get-card state card))))
                                                 (filter rezzed?))]
-                            (doseq [ice rezzed-ice]
-                              (derez state :runner ice {:no-msg true}))
-                            (when (seq rezzed-ice)
-                              (system-msg state :runner (str "uses " (:title card) " to derez " (enumerate-str (map :title rezzed-ice)))))))}]})
+                            (derez state :runner eid rezzed-ice)))}]})
 
 (defcard "Legwork"
   {:makes-run true
@@ -4162,9 +4160,9 @@
                {:async true
                 :prompt "How many [Credits] do you want to spend?"
                 :choices :credit
-                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
+                :msg (msg "make the Corp lose " target " [Credits]")
                 :effect (req (wait-for (lose-credits state :corp (make-eid state eid) target)
-                                       (gain-tags state side eid 1)))}})]})
+                                       (continue-ability state side (gain-tags-ability 1) card nil)))}})]})
 
 (defcard "VRcation"
   {:on-play
@@ -4313,10 +4311,8 @@
                                        :prompt (str "Rez " (card-str state chosen-ice) ", ignoring all costs?")
                                        :yes-ability {:async true
                                                      :effect
-                                                     (req
-                                                       (rez state :corp eid chosen-ice {:ignore-cost :all-costs}))}}}])
-                                  (derez state side target {:source-card card})
-                                  (effect-completed state side eid)))}
+                                                     (req (rez state :corp eid chosen-ice {:ignore-cost :all-costs}))}}}])
+                                  (derez state side eid target)))}
                           card nil)
                         (effect-completed state side eid))))}]
      :on-play {:async true
