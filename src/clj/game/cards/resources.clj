@@ -1902,8 +1902,13 @@
   (let [ability {:msg "gain [Click]"
                  :once :per-turn
                  :label "Gain [Click] (start of turn)"
-                 :effect (effect (gain-clicks 1)
-                                 (update! (assoc-in card [:special :joshua-b] true)))}]
+                 :effect (req (gain-clicks state side 1)
+                              (register-events
+                                state side card
+                                [(merge (gain-tags-ability 1)
+                                        {:event :runner-turn-ends
+                                         :unregister-once-resolved true
+                                         :interactive (req true)})]))}]
     {:flags {:runner-phase-12 (req true)}
      :events [{:event :runner-turn-begins
                :skippable true
@@ -1912,13 +1917,7 @@
                           :yes-ability ability
                           :no-ability
                           {:effect (effect (system-msg (str "declines to use " (:title card) " to gain [Click]"))
-                                           (update! (assoc-in card [:special :joshua-b] false)))}}}
-              {:event :runner-turn-ends
-               :interactive (req true)
-               :req (req (get-in card [:special :joshua-b]))
-               :async true
-               :effect (effect (gain-tags eid 1))
-               :msg "gain 1 tag"}]
+                                           (update! (assoc-in card [:special :joshua-b] false)))}}}]
      :abilities [ability]}))
 
 (defcard "Juli Moreira Lee"
@@ -3251,7 +3250,7 @@
               :player :runner
               :yes-ability {:msg "give the Corp 1 bad publicity and take 1 tag"
                             :async true
-                            :effect (effect (gain-bad-publicity :corp 1)
+                            :effect (effect (gain-bad-publicity :corp 1 {:suppress-checkpoint true})
                                             (gain-tags :runner eid 1))}}}]})
 
 (defcard "Tech Trader"

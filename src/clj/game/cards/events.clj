@@ -65,7 +65,7 @@
                               zones->sorted-names]]
    [game.core.set-aside :refer [get-set-aside set-aside]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck]]
-   [game.core.tags :refer [gain-tags lose-tags]]
+   [game.core.tags :refer [gain-tags gain-tags-ability lose-tags]]
    [game.core.threat :refer [threat threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -4161,9 +4161,9 @@
                {:async true
                 :prompt "How many [Credits] do you want to spend?"
                 :choices :credit
-                :msg (msg "take 1 tag and make the Corp lose " target " [Credits]")
+                :msg (msg "make the Corp lose " target " [Credits]")
                 :effect (req (wait-for (lose-credits state :corp (make-eid state eid) target)
-                                       (gain-tags state side eid 1)))}})]})
+                                       (continue-ability state side (gain-tags-ability 1) card nil)))}})]})
 
 (defcard "VRcation"
   {:on-play
