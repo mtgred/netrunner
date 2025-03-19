@@ -26,7 +26,6 @@
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
    [game.core.engine :refer [not-used-once? pay register-events resolve-ability trigger-event-sync]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
-   [game.core.expose :refer [expose-prevent]]
    [game.core.flags :refer [in-runner-scored? lock-zone prevent-current
                             prevent-draw
                             register-turn-flag! release-zone when-scored?]]
@@ -1438,25 +1437,26 @@
              :interactive (req true)
              :req (req (seq (:scored runner)))
              :async true
-             :effect (effect
-                       (continue-ability
-                         (let [stolen (:card context)]
+             :effect (req
+                       (let [scored (:card context)]
+                         (continue-ability
+                           state side
                            {:optional
-                            {:prompt (msg "Swap " (:title stolen) " for an agenda in the Runner's score area?")
+                            {:prompt (msg "Swap " (:title scored) " for an agenda in the Runner's score area?")
+                             :req (req (seq (get-in @state [:runner :scored])))
                              :yes-ability
-                             {:prompt (str "Choose a scored Runner agenda to swap with " (:title stolen))
-                              :choices {:card #(in-runner-scored? state side %)}
-                              :msg (msg "swap " (:title stolen) " for " (:title target))
+                             {:prompt (str "Choose a scored Runner agenda to swap with " (:title scored))
+                              :choices {:req (req (and (in-runner-scored? state side target)
+                                                       (:agendapoints target)
+                                                       (pos? (:agendapoints target))))}
+                              :msg (msg "swap " (:title scored) " for " (:title target))
                               :async true
-                              :effect (req (let [new-scored (second (swap-agendas state side target stolen))]
+                              :effect (req (let [new-scored (second (swap-agendas state side scored target))]
                                              (continue-ability
                                                state side
-                                               (when (when-scored? new-scored)
-                                                 {:msg (msg "trigger the \"when scored\" ability of " (:title new-scored))
-                                                  :async true
-                                                  :effect (effect (continue-ability (:on-score (card-def new-scored)) target nil))})
-                                               card nil)))}}})
-                         card targets))}]})
+                                               (:on-score (card-def new-scored))
+                                               new-scored nil)))}}}
+                           card targets)))}]})
 
 (defcard "Isabel McGuire"
   {:abilities [{:action true

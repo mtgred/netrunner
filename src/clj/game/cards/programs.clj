@@ -3240,12 +3240,12 @@
              :keep-menu-open :while-2-power-tokens-left
              :msg (msg "access 1 additional card from " name " for the remainder of the run")
              :effect (effect (register-events
-                               card [(breach-access-bonus server 1 {:duration :end-of-run})]))})
-  {:implementation "Only implemented for click to draw"
-   :abilities [(ttw-ab "R&D" :rd)
-               (ttw-ab "HQ" :hq)]
-   :events [{:event :corp-click-draw
-             :msg (msg "reveal that they drew " (:title (:card context)))}]})
+                               card [(breach-access-bonus server 1 {:duration :end-of-run})]))})]
+    {:implementation "Only implemented for click to draw"
+     :abilities [(ttw-ab "R&D" :rd)
+                 (ttw-ab "HQ" :hq)]
+     :events [{:event :corp-click-draw
+               :msg (msg "reveal that they drew " (:title (:card context)))}]}))
 
 (defcard "Switchblade"
   (auto-icebreaker {:abilities [(break-sub (->c :credit 1 {:stealth 1}) 0 "Sentry")

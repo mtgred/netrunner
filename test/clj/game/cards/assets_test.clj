@@ -2820,6 +2820,19 @@
       (rez state :corp (get-content state :remote2 0))
       (is (= credits (:credit (get-corp))) "Corp should neither gain nor lose any credits"))))
 
+(deftest investigator-inez-delgado-a
+  (do-game
+    (new-game {:corp {:hand ["Investigator Inez Delgado A" "Project Atlas"]}
+               :runner {:score-area ["Hostile Takeover"]}})
+    (play-from-hand state :corp "Investigator Inez Delgado A" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-and-score state "Project Atlas")
+    (click-prompt state :corp "Yes")
+    (is (changed? [(:credit (get-corp)) 7]
+          (click-card state :corp "Hostile Takeover"))
+        "Scored hostile")
+    (is (= "Hostile Takeover" (get-in @state [:corp :scored 0 :title])))))
+
 (deftest isabel-mcguire
   ;; Isabel McGuire
   (do-game
