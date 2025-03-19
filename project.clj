@@ -71,7 +71,7 @@
 
   :test-selectors {:default (fn [m] (not (:kaocha/pending m)))}
 
-  :profiles {:dev {:dependencies [[binaryage/devtools "1.0.4"]
+  :profiles {:dev {:dependencies [[binaryage/devtools "1.0.7"]
                                   [cider/piggieback "0.5.3"]
                                   [com.clojure-goes-fast/clj-async-profiler "0.5.1"]
                                   [rewrite-clj "1.1.45"]

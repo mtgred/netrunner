@@ -324,24 +324,24 @@
      (when-let [memory (:memoryunits card)]
        (if (< memory 3)
          [:div.anr-icon {:class (str "mu" memory)} ""]
-         [:div.heading [tr [:card-browser_memory "Memory"] {:memory memory}] [:span.anr-icon.mu]]))
+         [:div.heading (tr [:card-browser_memory "Memory"] {:memory memory}) [:span.anr-icon.mu]]))
      (when-let [cost (:cost card)]
-       [:div.heading [tr [:card-browser_cost "Cost"] {:cost cost}]])
+       [:div.heading (tr [:card-browser_cost "Cost"] {:cost cost})])
      (when-let [trash-cost (:trash card)]
        [:div.heading (tr [:card-browser_trash-cost "Trash cost"] {:trash-cost trash-cost})])
      (when-let [strength (:strength card)]
        [:div.heading (tr [:card-browser_strength "Strength"] {:strength strength})])
      (when-let [requirement (:advancementcost card)]
-       [:div.heading [tr [:card-browser_advancement "Advancement requirement"] {:requirement requirement}]])
+       [:div.heading (tr [:card-browser_advancement "Advancement requirement"] {:requirement requirement})])
      (when-let [agenda-point (:agendapoints card)]
-       [:div.heading [tr [:card-browser_agenda-points "Agenda points"] {:points agenda-point}]])
+       [:div.heading (tr [:card-browser_agenda-points "Agenda points"] {:points agenda-point})])
      (when-let [min-deck-size (:minimumdecksize card)]
-       [:div.heading [tr [:card-browser_min-deck-size "Minimum deck size"] {:min-deck-size min-deck-size}]])
+       [:div.heading (tr [:card-browser_min-deck-size "Minimum deck size"] {:min-deck-size min-deck-size})])
      (when-let [influence-limit (:influencelimit card)]
-       [:div.heading [tr [:card-browser_inf-limit "Influence limit"] {:inf-limit influence-limit}]])
+       [:div.heading (tr [:card-browser_inf-limit "Influence limit"] {:inf-limit influence-limit})])
 
      (when impl
-       [:div.heading [tr [:card-browser_implementation-note "Implementation note"] {:impl impl}]])
+       [:div.heading (tr [:card-browser_implementation-note "Implementation note"] {:impl impl})])
 
      [:div.text.card-body
       [:p [:span.type (tr-type (:type card))]
@@ -369,11 +369,11 @@
                      (str " [" (alt-art-name art) "]")))))]
          (when (show-alt-art?)
            (if (selected-alt-art card)
-             [:div.selected-alt [tr [:card-browser_selected-art "Selected Alt Art"]]]
+             [:div.selected-alt (tr [:card-browser_selected-art "Selected Alt Art"])]
              (when (or (:art card) (:previous-versions card) (:future-version card))
                [:button.alt-art-selector
                 {:on-click #(select-alt-art card)}
-                [tr [:card-browser_select-art "Select Art"]]])))])]]))
+                (tr [:card-browser_select-art "Select Art"])])))])]]))
 
 (defn types [side]
   (let [runner-types ["Identity" "Program" "Hardware" "Resource" "Event"]
@@ -523,7 +523,7 @@
 
 (defn sort-by-builder [state]
   [:div
-   [:h4 [tr [:card-browser-form_sort "Sort by"]]]
+   [:h4 (tr [:card-browser-form_sort "Sort by"])]
    [:select {:value (:sort-field @state)
              :on-change #(swap! state assoc :sort-field (.. % -target -value))}
     (doall
@@ -571,10 +571,10 @@
                           set-names)
         formats (-> format->slug keys butlast)]
     [:div
-     [simple-filter-builder [tr [:card-browser-form_format "Format"]]
+     [simple-filter-builder (tr [:card-browser-form_format "Format"])
       state :format-filter formats tr-format]
      [:div
-      [:h4 [tr [:card-browser_set "Set"]]]
+      [:h4 (tr [:card-browser_set "Set"])]
       [:select {:value (:set-filter @state)
                 :on-change #(swap! state assoc :set-filter (.. % -target -value))}
        (doall
@@ -584,11 +584,11 @@
            (if indent
              (str "* " (tr-set n))
              (tr-set n))]))]]
-     [simple-filter-builder [tr [:card-browser-form_side "Side"]]
+     [simple-filter-builder (tr [:card-browser-form_side "Side"])
       state :side-filter ["Corp" "Runner"] tr-side]
-     [simple-filter-builder [tr [:card-browser-form_faction "Faction"]]
+     [simple-filter-builder (tr [:card-browser-form_faction "Faction"])
       state :faction-filter (factions (:side-filter @state)) tr-faction]
-     [simple-filter-builder [tr [:card-browser-form_type "Type"]]
+     [simple-filter-builder (tr [:card-browser-form_type "Type"])
       state :type-filter (types (:side-filter @state)) tr-type]]))
 
 (defn clear-filters [state]
@@ -602,7 +602,7 @@
                           :type-filter "All"
                           :side-filter "All"
                           :faction-filter "All")}
-       [tr [:card-browser_clear "Clear"]]]])
+       (tr [:card-browser_clear "Clear"])]])
 
 (defn art-info [state]
   (let [selected (r/cursor state [:selected-card])]
@@ -614,10 +614,10 @@
             link (:artist-link info)]
         (when blurb
           [:div.panel.green-shade.artist-blurb
-           [:h4 [tr [:card-browser_artist-info "Artist Info"]]]
+           [:h4 (tr [:card-browser_artist-info "Artist Info"])]
            [:div blurb]
            (when link
-             [:a {:href link} [tr [:card-browser_more-info "More Info"]]])])))))
+             [:a {:href link} (tr [:card-browser_more-info "More Info"])])])))))
 
 (defn card-browser []
   (let [state (r/atom {:search-query ""

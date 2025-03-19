@@ -472,11 +472,11 @@
     [:div.notes-shared
      (when (not= "local-replay" (:gameid @game-state))
        [:div.remote-annotations
-        [:h4 [tr [:annotations_available-annotations "Available annotations"]] " "
+        [:h4 (tr [:annotations_available-annotations "Available annotations"]) " "
          [:button.small {:type "button"
                          :on-click #(get-remote-annotations (:gameid @game-state))} "⟳"]]
         (if (empty? (:remote-annotations @replay-status))
-          [tr [:annotations_no-published-annotations "No published annotations."]]
+          (tr [:annotations_no-published-annotations "No published annotations."])
           [:ul
            (doall
              (for [[n anno] (map-indexed vector (:remote-annotations @replay-status))]
@@ -489,18 +489,18 @@
                                   :on-click #(delete-remote-annotations n)} "X"])]))])
         [:div.button-row
          [:button {:type "button"
-                   :on-click #(publish-annotations)} [tr [:annotations_publish "Publish"]]]]
+                   :on-click #(publish-annotations)} (tr [:annotations_publish "Publish"])]]
         [:hr]])
-     [:h4 [tr [:annotations_import-local "Import local annotation file"]]]
+     [:h4 (tr [:annotations_import-local "Import local annotation file"])]
      [:input {:field :file
               :type :file
               :on-change #(swap! replay-status assoc :annotations-file (aget (.. % -target -files) 0))}]
      [:div.button-row
       [:button {:type "button" :on-click #(load-annotations-file)}
-       [tr [:annotations_load-local "Load"]]]
+       (tr [:annotations_load-local "Load"])]
       [:button {:type "button" :on-click #(save-annotations-file)}
-       [tr [:annotations_save-local "Save"]]]
+       (tr [:annotations_save-local "Save"])]
       [:button {:type "button" :on-click #(swap! replay-status assoc :annotations
                                                  {:turns {:corp {} :runner {}}
                                                   :clicks {}})}
-       [tr [:annotations_clear "Clear"]]]]]))
+       (tr [:annotations_clear "Clear"])]]]))

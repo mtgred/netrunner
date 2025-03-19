@@ -30,8 +30,8 @@
            [:div.infobox
             "Your opponent has left the game. You can wait for them to return, you may claim this game as a victory, or cancel the match."
             [:div.button-bar.centered
-             [:button {:on-click claim-victory} [tr [:angel-arena_claim-victory "Claim victory"]]]
-             [:button {:on-click cancel-match} [tr [:angel-arena_cancel-match "Cancel match"]]]]])]
+             [:button {:on-click claim-victory} (tr [:angel-arena_claim-victory "Claim victory"])]
+             [:button {:on-click cancel-match} (tr [:angel-arena_cancel-match "Cancel match"])]]])]
 
         "inactive-pre-start"
         [:div.angel-arena-time-warning
@@ -39,7 +39,7 @@
            [:div.infobox
             "There was no activity in this game yet. You may cancel the match, if your opponent does not respond."
             [:div.button-bar.centered
-             [:button {:on-click cancel-match} [tr [:angel-arena_cancel-match "Cancel match"]]]]])]
+             [:button {:on-click cancel-match} (tr [:angel-arena_cancel-match "Cancel match"])]]])]
 
         "inactive-warning"
         (let [time-inactive (/ (- (js/Date.now) (js/Date. warning-time)) 1000)
@@ -55,7 +55,7 @@
               (time-span-string (js/Math.floor time-remaining)) "."]
              (when (pos? inactivities-remaining)
                [:div.button-bar.centered
-                [:button {:on-click more-time} [tr [:angel-arena_still-here "Need more time"]]]])]
+                [:button {:on-click more-time} (tr [:angel-arena_still-here "Need more time"])]])]
             (if (not-spectator?)
               [:div.angel-arena-time-warning
                [:div.infobox
@@ -80,7 +80,7 @@
                    ". Your opponent can decide to either claim victory or cancel the match.")]
              (when (pos? inactivities-remaining)
                [:div.button-bar.centered
-                [:button {:on-click more-time} [tr [:angel-arena_still-here "Need more time"]]]])]
+                [:button {:on-click more-time} (tr [:angel-arena_still-here "Need more time"])]])]
             (if (not-spectator?)
               [:div.angel-arena-time-warning
                [:div.infobox
@@ -88,8 +88,8 @@
                      (time-span-string (js/Math.floor time-inactive))
                      ". You can decide to either claim victory or cancel the match.")]
                [:div.button-bar.centered
-                [:button {:on-click claim-victory} [tr [:angel-arena_claim-victory "Claim victory"]]]
-                [:button {:on-click cancel-match} [tr [:angel-arena_cancel-match "Cancel match"]]]]]
+                [:button {:on-click claim-victory} (tr [:angel-arena_claim-victory "Claim victory"])]
+                [:button {:on-click cancel-match} (tr [:angel-arena_cancel-match "Cancel match"])]]]
               [:div.angel-arena-time-warning
                [:div.infobox
                 (str (:username inactive-user) " has been inactive for "

@@ -49,22 +49,22 @@
   (if-not spectatorhands
     [:button {:on-click #(do (join-game lobby-state game "watch")
                              (resume-sound))}
-     [tr [:lobby_watch "Watch"]]]
+     (tr [:lobby_watch "Watch"])]
     (letfn [(join-fn [side]
               #(do (join-game lobby-state game "watch" side)
                    (resume-sound)))]
       [:div.split-button
        [:button {:on-click (join-fn nil)}
-        [tr [:lobby_watch "Watch"]]]
+        (tr [:lobby_watch "Watch"])]
        [:button.dropdown-toggle {:data-toggle "dropdown"}
         [:b.caret]]
        [:ul.dropdown-menu.blue-shade
         [:a.block-link {:on-click (join-fn "Corp")}
-       [tr [:lobby_corp-perspective "Corp Perspective"]]]
+       (tr [:lobby_corp-perspective "Corp Perspective"])]
       [:a.block-link {:on-click (join-fn "Runner")}
-       [tr [:lobby_runner-perspective "Runner Perspective"]]]
+       (tr [:lobby_runner-perspective "Runner Perspective"])]
       [:a.block-link {:on-click (join-fn nil)}
-       [tr [:lobby_both-perspective "Both"]]]]])))
+       (tr [:lobby_both-perspective "Both"])]]])))
 
 (defn- watch-protected-game-button
   [spectatorhands lobby-state game]
@@ -75,7 +75,7 @@
                                (swap! lobby-state assoc :password-game {:game game :action "watch"})))
                            (do (join-game lobby-state game "watch")
                                (resume-sound)))}
-     [tr [:lobby_watch "Watch"]]]
+     (tr [:lobby_watch "Watch"])]
     (letfn [(join-fn
               [side]
               #(if (:password game)
@@ -86,16 +86,16 @@
                      (resume-sound))))]
       [:div.split-button
        [:button {:on-click (join-fn nil)}
-        [tr [:lobby_watch "Watch"]]]
+        (tr [:lobby_watch "Watch"])]
        [:button.dropdown-toggle {:data-toggle "dropdown"}
         [:b.caret]]
        [:ul.dropdown-menu.blue-shade
         [:a.block-link {:on-click (join-fn "Corp")}
-       [tr [:lobby_corp-perspective "Corp Perspective"]]]
+       (tr [:lobby_corp-perspective "Corp Perspective"])]
       [:a.block-link {:on-click (join-fn "Runner")}
-       [tr [:lobby_runner-perspective "Runner Perspective"]]]
+       (tr [:lobby_runner-perspective "Runner Perspective"])]
       [:a.block-link {:on-click (join-fn nil)}
-       [tr [:lobby_both-perspective "Both"]]]]])))
+       (tr [:lobby_both-perspective "Both"])]]])))
 
 (defn watch-button [lobby-state user game current-game editing]
   (when (can-watch? user game current-game editing)
@@ -119,23 +119,23 @@
       [:div.split-button
        [:button {:on-click #(do (join-game lobby-state game "join")
                                 (resume-sound))}
-        [tr [:lobby_join "Join"]]]
+        (tr [:lobby_join "Join"])]
        [:button.dropdown-toggle {:data-toggle "dropdown"}
         [:b.caret]]
        [:ul.dropdown-menu.blue-shade
         [:a.block-link {:on-click #(do (join-game lobby-state game "join" "Corp")
                                        (resume-sound))}
-         [tr [:lobby_as-corp "As Corp"]]]
+         (tr [:lobby_as-corp "As Corp"])]
         [:a.block-link {:on-click #(do (join-game lobby-state game "join" "Runner")
                                        (resume-sound))}
-         [tr [:lobby_as-runner "As Runner"]]]]]
+         (tr [:lobby_as-runner "As Runner"])]]]
       [:button {:on-click #(if (:password game)
                              (authenticated
                                (fn [_]
                                  (swap! lobby-state assoc :password-game {:game game :action "join"})))
                              (do (join-game lobby-state game "join")
                                  (resume-sound)))}
-       [tr [:lobby_join "Join"]]])))
+       (tr [:lobby_join "Join"])])))
 
 (defn can-rejoin? [user {:keys [started players original-players]} current-game editing]
   (and (= 1 (count players))
@@ -152,7 +152,7 @@
                                (swap! lobby-state assoc :password-game {:game game :action "rejoin"})))
                            (do (join-game lobby-state game "rejoin")
                                (resume-sound)))}
-     [tr [:lobby_rejoin "Rejoin"]]]))
+     (tr [:lobby_rejoin "Rejoin"])]))
 
 (defn mod-menu-popup [s user {gameid :gameid}]
   (when (and (:show-mod-menu @s)
@@ -161,23 +161,23 @@
      [:div.panel.blue-shade.mod-menu
       [:div {:on-click #(do (reset-game-name gameid)
                             (swap! s assoc :show-mod-menu false))}
-       [tr [:lobby_reset "Reset Game Name"]]]
+       (tr [:lobby_reset "Reset Game Name"])]
       [:div {:on-click #(do (delete-game gameid)
                             (swap! s assoc :show-mod-menu false))}
-       [tr [:lobby_delete "Delete Game"]]]
+       (tr [:lobby_delete "Delete Game"])]
       [:div {:on-click #(swap! s assoc :show-mod-menu false)}
-       [tr [:lobby_cancel "Cancel"]]]]]))
+       (tr [:lobby_cancel "Cancel"])]]]))
 
 (defn game-title [s user game]
   [:h4 {:on-click #(swap! s update :show-mod-menu not)
         :class (when (superuser? @user) "clickable")}
    (when (:save-replay game) "🟢")
    (when (:password game)
-     [:<> "[" [tr [:lobby_private "PRIVATE"]] "] "])
+     [:<> "[" (tr [:lobby_private "PRIVATE"]) "] "])
    (:title game)
    (let [c (count (:spectators game))]
      (when (pos? c)
-       [:<> " (" [tr [:lobby_spectator-count] {:cnt c}] ")"]))])
+       [:<> " (" (tr [:lobby_spectator-count] {:cnt c}) ")"]))])
 
 (defn- precon-span [precon]
   (when precon
@@ -189,14 +189,14 @@
 
 (defn- open-decklists-span [precon open-decklists]
   (when (and open-decklists (not precon))
-    [:span.open-decklists (str " " [tr [:lobby_open-decklists-b] "(open decklists)"])]))
+    [:span.open-decklists (str " " (tr [:lobby_open-decklists-b] "(open decklists)"))]))
 
 (defn game-format [{fmt :format singleton? :singleton precon :precon open-decklists :open-decklists}]
   [:div {:class "game-format"}
-   [:span.format-label [tr [:lobby_format "Format"]] ":  "]
+   [:span.format-label (tr [:lobby_format "Format"]) ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
    [precon-span precon]
-   [:span.format-singleton (str (when singleton? (str " " [tr [:lobby_singleton-b "(singleton)"]])))]
+   [:span.format-singleton (str (when singleton? (str " " (tr [:lobby_singleton-b "(singleton)"]))))]
    [open-decklists-span precon open-decklists]
    [precon-under-span precon]])
 

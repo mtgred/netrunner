@@ -12,9 +12,9 @@
 (defn current-game-count [user games connected?]
   (r/with-let [c (r/track (fn [] (count (filter-games @user @games (:visible-formats @app-state)))))]
     [:div.float-right
-     [tr [:nav_game-count] {:cnt @c}]
+     (tr [:nav_game-count] {:cnt @c})
      (when (not @connected?)
-       [:a.reconnect-button {:on-click #(ws/chsk-reconnect!)} [tr [:game_attempt-reconnect "Attempt reconnect"]]])]))
+       [:a.reconnect-button {:on-click #(ws/chsk-reconnect!)} (tr [:game_attempt-reconnect "Attempt reconnect"])])]))
 
 (defn in-game-buttons [user current-game gameid]
   (when (and (:started @current-game)
@@ -24,40 +24,40 @@
       [:div.float-right
        (when is-player
          [:a.concede-button {:on-click #(concede)}
-          [tr [:game_concede "Concede"]]])
+          (tr [:game_concede "Concede"])])
        [:a.leave-button {:on-click #(leave-game)}
         (if (:replay @current-game)
-          [tr [:game_leave-replay "Leave replay"]]
-          [tr [:game_leave "Leave game"]])]
+          (tr [:game_leave-replay "Leave replay"])
+          (tr [:game_leave "Leave game"]))]
        (when is-player
          [:a.mute-button {:on-click #(mute-spectators)}
           (if (:mute-spectators @current-game)
-            [tr [:game_unmute "Unmute spectators"]]
-            [tr [:game_mute "Mute spectators"]])])])))
+            (tr [:game_unmute "Unmute spectators"])
+            (tr [:game_mute "Mute spectators"]))])])))
 
 (defn replay-and-spectator-buttons [gameid]
   (when (not (nil? @gameid))
     [:div.float-right
      [:a {:on-click #(leave-game)}
       (if (= "local-replay" @gameid)
-        [tr [:game_leave-replay "Leave replay"]]
-        [tr [:game_leave "Leave game"]])]
+        (tr [:game_leave-replay "Leave replay"])
+        (tr [:game_leave "Leave game"]))]
      (when (= "local-replay" @gameid)
        [:a.replay-button {:on-click #(set-replay-side :corp)}
-        [tr [:game_corp-view "Corp View"]]])
+        (tr [:game_corp-view "Corp View"])])
      (when (= "local-replay" @gameid)
        [:a.replay-button {:on-click #(set-replay-side :runner)}
-        [tr [:game_runner-view "Runner View"]]])
+        (tr [:game_runner-view "Runner View"])])
      (when (= "local-replay" @gameid)
        [:a.replay-button {:on-click #(set-replay-side :spectator)}
-        [tr [:game_spec-view "Spectator View"]]])]))
+        (tr [:game_spec-view "Spectator View"])])]))
 
 (defn spectator-list [current-game]
   (when-let [game @current-game]
     (when (:started game)
       (let [c (count (:spectators game))]
         (when (pos? c)
-          [:div.spectators-count.float-right [tr [:game_spec-count] c]
+          [:div.spectators-count.float-right (tr [:game_spec-count] c)
            [:div.blue-shade.spectators
             (for [p (:spectators game)]
               ^{:key (get-in p [:user :_id])}

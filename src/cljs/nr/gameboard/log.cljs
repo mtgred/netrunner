@@ -61,14 +61,14 @@
     [:button.indicate-action {:on-click #(do (.preventDefault %)
                                              (send-command "indicate-action"))
                               :key "Indicate action"}
-     [tr [:game_indicate-action "Indicate paid ability"]]]))
+     (tr [:game_indicate-action "Indicate paid ability"])]))
 
 (defn show-decklists []
   (when (get-in @app-state [:current-game :open-decklists])
     [:button.show-decklists {:on-click #(do (.preventDefault %)
                                             (swap! app-state update-in [:display-decklists] not))
                              :key "Show Decklists"}
-     [tr [:game_show-decklists "Show/Hide decklists"]]]))
+     (tr [:game_show-decklists "Show/Hide decklists"])]))
 
 (defn fuzzy-match-score
   "Matches if all characters in input appear in target in order.

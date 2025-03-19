@@ -136,11 +136,11 @@
     [:<>
      [:div.game-count
       [:h4 (if (= (count slug->format) (count @visible-formats))
-             [tr [:lobby_game-count] (count filtered-games)]
-             [tr [:lobby_game-count-filtered] (count filtered-games)])]]
+             (tr [:lobby_game-count] (count filtered-games))
+             (tr [:lobby_game-count-filtered] (count filtered-games)))]]
      [:div.game-list
       (if (empty? filtered-games)
-        [:h4 [tr [:lobby_no-games "No games"]]]
+        [:h4 (tr [:lobby_no-games "No games"])]
         (doall
           (for [game filtered-games]
             ^{:key (:gameid game)}
@@ -169,7 +169,7 @@
       (-> slug slug->format tr-format)]]))
 
 (defn new-game-button [s games gameid user]
-  [cond-button [tr [:lobby_new-game "New game"]]
+  [cond-button (tr [:lobby_new-game "New game"])
    ;; TODO: rewrite this check
    (and (not (or @gameid
                  (:editing @s)
@@ -187,10 +187,10 @@
 (defn reload-lobby-button []
   [:button.reload-button {:type "button"
                           :on-click #(ws/ws-send! [:lobby/list])}
-   [tr [:lobby_reload "Reload list"]]])
+   (tr [:lobby_reload "Reload list"])])
 
 (defn load-replay-button [s games gameid user]
-  [cond-button [tr [:lobby_load-replay "Load replay"]]
+  [cond-button (tr [:lobby_load-replay "Load replay"])
    ;; TODO: rewrite this check
    (and (not (or @gameid
                  (:editing @s)
@@ -207,14 +207,14 @@
     [:div.rooms
      [:div#filter.dropdown
       [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
-       [tr [:lobby_filter "Filter"]]
+       (tr [:lobby_filter "Filter"])
        [:b.caret]]
        [:div.dropdown-menu.blue-shade
         (doall (for [[k] slug->format]
                  ^{:key k}
                  [format-toggle k (contains? visible-formats k)]))]]
-     [room-tab user s games "casual" [tr [:lobby_type "Casual"] {:type "casual"}]]
-     [room-tab user s games "competitive" [tr [:lobby_type "Tournament"] {:type "tournament"}]]]
+     [room-tab user s games "casual" (tr [:lobby_type "Casual"] {:type "casual"})]
+     [room-tab user s games "competitive" (tr [:lobby_type "Tournament"] {:type "tournament"})]]
     (when-not (= "angel-arena" (:room @s))
       [:div.lobby-buttons
        [new-game-button s games current-game user]

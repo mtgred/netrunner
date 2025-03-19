@@ -769,17 +769,17 @@ settings_bespoke-sounds = {$sound ->
     *[unknown] Unknownyay espokebay oundssay ({$sound})
 }
 settings_bg = {$slug ->
-    [apex-bg] Apex
-    [custom-with-url] Ustomcay GBay (inputyay URLyay elowbay)
-    [find-the-truth-bg] Indfay Ethay Uthtray
-    [freelancer-bg] Eelancerfray
-    [monochrome-bg] Onochromay
-    [mushin-no-shin-bg] Ushinmay Onay Inshay
-    [push-your-luck-bg] Ushpay Ouryay Ucklay
-    [rumor-mill-bg] Umoray Illmay
-    [the-root-bg] Ethay Ootray
-    [traffic-jam-bg] Affictray Amjay
-    *[worlds2020-bg] Orldsway 2020
+    [apex] Apex
+    [custom] Ustomcay GBay (inputyay URLyay elowbay)
+    [find-the-truth] Indfay Ethay Uthtray
+    [freelancer] Eelancerfray
+    [monochrome] Onochromay
+    [mushin-no-shin] Ushinmay Onay Inshay
+    [push-your-luck] Ushpay Ouryay Ucklay
+    [rumor-mill] Umoray Illmay
+    [the-root] Ethay Ootray
+    [traffic-jam] Affictray Amjay
+    *[worlds2020] Orldsway 2020
 }
 settings_block = Ockblay useryay
 settings_blocked = Ockedblay usersyay
