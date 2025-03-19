@@ -43,7 +43,7 @@
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal]]
-   [game.core.rezzing :refer [derez rez]]
+   [game.core.rezzing :refer [derez rez rez-multiple-cards]]
    [game.core.runs :refer [end-run force-ice-encounter]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
@@ -1256,15 +1256,7 @@
                                :msg (msg "derez " (enumerate-str (map #(card-str state %) targets)))
                                :effect (req (doseq [t targets]
                                               (derez state side t {:no-msg true})))}
-                              card nil)))})
-          (ice-free-rez [state side targets card zone eid]
-            (if (zero? (count targets))
-              (do (register-events
-                    state side card
-                    [(ice-derez zone)])
-                  (effect-completed state side eid))
-              (wait-for (rez state :corp (make-eid state eid) (first targets) {:ignore-cost :all-costs})
-                        (ice-free-rez state side (drop 1 targets) card zone eid))))]
+                              card nil)))})]
     {:on-score {:effect (effect (add-counter eid card :agenda 1 nil))
                 :async true
                 :silent (req true)}
@@ -1285,12 +1277,11 @@
                                                          (not (rezzed? %))
                                                          (= (second (get-zone %)) current-server))
                                              :max 2}
-                                   :msg (msg "rez " (enumerate-str (map :title targets)) ", ignoring all costs")
                                    :async true
-                                   :cancel-effect (req
-                                                    (system-msg state side (str "declines to use " (:title card)))
-                                                    (ice-free-rez state side [] card current-server eid))
-                                   :effect (req (ice-free-rez state side targets card current-server eid))}
+                                   :cancel-effect (req (register-events state side card [(ice-derez current-server)])
+                                                       (effect-completed state side eid))
+                                   :effect (req (register-events state side card [(ice-derez current-server)])
+                                                (rez-multiple-cards state side eid targets {:ignore-cost :all-costs :msg-keys {:include-cost-from-eid eid}}))}
                                   card nil)))}}}]}))
 
 (defcard "Longevity Serum"
@@ -2016,9 +2007,9 @@
                 :prompt "Choose a bioroid to rez, ignoring all costs"
                 :choices {:card #(and (has-subtype? % "Bioroid")
                                       (not (rezzed? %)))}
-                :msg (msg "rez " (card-str state target) ", ignoring all costs")
                 :async true
-                :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
+                :effect (req (wait-for (rez state side target {:ignore-cost :all-costs
+                                                               :msg-keys {:include-cost-from-eid eid}})
                                        (let [c (:card async-result)
                                              ev (if (= (:active-player @state) :corp) :corp-turn-ends :runner-turn-ends)]
                                          (register-events
