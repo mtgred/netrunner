@@ -402,7 +402,7 @@
      {:prompt "Choose a card to derez"
       :choices {:card #(rezzed? %)}
       :async true
-      :effect (effect (derez eid target))}
+      :effect (effect (derez eid target {:no-event true}))}
      nil nil)))
 
 (defn command-trash
