@@ -1230,8 +1230,9 @@
        ;; update the disabled-card registry here
        (update-disabled-cards state)
        ;; c: Check winning or tying by agenda points
-       (when (check-win-by-agenda state)
-         (trigger-event state nil :win))
+       (when (and (check-win-by-agenda state) (not (:winner-declared state)))
+         (swap! state assoc :winner-declared true)
+         (trigger-event state nil :win {:winner (:winner @state)}))
        ;; d: uniqueness/console check
        (wait-for
          (check-unique-and-consoles state nil (make-eid state eid))

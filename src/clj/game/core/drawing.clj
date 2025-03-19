@@ -69,8 +69,8 @@
              deck-count (count (get-in @state [side :deck]))]
          (swap! state update :bonus dissoc :draw);; clear bonus draws
          (when (and (= side :corp) (< deck-count draws-after-prevent))
-           (when (win-decked state)
-             (trigger-event state :runner :win)))
+           (when (and (win-decked state) (not (:winner-declared @state)))
+             (trigger-event state :runner :win {:winner :runner})))
          (when (< draws-after-prevent draws-wanted)
            (let [prevented (- draws-wanted draws-after-prevent)]
              (system-msg state (other-side side)

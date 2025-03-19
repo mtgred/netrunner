@@ -59,6 +59,7 @@
   "Records a win via dealing damage to the runner."
   [state]
   (when-not (:winner state)
+    (swap! state assoc :winner-declared true)
     (system-msg state :runner "is flatlined")
     (win state :corp "Flatline")))
 
@@ -77,7 +78,7 @@
     (system-msg state side "cleared the win condition")
     (swap! state dissoc-in [:runner :clear-win])
     (swap! state dissoc-in [:corp :clear-win])
-    (swap! state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time)))
+    (swap! state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time :winner-declared)))
 
 (defn agenda-points-required-to-win
   [state side]

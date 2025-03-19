@@ -837,18 +837,18 @@
 
 (defcard "Evidence Collection"
   {:events [{:event :win
-             :req (req (= :corp (:winner @state)))
-             :msg (msg "reveal set 2")}]})
+             :req (req (= :corp (:winner context)))
+             :msg "reveal set 2"}]})
 
 (defcard "Evidence Collection 2"
   {:events [{:event :win
-             :req (req (= :corp (:winner @state)))
-             :msg (msg "reveal set 5")}]})
+             :req (req (= :corp (:winner context)))
+             :msg "reveal set 5"}]})
 
 (defcard "Evidence Collection 3"
   {:events [{:event :win
-             :req (req (= :corp (:winner @state)))
-             :msg (msg "reveal set 8")}]})
+             :req (req (= :corp (:winner context)))
+             :msg "reveal set 8"}]})
 
 (defcard "Evidence Collection 4"
   {:agendapoints-runner (req 1)})
