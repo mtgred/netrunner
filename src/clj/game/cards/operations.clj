@@ -453,8 +453,12 @@
              :async true
              :req (req (and (same-card? (:ice context) (:host card))
                             (:all-subs-broken context)))
-             :effect (req (wait-for (derez state side (:ice context) {:msg-keys {:source-card card} :suppress-checkpoint true})
-                                    (trash state :corp eid card {:cause-card card})))}]})
+             :effect (req (wait-for
+                            (derez state side (:ice context)
+                                   {:msg-keys {:source-card card
+                                               :and-then " and trash itself"}
+                                    :suppress-checkpoint true})
+                            (trash state :corp eid card {:cause-card card})))}]})
 
 (defcard "Biotic Labor"
   {:on-play
