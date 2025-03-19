@@ -2270,10 +2270,7 @@
   {:on-install {:player :corp
                 :waiting-prompt true
                 :prompt "Choose a card to derez"
-                ;; :change-in-game-state {:silent true
-                ;;                        :req (req (some #(and (rezzed? %)
-                ;;                                              (not (agenda? %)))
-                ;;                                        (all-installed state :corp)))}
+                :req (req (some #(and (rezzed? %) (not (agenda? %))) (all-installed state :corp)))
                 :choices {:card #(and (corp? %)
                                       (not (agenda? %))
                                       (rezzed? %))
