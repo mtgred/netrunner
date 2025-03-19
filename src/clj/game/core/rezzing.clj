@@ -158,29 +158,30 @@
 (defn derez
   "Derez a number of corp cards."
   ([state side eid cards] (derez state side eid cards nil))
-  ([state side eid cards {:keys [source-card suppress-checkpoint no-event msg-keys] :as args}]
+  ([state side eid cards {:keys [source-card suppress-checkpoint no-event no-msg msg-keys] :as args}]
    (let [cards (if (sequential? cards)
                  (filterv #(and (get-card state %) (rezzed? %)) (flatten cards))
                  [cards])]
      (if-not (seq cards)
        (effect-completed state side eid)
        (do (doseq [c cards]
-             (unregister-events state side c)
+             (unregister-events state :corp c)
              (update! state :corp (deactivate state :corp c true))
              (let [cdef (card-def c)]
                (when-let [derez-effect (:derez-effect cdef)]
                  ;; this is currently only for lycian fixing subtypes on derez
                  ;; should happen even if the card is disabled - nbk
-                 (resolve-ability state side derez-effect (get-card state c) cdef))
+                 (resolve-ability state :corp derez-effect (get-card state c) cdef))
                (when-let [derezzed-events (:derezzed-events cdef)]
-                 (register-events state side c (map #(assoc % :condition :derezzed) derezzed-events))))
-             (unregister-static-abilities state side c))
+                 (register-events state :corp c (map #(assoc % :condition :derezzed) derezzed-events))))
+             (unregister-static-abilities state :corp c))
            (update-disabled-cards state)
            (when-not no-event
              (queue-event state :derez {:cards cards
                                         :side side}))
            (update-disabled-cards state)
-           (derez-message state side eid cards msg-keys)
+           (when-not no-msg
+             (derez-message state side eid cards msg-keys))
            (if suppress-checkpoint
              (effect-completed state side eid)
              (checkpoint state side eid)))))))

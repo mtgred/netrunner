@@ -2270,15 +2270,16 @@
   {:on-install {:player :corp
                 :waiting-prompt true
                 :prompt "Choose a card to derez"
-                :change-in-game-state {:silent true
-                                       :req (req (some #(and (rezzed? %)
-                                                             (not (agenda? %)))
-                                                       (all-installed state :corp)))}
+                ;; :change-in-game-state {:silent true
+                ;;                        :req (req (some #(and (rezzed? %)
+                ;;                                              (not (agenda? %)))
+                ;;                                        (all-installed state :corp)))}
                 :choices {:card #(and (corp? %)
                                       (not (agenda? %))
-                                      (rezzed? %))}
+                                      (rezzed? %))
+                          :all true}
                 :async true
-                :effect (req (derez state side eid target {:msg-keys {:source-card card}}))}
+                :effect (req (derez state :corp eid target {:msg-keys {:source-card card}}))}
    :uninstall
    (effect
      (continue-ability
