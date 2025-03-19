@@ -144,16 +144,21 @@
 
 ;; TODO: make async
 (defn- derez-message
-  [state side eid cards {:keys [source-card] :as msg-keys}]
+  ;; note:
+  ;;  source-card - the card that's derezzing (optional)
+  ;;  and-then - text to append to the end of the message (ie derezz x` and trash itself`)
+  ;;              I suggest only using this if the rhs thing is part of the same instruction.
+  ;;  include-cost-from-eid [eid] - include the last payment str from the eid as if it was for this
+  [state side eid cards {:keys [source-card and-then] :as msg-keys}]
   (let [card-strs (enumerate-str (map #(card-str state % {:visible true}) cards))
         prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
         title (or (:title source-card) (:printed-title source-card))]
     (system-msg
       state side
       (cond
-        (not source-card) (str "derezzes " card-strs)
-        prepend-cost-str (str prepend-cost-str " to use " title " to derez " card-strs)
-        :else (str "uses " title " to derez " card-strs)))))
+        (not source-card) (str "derezzes " card-strs and-then)
+        prepend-cost-str (str prepend-cost-str " to use " title " to derez " card-strs and-then)
+        :else (str "uses " title " to derez " card-strs and-then)))))
 
 (defn derez
   "Derez a number of corp cards."
