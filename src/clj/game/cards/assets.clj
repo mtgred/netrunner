@@ -26,7 +26,7 @@
    [game.core.eid :refer [complete-with-result effect-completed is-basic-advance-action? make-eid get-ability-targets]]
    [game.core.engine :refer [not-used-once? pay register-events resolve-ability trigger-event-sync]]
    [game.core.events :refer [first-event? no-event? turn-events event-count]]
-   [game.core.flags :refer [in-runner-scored? lock-zone prevent-current
+   [game.core.flags :refer [in-corp-scored? in-runner-scored? lock-zone prevent-current
                             prevent-draw
                             register-turn-flag! release-zone when-scored?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
@@ -1443,13 +1443,14 @@
                            state side
                            {:optional
                             {:prompt (msg "Swap " (:title scored) " for an agenda in the Runner's score area?")
+                             :waiting-prompt true
                              :req (req (seq (get-in @state [:runner :scored])))
                              :yes-ability
                              {:prompt (str "Choose a scored Runner agenda to swap with " (:title scored))
                               :choices {:req (req (and (in-runner-scored? state side target)
                                                        (:agendapoints target)
                                                        (pos? (:agendapoints target))))}
-                              :msg (msg "swap " (:title scored) " for " (:title target))
+                              :msg (msg "swap " (card-str state scored) " for " (card-str state target))
                               :async true
                               :effect (req (let [new-scored (second (swap-agendas state side scored target))]
                                              (continue-ability
@@ -1457,6 +1458,34 @@
                                                (:on-score (card-def new-scored))
                                                new-scored nil)))}}}
                            card targets)))}]})
+
+(defcard "Investigator Inez Delgado A 2"
+  (letfn [(swap-abi [stolen]
+            {:prompt (str "Swap " (:title stolen) " with an agenda in your score area?")
+             :req (req (seq (:scored corp)))
+             :choices {:req (req (in-corp-scored? state side target))}
+             :msg (msg "swap " (card-str state stolen) " for " (card-str state target))
+             :effect (req (swap-agendas state side target stolen))})]
+    {:events [{:event :agenda-stolen
+               :interactive (req true)
+               :skippable true
+               :async true
+               :effect (req (let [stolen (:card context)]
+                              (if (:on-score (card-def stolen))
+                                (continue-ability
+                                  state side
+                                  {:optional {:prompt (str "Resolve the when-scored ability on " (:title stolen))
+                                              :waiting-prompt true
+                                              :yes-ability {:async true
+                                                            :msg (msg "resolve the when-scored ability on " (:title stolen))
+                                                            :effect (req (wait-for
+                                                                           (resolve-ability state side (:on-score (card-def stolen)) stolen nil)
+                                                                           (if (get-card state stolen)
+                                                                             (continue-ability state side (swap-abi stolen) card nil)
+                                                                             (effect-completed state side eid))))}
+                                              :no-ability (swap-abi stolen)}}
+                                  card nil)
+                                (continue-ability state side (swap-abi stolen) card nil))))}]}))
 
 (defcard "Isabel McGuire"
   {:abilities [{:action true
