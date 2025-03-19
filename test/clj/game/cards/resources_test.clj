@@ -5786,6 +5786,24 @@
         (run-continue state)
         (is (= (+ credits 5 2) (:credit (get-runner))) "Runner gains 5 from Dirty Laundry and 2 from Security Testing"))))
 
+(deftest shadow-team-full-test
+  (do-game
+    (new-game {:runner {:hand ["Rezeki"]
+                        :deck ["Shadow Team" "Shadow Team"]}})
+    (take-credits state :corp)
+    (click-draw state :runner)
+    (click-draw state :runner)
+    (is (= "Shadow Team"
+           (:title (get-resource state 0))
+           (:title (get-resource state 1)))
+        "installed 2 teams")
+    (run-on state :hq)
+    (click-card state :runner "Rezeki")
+    (is (no-prompt? state :runner) "Only forced to discard one card!")
+    (run-continue-until state :success)
+    (is (= ["Shadow Team" "Shadow Team"] (map :title (get-in @state [:runner :destroyed])))
+        "Destroyed both shadow teams")))
+
 (deftest slipstream-there-is-an-ice-at-the-correct-position
     ;; There is an ice at the correct position
     (do-game

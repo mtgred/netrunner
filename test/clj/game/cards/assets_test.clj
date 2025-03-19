@@ -2820,6 +2820,34 @@
       (rez state :corp (get-content state :remote2 0))
       (is (= credits (:credit (get-corp))) "Corp should neither gain nor lose any credits"))))
 
+(deftest investigator-inez-delgado-a
+  (do-game
+    (new-game {:corp {:hand ["Investigator Inez Delgado A" "Project Atlas"]}
+               :runner {:score-area ["Hostile Takeover"]}})
+    (play-from-hand state :corp "Investigator Inez Delgado A" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-and-score state "Project Atlas")
+    (click-prompt state :corp "Yes")
+    (is (changed? [(:credit (get-corp)) 7]
+          (click-card state :corp "Hostile Takeover"))
+        "Scored hostile")
+    (is (= "Hostile Takeover" (get-in @state [:corp :scored 0 :title])))))
+
+(deftest investigator-inez-delgado-a-2
+  (do-game
+    (new-game {:corp {:hand ["Project Atlas" "Investigator Inez Delgado A 2" "Hostile Takeover"]}})
+    (play-from-hand state :corp "Investigator Inez Delgado A 2" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-and-score state "Project Atlas")
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Steal")
+    (is (changed? [(:credit (get-corp)) 7]
+          (click-prompt state :corp "Yes"))
+        "Scored ability for hostile")
+    (click-card state :corp "Project Atlas")
+    (is (= "Hostile Takeover" (get-in @state [:corp :scored 0 :title])))))
+
 (deftest isabel-mcguire
   ;; Isabel McGuire
   (do-game
@@ -3276,6 +3304,33 @@
         (card-ability state :corp (refresh lti) 0)
         (click-prompt state :corp "8")
         (is (= (+ credits 8) (:credit (get-corp))) "Corp should gain 8 credits from Long-Term Investment ability")))))
+
+(deftest lt-todachine
+  (do-game
+    (new-game {:corp {:hand ["Lt. Todachine" "Vanilla"]}})
+    (play-from-hand state :corp "Lt. Todachine" "New remote")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-ice state :hq 0))
+    (is (= 1 (count-tags state)) "Runner has 1 tag")))
+
+(deftest lt-todachine-2
+  (do-game
+    (new-game {:corp {:hand ["Lt. Todachine 2" "Vanilla"]
+                      :deck [(qty "IPO" 3)]}
+               :runner {:hand ["Jailbreak"]}})
+    (play-from-hand state :corp "Lt. Todachine 2" "New remote")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-ice state :hq 0))
+    (is (= 1 (count-tags state)) "Runner has 1 tag")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jailbreak")
+    (click-prompt state :runner "R&D")
+    (run-continue-until state :success)
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner) "No prompt")
+    (is (not (:run @state)) "Access ended after 1 card seen - todachine did his work")))
 
 (deftest malia-icon-goes-away-with-cupellation
   (do-game

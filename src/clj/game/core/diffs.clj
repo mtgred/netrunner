@@ -252,6 +252,7 @@
    :play-area
    :current
    :set-aside
+   :destroyed
    :click
    :credit
    :toast
