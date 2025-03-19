@@ -889,21 +889,18 @@
                    :prompt (msg "Trash " (:title card) " and pay " (rez-cost state :corp (:card context))
                                 " [Credits] to derez " (:title (:card context)) "?")
                    :yes-ability
-                   {:cost [(->c :credit (rez-cost state :corp (:card context)))]
-                    :msg (msg "derez " (:title (:card context))
-                              " and prevent it from being rezzed this turn")
+                   {:cost [(->c :credit (rez-cost state :corp (:card context))) (->c :trash-can)]
                     :async true
-                    :effect (req (wait-for (trash state side card {:cause-card card})
-                                           (when-not (get-card state card)
-                                             (derez state :runner (:card context) {:no-msg true})
-                                             (register-turn-flag!
-                                               state side card :can-rez
-                                               (fn [state _ card]
-                                                 (if (same-card? card (:card context))
-                                                   ((constantly false)
-                                                    (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
-                                                   true))))
-                                           (effect-completed state side eid)))}}}
+                    :effect (req (wait-for
+                                   (derez state :runner (:card context) {:msg-keys {:source-card card}})
+                                   (register-turn-flag!
+                                     state side card :can-rez
+                                     (fn [state _ card]
+                                       (if (same-card? card (:card context))
+                                         ((constantly false)
+                                          (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
+                                         true)))
+                                   (effect-completed state side eid)))}}}
                  card targets))}]})
 
 (defcard "Counter Surveillance"
@@ -2200,6 +2197,8 @@
                            card nil)))}]})
 
 (defcard "Maxwell James"
+  ;; TODO - once we implement paid ability windows (if ever),
+  ;; we can enforce the errata'd condition on this
   {:static-abilities [(link+ 1)]
    :abilities [{:req (req (some #{:hq} (:successful-run runner-reg)))
                 :prompt "Choose a piece of ice protecting a remote server"
@@ -2207,9 +2206,10 @@
                                       (rezzed? %)
                                       (is-remote? (second (get-zone %))))}
                 :label "Derez a piece of ice protecting a remote server"
-                :msg (msg "derez " (card-str state target))
                 :cost [(->c :trash-can)]
-                :effect (effect (derez target {:no-msg true}))}]})
+                :async true
+                :effect (req (derez state side eid target {:msg-keys {:source-card card
+                                                                      :include-cost-from-eid eid}}))}]})
 
 (defcard "Miss Bones"
   {:data {:counter {:credit 12}}
@@ -2270,10 +2270,15 @@
   {:on-install {:player :corp
                 :waiting-prompt true
                 :prompt "Choose a card to derez"
+                :change-in-game-state {:silent true
+                                       :req (req (some #(and (rezzed? %)
+                                                             (not (agenda? %)))
+                                                       (all-installed state :corp)))}
                 :choices {:card #(and (corp? %)
                                       (not (agenda? %))
                                       (rezzed? %))}
-                :effect (effect (derez target {:source-card card}))}
+                :async true
+                :effect (req (derez state side eid target {:msg-keys {:source-card card}}))}
    :uninstall
    (effect
      (continue-ability
