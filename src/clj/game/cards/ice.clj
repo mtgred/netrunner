@@ -4030,7 +4030,7 @@
                                     state side card
                                     {:type :tldr-effect
                                      :duration :end-of-encounter
-                                     :value true
+                                     :value 1
                                      :req (req (same-card? t target))})))}]))}]})
 
 (defcard "TMI"

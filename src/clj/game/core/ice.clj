@@ -15,6 +15,7 @@
     [jinteki.utils :refer [make-label]]
     [clojure.string :as string]
     [clojure.set :as set]
+    [clojure.math :refer [pow]]
     [medley.core :refer [find-first]]))
 
 ;; These should be in runs.clj, but `req` needs get-current-ice and
@@ -358,27 +359,30 @@
     sub
     (build-sub sub (:cid sub) nil)))
 
+(defn get-expected-subroutines
+  [state side ice]
+  (if (or (is-disabled-reg? state ice) (not (rezzed? ice)))
+    ;; if it's disabled or unrezzed, it should only have the printed subs
+    (map #(build-sub % (:cid ice) {:printed true}) (:subroutines (card-def ice)))
+    (let [printed-subroutines-to-lose (or (sum-effects state side :lose-printed-subroutines ice) 0)
+          base-printed-subs (map #(build-sub % (:cid ice) {:printed true}) (:subroutines (card-def ice)))
+          printed-subroutines (drop printed-subroutines-to-lose base-printed-subs)
+          applied-subroutines (get-tagged-effects state side :additional-subroutines ice)
+          applied-front (mapcat (fn [{:keys [uuid subroutines cid]}] (mapv #(assoc % :source uuid :cid cid) subroutines)) (filter #(= (:position %) :front) applied-subroutines))
+          applied-end (mapcat (fn [{:keys [uuid subroutines cid]}] (mapv #(assoc % :source uuid :cid cid) subroutines)) (filter #(not= (:position %) :front) applied-subroutines))
+          expected-subroutines (concat applied-front printed-subroutines applied-end)
+          sub-repeats (int (pow 2 (or (min 4 (sum-effects state :corp :tldr-effect ice)) 0)))
+          expected-subroutines (if (> sub-repeats 1)
+                                 (mapcat (partial repeat sub-repeats) expected-subroutines)
+                                 expected-subroutines)]
+      expected-subroutines)))
+
 (defn update-ice-subroutines
   "Updates the given ice's subroutines by checking the subroutines it should have from the state"
   [state side ice]
-  (let [ice (get-card state ice)
-        printed-subroutines-to-lose (or (sum-effects state side :lose-printed-subroutines ice) 0)
-        base-printed-subs (map #(build-sub % (:cid ice) {:printed true})
-                               (:subroutines (card-def ice)))
-        printed-subroutines (drop printed-subroutines-to-lose base-printed-subs)
-        applied-subroutines (get-tagged-effects state side :additional-subroutines ice)
-        applied-front (mapcat (fn [{:keys [uuid subroutines cid]}] (mapv #(assoc % :source uuid :cid cid) subroutines)) (filter #(= (:position %) :front) applied-subroutines))
-        applied-end (mapcat (fn [{:keys [uuid subroutines cid]}] (mapv #(assoc % :source uuid :cid cid) subroutines)) (filter #(not= (:position %) :front) applied-subroutines))
-        expected-subroutines (concat applied-front printed-subroutines applied-end)
-        expected-subroutines (cond
-                               ;; if it's disabled, it can only have it's printed subs
-                               (is-disabled-reg? state ice) base-printed-subs
-                               ;; if it's affected by tldr, it's cursed
-                               (any-effects state :corp :tldr-effect true? ice)
-                               (mapcat (partial repeat 2) expected-subroutines)
-                               ;; otherwise, proceed as normal
-                               :else expected-subroutines)
-        active-subroutines (:subroutines ice)]
+  (when-let [ice (get-card state ice)]
+    (let [expected-subroutines (get-expected-subroutines state side ice)
+          active-subroutines (:subroutines ice)]
     (if (= (map #(select-keys % [:source :label]) expected-subroutines) (map #(select-keys % [:source :label]) active-subroutines))
       nil
       (let [new-subs (->> (reconcile-subroutines expected-subroutines active-subroutines)
@@ -387,7 +391,7 @@
                           (into []))]
         (update! state side (assoc ice :subroutines new-subs))
         (trigger-event state side :subroutines-changed (get-card state ice))
-        true))))
+        true)))))
 
 (defn update-ice-in-server
   "Updates all ice in the given server's :ices field."
