@@ -31,7 +31,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-extra-sub! remove-sub! update-all-ice update-all-icebreakers]]
+   [game.core.ice :refer [update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-cards-async swap-ice

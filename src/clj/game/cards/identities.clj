@@ -30,7 +30,7 @@
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-extra-sub! break-sub pump-ice remove-sub! update-all-ice update-all-icebreakers]]
+   [game.core.ice :refer [break-sub pump-ice update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [make-card]]
    [game.core.installing :refer [corp-install install-locked? runner-can-pay-and-install? runner-install]]
    [game.core.link :refer [link+ update-link]]

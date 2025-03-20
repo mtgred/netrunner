@@ -31,8 +31,8 @@
    [game.core.gaining :refer [gain-credits lose-clicks lose-credits]]
    [game.core.hand-size :refer [hand-size]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-sub add-sub! any-subs-broken? break-sub get-current-ice ice-strength-bonus
-                          remove-sub! remove-subs! resolve-subroutine
+   [game.core.ice :refer [any-subs-broken? break-sub get-current-ice ice-strength-bonus
+                          resolve-subroutine
                           set-current-ice unbroken-subroutines-choice update-all-ice update-all-icebreakers
                           update-ice-strength]]
    [game.core.identities :refer [disable-card enable-card]]

@@ -95,68 +95,6 @@
                        (into []))]
      (assoc ice :subroutines new-subs))))
 
-(defn add-sub!
-  ([state side ice sub] (add-sub! state side ice sub (:cid ice) nil))
-  ([state side ice sub cid] (add-sub! state side ice sub cid nil))
-  ([state side ice sub cid args]
-   (update! state :corp (add-sub ice sub cid args))
-   (trigger-event state side :subroutines-changed (get-card state ice))))
-
-(defn remove-sub
-  "Removes a single sub from a piece of ice for pred. By default removes the first subroutine
-  with the same cid as the given ice."
-  ([ice] (remove-sub ice #(= (:cid ice) (:from-cid %))))
-  ([ice pred]
-   (let [new-subs (->> (:subroutines ice)
-                       (remove-once pred)
-                       (map-indexed (fn [idx sub] (assoc sub :index idx)))
-                       (into []))]
-     (assoc ice :subroutines new-subs))))
-
-(defn remove-sub!
-  ([state side ice] (remove-sub! state side ice #(= (:cid ice) (:from-cid %))))
-  ([state side ice pred]
-   (update! state :corp (remove-sub ice pred))
-   (trigger-event state side :subroutines-changed (get-card state ice))))
-
-(defn remove-subs
-  "Removes all subs from a piece of ice for pred. By default removes the subroutines
-  with the same cid as the given ice."
-  ([ice] (remove-sub ice #(= (:cid ice) (:from-cid %))))
-  ([ice pred]
-   (let [new-subs (->> (:subroutines ice)
-                       (remove pred)
-                       (map-indexed (fn [idx sub] (assoc sub :index idx)))
-                       (into []))]
-     (assoc ice :subroutines new-subs))))
-
-(defn remove-subs!
-  ([state side ice] (remove-subs! state side ice #(= (:cid ice) (:from-cid %))))
-  ([state side ice pred]
-   (update! state :corp (remove-subs ice pred))
-   (trigger-event state side :subroutines-changed (get-card state ice))))
-
-(defn add-extra-sub!
-  "Add a run time subroutine to a piece of ice (Warden, Sub Boost, etc)"
-  ([state side ice sub] (add-extra-sub! state side ice sub (:cid ice) {:back true}))
-  ([state side ice sub cid] (add-extra-sub! state side ice sub cid {:back true}))
-  ([state side ice sub cid args]
-   (add-sub! state side (assoc-in ice [:special :extra-subs] true) sub cid args)
-   (trigger-event state side :subroutines-changed (get-card state ice))
-   ))
-
-(defn remove-extra-subs!
-  "Remove runtime subroutines assigned from the given cid from a piece of ice."
-  [state side ice cid]
-  (let [curr-subs (:subroutines ice)
-        new-subs (remove #(= cid (:from-cid %)) curr-subs)
-        extra-subs (some #(= (:cid ice) (:from-cid %)) new-subs)]
-    (update! state :corp
-             (-> ice
-                 (assoc :subroutines (vec new-subs))
-                 (assoc-in [:special :extra-subs] extra-subs)))
-    (trigger-event state side :subroutines-changed (get-card state ice))))
-
 (defn break-subroutine
   "Marks a given subroutine as broken"
   ([ice sub] (break-subroutine ice sub nil))

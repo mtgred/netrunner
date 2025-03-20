@@ -33,8 +33,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice
-                          update-ice-strength]]
+   [game.core.ice :refer [update-all-ice update-ice-strength]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [as-agenda mill move remove-from-currently-drawing

@@ -29,7 +29,7 @@
    [game.core.gaining :refer [gain-clicks gain-credits lose-clicks
                               lose-credits]]
    [game.core.hand-size :refer [runner-hand-size+]]
-   [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice]]
+   [game.core.ice :refer [update-all-ice]]
    [game.core.identities :refer [disable-identity enable-identity]]
    [game.core.initializing :refer [ability-init card-init]]
    [game.core.installing :refer [corp-install corp-install-msg install-as-condition-counter]]
