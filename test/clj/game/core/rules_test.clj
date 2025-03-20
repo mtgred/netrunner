@@ -700,7 +700,7 @@
     (click-prompt state :runner "No action")
     (run-empty-server state "HQ")
     (play-from-hand state :runner "Apocalypse")
-    (is (= #{"Shuffle Marilyn Campaign into R&D" "Allow 3 cards to be trashed"}
+    (is (= #{"Shuffle Marilyn Campaign into R&D" "Continue trashing 3 cards"}
            (into #{} (prompt-titles :corp)))
         "Corp only has the marilyn interrupt")
     (click-prompt state :corp "Shuffle Marilyn Campaign into R&D")
