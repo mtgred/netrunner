@@ -1232,17 +1232,13 @@
                                                                        :display-origin true}}))}})
 
 (defcard "Lightning Laboratory"
-  ;; TODO - I feel this card is OVERLY verbose
-  ;; maybe it could be condensed? I'm not sure
   (letfn [(ice-derez [zone]
             {:event :runner-turn-ends
              :req (req (seq (filter #(= (:zone %) [:servers zone :ices])
                                     (all-active-installed state :corp))))
              :duration :end-of-turn
              :async true
-             :effect (req (let [derez-count
-                                (min 2 (count (filter #(= (:zone %) [:servers zone :ices])
-                                                      (all-active-installed state :corp))))]
+             :effect (req (let [derez-count (min 2 (count (filter #(= (:zone %) [:servers zone :ices]) (all-active-installed state :corp))))]
                             (continue-ability
                               state side
                               {:prompt (msg "Choose " (quantify derez-count "piece") " of ice protecting " (zone->name [zone]) " to derez")
@@ -1253,8 +1249,8 @@
                                          :max derez-count
                                          :min derez-count}
                                :msg (msg "derez " (enumerate-str (map #(card-str state %) targets)))
-                               :effect (req (doseq [t targets]
-                                              (derez state side t {:no-msg true})))}
+                               :async true
+                               :effect (req (derez state side eid targets))}
                               card nil)))})]
     {:on-score {:effect (effect (add-counter eid card :agenda 1 nil))
                 :async true
