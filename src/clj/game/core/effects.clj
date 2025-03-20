@@ -67,6 +67,29 @@
      (->> (get-effect-maps state side eid effect-type targets)
           (mapv (get-effect-value state side eid targets))))))
 
+(defn get-tagged-effect-value
+  "Returns a function that returns the value of a given effect. If the :value is an fn,
+  it is called with the given state, side, eid, and targets. Otherwise, return the raw
+  value."
+  ([state side] (get-tagged-effect-value state side (make-eid state) nil))
+  ([state side eid] (get-tagged-effect-value state side eid nil))
+  ([state side eid targets]
+   (fn [{:keys [value card uuid]}]
+     (let [value (if (fn? value)
+                   (value state side eid card targets)
+                   value)]
+       (assoc value :cid (:cid card) :uuid uuid)))))
+
+(defn get-tagged-effects
+  "Gets all effects of a given type, and tags them all with the uuid of the source"
+  ([state side effect-type] (get-tagged-effects state side effect-type nil nil))
+  ([state side effect-type target] (get-tagged-effects state side effect-type target nil))
+  ([state side effect-type target targets]
+(let [eid (make-eid state)
+         targets (cons target targets)]
+     (->> (get-effect-maps state side eid effect-type targets)
+          (mapv (get-tagged-effect-value state side eid targets))))))
+
 (defn sum-effects
   "Sums the results from get-effects."
   ([state side effect-type] (sum-effects state side effect-type nil nil))

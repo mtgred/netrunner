@@ -5,7 +5,7 @@
    [game.core :as core]
    [game.core.card :refer :all]
    [game.core.cost-fns :refer [card-ability-cost]]
-   [game.core.ice :refer [pump-ice add-sub! update-all-icebreakers]]
+   [game.core.ice :refer [pump-ice update-all-icebreakers]]
    [game.core.payment :refer [->c]]
    [game.core.props :refer [add-counter]]
    [game.core.threat :refer [threat-level get-threat-level]]
@@ -253,8 +253,11 @@
                            :msg "end the run"
                            ;; don't need to actually do anything!
                            :async true}]
-              (dotimes [_ addl-subs]
-                (add-sub! state :corp (refresh ice) etr-sub))
+              (core/register-lingering-effect
+                state :corp (refresh ice)
+                {:type :additional-subroutines
+                 :value {:subroutines (vec (repeat addl-subs etr-sub))}})
+              (core/fake-checkpoint state)
               (is (= total-subs (count (:subroutines (refresh ice))))
                   (str "gained " addl-subs " ice subroutines"))
               (let [subs-per-break (:amount break)
@@ -5920,9 +5923,9 @@
 (deftest musaazi
   ;; Musaazi gains virus counters on successful runs and can spend virus counters from any installed card
   (do-game
-    (new-game {:corp {:deck ["Lancelot"]}
+    (new-game {:corp {:deck ["Swordsman"]}
                :runner {:deck ["Musaazi" "Imp"]}})
-    (play-from-hand state :corp "Lancelot" "HQ")
+    (play-from-hand state :corp "Swordsman" "HQ")
     (take-credits state :corp)
     (play-from-hand state :runner "Musaazi")
     (play-from-hand state :runner "Imp")
@@ -5942,9 +5945,9 @@
       (is (= 2 (get-strength (refresh musaazi))) "Musaazi strength 2")
       (is (no-prompt? state :runner) "No prompt open")
       (card-ability state :runner musaazi 0)
-      (click-prompt state :runner "Trash a program")
+      (click-prompt state :runner "Trash an AI program")
       (click-card state :runner musaazi)
-      (click-prompt state :runner "Resolve a Grail ice subroutine from HQ")
+      (click-prompt state :runner "Do 1 net damage")
       (click-card state :runner imp)
       (is (zero? (get-counters (refresh imp) :virus)) "Imp lost its final virus counter")
       (is (zero? (get-counters (refresh imp) :virus)) "Musaazi lost its virus counter"))))

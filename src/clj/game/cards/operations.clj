@@ -2882,27 +2882,23 @@
                                         card nil)))}}))
 
 (defcard "Sub Boost"
-  (let [new-sub {:label "[Sub Boost]: End the run"}]
-    {:sub-effect {:label "End the run"
-                  :msg "end the run"
-                  :async true
-                  :effect (effect (end-run eid card))}
-     :on-play {:choices {:card #(and (ice? %)
-                                     (rezzed? %))}
-               :change-in-game-state (req (some (every-pred ice? rezzed?) (all-installed state :corp)))
-               :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
-               :async true
-               :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
-                            (install-as-condition-counter state side eid card (get-card state target)))}
-     :static-abilities [{:type :gain-subtype
-                         :req (req (and (same-card? target (:host card))
-                                        (rezzed? target)))
-                         :value "Barrier"}]
-     :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
-     :events [{:event :rez
-               :condition :hosted
-               :req (req (same-card? (:card context) (:host card)))
-               :effect (req (add-extra-sub! state :corp (get-card state (:card context)) new-sub (:cid card)))}]}))
+  {:on-play {:choices {:card #(and (ice? %)
+                                   (rezzed? %))}
+             :change-in-game-state (req (some (every-pred ice? rezzed?) (all-installed state :corp)))
+             :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
+             :async true
+             :effect (req (install-as-condition-counter state side eid card (get-card state target)))}
+   :static-abilities [{:type :gain-subtype
+                       :req (req (and (same-card? target (:host card))
+                                      (rezzed? target)))
+                       :value "Barrier"}
+                      {:type :additional-subroutines
+                       :req (req (and (same-card? target (:host card))
+                                      (rezzed? target)))
+                       :value {:subroutines [{:label "[Sub Boost] End the run"
+                                              :msg "end the run"
+                                              :async true
+                                              :effect (effect (end-run eid card))}]}}]})
 
 (defcard "Subcontract"
   (letfn [(sc [i sccard]
@@ -3297,21 +3293,20 @@
                 card nil))}})
 
 (defcard "Wetwork Refit"
-  (let [new-sub {:label "[Wetwork Refit] Do 1 core damage"}]
-    {:on-play {:choices {:card #(and (ice? %)
-                                     (has-subtype? % "Bioroid")
-                                     (rezzed? %))}
-               :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 core damage\" before all its other subroutines")
-               :async true
-               :change-in-game-state (req (some #(and (ice? %) (rezzed? %) (has-subtype? % "Bioroid"))
-                                          (all-installed state :corp)))
-               :effect (req (add-extra-sub! state :corp target new-sub (:cid card) {:front true})
-                            (install-as-condition-counter state side eid card (get-card state target)))}
-     :sub-effect (do-brain-damage 1)
-     :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
-     :events [{:event :rez
-               :req (req (same-card? (:card context) (:host card)))
-               :effect (req (add-extra-sub! state :corp (get-card state (:card context)) new-sub (:cid card) {:front true}))}]}))
+  {:on-play {:choices {:card #(and (ice? %)
+                                   (has-subtype? % "Bioroid")
+                                   (rezzed? %))}
+             :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 core damage\" before all its other subroutines")
+             :async true
+             :change-in-game-state (req (some #(and (ice? %) (rezzed? %) (has-subtype? % "Bioroid"))
+                                              (all-installed state :corp)))
+             :effect (req (install-as-condition-counter state side eid card (get-card state target)))}
+   :static-abilities [{:type :additional-subroutines
+                       :duration :end-of-run
+                       :req (req (and (same-card? target (:host card))
+                                      (rezzed? target)))
+                       :value {:position :front
+                               :subroutines [(assoc (do-brain-damage 1) :label "[Wetwork Refit] Do 1 core damage")]}}]})
 
 (defcard "Witness Tampering"
   {:on-play

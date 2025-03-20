@@ -199,7 +199,10 @@
         ;; it's a select prompt - we want to click on a card
         (prompt-is-type? state side :select)
         (do (if (or (:cid prompt) (string? prompt))
-              (click-card state side prompt)
+              ;; we can still clock done on a select prompt though
+              (if (= prompt "Done")
+                (click-prompt state side prompt)
+                (click-card state side prompt))
               (click-card state (or (:side prompt) side) (:choice prompt)))
             (recur prompts))
         :else

@@ -67,50 +67,6 @@
    [jinteki.utils :refer :all]))
 
 ;;;; Helper functions specific for ice
-(defn reset-variable-subs
-  ([state side card total sub] (reset-variable-subs state side card total sub nil))
-  ([state side card total sub args]
-   (let [args (merge {:variable true} args)
-         old-subs (remove #(and (= (:cid card) (:from-cid %))
-                                (:variable %))
-                          (:subroutines card))
-         new-card (assoc card :subroutines old-subs)
-         new-subs (if (pos? total)
-                    (->> (range total)
-                         (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) new-card)
-                         :subroutines
-                         (into []))
-                    (into [] (map-indexed (fn [idx sub] (assoc sub :index idx)) (:subroutines new-card))))
-         new-card (assoc new-card :subroutines new-subs)]
-     (update! state :corp new-card)
-     (trigger-event state side :subroutines-changed (get-card state new-card)))))
-
-(defn gain-variable-subs
-  ([state side card total sub] (gain-variable-subs state side card total sub nil))
-  ([state side card total sub args]
-   (let [args (merge {:variable true} args)
-         new-subs (->> (range total)
-                       (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) card)
-                       :subroutines
-                       (into []))
-         new-card (assoc card :subroutines new-subs)]
-     (update! state :corp new-card)
-     (trigger-event state side :subroutines-changed (get-card state new-card)))))
-
-(defn reset-printed-subs
-  ([state side card total sub] (reset-printed-subs state side card total sub {:printed true}))
-  ([state side card total sub args]
-   (let [old-subs (remove #(and (= (:cid card) (:from-cid %))
-                                (:printed %))
-                          (:subroutines card))
-         new-card (assoc card :subroutines old-subs)
-         new-subs (->> (range total)
-                       (reduce (fn [ice _] (add-sub ice sub (:cid ice) args)) new-card)
-                       :subroutines)
-         new-card (assoc new-card :subroutines new-subs)]
-     (update! state :corp new-card)
-     (trigger-event state side :subroutines-changed (get-card state new-card)))))
-
 (defn all-subroutines-not-broken-by
   ([state side card type context]
    (let [ice (:ice context)
@@ -472,48 +428,46 @@
        (in-hand? card)
        (has-subtype? card "Grail")))
 
+(defn add-grail-subs
+  [cards]
+  (when (seq cards)
+    (let [t (first cards)
+          s (:subroutines (card-def t))]
+      {:prompt (str "Add " (:label (first s)) " subroutine where?")
+       :choices ["Front" "End"]
+       :async true
+       :effect (req (let [is-front? (when (= target "Front") :front)]
+                      (register-lingering-effect
+                        state side card
+                        {:type :additional-subroutines
+                         :duration :end-of-run
+                         :req (req (same-card? card target))
+                         :value {:position is-front?
+                                 :subroutines (vec s)}})
+                      (continue-ability state side (add-grail-subs (rest cards)) card nil)))})))
+
 (def reveal-grail
-  "Ability for revealing Grail ice from HQ."
-  {:label "Reveal up to 2 pieces of Grail ice from HQ"
+  {:prompt "Reveal up to 2 pieces of Grail ice from HQ (first ice chosen will be first sub)"
+   :interactive (req true)
    :choices {:max 2
              :card grail-in-hand}
    :async true
-   :effect (effect (reveal eid targets))
-   :msg (let [sub-label #(:label (first (:subroutines (card-def %))))]
-          (msg "reveal " (enumerate-str (map #(str (:title %) " (" (sub-label %) ")") targets))))})
-
-(def resolve-grail
-  "Ability for resolving a subroutine on a Grail ice in HQ."
-  {:label "Resolve a Grail ice subroutine from HQ"
-   :choices {:card grail-in-hand}
-   :async true
-   :effect (req (continue-ability state side (-> target card-def :subroutines first) card nil))})
+   :waiting-prompt true
+   :effect (req (wait-for (reveal-loud state side card nil targets)
+                          (continue-ability state side (add-grail-subs targets) card nil)))})
 
 (defn grail-ice
   "Creates data for grail ice"
   [ability]
-  {:abilities [reveal-grail]
-   :subroutines [ability resolve-grail]})
+  {:on-encounter reveal-grail
+   :subroutines [ability]})
 
 ;;; For NEXT ice and Tour Guide
 (defn variable-subs-ice
-  [pred subs-count sub]
-  (let [ef (effect (reset-variable-subs card (subs-count state) sub))
-        rez-ability {:silent (req true)
-                     :req (req (pred (:card context)))
-                     :effect ef}
-        trash-ability {:silent (req true)
-                       :req (req (and (installed? (:card context))
-                                      (rezzed? (:card context))
-                                      (pred (:card context))))
-                       :effect ef}]
-    {:on-rez {:effect ef}
-     :events [(assoc rez-ability :event :rez)
-              (assoc rez-ability :event :derez)
-              (assoc trash-ability :event :subroutines-should-update :req nil)
-              (assoc trash-ability :event :game-trash)
-              (assoc trash-ability :event :corp-trash)
-              (assoc trash-ability :event :runner-trash)]}))
+  [subs-count sub]
+  {:static-abilities [{:type :additional-subroutines
+                       :req (req (same-card? card target))
+                       :value (req {:subroutines (vec (repeat (subs-count state) sub))})}]})
 
 (defn subtype-ice-count
   "Counts number of rezzed pieces of ice with the given subtype"
@@ -531,7 +485,6 @@
 
 (defn next-ice-variable-subs [sub]
   (variable-subs-ice
-    (fn [card] (and (ice? card) (has-subtype? card "NEXT")))
     (fn [state] (next-ice-count (:corp @state)))
     sub))
 
@@ -568,13 +521,23 @@
 (defn zero-to-hero
   "Salvage, Tyrant, Woodcutter"
   [sub]
-  (let [ability {:req (req (same-card? card (:card context)))
-                 :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]
-    {:advanceable :while-rezzed
-     :events [(assoc ability :event :advance)
-              (assoc ability :event :subroutines-should-update :req nil)
-              (assoc ability :event :advancement-placed)
-              (assoc ability :event :rez)]}))
+  {:advanceable :while-rezzed
+   :static-abilities [{:type :additional-subroutines
+                       :req (req (and (same-card? card target)
+                                      (pos? (get-counters card :advancement))))
+                       :value (req {:position :front
+                                    :subroutines (vec (repeat (get-counters card :advancement) sub))})}]})
+
+;; For normally advanceable sub-growing ice
+(defn hero-to-hero
+  "Salvage, Tyrant, Woodcutter"
+  [sub]
+  {:advanceable :always
+   :static-abilities [{:type :additional-subroutines
+                       :req (req (and (same-card? card target)
+                                      (pos? (get-counters card :advancement))))
+                       :value (req {:position :front
+                                    :subroutines (vec (repeat (get-counters card :advancement) sub))})}]})
 
 ;; For 7 Wonders ice
 (defn wonder-sub
@@ -826,12 +789,9 @@
                  (install-from-hq-or-archives-sub)]})
 
 (defcard "Ashigaru"
-  {:on-rez {:effect (effect (reset-variable-subs card (count (:hand corp)) end-the-run))}
-   :events [{:event :card-moved
-             :req (req (and (corp? (:moved-card context))
-                            (or (in-hand? (:moved-card context))
-                                (= :hand (first (:previous-zone (:moved-card context)))))))
-             :effect (effect (reset-variable-subs card (count (:hand corp)) end-the-run))}]})
+  (variable-subs-ice
+    (fn [state] (count (get-in @state [:corp :hand])))
+    end-the-run))
 
 (defcard "Assassin"
   {:subroutines [(trace-ability 5 (do-net-damage 3))
@@ -947,27 +907,17 @@
                  end-the-run]})
 
 (defcard "Blockchain"
-  (let [sub-count (fn [corp]
+  (let [sub-count (fn [state]
                     (quot (count (filter #(and (operation? %)
                                                (has-subtype? % "Transaction")
                                                (faceup? %))
-                                         (:discard corp)))
+                                         (get-in @state [:corp :discard])))
                           2))
-        sub (corps-gains-and-runner-loses-credits 1 1)
-        reset-subs-abi {:effect (effect (reset-variable-subs card (sub-count corp)
-                                                             sub
-                                                             {:variable true :front true}))}]
-    {:on-rez reset-subs-abi
-     :events [(merge {:event :card-moved
-                      :req (req (and
-                                  (operation? (:moved-card context))
-                                  (has-subtype? (:moved-card context) "Transaction")
-                                  (or (in-discard? (:moved-card context))
-                                      (= :discard (first (:previous-zone (:moved-card context)))))))}
-                     reset-subs-abi)
-              (merge {:event :subroutines-should-update
-                      :silent (req true)}
-                     reset-subs-abi)]
+        sub (corps-gains-and-runner-loses-credits 1 1)]
+    {:static-abilities [{:type :additional-subroutines
+                         :req (req (same-card? card target))
+                         :value (req {:position :front
+                                      :subroutines (vec (repeat (sub-count state) sub))})}]
      :subroutines [sub
                    end-the-run]}))
 
@@ -1057,9 +1007,14 @@
                   discard-card-to-end-the-run-sub]}))
 
 (defcard "Brainstorm"
-  {:on-encounter {:effect (effect (gain-variable-subs card (count (:hand runner)) (do-brain-damage 1)))}
-   :events [{:event :run-ends
-             :effect (effect (reset-variable-subs card 0 nil))}]})
+    {:on-encounter {:interactive (req true)
+                    :effect (req (let [sub-count (count (:hand runner))]
+                                   (register-lingering-effect
+                                     state side card
+                                     {:type :additional-subroutines
+                                      :req (req (same-card? card target))
+                                      :duration :end-of-run
+                                      :value (req {:subroutines (vec (repeat sub-count (do-brain-damage 1)))})})))}})
 
 (defcard "Builder"
   (let [sub {:label "Place 1 advancement token on a piece of ice that can be advanced protecting this server"
@@ -1522,13 +1477,10 @@
              :req (req (and (has-subtype? (:card context) "Harmonic")
                             (ice? (:card context))))
              :async true
-             :effect (effect (add-counter eid card :power 1 nil))}
-            {:event :subroutines-should-update
-             :silent (req true)
-             :effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))}
-            {:event :counter-added
-             :req (req (same-card? card (:card context)))
-             :effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))}]})
+             :effect (effect (add-counter eid card :power 1 nil))}]
+   :static-abilities [{:type :additional-subroutines
+                       :req (req (same-card? card target))
+                       :value (req {:subroutines (vec (repeat (get-counters card :power) end-the-run))})}]})
 
 (defcard "Eli 1.0"
   {:subroutines [end-the-run
@@ -1643,23 +1595,20 @@
                  end-the-run]})
 
 (defcard "Envelopment"
-  (let [subs-effect (effect (reset-variable-subs card (get-counters card :power) end-the-run {:variable true :front true}))]
-    {:on-rez {:async true
-              :effect (effect (add-counter eid card :power 4 nil))}
-     :events [{:event :corp-turn-begins
-               :req (req (pos? (get-counters card :power)))
-               :async true
-               :effect (effect (add-counter eid card :power -1 nil))}
-              {:event :subroutines-should-update
-               :silent (req true)
-               :effect subs-effect}
-              {:event :counter-added
-               :req (req (same-card? card (:card context)))
-               :effect subs-effect}]
-     :subroutines [{:label "Trash this ice"
-                    :async true
-                    :msg (msg "trash " (:title card))
-                    :effect (effect (trash eid card {:cause :subroutine}))}]}))
+  {:on-rez {:async true
+            :effect (effect (add-counter eid card :power 4 nil))}
+   :events [{:event :corp-turn-begins
+             :req (req (pos? (get-counters card :power)))
+             :async true
+             :effect (effect (add-counter eid card :power -1 nil))}]
+   :subroutines [{:label "Trash this ice"
+                  :async true
+                  :msg (msg "trash " (:title card))
+                  :effect (effect (trash eid card {:cause :subroutine}))}]
+   :static-abilities [{:type :additional-subroutines
+                       :req (req (same-card? card target))
+                       :value (req {:position :front
+                                    :subroutines (vec (repeat (get-counters card :power) end-the-run))})}]})
 
 (defcard "Envelope"
   {:subroutines [(do-net-damage 1)
@@ -2191,27 +2140,14 @@
    :subroutines [end-the-run]})
 
 (defcard "Hive"
-  (let [corp-points (fn [corp] (min 5 (max 0 (- 5 (:agenda-point corp 0)))))
-        ability {:silent (req true)
-                 :effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}
-        reset-to-5 {:silent (req true)
-                    :effect (effect (reset-printed-subs card 5 end-the-run))}]
-    {:events [(assoc ability
-                     :event :rez
-                     :req (req (same-card? card (:card context))))
-              (assoc ability :event :agenda-scored)
-              (assoc ability :event :subroutines-should-update)
-              (assoc ability
-                     :event :card-moved
-                     :req (req (= :corp (:scored-side (:card context)))))]
-     :abilities [{:label "Lose subroutines"
-                  :msg (msg "lose " (- 5 (corp-points corp)) " subroutines")
-                  :effect (effect (reset-printed-subs card (corp-points corp) end-the-run))}]
-     :subroutines [end-the-run
-                   end-the-run
-                   end-the-run
-                   end-the-run
-                   end-the-run]}))
+  {:static-abilities [{:type :lose-printed-subroutines
+                       :req (req (same-card? card target))
+                       :value (req (max 0 (get-in @state [:corp :agenda-point])))}]
+   :subroutines [end-the-run
+                 end-the-run
+                 end-the-run
+                 end-the-run
+                 end-the-run]})
 
 (defcard "Holmegaard"
   {:subroutines [(trace-ability 4 {:label "Runner cannot access any cards this run"
@@ -2382,12 +2318,10 @@
                 :effect (req (unregister-effect-by-uuid state side lingering))}])))}]})
 
 (defcard "Information Overload"
-  {:on-encounter (tag-trace 1)
-   :on-rez {:effect (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))}
-   :events [{:event :subroutines-should-update
-             :effect (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))}
-            {:event :tags-changed
-             :effect (effect (reset-variable-subs card (count-tags state) runner-trash-installed-sub))}]})
+  (assoc (variable-subs-ice
+           (fn [state] (count-tags state))
+           runner-trash-installed-sub)
+         :on-encounter (tag-trace 1)))
 
 (defcard "Interrupt 0"
   (let [sub {:label "Make the Runner pay 1 [Credits] to use icebreaker"
@@ -2419,13 +2353,9 @@
    :leave-play (req (remove-watch state (keyword (str "iq" (:cid card)))))})
 
 (defcard "Ireress"
-  (let [sub (runner-loses-credits 1)
-        ability {:effect (effect (reset-variable-subs card (count-bad-pub state) sub))}]
-    {:events [(assoc ability
-                     :event :rez
-                     :req (req (same-card? card (:card context))))
-              (assoc ability :event :corp-gain-bad-publicity)
-              (assoc ability :event :corp-lose-bad-publicity)]}))
+  (variable-subs-ice
+    (fn [state] (count-bad-pub state))
+    (runner-loses-credits 1)))
 
 (defcard "It's a Trap!"
   {:on-expose {:msg "do 2 net damage"
@@ -2594,9 +2524,14 @@
                :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}}))
 
 (defcard "Komainu"
-  {:on-encounter {:effect (effect (gain-variable-subs card (count (:hand runner)) (do-net-damage 1)))}
-   :events [{:event :run-ends
-             :effect (effect (reset-variable-subs card 0 nil))}]})
+    {:on-encounter {:interactive (req true)
+                    :effect (req (let [sub-count (count (:hand runner))]
+                                   (register-lingering-effect
+                                     state side card
+                                     {:type :additional-subroutines
+                                      :req (req (same-card? card target))
+                                      :duration :end-of-run
+                                      :value (req {:subroutines (vec (repeat sub-count (do-net-damage 1)))})})))}})
 
 (defcard "Konjin"
   {:on-encounter (do-psi {:async true
@@ -2654,6 +2589,7 @@
     :choices {:card #(and (ice? %)
                           (active? %))
               :not-self true}
+    :msg (msg "choose " (card-str state target))
     :effect (req (let [target-subtypes (:subtype target)]
                    (register-lingering-effect
                      state :corp card
@@ -2661,16 +2597,14 @@
                       :duration :end-of-run
                       :req (req (same-card? card target))
                       :value (:subtypes target)})
-                   (system-msg state :corp (str "uses " (:title card) " to choose " (card-str state target)))
-                   (doseq [sub (:subroutines target)]
-                     (add-sub! state side (get-card state card) sub (:cid target) {:front true}))
-                   (register-events
-                     state side card
-                     (let [cid (:cid target)]
-                       [{:event :run-ends
-                         :unregister-once-resolved true
-                         :req (req (get-card state card))
-                         :effect (effect (remove-subs! (get-card state card) #(= cid (:from-cid %))))}]))))}
+                   (let [additional-subs (:subroutines target)]
+                     (register-lingering-effect
+                       state :corp card
+                       {:type :additional-subroutines
+                        :req (req (same-card? card target))
+                        :duration :end-of-run
+                        :value {:position :front
+                                :subroutines (mapv :sub-effect additional-subs)}}))))}
    :subroutines [{:label "End the run unless the Runner shuffles the grip into the stack"
                   :player :runner
                   :async true
@@ -2888,10 +2822,13 @@
                                 :unregister-once-resolved true
                                 :req (req (rezzed? (:ice context)))
                                 :msg (msg "give " (:title (:ice context)) "\"[Subroutine] End the run\" after all its other subroutines")
-                                :effect (effect (add-sub! (:ice context) end-the-run (:cid card) {:back true}))}
-                               {:event :end-of-encounter
-                                :duration :end-of-run
-                                :effect (effect (remove-sub! (:ice context) #(= (:cid card) (:from-cid %))))}]))}]})
+                                :effect (req (register-lingering-effect
+                                               state side card
+                                               (let [t-card (:ice context)]
+                                                 {:type :additional-subroutines
+                                                  :req (req (same-card? t-card target))
+                                                  :duration :end-of-run
+                                                  :value {:subroutines [end-the-run]}})))}]))}]})
 
 (defcard "Markus 1.0"
   {:subroutines [runner-trash-installed-sub
@@ -2903,16 +2840,9 @@
                  end-the-run]})
 
 (defcard "Masvingo"
-  (let [ability {:req (req (same-card? card (:card context)))
-                 :effect (effect (reset-variable-subs card (get-counters card :advancement) end-the-run))}]
-    {:advanceable :always
-     ;; TODO - can this just be data?
-     :on-rez {:async true
-              :effect (effect (add-prop eid card :advance-counter 1 {:placed true}))}
-     :events [(assoc ability :event :advance)
-              (assoc ability :event :subroutines-should-update :req nil)
-              (assoc ability :event :advancement-placed)
-              (assoc ability :event :rez)]}))
+  (assoc (hero-to-hero end-the-run)
+         :on-rez {:async true
+                  :effect (effect (add-prop eid card :advance-counter 1 {:placed true}))}))
 
 (defcard "Matrix Analyzer"
   {:on-encounter {:cost [(->c :credit 1)]
@@ -3182,24 +3112,12 @@
   {:subroutines [(do-net-damage 3)]})
 
 (defcard "News Hound"
-  (let [gain-sub {:req (req (and (= 1 (count (concat (:current corp) (:current runner))))
-                                 (has-subtype? (:card context) "Current")))
-                  :msg "make News Hound gain \"[subroutine] End the run\""
-                  :effect (effect (reset-variable-subs card 1 end-the-run {:back true}))}
-        lose-sub {:req (req (and (zero? (count (concat (:current corp) (:current runner))))
-                                 (has-subtype? (:card context) "Current")
-                                 (active? (:card context))))
-                  :msg "make News Hound lose \"[subroutine] End the run\""
-                  :effect (effect (reset-variable-subs card 0 nil))}]
-    {:on-rez {:effect (req (when (pos? (count (concat (get-in @state [:corp :current])
-                                                      (get-in @state [:runner :current]))))
-                             (reset-variable-subs state side card 1 end-the-run {:back true})))}
-     :events [(assoc gain-sub :event :play-event)
-              (assoc gain-sub :event :play-operation)
-              (assoc lose-sub :event :corp-trash)
-              (assoc lose-sub :event :runner-trash)
-              (assoc lose-sub :event :game-trash)]
-     :subroutines [(tag-trace 3)]}))
+  {:static-abilities [{:type :additional-subroutines
+                       :req (req (and (same-card? card target)
+                                      (pos? (count (concat (get-in @state [:corp :current])
+                                                           (get-in @state [:runner :current]))))))
+                       :value {:subroutines [end-the-run]}}]
+   :subroutines [(tag-trace 3)]})
 
 (defcard "NEXT Bronze"
   {:subroutines [end-the-run]
@@ -3393,10 +3311,13 @@
                                                     " from the grip, and gain " (quantify n "subroutine")))
                                    (wait-for
                                      (reveal state side (:hand runner))
-                                     (gain-variable-subs state side card n sub)
-                                     (effect-completed state side eid))))}
-     :events [{:event :run-ends
-               :effect (effect (reset-variable-subs card 0 nil))}]}))
+                                     (register-lingering-effect
+                                       state side card
+                                       {:type :additional-subroutines
+                                        :duration :end-of-run
+                                        :req (req (same-card? card target))
+                                        :value {:subroutines (vec (repeat n sub))}})
+                                     (effect-completed state side eid))))}}))
 
 (defcard "Pharos"
   {:advanceable :always
@@ -3677,16 +3598,14 @@
   {:subroutines [{:label "Give encountered ice \"End the run\""
                   :msg "give encountered ice \"[Subroutine] End the run\" after all its other subroutines for the remainder of the run"
                   :effect (effect
-                            (register-events
+                            (register-lingering-effect
                               card
-                              [{:event :encounter-ice
-                                :duration :end-of-run
-                                :req (req (not (same-card? card (:ice context))))
-                                :msg (msg "give " (:title (:ice context)) "\"[Subroutine] End the run\" after all its other subroutines")
-                                :effect (effect (add-sub! (:ice context) end-the-run (:cid card) {:back true}))}
-                               {:event :end-of-encounter
-                                :duration :end-of-run
-                                :effect (effect (remove-sub! (:ice context) #(= (:cid card) (:from-cid %))))}]))}]})
+                              {:type :additional-subroutines
+                               :duration :end-of-run
+                               :req (req (and (rezzed? target)
+                                              (same-card? target current-ice)
+                                              (not (same-card? card target))))
+                               :value {:subroutines [end-the-run]}}))}]})
 
 (defcard "Seraph"
   (let [encounter-ab
@@ -3887,15 +3806,17 @@
                  end-the-run]})
 
 (defcard "Starlit Knight"
-  (let [sub-count (fn [state]
-                    (sum-tag-effects state))
-        sub end-the-run]
-    {:on-encounter {:req (req (threat-level 4 state))
-                    :effect (effect (gain-variable-subs card (sub-count state) sub {:variable true :front false :end true}))}
-     :events [{:event :run-ends
-               :effect (effect (reset-variable-subs card 0 nil))}]
-     :subroutines [(give-tags 1)
-                   (give-tags 1)]}))
+  {:on-encounter {:interactive (req true)
+                  :req (req (threat-level 4 state))
+                  :effect (req (let [subs (sum-tag-effects state)]
+                                 (register-lingering-effect
+                                   state side card
+                                   {:type :additional-subroutines
+                                    :duration :end-of-run
+                                    :req (req (same-card? card target))
+                                    :value (req {:subroutines (vec (repeat subs end-the-run))})})))}
+   :subroutines [(give-tags 1)
+                 (give-tags 1)]})
 
 (defcard "Stavka"
   {:on-rez {:optional {:prompt "Trash another card to give Stavka +5 strength?"
@@ -3964,15 +3885,9 @@
                             (wait-for (pay state :runner (make-eid state eid) card [(->c :credit 3)])
                                       (system-msg state :runner (:msg async-result))
                                       (effect-completed state side eid))
-                            (continue-ability state :corp trash-program-sub card nil)))}
-        ability {:req (req (same-card? card (:card context)))
-                 :effect (effect (reset-variable-subs card (get-counters card :advancement) sub))}]
-    {:advanceable :always
-     :on-rez take-bad-pub
-     :events [(assoc ability :event :advance)
-              (assoc ability :event :subroutines-should-update :req nil)
-              (assoc ability :event :advancement-placed)
-              (assoc ability :event :rez)]}))
+                            (continue-ability state :corp trash-program-sub card nil)))}]
+    (assoc (hero-to-hero sub)
+           :on-rez take-bad-pub)))
 
 (defcard "Swordsman"
   {:static-abilities [{:type :cannot-break-subs-on-ice
@@ -4110,25 +4025,13 @@
                    :duration :end-of-run
                    :unregister-once-resolved true
                    :msg (msg "duplicate each subroutine on " (:title (:ice context)))
-                   :effect
-                   (req (let [curr-subs (map #(assoc % :from-cid (:cid (:ice context))) (:subroutines (:ice context)))
-                              tldr-subs (map #(assoc % :from-cid (:cid card)) curr-subs)
-                              new-subs (->> (interleave curr-subs tldr-subs)
-                                            (reduce
-                                              (fn [ice sub] (add-sub ice sub (:from-cid sub) nil))
-                                              (assoc (:ice context) :subroutines []))
-                                            :subroutines
-                                            (into []))
-                              new-card (assoc (:ice context) :subroutines new-subs)]
-                          (update! state :corp new-card)
-                          (register-events
-                            state side card
-                            (let [cid (:cid card)]
-                              [{:event :end-of-encounter
-                                :duration :end-of-encounter
-                                :unregister-once-resolved true
-                                :req (req (get-card state new-card))
-                                :effect (effect (remove-subs! (get-card state new-card) #(= cid (:from-cid %))))}]))))}]))}]})
+                   :effect (req (let [t (:ice context)]
+                                  (register-lingering-effect
+                                    state side card
+                                    {:type :tldr-effect
+                                     :duration :end-of-encounter
+                                     :value true
+                                     :req (req (same-card? t target))})))}]))}]})
 
 (defcard "TMI"
   {:on-rez {:trace {:base 2
@@ -4149,7 +4052,6 @@
 
 (defcard "Tour Guide"
   (variable-subs-ice
-    (fn [card] (asset? card))
     (fn [state] (count (filter asset? (all-active-installed state :corp))))
     end-the-run))
 
@@ -4513,19 +4415,12 @@
                   :effect (effect (end-run :corp eid card))}]})
 
 (defcard "Winchester"
-  (let [ab {:effect (req (reset-variable-subs state :corp card
-                                              (if (protecting-hq? card) 1 0)
-                                              (trace-ability 3 end-the-run) {:back true}))}]
-    {:subroutines [(trace-ability 4 trash-program-sub)
-                   (trace-ability 3 trash-hardware-sub)]
-     :on-rez ab
-     :events [(assoc ab :event :rez)
-              (assoc ab :event :card-moved)
-              (assoc ab :event :approach-ice)
-              (assoc ab :event :swap
-                     :req (req (and (= :installed (:swap-type context))
-                                    (or (protecting-hq? (:card1 context))
-                                        (protecting-hq? (:card2 context))))))]}))
+  {:subroutines [(trace-ability 4 trash-program-sub)
+                 (trace-ability 3 trash-hardware-sub)]
+   :static-abilities [{:type :additional-subroutines
+                       :req (req (and (same-card? card target)
+                                      (protecting-hq? card)))
+                       :value {:subroutines [(trace-ability 3 end-the-run)]}}]})
 
 (defcard "Woodcutter"
   (zero-to-hero (do-net-damage 1)))

@@ -1729,45 +1729,21 @@
       (strength-pump (->c :credit 2 {:stealth 1}) 4 :end-of-run)]}))
 
 (defcard "Hush"
-  (let [reset-card-to-printed-subs
-        (fn [state side card]
-          (let [card (get-card state card)
-                subs (subroutines-init card (card-def card))
-                new-card (assoc card :subroutines subs)]
-            (update! state :corp new-card)
-            (trigger-event state side :subroutines-changed (get-card state new-card))))
-        subroutines-should-update {:silent (req true)
-                                   :effect (req (trigger-event
-                                                  state :corp
-                                                  :subroutines-should-update))}]
-    (trojan
-      {:implementation "Experimentally implemented. If it doesn't work correctly, please file a bug report with the exact case and cards used, and we will investigate."
-       :static-abilities [{:type :disable-card
-                           :req (req (same-card? target (:host card)))
-                           :value true}]
-       :on-install {:effect (req (reset-card-to-printed-subs state side (:host card)))}
-       ;; hoping and praying that it's impossible for this to cause a feedback loop
-       :events [{:event :subroutines-changed
-                 :req (req (and
-                             (same-card? target (:host card))
-                             (or (some :variable (:subroutines target))
-                                 (some #(not (:printed %)) (:subroutines target)))))
-                 :effect (req (reset-card-to-printed-subs state side target))}]
-       :on-trash subroutines-should-update
-       :move-zone (req (continue-ability state side subroutines-should-update card nil))
-       :abilities [{:action true
-                    :label "Host on a piece of ice"
-                    :prompt "Choose a piece of ice"
-                    :cost [(->c :click 1)]
-                    :choices {:req (req (and (ice? target)
-                                             (installed? target)
-                                             (can-host? state target)))}
-                    :msg (msg "host itself on " (card-str state target))
-                    :async true
-                    :effect (req (host state side target card)
-                                 (update-disabled-cards state)
-                                 (reset-card-to-printed-subs state side target)
-                                 (continue-ability state side subroutines-should-update card nil))}]})))
+  (trojan
+    {:implementation "Experimentally implemented. If it doesn't work correctly, please file a bug report with the exact case and cards used, and we will investigate."
+     :static-abilities [{:type :disable-card
+                         :req (req (same-card? target (:host card)))
+                         :value true}]
+     :abilities [{:action true
+                  :label "Host on a piece of ice"
+                  :prompt "Choose a piece of ice"
+                  :cost [(->c :click 1)]
+                  :choices {:req (req (and (ice? target)
+                                           (installed? target)
+                                           (can-host? state target)))}
+                  :msg (msg "host itself on " (card-str state target))
+                  :effect (req (host state side target card)
+                               (update-disabled-cards state))}]}))
 
 (defcard "Hyperbaric"
   (auto-icebreaker {:data {:counter {:power 1}}
