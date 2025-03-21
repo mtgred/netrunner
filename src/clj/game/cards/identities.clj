@@ -52,7 +52,7 @@
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? name-zone
                               target-server zone->name]]
-   [game.core.shuffling :refer [shuffle! shuffle-into-deck]]
+   [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-cards-into-deck!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -723,9 +723,11 @@
              :player :corp
              :req (req (and (not (:disabled card))
                             (not (is-disabled? state side card))
-                            (has-most-faction? state :corp "Weyland Consortium")
-                            (some ice? (all-installed state side))))
-             :prompt "Choose a piece of ice to place 1 advancement token on"
+                            (has-most-faction? state :corp "Weyland Consortium")))
+             ;; TODO - ncigs change
+             ;; :change-in-game-state {:silent true
+             ;;                        :req (req (seq (filter ice? (all-installed state :corp))))}
+             :prompt "Choose a piece of ice to place 1 advancement counter on"
              :choices {:card #(and (installed? %)
                                    (ice? %))}
              :msg (msg "place 1 advancement token on " (card-str state target))
@@ -980,6 +982,7 @@
   {:events (let [inf {:req (req (and (not (:disabled card))
                                      (not (is-disabled? state side card))
                                      (has-most-faction? state :corp "NBN")))
+                      :interactive (req true)
                       :msg "give the Runner 1 tag"
                       :async true
                       :effect (effect (gain-tags :corp eid 1))}]
@@ -1015,7 +1018,6 @@
              :req (req (and (has-most-faction? state :runner "Shaper")
                             (first-event? state side :runner-install)))
              :msg "draw 1 card"
-             :once :per-turn
              :async true
              :effect (effect (draw eid 1))}]})
 
@@ -2106,17 +2108,21 @@
             {:event :runner-turn-ends
              :req (req (and (not (:disabled card))
                             (not (is-disabled? state side card))
-                            (has-most-faction? state :corp "Haas-Bioroid")
-                            (pos? (count (:discard corp)))))
-             :prompt "Choose a card in Archives to shuffle into R&D"
-             :choices {:card #(and (corp? %)
-                                   (in-discard? %))}
-             :player :corp
-             :show-discard true
-             :msg (msg "shuffle " (if (:seen target) (:title target) "a card")
-                       " into R&D")
-             :effect (effect (move :corp target :deck)
-                             (shuffle! :corp :deck))}]})
+                            (has-most-faction? state :corp "Haas-Bioroid")))
+             :async true
+             :effect (req (if (empty? (:discard corp))
+                            (do (shuffle-cards-into-deck! state :corp card :card [])
+                                (effect-completed state side eid))
+                            (continue-ability
+                              state side
+                              {:prompt "Choose a card in Archives to shuffle into R&D"
+                               :choices {:card #(and (corp? %)
+                                                     (in-discard? %))
+                                         :all true}
+                               :player :corp
+                               :show-discard true
+                               :effect (req (shuffle-cards-into-deck! state :corp card :corp target))}
+                              card nil)))}]})
 
 (defcard "Sunny Lebeau: Security Specialist"
   ;; No special implementation
@@ -2142,22 +2148,29 @@
                 :msg (msg "flip [their] identity")}]})
 
 (defcard "Synthetic Systems: The World Re-imagined"
-  {:events [{:event :pre-start-game
-             :effect draft-points-target}]
-   :flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
-                                    (not (is-disabled? state side card))
-                                    (has-most-faction? state :corp "Jinteki")
-                                    (<= 2 (count (filter ice? (all-installed state :corp))))))}
-   :abilities [{:prompt "Choose 2 installed pieces of ice to swap"
-                :label "swap 2 installed pieces of ice"
-                :choices {:card #(and (installed? %)
-                                      (ice? %))
-                          :max 2
-                          :all true}
-                :once :per-turn
-                :effect (req (apply swap-ice state side targets))
-                :msg (msg "swap the positions of " (card-str state (first targets))
-                          " and " (card-str state (second targets)))}]})
+  (let [abi {:prompt "Choose 2 installed pieces of ice to swap"
+             :label "swap 2 installed pieces of ice"
+             :choices {:card #(and (installed? %)
+                                   (ice? %))
+                       :max 2
+                       :all true}
+             :once :per-turn
+             :effect (req (apply swap-ice state side targets))
+             :msg (msg "swap the positions of " (card-str state (first targets))
+                       " and " (card-str state (second targets)))}]
+    {:events [{:event :pre-start-game
+               :effect draft-points-target}
+              {:events :corp-turn-begins
+               :optional {:req (req (and (has-most-faction? state :corp "Jinteki")
+                                         (<= 2 (count (filter ice? (all-installed state :corp))))))
+                          :prompt "Swap two ice?"
+                          :waiting-prompt true
+                          :yes-ability abi}}]
+     :flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
+                                      (not (is-disabled? state side card))
+                                      (has-most-faction? state :corp "Jinteki")
+                                      (<= 2 (count (filter ice? (all-installed state :corp))))))}
+     :abilities [abi]}))
 
 (defcard "Tāo Salonga: Telepresence Magician"
   (let [swap-ability
@@ -2391,13 +2404,8 @@
             {:event :runner-trash
              :interactive (req true)
              :req (req (and (has-most-faction? state :runner "Anarch")
-                            (corp? (:card target))
-                            (pos? (count (:discard runner)))
-                            (not (zone-locked? state :runner :discard))))
-             :msg (msg "shuffle " (:title (last (:discard runner))) " into the stack")
-             :effect (effect (move :runner (last (:discard runner)) :deck)
-                             (shuffle! :runner :deck)
-                             (trigger-event :searched-stack))}]})
+                            (corp? (:card target))))
+             :effect (req (shuffle-cards-into-deck! state :runner card :runner (last (:discard runner))))}]})
 
 (defcard "Zahya Sadeghi: Versatile Smuggler"
   {:events [{:event :run-ends
