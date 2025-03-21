@@ -1,5 +1,6 @@
 (ns game.core.shuffling
   (:require
+   [clojure.string :as str]
    [game.core.card :refer [corp? in-discard? get-card]]
    [game.core.eid :refer [effect-completed]]
    [game.core.engine :refer [trigger-event]]
@@ -25,27 +26,28 @@
 
 (defn shuffle-cards-into-deck!
   "Shuffles a given set of cards into the deck. Will print out what's happened. Will always shuffle."
-  [state from-side card shuffle-side & targets]
-  (let [targets (set (keep #(get-card state %) (flatten targets)))
-        targets (filter #(if (= (:zone %) [:discard]) (not (zone-locked? state shuffle-side :discard)) true) targets)
-        lhs (str " uses " (:title card)
-                 (when-not (= from-side shuffle-side)
-                   (str " to force the " (clojure.string/capitalize (name shuffle-side))))
-                 " to shuffle ")
-        rhs (if (= shuffle-side :corp) "Archives" "the Stack")]
-    (if (seq targets)
-      (let [cards-by-zone (group-by #(select-keys % [:side :zone]) (flatten targets))
-            strs (enumerate-str (map #(str (enumerate-str (map :title (get cards-by-zone %)))
-                                           " from " (name-zone (:side %) (:zone %)))
-                                     (keys cards-by-zone)))]
-        (doseq [t targets]
-          (when-not (= (:zone t) [:deck])
-            (move state shuffle-side t :deck)))
-        (system-msg state from-side (str lhs strs " into " rhs))
-        (shuffle! state shuffle-side :deck))
-      (do
-        (system-msg state from-side (str lhs rhs))
-        (shuffle! state shuffle-side :deck)))))
+  ([state from-side card targets] (shuffle-cards-into-deck! state from-side card from-side targets))
+  ([state from-side card shuffle-side targets]
+   (let [targets (set (keep #(get-card state %) (flatten targets)))
+         targets (filter #(if (= (:zone %) [:discard]) (not (zone-locked? state shuffle-side :discard)) true) targets)
+         lhs (str " uses " (:title card)
+                  (when-not (= from-side shuffle-side)
+                    (str " to force the " (str/capitalize (name shuffle-side))))
+                  " to shuffle ")
+         rhs (if (= shuffle-side :corp) "Archives" "the Stack")]
+     (if (seq targets)
+       (let [cards-by-zone (group-by #(select-keys % [:side :zone]) (flatten targets))
+             strs (enumerate-str (map #(str (enumerate-str (map :title (get cards-by-zone %)))
+                                            " from " (name-zone (:side %) (:zone %)))
+                                      (keys cards-by-zone)))]
+         (doseq [t targets]
+           (when-not (= (:zone t) [:deck])
+             (move state shuffle-side t :deck)))
+         (system-msg state from-side (str lhs strs " into " rhs))
+         (shuffle! state shuffle-side :deck))
+       (do
+         (system-msg state from-side (str lhs rhs))
+         (shuffle! state shuffle-side :deck))))))
 
 (defn shuffle-into-deck
   [state side & args]

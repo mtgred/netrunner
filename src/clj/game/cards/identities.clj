@@ -2111,7 +2111,7 @@
                             (has-most-faction? state :corp "Haas-Bioroid")))
              :async true
              :effect (req (if (empty? (:discard corp))
-                            (do (shuffle-cards-into-deck! state :corp card :card [])
+                            (do (shuffle-cards-into-deck! state :corp card [])
                                 (effect-completed state side eid))
                             (continue-ability
                               state side
@@ -2121,7 +2121,7 @@
                                          :all true}
                                :player :corp
                                :show-discard true
-                               :effect (req (shuffle-cards-into-deck! state :corp card :corp target))}
+                               :effect (req (shuffle-cards-into-deck! state :corp card [target]))}
                               card nil)))}]})
 
 (defcard "Sunny Lebeau: Security Specialist"
@@ -2405,7 +2405,7 @@
              :interactive (req true)
              :req (req (and (has-most-faction? state :runner "Anarch")
                             (corp? (:card target))))
-             :effect (req (shuffle-cards-into-deck! state :runner card :runner (last (:discard runner))))}]})
+             :effect (req (shuffle-cards-into-deck! state :runner card [(last (:discard runner))]))}]})
 
 (defcard "Zahya Sadeghi: Versatile Smuggler"
   {:events [{:event :run-ends
