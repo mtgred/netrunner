@@ -43,10 +43,15 @@
   (println "Removing old images from db cards")
   (mc/update db card-collection {} {$unset {:faces 1}} {:multi true})
   (mc/update db card-collection {} {$unset {:images 1}} {:multi true}))
+;; note: this should select a period, perhaps preceeded by an alphabetic string,
+;; so long as it either has front,back,or some numbers behind it
+;; the excess dots are because the lookbehind needs to be fixed width
+;; but this ensures we don't split on "front.", and instead split on "." for multi-faced cards
+(def ^:cost image-select-regex #"(?<=(.tank|house|ewery|front|.back|....[0123456789]))[a-zA-Z]*\.")
 
 (defn- add-flip-card-image
   [db base-path lang resolution art-set filename]
-  (let [code-face (first (str/split filename #"\."))
+  (let [code-face (first (str/split filename image-select-regex))
         code-face-split (str/split code-face #"-")
         code (first code-face-split)
         face (second code-face-split)
@@ -66,14 +71,14 @@
    (let [filename (.getName f)]
      (if (str/includes? filename "-")
        (add-flip-card-image db base-path lang resolution art-set filename)
-       (let [code (first (str/split filename #"\."))
+       (let [code (first (str/split filename image-select-regex))
              k (str/join "." ["images" (name lang) (name resolution) (name art-set)])
              prev-k-root (if (= :stock art-set) code (name art-set))
              prev-k (str/join "." ["images" (name lang) (name resolution) prev-k-root])
              path (str/join "/" [base-path (name lang) (name resolution) (name art-set) filename])]
          (when-not (some #(= % code) cards-to-skip)
-           (mc/update db card-collection {:code code} {$set {k path}})
-           (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$set {prev-k path}})))))))
+           (mc/update db card-collection {:code code} {$addToSet {k path}})
+           (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$addToSet {prev-k path}})))))))
 
 (defn- add-alt-images
   "All all images in the specified alt directory"

@@ -59,7 +59,11 @@
               "stock")
         card (if (or (:face card) (:images card)) card (get @all-cards (get-title card)))
         images (image-or-face card)]
-    (get-image-path images (keyword lang) (keyword res) (keyword art))))
+    (if (sequential? art)
+      (let [art-urls (get-image-path images (keyword lang) (keyword res) (keyword (first art)))
+            chosen-art (nth art-urls (second art))]
+        [chosen-art])
+      (get-image-path images (keyword lang) (keyword res) (keyword art)))))
 
 
 (defonce button-channel (chan))
