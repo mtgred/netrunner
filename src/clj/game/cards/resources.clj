@@ -2283,8 +2283,7 @@
         :prompt "Choose a card to rez, ignoring the rez cost"
         :choices {:card (complement rezzed?)}
         :async true
-        :effect (effect (system-msg :corp (str "uses " (:title card) " to rez " (:title target) " at no cost"))
-                        (rez eid target {:ignore-cost :rez-cost :no-msg true}))}
+        :effect (effect (rez eid target {:ignore-cost :rez-cost :no-msg true}))}
        card nil))
    :abilities [{:cost [(->c :trash-can)]
                 :msg "draw 1 card"

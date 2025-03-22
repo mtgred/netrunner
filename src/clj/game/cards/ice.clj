@@ -1783,10 +1783,10 @@
       :req (req (and (can-rez? state side card)
                      (can-pay? state side eid card nil (get-rez-cost state side card nil))))
       :yes-ability
-      {:msg (msg "rez and move " (:title card) ". The Runner is now encountering it")
-       :async true
+      {:async true
        :effect (req (wait-for (rez state side card)
                               (when (rezzed? (:card async-result))
+                                (system-msg state side (str "uses Formicary to move itself to the innermost position of the attacked server. The runner is now encountering it"))
                                 (move state side (get-card state card)
                                       [:servers (target-server run) :ices]
                                       {:front true})

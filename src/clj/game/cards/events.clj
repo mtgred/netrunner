@@ -4311,9 +4311,7 @@
                                        :prompt (str "Rez " (card-str state chosen-ice) ", ignoring all costs?")
                                        :yes-ability {:async true
                                                      :effect
-                                                     (req
-                                                       (system-msg state :corp (str "rezzes " (card-str state chosen-ice) ", ignoring all costs"))
-                                                       (rez state :corp eid chosen-ice {:ignore-cost :all-costs}))}}}])
+                                                     (req (rez state :corp eid chosen-ice {:ignore-cost :all-costs}))}}}])
                                   (derez state side eid target)))}
                           card nil)
                         (effect-completed state side eid))))}]

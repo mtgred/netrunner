@@ -1,5 +1,6 @@
 (ns game.core.rezzing
   (:require
+    [clojure.string :as string]
     [game.core.card :refer [asset? condition-counter? get-card ice? rezzed? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
@@ -45,6 +46,29 @@
                                               " cannot host cards")))
                 (effect-completed state side eid)))))
 
+(defn rez-message
+  [state side eid card cost-str {:keys [alternative-cost cost-bonus ignore-cost msg-keys] :as args}]
+  (let [source-card (or (:title (:source eid)) (:printed-title (:source eid)))
+        title-card (card-str state card {:visible true})
+        prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
+        cost-str (when (= ignore-cost :all-costs) "")
+        pre-lhs (when (every? (complement string/blank?) [cost-str prepend-cost-str])
+                  (str prepend-cost-str ", and then "))
+        modified-cost-str (if (string/blank? cost-str)
+                            prepend-cost-str
+                            (if (string/blank? pre-lhs)
+                              cost-str
+                              (str cost-str ",")))
+        rhs (cond alternative-cost " by paying its alternative cost"
+                  ignore-cost " at no cost"
+                  cost-bonus (if (pos? cost-bonus)
+                               (str " (paying " cost-bonus " [Credits] more)")
+                               (str " (paying " (- cost-bonus) " [Credits] less)")))
+        final-msg (if source-card
+                    (str (build-spend-msg modified-cost-str "use" "uses") source-card " to rez " title-card rhs)
+                    (str (build-spend-msg modified-cost-str "rez" "rezzes") title-card rhs))]
+    (system-msg state side final-msg)))
+
 (defn- complete-rez
   [state side eid
    {:keys [disabled] :as card}
@@ -65,12 +89,7 @@
                                               (update-in [:zone] #(map to-keyword %))
                                               (update-in [:host :zone] #(map to-keyword %)))))
                     (when-not no-msg
-                      (system-msg state side
-                                  (str (build-spend-msg msg "rez" "rezzes")
-                                       (:title card)
-                                       (cond
-                                         alternative-cost " by paying its alternative cost"
-                                         ignore-cost " at no cost")))
+                      (rez-message state side eid card msg args)
                       (implementation-msg state card))
                     (when (and (not no-warning) (:corp-phase-12 @state))
                       (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.
@@ -141,6 +160,31 @@
            card nil)
          (complete-rez state side eid card args))
        (effect-completed state side eid)))))
+
+(defn rez-multiple-message
+  "message for rezzing multiple cards, ignoring all costs"
+  [state side eid cards {:keys [msg-keys] :as args}]
+  (let [source-card (or (:title (:source eid)) (:printed-title (:source eid)))
+        cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
+        titles (enumerate-str (map #(card-str state % {:visible true}) cards))
+        rhs " (ignoring all costs)"
+        final-msg (if source-card
+                    (str (build-spend-msg cost-str "use" "uses") source-card " to rez " titles rhs)
+                    (str (build-spend-msg cost-str "rez" "rezzes") titles rhs))]
+    (system-msg state side final-msg)))
+
+(defn rez-multiple-cards
+  "Simultaneously rez (or attempt to rez) multiple cards (in an arbitrary order). I think these will always be ignoring all costs"
+  ([state side eid cards] (rez-multiple-cards state side eid cards nil))
+  ([state side eid cards {:keys [no-msg] :as args}]
+   (when-not no-msg
+     (rez-multiple-message state side eid cards args))
+   (cond
+     (or (not cards) (empty? cards)) (effect-completed state side eid)
+     (= 1 (count cards)) (rez state side eid (first cards) (assoc args :no-msg true))
+     :else (wait-for
+             (rez state side (first cards) (assoc args :suppress-checkpoint true :no-msg true))
+             (rez-multiple-cards state side eid (rest cards) (assoc args :no-msg true))))))
 
 (defn- derez-message
   ;; note:

@@ -44,7 +44,7 @@
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal reveal-loud]]
-   [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
+   [game.core.rezzing :refer [can-pay-to-rez? derez rez rez-multiple-cards]]
    [game.core.runs :refer [end-run make-run]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? remote->name zone->name]]
@@ -443,7 +443,6 @@
              :change-in-game-state (req (some #(and (ice? %)
                                               (not (rezzed? %)))
                                         (all-installed state :corp)))
-             :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
              :async true
              :cancel-effect (req (do-nothing state side eid card))
              :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
@@ -1946,9 +1945,8 @@
                                    (= (last (get-zone %)) :ices))}
              :change-in-game-state (req (some (every-pred ice? (complement rezzed?))
                                         (all-installed state :corp)))
-             :msg (msg "rez " (card-str state target) " at no cost")
              :async true
-             :effect (req (wait-for (rez state side target {:ignore-cost :all-costs :no-msg true})
+             :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
                                     (install-as-condition-counter state side eid card (:card async-result))))}
    :events [{:event :subroutines-broken
              :condition :hosted
@@ -2725,22 +2723,17 @@
       :effect (effect (continue-ability (ability 4) card nil))}}))
 
 (defcard "Shoot the Moon"
-  (letfn [(rez-helper [ice]
-            (when (seq ice)
-              {:async true
-               :effect (req (wait-for (rez state side (first ice) {:ignore-cost :all-costs})
-                                      (continue-ability state side (rez-helper (rest ice)) card nil)))}))]
-    {:on-play
-     {:req (req tagged)
-      :change-in-game-state (req (some (every-pred ice? (complement rezzed?)) (all-installed state :corp)))
-      :choices {:card #(and (ice? %)
-                         (not (rezzed? %)))
-                :max (req (min (count-tags state)
-                               (reduce (fn [c server]
-                                         (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
-                                       0 (flatten (seq (:servers corp))))))}
-      :async true
-      :effect (effect (continue-ability (rez-helper targets) card nil))}}))
+  {:on-play
+   {:req (req tagged)
+    :change-in-game-state (req (some (every-pred ice? (complement rezzed?)) (all-installed state :corp)))
+    :choices {:card #(and (ice? %)
+                          (not (rezzed? %)))
+              :max (req (min (count-tags state)
+                             (reduce (fn [c server]
+                                       (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
+                                     0 (flatten (seq (:servers corp))))))}
+    :async true
+    :effect (req (rez-multiple-cards state side eid targets {:ignore-cost :all-costs}))}})
 
 (defcard "Simulation Reset"
   {:on-play

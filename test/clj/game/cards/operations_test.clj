@@ -3239,7 +3239,7 @@
         (is (= 4 (:credit (get-corp))) "Archer rezzed at no credit cost")
         (is (= "Oversight AI" (get-title (first (:hosted (refresh archer)))))
             "Archer hosting OAI as a condition")
-        (is (last-log-contains? state "Corp uses Oversight AI to rez ice protecting R&D at position 0 at no cost.")
+        (is (last-log-contains? state "Corp uses Oversight AI to rez Archer protecting R&D at position 0 at no cost.")
                   "The right information is printed to the log"))))
 
 (deftest oversight-ai-trash-rezzed-ice-when-all-subs-are-broken-issue-4752
