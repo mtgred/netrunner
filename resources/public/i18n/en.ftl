@@ -716,6 +716,16 @@ ingame-settings_sort-heap = Sort Heap
 
 ingame-settings_stack-cards = Stack cards
 
+lobby_turmoil = Turmoil
+
+lobby_turmoil-details = The fickle winds of fate shall decide your future.
+
+lobby_turmoil-theme = "FINUKA DISPOSES"
+
+lobby_turmoil-info = This lobby is running in turmoil mode. The winds of fate shall decide your path to the future.
+
+lobby_span-turmoil = (turmoil)
+
 lobby_aborted = Connection aborted
 
 lobby_api-access = Allow API access to game information

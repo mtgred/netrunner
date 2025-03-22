@@ -84,7 +84,7 @@
   [:span [:label
           [:input {:type "checkbox" :checked (:turmoil @options)
                    :on-change #(swap! options assoc :turmoil (.. % -target -checked))}]
-          (tr [:lobby.turmoil "Turmoil"])]])
+          (tr [:lobby_turmoil "Turmoil"])]])
 
 (defn open-decklists [options]
   [:label
@@ -136,8 +136,8 @@
    [precon-choice fmt-state precon]
    [:div.infobox.blue-shade
     {:style {:display (if (:turmoil @options) "block" "none")}}
-    [:p (tr [:lobby.turmoil-details "The fickle winds of fate shall decide your future."])]
-    [:p (tr [:lobby.turmoil-theme "\"FINUKA DISPOSES\""])]]
+    [:p (tr [:lobby_turmoil-details "The fickle winds of fate shall decide your future."])]
+    [:p (tr [:lobby_turmoil-theme "\"FINUKA DISPOSES\""])]]
    [:div.infobox.blue-shade
     {:style {:display (if (:singleton @options) "block" "none")}}
     [:p (tr [:lobby_singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."])]

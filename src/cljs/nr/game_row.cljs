@@ -197,7 +197,7 @@
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
    [precon-span precon]
    [:span.format-singleton (str (when singleton? (str " " (tr [:lobby_singleton-b "(singleton)"]))))]
-   [:span.turmoil (when turmoil? (str " " (tr [:lobby_turmoil "(turmoil)"])))]
+   [:span.turmoil (when turmoil? (str " " (tr [:lobby_span-turmoil "(turmoil)"])))]
    [open-decklists-span precon open-decklists]
    [precon-under-span precon]])
 

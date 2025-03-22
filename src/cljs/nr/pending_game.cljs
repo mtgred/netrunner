@@ -102,7 +102,7 @@
 (defn turmoil-info-box [current-game]
   (when (:turmoil-mode @current-game)
     [:div.infobox.blue-shade
-     [:p (tr [:lobby.turmoil-info "This lobby is running in turmoil mode. The winds of fate shall decide your path to the future."])]]))
+     [:p (tr [:lobby_turmoil-info "This lobby is running in turmoil mode. The winds of fate shall decide your path to the future."])]]))
 
 (defn swap-sides-button [user gameid players]
   (when (first-user? @players @user)
