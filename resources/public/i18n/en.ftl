@@ -465,6 +465,8 @@ game_current = Current
 
 game_current-phase = Current phase
 
+game_destroyed = Destroyed
+
 game_draw = Draw
 
 game_encounter-ice = Encounter ice
