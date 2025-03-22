@@ -428,8 +428,8 @@ game_breach-server = Breach server
 game_card = Card
 
 game_card-count = {$cnt ->
-    [one] {$size} card
-    *[other] {$size} cards
+    [one] {$cnt} card
+    *[other] {$cnt} cards
 }
 
 game_click-count = {$click ->
