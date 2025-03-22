@@ -686,6 +686,7 @@
       (is (= 2 (count (:subroutines (refresh ashigaru)))))
       (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
       (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :deck)
+      (core/fake-checkpoint state)
       (is (zero? (count (:subroutines (refresh ashigaru))))))))
 
 (deftest ashigaru-sub-is-etr

@@ -1,6 +1,10 @@
 (ns nr.appstate
-  (:require [jinteki.utils :refer [str->int]]
-            [reagent.core :as r]))
+  (:require
+   [cljs.core.async :refer [<!] :refer-macros [go]]
+   [jinteki.i18n :as i18n]
+   [jinteki.utils :refer [str->int]]
+   [nr.ajax :refer [GET]]
+   [reagent.core :as r]))
 
 (defn- get-local-value
   "Read the value of the given key from localStorage. Return the default-value if no matching key found"
@@ -32,9 +36,9 @@
                             :custom-bg-url (get-local-value "custom_bg_url" "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
                             :card-back (get-local-value "card-back" "nsg")
                             :card-zoom (get-local-value "card-zoom" "image")
-                            :pin-zoom (get-local-value "pin-zoom" false)
+                            :pin-zoom (= (get-local-value "pin-zoom" "false") "true")
                             :pronouns "none"
-                            :language "en"
+                            :language (get-local-value "language" js/navigator.language)
                             :default-format (get-local-value "default-format" "standard")
                             :show-alt-art true
                             :card-resolution "default"
@@ -68,6 +72,11 @@
            :channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
                       :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}
            :games [] :current-game nil}))
+
+(go (let [lang (get-in @app-state [:options :language] "en")
+          response (<! (GET (str "/data/language/" lang)))]
+      (when (= 200 (:status response))
+        (i18n/insert-lang! lang (:json response)))))
 
 (defn current-gameid [app-state]
   (get-in @app-state [:current-game :gameid]))

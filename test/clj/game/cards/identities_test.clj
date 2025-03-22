@@ -2334,11 +2334,10 @@
        (play-from-hand state :runner "Reflection")
        (run-on state "HQ")
        (rez state :corp gal)
-       (run-continue state)
-       (card-ability state :corp (refresh gal) 0) ;reveal grail ice
+       (run-continue state :encounter-ice)
        (click-card state :corp (find-card "Galahad" (:hand (get-corp))))
        (is (changed? [(:credit (get-corp)) 1]
-             (click-prompt state :corp "Done")))
+             (click-prompts state :corp "Done" "Front")))
        (is (changed? [(:credit (get-corp)) 0]
              (run-continue state :movement)
              (run-jack-out state))) ; triggers reflection, but trigger already done this turn

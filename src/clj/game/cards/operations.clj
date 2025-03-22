@@ -29,7 +29,7 @@
    [game.core.gaining :refer [gain-clicks gain-credits lose-clicks
                               lose-credits]]
    [game.core.hand-size :refer [runner-hand-size+]]
-   [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice]]
+   [game.core.ice :refer [update-all-ice]]
    [game.core.identities :refer [disable-identity enable-identity]]
    [game.core.initializing :refer [ability-init card-init]]
    [game.core.installing :refer [corp-install corp-install-msg install-as-condition-counter]]
@@ -44,7 +44,7 @@
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal reveal-loud]]
-   [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
+   [game.core.rezzing :refer [can-pay-to-rez? derez rez rez-multiple-cards]]
    [game.core.runs :refer [end-run make-run]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? remote->name zone->name]]
@@ -443,21 +443,20 @@
              :change-in-game-state (req (some #(and (ice? %)
                                               (not (rezzed? %)))
                                         (all-installed state :corp)))
-             :msg (msg "rez " (card-str state target {:visible true}) " at no cost")
              :async true
              :cancel-effect (req (do-nothing state side eid card))
              :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
                                     (install-as-condition-counter state side eid card (:card async-result))))}
-   :events [{:event :end-of-encounter
+   :events [{:event :subroutines-broken
              :condition :hosted
              :async true
              :req (req (and (same-card? (:ice context) (:host card))
-                            (empty? (remove :broken (:subroutines (:ice context))))))
-             :effect (effect (system-msg :corp
-                                         (str "derezzes " (:title (:ice context))
-                                              " and trashes Bioroid Efficiency Research"))
-                             (derez :corp (:ice context) {:source-card card})
-                             (trash :corp eid card {:unpreventable true :cause-card card}))}]})
+                            (:all-subs-broken context)))
+             :effect (req (wait-for
+                            (derez state side (:ice context)
+                                   {:msg-keys {:and-then " and trash itself"}
+                                    :suppress-checkpoint true})
+                            (trash state :corp eid card {:cause-card card})))}]})
 
 (defcard "Biotic Labor"
   {:on-play
@@ -844,18 +843,18 @@
               :max (req (count (filter rezzed? (all-installed state :corp))))}
     :change-in-game-state (req (seq (all-installed state :corp)))
     :async true
-    :effect (req (doseq [c targets]
-                   (derez state side c {:source-card card}))
-                 (let [discount (* 3 (count targets))]
-                   (continue-ability
-                     state side
-                     {:async true
-                      :prompt (str "Choose a card to rez, paying " discount " [Credits] less")
-                      :choices {:req (req (and ((every-pred installed? corp? (complement rezzed?) (complement agenda?)) target)
-                                               (can-pay-to-rez? state side (assoc eid :source card)
-                                                                target {:cost-bonus (- discount)})))}
-                      :effect (req (rez state side eid target {:cost-bonus (- discount)}))}
-                     card nil)))}})
+    :effect (req (wait-for
+                   (derez state side targets)
+                   (let [discount (* 3 (count targets))]
+                     (continue-ability
+                       state side
+                       {:async true
+                        :prompt (str "Choose a card to rez, paying " discount " [Credits] less")
+                        :choices {:req (req (and ((every-pred installed? corp? (complement rezzed?) (complement agenda?)) target)
+                                                 (can-pay-to-rez? state side (assoc eid :source card)
+                                                                  target {:cost-bonus (- discount)})))}
+                        :effect (req (rez state side eid target {:cost-bonus (- discount)}))}
+                       card nil))))}})
 
 (defcard "Door to Door"
   {:events [{:event :runner-turn-begins
@@ -1956,9 +1955,8 @@
                                    (= (last (get-zone %)) :ices))}
              :change-in-game-state (req (some (every-pred ice? (complement rezzed?))
                                         (all-installed state :corp)))
-             :msg (msg "rez " (card-str state target) " at no cost")
              :async true
-             :effect (req (wait-for (rez state side target {:ignore-cost :all-costs :no-msg true})
+             :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
                                     (install-as-condition-counter state side eid card (:card async-result))))}
    :events [{:event :subroutines-broken
              :condition :hosted
@@ -2735,22 +2733,17 @@
       :effect (effect (continue-ability (ability 4) card nil))}}))
 
 (defcard "Shoot the Moon"
-  (letfn [(rez-helper [ice]
-            (when (seq ice)
-              {:async true
-               :effect (req (wait-for (rez state side (first ice) {:ignore-cost :all-costs})
-                                      (continue-ability state side (rez-helper (rest ice)) card nil)))}))]
-    {:on-play
-     {:req (req tagged)
-      :change-in-game-state (req (some (every-pred ice? (complement rezzed?)) (all-installed state :corp)))
-      :choices {:card #(and (ice? %)
-                         (not (rezzed? %)))
-                :max (req (min (count-tags state)
-                               (reduce (fn [c server]
-                                         (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
-                                       0 (flatten (seq (:servers corp))))))}
-      :async true
-      :effect (effect (continue-ability (rez-helper targets) card nil))}}))
+  {:on-play
+   {:req (req tagged)
+    :change-in-game-state (req (some (every-pred ice? (complement rezzed?)) (all-installed state :corp)))
+    :choices {:card #(and (ice? %)
+                          (not (rezzed? %)))
+              :max (req (min (count-tags state)
+                             (reduce (fn [c server]
+                                       (+ c (count (filter #(not (:rezzed %)) (:ices server)))))
+                                     0 (flatten (seq (:servers corp))))))}
+    :async true
+    :effect (req (rez-multiple-cards state side eid targets {:ignore-cost :all-costs}))}})
 
 (defcard "Simulation Reset"
   {:on-play
@@ -2892,27 +2885,23 @@
                                         card nil)))}}))
 
 (defcard "Sub Boost"
-  (let [new-sub {:label "[Sub Boost]: End the run"}]
-    {:sub-effect {:label "End the run"
-                  :msg "end the run"
-                  :async true
-                  :effect (effect (end-run eid card))}
-     :on-play {:choices {:card #(and (ice? %)
-                                     (rezzed? %))}
-               :change-in-game-state (req (some (every-pred ice? rezzed?) (all-installed state :corp)))
-               :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
-               :async true
-               :effect (req (add-extra-sub! state :corp (get-card state target) new-sub (:cid card))
-                            (install-as-condition-counter state side eid card (get-card state target)))}
-     :static-abilities [{:type :gain-subtype
-                         :req (req (and (same-card? target (:host card))
-                                        (rezzed? target)))
-                         :value "Barrier"}]
-     :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
-     :events [{:event :rez
-               :condition :hosted
-               :req (req (same-card? (:card context) (:host card)))
-               :effect (req (add-extra-sub! state :corp (get-card state (:card context)) new-sub (:cid card)))}]}))
+  {:on-play {:choices {:card #(and (ice? %)
+                                   (rezzed? %))}
+             :change-in-game-state (req (some (every-pred ice? rezzed?) (all-installed state :corp)))
+             :msg (msg "make " (card-str state target) " gain Barrier and \"[Subroutine] End the run\"")
+             :async true
+             :effect (req (install-as-condition-counter state side eid card (get-card state target)))}
+   :static-abilities [{:type :gain-subtype
+                       :req (req (and (same-card? target (:host card))
+                                      (rezzed? target)))
+                       :value "Barrier"}
+                      {:type :additional-subroutines
+                       :req (req (and (same-card? target (:host card))
+                                      (rezzed? target)))
+                       :value {:subroutines [{:label "[Sub Boost] End the run"
+                                              :msg "end the run"
+                                              :async true
+                                              :effect (effect (end-run eid card))}]}}]})
 
 (defcard "Subcontract"
   (letfn [(sc [i sccard]
@@ -3307,21 +3296,20 @@
                 card nil))}})
 
 (defcard "Wetwork Refit"
-  (let [new-sub {:label "[Wetwork Refit] Do 1 core damage"}]
-    {:on-play {:choices {:card #(and (ice? %)
-                                     (has-subtype? % "Bioroid")
-                                     (rezzed? %))}
-               :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 core damage\" before all its other subroutines")
-               :async true
-               :change-in-game-state (req (some #(and (ice? %) (rezzed? %) (has-subtype? % "Bioroid"))
-                                          (all-installed state :corp)))
-               :effect (req (add-extra-sub! state :corp target new-sub (:cid card) {:front true})
-                            (install-as-condition-counter state side eid card (get-card state target)))}
-     :sub-effect (do-brain-damage 1)
-     :leave-play (req (remove-extra-subs! state :corp (:host card) (:cid card)))
-     :events [{:event :rez
-               :req (req (same-card? (:card context) (:host card)))
-               :effect (req (add-extra-sub! state :corp (get-card state (:card context)) new-sub (:cid card) {:front true}))}]}))
+  {:on-play {:choices {:card #(and (ice? %)
+                                   (has-subtype? % "Bioroid")
+                                   (rezzed? %))}
+             :msg (msg "give " (card-str state target) " \"[Subroutine] Do 1 core damage\" before all its other subroutines")
+             :async true
+             :change-in-game-state (req (some #(and (ice? %) (rezzed? %) (has-subtype? % "Bioroid"))
+                                              (all-installed state :corp)))
+             :effect (req (install-as-condition-counter state side eid card (get-card state target)))}
+   :static-abilities [{:type :additional-subroutines
+                       :duration :end-of-run
+                       :req (req (and (same-card? target (:host card))
+                                      (rezzed? target)))
+                       :value {:position :front
+                               :subroutines [(assoc (do-brain-damage 1) :label "[Wetwork Refit] Do 1 core damage")]}}]})
 
 (defcard "Witness Tampering"
   {:on-play

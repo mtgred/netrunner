@@ -199,7 +199,10 @@
         ;; it's a select prompt - we want to click on a card
         (prompt-is-type? state side :select)
         (do (if (or (:cid prompt) (string? prompt))
-              (click-card state side prompt)
+              ;; we can still clock done on a select prompt though
+              (if (= prompt "Done")
+                (click-prompt state side prompt)
+                (click-card state side prompt))
               (click-card state (or (:side prompt) side) (:choice prompt)))
             (recur prompts))
         :else
@@ -972,11 +975,13 @@
   ([state side] (draw state side 1 nil))
   ([state side n] (draw state side n nil))
   ([state side n args]
-   (core/draw state side (core/make-eid state) n args)))
+   (core/draw state side (core/make-eid state) n args)
+   (core/fake-checkpoint state)))
 
 (defn purge
   [state side]
-  (core/purge state side (core/make-eid state)))
+  (core/purge state side (core/make-eid state))
+  (core/fake-checkpoint state))
 
 (defn trace
   [state base]

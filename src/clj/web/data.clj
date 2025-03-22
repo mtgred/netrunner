@@ -1,6 +1,7 @@
 (ns web.data
   (:require [web.utils :refer [response mongo-time-to-utc-string]]
             [monger.collection :as mc]
+            [jinteki.i18n :as i18n]
             [monger.query :as mq]
             [game.core.initializing :refer [card-implemented]]
             [clojure.edn :as edn]))
@@ -30,7 +31,7 @@
   [lang]
   (contains? #{"de" "es" "fr" "it" "ja" "ko" "pl" "zh-simp" "zh-trad"} lang))
 
-(defn lang-handler [{db :system/db {lang :lang} :path-params}]
+(defn card-lang-handler [{db :system/db {lang :lang} :path-params}]
   (if (validate-lang lang)
     (let [lang (case lang
                  "zh-simp" "cards-zh-hans" 
@@ -39,6 +40,10 @@
                  (str "cards-" lang))]
       (response 200 (mapv #(dissoc % :_id) (mc/find-maps db lang))))
     (response 200 {})))
+
+(defn lang-handler [{{lang :lang} :path-params}]
+  (let [content (i18n/get-content lang)]
+    (response 200 (pr-str content))))
 
 (defn alt-arts-handler [{db :system/db}]
   (response 200 (mapv #(dissoc % :_id) (mc/find-maps db "altarts"))))

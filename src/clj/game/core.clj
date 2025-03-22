@@ -462,9 +462,7 @@
 
 (expose-vars
   [game.core.ice
-   add-extra-sub!
    add-sub
-   add-sub!
    all-subs-broken-by-card?
    all-subs-broken?
    any-subs-broken-by-card?
@@ -491,11 +489,6 @@
    pump-all-ice
    pump-all-icebreakers
    pump-ice
-   remove-extra-subs!
-   remove-sub
-   remove-sub!
-   remove-subs
-   remove-subs!
    reset-all-ice
    reset-all-subs
    reset-all-subs!

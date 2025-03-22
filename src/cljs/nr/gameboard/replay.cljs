@@ -366,7 +366,7 @@
                                    (get-in @game-state [:runner :user :username])))))))
           ; Error handling does not work, as GET tries to parse something despite the connection
           ; timing out -- lostgeek (2021/02/14)
-          (non-game-toast (tr [:log.remote-annotations-fail "Could not get remote annotations."])
+          (non-game-toast (tr [:log_remote-annotations-fail "Could not get remote annotations."])
                           "error" {:time-out 3 :close-button true})))))
 
 (defn load-remote-annotations [pos]
@@ -449,7 +449,7 @@
 
 (defn notes-pane []
   [:div.notes
-   [:div.turn [:textarea#notes-turn {:placeholder (tr [:annotations.turn-placeholder "Notes for this turn"])
+   [:div.turn [:textarea#notes-turn {:placeholder (tr [:annotations_turn-placeholder "Notes for this turn"])
                                      :on-change #(update-notes)}]]
    (letfn
      [(create-buttons [types]
@@ -465,18 +465,18 @@
       (create-buttons [:blunder :mistake :inaccuracy :good :brilliant])
       [:div.notes-separator]
       (create-buttons [:a :b :c :d])])
-   [:div.click [:textarea#notes-click {:placeholder (tr [:annotations.click-placeholder "Notes for this click"])
+   [:div.click [:textarea#notes-click {:placeholder (tr [:annotations_click-placeholder "Notes for this click"])
                                        :on-change #(update-notes)}]]])
 (defn notes-shared-pane []
   (let [annotation-options (r/atom {:file ""})]
     [:div.notes-shared
      (when (not= "local-replay" (:gameid @game-state))
        [:div.remote-annotations
-        [:h4 (tr [:annotations.available-annotations "Available annotations"]) " "
+        [:h4 (tr [:annotations_available-annotations "Available annotations"]) " "
          [:button.small {:type "button"
                          :on-click #(get-remote-annotations (:gameid @game-state))} "⟳"]]
         (if (empty? (:remote-annotations @replay-status))
-          (tr [:annotations.no-published-annotations "No published annotations."])
+          (tr [:annotations_no-published-annotations "No published annotations."])
           [:ul
            (doall
              (for [[n anno] (map-indexed vector (:remote-annotations @replay-status))]
@@ -489,18 +489,18 @@
                                   :on-click #(delete-remote-annotations n)} "X"])]))])
         [:div.button-row
          [:button {:type "button"
-                   :on-click #(publish-annotations)} (tr [:annotations.publish "Publish"])]]
+                   :on-click #(publish-annotations)} (tr [:annotations_publish "Publish"])]]
         [:hr]])
-     [:h4 (tr [:annotations.import-local "Import local annotation file"])]
+     [:h4 (tr [:annotations_import-local "Import local annotation file"])]
      [:input {:field :file
               :type :file
               :on-change #(swap! replay-status assoc :annotations-file (aget (.. % -target -files) 0))}]
      [:div.button-row
       [:button {:type "button" :on-click #(load-annotations-file)}
-       (tr [:annotations.load-local "Load"])]
+       (tr [:annotations_load-local "Load"])]
       [:button {:type "button" :on-click #(save-annotations-file)}
-       (tr [:annotations.save-local "Save"])]
+       (tr [:annotations_save-local "Save"])]
       [:button {:type "button" :on-click #(swap! replay-status assoc :annotations
                                                  {:turns {:corp {} :runner {}}
                                                   :clicks {}})}
-       (tr [:annotations.clear "Clear"])]]]))
+       (tr [:annotations_clear "Clear"])]]]))

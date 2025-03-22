@@ -1,35 +1,38 @@
 (ns nr.translations
   (:require
    [clojure.string :as str]
-   [i18n.core :as tr]
-   [jinteki.utils :refer [slugify]]
-   [nr.appstate :refer [app-state]]))
+   [jinteki.i18n :as i18n]
+   [nr.appstate :refer [app-state]]
+   [reagent.core :as r]))
 
-(defn tr [resource & params]
-  (apply tr/tr-impl app-state resource params))
+(def language-cursor
+  (r/cursor app-state [:options :language]))
 
-(defn tr-string [prefix s]
-  (let [side (str/lower-case (str/replace (or s "") " " "-"))
-        kw (keyword (str prefix "." side))]
-    (tr [kw "Unknown"])))
+(defn tr
+  ([resource] (tr resource nil))
+  ([resource params]
+   (i18n/format language-cursor resource params)))
 
-(defn tr-string-s [prefix s]
-  (let [s-trim (-> (or s "")
-              (str/replace "&nbsp;&nbsp;&nbsp;&nbsp;" ""))
-        side (slugify s-trim)
-        kw (keyword (str prefix "." side))]
-    (str/replace (or s "") s-trim (tr [kw s-trim]))))
+(defn clean-input
+  [s]
+  (assert (seq s) "Given empty string")
+  (-> (or s "")
+      (str/replace " " "-")
+      (str/replace "&" "-")
+      (str/lower-case)))
 
-(defn tr-type [s] (tr-string "card-type" s))
-(defn tr-side [s] (tr-string "side" s))
-(defn tr-faction [s] (tr-string "faction" s))
-(defn tr-format [s] (tr-string "format" s))
-(defn tr-sort [s] (tr-string "card-browser.sort-by" s))
-(defn tr-lobby [s] (tr-string "lobby" s))
-(defn tr-pronouns [s] (tr-string "pronouns" s))
-(defn tr-watch-join [s] (tr-string "lobby" s))
-(defn tr-set [s] (tr-string-s "set" s))
-(defn tr-game-prompt [s] (tr-string-s "game-prompt" s))
+(defn tr-type [s] (tr [:card-type_name s] {:type (clean-input s)}))
+(defn tr-side [s] (tr [:side_name s] {:side (clean-input s)}))
+(defn tr-faction [s] (tr [:faction_name s] {:faction (clean-input s)}))
+(defn tr-format [s] (tr [:format_name s] {:format (clean-input s)}))
+(defn tr-room-type [s] (tr [:lobby_type s] {:type (clean-input s)}))
+(defn tr-pronouns [s] (tr [:pronouns s] {:pronoun (clean-input s)}))
+(defn tr-set [s]
+  (let [s (if (#{"0" "1" "2" "3" "4" "5" "6" "7" "8" "9"} (first s))
+            (str "a" s)
+            s)]
+    (tr [:set_name s] {:name (clean-input s)})))
+(defn tr-game-prompt [s] (tr [:game_prompt s] {:msg (clean-input s)}))
 
 (defn tr-data [k data]
   (or (get-in data [:localized k]) (k data)))

@@ -540,15 +540,15 @@
                            (has-subtype? % "Harmonic"))}
      :async true
      ;; TODO - once derez is async, fix this
-     :effect (req (doseq [harmonic targets]
-                    (derez state side harmonic))
-                  (complete-with-result
-                    state side eid
-                    {:paid/msg (str "derezzes " (count targets)
-                                   " Harmonic ice (" (enumerate-str (map #(card-str state %) targets)) ")")
-                     :paid/type :derez
-                     :paid/value (count targets)
-                     :paid/targets targets}))}
+     :effect (req (wait-for
+                    (derez state side targets {:suppress-checkpoint true :no-msg true})
+                    (complete-with-result
+                      state side eid
+                      {:paid/msg (str "derezzes " (count targets)
+                                      " Harmonic ice (" (enumerate-str (map #(card-str state %) targets)) ")")
+                       :paid/type :derez
+                       :paid/value (count targets)
+                       :paid/targets targets})))}
     card nil))
 
 ;; TrashInstalledProgram

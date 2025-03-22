@@ -131,8 +131,7 @@
                              (can-pay-to-rez? state side (assoc eid :source card)
                                               (:card context) {:cost-bonus -3})))
               :prompt "Rez ice with rez cost lowered by 3?"
-              :yes-ability {:msg (msg "lower the rez cost of " (:title (:card context)) " by 3 [Credits]")
-                            :async true
+              :yes-ability {:async true
                             :effect (effect (rez eid (:card context) {:cost-bonus -3}))}}}]})
 
 (defcard "Angelique Garza Correa"
@@ -224,7 +223,6 @@
                :choices (req (filter #(can-pay-to-rez? state side (assoc eid :source card)
                                                        % {:cost-bonus -7})
                                      (:hosted card)))
-               :msg (msg "lower the rez cost of " (:title target) " by 7 [Credits] and force the Runner to encounter it")
                :effect (req (wait-for (rez state side target {:cost-bonus -7})
                                       (let [ice (:card async-result)]
                                         (register-events
@@ -234,6 +232,7 @@
                                             :async true
                                             :req (req (get-card state ice))
                                             :effect (effect (trash eid (get-card state ice) {:cause-card card}))}])
+                                        (system-msg state side (str "uses " (:title card) " to force the Runner to encounter " (card-str state ice)))
                                         (force-ice-encounter state side eid ice))))}
               :no-ability
               {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]})
@@ -350,10 +349,10 @@
                                                                  (rezzed? %)
                                                                  (not (same-card? % rezzed-card)))}
                                            :async true
-                                           :msg (msg "derez " (card-str state target) " to give " (card-str state rezzed-card) " +3 strength for the remainder of the run")
-                                           :effect (req (derez state side (get-card state target) {:no-msg true})
-                                                        (pump-ice state side rezzed-card 3 :end-of-run)
-                                                        (effect-completed state side eid))}}}
+                                           :effect (req (wait-for (derez state side (get-card state target)
+                                                                         {:msg-keys {:and-then (str " to give " (card-str state rezzed-card) " +3 strength for the remainder of the run")}})
+                                                                  (pump-ice state side rezzed-card 3 :end-of-run)
+                                                                  (effect-completed state side eid)))}}}
                            card nil)))}]})
 
 (defcard "Breaker Bay Grid"
@@ -1685,7 +1684,6 @@
                                                      (corp? target)
                                                      (installed? target)
                                                      (can-pay-to-rez? state side (assoc eid :source card) target {:cost-bonus -2})))}
-                            :msg (msg "rez " (:title target) ", lowering the rez cost by 2 [Credits]")
                             :async true
                             :effect (effect (rez eid target {:cost-bonus -2}))}}}]})
 

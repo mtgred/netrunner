@@ -276,7 +276,6 @@
       (update :set-aside cards-summary state side)
       (update :prompt-state prompt-summary same-side?)
       (update :toast toast-summary same-side?)
-      (assoc :agenda-point-req (agenda-points-required-to-win state side))
       (select-non-nil-keys (into player-keys additional-keys))))
 
 (def corp-keys
@@ -322,6 +321,7 @@
   (let [corp-player? (= side :corp)
         install-list (:install-list corp)]
     (-> (player-summary corp state side corp-player? corp-keys)
+        (assoc :agenda-point-req (agenda-points-required-to-win state :corp))
         (update :deck deck-summary corp-player? corp)
         (update :hand hand-summary state corp-player? :corp corp)
         (update :discard discard-summary state corp-player? side corp)
@@ -352,6 +352,7 @@
   (let [runner-player? (= side :runner)
         runnable-list (:runnable-list runner)]
     (-> (player-summary runner state side runner-player? runner-keys)
+        (assoc :agenda-point-req (agenda-points-required-to-win state :runner))
         (update :deck deck-summary runner-player? runner)
         (update :hand hand-summary state runner-player? :runner runner)
         (update :discard prune-cards)

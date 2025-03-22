@@ -31,7 +31,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-extra-sub! remove-sub! update-all-ice update-all-icebreakers]]
+   [game.core.ice :refer [update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-cards-async swap-ice
@@ -43,7 +43,7 @@
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal]]
-   [game.core.rezzing :refer [derez rez]]
+   [game.core.rezzing :refer [derez rez rez-multiple-cards]]
    [game.core.runs :refer [end-run force-ice-encounter]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
@@ -718,8 +718,7 @@
     :async true
     :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                            (effect-completed eid))
-    :effect (effect (derez target {:source-card card})
-                    (effect-completed eid))}})
+    :effect (req (derez state side eid target))}})
 
 (defcard "Eden Fragment"
   {:static-abilities [{:type :ignore-install-cost
@@ -1251,17 +1250,13 @@
                                                                        :display-origin true}}))}})
 
 (defcard "Lightning Laboratory"
-  ;; TODO - I feel this card is OVERLY verbose
-  ;; maybe it could be condensed? I'm not sure
   (letfn [(ice-derez [zone]
             {:event :runner-turn-ends
              :req (req (seq (filter #(= (:zone %) [:servers zone :ices])
                                     (all-active-installed state :corp))))
              :duration :end-of-turn
              :async true
-             :effect (req (let [derez-count
-                                (min 2 (count (filter #(= (:zone %) [:servers zone :ices])
-                                                      (all-active-installed state :corp))))]
+             :effect (req (let [derez-count (min 2 (count (filter #(= (:zone %) [:servers zone :ices]) (all-active-installed state :corp))))]
                             (continue-ability
                               state side
                               {:prompt (msg "Choose " (quantify derez-count "piece") " of ice protecting " (zone->name [zone]) " to derez")
@@ -1272,17 +1267,9 @@
                                          :max derez-count
                                          :min derez-count}
                                :msg (msg "derez " (enumerate-str (map #(card-str state %) targets)))
-                               :effect (req (doseq [t targets]
-                                              (derez state side t {:no-msg true})))}
-                              card nil)))})
-          (ice-free-rez [state side targets card zone eid]
-            (if (zero? (count targets))
-              (do (register-events
-                    state side card
-                    [(ice-derez zone)])
-                  (effect-completed state side eid))
-              (wait-for (rez state :corp (make-eid state eid) (first targets) {:ignore-cost :all-costs})
-                        (ice-free-rez state side (drop 1 targets) card zone eid))))]
+                               :async true
+                               :effect (req (derez state side eid targets))}
+                              card nil)))})]
     {:on-score {:effect (effect (add-counter eid card :agenda 1 nil))
                 :async true
                 :silent (req true)}
@@ -1303,12 +1290,11 @@
                                                          (not (rezzed? %))
                                                          (= (second (get-zone %)) current-server))
                                              :max 2}
-                                   :msg (msg "rez " (enumerate-str (map :title targets)) ", ignoring all costs")
                                    :async true
-                                   :cancel-effect (req
-                                                    (system-msg state side (str "declines to use " (:title card)))
-                                                    (ice-free-rez state side [] card current-server eid))
-                                   :effect (req (ice-free-rez state side targets card current-server eid))}
+                                   :cancel-effect (req (register-events state side card [(ice-derez current-server)])
+                                                       (effect-completed state side eid))
+                                   :effect (req (register-events state side card [(ice-derez current-server)])
+                                                (rez-multiple-cards state side eid targets {:ignore-cost :all-costs :msg-keys {:include-cost-from-eid eid}}))}
                                   card nil)))}}}]}))
 
 (defcard "Longevity Serum"
@@ -1661,13 +1647,6 @@
   {:on-score {:silent (req true)
               :async true
               :effect (effect (add-counter eid card :agenda (- (get-counters (:card context) :advancement) 2) nil))}
-   :events [{:event :run-ends
-             :effect (req (let [cid (:cid card)
-                                ices (get-in card [:special :kusanagi])]
-                            (doseq [i ices]
-                              (when-let [ice (get-card state i)]
-                                (remove-sub! state side ice #(= cid (:from-cid %))))))
-                          (update! state side (dissoc-in card [:special :kusanagi])))}]
    :abilities [{:label "Give a piece of ice \"[Subroutine] Do 1 net damage\""
                 :prompt "Choose a piece of ice"
                 :choices {:card #(and (ice? %)
@@ -1676,10 +1655,13 @@
                 :keep-menu-open :while-agenda-tokens-left
                 :msg (str "make a piece of ice gain \"[Subroutine] Do 1 net damage\" "
                           "after all its other subroutines for the remainder of the run")
-                :effect  (effect (add-extra-sub! (get-card state target)
-                                                 (do-net-damage 1)
-                                                 (:cid card) {:back true})
-                                 (update! (update-in card [:special :kusanagi] #(conj % target))))}]})
+                :effect  (effect (register-lingering-effect
+                                   card
+                                   (let [t target]
+                                     {:type :additional-subroutines
+                                      :duration :end-of-run
+                                      :req (req (same-card? target t))
+                                      :value {:subroutines [(do-net-damage 1)]}})))}]})
 
 (defcard "Project Vacheron"
   {:flags {:has-events-when-stolen true}
@@ -1723,13 +1705,6 @@
   {:on-score {:silent (req true)
               :async true
               :effect (effect (add-counter eid card :agenda 3 nil))}
-   :events [{:event :run-ends
-             :effect (req (let [cid (:cid card)
-                                ices (get-in card [:special :wotan])]
-                            (doseq [i ices]
-                              (when-let [ice (get-card state i)]
-                                (remove-sub! state side ice #(= cid (:from-cid %))))))
-                          (update! state side (dissoc-in card [:special :wotan])))}]
    :abilities [{:req (req (and current-ice
                                (rezzed? current-ice)
                                (has-subtype? current-ice "Bioroid")
@@ -1738,13 +1713,16 @@
                 :keep-menu-open :while-agenda-tokens-left
                 :msg (str "make the approached piece of Bioroid ice gain \"[Subroutine] End the run\""
                           "after all its other subroutines for the remainder of this run")
-                :effect  (effect (add-extra-sub! (get-card state current-ice)
-                                                 {:label "End the run"
-                                                  :msg "end the run"
-                                                  :async true
-                                                  :effect (effect (end-run eid card))}
-                                                 (:cid card) {:back true})
-                                 (update! (update-in card [:special :wotan] #(conj % current-ice))))}]})
+                :effect (effect (register-lingering-effect
+                                  card
+                                  (let [card-target current-ice]
+                                    {:type :additional-subroutines
+                                     :duration :end-of-run
+                                     :req (req (same-card? target card-target))
+                                     :value {:subroutines [{:label "End the run"
+                                                            :msg "end the run"
+                                                            :async true
+                                                            :effect (effect (end-run eid card))}]}})))}]})
 
 (defcard "Project Yagi-Uda"
   (letfn [(put-back-counter [state side card]
@@ -2034,9 +2012,9 @@
                 :prompt "Choose a bioroid to rez, ignoring all costs"
                 :choices {:card #(and (has-subtype? % "Bioroid")
                                       (not (rezzed? %)))}
-                :msg (msg "rez " (card-str state target) ", ignoring all costs")
                 :async true
-                :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
+                :effect (req (wait-for (rez state side target {:ignore-cost :all-costs
+                                                               :msg-keys {:include-cost-from-eid eid}})
                                        (let [c (:card async-result)
                                              ev (if (= (:active-player @state) :corp) :corp-turn-ends :runner-turn-ends)]
                                          (register-events
@@ -2044,7 +2022,8 @@
                                            [{:event ev
                                              :unregister-once-resolved true
                                              :duration :end-of-turn
-                                             :effect (effect (derez c {:source-card card}))}])
+                                             :async true
+                                             :effect (effect (derez eid c))}])
                                          (effect-completed state side eid))))}]})
 
 (defcard "Sentinel Defense Program"
@@ -2165,16 +2144,16 @@
                          :waiting-prompt true
                          :choices {:req (req (some #{target} rezzed-targets))}
                          :once :per-turn
-                         :msg (msg "derez " (card-str state target) " to gain 1 [Credits]")
                          :async true
-                         :effect (effect (derez target {:no-msg true})
-                                         (gain-credits eid 1))})
+                         :effect (req (wait-for
+                                        (derez state side target {:msg-keys {:and-then " and gain 1 [Credits]"}})
+                                        (gain-credits state side eid 1)))})
                       card nil)))}
             {:event :derez
              :req (req (and run
                             (first-run-event?
                               state side :derez
-                              (fn [[context]] (ice? (:card context))))))
+                              (fn [[context]] (some ice? (:cards context))))))
              :msg "lower strength of each installed icebreaker by 2"}]
    :leave-play (effect (update-all-icebreakers))
    :static-abilities [{:type :breaker-strength
@@ -2183,7 +2162,7 @@
                                       (has-subtype? target "Icebreaker")
                                       (<= 1 (run-event-count
                                               state side :derez
-                                              (fn [[context]] (ice? (:card context)))))))}]})
+                                              (fn [[context]] (some ice? (:cards context)))))))}]})
 
 (defcard "Sting!"
   (letfn [(count-opp-stings [state side]
