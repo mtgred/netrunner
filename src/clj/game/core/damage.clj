@@ -81,6 +81,7 @@
                   (swap! state update-in [:stats :corp :damage dmg-type] (fnil + 0) n)
                   (if (< (count hand) n)
                     (do (flatline state)
+                        (trigger-event state side :win {:winner :corp})
                         (trash-cards state side eid cards-trashed {:unpreventable true}))
                     (wait-for (trash-cards state side cards-trashed {:unpreventable true
                                                                      :cause dmg-type

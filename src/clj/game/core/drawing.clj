@@ -1,17 +1,18 @@
 (ns game.core.drawing
   (:require
-    [game.core.card :refer [get-title]]
-    [game.core.eid :refer [effect-completed make-eid make-result]]
-    [game.core.engine :refer [checkpoint queue-event resolve-ability trigger-event trigger-event-simult trigger-event-sync]]
-    [game.core.events :refer [first-event?]]
-    [game.core.flags :refer [prevent-draw]]
-    [game.core.moving :refer [move]]
-    [game.core.say :refer [system-msg]]
-    [game.core.set-aside :refer [set-aside-for-me get-set-aside]]
-    [game.core.winning :refer [win-decked]]
-    [game.macros :refer [continue-ability msg req wait-for]]
-    [game.utils :refer [quantify safe-zero?]]
-    [jinteki.utils :refer [other-side]]))
+   [game.core.card :refer [get-title]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.eid :refer [effect-completed make-eid make-result]]
+   [game.core.engine :refer [checkpoint queue-event register-pending-event resolve-ability trigger-event trigger-event-simult trigger-event-sync]]
+   [game.core.events :refer [first-event?]]
+   [game.core.flags :refer [prevent-draw]]
+   [game.core.moving :refer [move]]
+   [game.core.say :refer [system-msg]]
+   [game.core.set-aside :refer [set-aside-for-me get-set-aside]]
+   [game.core.winning :refer [win-decked]]
+   [game.macros :refer [continue-ability msg req wait-for]]
+   [game.utils :refer [quantify safe-zero?]]
+   [jinteki.utils :refer [other-side]]))
 
 (defn max-draw
   "Put an upper limit on the number of cards that can be drawn in this turn."
@@ -68,7 +69,8 @@
              deck-count (count (get-in @state [side :deck]))]
          (swap! state update :bonus dissoc :draw);; clear bonus draws
          (when (and (= side :corp) (< deck-count draws-after-prevent))
-           (win-decked state))
+           (when (and (win-decked state) (not (:winner-declared @state)))
+             (trigger-event state :runner :win {:winner :runner})))
          (when (< draws-after-prevent draws-wanted)
            (let [prevented (- draws-wanted draws-after-prevent)]
              (system-msg state (other-side side)
@@ -92,6 +94,10 @@
                    (effect-completed state side eid))
                  (let [draw-event (if (= side :corp) :corp-draw :runner-draw)]
                    (swap! state update-in [side :register :currently-drawing] conj drawn)
+                   (doseq [c drawn]
+                     (when-let [on-draw (:on-draw (card-def c))]
+                       (register-pending-event
+                         state draw-event c (assoc on-draw :location :set-aside))))
                    (queue-event state draw-event {:cards drawn
                                                   :count drawn-count})
                    (wait-for

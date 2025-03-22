@@ -12,7 +12,7 @@
    [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp? condition-counter?
                            event? facedown? get-agenda-points get-card get-counters
                            get-title get-zone hardware? has-subtype? has-any-subtype? ice? identity?
-                           in-discard? in-hand? in-scored? installed? is-type? program? resource? rezzed?
+                           in-discard? in-hand? in-set-aside? in-scored? installed? is-type? program? resource? rezzed?
                            runner? upgrade? virus-program?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [can-charge charge-ability]]
@@ -1812,14 +1812,58 @@
                 :prompt "Choose a server"
                 :choices (req remotes)
                 :req (req (:stole-agenda runner-reg))
-                :effect (req (as-agenda state :runner card 0)
-                             (let [zone (server->zone state target)
+                :effect (req (let [moved-card (as-agenda state :runner card 0)
+                                   zone (server->zone state target)
                                    path (conj (into [(->c :corp)] zone) :content)
-                                   cards (enumerate-str (map :title (get-in @state path)))]
-                               (wait-for
-                                 (reveal state :corp (make-eid state eid) targets)
-                                 (system-msg state side
-                                             (str "uses " (:title card) " to reveal " cards " from " target))
+                                   cards (get-in @state path)]
+                               (register-events
+                                 state side moved-card
+                                 [{:event :win
+                                   :req (req (= :runner (:winner context)))
+                                   :unregister-once-resolved true
+                                   :msg "reveal set 2"}])
+                               (expose state :runner eid (get-in @state [:corp :servers (unknown->kw target) :content]))))}]})
+
+(defcard "Investigator Inez Delgado 2"
+  {:abilities [{:msg (msg "add itself to [their] score area as an agenda worth 0 agenda points")
+                :label "Add to score area and reveal the top 3 cards of R&D"
+                :async true
+                :req (req (:stole-agenda runner-reg))
+                :effect (req (let [moved-card (as-agenda state :runner card 0)]
+                               (register-events
+                                 state side moved-card
+                                 [{:event :win
+                                   :req (req (= :runner (:winner context)))
+                                   :unregister-once-resolved true
+                                   :msg "reveal set 5"}])
+                               (if (seq (:deck corp))
+                                 (reveal-loud state side eid card nil (take 3 (:deck corp)))
+                                 (effect-completed state side eid))))}]})
+
+(defcard "Investigator Inez Delgado 3"
+  {:abilities [{:msg (msg "add itself to [their] score area as an agenda worth 0 agenda points")
+                :label "Add to score area and reveal the top 3 cards of R&D"
+                :async true
+                :req (req (:stole-agenda runner-reg))
+                :effect (req (let [moved-card (as-agenda state :runner card 0)]
+                               (register-events
+                                 state side moved-card
+                                 [{:event :win
+                                   :req (req (= :runner (:winner context)))
+                                   :unregister-once-resolved true
+                                   :msg "reveal set 8"}])
+                               (if (seq (:hand corp))
+                                 (reveal-loud state side eid card nil (:hand corp))
+                                 (effect-completed state side eid))))}]})
+
+(defcard "Investigator Inez Delgado 4"
+  {:abilities [{:msg (msg "add itself to [their] score area as an agenda worth 0 agenda points")
+                :label "Add to score area and reveal the top 3 cards of R&D"
+                :async true
+                :req (req (:stole-agenda runner-reg))
+                :effect (req (let [moved-card (as-agenda state :runner card 0)]
+                               (if (seq (concat (:hand corp) [(first (:deck corp))]))
+                                 (reveal-loud state side eid card nil (concat (:hand corp) [(first (:deck corp))]))
                                  (effect-completed state side eid))))}]})
 
 (defcard "Jackpot!"
@@ -3060,6 +3104,21 @@
                :silent (req true)
                :effect (effect (update! (dissoc card :card-target)))}]
      :abilities [ability]}))
+
+(defcard "Shadow Team"
+  {:on-draw {:req (req (and (runner-can-pay-and-install? state side eid card)
+                            (in-set-aside? card)))
+             :msg (msg "install itself")
+             :async true
+             :effect (req (runner-install state side eid card))}
+   :events [{:event :run
+             :req (req (seq (:hand runner)))
+             :msg :cost
+             :cost [(->c :trash-from-hand 1)]}
+            {:event :successful-run
+             :req (req (#{:hq :rd :archives} (target-server context)))
+             :msg (msg "destroy itself")
+             :effect (req (move state side card :destroyed))}]})
 
 (defcard "Smartware Distributor"
   (let [start-of-turn-ability {:once :per-turn

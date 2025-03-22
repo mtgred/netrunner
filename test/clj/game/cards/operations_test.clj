@@ -3001,6 +3001,22 @@
               (click-prompt state :runner "Pay to steal"))
             "Paid 8c to steal 1adv Atlas"))))
 
+(deftest net-watchlist
+  (doseq [[ice cost] [["Fire Wall" -12] ["Spiderweb" -9] ["Ice Wall" -3]]]
+    (do-game
+      (new-game {:corp {:hand ["Net Watchlist" ice] :credits 15}
+                 :runner {:hand ["Corroder"] :credits 25}})
+      (play-from-hand state :corp "Net Watchlist")
+      (play-from-hand state :corp ice "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Corroder")
+      (run-on state :hq)
+      (run-continue-until state :encounter-ice)
+      (is (changed? [(:credit (get-runner)) cost]
+            (auto-pump-and-break state (get-program state 0)))
+          "Woah that's a big tax"))))
+
 (deftest neural-emp
   ;; Neural EMP - Play if Runner made a run the previous turn to do 1 net damage
   (do-game

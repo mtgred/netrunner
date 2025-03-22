@@ -2274,11 +2274,13 @@
                  [:div.right-inner-leftpane
                   (let [op-rfg (r/cursor game-state [op-side :rfg])
                         op-set-aside (r/cursor game-state [op-side :set-aside])
+                        op-destroyed (r/cursor game-state [op-side :destroyed])
                         op-current (r/cursor game-state [op-side :current])
                         op-play-area (r/cursor game-state [op-side :play-area])
                         last-revealed (r/cursor game-state [:last-revealed])
                         me-rfg (r/cursor game-state [me-side :rfg])
                         me-set-aside (r/cursor game-state [me-side :set-aside])
+                        me-destroyed (r/cursor game-state [me-side :destroyed])
                         me-current (r/cursor game-state [me-side :current])
                         me-play-area (r/cursor game-state [me-side :play-area])]
                     [:div
@@ -2288,6 +2290,8 @@
                      [rfg-view me-rfg (tr [:game_rfg "Removed from the game"]) true]
                      [rfg-view op-set-aside (tr [:game_set-aside "Set aside"]) false]
                      [rfg-view me-set-aside (tr [:game_set-aside "Set aside"]) false]
+                     [rfg-view op-destroyed (tr [:game_destroyed "Destroyed"]) false]
+                     [rfg-view me-destroyed (tr [:game_destroyed "Destroyed"]) false]
                      [play-area-view op-user (tr [:game_play-area "Play Area"]) op-play-area]
                      [play-area-view me-user (tr [:game_play-area "Play Area"]) me-play-area]
                      [rfg-view op-current (tr [:game_current "Current"]) false]

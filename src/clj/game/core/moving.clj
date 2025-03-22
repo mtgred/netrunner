@@ -597,9 +597,10 @@
   [state side card n]
   (let [card (deactivate state side card)
         card (convert-to-agenda card n)]
-    (move state side card :scored {:force true})
-    (update-all-agenda-points state side)
-    (check-win-by-agenda state side)))
+    (let [moved-card (move state side card :scored {:force true})]
+      (update-all-agenda-points state side)
+      (check-win-by-agenda state side)
+      moved-card)))
 
 (defn forfeit
   "Forfeits the given agenda to the :rfg zone."

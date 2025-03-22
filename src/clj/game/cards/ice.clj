@@ -2753,7 +2753,9 @@
                  trash-program-sub
                  trash-hardware-sub
                  {:label "Runner loses 3 [Credits], if able. End the run"
-                  :msg "make the Runner lose 3 [Credits] and end the run"
+                  :msg (msg (if (>= (:credit runner) 3)
+                              "make the Runner lose 3 [Credits] and end the run"
+                              "end the run"))
                   :async true
                   :effect (req (if (>= (:credit runner) 3)
                                  (wait-for (lose-credits state :runner (make-eid state eid) 3)
@@ -2765,9 +2767,12 @@
                  trash-resource-sub
                  (do-net-damage 1)
                  {:label "Runner loses [click], if able. End the run"
-                  :msg "make the Runner lose [click] and end the run"
+                  :msg (msg (if (pos? (:click runner))
+                              "make the Runner lose [click] and end the run"
+                              "end the run"))
                   :async true
-                  :effect (req (lose-clicks state :runner 1)
+                  :effect (req (when (pos? (:click runner))
+                                 (lose-clicks state :runner 1))
                                (end-run state :corp eid card))}]})
 
 (defcard "Macrophage"

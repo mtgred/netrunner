@@ -1849,6 +1849,16 @@
      [{:type :steal-additional-cost
        :value (req (->c :credit (+ 4 (* 2 (get-counters target :advancement)))))}]}))
 
+(defcard "Net Watchlist"
+  {:implementation "Only modifies ability costs, does not adjust non-ability uses"
+   :static-abilities [{:type :card-ability-additional-cost
+                       :req (req (and (has-subtype? (:card context) "Icebreaker")
+                                      (not (get-in context [:ability :break]))))
+                       :value (->c :credit 2)}
+                      {:type :break-sub-additional-cost
+                       :req (req (has-subtype? (:card context) "Icebreaker"))
+                       :value (->c :credit 2)}]})
+
 (defcard "Neural EMP"
   {:on-play
    {:req (req (last-turn? state :runner :made-run))
