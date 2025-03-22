@@ -30,13 +30,13 @@
                              :deck-id (:_id deck)}]
                1500
                #(when (sente/cb-error? %)
-                  (non-game-toast (tr [:lobby.select-error "Cannot select that deck"]) "error")))
+                  (non-game-toast (tr [:lobby_select-error "Cannot select that deck"]) "error")))
   (reagent-modals/close-modal!))
 
 (defn select-deck-modal [user current-game]
   (r/with-let [decks (r/cursor app-state [:decks])]
     [:div
-     [:h3 (tr [:lobby.select-title "Select your deck"])]
+     [:h3 (tr [:lobby_select-title "Select your deck"])]
      [:div.deck-collection.lobby-deck-selector
       (let [fmt (:format @current-game)
             players (:players @current-game)
@@ -74,7 +74,7 @@
 
 (defn start-button [current-game user gameid players]
   (when (first-user? @players @user)
-    [cond-button (tr [:lobby.start "Start"])
+    [cond-button (tr [:lobby_start "Start"])
      (or (every? :deck @players) (is-preconstructed? current-game))
      #(ws/ws-send! [:game/start {:gameid @gameid}])]))
 
@@ -87,7 +87,7 @@
                    8000
                    #(when (sente/cb-success? %)
                       (swap! app-state assoc :editing false :current-game nil))))}
-   (tr [:lobby.leave "Leave"])])
+   (tr [:lobby_leave "Leave"])])
 
 (defn precon-info-box [current-game]
   (when-let [precon (:precon @current-game)]
@@ -97,7 +97,7 @@
 (defn singleton-info-box [current-game]
   (when (:singleton @current-game)
     [:div.infobox.blue-shade
-     [:p (tr [:lobby.singleton-restriction "This lobby is running in singleton mode. This means decklists will be restricted to only those which do not contain any duplicate cards."])]]))
+     [:p (tr [:lobby_singleton-restriction "This lobby is running in singleton mode. This means decklists will be restricted to only those which do not contain any duplicate cards."])]]))
 
 (defn turmoil-info-box [current-game]
   (when (:turmoil-mode @current-game)
@@ -108,10 +108,10 @@
   (when (first-user? @players @user)
     (if (< 1 (count @players))
       [:button {:on-click #(ws/ws-send! [:lobby/swap {:gameid @gameid}])}
-       (tr [:lobby.swap "Swap sides"])]
+       (tr [:lobby_swap "Swap sides"])]
       [:div.dropdown
        [:button.dropdown-toggle {:data-toggle "dropdown"}
-        (tr [:lobby.swap "Swap sides"])
+        (tr [:lobby_swap "Swap sides"])
         [:b.caret]]
        (into
         [:ul.dropdown-menu.blue-shade]
@@ -140,7 +140,7 @@
         [:span.label
          (if this-player
            (deck-name (:deck player) 25)
-           (tr [:lobby.deck-selected "Deck selected"]))]])
+           (tr [:lobby_deck-selected "Deck selected"]))]])
      (when-let [deck (:deck player)]
        [:div.float-right [deck-format-status-span deck (:format @current-game "standard") true]])
      (when (and (is-constructed? current-game)
@@ -148,11 +148,11 @@
                 (not (= (:side player) (tr-side "Any Side"))))
        [:span.fake-link.deck-load
         {:on-click #(reagent-modals/modal! [select-deck-modal user current-game])}
-        (tr [:lobby.select-deck "Select Deck"])])]))
+        (tr [:lobby_select-deck "Select Deck"])])]))
 
 (defn player-list [user current-game players]
   [:<>
-   [:h3 (tr [:lobby.players "Players"])]
+   [:h3 (tr [:lobby_players "Players"])]
    (into
     [:div.players]
     (map (fn [player] [player-item user current-game player])
@@ -162,31 +162,31 @@
   (let [{:keys [allow-spectator api-access password
                 save-replay spectatorhands timer]} @current-game]
     [:<>
-     [:h3 (tr [:lobby.options "Options"])]
+     [:h3 (tr [:lobby_options "Options"])]
      [:ul.options
       (when allow-spectator
-        [:li (tr [:lobby.spectators "Allow spectators"])])
+        [:li (tr [:lobby_spectators "Allow spectators"])])
       (when timer
         [:li "Game timer set for " timer " minutes"])
       (when spectatorhands
-        [:li (tr [:lobby.hidden "Make players' hidden information visible to spectators"])])
+        [:li (tr [:lobby_hidden "Make players' hidden information visible to spectators"])])
       (when password
-        [:li (tr [:lobby.password-protected "Password protected"])])
+        [:li (tr [:lobby_password-protected "Password protected"])])
       (when save-replay
         [:<>
-         [:li (str "🟢 " (tr [:lobby.save-replay "Save replay"]))]
+         [:li (str "🟢 " (tr [:lobby_save-replay "Save replay"]))]
          [:div.infobox.blue-shade {:style {:display (if save-replay "block" "none")}}
-          [:p (tr [:lobby.save-replay-details "This will save a replay file of this match with open information (e.g. open cards in hand). The file is available only after the game is finished."])]
-          [:p (tr [:lobby.save-replay-unshared "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."])]
-          [:p (tr [:lobby.save-replay-beta "BETA Functionality: Be aware that we might need to reset the saved replays, so make sure to download games you want to keep. Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."])]]])
+          [:p (tr [:lobby_save-replay-details "This will save a replay file of this match with open information (e.g. open cards in hand). The file is available only after the game is finished."])]
+          [:p (tr [:lobby_save-replay-unshared "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."])]
+          [:p (tr [:lobby_save-replay-beta "BETA Functionality: Be aware that we might need to reset the saved replays, so make sure to download games you want to keep. Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."])]]])
       (when api-access
-        [:li (tr [:lobby.api-access "Allow API access to game information"])])]]))
+        [:li (tr [:lobby_api-access "Allow API access to game information"])])]]))
 
 (defn spectator-list [current-game]
   (let [{:keys [allow-spectator spectators]} @current-game]
     (when allow-spectator
       [:div.spectators
-       [:h3 (tr [:lobby.spectator-count "Spectators"] (count spectators))]
+       [:h3 (tr [:lobby_spectator-count "Spectators"] {:cnt (count spectators)})]
        (for [spectator spectators
              :let [_id (get-in spectator [:user :_id])]]
          ^{:key _id}
@@ -214,7 +214,7 @@
       (when-not (or (every? :deck @players)
                     (not (is-constructed? current-game)))
         [:div.flash-message
-         (tr [:lobby.waiting "Waiting players deck selection"])])
+         (tr [:lobby_waiting "Waiting players deck selection"])])
       [player-list user current-game players]
       [options-list current-game]
       [spectator-list current-game]

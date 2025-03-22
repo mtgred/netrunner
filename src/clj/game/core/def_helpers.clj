@@ -243,7 +243,7 @@
 
 (defn make-current-event-handler
   [title ability]
-  (let [card (server-card title)]
+  (let [card (server-card title false)]
     (if (has-subtype? card "Current")
       (let [event-keyword (if (corp? card) :agenda-stolen :agenda-scored)
             static-ab {:type :trash-when-expired
@@ -324,10 +324,17 @@
                                  (effect-completed state side eid)))))})))
 
 (defmacro defcard
-  [title ability]
+  "Define a card to be returned from card-def. The definition consists of the
+  title (a string), 0 or more transformers and a body (an expression, usually
+  a map). Each tranformer should be a symbol or a list, symbols are wrapped
+  in lists and then the last transformer has the body inserted at the end,
+  then the second last has the result inserted as its last item and so on."
+  {:arglists '([title ability] [title transformers* ability])}
+  [title body & more]
   `(do (swap! card-defs-cache dissoc ~title)
        (defmethod card-defs/defcard-impl ~title [~'_]
          (or (get @card-defs-cache ~title)
-             (let [ability# (add-default-abilities ~title ~ability)]
+             (let [ability# (->> ~@(reverse (cons body more))
+                                 (add-default-abilities ~title))]
                (swap! card-defs-cache assoc ~title ability#)
                ability#)))))

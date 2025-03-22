@@ -33,8 +33,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice
-                          update-ice-strength]]
+   [game.core.ice :refer [update-all-ice update-ice-strength]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [as-agenda mill move remove-from-currently-drawing
@@ -998,10 +997,10 @@
   {:abilities [{:action true
                 :cost [(->c :click 3)]
                 :keep-menu-open :while-3-clicks-left
-                :choices {:card #(not (:rezzed %))}
-                :label "Rez a card at no cost" :msg (msg "rez " (:title target) " at no cost")
+                :label "Rez a card, ignoring all costs"
+                :choices {:card (every-pred corp? installed? (complement agenda?) (complement rezzed?))}
                 :async true
-                :effect (effect (rez eid target {:ignore-cost :all-costs}))}]})
+                :effect (effect (rez eid target {:ignore-cost :all-costs :msg-keys {:include-cost-from-eid eid}}))}]})
 
 (defcard "Elizabeth Mills"
   {:on-rez {:msg "remove 1 bad publicity"
@@ -1072,7 +1071,6 @@
                                          (can-pay-to-rez? state side (assoc eid :source card)
                                                           target {:cost-bonus -1})))}
                 :label "Rez a card, lowering the cost by 1 [Credits] (start of turn)"
-                :msg (msg "rez " (:title target))
                 :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus -1})
                                        (update! state side (assoc card :ebc-rezzed (:cid target)))
                                        (effect-completed state side eid)))}
@@ -2335,7 +2333,6 @@
                                       (can-pay-to-rez? state side (assoc eid :source card)
                                                        target {:cost-bonus (- discount)})
                                       (not (rezzed? target))))}
-             :msg (msg "rez " (:title target))
              :waiting-prompt true
              :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus (- discount)})
                                     (if (< cnt 3)
@@ -2938,22 +2935,24 @@
                 :effect (req (apply swap-installed state side targets))}]})
 
 (defcard "Test Ground"
-  (letfn [(derez-card [advancements]
-            (when (pos? advancements)
-              {:async true
-               :waiting-prompt true
-               :prompt "Derez a card"
-               :choices {:card #(and (installed? %)
-                                     (rezzed? %))}
-               :effect (req (derez state side target {:source-card card})
-                            (continue-ability state side (derez-card (dec advancements)) card nil))}))]
-    {:advanceable :always
-     :abilities [{:label "Derez 1 card for each advancement token"
-                  :req (req (pos? (get-counters card :advancement)))
-                  :msg (msg "derez " (quantify (get-counters card :advancement) "card"))
-                  :cost [(->c :trash-can)]
-                  :async true
-                  :effect (req (continue-ability state side (derez-card (get-counters card :advancement)) card nil))}]}))
+  {:advanceable :always
+   :abilities [{:label "Derez 1 card for each advancement token"
+                :req (req (pos? (get-counters card :advancement)))
+                :cost [(->c :trash-can)]
+                :async true
+                :effect (req (let [cards-to-pick (min (count (filter #(and (rezzed? %) (not (agenda? %))) (all-installed state :corp)))
+                                                      (get-counters card :advancement))
+                                   payment-eid eid]
+                               (continue-ability
+                                 state side
+                                 {:prompt (str "derez " cards-to-pick " cards")
+                                  :waiting-prompt true
+                                  :choices {:card (every-pred installed? rezzed? (complement agenda?))
+                                            :max cards-to-pick
+                                            :all true}
+                                  :async true
+                                  :effect (req (derez state side eid targets {:msg-keys {:include-cost-from-eid payment-eid}}))}
+                                 card nil)))}]})
 
 (defcard "The Board"
   {:on-trash executive-trash-effect
@@ -3197,29 +3196,12 @@
      :abilities [ability]}))
 
 (defcard "Warden Fatuma"
-  (let [new-sub {:label "[Warden Fatuma] Force the Runner to lose [Click], if able"
-                 :msg "force the Runner to lose [Click], if able"
-                 :effect (effect (lose-clicks :runner 1))}]
-    (letfn [(all-rezzed-bios [state]
-              (filter #(and (ice? %)
-                            (has-subtype? % "Bioroid")
-                            (rezzed? %))
-                      (all-installed state :corp)))
-            (remove-one [cid state ice]
-              (remove-extra-subs! state :corp ice cid))
-            (add-one [cid state ice]
-              (add-extra-sub! state :corp ice new-sub cid {:front true}))
-            (update-all [state func]
-              (doseq [i (all-rezzed-bios state)]
-                (func state i)))]
-      {:on-rez {:msg "add \"[Subroutine] The Runner loses [Click], if able\" before all other subroutines"
-                :effect (req (update-all state (partial add-one (:cid card))))}
-       :leave-play (req (system-msg state :corp "loses Warden Fatuma additional subroutines")
-                     (update-all state (partial remove-one (:cid card))))
-       :events [{:event :rez
-                 :req (req (and (ice? (:card context))
-                                (has-subtype? (:card context) "Bioroid")))
-                 :effect (req (add-one (:cid card) state (get-card state (:card context))))}]})))
+  {:static-abilities [{:type :additional-subroutines
+                       :req (req (and (ice? target) (rezzed? target) (has-subtype? target "Bioroid")))
+                       :value {:position :front
+                               :subroutines [{:label "[Warden Fatuma] Force the Runner to lose [Click], if able"
+                                              :msg "force the Runner to lose [Click], if able"
+                                              :effect (effect (lose-clicks :runner 1))}]}}]})
 
 (defcard "Warm Reception"
   (let [install {:prompt "Choose a card to install"
@@ -3243,9 +3225,8 @@
                    :prompt "Choose another card to derez"
                    :choices {:not-self true
                              :card #(rezzed? %)}
-                   :msg (msg "derez itself to derez " (card-str state target))
-                   :effect (effect (derez card {:source-card card})
-                                   (derez target {:source-card card}))}]
+                   :async true
+                   :effect (req (derez state side eid [card target]))}]
     {:derezzed-events [corp-rez-toast]
      :events [{:event :corp-turn-begins
                :interactive (req true)

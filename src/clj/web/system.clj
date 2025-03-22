@@ -17,6 +17,7 @@
    [game.quotes :refer [load-quotes!]]
    [integrant.core :as ig]
    [jinteki.cards :as cards]
+   [jinteki.i18n :as i18n]
    [medley.core :refer [deep-merge]]
    [monger.collection :as mc]
    [monger.core :as mg]
@@ -24,7 +25,6 @@
    [taoensso.sente :as sente]
    [time-literals.data-readers]
    [time-literals.read-write :as read-write]
-   ;; [web.angel-arena :as angel-arena]
    [web.api :refer [make-app make-dev-app]]
    [web.app-state :as app-state]
    [web.game]
@@ -128,13 +128,21 @@
 (defmethod ig/init-key :game/quotes [_ _opts]
   (load-quotes!))
 
+(defmethod ig/init-key :web/i18n [_ _opts]
+  (i18n/load-dictionary! "resources/public/i18n"))
+
+(defmethod ig/halt-key! :web/i18n [_ _opts]
+  (reset! i18n/fluent-dictionary nil))
+
 (defn- format-card-key->string
   [fmt]
   (assoc fmt :cards
-         (reduce-kv
-           (fn [m k v]
-             (assoc m (name k) v))
-           {} (:cards fmt))))
+         (->> (:cards fmt)
+              (reduce-kv
+               (fn [m k v]
+                 (assoc! m (name k) v))
+               (transient {}))
+              (persistent!))))
 
 (defmethod ig/init-key :jinteki/cards [_ {{:keys [db]} :mongo}]
   (let [cards (mc/find-maps db "cards" nil)

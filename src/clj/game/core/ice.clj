@@ -5,7 +5,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid make-result]]
-    [game.core.effects :refer [any-effects get-effects register-lingering-effect sum-effects]]
+    [game.core.effects :refer [any-effects get-effects get-tagged-effects is-disabled-reg? register-lingering-effect sum-effects]]
     [game.core.engine :refer [ability-as-handler pay resolve-ability trigger-event trigger-event-simult queue-event checkpoint]]
     [game.core.payment :refer [build-cost-label can-pay? merge-costs ->c stealth-value]]
     [game.core.say :refer [system-msg]]
@@ -15,6 +15,7 @@
     [jinteki.utils :refer [make-label]]
     [clojure.string :as string]
     [clojure.set :as set]
+    [clojure.math :refer [pow]]
     [medley.core :refer [find-first]]))
 
 ;; These should be in runs.clj, but `req` needs get-current-ice and
@@ -65,91 +66,35 @@
        (same-card? ice encounter-ice)))))
 
 ;;; Ice subroutine functions
+(defn build-sub
+  ([sub cid] (build-sub sub cid nil))
+  ([sub cid {:keys [front back printed variable]}]
+   {:label (make-label sub)
+    :from-cid cid
+    :sub-effect (if (:sub-effect sub)
+                  (:sub-effect sub)
+                  (dissoc sub :breakable))
+    :variable (or variable false)
+    :printed (or printed false)
+    :source (or (:source sub) (when printed :printed))
+    :breakable (:breakable sub true)}))
+
 (defn add-sub
   ([ice sub] (add-sub ice sub (:cid ice) nil))
   ([ice sub cid] (add-sub ice sub cid nil))
-  ([ice sub cid {:keys [front back printed variable]}]
+  ([ice sub cid {:keys [front back printed variable] :as args}]
    (let [curr-subs (:subroutines ice [])
          position (cond
                     back 1
                     front -1
                     :else 0)
-         new-sub {:label (make-label sub)
-                  :from-cid cid
-                  :sub-effect (if (:sub-effect sub)
-                                (:sub-effect sub)
-                                (dissoc sub :breakable))
-                  :position position
-                  :variable (or variable false)
-                  :printed (or printed false)
-                  :breakable (:breakable sub true)}
+         new-sub (assoc (build-sub sub cid args)
+                        :position position)
          new-subs (->> (conj curr-subs new-sub)
                        (sort-by :position)
                        (map-indexed (fn [idx sub] (assoc sub :index idx)))
                        (into []))]
      (assoc ice :subroutines new-subs))))
-
-(defn add-sub!
-  ([state side ice sub] (add-sub! state side ice sub (:cid ice) nil))
-  ([state side ice sub cid] (add-sub! state side ice sub cid nil))
-  ([state side ice sub cid args]
-   (update! state :corp (add-sub ice sub cid args))
-   (trigger-event state side :subroutines-changed (get-card state ice))))
-
-(defn remove-sub
-  "Removes a single sub from a piece of ice for pred. By default removes the first subroutine
-  with the same cid as the given ice."
-  ([ice] (remove-sub ice #(= (:cid ice) (:from-cid %))))
-  ([ice pred]
-   (let [new-subs (->> (:subroutines ice)
-                       (remove-once pred)
-                       (map-indexed (fn [idx sub] (assoc sub :index idx)))
-                       (into []))]
-     (assoc ice :subroutines new-subs))))
-
-(defn remove-sub!
-  ([state side ice] (remove-sub! state side ice #(= (:cid ice) (:from-cid %))))
-  ([state side ice pred]
-   (update! state :corp (remove-sub ice pred))
-   (trigger-event state side :subroutines-changed (get-card state ice))))
-
-(defn remove-subs
-  "Removes all subs from a piece of ice for pred. By default removes the subroutines
-  with the same cid as the given ice."
-  ([ice] (remove-sub ice #(= (:cid ice) (:from-cid %))))
-  ([ice pred]
-   (let [new-subs (->> (:subroutines ice)
-                       (remove pred)
-                       (map-indexed (fn [idx sub] (assoc sub :index idx)))
-                       (into []))]
-     (assoc ice :subroutines new-subs))))
-
-(defn remove-subs!
-  ([state side ice] (remove-subs! state side ice #(= (:cid ice) (:from-cid %))))
-  ([state side ice pred]
-   (update! state :corp (remove-subs ice pred))
-   (trigger-event state side :subroutines-changed (get-card state ice))))
-
-(defn add-extra-sub!
-  "Add a run time subroutine to a piece of ice (Warden, Sub Boost, etc)"
-  ([state side ice sub] (add-extra-sub! state side ice sub (:cid ice) {:back true}))
-  ([state side ice sub cid] (add-extra-sub! state side ice sub cid {:back true}))
-  ([state side ice sub cid args]
-   (add-sub! state side (assoc-in ice [:special :extra-subs] true) sub cid args)
-   (trigger-event state side :subroutines-changed (get-card state ice))
-   ))
-
-(defn remove-extra-subs!
-  "Remove runtime subroutines assigned from the given cid from a piece of ice."
-  [state side ice cid]
-  (let [curr-subs (:subroutines ice)
-        new-subs (remove #(= cid (:from-cid %)) curr-subs)
-        extra-subs (some #(= (:cid ice) (:from-cid %)) new-subs)]
-    (update! state :corp
-             (-> ice
-                 (assoc :subroutines (vec new-subs))
-                 (assoc-in [:special :extra-subs] extra-subs)))
-    (trigger-event state side :subroutines-changed (get-card state ice))))
 
 (defn break-subroutine
   "Marks a given subroutine as broken"
@@ -379,11 +324,81 @@
                                                        :old-strength old-strength})
       changed?)))
 
+(def relevant-sub-keys [:source :label])
+
+(defn reconcile-subroutines
+  [new-subs old-subs]
+  (letfn [(preserve-status [new-sub old-sub] (merge new-sub (select-keys old-sub [:broken :fired])))
+          (same-sub? [new-sub old-sub] (= (select-keys new-sub [:label :source])
+                                          (select-keys old-sub [:label :source])))]
+    (loop [remaining-old (vec old-subs)
+           result []
+           to-add (vec new-subs)]
+      (cond
+        (empty? remaining-old) (concat result to-add)
+        (empty? to-add) result
+        :else
+        (let [new-sub (first to-add)
+              ;; Find the first match in remaining-old
+              match-index (some->> remaining-old
+                                   (map-indexed vector)
+                                   (filter #(same-sub? (second %) new-sub))
+                                   ffirst)]
+          (if match-index
+            (recur (concat (subvec (vec remaining-old) 0 match-index)
+                           (subvec (vec remaining-old) (inc match-index)))
+                   (concat result [(preserve-status new-sub (nth remaining-old match-index))])
+                   (subvec to-add 1))
+            (recur remaining-old
+                   (concat result [new-sub])
+                   (subvec to-add 1))))))))
+
+(defn- build-unbuilt-subs
+  [sub]
+  (if (contains? sub :variable) ;; could just as easily be any of the other keys
+    sub
+    (build-sub sub (:cid sub) nil)))
+
+(defn get-expected-subroutines
+  [state side ice]
+  (if (or (is-disabled-reg? state ice) (not (rezzed? ice)))
+    ;; if it's disabled or unrezzed, it should only have the printed subs
+    (map #(build-sub % (:cid ice) {:printed true}) (:subroutines (card-def ice)))
+    (let [printed-subroutines-to-lose (or (sum-effects state side :lose-printed-subroutines ice) 0)
+          base-printed-subs (map #(build-sub % (:cid ice) {:printed true}) (:subroutines (card-def ice)))
+          printed-subroutines (drop printed-subroutines-to-lose base-printed-subs)
+          applied-subroutines (get-tagged-effects state side :additional-subroutines ice)
+          applied-front (mapcat (fn [{:keys [uuid subroutines cid]}] (mapv #(assoc % :source uuid :cid cid) subroutines)) (filter #(= (:position %) :front) applied-subroutines))
+          applied-end (mapcat (fn [{:keys [uuid subroutines cid]}] (mapv #(assoc % :source uuid :cid cid) subroutines)) (filter #(not= (:position %) :front) applied-subroutines))
+          expected-subroutines (concat applied-front printed-subroutines applied-end)
+          sub-repeats (int (pow 2 (or (min 4 (sum-effects state :corp :tldr-effect ice)) 0)))
+          expected-subroutines (if (> sub-repeats 1)
+                                 (mapcat (partial repeat sub-repeats) expected-subroutines)
+                                 expected-subroutines)]
+      expected-subroutines)))
+
+(defn update-ice-subroutines
+  "Updates the given ice's subroutines by checking the subroutines it should have from the state"
+  [state side ice]
+  (when-let [ice (get-card state ice)]
+    (let [expected-subroutines (get-expected-subroutines state side ice)
+          active-subroutines (:subroutines ice)]
+    (if (= (map #(select-keys % [:source :label]) expected-subroutines) (map #(select-keys % [:source :label]) active-subroutines))
+      nil
+      (let [new-subs (->> (reconcile-subroutines expected-subroutines active-subroutines)
+                          (map build-unbuilt-subs)
+                          (map-indexed (fn [idx sub] (assoc sub :index idx)))
+                          (into []))]
+        (update! state side (assoc ice :subroutines new-subs))
+        (trigger-event state side :subroutines-changed (get-card state ice))
+        true)))))
+
 (defn update-ice-in-server
   "Updates all ice in the given server's :ices field."
   [state side server]
   (reduce (fn [changed? ice]
             (or (update-ice-strength state side ice)
+                (when (get-card state ice) (update-ice-subroutines state side ice))
                 changed?))
           false
           (:ices server)))

@@ -5,6 +5,7 @@
    [clojure.string :as s]
    [goog.dom :as gdom]
    [jinteki.cards :refer [all-cards]]
+   [medley.core :as m]
    [nr.ajax :refer [DELETE GET POST PUT]]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [valid-email?]]
@@ -13,87 +14,110 @@
    [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top]]
+   [jinteki.i18n :as i18n]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]))
 
 (defn post-response [s response]
   (case (:status response)
-    401 (non-game-toast  (tr [:settings.invalid-password "Invalid login or password"]) "error" nil)
-    404 (non-game-toast  (tr [:settings.invalid-email "No account with that email address exists"]) "error" nil)
+    401 (non-game-toast (tr [:settings_invalid-password "Invalid login or password"]) "error" nil)
+    404 (non-game-toast (tr [:settings_invalid-email "No account with that email address exists"]) "error" nil)
     ;; else
-    (non-game-toast (tr [:settings.updated "Profile updated - Please refresh your browser"]) "success" nil))
+    (do (when-let [json (:json response)]
+          (when (and (:lang json) (:content json))
+            (i18n/insert-lang! (:lang json) (:content json))))
+        (non-game-toast (tr [:settings_updated "Profile updated - Please refresh your browser"]) "success" nil)))
   (swap! s assoc :flash-message ""))
 
-(defn post-options [url callback]
-  (let [params (:options @app-state)]
-    (go (let [response (<! (PUT url params :json))]
+(defn post-options [callback]
+  (let [params (:options @app-state)
+        params (if (i18n/get-bundle (:language params))
+                 params
+                 (assoc params :lang (:language params)))]
+    (go (let [response (<! (PUT "/profile" params :json))]
           (callback response)))))
 
-(defn handle-post [event url s]
+(defn save-to-local-storage!
+  [k v]
+  (when-not (nil? v)
+    (.setItem js/localStorage k v)))
+
+(defn handle-post [event s]
   (.preventDefault event)
-  (swap! s assoc :flash-message (tr [:settings.updating "Updating profile..."]))
-  (swap! app-state assoc-in [:options :pronouns] (:pronouns @s))
-  (swap! app-state assoc-in [:options :bespoke-sounds] (:bespoke-sounds @s))
-  (swap! app-state assoc-in [:options :language] (:language @s))
-  (swap! app-state assoc-in [:options :sounds] (:sounds @s))
-  (swap! app-state assoc-in [:options :default-format] (:default-format @s))
-  (swap! app-state assoc-in [:options :lobby-sounds] (:lobby-sounds @s))
-  (swap! app-state assoc-in [:options :sounds-volume] (:volume @s))
-  (swap! app-state assoc-in [:options :background] (:background @s))
-  (swap! app-state assoc-in [:options :custom-bg-url] (:custom-bg-url @s))
-  (swap! app-state assoc-in [:options :card-back] (:card-back @s))
-  (swap! app-state assoc-in [:options :card-zoom] (:card-zoom @s))
-  (swap! app-state assoc-in [:options :pin-zoom] (:pin-zoom @s))
-  (swap! app-state assoc-in [:options :show-alt-art] (:show-alt-art @s))
-  (swap! app-state assoc-in [:options :card-resolution] (:card-resolution @s))
-  (swap! app-state assoc-in [:options :pass-on-rez] (:pass-on-rez @s))
-  (swap! app-state assoc-in [:options :player-stats-icons] (:player-stats-icons @s))
-  (swap! app-state assoc-in [:options :stacked-cards] (:stacked-cards @s))
-  (swap! app-state assoc-in [:options :ghost-trojans] (:ghost-trojans @s))
-  (swap! app-state assoc-in [:options :display-encounter-info] (:display-encounter-info @s))
-  (swap! app-state assoc-in [:options :sides-overlap] (:sides-overlap @s))
-  (swap! app-state assoc-in [:options :log-timestamps] (:log-timestamps @s))
-  (swap! app-state assoc-in [:options :runner-board-order] (:runner-board-order @s))
-  (swap! app-state assoc-in [:options :log-width] (:log-width @s))
-  (swap! app-state assoc-in [:options :log-top] (:log-top @s))
-  (swap! app-state assoc-in [:options :log-player-highlight] (:log-player-highlight @s))
-  (swap! app-state assoc-in [:options :blocked-users] (:blocked-users @s))
-  (swap! app-state assoc-in [:options :alt-arts] (:alt-arts @s))
-  (swap! app-state assoc-in [:options :gamestats] (:gamestats @s))
-  (swap! app-state assoc-in [:options :deckstats] (:deckstats @s))
-  (swap! app-state assoc-in [:options :disable-websockets] (:disable-websockets @s))
-  (.setItem js/localStorage "sounds" (:sounds @s))
-  (.setItem js/localStorage "default-format" (:default-format @s))
-  (.setItem js/localStorage "lobby_sounds" (:lobby-sounds @s))
-  (.setItem js/localStorage "custom_bg_url" (:custom-bg-url @s))
-  (.setItem js/localStorage "sounds_volume" (:volume @s))
-  (.setItem js/localStorage "log-width" (:log-width @s))
-  (.setItem js/localStorage "log-top" (:log-top @s))
-  (.setItem js/localStorage "log-player-highlight" (:log-player-highlight @s))
-  (.setItem js/localStorage "pass-on-rez" (:pass-on-rez @s))
-  (.setItem js/localStorage "player-stats-icons" (:player-stats-icons @s))
-  (.setItem js/localStorage "stacked-cards" (:stacked-cards @s))
-  (.setItem js/localStorage "ghost-trojans" (:ghost-trojans @s))
-  (.setItem js/localStorage "display-encounter-info" (:display-encounter-info @s))
-  (.setItem js/localStorage "sides-overlap" (:sides-overlap @s))
-  (.setItem js/localStorage "log-timestamps" (:log-timestamps @s))
-  (.setItem js/localStorage "runner-board-order" (:runner-board-order @s))
-  (.setItem js/localStorage "card-back" (:card-back @s))
-  (.setItem js/localStorage "card-zoom" (:card-zoom @s))
-  (.setItem js/localStorage "pin-zoom" (:pin-zoom @s))
-  (.setItem js/localStorage "disable-websockets" (:disable-websockets @s))
-  (post-options url (partial post-response s)))
+  (swap! s assoc :flash-message (tr [:settings_updating "Updating profile..."]))
+  (let [{:keys [pronouns bespoke-sounds language sounds default-format
+                lobby-sounds volume background custom-bg-url card-back card-zoom
+                pin-zoom show-alt-art card-resolution pass-on-rez
+                player-stats-icons stacked-cards ghost-trojans
+                display-encounter-info sides-overlap log-timestamps
+                runner-board-order log-width log-top log-player-highlight
+                blocked-users alt-arts gamestats deckstats disable-websockets]} @s]
+    (swap! app-state update :options
+           (fn [options]
+             (m/assoc-some options
+                           :pronouns pronouns
+                           :bespoke-sounds bespoke-sounds
+                           :language language
+                           :sounds sounds
+                           :default-format default-format
+                           :lobby-sounds lobby-sounds
+                           :volume volume
+                           :background background
+                           :custom-bg-url custom-bg-url
+                           :card-back card-back
+                           :card-zoom card-zoom
+                           :pin-zoom pin-zoom
+                           :show-alt-art show-alt-art
+                           :card-resolution card-resolution
+                           :pass-on-rez pass-on-rez
+                           :player-stats-icons player-stats-icons
+                           :stacked-cards stacked-cards
+                           :ghost-trojans ghost-trojans
+                           :display-encounter-info display-encounter-info
+                           :sides-overlap sides-overlap
+                           :log-timestamps log-timestamps
+                           :runner-board-order runner-board-order
+                           :log-width log-width
+                           :log-top log-top
+                           :log-player-highlight log-player-highlight
+                           :blocked-users blocked-users
+                           :alt-arts alt-arts
+                           :gamestats gamestats
+                           :deckstats deckstats
+                           :disable-websockets disable-websockets)))
+    (save-to-local-storage! "language" language)
+    (save-to-local-storage! "sounds" sounds)
+    (save-to-local-storage! "default-format" default-format)
+    (save-to-local-storage! "lobby_sounds" lobby-sounds)
+    (save-to-local-storage! "custom_bg_url" custom-bg-url)
+    (save-to-local-storage! "sounds_volume" volume)
+    (save-to-local-storage! "log-width" log-width)
+    (save-to-local-storage! "log-top" log-top)
+    (save-to-local-storage! "log-player-highlight" log-player-highlight)
+    (save-to-local-storage! "pass-on-rez" pass-on-rez)
+    (save-to-local-storage! "player-stats-icons" player-stats-icons)
+    (save-to-local-storage! "stacked-cards" stacked-cards)
+    (save-to-local-storage! "ghost-trojans" ghost-trojans)
+    (save-to-local-storage! "display-encounter-info" display-encounter-info)
+    (save-to-local-storage! "sides-overlap" sides-overlap)
+    (save-to-local-storage! "log-timestamps" log-timestamps)
+    (save-to-local-storage! "runner-board-order" runner-board-order)
+    (save-to-local-storage! "card-back" card-back)
+    (save-to-local-storage! "card-zoom" card-zoom)
+    (save-to-local-storage! "pin-zoom" pin-zoom)
+    (save-to-local-storage! "disable-websockets" disable-websockets))
+  (post-options #(post-response s %)))
 
 (defn add-user-to-block-list
   [user s]
   (let [blocked-user (:block-user-input @s)
         my-user-name (:username user)
         current-blocked-list (:blocked-users @s)]
-    (swap! s assoc-in [:block-user-input] "")
+    (swap! s assoc :block-user-input "")
     (when (and (not (s/blank? blocked-user))
                (not= my-user-name blocked-user)
                (= -1 (.indexOf current-blocked-list blocked-user)))
-      (swap! s assoc-in [:blocked-users] (conj current-blocked-list blocked-user)))))
+      (swap! s assoc :blocked-users (conj current-blocked-list blocked-user)))))
 
 (defn remove-user-from-block-list
   [evt s]
@@ -102,7 +126,7 @@
         user-name (gdom/getTextContent next-sib)
         current-blocked-list (:blocked-users @s)]
     (when user-name
-      (swap! s assoc-in [:blocked-users] (vec (remove #(= % user-name) current-blocked-list))))))
+      (swap! s assoc :blocked-users (vec (remove #(= % user-name) current-blocked-list))))))
 
 (defn- all-alt-art-types
   []
@@ -136,7 +160,7 @@
         (add-card-art card art s)))))
 
 (defn- clear-card-art [s]
-  (swap! s assoc-in [:alt-arts] {}))
+  (swap! s assoc :alt-arts {}))
 
 (defn- reset-card-art [s]
   (let [art (:all-art-select @s)
@@ -151,13 +175,13 @@
       [:div
        [:input {:type "number"
                 :min 100 :max 2000
-                :on-change #(do (swap! s assoc-in [:log-width] (.. % -target -value))
+                :on-change #(do (swap! s assoc :log-width (.. % -target -value))
                                 (reset! log-width (.. % -target -value)))
                 :value @log-width}]
        [:button.update-log-width {:type "button"
-                                  :on-click #(do (swap! s assoc-in [:log-width] (get-in @app-state [:options :log-width]))
+                                  :on-click #(do (swap! s assoc :log-width (get-in @app-state [:options :log-width]))
                                                  (reset! log-width (get-in @app-state [:options :log-width])))}
-        (tr [:settings.get-log-width "Get current log width"])]])))
+        (tr [:settings_get-log-width "Get current log width"])]])))
 
 (defn log-top-option [s]
   (let [log-top (r/atom (:log-top @s))]
@@ -165,20 +189,20 @@
       [:div
        [:input {:type "number"
                 :min 100 :max 2000
-                :on-change #(do (swap! s assoc-in [:log-top] (.. % -target -value))
+                :on-change #(do (swap! s assoc :log-top (.. % -target -value))
                                 (reset! log-top (.. % -target -value)))
                 :value @log-top}]
        [:button.update-log-width {:type "button"
-                                  :on-click #(do (swap! s assoc-in [:log-top] (get-in @app-state [:options :log-top]))
+                                  :on-click #(do (swap! s assoc :log-top (get-in @app-state [:options :log-top]))
                                                  (reset! log-top (get-in @app-state [:options :log-top])))}
-        (tr [:settings.get-log-top "Get current log top"])]])))
+        (tr [:settings_get-log-top "Get current log top"])]])))
 
 (defn change-email [_]
   (let [email-state (r/atom {:flash-message ""
                              :email ""})]
     (fn [s]
       [:div
-       [:h3 (tr [:settings.email-title "Change email address"])]
+       [:h3 (tr [:settings_email-title "Change email address"])]
        [:p.flash-message (:flash-message @email-state)]
        [:form {:on-submit (fn [event]
                             (.preventDefault event)
@@ -190,30 +214,30 @@
                                         (-> js/document .-location (.reload true))
                                         (swap! email-state assoc :flash-message message)))))))}
         (when-let [email (:email @s)]
-          [:p [:label.email (tr [:settings.current-email "Current email"]) ": "]
+          [:p [:label.email (tr [:settings_current-email "Current email"]) ": "]
            [:input.email {:type "text"
                           :value email
                           :name "current-email"
                           :read-only true}]])
-        [:p [:label.email (tr [:settings.desired-email "Desired email"]) ": "]
+        [:p [:label.email (tr [:settings_desired-email "Desired email"]) ": "]
          [:input.email {:type "text"
-                        :placeholder (tr [:settings.email-placeholder "Email address"])
+                        :placeholder (tr [:settings_email-placeholder "Email address"])
                         :name "email"
                         :on-change #(let [value (-> % .-target .-value)]
                                       (swap! email-state assoc :email value))
                         :on-blur #(if (valid-email? (-> % .-target .-value))
                                     (swap! email-state assoc :flash-message "")
                                     (swap! email-state assoc
-                                           :flash-message (tr [:settings.enter-valid "Please enter a valid email address"])))}]]
+                                           :flash-message (tr [:settings_enter-valid "Please enter a valid email address"])))}]]
         [:p.float-right
          (let [disabled (not (valid-email? (:email @email-state)))]
            [:button
             {:disabled disabled
              :class (when disabled "disabled")}
-            (tr [:settings.update "Update"])])
+            (tr [:settings_update "Update"])])
          [:button {:on-click #(do (.preventDefault %)
                                   (reagent-modals/close-modal!))}
-          (tr [:settings.cancel "Cancel"])]]]])))
+          (tr [:settings_cancel "Cancel"])]]]])))
 
 (defn- update-api-keys-response [response s]
   (let [status (:status response)]
@@ -235,7 +259,7 @@
 (defn- api-keys [s]
   (r/with-let [keys-cursor (r/cursor s [:api-keys])]
     [:section
-     [:h3 (tr [:settings.api-keys "API Keys"])]
+     [:h3 (tr [:settings_api-keys "API Keys"])]
      [:div.news-box.panel.blue-shade
       [:ul.list
        (doall
@@ -246,13 +270,49 @@
              [:button.delete
               {:on-click #(do (.preventDefault %)
                               (delete-api-key (:_id d) s))}
-              (tr [:settings.delete-api-key "Delete"])]]
+              (tr [:settings_delete-api-key "Delete"])]]
             [:span.date
              (format-date-time ISO-ish-formatter (:date d))]
             [:span.title (:api-key d "")]]))]]
      [:button {:on-click #(do (.preventDefault %)
                               (create-api-key s))}
-      (tr [:settings.create-api-key "Create API Key"])]]))
+      (tr [:settings_create-api-key "Create API Key"])]]))
+
+(def pronoun-list
+  [["Unspecified" "none"]
+   ["Any" "any"]
+   ["Prefer not to say" "myodb"]
+   ["[blank]" "blank"]
+   ["They/them" "they"]
+   ["She/her" "she"]
+   ["She/it" "sheit"]
+   ["She/they" "shethey"]
+   ["He/him" "he"]
+   ["He/it" "heit"]
+   ["He/they" "hethey"]
+   ["He/She/they" "heshe"]
+   ["It" "it"]
+   ["Fae/faer" "faefaer"]
+   ["Ne/nem" "ne"]
+   ["Ve/ver" "ve"]
+   ["Ey/em" "ey"]
+   ["Ze/hir" "zehir"]
+   ["Ze/zir" "zezir"]
+   ["Xe/xem" "xe"]
+   ["Xi/xir" "xi"]])
+
+(def background-list
+  [["Apex" "apex"]
+   ["Custom BG (input URL below)" "custom"]
+   ["Find The Truth" "find-the-truth"]
+   ["Freelancer" "freelancer"]
+   ["Monochrome" "monochrome"]
+   ["Mushin No Shin" "mushin-no-shin"]
+   ["Push Your Luck" "push-your-luck"]
+   ["Rumor Mill" "rumor-mill"]
+   ["The Root" "the-root"]
+   ["Traffic Jam" "traffic-jam"]
+   ["Worlds 2020" "worlds2020"]])
 
 (defn account-content [_ _ scroll-top]
   (r/create-class
@@ -262,49 +322,33 @@
      :reagent-render
      (fn [user s _]
        [:div#profile-form.panel.blue-shade.content-page {:ref "profile-form"}
-         [:h2 (tr [:nav.settings "Settings"])]
-         [:form {:on-submit #(handle-post % "/profile" s)}
-          [:button.float-right (tr [:settings.update-profile "Update Profile"])]
+         [:h2 (tr [:nav_settings "Settings"])]
+         [:form {:on-submit #(handle-post % s)}
+          [:button.float-right (tr [:settings_update-profile "Update Profile"])]
           [:section
-           [:h3 (tr [:settings.email "Email"])]
-           [:a {:href "" :on-click #(do
-                                      (.preventDefault %)
-                                      (reagent-modals/modal! [change-email s]))} (tr [:settings.change-email "Change email"])]]
+           [:h3 (tr [:settings_email "Email"])]
+           [:a {:href ""
+                :on-click #(do
+                             (.preventDefault %)
+                             (reagent-modals/modal! [change-email s]))}
+            (tr [:settings_change-email "Change email"])]]
           [:section
-           [:h3 (tr [:settings.avatar "Avatar"])]
+           [:h3 (tr [:settings_avatar "Avatar"])]
            [avatar @user {:opts {:size 38}}]
-           [:a {:href "http://gravatar.com" :target "_blank"} (tr [:settings.change-avatar "Change on gravatar.com"])]]
+           [:a {:href "http://gravatar.com" :target "_blank"}
+            (tr [:settings_change-avatar "Change on gravatar.com"])]]
           [:section
-           [:h3 (tr [:settings.pronouns "Pronouns"])]
+           [:h3 (tr [:settings_pronouns "Pronouns"])]
            [:select {:value (:pronouns @s "none")
                      :on-change #(swap! s assoc :pronouns (.. % -target -value))}
             (doall
-              (for [option [{:name (tr [:pronouns.none "Unspecified"]) :ref "none"}
-                            {:name (tr [:pronouns.any "Any"]) :ref "any"}
-                            {:name (tr [:pronouns.myodb "Prefer not to say"]) :ref "myodb"}
-                            {:name (tr [:pronouns.blank "[blank]"]) :ref "blank"}
-                            {:name (tr [:pronouns.they "They/them"]) :ref "they"}
-                            {:name (tr [:pronouns.she "She/her"]) :ref "she"}
-                            {:name (tr [:pronouns.sheit "She/it"]) :ref "sheit"}
-                            {:name (tr [:pronouns.shethey "She/they"]) :ref "shethey"}
-                            {:name (tr [:pronouns.he "He/him"]) :ref "he"}
-                            {:name (tr [:pronouns.heit "He/it"]) :ref "heit"}
-                            {:name (tr [:pronouns.hethey "He/they"]) :ref "hethey"}
-                            {:name (tr [:pronouns.heshe "He/She/they"]) :ref "heshe"}
-                            {:name (tr [:pronouns.it "It"]) :ref "it"}
-                            {:name (tr [:pronouns.ne "Fae/faer"]) :ref "faefaer"}
-                            {:name (tr [:pronouns.ne "Ne/nem"]) :ref "ne"}
-                            {:name (tr [:pronouns.ve "Ve/ver"]) :ref "ve"}
-                            {:name (tr [:pronouns.ey "Ey/em"]) :ref "ey"}
-                            {:name (tr [:pronouns.zehir "Ze/hir"]) :ref "zehir"}
-                            {:name (tr [:pronouns.zezir "Ze/zir"]) :ref "zezir"}
-                            {:name (tr [:pronouns.xe "Xe/xem"]) :ref "xe"}
-                            {:name (tr [:pronouns.xi "Xi/xir"]) :ref "xi"}]]
-                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
+             (for [[title ref] pronoun-list]
+               [:option {:value ref :key ref}
+                (tr [:pronouns title] {:pronoun ref})]))]
            [:div "If your personal pronouns are not represented, you can request them "
             [:a {:href "https://github.com/mtgred/netrunner/issues"} "here"]]]
           [:section
-           [:h3 (tr [:settings.language "Language"])]
+           [:h3 (tr [:settings_language "Language"])]
            [:select {:value (:language @s "en")
                      :on-change #(swap! s assoc :language (.. % -target -value))}
             (doall
@@ -317,36 +361,37 @@
                             {:name "日本語" :ref "ja"}
                             {:name "한국어" :ref "ko"}
                             {:name "Polski" :ref "pl"}
-                            {:name "Igpay Atinlay" :ref "la-pig"}
                             {:name "Português" :ref "pt"}
-                            {:name "Русский" :ref "ru"}]]
+                            {:name "Русский" :ref "ru"}
+                            {:name "Igpay Atinlay" :ref "la-pig"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
           [:section
-           [:h3 (tr [:settings.sounds "Sounds"])]
+           [:h3 (tr [:settings_sounds "Sounds"])]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:lobby-sounds @s)
-                             :on-change #(swap! s assoc-in [:lobby-sounds] (.. % -target -checked))}]
-             (tr [:settings.enable-lobby-sounds "Enable lobby sounds"])]]
+                             :on-change #(swap! s assoc :lobby-sounds (.. % -target -checked))}]
+             (tr [:settings_enable-lobby-sounds "Enable lobby sounds"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:sounds @s)
-                             :on-change #(swap! s assoc-in [:sounds] (.. % -target -checked))}]
-             (tr [:settings.enable-game-sounds "Enable game sounds"])]]
-           [:div (tr [:settings.volume "Volume"])
+                             :on-change #(swap! s assoc :sounds (.. % -target -checked))}]
+             (tr [:settings_enable-game-sounds "Enable game sounds"])]]
+           [:div (tr [:settings_volume "Volume"])
             [:input {:type "range"
                      :min 1 :max 100 :step 1
                      :on-mouse-up #(play-sfx [(random-sound)] {:volume (int (.. % -target -value))})
-                     :on-change #(swap! s assoc-in [:volume] (.. % -target -value))
+                     :on-change #(swap! s assoc :volume (.. % -target -value))
                      :value (or (:volume @s) 50)
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
 
           [:section
-           [:h3 (tr [:settings.bespoke-sounds-header "Card-Specific Sounds"])]
+           [:h3 (tr [:settings_bespoke-sounds "Card-Specific Sounds"] {:sound "header"})]
            (doall
-             (for [grouping (distinct (map :grouping (vals bespoke-sounds)))]
+             (for [grouping (distinct (map :grouping (vals bespoke-sounds)))
+                   :let [group-name (name grouping)]]
                ^{:key grouping}
                [:div
                 [:label [:input {:type "checkbox"
@@ -354,61 +399,63 @@
                                  :checked (get-in @s [:bespoke-sounds grouping])
                                  :on-change #(let [checked (.. % -target -checked)]
                                                (when checked
-                                                 (play-sfx [(select-random-from-grouping grouping)] {:volume (or (:volume @s) 50) :force true}))
+                                                 (play-sfx [(select-random-from-grouping grouping)]
+                                                           {:volume (or (:volume @s) 50)
+                                                            :force true}))
                                                (swap! s assoc-in [:bespoke-sounds grouping] checked))}]
-                 (tr [(keyword (str "settings.bespoke-sounds." (name grouping))) (name grouping)])]]))]
+                 (tr [:settings_bespoke-sounds group-name] {:sound group-name})]]))]
 
           [:section
-           [:h3 (tr [:lobby.default-game-format "Default game format"])]
+           [:h3 (tr [:lobby_default-game-format "Default game format"])]
            [:select.format
             {:value (or (:default-format @s) "standard")
-             :on-change #(swap! s assoc-in [:default-format] (.. % -target -value))}
+             :on-change #(swap! s assoc :default-format (.. % -target -value))}
             (doall
              (for [[k v] slug->format]
                ^{:key k}
                [:option {:value k} (tr-format v)]))]]
 
           [:section
-           [:h3 (tr [:settings.layout-options "Layout options"])]
+           [:h3 (tr [:settings_layout-options "Layout options"])]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:player-stats-icons @s)
-                             :on-change #(swap! s assoc-in [:player-stats-icons] (.. % -target -checked))}]
-             (tr [:settings.player-stats-icons "Use icons for player stats"])]]
+                             :on-change #(swap! s assoc :player-stats-icons (.. % -target -checked))}]
+             (tr [:settings_player-stats-icons "Use icons for player stats"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:stacked-cards @s)
-                             :on-change #(swap! s assoc-in [:stacked-cards] (.. % -target -checked))}]
-             (tr [:settings.stacked-cards "Card stacking (on by default)"])]]
+                             :on-change #(swap! s assoc :stacked-cards (.. % -target -checked))}]
+             (tr [:settings_stacked-cards "Card stacking (on by default)"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:ghost-trojans @s)
-                             :on-change #(swap! s assoc-in [:ghost-trojans] (.. % -target -checked))}]
-             (tr [:settings.display-encounter-info "Display ghosts for hosted programs"])]]
+                             :on-change #(swap! s assoc :ghost-trojans (.. % -target -checked))}]
+             (tr [:settings_ghost-trojans "Display ghosts for hosted programs"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:display-encounter-info @s)
-                             :on-change #(swap! s assoc-in [:display-encounter-info] (.. % -target -checked))}]
-             (tr [:settings.display-encounter-info "Always display encounter info dialog"])]]
+                             :on-change #(swap! s assoc :display-encounter-info (.. % -target -checked))}]
+             (tr [:settings_display-encounter-info "Always display encounter info"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:sides-overlap @s)
-                             :on-change #(swap! s assoc-in [:sides-overlap] (.. % -target -checked))}]
-             (tr [:settings.sides-overlap "Runner and Corp board may overlap"])]]
+                             :on-change #(swap! s assoc :sides-overlap (.. % -target -checked))}]
+             (tr [:settings_sides-overlap "Runner and Corp board may overlap"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:log-timestamps @s)
-                             :on-change #(swap! s assoc-in [:log-timestamps] (.. % -target -checked))}]
-             (tr [:settings.log-timestamps "Show log timestamps"])]]
+                             :on-change #(swap! s assoc :log-timestamps (.. % -target -checked))}]
+             (tr [:settings_toggle-log-timestamps "Show log timestamps"])]]
 
            [:br]
-           [:h4 (tr [:settings.runner-layout "Runner layout from Corp perspective"])]
+           [:h4 (tr [:settings_runner-layout "Runner layout from Corp perspective"])]
            [:div
             [:div.radio
              [:label [:input {:name "runner-board-order"
@@ -416,7 +463,7 @@
                               :value "jnet"
                               :checked (= "jnet" (:runner-board-order @s))
                               :on-change #(swap! s assoc :runner-board-order (.. % -target -value))}]
-              (tr [:settings.runner-classic "Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)"])]]
+              (tr [:settings_runner-classic "Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)"])]]
 
             [:div.radio
              [:label [:input {:name "runner-board-order"
@@ -424,15 +471,15 @@
                               :value "irl"
                               :checked (= "irl" (:runner-board-order @s))
                               :on-change #(swap! s assoc :runner-board-order (.. % -target -value))}]
-              (tr [:settings.runner-reverse "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"])]]]
+              (tr [:settings_runner-reverse "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"])]]]
 
            [:br]
-           [:h4 (tr [:settings.log-size "Log size"])]
+           [:h4 (tr [:settings_log-size "Log size"])]
            [:div
             [log-width-option s]
             [log-top-option s]]
            [:br]
-           [:h4 (tr [:settings.log-player-highlight "Log player highlight"])]
+           [:h4 (tr [:settings_log-player-highlight "Log player highlight"])]
            [:div
             [:div.radio
              [:label [:input {:name "log-player-highlight"
@@ -440,7 +487,7 @@
                               :value "blue-red"
                               :checked (= "blue-red" (:log-player-highlight @s))
                               :on-change #(swap! s assoc :log-player-highlight (.. % -target -value))}]
-              (tr [:settings.log-player-highlight-red-blue "Corp: Blue / Runner: Red"])]]
+              (tr [:settings_log-player-highlight-red-blue "Corp: Blue / Runner: Red"])]]
 
             [:div.radio
              [:label [:input {:name "log-player-highlight"
@@ -448,42 +495,30 @@
                               :value "none"
                               :checked (= "none" (:log-player-highlight @s))
                               :on-change #(swap! s assoc :log-player-highlight (.. % -target -value))}]
-              (tr [:settings.log-player-highlight-none "None"])]]]]
+              (tr [:settings_log-player-highlight-none "None"])]]]]
 
           (let [custom-bg-selected (= (:background @s) "custom-bg" )
-                custom-bg-url (r/atom (:custom-bg-url @s))]
+                custom-bg-url (r/cursor s [:custom-bg-url])]
             [:section
-             [:h3  (tr [:settings.background "Game board background"])]
-             (doall (for [option [{:name (tr [:settings.the-root-bg "The Root"])              :ref "lobby-bg"}
-                                  {:name (tr [:settings.freelancer-bg "Freelancer"])          :ref "freelancer-bg"}
-                                  {:name (tr [:settings.mushin-no-shin-bg "Mushin No Shin"])  :ref "mushin-no-shin-bg"}
-                                  {:name (tr [:settings.traffic-jam-bg "Traffic Jam"])        :ref "traffic-jam-bg"}
-                                  {:name (tr [:settings.rumor-mill-bg "Rumor Mill"])          :ref "rumor-mill-bg"}
-                                  {:name (tr [:settings.find-the-truth-bg "Find The Truth"])  :ref "find-the-truth-bg"}
-                                  {:name (tr [:settings.push-your-luck-bg "Push Your Luck"])  :ref "push-your-luck-bg"}
-                                  {:name (tr [:settings.apex-bg "Apex"])                      :ref "apex-bg"}
-                                  {:name (tr [:settings.worlds2020-bg "Worlds 2020"])         :ref "worlds2020"}
-                                  {:name (tr [:settings.monochrome-bg "Monochrome"])          :ref "monochrome-bg"}
-                                  {:name (str (tr [:settings.custom-bg "Custom BG"]) (when custom-bg-selected (tr [:settings.input-url-below " (input URL below)"])))
-                                   :ref "custom-bg"}]]
-                      [:div.radio {:key (:name option)}
+             [:h3 (tr [:settings_background "Game board background"])]
+             (doall (for [[title slug] background-list]
+                      [:div.radio {:key slug}
                        [:label [:input {:type "radio"
                                         :name "background"
-                                        :value (:ref option)
-                                        :on-change #(swap! s assoc-in [:background] (.. % -target -value))
-                                        :checked (= (:background @s) (:ref option))}]
-                        (:name option)]]))
+                                        :value slug
+                                        :on-change #(swap! s assoc :background (.. % -target -value))
+                                        :checked (= (:background @s) slug)}]
+                        (tr [:settings_bg title] {:slug slug})]]))
 
              [:div [:input {:type "text"
                             :hidden (not custom-bg-selected)
-                            :on-change #(do (swap! s assoc-in [:custom-bg-url] (.. % -target -value))
-                                            (reset! custom-bg-url (.. % -target -value)))
+                            :on-change #(swap! s assoc :custom-bg-url (.. % -target -value))
                             :value @custom-bg-url}]]])
 
           [:section
-           [:h3  (tr [:settings.card-backs "Card backs"])]
-           (doall (for [option [{:name (tr [:settings.nsg "NSG"]) :ref "nsg"}
-                                {:name (tr [:settings.ffg "FFG"]) :ref "ffg"}]]
+           [:h3 (tr [:settings_card-backs "Card backs"])]
+           (doall (for [option [{:name (tr [:settings_nsg "NSG"]) :ref "nsg"}
+                                {:name (tr [:settings_ffg "FFG"]) :ref "ffg"}]]
                     [:div.radio {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "card-back"
@@ -493,9 +528,9 @@
                       (:name option)]]))]
 
           [:section
-           [:h3  (tr [:settings.card-preview-zoom "Card preview zoom"])]
-           (doall (for [option [{:name (tr [:settings.card-iamge "Card Image"]) :ref "image"}
-                                {:name (tr [:settings.card-text "Card Text"]) :ref "text"}]]
+           [:h3  (tr [:settings_card-preview-zoom "Card preview zoom"])]
+           (doall (for [option [{:name (tr [:settings_card-iamge "Card Image"]) :ref "image"}
+                                {:name (tr [:settings_card-text "Card Text"]) :ref "text"}]]
                     [:div.radio {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "card-zoom"
@@ -508,68 +543,68 @@
             [:label [:input {:type "checkbox"
                              :name "pin-zoom"
                              :checked (:pin-zoom @s)
-                             :on-change #(swap! s assoc-in [:pin-zoom] (.. % -target -checked))}]
-             (tr [:settings.pin-zoom "Keep zoomed cards on screen"])]]]
+                             :on-change #(swap! s assoc :pin-zoom (.. % -target -checked))}]
+             (tr [:settings_pin-zoom "Keep zoomed cards on screen"])]]]
 
           [:section
-           [:h3 (tr [:settings.game-stats " Game Win/Lose statistics "])]
-           (doall (for [option [{:name (tr [:settings.always "Always"])                      :ref "always"}
-                                {:name (tr [:settings.comp-only "Competitive Lobby Only"])   :ref "competitive"}
-                                {:name (tr [:settings.none "None"])                          :ref "none"}]]
+           [:h3 (tr [:settings_game-stats " Game Win/Lose statistics "])]
+           (doall (for [option [{:name (tr [:settings_always "Always"])                      :ref "always"}
+                                {:name (tr [:settings_comp-only "Competitive Lobby Only"])   :ref "competitive"}
+                                {:name (tr [:settings_none "None"])                          :ref "none"}]]
                     [:div {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "gamestats"
                                       :value (:ref option)
-                                      :on-change #(swap! s assoc-in [:gamestats] (.. % -target -value))
+                                      :on-change #(swap! s assoc :gamestats (.. % -target -value))
                                       :checked (= (:gamestats @s) (:ref option))}]
                       (:name option)]]))]
 
           [:section
-           [:h3 (tr [:settings.deck-stats " Deck statistics "])]
-           (doall (for [option [{:name (tr [:settings.always "Always"])                      :ref "always"}
-                                {:name (tr [:settings.comp-only "Competitive Lobby Only"])   :ref "competitive"}
-                                {:name (tr [:settings.none "None"])                          :ref "none"}]]
+           [:h3 (tr [:settings_deck-stats " Deck statistics "])]
+           (doall (for [option [{:name (tr [:settings_always "Always"])                      :ref "always"}
+                                {:name (tr [:settings_comp-only "Competitive Lobby Only"])   :ref "competitive"}
+                                {:name (tr [:settings_none "None"])                          :ref "none"}]]
                     [:div {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "deckstats"
                                       :value (:ref option)
-                                      :on-change #(swap! s assoc-in [:deckstats] (.. % -target -value))
+                                      :on-change #(swap! s assoc :deckstats (.. % -target -value))
                                       :checked (= (:deckstats @s) (:ref option))}]
                       (:name option)]]))]
 
           [:section {:id "high-res"}
-           [:h3 (tr [:settings.card-images "Card images"])]
+           [:h3 (tr [:settings_card-images "Card images"])]
            [:div
             [:label [:input {:type "checkbox"
                              :name "use-high-res"
                              :checked (= "high" (:card-resolution @s))
-                             :on-change #(swap! s assoc-in [:card-resolution] (if (.. % -target -checked) "high" "default"))}]
-             (tr [:settings.high-res "Enable high-resolution card images"])]]]
+                             :on-change #(swap! s assoc :card-resolution (if (.. % -target -checked) "high" "default"))}]
+             (tr [:settings_high-res "Enable high-resolution card images"])]]]
 
           [:section {:id "alt-art"}
-           [:h3 (tr [:settings.alt-art "Alt arts"])]
+           [:h3 (tr [:settings_alt-art "Alt arts"])]
            [:div
             [:label [:input {:type "checkbox"
                              :name "show-alt-art"
                              :checked (:show-alt-art @s)
-                             :on-change #(swap! s assoc-in [:show-alt-art] (.. % -target -checked))}]
-             (tr [:settings.show-alt "Show alternate card arts"])]]
+                             :on-change #(swap! s assoc :show-alt-art (.. % -target -checked))}]
+             (tr [:settings_show-alt "Show alternate card arts"])]]
            [:br]
 
            (when (and (:special @user) (:show-alt-art @s) (:alt-info @app-state))
              [:div {:id "my-alt-art"}
               [:div {:id "set-all"}
-               (tr [:settings.set-all "Set all cards to"]) ": "
+               (tr [:settings_set-all "Set all cards to"]) ": "
                [:select {:ref "all-art-select"
                          :value (:all-art-select @s)
-                         :on-change #(swap! s assoc-in [:all-art-select] (-> % .-target .-value))}
+                         :on-change #(swap! s assoc :all-art-select (-> % .-target .-value))}
                 (doall (for [t (all-alt-art-types)]
                          (when (not= "prev" t)
                            [:option {:value t :key t} (alt-art-name t)])))]
                [:button
                 {:type "button"
                  :on-click #(reset-card-art s)}
-                (tr [:settings.set "Set"])]]
+                (tr [:settings_set "Set"])]]
               [:div.reset-all
                (let [disabled (empty? (:alt-arts @s))]
                  [:button
@@ -577,23 +612,24 @@
                    :disabled disabled
                    :class (if disabled "disabled" "")
                    :on-click #(clear-card-art s)}
-                  (tr [:settings.reset "Reset All to Official Art"])])]])]
+                  (tr [:settings_reset "Reset All to Official Art"])])]])]
 
          [:section
-          [:h3 (tr [:settings.blocked "Blocked users"])]
+          [:h3 (tr [:settings_blocked "Blocked users"])]
           [:div
-           [:input {:on-change #(swap! s assoc-in [:block-user-input] (-> % .-target .-value))
+           [:input {:on-change #(swap! s assoc :block-user-input (-> % .-target .-value))
                     :on-key-down (fn [e]
                                    (when (= e.keyCode 13)
                                      (.preventDefault e)
                                      (add-user-to-block-list user s)))
                     :ref "block-user-input"
                     :value (:block-user-input @s)
-                    :type "text" :placeholder (tr [:settings.user-name "User name"])}]
+                    :type "text"
+                    :placeholder (tr [:settings_user-name "User name"])}]
            [:button.block-user-btn {:type "button"
                                     :name "block-user-button"
                                     :on-click #(add-user-to-block-list user s)}
-            (tr [:settings.block "Block user"])]]
+            (tr [:settings_block "Block user"])]]
           (doall (for [bu (:blocked-users @s)]
                    [:div.line {:key bu}
                     [:button.small.unblock-user {:type "button"
@@ -601,13 +637,13 @@
                     [:span.blocked-user-name (str "  " bu)]]))]
 
          [:section
-          [:h3  (tr [:settings.connection "Connection"])]
+          [:h3  (tr [:settings_connection "Connection"])]
           [:div
            [:label [:input {:type "checkbox"
                             :name "disable-websockets"
                             :checked (:disable-websockets @s)
-                            :on-change #(swap! s assoc-in [:disable-websockets] (.. % -target -checked))}]
-            (tr [:settings.disable-websockets "Disable websockets - requires browser refresh after clicking Update Profile [Not Recommended!]"])]]]
+                            :on-change #(swap! s assoc :disable-websockets (.. % -target -checked))}]
+            (tr [:settings_disable-websockets "Disable websockets - requires browser refresh after clicking Update Profile [Not Recommended!]"])]]]
 
      [api-keys s]
 
@@ -617,38 +653,17 @@
 (defn account []
   (let [user (r/cursor app-state [:user])
         scroll-top (atom 0)
-        state (r/atom {:flash-message ""
-                       :background (get-in @app-state [:options :background])
-                       :custom-bg-url (get-in @app-state [:options :custom-bg-url])
-                       :card-back (get-in @app-state [:options :card-back])
-                       :card-zoom (get-in @app-state [:options :card-zoom])
-                       :pin-zoom (get-in @app-state [:options :pin-zoom])
-                       :pronouns (get-in @app-state [:options :pronouns])
-                       :bespoke-sounds (get-in @app-state [:options :bespoke-sounds])
-                       :language (get-in @app-state [:options :language])
-                       :sounds (get-in @app-state [:options :sounds])
-                       :default-format (get-in @app-state [:options :default-format])
-                       :lobby-sounds (get-in @app-state [:options :lobby-sounds])
-                       :volume (get-in @app-state [:options :sounds-volume])
-                       :show-alt-art (get-in @app-state [:options :show-alt-art])
-                       :alt-arts (get-in @app-state [:options :alt-arts])
-                       :all-art-select "wc2015"
-                       :card-resolution (get-in @app-state [:options :card-resolution])
-                       :stacked-cards (get-in @app-state [:options :stacked-cards])
-                       :ghost-trojans (get-in @app-state [:options :ghost-trojans])
-                       :display-encounter-info (get-in @app-state [:options :display-encounter-info])
-                       :sides-overlap (get-in @app-state [:options :sides-overlap])
-                       :pass-on-rez (get-in @app-state [:options :pass-on-rez])
-                       :log-timestamps (get-in @app-state [:options :log-timestamps])
-                       :player-stats-icons (get-in @app-state [:options :player-stats-icons])
-                       :runner-board-order (get-in @app-state [:options :runner-board-order])
-                       :log-width (get-in @app-state [:options :log-width])
-                       :log-top (get-in @app-state [:options :log-top])
-                       :log-player-highlight (get-in @app-state [:options :log-player-highlight])
-                       :gamestats (get-in @app-state [:options :gamestats])
-                       :deckstats (get-in @app-state [:options :deckstats])
-                       :blocked-users (sort (get-in @app-state [:options :blocked-users]))
-                       :disable-websockets (get-in @app-state [:options :disable-websockets])})]
+        state (r/atom
+               (-> (:options @app-state)
+                   (select-keys [:pronouns :bespoke-sounds :language :sounds :default-format
+                                 :lobby-sounds :volume :background :custom-bg-url :card-back :card-zoom
+                                 :pin-zoom :show-alt-art :card-resolution :pass-on-rez
+                                 :player-stats-icons :stacked-cards :ghost-trojans
+                                 :display-encounter-info :sides-overlap :log-timestamps
+                                 :runner-board-order :log-width :log-top :log-player-highlight
+                                 :blocked-users :alt-arts :gamestats :deckstats :disable-websockets])
+                   (assoc :flash-message ""
+                          :all-art-select "wc2015")))]
 
     (go (let [response (<! (GET "/profile/email"))]
           (when (= 200 (:status response))

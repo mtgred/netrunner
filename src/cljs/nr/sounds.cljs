@@ -1,6 +1,7 @@
 (ns nr.sounds
   (:require
    ["howler" :as howler :refer [Howl]]
+   [flatland.ordered.map :refer [ordered-map]]
    [jinteki.utils :refer [str->int]]
    [nr.appstate :refer [app-state]]))
 
@@ -10,12 +11,13 @@
     [sound (new Howl args)]))
 
 (defonce bespoke-sounds
-  {"archer" {:grouping :archer :default "rez-ice"}
+  (ordered-map
+   "archer" {:grouping :archer :default "rez-ice"}
    "bloop" {:grouping :harmonics :default "rez-ice"}
    "echo" {:grouping :harmonics :default "rez-ice"}
    "end-of-the-line" {:grouping :end-of-the-line :default "play-instant"}
    "pulse" {:grouping :harmonics :default "rez-ice"}
-   "wave" {:grouping :harmonics :default "rez-ice"}})
+   "wave" {:grouping :harmonics :default "rez-ice"}))
 
 (defn select-random-from-grouping
   [key]

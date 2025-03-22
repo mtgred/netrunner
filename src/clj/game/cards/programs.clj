@@ -334,7 +334,8 @@
                                    (rezzed? current-ice)
                                    (has-subtype? current-ice ice-type)
                                    (all-subs-broken-by-card? current-ice card)))
-                    :effect (effect (derez current-ice {:source-card card}))}]})))
+                    :async true
+                    :effect (req (derez state side eid current-ice {:msg-keys {:include-cost-from-eid eid}}))}]})))
 
 (defn- trash-to-bypass
   "Trash to bypass current ice
@@ -691,16 +692,16 @@
                    (strength-pump 3 3 :end-of-encounter {:cost-bonus discount-fn})]})))
 
 (defcard "Botulus"
-  (auto-icebreaker
-    (trojan
-      {:implementation "[Erratum] Program: Virus - Trojan"
-       :data {:counter {:virus 1}}
-       :events [{:event :runner-turn-begins
-                 :async true
-                 :effect (effect (add-counter eid card :virus 1 nil))}]
-       :abilities [(break-sub
-                     [(->c :virus 1)] 1 "All"
-                     {:req (req (same-card? current-ice (:host card)))})]})))
+  auto-icebreaker
+  trojan
+  {:implementation "[Erratum] Program: Virus - Trojan"
+   :data {:counter {:virus 1}}
+   :events [{:event :runner-turn-begins
+             :async true
+             :effect (effect (add-counter eid card :virus 1 nil))}]
+   :abilities [(break-sub
+                 [(->c :virus 1)] 1 "All"
+                 {:req (req (same-card? current-ice (:host card)))})]})
 
 (defcard "Brahman"
   (auto-icebreaker {:abilities [(break-sub 1 2 "All")
@@ -1014,7 +1015,8 @@
                                (all-subs-broken? current-ice)))
                 :label "derez an ice"
                 :cost [(->c :trash-can)]
-                :effect (effect (derez current-ice {:source-card card}))}]})
+                :async true
+                :effect (req (derez state side eid current-ice {:msg-keys {:include-cost-from-eid eid}}))}]})
 
 (defcard "Crowbar"
   (break-and-enter "Code Gate"))
@@ -1318,14 +1320,13 @@
                                 (strength-pump 3 2)]}))
 
 (defcard "Egret"
-  (trojan
-    {:rezzed true}
-    {:implementation "[Erratum] Program: Trojan"
-     :on-install {:msg (msg "make " (card-str state (:host card))
-                            " gain Barrier, Code Gate and Sentry subtypes")}
-     :static-abilities [{:type :gain-subtype
-                         :req (req (same-card? target (:host card)))
-                         :value ["Barrier" "Code Gate" "Sentry"]}]}))
+  (trojan {:rezzed true})
+  {:implementation "[Erratum] Program: Trojan"
+   :on-install {:msg (msg "make " (card-str state (:host card))
+                          " gain Barrier, Code Gate and Sentry subtypes")}
+   :static-abilities [{:type :gain-subtype
+                       :req (req (same-card? target (:host card)))
+                       :value ["Barrier" "Code Gate" "Sentry"]}]})
 
 (defcard "Endless Hunger"
   {:implementation "ETR restriction not implemented"
@@ -1491,7 +1492,8 @@
                                  :cost [(->c :credit 6)]
                                  :req (req (and (get-current-encounter state)
                                                 (has-subtype? current-ice "Sentry")))
-                                 :effect (effect (derez current-ice {:source-card card}))}
+                                 :async true
+                                 :effect (req (derez state side eid current-ice {:msg-keys {:include-cost-from-eid eid}}))}
                                 (strength-pump 1 1)]}))
 
 (defcard "Flux Capacitor"
@@ -1729,45 +1731,21 @@
       (strength-pump (->c :credit 2 {:stealth 1}) 4 :end-of-run)]}))
 
 (defcard "Hush"
-  (let [reset-card-to-printed-subs
-        (fn [state side card]
-          (let [card (get-card state card)
-                subs (subroutines-init card (card-def card))
-                new-card (assoc card :subroutines subs)]
-            (update! state :corp new-card)
-            (trigger-event state side :subroutines-changed (get-card state new-card))))
-        subroutines-should-update {:silent (req true)
-                                   :effect (req (trigger-event
-                                                  state :corp
-                                                  :subroutines-should-update))}]
-    (trojan
-      {:implementation "Experimentally implemented. If it doesn't work correctly, please file a bug report with the exact case and cards used, and we will investigate."
-       :static-abilities [{:type :disable-card
-                           :req (req (same-card? target (:host card)))
-                           :value true}]
-       :on-install {:effect (req (reset-card-to-printed-subs state side (:host card)))}
-       ;; hoping and praying that it's impossible for this to cause a feedback loop
-       :events [{:event :subroutines-changed
-                 :req (req (and
-                             (same-card? target (:host card))
-                             (or (some :variable (:subroutines target))
-                                 (some #(not (:printed %)) (:subroutines target)))))
-                 :effect (req (reset-card-to-printed-subs state side target))}]
-       :on-trash subroutines-should-update
-       :move-zone (req (continue-ability state side subroutines-should-update card nil))
-       :abilities [{:action true
-                    :label "Host on a piece of ice"
-                    :prompt "Choose a piece of ice"
-                    :cost [(->c :click 1)]
-                    :choices {:req (req (and (ice? target)
-                                             (installed? target)
-                                             (can-host? state target)))}
-                    :msg (msg "host itself on " (card-str state target))
-                    :async true
-                    :effect (req (host state side target card)
-                                 (update-disabled-cards state)
-                                 (reset-card-to-printed-subs state side target)
-                                 (continue-ability state side subroutines-should-update card nil))}]})))
+  (trojan
+    {:implementation "Experimentally implemented. If it doesn't work correctly, please file a bug report with the exact case and cards used, and we will investigate."
+     :static-abilities [{:type :disable-card
+                         :req (req (same-card? target (:host card)))
+                         :value true}]
+     :abilities [{:action true
+                  :label "Host on a piece of ice"
+                  :prompt "Choose a piece of ice"
+                  :cost [(->c :click 1)]
+                  :choices {:req (req (and (ice? target)
+                                           (installed? target)
+                                           (can-host? state target)))}
+                  :msg (msg "host itself on " (card-str state target))
+                  :effect (req (host state side target card)
+                               (update-disabled-cards state))}]}))
 
 (defcard "Hyperbaric"
   (auto-icebreaker {:data {:counter {:power 1}}
@@ -2955,7 +2933,7 @@
                :async true
                :effect (effect (gain-credits :runner eid 3))}
               {:event :derez
-               :req (req (same-card? (:card context) (:host card)))
+               :req (req (some #(same-card? % (:host card)) (:cards context)))
                ;; NOTE
                ;;   current guidance from rules is that saci doesn't get
                ;;   a payout on magnet rez, but does get one when magnet is
@@ -3306,13 +3284,12 @@
 (defcard "Tranquilizer"
   (let [action (req (wait-for
                       (add-counter state side card :virus 1 nil)
-                      (when (and (rezzed? (get-card state (:host card)))
+                      (if (and (rezzed? (get-card state (:host card)))
                                  (<= 3 (get-virus-counters state (get-card state card))))
-                        (derez state side (get-card state (:host card)) {:source-card card}))
-                      (effect-completed state side eid)))]
+                        (derez state side eid (get-card state (:host card)))
+                        (effect-completed state side eid))))]
     (trojan
-      {:implementation "[Erratum] Program: Virus - Trojan"
-       :on-install {:interactive (req true)
+      {:on-install {:interactive (req true)
                     :async true
                     :effect action}
        :events [{:event :runner-turn-begins

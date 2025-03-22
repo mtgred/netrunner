@@ -8,7 +8,7 @@
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
     [game.core.say :refer [system-msg]]
     [game.core.toasts :refer [toast]]
-    [game.macros :refer [wait-for]]
+    [game.macros :refer [req wait-for]]
     [game.utils :refer [pluralize quantify]]))
 
 (defn sum-tag-effects
@@ -60,6 +60,12 @@
      (resolve-tag state side eid {:suppress-checkpoint suppress-checkpoint
                                   :card card
                                   :n (:remaining async-result)}))))
+
+(defn gain-tags-ability [n]
+  "Take n tags"
+  {:msg (str "take " (quantify n "tag"))
+   :async true
+   :effect (req (gain-tags state side eid n))})
 
 (defn lose-tags
   "Always removes `:base` tags"

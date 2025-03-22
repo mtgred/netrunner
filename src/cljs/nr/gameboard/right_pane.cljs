@@ -14,27 +14,27 @@
 (defonce available-tabs
   {:log
    {:hiccup [log-pane]
-    :label (tr [:log.game-log "Game Log"])}
+    :label (tr [:log_game-log "Game Log"])}
 
    :notes
    {:hiccup [notes-pane]
-    :label (tr [:log.annotating "Annotating"])}
+    :label (tr [:log_annotating "Annotating"])}
 
    :notes-shared
    {:hiccup [notes-shared-pane]
-    :label (tr [:log.shared "Shared Annotations"])}
+    :label (tr [:log_shared "Shared Annotations"])}
 
    :run-timing
    {:hiccup [run-timing-pane]
-    :label (tr [:log.run-timing "Run Timing"])}
+    :label (tr [:log_run-timing "Run Timing"])}
 
    :turn-timing
    {:hiccup [turn-timing-pane]
-    :label (tr [:log.turn-timing "Turn Timing"])}
+    :label (tr [:log_turn-timing "Turn Timing"])}
 
    :settings
    {:hiccup [settings-pane]
-    :label (tr [:log.settings "Settings"])}})
+    :label (tr [:log_settings "Settings"])}})
 
 (defn- resize-card-zoom
   "Resizes the card zoom based on the values in the app-state"
@@ -58,8 +58,9 @@
       (.css "height" "auto")
       (.css "width" width))))
 
-(defn- pane-resize [event ui]
+(defn- pane-resize
   "Resize the card zoom to fit the available space"
+  [event ui]
   (let [width (.. ui -size -width)
         top (.. ui -position -top)]
     (swap! app-state assoc-in [:options :log-width] width) ;;XXX: rename
@@ -78,11 +79,12 @@
   (put! zoom-channel false))
 
 (defn- tab-selector [selected-tab]
-  (fn []
-    [:div.panel.panel-top.blue-shade.selector
-     (doall (for [[tab {:keys [label]}] (seq @loaded-tabs)]
-              [:a {:key tab
-                   :on-click #(reset! selected-tab tab)} label]))]))
+  [:div.panel.panel-top.blue-shade.selector
+   (doall (for [[tab {:keys [label]}] (seq @loaded-tabs)]
+            (do (prn label)
+                [:a {:key tab
+                     :on-click #(reset! selected-tab tab)}
+                 label])))])
 
 (defn load-tab [tab]
   (let [{:keys [hiccup label]}
