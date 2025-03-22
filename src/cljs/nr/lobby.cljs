@@ -136,8 +136,8 @@
     [:<>
      [:div.game-count
       [:h4 (if (= (count slug->format) (count @visible-formats))
-             (tr [:lobby_game-count] (count filtered-games))
-             (tr [:lobby_game-count-filtered] (count filtered-games)))]]
+             (tr [:lobby_game-count] {:cnt (count filtered-games)})
+             (tr [:lobby_game-count-filtered] {:cnt (count filtered-games)}))]]
      [:div.game-list
       (if (empty? filtered-games)
         [:h4 (tr [:lobby_no-games "No games"])]

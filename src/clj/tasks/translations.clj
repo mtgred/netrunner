@@ -114,12 +114,7 @@
     (println "Finished!")))
 
 (comment
-  (do
-    (println "these should be empty")
-    (missing-translations "fr" "ko" "ja" "pl" "pt" "ru" "zh-simp")
-    (newline)
-    (println "these need to be worked on")
-    (missing-translations "la-pig")))
+  (missing-translations))
 
 (defn get-value
   [message]
@@ -175,8 +170,7 @@
   (undefined-translations))
 
 (def keys-to-dissoc
-  #{"missing" ; default text
-    "card-type_" ; handled by tr-type
+  #{"card-type_" ; handled by tr-type
     "side_" ; handled by tr-side
     "faction_" ; handled by tr-faction
     "format_" ; handled by tr-format
@@ -184,7 +178,6 @@
     "pronouns" ; handled by tr-pronouns
     "set_" ; handled by tr-set
     "game_prompt" ; handled by tr-game-prompt
-    "card-browser_sort-by"
     "preconstructed_"
     })
 
@@ -195,7 +188,7 @@
                      (remove (fn [k]
                                (some #(str/starts-with? k %)
                                      keys-to-dissoc)))
-                     (map #(let [patt (str "tr \\[(:" % ")( \\\"(.*?)\\\")?\\]")]
+                     (map #(let [patt (str "tr \\[:" % "(( \\\"(.*?)\\\")| [a-zA-Z0-9_-]*?)?\\]")]
                              [% (re-pattern patt)]))
                      (into #{}))
         files (->> (concat (file-seq (io/file "src/cljs"))
@@ -401,25 +394,14 @@
                                             (newline)))
    (-ftl-print (Message/.identifier this) ctx)
    (print " = ")
-   (-ftl-print (Optional/.orElseThrow (Message/.pattern this)) ctx))
+   (-ftl-print (Optional/.orElseThrow (Message/.pattern this)) ctx)
+   (newline))
 
   FluentResource
   (-ftl-print
    [this ctx]
-   (let [current-ns (volatile! nil)
-         entries (FluentResource/.entries this)]
+   (let [entries (FluentResource/.entries this)]
      (doseq [entry entries]
-       (if (or (instance? Commentary$Comment entry)
-               (instance? Commentary$GroupComment entry)
-               (instance? Commentary$ResourceComment entry))
-         (vreset! current-ns nil)
-         (when-let [new-ns (get-id entry)]
-           (let [[new-ns] (str/split new-ns #"_")]
-             (if @current-ns
-               (when-not (= new-ns @current-ns)
-                 (vreset! current-ns new-ns)
-                 (newline))
-               (vreset! current-ns new-ns)))))
        (-ftl-print entry ctx)
        (newline)))))
 

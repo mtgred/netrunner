@@ -1,7 +1,7 @@
 (ns jinteki.i18n
   (:refer-clojure :exclude [format])
   (:require
-   [jinteki.i18n.fluent :as fluent]
+   [noahtheduke.fluent :as fluent]
    #?@(:clj [[clojure.java.io :as io]
              [clojure.string :as str]])
    #?(:cljs
@@ -13,7 +13,8 @@
 
 (defn insert-lang! [lang content]
   (swap! fluent-dictionary assoc lang {:content content
-                                       :ftl (fluent/build lang content)}))
+                                       :ftl (let [lang (if (= "la-pig" lang) "en" lang)]
+                                              (fluent/build lang content))}))
 
 #?(:clj
    (defn load-dictionary!
