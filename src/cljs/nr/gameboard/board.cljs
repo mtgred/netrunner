@@ -444,7 +444,7 @@
                   ^{:key label}
                   [card-menu-item (label-fn label)
                    #(do (close-card-menu)
-                        (if (= "Cast as a Sorcery" label)
+                        (if (= "Expend" label)
                           (send-command "expend" {:card card :server label})
                           (send-command "play" {:card card :server label})))])
                 servers))]])))
