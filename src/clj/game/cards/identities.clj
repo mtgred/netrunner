@@ -30,7 +30,7 @@
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-extra-sub! break-sub pump-ice remove-sub! update-all-ice update-all-icebreakers]]
+   [game.core.ice :refer [break-sub pump-ice update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [make-card]]
    [game.core.installing :refer [corp-install install-locked? runner-can-pay-and-install? runner-install]]
    [game.core.link :refer [link+ update-link]]
@@ -2301,17 +2301,8 @@
                                                 (str payment-str
                                                      " due to " (:title card)
                                                      " subroutine")))
-                                  (effect-completed state side eid))))}
-        unregister-sub-event
-        {:effect (req (let [cid (:cid card)
-                            ices (get-in card [:special :thunderbolt-armaments])]
-                        (doseq [i ices]
-                          (when-let [ice (get-card state i)]
-                            (remove-sub! state side ice #(= cid (:from-cid %))))))
-                      (update! state side (dissoc-in card [:special :thunderbolt-armaments])))}]
-    {:events [(assoc unregister-sub-event :event :run-ends)
-              (assoc unregister-sub-event :event :run) ;; protection for trick shot...
-              {:event :rez
+                                  (effect-completed state side eid))))}]
+    {:events [{:event :rez
                :req (req (and run
                               (ice? (:card context))
                               (or (has-subtype? (:card context) "AP")
@@ -2321,11 +2312,14 @@
                          (:label thunderbolt-sub)
                          "\" after its other subroutines")
                :async true
-               :effect (effect (add-extra-sub! (get-card state (:card context))
-                                               thunderbolt-sub
-                                               (:cid card) {:front false})
-                               (update! (update-in card [:special :thunderbolt-armaments]
-                                                   #(conj % (:card context))))
+               :effect (effect (register-lingering-effect
+                                 card
+                                 (let [t (:card context)]
+                                   {:type :additional-subroutines
+                                    :duration :end-of-run
+                                    :req (req (and (rezzed? target)
+                                                   (same-card? t target)))
+                                    :value {:subroutines [thunderbolt-sub]}}))
                                (pump-ice (:card context) 1 :end-of-run)
                                (effect-completed eid))}]}))
 

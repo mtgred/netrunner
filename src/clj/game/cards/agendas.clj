@@ -31,7 +31,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-extra-sub! remove-sub! update-all-ice update-all-icebreakers]]
+   [game.core.ice :refer [update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-cards-async swap-ice
@@ -1641,13 +1641,6 @@
   {:on-score {:silent (req true)
               :async true
               :effect (effect (add-counter eid card :agenda (- (get-counters (:card context) :advancement) 2) nil))}
-   :events [{:event :run-ends
-             :effect (req (let [cid (:cid card)
-                                ices (get-in card [:special :kusanagi])]
-                            (doseq [i ices]
-                              (when-let [ice (get-card state i)]
-                                (remove-sub! state side ice #(= cid (:from-cid %))))))
-                          (update! state side (dissoc-in card [:special :kusanagi])))}]
    :abilities [{:label "Give a piece of ice \"[Subroutine] Do 1 net damage\""
                 :prompt "Choose a piece of ice"
                 :choices {:card #(and (ice? %)
@@ -1656,10 +1649,13 @@
                 :keep-menu-open :while-agenda-tokens-left
                 :msg (str "make a piece of ice gain \"[Subroutine] Do 1 net damage\" "
                           "after all its other subroutines for the remainder of the run")
-                :effect  (effect (add-extra-sub! (get-card state target)
-                                                 (do-net-damage 1)
-                                                 (:cid card) {:back true})
-                                 (update! (update-in card [:special :kusanagi] #(conj % target))))}]})
+                :effect  (effect (register-lingering-effect
+                                   card
+                                   (let [t target]
+                                     {:type :additional-subroutines
+                                      :duration :end-of-run
+                                      :req (req (same-card? target t))
+                                      :value {:subroutines [(do-net-damage 1)]}})))}]})
 
 (defcard "Project Vacheron"
   {:flags {:has-events-when-stolen true}
@@ -1703,13 +1699,6 @@
   {:on-score {:silent (req true)
               :async true
               :effect (effect (add-counter eid card :agenda 3 nil))}
-   :events [{:event :run-ends
-             :effect (req (let [cid (:cid card)
-                                ices (get-in card [:special :wotan])]
-                            (doseq [i ices]
-                              (when-let [ice (get-card state i)]
-                                (remove-sub! state side ice #(= cid (:from-cid %))))))
-                          (update! state side (dissoc-in card [:special :wotan])))}]
    :abilities [{:req (req (and current-ice
                                (rezzed? current-ice)
                                (has-subtype? current-ice "Bioroid")
@@ -1718,13 +1707,16 @@
                 :keep-menu-open :while-agenda-tokens-left
                 :msg (str "make the approached piece of Bioroid ice gain \"[Subroutine] End the run\""
                           "after all its other subroutines for the remainder of this run")
-                :effect  (effect (add-extra-sub! (get-card state current-ice)
-                                                 {:label "End the run"
-                                                  :msg "end the run"
-                                                  :async true
-                                                  :effect (effect (end-run eid card))}
-                                                 (:cid card) {:back true})
-                                 (update! (update-in card [:special :wotan] #(conj % current-ice))))}]})
+                :effect (effect (register-lingering-effect
+                                  card
+                                  (let [card-target current-ice]
+                                    {:type :additional-subroutines
+                                     :duration :end-of-run
+                                     :req (req (same-card? target card-target))
+                                     :value {:subroutines [{:label "End the run"
+                                                            :msg "end the run"
+                                                            :async true
+                                                            :effect (effect (end-run eid card))}]}})))}]})
 
 (defcard "Project Yagi-Uda"
   (letfn [(put-back-counter [state side card]

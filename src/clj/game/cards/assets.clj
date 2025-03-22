@@ -33,8 +33,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [add-extra-sub! remove-extra-subs! update-all-ice
-                          update-ice-strength]]
+   [game.core.ice :refer [update-all-ice update-ice-strength]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [as-agenda mill move remove-from-currently-drawing
@@ -3199,29 +3198,12 @@
      :abilities [ability]}))
 
 (defcard "Warden Fatuma"
-  (let [new-sub {:label "[Warden Fatuma] Force the Runner to lose [Click], if able"
-                 :msg "force the Runner to lose [Click], if able"
-                 :effect (effect (lose-clicks :runner 1))}]
-    (letfn [(all-rezzed-bios [state]
-              (filter #(and (ice? %)
-                            (has-subtype? % "Bioroid")
-                            (rezzed? %))
-                      (all-installed state :corp)))
-            (remove-one [cid state ice]
-              (remove-extra-subs! state :corp ice cid))
-            (add-one [cid state ice]
-              (add-extra-sub! state :corp ice new-sub cid {:front true}))
-            (update-all [state func]
-              (doseq [i (all-rezzed-bios state)]
-                (func state i)))]
-      {:on-rez {:msg "add \"[Subroutine] The Runner loses [Click], if able\" before all other subroutines"
-                :effect (req (update-all state (partial add-one (:cid card))))}
-       :leave-play (req (system-msg state :corp "loses Warden Fatuma additional subroutines")
-                     (update-all state (partial remove-one (:cid card))))
-       :events [{:event :rez
-                 :req (req (and (ice? (:card context))
-                                (has-subtype? (:card context) "Bioroid")))
-                 :effect (req (add-one (:cid card) state (get-card state (:card context))))}]})))
+  {:static-abilities [{:type :additional-subroutines
+                       :req (req (and (ice? target) (rezzed? target) (has-subtype? target "Bioroid")))
+                       :value {:position :front
+                               :subroutines [{:label "[Warden Fatuma] Force the Runner to lose [Click], if able"
+                                              :msg "force the Runner to lose [Click], if able"
+                                              :effect (effect (lose-clicks :runner 1))}]}}]})
 
 (defcard "Warm Reception"
   (let [install {:prompt "Choose a card to install"
