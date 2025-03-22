@@ -334,7 +334,8 @@
                                    (rezzed? current-ice)
                                    (has-subtype? current-ice ice-type)
                                    (all-subs-broken-by-card? current-ice card)))
-                    :effect (effect (derez current-ice {:source-card card}))}]})))
+                    :async true
+                    :effect (req (derez state side eid current-ice {:msg-keys {:include-cost-from-eid eid}}))}]})))
 
 (defn- trash-to-bypass
   "Trash to bypass current ice
@@ -1014,7 +1015,8 @@
                                (all-subs-broken? current-ice)))
                 :label "derez an ice"
                 :cost [(->c :trash-can)]
-                :effect (effect (derez current-ice {:source-card card}))}]})
+                :async true
+                :effect (req (derez state side eid current-ice {:msg-keys {:include-cost-from-eid eid}}))}]})
 
 (defcard "Crowbar"
   (break-and-enter "Code Gate"))
@@ -1491,7 +1493,8 @@
                                  :cost [(->c :credit 6)]
                                  :req (req (and (get-current-encounter state)
                                                 (has-subtype? current-ice "Sentry")))
-                                 :effect (effect (derez current-ice {:source-card card}))}
+                                 :async true
+                                 :effect (req (derez state side eid current-ice {:msg-keys {:include-cost-from-eid eid}}))}
                                 (strength-pump 1 1)]}))
 
 (defcard "Flux Capacitor"
@@ -2955,7 +2958,7 @@
                :async true
                :effect (effect (gain-credits :runner eid 3))}
               {:event :derez
-               :req (req (same-card? (:card context) (:host card)))
+               :req (req (some #(same-card? % (:host card)) (:cards context)))
                ;; NOTE
                ;;   current guidance from rules is that saci doesn't get
                ;;   a payout on magnet rez, but does get one when magnet is
@@ -3236,7 +3239,8 @@
                                 (strength-pump (->c :credit 1 {:stealth 1}) 7 :end-of-encounter)]}))
 
 (defcard "Takobi"
-  {:events [{:event :subroutines-broken
+  {:special {:auto-place-counter :always}
+   :events [{:event :subroutines-broken
              :optional {:req (req (:all-subs-broken target))
                         :prompt (msg "Place 1 power counter on " (:title card) "?")
                         :autoresolve (get-autoresolve :auto-place-counter)
@@ -3305,13 +3309,12 @@
 (defcard "Tranquilizer"
   (let [action (req (wait-for
                       (add-counter state side card :virus 1 nil)
-                      (when (and (rezzed? (get-card state (:host card)))
+                      (if (and (rezzed? (get-card state (:host card)))
                                  (<= 3 (get-virus-counters state (get-card state card))))
-                        (derez state side (get-card state (:host card)) {:source-card card}))
-                      (effect-completed state side eid)))]
+                        (derez state side eid (get-card state (:host card)))
+                        (effect-completed state side eid))))]
     (trojan
-      {:implementation "[Erratum] Program: Virus - Trojan"
-       :on-install {:interactive (req true)
+      {:on-install {:interactive (req true)
                     :async true
                     :effect action}
        :events [{:event :runner-turn-begins

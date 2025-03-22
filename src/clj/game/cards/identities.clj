@@ -1949,7 +1949,7 @@
                           (in-deck? (:card %))))
                 ctx))
         relevant-cards-general #{"Labor Rights" "The Price"}
-        relevant-cards-trashed #{"I've Had Worse" "Strike Fund" "Steelskin Scarring"}
+        relevant-cards-trashed #{"I've Had Worse" "Strike Fund" "Steelskin Scarring" "Crowdfunding"}
         trigger-ability-req (req (let [res-type (get-in (get-card state card) [:special :resolution-mode])
                                        valid-cards (mapv #(get-card state %) (filter runner? context))]
                                    (and (some runner? context)

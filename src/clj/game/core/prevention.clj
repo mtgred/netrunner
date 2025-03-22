@@ -280,7 +280,7 @@
                    (str "Prevent any of " (count (get-in @state [:prevent :trash :remaining])) " cards from being trashed?"))
                  "Choose an interrupt")) ;; note - for corp, this is only marilyn campaign
      :waiting "your opponent to resolve trash prevention triggers"
-     :option (fn [state remainder] (str "Allow " (quantify (count (get-in @state [:prevent :trash :remaining])) "card") " to be trashed"))}))
+     :option (fn [state remainder] (str "Continue trashing " (quantify (count (get-in @state [:prevent :trash :remaining])) "card")))}))
 
 (defn resolve-trash-prevention
   [state side eid targets {:keys [unpreventable game-trash cause cause-card] :as args}]

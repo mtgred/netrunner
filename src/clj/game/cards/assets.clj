@@ -1603,26 +1603,26 @@
                 :async true
                 :cost [(->c :x-power)]
                 :keep-menu-open :while-power-tokens-left
-                :effect
-                (effect
-                  (continue-ability
-                    {:prompt "Choose an agenda in HQ to reveal"
-                     :choices {:req (req (and (agenda? target)
-                                              (<= (:agendapoints target) (cost-value eid :x-power))))}
-                     :msg (msg "reveal " (:title target) " from HQ")
-                     :async true
-                     :effect (req (wait-for (reveal state side target)
-                                            (let [title (:title target)]
-                                              (register-turn-flag!
-                                                state side
-                                                card :can-steal
-                                                (fn [state _side card]
-                                                  (if (= (:title card) title)
-                                                    ((constantly false)
-                                                     (toast state :runner "Cannot steal due to Lakshmi Smartfabrics." "warning"))
-                                                    true)))
-                                              (effect-completed state side eid))))}
-                    card nil))}]})
+                :effect (req (let [value (cost-value eid :x-power)]
+                               (continue-ability
+                                 state side
+                                 {:prompt "Choose an agenda in HQ to reveal"
+                                  :choices {:req (req (and (agenda? target)
+                                                           (<= (:agendapoints target) value)))}
+                                  :msg (msg "reveal " (:title target) " from HQ")
+                                  :async true
+                                  :effect (req (wait-for (reveal state side target)
+                                                         (let [title (:title target)]
+                                                           (register-turn-flag!
+                                                             state side
+                                                             card :can-steal
+                                                             (fn [state _side card]
+                                                               (if (= (:title card) title)
+                                                                 ((constantly false)
+                                                                  (toast state :runner "Cannot steal due to Lakshmi Smartfabrics." "warning"))
+                                                                 true)))
+                                                           (effect-completed state side eid))))}
+                                 card nil)))}]})
 
 (defcard "Launch Campaign"
   (campaign 6 2))
@@ -2168,16 +2168,25 @@
      :abilities [ability]}))
 
 (defcard "Personalized Portal"
-  {:events [{:event :corp-turn-begins
+  {:special {:auto-fire :always}
+   :abilities [(set-autoresolve :auto-fire "Personalized Portal (gain credits)")]
+   :events [{:event :corp-turn-begins
              :interactive (req true)
              :async true
-             :effect (req (wait-for (draw state :runner 1)
-                                    (let [cnt (count (get-in @state [:runner :hand]))
-                                          credits (quot cnt 2)]
-                                      (system-msg state :corp
-                                                  (str "uses " (:title card) " to force the runner to draw "
-                                                       "1 card and gain " credits " [Credits]"))
-                                      (gain-credits state :corp eid credits))))}]})
+             :msg "force the runner to draw 1 card"
+             :effect (req (wait-for
+                            (draw state :runner 1)
+                            (let [creds-to-gain (quot (count (get-in @state [:runner :hand])) 2)]
+                              (continue-ability
+                                state side
+                                {:optional {:prompt (str "Gain " creds-to-gain " [Credits]?")
+                                            :autoresolve (get-autoresolve :auto-fire)
+                                            :req (req (pos? creds-to-gain))
+                                            :waiting-prompt true
+                                            :yes-ability {:msg (str "gain " creds-to-gain " [Credits]")
+                                                          :async true
+                                                          :effect (req (gain-credits state side eid creds-to-gain))}}}
+                                card nil))))}]})
 
 (defcard "Plan B"
   (advance-ambush
@@ -2895,16 +2904,21 @@
                 (hardware? card)
                 (and (resource? card)
                      (has-subtype? card "Virtual"))))]
-    {:static-abilities [{:type :install-cost
+    {:special {:auto-fire :always}
+     :abilities [(set-autoresolve :auto-fire "TechnoCo")]
+     :static-abilities [{:type :install-cost
                          :req (req (and (is-techno-target target)
                                         (not (:facedown (second targets)))))
                          :value 1}]
      :events [{:event :runner-install
-               :req (req (and (is-techno-target (:card context))
-                              (not (:facedown context))))
-               :msg "gain 1 [Credits]"
-               :async true
-               :effect (effect (gain-credits :corp eid 1))}]}))
+               :optional {:req (req (and (is-techno-target (:card context))
+                                         (not (:facedown context))))
+                          :prompt "Gain 1 [Credit]?"
+                          :waiting-prompt true
+                          :autoresolve (get-autoresolve :auto-fire)
+                          :yes-ability {:msg "gain 1 [Credits]"
+                                        :async true
+                                        :effect (effect (gain-credits :corp eid 1))}}}]}))
 
 (defcard "Tenma Line"
   {:abilities [{:action true
@@ -2924,22 +2938,24 @@
                 :effect (req (apply swap-installed state side targets))}]})
 
 (defcard "Test Ground"
-  (letfn [(derez-card [advancements]
-            (when (pos? advancements)
-              {:async true
-               :waiting-prompt true
-               :prompt "Derez a card"
-               :choices {:card #(and (installed? %)
-                                     (rezzed? %))}
-               :effect (req (derez state side target {:source-card card})
-                            (continue-ability state side (derez-card (dec advancements)) card nil))}))]
-    {:advanceable :always
-     :abilities [{:label "Derez 1 card for each advancement token"
-                  :req (req (pos? (get-counters card :advancement)))
-                  :msg (msg "derez " (quantify (get-counters card :advancement) "card"))
-                  :cost [(->c :trash-can)]
-                  :async true
-                  :effect (req (continue-ability state side (derez-card (get-counters card :advancement)) card nil))}]}))
+  {:advanceable :always
+   :abilities [{:label "Derez 1 card for each advancement token"
+                :req (req (pos? (get-counters card :advancement)))
+                :cost [(->c :trash-can)]
+                :async true
+                :effect (req (let [cards-to-pick (min (count (filter #(and (rezzed? %) (not (agenda? %))) (all-installed state :corp)))
+                                                      (get-counters card :advancement))
+                                   payment-eid eid]
+                               (continue-ability
+                                 state side
+                                 {:prompt (str "derez " cards-to-pick " cards")
+                                  :waiting-prompt true
+                                  :choices {:card (every-pred installed? rezzed? (complement agenda?))
+                                            :max cards-to-pick
+                                            :all true}
+                                  :async true
+                                  :effect (req (derez state side eid targets {:msg-keys {:include-cost-from-eid payment-eid}}))}
+                                 card nil)))}]})
 
 (defcard "The Board"
   {:on-trash executive-trash-effect
@@ -3229,9 +3245,8 @@
                    :prompt "Choose another card to derez"
                    :choices {:not-self true
                              :card #(rezzed? %)}
-                   :msg (msg "derez itself to derez " (card-str state target))
-                   :effect (effect (derez card {:source-card card})
-                                   (derez target {:source-card card}))}]
+                   :async true
+                   :effect (req (derez state side eid [card target]))}]
     {:derezzed-events [corp-rez-toast]
      :events [{:event :corp-turn-begins
                :interactive (req true)

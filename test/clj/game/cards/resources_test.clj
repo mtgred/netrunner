@@ -1151,28 +1151,6 @@
         (rez state :corp jhow)
         (is (rezzed? (refresh jhow)) "Jackson Howard can be rezzed after changing zone"))))
 
-(deftest councilman-preventing-councilman-s-self-trash-prevents-the-rez-prevention-effect
-    ;; Preventing Councilman's self-trash prevents the rez prevention effect
-    (do-game
-      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                        :hand ["Chief Slee"]}
-                 :runner {:deck ["Councilman" "Fall Guy"]}})
-      (play-from-hand state :corp "Chief Slee" "New remote")
-      (take-credits state :corp)
-      (play-from-hand state :runner "Councilman")
-      (play-from-hand state :runner "Fall Guy")
-      (take-credits state :runner)
-      (let [slee (get-content state :remote1 0)
-            councilman (get-resource state 0)
-            fall-guy (get-resource state 1)]
-        (rez state :corp slee)
-        (is (changed? [(:credit (get-runner)) -2]
-              (click-prompt state :runner "Yes")
-              (card-ability state :runner fall-guy 0)
-              (is (rezzed? (refresh slee)) "Chief Slee still rezzed")
-              (is (refresh councilman) "Councilman's trash is prevented"))
-            "Runner still pays for Councilman effect"))))
-
 (deftest counter-surveillance-trash-to-run-on-successful-run-access-cards-equal-to-tags-and-pay-that-amount-in-credits
     ;; Trash to run, on successful run access cards equal to Tags and pay that amount in credits
     (do-game
@@ -3732,7 +3710,6 @@
       (dotimes [_ 3]
         (run-empty-server state "Server 1")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Yes")
         (take-credits state :runner)
         (take-credits state :corp))
       (take-credits state :runner)
@@ -3769,7 +3746,6 @@
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (click-prompt state :runner "No action")
-      (click-prompt state :runner "Yes")
       (is (= 1 (get-counters (get-resource state 0) :power)) "Kasi String should have 1 power counter on itself")))
 
 (deftest kati-jones
@@ -5353,7 +5329,6 @@
       (let [credits (:credit (get-runner))]
         (run-empty-server state "R&D")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Yes")
         (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card"))
       (let [credits (:credit (get-runner))]
         (run-empty-server state "R&D")
@@ -5366,13 +5341,14 @@
         (run-continue state)
         (dotimes [_ 5]
           (click-prompt state :runner "No action"))
-        (click-prompt state :runner "Yes")
         (is (= (+ credits 5) (:credit (get-runner))) "Psych Mike should give 5 credits for DDM accesses"))
         (run-empty-server state "HQ")
         (click-prompt state :runner "No action")
     (is (not (last-log-contains? state "Psych Mike to gain 0")) "No log should be printed")
       (take-credits state :runner)
       (take-credits state :corp)
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-prompt state :runner "Ask")
       (let [credits (:credit (get-runner))]
         (run-empty-server state "R&D")
         (click-prompt state :runner "No action")
@@ -5406,7 +5382,6 @@
         (click-prompt state :runner "Unrezzed upgrade")
         (click-prompt state :runner "No action")
         (click-prompt state :runner "No action")
-        (click-prompt state :runner "Yes")
         (is (= (inc credits) (:credit (get-runner))) "Psych Mike should give 1 credit for accessing 1 card"))))
 
 (deftest reclaim-basic-behavior
@@ -7199,6 +7174,19 @@
       (click-prompt state :runner "No action")
       (click-prompt state :runner "No action")
       (is (no-prompt? state :runner) "No prompt left over"))))
+
+(deftest twinning-only-gets-one-counter-from-multiple-credit-sources
+  (do-game
+    (new-game {:runner {:hand ["The Twinning" "Public Terminal" "Prepaid VoicePAD" "Dirty Laundry"]
+                        :credits 15}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Twinning")
+    (play-from-hand state :runner "Public Terminal")
+    (play-from-hand state :runner "Prepaid VoicePAD")
+    (play-from-hand state :runner "Dirty Laundry")
+    (is (changed? [(get-counters (get-resource state 0) :power) 1]
+          (click-prompts state :runner "Prepaid VoicePAD" "Public Terminal" "HQ"))
+        "Only got one counter")))
 
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool

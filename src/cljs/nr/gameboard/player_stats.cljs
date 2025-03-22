@@ -107,7 +107,7 @@
           :brain-damage
           [:div (tr [:game_brain-damage "Core Damage"] {:dmg brain-damage})])
          (when (= (:side @game-state) :runner)
-           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :delta (.. % -target -checked)})]
+           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :value (.. % -target -checked)})]
              [:div [:label [:input {:type "checkbox"
                                     :value true
                                     :checked trash-like-cards
@@ -134,7 +134,7 @@
                                             {:base base
                                              :additional additional}))]))
          (when (= (:side @game-state) :corp)
-           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :delta (.. % -target -checked)})]
+           (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :value (.. % -target -checked)})]
              [:div [:label [:input {:type "checkbox"
                                     :value true
                                     :checked trash-like-cards
