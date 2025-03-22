@@ -1,7 +1,7 @@
 (ns nr.password-game
   (:require
    [nr.auth :refer [authenticated]]
-   [nr.translations :refer [tr tr-watch-join]]
+   [nr.translations :refer [tr tr-room-type]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [taoensso.sente :as sente]))
@@ -20,10 +20,10 @@
                    8000
                    #(if (sente/cb-success? %)
                       (case %
-                        403 (swap! state assoc :error-msg (tr [:lobby.invalid-password "Invalid password"]))
-                        404 (swap! state assoc :error-msg (tr [:lobby.not-allowed "Not allowed"]))
+                        403 (swap! state assoc :error-msg (tr [:lobby_invalid-password "Invalid password"]))
+                        404 (swap! state assoc :error-msg (tr [:lobby_not-allowed "Not allowed"]))
                         200 (swap! lobby-state assoc :editing false :password-game nil))
-                      (swap! state assoc :error-msg (tr [:lobby.aborted "Connection aborted"])))))))
+                      (swap! state assoc :error-msg (tr [:lobby_aborted "Connection aborted"])))))))
 
 (defn password-game [lobby-state]
   (r/with-let [game (r/cursor lobby-state [:password-game :game])
@@ -33,12 +33,12 @@
                               :error-msg nil})]
     (fn [lobby-state]
       [:div.password-prompt
-       [:h3 (str (tr [:lobby.password-for "Password for"])
+       [:h3 (str (tr [:lobby_password-for "Password for"])
                  " " (:title @game))]
        [:p
         [:input.game-title {:on-change #(swap! state assoc :password (.. % -target -value))
                             :value (:password @state)
-                            :placeholder (tr [:lobby.password "Password"])
+                            :placeholder (tr [:lobby_password "Password"])
                             :maxLength "30"
                             :on-key-press (fn [e]
                                             (when (= 13 (.. e -charCode))
@@ -46,10 +46,10 @@
        [:p
         [:button {:type "button"
                   :on-click #(join-game lobby-state state @game @action @request-side)}
-         (tr-watch-join @action)]
+         (tr-room-type @action)]
         [:span.fake-link {:on-click #(do
                                        (swap! lobby-state dissoc :password-game)
                                        (reset! state {:error-msg nil :password nil}))}
-         (tr [:lobby.cancel "Cancel"])]]
+         (tr [:lobby_cancel "Cancel"])]]
        (when-let [error-msg (:error-msg @state)]
          [:p.flash-message error-msg])])))

@@ -1,19 +1,21 @@
 (ns web.auth
   (:require
    [buddy.sign.jwt :as jwt]
-   [cljc.java-time.temporal.chrono-unit :as chrono]
    [cljc.java-time.instant :as inst]
+   [cljc.java-time.temporal.chrono-unit :as chrono]
    [clojure.string :as str]
    [crypto.password.bcrypt :as password]
+   [jinteki.i18n :as i18n]
+   [jinteki.utils :refer [select-non-nil-keys]]
    [monger.collection :as mc]
    [monger.operators :refer :all]
    [monger.result :refer [acknowledged?]]
    [postal.core :as mail]
    [ring.util.response :refer [redirect]]
    [web.app-state :as app-state]
-   [web.mongodb :refer [find-one-as-map-case-insensitive ->object-id]]
-   [web.user :refer [active-user? valid-username? within-char-limit-username? create-user user-keys]]
-   [web.utils :refer [response md5]]
+   [web.mongodb :refer [->object-id find-one-as-map-case-insensitive]]
+   [web.user :refer [active-user? create-user user-keys valid-username?]]
+   [web.utils :refer [md5 response]]
    [web.versions :refer [banned-msg]])
   (:import
    java.security.SecureRandom))
@@ -168,7 +170,7 @@
     :else
     (response 404 {:message "Account not found"})))
 
-(defn profile-keys []
+(def profile-keys
   [:background :pronouns :language :default-format :show-alt-art :blocked-users
    :alt-arts :card-resolution :deckstats :gamestats :card-zoom :pin-zoom
    :card-back :stacked-cards :ghost-trojans :display-encounter-info
@@ -179,15 +181,22 @@
   [{db :system/db
     {username :username :as user} :user
     body :body}]
-  (if (active-user? user)
-    (if (acknowledged? (mc/update db "users"
-                                  {:username username}
-                                  {"$set" {:options (select-keys body (profile-keys))}}))
-      (do (when (get-in @app-state/app-state [:users username])
-            (swap! app-state/app-state assoc-in [:users username :options] (select-keys body (profile-keys))))
-          (response 200 {:message "Refresh your browser"}))
-      (response 404 {:message "Account not found"}))
-    (response 401 {:message "Unauthorized"})))
+  (let [options (select-non-nil-keys body profile-keys)
+        lang (:lang body)]
+    (if (active-user? user)
+      (if (acknowledged? (mc/update db "users"
+                                    {:username username}
+                                    {"$set" {:options options}}))
+        (do (when (get-in @app-state/app-state [:users username])
+              (swap! app-state/app-state assoc-in [:users username :options] options))
+            (let [resp {:message "Refresh your browser"}
+                  resp (cond-> resp
+                         lang
+                         (assoc :lang lang
+                                :content (i18n/get-content lang)))]
+              (response 200 resp)))
+        (response 404 {:message "Account not found"}))
+      (response 401 {:message "Unauthorized"}))))
 
 (defn generate-secure-token
   [size]

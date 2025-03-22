@@ -243,7 +243,7 @@
 
 (defn make-current-event-handler
   [title ability]
-  (let [card (server-card title)]
+  (let [card (server-card title false)]
     (if (has-subtype? card "Current")
       (let [event-keyword (if (corp? card) :agenda-stolen :agenda-scored)
             static-ab {:type :trash-when-expired

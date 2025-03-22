@@ -41,7 +41,7 @@
        :reagent-render
        (fn [current-game messages]
          [:div.chat-box
-          [:h3 (tr [:lobby.chat "Chat"])]
+          [:h3 (tr [:lobby_chat "Chat"])]
           (into [:div.message-list {:ref #(swap! state assoc :message-list %)}]
                 (map
                   (fn [{:keys [user text timestamp]}]
@@ -56,8 +56,8 @@
           [:div
            [:form.msg-box {:on-submit #(do (.preventDefault %)
                                            (send-message state current-game))}
-            [:input {:placeholder (tr [:chat.placeholder "Say something..."])
+            [:input {:placeholder (tr [:chat_placeholder "Say something..."])
                      :type "text"
                      :value @current-input
                      :on-change #(swap! state assoc :msg (-> % .-target .-value))}]
-            [:button (tr [:chat.send "Send"])]]]])})))
+            [:button (tr [:chat_send "Send"])]]]])})))

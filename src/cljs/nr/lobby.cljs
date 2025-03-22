@@ -38,7 +38,7 @@
 (defmethod ws/event-msg-handler :lobby/timeout
   [{{:keys [gameid]} :?data}]
   (when (= gameid (:gameid @app-state))
-    (non-game-toast (tr [:lobby.closed-msg "Game lobby closed due to inactivity"])
+    (non-game-toast (tr [:lobby_closed-msg "Game lobby closed due to inactivity"])
                     "error"
                     {:time-out 0 :close-button true})
     (swap! app-state assoc :gameid nil)))
@@ -81,7 +81,7 @@
                                                    (assoc init-state :replay-jump-to jump-to)
                                                    init-state)))}))
                404
-               (non-game-toast (tr [:lobby.replay-link-error "Replay link invalid."])
+               (non-game-toast (tr [:lobby_replay-link-error "Replay link invalid."])
                                "error" {:time-out 0 :close-button true}))))))))
 
 (defn leave-game []
@@ -135,12 +135,12 @@
           filtered-games (filter-games @user room-games @visible-formats)]
     [:<>
      [:div.game-count
-      [:h4 (str (tr [:lobby.game-count] (count filtered-games))
-                (when (not= (count slug->format) (count @visible-formats))
-                  (str "  " (tr [:lobby.filtered "(filtered)"]))))]]
+      [:h4 (if (= (count slug->format) (count @visible-formats))
+             (tr [:lobby_game-count] {:cnt (count filtered-games)})
+             (tr [:lobby_game-count-filtered] {:cnt (count filtered-games)}))]]
      [:div.game-list
       (if (empty? filtered-games)
-        [:h4 (tr [:lobby.no-games "No games"])]
+        [:h4 (tr [:lobby_no-games "No games"])]
         (doall
           (for [game filtered-games]
             ^{:key (:gameid game)}
@@ -169,7 +169,7 @@
       (-> slug slug->format tr-format)]]))
 
 (defn new-game-button [s games gameid user]
-  [cond-button (tr [:lobby.new-game "New game"])
+  [cond-button (tr [:lobby_new-game "New game"])
    ;; TODO: rewrite this check
    (and (not (or @gameid
                  (:editing @s)
@@ -187,10 +187,10 @@
 (defn reload-lobby-button []
   [:button.reload-button {:type "button"
                           :on-click #(ws/ws-send! [:lobby/list])}
-   (tr [:lobby.reload "Reload list"])])
+   (tr [:lobby_reload "Reload list"])])
 
 (defn load-replay-button [s games gameid user]
-  [cond-button (tr [:lobby.load-replay "Load replay"])
+  [cond-button (tr [:lobby_load-replay "Load replay"])
    ;; TODO: rewrite this check
    (and (not (or @gameid
                  (:editing @s)
@@ -207,15 +207,14 @@
     [:div.rooms
      [:div#filter.dropdown
       [:a.dropdown-toggle {:href "" :data-toggle "dropdown"}
-       (tr [:lobby.filter "Filter"])
+       (tr [:lobby_filter "Filter"])
        [:b.caret]]
        [:div.dropdown-menu.blue-shade
         (doall (for [[k] slug->format]
                  ^{:key k}
                  [format-toggle k (contains? visible-formats k)]))]]
-     [room-tab user s games "casual" (tr [:lobby.casual "Casual"])]
-     ;; [room-tab user s games "angel-arena" (tr [:lobby.angel-arena "Angel Arena"])]
-     [room-tab user s games "competitive" (tr [:lobby.tournament "Tournament"])]]
+     [room-tab user s games "casual" (tr [:lobby_type "Casual"] {:type "casual"})]
+     [room-tab user s games "competitive" (tr [:lobby_type "Tournament"] {:type "tournament"})]]
     (when-not (= "angel-arena" (:room @s))
       [:div.lobby-buttons
        [new-game-button s games current-game user]
