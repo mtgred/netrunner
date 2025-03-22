@@ -911,7 +911,7 @@
            [:div.panel.blue-shade.popup {:ref #(swap! s assoc :hand-popup %) :class popup-direction}
             [:div
              [:a {:on-click #(close-popup % (:hand-popup @s) nil false false)} (tr [:game_close "Close"])]
-             [:label (tr [:game_card-count] size)]
+             [:label (tr [:game_card-count] {:cnt size})]
              (let [{:keys [total]} @hand-size]
                (stat-controls :hand-size [:div.hand-size (tr [:game_max-hand "Max hand size"] {:total total})]))
              [build-hand-card-view filled-hand size "card-popup-wrapper"]]])]))))
