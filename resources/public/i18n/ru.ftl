@@ -408,7 +408,7 @@ game_agenda-count = {$cnt ->
 
 game_approach-ice = Приближение ко льду
 
-game_archives = Архивы{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
+game_archives = Архивы ({$faceup} ↑ {$facedown} ↓)
 
 game_attempt-reconnect = Переподключиться
 

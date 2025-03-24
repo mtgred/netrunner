@@ -392,7 +392,7 @@ game_agenda-count = agenda-point 议案分数
 
 game_approach-ice = 接驳防火墙
 
-game_archives = 档案库{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
+game_archives = 档案库 ({$faceup} ↑ {$facedown} ↓)
 
 game_attempt-reconnect = 尝试重新连接
 

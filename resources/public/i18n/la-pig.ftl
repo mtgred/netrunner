@@ -226,7 +226,7 @@ game_agenda-count-with-req = {$agenda-point ->
 
 game_approach-ice = Approachyay iceyay
 
-game_archives = Archivesyay{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
+game_archives = Archivesyay ({$faceup} ↑ {$facedown} ↓)
 
 game_auto-pass = Autoyay-asspay ioritypriay
 

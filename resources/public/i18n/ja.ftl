@@ -184,7 +184,7 @@ game_agenda-count = {$agenda-point} 計画点
 
 game_approach-ice = アイスにアプローチ
 
-game_archives = アーカイブ{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
+game_archives = アーカイブ ({$faceup} ↑ {$facedown} ↓)
 
 game_auto-pass = 自動通過処理
 

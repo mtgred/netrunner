@@ -244,7 +244,7 @@ game_agenda-count-with-req = {$agenda-point ->
 
 game_approach-ice = Aproximar do gelo
 
-game_archives = Arquivos{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
+game_archives = Arquivos ({$faceup} ↑ {$facedown} ↓)
 
 game_auto-pass = Passar prioridade automaticamente
 

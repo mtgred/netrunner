@@ -228,7 +228,7 @@ game_agenda-count = {$agenda-point} 아젠다 점수
 
 game_approach-ice = 아이스 접근
 
-game_archives = 기록보관소{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
+game_archives = 기록보관소 ({$faceup} ↑ {$facedown} ↓)
 
 game_auto-pass = 자동-통과 우선
 

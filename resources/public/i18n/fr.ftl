@@ -249,7 +249,7 @@ game_agenda-count-with-req = {$agenda-point ->
 
 game_approach-ice = Approcher la glace
 
-game_archives = Archives{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
+game_archives = Archives ({$faceup} ↑ {$facedown} ↓)
 
 game_auto-pass = Activer le passage automatique
 

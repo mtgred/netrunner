@@ -232,7 +232,7 @@ game_agenda-count = Punkty projektów: {$agenda-point}
 
 game_approach-ice = Zbliżenie do lodu
 
-game_archives = Archiwum{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
+game_archives = Archiwum ({$faceup} ↑ {$facedown} ↓)
 
 game_auto-pass = Priorytet auto-mijania
 
