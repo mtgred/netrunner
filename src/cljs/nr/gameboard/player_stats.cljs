@@ -84,7 +84,7 @@
              (ctrl :link [:div link " " [:span.anr-icon.link]])]
             [display-special-memory memory true]]
            [:<>
-            (ctrl :click [:div (tr [:game_click-count] click)])
+            (ctrl :click [:div (tr [:game_click-count] {:click click})])
             (ctrl :credit [:div (if (pos? run-credit)
                                   (tr [:game_credit-count-with-run-credits]
                                       {:credit credit
@@ -125,7 +125,7 @@
             (ctrl :click [:div click " " [:span.anr-icon.click]])
             (ctrl :credit [:div credit " " [:span.anr-icon.credit]])]
            [:<>
-            (ctrl :click [:div (tr [:game_click-count] click)])
+            (ctrl :click [:div (tr [:game_click-count] {:click click})])
             (ctrl :credit [:div (tr [:game_credit-count] {:credit credit})])])
          (let [{:keys [base additional]} bad-publicity]
            (ctrl :bad-publicity [:div (if (pos? additional)

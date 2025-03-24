@@ -189,7 +189,7 @@
 
 (defn- open-decklists-span [precon open-decklists]
   (when (and open-decklists (not precon))
-    [:span.open-decklists (str " " (tr [:lobby_open-decklists-b] "(open decklists)"))]))
+    [:span.open-decklists (str " " (tr [:lobby_open-decklists-b "(open decklists)"]))]))
 
 (defn game-format [{fmt :format singleton? :singleton precon :precon open-decklists :open-decklists}]
   [:div {:class "game-format"}
