@@ -492,15 +492,15 @@ stats_credits-spent = 消費したクレジット
 
 stats_damage-done = 与えたダメージ
 
-stats_ended = 終了
+stats_ended = 終了: {$ended}
 
-stats_format = フォーマット
+stats_format = フォーマット: {$format}
 
 stats_game-stats = 対戦統計
 
 stats_game-title = {$title} (ターン数 {$cnt})
 
-stats_lobby = ロビー
+stats_lobby = ロビー: {$lobby}
 
 stats_log-count = ログ数 {$cnt}
 
@@ -524,8 +524,8 @@ stats_view-games = 統計画面に戻る
 
 stats_view-log = ログを見る
 
-stats_win-method = 勝利方法
+stats_win-method = 勝利方法: {$reason}
 
-stats_winner = 勝者
+stats_winner = 勝者: {$winner}
 
 stats_won = 勝利: {$won} ({NUMBER($percent, style: "percent")})

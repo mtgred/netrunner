@@ -1434,11 +1434,11 @@ stats_damage-done = Damage Done
 
 stats_download = Download replay
 
-stats_ended = Ended
+stats_ended = Ended: {$ended}
 
 stats_events-played = Events Played
 
-stats_format = Format
+stats_format = Format: {$format}
 
 stats_game-stats = Game Stats
 
@@ -1449,7 +1449,7 @@ stats_game-title = {$title} ({$cnt ->
 
 stats_launch = Launch Replay
 
-stats_lobby = Lobby
+stats_lobby = Lobby: {$lobby}
 
 stats_log-count = {$cnt ->
     [one] {$cnt} Log
@@ -1507,8 +1507,8 @@ stats_view-games = Return to stats screen
 
 stats_view-log = View log
 
-stats_win-method = Win method
+stats_win-method = Win method: {$reason}
 
-stats_winner = Winner
+stats_winner = Winner: {$winner}
 
 stats_won = Won: {$won} ({NUMBER($percent, style: "percent")})

@@ -1341,11 +1341,11 @@ stats_damage-done = 造成伤害量
 
 stats_download = 下载录像
 
-stats_ended = 结束时间
+stats_ended = 结束时间: {$ended}
 
 stats_events-played = 事件打出数量
 
-stats_format = 赛制
+stats_format = 赛制: {$format}
 
 stats_game-stats = 胜负统计
 
@@ -1353,7 +1353,7 @@ stats_game-title = {$title} ({$cnt} 个回合)
 
 stats_launch = 播放录像
 
-stats_lobby = 大厅
+stats_lobby = 大厅: {$lobby}
 
 stats_log-count = {$cnt} 条记录
 
@@ -1403,8 +1403,8 @@ stats_view-games = 返回统计界面
 
 stats_view-log = 查看记录
 
-stats_win-method = 胜利方式
+stats_win-method = 胜利方式: {$reason}
 
-stats_winner = 胜者
+stats_winner = 胜者: {$winner}
 
 stats_won = 胜利: {$won} ({NUMBER($percent, style: "percent")})

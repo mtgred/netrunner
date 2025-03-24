@@ -876,9 +876,9 @@ stats_damage-done = Amageday Oneday
 
 stats_download = Ownloadday eplayray
 
-stats_ended = Endedyay
+stats_ended = Endedyay: {$ended}
 
-stats_format = Ormatfay
+stats_format = Ormatfay: {$format}
 
 stats_game-stats = Amegay Atsstay
 
@@ -889,7 +889,7 @@ stats_game-title = {$title} ({$cnt ->
 
 stats_launch = Aunchlay Eplayray
 
-stats_lobby = Obbylay
+stats_lobby = Obbylay: {$lobby}
 
 stats_log-count = {$cnt ->
     [one] {$cnt} Oglay
@@ -929,8 +929,8 @@ stats_view-games = Eturnray otay atsstay eenscray
 
 stats_view-log = Iewvay oglay
 
-stats_win-method = Inway ethodmay
+stats_win-method = Inway ethodmay: {$reason}
 
-stats_winner = Innerway
+stats_winner = Innerway: {$winner}
 
 stats_won = Onway: {$won} ({NUMBER($percent, style: "percent")})

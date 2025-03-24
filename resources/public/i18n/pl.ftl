@@ -710,9 +710,9 @@ stats_damage-done = Zadane obrażenia
 
 stats_download = Pobierz powtórkę
 
-stats_ended = Zakończono
+stats_ended = Zakończono: {$ended}
 
-stats_format = Format
+stats_format = Format: {$format}
 
 stats_game-stats = Statystyki gier
 
@@ -720,7 +720,7 @@ stats_game-title = {$title} (Tura: {$cnt})
 
 stats_launch = Uruchom powtórkę
 
-stats_lobby = Poczekalnia
+stats_lobby = Poczekalnia: {$lobby}
 
 stats_log-count = Dzienniki: {$cnt}
 
@@ -752,8 +752,8 @@ stats_view-games = Powrót do ekranu statystyk
 
 stats_view-log = Obejrzyj dziennik
 
-stats_win-method = Sposób wygranej
+stats_win-method = Sposób wygranej: {$reason}
 
-stats_winner = Wygrana
+stats_winner = Wygrana: {$winner}
 
 stats_won = Wygrano: {$won} ({NUMBER($percent, style: "percent")})
