@@ -228,7 +228,7 @@ game_agenda-count = {$agenda-point} 아젠다 점수
 
 game_approach-ice = 아이스 접근
 
-game_archives = 기록보관소{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
+game_archives = 기록보관소 ({$faceup} ↑ {$facedown} ↓)
 
 game_auto-pass = 자동-통과 우선
 
@@ -664,9 +664,9 @@ stats_damage-done = 입힌 피해
 
 stats_download = 리플레이 다운로드
 
-stats_ended = 종료됨
+stats_ended = 종료됨: {$ended}
 
-stats_format = 포맷
+stats_format = 포맷: {$format}
 
 stats_game-stats = 게임 기록
 
@@ -674,7 +674,7 @@ stats_game-title = {$title} ({$cnt} 차례)
 
 stats_launch = 리플레이 실행
 
-stats_lobby = 로비
+stats_lobby = 로비: {$lobby}
 
 stats_log-count = {$cnt} 로그
 
@@ -706,8 +706,8 @@ stats_view-games = 기록 화면으로 돌아가기
 
 stats_view-log = 로그 보기
 
-stats_win-method = 승리 방법
+stats_win-method = 승리 방법: {$reason}
 
-stats_winner = 승자
+stats_winner = 승자: {$winner}
 
 stats_won = 승리: {$won} ({NUMBER($percent, style: "percent")})

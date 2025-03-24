@@ -244,7 +244,7 @@ game_agenda-count-with-req = {$agenda-point ->
 
 game_approach-ice = Aproximar do gelo
 
-game_archives = Arquivos{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
+game_archives = Arquivos ({$faceup} ↑ {$facedown} ↓)
 
 game_auto-pass = Passar prioridade automaticamente
 
@@ -755,9 +755,9 @@ stats_damage-done = Dano Causado
 
 stats_download = Baixar replay
 
-stats_ended = Terminadas
+stats_ended = Terminadas: {$ended}
 
-stats_format = Formato
+stats_format = Formato: {$format}
 
 stats_game-stats = Estatísticas de Jogo
 
@@ -768,7 +768,7 @@ stats_game-title = {$title} ({$cnt ->
 
 stats_launch = Carregar Replay
 
-stats_lobby = Lobby
+stats_lobby = Lobby: {$lobby}
 
 stats_log-count = {$cnt ->
     [one] {$cnt} Log
@@ -806,8 +806,8 @@ stats_view-games = Retornar para Estatísticas
 
 stats_view-log = Visualizar log
 
-stats_win-method = Método de vitórias
+stats_win-method = Método de vitórias: {$reason}
 
-stats_winner = Vencedor
+stats_winner = Vencedor: {$winner}
 
 stats_won = Vitórias: {$won} ({NUMBER($percent, style: "percent")})

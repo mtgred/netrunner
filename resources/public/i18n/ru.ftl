@@ -408,7 +408,7 @@ game_agenda-count = {$cnt ->
 
 game_approach-ice = Приближение ко льду
 
-game_archives = Архивы{"\u00A0"}({$faceup} ↑ {$facedown} ↓)
+game_archives = Архивы ({$faceup} ↑ {$facedown} ↓)
 
 game_attempt-reconnect = Переподключиться
 
@@ -1414,11 +1414,11 @@ stats_damage-done = Нанесено урона
 
 stats_download = Скачать запись
 
-stats_ended = Закончено
+stats_ended = Закончено: {$ended}
 
 stats_events-played = Разыграно событий
 
-stats_format = Формат
+stats_format = Формат: {$format}
 
 stats_game-stats = Игровая статистика
 
@@ -1431,7 +1431,7 @@ stats_game-title = {$title} ({$cnt ->
 
 stats_launch = Запустить запись
 
-stats_lobby = Лобби
+stats_lobby = Лобби: {$lobby}
 
 stats_log-count = {$cnt ->
     *[one] {$cnt} журнал
@@ -1491,8 +1491,8 @@ stats_view-games = Вернуться к статистике
 
 stats_view-log = Смотреть журнал
 
-stats_win-method = Способ победы
+stats_win-method = Способ победы: {$reason}
 
-stats_winner = Победитель
+stats_winner = Победитель: {$winner}
 
 stats_won = Выиграно: {$won} ({NUMBER($percent, style: "percent")})

@@ -66,9 +66,7 @@
                  [time-literals "0.1.5"]
                  [metosin/reitit "0.7.2"]
                  [org.flatland/ordered "1.15.12"]
-                 [io.github.noahtheduke/fluent-clj "0.0.1"]
-                 [net.xyzsd.fluent/fluent-base "0.70"]
-                 [net.xyzsd.fluent/fluent-functions-cldr "0.70"]]
+                 [io.github.noahtheduke/fluent-clj "0.0.2"]]
 
   :test-selectors {:default (fn [m] (not (:kaocha/pending m)))}
 
