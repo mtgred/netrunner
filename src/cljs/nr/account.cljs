@@ -303,7 +303,7 @@
 
 (def background-list
   [["Apex" "apex"]
-   ["Custom BG (input URL below)" "custom"]
+   ["Custom BG (input URL below)" "custom-bg"]
    ["Find The Truth" "find-the-truth"]
    ["Freelancer" "freelancer"]
    ["Monochrome" "monochrome"]
