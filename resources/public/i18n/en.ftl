@@ -599,7 +599,7 @@ game_show-decklists = Show/Hide decklists
 game_shuffle = Shuffle
 
 game_spec-count = {$cnt ->
-    [one] Spectator
+    [one] {$cnt} Spectator
     *[other] {$cnt} Spectators
 }
 
