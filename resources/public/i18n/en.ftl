@@ -541,6 +541,7 @@ game_prompt = {$msg ->
     [archives] Archives
     [derez] derez
     [expend] Expend
+    [cast-as-a-sorcery] Cast as a Sorcery
     [hq] HQ
     [new-remote] New Remote
     [r-d] R&D
