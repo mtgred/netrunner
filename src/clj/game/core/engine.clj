@@ -914,7 +914,7 @@
                     (show-wait-prompt state opponent
                                       (str (side-str active-player) " to resolve " (event-title event) " triggers"))
                     ; let active player activate their events first
-                    (wait-for (trigger-event-simult-player state side (make-eid state eid) active-player-events cancel-fn targets)
+                    (wait-for (trigger-event-simult-player state active-player (make-eid state eid) active-player-events cancel-fn targets)
                               (when after-active-player
                                 (resolve-ability state side eid after-active-player nil nil))
                               (clear-wait-prompt state opponent)
