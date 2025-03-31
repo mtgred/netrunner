@@ -21,6 +21,13 @@
       (str/replace "&" "-")
       (str/lower-case)))
 
+(defn tr-fix-server-name
+  [s]
+  (let [cleaned (clean-input s)]
+    (if-let [[_ num] (re-matches #"sever-(\d+)" cleaned)]
+      {:msg "server-{num}" :num num}
+      {:msg cleaned})))
+
 (defn tr-type [s] (tr [:card-type_name s] {:type (clean-input s)}))
 (defn tr-side [s] (tr [:side_name s] {:side (clean-input s)}))
 (defn tr-faction [s] (tr [:faction_name s] {:faction (clean-input s)}))
@@ -32,7 +39,7 @@
             (str "a" s)
             s)]
     (tr [:set_name s] {:name (clean-input s)})))
-(defn tr-game-prompt [s] (tr [:game_prompt s] {:msg (clean-input s)}))
+(defn tr-game-prompt [s] (tr [:game_prompt s] (tr-fix-server-name s)))
 
 (defn tr-data [k data]
   (or (get-in data [:localized k]) (k data)))
