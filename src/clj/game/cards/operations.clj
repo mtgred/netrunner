@@ -3257,8 +3257,7 @@
   {:on-play
    {:psi {:req (req (seq (:scored runner)))
           :not-equal
-          {:player :corp
-           :async true
+          {:async true
            :prompt "Choose a resource to trash"
            :choices {:card #(and (installed? %)
                                  (resource? %))}

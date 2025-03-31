@@ -749,7 +749,6 @@
     {:req (req (not (in-discard? card)))
      :waiting-prompt true
      :prompt (msg "Pay 3 [Credits] to force Runner to encounter " (:title card) "?")
-     :player :corp
      :yes-ability
      {:cost [(->c :credit 3)]
       :async true
@@ -1057,7 +1056,6 @@
 
 (defcard "Bullfrog"
   {:subroutines [(do-psi {:label "Move this ice to another server"
-                          :player :corp
                           :prompt "Choose a server"
                           :choices (req servers)
                           :msg (msg "move itself to the outermost position of " target)
@@ -1207,7 +1205,6 @@
 (defcard "Clairvoyant Monitor"
   {:subroutines [(do-psi {:label "Place 1 advancement token and end the run"
                           :async true
-                          :player :corp
                           :prompt "Choose an installed card to place 1 advancement token on"
                           :msg (msg "place 1 advancement token on "
                                     (card-str state target) " and end the run")
@@ -2958,14 +2955,12 @@
   {:subroutines [(do-psi {:async true
                           :label "Do 2 net damage"
                           :msg "do 2 net damage and trash itself"
-                          :player :corp
                           :effect (req (wait-for (damage state :corp :net 2 {:card card})
                                                  (trash state :corp (make-eid state eid) card {:cause :subroutine})
                                                  (encounter-ends state side eid)))}
                          {:async true
                           :label "Do 1 net damage"
                           :msg "do 1 net damage and trash itself"
-                          :player :corp
                           :effect (req (wait-for (damage state :corp :net 1 {:card card})
                                                  (trash state :corp (make-eid state eid) card {:cause :subroutine})
                                                  (encounter-ends state side eid)))})]})
@@ -2973,7 +2968,6 @@
 (defcard "Mind Game"
   {:subroutines [(do-psi {:label "Redirect the run to another server"
                           :async true
-                          :player :corp
                           :prompt "Choose a server"
                           :waiting-prompt true
                           :choices (req (remove #{(-> @state :run :server central->name)} servers))
@@ -3456,8 +3450,7 @@
 (defcard "Sadaka"
   (let [maybe-draw-effect
         {:optional
-         {:player :corp
-          :waiting-prompt true
+         {:waiting-prompt true
           :prompt "Draw 1 card?"
           :yes-ability
           {:async true

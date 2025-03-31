@@ -233,7 +233,6 @@
   (letfn [(senai-ability [agenda]
             {:interactive (req true)
              :optional {:prompt "Initiate a trace?"
-                        :player :corp
                         :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability {:trace {:base (get-advancement-requirement agenda)
                                               :successful
@@ -490,7 +489,6 @@
               {:req (req (= :runner side))
                :waiting-prompt true
                :prompt "Draw 2 cards?"
-               :player :corp
                :yes-ability {:msg "draw 2 cards"
                              :async true
                              :effect (effect (draw eid 2))}}}})
@@ -1745,7 +1743,6 @@
              :effect (req (gain-tags state :runner eid 1))}
             {:event :breach-server
              :interactive (req true)
-             :player :corp
              :req (req tagged)
              :async true
              ;; the random-access check needs to be dereffed to work correctly
@@ -2030,7 +2027,6 @@
                 :effect (effect (gain-credits eid 2))}]
    :on-trash {:optional
               {:req (req (= :runner side))
-               :player :corp
                :waiting-prompt true
                :prompt "Gain 2 [Credits]?"
                :yes-ability
@@ -2068,9 +2064,9 @@
 
 (defcard "Net Analytics"
   (let [ability {:optional
-                 {:player :corp
-                  :autoresolve (get-autoresolve :auto-fire)
+                 {:autoresolve (get-autoresolve :auto-fire)
                   :waiting-prompt true
+                  :player :corp
                   :prompt "Draw 1 card?"
                   :yes-ability
                   {:msg "draw 1 card"
@@ -2640,7 +2636,6 @@
                                  state side
                                  {:optional
                                   {:req (req (pos? (count-bad-pub state)))
-                                   :player :corp
                                    :prompt "Remove 1 bad publicity?"
                                    :yes-ability
                                    {:msg "remove 1 bad publicity"
@@ -3208,7 +3203,6 @@
 (defcard "Vera Ivanovna Shuyskaya"
   (let [ability {:interactive (req true)
                  :optional {:prompt "Reveal the grip and trash a card?"
-                            :player :corp
                             :autoresolve (get-autoresolve :auto-fire)
                             :yes-ability (with-revealed-hand :runner {:event-side :corp}
                                            {:prompt "Choose a card to trash"
@@ -3426,7 +3420,6 @@
                                        state side
                                        {:optional
                                         {:req (req (not (rezzed? card)))
-                                         :player :corp
                                          :prompt (msg "The Runner is about to expose " (enumerate-str (map #(card-str state % {:visible true}) (:cards ctx))) ". Rez Zaibatsu Loyalty?")
                                          :yes-ability {:async true
                                                        :effect (effect (rez eid card))}}}

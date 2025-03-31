@@ -158,7 +158,6 @@
   {:events
    [{:event :run
      :req (req (first-event? state side :run))
-     :player :corp
      :async true
      :waiting-prompt true
      :prompt "Choose one"
@@ -369,8 +368,7 @@
 (defcard "Better Citizen Program"
   {:events [{:event :play-event
              :optional
-             {:player :corp
-              :req (req (and (has-subtype? (:card context) "Run")
+             {:req (req (and (has-subtype? (:card context) "Run")
                              (first-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))
                              (no-event? state :runner :runner-install #(has-subtype? (:card (first %)) "Icebreaker"))))
               :waiting-prompt true
@@ -383,8 +381,7 @@
             {:event :runner-install
              :silent (req true)
              :optional
-             {:player :corp
-              :req (req (and (not (:facedown context))
+             {:req (req (and (not (:facedown context))
                              (has-subtype? (:card context) "Icebreaker")
                              (first-event? state :runner :runner-install #(has-subtype? (:card (first %)) "Icebreaker"))
                              (no-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))))
@@ -1159,7 +1156,6 @@
                            (is-remote? (second (get-zone %))))
                      (all-installed state :corp)))
      :prompt "Choose a card to place 2 advancement tokens on"
-     :player :corp
      :choices {:card #(and (= (last (get-zone %)) :content)
                            (is-remote? (second (get-zone %))))}
      :msg (msg "place 2 advancement token on " (card-str state target))
@@ -1764,7 +1760,6 @@
 (defcard "Puppet Master"
   {:events [{:event :successful-run
              :skippable true
-             :player :corp
              :interactive (req true)
              :waiting-prompt true
              :prompt "Choose a card that can be advanced to place 1 advancement token on"
@@ -2392,8 +2387,7 @@
               :effect (effect (add-counter eid card :agenda 3 nil))}
    :events [{:event :runner-turn-begins
              :optional
-             {:player :corp
-              :req (req (pos? (get-counters card :agenda)))
+             {:req (req (pos? (get-counters card :agenda)))
               :waiting-prompt true
               :prompt "Make the Runner lose [Click]?"
               :yes-ability
