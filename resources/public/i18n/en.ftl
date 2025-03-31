@@ -537,18 +537,18 @@ game_ok = OK
 game_play-area = Play Area
 
 game_prompt = {$msg ->
-    [advance] advance
+    [advance] Advance
     [archives] Archives
-    [derez] derez
+    [derez] Derez
     [expend] Expend
     [cast-as-a-sorcery] Cast as a Sorcery
     [hq] HQ
     [new-remote] New Remote
     [r-d] R&D
-    [rez] rez
-    [score] score
+    [rez] Rez
+    [score] Score
+    [trash] Trash
     [server-{num}] Server {$num}
-    [trash] trash
     *[unknown] Unknown game prompt ({$msg})
 }
 
