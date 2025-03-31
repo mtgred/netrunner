@@ -541,22 +541,14 @@ game_prompt = {$msg ->
     [archives] Archives
     [derez] Derez
     [expend] Expend
+    [cast-as-a-sorcery] Cast as a Sorcery
     [hq] HQ
     [new-remote] New Remote
     [r-d] R&D
     [rez] Rez
     [score] Score
-    [server-1] Server 1
-    [server-10] Server 10
-    [server-2] Server 2
-    [server-3] Server 3
-    [server-4] Server 4
-    [server-5] Server 5
-    [server-6] Server 6
-    [server-7] Server 7
-    [server-8] Server 8
-    [server-9] Server 9
     [trash] Trash
+    [server-{num}] Server {$num}
     *[unknown] Unknown game prompt ({$msg})
 }
 
@@ -599,7 +591,7 @@ game_show-decklists = Show/Hide decklists
 game_shuffle = Shuffle
 
 game_spec-count = {$cnt ->
-    [one] Spectator
+    [one] {$cnt} Spectator
     *[other] {$cnt} Spectators
 }
 
