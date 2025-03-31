@@ -1107,7 +1107,7 @@
                                   :else
                                   "")}]])
 
-(defn server-view [{:keys [server central-view run]} opts]
+(defn server-view [{:keys [key server central-view run]} opts]
   (let [content (:content server)
         ices (:ices server)
         run-pos (:position run)
@@ -1147,7 +1147,9 @@
                                                        (and (< 1 (count content)) (not is-first)))
                                                "shift"))}
                [card-view card flipped]]))))
-      [label content (assoc opts :classes "server-label" :hide-cursor true)]]]))
+      (if central-view
+        [label content (assoc opts :classes "server-label" :hide-cursor true)]
+        [label content (assoc opts :classes "server-label" :hide-cursor true :name (str "Server " key))])]]))
 
 (defn stacked-label [cursor similar-servers opts]
   (let [similar-server-names (->> similar-servers
