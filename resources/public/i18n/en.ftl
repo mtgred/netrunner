@@ -421,7 +421,7 @@ game_bad-pub-count-additional = {$base} + {$additional} Bad Publicity
 
 game_beat-trace = Beat Trace
 
-game_brain-damage = {$dmg} Core Damage
+game_brain-damage = {NUMBER($dmg)} Core Damage
 
 game_breach-server = Breach server
 
@@ -537,27 +537,18 @@ game_ok = OK
 game_play-area = Play Area
 
 game_prompt = {$msg ->
-    [advance] advance
+    [advance] Advance
     [archives] Archives
-    [derez] derez
+    [derez] Derez
     [expend] Expend
     [cast-as-a-sorcery] Cast as a Sorcery
     [hq] HQ
     [new-remote] New Remote
     [r-d] R&D
-    [rez] rez
-    [score] score
-    [server-1] Server 1
-    [server-10] Server 10
-    [server-2] Server 2
-    [server-3] Server 3
-    [server-4] Server 4
-    [server-5] Server 5
-    [server-6] Server 6
-    [server-7] Server 7
-    [server-8] Server 8
-    [server-9] Server 9
-    [trash] trash
+    [rez] Rez
+    [score] Score
+    [trash] Trash
+    [server-num] Server {$num}
     *[unknown] Unknown game prompt ({$msg})
 }
 
@@ -600,7 +591,7 @@ game_show-decklists = Show/Hide decklists
 game_shuffle = Shuffle
 
 game_spec-count = {$cnt ->
-    [one] Spectator
+    [one] {$cnt} Spectator
     *[other] {$cnt} Spectators
 }
 
@@ -1270,16 +1261,16 @@ settings_bespoke-sounds = {$sound ->
 }
 
 settings_bg = {$slug ->
-    [apex] Apex
-    [custom] Custom BG (input URL below)
-    [find-the-truth] Find The Truth
-    [freelancer] Freelancer
-    [monochrome] Monochrome
-    [mushin-no-shin] Mushin No Shin
-    [push-your-luck] Push Your Luck
-    [rumor-mill] Rumor Mill
-    [the-root] The Root
-    [traffic-jam] Traffic Jam
+    [apex-bg] Apex
+    [custom-bg] Custom BG (input URL below)
+    [find-the-truth-bg] Find The Truth
+    [freelancer-bg] Freelancer
+    [monochrome-bg] Monochrome
+    [mushin-no-shin-bg] Mushin No Shin
+    [push-your-luck-bg] Push Your Luck
+    [rumor-mill-bg] Rumor Mill
+    [the-root-bg] The Root
+    [traffic-jam-bg] Traffic Jam
     *[worlds2020] Worlds 2020
 }
 

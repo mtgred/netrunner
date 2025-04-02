@@ -84,16 +84,13 @@
        (remove #(str/starts-with? "angel-arena" (first %)))
        (into {})))
 
-(defn to-string [s]
-  (if (string? s) s (name s)))
-
 (defn missing-translations
   "Treat :en as the single source of truth. Compare each other language against it.
   Print when the other language is missing entries, and also print when the other
   language has defined entries not in :en."
   [& args]
   (let [en-keys (keys (get-messages "en"))]
-    (doseq [lang (or (seq (map to-string args))
+    (doseq [lang (or (seq (map name args))
                      (keys (dissoc @fluent-dictionary "en")))
             :let [lang-keys (keys (get-messages lang))]]
       (println "Checking" lang)
@@ -418,7 +415,7 @@
 
 (defn format-i18n-files
   [& args]
-  (let [langs (or (seq (map to-string args))
+  (let [langs (or (seq (map name args))
                   (keys @fluent-dictionary))]
     (doseq [lang langs
             :let [f (io/file "resources" "public" "i18n" (str lang ".ftl"))

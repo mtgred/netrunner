@@ -735,16 +735,16 @@ settings_bespoke-sounds = {$sound ->
 }
 
 settings_bg = {$slug ->
-    [apex] Apex
-    [custom] Ustomcay GBay (inputyay URLyay elowbay)
-    [find-the-truth] Indfay Ethay Uthtray
-    [freelancer] Eelancerfray
-    [monochrome] Onochromay
-    [mushin-no-shin] Ushinmay Onay Inshay
-    [push-your-luck] Ushpay Ouryay Ucklay
-    [rumor-mill] Umoray Illmay
-    [the-root] Ethay Ootray
-    [traffic-jam] Affictray Amjay
+    [apex-bg] Apex
+    [custom-bg] Ustomcay GBay (inputyay URLyay elowbay)
+    [find-the-truth-bg] Indfay Ethay Uthtray
+    [freelancer-bg] Eelancerfray
+    [monochrome-bg] Onochromay
+    [mushin-no-shin-bg] Ushinmay Onay Inshay
+    [push-your-luck-bg] Ushpay Ouryay Ucklay
+    [rumor-mill-bg] Umoray Illmay
+    [the-root-bg] Ethay Ootray
+    [traffic-jam-bg] Affictray Amjay
     *[worlds2020] Orldsway 2020
 }
 

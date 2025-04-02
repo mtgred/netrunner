@@ -73,8 +73,7 @@
 (defcard "Acacia"
   {:events [{:event :purge
              :optional
-             {:player :runner
-              :waiting-prompt true
+             {:waiting-prompt true
               :prompt "Trash Acacia to gain 1 [Credits] for each purged virus counter?"
               :yes-ability
               {:async true
@@ -750,7 +749,6 @@
              :optional
              {:req (req (and (:successful target)
                              (:dopp-active (get-card state card))))
-              :player :runner
               :prompt "Make another run?"
               :yes-ability {:prompt "Choose a server"
                             :async true
@@ -919,7 +917,6 @@
              {:req (req (= :runner (:active-player @state)))
               :waiting-prompt true
               :prompt "Trash Flip Switch to reduce the base trace strength to 0?"
-              :player :runner
               :yes-ability {:msg "reduce the base trace strength to 0"
                             :cost [(->c :trash-can)]
                             :effect (req (swap! state assoc-in [:trace :force-base] 0))}}}]
@@ -1340,7 +1337,6 @@
   {:static-abilities [(mu+ 1)
                       (runner-hand-size+ 1)]
    :events [{:event :agenda-scored
-             :player :runner
              :prompt "Choose a card"
              :msg "add 1 card from the stack to the grip"
              :choices (req (cancellable (:deck runner)))
@@ -1646,7 +1642,6 @@
         {:async true
          :prompt "Choose a card to install"
          :waiting-prompt true
-         :player :runner
          :req (req (pos? (count (:hand runner))))
          :choices {:req (req (and (runner? target)
                                   (in-hand? target)
@@ -1676,7 +1671,6 @@
              :silent (get-autoresolve :auto-fire never?)
              :optional
              {:req (req (first-event? state side :successful-run))
-              :player :runner
               :autoresolve (get-autoresolve :auto-fire)
               :waiting-prompt true
               :prompt "Gain 1 [Credit] and look at the top card of the stack?"
@@ -1688,8 +1682,7 @@
                  (wait-for (gain-credits state :runner 1)
                            (continue-ability
                              state :runner
-                             {:player :runner
-                              :optional
+                             {:optional
                               {:prompt (msg "Add " (:title (first (:deck runner))) " to bottom of the stack?")
                                :yes-ability
                                {:msg "add the top card of the stack to the bottom"
@@ -1855,7 +1848,6 @@
              :optional {:req (req (and (first-event? state side :run)
                                        (pos? (count (:deck runner)))))
                         :autoresolve (get-autoresolve :auto-fire)
-                        :player :runner
                         :prompt "Look at top 2 cards of the stack?"
                         :yes-ability
                         {:msg "look at the top 2 cards of the stack"
@@ -2346,7 +2338,6 @@
              {:req (req (= (:credit runner) (:credit corp)))
               :waiting-prompt true
               :prompt "Gain 2 [Credits]?"
-              :player :runner
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability {:msg "gain 2 [Credits]"
                             :async true
@@ -2649,7 +2640,6 @@
              :optional
              {:waiting-prompt true
               :prompt (msg "Gain " (count (:cards context)) " [Credits]?")
-              :player :runner
               :autoresolve (get-autoresolve :auto-gain-credits)
               :yes-ability {:msg (msg "gain " (count (:cards context)) " [Credits]")
                             :async true

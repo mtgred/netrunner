@@ -131,7 +131,6 @@
    :events [{:event :run-ends
              :optional {:req (req (and (not (get-in card [:special :run-again]))
                                        (:unsuccessful target)))
-                        :player :runner
                         :prompt "Make another run on the same server?"
                         :yes-ability
                         {:effect (req (let [last-run (get-in @state [:runner :register :last-run])
@@ -684,7 +683,6 @@
    :interactions {:pay-credits {:req (req run)
                                 :type :credit}}
    :events [{:event :run-ends
-             :player :runner
              :prompt "Choose a program that was used during the run"
              :choices {:card #(and (program? %)
                                    (installed? %))}
@@ -1955,11 +1953,10 @@
              :effect (req (wait-for
                             (access-card state side (first cards))
                             (if (< 1 (count cards))
-                              (continue-ability state side (access-pile (rest cards) pile pile-size) card nil)
+                              (continue-ability state :runner (access-pile (rest cards) pile pile-size) card nil)
                               (effect-completed state side eid))))})
           (which-pile [p1 p2]
-            {:player :runner
-             :waiting-prompt true
+            {:waiting-prompt true
              :prompt "Choose a pile to access"
              :choices [(str "Pile 1 (" (quantify (count p1) "card") ")")
                        (str "Pile 2 (" (quantify (count p2) "card") ")")]
@@ -1979,7 +1976,8 @@
            :choices {:card #(and (in-hand? %)
                                  (corp? %))
                      :max (req (dec (count (:hand corp))))}
-           :effect (effect (continue-ability
+           :effect (req (continue-ability
+                          state :runner
                              (which-pile (shuffle targets)
                                          (shuffle (vec (set/difference
                                                          (set (:hand corp)) (set targets)))))
@@ -3041,8 +3039,7 @@
                                   (do (system-msg state :runner (str "gains " (* 2 spent) " [Credits]"))
                                       (gain-credits state :runner eid (* 2 spent))))))))})
           (runner-choice [choices]
-            {:player :runner
-             :prompt "How many credits do you want to spend?"
+            {:prompt "How many credits do you want to spend?"
              :waiting-prompt true
              :choices choices
              :async true
@@ -3302,8 +3299,7 @@
 
 (defcard "Rigged Results"
   (letfn [(choose-ice []
-            {:player :runner
-             :waiting-prompt true
+            {:waiting-prompt true
              :prompt "Choose a piece of ice to bypass"
              :choices {:card ice?}
              :msg (msg "make a run and bypass " (card-str state target))
@@ -3332,8 +3328,7 @@
                                         (continue-ability state :runner (choose-ice) card nil)
                                         (effect-completed state side eid)))))})
           (runner-choice [choices]
-            {:player :runner
-             :waiting-prompt true
+            {:waiting-prompt true
              :prompt "How many credits do you want to spend?"
              :choices choices
              :async true

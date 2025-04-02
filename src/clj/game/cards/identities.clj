@@ -103,7 +103,6 @@
                (continue-ability
                  {:optional
                   {:prompt "Expose installed card unless the Corp pays 1 [Credits]?"
-                   :player :runner
                    :autoresolve (get-autoresolve :auto-fire)
                    :no-ability {:effect (req (clear-wait-prompt state :corp))}
                    :yes-ability
@@ -263,7 +262,6 @@
              :automatic :pre-breach
              :interactive (req true)
              :psi {:req (req (= target :rd))
-                   :player :runner
                    :equal {:msg "access 1 additional card"
                            :async true
                            :effect (effect (access-bonus :rd 1)
@@ -521,8 +519,7 @@
              :effect (effect (enable-corp-damage-choice))}
             {:event :pre-resolve-damage
              :optional
-             {:player :corp
-              :req (req (and (= target :net)
+             {:req (req (and (= target :net)
                              (corp-can-choose-damage? state)
                              (pos? (last targets))
                              (empty? (filter #(= :net (:damage-type (first %))) (turn-events state :runner :damage)))
@@ -720,7 +717,6 @@
   {:events [{:event :pre-start-game
              :effect draft-points-target}
             {:event :runner-turn-begins
-             :player :corp
              :req (req (and (not (:disabled card))
                             (not (is-disabled? state side card))
                             (has-most-faction? state :corp "Weyland Consortium")))
@@ -1904,7 +1900,6 @@
              :req (req (and (not (install-locked? state side))
                             (= (:amount context) (count-tags state)))) ;; every tag is one that was just gained
              :prompt "Choose a connection to install, paying 2 [Credits] less"
-             :player :runner
              :choices
              {:req (req (and (has-subtype? target "Connection")
                              (resource? target)
