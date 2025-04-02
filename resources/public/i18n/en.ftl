@@ -421,7 +421,7 @@ game_bad-pub-count-additional = {$base} + {$additional} Bad Publicity
 
 game_beat-trace = Beat Trace
 
-game_brain-damage = {$dmg} Core Damage
+game_brain-damage = {NUMBER($dmg)} Core Damage
 
 game_breach-server = Breach server
 
@@ -548,7 +548,7 @@ game_prompt = {$msg ->
     [rez] Rez
     [score] Score
     [trash] Trash
-    [server-{num}] Server {$num}
+    [server-num] Server {$num}
     *[unknown] Unknown game prompt ({$msg})
 }
 
