@@ -20,7 +20,7 @@
  "Akiko Nisei: Head Case"
  {"Default"
   ["This red dust chokes everything it touches... Where did it come from?"
-   " I see them pacing in their towers, gleaming like sharpened knives..."
+   "I see them pacing in their towers, gleaming like sharpened knives..."
    "Many have fallen on this path. I feel their presences wax and wane in the flow."
    "Just darkness pierced by flickering starlight... No... Searchlights..."]
   "Haas-Bioroid" ["She sits alone, fuming at his juvenile escapades."
@@ -30,7 +30,7 @@
              "Satoshi, have you lost your way, or was this always your intent?"]
   "NBN" ["How can you have so many eyes and still see so little?"]
   "Weyland Consortium"
-  ["Countless black suits and blank faces. "
+  ["Countless black suits and blank faces."
    "Armed and armored, infesting ever hole like pests, waiting for a signal to strike."]}
  "Alice Merchant: Clan Agitator"
  {"Default" ["They dare start a fire here? We cannot be blamed if it engulfs them."]
@@ -48,19 +48,19 @@
   "Jinteki"
   ["Their company culture embraces honor and loyalty, but I know a few other things they seem to enjoy."]
   "NBN"
-  ["They seem to be building a profile on me. They won't miss it, they have plenty more. "]
+  ["They seem to be building a profile on me. They won't miss it, they have plenty more."]
   "Weyland Consortium"
   ["A decentralised command structure only means they have so many more charming employees to unlock the doors for me."]}
  "Apex: Invasive Predator"
  {"AgInfusion: New Miracles for a New World"
   ["MEAT FOOD FILLS ME NOT. BUT INFORMATION...I HUNGER"]
   "Blue Sun: Powering the Future" ["Endless energy. Unresistable draw."]
-  "Default" [" .'.;':'. HUNT ,':;.';."]
+  "Default" [".'.;':'. HUNT ,':;.';."]
   "GRNDL: Power Unleashed"
   ["Their greed trembeles in the presence of my own. It will be consumed."]
   "Haas-Bioroid" ["..:.: .:::..:  .::. .. :."]
   "Information Dynamics: All You Need To Know" ["Not all. but some."]
-  "Jinteki" [". . : ... ..... ::: ............. "]
+  "Jinteki" [". . : ... ..... ::: ............."]
   "NBN" ["..   ... . .    :.:: ::: ..:"]
   "Weyland Consortium" ["... : ..... : ..... :::::::"]}
  "Armand \"Geist\" Walker: Tech Lord"
@@ -70,8 +70,7 @@
   ["The street price for cybernetics is through the roof. It's a simple matter of supply and demand."]
   "Jinteki" ["One by one the masks slip away. Hey, I can play that game too."]
   "NBN"
-  [""
-   " The big screen news are just a cover-up of all the dirt and blood we deal with every day in the streets."]
+  ["The big screen news are just a cover-up of all the dirt and blood we deal with every day in the streets."]
   "Weyland Consortium"
   ["Let's find out where the next \"renovation\" is happening. Muertos pays good money to defend their turf."]}
  "Ayla \"Bios\" Rahim: Simulant Specialist"
@@ -88,10 +87,10 @@
   ["What new toys do you have to share with me today, hm?"]
   "Default"
   ["Hey Baklan, ready to see something super cool?"
-   "\"Good luck?\" Darlin', with moves like these, we ain't gonna need luck. "]
+   "\"Good luck?\" Darlin', with moves like these, we ain't gonna need luck."]
   "Gagarin Deep Space: Expanding the Horizon"
   ["Look, my arm can do a lot, but I don't know about going into deep space..."]
-  "Haas-Bioroid" ["Psh. Nice chrome, but mine's better. Time to prove it. "]
+  "Haas-Bioroid" ["Psh. Nice chrome, but mine's better. Time to prove it."]
   "Haas-Bioroid: Architects of Tomorrow"
   ["I can't wait to reverse engineer some of these bad boys. Well, and girls. All of them, really."]
   "Haas-Bioroid: Stronger Together"
@@ -99,14 +98,14 @@
   "Harmony Medtech: Biomedical Pioneer"
   ["Really wish I'd found y'all's techniques and files before cutting off my arm in an old rusty shop..."]
   "Jinteki"
-  ["Measure twice, cut once... well, technically it takes a buncha cuts. And it's sorta like a sawing motion...unless they have some new techniques they'd like to share? "]
+  ["Measure twice, cut once... well, technically it takes a buncha cuts. And it's sorta like a sawing motion...unless they have some new techniques they'd like to share?"]
   "NBN"
   ["Oh, sure, now someone's paying attention."
    "Is... is this thing on? Hey everybody, looking for the slickest cybernetics around? Come see me in--*krrzzzttt*"]
   "NBN: The World is Yours*" ["Why yes, the world is mine."]
   "Skorpios Defense Systems: Persuasive Power"
   ["Bringin' out the big guns, eh? Why don't we see whose are bigger?"]
-  "Weyland Consortium" ["Babe, I'm the highest profile target there is. Need some proof? "]}
+  "Weyland Consortium" ["Babe, I'm the highest profile target there is. Need some proof?"]}
  "Boris \"Syfr\" Kovac: Crafty Veteran"
  {"Default" ["They don't call me \"100% win rate on Jnet\" for nothing."]}
  "Chaos Theory: Wünderkind"
@@ -191,7 +190,7 @@
  "Hoshiko Shiro: Untold Protagonist"
  {"Default" ["Do i have to?"]
   "Haas-Bioroid"
-  ["Keiko! If we can figure out the new brain-taping algos and customize them to my rig, the immersion will be... NEXT LEVEL! "]
+  ["Keiko! If we can figure out the new brain-taping algos and customize them to my rig, the immersion will be... NEXT LEVEL!"]
   "Jinteki" ["Stims are red, holos are blue,\nお前はもう死んでいる"]
   "NBN"
   ["Gotta go in blind! Can't get spoiled on the next season of Digi Fantasy: Battle of the Dragoonoids!"]
@@ -237,7 +236,7 @@
  {"Default"
   ["They know we've infiltrated the network, now it's do-or-die time. Let's hope this rig works!"]
   "Jinteki"
-  ["Their R&D has churned through billions of cred to create these servers, but that's nothing a little elbow grease can't match "]}
+  ["Their R&D has churned through billions of cred to create these servers, but that's nothing a little elbow grease can't match."]}
  "Ken \"Express\" Tenma: Disappeared Clone"
  {"Default" ["This delivery can wait. I've got a more profitable run in mind..."]
   "Haas-Bioroid" ["Got no time for hanging out with bioroids, sorry."]
@@ -262,7 +261,7 @@
   ["I've got a special lesson reserved for them. Let the teaching begin."]
   "Default"
   ["Consider this free seminar an introduction to my three-step process: 1. Profit. 2. ??? 3. Profit."]
-  "Haas-Bioroid" ["Efficiency? This should put their processes to the test. "]
+  "Haas-Bioroid" ["Efficiency? This should put their processes to the test."]
   "Jinteki"
   ["Medicine is your business and health is your product. It seems like an easy product to sell. Let me give you a hand with that."]
   "NBN"
@@ -272,12 +271,12 @@
  "Lat: Ethical Freelancer"
  {"Default"
   ["Rumors abound about this operation. I’m interested to see how...if... they did it without breaching ASI guidelines."]
-  "Haas-Bioroid" ["Nice hoppers, sure. But my ride is better. "
+  "Haas-Bioroid" ["Nice hoppers, sure. But my ride is better."
                   "Efficiency is not a substitute for humanity."]
   "Jinteki"
-  ["They grow and they twist and they clone, never with any concern. I maintain they should have several concerns. Let's put ourselves on their radar as a warning. "]
+  ["They grow and they twist and they clone, never with any concern. I maintain they should have several concerns. Let's put ourselves on their radar as a warning."]
   "NBN"
-  ["Their technologies can be put to a greater purpose. Someone needs to show them how. "]
+  ["Their technologies can be put to a greater purpose. Someone needs to show them how."]
   "Weyland Consortium"
   ["Take my kampung from me, will you? No amount of jobs will bring my home back."]}
  "Leela Patel: Trained Pragmatist"
@@ -285,12 +284,12 @@
   ["They know we've infiltrated their network, but I'm already two steps ahead. Lets make them take one step back"]
   "Haarpsichord Studios: Entertainment Unleashed" ["Lets bounce."]
   "Haas-Bioroid"
-  ["Bioroids can put up a tough fight, but i've turfed harder opponents. "]
-  "Jinteki" ["Oh they'll fall for this trap, I'm sure. Over and over again. "]
+  ["Bioroids can put up a tough fight, but i've turfed harder opponents."]
+  "Jinteki" ["Oh they'll fall for this trap, I'm sure. Over and over again."]
   "NBN"
   ["Find me? Yeah. Sometimes they do come knocking. You just have to knock back harder."]
   "Weyland Consortium"
-  ["They keep their ice between here and the satellites, never expecting anyone to hack into the satellites directly. "]}
+  ["They keep their ice between here and the satellites, never expecting anyone to hack into the satellites directly."]}
  "Liza Talking Thunder: Prominent Legislator"
  {"Default"
   ["Make things easy and we can keep this quiet. Make a fuss and you'll give me something to run against in the next election."]
@@ -324,7 +323,7 @@
   "Gagarin Deep Space: Expanding the Horizon"
   ["Exploring physical space? What a strange fascination... However, I might be able to learn a thing or two."]
   "Haas-Bioroid"
-  ["The mind of a bioroid is a uncharted map to discover on it's own. I shouldn't spend too long interacting with them, theres critical data here I need. "]
+  ["The mind of a bioroid is a uncharted map to discover on it's own. I shouldn't spend too long interacting with them, theres critical data here I need."]
   "Jinteki"
   ["They've mapped countless genomes and deciphered it's most arcane puzzles. Their knowledge could guide me far."]
   "NBN"
@@ -348,13 +347,13 @@
   ["I already know one thousand of their secrets. Time to make it one thousand and one."]
   "Jinteki"
   ["My, my, they are looking rather sharp tonight. Let me get my faerie and dress to the nines, they can wait to be dealt with."]
-  "NBN" ["Spy vs spy? I'll match them eye for eye. "]
+  "NBN" ["Spy vs spy? I'll match them eye for eye."]
   "Weyland Consortium"
   ["Who knows, I may end up selling some of what I find back to the owners, repackaged. It's a fair deal."]}
  "Noise: Hacker Extraordinaire"
- {"Default" ["Even if I did do it, how would they ever prove it? "]
+ {"Default" ["Even if I did do it, how would they ever prove it?"]
   "Haas-Bioroid"
-  ["They'll have to pull some strings to get you back for where you are going, byebye little bioroid! "]
+  ["They'll have to pull some strings to get you back for where you are going, byebye little bioroid!"]
   "Jinteki"
   ["I found the last clone to be completely satisfactory. Let's see what I find this time."]
   "Weyland Consortium" ["I like suits. I like to watch them burn."]}
@@ -459,8 +458,8 @@
    "What color hat are we wearing today, Jak? White? Do they know that? The last white hat job I did the client blew up my apartment."]
   "GRNDL: Power Unleashed" ["Won't somebody please think of the children!"]
   "Haas-Bioroid"
-  ["I have never met a bioroid I have not felt at least a twinge of sympathy for. "
-   " What color hat are we today, Jak? Ultraviolet? I... don't know what that means in this context. "
+  ["I have never met a bioroid I have not felt at least a twinge of sympathy for."
+   "What color hat are we today, Jak? Ultraviolet? I... don't know what that means in this context."
    "Jak. I want to ask you. Do you think love can bloom, even on a battlefield?"]
   "Jinteki"
   ["There's just no telling what these people are up to in their secret labs. Unless you know where to look..."]
@@ -498,13 +497,13 @@
   "Default"
   ["Let's record a few incursions to test their response. Your analysis will be due next Tuesday."]
   "Haas-Bioroid"
-  ["The last bioroid research paper was published forty years ago. Do we really think they've nothing new to share since then? "]
+  ["The last bioroid research paper was published forty years ago. Do we really think they've nothing new to share since then?"]
   "Jinteki"
   ["Is it science? Undoubtedly yes. Is it for the common good? We'll decide for ourselves..."]
   "NBN"
   ["They might control the net, but academia created it. Let's see if they've caught on to all our tricks yet."]
   "Weyland Consortium"
-  ["Here is a prime example of post-post-post-capitalist economy running rampant. Will they even care if we expose their actions? "]}
+  ["Here is a prime example of post-post-post-capitalist economy running rampant. Will they even care if we expose their actions?"]}
  "Valencia Estevez: The Angel of Cayambe"
  {"AgInfusion: New Miracles for a New World"
   ["They put what in the food supply? The world's gonna want to hear this..."]

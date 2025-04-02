@@ -12,9 +12,9 @@
     (is (get @all-cards id)))
   (doseq [[id pairs] @sut/identity-quotes
           [pair-id pair-quotes] pairs
-          :when (not (#{"Default" "Anarch" "Criminal" "Shaper"
-                        "Haas-Bioroid" "Jinteki" "NBN" "Weyland Consortium"} pair-id))
-          :let [pair? (get @all-cards pair-id)]]
+          :let [pair? (or (get @all-cards pair-id)
+                          (#{"Default" "Anarch" "Criminal" "Shaper"
+                             "Haas-Bioroid" "Jinteki" "NBN" "Weyland Consortium"} pair-id))]]
     (testing (format "checking %s quotes" id)
       (is pair? (format "%s is mispelled" (pr-str pair-id)))
       (is (vector? pair-quotes))
