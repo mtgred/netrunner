@@ -6,7 +6,7 @@
   "Default"
   ["There is no need to hide your dirty secrets. We already know who, where, and what you are."]
   "Shaper"
-  ["We've got some research on this intruder. They seem slick, but put them under a bit of pressure and they'll crack. "]}
+  ["We've got some research on this intruder. They seem slick, but put them under a bit of pressure and they'll crack."]}
  "AgInfusion: New Miracles for a New World"
  {"Anarch"
   ["How can one selfish and inferior mind possibly understand what we're trying to achieve here."]
@@ -28,7 +28,7 @@
   "Criminal"
   ["We are running additional background checks to confirm the identity of the suspect."]
   "Default"
-  ["Protocols checked and re-checked. Prepare to \"test\" their brain against our code. "]
+  ["Protocols checked and re-checked. Prepare to \"test\" their brain against our code."]
   "Shaper"
   ["They seem quite prepared. Have the field units deal with their contacts, they won't be able to face us alone."]}
  "Azmari EdTech: Shaping the Future"
@@ -87,10 +87,10 @@
  "Earth Station: SEA Headquarters"
  {"Anarch" ["A Brute Force Hack? Maybe these aren't run of the mill criminals."]
   "Criminal"
-  ["We are getting contraband pings on pods all the way up and down the damn stalk. Something isn't adding up... Sweep for a backdoor and prepare to engage the emergency lockouts. "]
-  "Default" ["Thinking of going up without paying fare? Take em' down. "]
+  ["We are getting contraband pings on pods all the way up and down the damn stalk. Something isn't adding up... Sweep for a backdoor and prepare to engage the emergency lockouts."]
+  "Default" ["Thinking of going up without paying fare? Take em' down."]
   "Shaper"
-  ["A crafty one getting this far, but they won't go so far once the gravity flips. "]}
+  ["A crafty one getting this far, but they won't go so far once the gravity flips."]}
  "Fringe Applications: Tomorrow, Today"
  {"Anarch"
   ["We all take risks to get where nobody else dares. Some of us take the wrong kinds of risks, though."]
@@ -116,18 +116,18 @@
   "Default"
   ["Humanity has no future without expansion: beyond our planets, to the stars. And yet they interfere."]
   "Shaper"
-  ["How petty they are, those who would interfere with us to try and comprehend our vision. As if they could. "]}
+  ["How petty they are, those who would interfere with us to try and comprehend our vision. As if they could."]}
  "GameNET: Where Dreams are Real"
  {"Anarch"
-  ["Hunting these \"Runners\" is the ultimate game, and we get to make all the rules... "
+  ["Hunting these \"Runners\" is the ultimate game, and we get to make all the rules..."
    "They are analyzing our board... It won't help. The mistake is thinking we're playing the same game."]
   "Criminal"
-  ["And who would this be? Seems they are looking for easy cred... Turn the tables, lets siphon them dry. "
-   "Lets teach them a thing or two about monetization. "]
+  ["And who would this be? Seems they are looking for easy cred... Turn the tables, lets siphon them dry."
+   "Lets teach them a thing or two about monetization."]
   "Default"
-  ["User detected outside of boundries. Tag their ID and shepard them back to Dreamland. "]
+  ["User detected outside of boundries. Tag their ID and shepard them back to Dreamland."]
   "Shaper"
-  ["Double the allocated resources to the new M-0pus processes. Once we cripple their setup, we'll be left with another happy, complacent customer. "]}
+  ["Double the allocated resources to the new M-0pus processes. Once we cripple their setup, we'll be left with another happy, complacent customer."]}
  "Haarpsichord Studios: Entertainment Unleashed"
  {"Anarch"
   ["It's quite ironic that most of the underground and independent music fueling young, angry people aggressively interfering with our cultural projects comes from labels we have direct ties with."]
@@ -142,7 +142,7 @@
   ["You can tear down our walls, and we will build them again. Our bioroids will not falter."]
   "Criminal"
   ["We are protecting something far greater than profits. You would not understand how important this fight is."]
-  "Default" ["Initiate bioroid acceleration, we're not going down without a fight! "]
+  "Default" ["Initiate bioroid acceleration, we're not going down without a fight!"]
   "Shaper"
   ["Real progress means everyone moving in the same direction for the greater good. Swimming against the current brings you nowhere."]}
  "Haas-Bioroid: Engineering the Future"
@@ -174,7 +174,7 @@
   "Criminal" ["Underground crime syndicates? We can market that to our viewers."]
   "Default" ["Another day, another undiscovered star knocking at our door."]
   "Shaper"
-  ["It's hard to get enough audience attention for nerdy science types, but maybe if we put an adventurous spin on this...\n"]}
+  ["It's hard to get enough audience attention for nerdy science types, but maybe if we put an adventurous spin on this..."]}
  "Harmony Medtech: Biomedical Pioneer"
  {"Anarch"
   ["An unruly mind creates an unruly body. These malcontents cannot be allowed to disturb our peaceful world."]
@@ -187,9 +187,9 @@
  {"Anarch"
   ["Our forecasts are experiencing a decline in precision. The unpredictable variables must be controlled."]
   "Criminal"
-  ["We have delved your innermost thoughts, and yes, your mother would be disappointed. "]
-  "Default" ["We see you. "]
-  "Shaper" ["The mind is the greatest weapon and the most dangerous battlefield. "]}
+  ["We have delved your innermost thoughts, and yes, your mother would be disappointed."]
+  "Default" ["We see you."]
+  "Shaper" ["The mind is the greatest weapon and the most dangerous battlefield."]}
  "Industrial Genomics: Growing Solutions"
  {"Anarch"
   ["Burn and rage all you want - the seeds of our incessant toil will not be wasted by the likes of you."]
@@ -237,7 +237,7 @@
   "Default"
   ["In the midst of battle, as soon as an adversary tries to get out of the way of your steel, you have already won. However this is war, we will not let them flinch from our blade."]
   "Shaper"
-  ["A curious visitor? No need to present a cold shoulder, simply lead them through our sharpened ice. They will either learn or perish. "]}
+  ["A curious visitor? No need to present a cold shoulder, simply lead them through our sharpened ice. They will either learn or perish."]}
  "Jinteki: Replicating Perfection"
  {"Anarch"
   ["Ichor and fire have no mandate here. Let them waste away pleading for submission."]
@@ -339,10 +339,10 @@
   "Default"
   ["We've seen this intrusion coming. An interesting test for our newest line. This will be over quickly."]
   "Shaper"
-  ["Definitely a clever sort, to make it this far. Despite their preparedness, we know they will not make it much further. "]}
+  ["Definitely a clever sort, to make it this far. Despite their preparedness, we know they will not make it much further."]}
  "Pālanā Foods: Sustainable Growth"
  {"Anarch"
-  ["An appetite for justice? Let us teach them better than to bite the hand that feeds.\n"]
+  ["An appetite for justice? Let us teach them better than to bite the hand that feeds."]
   "Criminal"
   ["Rupees to rasgulla, this intruder is looking for some easy money. Lets give them something a bit different to chew on."]
   "Default"
@@ -354,7 +354,7 @@
  {"Anarch"
   ["Luddites. Always on the fringe of civilization. Always trying to get sand into the gears of progress. Always getting ground to dust in the end."]
   "Criminal"
-  ["Seems as someone would like a cut of our profits. They may enjoy our newest public-private partnership project, lets arrange a \"meet and greet\" there. Be sure to invite the prisec squads this time. "]
+  ["Seems as someone would like a cut of our profits. They may enjoy our newest public-private partnership project, lets arrange a \"meet and greet\" there. Be sure to invite the prisec squads this time."]
   "Default"
   ["We have reached an agreement to industrialise several previously protected parks in the region. There may be some resistance to this in the local population. Pay them no attention."]
   "Shaper"
@@ -370,7 +370,7 @@
  {"Anarch" ["Mnemonics Now Erase Man’s Oldest Nemesis, Insufficient Cerebral Storage"]
   "Criminal" ["Every Bad Runner Deserves Cyber Knives"]
   "Default"
-  ["It is not a priority, let them burn out searching for crumbs. Even if they find something worth spreading, we'll be onto the next project by then. "]
+  ["It is not a priority, let them burn out searching for crumbs. Even if they find something worth spreading, we'll be onto the next project by then."]
   "Shaper" ["Warning: Reaching Out Into The Unknown May Cause Severe Harm Or Death"]}
  "Seidr Laboratories: Destiny Defined"
  {"Anarch"
@@ -394,7 +394,7 @@
   ["To secure peace is to prepare for war. Pacifism can't be an answer to aggression. Extreme prejudice it is, then."]}
  "Spark Agency: Worldswide Reach"
  {"Anarch"
-  ["Aggression, anger, discontent... How can we package, brand, and promote it?\n"]
+  ["Aggression, anger, discontent... How can we package, brand, and promote it?"]
   "Criminal"
   ["An infiltrator to our system? Autoreports indicate they have cred to spare! Activate the tracers, it's pay day!"]
   "Default" ["Everything is profitable. Let's sell the world on this intruder."]
@@ -405,7 +405,7 @@
   ["They are coming in hot and looks like they play dirty. Feed our 'roids lightning, lets make em crap thunder."]
   "Criminal"
   ["FEEL THE RYTHM//👏//FEEL THE RHYME//👏//GET ON UP//👏//IT'S SPORTSMETAL TIME!"]
-  "Default" ["Let's hustle, team! They are coming at us with 110% intensity! "]
+  "Default" ["Let's hustle, team! They are coming at us with 110% intensity!"]
   "Shaper" ["Trust the Process."]
   "Wyvern: Chemically Enhanced" ["Shake it up! Get down there!"]}
  "Strategic Innovations: Future Forward"
@@ -478,7 +478,7 @@
   "Criminal"
   ["Those who trespass shall be maimed. Those who trespass repeatedly, shall be eliminated."]
   "Default"
-  ["Let them break themselves on our defenses. When they run to hide we'll stamp them out. "]
+  ["Let them break themselves on our defenses. When they run to hide we'll stamp them out."]
   "Ele \"Smoke\" Scovak: Cynosure of the Net"
   ["Trying to make a show of our defenses? Let's give them a finale to remember."]
   "Exile: Streethawk"
@@ -499,7 +499,7 @@
   "Shaper"
   ["It's a shame we can't cooperate and stand on opposing sides.. Together, we could have achieved so much more..."]
   "Sunny Lebeau: Security Specialist"
-  ["GlobalSec is poking around? Get the CIO to file for an injunction. Make sure we leave everything squeeky clean on our end.\n"]}
+  ["GlobalSec is poking around? Get the CIO to file for an injunction. Make sure we leave everything squeeky clean on our end."]}
  "Weyland Consortium: Built to Last"
  {"Anarch"
   ["We have some trouble makers. I expect they will scratch the paint."]
