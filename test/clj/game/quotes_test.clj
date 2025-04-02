@@ -1,5 +1,6 @@
 (ns game.quotes-test
   (:require
+   [clojure.string :as str]
    [clojure.test :refer [deftest is testing]]
    [game.quotes :as sut]
    [game.test-framework]
@@ -16,4 +17,7 @@
           :let [pair? (get @all-cards pair-id)]]
     (testing (format "checking %s quotes" id)
       (is pair? (format "%s is mispelled" (pr-str pair-id)))
-      (is (vector? pair-quotes)))))
+      (is (vector? pair-quotes))
+      (doseq [quote pair-quotes]
+        (is (not (str/blank? quote)))
+        (is (= quote (str/trim quote)))))))
