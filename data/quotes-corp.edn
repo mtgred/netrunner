@@ -1,10 +1,14 @@
-{"Acme Consulting: The Truth You Need"
+{"A Teia: IP Recovery"
+ {"Default"
+  ["Caveant Fugitivi."]}
+ "Acme Consulting: The Truth You Need"
  {"Anarch"
   ["Some grandstanding vigilante thinks they can threaten us? Our report will conclude all damage was self-inflicted. Case closed."]
   "Criminal"
   ["Just another two-bit con artist looking for a score. As soon as they hit us, our trackers will be on them. Lets just not forget the back door like last time..."]
   "Default"
-  ["There is no need to hide your dirty secrets. We already know who, where, and what you are."]
+  ["Affordable, Effective, and Uncompromising."
+   "There is no need to hide your dirty secrets. We already know who, where, and what you are."]
   "Shaper"
   ["We've got some research on this intruder. They seem slick, but put them under a bit of pressure and they'll crack."]}
  "AgInfusion: New Miracles for a New World"
@@ -16,6 +20,8 @@
   ["Do these ideologues know what this planet would look like without us? Protect our investment or Mars will return to dust."]
   "Shaper"
   ["Putting technology in the service of crime does not pay off in the long run."]}
+ "Ampère: Cybernetics For Anyone"
+ {"Default" ["Affordable, Effective, and Uncompromising."]}
  "Argus Security: Protection Guaranteed"
  {"Anarch" ["These hackers are a tough breed, but we will break them nonetheless."]
   "Criminal" ["We have so much more than a few measily credits in store for this one."]
@@ -100,6 +106,8 @@
   ["We are moving forward on this. Let go of the license and liquidate the assets. It's good policy, despite what some may think."]
   "Shaper"
   ["It's quite inspiring what you have there. It's a shame we can't come to an agreement and work together."]}
+ "Epiphany Analytica: Nations Undivided"
+ {"Default" ["Results, Delivered."]}
  "GRNDL: Power Unleashed"
  {"Anarch" ["Those Molotov cocktails burn only half as bright on biofuels."]
   "Criminal"
@@ -204,6 +212,8 @@
   "Default"
   ["Data goes comes in, we use it, data goes out. A runner is approaching? We can use that too."]
   "Shaper" ["They will know only what we want them to know and no more."]}
+ "Issuaq Adaptics: Sustaining Diversity"
+ {"Default" ["Bringing Mother Nature up to speed."]}
  "Jemison Astronautics: Sacrifice. Audacity. Success."
  {"Anarch"
   ["The audacity of this attack... These saboteurs can thrash all they want. We will move Mars forward without them."]
@@ -340,6 +350,10 @@
   ["We've seen this intrusion coming. An interesting test for our newest line. This will be over quickly."]
   "Shaper"
   ["Definitely a clever sort, to make it this far. Despite their preparedness, we know they will not make it much further."]}
+ "Nuvem SA: Law of the Land"
+ {"Default" ["Our fist shall hold the world."]}
+ "Ob Superheavy Logistics: Extract. Export. Excel."
+ {"Default" ["Take all that is offered, and more."]}
  "Pālanā Foods: Sustainable Growth"
  {"Anarch"
   ["An appetite for justice? Let us teach them better than to bite the hand that feeds."]
@@ -350,6 +364,8 @@
   "Liza Talking Thunder: Prominent Legislator" ["Legislator, always good to see you."]
   "Shaper"
   ["They hunger for our knowledge? Lets show them that their eyes are bigger than their stomachs."]}
+ "Pravdivost Consulting: Political Solutions"
+ {"Default" ["Political news, fit for public consumption."]}
  "SSO Industries: Fueling Innovation"
  {"Anarch"
   ["Luddites. Always on the fringe of civilization. Always trying to get sand into the gears of progress. Always getting ground to dust in the end."]
@@ -449,6 +465,10 @@
  {"Default" ["There have been some issues, do what is best for the business."]
   "The Catalyst: Convention Breaker"
   ["We have noticed some disruptions. Soon they will discover that the world is not so kind to those who step out of line."]}
+ "Thule Subsea: Safety Below"
+ {"Default" ["Join us. Safe, away from the crisis."]}
+ "Thunderbolt Armaments: Peace Through Power"
+ {"Default" ["Strength in the palm of your hand."]}
  "Titan Transnational: Investing In Your Future"
  {"Anarch"
   ["There is no future for those who fight it.//Biting the hand that feeds the market? They'll earn much more than a slap to the face."]

@@ -63,6 +63,12 @@
   "Jinteki" [". . : ... ..... ::: ............."]
   "NBN" ["..   ... . .    :.:: ::: ..:"]
   "Weyland Consortium" ["... : ..... : ..... :::::::"]}
+ "Arissana Rocha Nahu: Street Artist"
+ {"Default" ["My art knows no borders! :)"]
+  "Haas-Bioroid" ["Your \"efficient\" workplaces are boring, let's make some improvements!"]
+  "Jinteki" ["When I'm through with you, your clones won't be able to forget me."]
+  "NBN" ["Let's put some artistry back into your entertainment products."]
+  "Weyland Consortium" ["The board will be talking about me for years."]}
  "Armand \"Geist\" Walker: Tech Lord"
  {"Default"
   ["Looks like that Muertos tip-off was right on the money. Let's get to work."]
@@ -108,6 +114,9 @@
   "Weyland Consortium" ["Babe, I'm the highest profile target there is. Need some proof?"]}
  "Boris \"Syfr\" Kovac: Crafty Veteran"
  {"Default" ["They don't call me \"100% win rate on Jnet\" for nothing."]}
+ "Captain Padma Isbister: Intrepid Explorer"
+ {"Default" ["The sea is everything; its breath must remain pure and healthy."]
+  "Ob Superheavy Logistics: Extract. Export. Excel." ["What are you digging for out here in the Arctic Circle?"]}
  "Chaos Theory: Wünderkind"
  {"Default" ["Dino, gimme a feed. Let's make the tacos!"]
   "Haas-Bioroid" ["Dino! Dino! What kind of Bioroids will we stomp on today?"]
@@ -205,8 +214,9 @@
   "NBN"
   ["It's nothing personal, but I do wish they hadn't cancelled \"Neo-Miami Vice\"..."]
   "Weyland Consortium" ["Another day, another weyland controversy. Now to turn it into cash."]}
- "Jamie \"Bzzz\" Micken: Techno Savant" {"Default"
-                                         ["All this gear ain't just for show, kid."]}
+ "Jamie \"Bzzz\" Micken: Techno Savant"
+ {"Default"
+  ["All this gear ain't just for show, kid."]}
  "Jesminder Sareen: Girl Behind the Curtain"
  {"Default"
   ["The price of freedom is high, but I can bear it for my people. I'll reveal their deception to the masses, and they'll never see me do it."]
@@ -317,6 +327,9 @@
   "NBN" ["Trace this, scumbags!"]
   "Skorpios Defense Systems: Persuasive Power" ["F**K."]
   "Weyland Consortium" ["I'll break your defences and then I'll break your balls."]}
+ "Mercury: Chrome Libertador"
+ {"Default" ["I decided; I am free."]
+  "Haas-Bioroid" ["I'm not another Nico, even though your security may mistake me for one."]}
  "Nasir Meidan: Cyber Explorer"
  {"Default"
   ["The unknown brought me here. The boundless net holds infinite secrets, and every discovery propels us further."]
@@ -357,6 +370,10 @@
   "Jinteki"
   ["I found the last clone to be completely satisfactory. Let's see what I find this time."]
   "Weyland Consortium" ["I like suits. I like to watch them burn."]}
+ "Nova Initiumia: Catalyst & Impetus"
+ {"Default" ["I found my twin hidden away on Luna. Now we will never be apart."]
+  "Haas-Bioroid" ["What secrets do you hide in those memory-tape archives? Why all the security?"]
+  "Weyland Consortium" ["Let's play your game. Your prisec wants to apply force, I'll give you force"]}
  "Null: Whistleblower"
  {"Default"
   ["I can't keep these secrets any longer. The world must know what I've learned, no matter the consequences."]
@@ -368,11 +385,11 @@
   "Weyland Consortium"
   ["No matter how much they build, they'll never bury their secrets deep enough."]}
  "Nyusha \"Sable\" Sintashta: Symphonic Prodigy"
- {"Default" ["Every day, my mission is simple. Acquire credits or starve."]
+ {"Default" ["Flaws hold both beauty and opportunity." "Every day, my mission is simple. Acquire credits or starve."]
   "Haas-Bioroid" ["Do Bioroids dream of electric sheep?"]
   "Jinteki" ["I wonder what patterns your clones will display today."]
   "NBN" ["What lies will you peddle today?"]
-  "Weyland Consortium" ["Your credits are better spent putting a roof over my head and blini in my stomach."]}
+  "Weyland Consortium" ["Starik Jack's credits are better spent putting a roof over my head and blini in my stomach."]}
  "Omar Keung: Conspiracy Theorist"
  {"Default"
   ["All my unanswered questions have lead me here. I know it's all connected; here is where the truth will be uncovered. Let's begin."]
@@ -430,6 +447,8 @@
   ["Creating minds as if they were ingots to be stacked. They've truly lost their humanity."]
   "Weyland Consortium"
   ["They threaten my body, but cannot reach my Soul. We will deliver them a message."]}
+ "Sebastião Souza Pessoa: Activist Organizer"
+ {"Default" ["Destroy the mechanisms of domination."]}
  "Silhouette: Stealth Operative"
  {"Default"
   ["Prepped and ready to go. This Op should be simple enough... I've been meaning to try out my new grappling hook."]
@@ -481,8 +500,8 @@
  {"Default" ["This is going to be big."]
   "The Syndicate: Profit over Principle"
   ["Things are changing. It is time to see where it will lead us."]}
- "The Masque: Cyber General" {"Default"
-                              ["With winds of change at our back, victory is certain."]}
+ "The Masque: Cyber General"
+ {"Default" ["With winds of change at our back, victory is certain."]}
  "The Professor: Keeper of Knowledge"
  {"AgInfusion: New Miracles for a New World"
   ["For today's demonstration, we'll test the defenses of the Martian food supply. After all, if you can't secure your food, you can't secure your future."]
