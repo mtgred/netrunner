@@ -1262,7 +1262,7 @@ settings_bespoke-sounds = {$sound ->
 
 settings_bg = {$slug ->
     [apex] Apex
-    [custom] Custom BG (input URL below)
+    [custom-bg] Custom BG (input URL below)
     [find-the-truth] Find The Truth
     [freelancer] Freelancer
     [monochrome] Monochrome

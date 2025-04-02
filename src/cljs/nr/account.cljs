@@ -89,6 +89,7 @@
     (save-to-local-storage! "sounds" sounds)
     (save-to-local-storage! "default-format" default-format)
     (save-to-local-storage! "lobby_sounds" lobby-sounds)
+    (save-to-local-storage! "background" background)
     (save-to-local-storage! "custom_bg_url" custom-bg-url)
     (save-to-local-storage! "sounds_volume" volume)
     (save-to-local-storage! "log-width" log-width)

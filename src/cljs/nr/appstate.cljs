@@ -29,49 +29,63 @@
         serialized (get-local-value "visible-formats" "")]
     (if (empty? serialized) default-visible-formats (set (.parse js/JSON serialized)))))
 
-(def app-state
-  (r/atom {:active-page "/"
-           :user (js->clj js/user :keywordize-keys true)
-           :options (merge {:background "lobby-bg"
-                            :custom-bg-url (get-local-value "custom_bg_url" "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
-                            :card-back (get-local-value "card-back" "nsg")
-                            :card-zoom (get-local-value "card-zoom" "image")
-                            :pin-zoom (= (get-local-value "pin-zoom" "false") "true")
-                            :pronouns "none"
-                            :language (get-local-value "language" js/navigator.language)
-                            :default-format (get-local-value "default-format" "standard")
-                            :show-alt-art true
-                            :card-resolution "default"
-                            :player-stats-icons (= (get-local-value "player-stats-icons" "true") "true")
-                            :stacked-servers (= (get-local-value "stacked-servers" "true") "true")
-                            :sides-overlap (= (get-local-value "sides-overlap" "true") "true")
-                            :log-timestamps (= (get-local-value "log-timestamps" "true") "true")
-                            :runner-board-order (let [value (get-local-value "runner-board-order" "irl")]
-                                                  (case value
-                                                    "true" "jnet"
-                                                    "false" "irl"
-                                                    value))
-                            :deckstats "always"
-                            :gamestats "always"
-                            :log-width (str->int (get-local-value "log-width" "300"))
-                            :log-top (str->int (get-local-value "log-top" "419"))
-                            :log-player-highlight (get-local-value "log-player-highlight" "blue-red")
-                            :sounds (= (get-local-value "sounds" "true") "true")
-                            :lobby-sounds (= (get-local-value "lobby_sounds" "true") "true")
-                            :sounds-volume (str->int (get-local-value "sounds_volume" "100"))
-                            :disable-websockets (= (get-local-value "disable-websockets" "false") "true")}
-                           (:options (js->clj js/user :keywordize-keys true)))
+(def valid-background-slugs
+  #{"apex" "custom-bg"
+    "find-the-truth" "freelancer"
+    "monochrome" "mushin-no-shin"
+    "push-your-luck" "rumor-mill"
+    "the-root" "traffic-jam"
+    "worlds2020"})
 
-           :cards-loaded false
-           :connected false
-           :previous-cards {}
-           :sets [] :mwl [] :cycles []
-           :decks [] :decks-loaded false
-           :stats (:stats (js->clj js/user :keywordize-keys true))
-           :visible-formats (load-visible-formats)
-           :channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
-                      :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}
-           :games [] :current-game nil}))
+(defn validate-options
+  [opts]
+  (-> opts
+      (update :background #(or (valid-background-slugs %) "worlds2020"))
+      (update :runner-board-order #(case %
+                                     "true" "jnet"
+                                     "false" "irl"
+                                     %))))
+
+(def app-state
+  (let [js-user (js->clj js/user :keywordize-keys true)]
+    (r/atom {:active-page "/"
+             :user js-user
+             :options (-> {:background (get-local-value "background" "worlds2020")
+                           :custom-bg-url (get-local-value "custom_bg_url" "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
+                           :card-back (get-local-value "card-back" "nsg")
+                           :card-zoom (get-local-value "card-zoom" "image")
+                           :pin-zoom (= (get-local-value "pin-zoom" "false") "true")
+                           :pronouns "none"
+                           :language (get-local-value "language" js/navigator.language)
+                           :default-format (get-local-value "default-format" "standard")
+                           :show-alt-art true
+                           :card-resolution "default"
+                           :player-stats-icons (= (get-local-value "player-stats-icons" "true") "true")
+                           :stacked-servers (= (get-local-value "stacked-servers" "true") "true")
+                           :sides-overlap (= (get-local-value "sides-overlap" "true") "true")
+                           :log-timestamps (= (get-local-value "log-timestamps" "true") "true")
+                           :runner-board-order (get-local-value "runner-board-order" "irl")
+                           :deckstats "always"
+                           :gamestats "always"
+                           :log-width (str->int (get-local-value "log-width" "300"))
+                           :log-top (str->int (get-local-value "log-top" "419"))
+                           :log-player-highlight (get-local-value "log-player-highlight" "blue-red")
+                           :sounds (= (get-local-value "sounds" "true") "true")
+                           :lobby-sounds (= (get-local-value "lobby_sounds" "true") "true")
+                           :sounds-volume (str->int (get-local-value "sounds_volume" "100"))
+                           :disable-websockets (= (get-local-value "disable-websockets" "false") "true")}
+                          (merge (:options js-user))
+                          (validate-options))
+             :cards-loaded false
+             :connected false
+             :previous-cards {}
+             :sets [] :mwl [] :cycles []
+             :decks [] :decks-loaded false
+             :stats (:stats js-user)
+             :visible-formats (load-visible-formats)
+             :channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
+                        :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}
+             :games [] :current-game nil})))
 
 (go (let [lang (get-in @app-state [:options :language] "en")
           response (<! (GET (str "/data/language/" lang)))]
