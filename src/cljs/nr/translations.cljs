@@ -25,7 +25,7 @@
   [s]
   (let [cleaned (clean-input s)]
     (if-let [[_ num] (re-matches #"sever-(\d+)" cleaned)]
-      {:msg "server-{num}" :num num}
+      {:msg "server-num" :num num}
       {:msg cleaned})))
 
 (defn tr-type [s] (tr [:card-type_name s] {:type (clean-input s)}))
