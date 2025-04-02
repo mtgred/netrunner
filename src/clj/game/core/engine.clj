@@ -751,8 +751,17 @@
   (if (nil? event)
     (effect-completed state side eid)
     (do (log-event state event targets)
-        (let [handlers (gather-events state side eid event targets nil)]
-          (trigger-event-sync-next state side eid handlers event targets)))))
+        (let [handlers (gather-events state side eid event targets nil)
+              active-player (:active-player @state)
+              opponent (other-side active-player)
+              is-player (fn [player ability]
+                          (#{(get-side ability) (get-ability-side ability)} player))
+              get-handlers (fn [player-side]
+                             (filterv (partial is-player player-side) handlers))
+              active-player-events (get-handlers active-player)
+              opponent-events (get-handlers opponent)]
+          (wait-for (trigger-event-sync-next state active-player active-player-events event targets)
+                    (trigger-event-sync-next state opponent eid opponent-events event targets))))))
 
 (defn- trigger-event-simult-player
   "Triggers the simultaneous event handlers for the given event trigger and player.
@@ -914,7 +923,7 @@
                     (show-wait-prompt state opponent
                                       (str (side-str active-player) " to resolve " (event-title event) " triggers"))
                     ; let active player activate their events first
-                    (wait-for (trigger-event-simult-player state side (make-eid state eid) active-player-events cancel-fn targets)
+                    (wait-for (trigger-event-simult-player state active-player (make-eid state eid) active-player-events cancel-fn targets)
                               (when after-active-player
                                 (resolve-ability state side eid after-active-player nil nil))
                               (clear-wait-prompt state opponent)

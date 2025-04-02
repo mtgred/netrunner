@@ -884,8 +884,7 @@
              (effect
                (continue-ability
                  {:optional
-                  {:player :runner
-                   :waiting-prompt true
+                  {:waiting-prompt true
                    :prompt (msg "Trash " (:title card) " and pay " (rez-cost state :corp (:card context))
                                 " [Credits] to derez " (:title (:card context)) "?")
                    :yes-ability
@@ -993,7 +992,6 @@
                            {:optional
                             {:req (req (and (<= 3 (count (:successful-run runner-reg)))
                                             (not (get-in @state [:runner :register :crowdfunding-prompt]))))
-                             :player :runner
                              :prompt "Install Crowdfunding from the Heap?"
                              :yes-ability {:async true
                                            :effect (effect (runner-install :runner eid card {:ignore-all-cost true
@@ -1479,7 +1477,6 @@
      :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil (->c :credit 1))
                       "Pay 1 [Credits]")
                     "Trash Fencer Fueno"])
-     :player :runner
      :msg (msg (if (= target "Trash Fencer Fueno")
                  "trash itself"
                  (decapitalize target)))
@@ -2087,7 +2084,6 @@
                  :choices (req [(when (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil (->c :credit 1))
                                   "Pay 1 [Credits]")
                                 "Trash Lewi Guilherme"])
-                 :player :runner
                  :msg (msg (if (= target "Trash Lewi Guilherme")
                              "trash itself"
                              (decapitalize target)))
@@ -2350,7 +2346,6 @@
                                  card nil :randomly-trash-from-hand 1)
                        "Trash a random card from the grip")
                      "Trash Mystic Maemi"])
-     :player :runner
      :msg (msg (if (= target "Trash Mystic Maemi")
                  "trash itself"
                  (decapitalize target)))
@@ -2374,7 +2369,6 @@
              :once :per-run
              :waiting-prompt true
              :prompt "Choose one"
-             :player :runner
              :choices ["Place 1 [Credits] on Net Mercur" "Draw 1 card"]
              :async true
              :msg (msg (if (= target "Draw 1 card")
@@ -2608,7 +2602,6 @@
      :choices {:all true
                :card #(and (installed? %)
                            (runner? %))}
-     :player :runner
      :msg (msg "trash " (:title target))
      :async true
      :effect (effect (trash eid target {:cause :runner-ability :cause-card card}))}
@@ -3304,7 +3297,6 @@
                             (has-subtype? (:card context) "Gray Ops")))
               :waiting-prompt true
               :prompt "Give the Corp 1 bad publicity and take 1 tag?"
-              :player :runner
               :yes-ability {:msg "give the Corp 1 bad publicity and take 1 tag"
                             :async true
                             :effect (effect (gain-bad-publicity :corp 1 {:suppress-checkpoint true})
@@ -3767,7 +3759,6 @@
     {:prompt "Choose one"
      :waiting-prompt true
      :choices ["Take 1 tag" "Trash Trickster Taka"]
-     :player :runner
      :msg (msg (if (= target "Trash Trickster Taka")
                  "trash itself"
                  (decapitalize target)))
@@ -3900,7 +3891,6 @@
    :events [{:event :runner-lose-tag
              :req (req
                     (= :runner (:side context)))
-             :player :runner
              :msg "gain 1 [Credits]"
              :async true
              :interactive (req true)

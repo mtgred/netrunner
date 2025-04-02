@@ -625,8 +625,7 @@
 
 (defcard "Disposable HQ"
   (letfn [(dhq [i n]
-            {:player :corp
-             :req (req (pos? n))
+            {:req (req (pos? n))
              :prompt "Choose a card in HQ to add to the bottom of R&D"
              :choices {:card #(and (corp? %)
                                    (in-hand? %))}
@@ -908,7 +907,6 @@
                        :successful
                        {:waiting-prompt true
                         :prompt "Choose a program or virtual resource"
-                        :player :corp
                         :choices {:card #(and (installed? %)
                                               (or (program? %)
                                                   (and (resource? %)
@@ -1458,7 +1456,6 @@
                                  targets))
                  :waiting-prompt true
                  :prompt "How many credits do you want to pay?"
-                 :player :corp
                  :choices {:number (req (min (->> targets
                                                   (filter #(or (in-same-server? card (:card %))
                                                                (from-same-server? card (:card %))

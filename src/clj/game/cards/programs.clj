@@ -440,7 +440,6 @@
      :optional
      {:prompt (msg "Pay 2 [Credits] to gain [Click]?")
       :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [(->c :credit 2)]))
-      :player :runner
       :yes-ability {:cost [(->c :credit 2)]
                     :msg "gain [Click]"
                     :effect (req (gain-clicks state :runner 1)
@@ -573,8 +572,7 @@
   {:special {:auto-place-credit :always}
    :events [{:event :successful-run
              :optional
-             {:player :runner
-              :req (req (not (= "Jak Sinclair" (get-in run [:source-card :title]))))
+             {:req (req (not (= "Jak Sinclair" (get-in run [:source-card :title]))))
               :waiting-prompt true
               :autoresolve (get-autoresolve :auto-place-credit)
               :prompt (msg "Place 1 credit on " (:title card) "?")
@@ -708,7 +706,6 @@
                                 (strength-pump 2 1)]
                     :events [{:event :end-of-encounter
                               :req (req (any-subs-broken-by-card? (:ice context) card))
-                              :player :runner ; Needed for when the run is ended by the Corp
                               :prompt "Choose a non-virus program to add to the top of the stack"
                               :choices {:card #(and (installed? %)
                                                     (program? %)
@@ -885,7 +882,6 @@
              :optional
              {:req (req (and (:successful context)
                              (= :rd (target-server context))))
-              :player :runner
               :waiting-prompt true
               :autoresolve (get-autoresolve :auto-place-counter)
               :prompt (msg "Place 1 virus counter on " (:title card) "?")
@@ -1265,8 +1261,7 @@
    [{:event :initialize-trace
      :trash-icon true
      :optional
-     {:player :runner
-      :waiting-prompt true
+     {:waiting-prompt true
       :prompt "Trash Disrupter to reduce the base trace strength to 0?"
       :yes-ability
       {:cost [(->c :trash-can)]
@@ -2388,7 +2383,6 @@
              :optional
              {:req (req (and (first-event? state side :successful-run)
                              (pos? (get-counters card :power))))
-              :player :runner
               :autoresolve (get-autoresolve :auto-fire)
               :waiting-prompt true
               :prompt "Remove 1 hosted power counter?"
@@ -3406,7 +3400,6 @@
         runner-draw {:label "Each player draws 1 card (manual)"
                      :optional {:prompt "Draw 1 card?"
                                 :waiting-prompt true
-                                :player :runner
                                 :yes-ability {:async true
                                               :msg "draw 1 card"
                                               :effect (req (wait-for (draw state :runner 1)
