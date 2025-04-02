@@ -5,8 +5,8 @@
             :url "https://opensource.org/licenses/MIT"}
   :min-lein-version "2.7.1"
 
-  :source-paths ["src/clj" "src/cljs/nr" "src/cljc"]
-  :test-paths ["test/clj"]
+  :source-paths ["src/clj" "src/cljs" "src/cljc"]
+  :test-paths ["test/clj" "test/cljs" "test/cljc"]
 
   :jar-name "netrunner.jar"
   :jar-exclusions [#"public/img/cards/*"]
@@ -85,7 +85,7 @@
                             :fail-fast? false}
                    :source-paths ["src/clj" "src/cljs" "src/cljc" "src/css"
                                   "dev/src/clj" "dev/src/cljs"
-                                  "test/clj"]
+                                  "test/clj" "test/cljc" "test/cljs"]
                    :resource-paths ["target"]
                    :clean-targets ^{:protect false} ["target"]
                    :jvm-opts ["-Djdk.attach.allowAttachSelf"
