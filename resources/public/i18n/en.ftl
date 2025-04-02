@@ -1261,16 +1261,16 @@ settings_bespoke-sounds = {$sound ->
 }
 
 settings_bg = {$slug ->
-    [apex] Apex
+    [apex-bg] Apex
     [custom-bg] Custom BG (input URL below)
-    [find-the-truth] Find The Truth
-    [freelancer] Freelancer
-    [monochrome] Monochrome
-    [mushin-no-shin] Mushin No Shin
-    [push-your-luck] Push Your Luck
-    [rumor-mill] Rumor Mill
-    [the-root] The Root
-    [traffic-jam] Traffic Jam
+    [find-the-truth-bg] Find The Truth
+    [freelancer-bg] Freelancer
+    [monochrome-bg] Monochrome
+    [mushin-no-shin-bg] Mushin No Shin
+    [push-your-luck-bg] Push Your Luck
+    [rumor-mill-bg] Rumor Mill
+    [the-root-bg] The Root
+    [traffic-jam-bg] Traffic Jam
     *[worlds2020] Worlds 2020
 }
 

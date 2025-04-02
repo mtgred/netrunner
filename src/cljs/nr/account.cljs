@@ -303,16 +303,16 @@
    ["Xi/xir" "xi"]])
 
 (def background-list
-  [["Apex" "apex"]
+  [["Apex" "apex-bg"]
    ["Custom BG (input URL below)" "custom-bg"]
-   ["Find The Truth" "find-the-truth"]
-   ["Freelancer" "freelancer"]
-   ["Monochrome" "monochrome"]
-   ["Mushin No Shin" "mushin-no-shin"]
-   ["Push Your Luck" "push-your-luck"]
-   ["Rumor Mill" "rumor-mill"]
-   ["The Root" "the-root"]
-   ["Traffic Jam" "traffic-jam"]
+   ["Find The Truth" "find-the-truth-bg"]
+   ["Freelancer" "freelancer-bg"]
+   ["Monochrome" "monochrome-bg"]
+   ["Mushin No Shin" "mushin-no-shin-bg"]
+   ["Push Your Luck" "push-your-luck-bg"]
+   ["Rumor Mill" "rumor-mill-bg"]
+   ["The Root" "the-root-bg"]
+   ["Traffic Jam" "traffic-jam-bg"]
    ["Worlds 2020" "worlds2020"]])
 
 (defn account-content [_ _ scroll-top]
