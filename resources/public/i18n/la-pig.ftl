@@ -344,16 +344,7 @@ game_prompt = {$msg ->
     [r-d] R&DYAY
     [rez] ezray
     [score] orescay
-    [server-1] Erversay 1
-    [server-10] Erversay 10
-    [server-2] Erversay 2
-    [server-3] Erversay 3
-    [server-4] Erversay 4
-    [server-5] Erversay 5
-    [server-6] Erversay 6
-    [server-7] Erversay 7
-    [server-8] Erversay 8
-    [server-9] Erversay 9
+    [server-num] Erversay {$num}
     [trash] ashtray
     *[unknown] undefined
 }

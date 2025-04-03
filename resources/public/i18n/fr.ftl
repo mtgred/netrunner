@@ -108,7 +108,7 @@ deck-builder_agenda-points = Points de projet
 deck-builder_cancel = Annuler
 
 deck-builder_card-count = {$cnt ->
-    [one] 1 card
+    [one] {$cnt} card
     *[other] {$cnt} cards
 }
 
@@ -238,12 +238,12 @@ game_abilities = Capacités
 game_actions = Actions
 
 game_agenda-count = {$agenda-point ->
-    [one] 1 Point de projet
+    [one] {$agenda-point} Point de projet
     *[other] {$agenda-point} Points de projet
 }
 
 game_agenda-count-with-req = {$agenda-point ->
-    [one] 1 Point de projet
+    [one] {$agenda-point} Point de projet
     *[other] {$agenda-point} Points de projet
 } ({$agenda-point-req} required)
 
