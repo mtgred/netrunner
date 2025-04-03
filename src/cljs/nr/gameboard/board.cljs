@@ -434,10 +434,9 @@
                    (if (:cid label)
                      (:title label)
                      (tr-game-prompt label)))]
-    (when servers
-      [:div.panel.blue-shade.servers-menu (when active-menu?
-                                            {:class "active-menu"
-                                             :style {:display "inline"}})
+    (when (and servers active-menu?)
+      [:div.panel.blue-shade.servers-menu {:class "active-menu"
+                                           :style {:display "inline"}}
        [:ul (doall
               (map-indexed
                 (fn [_ label]

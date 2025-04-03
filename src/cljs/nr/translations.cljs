@@ -24,7 +24,7 @@
 (defn tr-fix-server-name
   [s]
   (let [cleaned (clean-input s)]
-    (if-let [[_ num] (re-matches #"sever-(\d+)" cleaned)]
+    (if-let [[_ num] (re-matches #"server-(\d+)" cleaned)]
       {:msg "server-num" :num num}
       {:msg cleaned})))
 
