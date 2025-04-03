@@ -1185,7 +1185,7 @@ settings_bg = {$slug ->
     [rumor-mill-bg] 谣言工厂
     [the-root-bg] 根基
     [traffic-jam-bg] 交通阻塞
-    [worlds2020-bg] 世界2020
+    [worlds2020] 世界2020
     *[unknown] undefined
 }
 

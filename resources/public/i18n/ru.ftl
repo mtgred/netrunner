@@ -1262,7 +1262,7 @@ settings_bespoke-sounds = {$sound ->
 settings_bg = {$slug ->
     [custom-bg] Индивидуальный фон
     [monochrome-bg] Монотонный
-    [worlds2020-bg] Чемпионат мира 2020
+    [worlds2020] Чемпионат мира 2020
     *[unknown] undefined
 }
 
