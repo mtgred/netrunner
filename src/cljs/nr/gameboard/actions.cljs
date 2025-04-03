@@ -44,9 +44,11 @@
 
 (defn handle-diff! [{:keys [gameid diff]}]
   (when (= gameid (str (current-gameid app-state)))
-    (reset! game-state (differ/patch @last-state diff))
+    (let [patch (differ/patch @last-state diff)]
+      (reset! game-state patch))
     (check-lock?)
-    (reset! last-state @game-state)))
+    (let [gs @game-state]
+      (reset! last-state gs))))
 
 (declare toast)
 (defn handle-timeout [gameid]
