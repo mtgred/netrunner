@@ -367,28 +367,33 @@
          [:img.card.bg {:src url :alt (get-title card) :onError #(-> % .-target js/$ .hide)}]])]]))
 
 (defn card-implementation [zoom-card]
-  (when-let [card @zoom-card]
-    (let [implemented (:implementation card)]
-      (case implemented
-        (:full "full") nil
-        [:div.panel.blue-shade.implementation {:style {:right (get-in @app-state [:options :log-width])}}
-         (if implemented
-           [:span.impl-msg implemented]
-           [:span.unimplemented (tr [:game_unimplemented "Unimplemented"])])]))))
+  (r/with-let [log-width (r/cursor app-state [:options :log-width])]
+    (when-let [card @zoom-card]
+      (let [implemented (:implementation card)]
+        (case implemented
+          (:full "full") nil
+          [:div.panel.blue-shade.implementation {:style {:right @log-width}}
+           (if implemented
+             [:span.impl-msg implemented]
+             [:span.unimplemented (tr [:game_unimplemented "Unimplemented"])])])))))
 
 (defn card-zoom-display
   [zoom-card img-side]
-  (when-let [card @zoom-card]
-    [:<>
-     [:div.card-preview.blue-shade
-      {:on-click #(reset! img-side (not @img-side))}
-      (let [url (image-url card)
-            show-img (= "image" (get-in @app-state [:options :card-zoom] "image"))]
-        (if (and @img-side url show-img)
-          [:img {:src url :alt (get-title card) :onLoad #(-> % .-target js/$ .show)}]
-          [card-as-text card false]))]
-     (when (get-in @app-state [:options :pin-zoom] false)
-       [:button.win-right {:on-click #(reset! zoom-card false) :type "button"} "✘"])]))
+  (r/with-let [pin (r/cursor app-state [:options :pin-zoom])
+               card-zoom-type (r/cursor @app-state [:options :card-zoom])]
+    (when-let [card @zoom-card]
+      [:<>
+       [:div.card-preview.blue-shade
+        {:on-click #(reset! img-side (not @img-side))}
+        (let [url (image-url card)
+              show-img (= "image" (or @card-zoom-type "image"))]
+          (if (and @img-side url show-img)
+            [:img {:src url :alt (get-title card) :onLoad #(-> % .-target js/$ .show)}]
+            [card-as-text card false]))]
+       (when (or @pin false)
+         [:button.win-right {:on-click #(reset! zoom-card false)
+                             :type "button"}
+          "✘"])])))
 
 (defn card-zoom [zoom-card img-side]
   (if @zoom-card
@@ -396,19 +401,19 @@
         [card-zoom-display zoom-card img-side])
     (do (-> ".card-zoom" js/$ (.removeClass "fade")) nil)))
 
-(defn card-zoom-view [_zoom-card]
-  (let [zoomed-card (r/atom nil)
-        img-side (r/atom true)]
-    (fn [zoom-card]
-      (let [pin (get-in @app-state [:options :pin-zoom] false)]
-        (when (or @zoom-card
-                  (and (not @zoom-card) (not pin)))
-          (reset! zoomed-card @zoom-card)
-          (reset! img-side true))
-        [:<>
-         [:div.card-zoom
-          [card-zoom zoomed-card img-side]]
-         [card-implementation zoomed-card]]))))
+(defn card-zoom-view [zoom-card]
+  (r/with-let [zoomed-card (r/atom nil)
+               img-side (r/atom true)
+               pin (r/cursor app-state [:options :pin-zoom])]
+    (let [pin (or @pin false)]
+      (when (or @zoom-card
+                (and (not @zoom-card) (not pin)))
+        (reset! zoomed-card @zoom-card)
+        (reset! img-side true))
+      [:<>
+       [:div.card-zoom
+        [card-zoom zoomed-card img-side]]
+       [card-implementation zoomed-card]])))
 
 (defn- card-menu-item
   "Creates a li item for a card menu using the given id and key.
@@ -428,25 +433,23 @@
 (defn server-menu
   "The pop-up on a card in hand when clicked"
   [card]
-  (let [servers (get-in @game-state [:corp :install-list])
-        active-menu? (= (:cid card) (:source @card-menu))
-        label-fn (fn [label]
-                   (if (:cid label)
-                     (:title label)
-                     (tr-game-prompt label)))]
-    (when (and servers active-menu?)
-      [:div.panel.blue-shade.servers-menu {:class "active-menu"
-                                           :style {:display "inline"}}
-       [:ul (doall
-              (map-indexed
+  (r/with-let [install-list (r/cursor game-state [:corp :install-list])]
+    (let [active-menu? (= (:cid card) (:source @card-menu))]
+      (when (and @install-list active-menu?)
+        [:div.panel.blue-shade.servers-menu {:class "active-menu"
+                                             :style {:display "inline"}}
+         [:ul (doall
+               (map-indexed
                 (fn [_ label]
                   ^{:key label}
-                  [card-menu-item (label-fn label)
+                  [card-menu-item (if (:cid label)
+                                    (:title label)
+                                    (tr-game-prompt label))
                    #(do (close-card-menu)
                         (if (= "Expend" label)
                           (send-command "expend" {:card card :server label})
                           (send-command "play" {:card card :server label})))])
-                servers))]])))
+                @install-list))]]))))
 
 (defn list-abilities
   [ab-type card abilities]
