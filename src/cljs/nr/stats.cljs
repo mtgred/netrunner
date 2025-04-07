@@ -193,7 +193,7 @@
        (faction-icon-memo (:faction runner-id) (:title runner-id)) " " (:title runner-id)]]
 
      (when winner
-       [:h4 (tr [:stats_winner "Winner"]) ": " (tr-side winner) (str user-win)])]))
+       [:h4 (tr [:stats_winner "Winner"] {:winner (tr-side winner)}) (str user-win)])]))
 
 (defn history [_state list-scroll-top _log-scroll-top]
   (r/create-class
