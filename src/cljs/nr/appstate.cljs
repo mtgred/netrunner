@@ -30,11 +30,11 @@
     (if (empty? serialized) default-visible-formats (set (.parse js/JSON serialized)))))
 
 (def valid-background-slugs
-  #{"apex" "custom-bg"
-    "find-the-truth" "freelancer"
-    "monochrome" "mushin-no-shin"
-    "push-your-luck" "rumor-mill"
-    "the-root" "traffic-jam"
+  #{"apex-bg" "custom-bg"
+    "find-the-truth-bg" "freelancer-bg"
+    "monochrome-bg" "mushin-no-shin-bg"
+    "push-your-luck-bg" "rumor-mill-bg"
+    "the-root-bg" "traffic-jam-bg"
     "worlds2020"})
 
 (defn validate-options

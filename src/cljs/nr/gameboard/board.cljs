@@ -367,28 +367,33 @@
          [:img.card.bg {:src url :alt (get-title card) :onError #(-> % .-target js/$ .hide)}]])]]))
 
 (defn card-implementation [zoom-card]
-  (when-let [card @zoom-card]
-    (let [implemented (:implementation card)]
-      (case implemented
-        (:full "full") nil
-        [:div.panel.blue-shade.implementation {:style {:right (get-in @app-state [:options :log-width])}}
-         (if implemented
-           [:span.impl-msg implemented]
-           [:span.unimplemented (tr [:game_unimplemented "Unimplemented"])])]))))
+  (r/with-let [log-width (r/cursor app-state [:options :log-width])]
+    (when-let [card @zoom-card]
+      (let [implemented (:implementation card)]
+        (case implemented
+          (:full "full") nil
+          [:div.panel.blue-shade.implementation {:style {:right @log-width}}
+           (if implemented
+             [:span.impl-msg implemented]
+             [:span.unimplemented (tr [:game_unimplemented "Unimplemented"])])])))))
 
 (defn card-zoom-display
   [zoom-card img-side]
-  (when-let [card @zoom-card]
-    [:<>
-     [:div.card-preview.blue-shade
-      {:on-click #(reset! img-side (not @img-side))}
-      (let [url (image-url card)
-            show-img (= "image" (get-in @app-state [:options :card-zoom] "image"))]
-        (if (and @img-side url show-img)
-          [:img {:src url :alt (get-title card) :onLoad #(-> % .-target js/$ .show)}]
-          [card-as-text card false]))]
-     (when (get-in @app-state [:options :pin-zoom] false)
-       [:button.win-right {:on-click #(reset! zoom-card false) :type "button"} "✘"])]))
+  (r/with-let [pin (r/cursor app-state [:options :pin-zoom])
+               card-zoom-type (r/cursor @app-state [:options :card-zoom])]
+    (when-let [card @zoom-card]
+      [:<>
+       [:div.card-preview.blue-shade
+        {:on-click #(reset! img-side (not @img-side))}
+        (let [url (image-url card)
+              show-img (= "image" (or @card-zoom-type "image"))]
+          (if (and @img-side url show-img)
+            [:img {:src url :alt (get-title card) :onLoad #(-> % .-target js/$ .show)}]
+            [card-as-text card false]))]
+       (when (or @pin false)
+         [:button.win-right {:on-click #(reset! zoom-card false)
+                             :type "button"}
+          "✘"])])))
 
 (defn card-zoom [zoom-card img-side]
   (if @zoom-card
@@ -396,19 +401,19 @@
         [card-zoom-display zoom-card img-side])
     (do (-> ".card-zoom" js/$ (.removeClass "fade")) nil)))
 
-(defn card-zoom-view [_zoom-card]
-  (let [zoomed-card (r/atom nil)
-        img-side (r/atom true)]
-    (fn [zoom-card]
-      (let [pin (get-in @app-state [:options :pin-zoom] false)]
-        (when (or @zoom-card
-                  (and (not @zoom-card) (not pin)))
-          (reset! zoomed-card @zoom-card)
-          (reset! img-side true))
-        [:<>
-         [:div.card-zoom
-          [card-zoom zoomed-card img-side]]
-         [card-implementation zoomed-card]]))))
+(defn card-zoom-view [zoom-card]
+  (r/with-let [zoomed-card (r/atom nil)
+               img-side (r/atom true)
+               pin (r/cursor app-state [:options :pin-zoom])]
+    (let [pin (or @pin false)]
+      (when (or @zoom-card
+                (and (not @zoom-card) (not pin)))
+        (reset! zoomed-card @zoom-card)
+        (reset! img-side true))
+      [:<>
+       [:div.card-zoom
+        [card-zoom zoomed-card img-side]]
+       [card-implementation zoomed-card]])))
 
 (defn- card-menu-item
   "Creates a li item for a card menu using the given id and key.
@@ -428,26 +433,23 @@
 (defn server-menu
   "The pop-up on a card in hand when clicked"
   [card]
-  (let [servers (get-in @game-state [:corp :install-list])
-        active-menu? (= (:cid card) (:source @card-menu))
-        label-fn (fn [label]
-                   (if (:cid label)
-                     (:title label)
-                     (tr-game-prompt label)))]
-    (when servers
-      [:div.panel.blue-shade.servers-menu (when active-menu?
-                                            {:class "active-menu"
-                                             :style {:display "inline"}})
-       [:ul (doall
-              (map-indexed
+  (r/with-let [install-list (r/cursor game-state [:corp :install-list])]
+    (let [active-menu? (= (:cid card) (:source @card-menu))]
+      (when (and @install-list active-menu?)
+        [:div.panel.blue-shade.servers-menu {:class "active-menu"
+                                             :style {:display "inline"}}
+         [:ul (doall
+               (map-indexed
                 (fn [_ label]
                   ^{:key label}
-                  [card-menu-item (label-fn label)
+                  [card-menu-item (if (:cid label)
+                                    (:title label)
+                                    (tr-game-prompt label))
                    #(do (close-card-menu)
                         (if (= "Expend" label)
                           (send-command "expend" {:card card :server label})
                           (send-command "play" {:card card :server label})))])
-                servers))]])))
+                @install-list))]]))))
 
 (defn list-abilities
   [ab-type card abilities]
@@ -472,26 +474,26 @@
       abilities)))
 
 (defn check-keep-menu-open
-  [card]
-  (let [side (:side @game-state)
-        keep-menu-open (case (:keep-menu-open @card-menu)
+  [card player keep-menu-open]
+  (let [{:keys [credit click hand]} @player
+        keep-menu-open (case @keep-menu-open
                         :while-credits-left
-                        (pos? (get-in @game-state [side :credit]))
+                        (pos? credit)
 
                         :while-clicks-left
-                        (pos? (get-in @game-state [side :click]))
+                        (pos? click)
 
                         :while-2-clicks-left
-                        (>= (get-in @game-state [side :click]) 2)
+                        (>= click 2)
 
                         :while-3-clicks-left
-                        (>= (get-in @game-state [side :click]) 3)
+                        (>= click 3)
 
                         :while-4-clicks-left
-                        (>= (get-in @game-state [side :click]) 4)
+                        (>= click 4)
 
                         :while-cards-in-hand
-                        (not-empty (get-in @game-state [side :hand]))
+                        (not-empty hand)
 
                         :while-power-tokens-left
                         (pos? (get-counters card :power))
@@ -526,10 +528,11 @@
 
                         :for-agendas
                         (or (some #(= "score" %) (action-list card))          ; can score
-                            (not (zero? (get-in @game-state [side :click])))) ; clicks left
+                            (not (zero? click))) ; clicks left
 
                         :forever true
 
+                         #_:else
                         false)]
     (when-not keep-menu-open (close-card-menu))
     keep-menu-open))
@@ -621,24 +624,27 @@
          subroutines))]))
 
 (defn card-abilities [card abilities subroutines]
-  (let [actions (action-list card)]
-    (when (and (= (:cid card) (:source @card-menu))
-               (= (:ghost card) (:ghost @card-menu))
-               (or (nil? (:keep-menu-open @card-menu))
-                   (check-keep-menu-open card))
-               (or (pos? (+ (count actions)
-                            (count abilities)
-                            (count subroutines)))
-                   (some #{"derez" "rez" "advance" "trash"} actions)
-                   (= type "ICE")))
-      [:div.panel.blue-shade.abilities.active-menu {:style {:display "inline"}}
-       [:button.win-right {:on-click #(close-card-menu) :type "button"} "✘"]
-       (when (seq actions)
-         [:span.float-center (tr [:game_actions "Actions"]) ":"])
-       (when (seq actions)
-         [:ul
-          (doall
-            (map-indexed
+  (r/with-let [gs-side (r/cursor game-state [:side])
+               gs-player (r/cursor game-state [@gs-side])
+               keep-menu-open (r/cursor card-menu [:keep-menu-open])]
+    (let [actions (action-list card)]
+      (when (and (= (:cid card) (:source @card-menu))
+                 (= (:ghost card) (:ghost @card-menu))
+                 (or (nil? (:keep-menu-open @card-menu))
+                     (check-keep-menu-open card gs-player keep-menu-open))
+                 (or (pos? (+ (count actions)
+                              (count abilities)
+                              (count subroutines)))
+                     (some #{"derez" "rez" "advance" "trash"} actions)
+                     (= type "ICE")))
+        [:div.panel.blue-shade.abilities.active-menu {:style {:display "inline"}}
+         [:button.win-right {:on-click #(close-card-menu) :type "button"} "✘"]
+         (when (seq actions)
+           [:span.float-center (tr [:game_actions "Actions"]) ":"])
+         (when (seq actions)
+           [:ul
+            (doall
+             (map-indexed
               (fn [_ action]
                 (let [keep-menu-open (case action
                                        "derez" false
@@ -654,24 +660,24 @@
                           (swap! card-menu assoc :keep-menu-open keep-menu-open)
                           (close-card-menu)))]))
               actions))])
-       (when (or (seq abilities)
-                 (and (active? card)
-                      (seq (remove #(or (:fired %) (:broken %)) subroutines))))
-         [:span.float-center (tr [:game_abilities "Abilities"]) ":"])
-       [:ul
-        (when (seq abilities)
-          (list-abilities :ability card abilities))
-        (when (and (active? card)
-                   (seq (remove #(or (:fired %) (:broken %)) subroutines)))
-          [card-menu-item (tr [:game_fire-unbroken "Fire unbroken subroutines"])
-           #(do (send-command "unbroken-subroutines" {:card card})
-                (close-card-menu))])]
-       (when (seq subroutines)
-         [:span.float-center (tr [:game_subs "Subroutines"]) ":"])
-       (when (seq subroutines)
+         (when (or (seq abilities)
+                   (and (active? card)
+                        (seq (remove #(or (:fired %) (:broken %)) subroutines))))
+           [:span.float-center (tr [:game_abilities "Abilities"]) ":"])
          [:ul
-          (doall
-            (map-indexed
+          (when (seq abilities)
+            (list-abilities :ability card abilities))
+          (when (and (active? card)
+                     (seq (remove #(or (:fired %) (:broken %)) subroutines)))
+            [card-menu-item (tr [:game_fire-unbroken "Fire unbroken subroutines"])
+             #(do (send-command "unbroken-subroutines" {:card card})
+                  (close-card-menu))])]
+         (when (seq subroutines)
+           [:span.float-center (tr [:game_subs "Subroutines"]) ":"])
+         (when (seq subroutines)
+           [:ul
+            (doall
+             (map-indexed
               (fn [i sub]
                 (let [fire-sub #(do (send-command "subroutine" {:card card
                                                                 :subroutine i})
@@ -693,7 +699,7 @@
                    [:span.float-right
                     (cond (:broken sub) banned-span
                           (:fired sub) "✅")]]))
-              subroutines))])])))
+              subroutines))])]))))
 
 (defn draw-facedown?
   "Returns true if the installed card should be drawn face down."
@@ -712,12 +718,16 @@
            subtype-target corp-abilities]
     :as card} flipped disable-click]
   (let [title (get-title card)]
-    (r/with-let [prompt-state (r/cursor game-state [(keyword (lower-case side)) :prompt-state])]
+    (r/with-let [gs-prompt-state (r/cursor game-state [(keyword (lower-case side)) :prompt-state])
+                 gs-encounter-ice (r/cursor game-state [:encounters :ice])
+                 as-button (r/cursor app-state [:button])
+                 gs-side (r/cursor game-state [:side])
+                 as-stacked-cards (r/cursor app-state [:options :stacked-cards])]
       [:div.card-frame.menu-container
        [:div.blue-shade.card {:class (str (cond selected "selected"
-                                                (contains? (into #{} (get-in @prompt-state [:selectable])) (:cid card)) "selectable"
-                                                (same-card? card (:button @app-state)) "hovered"
-                                                (same-card? card (-> @game-state :encounters :ice)) "encountered"
+                                                (contains? (into #{} (get-in @gs-prompt-state [:selectable])) (:cid card)) "selectable"
+                                                (same-card? card @as-button) "hovered"
+                                                (same-card? card @gs-encounter-ice) "encountered"
                                               (and (not (any-prompt-open? side)) (playable? card)) "playable"
                                               ghost "ghost"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
@@ -734,7 +744,7 @@
                             :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                             :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
                                                        (spectator-view-hidden?)
-                                                       (= (:side @game-state) (keyword (lower-case side))))
+                                                       (= @gs-side (keyword (lower-case side))))
                                                (put-game-card-in-channel card zoom-channel))
                             :on-mouse-leave #(put! zoom-channel false)
                             :on-click #(when (not disable-click)
@@ -748,7 +758,7 @@
       (if (or (not code) flipped facedown)
         (let [facedown-but-known (or (not (or (not code) flipped facedown))
                                      (spectator-view-hidden?)
-                                     (= (:side @game-state) (keyword (lower-case side))))
+                                     (= @gs-side (keyword (lower-case side))))
               alt-str (when facedown-but-known (str "Facedown " title))]
           [facedown-card side ["bg"] alt-str])
         (when-let [url (image-url card)]
@@ -783,21 +793,21 @@
             (#{"Agenda" "Asset" "ICE" "Upgrade"} type))
        [server-menu card]
 
-       (and (= :runner (:side @game-state))
+       (and (= :runner @gs-side)
             (pos? (+ (count runner-abilities) (count subroutines))))
        [runner-abs card runner-abilities subroutines title]
 
-       (and (= :corp (:side @game-state))
+       (and (= :corp @gs-side)
             (pos? (count corp-abilities)))
        [corp-abs card corp-abilities]
 
-       (= (:side @game-state) (keyword (lower-case side)))
+       (= (keyword (lower-case side)) @gs-side)
        [card-abilities card abilities subroutines])
 
      (when (pos? (count hosted))
        [:div.hosted
         (if (and (not (ice? card))
-                 (get-in @app-state [:options :stacked-cards] false))
+                 @as-stacked-cards)
         ; stacked mode
           (let [distinct-hosted (vals (group-by get-title hosted))]
             (show-distinct-cards distinct-hosted))

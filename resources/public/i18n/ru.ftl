@@ -562,16 +562,7 @@ game_prompt = {$msg ->
     [r-d] undefined
     [rez] развернуть
     [score] засчитать
-    [server-1] Сервер 1
-    [server-10] Сервер 10
-    [server-2] Сервер 2
-    [server-3] Сервер 3
-    [server-4] Сервер 4
-    [server-5] Сервер 5
-    [server-6] Сервер 6
-    [server-7] Сервер 7
-    [server-8] Сервер 8
-    [server-9] Сервер 9
+    [server-num] Сервер {$num}
     [trash] снести
     *[unknown] undefined
 }
@@ -1262,7 +1253,7 @@ settings_bespoke-sounds = {$sound ->
 settings_bg = {$slug ->
     [custom-bg] Индивидуальный фон
     [monochrome-bg] Монотонный
-    [worlds2020-bg] Чемпионат мира 2020
+    [worlds2020] Чемпионат мира 2020
     *[unknown] undefined
 }
 

@@ -510,16 +510,7 @@ game_prompt = {$msg ->
     [r-d] 研发中心
     [rez] 激活
     [score] 计分
-    [server-1] 服务器 1
-    [server-10] 服务器 10
-    [server-2] 服务器 2
-    [server-3] 服务器 3
-    [server-4] 服务器 4
-    [server-5] 服务器 5
-    [server-6] 服务器 6
-    [server-7] 服务器 7
-    [server-8] 服务器 8
-    [server-9] 服务器 9
+    [server-num] 服务器 {$num}
     [trash] 销毁
     *[unknown] undefined
 }
@@ -1185,7 +1176,7 @@ settings_bg = {$slug ->
     [rumor-mill-bg] 谣言工厂
     [the-root-bg] 根基
     [traffic-jam-bg] 交通阻塞
-    [worlds2020-bg] 世界2020
+    [worlds2020] 世界2020
     *[unknown] undefined
 }
 
