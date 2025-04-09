@@ -86,10 +86,11 @@
                          ;; while resolving another ability or promppt
                          blocking-prompt?
                          (not= side (to-keyword (:side card)))
-                         (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
+                         ;; prevention/disabling abilities
+                         (any-effects state side :prevent-paid-ability true? card [ability ability-idx])
+                         (some? (is-disabled-reg? state card)))]
      (when blocking-prompt?
-       (toast state side (str "You cannot play abilities while other abilities are resolving.")
-              "warning"))
+       (toast state side "You cannot play abilities while other abilities are resolving." "warning"))
      (when-not cannot-play
        (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
 

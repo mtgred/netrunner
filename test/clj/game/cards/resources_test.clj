@@ -3579,8 +3579,8 @@
     (play-and-score state "Nisei MK II")
     (play-from-hand state :corp "Vanilla" "HQ")
     (play-from-hand state :corp "Ichi 1.0" "HQ")
-    (rez state corp (get-ice state :hq 0))
-    (rez state corp (get-ice state :hq 1))
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
     (take-credits state :corp)
     (play-from-hand state :runner "John Masanori")
     (run-on state :hq)
@@ -4084,6 +4084,25 @@
       (is (changed? [(:credit (get-runner)) -8]
             (click-prompt state :runner "Server 1"))
           "Spent 8 credits to make a run on the server"))))
+
+(deftest light-the-fire-spin-doctor
+  ;; Light the Fire!
+  (do-game
+    (new-game {:corp {:hand ["Spin Doctor"]
+                      :deck [(qty "Hedge Fund" 10)]
+                      :discard ["Ice Wall" "Fire Wall" "Tyrant"]}
+               :runner {:hand ["Light the Fire!" (qty "Sure Gamble" 4)]
+                        :credits 100}})
+    (play-from-hand state :corp "Spin Doctor" "New remote")
+    (let [spin (get-content state :remote1 0)]
+      (rez state :corp spin)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Light the Fire!")
+      (card-ability state :runner (get-resource state 0) 0)
+      (click-prompt state :runner "Server 1")
+      (card-ability state :corp spin 0)
+      (is (no-prompt? state :corp) "Corp is making no decisions")
+      (is (refresh spin) "Corp is making no decisions"))))
 
 (deftest logic-bomb
   ;; Logic Bomb
