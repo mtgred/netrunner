@@ -10,11 +10,11 @@
                    :file "nsg"}
 
    ;; prizes for tournaments - these are assigned to individual players through the admin or TO panels
-   :nbk-deep-dive {:description "You won something! Well done!"
-                   :side :runner
-                   :prize true
-                   :name "Deep Dive (nbk)"
-                   :file "nbk-deep-dive"}})
+   :nbk-test-prize {:description "You won something! Well done!"
+                    :side :corp
+                    :prize true
+                    :name "Sundew (test prize)"
+                    :file "test-prize-nbk"}})
 
 (defn just-prizes []
   (into (sorted-map-by (fn [a b] (compare (:name a) (:name b))))
