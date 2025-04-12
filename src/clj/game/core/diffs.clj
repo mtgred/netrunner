@@ -373,7 +373,6 @@
    :show-alt-art])
 
 (defn options-summary [options]
-  (println options)
   (when (seq options)
     (select-non-nil-keys options options-keys)))
 
