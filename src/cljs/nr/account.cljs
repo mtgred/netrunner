@@ -49,7 +49,7 @@
   (let [{:keys [pronouns bespoke-sounds language sounds default-format
                 lobby-sounds volume background custom-bg-url corp-card-sleeve runner-card-sleeve card-zoom
                 pin-zoom show-alt-art card-resolution pass-on-rez
-                player-stats-icons stacked-cards ghost-trojans
+                player-stats-icons stacked-cards ghost-trojans prizes
                 display-encounter-info sides-overlap log-timestamps
                 runner-board-order log-width log-top log-player-highlight
                 blocked-users alt-arts gamestats deckstats disable-websockets]} @s]
@@ -524,7 +524,7 @@
            [:select {:value (:corp-card-sleeve @s "nsg")
                      :on-change #(swap! s assoc :corp-card-sleeve (.. % -target -value))}
             (doall
-              (for [[k v] (card-backs/card-backs-for-side :corp)]
+              (for [[k v] (card-backs/card-backs-for-side :corp (-> @s :prizes :card-backs))]
                 [:option {:value k :key k}
                  (tr [(keyword (str "card-backs_" k)) (:name v)])]))]
 
@@ -533,7 +533,7 @@
            [:select {:value (:runner-card-sleeve @s "nsg")
                      :on-change #(swap! s assoc :runner-card-sleeve (.. % -target -value))}
             (doall
-              (for [[k v] (card-backs/card-backs-for-side :runner)]
+              (for [[k v] (card-backs/card-backs-for-side :runner (-> @s :prizes :card-backs))]
                 [:option {:value k :key k}
                  (tr [(keyword (str "card-backs_" k)) (:name v)])]))]
            [:div "You can earn more card backs by placing well in select online tournaments. If you're an artist with art that you think would make for a good card back, please feel free to contact us"]]
@@ -670,7 +670,7 @@
                                  :lobby-sounds :volume :background :custom-bg-url :card-zoom
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
                                  :player-stats-icons :stacked-cards :ghost-trojans
-                                 :corp-card-sleeve :runner-card-sleeve
+                                 :corp-card-sleeve :runner-card-sleeve :prizes
                                  :display-encounter-info :sides-overlap :log-timestamps
                                  :runner-board-order :log-width :log-top :log-player-highlight
                                  :blocked-users :alt-arts :gamestats :deckstats :disable-websockets])

@@ -12,17 +12,21 @@
    ;; prizes for tournaments - these are assigned to individual players through the admin or TO panels
    :nbk-deep-dive {:description "You won something! Well done!"
                    :side :runner
-                   ;;:prize true
+                   :prize true
                    :name "Deep Dive (nbk)"
                    :file "nbk-deep-dive"}})
 
-(defn card-backs-for-side [side] ;; unlocked]
+(defn just-prizes []
+  (into (sorted-map-by (fn [a b] (compare (:name a) (:name b))))
+        (filter (fn [[_ v]] (:prize v)) card-backs)))
+
+(defn card-backs-for-side [side unlocked]
   ;; TODO - system for unlocking these
-  (let [unlocked #{}]
-    (into {} (filter (fn [[k v]]
-                       (and
-                         ;; it either has no specified side, or matches the input side
-                         (or (not (:side v)) (= side (:side v)))
-                         ;; it's either not a prize, or it's a prize that we own
-                         (not (:prize v))))
-                     card-backs))))
+  (into {} (filter (fn [[k v]]
+                     (and
+                       ;; it either has no specified side, or matches the input side
+                       (or (not (:side v)) (= side (:side v)))
+                       ;; it's either not a prize, or it's a prize that we own
+                       (or (not (:prize v))
+                           (contains? unlocked k))))
+                   card-backs)))

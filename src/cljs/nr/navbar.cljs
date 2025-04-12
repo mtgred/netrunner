@@ -51,6 +51,11 @@
     :route "/users"
     :show? #(or (:isadmin (:user %))
                 (:ismoderator (:user %)))}
+   {:title (tr [:nav_users "Prizes"])
+    :cls "prizes"
+    :route "/prizes"
+    :show? #(or (:isadmin (:user %))
+                (:ismoderator (:user %)))}
    {:title (tr [:nav_features "Features"])
     :cls "features"
     :route "/features"
