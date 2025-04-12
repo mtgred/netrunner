@@ -388,7 +388,7 @@ game_abilities = 能力
 
 game_actions = 操作
 
-game_agenda-count = agenda-point 议案分数
+game_agenda-count = {$agenda-point} 议案分数
 
 game_approach-ice = 接驳防火墙
 
