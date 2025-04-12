@@ -366,11 +366,14 @@
   [:alt-arts
    :background
    :card-resolution
+   :corp-card-sleeve
+   :runner-card-sleeve
    :language
    :pronouns
    :show-alt-art])
 
 (defn options-summary [options]
+  (println options)
   (when (seq options)
     (select-non-nil-keys options options-keys)))
 
