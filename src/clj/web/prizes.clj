@@ -19,7 +19,7 @@
   (response 200 {:message "ok"}))
 
 (defmethod ws/-msg-handler :prizes/load-user
-  prizes--fetch-user
+  prizes--load-user
   [{{db :system/db user :user} :ring-req
     {:keys [username] :as data} :?data
     uid :uid}]
