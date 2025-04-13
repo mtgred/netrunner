@@ -2,7 +2,7 @@
   (:require
    [game.core.card :refer [agenda? asset? event? has-subtype? hardware? resource? program? upgrade? ice? operation? identity? corp? runner?]]
    [game.core.commands :refer [lobby-command]]
-   [game.core.identities :refer [disable-identity]]
+   [game.core.identities :refer [disable-identity disable-card]]
    [game.core.initializing :refer [card-init make-card]]
    [game.core.hosting :refer [host]]
    [game.core.moving :refer [move]]
