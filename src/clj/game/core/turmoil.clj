@@ -112,21 +112,24 @@
 
 (defn- replace-hand [state side]
   (let [new-hand (mapv #(if (should-replace? :hand (count (get-in @state [side :hand])))
-                          (assoc (build-card (pick-replacement-card %)) :zone [:hand])
+                          (do (disable-card state side %)
+                              (assoc (build-card (pick-replacement-card %)) :zone [:hand]))
                           %)
                        (get-in @state [side :hand]))]
     (swap! state assoc-in [side :hand] new-hand)))
 
 (defn- replace-discard [state side]
   (let [new-discard (mapv #(if (should-replace? :discard)
-                             (assoc (build-card (pick-replacement-card %)) :zone [:discard] :seen (:seen %))
+                             (do (disable-card state side %)
+                                 (assoc (build-card (pick-replacement-card %)) :zone [:discard] :seen (:seen %)))
                              %)
                        (get-in @state [side :discard]))]
     (swap! state assoc-in [side :discard] new-discard)))
 
 (defn- replace-deck [state side]
   (let [new-deck (mapv #(if (should-replace? :deck)
-                          (assoc (build-card (pick-replacement-card %)) :zone [:deck])
+                          (do (disable-card state side %)
+                              (assoc (build-card (pick-replacement-card %)) :zone [:deck]))
                           %)
                        (get-in @state [side :deck]))]
     (swap! state assoc-in [side :deck] new-deck)))
