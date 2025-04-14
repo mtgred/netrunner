@@ -153,8 +153,11 @@
 
 (defn register-lingering-effect
   [state _ card ability]
+  (assert (contains? ability :type))
+  (assert (contains? ability :value))
   (let [ability (assoc
-                  (select-keys ability [:type :duration :req :value])
+                  (select-keys ability [:type :req :value])
+                  :duration (:duration ability true)
                   :card card
                   :lingering true
                   :uuid (uuid/v1))]
