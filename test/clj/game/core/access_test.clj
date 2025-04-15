@@ -173,6 +173,7 @@
               :runner {:hand ["The Maker's Eye"]}})
    (take-credits state :corp)
    (play-from-hand state :runner "The Maker's Eye")
+   (run-continue state)
    (core/access-bonus state :corp :total -1)
    (run-continue state)
    (click-prompt state :runner "No action")
