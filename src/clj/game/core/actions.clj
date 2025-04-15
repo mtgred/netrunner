@@ -712,8 +712,8 @@
 (defn score
   "Score an agenda."
   ([state side eid card] (score state side eid card nil))
-  ([state side eid card {:keys [no-req ignore-turn]}]
-   (if-not (can-score? state side card {:no-req no-req :ignore-turn ignore-turn})
+  ([state side eid card {:keys [no-req ignore-turn ignore-adv]}]
+   (if-not (can-score? state side card {:no-req no-req :ignore-turn ignore-turn :ignore-adv ignore-adv})
      (effect-completed state side eid)
      (let [cost (score-additional-cost-bonus state side card)
            adv-cost (if (or no-req ignore-adv)
