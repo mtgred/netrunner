@@ -157,6 +157,7 @@
     (click-prompt state :runner "Yes")
     (is (:run @state) "Run has started")
     (run-continue state)
+    (run-continue state)
     (is (changed? [(:click (get-runner)) -2]
                   (click-prompt state :runner "Yes"))
         "Costs 2 clicks")
@@ -180,6 +181,7 @@
     (end-phase-12 state :runner)
     (click-prompt state :runner "Yes")
     (is (:run @state) "Run has started")
+    (run-continue state)
     (run-continue state)
     (click-prompt state :runner "Malandragem (rfg)")
     (click-prompt state :runner "Yes")
@@ -887,6 +889,7 @@
             omar (get-in @state [:runner :identity])]
         (click-card state :runner surveyor)
         (card-ability state :runner omar 0)
+        (run-continue state)
         (rez state :corp surveyor)
         (run-continue state)
         (card-ability state :runner (refresh boom) 0)
@@ -938,6 +941,7 @@
          boom (get-hardware state 0)]
      (click-card state :runner icew)
      (play-from-hand state :runner "Reboot")
+     (run-continue state)
      (rez state :corp icew)
      (run-continue state)
      (card-ability state :runner (refresh boom) 0)
@@ -964,6 +968,7 @@
          boom (get-hardware state 0)]
      (click-card state :runner icew)
      (play-from-hand state :runner "Reboot")
+     (run-continue state)
      (rez state :corp icew)
      (run-continue state)
      (card-ability state :runner (refresh boom) 0)
@@ -1398,6 +1403,7 @@
       (play-from-hand state :runner "Capybara")
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "HQ")
+      (run-continue state)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (is (not-empty (get-hardware state)) "Capybara installed")
@@ -1859,6 +1865,7 @@
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "R&D")
       (is (:run @state) "New run started")
+      (run-continue state)
       (is (= [:rd] (:server (:run @state))) "Running on R&D")
       (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
 
@@ -1872,6 +1879,7 @@
       (play-from-hand state :runner "Doppelgänger")
       (play-from-hand state :runner "The Maker's Eye")
       (run-continue state)
+      (run-continue state)
       (is (accessing state "Quandary"))
       (click-prompt state :runner "No action")
       (is (accessing state "Quandary"))
@@ -1882,6 +1890,7 @@
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "R&D")
       (is (:run @state) "New run started")
+      (run-continue state)
       (run-continue state)
       (is (= [:rd] (:server (:run @state))) "Running on R&D")
       (is (accessing state "Quandary"))
@@ -1906,6 +1915,7 @@
     (click-prompt state :runner "HQ")
     (is (:run @state) "New run started")
     (is (= [:hq] (:server (:run @state))) "Running on R&D")
+    (run-continue state)
     (run-continue state)))
 
 (deftest dorm-computer
@@ -1921,6 +1931,7 @@
                      (get-counters (refresh dorm) :power) -1]
             (card-ability state :runner dorm 0)
             (click-prompt state :runner "Server 1")
+            (run-continue state)
             (run-continue state)
             (is (= "Snare!" (:title (:card (prompt-map :corp)))))
             (is (waiting? state :runner) "Runner has prompt to wait for Snare!")
@@ -3685,6 +3696,7 @@
         (play-from-hand state :runner "Cold Read")
         (click-prompt state :runner "R&D")
         (run-continue state)
+        (run-continue state)
         (click-prompt state :runner "Yes")
         (click-card state :runner "Cold Read")
         (click-card state :runner "Cold Read")
@@ -4814,6 +4826,7 @@
     (click-card state :runner "Lucky Find")
     (click-prompt state :runner "Done")
     (run-continue state)
+    (run-continue state)
     (click-prompt state :runner "No action") ; First card
     (click-prompt state :runner "Steal") ; Second card, due to additional access
     (is (nil? (:run @state)) "Run is over")))
@@ -5233,6 +5246,7 @@
   (letfn [(laundry-archives [state]
             (play-from-hand state :runner "Dirty Laundry")
             (click-prompt state :runner "Archives")
+            (run-continue state)
             (run-continue state))]
     (testing "Installing Swift gives the runner +1[mu]"
       (do-game
@@ -5360,6 +5374,7 @@
       (play-from-hand state :runner "Sneakdoor Beta")
       (play-from-hand state :runner "The Gauntlet")
       (card-ability state :runner (get-program state 1) 0)
+      (run-continue state)
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
@@ -5408,6 +5423,7 @@
       (play-from-hand state :runner "The Gauntlet")
       (play-from-hand state :runner "Knifed")
       (click-prompt state :runner "HQ")
+      (run-continue state)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
@@ -5679,6 +5695,7 @@
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
       (run-continue state)
+      (run-continue state)
       (click-prompt state :runner "Top Hat") ; Top Hat activation
       (is (= 0 (count (:discard (get-runner)))) "No damage yet")
       (click-prompt state :runner "2") ; Top Hat - accessing Brainstorm
@@ -5687,6 +5704,7 @@
       ;; Stealing agenda
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
+      (run-continue state)
       (run-continue state)
       (click-prompt state :runner "Top Hat") ; Top Hat activation
       (click-prompt state :runner "1") ; Top Hat - accessing Accelerated Beta Test
