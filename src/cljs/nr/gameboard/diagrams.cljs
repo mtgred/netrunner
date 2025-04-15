@@ -67,8 +67,9 @@
       (bullet 0 (tr [:diagrams_run-timing_initiation-a "Runner declares a server"]))
       (bullet 1 (tr [:diagrams_run-timing_initiation-b "Runner gains Bad Publicity credits"]))
       (bullet 2 (tr [:diagrams_run-timing_initiation-c "Run formally begins - Run events fire"]))
-      (bullet 3 (tr [:diagrams_run-timing_initiation-d "Proceed to the outermost ice, if applicable, and begin the approach phase (6.9.2)"]))
-      (bullet 4 (tr [:diagrams_run-timing_initiation-e "Otherwise, proceed to the movement phase (6.9.4)"]))]
+      (bullet 3 (tr [:diagrams_run-timing_initiation-c-2 "Paid Ability Window. Corp may rez non-ice cards during this window."]))
+      (bullet 4 (tr [:diagrams_run-timing_initiation-d "Proceed to the outermost ice, if applicable, and begin the approach phase (6.9.2)"]))
+      (bullet 5 (tr [:diagrams_run-timing_initiation-e "Otherwise, proceed to the movement phase (6.9.4)"]))]
      [:section
       [:h4 (tr [:diagrams_run-timing_approach "6.9.2: Approach Ice Phase"])]
       (bullet 0 (tr [:diagrams_run-timing_approach-a "You are now approaching the ice. Approach events resolve"]))
