@@ -239,6 +239,7 @@
     (let [anansi (get-ice state :hq 0)]
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "HQ")
+      (run-continue state)
       (rez state :corp anansi)
       (is (changed? [(count (:hand (get-runner))) -3]
             (run-continue state))
@@ -256,6 +257,7 @@
       (play-from-hand state :runner "Capybara")
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "HQ")
+      (run-continue state)
       (rez state :corp anansi)
       (is (changed? [(count (:hand (get-runner))) 0]
             (run-continue state)
@@ -526,6 +528,7 @@
       (take-credits state :corp)
       (let [ansel (get-ice state :rd 0)]
         (play-from-hand state :runner "Trick Shot")
+        (run-continue state)
         (rez state :corp ansel)
         (run-continue state :encounter-ice)
         (fire-subs state (refresh ansel))
@@ -551,6 +554,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Run Amok")
     (click-prompt state :runner "HQ")
+    (run-continue state)
     (rez state :corp (get-ice state :hq 0))
     (run-continue state :encounter-ice)
     (card-subroutine state :corp (get-ice state :hq 0) 2)
@@ -930,6 +934,7 @@
           ath (get-ice state :hq 0)]
       (card-ability state :runner dorm 0)
       (click-prompt state :runner "HQ")
+      (run-continue state)
       (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")
       (rez state :corp ath)
       (run-continue state)
@@ -2357,7 +2362,7 @@
       (card-subroutine state :corp excal 0)
       (run-continue state :movement)
       (run-jack-out state)
-      (run-on state "R&D")
+      (run-on state "R&D" {:wait-at-initiation true})
       (is (not (:run @state)) "No run initiated")
       (is (= 3 (:click (get-runner))))
       (play-from-hand state :runner "Stimhack")
@@ -2875,6 +2880,7 @@
           tt (get-ice state :hq 0)]
       (card-ability state :runner dorm 0)
       (click-prompt state :runner "HQ")
+      (run-continue state)
       (is (= :approach-ice (:phase (get-run))) "Run is in approach phase")
       (rez state :corp tt)
       (run-continue state)
@@ -4369,6 +4375,7 @@
       (play-from-hand state :corp "An Offer You Can't Refuse")
       (click-prompt state :corp "HQ")
       (click-prompt state :runner "Yes")
+      (run-continue state)
       (rez state :corp klev)
       (click-prompt state :corp "Yes")
       (is (changed? [(:credit (get-runner)) 2]

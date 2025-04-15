@@ -5533,7 +5533,7 @@
         (is (= 5 (:credit (get-corp))) "Corp now has 5cr")
         (play-from-hand state :runner "Data Breach")
         (is (= 7 (:credit (get-corp))) "Corp gained 2cr from Sundew")
-        (run-continue state)
+        (run-continue-until state :success)
         (click-prompt state :runner "Yes")
         (is (= 7 (:credit (get-corp))) "Corp did not gain credits from second run"))))
 
@@ -5567,6 +5567,7 @@
         ; spend click on run event
         (play-from-hand state :runner "Out of the Ashes")
         (click-prompt state :runner "Archives")
+        (run-continue state)
         (is (= 7 (:credit (get-corp))) "Corp gained 2cr from Sundew")
         (run-continue-until state :success)
         (take-credits state :runner)
@@ -5591,6 +5592,7 @@
         (is (some? (prompt-map :runner)))
         (click-prompt state :runner "Yes")
         (click-prompt state :runner "Archives")
+        (run-continue state)
         (is (= 15 (:credit (get-corp))) "Corp did not gain credits from Ashes (no click spent)")
         (run-jack-out state)
         ; spend click on run
@@ -5611,6 +5613,7 @@
         ;; spend a click on a run through a card, not through click-run
         (play-from-hand state :runner "Dirty Laundry")
         (click-prompt state :runner "Server 1")
+        (run-continue state)
         (is (= 5 (:credit (get-corp))) "Corp did not gain 2cr from run on Sundew")
         (run-jack-out state)
         (take-credits state :runner)
@@ -5681,6 +5684,7 @@
     (play-from-hand state :runner "Light the Fire!")
     (card-ability state :runner (get-resource state 0) 0)
     (click-prompt state :runner "Server 1")
+    (run-continue state)
     (rez state :corp (get-content state :remote1 0))
     (run-jack-out state)
     (is (= nil (:reason @state)) "no win happened yet")
@@ -6152,6 +6156,7 @@
     (click-prompt state :runner "Yes")
     (is (= 2 (:credit (get-corp))) "Gained 1 credit from the first run on this turn")
     (run-continue state)
+    (run-continue state)
     (take-credits state :corp)
     ;; Normal run
     (is (= 2 (:credit (get-corp))))
@@ -6163,6 +6168,7 @@
     (is (= 6 (:credit (get-corp))))
     (play-from-hand state :runner "Dirty Laundry")
     (click-prompt state :runner "R&D")
+    (run-continue state)
     (is (= 7 (:credit (get-corp))))
     (run-jack-out state)
     (run-empty-server state "R&D")
@@ -6766,6 +6772,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Because I Can")
     (click-prompt state :runner "Server 1")
+    (run-continue state)
     (rez state :corp (get-ice state :remote1 0))
     (rez state :corp (get-content state :remote1 0))
     (run-continue state)

@@ -1627,12 +1627,21 @@
        [:h4 (tr [:game_current-phase "Current phase"]) ":" [:br] (get phase->title phase)])
 
      (cond
-       (:next-phase @run)
+       (and (:next-phase @run)
+            (not= "initiation" (:phase @run)))
        [cond-button
         (phase->title next-phase)
         (and next-phase
              (not (:no-action @run)))
         #(send-command "start-next-phase")]
+
+       (= "initiation" (:phase @run))
+       [cond-button
+        (str (tr [:game.continue-to "Continue to"]) " " (if (zero? (:position @run))
+                                                          (tr [:game.approach-server "Approach server"])
+                                                          (tr [:game.approach-ice "Approach ice"])))
+        (not= "runner" (:no-action @run))
+        #(send-command "continue")]
 
        (and (not next-phase)
             (not (zero? (:position @run)))

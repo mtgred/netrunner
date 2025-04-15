@@ -591,6 +591,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "R&D")
+      (run-continue state)
       (is (= (get-ice state :rd 0) (core/get-current-ice state)))
       (card-ability state :corp (:identity (get-corp)) 0)
       (click-prompt state :corp "HQ")
@@ -953,11 +954,12 @@
     (take-credits state :corp)
     (click-prompt state :corp "Event")
     (is (changed? [(:credit (get-corp)) 0]
-                  (play-from-hand state :runner "Direct Access")
-                  (click-prompt state :runner "Archives")
-                  (run-continue-until state :success)
-                  (click-prompt state :runner "No")
-                  (play-from-hand state :runner "Easy Mark"))
+          (play-from-hand state :runner "Direct Access")
+          (click-prompt state :runner "Archives")
+          (run-continue state)
+          (run-continue-until state :success)
+          (click-prompt state :runner "No")
+          (play-from-hand state :runner "Easy Mark"))
         "Didn't gain any credits from azmari")))
 
 (deftest barry-baz-wong-tri-maf-contact
@@ -1184,7 +1186,7 @@
         (is (changed? [(:credit (get-runner)) -1]
               (run-on state :hq))
             "Paid 1c to run on HQ")
-        (is (last-log-contains? state "spends [Click] and pays 1 [Credits] to make a run on HQ") "Should have correct log with credits price for the run")))
+        (is (last-n-log-contains? state 1 "spends [Click] and pays 1 [Credits] to make a run on HQ") "Should have correct log with credits price for the run")))
 
 (deftest earth-station-sea-headquarters-front-side-flipping-costs-1-click
       ;; Flipping costs 1 click
@@ -1229,7 +1231,7 @@
         (is (changed? [(:credit (get-runner)) -6]
               (run-on state :remote1))
             "Paid 6c to run on remote server")
-        (is (last-log-contains? state "spends [Click] and pays 6 [Credits] to make a run on Server 1") "Should have correct log with credits price for the run")))
+        (is (last-n-log-contains? state 1 "spends [Click] and pays 6 [Credits] to make a run on Server 1") "Should have correct log with credits price for the run")))
 
 (deftest earth-station-sea-headquarters-flip-side-flip-back-on-successful-hq-run
       ;; Flip back on successful HQ run
@@ -2890,6 +2892,7 @@
       (play-from-hand state :runner "Direct Access")
       (is (not (core/can-run-server? state "Server 1")))
       (click-prompt state :runner "R&D")
+      (run-continue state)
       (is (= :rd (get-in @state [:run :server 0])) "Running on remote vs RP")
       (run-continue state)
       (click-prompt state :runner "Yes")
@@ -2903,6 +2906,7 @@
       (click-prompt state :runner "Pay 2 [Credits] to trash")
       (play-from-hand state :runner "Marathon")
       (click-prompt state :runner "Server 3")
+      (run-continue state)
       (run-jack-out state)
       ;;can't run OTG or Rashida
       (is (not (core/can-run-server? state "Server 2")))
@@ -3420,6 +3424,7 @@
       (take-credits state :corp)
       (click-prompt state :runner "HQ")
       (card-ability state :runner (get-program state 0) 0)
+      (run-continue state)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (fire-subs state (refresh (get-ice state :hq 0)))
@@ -3875,7 +3880,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Direct Access")
       (click-prompt state :runner "Server 1")
-      (run-continue state)
+      (run-continue-until state :success)
       (click-prompt state :runner "Pay 2 [Credits] to trash")
       (click-prompt state :runner "Yes")
       (run-empty-server state "Server 2")
@@ -4526,6 +4531,7 @@
       (let [omar (get-in @state [:runner :identity])]
         (card-ability state :runner omar 0)
         (run-continue state)
+        (run-continue state)
         (click-prompt state :runner "HQ")
         (is (= [:hq] (get-in @state [:runner :register :successful-run])))
         (is (accessing state "Hedge Fund"))
@@ -4538,6 +4544,7 @@
         (run-empty-server state :rd)
         (is (= [:rd] (get-in @state [:runner :register :successful-run])))
         (card-ability state :runner omar 0)
+        (run-continue state)
         (run-continue state)
         (click-prompt state :runner "HQ")
         (is (= [:hq :rd] (get-in @state [:runner :register :successful-run]))))))
@@ -4554,6 +4561,7 @@
             ash (get-content state :hq 0)]
         (rez state :corp ash)
         (card-ability state :runner omar 0)
+        (run-continue state)
         (run-continue state)
         (click-prompt state :runner "HQ")
         (click-prompt state :corp "0")
@@ -4574,6 +4582,7 @@
         (rez state :corp cr)
         (card-ability state :runner omar 0)
         (run-continue state)
+        (run-continue state)
         (is (= (:cid cr) (-> (prompt-map :runner) :card :cid)))
         (is (empty? (-> (get-runner) :register :successful-run)))
         (is (= :archives (get-in @state [:run :server 0]))))))
@@ -4589,6 +4598,7 @@
             medium (get-program state 0)]
         (card-ability state :runner omar 0)
         (run-continue state)
+        (run-continue state)
         (click-prompt state :runner "R&D")
         (is (= 1 (get-counters (refresh medium) :virus))))))
 
@@ -4603,6 +4613,7 @@
             nerve (get-program state 0)]
         (card-ability state :runner omar 0)
         (run-continue state)
+        (run-continue state)
         (click-prompt state :runner "HQ")
         (is (= 1 (get-counters (refresh nerve) :virus))))))
 
@@ -4616,6 +4627,7 @@
       (let [omar (get-in @state [:runner :identity])
             frog (get-ice state :archives 0)]
         (card-ability state :runner omar 0)
+        (run-continue state)
         (rez state :corp frog)
         (run-continue state)
         (is (= [:archives] (:server (get-run))))
@@ -4993,13 +5005,12 @@
     (card-ability state :corp (get-in @state [:corp :identity]) 0)
     (click-prompt state :corp "Manual")
     (play-from-hand state :runner "Lucky Find")
-    (play-from-hand state :runner "The Maker's Eye")
+    (play-run-event state "The Maker's Eye" :rd)
     (is (= [:rd] (:server (get-run))))
     ; Don't allow a run-event in progress to be targeted #2963
     (card-ability state :corp (get-in @state [:corp :identity]) 1)
     (is (empty? (filter #(= "The Maker's Eye" (:title %)) (-> (get-corp) :prompt first :choices))) "No Maker's Eye choice")
     (click-prompt state :corp "Cancel")
-    (run-continue state)
     (is (accessing state "Quandary"))
     (click-prompt state :runner "No action")
     (is (accessing state "Quandary"))
@@ -5547,6 +5558,7 @@
     (let [tithe (get-ice state :remote1 0)]
       (take-credits state :corp)
       (play-from-hand state :runner "Trick Shot")
+      (run-continue state)
       (rez state :corp tithe)
       (is (= 2 (get-strength (refresh tithe))) "Tithe strength is buffed")
       (is (= 3 (count (:subroutines (refresh tithe)))) "Tithe has 3 subroutines")
@@ -5662,6 +5674,7 @@
       (play-from-hand state :runner "Direct Access")
       (click-prompt state :runner "HQ")
       (rez state :corp (get-ice state :hq 0))
+      (run-continue state)
       (run-continue state)
       (run-continue state)
       (is (zero? (count (:discard (get-runner)))) "Runner takes no damage")

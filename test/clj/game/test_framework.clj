@@ -619,19 +619,24 @@
 
 ;;; Run functions
 (defn run-on-impl
-  [state server]
+  [state server {:keys [wait-at-initiation]}]
   (let [run (:run @state)]
     (ensure-no-prompts state)
     (is' (not run) "There is no existing run")
     (is' (pos? (get-in @state [:runner :click])) "Runner can make a run")
     (when (and (not run) (pos? (get-in @state [:runner :click])))
       (core/process-action "run" state :runner {:server server})
+      (when-not wait-at-initiation
+        (core/process-action "continue" state :corp nil)
+        (when-not (:no-action run)
+          (core/process-action "continue" state :runner nil)))
       true)))
 
 (defmacro run-on
   "Start run on specified server."
-  [state server]
-  `(error-wrapper (run-on-impl ~state ~server)))
+  ([state server] `(run-on ~state ~server {}))
+  ([state server args]
+   `(error-wrapper (run-on-impl ~state ~server ~args))))
 
 (defn run-next-phase-impl
   [state]
@@ -782,7 +787,7 @@
     (is' (= [server] (get-in @state [:run :server])) "Correct server is run")
     (when (and (:run @state)
                (= [server] (get-in @state [:run :server]))
-               (run-continue state))
+               (run-continue-until state :success))
       (is' (seq (get-in @state [:runner :prompt])) "A prompt is shown")
       (is' (true? (get-in @state [:run :successful])) "Run is marked successful"))))
 
@@ -1147,7 +1152,7 @@
            (play-from-hand state :runner r)))
        ;; runner should have the default click/credit count (- 1 click for the run)
        (run-on state server-key)
-       (run-continue state :encounter-ice)
+       (run-continue-until state :encounter-ice)
        state))))
 
 (defn subroutine-test
