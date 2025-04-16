@@ -181,7 +181,7 @@
                                                          (trash-cards state side eid to-be-trashed {:unpreventable true :game-trash true})))}
                                          card nil)))}})
 
-(defcard "Âu Cơ"
+(defcard "AU Co.: The Gold Standard in Clones"
   (let [abi {:msg (msg "place 1 power counter on itself")
              :label "Manually place 1 power counter"
              :once-per-instance true
@@ -519,7 +519,7 @@
              :effect (effect (gain-credits :corp eid 2))
              :msg (msg "gain 2 [Credits] from " (:card-target card))}]})
 
-(defcard "Barry \"Baz\" Wong"
+(defcard "Barry \"Baz\" Wong: Tri-Maf Veteran"
   {:events [{:async true
              :prompt "Install a resource or piece of hardware"
              :event :rez
@@ -534,7 +534,7 @@
                                       (runner-can-pay-and-install? state side eid target)))}
              :effect (effect (runner-install (assoc eid :source card) target {:msg-keys {:install-source card}}))}]})
 
-(defcard "BANGUN"
+(defcard "BANGUN: When Disaster Strikes"
   ;; todo - this technically doesn't match the id, but it's good enough for online play. Maybe somebody can tweak it in a few years.
   {:abilities [{:label "Manually turn an agenda faceup"
 	        :choices {:req (req (and (agenda? target)
@@ -655,7 +655,7 @@
 (defcard "Cybernetics Division: Humanity Upgraded"
   {:static-abilities [(hand-size+ -1)]})
 
-(defcard "Dewi Subrotoputri"
+(defcard "Dewi Subrotoputri: Pedagogical Dhalang"
   (let [flip-effect {:effect (effect (update! (if (:flipped card)
                                                 (assoc card
                                                        :flipped false
@@ -678,7 +678,7 @@
                                                            (wait-for
                                                              (draw state :runner 1)
                                                              (system-msg state side
-                                                                         "draws 1 card and flips [their] identity")
+                                                                         "draws 1 card and flips [their] identity to Dewi Subrotoputri: Pedagogical Dhalang")
                                                              (continue-ability state side flip-effect card targets))
                                                            (effect-completed state side eid))
                                                          (if (zero? (available-mu state))
@@ -686,7 +686,7 @@
                                                              (gain-credits state :runner 1)
                                                              (system-msg
                                                                state side
-                                                               "gain 1 [Credits] and flips [their] identity")
+                                                               "gain 1 [Credits] and flips [their] identity to Dewi Subrotoputri: Shadow Guide")
                                                              (continue-ability state :runner flip-effect card nil))
                                                            (effect-completed state side eid))))}}}]
     {:events [{:event :pre-first-turn
@@ -1413,7 +1413,7 @@
     {:events [(assoc leela :event :agenda-scored)
               (assoc leela :event :agenda-stolen)]}))
 
-(defcard "LEO Construction"
+(defcard "LEO Construction: Labor Solutions"
   {:abilities [{:cost [(->c :bioroid-run-server 1)]
                 :once :per-turn
                 :label "end the run"
@@ -1443,7 +1443,7 @@
              :async true
              :effect (effect (gain-credits :runner eid 2))}]})
 
-(defcard "Magdalene Keino-Chemutai"
+(defcard "Magdalene Keino-Chemutai: Cryptarchitect"
   {:events [{:event :runner-discard-to-hand-size
              :async true
              :effect (req (let [installable (filterv (fn [c]
@@ -1596,7 +1596,7 @@
                               :effect (effect (effect-completed eid))}
                              card nil)))}]})
 
-(defcard "MuslihaT"
+(defcard "MuslihaT: Multifarious Marketeer"
   {:events [{:event :runner-turn-begins
              :req (req (seq (:deck runner)))
              :msg (msg "look at the top card of the stack")
@@ -1729,7 +1729,7 @@
                              :effect (effect (draw :corp eid 1))}])
                           (effect-completed state side eid))))}]})
 
-(defcard "Nebula Talent Management"
+(defcard "Nebula Talent Management: Making Stars"
   (let [flip-effect
         {:effect (effect (update! (if (:flipped card)
                                     (assoc card
@@ -1750,14 +1750,14 @@
               {:event :corp-turn-ends
                :req (req (and (not (no-event? state side :play-operation))
                               (not (:flipped card))))
-               :msg (msg "flip [their] identity and gain 1 [Credits]")
+               :msg (msg "flip [their] identity to Gemilang Arena: Burning Bright and gain 1 [Credits]")
                :async true
                :effect (req (wait-for (gain-credits state side 1)
                                       (continue-ability state side flip-effect card nil)))}
               {:event :successful-run
                :req (req (and (or (= :rd (target-server context)) (= :hq (target-server context)))
                               (:flipped card)))
-               :msg (msg "flip [their] identity")
+               :msg (msg "flip [their] identity to Nebula Talent Management: Making Stars")
                :async true
                :effect (req (continue-ability state side flip-effect card targets))}
               {:event :play-operation-resolved
@@ -2046,7 +2046,7 @@
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
 
-(defcard "Poétrï Luxury Brands"
+(defcard "Poétrï Luxury Brands: All the Rage"
   (let [remote-choice
         (fn [chosen]
           {:async true
@@ -2105,7 +2105,7 @@
              :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
                                     (effect-completed eid))}]})
 
-(defcard "PT Untaian"
+(defcard "PT Untaian: Life's Building Blocks"
   {:interactive (req true)
    :events [{:event :corp-turn-ends
              :interactive (req true)
@@ -2165,7 +2165,7 @@
                                   :req (req (same-card? ice target))
                                   :value "Code Gate"})))}]})
 
-(defcard "Ryō \"Phoenix\" Ōno"
+(defcard "Ryō \"Phoenix\" Ōno: Out of the Ashes"
   {:events [{:event :successful-run
              :req (req (letfn [(valid-ctx? [[ctx]] (pos? (or (:subroutines-fired ctx) 0)))]
                          (and (valid-ctx? [context])
@@ -2620,7 +2620,7 @@
   ;; No special implementation
   {})
 
-(defcard "The Zwicky Group"
+(defcard "The Zwicky Group: Invisible Hands"
   {:events [{:event :corp-credit-gain
              :async true
              :req (req (letfn [(valid-ctx? [[ctx]]
@@ -2699,7 +2699,7 @@
              :async true
              :effect (effect (add-counter eid (:card context) :agenda 1 nil))}]})
 
-(defcard "Topan" ;;TODO - final card name will have the tagline on it
+(defcard "Topan: Ormas Leader"
   (letfn [(installable? [state side eid target]
             (and (in-hand*? state target)
                  (or (hardware? target)

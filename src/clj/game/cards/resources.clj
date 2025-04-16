@@ -3012,7 +3012,7 @@
                 :async true
                 :effect (effect (make-run eid target card))}]})
 
-(defcard "Rent-Reducing Rioters"
+(defcard "Rent Rioters"
   {:abilities [{:action true
                 :cost [(->c :click 3) (->c :trash-can)]
                 :keep-menu-open :while-clicks-left

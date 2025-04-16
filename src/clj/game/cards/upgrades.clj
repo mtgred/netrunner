@@ -1213,7 +1213,7 @@
                 :async true
                 :effect (effect (purge eid))}]})
 
-(defcard "Mercia B4ll4rd"
+(defcard "Mercia B4LL4RD"
   {:events [{:event :corp-action-phase-ends
              :req (req (seq (:hand corp)))
              :prompt "Install an ice, paying 1 [Credits] less"

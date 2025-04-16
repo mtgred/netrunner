@@ -204,7 +204,7 @@
   (do-game
     (new-game {:corp {:hand ["Anemone" "IPO"]
                       :deck ["Hedge Fund" "Ice Wall" "NGO Front"]
-                      :id "Âu Cơ"}})
+                      :id "Au Co.: The Gold Standard in Clones"}})
     (play-from-hand state :corp "Anemone" "HQ")
     (take-credits state :corp)
     (run-on state :hq)
@@ -223,7 +223,7 @@
     (new-game {:corp {:hand ["Cohort Guidance Program" "IPO" "Bladderwort"]
                       :credits 3
                       :deck [(qty "Restructure" 5)]
-                      :id "Âu Cơ"}})
+                      :id "Au Co.: The Gold Standard in Clones"}})
     (play-from-hand state :corp "Cohort Guidance Program" "New remote")
     (play-from-hand state :corp "Bladderwort" "New remote")
     (take-credits state :corp)
@@ -245,7 +245,8 @@
 
 (deftest au-co-works-with-john-bautista
   (do-game
-    (new-game {:corp {:hand ["Phật Gioan Baotixita"] :deck ["Hostile Takeover"]:id "Âu Cơ"}
+    (new-game {:corp {:hand ["Phật Gioan Baotixita"] :deck ["Hostile Takeover"]
+                      :id "Au Co.: The Gold Standard in Clones"}
                :runner {:hand ["Sure Gamble"]}})
     (play-from-hand state :corp "Phật Gioan Baotixita" "New remote")
     (rez state :corp (get-content state :remote1 0))
@@ -966,7 +967,7 @@
   (do-game
     (new-game
       {:corp {:hand ["Vanilla"]}
-       :runner {:id "Barry \"Baz\" Wong" :hand ["Cyberfeeder"]}})
+       :runner {:id "Barry \"Baz\" Wong: Tri-Maf Veteran" :hand ["Cyberfeeder"]}})
     (play-from-hand state :corp "Vanilla" "HQ")
     (take-credits state :corp)
     (rez state :corp (get-ice state :hq 0))
@@ -996,7 +997,7 @@
 (deftest bangun
   (do-game
     (new-game {:runner {:hand [(qty "Sure Gamble" 3)]}
-               :corp {:id "BANGUN" :hand ["Hostile Takeover"]}})
+               :corp {:id "BANGUN: When Disaster Strikes" :hand ["Hostile Takeover"]}})
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (click-prompt state :corp "Yes")
     (is (:seen (get-content state :remote1 0)) "HT is seen")
@@ -1010,7 +1011,7 @@
 (deftest bangun-archives
   (do-game
     (new-game {:runner {:hand [(qty "Sure Gamble" 3)]}
-               :corp {:id "BANGUN" :discard ["Hostile Takeover"]}})
+               :corp {:id "BANGUN: When Disaster Strikes" :discard ["Hostile Takeover"]}})
     (take-credits state :corp)
     (run-empty-server state :archives)
     (click-prompt state :runner "Steal")
@@ -1020,7 +1021,7 @@
 (deftest bangun-normal-case
   (do-game
     (new-game {:runner {:hand [(qty "Sure Gamble" 3)]}
-               :corp {:id "BANGUN" :hand ["Hostile Takeover"]}})
+               :corp {:id "BANGUN: When Disaster Strikes" :hand ["Hostile Takeover"]}})
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (click-prompt state :corp "No")
     (take-credits state :corp)
@@ -1156,7 +1157,7 @@
 
 (deftest dewi-flippy
   (do-game
-    (new-game {:runner {:id "Dewi Subrotoputri"
+    (new-game {:runner {:id "Dewi Subrotoputri: Pedagogical Dhalang"
                         :hand ["Fermenter" "Mayfly" "Marjanah"]
                         :deck [(qty "Sure Gamble" 15)]}})
     (take-credits state :corp)
@@ -3229,7 +3230,7 @@
 
 (deftest leo-construction
   (do-game
-    (new-game {:corp {:id "LEO Construction"
+    (new-game {:corp {:id "LEO Construction: Labor Solutions"
                       :hand ["Eli 1.0" "Project Atlas"]}})
     (play-from-hand state :corp "Eli 1.0" "R&D")
     (rez state :corp (get-ice state :rd 0))
@@ -3318,7 +3319,7 @@
 
 (deftest magdalene-keino-chemutai-test
   (do-game
-    (new-game {:runner {:id "Magdalene Keino-Chemutai"
+    (new-game {:runner {:id "Magdalene Keino-Chemutai: Cryptarchitect"
                         :hand ["Corroder" (qty "Sure Gamble" 5)]}})
     (take-credits state :corp)
     (take-credits state :runner)
@@ -3716,7 +3717,7 @@
 
 (deftest muslihat-draw
   (do-game
-    (new-game {:runner {:id "MuslihaT"
+    (new-game {:runner {:id "MuslihaT: Multifarious Marketeer"
                         :hand []
                         :deck ["Dirty Laundry"]}})
     (take-credits state :corp)
@@ -3725,7 +3726,7 @@
 
 (deftest muslihat-no-draw
   (do-game
-    (new-game {:runner {:id "MuslihaT"
+    (new-game {:runner {:id "MuslihaT: Multifarious Marketeer"
                         :hand []
                         :deck ["Dirty Laundry" "Jailbreak" "Marjanah"]}})
     (take-credits state :corp)
@@ -4047,7 +4048,7 @@
 
 (deftest nebula-talent-management-flippy
   (do-game
-    (new-game {:corp {:id "Nebula Talent Management"
+    (new-game {:corp {:id "Nebula Talent Management: Making Stars"
                       :hand [(qty "Beanstalk Royalties" 4) "Hedge Fund"]
                       :deck []}})
     (play-from-hand state :corp "Beanstalk Royalties")
@@ -4642,7 +4643,7 @@
 
 (deftest poetri-luxury-brands-score
   (do-game
-    (new-game {:corp {:id "Poétrï Luxury Brands"
+    (new-game {:corp {:id "Poétrï Luxury Brands: All the Rage"
                       :hand ["Hostile Takeover"]
                       :deck ["Archer" "Enigma" "Vanilla"]}})
     (play-and-score state "Hostile Takeover")
@@ -4652,7 +4653,7 @@
 
 (deftest poetri-luxury-brands-steal
   (do-game
-    (new-game {:corp {:id "Poétrï Luxury Brands"
+    (new-game {:corp {:id "Poétrï Luxury Brands: All the Rage"
                       :hand ["PAD Campaign"]
                       :deck ["Hostile Takeover"]}})
     (take-credits state :corp)
@@ -4686,7 +4687,7 @@
 
 (deftest pt-untaian-adv
   (do-game
-    (new-game {:corp {:id "PT Untaian"
+    (new-game {:corp {:id "PT Untaian: Life's Building Blocks"
                       :hand [(qty "Hedge Fund" 3) "Project Atlas"]}})
     (play-from-hand state :corp "Project Atlas" "New remote")
     (take-credits state :corp)
@@ -4697,7 +4698,7 @@
 
 (deftest pt-untaian-decline
   (do-game
-    (new-game {:corp {:id "PT Untaian"
+    (new-game {:corp {:id "PT Untaian: Life's Building Blocks"
                       :hand [(qty "Hedge Fund" 3) "Project Atlas"]}})
     (play-from-hand state :corp "Project Atlas" "New remote")
     (take-credits state :corp)
@@ -4708,7 +4709,7 @@
 
 (deftest pt-untaian-do-nothing-ncigs
   (do-game
-    (new-game {:corp {:id "PT Untaian"
+    (new-game {:corp {:id "PT Untaian: Life's Building Blocks"
                       :hand [(qty "Hedge Fund" 3)]}})
     (is (changed? [(:credit (get-corp)) 3]
           (take-credits state :corp)
@@ -4717,7 +4718,7 @@
 
 (deftest pt-untaian-hand-size
   (do-game
-    (new-game {:corp {:id "PT Untaian"
+    (new-game {:corp {:id "PT Untaian: Life's Building Blocks"
                       :hand [(qty "Hedge Fund" (+ 3 1))]}})
     (take-credits state :corp)
     (is (no-prompt? state :corp))))
@@ -4842,7 +4843,7 @@
 
 (deftest ryo-phoenix-oro
   (do-game
-    (subroutine-test "Neural Katana" 0 {:runner {:id "Ryō \"Phoenix\" Ōno" :hand 5} :corp {:hand ["IPO" "Hedge Fund"]}})
+    (subroutine-test "Neural Katana" 0 {:runner {:id "Ryō \"Phoenix\" Ōno: Out of the Ashes" :hand 5} :corp {:hand ["IPO" "Hedge Fund"]}})
     (run-continue-until state :success)
     (click-card state :corp "IPO")
     (is (= 6 (:credit (get-runner))) "Gained 1c")
@@ -5195,7 +5196,7 @@
 
 (deftest synapse-global-test
   (do-game
-    (new-game {:corp {:id "Synapse Global"
+    (new-game {:corp {:id "Synapse Global: Faster than Thought"
                       :hand ["Ice Wall"]}})
     (core/gain state :runner :tag 1)
     (is (changed? [(:credit (get-corp)) +2]
@@ -5206,7 +5207,7 @@
 
 (deftest synapse-global-install
   (do-game
-    (new-game {:corp {:id "Synapse Global"
+    (new-game {:corp {:id "Synapse Global: Faster than Thought"
                       :hand ["Ice Wall"]}
                :runner {:hand ["Networking"]}})
     (core/gain state :runner :tag 1)
@@ -5387,7 +5388,7 @@
 
 (deftest the-zwicky-group-operation
   (do-game
-    (new-game {:corp {:id "The Zwicky Group"
+    (new-game {:corp {:id "The Zwicky Group: Invisible Hands"
                       :hand [(qty "Predictive Planogram" 3)]
                       :deck [(qty "Hedge Fund" 10)]}})
     (play-from-hand state :corp "Predictive Planogram")
@@ -5404,7 +5405,7 @@
 
 (deftest the-zwicky-group-agenda
   (do-game
-    (new-game {:corp {:id "The Zwicky Group"
+    (new-game {:corp {:id "The Zwicky Group: Invisible Hands"
                       :hand ["Orbital Superiority" (qty "Offworld Office" 2)]
                       :deck [(qty "Hedge Fund" 10)]}})
     (play-and-score state "Orbital Superiority")
@@ -5418,7 +5419,7 @@
 
 (deftest the-zwicky-group-plutus
   (do-game
-    (new-game {:corp {:id "The Zwicky Group"
+    (new-game {:corp {:id "The Zwicky Group: Invisible Hands"
                       :credits 10
                       :score-area ["Hostile Takeover"]
                       :hand ["Hedge Fund" "Plutus"]
@@ -5569,7 +5570,7 @@
 
 (deftest topan-basic-test
   (do-game
-    (new-game {:runner {:id "Topan"
+    (new-game {:runner {:id "Topan: Ormas Leader"
                         :hand ["Earthrise Hotel" "Steelskin Scarring"] :deck [(qty "Sure Gamble" 10)]}})
     (take-credits state :corp)
     (card-ability state :runner (:identity (get-runner)) 0)

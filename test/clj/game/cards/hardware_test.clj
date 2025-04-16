@@ -1795,13 +1795,13 @@
     (let [adpt (first (:hosted (get-hardware state 0)))]
       (is (= 8 (get-strength adpt)) "Adept at 8 strength hosted"))))
 
-(deftest diplomat-breach
+(deftest detente-breach
   (do-game
-    (new-game {:runner {:hand ["Diplomat"]
+    (new-game {:runner {:hand ["Detente"]
                         :deck [(qty "Easy Mark" 3)]}
                :corp {:hand [(qty "IPO" 2)]}})
     (take-credits state :corp)
-    (play-from-hand state :runner "Diplomat")
+    (play-from-hand state :runner "Detente")
     (run-empty-server state :archives)
     (run-empty-server state :hq)
     (click-prompt state :runner "Yes")

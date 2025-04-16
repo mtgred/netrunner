@@ -754,6 +754,46 @@
              :msg "gain 1 [Credits]"
              :effect (effect (gain-credits eid 1))}]})
 
+(defcard "Detente"
+  (let [return-cards
+        {:action true
+         :cost [(->c :click 1) (->c :hosted-to-hq 2)]
+         :label "Runner may access 1 card from HQ"
+         :msg :cost
+         :async true
+         :effect (req (continue-ability
+                        state :runner
+                        {:optional
+                         {:prompt "Access 1 card from HQ?"
+                          :waiting-prompt true
+                          :yes-ability {:msg (msg "access 1 card from HQ")
+                                        :async true
+                                        :effect (effect (access-n-cards eid [:hq] 1))}}}
+                        card nil))}]
+    {:static-abilities [(mu+ 1)]
+     :events [{:event :successful-run
+               :skippable true
+               :optional {:req (req
+                                 (let [valid-ctx? (fn [[ctx]] (-> ctx :server first (= :hq)))]
+                                   (and (valid-ctx? [context])
+                                        (first-event? state side :successful-run valid-ctx?)
+                                        (seq (:hand corp)))))
+                          :waiting-prompt true
+                          :prompt "Reveal and host a card from HQ (at random)"
+                          :yes-ability {:effect (req (let [target-card (first (shuffle (:hand corp)))]
+                                                       (system-msg state side
+                                                                   (str "uses Detente to reveal and host "
+                                                                        (:title target-card)
+                                                                        " from HQ"))
+                                                       (wait-for
+                                                         (reveal state :runner target-card)
+                                                         (host state side card
+                                                               (assoc target-card :seen true))
+                                                         (effect-completed state side eid))))
+                                        :async true}}}]
+     :abilities [return-cards]
+     :corp-abilities [(assoc return-cards :player :corp :display-side :corp)]}))
+
 (defcard "Devil Charm"
   {:events [{:event :encounter-ice
              :skippable true
@@ -782,46 +822,6 @@
                       {:type :breaker-strength
                        :req (req (same-card? target (first (:hosted card))))
                        :value 2}]})
-
-(defcard "Diplomat"
-  (let [return-cards
-        {:action true
-         :cost [(->c :click 1) (->c :hosted-to-hq 2)]
-         :label "Runner may access 1 card from HQ"
-         :msg :cost
-         :async true
-         :effect (req (continue-ability
-                        state :runner
-                        {:optional
-                         {:prompt "Access 1 card from HQ?"
-                          :waiting-prompt true
-                          :yes-ability {:msg (msg "access 1 card from HQ")
-                                        :async true
-                                        :effect (effect (access-n-cards eid [:hq] 1))}}}
-                        card nil))}]
-    {:static-abilities [(mu+ 1)]
-     :events [{:event :successful-run
-               :skippable true
-               :optional {:req (req
-                                 (let [valid-ctx? (fn [[ctx]] (-> ctx :server first (= :hq)))]
-                                   (and (valid-ctx? [context])
-                                        (first-event? state side :successful-run valid-ctx?)
-                                        (seq (:hand corp)))))
-                          :waiting-prompt true
-                          :prompt "Reveal and host a card from HQ (at random)"
-                          :yes-ability {:effect (req (let [target-card (first (shuffle (:hand corp)))]
-                                                       (system-msg state side
-                                                                   (str "uses Diplomat to reveal and host "
-                                                                        (:title target-card)
-                                                                        " from HQ"))
-                                                       (wait-for
-                                                         (reveal state :runner target-card)
-                                                         (host state side card
-                                                               (assoc target-card :seen true))
-                                                         (effect-completed state side eid))))
-                                        :async true}}}]
-     :abilities [return-cards]
-     :corp-abilities [(assoc return-cards :player :corp :display-side :corp)]}))
 
 (defcard "Docklands Pass"
   {:events [(breach-access-bonus

@@ -5608,16 +5608,16 @@
 
 (deftest rent-rioters-test
   (do-game
-    (new-game {:runner {:hand ["Rent-Reducing Rioters"]}})
+    (new-game {:runner {:hand ["Rent Rioters"]}})
     (take-credits state :corp)
-    (play-from-hand state :runner "Rent-Reducing Rioters")
+    (play-from-hand state :runner "Rent Rioters")
     (take-credits state :runner)
     (take-credits state :corp)
     (is (changed? [(:credit (get-runner)) 9
                    (:click (get-runner)) -3]
           (card-ability state :runner (get-resource state 0) 0))
         "Gained 9c")
-    (is (= ["Rent-Reducing Rioters"] (map :title (:discard (get-runner)))))))
+    (is (= ["Rent Rioters"] (map :title (:discard (get-runner)))))))
 
 (deftest rolodex
   ;; Rolodex - Full test
