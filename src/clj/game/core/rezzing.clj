@@ -208,9 +208,11 @@
   "Derez a number of corp cards."
   ([state side eid cards] (derez state side eid cards nil))
   ([state side eid cards {:keys [suppress-checkpoint no-event no-msg msg-keys] :as args}]
-   (let [cards (if (sequential? cards)
-                 (filterv #(and (get-card state %) (rezzed? %)) (flatten cards))
-                 [cards])]
+   (let [cards (vec (keep #(let [c (get-card state %)]
+                             (and (rezzed? c) c))
+                          (if (sequential? cards)
+                            (flatten cards)
+                            [cards])))]
      (if-not (seq cards)
        (effect-completed state side eid)
        (do (doseq [c cards]
