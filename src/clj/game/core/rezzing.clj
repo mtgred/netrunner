@@ -213,7 +213,6 @@
                           (if (sequential? cards)
                             (flatten cards)
                             [cards])))]
-     (println cards)
      (if-not (seq cards)
        (effect-completed state side eid)
        (do (doseq [c cards]
