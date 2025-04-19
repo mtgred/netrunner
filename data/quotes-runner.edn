@@ -115,8 +115,13 @@
  "Boris \"Syfr\" Kovac: Crafty Veteran"
  {"Default" ["They don't call me \"100% win rate on Jnet\" for nothing."]}
  "Captain Padma Isbister: Intrepid Explorer"
- {"Default" ["The sea is everything; its breath must remain pure and healthy."]
-  "Ob Superheavy Logistics: Extract. Export. Excel." ["What are you digging for out here in the Arctic Circle?"]}
+ {"Default" ["Nothing but us, the waves and the tell-tale signs of corporate exploitation."
+             "The sea is everything; its breath must remain pure and healthy."]
+  "Haas-Bioroid" ["Why does a business want to get away from it all? Do you want some quiet or do you want privacy?"]
+  "Jinteki" ["Are you sure it wasn't anything mechanical? Let's take a break and then take another look."]
+  "NBN" ["We can get the sub out; see if we can find a hole in their masking."]
+  "Ob Superheavy Logistics: Extract. Export. Excel." ["What are you digging for out here in the Arctic Circle?"]
+  "Weyland Consortium" ["Could I have some eggs and the sonar scan?"]}
  "Chaos Theory: Wünderkind"
  {"Default" ["Dino, gimme a feed. Let's make the tacos!"]
   "Haas-Bioroid" ["Dino! Dino! What kind of Bioroids will we stomp on today?"]
