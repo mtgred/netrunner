@@ -29,6 +29,7 @@
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
                      image-or-face map-longest render-icons render-message]]
    [nr.ws :as ws]
+   [jinteki.card-backs :as card-backs]
    [reagent.core :as r]))
 
 (declare stacked-card-view show-distinct-cards)
@@ -325,12 +326,28 @@
        (filter #(not (#{:hq :rd :archives} (first %))))
        (sort-by #(zone->sort-key (first %)))))
 
+(defn facedown-card-url
+  [side]
+  (let [my-side (:side @game-state)
+        side-key (keyword (lower-case side))
+        display-options (or (get-in @app-state [:options :card-back-display]) "them")
+        card-back (if (= side-key my-side)
+                    (or (get-in @game-state [my-side :user :options (if (= side-key :corp) :corp-card-sleeve :runner-card-sleeve)]) "nsg-card-back")
+                    (case display-options
+                      "them" (or (get-in @game-state [side-key :user :options (if (= side-key :corp) :corp-card-sleeve :runner-card-sleeve)]) "nsg-card-back")
+                      "me" (or (get-in @game-state [my-side :user :options (if (= side-key :corp) :corp-card-sleeve :runner-card-sleeve)]) "nsg-card-back")
+                      "ffg" "ffg-card-back"
+                      "nsg" "nsg-card-back"
+                      "nsg-card-back"))
+        maybe-image? (get-in card-backs/card-backs [(keyword card-back) :file])
+        s (lower-case side)]
+    (str "/img/card-backs/" s "/" maybe-image?  ".png")))
+
 (defn facedown-card
   "Image element of a facedown card"
   ([side] (facedown-card side [] nil))
   ([side class-list alt-alt-text]
-   (let [card-back (get-in @app-state [:options :card-back])
-         s (lower-case side)
+   (let [s (lower-case side)
          alt (if (nil? alt-alt-text)
                (str "Facedown " s " card")
                alt-alt-text)
@@ -339,7 +356,7 @@
                   (concat ["img" "card"])
                   (join ".")
                   keyword)]
-     [tag {:src (str "/img/" card-back "-" s ".png")
+     [tag {:src (facedown-card-url side)
            :alt alt}])))
 
 (defn sort-archives
@@ -1442,7 +1459,7 @@
                                                     :key (str (:cid card) "-" i "-" @mulliganed)}
                              [:div.flipper
                               [:div.card-back
-                               [:img.start-card {:src (str "/img/" card-back "-" (lower-case (:side @my-ident)) ".png")}]]
+                               [:img.start-card {:src (facedown-card-url (:side @my-ident))}]]
                               [:div.card-front
                                (when-let [url (image-url card)]
                                  [:div {:on-mouse-enter #(put-game-card-in-channel card zoom-channel)

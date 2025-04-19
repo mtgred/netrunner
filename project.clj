@@ -100,6 +100,7 @@
             "load-generator" ^{:doc "Performance test lobbies"} ["run" "-m" "tasks.load-generator/command"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
             "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]
+            "update-prizes" ^{:doc "Update prize information (card-backs, etc)"} ["run" "-m" "tasks.update-prizes/command"]
             "add-deck-to-all" ["run" "-m" "tasks.decks/add-for-all-users"]
             "rename-card" ["run" "-m" "tasks.card-rename/command"]
             "card-coverage" ["run" "-m" "tasks.card-coverage/test-coverage"]

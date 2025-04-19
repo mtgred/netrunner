@@ -23,11 +23,12 @@
    [web.pages :as pages]
    [web.stats :as stats]
    [web.tournament :as tournament]
+   [web.prizes :as prizes]
    [web.ws :as ws]))
 
 (add-encoder org.bson.types.ObjectId encode-str)
 
-(def paths ["" "chat" "cards" "deckbuilder" "play" "help" "account" "stats" "about" "tournament" "admin" "users" "features"])
+(def paths ["" "chat" "cards" "deckbuilder" "play" "help" "account" "stats" "about" "tournament" "admin" "users" "prizes" "features"])
 
 (defn base-routes []
   (ring/router
@@ -116,6 +117,8 @@
        ["/full/:gameid" {:get #'stats/fetch-replay}]]]
      ["/tournament-auth/:username" {:middleware [::auth ::tournament-auth ::forgery]
                                     :get #'tournament/auth}]
+     ["/prizes/:username" {:middleware [::auth ::tournament-auth ::forgery]
+                           :get #'prizes/auth}]
      ["/admin" {:middleware [::auth ::admin ::forgery]}
       ["/news"
        ["" {:post #'admin/news-create-handler}]

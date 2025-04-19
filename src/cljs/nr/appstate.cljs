@@ -52,7 +52,8 @@
              :user js-user
              :options (-> {:background (get-local-value "background" "worlds2020")
                            :custom-bg-url (get-local-value "custom_bg_url" "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
-                           :card-back (get-local-value "card-back" "nsg")
+                           :corp-card-sleeve (get-local-value "corp-card-sleeve" "nsg")
+                           :runner-card-sleeve (get-local-value "runner-card-sleeve" "nsg")
                            :card-zoom (get-local-value "card-zoom" "image")
                            :pin-zoom (= (get-local-value "pin-zoom" "false") "true")
                            :pronouns "none"

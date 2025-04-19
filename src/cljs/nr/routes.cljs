@@ -14,6 +14,7 @@
    [nr.lobby :refer [game-lobby]]
    [nr.stats :refer [stats]]
    [nr.tournament :refer [tournament]]
+   [nr.prizes :refer [prizes]]
    [nr.users :refer [users]]
    [reagent.core :as r]
    [reitit.frontend :as rf]
@@ -57,6 +58,8 @@
                 :view about}]
      ["/tournament" {:name :nav/tournament
                      :view tournament}]
+     ["/prizes" {:name :nav/prizes
+                 :view prizes}]
      ["/admin" {:name :nav/admin
                 :view admin}]
      ["/users" {:name :nav/users

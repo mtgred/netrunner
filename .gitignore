@@ -33,6 +33,7 @@ pom.xml
 /data/mwls.edn
 /data/sets.edn
 /data/img
+/data/card-backs.edn
 /.lein-failures
 
 config.edn
