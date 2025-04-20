@@ -147,7 +147,6 @@
                                   :position n
                                   :corp-auto-no-action false
                                   :phase :initiation
-                                  ;;:next-phase :initiation
                                   :eid eid
                                   :current-ice nil
                                   :events nil
@@ -166,10 +165,7 @@
                      (queue-event state :run {:server s
                                               :position n
                                               :cost-args cost-args})
-                     ;;(wait-for
                      (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-initiation)))))))))))
-;;                       (set-next-phase state (if (pos? (get-in @state [:run :position] 0)) :approach-ice :movement)))))))))))))
-
 
 (defmethod continue :initiation
   [state side _]

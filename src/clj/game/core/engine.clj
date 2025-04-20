@@ -328,7 +328,6 @@
   ([state side eid ability card payment-str]
    (when-not (get-in ability [:change-in-game-state :silent])
      (print-msg state side (assoc ability :msg "do nothing") card [] payment-str))
-   ;;(system-msg state side (str "uses " (:title card) " to do nothing")))
    (effect-completed state side eid)))
 
 (defn- change-in-game-state?

@@ -107,7 +107,6 @@
         evs (filterv (effect-pred state side eid []) evs)
         card-vals (mapv (fn [ev] {:card (:card ev) :value ((get-effect-value state side eid []) ev)}) evs)
         abs (filter #(= (->> % :value :prevents) key) card-vals)
-        ;;_ (println abs)
         playable? (filter #(let [card (or (:card %) (get-in % [:value :card]))
                                  prev (get-in % [:value])
                                  ability (get-in % [:value :ability])

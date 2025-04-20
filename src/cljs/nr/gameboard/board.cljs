@@ -180,7 +180,6 @@
           choices)))
 
 (defn send-play-command [{:keys [type zone] :as card} shift-key-held]
-;;  (js/console.log (str card))
   (if (and (= "discard" (first zone)) (:flashback-fake-in-hand card))
     (send-command "flashback" {:card (card-for-click card) :shift-key-held shift-key-held})
     (send-command "play" {:card (card-for-click card) :shift-key-held shift-key-held})))

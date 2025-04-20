@@ -562,7 +562,7 @@
        (do-play-ability state side eid {:ability ability
                                         :card card
                                         :ability-idx ability-idx
-                                        :tagets nil})))));;(assoc args :ability-idx ability-idx :ability ability))))))
+                                        :targets nil})))))
 
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."

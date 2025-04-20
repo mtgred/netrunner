@@ -69,10 +69,9 @@
                  (:corp-abilities tdef)
                  (:runner-abilities tdef))
            ;; Initialize the whole card
-           (do (card-init state side target {:resolve-effect false
-                                             :init-data true
-                                             :no-mu no-mu})
-               (println "inited card"))
+           (card-init state side target {:resolve-effect false
+                                         :init-data true
+                                         :no-mu no-mu})
            ;; Otherwise just register events and static abilities
            (do (register-default-events state side target)
                (register-static-abilities state side target)
