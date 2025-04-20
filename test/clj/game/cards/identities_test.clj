@@ -204,7 +204,7 @@
   (do-game
     (new-game {:corp {:hand ["Anemone" "IPO"]
                       :deck ["Hedge Fund" "Ice Wall" "NGO Front"]
-                      :id "Au Co.: The Gold Standard in Clones"}})
+                      :id "AU Co.: The Gold Standard in Clones"}})
     (play-from-hand state :corp "Anemone" "HQ")
     (take-credits state :corp)
     (run-on state :hq)
@@ -223,7 +223,7 @@
     (new-game {:corp {:hand ["Cohort Guidance Program" "IPO" "Bladderwort"]
                       :credits 3
                       :deck [(qty "Restructure" 5)]
-                      :id "Au Co.: The Gold Standard in Clones"}})
+                      :id "AU Co.: The Gold Standard in Clones"}})
     (play-from-hand state :corp "Cohort Guidance Program" "New remote")
     (play-from-hand state :corp "Bladderwort" "New remote")
     (take-credits state :corp)
@@ -246,7 +246,7 @@
 (deftest au-co-works-with-john-bautista
   (do-game
     (new-game {:corp {:hand ["Phật Gioan Baotixita"] :deck ["Hostile Takeover"]
-                      :id "Au Co.: The Gold Standard in Clones"}
+                      :id "AU Co.: The Gold Standard in Clones"}
                :runner {:hand ["Sure Gamble"]}})
     (play-from-hand state :corp "Phật Gioan Baotixita" "New remote")
     (rez state :corp (get-content state :remote1 0))
@@ -254,7 +254,7 @@
     (run-empty-server state :rd)
     (click-prompt state :runner "Steal")
     (is (= 0 (get-counters (:identity (get-corp)) :power)))
-    (click-prompt state :corp "Hosted power counter: Do 1 net damage")
+    (click-prompt state :corp "Do 1 net damage")
     (is (= 1 (get-counters (:identity (get-corp)) :power)))))
 
 (deftest acme-consulting-the-truth-you-need-tag-gain-when-rezzing-outermost-ice
@@ -4647,7 +4647,7 @@
                       :hand ["Hostile Takeover"]
                       :deck ["Archer" "Enigma" "Vanilla"]}})
     (play-and-score state "Hostile Takeover")
-    (click-prompts state :corp "Poétrï Luxury Brands" "Yes" "Install Archer, ignoring the install cost" "New remote")
+    (click-prompts state :corp "Poétrï Luxury Brands: All the Rage" "Yes" "Install Archer, ignoring the install cost" "New remote")
     (is (no-prompt? state :corp))
     (is (= 2 (count (:deck (get-corp)))))))
 

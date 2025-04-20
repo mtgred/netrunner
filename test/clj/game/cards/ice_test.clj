@@ -1116,6 +1116,35 @@
       (card-subroutine state :corp ba2 0)
       (is (= 3 (count (:discard (get-runner)))) "Runner suffered 2 net damage"))))
 
+
+(deftest biawak-discount
+  (do-game
+    (new-game {:corp {:score-area ["Project Atlas"]
+                      :credits 5
+                      :hand ["Biawak"]}})
+    (play-from-hand state :corp "Biawak" "HQ")
+    (rez state :corp (get-ice state :hq 0) {:expect-rez false})
+    (is (changed? [(:credit (get-corp)) -4]
+          (click-prompts state :corp "Biawak" "Project Atlas"))
+        "Paid 4 + atlas to rez")
+    (is (rezzed? (get-ice state :hq 0)) "No rezzed")))
+
+(deftest biawak-subs-tests
+  ;; trash program or etr
+  (do-game
+    (subroutine-test "Biawak" 0 nil {:rig ["Fermenter"] :disable true})
+    (click-prompt state :corp "Trash a program")
+    (click-card state :corp "Fermenter")
+    (is (= 1 (count (:discard (get-runner)))) (str "Trashed prog")))
+  ;; trash hardware or etr
+  (do-game
+    (subroutine-test "Biawak" 1 nil {:rig ["Kati Jones"] :disable true})
+    (click-prompt state :corp "Trash a resource")
+    (click-card state :corp "Kati Jones")
+    (is (= 1 (count (:discard (get-runner)))) (str "Trashed kati")))
+  ;; etr
+  (do-game (etr-sub "Biawak" 2)))
+
 (deftest blockchain-face-up-transactions
   ;; Face up transactions
   (do-game
@@ -6312,34 +6341,6 @@
       (fire-subs state (refresh pulse))
       (is (= ["End the run"] (prompt-buttons :runner))
           "Runner has no click left to spend"))))
-
-(deftest predator-discount
-  (do-game
-    (new-game {:corp {:score-area ["Project Atlas"]
-                      :credits 5
-                      :hand ["Predator"]}})
-    (play-from-hand state :corp "Predator" "HQ")
-    (rez state :corp (get-ice state :hq 0) {:expect-rez false})
-    (is (changed? [(:credit (get-corp)) -4]
-          (click-prompts state :corp "Predator" "Project Atlas"))
-        "Paid 4 + atlas to rez")
-    (is (rezzed? (get-ice state :hq 0)) "No rezzed")))
-
-(deftest predator-subs-tests
-  ;; trash program or etr
-  (do-game
-    (subroutine-test "Predator" 0 nil {:rig ["Fermenter"] :disable true})
-    (click-prompt state :corp "Trash a program")
-    (click-card state :corp "Fermenter")
-    (is (= 1 (count (:discard (get-runner)))) (str "Trashed prog")))
-  ;; trash hardware or etr
-  (do-game
-    (subroutine-test "Predator" 1 nil {:rig ["Kati Jones"] :disable true})
-    (click-prompt state :corp "Trash a resource")
-    (click-card state :corp "Kati Jones")
-    (is (= 1 (count (:discard (get-runner)))) (str "Trashed kati")))
-  ;; etr
-  (do-game (etr-sub "Predator" 2)))
 
 (deftest quicksand
   (do-game

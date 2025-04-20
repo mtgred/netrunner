@@ -4254,14 +4254,14 @@
     (let [tvm (get-content state :remote1 0)]
       (rez state :corp tvm)
       (take-credits state :corp)
-      (is (= (get-counters (refresh tvm) :power) 2))
+      (is (= (get-counters (refresh tvm) :power) 1))
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (= (get-counters (refresh tvm) :power) 3))
+      (is (= (get-counters (refresh tvm) :power) 2))
       (take-credits state :runner)
       (play-and-score state "Hostile Takeover")
       (click-prompt state :corp "Phật Gioan Baotixita")
-      (click-prompt state :corp "3 hosted power counters: Do 3 net damage")
+      (click-prompt state :corp "2 hosted power counters: Do 3 net damage")
       (is (= 3 (count (:discard (get-runner)))) "Took 3 net"))))
 
 (deftest plan-b
