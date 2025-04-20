@@ -15,17 +15,19 @@
     [tasks.index :refer [create-indexes]]
     [tasks.setup :refer [connect disconnect]]))
 
-(def ^:const edn-base-url "https://raw.githubusercontent.com/NoahTheDuke/netrunner-data/master/edn/raw_data.edn")
 (def ^:const jnet-image-url "https://card-images.netrunnerdb.com/v1/large/")
 (def ^:const jnet-image-url-v2 "https://card-images.netrunnerdb.com/v2/large/")
+(defn- build-edn-url
+  [repo branch]
+  (str "https://raw.githubusercontent.com/" repo "/" branch "/edn/raw_data.edn"))
 
 (defn download-edn-data
-  [localpath]
+  [localpath repo branch]
   (if localpath
     (-> (str localpath "/edn/raw_data.edn")
         (slurp)
         (edn/read-string))
-    (let [{:keys [status body error]} @(http/get edn-base-url)]
+    (let [{:keys [status body error]} @(http/get (build-edn-url repo branch))]
       (cond
         error (throw (Exception. (str "Failed to download file " error)))
         (= 200 status) (edn/read-string body)
@@ -105,8 +107,8 @@
              {:upsert true}))
 
 (defn fetch-data
-  [{:keys [card-images db local]}]
-  (let [edn (dissoc (download-edn-data local) :promos)]
+  [{:keys [card-images db local repo branch]}]
+  (let [edn (dissoc (download-edn-data local repo branch) :promos)]
     (doseq [[k data] edn
             :let [filename (str "data/" (name k) ".edn")]]
       (write-to-file filename data)
