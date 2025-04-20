@@ -696,7 +696,7 @@
   (let [ev {:silent (req true)
             :async true
             :effect (req (add-counter state side eid card :power 1))}]
-    {:events [{:silent (req true)
+    {:events [{:interactive (req true)
                :async true
                :effect (req (add-counter state side eid card :power 1))
                :event :runner-trash
@@ -704,7 +704,7 @@
                            (and (ctx-valid? [context])
                                 (first-event? state side :runner-trash ctx-valid?)
                                 (no-event? state :runner :agenda-stolen))))}
-              {:silent (req true)
+              {:interactive (req true)
                :effect (req (add-counter state side eid card :power 1))
                :async true
                :event :agenda-stolen
@@ -712,6 +712,7 @@
                            (and (no-event? state side :runner-trash ctx-valid?)
                                 (first-event? state :runner :agenda-stolen))))}
               {:event :runner-turn-ends
+               :interactive (req true)
                :skippable true
                :optional {:req (req (>= (get-counters card :power) 2))
                           :prompt "Sabotage 3?"

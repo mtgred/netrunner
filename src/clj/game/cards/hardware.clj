@@ -1535,9 +1535,9 @@
                          (= :hq (target-server context))
                          (some rezzed? (all-installed state :corp))))
              :choices {:card (every-pred installed? corp? rezzed? ice?)}
-             :msg (msg "derez " (card-str state target))
              :cost [(->c :trash-can 1)]
-             :effect (req (derez state side target))}]})
+             :async true
+             :effect (req (derez state side eid target))}]})
 
 (defcard "Marrow"
   {:static-abilities [(mu+ 1)

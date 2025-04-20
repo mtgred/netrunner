@@ -1754,8 +1754,8 @@
 
 (defcard "Measured Response"
   {:on-play (choose-one-helper
-              {:req (req (last-turn? state :runner :successful-run))
-               :change-in-game-state {:req (req (threat-level 4 state))}
+              {:req (req (and (last-turn? state :runner :successful-run)
+                              (threat-level 4 state)))
                :player :runner}
               [(cost-option [(->c :credit 8)] :runner)
                {:option "Corp does 4 meat damage"

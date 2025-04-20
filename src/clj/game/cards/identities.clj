@@ -535,7 +535,6 @@
              :effect (effect (runner-install (assoc eid :source card) target {:msg-keys {:install-source card}}))}]})
 
 (defcard "BANGUN: When Disaster Strikes"
-  ;; todo - this technically doesn't match the id, but it's good enough for online play. Maybe somebody can tweak it in a few years.
   {:abilities [{:label "Manually turn an agenda faceup"
 	        :choices {:req (req (and (agenda? target)
                                          (installed? target)))}
@@ -560,6 +559,7 @@
              :req (req (and (not (ice? (:card target)))
                             (not (condition-counter? (:card target)))
                             (not (rezzed? (:card context)))
+                            (not (contains? #{:hq :archives :rd} (second (get-zone (:card target)))))
                             (not (#{:face-up} (:install-state context)))
                             (let [cards-in-slot (filter #(= (:zone %) (:zone (:card context))) (all-installed state :corp))]
                               (not (some #(and (or (asset? %) (agenda? %))
@@ -575,7 +575,7 @@
                                   :waiting-prompt true
                                   :yes-ability {:msg (str "turn " (card-str state tcard {:visible true}) " faceup")
                                                 :effect (req (update! state side (assoc tcard :seen true :rezzed true)))}}}
-                                {:prompt "You didn't install an agenda, but your opponent probably doesn't know that"
+                                {:prompt "Nothing to see here"
                                  :waiting-prompt true
                                  :choices ["OK"]})
                               card nil)))}]})
@@ -2477,7 +2477,7 @@
                 :label "Flip this identity"
                 :msg (msg "flip [their] identity")}]})
 
-(defcard "Synapse Global"
+(defcard "Synapse Global: Faster than Thought"
   {:events [{:event :runner-lose-tag
              :req (req (first-event? state side :runner-lose-tag))
              :prompt "Reveal and install a card from HQ?"

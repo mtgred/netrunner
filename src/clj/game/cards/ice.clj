@@ -416,7 +416,6 @@
   ([args]
    {:label "Install a card from HQ"
     :prompt "Choose a card to install from HQ"
-    :show-discard true
     :waiting-prompt true
     :choices {:card #(and (corp-installable-type? %)
                           (in-hand? %))}
@@ -532,17 +531,9 @@
    :choices {:max 2
              :card grail-in-hand}
    :async true
-   :change-in-game-state {:silent true :req (req (seq (:hand corp)))}
-   :effect (effect (reveal eid targets))
-   :msg (let [sub-label #(:label (first (:subroutines (card-def %))))]
-          (msg "reveal " (enumerate-str (map #(str (:title %) " (" (sub-label %) ")") targets))))})
-
-(def resolve-grail
-  "Ability for resolving a subroutine on a Grail ice in HQ."
-  {:label "Resolve a Grail ice subroutine from HQ"
-   :choices {:card grail-in-hand}
-   :async true
-   :effect (req (continue-ability state side (-> target card-def :subroutines first) card nil))})
+   :waiting-prompt true
+   :effect (req (wait-for (reveal-loud state side card nil targets)
+                          (continue-ability state side (add-grail-subs targets) card nil)))})
 
 (defn grail-ice
   "Creates data for grail ice"
@@ -3587,7 +3578,7 @@
   {:on-encounter (gain-credits-sub 1)
    :subroutines [(end-the-run-unless-runner-pays (->c :credit 1))]})
 
-(defcard "Predator"
+(defcard "Biawak"
   {:subroutines [(trash-type-or-end-the-run "program" program? trash-program-sub)
                  (trash-type-or-end-the-run "resource" resource? trash-resource-sub)
                  end-the-run]
@@ -3856,7 +3847,7 @@
 (defcard "Semak-samun"
   {:static-abilities [{:type :cannot-break-subs-on-ice
                        :req (req (and (same-card? card (:ice context))
-                                      (has-subtype? (:icebreaker context) "Fracter")))
+                                      (not (has-subtype? (:icebreaker context) "Fracter"))))
                        :value true}]
    :subroutines [(end-the-run-unless-runner-pays (->c :net 3))]})
 

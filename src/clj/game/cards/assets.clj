@@ -2374,25 +2374,24 @@
                :async true
                :effect (req (add-counter state side eid card :power 1 {:placed true}))}
         opt (fn [x]
-              {:option (str "Do " x " net damage")
-               :ability {:msg (str "do " x " net damage")
-                         :async true
-                         :effect (req (wait-for (damage state :corp :net x)
-                                                (continue-ability state side place card nil)))}
-               :cost [(->c :power x)]})
+              (merge
+                {:option (str "Do " x " net damage")
+                 :ability {:msg (str "do " x " net damage")
+                           :async true
+                           :effect (req (damage state :corp eid :net x))}}
+                (if (= x 1)
+                  {}
+                  {:cost [(->c :power (dec x))]})))
         abi (choose-one-helper
               {:req (req (and (or (and (first-event? state :corp :agenda-scored)
                                        (no-event? state :runner :agenda-stolen))
                                   (and (first-event? state :runner :agenda-stolen)
-                                       (no-event? state :corp :agenda-scored)))
-                              (pos? (get-counters card :power))))
+                                       (no-event? state :corp :agenda-scored)))))
                :player :corp
                :side :corp
-               :optional true
                :interactive (req true)}
               (vec (map opt [1 2 3])))]
-    {:on-rez place
-     :events [(assoc abi :event :agenda-scored)
+    {:events [(assoc abi :event :agenda-scored)
               (assoc place :event :corp-turn-ends)
               (assoc abi :event :agenda-stolen)]}))
 

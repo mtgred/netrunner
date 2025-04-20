@@ -1756,6 +1756,7 @@
     {:mode :computed}
     {:events [{:event :corp-turn-ends
                :cost [(->c :agenda 1)]
+               :req (req (can-pay? state side eid card nil [(->c :agenda 1)]))
                :interactive (req true)
                :label "Install a card from Archives"
                :prompt "Install a card from Archives"
