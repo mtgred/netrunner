@@ -354,7 +354,8 @@
       (let [shortfall (- (or (value (find-first #(= :credit (:cost/type %)) costs)) 0) (total-available-credits state side eid card))
             need-to-trash (max 0 shortfall)
             cards-in-slot (count (get-in @state (concat [:corp] slot)))
-            possible? (and (ice? card) (>= cards-in-slot need-to-trash))]
+            possible? (and (ice? card) (>= cards-in-slot need-to-trash))
+            c card]
         (cond (and possible? (pos? need-to-trash))
               (letfn [(trash-all-or-none [] {:prompt (str "Trash ice protecting " (name-zone :corp slot) " (minimum " need-to-trash ")")
                                              :choices {:req (req (= (:zone target) slot))
@@ -365,15 +366,15 @@
                                                             (do (system-msg state side (str "trashes " (enumerate-str (map #(card-str state %) targets))))
                                                                 (wait-for
                                                                   (trash-cards state side targets {:keep-server-alive true :suppress-checkpoint true})
-                                                                  (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true))))
+                                                                  (corp-install-pay state side eid c server (assoc args :resolved-optional-trash true))))
                                                             (do (toast state :corp (str "You must either trash at least " need-to-trash " ice, or trash none of them"))
-                                                                (continue-ability state side (trash-all-or-none) card targets))))
+                                                                (continue-ability state side (trash-all-or-none) c targets))))
                                              :cancel-effect (req (effect-completed state side eid))})]
-                (continue-ability state side (trash-all-or-none) card nil))
+                (continue-ability state side (trash-all-or-none) nil nil))
               (and corp-wants-to-trash? (zero? need-to-trash))
               (continue-ability
                 state side
-                {:prompt (str "Trash any number of " (if (ice? card) "ice protecting " "cards in ") (name-zone :corp slot))
+                {:prompt (str "Trash any number of " (if (ice? c) "ice protecting " "cards in ") (name-zone :corp slot))
                  :choices {:req (req (= (:zone target) slot))
                            :max cards-in-slot}
                  :async true
@@ -381,9 +382,9 @@
                  :effect (req (do (system-msg state side (str "trashes " (enumerate-str (map #(card-str state %) targets))))
                                   (wait-for
                                     (trash-cards state side targets {:keep-server-alive true :suppress-checkpoint true})
-                                    (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true)))))
-                 :cancel-effect (req (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true)))}
-                card nil)
+                                    (corp-install-pay state side eid c server (assoc args :resolved-optional-trash true)))))
+                 :cancel-effect (req (corp-install-pay state side eid c server (assoc args :resolved-optional-trash true)))}
+                nil nil)
               :else (effect-completed state side eid))))))
 
 (defn corp-install
