@@ -1575,7 +1575,8 @@
                    (:subroutines ice)))
         #(send-command "unbroken-subroutines" {:card ice})])
 
-     (if @encounters
+     (cond
+       @encounters
        ;;Encounter continue button
        (let [pass-ice? (and (= "encounter-ice" (:phase @run))
                             (= 1 (:encounter-count @encounters)))]
@@ -1585,7 +1586,18 @@
             (tr [:game_continue "Continue"]))
           (not= "corp" (:no-action @encounters))
           #(send-command "continue")])
+
+       ;; initiation
+       (= "initiation" (:phase @run))
+       [cond-button
+        (str (tr [:game.continue-to "Continue to"]) " " (if (zero? (:position @run))
+                                                          (tr [:game.approach-server "Approach server"])
+                                                          (tr [:game.approach-ice "Approach ice"])))
+        (not= "corp" (:no-action @run))
+        #(send-command "continue")]
+
        ;;Non-encounter continue button
+       :else
        [cond-button
         (if (or (:next-phase @run)
                 (zero? (:position @run)))
