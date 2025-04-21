@@ -6872,6 +6872,12 @@
     (is (:run @state) "Run ended")
     (is (and (= 1 (count (:hand (get-runner)))) (= 3 (count (:discard (get-runner))))) "Took 3 net")))
 
+(deftest semak-samun-can-be-broken-by-fracters
+  (do-game
+    (run-and-encounter-ice-test "Semak-samun" nil {:rig ["Rising Tide"]})
+    (auto-pump-and-break state (get-program state 0))
+    (is (-> (get-ice state :hq 0) :subroutines first :broken) "Broke sub with a fracter")))
+
 (deftest sensei
   ;; Sensei
   (do-game
