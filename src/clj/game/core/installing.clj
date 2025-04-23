@@ -145,7 +145,8 @@
   "Prints the correct install message."
   [state side card server install-state cost-str {:keys [counters msg-keys] :as args}]
   (when (:display-message args true)
-    (let [{:keys [display-origin install-source origin-index known]} msg-keys
+    (let [{:keys [display-origin install-source origin-index known set-zone]} msg-keys
+          prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
           card-name (if (or (#{:rezzed :rezzed-no-cost :face-up} install-state)
                             ;; note that cards which the corp is instructed to rez, but cannot
                             ;; (or chooses not to rez) are revealed, so they're safe to name here
@@ -160,11 +161,18 @@
           origin (if display-origin
                    (str " from "
                         (when origin-index (str " position " (inc origin-index) " of "))
-                        (name-zone :corp (:zone card)))
+                        (or set-zone (name-zone :corp (:zone card))))
                    "")
+          pre-lhs (when (every? (complement string/blank?) [cost-str prepend-cost-str])
+                    (str prepend-cost-str ", and then "))
+          modified-cost-str (if (string/blank? cost-str)
+                              prepend-cost-str
+                              (if (string/blank? pre-lhs)
+                                cost-str
+                                (str cost-str ",")))
           lhs (if install-source
-                (str (build-spend-msg cost-str "use") (:title install-source) " to install ")
-                (build-spend-msg cost-str "install"))]
+                (str (build-spend-msg modified-cost-str "use") (:title install-source) " to install ")
+                (build-spend-msg modified-cost-str "install"))]
       (system-msg state side (str lhs card-name origin
                                   (if (ice? card) " protecting " " in the root of ") server-name
                                   (format-counters-msg counters)))
@@ -346,7 +354,8 @@
       (let [shortfall (- (or (value (find-first #(= :credit (:cost/type %)) costs)) 0) (total-available-credits state side eid card))
             need-to-trash (max 0 shortfall)
             cards-in-slot (count (get-in @state (concat [:corp] slot)))
-            possible? (and (ice? card) (>= cards-in-slot need-to-trash))]
+            possible? (and (ice? card) (>= cards-in-slot need-to-trash))
+            c card]
         (cond (and possible? (pos? need-to-trash))
               (letfn [(trash-all-or-none [] {:prompt (str "Trash ice protecting " (name-zone :corp slot) " (minimum " need-to-trash ")")
                                              :choices {:req (req (= (:zone target) slot))
@@ -357,15 +366,15 @@
                                                             (do (system-msg state side (str "trashes " (enumerate-str (map #(card-str state %) targets))))
                                                                 (wait-for
                                                                   (trash-cards state side targets {:keep-server-alive true :suppress-checkpoint true})
-                                                                  (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true))))
+                                                                  (corp-install-pay state side eid c server (assoc args :resolved-optional-trash true))))
                                                             (do (toast state :corp (str "You must either trash at least " need-to-trash " ice, or trash none of them"))
-                                                                (continue-ability state side (trash-all-or-none) card targets))))
+                                                                (continue-ability state side (trash-all-or-none) c targets))))
                                              :cancel-effect (req (effect-completed state side eid))})]
-                (continue-ability state side (trash-all-or-none) card nil))
+                (continue-ability state side (trash-all-or-none) nil nil))
               (and corp-wants-to-trash? (zero? need-to-trash))
               (continue-ability
                 state side
-                {:prompt (str "Trash any number of " (if (ice? card) "ice protecting " "cards in ") (name-zone :corp slot))
+                {:prompt (str "Trash any number of " (if (ice? c) "ice protecting " "cards in ") (name-zone :corp slot))
                  :choices {:req (req (= (:zone target) slot))
                            :max cards-in-slot}
                  :async true
@@ -373,9 +382,9 @@
                  :effect (req (do (system-msg state side (str "trashes " (enumerate-str (map #(card-str state %) targets))))
                                   (wait-for
                                     (trash-cards state side targets {:keep-server-alive true :suppress-checkpoint true})
-                                    (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true)))))
-                 :cancel-effect (req (corp-install-pay state side eid card server (assoc args :resolved-optional-trash true)))}
-                card nil)
+                                    (corp-install-pay state side eid c server (assoc args :resolved-optional-trash true)))))
+                 :cancel-effect (req (corp-install-pay state side eid c server (assoc args :resolved-optional-trash true)))}
+                nil nil)
               :else (effect-completed state side eid))))))
 
 (defn corp-install
@@ -455,6 +464,9 @@
         hide-zero-cost (:hide-zero-cost msg-keys facedown)
         cost-str (if (and hide-zero-cost (= cost-str "pays 0 [Credits]")) nil cost-str)
         prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
+        display-origin (or (when-not (contains? msg-keys :display-origin)
+                             (not= (:previous-zone card) [:hand]))
+                           display-origin)
         discount-str (cond
                        ignore-all-cost " (ignoring all costs)"
                        ignore-install-cost " (ignoring it's install cost)"
@@ -497,7 +509,7 @@
 
 (defn runner-install-continue
   [state side eid card
-   {:keys [previous-zone host-card facedown no-mu no-msg payment-str] :as args}]
+   {:keys [previous-zone host-card facedown no-mu no-msg payment-str costs] :as args}]
   (let [c (if host-card
             (host state side host-card card)
             (move state side card
@@ -515,7 +527,9 @@
       (runner-install-message state side installed-card payment-str args))
     (when-not facedown
       (implementation-msg state card))
-    (play-sfx state side "install-runner")
+    (if-let [install-sound (when-not facedown (:install-sound (card-def card)))]
+      (play-sfx state side install-sound)
+      (play-sfx state side "install-runner"))
     (update-disabled-cards state)
     (when (and (not facedown)
                (resource? card))
@@ -524,6 +538,7 @@
                (has-subtype? installed-card "Icebreaker"))
       (update-breaker-strength state side installed-card))
     (queue-event state :runner-install {:card (get-card state installed-card)
+                                        :costs costs
                                         :facedown facedown})
     (when-let [on-install (and (not facedown)
                                (:on-install (card-def installed-card)))]
@@ -600,6 +615,7 @@
                       (runner-install-continue
                         state side eid
                         played-card (assoc args
+                                           :costs costs
                                            :previous-zone (:zone card)
                                            :payment-str payment-str))
                       (let [returned-card (move state :runner played-card (:zone card) {:suppress-event true})]

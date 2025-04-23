@@ -41,6 +41,7 @@
     (start-turn state :runner)
     (play-from-hand state :runner "\"Pretty\" Mary da Silva")
     (play-from-hand state :runner "Trick Shot")
+    (run-continue state)
     (run-continue state :success)
     (click-prompt state :corp "1 [Credits]")
     (click-prompt state :runner "0 [Credits]")
@@ -302,6 +303,7 @@
       (play-from-hand state :runner "Dirty Laundry")
       (click-prompt state :runner "Server 1")
       (is (:credit (get-runner) 3) "Runner has 1 credit")
+      (run-continue state)
       (run-continue state)
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
@@ -1077,6 +1079,7 @@
        (is (not (some #{"HQ"} (prompt-buttons :runner)))
            "Runner should not get to choose HQ due to increased cost")
        (click-prompt state :runner "R&D")
+       (run-continue state)
        (run-jack-out state)
        (take-credits state :runner)
        (is (= 2 (:credit (get-runner))))
@@ -1104,7 +1107,7 @@
                     (:click (get-runner)) 0]
                    (play-from-hand state :runner "Dirty Laundry")
                    (click-prompt state :runner "HQ")
-                   (is (second-last-log-contains? state "Runner spends [Click] and pays 2 [Credits] to play Dirty Laundry."))
+                   (is (last-n-log-contains? state 2 "Runner spends [Click] and pays 2 [Credits] to play Dirty Laundry."))
                    (core/command-undo-click state :runner))
          "Undo click undid the CSS costs")))
 
@@ -1121,7 +1124,7 @@
      (take-credits state :corp)
      (play-from-hand state :runner "Dirty Laundry")
      (click-prompt state :runner "HQ")
-     (is (second-last-log-contains? state "Runner spends [Click] and pays 2 [Credits] to play Dirty Laundry."))
+     (is (last-n-log-contains? state 2 "Runner spends [Click] and pays 2 [Credits] to play Dirty Laundry."))
      (is (last-log-contains? state "Runner spends [Click] and pays 1 [Credits] to make a run on HQ."))))
 
 (deftest corporate-troubleshooter
@@ -1738,6 +1741,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Jailbreak")
     (click-prompt state :runner "HQ")
+    (run-continue state)
     (rez state :corp (get-ice state :hq 0))
     (is (= 0 (count-tags state)) "Runner not consided tagged")
     (run-continue state :encounter-ice)
@@ -2371,6 +2375,24 @@
        (is (empty? (:run @state)))
        (is (not (last-log-contains? state "Runner approaches Vanilla protecting R&D at position 1")) "Run has ended"))))
 
+(deftest mahkota-langit-grid-full-test
+  (do-game
+    (new-game {:corp {:hand ["Mahkota Langit Grid" "Tithe" "PAD Campaign"]}
+               :runner {:credits 7}})
+    (play-from-hand state :corp "Mahkota Langit Grid" "New remote")
+    (play-from-hand state :corp "Tithe" "Server 1")
+    (play-from-hand state :corp "PAD Campaign" "Server 1")
+    (rez state :corp (get-content state :remote1 0))
+    (rez state :corp (get-ice state :remote1 0) {:expect-rez false})
+    (click-card state :corp (get-content state :remote1 0))
+    (rez state :corp (get-content state :remote1 1) {:expect-rez false})
+    (click-card state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (run-on state :remote1)
+    (run-continue-until state :success)
+    (click-card state :runner (get-content state :remote1 1))
+    (click-prompt state :runner "Pay 6 [Credits] to trash")))
+
 (deftest malapert-data-vault
   ;; Malapert Data Vault
   (do-game
@@ -2626,6 +2648,18 @@
         (is (zero? (virus-counters (find-card "Medium" (get-program state))))
             "Medium has no counters"))))
 
+(deftest mercia-ballard-test
+  (doseq [[targ serv] [["Archives" :archives] ["R&D" :rd] ["HQ" :hq] ["New remote" :remote1]]]
+    (do-game
+      (new-game {:corp {:hand [(qty "Hedge Fund" 5) "Mercia B4LL4RD" "Ping"]}})
+      (play-from-hand state :corp "Mercia B4LL4RD" "HQ")
+      (rez state :corp (get-content state :hq 0))
+      (take-credits state :corp)
+      (click-card state :corp "Ping")
+      (click-prompt state :corp targ)
+      (is (= "Ping" (:title (get-ice state serv 0))) (str "installed ping on " targ))
+      (is (= "Mercia B4LL4RD" (:title (get-content state serv 0))) (str "Moved to " targ " post-install")))))
+
 (deftest midori
   ;; Midori
   (do-game
@@ -2722,6 +2756,28 @@
             (card-ability state :runner (get-program state 0) 0)
             (click-prompt state :runner "End the run"))
           "Runner loses 3 credits, 2 for cradle 1 for midway")))
+
+(deftest mitra-aman
+  (doseq [opt [:rez :swap-hand :swap-discard]]
+    (do-game
+      (new-game {:corp {:hand ["Mitra Aman" "Ice Wall" "Enigma"]
+                        :discard ["Whitespace"]}})
+      (play-from-hand state :corp "Mitra Aman" "New remote")
+      (play-from-hand state :corp "Ice Wall" "Server 1")
+      (rez state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-on state :remote1)
+      (is (changed? [(:credit (get-corp)) 3]
+            (click-prompt state :corp "Yes")))
+      (cond
+        (= opt :rez)
+        (click-prompt state :corp "Done")
+        (= opt :swap-hand)
+        (click-card state :corp "Enigma")
+        (= opt :swap-discard)
+        (click-card state :corp "Whitespace"))
+      (is (no-prompt? state :corp) "No lingering prompt")
+      (is (no-prompt? state :runner) "No lingering prompt"))))
 
 (deftest mr-hendrik-corp-declines
   ;; Pay 2: runner suffers core or loses all (at least 1) clicks
@@ -2936,7 +2992,7 @@
       (play-from-hand state :runner "Demolition Run")
       (is (= 3 (:credit (get-runner))) "Runner paid play costs")
       (click-prompt state :runner "R&D")
-      (run-continue state)
+      (run-continue-until state :success)
       (click-prompt state :runner "Unrezzed upgrade")
       (is (= ["[Demolition Run] Trash card"] (prompt-titles :runner)) "Runner is not given the choice")))
 
@@ -3759,6 +3815,7 @@
        (is (not (some #{"HQ"} (prompt-buttons :runner)))
            "Runner should not get to choose HQ due to increased cost")
        (click-prompt state :runner "Archives")
+       (run-continue state)
        (is (= 4 (get-counters (refresh rs) :power)) "No counter removed by only making a run")
        (run-continue state)
        (is (= 3 (get-counters (refresh rs) :power)) "1 counters removed from Reduced Service by successful run")
@@ -3947,7 +4004,7 @@
   ;; Trash to stop installs for the rest of the run
   (do-game
     (new-game {:corp {:deck [(qty "Signal Jamming" 3)]}
-               :runner {:deck [(qty "Self-modifying Code" 3) "Reaver"]}})
+               :runner {:hand [(qty "Self-modifying Code" 3)] :deck ["Reaver"] :credits 10}})
     (starting-hand state :runner ["Self-modifying Code" "Self-modifying Code"])
     (play-from-hand state :corp "Signal Jamming" "HQ")
     (take-credits state :corp)
@@ -3960,7 +4017,8 @@
       (run-on state "HQ")
       (card-ability state :corp sj 0)
       (card-ability state :runner smc1 0)
-      (is (no-prompt? state :runner) "SJ blocking SMC")
+      (is (= ["Done"] (prompt-titles :runner)) "Can only shuffle")
+      (click-prompt state :runner "Done")
       (run-jack-out state)
       (card-ability state :runner smc2 0)
       (click-prompt state :runner "Reaver"))))
@@ -4680,6 +4738,7 @@
       (play-from-hand state :runner "Singularity")
       (click-prompt state :runner "Server 1")
       (run-continue state)
+      (run-continue state)
       (is (= 2 (-> (get-corp) :discard count)) "Corp has both cards in discard")
       (click-prompt state :corp "0")
       (click-prompt state :runner "0") ; Corp wins trace
@@ -4868,6 +4927,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Pinhole Threading")
     (click-prompt state :runner "Archives")
+    (run-continue state)
     (run-continue state)
     (is (changed? [(:credit (get-corp)) +2]
           (click-card state :runner "Yakov Erikovich Avdakov")

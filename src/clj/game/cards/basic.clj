@@ -4,7 +4,7 @@
    [game.core.board :refer [all-active-installed installable-servers]]
    [game.core.card :refer [agenda? asset? event? get-card hardware? ice?
                            in-hand? operation? program? resource? upgrade?]]
-   [game.core.def-helpers :refer [defcard]]
+   [game.core.def-helpers :refer [defcard in-hand*?]]
    [game.core.drawing :refer [draw use-bonus-click-draws!]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
    [game.core.effects :refer [get-effects]]
@@ -175,8 +175,7 @@
                 :label "Install 1 program, resource, or piece of hardware from the grip"
                 :async true
                 :req (req (let [target-card (:card context)]
-                            (and (not-empty (:hand runner))
-                                 (in-hand? target-card)
+                            (and (in-hand*? state (get-card state target-card))
                                  (or (hardware? target-card)
                                      (program? target-card)
                                      (resource? target-card))
@@ -191,8 +190,7 @@
                 :label "Play 1 event"
                 :async true
                 :req (req (let [target-card (:card context)]
-                            (and (not-empty (:hand runner))
-                                 (in-hand? target-card)
+                            (and (in-hand*? state (get-card state target-card))
                                  (event? target-card)
                                  (can-play-instant? state :runner (assoc eid :source-type :play)
                                                     target-card {:base-cost [(->c :click 1)]}))))

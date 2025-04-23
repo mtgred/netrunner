@@ -107,7 +107,7 @@
       (cons "derez"))))
 
 (def click-card-keys
-  [:cid :side :host :type :zone :ghost])
+  [:cid :side :host :type :zone :ghost :flashback-fake-in-hand])
 
 (defn card-for-click [card]
   (select-non-nil-keys
@@ -179,6 +179,11 @@
             (when (= (:cid value) (:cid clicked-card)) uuid))
           choices)))
 
+(defn send-play-command [{:keys [type zone] :as card} shift-key-held]
+  (if (and (= "discard" (first zone)) (:flashback-fake-in-hand card))
+    (send-command "flashback" {:card (card-for-click card) :shift-key-held shift-key-held})
+    (send-command "play" {:card (card-for-click card) :shift-key-held shift-key-held})))
+
 (defn handle-card-click [{:keys [type zone] :as card} shift-key-held]
   (let [side (:side @game-state)]
     (when (not-spectator?)
@@ -200,18 +205,24 @@
         (and (= side :runner)
              (= "Runner" (:side card))
              (not (any-prompt-open? side))
-             (= "hand" (first zone))
-             (playable? card))
-        (send-command "play" {:card (card-for-click card) :shift-key-held shift-key-held})
+             (or (and (= "hand" (first zone))
+                      (playable? card))
+                 (:playable-as-if-in-hand card)
+                 (and (= "discard" (first zone))
+                      (:flashback-playable card))))
+        (send-play-command (card-for-click card) shift-key-held)
 
         ;; Corp clicking on a corp card
         (and (= side :corp)
              (= "Corp" (:side card))
              (not (any-prompt-open? side))
-             (= "hand" (first zone))
-             (playable? card))
+             (or (and (= "hand" (first zone))
+                      (playable? card))
+                 (and (= "discard" (first zone))
+                      (= "Operation" type)
+                      (:flashback-playable card))))
         (if (= "Operation" type)
-          (send-command "play" {:card (card-for-click card)})
+          (send-play-command (card-for-click card) shift-key-held)
           (if (= (:cid card) (:source @card-menu))
             (do (send-command "generate-install-list" nil)
                 (close-card-menu))
@@ -715,7 +726,7 @@
   [{:keys [zone code type abilities counter
            subtypes strength current-strength selected hosted
            side facedown card-target icon new ghost runner-abilities subroutines
-           subtype-target corp-abilities]
+           subtype-target corp-abilities flashback-fake-in-hand flashback-playable]
     :as card} flipped disable-click]
   (let [title (get-title card)]
     (r/with-let [gs-prompt-state (r/cursor game-state [(keyword (lower-case side)) :prompt-state])
@@ -730,13 +741,16 @@
                                                 (same-card? card @gs-encounter-ice) "encountered"
                                               (and (not (any-prompt-open? side)) (playable? card)) "playable"
                                               ghost "ghost"
+                                              (and flashback-fake-in-hand (not (any-prompt-open? side)) flashback-playable) "playable flashback"
+                                              flashback-fake-in-hand "flashback"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
-                                              new "new"))
+                                              ;; specifically, don't show cards as 'new' during selection prompts, so they dont look like selectable cards (we're running out of colors)
+                                            (and new (not (seq (get-in @gs-prompt-state [:selectable])))) "new"))
                             :tab-index (when (and (not disable-click)
                                                   (or (active? card)
                                                       (playable? card)))
                                          0)
-                            :draggable (when (and (not-spectator?) (not disable-click)) true)
+                            :draggable (when (and (not-spectator?) (not disable-click) (not flashback-fake-in-hand)) true)
                             :on-touch-start #(handle-touchstart % card)
                             :on-touch-end   #(handle-touchend %)
                             :on-touch-move  #(handle-touchmove %)
@@ -901,9 +915,14 @@
 
 (defn hand-view []
   (let [s (r/atom {})]
-    (fn [side hand hand-size hand-count popup popup-direction]
-      (let [size (if (nil? @hand-count) (count @hand) @hand-count)
-            filled-hand (concat @hand (repeat (- size (count @hand)) {:side (if (= :corp side) "Corp" "Runner")}))]
+    (fn [side hand hand-size hand-count popup popup-direction discard]
+      (let [flashbacks (if discard (map #(assoc % :flashback-fake-in-hand true) (filter :flashback-playable @discard))
+                           [])
+            printed-size (if (nil? @hand-count) (count @hand) @hand-count)
+            size (+ printed-size (count flashbacks))
+            filled-hand (concat (map #(dissoc % :flashback) @hand)
+                                flashbacks
+                                (repeat (- size (+ (count @hand) (count flashbacks))) {:side (if (= :corp side) "Corp" "Runner")}))]
         [:div.hand-container
          [:div.hand-controls
           [:div.panel.blue-shade.hand
@@ -912,7 +931,7 @@
            [label filled-hand {:name (if (= :corp side)
                                        (tr [:game_hq "HQ"])
                                        (tr [:game_grip "Grip"]))
-                               :fn (fn [_] (str size "/" (:total @hand-size)))}]]
+                               :fn (fn [_] (str printed-size "/" (:total @hand-size)))}]]
           (when popup
             [:div.panel.blue-shade.hand-expand
              {:on-click #(-> (:hand-popup @s) js/$ .fadeToggle)}
@@ -1555,7 +1574,8 @@
                    (:subroutines ice)))
         #(send-command "unbroken-subroutines" {:card ice})])
 
-     (if @encounters
+     (cond
+       @encounters
        ;;Encounter continue button
        (let [pass-ice? (and (= "encounter-ice" (:phase @run))
                             (= 1 (:encounter-count @encounters)))]
@@ -1565,7 +1585,18 @@
             (tr [:game_continue "Continue"]))
           (not= "corp" (:no-action @encounters))
           #(send-command "continue")])
+
+       ;; initiation
+       (= "initiation" (:phase @run))
+       [cond-button
+        (str (tr [:game.continue-to "Continue to"]) " " (if (zero? (:position @run))
+                                                          (tr [:game.approach-server "Approach server"])
+                                                          (tr [:game.approach-ice "Approach ice"])))
+        (not= "corp" (:no-action @run))
+        #(send-command "continue")]
+
        ;;Non-encounter continue button
+       :else
        [cond-button
         (if (or (:next-phase @run)
                 (zero? (:position @run)))
@@ -1607,12 +1638,21 @@
        [:h4 (tr [:game_current-phase "Current phase"]) ":" [:br] (get phase->title phase)])
 
      (cond
-       (:next-phase @run)
+       (and (:next-phase @run)
+            (not= "initiation" (:phase @run)))
        [cond-button
         (phase->title next-phase)
         (and next-phase
              (not (:no-action @run)))
         #(send-command "start-next-phase")]
+
+       (= "initiation" (:phase @run))
+       [cond-button
+        (str (tr [:game.continue-to "Continue to"]) " " (if (zero? (:position @run))
+                                                          (tr [:game.approach-server "Approach server"])
+                                                          (tr [:game.approach-ice "Approach ice"])))
+        (not= "runner" (:no-action @run))
+        #(send-command "continue")]
 
        (and (not next-phase)
             (not (zero? (:position @run)))
@@ -2317,7 +2357,7 @@
                                   :me me :opponent opponent :prompt-state prompt-state}])]]
 
                 [:div.me
-                 [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true]]]]
+                 [hand-view me-side me-hand me-hand-size me-hand-count prompt-state true me-discard]]]]
               (when (:replay @game-state)
                 [:div.bottompane
                  [replay-panel]])])))})))

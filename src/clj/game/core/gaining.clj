@@ -89,6 +89,7 @@
        (gain state side :credit amount)
        (queue-event state event {:side side
                                  :amount amount
+                                 :source (:source eid)
                                  :action action})
        (if suppress-checkpoint
          (effect-completed state nil eid)

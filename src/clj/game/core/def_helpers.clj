@@ -2,26 +2,30 @@
   (:require
     [clojure.string :as str]
     [game.core.access :refer [access-bonus]]
-    [game.core.board :refer [all-installed]]
-    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? runner? in-hand?]]
+    [game.core.board :refer [all-installed get-all-cards]]
+    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? in-hand? operation? runner? ]]
     [game.core.card-defs :as card-defs]
     [game.core.damage :refer [damage]]
+    [game.core.drawing :refer [draw]]
     [game.core.eid :refer [effect-completed make-eid]]
     [game.core.engine :refer [queue-event register-events resolve-ability trigger-event-sync unregister-event-by-uuid]]
-    [game.core.effects :refer [is-disabled-reg?]]
-    [game.core.gaining :refer [gain-credits]]
+    [game.core.effects :refer [any-effects is-disabled-reg?]]
+    [game.core.gaining :refer [gain-credits lose-credits]]
+    [game.core.installing :refer [corp-install]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-cost-string can-pay?]]
     [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [clear-wait-prompt]]
     [game.core.props :refer [add-counter]]
     [game.core.revealing :refer [conceal-hand reveal-hand reveal-loud]]
-    [game.core.runs :refer [jack-out]]
+    [game.core.runs :refer [can-run-server? make-run jack-out]]
     [game.core.say :refer [system-msg system-say]]
+    [game.core.servers :refer [zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
+    [game.core.tags :refer [gain-tags]]
     [game.macros :refer [continue-ability effect msg req wait-for]]
-    [game.utils :refer [enumerate-str remove-once same-card? server-card to-keyword]]
+    [game.utils :refer [enumerate-str remove-once same-card? server-card to-keyword quantify]]
     [jinteki.utils :refer [other-side]]))
 
 (defn combine-abilities
@@ -166,6 +170,61 @@
    :effect (effect (system-msg (str "trashes " (:title card)))
                    (trash eid card {:unpreventable true :source-card card}))})
 
+(defn draw-abi
+  "shorthand ability to draw x cards (apply args to the draw fn)"
+  ([x] (draw-abi x nil))
+  ([x args]
+   {:msg (msg "draw " (quantify x "card"))
+    :label (str "Draw " (quantify x "card"))
+    :async true
+    :effect (req (draw state side eid x args))}))
+
+(defn draw-loud
+  "Draw n cards, using the given card as the source, and logging that cards were drawn"
+  ([state side eid card n] (draw-loud state side eid card n nil))
+  ([state side eid card n args]
+   (resolve-ability state side eid (draw-abi n args) card nil)))
+
+(defn run-server-ability
+  "Runs a target server, if possible"
+  [server]
+  {:async true
+   :change-in-game-state {:req (req (can-run-server? state server))}
+   :msg (str "make a run on " (zone->name server))
+   :effect (req (make-run state side eid server card))})
+
+(def run-any-server-ability
+  {:async true
+   :prompt "Choose a server"
+   :choices (req runnable-servers)
+   :msg (msg "make a run on " target)
+   :effect (effect (make-run eid target card))})
+
+(def run-remote-server-ability
+  {:async true
+   :prompt "Choose a remote server"
+   :change-in-game-state {:req (req (seq (filter #(can-run-server? state %) remotes)))}
+   :choices (req (filter #(can-run-server? state %) remotes))
+   :msg (msg "make a run on " target)
+   :effect (effect (make-run eid target card))})
+
+(def run-central-server-ability
+  {:prompt "Choose a central server"
+   :choices (req (filter #{"HQ" "R&D" "Archives"} runnable-servers))
+   :change-in-game-state {:req (req (seq (filter #{"HQ" "R&D" "Archives"} runnable-servers)))}
+   :async true
+   :msg (msg "make a run on " target)
+   :effect (effect (make-run eid target card))})
+
+(defn run-server-from-choices-ability
+  [choices]
+  {:prompt "Choose a server"
+   :choices (req (filter #(can-run-server? state %) choices))
+   :change-in-game-state {:req (req (seq (filter (set choices) runnable-servers)))}
+   :async true
+   :msg (msg "make a run on " target)
+   :effect (effect (make-run eid target card))})
+
 (defn take-credits
   "Take n counters from a card and place them in your credit pool as if they were credits (if possible)"
   ([state side eid card type n] (take-credits state side eid card type n nil))
@@ -179,6 +238,21 @@
                    (gain-credits state side eid n args))
          (effect-completed state side eid)))
      (effect-completed state side eid))))
+
+(defn in-hand*?
+  "Card is 'in-hand' for the purposes of being installed only"
+  [state card]
+  (or (in-hand? card)
+      (any-effects state (:side card) :can-play-as-if-in-hand true? card)))
+
+(defn all-cards-in-hand*
+  "All cards that are in-hand for the purposes of being installed only"
+  [state side]
+  (filter #(and (if (= side :runner)
+                  (runner? %)
+                  (corp? %))
+                (in-hand*? state %))
+          (get-all-cards state)))
 
 ;; NOTE - update this as the above (take credits) is updated
 (defn spend-credits
@@ -270,6 +344,51 @@
   [state]
   (some #(or (not (faceup? %)) (can-be-advanced? state %)) (all-installed state :corp)))
 
+(defn corp-install-up-to-n-cards
+  "Ability to install up to n corp cards"
+  ([n] (corp-install-up-to-n-cards n nil))
+  ([n args]
+   {:prompt (str "install a card from HQ" (when (> n 1) (str " (" n " remaining)")))
+    :choices {:card (every-pred corp? in-hand? (complement operation?))}
+    :async true
+    :effect (req (wait-for
+                   (corp-install state side target nil (merge {:msg-keys {:install-source card}} args))
+                   (if (> n 1)
+                     (continue-ability state side (corp-install-up-to-n-cards (dec n)) card nil)
+                     (effect-completed state side eid))))}))
+
+(defn gain-credits-ability [x]
+  {:msg (str "gain " x " [Credits]")
+   :async true
+   :effect (req (gain-credits state side eid x))})
+
+(defn drain-credits
+  ([draining-side victim-side qty] (drain-credits draining-side victim-side qty 1))
+  ([draining-side victim-side qty multiplier] (drain-credits draining-side victim-side qty multiplier 0))
+  ([draining-side victim-side qty multiplier tags-to-gain]
+   (letfn [(to-drain [state] (let [qty (if (number? qty)
+                                         qty
+                                         (qty state draining-side (make-eid state) nil nil))]
+                               (min (get-in @state [victim-side :credit] 0) qty)))
+           (to-gain [state] (* (to-drain state) multiplier))]
+     {:msg (msg "force the " (str/capitalize (name victim-side)) " to lose "
+                (to-drain state) " [Credits], " (when (zero? tags-to-gain) " and ")
+                "gain " (to-gain state) " [Credits]"
+                (when (pos? tags-to-gain)
+                  (str (if (= :corp draining-side)
+                         ", and give Runner "
+                         ", and take ")
+                       (quantify tags-to-gain "tag"))))
+      :async true
+      :effect (req (let [c-drain (to-drain state)
+                         c-gain (to-gain state)]
+                     (if (zero? tags-to-gain)
+                       (wait-for (lose-credits state victim-side c-drain {:suppress-checkpoint true})
+                                 (gain-credits state draining-side eid c-gain))
+                       (wait-for (gain-tags state :draining-side tags-to-gain)
+                                 (wait-for (lose-credits state victim-side c-drain {:suppress-checkpoint true})
+                                           (gain-credits state draining-side eid c-gain))))))})))
+
 (defn corp-recur
   ([] (corp-recur (constantly true)))
   ([pred]
@@ -285,6 +404,13 @@
     :effect (effect (move :corp target :hand))}))
 
 (def card-defs-cache (atom {}))
+
+(def trash-on-purge
+  {:event :purge
+   :async true
+   :msg "trash itself"
+   :effect (req (trash state :runner eid card {:cause :purge
+                                               :cause-card card}))})
 
 (defn with-revealed-hand
   "Resolves an ability while a player has their hand revealed (so you can click cards in their hand)

@@ -5,7 +5,7 @@
     [clojure.string :as string]
     [game.core.agendas :refer [update-advancement-requirement update-all-advancement-requirements update-all-agenda-points]]
     [game.core.board :refer [installable-servers]]
-    [game.core.card :refer [get-agenda-points get-card]]
+    [game.core.card :refer [get-advancement-requirement get-agenda-points get-card get-counters]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [break-sub-ability-cost card-ability-cost card-ability-cost score-additional-cost-bonus]]
     [game.core.effects :refer [any-effects is-disabled-reg?]]
@@ -16,6 +16,7 @@
     [game.core.initializing :refer [card-init]]
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs build-cost-string ->c]]
+    [game.core.play-instants :refer [play-instant]]
     [game.core.expend :refer [expend expendable?]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
     [game.core.prompts :refer [resolve-select]]
@@ -100,9 +101,30 @@
     (let [card (get-card state card)
           eid (make-eid state {:source card :source-type :ability})
           expend-ab (expend (:expend (card-def card)))]
-      (resolve-ability state side eid expend-ab card nil))
+      (do-play-ability
+        state side eid
+        {:card card
+         :ability expend-ab
+         :ability-idx 0
+         :targets nil}))
     (toast state side (str "You cannot play abilities while other abilities are resolving.")
               "warning")))
+
+(defn flashback
+  "Called when the player clicks a flashback card from hand."
+  [state side {:keys [card] :as context}]
+  (when-let [card (get-card state card)]
+    (let [flashback-cost (:flashback (card-def card))
+          eid (make-eid state {:source card :source-type :ability})
+          card (assoc card :rfg-instead-of-trashing true)]
+      (do-play-ability
+        state side eid
+        {:card card
+         :ability {:action true
+                   :async true
+                   :effect (req (play-instant state side eid (assoc card :rfg-instead-of-trashing true) {:base-cost flashback-cost :as-flashback true}))}
+         :ability-idx 0
+         :targets []}))))
 
 (defn play
   "Called when the player clicks a card from hand."
@@ -537,7 +559,10 @@
          cannot-play (or (:disabled card)
                          (any-effects state side :prevent-paid-ability true? card [ability ability-idx]))]
      (when-not cannot-play
-       (do-play-ability state side eid (assoc args :ability-idx ability-idx :ability ability))))))
+       (do-play-ability state side eid {:ability ability
+                                        :card card
+                                        :ability-idx ability-idx
+                                        :targets nil})))))
 
 (defn play-runner-ability
   "Triggers a corp card's runner-ability using its zero-based index into the card's card-def :runner-abilities vector."
@@ -662,7 +687,7 @@
 
 (defn resolve-score
   "resolves the actual 'scoring' of an agenda (after costs/can-steal has been worked out)"
-  [state side eid card]
+  [state side eid card {:keys [advancement-tokens advancement-requirement]}]
   (let [moved-card (move state :corp card :scored)
         c (card-init state :corp moved-card {:resolve-effect false
                                              :init-data true})
@@ -679,20 +704,26 @@
     (when-let [on-score (:on-score (card-def c))]
       (register-pending-event state :agenda-scored c on-score))
     (queue-event state :agenda-scored {:card c
+                                       :advancement-requirement advancement-requirement
+                                       :advancement-tokens advancement-tokens
                                        :points points})
     (checkpoint state nil eid {:duration :agenda-scored})))
 
 (defn score
   "Score an agenda."
   ([state side eid card] (score state side eid card nil))
-  ([state side eid card {:keys [no-req ignore-turn]}]
-   (if-not (can-score? state side card {:no-req no-req :ignore-turn ignore-turn})
+  ([state side eid card {:keys [no-req ignore-turn ignore-adv]}]
+   (if-not (can-score? state side card {:no-req no-req :ignore-turn ignore-turn :ignore-adv ignore-adv})
      (effect-completed state side eid)
      (let [cost (score-additional-cost-bonus state side card)
+           adv-cost (if (or no-req ignore-adv)
+                      0
+                      (get-advancement-requirement card))
+           adv-tokens (get-counters card :advancement)
            cost-strs (build-cost-string cost)
            can-pay (can-pay? state side (make-eid state (assoc eid :additional-costs cost)) card (:title card) cost)]
        (cond
-         (string/blank? cost-strs) (resolve-score state side eid card)
+         (string/blank? cost-strs) (resolve-score state side eid card {:advancement-requirement adv-cost :advancement-tokens adv-tokens})
          (not can-pay) (effect-completed state side eid)
          :else (wait-for (pay state side (make-eid state
                                                    (assoc eid
@@ -705,4 +736,4 @@
                              (effect-completed state side eid)
                              (do
                                (system-msg state side (str (:msg payment-result) " to score " (:title card)))
-                               (resolve-score state side eid card))))))))))
+                               (resolve-score state side eid card {:advancement-requirement adv-cost :advancement-tokens adv-tokens}))))))))))

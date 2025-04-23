@@ -57,7 +57,7 @@
     (mc/update db card-collection {:code code} {$set {k path}})
     (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$set {prev-k path}})))
 
-(def ^:const cards-to-skip #{"08012" "09001" "26066" "26120"})
+(def ^:const cards-to-skip #{"08012" "09001" "26066" "26120" "35023" "35057"})
 
 (defn- add-card-image
   "Add an image to a card in the db"

@@ -6,6 +6,20 @@
    [game.core.eid :refer [make-eid]]
    [game.test-framework :refer :all]))
 
+(deftest dividents-vs-sansan-city-grid
+  ;; note - the divends agendas scale off excess advancement counters,
+  ;; so cards like sansan will make them more valuable where they don't make beales better
+  (do-game
+    (new-game {:corp {:credits 15 :hand ["SanSan City Grid" "Off the Books"]}})
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "SanSan City Grid" "New remote")
+    (play-from-hand state :corp "Off the Books" "Server 1")
+    (dotimes [_ 3]
+      (click-advance state :corp (get-content state :remote1 1)))
+    (rez state :corp (get-content state :remote1 0))
+    (score state :corp (get-content state :remote1 1))
+    (is (= 1 (get-counters (get-scored state :corp 0) :agenda)) "Got 1 from sansan")))
+
 (deftest ^{:card-title "15-minutes"}
   fifteen-minutes
   ;; 15 Minutes - check if it works correctly from both sides
@@ -105,6 +119,32 @@
         (run-continue state)
         (run-on state :archives)
         (is (no-prompt? state :corp) "No prompt as it's once per turn")))))
+
+(deftest aggressive-trendsetting-pay-click
+  (do-game
+    (new-game {:corp {:score-area ["Aggressive Trendsetting"] :hand ["PAD Campaign"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
+    (is (changed? [(:click (get-runner)) -1]
+          (click-prompt state :runner "Yes"))
+        "Spent click")
+    (take-credits state :runner)
+    (is (= 3 (:click (get-corp))) "Only got 3 clicks")))
+
+(deftest aggressive-trendsetting-gain-click
+  (do-game
+    (new-game {:corp {:score-area ["Aggressive Trendsetting"] :hand ["PAD Campaign"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (click-prompt state :runner "Pay 4 [Credits] to trash")
+    (is (changed? [(:click (get-runner)) 0]
+          (click-prompt state :runner "No"))
+        "Did not spend click")
+    (take-credits state :runner)
+    (is (= 4 (:click (get-corp))) "got +1 clicks")))
 
 (deftest ancestral-imager
   ;; Ancestral Imager
@@ -542,6 +582,7 @@
       (play-from-hand state :runner "The Maker's Eye")
       (click-prompt state :corp "Yes")
       (is (= 1 (count-tags state)) "Runner takes 1 tag for playing a Run event")
+      (run-continue state)
       (run-jack-out state)
       (play-from-hand state :runner "Wyrm")
       (is (no-prompt? state :corp) "Corp shouldn't get a prompt to use Better Citizen Program")
@@ -1284,6 +1325,27 @@
       (is (= 4 (:click (get-corp))) "Should gain 2 clicks, not 3")
       (is (= 1 (get-counters (refresh eu-scored) :agenda)) "Should still have 1 agenda counter"))))
 
+(deftest embedded-reporting
+  (dotimes [oa 5]
+    (do-game
+      (new-game {:corp {:hand ["Embedded Reporting" "Beanstalk Royalties"]
+                        :deck ["IPO" (qty "Restructure" 15)]}})
+      (play-from-hand state :corp "Embedded Reporting" "New remote")
+      (core/gain state :corp :click 10 :credit 10)
+      (let [gpp (get-content state :remote1 0)]
+        (advance state gpp (+ 3 oa))
+        (is (= (+ 3 oa) (get-counters (refresh gpp) :advancement)) (str "Embedded Reporting should have " (+ oa 3) " advancement tokens"))
+        (score state :corp (refresh gpp)))
+      (let [gpp-scored (get-scored state :corp 0)]
+        (is (= (* 2 oa) (get-counters (refresh gpp-scored) :agenda)) (str "Embedded Reporting should have " oa " agenda counters"))
+        (take-credits state :corp)
+        (when-not (zero? oa)
+          (is (changed? [(get-counters (refresh gpp-scored) :agenda) -1]
+		(click-prompt state :corp "Yes")
+                (click-prompt state :corp "IPO")
+                (is-deck-stacked? state :corp ["IPO" "Restructure"]))
+              "Stacked the deck"))))))
+
 (deftest eminent-domain
   (do-game
     (new-game {:corp {:deck [(qty "Archer" 10)]
@@ -1671,6 +1733,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Political Graffiti")
         (run-continue state)
+        (run-continue state)
         (click-card state :runner "Glenn Station")
         (is (= 1 (count (:hosted (refresh gs-scored)))))
         (take-credits state :runner)
@@ -1683,6 +1746,7 @@
         (take-credits state :corp)
         (play-from-hand state :runner "Political Graffiti")
         (run-continue state)
+        (run-continue state)
         (click-card state :runner "Glenn Station")
         (take-credits state :runner)
         (card-ability state :corp (refresh gs-scored) 1)
@@ -1691,6 +1755,7 @@
       (do-game state
         (take-credits state :corp)
         (play-from-hand state :runner "Political Graffiti")
+        (run-continue state)
         (run-continue state)
         (click-card state :runner "Glenn Station")
         (take-credits state :runner)
@@ -1756,22 +1821,29 @@
                  [2 1]
                  [3 0]]))))
 
+(deftest greenmail-test
+  (do-game
+    (new-game {:corp {:hand ["Greenmail" "Archer"]}})
+    (is (changed? [(:credit (get-corp)) 2]
+          (play-and-score state "Greenmail")))
+    (play-from-hand state :corp "Archer" "HQ")
+    (rez state :corp (get-ice state :hq 0) {:expect-rez false})
+    (is (changed? [(:credit (get-corp)) +4]
+          (click-card state :corp "Greenmail"))
+        "Gained 4 for the forfeit")))
+
 (deftest hades-fragment
   ;; Hades Fragment
   (do-game
-    (new-game {:corp {:deck ["Hades Fragment" (qty "Hedge Fund" 2)]}})
+    (new-game {:corp {:hand ["Hades Fragment"] :discard ["Hedge Fund"]}})
     (starting-hand state :corp ["Hades Fragment"])
     (play-and-score state "Hades Fragment")
     (take-credits state :corp)
     (take-credits state :runner)
-    (is (= 1 (count (:hand (get-corp)))) "Corp should have no opportunity to use Hades Shard")
-    (core/move state :corp (find-card "Hedge Fund" (:hand (get-corp))) :discard)
-    (take-credits state :corp)
-    (take-credits state :runner)
     (let [hf-scored (get-scored state :corp 0)]
       (card-ability state :corp hf-scored 0)
-      (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp))))
-      (is (= 2 (count (:deck (get-corp)))) "R&D should have 2 cards in it after Hades Fragment use"))))
+      (click-card state :corp (find-card "Hedge Fund" (:discard (get-corp)))))
+    (is (= 1 (count (:deck (get-corp)))) "R&D should have 1 card in it after Hades Fragment use")))
 
 (deftest helium-3-deposit
   ;; Helium-3 Deposit
@@ -2633,6 +2705,17 @@
         (is (= :this-turn (rezzed? (get-content state :remote6 0))))
         (is (= (dec credits) (:credit (get-corp))))))))
 
+(deftest next-big-thing-test
+  (do-game
+    (new-game {:corp {:hand ["Next Big Thing"] :deck ["Hedge Fund" "NGO Front" "Project Atlas" "IPO"]}})
+    (play-and-score state "Next Big Thing")
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (is (= 4 (count (:hand (get-corp)))) "Next Big Thing drew 2 cards")
+    (click-card state :corp (:title (first (:hand (get-corp)))))
+    (click-card state :corp (:title (second (:hand (get-corp)))))
+    (click-prompt state :corp "Done")
+    (is (= 2 (count (:hand (get-corp)))) "Next Big Thing shuffled 2 cards")))
+
 (deftest next-wave-2
   ;; NEXT Wave 2
   (do-game
@@ -2730,6 +2813,20 @@
       (is (changed? [(:credit (get-corp)) 7]
             (play-and-score state "Offworld Office"))
           "Corp gains 7 credits from Offworld Office")))
+
+(deftest off-the-books
+  (do-game
+    (new-game {:corp {:hand ["Off the Books"] :deck ["Project Atlas"]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Off the Books" "New remote")
+    (let [pr (get-content state :remote1 0)]
+      (advance state pr 5)
+      (score state :corp (refresh pr)))
+    (let [scored (get-scored state :corp 0)]
+      (is (= 2 (get-counters (refresh scored) :agenda)) "should have 2 agenda counters")
+      (take-credits state :corp)
+      (click-prompts state :corp "Yes" "Project Atlas" "Install Project Atlas" "New remote")
+      (is (= "Project Atlas" (:title (get-content state :remote2 0)))))))
 
 (deftest ontological-dependence
   ;; Ontological Dependence
@@ -3035,6 +3132,23 @@
       (score state :corp (refresh pb2))
       (is (= 5 (:agenda-point (get-corp))) "5 advancements: scored for 3 points"))))
 
+(deftest project-ingatan
+  (dotimes [oa 5]
+    (do-game
+      (new-game {:corp {:hand ["Project Ingatan"] :discard ["Ice Wall"]}})
+      (play-from-hand state :corp "Project Ingatan" "New remote")
+      (core/gain state :corp :click 10 :credit 10)
+      (let [ing (get-content state :remote1 0)]
+        (advance state ing (+ 3 oa))
+        (is (= (+ 3 oa) (get-counters (refresh ing) :advancement)) (str "Project Ingatan should have " (+ oa 3) " advancement tokens"))
+        (score state :corp (refresh ing)))
+      (let [ing-scored (get-scored state :corp 0)]
+        (is (= oa (get-counters (refresh ing-scored) :agenda)) (str "Project Ingatan should have " oa " agenda counters"))
+        (when-not (zero? oa)
+          (take-credits state :corp)
+          (click-card state :corp "Ice Wall")
+          (click-prompt state :corp "HQ"))))))
+
 (deftest project-kusanagi
   ;; Project Kusanagi
   (do-game
@@ -3137,7 +3251,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "HQ")
-      (run-continue state)
+      (run-continue-until state :success)
       (click-prompt state :runner "Steal")
       (is (= 1 (:agenda-point (get-runner))) "Runner should only have 1 agenda point as Project Vacheron has agenda tokens on itself")
       (is (= 4 (get-counters (get-scored state :runner 0) :agenda)) "Project Vacheron should have 4 tokens on itself")))
@@ -3416,6 +3530,15 @@
     (click-prompt state :corp "Done")
     (is (no-prompt? state :runner) "Runner's waiting prompt resolved")))
 
+(deftest proprionegation-test
+  (do-game
+    (new-game {:corp {:hand ["Proprionegation"]}})
+    (play-and-score state "Proprionegation")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (is (= [:archives] (get-in @state [:run :server])) "Running on 'chives")))
+
 (deftest quantum-predictive-model
   ;; Quantum Predictive Model
   (do-game
@@ -3454,7 +3577,7 @@
     (play-from-hand state :corp "An Offer You Can't Refuse")
     (click-prompt state :corp "HQ")
     (click-prompt state :runner "Yes")
-    (run-continue state :success)
+    (run-continue-until state :success)
     (click-prompt state :runner "OK")
     (is (= 0 (:agenda-point (get-runner))) "Corp got the QPM")
     (is (= 1 (:agenda-point (get-corp))) "Corp got the QPM")))
@@ -4052,6 +4175,24 @@
       (click-prompt state :runner "1") ;; Prevent the brain damage this time
       (is (= 3 (count (:discard (get-runner)))) "Feedback filter trashed, didn't take another net damage")
       (is (= 1 (:brain-damage (get-runner)))))))
+
+(deftest sericulture-expansion
+  (do-game
+    (new-game {:corp {:hand ["Sericulture Expansion" "NGO Front"]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Sericulture Expansion" "New remote")
+    (play-from-hand state :corp "NGO Front" "New remote")
+    (let [pr (get-content state :remote1 0)]
+      (advance state pr 5)
+      (score state :corp (refresh pr)))
+    (let [scored (get-scored state :corp 0)]
+      (is (= 2 (get-counters (refresh scored) :agenda)) "should have 2 agenda counters")
+      (is (changed? [(get-counters (refresh scored) :agenda) -1]
+            (take-credits state :corp)
+            (click-card state :corp "NGO Front")
+            (is (= 2 (get-counters (get-content state :remote2 0) :advancement)) "Placed 2 counters"))
+          "Spent to place counters")
+    (is (no-prompt? state :runner) "No lingering prompt"))))
 
 (deftest show-of-force
   ;; Show of Force
@@ -4682,6 +4823,7 @@
         (is (changed? [(:credit (get-runner)) -2]
               (play-from-hand state :runner "Dirty Laundry")
               (click-prompt state :runner "HQ")
+              (run-continue state)
               (card-ability state :corp (refresh tm) 0)
               (run-continue state)
               (is (accessing state "Hedge Fund"))
@@ -4690,6 +4832,7 @@
         (is (changed? [(:credit (get-runner)) 3]
               (play-from-hand state :runner "Dirty Laundry")
               (click-prompt state :runner "HQ")
+              (run-continue state)
               (run-continue state)
               (click-prompt state :runner "No action"))
             "Gained 5c from DL"))))
@@ -4723,6 +4866,7 @@
       (let [tm (get-scored state :corp 0)
             stargate (get-program state 0)]
         (card-ability state :runner stargate 0)
+        (run-continue state)
         (card-ability state :corp (refresh tm) 0)
         (run-continue state)
         (is (empty? (-> (get-runner) :register :successful-run)))

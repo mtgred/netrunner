@@ -82,7 +82,7 @@
       (play-from-hand state :runner "Daily Casts")
       (is (last-log-contains? state "Runner spends [Click] and pays 3 [Credits] to install Daily Casts.") "Install resource, three cost")
       (run-on state :archives)
-      (is (last-log-contains? state "Runner spends [Click] to make a run on Archives.") "Initiate run, zero cost")))
+      (is (last-n-log-contains? state 1 "Runner spends [Click] to make a run on Archives.") "Initiate run, zero cost")))
   (testing "Issue #4295: Auto-pumping Icebreaker with pay-credits prompt"
     (do-game
       (new-game {:runner {:hand ["Corroder" "Net Mercur" "Cloak"]}

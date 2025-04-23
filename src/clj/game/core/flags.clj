@@ -1,7 +1,7 @@
 (ns game.core.flags
   (:require
     [game.core.board :refer [all-active all-installed]]
-    [game.core.card :refer [agenda? can-be-advanced? get-advancement-requirement get-cid get-counters installed? in-scored? rezzed? ]]
+    [game.core.card :refer [agenda? can-be-advanced? get-advancement-requirement get-cid get-counters installed? in-scored? rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [any-effects is-disabled-reg?]]
     [game.core.eid :refer [make-eid]]
@@ -172,8 +172,8 @@
   [state side zone]
   (seq (get-in @state [side :locked zone])))
 
-(defn untrashable-while-rezzed? [card]
-  (and (card-flag? card :untrashable-while-rezzed true) (rezzed? card)))
+(defn untrashable-while-rezzed? [state side card]
+  (any-effects state side :cannot-be-trashed true? card))
 
 (defn untrashable-while-resources? [card]
   (and (card-flag? card :untrashable-while-resources true) (installed? card)))
@@ -291,7 +291,7 @@
      ;; An effect hasn't be flagged as unable to be scored (Dedication Ceremony)
      (check-flag-types? state side card :can-score [:current-turn :persistent])
      ;; An effect hasn't set a card as unable to be scored (Clot)
-     (empty? (filter #(same-card? card %) (get-in @state [:corp :register :cannot-score])))
+     (not (any-effects state side :cannot-score true? {:card card}))
      ;; A terminal operation hasn't been played
      (not (get-in @state [:corp :register :terminal])))))
 

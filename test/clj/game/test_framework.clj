@@ -578,6 +578,18 @@
       (is' (core/process-action "play" state side {:card card :server server}))
       true)))
 
+(defn flashback-impl
+  [state side title]
+  (let [card (find-card title (get-in @state [side :discard]))]
+    (ensure-no-prompts state)
+    (is' (some? card) (str title " is in discard"))
+    (is' (core/process-action "flashback" state side {:card card :server nil}))))
+
+(defmacro flashback
+  "Play a card as a flashback based on its title"
+  ([state side title]
+   `(error-wrapper (flashback-impl ~state ~side ~title))))
+
 (defmacro play-from-hand
   "Play a card from hand based on its title. If installing a Corp card, also indicate
   the server to install into with a string."
@@ -607,19 +619,24 @@
 
 ;;; Run functions
 (defn run-on-impl
-  [state server]
+  [state server {:keys [wait-at-initiation]}]
   (let [run (:run @state)]
     (ensure-no-prompts state)
     (is' (not run) "There is no existing run")
     (is' (pos? (get-in @state [:runner :click])) "Runner can make a run")
     (when (and (not run) (pos? (get-in @state [:runner :click])))
       (core/process-action "run" state :runner {:server server})
+      (when-not wait-at-initiation
+        (core/process-action "continue" state :corp nil)
+        (when-not (:no-action run)
+          (core/process-action "continue" state :runner nil)))
       true)))
 
 (defmacro run-on
   "Start run on specified server."
-  [state server]
-  `(error-wrapper (run-on-impl ~state ~server)))
+  ([state server] `(run-on ~state ~server {}))
+  ([state server args]
+   `(error-wrapper (run-on-impl ~state ~server ~args))))
 
 (defn run-next-phase-impl
   [state]
@@ -770,7 +787,7 @@
     (is' (= [server] (get-in @state [:run :server])) "Correct server is run")
     (when (and (:run @state)
                (= [server] (get-in @state [:run :server]))
-               (run-continue state))
+               (run-continue-until state :success))
       (is' (seq (get-in @state [:runner :prompt])) "A prompt is shown")
       (is' (true? (get-in @state [:run :successful])) "Run is marked successful"))))
 
@@ -1121,7 +1138,7 @@
        (when counters
          ;; counters of the form :counter {:power x :credit x}
          (doseq [[c-type c-count] counters]
-           (core/add-counter state :corp (get-ice state server-key 0) c-type c-count)))
+           (core/add-counter state :corp (core/make-eid state) (get-ice state server-key 0) c-type c-count)))
        ;; ensure we start with the specified credit count (default 5)
        ;; by not actually clicking for creds
        (core/lose state :corp :click 2)
@@ -1135,7 +1152,7 @@
            (play-from-hand state :runner r)))
        ;; runner should have the default click/credit count (- 1 click for the run)
        (run-on state server-key)
-       (run-continue state :encounter-ice)
+       (run-continue-until state :encounter-ice)
        state))))
 
 (defn subroutine-test
@@ -1181,6 +1198,29 @@
          ice (get-ice state server-key 0)]
      (fire-subs state ice)
      state)))
+
+
+(defn is-deck-stacked-impl
+  [state side expected-deck]
+  (let [expected-deck (seq (flatten expected-deck))
+        deck (seq (map :title (take (count expected-deck) (get-in @state [side :deck]))))]
+    (is' (= expected-deck deck) (str "deck is not " expected-deck))))
+
+(defmacro is-deck-stacked?
+  [state side expected-deck]
+  `(error-wrapper (is-deck-stacked-impl ~state ~side ~expected-deck)))
+
+(defn provides-mu-impl
+  [cname x]
+  (let [state (new-game {:runner {:hand [cname] :credits 15}})] ;; todo - install-free
+    (take-credits state :corp)
+    (play-from-hand state :runner cname)
+    (is' (= (+ 4 x) (core/available-mu state)) (str cname " provided " x " memory"))
+    state))
+
+(defmacro provides-mu
+  [cname x]
+  `(error-wrapper (provides-mu-impl ~cname ~x)))
 
 (defn bad-usage [n]
   `(throw (new IllegalArgumentException (str ~n " should only be used inside 'is'"))))

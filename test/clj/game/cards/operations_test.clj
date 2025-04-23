@@ -573,6 +573,22 @@
     (is (= 4 (get-counters (get-content state :remote1 0) :advancement)))
     (is (no-prompt? state :corp))))
 
+(deftest bigger-picture-full-test
+  (do-game
+    (new-game {:corp {:hand [(qty "Bigger Picture" 2)]} :runner {:credits 15}})
+    (play-from-hand state :corp "Bigger Picture")
+    (is (no-prompt? state :corp) "Couldn't play Bigger Picture")
+    (is (= 2 (count (:hand (get-corp)))) "Couldn't play Bigger Picture")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Bigger Picture")
+    (click-prompt state :corp "Remove any number of tags")
+    (is (= 1 (count-tags state)))
+    (is (changed? [(:credit (get-corp)) 5
+                   (:credit (get-runner)) (- 5)
+                   (count-tags state) -1]
+          (click-prompt state :corp "1"))
+        "6 tempos gained")))
+
 (deftest bioroid-efficiency-research
   ;; Eli 1.0
   (do-game
@@ -1473,7 +1489,7 @@
       (take-credits state :corp)
       (take-credits state :runner 3)
       (is (= 1 (:click (get-runner))) "Runner has 1 click")
-      (run-on state :archives)
+      (run-on state :archives {:wait-at-initiation true})
       (is (not (:run @state)) "No run was initiated")
       (is (= 1 (:click (get-runner))) "Runner has 1 click")
       (take-credits state :runner)
@@ -1497,6 +1513,7 @@
       (let [sneakdoor (get-program state 0)]
         (card-ability state :runner sneakdoor 0)
         (is (= 3 (:click (get-runner))) "Runner doesn't spend 1 additional click to run with a card ability")
+        (run-continue state)
         (run-continue state)
         (run-empty-server state :archives)
         (is (= 1 (:click (get-runner))) "Runner spends 1 additional click to make a run")
@@ -1532,6 +1549,7 @@
       (play-from-hand state :runner "Out of the Ashes")
       (click-prompt state :runner "Archives")
       (is (= 3 (:click (get-runner))) "Runner doesn't spend 1 additional click to run with a run event")
+      (run-continue state)
       (run-continue state)
       (run-empty-server state :archives)
       (is (= 1 (:click (get-runner))) "Runner spends 1 additional click to make a run")
@@ -2289,6 +2307,7 @@
     (play-from-hand state :runner "Stargate")
     (card-ability state :runner (get-program state 0) 0)
     (run-continue state)
+    (run-continue state)
     (click-prompt state :runner "Vanilla")
     (take-credits state :runner)
     (play-from-hand state :corp "Hellion Beta Test")
@@ -2480,6 +2499,28 @@
     (click-prompt state :runner "2") ; Runner matches
     (is (= 1 (count-bad-pub state)))))
 
+(deftest ip-enforcement-no-counter
+  (do-game
+    (new-game {:corp {:hand ["IP Enforcement"] :credits 11}
+               :runner {:score-area ["City Works Project"] :tags 3}})
+    (play-from-hand state :corp "IP Enforcement")
+    (click-prompt state :corp "3")
+    (click-card state :corp "City Works Project")
+    (click-prompt state :corp "New remote")
+    (is (= "City Works Project" (:title (get-content state :remote1 0))) "CWP installed")
+    (is (= 0 (get-counters (get-content state :remote1 0) :advancement)) "with 0 adv counter")))
+
+(deftest ip-enforcement-with-counter
+  (do-game
+    (new-game {:corp {:hand ["IP Enforcement"] :credits 11}
+               :runner {:score-area ["City Works Project"] :tags 4}})
+    (play-from-hand state :corp "IP Enforcement")
+    (click-prompt state :corp "3")
+    (click-card state :corp "City Works Project")
+    (click-prompt state :corp "New remote")
+    (is (= "City Works Project" (:title (get-content state :remote1 0))) "CWP installed")
+    (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "with 1 adv counter")))
+
 (deftest ipo
   ;; IPO - credits with Terminal operations
   (do-game
@@ -2563,6 +2604,34 @@
       (is (= 1 (count (:rfg (get-corp)))) "Kakurenbo was removed from game")
       (is (no-prompt? state :corp) "No more prompts")))
 
+(deftest key-performance-indicators-test
+  (dotimes [_ 24]
+    (do-game
+      (new-game {:corp {:hand ["Key Performance Indicators" "Ice Wall" "Enigma" "NGO Front" "Hedge Fund"]
+                        :deck ["IPO"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (play-from-hand state :corp "Key Performance Indicators")
+      (doseq [action (take 2 (shuffle [:cred :install :advance :shuffle]))]
+        (case action
+          :cred (is (changed? [(:credit (get-corp)) 2]
+                      (click-prompt state :corp "Gain 2 [Credit]"))
+                    "Gained 2 creds")
+          :install (is (changed? [(:credit (get-corp)) 0]
+                         (click-prompt state :corp "Install 1 piece of ice from HQ, ignoring all costs")
+                         (click-card state :corp "Enigma")
+                         (click-prompt state :corp "HQ"))
+                       "Installed enigma, ignoring it's cost")
+          :advance (is (changed? [(get-counters (get-ice state :hq 0) :advancement) 1]
+                         (click-prompt state :corp "Place 1 advancement counter")
+                         (click-card state :corp (get-ice state :hq 0)))
+                       "Placed 1 adv on ice wall")
+          :shuffle (is (changed? [(count (:hand (get-corp))) 0
+                                  (count (:deck (get-corp))) 0]
+                         (click-prompt state :corp "Draw 1 card. Shuffle 1 card from HQ into R&D")
+                         (click-card state :corp "Hedge Fund"))
+                       "Drew 1, shuffled 1")))
+      (is (no-prompt? state :corp) "No lingering prompts")
+      (is (no-prompt? state :runner) "No lingering prompts"))))
 
 (deftest kill-switch
   ;; Kill Switch
@@ -2752,6 +2821,45 @@
       (card-side-ability state :runner (-> (get-resource state 0) :hosted first) 0)
       (is (nil? (get-resource state 0)) "Beth should now be trashed")
       (is (= (- credits 2) (:credit (get-runner))) "Runner should pay 2 credits to trash MCA"))))
+
+(deftest measured-response-test
+  (doseq [opt ["Pay 8 [Credits]" "Corp does 4 meat damage"]]
+    (do-game
+      (new-game {:corp {:hand ["Measured Response" "Hostile Takeover"] :score-area ["Vanity Project"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (click-advance state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Steal")
+      (take-credits state :runner)
+      (is (changed? [(:credit (get-runner)) 0]
+            (play-from-hand state :corp "Measured Response"))
+          "Stole 8c")
+      (if (= opt "Pay 8 [Credits]")
+        (is (changed? [(count (:hand (get-runner))) 0
+                       (:credit (get-runner)) -8]
+              (click-prompt state :runner opt))
+            "Paid 8c")
+        (is (changed? [(count (:hand (get-runner))) -4
+                       (:credit (get-runner)) 0]
+              (click-prompt state :runner opt))
+            "Suffered 4 damage")))))
+
+(deftest measured-response-no-threat
+  (doseq [opt ["Pay 8 [Credits]" "Corp does 4 meat damage"]]
+    (do-game
+      (new-game {:corp {:hand ["Measured Response" "Hostile Takeover"] :score-area ["City Works Project"]}
+                 :runner {:hand [(qty "Sure Gamble" 5)]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (click-advance state :corp (get-content state :remote1 0))
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (click-prompt state :runner "Steal")
+      (take-credits state :runner)
+      (play-from-hand state :corp "Measured Response")
+      (is (no-prompt? state :corp) "No prompt because no threat")
+      (is (no-prompt? state :runner) "No prompt because no threat"))))
 
 (deftest media-blitz
   ;; Hostile Takeover
@@ -2984,6 +3092,14 @@
        "Spent 3 clicks to go MAD")
    (is (= 2 (count-tags state)) "Runner should have two tags from MAD")
    (is (= 3 (count (:discard (get-corp)))) "MAD + 2 cards in discard")))
+
+(deftest nanomanagement
+  ;; Biotic Labor - Gain 2 clicks
+  (do-game
+    (new-game {:corp {:hand ["Nanomanagement"]}})
+    (play-from-hand state :corp "Nanomanagement")
+    (is (= 1 (:credit (get-corp))))
+    (is (= 4 (:click (get-corp))) "Spent 1 click to gain 2 additional clicks")))
 
 (deftest napd-cordon
   ;; NAPD Cordon
@@ -3329,6 +3445,44 @@
     (rez state :corp (get-ice state :remote1 0))
     (play-from-hand state :corp "Peak Efficiency")
     (is (= 7 (:credit (get-corp))) "Gained 3 credits for 3 rezzed pieces of ice; unrezzed ice ignored")))
+
+(deftest peer-review-basic
+  (do-game
+    (new-game {:corp {:deck ["Peer Review" "PAD Campaign" "Tithe"]}})
+    (play-from-hand state :corp "Peer Review")
+    (is (changed? [(:credit (get-corp)) 7]
+                  (click-card state :corp "PAD Campaign"))
+        "gained 7 after selecting a target")
+    (click-card state :corp "PAD Campaign")
+    (is (changed? [(count (:hand (get-corp))) -1]
+                  (click-prompt state :corp "New remote"))
+        "hand reduced after install")))
+
+(deftest peer-review-small-hand
+  (do-game
+    (new-game {:corp {:deck ["Peer Review" "PAD Campaign"]}})
+    (is (changed? [(:credit (get-corp)) (- 7 4)]
+                  (play-from-hand state :corp "Peer Review"))
+        "gained 7 after playing event")
+    (click-card state :corp "PAD Campaign")
+    (is (changed? [(count (:hand (get-corp))) -1]
+                  (click-prompt state :corp "New remote"))
+        "hand reduced after install")))
+
+(deftest petty-cash
+  (do-game
+    (new-game {:corp {:hand ["Petty Cash"]}})
+    (is (changed? [(:credit (get-corp)) 2
+                   (:click (get-corp)) -1]
+                  (play-from-hand state :corp "Petty Cash"))
+        "Works from HQ")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (changed? [(:credit (get-corp)) 2
+                   (:click (get-corp)) 0]
+                  (flashback state :corp "Petty Cash"))
+        "Works from discard")
+    (is (= (get-in @state [:corp :rfg 0 :title]) "Petty Cash") "Removed Petty Cash from the game")))
 
 (deftest pivot-gets-operations
   (do-game
@@ -4207,7 +4361,7 @@
      (core/lose state :runner :credit 6)
      (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
      (is (zero? (:credit (get-runner))) "Runner has 0 credits")
-     (run-on state :archives)
+     (run-on state :archives {:wait-at-initiation true})
      (is (not (:run @state)) "No run was initiated")
      (is (= 4 (:click (get-runner))) "Runner has 4 clicks")
      (is (zero? (:credit (get-runner))) "Runner has 0 credits")
@@ -4235,6 +4389,7 @@
        (is (= 1 (:credit (get-runner)))
            "Runner spends 1 additional credit to run with a card ability")
        (run-continue state)
+       (run-continue state)
        (run-on state :archives)
        (is (= 1 (:credit (get-runner)))
            "Runner doesn't spend 1 credit to make a run"))))
@@ -4251,6 +4406,7 @@
      (click-prompt state :runner "Archives")
      (is (= 3 (:credit (get-runner)))
          "Runner spends 1 additional credit to run with a run event")
+     (run-continue state)
      (run-continue state)
      (run-empty-server state :archives)
      (is (= 3 (:credit (get-runner)))
@@ -4339,6 +4495,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Stimhack")
       (click-prompt state :runner "HQ")
+      (run-continue state)
       (run-jack-out state)
       (is (= 4 (:credit (get-runner))) (str "An additional real cred spent, not Stimhack money"))
       (run-on state "R&D")
@@ -5142,6 +5299,30 @@
       (is (= bp (count-bad-pub state)) "Corp shouldn't gain any more bad pub")
       (is (= credits (:credit (get-corp))) "Corp shouldn't gain any more as over 10 credits"))))
 
+(deftest top-down-solutions-basic-test
+  (do-game
+    (new-game {:corp {:hand ["Top-Down Solutions" "Enigma" "Vanilla"]
+                      :deck [(qty "IPO" 5)]}})
+    (is (changed? [(count (:hand (get-corp))) 1]
+          (play-from-hand state :corp "Top-Down Solutions"))
+        "Drew 2 cards")
+    (click-card state :corp "Enigma")
+    (click-prompt state :corp "HQ")
+    (click-card state :corp "Vanilla")
+    (click-prompt state :corp "HQ")
+    (is (no-prompt? state :corp) "No lingering prompts")))
+
+(deftest touch-ups
+  ;; Touch Ups
+  (do-game
+    (new-game {:corp {:hand ["Touch-ups" "Hostile Takeover"]}
+               :runner {:hand ["Corroder" "Ika" "Sure Gamble"]}})
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (play-from-hand state :corp "Touch-ups")
+    (click-prompts state :corp "Hostile Takeover" "Program" "Corroder" "Ika")
+    (is (no-prompt? state :corp) "No prompt left")
+    (is (= 1 (count (:hand (get-runner)))) "2 cards gone from hand")))
+
 (deftest traffic-accident
   ;; Traffic Accident
   (do-game
@@ -5358,7 +5539,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Film Critic")
     (play-from-hand state :runner "Khusyuk")
-    (run-continue state)
+    (run-continue-until state :success)
     (click-prompt state :runner "1 [Credit]: 1 card")
     (click-prompt state :runner "Ice Wall")
     (click-prompt state :runner "No action")
@@ -5434,7 +5615,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Desperado")
       (play-from-hand state :runner "Embezzle")
-      (run-continue state)
+      (run-continue-until state :success)
       (click-prompt state :runner "Operation")
       (take-credits state :runner)
       (play-from-hand state :corp "Wake Up Call")
@@ -5454,6 +5635,7 @@
       (play-from-hand state :runner "Stargate")
       (play-from-hand state :runner "Acacia")
       (card-ability state :runner (get-program state 0) 0)
+      (run-continue state)
       (run-continue state)
       (click-prompt state :runner "Hedge Fund")
       (take-credits state :runner)

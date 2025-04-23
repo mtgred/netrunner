@@ -147,7 +147,6 @@
                                   :position n
                                   :corp-auto-no-action false
                                   :phase :initiation
-                                  :next-phase :initiation
                                   :eid eid
                                   :current-ice nil
                                   :events nil
@@ -166,13 +165,19 @@
                      (queue-event state :run {:server s
                                               :position n
                                               :cost-args cost-args})
-                     (wait-for
-                       (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-initiation)
-                       (if (pos? (get-in @state [:run :position] 0))
-                         (do (set-next-phase state :approach-ice)
-                             (start-next-phase state side nil))
-                         (do (set-next-phase state :movement)
-                             (start-next-phase state side nil))))))))))))))
+                     (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-initiation)))))))))))
+
+(defmethod continue :initiation
+  [state side _]
+  (if-not (get-in @state [:run :no-action])
+    (do (swap! state assoc-in [:run :no-action] side)
+        (when (= :corp side)
+          (system-msg state side "has no further action")))
+    (if (pos? (get-in @state [:run :position] 0))
+      (do (set-next-phase state :approach-ice)
+          (start-next-phase state side nil))
+      (do (set-next-phase state :movement)
+          (start-next-phase state side nil)))))
 
 (defn toggle-auto-no-action
   [state _ _]
@@ -462,29 +467,32 @@
 (defn approach-server
   [state side eid]
   (set-current-ice state nil)
-  (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
-  (queue-event state :approach-server)
-  (wait-for (checkpoint state side
-                        (make-eid state)
+  (wait-for
+    (trigger-event-simult state side :pre-approach-server nil
+                          {:server (first (:server (:run @state)))})
+    (system-msg state :runner (str "approaches " (zone->name (:server (:run @state)))))
+    (queue-event state :approach-server)
+    (wait-for (checkpoint state side
+                          (make-eid state)
                           ;; Immediately end approach if:
                           ;; * run ends
                           ;; * phase changes
                           ;; * server becomes empty
-                        {:cancel-fn (fn [state]
-                                      (or (check-for-empty-server state)
-                                          (:ended (:end-run @state))
-                                          (get-in @state [:run :next-phase])))})
-            (cond
-              ;; end run
-              (or (check-for-empty-server state)
-                  (:ended (:end-run @state)))
-              (handle-end-run state side eid)
-              ;; phase changed
-              (get-in @state [:run :next-phase])
-              (start-next-phase state side eid)
-              ;; go to Success phase
-              :else (do (set-next-phase state :success)
-                        (start-next-phase state side eid)))))
+                          {:cancel-fn (fn [state]
+                                        (or (check-for-empty-server state)
+                                            (:ended (:end-run @state))
+                                            (get-in @state [:run :next-phase])))})
+              (cond
+                ;; end run
+                (or (check-for-empty-server state)
+                    (:ended (:end-run @state)))
+                (handle-end-run state side eid)
+                ;; phase changed
+                (get-in @state [:run :next-phase])
+                (start-next-phase state side eid)
+                ;; go to Success phase
+                :else (do (set-next-phase state :success)
+                          (start-next-phase state side eid))))))
 
 (defmethod continue :movement
   [state side _]
@@ -678,7 +686,7 @@
                   ;; if the server is a mark, add it to the successful run
                   (let [marked (when (is-mark? state (first (:server (:run @state))))
                                  {:marked-server true})
-                        keys (conj (select-keys (:run @state) [:server :run-id]) marked)]
+                        keys (conj (select-keys (:run @state) [:server :run-id :subroutines-fired]) marked)]
                     (queue-event state :successful-run keys)
                     (checkpoint state nil eid))))))
 

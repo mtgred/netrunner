@@ -4,7 +4,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [register-static-abilities unregister-static-abilities]]
     [game.core.eid :refer [make-eid]]
-    [game.core.engine :refer [register-default-events unregister-events]]
+    [game.core.engine :refer [register-default-events register-events unregister-events]]
     [game.core.initializing :refer [card-init]]
     [game.core.memory :refer [init-mu-cost]]
     [game.core.update :refer [update! update-hosted!]]
@@ -60,7 +60,7 @@
            cdef (card-def card)
            tdef (card-def target)]
        (update! state side (update card :hosted conj target))
-       (when (and installed
+       (if (and installed
                   (or (runner? target)
                       (and (corp? target)
                            (rezzed? target))))
@@ -77,7 +77,11 @@
                (register-static-abilities state side target)
                (when (and (program? target)
                           (not no-mu))
-                 (init-mu-cost state target)))))
+                 (init-mu-cost state target))))
+         (when-not installed
+           (let [events (filter #(= (:location %) :hosted) (:events (card-def target)))]
+             (when (seq events)
+               (register-events state side (get-card state target) events)))))
        (when-let [hosted-gained (:hosted-gained cdef)]
          (hosted-gained state side (make-eid state) (get-card state card) [target]))
        ;; Update all static abilities and floating effects

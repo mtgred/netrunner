@@ -157,6 +157,7 @@
     (click-prompt state :runner "Yes")
     (is (:run @state) "Run has started")
     (run-continue state)
+    (run-continue state)
     (is (changed? [(:click (get-runner)) -2]
                   (click-prompt state :runner "Yes"))
         "Costs 2 clicks")
@@ -180,6 +181,7 @@
     (end-phase-12 state :runner)
     (click-prompt state :runner "Yes")
     (is (:run @state) "Run has started")
+    (run-continue state)
     (run-continue state)
     (click-prompt state :runner "Malandragem (rfg)")
     (click-prompt state :runner "Yes")
@@ -502,6 +504,42 @@
         (click-prompt state :runner "Expose a card")
         (click-card state :runner "Ice Wall")
         (click-prompt state :corp "No"))))
+
+(deftest bling
+  (do-game
+    (new-game {:corp {:hand ["IPO"]}
+               :runner {:hand ["Bling" "Spy Camera" "Rezeki" "Modded"]
+                        :deck ["Corroder" "Corroder"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bling")
+    (play-from-hand state :runner "Rezeki")
+    (is (no-prompt? state :runner) "Not prompted to host")
+    (play-from-hand state :runner "Spy Camera")
+    (click-prompt state :runner "Yes")
+    (is (= "Corroder" (->> (get-hardware state 0) :hosted first :title)) "Roadster hosted on bling")
+    (play-from-hand state :runner "Modded")
+    (click-card state :runner (->> (get-hardware state 0) :hosted first))
+    (click-prompt state :runner "Yes")
+    (is (= "Corroder" (->> (get-hardware state 0) :hosted first :title)) "Roadster hosted on bling again")
+    (take-credits state :runner)
+    (is (= "Corroder" (->> (get-runner) :discard second :title)) "Corroder trashed EOT")))
+
+(deftest bling-with-fragments
+  (do-game
+    (new-game {:corp {:hand [] :deck []}
+               :runner {:hand ["Modded" "Bling"] :deck ["Utopia Shard" "Eden Shard" "Hades Shard"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Modded")
+    (click-card state :runner "Bling")
+    (dotimes [_ 3]
+      (click-prompt state :runner "Yes") ;; host the card
+      (let [active-shard (->> (get-hardware state 0) :hosted first :title)
+            target-server (case active-shard
+                            "Utopia Shard" :hq
+                            "Hades Shard"  :archives
+                            "Eden Shard"   :rd)]
+        (run-empty-server state target-server)
+        (click-prompt state :runner active-shard)))))
 
 (deftest bmi-buffer
   (do-game
@@ -851,6 +889,7 @@
             omar (get-in @state [:runner :identity])]
         (click-card state :runner surveyor)
         (card-ability state :runner omar 0)
+        (run-continue state)
         (rez state :corp surveyor)
         (run-continue state)
         (card-ability state :runner (refresh boom) 0)
@@ -902,6 +941,7 @@
          boom (get-hardware state 0)]
      (click-card state :runner icew)
      (play-from-hand state :runner "Reboot")
+     (run-continue state)
      (rez state :corp icew)
      (run-continue state)
      (card-ability state :runner (refresh boom) 0)
@@ -928,6 +968,7 @@
          boom (get-hardware state 0)]
      (click-card state :runner icew)
      (play-from-hand state :runner "Reboot")
+     (run-continue state)
      (rez state :corp icew)
      (run-continue state)
      (card-ability state :runner (refresh boom) 0)
@@ -1362,6 +1403,7 @@
       (play-from-hand state :runner "Capybara")
       (play-from-hand state :runner "Inside Job")
       (click-prompt state :runner "HQ")
+      (run-continue state)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (is (not-empty (get-hardware state)) "Capybara installed")
@@ -1753,6 +1795,28 @@
     (let [adpt (first (:hosted (get-hardware state 0)))]
       (is (= 8 (get-strength adpt)) "Adept at 8 strength hosted"))))
 
+(deftest detente-breach
+  (do-game
+    (new-game {:runner {:hand ["Detente"]
+                        :deck [(qty "Easy Mark" 3)]}
+               :corp {:hand [(qty "IPO" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Detente")
+    (run-empty-server state :archives)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Yes")
+    (is (seq (:hosted (get-hardware state 0))) "Diplomat hosted IPO")
+    (click-prompt state :runner "No action")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Yes")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-card state :runner (first (:hosted (get-hardware state 0))))
+    (click-card state :runner (second (:hosted (get-hardware state 0))))
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "No action")))
+
 (deftest docklands-pass-corp-access-extra-card-on-hq-run
     ;; Corp access extra card on HQ run
     (do-game
@@ -1801,6 +1865,7 @@
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "R&D")
       (is (:run @state) "New run started")
+      (run-continue state)
       (is (= [:rd] (:server (:run @state))) "Running on R&D")
       (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
 
@@ -1814,6 +1879,7 @@
       (play-from-hand state :runner "Doppelgänger")
       (play-from-hand state :runner "The Maker's Eye")
       (run-continue state)
+      (run-continue state)
       (is (accessing state "Quandary"))
       (click-prompt state :runner "No action")
       (is (accessing state "Quandary"))
@@ -1824,6 +1890,7 @@
       (click-prompt state :runner "Yes")
       (click-prompt state :runner "R&D")
       (is (:run @state) "New run started")
+      (run-continue state)
       (run-continue state)
       (is (= [:rd] (:server (:run @state))) "Running on R&D")
       (is (accessing state "Quandary"))
@@ -1848,6 +1915,7 @@
     (click-prompt state :runner "HQ")
     (is (:run @state) "New run started")
     (is (= [:hq] (:server (:run @state))) "Running on R&D")
+    (run-continue state)
     (run-continue state)))
 
 (deftest dorm-computer
@@ -1863,6 +1931,7 @@
                      (get-counters (refresh dorm) :power) -1]
             (card-ability state :runner dorm 0)
             (click-prompt state :runner "Server 1")
+            (run-continue state)
             (run-continue state)
             (is (= "Snare!" (:title (:card (prompt-map :corp)))))
             (is (waiting? state :runner) "Runner has prompt to wait for Snare!")
@@ -2076,8 +2145,6 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Flip Switch")
       (let [flip (get-hardware state 0)]
-        (card-ability state :runner (get-hardware state 0) 0)
-        (is (refresh flip) "Flip Switch hasn't been trashed")
         (run-on state "HQ")
         (card-ability state :runner (get-hardware state 0) 0)
         (is (= "Runner jacks out." (-> @state :log last :text)))
@@ -2093,10 +2160,7 @@
       (play-from-hand state :runner "Flip Switch")
       (is (zero? (count-tags state)) "Runner starts with 0 tags")
       (let [flip (get-hardware state 0)]
-        (card-ability state :runner flip 1)
-        (is (refresh flip) "Flip Switch hasn't been trashed")
         (gain-tags state :runner 1)
-        (is (= 1 (count-tags state)) "Runner starts with 0 tags")
         (card-ability state :runner flip 1)
         (is (zero? (count-tags state)) "Runner has lost 1 tag")
         (is (nil? (refresh flip)) "Flip Switch has been trashed")
@@ -2299,6 +2363,30 @@
       (is (= 6 (count (:set-aside (get-runner)))) "6 cards in deck")
       (click-prompt state :runner "DDoS")
       (is (= "DDoS" (:title (get-resource state 0))) "DDoS is installed")))
+
+(deftest gamedragon-tm-pro
+  (do-game
+    (new-game {:corp {:hand ["Fire Wall"]}
+               :runner {:hand ["GAMEDRAGON™ Pro" "Corroder"] :credits 10}})
+    (play-from-hand state :corp "Fire Wall" "HQ")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :runner "Corroder")
+    (let [cor (get-program state 0)]
+      (play-from-hand state :runner "GAMEDRAGON™ Pro")
+      (click-card state :runner "Corroder")
+      (run-on state :hq)
+      (is (= 3 (get-strength (refresh cor))) "Corroder got +1")
+      (run-continue state :encounter-ice)
+      (card-ability state :runner (refresh cor) 1)
+      (card-ability state :runner (refresh cor) 1)
+      (is (= 5 (get-strength (refresh cor))) "Stayed at 5")
+      (card-ability state :runner (refresh cor) 0)
+      (click-prompt state :runner "End the run")
+      (run-continue state :movement)
+      (is (= 5 (get-strength (refresh cor))) "Stayed at 5")
+      (run-jack-out state)
+      (is (= 3 (get-strength (refresh cor))) "reset to 2"))))
 
 (deftest gebrselassie
   ;; Gebrselassie
@@ -3125,6 +3213,36 @@
         (click-card state :runner (refresh pad))
         (is (zero? (get-counters (refresh mache) :power)) "Mache should gain no counters from a trash outside of an access"))))
 
+(deftest maglectric-rapid-748
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Maglectric Rapid (748 Mod)"]}})
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Maglectric Rapid (748 Mod)")
+    (run-empty-server state :hq)
+    (is (no-prompt? state :runner) "no targets")
+    (rez state :corp (get-ice state :rd 0))
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Done")
+    (run-empty-server state :hq)
+    (click-card state :runner "Ice Wall")
+    (is (not (rezzed? (get-ice state :rd 0))) "not rezzed")
+    (is (= "Maglectric Rapid (748 Mod)" (get-in @state [:runner :discard 0 :title])) "Trashed Maglectric Rapid (748 Mod)")))
+
+(deftest madani-test
+  (do-game
+    (new-game {:runner {:hand ["Madani" "Ika" "Fermenter" "Rezeki"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Madani")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-prompts state :runner "Ika" "Fermenter" "Rezeki")
+    (is (no-prompt? state :runner))
+    (is (= 3 (count (:hosted (get-hardware state 0)))) "3 hosted cards")
+    (card-ability state :runner (get-hardware state 0) 1)
+    (click-card state :runner "Ika")
+    (is (= "Ika" (:title (get-program state 0))) "Intsalled ika")))
+
 (deftest marrow
   (do-game
     (new-game {:runner {:hand [(qty "Sure Gamble" 2) "Marrow"]}
@@ -3577,6 +3695,7 @@
         (play-from-hand state :runner "Mu Safecracker")
         (play-from-hand state :runner "Cold Read")
         (click-prompt state :runner "R&D")
+        (run-continue state)
         (run-continue state)
         (click-prompt state :runner "Yes")
         (click-card state :runner "Cold Read")
@@ -4199,15 +4318,15 @@
         (card-ability state :runner (get-hardware state 0) 1)
         (is (last-log-contains? state "reveal Sure Gamble from the top of the stack") "Correctly prints the revealed card"))))
 
-(deftest prognostic-q-loop-doesn-t-fire-with-an-empty-deck
-    ;; Doesn't fire with an empty deck
-    (do-game
-      (new-game {:runner {:hand ["Prognostic Q-Loop"]}})
-      (take-credits state :corp)
-      (play-from-hand state :runner "Prognostic Q-Loop")
-      (card-ability state :runner (get-hardware state 0) 1)
-      (is (last-log-contains? state "Runner spends [Click] and pays 1 [Credits] to install Prognostic Q-Loop.")
-          "Shouldn't print anything to log as the stack is empty")))
+(deftest prognostic-q-loop-does-nothing-with-an-empty-deck
+  ;; Doesn't fire with an empty deck
+  (do-game
+    (new-game {:runner {:hand ["Prognostic Q-Loop"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Prognostic Q-Loop")
+    (card-ability state :runner (get-hardware state 0) 1)
+    (is (last-log-contains? state "Prognostic Q-Loop to do nothing.")
+        "Shouldn't print anything to log as the stack is empty")))
 
 (deftest prognostic-q-loop-orders-correctly-with-other-on-run-triggers-when-firing-first-issue-4973
     ;; Orders correctly with other on run triggers when firing first. Issue #4973
@@ -4707,6 +4826,7 @@
     (click-card state :runner "Lucky Find")
     (click-prompt state :runner "Done")
     (run-continue state)
+    (run-continue state)
     (click-prompt state :runner "No action") ; First card
     (click-prompt state :runner "Steal") ; Second card, due to additional access
     (is (nil? (:run @state)) "Run is over")))
@@ -4934,7 +5054,8 @@
         (play-from-hand state :runner "Corroder")
         (play-from-hand state :runner "Simulchip")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (no-prompt? state :runner) "No Simulchip prompt"))))
+        (is (not (no-prompt? state :runner))
+            "Simulchip prompt (the great NCIGS paradigm shift)"))))
 
 (deftest simulchip-no-additional-cost-when-hosted-program-is-trashed-issue-4897
     ;; No additional cost when hosted program is trashed. Issue #4897
@@ -5125,6 +5246,7 @@
   (letfn [(laundry-archives [state]
             (play-from-hand state :runner "Dirty Laundry")
             (click-prompt state :runner "Archives")
+            (run-continue state)
             (run-continue state))]
     (testing "Installing Swift gives the runner +1[mu]"
       (do-game
@@ -5252,6 +5374,7 @@
       (play-from-hand state :runner "Sneakdoor Beta")
       (play-from-hand state :runner "The Gauntlet")
       (card-ability state :runner (get-program state 1) 0)
+      (run-continue state)
       (rez state :corp (get-ice state :archives 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
@@ -5300,6 +5423,7 @@
       (play-from-hand state :runner "The Gauntlet")
       (play-from-hand state :runner "Knifed")
       (click-prompt state :runner "HQ")
+      (run-continue state)
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (card-ability state :runner (get-program state 0) 0)
@@ -5571,6 +5695,7 @@
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
       (run-continue state)
+      (run-continue state)
       (click-prompt state :runner "Top Hat") ; Top Hat activation
       (is (= 0 (count (:discard (get-runner)))) "No damage yet")
       (click-prompt state :runner "2") ; Top Hat - accessing Brainstorm
@@ -5579,6 +5704,7 @@
       ;; Stealing agenda
       (play-from-hand state :runner "Mad Dash")
       (click-prompt state :runner "R&D")
+      (run-continue state)
       (run-continue state)
       (click-prompt state :runner "Top Hat") ; Top Hat activation
       (click-prompt state :runner "1") ; Top Hat - accessing Accelerated Beta Test

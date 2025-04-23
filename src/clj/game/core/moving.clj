@@ -609,16 +609,19 @@
    (wait-for (trash-cards state side (make-eid state eid) (:hosted card) {:game-trash true
                                                                           :suppress-checkpoint true
                                                                           :unpreventable true})
-             (let [card (get-card state card)]
+             (let [card (get-card state card)
+                   forfeit-ev (if (= :corp side) :corp-forfeit-agenda :runner-forfeit-agenda)
+                   moved-card (move state (to-keyword (:side card)) card :rfg)]
                (when msg
                  (system-msg state side (str "forfeits " (get-title card))))
-               (move state (to-keyword (:side card)) card :rfg)
                (update-all-agenda-points state side)
                (check-win-by-agenda state side)
-               (queue-event state (if (= :corp side) :corp-forfeit-agenda :runner-forfeit-agenda) {:card card})
+               (queue-event state forfeit-ev {:card card})
+               (when-let [on-forfeit (:on-forfeit (card-def card))]
+                 (register-pending-event state forfeit-ev moved-card (assoc on-forfeit :location :rfg)))
                (if suppress-checkpoint
-                 (complete-with-result state side eid card)
-                 (checkpoint state nil (make-result eid card) {:duration :game-trash}))))))
+                 (complete-with-result state side eid moved-card)
+                 (checkpoint state nil (make-result eid moved-card) {:durations [:game-trash]}))))))
 
 (defn flip-facedown
   "Flips a runner card facedown, either manually (if it's hosted) or by calling move to facedown"

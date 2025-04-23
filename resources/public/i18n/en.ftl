@@ -1168,6 +1168,7 @@ set_name = {$name ->
     [draft-cycle] Draft Cycle
     [earth-s-scion] Earth's Scion
     [escalation] Escalation
+    [elevation] Elevation
     [fear-and-loathing] Fear and Loathing
     [fear-the-masses] Fear the Masses
     [first-contact] First Contact

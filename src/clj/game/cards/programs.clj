@@ -3,7 +3,7 @@
    [game.core.access :refer [access-bonus max-access]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type
                             card->server server->zone]]
-   [game.core.card :refer [active? agenda? asset? card-index corp? facedown? faceup?
+   [game.core.card :refer [active? agenda? asset? card-index corp? event? facedown? faceup?
                            get-advancement-requirement get-card get-counters
                            get-nested-host get-title get-zone
                            hardware? has-subtype? has-any-subtype? in-hand? in-discard? ice? installed?
@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [breach-access-bonus defcard offer-jack-out trash-on-empty get-x-fn rfg-on-empty]]
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out trash-on-empty trash-on-purge get-x-fn rfg-on-empty]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -25,7 +25,7 @@
                              first-successful-run-on-server? no-event? turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid]]
-   [game.core.flags :refer [can-host? can-trash? card-flag? lock-zone release-zone zone-locked?]]
+   [game.core.flags :refer [can-host? can-trash? card-flag? lock-zone release-zone untrashable-while-rezzed? zone-locked?]]
    [game.core.gaining :refer [gain-clicks gain-credits lose-credits]]
    [game.core.hosting :refer [host]]
    [game.core.identities :refer [disable-card enable-card]]
@@ -497,6 +497,7 @@
                   :msg "make a run on R&D"
                   :makes-run true
                   :async true
+                  :change-in-game-state {:req (req rd-runnable)}
                   :effect (effect (register-events card [ability])
                                   (make-run eid :rd card))}]}))
 
@@ -558,6 +559,11 @@
   (auto-icebreaker {:abilities [(break-sub 2 1 "Barrier")
                                 (strength-pump 2 3)]}))
 
+(defcard "Azimat"
+  {:recurring 2
+   :interactions {:pay-credits {:req (req (= :runner-trash-corp-cards (:source-type eid)))
+                                :type :recurring}}})
+
 (defcard "Baba Yaga"
   (let [gain-abis (req (let [new-abis (mapcat (comp ability-init card-def) (:hosted card))]
                          (update! state :runner (assoc card :abilities new-abis))))]
@@ -598,7 +604,7 @@
                                            (let [target-ice (:ice (get-current-encounter state))]
                                              (register-events
                                                state side card
-                                               [{:event :end-run-interrupt
+                                               [{:event :can-run-be-ended?
                                                  :duration :end-of-encounter
                                                  :async true
                                                  :silent (req true)
@@ -826,6 +832,14 @@
                               (do (system-msg state side (str "uses " (:title card) " to trash " (card-str state (:ice context))))
                                   (trash state side eid (:ice context) {:cause-card card}))))}]}))
 
+(defcard "Chromatophores"
+  (trojan
+    {:on-install {:msg (msg "make " (card-str state (:host card))
+                            " gain Barrier, Code Gate and Sentry subtypes")}
+     :static-abilities [{:type :gain-subtype
+                         :req (req (same-card? target (:host card)))
+                         :value ["Barrier" "Code Gate" "Sentry"]}]}))
+
 (defcard "Cat's Cradle"
   (auto-icebreaker
     {:static-abilities [{:type :rez-cost
@@ -845,21 +859,13 @@
                                 :type :recurring}}})
 
 (defcard "Clot"
-  {:on-install
-   {:effect (req (let [agendas (->> (turn-events state :corp :corp-install)
-                                    (map #(:card (first %)))
-                                    (filter agenda?))]
-                   (swap! state assoc-in [:corp :register :cannot-score] agendas)))}
-   :events [{:event :purge
-             :async true
-             :msg "trash itself"
-             :effect (req (swap! state update-in [:corp :register] dissoc :cannot-score)
-                          (trash state :runner eid card {:cause :purge
-                                                         :cause-card card}))}
+  {:static-abilities [{:type :cannot-score
+                       :req (req (= :this-turn (installed? (:card context))))
+                       :value true}]
+   :events [trash-on-purge
             {:event :corp-install
              :req (req (agenda? (:card context)))
-             :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons (:card context) %)))}]
-   :leave-play (req (swap! state update-in [:corp :register] dissoc :cannot-score))})
+             :effect (req (swap! state update-in [:corp :register :cannot-score] #(cons (:card context) %)))}]})
 
 (defcard "Coalescence"
   {:abilities [{:cost [(->c :power 1)]
@@ -899,6 +905,7 @@
                 :msg "make a run on R&D"
                 :makes-run true
                 :async true
+                :change-in-game-state {:req (req rd-runnable)}
                 :effect (req (make-run state side eid :rd card))}
                (set-autoresolve :auto-place-counter "Conduit placing virus counters on itself")]})
 
@@ -923,7 +930,7 @@
                                 ab (if (= 1 amt-trashed) sing-ab mult-ab)]
                             (continue-ability state side ab card targets)))}]
    :abilities [{:action true
-                :req (req (pos? (get-virus-counters state card)))
+                :change-in-game-state {:req (req (pos? (get-virus-counters state card)))}
                 :cost [(->c :click 1)]
                 :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters"
                 :async true
@@ -1199,7 +1206,7 @@
                                           (resource? %))
                                       (runner-can-install? state side % nil)
                                       (<= (install-cost state side %) (get-counters card :power)))
-                                (:hand runner)))
+                                (all-cards-in-hand* state :runner)))
                 :label "install a card from the grip"
                 :cost [(->c :trash-can)]
                 :async true
@@ -1207,7 +1214,7 @@
                           (continue-ability
                             {:waiting-prompt true
                              :prompt "Choose a card to install"
-                             :choices {:req (req (and (in-hand? target)
+                             :choices {:req (req (and (in-hand*? state target)
                                                       (or (hardware? target)
                                                           (program? target)
                                                           (resource? target))
@@ -1248,6 +1255,21 @@
                                  :cost [(->c :trash-can)])}]
    :abilities [(break-sub [(->c :trash-can)] 0 "AP")]})
 
+(defcard "Devadatta Drone"
+  {:data {:counter {:power 2}}
+   :events [{:event :breach-server
+             :skippable true
+             :optional
+             {:req (req (and (pos? (get-counters card :power))
+                             (= target :rd)))
+              :waiting-prompt true
+              :prompt "Spend 1 hosted power counter to access 1 additional card?"
+              :autoresolve (get-autoresolve :auto-fire)
+              :yes-ability {:msg "access 1 additional card from R&D"
+                            :cost [(->c :power 1)]
+                            :effect (effect (access-bonus :rd 1))}}}]
+   :abilities [(set-autoresolve :auto-fire "Devadatta Drone")]})
+
 (defcard "Dhegdheer"
   {:implementation "Discount not considered by any engine functions when checking if a program is playable"
    :static-abilities [{:type :can-host
@@ -1275,11 +1297,7 @@
                        :req (req (let [serv (:server (second targets))]
                                    (= serv (:card-target card))))
                        :value 1}]
-   :events [{:event :purge
-             :async true
-             :msg "trash itself"
-             :effect (req (trash state :runner eid card {:cause :purge
-                                                         :cause-card card}))}]})
+   :events [trash-on-purge]})
 
 (defcard "Djinn"
   {:static-abilities [{:type :can-host
@@ -1289,6 +1307,7 @@
                        :no-mu true
                        :max-mu 3}]
    :abilities [{:action true
+                :change-in-game-state {:req (req (seq (:deck runner)))}
                 :label "Search the stack for a virus program and add it to the grip"
                 :prompt "Choose a Virus"
                 :msg (msg "add " (:title target) " from the stack to the grip")
@@ -1364,11 +1383,7 @@
 
 (defcard "eXer"
   {:events [(breach-access-bonus :rd 1)
-            {:event :purge
-             :async true
-             :msg "trash itself"
-             :effect (req (trash state :runner eid card {:cause :purge
-                                                         :cause-card card}))}]})
+            trash-on-purge]})
 
 (defcard "Expert Schedule Analyzer"
   (let [ability (successful-run-replace-breach
@@ -1380,6 +1395,7 @@
                    :effect (effect (reveal eid (:hand corp)))}})]
     {:abilities [{:action true
                   :cost [(->c :click 1)]
+                  :change-in-game-state {:req (req hq-runnable)}
                   :msg "make a run on HQ"
                   :makes-run true
                   :async true
@@ -1475,7 +1491,7 @@
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}]
    :abilities [{:action true
-                :req (req (pos? (get-virus-counters state card)))
+                :change-in-game-state {:req (req (pos? (get-virus-counters state card)))}
                 :cost [(->c :click 1) (->c :trash-can)]
                 :label "Gain 2 [Credits] for each hosted virus counter"
                 :msg (msg (str "gain " (* 2 (get-virus-counters state card)) " [Credits]"))
@@ -1559,6 +1575,23 @@
                 :effect (effect (gain-credits eid (get-virus-counters state card)))
                 :msg (msg "gain " (get-virus-counters state card) " [Credits]")}]})
 
+(defcard "Gourmand"
+  {:interactions {:access-ability
+                  {:label "Trash card"
+                   :trash? true
+                   :req (req (and (can-trash? state :runner target)
+                                  (not (agenda? target))
+                                  (not (in-discard? target))))
+                   :cost [(->c :trash-can)]
+                   :trash-icon true
+                   :msg (msg "trash " (:title target))
+                   :async true
+                   :effect (req (wait-for
+                                  (trash state side (assoc target :seen true)
+                                         {:accessed true
+                                          :cause-card card})
+                                  (draw-loud state side eid card 1)))}}})
+
 (defcard "Grappling Hook"
   (let [break-subs (fn [state ice subroutines]
                      (doseq [sub subroutines]
@@ -1601,6 +1634,7 @@
      :abilities [{:action true
                   :async true
                   :cost [(->c :click 1) (->c :virus 1)]
+                  :change-in-game-state {:req (req (seq (:deck corp)))}
                   :keep-menu-open :while-virus-tokens-left
                   :msg "force the Corp to trash the top card of R&D"
                   :effect (effect (mill :corp eid :corp 1))}]}))
@@ -1640,7 +1674,7 @@
                             {:optional
                              {:prompt "Host a card on this program instead of accessing it?"
                               :yes-ability {:prompt "Choose a card in Archives"
-                                            :choices (req (:discard corp))
+                                            :choices (req (cancellable (:discard corp) :sorted))
                                             :msg (msg "host " (:title target) " on itself instead of accessing it")
                                             :effect (effect
                                                       (update! (assoc-in card [:special :host-available] false))
@@ -1686,6 +1720,12 @@
                                          (take 2 (shuffle (:hand corp))) {:cause-card card})
                             (trash state :runner eid card {:cause :purge :cause-card card})))}]})
 
+(defcard "Hantu"
+  (auto-icebreaker
+    {:data {:counter {:virus 2}}
+     :abilities [(break-sub 1 1 "Sentry")
+                 (strength-pump [(->c :virus 1) 3] 2)]}))
+
 (defcard "Hemorrhage"
   {:events [{:event :successful-run
              :silent (req true)
@@ -1694,7 +1734,7 @@
    :abilities [{:action true
                 :cost [(->c :click 1) (->c :virus 2)]
                 :keep-menu-open :while-2-virus-tokens-left
-                :req (req (pos? (count (:hand corp))))
+                :change-in-game-state {:req (req (seq (:hand corp)))}
                 :msg "force the Corp to trash 1 card from HQ"
                 :async true
                 :effect (req (continue-ability
@@ -1836,10 +1876,7 @@
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :runner eid 1))}
-            {:event :purge
-             :async true
-             :msg "trash itself"
-             :effect (req (trash state :runner eid card {:cause :purge :cause-card card}))}]})
+            trash-on-purge]})
 
 (defcard "K2CP Turbine"
   {:static-abilities [{:type :breaker-strength
@@ -1863,6 +1900,7 @@
                                    (trash eid (assoc target :seen true) {:cause-card card}))}})]
     {:abilities [{:action true
                   :cost [(->c :click 1)]
+                  :change-in-game-state {:req (req rd-runnable)}
                   :msg "make a run on R&D"
                   :makes-run true
                   :async true
@@ -1924,11 +1962,7 @@
              :msg "force the Corp to lose 1 [Credits]"
              :async true
              :effect (effect (lose-credits :corp eid 1))}
-            {:event :purge
-             :async true
-             :msg "trash itself"
-             :effect (req (trash state :runner eid card {:cause :purge
-                                                         :cause-card card}))}]})
+            trash-on-purge]})
 
 (defcard "Laser Pointer"
   {:events [{:event :encounter-ice
@@ -2414,9 +2448,8 @@
               :prompt "Spend 1 hosted power counter to access 1 additional card?"
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability {:msg "access 1 additional card from R&D"
-                            :async true
-                            :effect (effect (access-bonus :rd 1)
-                                            (add-counter eid card :power -1 nil))}}}]
+                            :cost [(->c :power 1)]
+                            :effect (effect (access-bonus :rd 1))}}}]
    :abilities [(set-autoresolve :auto-fire "Nyashia")]})
 
 (defcard "Odore"
@@ -2546,7 +2579,7 @@
                :effect (req (add-counter state side eid card :virus 1 nil))}
               {:event :ice-strength-changed
                :req (req (and (same-card? (:card context) (:host card))
-                              (not (card-flag? (:host card) :untrashable-while-rezzed true))
+                              (not (untrashable-while-rezzed? state side (:host card)))
                               (<= (get-strength (:card context)) 0)))
                :async true
                :effect (req (unregister-events state side card)
@@ -2691,11 +2724,7 @@
 
 (defcard "Physarum Entangler"
   (trojan
-    {:events [{:event :purge
-               :async true
-               :msg "trash itself"
-               :effect (req (trash state :runner eid card {:cause :purge
-                                                           :cause-card card}))}
+    {:events [trash-on-purge
               {:event :encounter-ice
                :skippable true
                :optional {:prompt (msg "Pay " (count (:subroutines (get-card state current-ice)))
@@ -2772,6 +2801,12 @@
                      (assoc base :effect (req (register-once state side (once card) card)
                                               ((:effect base) state side eid card targets))))]})))
 
+(defcard "Principia"
+  (auto-icebreaker
+    {:install-cost-bonus (req (- (count (filter #(has-subtype? % "Icebreaker") (all-installed state :runner)))))
+     :abilities [(break-sub 1 1 "Barrier")
+                 (strength-pump 2 2)]}))
+
 (defcard "Progenitor"
   {:static-abilities [{:type :can-host
                        :req (req (and (program? target) (has-subtype? target "Virus")))
@@ -2837,6 +2872,12 @@
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]})
+
+(defcard "Rising Tide"
+  (auto-icebreaker
+    {:static-abilities [(breaker-strength-bonus (req (count (filter #(has-subtype? % "Fracter") (:discard runner)))))]
+     :abilities [(break-sub 1 1 "Barrier")
+                 (strength-pump 1 1)]}))
 
 (defcard "RNG Key"
   {:events [{:event :pre-access-card
@@ -2957,6 +2998,13 @@
   (return-and-derez (break-sub 1 1 "Barrier")
                     (strength-pump 2 2)))
 
+(defcard "Sang Kancil"
+  (auto-icebreaker
+    (let [discount-fn (req (when (some #(and (event? %) (has-subtype? % "Run")) (:play-area runner))
+                             [(->c :credit -2)]))]
+      {:abilities [(break-sub 1 1 "Code Gate")
+                   (strength-pump 3 2 :end-of-encounter {:cost-bonus discount-fn})]})))
+
 (defcard "Savant"
   (mu-based-strength [(break-multiple-types
                         2 "Code Gate"
@@ -2966,10 +3014,11 @@
   {:abilities [{:cost [(->c :credit 2)]
                 :label "Install a program"
                 :once :per-turn
-                :req (req (not (install-locked? state side)))
+                :change-in-game-state {:req (req (and (not (install-locked? state side))
+                                                      (seq (all-cards-in-hand* state :runner))))}
                 :prompt "Choose a program to install"
-                :choices {:card #(and (program? %)
-                                      (in-hand? %))}
+                :choices {:req (req (and (program? target)
+                                         (in-hand*? state target)))}
                 :async true
                 :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
                                                                                                                          :display-origin true
@@ -2985,8 +3034,7 @@
              :effect (req (gain-credits state side eid 1))}]})
 
 (defcard "Self-modifying Code"
-  {:abilities [{:req (req (not (install-locked? state side)))
-                :label "Install a program from the stack"
+  {:abilities [{:label "Install a program from the stack"
                 :cost [(->c :trash-can) (->c :credit 2)]
                 :async true
                 :effect (effect
@@ -2996,6 +3044,7 @@
                                              (->> (:deck runner)
                                                   (filter
                                                     #(and (program? %)
+                                                          (not (install-locked? state side))
                                                           (can-pay? state side
                                                                     (assoc eid :source card :source-type :runner-install)
                                                                     % nil [(->c :credit (install-cost state side %))])))
@@ -3037,6 +3086,7 @@
 (defcard "Sneakdoor Beta"
   {:abilities [{:action true
                 :cost [(->c :click 1)]
+                :change-in-game-state {:req (req archives-runnable)}
                 :msg "make a run on Archives"
                 :makes-run true
                 :async true
@@ -3156,6 +3206,7 @@
                   :once :per-turn
                   :msg "make a run on R&D"
                   :makes-run true
+                  :change-in-game-state {:req (req rd-runnable)}
                   :async true
                   :effect (effect (register-events card [ability])
                                   (make-run eid :rd card))}]}))
@@ -3257,10 +3308,7 @@
      :flags {:drip-economy true}
      :abilities [ability]
      :events [(assoc ability :event :runner-turn-begins)
-              {:event :purge
-               :async true
-               :msg "trash itself"
-               :effect (req (trash state :runner eid card {:cause :purge :cause-card card}))}]}))
+              trash-on-purge]}))
 
 (defcard "Torch"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
@@ -3281,7 +3329,8 @@
     {:abilities [{:action true
                   :label "Make a run on targeted server"
                   :cost [(->c :click 1) (->c :credit 2)]
-                  :req (req (some #(= (:card-target card) %) runnable-servers))
+                  :change-in-game-state
+                  {:req (req (some #(= (:card-target card) %) runnable-servers))}
                   :msg (msg "make a run on " (:card-target card) ". Prevent the first subroutine that would resolve from resolving")
                   :async true
                   :effect (effect (register-events card [prevent-sub])
@@ -3344,7 +3393,7 @@
   (let [trash-if-5 (req (let [h (get-card state (:host card))]
                           (if (and h
                                    (>= (get-virus-counters state card) 5)
-                                   (not (and (card-flag? h :untrashable-while-rezzed true)
+                                   (not (and (untrashable-while-rezzed? state side (:host card))
                                              (rezzed? h))))
                             (do (system-msg state :runner (str "uses " (:title card) " to trash " (card-str state h)))
                                 (unregister-events state side card)
@@ -3431,19 +3480,23 @@
                                                                                       (has-subtype? % "Icebreaker"))
                                                                                 (all-active-installed state :runner))))})]}))
 
-;; TODO - just make this an autoresolve
 (defcard "Upya"
-  {:implementation "Power counters added automatically"
+  {:special {:auto-place-counters :always}
    :events [{:event :successful-run
-             :silent (req true)
-             :req (req (= :rd (target-server context)))
-             :async true
-             :effect (effect (add-counter eid card :power 1 nil))}]
+             :optional
+             {:player :runner
+              :req (req (= :rd (target-server context)))
+              :waiting-prompt true
+              :autoresolve (get-autoresolve :auto-place-counters)
+              :prompt (msg "Place 1 power counter on " (:title card) "?")
+              :yes-ability {:async true
+                            :effect (effect (add-counter eid card :power 1 nil))}}}]
    :abilities [{:action true
                 :cost [(->c :click 1) (->c :power 3)]
                 :once :per-turn
                 :msg "gain [Click][Click]"
-                :effect (effect (gain-clicks 2))}]})
+                :effect (effect (gain-clicks 2))}
+               (set-autoresolve :auto-place-counters "Upya placing counters on itself")]})
 
 (defcard "Utae"
   (let [break-req (:break-req (break-sub 1 1 "Code Gate"))]

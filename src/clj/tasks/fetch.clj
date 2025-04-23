@@ -19,6 +19,12 @@
   [["-l" "--local PATH" "Path to fetch card edn from"
     :validate [#(.exists (io/file (str % "/edn/raw_data.edn")))
                "Could not find local data file"]]
+   ["-r" "--repo REPO" "Pick a specific (github) name/repo. Default is 'NoahTheDuke/netrunner-data'"
+    :id :repo
+    :default "NoahTheDuke/netrunner-data"]
+   ["-b" "--branch BRANCH" "Pick a specific branch of the given repo to pull from. Default is 'master'"
+    :id :branch
+    :default "master"]
    ["-d" "--db" "Load card data into the database (default)"
     :id :db
     :default true]

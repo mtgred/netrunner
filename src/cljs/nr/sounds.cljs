@@ -15,6 +15,18 @@
    "archer" {:grouping :archer :default "rez-ice"}
    "bloop" {:grouping :harmonics :default "rez-ice"}
    "echo" {:grouping :harmonics :default "rez-ice"}
+   "illumination" {:grouping :illumination :default "play-instant"}
+   ;; admittedly, this looks silly, but it's actually really cool, trust me - nbk
+   "bling-1" {:grouping :bling :default nil}
+   "bling-2" {:grouping :bling :default nil}
+   "bling-3" {:grouping :bling :default nil}
+   "bling-4" {:grouping :bling :default nil}
+   "bling-5" {:grouping :bling :default nil}
+   "bling-6" {:grouping :bling :default nil}
+   "bling-7" {:grouping :bling :default nil}
+   "bling-8" {:grouping :bling :default nil}
+   "bling-9" {:grouping :bling :default nil}
+   "bling-10" {:grouping :bling :default nil}
    "end-of-the-line" {:grouping :end-of-the-line :default "play-instant"}
    "pulse" {:grouping :harmonics :default "rez-ice"}
    "wave" {:grouping :harmonics :default "rez-ice"}))
