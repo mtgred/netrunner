@@ -2233,7 +2233,8 @@
          :duration :end-of-run
          :req (req (and run
                         (some #{:content} (:zone target))
-                        (some #{run-server} (:zone target))))}]
+                        (some #{(first (:server (:run @state)))} (:zone target))))
+         :value true}]
     {:abilities [{:action true
                   :label "Run a remote server"
                   :cost [(->c :click 1) (->c :trash-can) (->c :brain 1)]
@@ -2244,7 +2245,7 @@
                   :async true
                   :effect (effect
                             (register-events card [successful-run-event])
-                            (register-lingering-effect card [disable-card-effect])
+                            (register-lingering-effect card disable-card-effect)
                             (make-run eid target card))}]}))
 
 (defcard "Logic Bomb"
