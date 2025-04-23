@@ -14,8 +14,9 @@
    :clj (def card-backs base-card-backs))
 
 (defn just-prizes []
-  (into (sorted-map-by (fn [a b] (compare (:name a) (:name b))))
-        (filter (fn [[_ v]] (:prize v)) card-backs)))
+  (into {}
+        (filter (fn [[_ v]] (:prize v)))
+        card-backs))
 
 (defn card-backs-for-side [side unlocked]
   (into {} (filter (fn [[k v]]
