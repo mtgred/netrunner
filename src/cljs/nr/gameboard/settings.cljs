@@ -94,15 +94,17 @@
         (tr [:ingame-settings_sides-overlap "Runner and Corp may overlap"])]]]
 
      [:section
-      [:h4 (tr [:ingame-settings_card-backs "Card backs"])]
-      (doall (for [option [{:name (tr [:settings_nsg "NSG"]) :ref "nsg"}
-                           {:name (tr [:settings_ffg "FFG"]) :ref "ffg"}]]
+      [:h4 (tr [:ingame-settings_card-back-display "Display Opponent Card backs"])]
+      (doall (for [option [{:name (tr [:settings_card-backs-their-choice "Their Choice"]) :ref "them"}
+                           {:name (tr [:settings_card-backs-my-choice "My Choice"]) :ref "me"}
+                           {:name (tr [:settings_card-backs-ffg "FFG Card Back"]) :ref "ffg"}
+                           {:name (tr [:settings_card-backs-nsg "NSG Card Back"]) :ref "nsg"}]]
                [:div.radio {:key (:name option)}
                 [:label [:input {:type "radio"
-                                 :name "card-back"
+                                 :name "card-back-display"
                                  :value (:ref option)
-                                 :on-change #(swap! app-state assoc-in [:options :card-back] (.. % -target -value))
-                                 :checked (= (get-in @app-state [:options :card-back]) (:ref option))}]
+                                 :on-change #(swap! app-state assoc-in [:options :card-back-display] (.. % -target -value))
+                                 :checked (= (get-in @app-state [:options :card-back-display]) (:ref option))}]
                  (:name option)]]))]
 
      [:section

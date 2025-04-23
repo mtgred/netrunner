@@ -15,6 +15,7 @@
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top]]
    [jinteki.i18n :as i18n]
+   [jinteki.card-backs :as card-backs]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]))
 
@@ -46,9 +47,9 @@
   (.preventDefault event)
   (swap! s assoc :flash-message (tr [:settings_updating "Updating profile..."]))
   (let [{:keys [pronouns bespoke-sounds language sounds default-format
-                lobby-sounds volume background custom-bg-url card-back card-zoom
+                lobby-sounds volume background custom-bg-url corp-card-sleeve runner-card-sleeve card-zoom
                 pin-zoom show-alt-art card-resolution pass-on-rez
-                player-stats-icons stacked-cards ghost-trojans
+                player-stats-icons stacked-cards ghost-trojans prizes
                 display-encounter-info sides-overlap log-timestamps
                 runner-board-order log-width log-top log-player-highlight
                 blocked-users alt-arts gamestats deckstats disable-websockets]} @s]
@@ -64,7 +65,8 @@
                            :volume volume
                            :background background
                            :custom-bg-url custom-bg-url
-                           :card-back card-back
+                           :runner-card-sleeve runner-card-sleeve
+                           :corp-card-sleeve corp-card-sleeve
                            :card-zoom card-zoom
                            :pin-zoom pin-zoom
                            :show-alt-art show-alt-art
@@ -103,7 +105,8 @@
     (save-to-local-storage! "sides-overlap" sides-overlap)
     (save-to-local-storage! "log-timestamps" log-timestamps)
     (save-to-local-storage! "runner-board-order" runner-board-order)
-    (save-to-local-storage! "card-back" card-back)
+    (save-to-local-storage! "corp-card-sleeve" corp-card-sleeve)
+    (save-to-local-storage! "runner-card-sleeve" runner-card-sleeve)
     (save-to-local-storage! "card-zoom" card-zoom)
     (save-to-local-storage! "pin-zoom" pin-zoom)
     (save-to-local-storage! "disable-websockets" disable-websockets))
@@ -517,16 +520,23 @@
                             :value @custom-bg-url}]]])
 
           [:section
-           [:h3 (tr [:settings_card-backs "Card backs"])]
-           (doall (for [option [{:name (tr [:settings_nsg "NSG"]) :ref "nsg"}
-                                {:name (tr [:settings_ffg "FFG"]) :ref "ffg"}]]
-                    [:div.radio {:key (:name option)}
-                     [:label [:input {:type "radio"
-                                      :name "card-back"
-                                      :value (:ref option)
-                                      :on-change #(swap! s assoc :card-back (.. % -target -value))
-                                      :checked (= (:card-back @s) (:ref option))}]
-                      (:name option)]]))]
+           [:h3 (tr [:settings_corp-card-sleeve "Corp card backs"])]
+           [:select {:value (:corp-card-sleeve @s "nsg")
+                     :on-change #(swap! s assoc :corp-card-sleeve (.. % -target -value))}
+            (doall
+              (for [[k v] (card-backs/card-backs-for-side :corp (-> @s :prizes :card-backs))]
+                [:option {:value k :key k}
+                 (tr [(keyword (str "card-backs_" k)) (:name v)])]))]
+
+          ;; [:section
+           [:h3 (tr [:settings_runner-card-sleeve "Runner card backs"])]
+           [:select {:value (:runner-card-sleeve @s "nsg")
+                     :on-change #(swap! s assoc :runner-card-sleeve (.. % -target -value))}
+            (doall
+              (for [[k v] (card-backs/card-backs-for-side :runner (-> @s :prizes :card-backs))]
+                [:option {:value k :key k}
+                 (tr [(keyword (str "card-backs_" k)) (:name v)])]))]
+           [:div "You can earn more card backs by placing well in select online tournaments. If you're an artist with art that you think would make for a good card back, please feel free to contact us"]]
 
           [:section
            [:h3  (tr [:settings_card-preview-zoom "Card preview zoom"])]
@@ -657,9 +667,10 @@
         state (r/atom
                (-> (:options @app-state)
                    (select-keys [:pronouns :bespoke-sounds :language :sounds :default-format
-                                 :lobby-sounds :volume :background :custom-bg-url :card-back :card-zoom
+                                 :lobby-sounds :volume :background :custom-bg-url :card-zoom
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
                                  :player-stats-icons :stacked-cards :ghost-trojans
+                                 :corp-card-sleeve :runner-card-sleeve :prizes
                                  :display-encounter-info :sides-overlap :log-timestamps
                                  :runner-board-order :log-width :log-top :log-player-highlight
                                  :blocked-users :alt-arts :gamestats :deckstats :disable-websockets])

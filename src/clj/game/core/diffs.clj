@@ -386,6 +386,8 @@
   [:alt-arts
    :background
    :card-resolution
+   :corp-card-sleeve
+   :runner-card-sleeve
    :language
    :pronouns
    :show-alt-art])
