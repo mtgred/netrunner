@@ -2521,6 +2521,20 @@
     (is (= "City Works Project" (:title (get-content state :remote1 0))) "CWP installed")
     (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "with 1 adv counter")))
 
+(deftest ip-enforcement-dont-preserve-counters
+  (do-game
+    (new-game {:corp {:deck [(qty "IP Enforcement" 2)] :hand ["Project Vacheron"]}
+               :runner {:tags 10}})
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Steal")
+    (take-credits state :runner)
+    (play-from-hand state :corp "IP Enforcement")
+    (click-prompts state :corp "3" "Project Vacheron" "New remote")
+    (is (zero? (get-counters (get-content state :remote1 ) :agenda)) "No agenda counters")
+    (is (zero? (get-counters (get-content state :remote1 ) :power)) "No power counters")
+    (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "1 adv counter")))
+
 (deftest ipo
   ;; IPO - credits with Terminal operations
   (do-game
