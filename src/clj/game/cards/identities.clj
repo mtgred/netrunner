@@ -668,6 +668,7 @@
         maybe-flip {:event :successful-run
                     :skippable true
                     :optional {:prompt (msg "Flip your ID (" (if (:flipped card) "draw 1 card)?" "gain 1 [Credits])?"))
+                               :interactive (req true)
                                :req (req (or
                                            (and (:flipped card) (pos? (available-mu state)))
                                            (and (not (:flipped card)) (zero? (available-mu state)))))
@@ -2106,8 +2107,7 @@
                                     (effect-completed eid))}]})
 
 (defcard "PT Untaian: Life's Building Blocks"
-  {:interactive (req true)
-   :events [{:event :corp-turn-ends
+  {:events [{:event :corp-turn-ends
              :interactive (req true)
              :skippable true
              :req (req (<= (count (:hand corp)) 3))
