@@ -1,5 +1,6 @@
 (ns nr.gameboard.log
   (:require
+   [cljc.java-time.instant :as inst]
    [clojure.string :as string]
    [jinteki.utils :refer [command-info]]
    [nr.angel-arena.log :as angel-arena-log]
@@ -49,12 +50,16 @@
   "Send a typing event to server for this user if it is not already set in game state AND user is not a spectator"
   [s]
   (r/with-let [typing (r/cursor game-state [:typing])]
-    (let [text (:msg @s)]
-      (when (and (not (:replay @game-state))
-                 (not @typing)
-                 (not-spectator?))
-        (ws/ws-send! [:game/typing {:gameid (current-gameid app-state)
-                                    :typing (boolean (seq text))}])))))
+    (let [typing? (boolean (seq (:msg @s)))]
+      ;; note - temporarily disable to see if it impacts performance
+      ;; (when (and (not (:replay @game-state))
+      ;;            ;; only send if the typing state is different
+      ;;            (or (and (not @typing) typing?)
+      ;;                (and (not typing?) @typing))
+      ;;            (not-spectator?))
+      ;;   (ws/ws-send! [:game/typing {:gameid (current-gameid app-state)
+      ;;                               :typing typing?}])))))
+      )))
 
 (defn indicate-action []
   (when (not-spectator?)
