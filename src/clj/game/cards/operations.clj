@@ -446,7 +446,7 @@
                           :choices {:number (req (count-tags state))}
                           :msg (msg
                                  (let [drained (min (:credit runner) (* 5 target))]
-                                   (str "remove " target " tags to force the runner to lose " drained
+                                   (str "remove " (quantify target "tag") " to force the runner to lose " drained
                                         " [Credits]")))
                           :async true
                           :effect (req (continue-ability
