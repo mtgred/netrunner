@@ -34,7 +34,7 @@ RUN npm run cljs:release
 RUN lein uberjar
 
 # Create a smaller runtime image
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 

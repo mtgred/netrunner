@@ -18,15 +18,15 @@ Install [Leiningen](https://leiningen.org/),
 [NodeJS](https://nodejs.org/en/download/package-manager/#macos) and
 [MongoDB](https://docs.mongodb.com/manual/installation/).
 
-This project runs on Java 8. If you're on OSX or Linux, we recommend using
+This project runs on Java 21. If you're on OSX or Linux, we recommend using
 [jenv](https://github.com/jenv/jenv/blob/master/README.md) to manage your java environment.
 
 You can check your setup by running:
 
     $ lein version
-    Leiningen 2.9.6 on Java 16.0.1 OpenJDK 64-Bit Server VM
+    Leiningen 2.11.2 on Java 21.0.7 OpenJDK 64-Bit Server VM
 
-Your exact version numbers below may vary, but we require Java 1.8+.
+Your exact version numbers may vary, but we require Java 21+.
 
 Populate the database and create indexes using:
 
