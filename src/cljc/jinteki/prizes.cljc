@@ -8,5 +8,6 @@
                       (and res (-> res slurp clojure.edn/read-string))
                       (catch Exception e
                         (println "Exc: " e)))
-                    {})]
+                    {})
+           _ (println (str (count (-> res slurp clojure.edn/read-string)) " card backs loaded"))]
        `(def ~sym (merge ~data ~base-card-backs)))))
