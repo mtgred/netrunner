@@ -5,7 +5,7 @@
                              get-only-card-to-access]]
    [game.core.actions :refer [play-ability]]
    [game.core.board :refer [all-active all-active-installed all-installed]]
-   [game.core.card :refer [corp? event? facedown? get-card get-counters get-title
+   [game.core.card :refer [agenda? corp? event? facedown? get-card get-counters get-title
                            get-zone hardware? has-subtype? has-any-subtype? ice? in-deck? in-discard?
                            in-hand? in-scored? installed? is-type? program? resource? rezzed?
                            runner? virus-program? faceup?]]
@@ -1531,10 +1531,13 @@
   {:events [{:event :successful-run
              :prompt "Derez a card?"
              :skippable true
+             ;; not - agendas cannot be rezzed, but faceup agendas are marked as 'rezzed' for the
+             ;; diff system, so this is just a safeguard
              :req (req (and
                          (= :hq (target-server context))
-                         (some rezzed? (all-installed state :corp))))
-             :choices {:card (every-pred installed? corp? rezzed? ice?)}
+                         (some (every-pred rezzed? (complement agenda?))
+                               (all-installed state :corp))))
+             :choices {:card (every-pred installed? corp? rezzed? (complement agenda?))}
              :cost [(->c :trash-can 1)]
              :async true
              :effect (req (derez state side eid target))}]})
