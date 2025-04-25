@@ -3230,6 +3230,24 @@
     (is (not (rezzed? (get-ice state :rd 0))) "not rezzed")
     (is (= "Maglectric Rapid (748 Mod)" (get-in @state [:runner :discard 0 :title])) "Trashed Maglectric Rapid (748 Mod)")))
 
+(deftest maglectric-rapid-748-derez-installed-card-issue-8095
+  (do-game
+    (new-game {:corp {:hand ["PAD Campaign"]}
+               :runner {:hand ["Maglectric Rapid (748 Mod)"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Maglectric Rapid (748 Mod)")
+    (run-empty-server state :hq)
+    (is (no-prompt? state :runner) "no targets")
+    (rez state :corp (get-content state :remote1 0))
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Done")
+    (run-empty-server state :hq)
+    (click-card state :runner "PAD Campaign")
+    (is (not (rezzed? (get-content state :remote1 0))) "not rezzed")
+    (is (= "Maglectric Rapid (748 Mod)" (get-in @state [:runner :discard 0 :title])) "Trashed Maglectric Rapid (748 Mod)")))
+
+
 (deftest madani-test
   (do-game
     (new-game {:runner {:hand ["Madani" "Ika" "Fermenter" "Rezeki"]}})
