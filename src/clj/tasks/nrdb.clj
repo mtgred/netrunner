@@ -74,7 +74,7 @@
     (reduce expand-card `() c)))
 
 ;; these are cards with multiple faces, so we can't download them directly
-(def ^:const cards-to-skip #{"08012" "09001" "26066" "26120"})
+(def ^:const cards-to-skip #{"08012" "09001" "26066" "26120" "35023" "35057"})
 
 (defn download-card-images
   "Download card images (if necessary) from NRDB"
