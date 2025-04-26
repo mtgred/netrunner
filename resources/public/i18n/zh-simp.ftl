@@ -682,11 +682,11 @@ lobby_game-count = {$cnt} 局对战
 lobby_game-count-filtered = {$cnt} 局对战（过滤后）
 
 lobby_gateway-format = {$format ->
-    [beginner] 初学者
+    [Beginner] 初学者
     [beginner-info] 此大厅为公司和潜袭者使用核心网关初学者牌组而准备。建议你在初次游戏中使用这些牌组。游戏按6点议案分数进行。
     [beginner-ul] 核心网关 - 初学者教学牌组
-    [constructed] 构筑
-    [intermediate] 进阶
+    [Constructed] 构筑
+    [Intermediate] 进阶
     [intermediate-info] 此大厅为公司和潜袭者使用核心网关进阶牌组而准备。这些牌组比初学者牌组稍大。游戏按7点议案分数进行。
     [intermediate-ul] 核心网关 - 进阶教学牌组
     *[unknown] undefined

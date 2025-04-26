@@ -104,7 +104,7 @@
                         :value option
                         :on-change #(reset! gateway-type (.. % -target -value))
                         :checked (= @gateway-type option)}]
-              (str (tr [:lobby_gateway-format] {:format option}) "    ")]]))])
+              (str (tr [:lobby_gateway-format option] {:format option}) "    ")]]))])
 
 (defn precon-choice [fmt-state precon]
   [:div

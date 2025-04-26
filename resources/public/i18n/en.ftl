@@ -767,11 +767,11 @@ lobby_game-count-filtered = {$cnt ->
 }
 
 lobby_gateway-format = {$format ->
-    [beginner] Beginner
+    [Beginner] Beginner
     [beginner-info] This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points.
     [beginner-ul] System Gateway - Beginner Teaching Decks
-    [constructed] Constructed
-    [intermediate] Intermediate
+    [Constructed] Constructed
+    [Intermediate] Intermediate
     [intermediate-info] This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points.
     [intermediate-ul] System Gateway - Intermediate Teaching Decks
     *[unknown] Unknown Gateway Format ({$format})
