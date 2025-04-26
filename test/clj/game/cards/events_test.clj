@@ -7504,7 +7504,7 @@
                    (count-tags state) 0
                    (:click (get-runner)) 0]
           (run-continue-until state :success))
-        "Siphoned bigly")
+        "Not siphoned")
     (is (no-prompt? state :runner))))
 
 (deftest trade-in
