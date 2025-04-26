@@ -240,7 +240,6 @@
                 (if-not (agenda? moved-card)
                   (rez state side (assoc eid :source-type :rez :source (-> args :msg-keys :install-source))
                        moved-card {:ignore-cost :all-costs
-
                                    :no-msg no-msg})
                   (reveal-if-unrezzed state side eid moved-card)))
               ;; Ignore rez cost only
