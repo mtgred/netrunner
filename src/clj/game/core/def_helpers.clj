@@ -190,6 +190,7 @@
   [server]
   {:async true
    :change-in-game-state {:req (req (can-run-server? state server))}
+   :label (str "run " (zone->name server))
    :msg (str "make a run on " (zone->name server))
    :effect (req (make-run state side eid server card))})
 
@@ -197,6 +198,7 @@
   {:async true
    :prompt "Choose a server"
    :choices (req runnable-servers)
+   :label "Run any server"
    :msg (msg "make a run on " target)
    :effect (effect (make-run eid target card))})
 
@@ -205,6 +207,7 @@
    :prompt "Choose a remote server"
    :change-in-game-state {:req (req (seq (filter #(can-run-server? state %) remotes)))}
    :choices (req (filter #(can-run-server? state %) remotes))
+   :label "Run a remote server"
    :msg (msg "make a run on " target)
    :effect (effect (make-run eid target card))})
 
@@ -213,6 +216,7 @@
    :choices (req (filter #{"HQ" "R&D" "Archives"} runnable-servers))
    :change-in-game-state {:req (req (seq (filter #{"HQ" "R&D" "Archives"} runnable-servers)))}
    :async true
+   :label "Run a central server"
    :msg (msg "make a run on " target)
    :effect (effect (make-run eid target card))})
 
