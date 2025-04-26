@@ -221,6 +221,7 @@
                       (playable? card))
                  (and (= "discard" (first zone))
                       (= "Operation" type)
+                      (:flashback-fake-in-hand card)
                       (:flashback-playable card))))
         (if (= "Operation" type)
           (send-play-command (card-for-click card) shift-key-held)
