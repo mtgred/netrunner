@@ -19,7 +19,12 @@
         card-backs))
 
 (defn card-backs-for-side [side unlocked]
-  (into {} (filter (fn [[k v]]
+  ;; TODO for later - explicitly make the nsg and ffg backs pop up at the top of the list,
+  ;; regardless of the sorting used
+  (into (sorted-map-by (fn [k1 k2]
+                         (compare [(get-in card-backs [k1 :name]) k1]
+                                  [(get-in card-backs [k2 :name]) k2])))
+        (filter (fn [[k v]]
                      (and
                        ;; it either has no specified side, or matches the input side
                        (or (not (:side v)) (= side (:side v)))
