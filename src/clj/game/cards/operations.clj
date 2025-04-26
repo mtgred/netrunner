@@ -1538,13 +1538,15 @@
                  :prompt (str "Choose an agenda with " x " printed agenda points")
                  :choices {:req (req (valid-agenda? state target x))}
                  :async true
-                 :effect (req (corp-install state side eid target nil
-                                            {:msg-keys {:install-source card
-                                                        :known true
-                                                        :include-cost-from-eid eid
-                                                        :set-zone "the Runner score area"
-                                                        :display-origin true}
-                                             :counters {:advance-counter (if tagged 1 0)}}))}
+                 :effect (req
+                           (let [updated-card (update! state side (update target :counter {}))]
+                             (corp-install state side eid (get-card state target) nil
+                                           {:msg-keys {:install-source card
+                                                       :known true
+                                                       :include-cost-from-eid eid
+                                                       :set-zone "the Runner score area"
+                                                       :display-origin true}
+                                            :counters {:advance-counter (if tagged 1 0)}})))}
                 {:cost [(->c :tag x) (->c :credit x)]
                  :change-in-game-state {:req (req false)}})
               card nil))]
