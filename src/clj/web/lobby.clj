@@ -22,7 +22,7 @@
 
 (read-write/print-time-literals-clj!)
 
-(defonce telemetry-buckets (atom {}))
+(defonce telemetry-buckets (agent {}))
 (defn log-delay!
   [timestamp id]
   (let [now (inst/now)
@@ -34,11 +34,11 @@
                            (if (contains? map key)
                              (assoc map key (conj (key map) total-ms))
                              (assoc map key (seq [total-ms]))))]
-    (swap! telemetry-buckets create-or-update)))
+    (send telemetry-buckets create-or-update)))
 (defn fetch-delay-log!
   []
   (let [res @telemetry-buckets]
-    (reset! telemetry-buckets {})
+    (send telemetry-buckets (constantly {}))
     res))
 
 ;; Oracle guidance for active threads is ~cores+2
