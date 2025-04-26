@@ -47,7 +47,6 @@
 
 (defn game-details [state]
   (let [game (:view-game @state)]
-    (js/console.log (str "winner: " (:winner game) ", method: " (:reason game)))
     [:div.games.panel
      [:p.return-button [:button {:on-click #(swap! state dissoc :view-game)} (tr [:stats_view-games "Return to stats screen"])]]
      [:h4 (:title game) (when (:has-replay game) (if (:replay-shared game) " ⭐" " 🟢"))]
