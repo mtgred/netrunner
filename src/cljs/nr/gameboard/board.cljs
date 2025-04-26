@@ -343,13 +343,14 @@
         side-key (keyword (lower-case side))
         display-options (or (get-in @app-state [:options :card-back-display]) "them")
         card-back (if (= side-key my-side)
-                    (or (get-in @game-state [my-side :user :options (if (= side-key :corp) :corp-card-sleeve :runner-card-sleeve)]) "nsg-card-back")
+                    (get-in @game-state [my-side :user :options (if (= side-key :corp) :corp-card-sleeve :runner-card-sleeve)] "nsg-card-back")
                     (case display-options
-                      "them" (or (get-in @game-state [side-key :user :options (if (= side-key :corp) :corp-card-sleeve :runner-card-sleeve)]) "nsg-card-back")
-                      "me" (or (get-in @game-state [my-side :user :options (if (= side-key :corp) :corp-card-sleeve :runner-card-sleeve)]) "nsg-card-back")
+                      "them" (get-in @game-state [side-key :user :options (if (= side-key :corp) :corp-card-sleeve :runner-card-sleeve)] "nsg-card-back")
+                      "me"   (get-in @game-state [my-side :user :options (if (= side-key :corp) :corp-card-sleeve :runner-card-sleeve)] "nsg-card-back")
                       "ffg" "ffg-card-back"
                       "nsg" "nsg-card-back"
                       "nsg-card-back"))
+        card-back (if (= card-back "") "nsg-card-back" card-back)
         maybe-image? (get-in card-backs/card-backs [(keyword card-back) :file])
         s (lower-case side)]
     (str "/img/card-backs/" s "/" maybe-image?  ".png")))

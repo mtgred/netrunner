@@ -521,22 +521,41 @@
 
           [:section
            [:h3 (tr [:settings_corp-card-sleeve "Corp card backs"])]
-           [:select {:value (:corp-card-sleeve @s "nsg")
-                     :on-change #(swap! s assoc :corp-card-sleeve (.. % -target -value))}
+           [:select {:value (:corp-card-sleeve @s "nsg-card-back")
+                     :on-change #(swap! s assoc :corp-card-sleeve (or (.. % -target -value) "nsg-card-back"))}
             (doall
               (for [[k v] (card-backs/card-backs-for-side :corp (-> @s :prizes :card-backs))]
                 [:option {:value k :key k}
                  (tr [(keyword (str "card-backs_" k)) (:name v)])]))]
 
-          ;; [:section
+
            [:h3 (tr [:settings_runner-card-sleeve "Runner card backs"])]
-           [:select {:value (:runner-card-sleeve @s "nsg")
-                     :on-change #(swap! s assoc :runner-card-sleeve (.. % -target -value))}
+           [:select {:value (:runner-card-sleeve @s "nsg-card-back")
+                     :on-change #(swap! s assoc :runner-card-sleeve (or (.. % -target -value) "nsg-card-back"))}
             (doall
               (for [[k v] (card-backs/card-backs-for-side :runner (-> @s :prizes :card-backs))]
                 [:option {:value k :key k}
                  (tr [(keyword (str "card-backs_" k)) (:name v)])]))]
-           [:div "You can earn more card backs by placing well in select online tournaments. If you're an artist with art that you think would make for a good card back, please feel free to contact us"]]
+           [:div "You can earn more card backs by placing well in select online tournaments. If you're an artist with art that you think would make for a good card back, please feel free to contact us"]
+
+           [:div {:style {:display "flex" :justifyContent "center"}}
+            [:div
+             {:style {:display "flex" :flexDirection "column" :alighItems "center" :margin "1rem"}}
+             [:img {:src (str "/img/card-backs/corp/"
+                              (get-in (card-backs/card-backs-for-side :corp (-> @s :prizes :card-backs)) [(keyword (:corp-card-sleeve @s "nsg-card-back")) :file])
+                              ".png")
+                    :style {:maxWidth "200px"}
+                    :alt "Corp card back"}]
+             [:div {:style {:marginTop "0.5rem" :textAlign "center"}} "Corp card back"]]
+
+            [:div
+             {:style {:display "flex" :flexDirection "column" :alighItems "center" :margin "1rem"}}
+             [:img {:src (str "/img/card-backs/runner/"
+                              (get-in (card-backs/card-backs-for-side :runner (-> @s :prizes :card-backs)) [(keyword (:runner-card-sleeve @s "nsg-card-back")) :file])
+                              ".png")
+                    :style {:maxWidth "200px"}
+                    :alt "Runner card back"}]
+             [:div {:style {:marginTop "0.5rem" :textAlign "center"}} "Runner card back"]]]]
 
           [:section
            [:h3  (tr [:settings_card-preview-zoom "Card preview zoom"])]
