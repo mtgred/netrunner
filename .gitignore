@@ -20,6 +20,9 @@ pom.xml
 .cache
 *.archive
 
+/resources/public/img/card-backs/runner/
+/resources/public/img/card-backs/corp/
+/resources/public/img/card-backs/both/
 /resources/public/js/
 /resources/public/cljs/
 /resources/public/cljs-out/
