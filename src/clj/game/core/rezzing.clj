@@ -59,7 +59,6 @@
                             (if (string/blank? pre-lhs)
                               cost-str
                               (str cost-str ",")))
-        _ (println modified-cost-str)
         rhs (cond alternative-cost " by paying its alternative cost"
                   ignore-cost " at no cost"
                   cost-bonus (if (pos? cost-bonus)
