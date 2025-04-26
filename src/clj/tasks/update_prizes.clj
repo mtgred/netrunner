@@ -50,6 +50,10 @@
                         (with-open [w (io/output-stream card-path)]
                           (.write w body)))
                   (println "Error downloading art for card-back: " title error))))))
+        ;; this forces shadow-cljs to recompile the macro which depends on this
+        (let [p (io/file "src/cljc/jinteki/prizes.cljc")]
+          (when (.exists p)
+            (.setLastModified p (System/currentTimeMillis))))
         (println "done!"))
     (println "Unable to fetch card-back prize data")))
 

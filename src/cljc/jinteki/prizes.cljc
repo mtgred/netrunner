@@ -10,5 +10,4 @@
                         (println "Exc: " e)))
                     {})
            _ (println (str (count data) " card backs loaded"))]
-       `(def ~sym (merge ~data ~base-card-backs))
-       (hash (into (sorted-map) data)))))
+       `(def ~sym (merge ~data ~base-card-backs)))))
