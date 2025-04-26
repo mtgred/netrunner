@@ -1510,8 +1510,14 @@ stats_view-games = Return to stats screen
 
 stats_view-log = View log
 
-stats_win-method = Win method: {$reason}
+stats_win-method = Win method: {$reason ->
+  [null] (none)
+  *[other] {$reason}
+}
 
-stats_winner = Winner: {$winner}
+stats_winner = Winner: {$winner ->
+  [null] (none)
+  *[other] {$winner}
+}
 
 stats_won = Won: {$won} ({NUMBER($percent, style: "percent")})
