@@ -7490,6 +7490,23 @@
         "Siphoned bigly")
     (click-prompt state :runner "No action")))
 
+(deftest transfer-of-wealth-vs-redirect
+  (do-game
+    (new-game {:runner {:hand ["Transfer of Wealth"]}
+               :corp {:hand ["Proprionegation"]}})
+    (play-and-score state "Proprionegation")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Transfer of Wealth")
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (run-continue state)
+    (is (changed? [(:credit (get-corp)) 0
+                   (:credit (get-runner)) 0
+                   (count-tags state) 0
+                   (:click (get-runner)) 0]
+          (run-continue-until state :success))
+        "Siphoned bigly")
+    (is (no-prompt? state :runner))))
+
 (deftest trade-in
   ;; Trade-in - trash an installed Hardware, gain credits equal to half of install cost,
   ;;            search stack for Hardware and add to grip

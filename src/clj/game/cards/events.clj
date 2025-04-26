@@ -1830,7 +1830,8 @@
      :events [(assoc (install-fn 3)
                      :event :successful-run
                      :interactive (req true)
-                     :req (req this-card-run))]}))
+                     :req (req (and this-card-run
+                                    (= :rd (target-server context)))))]}))
 
 (defcard "Immolation Script"
   {:makes-run true
@@ -4023,7 +4024,8 @@
    :events [{:event :successful-run
              :interactive (req true)
              :automatic :drain-credits
-             :req (req this-card-run)
+             :req (req (and this-card-run
+                            (= :hq (target-server context))))
              :msg "take 1 tag"
              :async true
              :effect (req (wait-for (gain-tags state :runner 1)
