@@ -3344,7 +3344,7 @@
   {:on-play {:async true
              :change-in-game-state (req (and (seq (:deck runner))
                                              (pos? (get-in @state [:runner :click] 0))))
-             :msg (msg "draw " (quantify (get-in @state [:runner :click]) "cards"))
+             :msg (msg "draw " (quantify (get-in @state [:runner :click]) "card"))
              :effect (req (draw state side eid (get-in @state [:runner :click] 0)))}})
 
 (defcard "Rumor Mill"
