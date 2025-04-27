@@ -352,7 +352,7 @@
                       "nsg" "nsg-card-back"
                       "nsg-card-back"))
         card-back (if (= card-back "") "nsg-card-back" card-back)
-        maybe-image? (get-in card-backs/card-backs [(keyword card-back) :file])
+        maybe-image? (or (get-in card-backs/card-backs [(keyword card-back) :file]) "nsg")
         s (lower-case side)]
     (str "/img/card-backs/" s "/" maybe-image?  ".png")))
 
