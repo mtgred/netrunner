@@ -34,4 +34,4 @@
                        ;; it's either not a prize, or it's a prize that we own
                        (or (not (:prize v))
                            (contains? unlocked k))))
-                (dissoc card-backs :nsg :ffg "" nil))))
+                (dissoc card-backs :nsg :ffg))))
