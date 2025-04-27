@@ -10,11 +10,8 @@
                    :name "NSG Card Backs"
                    :file "nsg"}
    ;; fallbacks, just in case
-   "" {:file "nsg"}
-   nil {:file "nsg"}
    :ffg {:file "ffg"}
-   :nsg {:file "nsg"}
-   })
+   :nsg {:file "nsg"}})
 
 #?(:cljs (load-card-backs base-card-backs card-backs)
    :clj (def card-backs base-card-backs))
