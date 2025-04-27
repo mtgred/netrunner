@@ -8,7 +8,13 @@
                    :file "ffg"}
    :nsg-card-back {:description "The current Null Signal Games card backs."
                    :name "NSG Card Backs"
-                   :file "nsg"}})
+                   :file "nsg"}
+   ;; fallbacks, just in case
+   "" {:file "nsg"}
+   nil {:file "nsg"}
+   :ffg {:file "ffg"}
+   :nsg {:file "nsg"}
+   })
 
 #?(:cljs (load-card-backs base-card-backs card-backs)
    :clj (def card-backs base-card-backs))
@@ -31,4 +37,4 @@
                        ;; it's either not a prize, or it's a prize that we own
                        (or (not (:prize v))
                            (contains? unlocked k))))
-                   card-backs)))
+                (dissoc card-backs :nsg :ffg "" nil))))
