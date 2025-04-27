@@ -818,11 +818,11 @@
                                                              :unpreventable true})
                             (complete-with-result
                               state side eid
-                              {:cost/msg (str "trashes " (quantify (count async-result) " rezzed Bioroid" "")
-                                         " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :cost/type :bioroid-run-server
-                               :cost/value (count async-result)
-                               :cost/targets targets})))}
+                              {:paid/msg (str "trashes " (quantify (count async-result) " rezzed Bioroid" "")
+                                              " (" (enumerate-str (map #(card-str state %) targets)) ")")
+                               :paid/type :bioroid-run-server
+                               :paid/value (count async-result)
+                               :paid/targets targets})))}
     card nil))
 
 ;; TrashFromDeck
