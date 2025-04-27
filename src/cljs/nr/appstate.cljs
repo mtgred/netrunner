@@ -19,7 +19,6 @@
                                   "system-gateway"
                                   "throwback"
                                   "startup"
-                                  "sunset"
                                   "eternal"
                                   "preconstructed"
                                   "snapshot"
