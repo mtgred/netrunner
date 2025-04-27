@@ -2170,6 +2170,8 @@
              :req (req (letfn [(valid-ctx? [[ctx]] (pos? (or (:subroutines-fired ctx) 0)))]
                          (and (valid-ctx? [context])
                               (first-event? state side :successful-run valid-ctx?))))
+             :interactive (req true)
+             :automatic :force-discard
 	     :msg "gain 1 [Credits]"
              :async true
              :once :per-turn

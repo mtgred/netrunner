@@ -773,6 +773,7 @@
     {:static-abilities [(mu+ 1)]
      :events [{:event :successful-run
                :skippable true
+               :interactive (req true)
                :optional {:req (req
                                  (let [valid-ctx? (fn [[ctx]] (-> ctx :server first (= :hq)))]
                                    (and (valid-ctx? [context])
