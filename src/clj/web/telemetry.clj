@@ -113,7 +113,7 @@
                      " uid: " ws-uid-count
                      " conn: " ws-conn-total
                      " }"))
-      (timbre/info (str "pool occupants: " (seq (pool-occupants-info))))
+      (timbre/info (str "pool occupants: " (seq (map count (pool-occupants-info)))))
       (timbre/info latencies)
       ;; TODO - once we've got this set up on the server, wrap it in a try/catch - only ever display
       ;; the warning once!
