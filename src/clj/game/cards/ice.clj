@@ -4612,7 +4612,7 @@
                              :choices (req (cancellable (filter #(ice? %) (:deck corp)) :sorted))
                              :cancel-effect (effect (system-msg (str "uses " (:title card) " to shuffle R&D"))
                                                     (shuffle! :deck)
-                                                    (effect-completed state side eid))
+                                                    (effect-completed eid))
                              :effect (req (wait-for (reveal state side target)
                                                     (shuffle! state side :deck)
                                                     (move state side target :hand)
