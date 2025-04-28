@@ -8625,10 +8625,8 @@
         "gained 2c from wave")))
 
 (deftest wave-just-shuffle
-  ;; Wave - on rez vs. server, search R&D for an ice. Gain 1c for each rezzed harmonic ice.
   (do-game
-    (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
-                      :hand ["Wave" "Wave"]
+    (new-game {:corp {:hand ["Wave" "Wave"]
                       :deck ["Ice Wall"]
                       :credits 10}})
     (play-from-hand state :corp "Wave" "HQ")
