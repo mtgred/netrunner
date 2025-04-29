@@ -24,7 +24,15 @@ if [ -d "mongotools" ]; then
     export PATH="$(pwd)/mongotools/bin:$PATH"
 fi
 
-# Update the configuration file with the MongoDB connection URI
-mongorestore --uri="${MONGO_RESTORE_URI}" --archive="$MONGO_ARCHIVE" --nsFrom='jnet-tmpl.*' --nsTo="${MONGO_RESTORE_DB}.*"
+# Update the database from the mongodump archive embedded in the docker image.
+# The MONGO_ARCHIVE variable is the path the the archive file. Only certain collections
+# will be replaced, representing cards, formats, etc. User data, decks, game logs, etc.
+# will not be replaced. This needs to be run when https://github.com/NoahTheDuke/netrunner-data
+# has changed card definitions, etc.
+mongorestore --uri="${MONGO_RESTORE_URI}" --archive="$MONGO_ARCHIVE" --nsFrom='jnet-tmpl.*' --nsTo="${MONGO_RESTORE_DB}.*" \
+    --nsInclude='jnet-tmpl.altarts' --nsInclude='jnet-tmpl.cards*' --nsInclude='jnet-tmpl.config' \
+    --nsInclude='jnet-tmpl.cycles' --nsInclude='jnet-tmpl.formats' \
+    --nsInclude='jnet-tmpl.mwls' --nsInclude='jnet-tmpl.sets' \
+    --drop
 
 echo "Database initialization completed successfully."
