@@ -4647,7 +4647,7 @@
                       :hand ["Hostile Takeover"]
                       :deck ["Archer" "Enigma" "Vanilla"]}})
     (play-and-score state "Hostile Takeover")
-    (click-prompts state :corp "Poétrï Luxury Brands: All the Rage" "Yes" "Install Archer, ignoring the install cost" "New remote")
+    (click-prompts state :corp "Poétrï Luxury Brands: All the Rage" "Yes" "Install Archer" "New remote")
     (is (no-prompt? state :corp))
     (is (= 2 (count (:deck (get-corp)))))))
 
