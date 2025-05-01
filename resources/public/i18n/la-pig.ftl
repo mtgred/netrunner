@@ -197,10 +197,7 @@ format_name = {$format ->
     [classic] Assicclay
     [core-experience] Orecay Experienceyay
     [eternal] Eternalyay
-    [neo] Neoyay
     [preconstructed] undefined
-    [snapshot] Apshotsnay
-    [snapshot-plus] Apshotsnay Usplay
     [socr] SOCRYAY
     [standard] Andardstay
     [startup] Artupstay

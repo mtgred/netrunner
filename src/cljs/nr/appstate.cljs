@@ -21,9 +21,6 @@
                                   "startup"
                                   "eternal"
                                   "preconstructed"
-                                  "snapshot"
-                                  "snapshot-plus"
-                                  "neo"
                                   "casual"}
         serialized (get-local-value "visible-formats" "")]
     (if (empty? serialized) default-visible-formats (set (.parse js/JSON serialized)))))

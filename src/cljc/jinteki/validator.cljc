@@ -342,10 +342,7 @@
      :startup (build-format-legality valid :startup deck)
      :throwback (build-format-legality valid :throwback deck)
      :system-gateway (build-system-gateway-legality valid deck)
-     :eternal (build-format-legality valid :eternal deck)
-     :neo (build-format-legality valid :neo deck)
-     :snapshot (build-format-legality valid :snapshot deck)
-     :snapshot-plus (build-format-legality valid :snapshot-plus deck)}))
+     :eternal (build-format-legality valid :eternal deck)}))
 
 (defn trusted-deck-status
   [{:keys [status] :as deck}]

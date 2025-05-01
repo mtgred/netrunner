@@ -207,10 +207,7 @@ format_name = {$format ->
     [classic] 클래식
     [core-experience] 코어 익스피리언스
     [eternal] 이터널
-    [neo] Neo
     [preconstructed] undefined
-    [snapshot] 스냅샷
-    [snapshot-plus] 스냅샷 플러스
     [socr] SOCR
     [standard] 스탠다드
     [startup] undefined

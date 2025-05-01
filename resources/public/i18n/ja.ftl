@@ -163,10 +163,7 @@ format_name = {$format ->
     [classic] undefined
     [core-experience] undefined
     [eternal] エターナル
-    [neo] undefined
     [preconstructed] undefined
-    [snapshot] スナップショット
-    [snapshot-plus] undefined
     [socr] undefined
     [standard] スタンダード
     [startup] スタートアップ

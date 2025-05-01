@@ -127,9 +127,6 @@
    "system-gateway" "System Gateway"
    "preconstructed" "Preconstructed"
    "eternal" "Eternal"
-   "snapshot" "Snapshot"
-   "snapshot-plus" "Snapshot Plus"
-   "neo" "Neo"
    "casual" "Casual"))
 
 (def format->slug
@@ -140,9 +137,6 @@
    "System Gateway" "system-gateway"
    "Preconstructed" "preconstructed"
    "Eternal" "eternal"
-   "Snapshot" "snapshot"
-   "Snapshot Plus" "snapshot-plus"
-   "Neo" "neo"
    "Casual" "casual"))
 
 (defn regex-escape
