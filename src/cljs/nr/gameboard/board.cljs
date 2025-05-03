@@ -1533,12 +1533,15 @@
                    (<= pos (count run-ice)))
           (nth run-ice (dec pos))))))
 
-(def phase->title
-  {"initiation" (tr [:game_initiation "Initiation"])
-   "approach-ice" (tr [:game_approach-ice "Approach ice"])
-   "encounter-ice" (tr [:game_encounter-ice "Encounter ice"])
-   "movement" (tr [:game_movement "Movement"])
-   "success" (tr [:game_success "Success"])})
+(defn phase->title
+  [phase]
+  (case phase
+    "initiation" (tr [:game_initiation "Initiation"])
+    "approach-ice" (tr [:game_approach-ice "Approach ice"])
+    "encounter-ice" (tr [:game_encounter-ice "Encounter ice"])
+    "movement" (tr [:game_movement "Movement"])
+    "success" (tr [:game_success "Success"])
+    nil))
 
 (defn phase->next-phase-title
   ([run] (phase->next-phase-title (:phase @run) (:position @run)))
@@ -1571,7 +1574,7 @@
         (when (or (:button @app-state) (get-in @app-state [:options :display-encounter-info]))
           [encounter-info-div ice])])
      (when @run
-       [:h4 (tr [:game_current-phase "Current phase"]) ":" [:br] (get phase->title (:phase @run) (tr [:game_unknown-phase "Unknown phase"]))])
+       [:h4 (tr [:game_current-phase "Current phase"]) ":" [:br] (or (phase->title (:phase @run)) (tr [:game_unknown-phase "Unknown phase"]))])
 
      (cond
        (and (= "approach-ice" (:phase @run))
@@ -1654,7 +1657,7 @@
         (when (or (:button @app-state)  (get-in @app-state [:options :display-encounter-info]))
           [encounter-info-div ice])])
      (when @run
-       [:h4 (tr [:game_current-phase "Current phase"]) ":" [:br] (get phase->title phase)])
+       [:h4 (tr [:game_current-phase "Current phase"]) ":" [:br] (phase->title phase)])
 
      (cond
        (and (:next-phase @run)
