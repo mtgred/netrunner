@@ -409,6 +409,8 @@ game_agenda-count-with-req = {$agenda-point ->
 
 game_approach-ice = Approach ice
 
+game_approach-server = Approach server
+
 game_archives = Archives ({$faceup} ↑ {$facedown} ↓)
 
 game_attempt-reconnect = Attempt reconnect

@@ -1538,6 +1538,7 @@
   (case phase
     "initiation" (tr [:game_initiation "Initiation"])
     "approach-ice" (tr [:game_approach-ice "Approach ice"])
+    "approach-server" (tr [:game_approach-server "Approach server"])
     "encounter-ice" (tr [:game_encounter-ice "Encounter ice"])
     "movement" (tr [:game_movement "Movement"])
     "success" (tr [:game_success "Success"])
