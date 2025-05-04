@@ -150,7 +150,7 @@
                      " uid: " ws-uid-count
                      " conn: " ws-conn-total
                      " }"))
-      (timbre/info (str "pool occupants: " (seq (pool-occupants-info))))
+      (timbre/info (str "pool occupants: " (seq (map count (pool-occupants-info)))))
       (timbre/info latencies)
       ;; note: the two below (active cards and recent commands) are not relevant for our current situation I think
       ;; if we ever get locking issues or something in the future, it can be useful to diagnose them though
