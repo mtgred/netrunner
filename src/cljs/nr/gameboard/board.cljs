@@ -2067,7 +2067,7 @@
     (fn []
       [:div.panel.blue-shade.timestamp
        [:span.float-center
-        (tr [:game_game-start "Game start"] {:timestamp (js/Date. start-date)})]
+        (tr [:game_game-start "Game start"] {:timestamp (.toLocaleTimeString (js/Date. start-date))})]
        [:<>
         [:span.pm {:on-click #(swap! hide-timer not)}
          (if @hide-timer "+" "-")]
