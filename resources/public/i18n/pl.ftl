@@ -210,6 +210,7 @@ format_name = {$format ->
     [casual] Niekompetytywny
     [classic] Classic
     [core-experience] Core Experience
+    [core] Podstawowy
     [eternal] Eternal
     [preconstructed] undefined
     [socr] SOCR

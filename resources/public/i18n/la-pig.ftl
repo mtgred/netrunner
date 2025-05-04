@@ -196,6 +196,7 @@ format_name = {$format ->
     [casual] Asualcay
     [classic] Assicclay
     [core-experience] Orecay Experienceyay
+    [core] Orecay
     [eternal] Eternalyay
     [preconstructed] undefined
     [socr] SOCRYAY

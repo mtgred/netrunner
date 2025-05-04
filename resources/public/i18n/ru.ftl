@@ -381,6 +381,7 @@ format_name = {$format ->
     [casual] Свободный
     [classic] Классический
     [core-experience] undefined
+    [core] Базовый
     [eternal] Вечный
     [preconstructed] Чемпионский
     [socr] undefined

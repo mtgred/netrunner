@@ -342,6 +342,7 @@
      :startup (build-format-legality valid :startup deck)
      :throwback (build-format-legality valid :throwback deck)
      :system-gateway (build-system-gateway-legality valid deck)
+     :core (build-format-legality valid :core deck)
      :eternal (build-format-legality valid :eternal deck)}))
 
 (defn trusted-deck-status

@@ -148,22 +148,16 @@
                          "it encompasses nearly the entirety of the printed card pool and "
                          "only grows larger with time. "
                          "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
-           {:id "snapshot"
-             :title "What is the Snapshot format?"
+           {:id "core"
+             :title "What is the Core format?"
              :content [:ul
-                        [:p "This format is a \"snapshot\" of the meta at Magnum Opus; "
-                         "the culmination of FFG Organized Play. It will see minimal "
-                         "changes unless strictly necessary. "
-                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
-           {:id "snapshot-plus"
-             :title "What is the Snapshot Plus format?"
-             :content [:ul
-                        [:p "This is the Snapshot format but with the cards that were "
-                         "released at Worlds 2018 (Magnum Opus) included as well. The "
-                         "included cards are Labor Rights, Embolus, Slot Machine, Border "
-                         "Control, Timely Public Release, Hired Help, and Watch The "
-                         "World Burn. "
-                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]})}
+                        [:p "System Gateway and Elevation together constitute a core set "
+                         "that forms the basis for other game formats."
+                         "Elevation builds upon the groundwork laid by System Gateway "
+                         "to broaden the core Netrunner card pool "
+                         "and round out the thematic and mechanical identities of each identity. "
+                         "The core sets serve as a stepping stone from System Gateway to the larger supported formats. "
+                         "Refer to " [:a {:href "https://nullsignal.games/products/elevation/"} "Elevation"] "."]]})}
     {:id "site"
      :title "Website"
      :sub (list

@@ -125,6 +125,7 @@
    "throwback" "Throwback"
    "startup" "Startup"
    "system-gateway" "System Gateway"
+   "core" "Core"
    "preconstructed" "Preconstructed"
    "eternal" "Eternal"
    "casual" "Casual"))
@@ -135,6 +136,7 @@
    "Throwback" "throwback"
    "Startup" "startup"
    "System Gateway" "system-gateway"
+   "Core" "core"
    "Preconstructed" "preconstructed"
    "Eternal" "eternal"
    "Casual" "casual"))

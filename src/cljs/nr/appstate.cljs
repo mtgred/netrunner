@@ -17,6 +17,7 @@
   []
   (let [default-visible-formats #{"standard"
                                   "system-gateway"
+                                  "core"
                                   "throwback"
                                   "startup"
                                   "eternal"
