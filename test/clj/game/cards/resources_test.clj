@@ -7348,6 +7348,23 @@
           (click-prompts state :runner "Prepaid VoicePAD" "Public Terminal" "HQ"))
         "Only got one counter")))
 
+(deftest twinning-with-mid-breach-counter-gain
+  (do-game
+    (new-game {:runner {:hand ["The Twinning" "Cezve"]
+                        :id "Akiko Nisei: Head Case"
+                        :credits 10}
+               :corp {:hand ["IPO"]
+                      :deck [(qty "IPO" 10)]}})
+    (take-credits state :corp)
+    (doseq [c ["Cezve" "The Twinning"]]
+      (play-from-hand state :runner c))
+    (run-empty-server state :rd)
+    (click-prompts state :runner "Akiko Nisei: Head Case" "1 [Credits]")
+    (click-prompt state :corp "1 [Credits]")
+    (click-prompts state :runner "Cezve" "1"
+                   "No action" "No action" "No action")
+    (is (no-prompt? state :corp) "No prompts left, run done")))
+
 (deftest theophilius-bagbiter
   ;; Theophilius Bagbiter - hand size is equal to credit pool
   (do-game

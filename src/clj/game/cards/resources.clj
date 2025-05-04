@@ -3807,14 +3807,14 @@
             {:event :breach-server
              :automatic :pre-breach
              :async true
-             :req (req (and (#{:rd :hq} target)
-                            (< 0 (get-counters card :power))))
+             :interactive (req true)
+             :req (req (#{:rd :hq} target))
+             :change-in-game-state {:silent true :req (req (pos? (get-counters card :power)))}
              :effect (req
                        (let [target-server target]
                          (continue-ability
                            state side
-                           {:req (req (< 0 (get-counters card :power)))
-                            :prompt (msg "How many additional " (zone->name target-server) " accesses do you want to make?")
+                           {:prompt (msg "How many additional " (zone->name target-server) " accesses do you want to make?")
                             :choices {:number (req (min 2 (get-counters card :power)))
                                       :default (req (min 2 (get-counters card :power)))}
                             :msg (msg "access " (quantify target "additional card") " from "
