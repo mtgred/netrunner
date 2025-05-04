@@ -1611,9 +1611,9 @@
        ;; initiation
        (= "initiation" (:phase @run))
        [cond-button
-        (str (tr [:game.continue-to "Continue to"]) " " (if (zero? (:position @run))
-                                                          (tr [:game.approach-server "Approach server"])
-                                                          (tr [:game.approach-ice "Approach ice"])))
+        (tr [:game_continue-to "Continue to"] {:phase (if (zero? (:position @run))
+                                                        (tr [:game_approach-server "Approach server"])
+                                                        (tr [:game_approach-ice "Approach ice"]))})
         (not= "corp" (:no-action @run))
         #(send-command "continue")]
 
@@ -1670,9 +1670,9 @@
 
        (= "initiation" (:phase @run))
        [cond-button
-        (str (tr [:game.continue-to "Continue to"]) " " (if (zero? (:position @run))
-                                                          (tr [:game.approach-server "Approach server"])
-                                                          (tr [:game.approach-ice "Approach ice"])))
+        (tr [:game_continue-to "Continue to"] {:phase (if (zero? (:position @run))
+                                                        (tr [:game_approach-server "Approach server"])
+                                                        (tr [:game_approach-ice "Approach ice"]))})
         (not= "runner" (:no-action @run))
         #(send-command "continue")]
 
