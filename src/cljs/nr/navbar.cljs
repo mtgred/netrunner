@@ -9,54 +9,54 @@
    goog.history.Html5History))
 
 (def navbar-links
-  [{:title (tr [:nav_welcome "Welcome"])
+  [{:title [:nav_welcome "Welcome"]
     :cls "landing"
     :route "/"}
-    {:title (tr [:nav_chat "Chat"])
+    {:title [:nav_chat "Chat"]
     :cls "chat"
     :route "/chat"}
-   {:title (tr [:nav_cards "Cards"])
+   {:title [:nav_cards "Cards"]
     :cls "card"
     :route "/cards"}
-   {:title (tr [:nav_deck-builder "Deck Builder"])
+   {:title [:nav_deck-builder "Deck Builder"]
     :cls "deckbuilder"
     :route "/deckbuilder"}
-   {:title (tr [:nav_play "Play"])
+   {:title [:nav_play "Play"]
     :cls "play"
     :route "/play"}
-   {:title (tr [:nav_help "Help"])
+   {:title [:nav_help "Help"]
     :cls "help"
     :route "/help"}
-   {:title (tr [:nav_settings "Settings"])
+   {:title [:nav_settings "Settings"]
     :cls "settings"
     :route "/account"
     :show? :user}
-   {:title (tr [:nav_stats "Stats"])
+   {:title [:nav_stats "Stats"]
     :cls "stats"
     :route "/stats"
     :show? :user}
-   {:title (tr [:nav_about "About"])
+   {:title [:nav_about "About"]
     :cls "about"
     :route "/about"}
-   {:title (tr [:nav_tournaments "Tournaments"])
+   {:title [:nav_tournaments "Tournaments"]
     :cls "tournaments"
     :route "/tournament"
     :show? #(:tournament-organizer (:user %))}
-   {:title (tr [:nav_admin "Admin"])
+   {:title [:nav_admin "Admin"]
     :cls "admin"
     :route "/admin"
     :show? #(:isadmin (:user %))}
-   {:title (tr [:nav_users "Users"])
+   {:title [:nav_users "Users"]
     :cls "users"
     :route "/users"
     :show? #(or (:isadmin (:user %))
                 (:ismoderator (:user %)))}
-   {:title (tr [:nav_users "Prizes"])
+   {:title [:nav_prizes "Prizes"]
     :cls "prizes"
     :route "/prizes"
     :show? #(or (:isadmin (:user %))
                 (:ismoderator (:user %)))}
-   {:title (tr [:nav_features "Features"])
+   {:title [:nav_features "Features"]
     :cls "features"
     :route "/features"
     :show? #(:isadmin (:user %))}])
@@ -80,8 +80,8 @@
                  (show? @app-state))
          [:li {:class (if (= (:path @routes/current-view) route) "active" "")
                :id (str cls "-nav")
-               :key title
+               :key (tr title)
                ; :on-click #(.setToken history route)
                :data-target "#main"
                :data-slide-to idx}
-          [:a {:href route} title]])))])
+          [:a {:href route} (tr title)]])))])
