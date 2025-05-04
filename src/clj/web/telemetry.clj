@@ -7,7 +7,7 @@
    [game.core.board :refer [all-active]]
    [web.app-state :refer [app-state]]
    [web.lobby :refer [lobby-update-uids pool-occupants-info fetch-delay-log!]]
-   [web.ws :refer [connected-sockets connections_]]
+   [web.ws :as ws :refer [connected-sockets connections_]]
    [taoensso.encore :as enc]
    [taoensso.timbre :as timbre]))
 
@@ -74,6 +74,43 @@
   (let [bean (java.lang.management.ManagementFactory/getOperatingSystemMXBean)]
     (str (int (* 100 (/ (.getSystemLoadAverage bean) (.getAvailableProcessors bean)))) "%")))
 
+(defn thread-stats []
+  (let [threads (Thread/getAllStackTraces)]
+    (frequencies (map #(keyword (.name (.getState %))) (keys threads)))))
+
+(defn ws-chan-backlog []
+  (str "websocket-buffer: " (count (.buf ws/websocket-buffer)) " / " ws/buffer-size))
+
+(def last-gc-stats (atom {}))
+(defn log-gc []
+  (let [gc-beans (java.lang.management.ManagementFactory/getGarbageCollectorMXBeans)
+        current (into {}
+                      (map (fn [gc]
+                             [(.getName gc)
+                              {:collections (.getCollectionCount gc)
+                               :time (.getCollectionTime gc)}])
+                           gc-beans))]
+    ;; Calculate the deltas since last log
+    (doseq [[gc-name {:keys [collections time]}] current]
+      (let [prev (get @last-gc-stats gc-name {:collections 0 :time 0})
+            delta-collections (- collections (:collections prev))
+            delta-time (- time (:time prev))]
+        ;; Log total collections and total time collected since last log
+        (timbre/info (format "GC '%s': Collections = %d, Time (ms) = %d"
+                             gc-name delta-collections delta-time))))
+    ;; Update last-gc-stats for future comparison
+    (reset! last-gc-stats current)))
+
+(defn log-open-file-descriptors []
+  (let [os-bean (java.lang.management.ManagementFactory/getOperatingSystemMXBean)]
+    (if (instance? com.sun.management.UnixOperatingSystemMXBean os-bean)
+      (let [open (.getOpenFileDescriptorCount ^com.sun.management.UnixOperatingSystemMXBean os-bean)
+            max (.getMaxFileDescriptorCount ^com.sun.management.UnixOperatingSystemMXBean os-bean)]
+        (timbre/info
+          (str "Open file descriptors: "
+               (format "%d / %d (%.1f%%)" open max (* 100.0 (/ open max))))))
+      (timbre/info "Warning: Open FD count not supported on this JVM"))))
+
 (defonce log-stats
   (go (while true
     (<! (timeout log-stat-frequency))
@@ -115,9 +152,13 @@
                      " }"))
       (timbre/info (str "pool occupants: " (seq (pool-occupants-info))))
       (timbre/info latencies)
-      ;; TODO - once we've got this set up on the server, wrap it in a try/catch - only ever display
-      ;; the warning once!
-      (timbre/info (str "Active Cards (across all lobbies): " card-freqs))
-      (timbre/info (str "Recent Commands (across all lobbies): " cmd-freqs))
+      ;; note: the two below (active cards and recent commands) are not relevant for our current situation I think
+      ;; if we ever get locking issues or something in the future, it can be useful to diagnose them though
+      ;;(timbre/info (str "Active Cards (across all lobbies): " card-freqs))
+      ;;(timbre/info (str "Recent Commands (across all lobbies): " cmd-freqs))
+      (timbre/info (str "thread states: " (thread-stats)))
+      (timbre/info (ws-chan-backlog))
+      (log-gc)
+      (log-open-file-descriptors)
       (timbre/info (str "System Load (average): " (system-load-average)
                         " - heap: " (heap-usage) "\n"))))))
