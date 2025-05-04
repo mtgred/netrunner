@@ -382,10 +382,7 @@ format_name = {$format ->
     [classic] Классический
     [core-experience] undefined
     [eternal] Вечный
-    [neo] Нео
     [preconstructed] Чемпионский
-    [snapshot] undefined
-    [snapshot-plus] undefined
     [socr] undefined
     [standard] Стандарт
     [startup] Стартап

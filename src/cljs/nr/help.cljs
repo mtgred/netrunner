@@ -163,13 +163,7 @@
                          "included cards are Labor Rights, Embolus, Slot Machine, Border "
                          "Control, Timely Public Release, Hired Help, and Watch The "
                          "World Burn. "
-                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
-           {:id "neo"
-             :title "What is the Neo format?"
-             :content [:ul
-                        [:p "The Neo format is all the cards released by NSG with a small "
-                         "ban list. Refer to the #neo channel on "
-                         [:a {:href "https://discord.gg/glc"} "GLC Discord"] "."]]})}
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]})}
     {:id "site"
      :title "Website"
      :sub (list

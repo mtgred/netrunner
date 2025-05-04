@@ -371,10 +371,7 @@ format_name = {$format ->
     [classic] 经典
     [core-experience] 核心体验
     [eternal] 永久
-    [neo] Neo
     [preconstructed] 预构筑
-    [snapshot] 快照
-    [snapshot-plus] 快照+
     [socr] SOCR
     [standard] 标准
     [startup] 新启
