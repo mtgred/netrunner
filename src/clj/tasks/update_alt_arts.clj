@@ -32,9 +32,10 @@
             (recur (.read in-stream buffer))))))
     (format "%040x" (BigInteger. 1 (.digest digest)))))
 
-(defn list-content [token key high]
+(defn list-content [token key lang high]
   (let [url (str "https://api.github.com/repos/"
                  owner "/" repo "/contents/images/"
+                 lang "/"
                  (if high "high" "default") "/" key
                  "?ref=" branch)
         _ (println (str "fetching cards: " key " (" (if high "high-res)" "standard-res)")))
@@ -72,11 +73,11 @@
       :else
       (println "Error: HTTP" status))))
 
-(defn local-image-path [key high name]
-  (str "resources/public/img/cards/en/" (if high "high" "default") "/" key "/" name))
+(defn local-image-path [key lang high name]
+  (str "resources/public/img/cards/" lang "/" (if high "high" "default") "/" key "/" name))
 
-(defn fetch-image [token key high data force]
-  (let [local-path (local-image-path key high (:name data))]
+(defn fetch-image [token key lang high data force]
+  (let [local-path (local-image-path key lang high (:name data))]
     (if (and (not force) (.exists (io/file local-path)))
       (let [local-sha (sha1-checksum local-path)
             remote-sha (:sha data)]
@@ -89,16 +90,16 @@
   (->> "data/promos.edn" slurp edn/read-string (mapv :version)))
 
 (defn update-promos
-  [{:keys [token force]}]
+  [{:keys [token lang force]}]
   (println "updating promo cards...")
   (let [token (str/trim (slurp token))]
     (if (download-github-file token "promos.edn" "data/promos.edn")
       (doseq [path (get-promo-paths)]
         ;; get standard res images
-        (when-let [content (list-content token path nil)]
-          (cp/pmap 3 #(fetch-image token path nil % force) content))
-        (when-let [content (list-content token path :high-res)]
-          (cp/pmap 3 #(fetch-image token path :high-res % force) content)))
+        (when-let [content (list-content token path lang nil)]
+          (cp/pmap 3 #(fetch-image token path lang nil % force) content))
+        (when-let [content (list-content token path lang :high-res)]
+          (cp/pmap 3 #(fetch-image token path lang :high-res % force) content)))
       (println "Unable to read promo data from remote source - is your key accurate?"))))
 
 (defn usage
@@ -113,6 +114,9 @@
 (def cli-options
   [["-f" "--force" "Force refetch all files"
     :id :force]
+   ["-l" "--language LANG" "Which language fragment to check/update. Default is 'en'"
+    :id :lang
+    :default "en"]
    ["-t" "--token PATH" "Path to fetch token from"
     :id :token
     :validate [#(.exists (io/file %))
