@@ -379,6 +379,7 @@ format_name = {$format ->
     [casual] Casual
     [classic] Classic
     [core-experience] Core Experience
+    [core] Core
     [eternal] Eternal
     [preconstructed] Preconstructed
     [socr] SOCR

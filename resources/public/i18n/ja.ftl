@@ -162,6 +162,7 @@ format_name = {$format ->
     [casual] undefined
     [classic] undefined
     [core-experience] undefined
+    [core] 基本セ
     [eternal] エターナル
     [preconstructed] undefined
     [socr] undefined

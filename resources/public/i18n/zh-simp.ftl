@@ -370,6 +370,7 @@ format_name = {$format ->
     [casual] 休闲
     [classic] 经典
     [core-experience] 核心体验
+    [core] 核心体
     [eternal] 永久
     [preconstructed] 预构筑
     [socr] SOCR

@@ -206,6 +206,7 @@ format_name = {$format ->
     [casual] 캐주얼
     [classic] 클래식
     [core-experience] 코어 익스피리언스
+    [core] 코어
     [eternal] 이터널
     [preconstructed] undefined
     [socr] SOCR
