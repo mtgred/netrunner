@@ -1992,7 +1992,7 @@
                                      (check-win-by-agenda state side)
                                      (effect-completed state side eid)))
               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                     (effect-completed state side eid))}})
+                                     (effect-completed eid))}})
 
 (defcard "Regulatory Capture"
   {:advancement-requirement (req (- (min 4 (count-bad-pub state))))})
