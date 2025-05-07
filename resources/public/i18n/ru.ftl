@@ -382,10 +382,7 @@ format_name = {$format ->
     [classic] Классический
     [core-experience] undefined
     [eternal] Вечный
-    [neo] Нео
     [preconstructed] Чемпионский
-    [snapshot] undefined
-    [snapshot-plus] undefined
     [socr] undefined
     [standard] Стандарт
     [startup] Стартап
@@ -757,11 +754,11 @@ lobby_game-count-filtered = {$cnt ->
 }
 
 lobby_gateway-format = {$format ->
-    [beginner] Новичок
+    [Beginner] Новичок
     [beginner-info] В этом лобби можно играть стартовыми колодами Корпорации и Бегущего из набора Врата Cистемы. С этих колод рекомендуется начинать знакомство с игрой. Игра ведётся до 6 победных очков.
     [beginner-ul] Врата Системы - Стартовые обучающие колоды
-    [constructed] Свои колоды
-    [intermediate] Продвинутый
+    [Constructed] Свои колоды
+    [Intermediate] Продвинутый
     [intermediate-info] В этом лобби можно играть продвинутыми колодами Корпорации и Бегущего из набора Врата Cистемы. В этих колодах больше опций и механик, чем в стартовых. Игра ведётся до 7 победных очков.
     [intermediate-ul] Врата Системы - Продвинутые обучающие колоды
     *[unknown] undefined

@@ -2060,7 +2060,7 @@
         opts-fn (fn [cards]
                   (mapv #(when (and (not (operation? %))
                                     (not (agenda? %)))
-                           {:option (str "Install " (:title %) ", ignoring the install cost")
+                           {:option (str "Install " (:title %))
                             :ability (remote-choice %)})
                         cards))
         ev {:prompt (msg "The top of R&D is (in order): "
@@ -2170,6 +2170,8 @@
              :req (req (letfn [(valid-ctx? [[ctx]] (pos? (or (:subroutines-fired ctx) 0)))]
                          (and (valid-ctx? [context])
                               (first-event? state side :successful-run valid-ctx?))))
+             :interactive (req true)
+             :automatic :force-discard
 	     :msg "gain 1 [Credits]"
              :async true
              :once :per-turn

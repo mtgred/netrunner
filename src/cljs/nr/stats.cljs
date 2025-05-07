@@ -52,12 +52,13 @@
      [:h4 (:title game) (when (:has-replay game) (if (:replay-shared game) " ⭐" " 🟢"))]
      [:div
       [:div.game-details-table
-       [:div (tr [:stats_lobby "Lobby"] {:lobby (tr-room-type (:room game))})]
-       [:div (tr [:stats_format "Format"] {:format (tr-format (:format game))})]
-       [:div (tr [:stats_winner "Winner"] {:winner (tr-side (:winner game))})]
-       [:div (tr [:stats_win-method "Win method"] {:reason (:reason game)})]
-       [:div (tr [:stats_started "Started"] {:started (:start-date game)})]
-       [:div (tr [:stats_ended "Ended"] {:ended (:end-date game)})]]
+       [:div (tr [:stats_lobby "Lobby:"] {:lobby (tr-room-type (:room game))})]
+       [:div (tr [:stats_format "Format:"] {:format (tr-format (:format game))})]
+       [:div (tr [:stats_winner "Winner:"] {:winner (when (:winner game)
+                                                      (tr-side (:winner game)))})]
+       [:div (tr [:stats_win-method "Win method:"] {:reason (:reason game)})]
+       [:div (tr [:stats_started "Started:"] {:started (:start-date game)})]
+       [:div (tr [:stats_ended "Ended:"] {:ended (:end-date game)})]]
       (when (:stats game)
         [build-game-stats (get-in game [:stats :corp]) (get-in game [:stats :runner])])
       [:p

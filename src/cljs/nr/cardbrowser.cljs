@@ -88,12 +88,8 @@
       (assoc :influencelimit "∞")
       (assoc-in [:format :standard] {:banned true})
       (assoc-in [:format :startup] {:banned true})
-      (assoc-in [:format :sunset] {:banned true})
       (assoc-in [:format :throwback] {:banned true})
-      (assoc-in [:format :eternal] {:banned true})
-      (assoc-in [:format :snapshot] {:banned true})
-      (assoc-in [:format :snapshot-plus] {:banned true})
-      (assoc-in [:format :neo] {:banned true})))
+      (assoc-in [:format :eternal] {:banned true})))
 
 (defn- insert-starter-ids
   "Add special case info for the Starter Deck IDs"
@@ -200,14 +196,23 @@
   [card]
    (let [lang (get-in @app-state [:options :language] "en")
          res (get-in @app-state [:options :card-resolution] "default")
-         art (if (keyword? (:art card)) (:art card) :stock)]
-     (get-image-path (:images card) (keyword lang) (keyword res) art)))
+         art (if (keyword? (:art card)) (:art card) :stock)
+         art-index (get card :art-index 0)]
+     [(nth (get-image-path (:images card) (keyword lang) (keyword res) art) art-index)]))
 
 (defn- alt-version-from-string
   "Given a string name, get the keyword version or nil"
   [setname]
   (when-let [alt (find-first #(= setname (:name %)) (:alt-info @app-state))]
     (keyword (:version alt))))
+
+(defn- card-arts-for-key
+  [card key]
+  (let [lang (get-in @app-state [:options :language] "en")
+        res (get-in @app-state [:options :card-resolution] "default")]
+    (if-let [arts (get-in card [:images (keyword lang) (keyword res) key])]
+      (vec (map-indexed (fn [idx item] (assoc card :art key :art-index idx)) arts))
+      [(assoc card :art "" :art-index 0)])))
 
 (defn- expand-alts
   [only-version acc card]
@@ -226,7 +231,7 @@
               (show-alt-art? true))
        (->> filtered-images
             (concat [""])
-            (map #(if % (assoc card :art %) card))
+            (mapcat #(card-arts-for-key card %))
             (map #(if (not= "" (:art %)) (dissoc % :previous-versions) %))
             (concat acc))
        (conj acc card))))
@@ -287,10 +292,11 @@
         art (:art card)
         code-kw (keyword (:future-version card (:code card)))
         alts (:alt-arts (:options @app-state))
+        alt-index (get card :art-index 0)
         new-alts (cond
-                   (keyword? art) (assoc alts code-kw (name art))
+                   (keyword? art) (assoc alts code-kw [(name art) alt-index])
                    is-old-card (assoc alts code-kw (:code card))
-                   :else (dissoc alts code-kw))] ; remove the key entirely if the newest card is selected
+                   :else (dissoc alts code-kw))]
     (swap! app-state assoc-in [:options :alt-arts] new-alts)
     (nr.account/post-options (partial post-response))))
 

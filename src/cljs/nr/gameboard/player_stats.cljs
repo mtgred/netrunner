@@ -128,7 +128,7 @@
             (ctrl :click [:div (tr [:game_click-count] {:click click})])
             (ctrl :credit [:div (tr [:game_credit-count] {:credit credit})])])
          (let [{:keys [base additional]} bad-publicity]
-           (ctrl :bad-publicity [:div (if (pos? additional)
+           (ctrl :bad-publicity [:div (if-not (pos? additional)
                                         (tr [:game_bad-pub-count] {:base base})
                                         (tr [:game_bad-pub-count-additional]
                                             {:base base

@@ -197,10 +197,7 @@ format_name = {$format ->
     [classic] Assicclay
     [core-experience] Orecay Experienceyay
     [eternal] Eternalyay
-    [neo] Neoyay
     [preconstructed] undefined
-    [snapshot] Apshotsnay
-    [snapshot-plus] Apshotsnay Usplay
     [socr] SOCRYAY
     [standard] Andardstay
     [startup] Artupstay
@@ -453,11 +450,11 @@ lobby_game-count-filtered = {$cnt ->
 }
 
 lobby_gateway-format = {$format ->
-    [beginner] eginnerbay
+    [Beginner] eginnerbay
     [beginner-info] Isthay obbylay isyay usingyay ethay emsystay atewaygay eginnerbay ecksday orfay ethay orporationcay andyay unnerray . esethay ecksday areyay ecommendedray orfay ouryay irstfay amesgay . amesgay areyay ayedplay otay 6 agendayay ointspay.
     [beginner-ul] Emsystay atewaygay - eginnerbay eachingtay decks
-    [constructed] Onstructedcay
-    [intermediate] Intermediateyay
+    [Constructed] Onstructedcay
+    [Intermediate] Intermediateyay
     [intermediate-info] Isthay obbylay isyay usingyay ethay emsystay atewaygay intermediateyay ecksday orfay ethay orporationcay andyay unnerray. esethay ecksday avehay ightlyslay oremay angeray anthay ethay eginnerbay ecksday. amesgay areyay ayedplay otay 7 agendayay ointspay.
     [intermediate-ul] Emsystay atewaygay - intermediateyay eachingtay decks
     *[unknown] undefined

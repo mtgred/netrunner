@@ -84,7 +84,7 @@
                          :req (req (has-subtype? target subtype))
                          :value 1}]}))
 
-(defn project-agenda-helper
+(defn- project-agenda
   "Associates an ability which places agenda counters on a scored agenda based on the
   quantity of advancement counters on it when it was scored.
   Args:
@@ -94,8 +94,8 @@
   2) :granularity - granularity - gran 2 = 1 quantity every 2 counters. Default is 1:1
   3) :quantity    - quantity per granularity. Ie 3 counters every 2 excess
   4) :type        - counter type. Default is agenda counters."
-  ([cdef] (project-agenda-helper nil cdef))
-  ([{:keys [mode granularity quantity type] :as args
+  ([cdef] (project-agenda nil cdef))
+  ([{:keys [mode granularity quantity type]
      :or {granularity 1 quantity 1 type :agenda mode :printed}}
     cdef]
    (assoc cdef
@@ -105,12 +105,11 @@
            :effect (req (add-counter
                           state side eid card type
                           (* quantity
-                             (max 0
-                                  (quot (if (= mode :computed)
-                                          (max 0 (- (:advancement-tokens context) (:advancement-requirement context)))
-                                          (max 0 (- (:advancement-tokens context)
-                                                    (:advancementcost card))))
-                                        granularity)))))})))
+                             (quot (max 0 (- (:advancement-tokens context)
+                                             (if (= mode :computed)
+                                               (:advancement-requirement context)
+                                               (:advancementcost card))))
+                                   granularity))))})))
 
 (defn- agenda-counters
   ([qty] (agenda-counters qty :agenda))
@@ -492,11 +491,10 @@
                      (effect-completed state side eid)))}}}})
 
 (defcard "Braintrust"
-  (project-agenda-helper
-    {:granularity 2}
-    {:static-abilities [{:type :rez-cost
-                         :req (req (ice? target))
-                         :value (req (- (get-counters card :agenda)))}]}))
+  (project-agenda {:granularity 2})
+  {:static-abilities [{:type :rez-cost
+                       :req (req (ice? target))
+                       :value (req (- (get-counters card :agenda)))}]})
 
 (defcard "Breaking News"
   {:on-score {:async true
@@ -801,33 +799,32 @@
                 :msg "gain [Click][Click]"}]})
 
 (defcard "Embedded Reporting"
-  (project-agenda-helper
-    {:quantity 2 :mode :computed}
-    {:events [{:event :corp-turn-ends
-               :interactive (req true)
-               :skippable true
-               :optional {:prompt "Search R&D for an Operation?"
-                          :waiting-prompt true
-                          :req (req (and (pos? (get-counters card :agenda))
-                                         (seq (:deck corp))))
-                          :yes-ability {:choices (req (cancellable (filter operation? (:deck corp)) :sorted))
-                                        :prompt "Move an operation to the top of R&D"
-                                        :async true
-                                        :msg (msg "reveal " (:title target)
-                                                  " from R&D, shuffle R&D, and place it ontop")
-                                        :cost [(->c :agenda 1)]
-                                        :effect (req (wait-for
-                                                       (reveal state side target)
-                                                       (let [c (first (set-aside-for-me state side eid [target]))]
-                                                         (shuffle! state side :deck)
-                                                         (move state side c :deck {:front true}))
-                                                       (effect-completed state side eid)))
-                                        :cancel-effect (req (continue-ability
-                                                              state side
-                                                              {:cost [(->c :agenda 1)]
-                                                               :msg "shuffle R&D"
-                                                               :effect (req (shuffle! state side :deck))}
-                                                              card nil))}}}]}))
+  (project-agenda {:quantity 2 :mode :computed})
+  {:events [{:event :corp-turn-ends
+             :interactive (req true)
+             :skippable true
+             :optional {:prompt "Search R&D for an Operation?"
+                        :waiting-prompt true
+                        :req (req (and (pos? (get-counters card :agenda))
+                                       (seq (:deck corp))))
+                        :yes-ability {:choices (req (cancellable (filter operation? (:deck corp)) :sorted))
+                                      :prompt "Move an operation to the top of R&D"
+                                      :async true
+                                      :msg (msg "reveal " (:title target)
+                                                " from R&D, shuffle R&D, and place it ontop")
+                                      :cost [(->c :agenda 1)]
+                                      :effect (req (wait-for
+                                                     (reveal state side target)
+                                                     (let [c (first (set-aside-for-me state side eid [target]))]
+                                                       (shuffle! state side :deck)
+                                                       (move state side c :deck {:front true}))
+                                                     (effect-completed state side eid)))
+                                      :cancel-effect (req (continue-ability
+                                                            state side
+                                                            {:cost [(->c :agenda 1)]
+                                                             :msg "shuffle R&D"
+                                                             :effect (req (shuffle! state side :deck))}
+                                                            card nil))}}}]})
 
 (defcard "Eminent Domain"
   (let [expend-abi {:req (req (some corp-installable-type? (:hand corp)))
@@ -1574,33 +1571,32 @@
   {:on-score (gain-credits-ability 7)})
 
 (defcard "Off the Books"
-  (project-agenda-helper
-    {:mode :computed}
-    {:events [{:event :corp-turn-ends
-               :interactive (req true)
-               :skippable true
-               :optional {:req (req (and (pos? (get-counters card :agenda))
-                                         (seq (:deck corp))))
-                          :prompt "Search R&D for a card?"
-                          :yes-ability {:cost [(->c :agenda 1)]
-                                        :choices (req (cancellable (:deck corp) :sorted))
-                                        :prompt "Tutor a card"
-                                        :async true
-                                        :msg (msg "reveal " (:title target) " from R&D")
-                                        :effect (req (shuffle! state side :deck)
-                                                     (wait-for
-                                                       (reveal state side target)
-                                                       (let [target-card target]
-                                                         (continue-ability
-                                                           state side
-                                                           (choose-one-helper
-                                                             [{:option (str "Install " (:title target-card))
-                                                               :ability {:async true
-                                                                         :effect (req (corp-install state side eid target-card nil {:msg-args {:display-origin true :install-source card}}))}}
-                                                              {:option (str "Add " (:title target-card) " to HQ")
-                                                               :ability {:msg (msg "add " (:title target-card) " to HQ")
-                                                                         :effect (req (move state side target-card :hand))}}])
-                                                           card nil))))}}}]}))
+  (project-agenda {:mode :computed})
+  {:events [{:event :corp-turn-ends
+             :interactive (req true)
+             :skippable true
+             :optional {:req (req (and (pos? (get-counters card :agenda))
+                                       (seq (:deck corp))))
+                        :prompt "Search R&D for a card?"
+                        :yes-ability {:cost [(->c :agenda 1)]
+                                      :choices (req (cancellable (:deck corp) :sorted))
+                                      :prompt "Tutor a card"
+                                      :async true
+                                      :msg (msg "reveal " (:title target) " from R&D")
+                                      :effect (req (shuffle! state side :deck)
+                                                   (wait-for
+                                                     (reveal state side target)
+                                                     (let [target-card target]
+                                                       (continue-ability
+                                                         state side
+                                                         (choose-one-helper
+                                                           [{:option (str "Install " (:title target-card))
+                                                             :ability {:async true
+                                                                       :effect (req (corp-install state side eid target-card nil {:msg-args {:display-origin true :install-source card}}))}}
+                                                            {:option (str "Add " (:title target-card) " to HQ")
+                                                             :ability {:msg (msg "add " (:title target-card) " to HQ")
+                                                                       :effect (req (move state side target-card :hand))}}])
+                                                         card nil))))}}}]})
 
 (defcard "Ontological Dependence"
   {:advancement-requirement (req (- (or (get-in @state [:runner :brain-damage]) 0)))})
@@ -1731,25 +1727,24 @@
                                        (gain-bad-publicity state :corp eid 1)))}}))
 
 (defcard "Project Atlas"
-  (project-agenda-helper
-    {:abilities [{:cost [(->c :agenda 1)]
-                  :keep-menu-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
-                  :prompt "Choose a card"
-                  :label "Search R&D and add 1 card to HQ"
-                  ;; we need the req or the prompt will still show
-                  :req (req (pos? (get-counters card :agenda)))
-                  :msg (msg "add " (:title target) " to HQ from R&D")
-                  :choices (req (cancellable (:deck corp) :sorted))
-                  :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                         (effect-completed eid))
-                  :effect (effect (shuffle! :deck)
-                                  (move target :hand))}]}))
+  project-agenda
+  {:abilities [{:cost [(->c :agenda 1)]
+                :keep-menu-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
+                :prompt "Choose a card"
+                :label "Search R&D and add 1 card to HQ"
+                ;; we need the req or the prompt will still show
+                :req (req (pos? (get-counters card :agenda)))
+                :msg (msg "add " (:title target) " to HQ from R&D")
+                :choices (req (cancellable (:deck corp) :sorted))
+                :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
+                                       (effect-completed eid))
+                :effect (effect (shuffle! :deck)
+                                (move target :hand))}]})
 
 (defcard "Project Beale"
-  (project-agenda-helper
-    {:granularity 2}
-    {:agendapoints-runner (req 2)
-     :agendapoints-corp (req (+ 2 (get-counters card :agenda)))}))
+  (project-agenda {:granularity 2})
+  {:agendapoints-runner (req 2)
+   :agendapoints-corp (req (+ 2 (get-counters card :agenda)))})
 
 (defcard "Project Ingatan"
   (project-agenda-helper
@@ -1773,24 +1768,24 @@
                                                                                 :display-origin true}}))}]}))
 
 (defcard "Project Kusanagi"
-  (project-agenda-helper
-    {:abilities [{:label "Give a piece of ice \"[Subroutine] Do 1 net damage\""
-                  :prompt "Choose a piece of ice"
-                  :choices {:card #(and (ice? %)
-                                        (rezzed? %))}
-                  :cost [(->c :agenda 1)]
-                  :change-in-game-state {:req (req (and run (some (every-pred ice? rezzed?)
-                                                                  (all-installed state :corp))))}
-                  :keep-menu-open :while-agenda-tokens-left
-                  :msg (str "make a piece of ice gain \"[Subroutine] Do 1 net damage\" "
-                            "after all its other subroutines for the remainder of the run")
-                  :effect  (effect (register-lingering-effect
-                                     card
-                                     (let [t target]
-                                       {:type :additional-subroutines
-                                        :duration :end-of-run
-                                        :req (req (same-card? target t))
-                                        :value {:subroutines [(do-net-damage 1)]}})))}]}))
+  project-agenda
+  {:abilities [{:label "Give a piece of ice \"[Subroutine] Do 1 net damage\""
+                :prompt "Choose a piece of ice"
+                :choices {:card #(and (ice? %)
+                                      (rezzed? %))}
+                :cost [(->c :agenda 1)]
+                :change-in-game-state {:req (req (and run (some (every-pred ice? rezzed?)
+                                                                (all-installed state :corp))))}
+                :keep-menu-open :while-agenda-tokens-left
+                :msg (str "make a piece of ice gain \"[Subroutine] Do 1 net damage\" "
+                          "after all its other subroutines for the remainder of the run")
+                :effect  (effect (register-lingering-effect
+                                   card
+                                   (let [t target]
+                                     {:type :additional-subroutines
+                                      :duration :end-of-run
+                                      :req (req (same-card? target t))
+                                      :value {:subroutines [(do-net-damage 1)]}})))}]})
 
 (defcard "Project Vacheron"
   {:flags {:has-events-when-stolen true}
@@ -1821,12 +1816,12 @@
                             (effect-completed state side eid)))}]})
 
 (defcard "Project Vitruvius"
-  (project-agenda-helper
-    {:abilities [(into
-                   (corp-recur)
-                   {:cost [(->c :agenda 1)]
-                    :keep-menu-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
-                    :req (req (pos? (get-counters card :agenda)))})]}))
+  project-agenda
+  {:abilities [(into
+                 (corp-recur)
+                 {:cost [(->c :agenda 1)]
+                  :keep-menu-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
+                  :req (req (pos? (get-counters card :agenda)))})]})
 
 (defcard "Project Wotan"
   {:on-score (agenda-counters 3)
@@ -1875,7 +1870,7 @@
              :effect (effect (continue-ability (choose-swap target) card nil))
              :cancel-effect (effect (put-back-counter card)
                                     (effect-completed eid))})]
-    (project-agenda-helper
+    (project-agenda
       {:abilities [{:async true
                     :waiting-prompt true
                     :cost [(->c :agenda 1)]
@@ -1994,7 +1989,7 @@
                                      (check-win-by-agenda state side)
                                      (effect-completed state side eid)))
               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                     (effect-completed state side eid))}})
+                                     (effect-completed eid))}})
 
 (defcard "Regulatory Capture"
   {:advancement-requirement (req (- (min 4 (count-bad-pub state))))})
@@ -2164,18 +2159,17 @@
              :effect (effect (damage eid :net 1 {:card card}))}]})
 
 (defcard "Sericulture Expansion"
-  (project-agenda-helper
-    {:mode :computed}
-    {:events [{:event :corp-turn-ends
-               :req (req (and (seq (all-installed state :corp))
-                              (can-pay? state side eid card nil [(->c :agenda 1)])))
-               :prompt "Choose a card to place 2 advancement counters on"
-               :player :corp
-               :cost [(->c :agenda 1)]
-               :choices {:card (every-pred corp? installed?)}
-               :msg (msg "place 2 advancement counters on " (card-str state target))
-               :async true
-               :effect (req (add-prop state :corp eid target :advance-counter 2 {:placed true}))}]}))
+  (project-agenda {:mode :computed})
+  {:events [{:event :corp-turn-ends
+             :req (req (and (seq (all-installed state :corp))
+                            (can-pay? state side eid card nil [(->c :agenda 1)])))
+             :prompt "Choose a card to place 2 advancement counters on"
+             :player :corp
+             :cost [(->c :agenda 1)]
+             :choices {:card (every-pred corp? installed?)}
+             :msg (msg "place 2 advancement counters on " (card-str state target))
+             :async true
+             :effect (req (add-prop state :corp eid target :advance-counter 2 {:placed true}))}]})
 
 (defcard "Show of Force"
   {:on-score {:async true

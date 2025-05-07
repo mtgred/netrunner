@@ -8624,6 +8624,22 @@
           (card-subroutine state :corp (get-ice state :hq 0) 0))
         "gained 2c from wave")))
 
+(deftest wave-just-shuffle
+  (do-game
+    (new-game {:corp {:hand ["Wave" "Wave"]
+                      :deck ["Ice Wall"]
+                      :credits 10}})
+    (play-from-hand state :corp "Wave" "HQ")
+    (play-from-hand state :corp "Wave" "R&D")
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (rez state :corp (get-ice state :rd 0))
+    (is (no-prompt? state :corp) "No prompt to search from ice on another server")
+    (rez state :corp (get-ice state :hq 0))
+    (click-prompt state :corp "Yes")
+    (click-prompt state :corp "Cancel")
+    (is (no-prompt? state :corp))))
+
 (deftest wendigo
   ;; Morph ice gain and lose subtypes from normal advancements and placed advancements
   (do-game

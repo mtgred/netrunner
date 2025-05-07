@@ -1,5 +1,6 @@
 (ns web.lobby
   (:require
+   [clojure.core.async :refer [<! go timeout]]
    [cljc.java-time.instant :as inst]
    [cljc.java-time.duration :as duration]
    [cljc.java-time.temporal.chrono-unit :as chrono]
@@ -18,11 +19,12 @@
    [web.app-state :as app-state]
    [web.mongodb :as mongodb]
    [web.stats :as stats]
-   [web.ws :as ws]))
+   [web.ws :as ws]
+   [taoensso.encore :as enc]))
 
 (read-write/print-time-literals-clj!)
 
-(defonce telemetry-buckets (atom {}))
+(defonce telemetry-buckets (agent {}))
 (defn log-delay!
   [timestamp id]
   (let [now (inst/now)
@@ -34,11 +36,11 @@
                            (if (contains? map key)
                              (assoc map key (conj (key map) total-ms))
                              (assoc map key (seq [total-ms]))))]
-    (swap! telemetry-buckets create-or-update)))
+    (send telemetry-buckets create-or-update)))
 (defn fetch-delay-log!
   []
   (let [res @telemetry-buckets]
-    (reset! telemetry-buckets {})
+    (send telemetry-buckets (constantly {}))
     res))
 
 ;; Oracle guidance for active threads is ~cores+2
@@ -47,28 +49,44 @@
 (defonce game-pools
   (letfn [(new-pool [x]
             {:pool (cp/threadpool 1 {:name (str "game-thread-" x)})
-             :occupants (atom 0)})] ;; note that occupants is just for load balancing purposes
+             :occupants (atom #{})})] ;; note that occupants is just for load balancing purposes
     (vec (map new-pool (range pool-size)))))
 
 (defn pool-occupants-info [] (map #(deref (:occupants %)) game-pools))
 
 (defn join-pool!
   "Returns one of the pools at random with the least occupants. Updates pool occupancy"
-  []
-  (let [pool (first (sort-by #(deref (:occupants %)) (shuffle game-pools)))]
-    (swap! (:occupants pool) inc)
+  [gameid]
+  (let [pool (first (sort-by #(-> % :occupants deref count) (shuffle game-pools)))]
+    (swap! (:occupants pool) conj gameid)
     pool))
 
 (defn leave-pool!
   "Leaves a pool. This just decrements the occupants, so we can reassign it smartly"
-  [pool]
-  (swap! (:occupants pool) dec))
+  [pool gameid]
+  (swap! (:occupants pool) disj gameid))
+
+(def pool-cleaning-frequency (enc/ms :mins 30))
+(defonce clean-pools
+  (go (while true
+        (<! (timeout pool-cleaning-frequency))
+        (let [cleaned! (atom 0)
+              lobby-ids (set (map :gameid (app-state/get-lobbies)))]
+          (doseq [pool game-pools]
+            (let [occupants @(:occupants pool)
+                  stale (set/difference occupants lobby-ids)]
+              (when (seq stale)
+                (swap! cleaned! + (count stale))
+                (swap! (:occupants pool) set/difference stale))))
+          (if (pos? @cleaned!)
+            (println "cleaned up" @cleaned! "stale pool occupants!")
+            (println "all pools are tidy!"))))))
 
 (defonce lobby-pool (cp/threadpool 1 {:name "lobbies-thread"}))
 (defmacro lobby-thread [& expr] `(cp/future lobby-pool ~@expr))
 (defmacro game-thread [lobby & expr]
   "Note: if the lobby isn't actually real, or has been nulled somehow, executing on the lobby thread is safe"
-  `(cp/future (or (get-in ~lobby [:pool :pool]) lobby-pool) ~@expr))
+  `(cp/future (get-in ~lobby [:pool :pool] lobby-pool) ~@expr))
 
 (defn validate-precon
   [format client-precon client-gateway-type]
@@ -100,7 +118,7 @@
      :corp-spectators []
      :runner-spectators []
      :messages []
-     :pool (join-pool!)
+     :pool (join-pool! gameid)
      ;; options
      :precon (validate-precon format precon gateway-type)
      :open-decklists (or open-decklists (when (validate-precon format precon gateway-type) true))
@@ -402,7 +420,7 @@
    (swap! app-state/app-state update :lobbies dissoc gameid)
    (doseq [uid (keep :uid (get-players-and-spectators lobby))]
      (clear-lobby-state uid))
-   (leave-pool! pool)
+   (leave-pool! pool gameid)
    (when (and (not skip-on-close) on-close)
      (on-close lobby))))
 

@@ -380,10 +380,7 @@ format_name = {$format ->
     [classic] Classic
     [core-experience] Core Experience
     [eternal] Eternal
-    [neo] Neo
     [preconstructed] Preconstructed
-    [snapshot] Snapshot
-    [snapshot-plus] Snapshot Plus
     [socr] SOCR
     [standard] Standard
     [startup] Startup
@@ -408,6 +405,8 @@ game_agenda-count-with-req = {$agenda-point ->
 } ({$agenda-point-req} required)
 
 game_approach-ice = Approach ice
+
+game_approach-server = Approach server
 
 game_archives = Archives ({$faceup} ↑ {$facedown} ↓)
 
@@ -767,11 +766,11 @@ lobby_game-count-filtered = {$cnt ->
 }
 
 lobby_gateway-format = {$format ->
-    [beginner] Beginner
+    [Beginner] Beginner
     [beginner-info] This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points.
     [beginner-ul] System Gateway - Beginner Teaching Decks
-    [constructed] Constructed
-    [intermediate] Intermediate
+    [Constructed] Constructed
+    [Intermediate] Intermediate
     [intermediate-info] This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points.
     [intermediate-ul] System Gateway - Intermediate Teaching Decks
     *[unknown] Unknown Gateway Format ({$format})
@@ -1510,8 +1509,14 @@ stats_view-games = Return to stats screen
 
 stats_view-log = View log
 
-stats_win-method = Win method: {$reason}
+stats_win-method = Win method: {$reason ->
+  [null] (none)
+  *[other] {$reason}
+}
 
-stats_winner = Winner: {$winner}
+stats_winner = Winner: {$winner ->
+  [null] (none)
+  *[other] {$winner}
+}
 
 stats_won = Won: {$won} ({NUMBER($percent, style: "percent")})

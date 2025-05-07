@@ -22,7 +22,8 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard offer-jack-out
-                                  reorder-choice spend-credits take-credits trash-on-empty do-net-damage]]
+                                  reorder-choice spend-credits take-credits trash-on-empty do-net-damage
+                                  run-any-server-ability run-server-ability]]
    [game.core.drawing :refer [draw click-draw-bonus]]
    [game.core.effects :refer [register-lingering-effect update-disabled-cards]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
@@ -552,13 +553,7 @@
              :effect (effect (lose-clicks 1))}]})
 
 (defcard "Beatriz Friere Gonzalez"
-  {:abilities [{:action true
-                :cost [(->c :click 2)]
-                :msg "Make a run on HQ"
-                :makes-run true
-                :async true
-                :change-in-game-state {:req (req hq-runnable)}
-                :effect (req (make-run state :runner eid :hq card))}]
+  {:abilities [(assoc (run-server-ability :hq) :action true :cost [(->c :click 2)])]
    :events [(successful-run-replace-breach
               {:target-server :hq
                :this-card-run true
@@ -1204,14 +1199,7 @@
                 :async true
                 :req (req (pos? (get-counters (get-card state card) :credit)))
                 :effect (req (spend-credits state side eid card :credit 1))}
-               {:action true
-                :label "Run a server"
-                :cost [(->c :click 1)]
-                :async true
-                :makes-run true
-                :prompt "Choose a server"
-                :choices (req runnable-servers)
-                :effect (req (make-run state :runner eid target card))}]
+               (assoc run-any-server-ability :action true :cost [(->c :click 1)])]
    :interactions {:pay-credits {:req (req (and (get-in card [:special :run-id])
                                                (= (get-in card [:special :run-id]) (:run-id run))))
                                 :type :credit}}})
@@ -1487,17 +1475,10 @@
                      :effect (req (breach-server state :runner eid [:rd] nil))}})]
     {:events [constant-effect
               replace-breach-event]
-     :abilities [{:action true
-                  :cost [(->c :click 1)]
-                  :change-in-game-state {:req (req archives-runnable)}
-                  :msg "make a run on Archives"
-                  :label "Take 1 tag and run Archives"
-                  :makes-run true
-                  :once :per-turn
-                  :async true
-                  :effect
-                  (req (wait-for (gain-tags state :runner 1 {:unpreventable true})
-                                 (make-run state side eid :archives (get-card state card))))}]}))
+     :abilities [(assoc (run-server-ability :archives)
+                        :cost [(->c :gain-tag 1) (->c :click 1)]
+                        :once :per-turn
+                        :action true)]}))
 
 (defcard "Fall Guy"
   (letfn [(valid-context? [context] (not= :ability-cost (:cause context)))]
@@ -3826,14 +3807,14 @@
             {:event :breach-server
              :automatic :pre-breach
              :async true
-             :req (req (and (#{:rd :hq} target)
-                            (< 0 (get-counters card :power))))
+             :interactive (req true)
+             :req (req (#{:rd :hq} target))
+             :change-in-game-state {:silent true :req (req (pos? (get-counters card :power)))}
              :effect (req
                        (let [target-server target]
                          (continue-ability
                            state side
-                           {:req (req (< 0 (get-counters card :power)))
-                            :prompt (msg "How many additional " (zone->name target-server) " accesses do you want to make?")
+                           {:prompt (msg "How many additional " (zone->name target-server) " accesses do you want to make?")
                             :choices {:number (req (min 2 (get-counters card :power)))
                                       :default (req (min 2 (get-counters card :power)))}
                             :msg (msg "access " (quantify target "additional card") " from "

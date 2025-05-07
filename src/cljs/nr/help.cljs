@@ -133,11 +133,6 @@
                          "taking their first steps into Organized Play as well as experienced "
                          "players who want a slimmed-down deckbuilding challenge. "
                          "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
-            {:id "sunset"
-             :title "What is the Sunset format?"
-             :content [:ul
-                        [:p "Sunset is essentially Standard with an extended, experimental banlist added to it."
-                         "Refer to the " [:a {:href "https://nullsignal.games/blog/introducing-sunset/"} "Sunset Announcement"] "."]]}
             {:id "system-gateway"
              :title "What is the System Gateway format?"
              :content [:ul
@@ -168,13 +163,7 @@
                          "included cards are Labor Rights, Embolus, Slot Machine, Border "
                          "Control, Timely Public Release, Hired Help, and Watch The "
                          "World Burn. "
-                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]}
-           {:id "neo"
-             :title "What is the Neo format?"
-             :content [:ul
-                        [:p "The Neo format is all the cards released by NSG with a small "
-                         "ban list. Refer to the #neo channel on "
-                         [:a {:href "https://discord.gg/glc"} "GLC Discord"] "."]]})}
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]})}
     {:id "site"
      :title "Website"
      :sub (list

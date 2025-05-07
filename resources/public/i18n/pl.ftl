@@ -211,10 +211,7 @@ format_name = {$format ->
     [classic] Classic
     [core-experience] Core Experience
     [eternal] Eternal
-    [neo] Neo
     [preconstructed] undefined
-    [snapshot] Snapshot
-    [snapshot-plus] Snapshot Plus
     [socr] SOCR
     [standard] Standard
     [startup] Startup

@@ -47,11 +47,11 @@
                 (effect-completed state side eid)))))
 
 (defn rez-message
-  [state side eid card cost-str {:keys [alternative-cost cost-bonus ignore-cost msg-keys] :as args}]
+  [state side eid card cost-str {:keys [alternative-cost cost-bonus ignore-cost msg-keys cost-msg] :as args}]
   (let [source-card (or (:title (:source eid)) (:printed-title (:source eid)))
         title-card (card-str state card {:visible true})
         prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
-        cost-str (when (= ignore-cost :all-costs) "")
+        cost-str (when-not (= ignore-cost :all-costs) cost-msg)
         pre-lhs (when (every? (complement string/blank?) [cost-str prepend-cost-str])
                   (str prepend-cost-str ", and then "))
         modified-cost-str (if (string/blank? cost-str)
@@ -89,7 +89,7 @@
                                               (update-in [:zone] #(map to-keyword %))
                                               (update-in [:host :zone] #(map to-keyword %)))))
                     (when-not no-msg
-                      (rez-message state side eid card msg args)
+                      (rez-message state side eid card msg (assoc args :cost-msg msg))
                       (implementation-msg state card))
                     (when (and (not no-warning) (:corp-phase-12 @state))
                       (toast state :corp "You are not allowed to rez cards between Start of Turn and Mandatory Draw.

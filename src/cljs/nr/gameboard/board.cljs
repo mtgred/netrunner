@@ -60,7 +60,11 @@
               "stock")
         card (if (or (:face card) (:images card)) card (get @all-cards (get-title card)))
         images (image-or-face card)]
-    (get-image-path images (keyword lang) (keyword res) (keyword art))))
+    (if (sequential? art)
+      (let [art-urls (get-image-path images (keyword lang) (keyword res) (keyword (first art)))
+            chosen-art (nth art-urls (second art))]
+        [chosen-art])
+      (get-image-path images (keyword lang) (keyword res) (keyword art)))))
 
 
 (defonce button-channel (chan))
@@ -352,7 +356,7 @@
                       "nsg" "nsg-card-back"
                       "nsg-card-back"))
         card-back (if (= card-back "") "nsg-card-back" card-back)
-        maybe-image? (get-in card-backs/card-backs [(keyword card-back) :file])
+        maybe-image? (or (get-in card-backs/card-backs [(keyword card-back) :file]) "nsg")
         s (lower-case side)]
     (str "/img/card-backs/" s "/" maybe-image?  ".png")))
 
@@ -1533,12 +1537,16 @@
                    (<= pos (count run-ice)))
           (nth run-ice (dec pos))))))
 
-(def phase->title
-  {"initiation" (tr [:game_initiation "Initiation"])
-   "approach-ice" (tr [:game_approach-ice "Approach ice"])
-   "encounter-ice" (tr [:game_encounter-ice "Encounter ice"])
-   "movement" (tr [:game_movement "Movement"])
-   "success" (tr [:game_success "Success"])})
+(defn phase->title
+  [phase]
+  (case phase
+    "initiation" (tr [:game_initiation "Initiation"])
+    "approach-ice" (tr [:game_approach-ice "Approach ice"])
+    "approach-server" (tr [:game_approach-server "Approach server"])
+    "encounter-ice" (tr [:game_encounter-ice "Encounter ice"])
+    "movement" (tr [:game_movement "Movement"])
+    "success" (tr [:game_success "Success"])
+    nil))
 
 (defn phase->next-phase-title
   ([run] (phase->next-phase-title (:phase @run) (:position @run)))
@@ -1571,7 +1579,7 @@
         (when (or (:button @app-state) (get-in @app-state [:options :display-encounter-info]))
           [encounter-info-div ice])])
      (when @run
-       [:h4 (tr [:game_current-phase "Current phase"]) ":" [:br] (get phase->title (:phase @run) (tr [:game_unknown-phase "Unknown phase"]))])
+       [:h4 (tr [:game_current-phase "Current phase"]) ":" [:br] (or (phase->title (:phase @run)) (tr [:game_unknown-phase "Unknown phase"]))])
 
      (cond
        (and (= "approach-ice" (:phase @run))
@@ -1608,9 +1616,9 @@
        ;; initiation
        (= "initiation" (:phase @run))
        [cond-button
-        (str (tr [:game.continue-to "Continue to"]) " " (if (zero? (:position @run))
-                                                          (tr [:game.approach-server "Approach server"])
-                                                          (tr [:game.approach-ice "Approach ice"])))
+        (tr [:game_continue-to "Continue to"] {:phase (if (zero? (:position @run))
+                                                        (tr [:game_approach-server "Approach server"])
+                                                        (tr [:game_approach-ice "Approach ice"]))})
         (not= "corp" (:no-action @run))
         #(send-command "continue")]
 
@@ -1654,7 +1662,7 @@
         (when (or (:button @app-state)  (get-in @app-state [:options :display-encounter-info]))
           [encounter-info-div ice])])
      (when @run
-       [:h4 (tr [:game_current-phase "Current phase"]) ":" [:br] (get phase->title phase)])
+       [:h4 (tr [:game_current-phase "Current phase"]) ":" [:br] (phase->title phase)])
 
      (cond
        (and (:next-phase @run)
@@ -1667,9 +1675,9 @@
 
        (= "initiation" (:phase @run))
        [cond-button
-        (str (tr [:game.continue-to "Continue to"]) " " (if (zero? (:position @run))
-                                                          (tr [:game.approach-server "Approach server"])
-                                                          (tr [:game.approach-ice "Approach ice"])))
+        (tr [:game_continue-to "Continue to"] {:phase (if (zero? (:position @run))
+                                                        (tr [:game_approach-server "Approach server"])
+                                                        (tr [:game_approach-ice "Approach ice"]))})
         (not= "runner" (:no-action @run))
         #(send-command "continue")]
 
@@ -2063,7 +2071,7 @@
     (fn []
       [:div.panel.blue-shade.timestamp
        [:span.float-center
-        (tr [:game_game-start "Game start"] {:timestamp (js/Date. start-date)})]
+        (tr [:game_game-start "Game start"] {:timestamp (.toLocaleTimeString (js/Date. start-date))})]
        [:<>
         [:span.pm {:on-click #(swap! hide-timer not)}
          (if @hide-timer "+" "-")]

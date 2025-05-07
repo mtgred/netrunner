@@ -126,11 +126,7 @@
    "startup" "Startup"
    "system-gateway" "System Gateway"
    "preconstructed" "Preconstructed"
-   "sunset" "Sunset"
    "eternal" "Eternal"
-   "snapshot" "Snapshot"
-   "snapshot-plus" "Snapshot Plus"
-   "neo" "Neo"
    "casual" "Casual"))
 
 (def format->slug
@@ -140,11 +136,7 @@
    "Startup" "startup"
    "System Gateway" "system-gateway"
    "Preconstructed" "preconstructed"
-   "Sunset" "sunset"
    "Eternal" "eternal"
-   "Snapshot" "snapshot"
-   "Snapshot Plus" "snapshot-plus"
-   "Neo" "neo"
    "Casual" "casual"))
 
 (defn regex-escape
