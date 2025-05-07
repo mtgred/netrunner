@@ -1747,7 +1747,7 @@
    :agendapoints-corp (req (+ 2 (get-counters card :agenda)))})
 
 (defcard "Project Ingatan"
-  (project-agenda-helper
+  (project-agenda
     {:mode :computed}
     {:events [{:event :corp-turn-ends
                :cost [(->c :agenda 1)]
