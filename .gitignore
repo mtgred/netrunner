@@ -20,6 +20,8 @@ pom.xml
 .cache
 *.archive
 
+data/promos.edn
+
 /resources/public/img/card-backs/runner/
 /resources/public/img/card-backs/corp/
 /resources/public/img/card-backs/both/
