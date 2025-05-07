@@ -1747,22 +1747,25 @@
    :agendapoints-corp (req (+ 2 (get-counters card :agenda)))})
 
 (defcard "Project Ingatan"
-  (project-agenda {:mode :computed})
-  {:events [{:event :corp-turn-ends
-             :cost [(->c :agenda 1)]
-             :req (req (can-pay? state side eid card nil [(->c :agenda 1)]))
-             :interactive (req true)
-             :label "Install a card from Archives"
-             :prompt "Install a card from Archives"
-             :show-discard true
-             :change-in-game-state {:silent true
-                                    :req (req (some #(or (not (:seen %))
-                                                         (not (operation? %)))
-                                                    (:discard corp)))}
-             :choices {:req (req (and (not (operation? target))
-                                      (in-discard? target)))}
-             :async true
-             :effect (req (corp-install state side eid target nil))}]})
+  (project-agenda
+    {:mode :computed}
+    {:events [{:event :corp-turn-ends
+               :cost [(->c :agenda 1)]
+               :req (req (can-pay? state side eid card nil [(->c :agenda 1)]))
+               :interactive (req true)
+               :label "Install a card from Archives"
+               :prompt "Install a card from Archives, ignoring all costs"
+               :show-discard true
+               :change-in-game-state {:silent true
+                                      :req (req (some #(or (not (:seen %))
+                                                           (not (operation? %)))
+                                                      (:discard corp)))}
+               :choices {:req (req (and (not (operation? target))
+                                        (in-discard? target)))}
+               :async true
+               :effect (req (corp-install state side eid target nil {:ignore-all-cost true
+                                                                     :msg-keys {:install-source card
+                                                                                :display-origin true}}))}]}))
 
 (defcard "Project Kusanagi"
   project-agenda
