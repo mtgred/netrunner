@@ -1759,7 +1759,7 @@
                :req (req (can-pay? state side eid card nil [(->c :agenda 1)]))
                :interactive (req true)
                :label "Install a card from Archives"
-               :prompt "Install a card from Archives"
+               :prompt "Install a card from Archives, ignoring all costs"
                :show-discard true
                :change-in-game-state {:silent true
                                       :req (req (some #(or (not (:seen %))
@@ -1768,7 +1768,9 @@
                :choices {:req (req (and (not (operation? target))
                                         (in-discard? target)))}
                :async true
-               :effect (req (corp-install state side eid target nil))}]}))
+               :effect (req (corp-install state side eid target nil {:ignore-all-cost true
+                                                                     :msg-keys {:install-source card
+                                                                                :display-origin true}}))}]}))
 
 (defcard "Project Kusanagi"
   (project-agenda-helper

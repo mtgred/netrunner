@@ -3135,8 +3135,9 @@
 (deftest project-ingatan
   (dotimes [oa 5]
     (do-game
-      (new-game {:corp {:hand ["Project Ingatan"] :discard ["Ice Wall"]}})
+      (new-game {:corp {:hand ["Project Ingatan" "Vanilla"] :discard ["Ice Wall"]}})
       (play-from-hand state :corp "Project Ingatan" "New remote")
+      (play-from-hand state :corp "Vanilla" "HQ")
       (core/gain state :corp :click 10 :credit 10)
       (let [ing (get-content state :remote1 0)]
         (advance state ing (+ 3 oa))
@@ -3146,8 +3147,10 @@
         (is (= oa (get-counters (refresh ing-scored) :agenda)) (str "Project Ingatan should have " oa " agenda counters"))
         (when-not (zero? oa)
           (take-credits state :corp)
-          (click-card state :corp "Ice Wall")
-          (click-prompt state :corp "HQ"))))))
+          (is (changed? [(:credit (get-corp)) 0]
+                (click-card state :corp "Ice Wall")
+                (click-prompt state :corp "HQ"))
+              "Install was free"))))))
 
 (deftest project-kusanagi
   ;; Project Kusanagi
