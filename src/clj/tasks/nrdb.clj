@@ -13,7 +13,9 @@
     [tasks.utils :refer [replace-collection]]
     [tasks.images :refer [add-images]]
     [tasks.index :refer [create-indexes]]
-    [tasks.setup :refer [connect disconnect]]))
+    [tasks.setup :refer [connect disconnect]])
+  (:import [javax.imageio ImageIO]
+           [java.io ByteArrayInputStream File]))
 
 (def ^:const jnet-image-url "https://card-images.netrunnerdb.com/v1/large/")
 (def ^:const jnet-image-url-v2 "https://card-images.netrunnerdb.com/v2/large/")
@@ -53,10 +55,11 @@
                 (fn [{:keys [status body error]}]
                   (case status
                     404 (println "No image for card" code title)
-                    200 (let [card-path (.getPath (card-image-file code))]
+                    200 (let [input-stream (ByteArrayInputStream. body)
+                              image (ImageIO/read input-stream)
+                              card-path (.getPath (card-image-file code))]
                           (io/make-parents card-path)
-                          (with-open [w (io/output-stream card-path)]
-                            (.write w body)))
+                          (ImageIO/write image "png" (File. card-path)))
                     (println "Error downloading art for card" code error)))))))
 
 (def download-card-image-throttled
