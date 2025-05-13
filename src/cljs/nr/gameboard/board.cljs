@@ -64,7 +64,7 @@
       (let [art-urls (get-image-path images (keyword lang) (keyword res) (keyword (first art)))
             chosen-art (nth art-urls (second art))]
         [chosen-art])
-      (get-image-path images (keyword lang) (keyword res) (keyword art)))))
+      (first (get-image-path images (keyword lang) (keyword res) (keyword art))))))
 
 
 (defonce button-channel (chan))
