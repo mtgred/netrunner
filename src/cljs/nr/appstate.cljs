@@ -4,6 +4,7 @@
    [jinteki.i18n :as i18n]
    [jinteki.utils :refer [str->int]]
    [nr.ajax :refer [GET]]
+   [clojure.string :as str]
    [reagent.core :as r]))
 
 (defn- get-local-value
@@ -43,6 +44,20 @@
                                      "false" "irl"
                                      %))))
 
+;; we only support the following languages
+;; if trs get added for new languages, I guess we need to update this
+(def supported-languages
+  #{"en" "fr" "ja" "ko" "pl" "pt" "ru" "zh-simp"})
+
+(def nav-lang
+  "en-us, en-uk, etc should just be en, fr-CA -> fr, en->en"
+  (let [lang (some-> js/navigator.language (str/split #"-") first)]
+    (cond
+      ;; if we ever implement proper zh, fix this
+      (= lang "zh") "zh-simp"
+      (contains? supported-languages lang) lang
+      :else "en")))
+
 (def app-state
   (let [js-user (js->clj js/user :keywordize-keys true)]
     (r/atom {:active-page "/"
@@ -54,7 +69,7 @@
                            :card-zoom (get-local-value "card-zoom" "image")
                            :pin-zoom (= (get-local-value "pin-zoom" "false") "true")
                            :pronouns "none"
-                           :language (get-local-value "language" js/navigator.language)
+                           :language (get-local-value "language" nav-lang)
                            :default-format (get-local-value "default-format" "standard")
                            :show-alt-art true
                            :card-resolution "default"
