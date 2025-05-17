@@ -129,7 +129,7 @@
   (load-quotes!))
 
 (defmethod ig/init-key :web/i18n [_ _opts]
-  (i18n/load-dictionary! "resources/public/i18n"))
+  (i18n/load-dictionary! "public/i18n"))
 
 (defmethod ig/halt-key! :web/i18n [_ _opts]
   (reset! i18n/fluent-dictionary nil))
