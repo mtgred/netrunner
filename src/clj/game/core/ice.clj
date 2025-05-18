@@ -100,7 +100,11 @@
   "Marks a given subroutine as broken"
   ([ice sub] (break-subroutine ice sub nil))
   ([ice sub breaker]
-   (let [replacement-sub (assoc sub :broken true :breaker (when breaker (:cid breaker)))
+   (let [replacement-sub (merge sub
+                                {:broken true}
+                                (when breaker
+                                  {:breaker (:cid breaker)
+                                   :breaker-subtypes (:subtypes breaker)}))
          replacement-subs (assoc (vec (:subroutines ice)) (:index sub) replacement-sub)]
      (assoc ice :subroutines replacement-subs))))
 
@@ -782,7 +786,7 @@
                                                      (not= :unrestricted ((:breakable %) state side eid current-ice [card]))
                                                      (not (:breakable % true))) ; breakable is a bool
                                                   (:subroutines current-ice)))
-              can-auto-break (not (any-effects state side :cannot-auto-break-subs-on-ice true? {:ice current-ice}))
+              can-auto-break (not (any-effects state side :cannot-auto-break-subs-on-ice true? {:ice current-ice :breaker card}))
               times-break (when (and (pos? unbroken-subs)
                                      subs-broken-at-once)
                             (if (pos? subs-broken-at-once)

@@ -2154,28 +2154,35 @@
                  end-the-run]})
 
 (defcard "Hammer"
-  {:implementation "Breaking restriction not implemented"
-   :subroutines [(give-tags 1)
-                 {:label "Choose a resource or piece of hardware to trash"
-                  :msg (msg "trash " (:title target))
-                  :prompt "Trash a resource or piece of hardware"
-                  :change-in-game-state {:silent (req true)
-                                         :req (req (some #(or (hardware? %) (resource? %)) (all-installed state :runner)))}
-                  :choices {:req (req (and (installed? target)
-                                           (or (hardware? target)
-                                               (resource? target))))}
-                  :async true
-                  :effect (effect (trash eid target {:cause :subroutine}))}
-                 {:label "Choose a program to trash that is not a decoder, fracter or killer"
-                  :change-in-game-state {:silent (req true)
-                                         :req (req (some #(and (program? %) (not (has-any-subtype? % ["Decoder" "Fracter" "Killer"]))) (all-installed state :runner)))}
-                  :prompt "Trash a program that is not a decoder, fracter or killer"
-                  :msg (msg "trash " (:title target))
-                  :choices {:card #(and (installed? %)
-                                        (program? %)
-                                        (not (has-any-subtype? % ["Decoder" "Fracter" "Killer"])))}
-                  :async true
-                  :effect (effect (trash eid target {:cause :subroutine}))}]})
+  (let [breakable-fn (req (or (empty? (filter #(and (:printed %) (:broken %) (not (contains? (set (:breaker-subtypes %)) "Killer"))) (:subroutines card)))
+                              (has-subtype? target "Killer")))]
+    {:static-abilities [{:type :cannot-auto-break-subs-on-ice
+                         :req (req (and (same-card? card (:ice context))
+                                        (not (has-subtype? (:breaker context) "Killer"))))
+                         :value true}]
+     :subroutines [(assoc (give-tags 1) :breakable breakable-fn)
+                   {:label "Choose a resource or piece of hardware to trash"
+                    :msg (msg "trash " (:title target))
+                    :prompt "Trash a resource or piece of hardware"
+                    :change-in-game-state {:silent (req true)
+                                           :req (req (some #(or (hardware? %) (resource? %)) (all-installed state :runner)))}
+                    :choices {:req (req (and (installed? target)
+                                             (or (hardware? target)
+                                                 (resource? target))))}
+                    :async true
+                    :breakable breakable-fn
+                    :effect (effect (trash eid target {:cause :subroutine}))}
+                   {:label "Choose a program to trash that is not a decoder, fracter or killer"
+                    :change-in-game-state {:silent (req true)
+                                           :req (req (some #(and (program? %) (not (has-any-subtype? % ["Decoder" "Fracter" "Killer"]))) (all-installed state :runner)))}
+                    :prompt "Trash a program that is not a decoder, fracter or killer"
+                    :msg (msg "trash " (:title target))
+                    :breakable breakable-fn
+                    :choices {:card #(and (installed? %)
+                                          (program? %)
+                                          (not (has-any-subtype? % ["Decoder" "Fracter" "Killer"])))}
+                    :async true
+                    :effect (effect (trash eid target {:cause :subroutine}))}]}))
 
 (defcard "Descent"
   (let [shuffle-ab
@@ -4465,18 +4472,20 @@
                                  (lose-credits state :runner eid 1)))}]})
 
 (defcard "Unsmiling Tsarevna"
-  (let [on-rez-ability {:async true
+  (let [breakable-fn (req  (or (empty? (filter (every-pred :broken :printed) (:subroutines card)))
+                               (not (any-effects state side :unsmiling-effect true? card [card]))))
+        on-rez-ability {:async true
                         :msg (msg "let the Runner gain 2 [Credits] to"
-                                  " prevent them from breaking more than 1 subroutine"
+                                  " prevent them from breaking more than 1 printed subroutine"
                                   " on this ice per encounter for the remainder of this run")
                         :effect
                         (req (wait-for (gain-credits state :runner 2)
                                        (register-lingering-effect
                                          state side card
-                                         {:type :cannot-break-subs-on-ice
+                                         {:type :unsmiling-effect
                                           :duration :end-of-run
-                                          :req (req (same-card? card (:ice context)))
-                                          :value (req (any-subs-broken? (:ice context)))})
+                                          :req (req (same-card? card target))
+                                          :value true})
                                        (register-lingering-effect
                                          state side card
                                          {:type :cannot-auto-break-subs-on-ice
@@ -4484,9 +4493,9 @@
                                           :req (req (same-card? card (:ice context)))
                                           :value true})
                                        (effect-completed state side eid)))}]
-    {:subroutines [(give-tags 1)
-                   (do-net-damage 2)
-                   (maybe-draw-sub 2)]
+    {:subroutines [(assoc (give-tags 1)      :breakable breakable-fn)
+                   (assoc (do-net-damage 2)  :breakable breakable-fn)
+                   (assoc (maybe-draw-sub 2) :breakable breakable-fn)]
      :on-rez {:optional
               {:prompt "Let the Runner gain 2 [Credits]?"
                :waiting-prompt true
@@ -4564,7 +4573,9 @@
   {:subroutines [(runner-loses-credits 1)]
    :implementation "Might be incorrect if decoder is uninstalled"
    :events [{:event :end-of-encounter
-             :req (req (all-subroutines-not-broken-by state side card "Decoder" context))
+             :req (req (let [printed-sub (first (filter :printed (:subroutines card)))]
+                         (or (not (:broken printed-sub))
+                             (not (contains? (set (:breaker-subtypes printed-sub)) "Decoder")))))
              :msg "give the Runner 1 tag"
              :async true
              :effect (effect (gain-tags eid 1))}]})

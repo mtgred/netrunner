@@ -3578,6 +3578,29 @@
                     (click-card state :corp (get-resource state 0)))
           "Smartware Distributor got trashed"))))
 
+(deftest hammer-restrictions
+  (do-game
+    (new-game {:corp {:hand ["Hammer"] :credits 10}
+               :runner {:hand ["Carmen" "Botulus" "Cookbook"] :credits 15}})
+    (play-from-hand state :corp "Hammer" "HQ")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :runner "Carmen")
+    (play-from-hand state :runner "Cookbook")
+    (play-from-hand state :runner "Botulus")
+    (click-card state :runner "Hammer")
+    (run-on state :hq)
+    (run-continue-until state :encounter-ice)
+    (card-ability state :runner (first (:hosted (get-ice state :hq 0))) 0)
+    (click-prompt state :runner "Done")
+    (card-ability state :runner (get-program state 0) 1)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompts state :runner "Choose a resource or piece of hardware to trash" "Done")
+    (is (no-prompt? state :runner))
+    (card-ability state :runner (first (:hosted (get-ice state :hq 0))) 0)
+    (click-prompt state :runner "Give the Runner 1 tag")
+    (is (no-prompt? state :runner) "Can no longer break stuff")))
+
 (deftest harvester
   ;; Harvester - draw 3, then discard
   (do-game
@@ -8348,6 +8371,29 @@
       (click-prompt state :runner "Do 2 net damage")
       (click-prompt state :runner "Give the Runner 1 tag")
       (click-prompt state :runner "Done"))))
+
+(deftest unsmiling-with-extra-sub
+  (doseq [order [["End the run" "Give the Runner 1 tag"]
+                 ["Give the Runner 1 tag" "End the run"]]]
+    (do-game
+      (new-game {:corp {:hand ["Marker" "Unsmiling Tsarevna"]}
+                 :runner {:hand ["Carmen"] :credits 20}})
+      (play-from-hand state :corp "Unsmiling Tsarevna" "HQ")
+      (play-from-hand state :corp "Marker" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Carmen")
+      (run-on state :hq)
+      (rez state :corp (get-ice state :hq 1))
+      (run-continue-until state :encounter-ice)
+      (fire-subs state (get-ice state :hq 1))
+      (rez state :corp (get-ice state :hq 0))
+      (click-prompt state :corp "Yes")
+      (run-continue-until state :encounter-ice)
+      (is (= 4 (count (:subroutines (get-ice state :hq 0)))))
+      (card-ability state :runner (get-program state 0) 0)
+      (doseq [i order]
+        (click-prompt state :runner i))
+      (is (no-prompt? state :runner) "Broke 2 subs, no more choices offered"))))
 
 (deftest unsmiling-tsarevna-wrong-server
   (do-game
