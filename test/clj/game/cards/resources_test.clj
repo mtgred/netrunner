@@ -6868,6 +6868,19 @@
     (is (not (no-prompt? state :runner)) "The Class Act is prompting the runner to choose")
     (is (= 3 (count (:set-aside (get-runner)))) "The Class Act set aside 3 cards")))
 
+(deftest the-class-act-paladin-interaction
+  (do-game
+    (new-game {:runner {:hand ["Paladin Poemu" "The Class Act"]
+                        :deck [(qty "Ika" 4) "Easy Mark"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Paladin Poemu")
+    (play-from-hand state :runner "The Class Act")
+    (core/add-counter state :runner (core/make-eid state) (get-resource state 0) :credit 5)
+    (take-credits state :runner)
+    (is (= ["Done" "Paladin Poemu" "The Class Act"] (sort (prompt-titles :runner))) "Choice between apaldin and class act")
+    (click-prompts state :runner "The Class Act" "Easy Mark" "The Class Act")
+    (is (= 1 (count (:discard (get-runner)))))))
+
 (deftest the-helpful-ai
   ;; The Helpful AI - +1 link; trash to give an icebreaker +2 str until end of turn
   (do-game

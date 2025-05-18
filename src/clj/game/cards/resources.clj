@@ -3581,6 +3581,7 @@
 (defcard "The Class Act"
   (let [draw-ability {:req (req (= :this-turn (installed? card)))
                       :async true
+                      :interactive (req true)
                       :automatic :pre-draw-cards ;; queue this before smaller draws
                       :msg "draw 4 cards"
                       :effect (effect (draw :runner eid 4))}]
