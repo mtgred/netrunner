@@ -168,7 +168,8 @@
   ([state side eid card] (play-instant state side eid card nil))
   ([state side eid card args]
    (let [eid (assoc eid :source card :source-type :play)
-         costs (play-instant-costs state side card (dissoc args :cached-costs))]
+         costs (play-instant-costs state side card (dissoc args :cached-costs))
+         c card]
      ;; ensure the instant can be played
      (if (can-play-instant? state side eid card (assoc args :cached-costs costs))
        ;; Wait on pay to finish before triggering instant-effect
@@ -179,7 +180,7 @@
             {:prompt (str "Pay the additional costs to play " (:title card) "?")
              :yes-ability {:async true
                            :req (req (can-pay? state side eid (get-card state card) nil costs))
-                           :effect (req (continue-play-instant state side (assoc eid :source card :source-type :play) card costs args))}
+                           :effect (req (continue-play-instant state side (assoc eid :source card :source-type :play) c costs args))}
              :no-ability {:cost (when (:base-cost args) [(:base-cost args)])
                           :async true
                           :effect (req (reveal state side eid card)) ;;TODO - use reveal-explicit later?
