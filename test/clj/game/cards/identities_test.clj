@@ -4523,6 +4523,18 @@
     (click-prompt state :corp "Yes")
     (is (last-log-contains? state "shuffle") "Ob superheavy should shuffle R&D")))
 
+(deftest ob-superheavy-logistics-except-during-installation
+  (do-game
+   (new-game {:corp {:id "Ob Superheavy Logistics: Extract. Export. Excel."
+                     :hand ["PAD Campaign" "Adonis Campaign"]
+                     :deck [(qty "Prisec" 2) "Anoetic Void" "Ice Wall"]
+                     :credits 10}})
+   (play-from-hand state :corp "PAD Campaign" "New remote")
+   (rez state :corp (get-content state :remote1 0))
+   (play-from-hand state :corp "Adonis Campaign" "Server 1")
+   (click-prompt state :corp "OK")
+   (is (no-prompt? state :corp))))
+
 (deftest omar-keung-conspiracy-theorist-make-a-successful-run-on-the-chosen-server-once-per-turn
     ;; Make a successful run on the chosen server once per turn
     (do-game
