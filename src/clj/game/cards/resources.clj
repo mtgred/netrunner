@@ -3796,8 +3796,10 @@
 
 (defcard "The Twinning"
   {:events [{:event :spent-credits-from-card
-             :req (req (let [valid-ctx? (fn [[{:keys [card] :as ctx}]] (and (runner? card)
-                                                                            (installed? card)))]
+             :req (req (letfn [(valid-ctx? [[{:keys [card] :as ctx} & rem]]
+                                 (or (and (runner? card)
+                                          (installed? card))
+                                     (and rem (valid-ctx? rem))))]
                          (and (some #(valid-ctx? [%]) targets)
                               (first-event? state side :spent-credits-from-card valid-ctx?))))
              :once-per-instance true
