@@ -19,14 +19,16 @@
 #?(:clj
    (defn load-dictionary!
      [dir]
-     (let [langs (->> (io/file dir)
-                      (file-seq)
-                      (filter #(.isFile ^java.io.File %))
-                      (filter #(str/ends-with? (str %) ".ftl"))
-                      (map (fn [^java.io.File f]
-                             (let [n (str/replace (.getName f) ".ftl" "")
-                                   content (slurp f)]
-                               [n content]))))
+     ;; List of supported language files (based on resources/public/i18n directory)
+     (let [languages ["en" "fr" "ja" "ko" "la-pig" "pl" "pt" "ru" "zh-simp"]
+           ;; Try loading each language directly as a resource (works in both jar and filesystem)
+           langs (->> languages
+                      (keep (fn [lang]
+                              (let [res-path (str dir "/" lang ".ftl")
+                                    ;; Try to load from classpath (including jar)
+                                    res (io/resource res-path)]
+                                (when res
+                                  [lang (slurp res)])))))
            errors (volatile! [])]
        (doseq [[lang content] langs]
          (try (insert-lang! lang content)
