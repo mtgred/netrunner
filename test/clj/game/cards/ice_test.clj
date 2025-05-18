@@ -3581,11 +3581,12 @@
 (deftest hammer-restrictions
   (do-game
     (new-game {:corp {:hand ["Hammer"] :credits 10}
-               :runner {:hand ["Carmen" "Botulus"] :credits 15}})
+               :runner {:hand ["Carmen" "Botulus" "Cookbook"] :credits 15}})
     (play-from-hand state :corp "Hammer" "HQ")
     (take-credits state :corp)
     (rez state :corp (get-ice state :hq 0))
     (play-from-hand state :runner "Carmen")
+    (play-from-hand state :runner "Cookbook")
     (play-from-hand state :runner "Botulus")
     (click-card state :runner "Hammer")
     (run-on state :hq)
@@ -3597,6 +3598,7 @@
     (click-prompts state :runner "Choose a resource or piece of hardware to trash" "Done")
     (is (no-prompt? state :runner))
     (card-ability state :runner (first (:hosted (get-ice state :hq 0))) 0)
+    (click-prompt state :runner "Give the Runner 1 tag")
     (is (no-prompt? state :runner) "Can no longer break stuff")))
 
 (deftest harvester

@@ -2154,7 +2154,7 @@
                  end-the-run]})
 
 (defcard "Hammer"
-  (let [breakable-fn (req (or (empty? (filter (every-pred :broken :printed) (:subroutines card)))
+  (let [breakable-fn (req (or (empty? (filter #(and (:printed %) (:broken %) (not (contains? (set (:breaker-subtypes %)) "Killer"))) (:subroutines card)))
                               (has-subtype? target "Killer")))]
     {:static-abilities [{:type :cannot-auto-break-subs-on-ice
                          :req (req (and (same-card? card (:ice context))
@@ -4573,7 +4573,9 @@
   {:subroutines [(runner-loses-credits 1)]
    :implementation "Might be incorrect if decoder is uninstalled"
    :events [{:event :end-of-encounter
-             :req (req (all-subroutines-not-broken-by state side card "Decoder" context))
+             :req (req (let [printed-sub (first (filter :printed (:subroutines card)))]
+                         (or (not (:broken printed-sub))
+                             (not (contains? (set (:breaker-subtypes printed-sub)) "Decoder")))))
              :msg "give the Runner 1 tag"
              :async true
              :effect (effect (gain-tags eid 1))}]})

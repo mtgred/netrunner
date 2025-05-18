@@ -100,7 +100,11 @@
   "Marks a given subroutine as broken"
   ([ice sub] (break-subroutine ice sub nil))
   ([ice sub breaker]
-   (let [replacement-sub (assoc sub :broken true :breaker (when breaker (:cid breaker)))
+   (let [replacement-sub (merge sub
+                                {:broken true}
+                                (when breaker
+                                  {:breaker (:cid breaker)
+                                   :breaker-subtypes (:subtypes breaker)}))
          replacement-subs (assoc (vec (:subroutines ice)) (:index sub) replacement-sub)]
      (assoc ice :subroutines replacement-subs))))
 
