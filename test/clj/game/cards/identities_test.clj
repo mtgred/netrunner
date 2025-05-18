@@ -1179,6 +1179,35 @@
           (click-prompt state :runner "Yes")
         "Drew 1 card from the flip back"))))
 
+(deftest dewi-is-interactive
+  (testing "flip dewi interactively"
+    (do-game
+      (new-game {:runner {:id "Dewi Subrotoputri: Pedagogical Dhalang"
+                          :hand ["Endless Hunger" "Bahia Bands"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Bahia Bands")
+      (click-prompt state :runner "Archives")
+      (run-continue-until state :success)
+      (is (changed? [(:credit (get-runner)) 1]
+            (click-prompts state :runner "Bahia Bands" "Draw 2 cards" "Install a card from the grip, paying 1 [Credits] less" "Endless Hunger" "Yes"))
+          "Gained 1c/flipped from installing endless hunger")))
+  (testing "unflip dewi interactively"
+    (do-game
+      (new-game {:runner {:id "Dewi Subrotoputri: Pedagogical Dhalang"
+                          :hand ["Endless Hunger" "Fermenter" "Bahia Bands"]
+                          :deck [(qty "Ika" 5)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Endless Hunger")
+      (is (changed? [(:credit (get-runner)) 1]
+            (run-empty-server state :archives)
+            (click-prompt state :runner "Yes")))
+      (play-from-hand state :runner "Bahia Bands")
+      (click-prompt state :runner "Archives")
+      (run-continue-until state :success)
+      (is (changed? [(count (:hand (get-runner))) 2]
+            (click-prompts state :runner "Bahia Bands" "Draw 2 cards" "Install a card from the grip, paying 1 [Credits] less" "Fermenter" "Endless Hunger" "Yes"))
+          "Drew 1/flipped from installing endless hunger"))))
+
 (deftest earth-station-sea-headquarters-front-side-additional-cost-to-run-hq
       ;; Additional cost to run HQ
     (do-game

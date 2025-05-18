@@ -667,11 +667,13 @@
                                                        :code (str (subs (:code card) 0 5) "flip")))))}
         maybe-flip {:event :successful-run
                     :skippable true
+                    :interactive (req true)
+                    :change-in-game-state
+                               {:silent true
+                                :req (req (or
+                                            (and (:flipped card) (pos? (available-mu state)))
+                                            (and (not (:flipped card)) (zero? (available-mu state)))))}
                     :optional {:prompt (msg "Flip your ID (" (if (:flipped card) "draw 1 card)?" "gain 1 [Credits])?"))
-                               :interactive (req true)
-                               :req (req (or
-                                           (and (:flipped card) (pos? (available-mu state)))
-                                           (and (not (:flipped card)) (zero? (available-mu state)))))
                                :yes-ability {:async true
                                              :effect (req
                                                        (if (:flipped card)
