@@ -4308,6 +4308,17 @@
             (click-card state :corp "Hedge Fund"))
           "Played a hedge"))))
 
+(deftest plutus-corporate-hospitality
+  (do-game
+    (new-game {:corp {:hand ["Plutus" "Corporate Hospitality" "Enigma" "IPO"]}})
+    (play-from-hand state :corp "Plutus" "New remote")
+    (take-credits state :corp)
+    (rez state :corp (get-content state :remote1 0) {:expect-rez false})
+    (click-prompts state :corp "Corporate Hospitality" "Enigma" "IPO")
+    (take-credits state :runner)
+    (click-prompts state :corp "Corporate Hospitality" "Yes" "IPO")
+    (is (= "Corporate Hospitality" (get-in @state [:corp :rfg 0 :title])) "Hospo removed from game")))
+
 (deftest political-dealings-full-test
     ;; Full test
     (do-game
