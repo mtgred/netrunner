@@ -358,17 +358,18 @@
             (doall
               (for [option [{:name "English" :ref "en"}
                             {:name "中文 (Simplified)" :ref "zh-simp"}
-                            {:name "中文 (Traditional)" :ref "zh-trad"}
+                            {:name "中文 (Traditional) (Cards only)" :ref "zh-trad"}
                             {:name "Français" :ref "fr"}
-                            {:name "Deutsch" :ref "de"}
-                            {:name "Italiano" :ref "it"}
+                            {:name "Deutsch (Cards only)" :ref "de"}
+                            {:name "Italiano (Cards only)" :ref "it"}
                             {:name "日本語" :ref "ja"}
                             {:name "한국어" :ref "ko"}
                             {:name "Polski" :ref "pl"}
                             {:name "Português" :ref "pt"}
                             {:name "Русский" :ref "ru"}
                             {:name "Igpay Atinlay" :ref "la-pig"}]]
-                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
+                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
+           [:div "Some languages are not fully translated yet. If you would like to help with translations, please contact us."]]
           [:section
            [:h3 (tr [:settings_sounds "Sounds"])]
            [:div
