@@ -782,7 +782,7 @@
                                                      (not= :unrestricted ((:breakable %) state side eid current-ice [card]))
                                                      (not (:breakable % true))) ; breakable is a bool
                                                   (:subroutines current-ice)))
-              can-auto-break (not (any-effects state side :cannot-auto-break-subs-on-ice true? {:ice current-ice}))
+              can-auto-break (not (any-effects state side :cannot-auto-break-subs-on-ice true? {:ice current-ice :breaker card}))
               times-break (when (and (pos? unbroken-subs)
                                      subs-broken-at-once)
                             (if (pos? subs-broken-at-once)
