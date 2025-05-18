@@ -2934,6 +2934,23 @@
                 (play-from-hand state :runner "Mystic Maemi"))
               "Did not get 1c back from installing Mystic Maemi")))))
 
+(deftest keiko-mixed-triggers
+  ;; Keiko
+  (doseq [[f s] [["Mystic Maemi" "Prepaid VoicePAD"]
+                 ["Prepaid VoicePAD" "Mystic Maemi"]]]
+    (do-game
+      (new-game {:runner {:deck ["Mystic Maemi" "Keiko" "Prepaid VoicePAD" "Lucky Find"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Keiko")
+      (play-from-hand state :runner "Mystic Maemi")
+      (play-from-hand state :runner "Prepaid VoicePAD")
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (play-from-hand state :runner "Lucky Find")
+      (is (changed? [(:credit (get-runner)) 9]
+            (click-prompts state :runner f s))
+          "Got the keiko cred when mixing sources"))))
+
 (deftest knobkierie-functionality
     ;; functionality
     (do-game

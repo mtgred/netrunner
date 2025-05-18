@@ -1383,24 +1383,27 @@
                             (effect-completed state side eid)))}]})
 
 (defcard "Keiko"
-  (letfn [(companion? [[{:keys [card]}]]
-            (and (not (facedown? card))
-                 (has-subtype? card "Companion")))]
+  (letfn [(companion? [card]
+            (and (not (facedown? card)) (has-subtype? card "Companion")))
+          (valid-ctx? [[{:keys [card] :as ctx} & rem]]
+            (or ((every-pred runner? installed? companion?) card)
+                (and rem (valid-ctx? rem))))]
     {:static-abilities [(mu+ 2)]
      :events [{:event :spent-credits-from-card
-               :req (req (and (companion? [context])
-                              (= 1 (+ (event-count state :runner :spent-credits-from-card companion?)
-                                      (event-count state :runner :runner-install companion?)))))
-             :msg "gain 1 [Credit]"
-             :async true
-             :effect (effect (gain-credits :runner eid 1))}
-            {:event :runner-install
-             :req (req (and (companion? [context])
-                            (= 1 (+ (event-count state :runner :spent-credits-from-card companion?)
-                                    (event-count state :runner :runner-install companion?)))))
-             :msg "gain 1 [Credit]"
-             :async true
-             :effect (effect (gain-credits :runner eid 1))}]}))
+               :once-per-instance true
+               :req (req (and (some #(valid-ctx? [%]) targets)
+                              (first-event? state side :spent-credits-from-card valid-ctx?)
+                              (no-event? state side :runner-install #(companion? (:card (first %))))))
+               :msg "gain 1 [Credit]"
+               :async true
+               :effect (effect (gain-credits :runner eid 1))}
+              {:event :runner-install
+               :req (req (and (companion? (:card context))
+                              (first-event? state side :runner-install #(companion? (:card (first %))))
+                              (no-event? state side :spent-credits-from-card valid-ctx?)))
+               :msg "gain 1 [Credit]"
+               :async true
+               :effect (effect (gain-credits :runner eid 1))}]}))
 
 (defcard "Knobkierie"
   {:static-abilities [(virus-mu+ 3)]
