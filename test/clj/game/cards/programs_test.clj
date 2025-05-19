@@ -2520,6 +2520,22 @@
               (click-prompt state :runner "[Cupellation] 1 [Credits]: Host card"))
             "Card is hosted on Cupellation")))))
 
+(deftest cupellation-doesnt-count-as-a-trash
+  (do-game
+    (new-game {:corp {:hand [(qty "Oppo Research" 2)]}
+               :runner {:hand ["Cupellation"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cupellation")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "[Cupellation] 1 [Credits]: Host card")
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Yes")
+    (click-prompt state :runner "No action")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Oppo Research")
+    (is (no-prompt? state :corp))
+    (is (= 0 (count-tags state)) "No tags")))
+
 (deftest curupira
   (do-game
     (new-game {:runner {:hand ["Curupira"]
@@ -2531,7 +2547,7 @@
     (core/gain state :runner :click 10)
     (play-from-hand state :runner "Curupira")
     (let [curu (get-program state 0)]
-      (dotimes [_ 3] 
+      (dotimes [_ 3]
         (run-on state "HQ")
         (run-continue state)
         (is (changed? [(get-counters (refresh curu) :power) 1]
