@@ -1363,6 +1363,19 @@
     (click-prompt state :corp "Boomerang")
     (is (not-any? #{"Boomerang"} (prompt-buttons :runner)) "No offer to install boomerang")))
 
+(deftest buffer-drive-with-light-the-fire!
+  (do-game
+    (new-game {:corp {:hand ["PAD Campaign"]}
+               :runner {:hand ["Buffer Drive" "Light the Fire!" "Ika"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Buffer Drive")
+    (play-from-hand state :runner "Light the Fire!")
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :runner "Server 1")
+    (is (= ["Ika" "No action"] (sort (prompt-buttons :runner)))
+        "No prompt to bottom light the fire!")))
+
 (deftest capstone
   ;; Capstone
   (do-game
