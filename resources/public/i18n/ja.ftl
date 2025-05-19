@@ -336,7 +336,7 @@ game_win-conceded = {$winner} ({$side}) 降参による勝利 {$turn} ターン
 
 game_win-decked = {$winner} ({$side}) コーポのデッキ切れによる勝利 {$turn} ターン
 
-game_win-flatlined = {$winner} ({$side}) (fn [[turn]] (str "フラットラインによる勝利 {$turn} ターン
+game_win-flatlined = {$winner} ({$side}) フラットラインによる勝利 {$turn} ターン
 
 game_win-other = {$winner} ({$side}) wins by {$reason} on turn {$turn}
 
