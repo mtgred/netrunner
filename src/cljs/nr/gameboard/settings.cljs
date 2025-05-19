@@ -7,6 +7,7 @@
 (defn settings-pane []
   (fn []
     [:div.settings
+     [:section [:button {:on-click #(post-options (constantly nil))} (tr [:ingame-settings_save "Save"])]]
      [:section
       [:h4 (tr [:ingame-settings_card-stacking "Card settings"])]
       [:div
@@ -140,5 +141,4 @@
                         :name "show-alt-art"
                         :checked (get-in @app-state [:options :show-alt-art])
                         :on-change #(swap! app-state assoc-in [:options :show-alt-art] (.. % -target -checked))}]
-        (tr [:ingame-settings_show-alt "Show alternate card arts"])]]]
-     [:button {:on-click #(post-options (constantly nil))} (tr [:ingame-settings_save "Save"])]]))
+        (tr [:ingame-settings_show-alt "Show alternate card arts"])]]]]))
