@@ -468,19 +468,17 @@
                       (runner-hand-size+ (get-x-fn))]})
 
 (defcard "Buffer Drive"
-  (let [grip-or-stack-trash?
-        (fn [targets]
-          (some #(and (runner? (:card %))
-                      (or (in-hand? (:card %))
-                          (in-deck? (:card %))))
-                targets))
+  (let [grip-or-stack-trash? (fn [{:keys [card]}]
+                               (and (runner? card)
+                                    (or (in-hand? card)
+                                        (in-deck? card))))
         triggered-ability
         {:once-per-instance true
          :req (req
-                (and (grip-or-stack-trash? targets)
-                     (first-trash? state grip-or-stack-trash?)))
+                (and (some grip-or-stack-trash? targets)
+                     (first-trash? state #(some grip-or-stack-trash? %))))
          :prompt "Choose 1 trashed card to add to the bottom of the stack"
-         :choices (req (conj (sort (keep #(->> (:moved-card %) :title) targets)) "No action"))
+         :choices (req (conj (sort (keep #(->> (:moved-card %) :title) (filter grip-or-stack-trash? targets))) "No action"))
          :async true
          :effect (req (if (= "No action" target)
                         (effect-completed state side eid)
