@@ -58,7 +58,7 @@
         to-installed (#{:servers :rig} (first dest))
         from-installed (#{:servers :rig} src-zone)
         trash-hosted (fn [h]
-                       (engine/move* state side
+                       (engine/move* state nil
                                     (make-eid state)
                                     :trash
                                     (update h :zone #(map to-keyword %))
