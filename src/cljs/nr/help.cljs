@@ -95,8 +95,9 @@
              :title "Can I play my first game on jinteki.net even though I'm a total beginner and never played in meatspace?"
              :content [:ul
                         [:p "Sure! Many players will be happy to play/teach a beginner if they know what they're getting into beforehand. "
-                         "So just create a new game with name such as \"beginner here\" or \"core set only please\", someone "
-                         "happy to play with a beginner should join after a while."]]}
+                         "So just create a new game in the System Gateway or Core formats "
+                         "with a name such as \"beginner here\" or \"core set only please\", "
+                         "someone happy to play with a beginner should join after a while."]]}
             {:id "finddecks"
              :title "Where can I find some good starting decks?"
              :content [:ul [:p [:a {:href "https://netrunnerdb.com/"} "NetrunnerDB"] " is a good resource for finding decks of all kinds. "
@@ -151,13 +152,15 @@
            {:id "core"
              :title "What is the Core format?"
              :content [:ul
-                        [:p "System Gateway and Elevation together constitute a core set "
-                         "that forms the basis for other game formats."
-                         "Elevation builds upon the groundwork laid by System Gateway "
+                        [:p "Elevation builds upon the groundwork laid by System Gateway "
                          "to broaden the core Netrunner card pool "
                          "and round out the thematic and mechanical identities of each identity. "
-                         "The core sets serve as a stepping stone from System Gateway to the larger supported formats. "
-                         "Refer to " [:a {:href "https://nullsignal.games/products/elevation/"} "Elevation"] "."]]})}
+                         "The combination of System Gateway and Elevation "
+                         "will form the non-rotating core for the Standard and Startup formats, "
+                         "as well as the recommended starting point for new players "
+                         "wanting to explore beyond System Gateway alone. "
+                         "There is no ban list associated with the Core Sets format. "
+                         "Refer to " [:a {:href "https://nullsignal.games/players/supported-formats/"} "Supported Formats"] "."]]})}
     {:id "site"
      :title "Website"
      :sub (list
