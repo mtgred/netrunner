@@ -115,15 +115,20 @@
                         (= (:prompt-type %) type))
                   (get-in @state [side :prompt])))))
 
+(defn first-selection-by-eid
+  [state side eid]
+  (first (filter #(= (:eid eid) (-> % :ability :eid :eid)) (get-in @state [side :selected]))))
+
 (defn resolve-select
   "Resolves a selection prompt by invoking the prompt's ability with the targeted cards.
   Called when the user clicks 'Done' or selects the :max number of cards."
   [state side eid card args update! resolve-ability]
-  (let [selected (get-in @state [side :selected 0])
+  (let [selected (or (first-selection-by-eid state side eid)
+                     (get-in @state [side :selected 0]))
         cards (map #(dissoc % :selected) (:cards selected))
         prompt (or (first-prompt-by-eid state side eid :select)
                    (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt]))))]
-    (swap! state update-in [side :selected] #(vec (rest %)))
+    (swap! state update-in [side :selected] (fn [coll] (filterv #(not= % selected) coll)))
     (when prompt
       (remove-from-prompt-queue state side prompt))
     (if (seq cards)
@@ -194,7 +199,8 @@
                         (toast state side (str "You must choose " max-choices " " (pluralize "card" max-choices)))
                         (show-select state side card ability update! resolve-ability args))
                       (fn [_]
-                        (let [selected (get-in @state [side :selected 0] [])
+                        (let [selected (or (first-selection-by-eid state side (:eid ability))
+                                           (get-in @state [side :selected 0]))
                               cards (map #(dissoc % :selected) (:cards selected))]
                           ; check for :min. If not enough cards are selected, show toast and stay in select prompt
                           (if (and min-choices (< (count cards) min-choices))

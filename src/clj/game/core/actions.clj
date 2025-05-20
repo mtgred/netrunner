@@ -19,7 +19,7 @@
     [game.core.play-instants :refer [play-instant]]
     [game.core.expend :refer [expend expendable?]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
-    [game.core.prompts :refer [resolve-select first-prompt-by-eid]]
+    [game.core.prompts :refer [resolve-select first-prompt-by-eid first-selection-by-eid]]
     [game.core.props :refer [add-counter add-prop set-prop]]
     [game.core.runs :refer [continue get-runnable-zones]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
@@ -280,12 +280,24 @@
       :else
       (prompt-error "in an unknown prompt type" prompt args))))
 
+(defn- update-first [selection target eid c]
+  "This ensures that updating the selected set of cards doesn't mix up prompts (usually when the user does something silly, or the front-end/back-end are out of sync"
+  (mapv (fn [s]
+          (if (= (-> s :ability :eid :eid) (:eid eid))
+            (update s :cards
+                    (if (:selected c)
+                      (fn [cards] (conj cards c))
+                      (fn [cards] (remove-once #(same-card? % target) cards))))
+            s))
+        selection))
+
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
   if the max number of cards has been selected."
-  [state side {:keys [card shift-key-held eid]}]
+  [state side {:keys [card shift-key-held eid] :as args}]
   (let [target (get-card state card)
-        prompt (first (get-in @state [side :selected]))
+        prompt (or (first-selection-by-eid state side eid)
+                   (first (get-in @state [side :selected])))
         ability (:ability prompt)
         card-req (:req prompt)
         card-condition (:card prompt)
@@ -298,13 +310,12 @@
                  :else true))
       (let [c (update-in target [:selected] not)]
         (update! state side c)
-        (if (:selected c)
-          (swap! state update-in [side :selected 0 :cards] #(conj % c))
-          (swap! state update-in [side :selected 0 :cards]
-                 (fn [coll] (remove-once #(same-card? % target) coll))))
-        (let [selected (get-in @state [side :selected 0])
-              prompt (or (first-prompt-by-eid state side eid :select)
-                         (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt]))))
+        (swap! state update-in [side :selected] #(update-first % target eid c))
+        (let [selected (or (first-selection-by-eid state side eid)
+                           (first (get-in @state [side :selected])))
+              prompt (or
+                       (first-prompt-by-eid state side eid :select)
+                       (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt]))))
               card (:card prompt)]
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side eid card (select-keys prompt [:cancel-effect]) update! resolve-ability)))))))

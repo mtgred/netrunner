@@ -43,6 +43,7 @@
 (defn is-replay? [] (= "local-replay" (:gameid @app-state [:gameid])))
 
 (defn- prompt-eid [side] (get-in @game-state [side :prompt-state :eid]))
+
 (defn- any-prompt-open?
   [side]
   (if (= side :corp)
