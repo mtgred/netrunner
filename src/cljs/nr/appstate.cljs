@@ -74,7 +74,7 @@
                            :show-alt-art true
                            :card-resolution "default"
                            :player-stats-icons (= (get-local-value "player-stats-icons" "true") "true")
-                           :stacked-servers (= (get-local-value "stacked-servers" "true") "true")
+                           :stacked-cards (= (get-local-value "stacked-cards" "true") "true")
                            :sides-overlap (= (get-local-value "sides-overlap" "true") "true")
                            :log-timestamps (= (get-local-value "log-timestamps" "true") "true")
                            :runner-board-order (get-local-value "runner-board-order" "irl")
