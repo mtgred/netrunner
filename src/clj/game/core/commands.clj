@@ -114,6 +114,7 @@
 (defn command-facedown [state side]
   (resolve-ability state side
                    {:prompt "Choose a card to install facedown"
+                    :waiting-prompt true
                     :choices {:card #(and (runner? %)
                                           (in-hand? %))}
                     :async true
@@ -172,6 +173,7 @@
     state side
     {:optional
      {:prompt "Rez all cards and turn cards in archives faceup?"
+      :waiting-prompt true
       :yes-ability {:async true
                     :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                                  (wait-for
@@ -255,11 +257,13 @@
      state side
      (if (= side :corp)
        {:prompt (str "Choose a card to install" (when ignore-all-cost " (ignoring all costs)"))
+        :waiting-prompt true
         :choices {:card #(and (corp? %)
                               (not (installed? %)))}
         :async true
         :effect (req (corp-install state side eid target nil {:ignore-all-cost ignore-all-cost}))}
        {:prompt (str "Choose a card to install" (when ignore-all-cost " (ignoring all costs)"))
+        :waiting-prompt true
         :choices {:card #(and (runner? %)
                               (not (installed? %)))}
         :async true
@@ -276,6 +280,7 @@
     (resolve-ability
       state side
       {:prompt "Choose a piece of ice to install"
+       :waiting-prompt true
        :choices {:card #(and (ice? %)
                              (#{[:hand]} (:zone %)))}
        :async true
@@ -322,6 +327,7 @@
     (resolve-ability
      state side
      {:prompt "Choose an agenda to score"
+      :waiting-prompt true
       :choices {:req (req (and (agenda? target)
                                (or (installed? target)
                                    (in-hand? target))))}
@@ -380,6 +386,7 @@
     (resolve-ability
       state side
       {:prompt "Choose the card to be hosted"
+       :waiting-prompt true
        :choices {:card #(and (f %)
                              (installed? %))}
        :async true
@@ -400,6 +407,7 @@
     (resolve-ability
      state side
      {:prompt "Choose a card to derez"
+      :waiting-prompt true
       :choices {:card #(rezzed? %)}
       :async true
       :effect (effect (derez eid target {:no-event true}))}
@@ -411,6 +419,7 @@
     (resolve-ability
       state side
       {:prompt "Choose a card to trash"
+       :waiting-prompt true
        :choices {:card #(f %)}
        :async true
        :effect (effect (trash eid target {:unpreventable true}))}
@@ -461,6 +470,7 @@
                                             (make-card {:title "/card-info command"}) nil)
             "/charge"     #(resolve-ability %1 %2
                                             {:prompt "Choose an installed card"
+                                             :waiting-prompt true
                                              :async true
                                              :effect (req (charge-card %1 %2 eid target))
                                              :choices {:card (fn [t] (same-side? (:side t) %2))}}
@@ -474,6 +484,7 @@
             "/derez"      command-derez
             "/disable-card" #(resolve-ability %1 %2
                                               {:prompt "Choose a card to disable"
+                                               :waiting-prompt true
                                                :effect (req (disable-card state side target))
                                                :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                               (make-card {:title "/disable-card command"}) nil)
@@ -482,6 +493,7 @@
             "/draw"       #(draw %1 %2 (make-eid %1) (constrain-value value 0 1000))
             "/enable-card" #(resolve-ability %1 %2
                                              {:prompt "Choose a card to enable"
+                                              :waiting-prompt true
                                               :effect (req (enable-card state side target))
                                               :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                              (make-card {:title "/enable-card command"}) nil)
@@ -513,18 +525,21 @@
                               (swap! state assoc-in [:runner :memory :used] (constrain-value value -1000 1000))))
             "/move-bottom"  #(resolve-ability %1 %2
                                               {:prompt "Choose a card in hand to put on the bottom of your deck"
+                                               :waiting-prompt true
                                                :effect (effect (move target :deck))
                                                :choices {:card (fn [t] (and (same-side? (:side t) %2)
                                                                             (in-hand? t)))}}
                                               (make-card {:title "/move-bottom command"}) nil)
             "/move-deck"   #(resolve-ability %1 %2
                                              {:prompt "Choose a card to move to the top of your deck"
+                                              :waiting-prompt true
                                               :effect (req (let [c (deactivate %1 %2 target)]
                                                              (move %1 %2 c :deck {:front true})))
                                               :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                              (make-card {:title "/move-deck command"}) nil)
             "/move-hand"  #(resolve-ability %1 %2
                                             {:prompt "Choose a card to move to your hand"
+                                             :waiting-prompt true
                                              :effect (req (let [c (deactivate %1 %2 target)]
                                                             (move %1 %2 c :hand)))
                                              :choices {:card (fn [t] (same-side? (:side t) %2))}}
@@ -553,6 +568,7 @@
                                               (make-card {:title "/rez command"}) nil))
             "/rfg"        #(resolve-ability %1 %2
                                             {:prompt "Choose a card"
+                                             :waiting-prompt true
                                              :effect (req (let [c (deactivate %1 %2 target)]
                                                             (move %1 %2 c :rfg)))
                                              :choices {:card (fn [t] (same-side? (:side t) %2))}}
@@ -574,6 +590,7 @@
                              (resolve-ability
                                %1 %2
                                {:prompt "Choose two installed ice to swap"
+                                :waiting-prompt true
                                 :choices {:max 2
                                           :all true
                                           :card (fn [c] (and (installed? c)
@@ -584,6 +601,7 @@
                                  (resolve-ability
                                    %1 %2
                                    {:prompt "Choose two installed non-ice to swap"
+                                    :waiting-prompt true
                                     :choices {:max 2
                                               :all true
                                               :card (fn [c] (and (installed? c)

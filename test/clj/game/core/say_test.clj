@@ -297,9 +297,13 @@
       (do-game
         (new-game)
         (core/command-parser state :corp {:user user :text "/trace 6"})
-        (is (= 6 (:base (prompt-map :corp))) "Base trace should now be 6")
+        (is (= 6 (:base (prompt-map :corp))) "Base trace should now be 6"))
+      (do-game
+        (new-game)
         (core/command-parser state :corp {:user user :text "/trace -5"})
-        (is (= -5 (:base (prompt-map :corp))) "Base trace should now be -5")
+        (is (= -5 (:base (prompt-map :corp))) "Base trace should now be -5"))
+      (do-game
+        (new-game)
         (core/command-parser state :corp {:user user :text "/trace 99999999999999999999999999999999999999999999"})
         (is (= 1000 (:base (prompt-map :corp))) "Base trace should now be 1000"))))
 

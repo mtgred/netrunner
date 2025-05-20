@@ -39,12 +39,22 @@
   (case key
     :trash-like-cards (swap! state assoc-in [side :trash-like-cards] value)))
 
+(defn should-process-command?
+  [state side command]
+  (let [prompt-type (get-in @state [side :prompt-state :prompt-type])]
+    ;; we can process these commands whenever, they are for fixing stuff
+    (or (contains? #{"/close-prompt" "/undo-click" "/undo-turn" "/swap-sides"} (str/trim command))
+        ;; but otherwise, we should not process commands unless there is no prompt,
+        ;; or just a run prompt
+        (not prompt-type)
+        (= :run prompt-type))))
+
 (defn command-parser
   [state side {:keys [user text] :as args}]
   (let [author (or user (get-in @state [side :user]))
         text (if (= (str/trim text) "null") " null" text)]
     (if-let [command (parse-command state text)]
-      (when (and (not= side nil) (not= side :spectator))
+      (when (and (not= side nil) (not= side :spectator) (should-process-command? state side text))
         (command state side)
         (system-say state side (str "[!]" (:username author) " uses a command: " text)))
       (say state side args))))
