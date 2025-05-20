@@ -241,6 +241,7 @@
   (when same-side?
     (-> prompt
         (update :card #(not-empty (select-non-nil-keys % card-keys)))
+        (update :eid #(select-keys % [:eid]))
         (update :choices (fn [choices]
                            (if (sequential? choices)
                              (->> choices
