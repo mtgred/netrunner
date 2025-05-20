@@ -139,7 +139,7 @@
           (:number choices))
       (try
         (let [parsed-number (Integer/parseInt choice)]
-          (when-not (core/process-action "choice" state side {:choice parsed-number})
+          (when-not (core/process-action "choice" state side {:choice parsed-number :eid (:eid (get-prompt state side))})
             (is' (not true) (str "Parsed number " parsed-number " is incorrect somehow"))))
         (catch Exception _
           (is' (number? (Integer/parseInt choice)) (expect-type "number string" choice))))
@@ -149,7 +149,7 @@
         (let [int-choice (Integer/parseInt choice)
               under (<= int-choice (:choices prompt))]
           (when-not (and under
-                         (core/process-action "choice" state side {:choice int-choice}))
+                         (core/process-action "choice" state side {:choice int-choice :eid (:eid (get-prompt state side))}))
             (is' (<= int-choice (:choices prompt))
                  (str (utils/side-str side) " expected to pay [ "
                       int-choice " ] to trace but couldn't afford it."))))
@@ -159,7 +159,7 @@
 
       ;; List of card titles for auto-completion
       (:card-title choices)
-      (when-not (core/process-action "choice" state side {:choice choice})
+      (when-not (core/process-action "choice" state side {:choice choice :eid (:eid (get-prompt state side))})
         (is' (true? (or (map? choice) (string? choice))) (expect-type "card string or map" choice)))
 
       ;; Default text prompt
@@ -169,7 +169,7 @@
                            (utils/same-card? choice (:value %)))
             idx (or (:idx (first args)) 0)
             chosen (nth (filter choice-fn choices) idx nil)]
-        (when-not (and chosen (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)}}))
+        (when-not (and chosen (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)} :eid (:eid (get-prompt state side))}))
           (is' (= choice (mapv :value choices))
                (str (utils/side-str side) " expected to click [ "
                     (pr-str (if (string? choice) choice (:title choice "")))

@@ -108,10 +108,12 @@
      (add-to-prompt-queue state side newitem))))
 
 (defn first-prompt-by-eid
-  [state side eid type]
-  (first (filter #(and (= (:eid eid) (:eid (:eid %)))
-                       (= (:prompt-type %) type))
-                 (get-in @state [side :prompt]))))
+  ([state side eid]
+   (first (filter #(= (:eid eid) (:eid (:eid %))) (get-in @state [side :prompt]))))
+  ([state side eid type]
+   (first (filter #(and (= (:eid eid) (:eid (:eid %)))
+                        (= (:prompt-type %) type))
+                  (get-in @state [side :prompt])))))
 
 (defn resolve-select
   "Resolves a selection prompt by invoking the prompt's ability with the targeted cards.

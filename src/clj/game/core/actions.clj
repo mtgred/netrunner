@@ -221,7 +221,9 @@
   "Resolves a prompt by invoking its effect function with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
   [state side {:keys [choice eid] :as args}]
-  (let [prompt (first (get-in @state [side :prompt]))
+  (let [prompt (or (first-prompt-by-eid state side eid)
+                   (first (get-in @state [side :prompt])))
+        prompt-eid eid
         effect (:effect prompt)
         card (get-card state (:card prompt))
         choices (:choices prompt)]
