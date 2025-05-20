@@ -109,11 +109,11 @@
            (or (map? card)
                (string? card)))
       (if (map? card)
-        (core/process-action "select" state side {:card card})
+        (core/process-action "select" state side {:card card :eid (:eid (get-prompt state side))})
         (let [all-cards (core/get-all-cards state)
               matching-cards (filter #(= card (core/get-title %)) all-cards)]
           (if (= (count matching-cards) 1)
-            (core/process-action "select" state side {:card (first matching-cards)})
+            (core/process-action "select" state side {:card (first matching-cards) :eid (:eid (get-prompt state side))})
             (is' (= 1 (count matching-cards))
                  (str "Expected to click card [ " card
                       " ] but found " (count matching-cards)
