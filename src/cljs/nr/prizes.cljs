@@ -28,17 +28,23 @@
 
 (defn assign-card-backs []
   [:section
-   [:h4 "Card Backs"]
+   [:h3 "Card Backs"]
    [:p "These are card backs that the player can select in the settings menu. Players can opt to see the card backs other players use, only the ones they select, or only ffg/nsg backs for their opponents."]
    [:br]
-   (doall
-     (for [[k {:keys [name description]}] (card-backs/just-prizes)]
-       ^{:key k}
-       [:div
-        [:label [:input {:type "checkbox"
-                         :checked (get-in @selected-user [:prizes :card-backs k] false)
-                         :on-change #(swap! selected-user assoc-in [:prizes :card-backs k] (.. % -target -checked))}]
-         (str name " - " description)]]))])
+   (let [backs (card-backs/just-prizes)]
+     (doall
+       (for [group (->> backs vals (map :group) distinct sort)]
+         ^{:key group}
+         [:section
+          [:h3 group]
+          (doall
+            (for [[k {:keys [description side file] :as prize}] (into {} (filter (fn [[_ v]] (= (:group v) group)) backs))]
+              ^{:key k}
+              [:div
+               [:label [:input {:type "checkbox"
+                                :checked (get-in @selected-user [:prizes :card-backs k] false)
+                                :on-change #(swap! selected-user assoc-in [:prizes :card-backs k] (.. % -target -checked))}]
+                (str (:name prize) " - " description)]]))])))])
 
 (defn- load-user-fn [username]
   (ws/ws-send! [:prizes/load-user {:username username}]))
