@@ -240,8 +240,8 @@
   [prompt same-side?]
   (when same-side?
     (-> prompt
+        (update :eid #(when (:eid %) select-keys % [:eid]))
         (update :card #(not-empty (select-non-nil-keys % card-keys)))
-        (update :eid #(select-keys % [:eid]))
         (update :choices (fn [choices]
                            (if (sequential? choices)
                              (->> choices
