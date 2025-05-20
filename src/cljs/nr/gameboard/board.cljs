@@ -42,6 +42,7 @@
 
 (defn is-replay? [] (= "local-replay" (:gameid @app-state [:gameid])))
 
+(defn- prompt-eid [side] (get-in @game-state [side :prompt-state :eid]))
 (defn- any-prompt-open?
   [side]
   (if (= side :corp)
@@ -195,11 +196,11 @@
       (cond
         ;; Selecting card
         (= (get-in @game-state [side :prompt-state :prompt-type]) "select")
-        (send-command "select" {:card (card-for-click card) :shift-key-held shift-key-held})
+        (send-command "select" {:card (card-for-click card) :eid (prompt-eid side) :shift-key-held shift-key-held})
 
         ;; A selectable card is clicked outside of a select prompt (ie it's a button on a choices prompt)
         (contains? (into #{} (get-in @game-state [side :prompt-state :selectable])) (:cid card))
-        (send-command "choice" {:choice {:uuid (prompt-button-from-card? card (get-in @game-state [side :prompt-state]))}})
+        (send-command "choice" {:eid (prompt-eid side) :choice {:uuid (prompt-button-from-card? card (get-in @game-state [side :prompt-state]))}})
 
         ;; Card is an identity of player's side
         (and (= (:type card) "Identity")
@@ -1502,13 +1503,13 @@
                  true #(swap! app-state assoc :start-shown true)]
                 (list ^{:key "keepbtn"} [cond-button (tr [:game_keep "Keep"])
                                          (= "mulligan" (:prompt-type @prompt-state))
-                                         #(send-command "choice" {:choice {:uuid (->> (:choices @prompt-state)
+                                         #(send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice {:uuid (->> (:choices @prompt-state)
                                                                                       (filter (fn [c] (= "Keep" (:value c))))
                                                                                       first
                                                                                       :uuid)}})]
                       ^{:key "mullbtn"} [cond-button (tr [:game_mulligan "Mulligan"])
                                          (= "mulligan" (:prompt-type @prompt-state))
-                                         #(do (send-command "choice" {:choice {:uuid (->> (:choices @prompt-state)
+                                         #(do (send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice {:uuid (->> (:choices @prompt-state)
                                                                                           (filter (fn [c] (= "Mulligan" (:value c))))
                                                                                           first
                                                                                           :uuid)}})
@@ -1774,7 +1775,7 @@
          [:button#trace-unbeatable
           {:on-click #(reset! !value (or unbeatable beat-trace))}
           [:div (str beat-str " (" (or unbeatable beat-trace)) [:span {:class "anr-icon credit"}] ")"]]))
-     [:button#trace-submit {:on-click #(send-command "choice" {:choice (-> "#credit" js/$ .val str->int)})}
+     [:button#trace-submit {:on-click #(send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice (-> "#credit" js/$ .val str->int)})}
       (tr [:game_ok "OK"])]]))
 
 (defn prompt-div
@@ -1815,7 +1816,7 @@
             (doall (for [i (range (inc n))]
                      [:option {:key i :value i} i]))]]
           [:button#number-submit {:on-click #(send-command "choice"
-                                                           {:choice (-> "#credit" js/$ .val str->int)})}
+                                                           {:eid (prompt-eid (:side @game-state)) :choice (-> "#credit" js/$ .val str->int)})}
            (tr [:game_ok "OK"])]])
 
        ;; trace prompts require their own logic
@@ -1834,7 +1835,7 @@
             (doall (for [i (range (inc n))]
                      [:option {:key i :value i} i]))]]
           [:button#credit-submit {:on-click #(send-command "choice"
-                                             {:choice (-> "#credit" js/$ .val str->int)})}
+                                             {:eid (prompt-eid (:side @game-state)) :choice (-> "#credit" js/$ .val str->int)})}
            (tr [:game_ok "OK"])]])
 
        ;; auto-complete text box
@@ -1845,7 +1846,7 @@
                              :onKeyUp #(when (= "Enter" (.-key %))
                                          (-> "#card-submit" js/$ .click)
                                          (.stopPropagation %))}]]
-        [:button#card-submit {:on-click #(send-command "choice" {:choice (-> "#card-title" js/$ .val)})}
+        [:button#card-submit {:on-click #(send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice (-> "#card-title" js/$ .val)})}
          (tr [:game_ok "OK"])]]
 
        ;; choice of specified counters on card
@@ -1860,7 +1861,7 @@
             (doall (for [i (range (inc num-counters))]
                      [:option {:key i :value i} i]))] (tr [:game_credits "credits"])]
           [:button#counter-submit {:on-click #(send-command "choice"
-                                             {:choice (-> "#credit" js/$ .val str->int)})}
+                                             {:eid (prompt-eid (:side @game-state)) :choice (-> "#credit" js/$ .val str->int)})}
            (tr [:game_ok "OK"])]])
 
        ;; otherwise choice of all present choices
@@ -1869,7 +1870,7 @@
                     :when (not= value "Hide")]
                 ;; HERE
                 [:button {:key idx
-                          :on-click #(do (send-command "choice" {:choice {:uuid uuid}})
+                          :on-click #(do (send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice {:uuid uuid}})
                                          (card-highlight-mouse-out % value button-channel))
                           :on-mouse-over
                           #(card-highlight-mouse-over % value button-channel)

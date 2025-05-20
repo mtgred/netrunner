@@ -19,7 +19,7 @@
     [game.core.play-instants :refer [play-instant]]
     [game.core.expend :refer [expend expendable?]]
     [game.core.prompt-state :refer [remove-from-prompt-queue]]
-    [game.core.prompts :refer [resolve-select]]
+    [game.core.prompts :refer [resolve-select first-prompt-by-eid]]
     [game.core.props :refer [add-counter add-prop set-prop]]
     [game.core.runs :refer [continue get-runnable-zones]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
@@ -220,7 +220,7 @@
 (defn resolve-prompt
   "Resolves a prompt by invoking its effect function with the selected target of the prompt.
   Triggered by a selection of a prompt choice button in the UI."
-  [state side {:keys [choice] :as args}]
+  [state side {:keys [choice eid] :as args}]
   (let [prompt (first (get-in @state [side :prompt]))
         effect (:effect prompt)
         card (get-card state (:card prompt))
@@ -281,7 +281,7 @@
 (defn select
   "Attempt to select the given card to satisfy the current select prompt. Calls resolve-select
   if the max number of cards has been selected."
-  [state side {:keys [card shift-key-held]}]
+  [state side {:keys [card shift-key-held eid]}]
   (let [target (get-card state card)
         prompt (first (get-in @state [side :selected]))
         ability (:ability prompt)
@@ -301,10 +301,11 @@
           (swap! state update-in [side :selected 0 :cards]
                  (fn [coll] (remove-once #(same-card? % target) coll))))
         (let [selected (get-in @state [side :selected 0])
-              prompt (first (get-in @state [side :prompt]))
+              prompt (or (first-prompt-by-eid state side eid :select)
+                         (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt]))))
               card (:card prompt)]
           (when (= (count (:cards selected)) (or (:max selected) 1))
-            (resolve-select state side card (select-keys prompt [:cancel-effect]) update! resolve-ability)))))))
+            (resolve-select state side eid card (select-keys prompt [:cancel-effect]) update! resolve-ability)))))))
 
 (defn play-auto-pump
   "Use the 'match strength with ice' function of icebreakers."

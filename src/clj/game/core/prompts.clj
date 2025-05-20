@@ -107,13 +107,20 @@
                   :link link}]
      (add-to-prompt-queue state side newitem))))
 
+(defn first-prompt-by-eid
+  [state side eid type]
+  (first (filter #(and (= (:eid eid) (:eid (:eid %)))
+                       (= (:prompt-type %) type))
+                 (get-in @state [side :prompt]))))
+
 (defn resolve-select
   "Resolves a selection prompt by invoking the prompt's ability with the targeted cards.
   Called when the user clicks 'Done' or selects the :max number of cards."
-  [state side card args update! resolve-ability]
+  [state side eid card args update! resolve-ability]
   (let [selected (get-in @state [side :selected 0])
         cards (map #(dissoc % :selected) (:cards selected))
-        prompt (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt])))]
+        prompt (or (first-prompt-by-eid state side eid :select)
+                   (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt]))))]
     (swap! state update-in [side :selected] #(vec (rest %)))
     (when prompt
       (remove-from-prompt-queue state side prompt))
@@ -192,7 +199,7 @@
                             (do
                               (toast state side (str "You must choose at least " min-choices " " (pluralize "card" min-choices)))
                               (show-select state side card ability update! resolve-ability args))
-                            (resolve-select state side card
+                            (resolve-select state side (:eid ability) card
                                             (select-keys (wrap-function args :cancel-effect) [:cancel-effect])
                                             update! resolve-ability)))))
                     (-> args

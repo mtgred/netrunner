@@ -224,6 +224,7 @@
    :prompt-type
    :show-discard
    :selectable
+   :eid
    ;; traces
    :player
    :base
