@@ -2004,6 +2004,7 @@
     {:events [{:event :corp-trash
                :req (req (and
                            (installed? (:card context))
+                           (not (:during-installation context))
                            (rezzed? (:card context))
                            (trash-cause eid target)
                            (not (used-this-turn? (:cid card) state))))
