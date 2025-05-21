@@ -4250,6 +4250,21 @@
        (is (= 0 (:position (get-run))) "Run should still be at position 0")
        (is (same-card? ws (core/get-current-ice state))))))
 
+(deftest sisyphus-protocol-vs-pelangi
+  (do-game
+    (new-game {:corp {:score-area ["Sisyphus Protocol"] :hand ["Vanilla"]}
+               :runner {:hand ["Pelangi"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Pelangi")
+    (run-on state :hq)
+    (run-continue-until state :encounter-ice)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "Sentry")
+    (run-continue state)
+    (is (no-prompt? state :corp) "No prompt for sisyphus")))
+
 (deftest slash-and-burn-agriculture
   (do-game
     (new-game {:corp {:deck ["Slash and Burn Agriculture" "PAD Campaign" "Ice Wall"]}})
