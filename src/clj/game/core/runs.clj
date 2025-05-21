@@ -17,6 +17,7 @@
     [game.core.prompts :refer [clear-run-prompts clear-wait-prompt show-run-prompts show-prompt show-wait-prompt]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [is-remote? target-server unknown->kw zone->name]]
+    [game.core.subtypes :refer [update-all-subtypes]]
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
@@ -219,6 +220,7 @@
     (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
                                        :end-of-encounter
                                        {:ice ice})
+              (update-all-subtypes state)
               (let [run (:run @state)
                     phase (:phase run)]
                 (cond
