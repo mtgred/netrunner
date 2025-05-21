@@ -1352,21 +1352,21 @@
                      (strength-pump 2 4)]))
 
 (defcard "Equivocation"
-  (let [force-draw (fn [title]
+  (let [force-draw (fn [c]
                      {:optional
-                      {:prompt (str "Force the Corp to draw " title "?")
+                      {:prompt (str "Force the Corp to draw " (:title c) "?")
                        :yes-ability
                        {:async true
-                        :effect (req (system-msg state :corp (str "is forced to draw " title))
+                        :effect (req (system-msg state :corp (str "is forced to draw " (:title c)))
                                      (draw state :corp eid 1))}}})
         rvl {:optional
              {:prompt "Reveal the top card of R&D?"
               :yes-ability
               {:async true
-               :effect (req (let [topcard (-> corp :deck first :title)]
+               :effect (req (let [topcard (get-in @state [:corp :deck 0])]
                               (wait-for
                                 (reveal state side topcard)
-                                (system-msg state :runner (str "reveals " topcard
+                                (system-msg state :runner (str "reveals " (:title topcard)
                                                                " from the top of R&D"))
                                 (continue-ability state side (force-draw topcard) card nil))))}}}]
     {:events [{:event :successful-run
