@@ -7,7 +7,7 @@
                              steal-cost-bonus]]
    [game.core.bad-publicity :refer [lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed all-installed-corp card->server
-                            get-remotes server->zone server-list]]
+                            get-remotes server->zone server-list server-list-exclude]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? get-card get-counters get-zone
                            has-subtype? ice? in-discard? in-hand? installed? operation? program? resource? rezzed?
@@ -70,7 +70,7 @@
      :yes-ability
      {:prompt "Choose a server"
       :waiting-prompt true
-      :choices (req (server-list state))
+      :choices (req (server-list-exclude state [(second (:zone card))]))
       :msg (msg "move itself to " target)
       :async true
       :effect (req (let [c (move state side card

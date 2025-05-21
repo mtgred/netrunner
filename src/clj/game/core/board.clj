@@ -159,6 +159,11 @@
   [state]
   (zones->sorted-names (get-zones state)))
 
+(defn server-list-exclude
+  "Get a list of all servers other than the ones provided"
+  [state exclude-list]
+  (zones->sorted-names (remove (set exclude-list) (get-zones state))))
+
 (defn installable-servers
   "Get list of servers the specified card can be installed in"
   [state card]
