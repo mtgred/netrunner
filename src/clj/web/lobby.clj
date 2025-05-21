@@ -426,10 +426,8 @@
 
 (defn leave-lobby! [db user uid ?reply-fn lobby]
   (let [leave-message (core/make-system-message (str (:username user) " left the game."))
-        new-app-state (swap! app-state/app-state
-                               update :lobbies #(-> %
-                                                    (handle-leave-lobby uid leave-message)
-                                                    (handle-set-last-update (:gameid lobby) uid)))
+        new-app-state (swap! app-state/app-state update :lobbies
+                             #(handle-leave-lobby % uid leave-message))
           lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
       (if lobby?
         (when-let [state (:state lobby?)]
@@ -601,10 +599,8 @@
 (defn join-lobby! [user uid ?data ?reply-fn lobby]
   (let [correct-password? (check-password lobby user (:password ?data))
         join-message (core/make-system-message (str (:username user) " joined the game."))
-        new-app-state (swap! app-state/app-state
-                             update :lobbies #(-> %
-                                                  (handle-join-lobby ?data uid user correct-password? join-message)
-                                                  (handle-set-last-update (:gameid lobby) uid)))
+        new-app-state (swap! app-state/app-state update :lobbies
+                             #(handle-join-lobby % ?data uid user correct-password? join-message))
         lobby? (get-in new-app-state [:lobbies (:gameid ?data)])]
     (cond
       (and lobby? correct-password?)
