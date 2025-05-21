@@ -170,18 +170,30 @@
     :else
     (response 404 {:message "Account not found"})))
 
+(def max-custom-bg-url-length 2048)
+
 (def profile-keys
   [:background :pronouns :language :default-format :show-alt-art :blocked-users
    :alt-arts :card-resolution :deckstats :gamestats :card-zoom :pin-zoom :card-back-display
    :corp-card-sleeve :runner-card-sleeve :prizes :stacked-cards :ghost-trojans :display-encounter-info
    :sides-overlap :archives-sorted :heap-sorted :log-timestamps
-   :labeled-cards :labeled-unrezzed-cards :bespoke-sounds :pass-on-rez])
+   :labeled-cards :labeled-unrezzed-cards :bespoke-sounds :pass-on-rez :custom-bg-url])
+
+(defn valid-custom-bg-url?
+  "Validates that the URL is reasonable for a custom background"
+  [url]
+  (and url
+       (string? url)
+       (<= (count url) max-custom-bg-url-length)))
 
 (defn update-profile-handler
   [{db :system/db
     {username :username :as user} :user
     body :body}]
-  (let [options (select-non-nil-keys body profile-keys)
+  (let [custom-bg-url (:custom-bg-url body)
+        options (cond-> (select-non-nil-keys body profile-keys)
+                  (and custom-bg-url (not (valid-custom-bg-url? custom-bg-url)))
+                  (dissoc :custom-bg-url))
         lang (:lang body)]
     (if (active-user? user)
       (if (acknowledged? (mc/update db "users"
