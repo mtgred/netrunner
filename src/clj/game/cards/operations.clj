@@ -2306,6 +2306,7 @@
              :base-play-cost [(->c :x-credits 0 {:maximum (req (count-tags state))})]
              :choices {:req (req (can-be-advanced? state target))}
              :msg (msg "place " (or (->> eid :cost-paid :x-credits :paid/value) 0) " advancement counters on " (card-str state target))
+             :async true
              :effect (req (add-prop state side eid target :advance-counter (or (->> eid :cost-paid :x-credits :paid/value) 0) {:placed true}))}})
 
 (defcard "Psychokinesis"

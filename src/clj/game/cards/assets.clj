@@ -492,7 +492,7 @@
   {:flags {:rd-reveal (req true)}
    :on-access {:optional
                {:req (req (and (not (in-discard? card))
-                               (can-pay? state side eid card nil [(->c :credit 4)])))
+                               (can-pay? state :corp eid card nil [(->c :credit 4)])))
                 :waiting-prompt true
                 :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
                 :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
@@ -2973,7 +2973,7 @@
   {:flags {:rd-reveal (req true)}
    :on-access {:optional
                {:req (req (and (not (in-discard? card))
-                               (can-pay? state side eid card nil [(->c :credit 4)])))
+                               (can-pay? state :corp eid card nil [(->c :credit 4)])))
                 :waiting-prompt true
                 :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
                 :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
