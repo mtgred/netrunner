@@ -1812,7 +1812,7 @@
                             :onKeyUp #(when (= "Enter" (.-key %))
                                         (-> "#number-submit" js/$ .click)
                                         (.stopPropagation %))}
-            (doall (for [i (range (inc n))]
+            (doall (for [i (range (:minimum choices 0) (inc n))]
                      [:option {:key i :value i} i]))]]
           [:button#number-submit {:on-click #(send-command "choice"
                                                            {:choice (-> "#credit" js/$ .val str->int)})}
