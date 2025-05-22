@@ -1327,12 +1327,7 @@
     {:static-abilities [{:type :install-cost
                          :req (req (and (kate-type? target)
                                         (not-triggered? state)))
-                         :value -1}]
-     :events [{:event :runner-install
-               :req (req (and (kate-type? (:card context))
-                              (not-triggered? state)))
-               :silent (req true)
-               :msg (msg "reduce the install cost of " (:title (:card context)) " by 1 [Credits]")}]}))
+                         :value -1}]}))
 
 (defcard "Ken \"Express\" Tenma: Disappeared Clone"
   {:events [{:event :play-event
@@ -1829,6 +1824,7 @@
 (defcard "Noise: Hacker Extraordinaire"
   {:events [{:async true
              :event :runner-install
+             :interactive (req true)
              :req (req (has-subtype? (:card context) "Virus"))
              :msg "force the Corp to trash the top card of R&D"
              :effect (effect (mill :corp eid :corp 1))}]})
