@@ -37,7 +37,7 @@
    [game.core.moving :refer [as-agenda mill move swap-agendas swap-ice trash
                              trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
-   [game.core.payment :refer [can-pay? cost-target ->c]]
+   [game.core.payment :refer [can-pay? cost-target cost-value ->c]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prevention :refer [damage-boost]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
@@ -183,11 +183,10 @@
                                                                                       :display-origin true}})
                                       (continue-ability state side (ab (inc n) total) card nil)))}))]
     {:on-play
-     {:prompt "How many Advertisements do you want to install and rez?"
-      :choices :credit
-      :msg (msg "install and rez " target " Advertisements")
+     {:base-play-cost [(->c :x-credits)]
+      :msg (msg "install and rez " (cost-value eid :x-credits) " Advertisements")
       :async true
-      :effect (effect (continue-ability (ab 0 target) card nil))}}))
+      :effect (effect (continue-ability (ab 0 (cost-value eid :x-credits)) card nil))}}))
 
 (defcard "Aggressive Negotiation"
   {:on-play (assoc (tutor-abi nil) :req (req (:scored-agenda corp-reg)))})
@@ -2305,9 +2304,9 @@
              :waiting-prompt true
              :base-play-cost [(->c :x-credits 0 {:maximum (req (count-tags state))})]
              :choices {:req (req (can-be-advanced? state target))}
-             :msg (msg "place " (or (->> eid :cost-paid :x-credits :paid/value) 0) " advancement counters on " (card-str state target))
+             :msg (msg "place " (cost-value eid :x-credits) " advancement counters on " (card-str state target))
              :async true
-             :effect (req (add-prop state side eid target :advance-counter (or (->> eid :cost-paid :x-credits :paid/value) 0) {:placed true}))}})
+             :effect (req (add-prop state side eid target :advance-counter (cost-value eid :x-credits) {:placed true}))}})
 
 (defcard "Psychokinesis"
   (letfn [(install-card [chosen]
@@ -2419,11 +2418,10 @@
                    {:effect (effect (shuffle! :corp :deck))
                     :msg "shuffle R&D"}))]
     {:on-play
-     {:prompt "How many Sysops do you want to search for?"
-      :choices :credit
-      :msg (msg "search for " target " Sysops")
+     {:base-play-cost [(->c :x-credits)]
+      :msg (msg "search for " (cost-value eid :x-credits) " Sysops")
       :async true
-      :effect (effect (continue-ability (rthelp target target []) card nil))}}))
+      :effect (effect (continue-ability (rthelp (cost-value eid :x-credits) (cost-value eid :x-credits) []) card nil))}}))
 
 (defcard "Red Level Clearance"
   (let [all [{:msg "gain 2 [Credits]"

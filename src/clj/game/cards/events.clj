@@ -346,68 +346,52 @@
   {:makes-run true
    :on-play
    {:async true
-    :prompt "How many credits do you want to pay?"
-    :choices :credit
-    :msg (msg "increase the rez cost of the first unrezzed piece of ice approached by " target " [Credits]")
-    :effect (effect
-              (continue-ability
-               (let [bribery-x target
-                     eid (assoc eid :x-cost true)]
-                  {:prompt "Choose a server"
-                   :choices (req runnable-servers)
-                   :async true
-                   :effect (effect
-                             (register-events
-                               card
-                               [{:event :approach-ice
-                                 :duration :end-of-run
-                                 :unregister-once-resolved true
-                                 :req (req (and (not (rezzed? (:ice context)))
-                                                (first-run-event? state side :approach-ice
-                                                                  (fn [targets]
-                                                                    (let [context (first targets)]
-                                                                      (not (rezzed? (:ice context))))))))
-                                 :effect (effect
-                                           (register-lingering-effect
-                                             card
-                                             (let [approached-ice (:ice context)]
-                                               {:type :rez-additional-cost
-                                                :duration :end-of-run
-                                                :unregister-once-resolved true
-                                                :req (req (same-card? approached-ice target))
-                                                :value [(->c :credit bribery-x)]})))}])
-                             (make-run eid target card))})
-                card nil))}})
+    :base-play-cost [(->c :x-credits)]
+    :choices (req runnable-servers)
+    :msg (msg "make a run on " target " and increase the rez cost of the first unrezzed piece of ice approached by " (cost-value eid :x-credits) " [Credits]")
+    :prompt "Choose a server"
+    :effect (req (let [bribery-x (cost-value eid :x-credits)]
+                   (register-events
+                     state side card
+                     [{:event :approach-ice
+                       :duration :end-of-run
+                       :unregister-once-resolved true
+                       :req (req (and (not (rezzed? (:ice context)))
+                                      (first-run-event? state side :approach-ice
+                                                        (fn [targets]
+                                                          (let [context (first targets)]
+                                                            (not (rezzed? (:ice context))))))))
+                       :effect (effect
+                                 (register-lingering-effect
+                                   card
+                                   (let [approached-ice (:ice context)]
+                                     {:type :rez-additional-cost
+                                      :duration :end-of-run
+                                      :unregister-once-resolved true
+                                      :req (req (same-card? approached-ice target))
+                                      :value [(->c :credit bribery-x)]})))}]))
+                 (make-run state side eid target card))}})
 
 (defcard "Brute-Force-Hack"
   {:on-play
    {:async true
-    ;; TODO - can we just give the ability an `:x-cost` tag instead of this dereffing?
-    :effect (req (resolve-ability
-                   state side (assoc eid :x-cost true)
-                   {:prompt "How many credits do you want to spend?"
-                    :cost [(->c :x-credits)]
-                    :async true
-                    :effect (req (let [payment-eid eid
-                                       amount-spent (cost-value eid :x-credits)
-                                       valid-ice (filter #(and (rezzed? %)
-                                                               (ice? %)
-                                                               (<= (rez-cost state :corp % nil) amount-spent))
-                                                         (all-installed state :corp))]
-                                   (if (seq valid-ice)
-                                     (continue-ability
-                                       state side
-                                       {:choices {:req (req (some #(same-card? % target) valid-ice))
-                                                  :all true}
-                                        :async true
-                                        :effect (req (derez state side eid target {:msg-keys {:include-cost-from-eid payment-eid}}))}
-                                       card nil)
-                                     (do (system-msg state side (str (if (pos? amount-spent)
-                                                                       (str (:latest-payment-str eid) " to use ")
-                                                                       "uses ")
-                                                                     (:title card) " to do nothing"))
-                                         (effect-completed state side eid)))))}
-                   card nil))}})
+    :base-play-cost [(->c :x-credits)]
+    :change-in-game-state {:req (req (some #(and (rezzed? %)
+                                                 (ice? %)
+                                                 (<= (rez-cost state :corp % nil) (cost-value eid :x-credits)))
+                                           (all-installed state :corp)))}
+    ;; note - prompts either strip the eid somewhere, or make up entirely new eids.
+    ;; Ideally we wouldn't need to deref at all here.
+    ;; TODO - see if I can fix that later - nbk, may 2025
+    :effect (req (let [x-val (cost-value eid :x-credits)]
+                   (continue-ability
+                     state side
+                     {:prompt (msg "derez an ice with a rez cost of " x-val " or lower")
+                      :choices {:req (req (and (rezzed? target)
+                                               (ice? target)
+                                               (<= (rez-cost state :corp target nil) x-val)))}
+                      :effect (req (derez state side eid target))}
+                     card nil)))}})
 
 (defcard "Build Script"
   {:on-play
