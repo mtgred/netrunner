@@ -301,10 +301,7 @@
 (defn power-counter-ability
   "Does specified ability using a power counter."
   [{:keys [label message] :as ability}]
-  (assoc ability
-         :label label
-         :msg message
-         :cost [(->c :power 1)]))
+  (assoc ability :cost [(->c :power 1)]))
 
 (defn do-psi
   "Start a psi game, if not equal do ability"
@@ -2440,7 +2437,7 @@
                  (trace-ability 1 {:label "Give the Runner 1 tag and do 1 core damage"
                                    :msg "give the Runner 1 tag and do 1 core damage"
                                    :async true
-                                   :effect (req (wait-for (damage state :runner :brain 1 {:card card})
+                                   :effect (req (wait-for (damage state :runner :brain 1 {:card card :suppress-checkpoint true})
                                                           (gain-tags state :corp eid 1)))})]
    :runner-abilities [(bioroid-break 1 1)]})
 
