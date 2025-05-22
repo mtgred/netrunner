@@ -4,7 +4,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [any-effects get-effects sum-effects get-effect-maps get-effect-value is-disabled-reg?]]
     [game.core.eid :refer [make-eid]]
-    [game.core.payment :refer [merge-costs]]))
+    [game.core.payment :refer [->c merge-costs]]))
 
 ;; State-aware cost-generating functions
 (defn play-cost
@@ -19,6 +19,20 @@
            (sum-effects state side :play-cost card)]
           (reduce (fnil + 0 0))
           (max 0)))))
+
+(defn base-play-cost
+  "The play cost for an event or operation, taking into account an X as a cost. Returns a cost vector."
+  [state side {:keys [cost] :as card} {:keys [cost-bonus] :as args}]
+  (if-let [special-cost (get-in (card-def card) [:on-play :base-play-cost])]
+    (let [modifications (+ (or cost-bonus 0)
+                           (if-let [playfun (get-in (card-def card) [:on-play :play-cost-bonus])]
+                             (playfun state side (make-eid state) card nil)
+                             0)
+                           (sum-effects state side :play-cost card))]
+      (if (zero? modifications)
+        special-cost
+        (merge-costs (concat special-cost [(->c :credit modifications)]))))
+    [(->c :credit (play-cost state side card args))]))
 
 (defn play-additional-cost-bonus
   [state side card]
