@@ -1258,12 +1258,10 @@
 
 (defcard "Jinteki: Personal Evolution"
   (let [ability {:async true
-                 :req (req (not (:winner @state)))
+                 :interactive (req true)
                  :msg "do 1 net damage"
                  :effect (effect (damage eid :net 1 {:card card}))}]
-    {:events [(assoc ability
-                     :event :agenda-scored
-                     :interactive (req true))
+    {:events [(assoc ability :event :agenda-scored)
               (assoc ability :event :agenda-stolen)]}))
 
 (defcard "Jinteki: Potential Unleashed"
