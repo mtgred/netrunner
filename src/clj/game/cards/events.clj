@@ -17,8 +17,8 @@
    [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [all-cards-in-hand* in-hand*?
-                                  breach-access-bonus defcard drain-credits offer-jack-out
-                                  reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability with-revealed-hand]]
+                                  breach-access-bonus defcard draw-abi drain-credits gain-credits-ability  offer-jack-out
+                                  reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability tutor-abi with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid
@@ -495,8 +495,7 @@
     :change-in-game-state {:req (req (seq (all-cards-in-hand* state :runner)))}
     :choices {:req (req (and (resource? target)
                              (in-hand*? state target)
-                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                       [(->c :credit (install-cost state side target {:cost-bonus -3}))])))}
+                             (runner-can-pay-and-install? state side eid card {:cost-bonus -3})))}
     :async true
     :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3
                                                                                                   :msg-keys {:install-source card
@@ -1118,11 +1117,7 @@
                               (effect-completed state side eid))))}]})
 
 (defcard "Diesel"
-  {:on-play
-   {:msg "draw 3 cards"
-    :change-in-game-state {:req (req (seq (:deck runner)))}
-    :async true
-    :effect (effect (draw eid 3))}})
+  {:on-play (draw-abi 3)})
 
 (defcard "Direct Access"
   {:makes-run true
@@ -1210,10 +1205,7 @@
                     (make-run eid target card))}})
 
 (defcard "Easy Mark"
-  {:on-play
-   {:msg "gain 3 [Credits]"
-    :async true
-    :effect (effect (gain-credits eid 3))}})
+  {:on-play (gain-credits-ability 3)})
 
 (defcard "Embezzle"
   {:makes-run true
@@ -1543,8 +1535,7 @@
 
 (defcard "Forged Activation Orders"
   {:on-play
-   {:choices {:card #(and (ice? %)
-                          (not (rezzed? %)))}
+   {:choices {:card (every-pred ice? (complement rezzed?))}
     :change-in-game-state {:req (req (some (every-pred ice? (complement rezzed?)) (all-installed state :corp)))}
     :async true
     :effect (req (let [ice target
@@ -1907,21 +1898,14 @@
                             card nil))}})]})
 
 (defcard "Infiltration"
-  {:on-play
-   {:prompt "Choose one"
-    :waiting-prompt true
-    :choices ["Gain 2 [Credits]" "Expose a card"]
-    :async true
-    :effect (effect (continue-ability
-                      (if (= target "Expose a card")
-                        {:choices {:card #(and (installed? %)
+  {:on-play (choose-one-helper
+              [{:option "Gain 2 [Credits]"
+                :ability (gain-credits-ability 2)}
+               {:option "Expose a card"
+                :ability {:choices {:card #(and (installed? %)
                                                (not (rezzed? %)))}
-                         :async true
-                         :effect (effect (expose eid [target]))}
-                        {:msg "gain 2 [Credits]"
-                         :async true
-                         :effect (effect (gain-credits eid 2))})
-                      card nil))}})
+                          :async true
+                          :effect (effect (expose eid [target]))}}])})
 
 (defcard "Information Sifting"
   (letfn [(access-pile [cards pile pile-size]
@@ -2020,7 +2004,8 @@
    :on-play run-any-server-ability
    :events [{:event :encounter-ice
              :automatic :bypass
-             :req (req (first-run-event? state side :encounter-ice))
+             :req (req (and (first-run-event? state side :encounter-ice)
+                            this-card-is-run-source))
              :msg (msg "bypass " (:title (:ice context)))
              :effect (req (bypass-ice state))}]})
 
@@ -2584,8 +2569,7 @@
     :choices {:req (req (and (or (hardware? target)
                                  (program? target))
                              (in-hand*? state target)
-                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                       [(->c :credit (install-cost state side target {:cost-bonus -3}))])))}
+                             (runner-can-pay-and-install? state side eid card {:cost-bonus -3})))}
     :async true
     :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -3
                                                                                                   :msg-keys {:install-source card
@@ -3656,14 +3640,7 @@
                            (draw state side eid 2)))}})
 
 (defcard "Special Order"
-  {:on-play
-   {:prompt "Choose an Icebreaker"
-    :change-in-game-state {:req (req (seq (:deck runner)))}
-    :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))
-    :msg (msg "add " (:title target) " from the stack to the grip and shuffle the stack")
-    :effect (effect (trigger-event :searched-stack)
-                    (shuffle! :deck)
-                    (move target :hand))}})
+  {:on-play (tutor-abi true #(has-subtype? % "Icebreaker"))})
 
 (defcard "Spooned"
   (cutlery "Code Gate"))
@@ -3972,8 +3949,7 @@
 (defcard "Tinkering"
   {:on-play
    {:prompt "Choose a piece of ice"
-    :choices {:card #(and (installed? %)
-                          (ice? %))}
+    :choices {:card (every-pred ice? installed?)}
     :change-in-game-state {:req (req (some ice? (all-installed state :corp)))}
     :msg (msg "make " (card-str state target) " gain Sentry, Code Gate, and Barrier until the end of the turn")
     :effect (req (register-lingering-effect state side card
