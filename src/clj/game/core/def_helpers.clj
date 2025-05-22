@@ -363,6 +363,7 @@
 
 (defn gain-credits-ability [x]
   {:msg (str "gain " x " [Credits]")
+   :label (str "gain " x " [Credits]")
    :async true
    :effect (req (gain-credits state side eid x))})
 

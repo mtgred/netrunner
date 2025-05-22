@@ -300,7 +300,7 @@
 
 (defn power-counter-ability
   "Does specified ability using a power counter."
-  [{:keys [label message] :as ability}]
+  [ability]
   (assoc ability :cost [(->c :power 1)]))
 
 (defn do-psi
