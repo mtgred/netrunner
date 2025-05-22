@@ -77,6 +77,7 @@
     (is (= ["Enigma" "Cancel"] (map #(or (:title %) (identity %)) (prompt-buttons :corp))))
     (click-prompt state :corp "Enigma")
     (click-prompt state :corp "HQ")
+    (click-prompt state :corp "Cancel")
     (is (no-prompt? state :corp))
     (is (no-prompt? state :runner))
     (is (some? (get-ice state :hq 0)))
