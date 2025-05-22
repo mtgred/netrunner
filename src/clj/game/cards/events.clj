@@ -387,6 +387,7 @@
                    (continue-ability
                      state side
                      {:prompt (msg "derez an ice with a rez cost of " x-val " or lower")
+                      :async true
                       :choices {:req (req (and (rezzed? target)
                                                (ice? target)
                                                (<= (rez-cost state :corp target nil) x-val)))}
