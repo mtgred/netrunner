@@ -17,7 +17,7 @@
     :cost/additional (boolean additional)
     :cost/stealth stealth
     :cost/maximum maximum
-    :cost/args (not-empty (dissoc args :stealth :additional))}))
+    :cost/args (not-empty (dissoc args :stealth :additional :maximum))}))
 
 (defmulti value :cost/type)
 (defmethod value :default [_] 0)
@@ -47,6 +47,7 @@
     (->c (:cost/type cur)
          (+ (:cost/amount acc 0) (:cost/amount cur 0))
          (conj {:additional (:cost/additional cur)
+                :maximum (:cost/maximum cur)
                 :stealth (cond
                            (or (= :all-stealth acc-stealth)
                                (= :all-stealth cur-stealth))

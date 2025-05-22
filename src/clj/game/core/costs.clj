@@ -223,8 +223,12 @@
     state side
     {:async true
      :prompt "How many credits do you want to spend?"
-     :choices {:number (req (if-let [maximum (->> cost :cost/args :maximum)]
-                              (min (total-available-credits state side eid card) maximum)
+     :choices {:number (req
+                         (if-let [maximum (->> cost :cost/maximum)]
+                              (min (total-available-credits state side eid card)
+                                   (if (fn? maximum)
+                                     (maximum state side eid card nil)
+                                     maximum))
                               (total-available-credits state side eid card)))}
      :effect
      (req

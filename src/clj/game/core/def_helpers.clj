@@ -15,12 +15,13 @@
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [build-cost-string can-pay?]]
     [game.core.play-instants :refer [async-rfg]]
-    [game.core.prompts :refer [clear-wait-prompt]]
+    [game.core.prompts :refer [cancellable clear-wait-prompt]]
     [game.core.props :refer [add-counter]]
-    [game.core.revealing :refer [conceal-hand reveal-hand reveal-loud]]
+    [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
     [game.core.runs :refer [can-run-server? make-run jack-out]]
     [game.core.say :refer [system-msg system-say]]
     [game.core.servers :refer [zone->name]]
+    [game.core.shuffling :refer [shuffle!]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.core.tags :refer [gain-tags]]
@@ -407,6 +408,35 @@
                        (pred %))}
     :msg (msg "add " (card-str state target {:visible (faceup? target)}) " to HQ")
     :effect (effect (move :corp target :hand))}))
+
+(defn tutor-abi
+  "Tutor a card. Optionally, pass a restriction, which is a 1-fn the cards must pass"
+  ([reveal?] (tutor-abi reveal nil))
+  ([reveal? restriction]
+   {:change-in-game-state {:req (req (seq (get-in @state [side :deck])))}
+    :prompt "Choose a card"
+    :choices (req (cancellable
+                    (filter #(or (not restriction) (restriction %))
+                            (get-in @state [side :deck]))
+                    :sorted))
+    :msg (msg "search "
+              (if (= side :corp) "R&D" "[their] Stack")
+              " for "
+              (if reveal? (:title target) "a card")
+              " and add it to "
+              (if (= side :corp) "HQ" "[their] Grip"))
+    :cancel-effect (req (system-msg state side "shuffles their deck!")
+                        (shuffle! state side :deck)
+                        (effect-completed state side eid))
+    :async true
+    :effect (req (if reveal?
+                   (wait-for (reveal state side target)
+                             (move state side target :hand)
+                             (shuffle! state side :deck)
+                             (effect-completed state side eid))
+                   (do (move state side target :hand)
+                       (shuffle! state side :deck)
+                       (effect-completed state side eid))))}))
 
 (def card-defs-cache (atom {}))
 

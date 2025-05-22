@@ -86,10 +86,12 @@
   [state side card {:keys [ignore-cost base-cost no-additional-cost cached-costs cost-bonus]}]
   (or cached-costs
       (let [cost (play-cost state side card {:cost-bonus cost-bonus})
+            replacement-base-cost (get-in (card-def card) [:on-play :base-play-cost])
+            cost (or replacement-base-cost (->c :credit cost))
             additional-costs (play-additional-cost-bonus state side card)
             costs (merge-costs
                     [(when-not ignore-cost
-                       [base-cost (->c :credit cost)])
+                       [base-cost cost])
                      (when (and (has-subtype? card "Triple")
                                 (not no-additional-cost))
                        (->c :click 2))
