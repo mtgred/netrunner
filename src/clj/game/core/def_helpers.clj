@@ -8,7 +8,7 @@
     [game.core.damage :refer [damage]]
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [queue-event register-events resolve-ability trigger-event-sync unregister-event-by-uuid]]
+    [game.core.engine :refer [queue-event register-events resolve-ability trigger-event trigger-event-sync unregister-event-by-uuid]]
     [game.core.effects :refer [any-effects is-disabled-reg?]]
     [game.core.gaining :refer [gain-credits lose-credits]]
     [game.core.installing :refer [corp-install]]
@@ -425,11 +425,15 @@
               (if reveal? (:title target) "a card")
               " and add it to "
               (if (= side :corp) "HQ" "[their] Grip"))
-    :cancel-effect (req (system-msg state side "shuffles their deck!")
+    :cancel-effect (req (when (= side :runner)
+                          (trigger-event state side :searched-stack))
+                        (system-msg state side "shuffles their deck!")
                         (shuffle! state side :deck)
                         (effect-completed state side eid))
     :async true
-    :effect (req (if reveal?
+    :effect (req (when (= side :runner)
+                   (trigger-event state side :searched-stack))
+                 (if reveal?
                    (wait-for (reveal state side target)
                              (move state side target :hand)
                              (shuffle! state side :deck)
