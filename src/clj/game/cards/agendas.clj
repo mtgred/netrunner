@@ -162,13 +162,13 @@
                                         (get-in (get-card state card) [:special :shuffle-occurred])
                                         (do (unregister-events state side card)
                                             (trash-cards state side eid choices {:unpreventable true :cause-card card}))
-                                        ;; There are still ice left
-                                        (seq (filter ice? choices))
+                                        ;; There are still cards left
+                                        (seq choices)
                                         (continue-ability state side (abt choices) card nil)
                                         ;; Trash what's left
                                         :else
                                         (do (unregister-events state side card)
-                                            (trash-cards state side eid choices {:unpreventable true :cause-card card}))))))})]
+                                            (effect-completed state side eid))))))})]
     {:on-score
      {:interactive (req true)
       :optional
@@ -1145,7 +1145,7 @@
 (defcard "Hostile Takeover"
   {:on-score {:msg "gain 7 [Credits] and take 1 bad publicity"
               :async true
-              :effect (req (wait-for (gain-credits state side 7)
+              :effect (req (wait-for (gain-credits state side 7 {:suppress-checkpoint true})
                                      (gain-bad-publicity state :corp eid 1)))
               :interactive (req true)}})
 
@@ -1549,7 +1549,7 @@
 
 (defcard "Nisei MK II"
   {:on-score (agenda-counters 1)
-   :abilities [{:change-in-game-state {:req (req (:run @state))}
+   :abilities [{:req (req (:run @state))
                 :cost [(->c :agenda 1)]
                 :msg "end the run"
                 :async true
@@ -1671,18 +1671,15 @@
               {:prompt "Forfeit this agenda to give the Runner 1 tag and take 1 bad publicity?"
                :yes-ability
                {:msg "give the Runner 1 tag and take 1 bad publicity"
+                :cost [(->c :forfeit-self)]
                 :async true
                 :effect (req (wait-for
-                               (forfeit state side (make-eid state eid) card)
-                               (wait-for
-                                 (gain-bad-publicity state :corp (make-eid state eid) 1)
-                                 (gain-tags state :corp eid 1))))}}}})
+                               (gain-bad-publicity state :corp (make-eid state eid) 1 {:suppress-checkpoint true})
+                               (gain-tags state :corp eid 1)))}}}})
 
 (defcard "Priority Requisition"
   {:on-score {:interactive (req true)
-              :choices {:card #(and (ice? %)
-                                    (not (rezzed? %))
-                                    (installed? %))}
+              :choices {:card (every-pred ice? installed? (complement rezzed?))}
               :async true
               :effect (effect (rez eid target {:ignore-cost :all-costs}))}})
 

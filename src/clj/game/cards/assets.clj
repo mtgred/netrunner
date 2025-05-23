@@ -20,7 +20,7 @@
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [play-cost]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard
+   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard gain-credits-ability
                                   reorder-choice spend-credits take-credits trash-on-empty get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
@@ -90,6 +90,19 @@
                (assoc ability :event :corp-turn-begins)]
       :abilities [ability]})))
 
+(defn creds-on-round-start
+  "For perpetual campaigns, like PAD Campaign and refuge campaign"
+  [per-turn]
+  (let [ability {:msg (str "gain " per-turn " [Credits]")
+                 :label (str "Gain " per-turn " [Credits] (start of turn)")
+                 :once :per-turn
+                 :async true
+                 :automatic :gain-credits
+                 :effect (effect (gain-credits eid per-turn))}]
+    {:derezzed-events [corp-rez-toast]
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
+
 (def executive-trash-effect
   {:when-inactive true
    :req (req (and (= side :runner)
@@ -149,8 +162,7 @@
                      :waiting-prompt true
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "program") " to trash")
                      :choices {:max (req (get-counters (get-card state card) :advancement))
-                               :card #(and (installed? %)
-                                           (program? %))}
+                               :card (every-pred installed? program?)}
                      :msg (msg "trash " (enumerate-str (map :title targets)))
                      :async true
                      :effect (effect (trash-cards eid targets {:cause-card card}))}))
@@ -479,7 +491,8 @@
 (defcard "Byte!"
   {:flags {:rd-reveal (req true)}
    :on-access {:optional
-               {:req (req (not (in-discard? card)))
+               {:req (req (and (not (in-discard? card))
+                               (can-pay? state :corp eid card nil [(->c :credit 4)])))
                 :waiting-prompt true
                 :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
                 :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
@@ -1940,24 +1953,13 @@
                 :effect (effect (gain-clicks 4))}]})
 
 (defcard "Melange Mining Corp."
-  {:abilities [{:action true
-                :cost [(->c :click 3)]
-                :keep-menu-open :while-3-clicks-left
-                :async true
-                :effect (effect (gain-credits eid 7))
-                :msg "gain 7 [Credits]"}]})
+  {:abilities [(merge (gain-credits-ability 7)
+                      {:action true
+                       :cost [(->c :click 3)]
+                       :keep-menu-open :while-3-clicks-left})]})
 
 (defcard "Mental Health Clinic"
-  (let [ability {:msg "gain 1 [Credits]"
-                 :label "Gain 1 [Credits] (start of turn)"
-                 :automatic :gain-credits
-                 :once :per-turn
-                 :async true
-                 :effect (effect (gain-credits eid 1))}]
-    {:static-abilities [(runner-hand-size+ 1)]
-     :derezzed-events [corp-rez-toast]
-     :events [(assoc ability :event :corp-turn-begins)]
-     :abilities [ability]}))
+  (assoc (creds-on-round-start 1) :static-abilities [(runner-hand-size+ 1)]))
 
 (defcard "Moon Pool"
   (letfn [(moon-pool-place-advancements [x]
@@ -2301,15 +2303,7 @@
      :abilities [ability]}))
 
 (defcard "PAD Campaign"
-  (let [ability {:msg "gain 1 [Credits]"
-                 :label "Gain 1 [Credits] (start of turn)"
-                 :once :per-turn
-                 :async true
-                 :automatic :gain-credits
-                 :effect (effect (gain-credits eid 1))}]
-    {:derezzed-events [corp-rez-toast]
-     :events [(assoc ability :event :corp-turn-begins)]
-     :abilities [ability]}))
+  (creds-on-round-start 1))
 
 (defcard "PAD Factory"
   {:abilities [{:action true
@@ -2535,19 +2529,12 @@
      :on-access ab}))
 
 (defcard "Public Access Plaza"
-  (let [ability {:msg "gain 1 [Credits]"
-                 :label "Gain 1 [Credits] (start of turn)"
-                 :once :per-turn
-                 :async true
-                 :effect (effect (gain-credits eid 1))}]
-    {:derezzed-events [corp-rez-toast]
-     :events [(assoc ability :event :corp-turn-begins)]
-     :abilities [ability]
-     :on-trash {:async true
-                :req (req (and (= :runner side)
-                               (threat-level 2 state)))
-                :msg "give the Runner 1 tag"
-                :effect (req (gain-tags state side eid 1))}}))
+  (assoc (creds-on-round-start 1)
+         :on-trash {:async true
+                    :req (req (and (= :runner side)
+                                   (threat-level 2 state)))
+                    :msg "give the Runner 1 tag"
+                    :effect (req (gain-tags state side eid 1))}))
 
 (defcard "Public Health Portal"
   (let [ability {:once :per-turn
@@ -2731,15 +2718,7 @@
                                  card nil)))}]})
 
 (defcard "Refuge Campaign"
-  (let [ability {:msg "gain 2 [Credits]"
-                 :label "Gain 2 [Credits] (start of turn)"
-                 :once :per-turn
-                 :automatic :gain-credits
-                 :async true
-                 :effect (effect (gain-credits eid 2))}]
-    {:derezzed-events [corp-rez-toast]
-     :events [(assoc ability :event :corp-turn-begins)]
-     :abilities [ability]}))
+  (creds-on-round-start 2))
 
 (defcard "Regolith Mining License"
   {:data {:counter {:credit 15}}
@@ -2861,13 +2840,10 @@
                 :effect (effect (gain-credits eid target))}]})
 
 (defcard "Security Subcontract"
-  {:abilities [{:action true
-                :cost [(->c :click 1) (->c :ice 1)]
-                :keep-menu-open :while-clicks-left
-                :msg "gain 4 [Credits]"
-                :label "Gain 4 [Credits]"
-                :async true
-                :effect (effect (gain-credits eid 4))}]})
+  {:abilities [(merge (gain-credits-ability 4)
+                      {:action true
+                       :cost [(->c :click 1) (->c :ice 1)]
+                       :keep-menu-open :while-clicks-left})]})
 
 (defcard "Sensie Actors Union"
   {:derezzed-events [corp-rez-toast]
@@ -2996,7 +2972,8 @@
 (defcard "Snare!"
   {:flags {:rd-reveal (req true)}
    :on-access {:optional
-               {:req (req (not (in-discard? card)))
+               {:req (req (and (not (in-discard? card))
+                               (can-pay? state :corp eid card nil [(->c :credit 4)])))
                 :waiting-prompt true
                 :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
                 :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
