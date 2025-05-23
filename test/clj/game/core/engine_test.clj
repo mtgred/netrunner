@@ -85,25 +85,32 @@
            (e/merge-costs-paid (:cost-paid eid1))))
     (is (= {:click {:paid/type :click
                     :paid/targets nil
+                    :paid/x-value 0
                     :paid/value 4}
             :credit {:paid/type :credit
                      :paid/targets nil
+                     :paid/x-value 0
                      :paid/value 1}
             :forfeit {:paid/type :forfeit
                       :paid/targets [{:title "NAPD Contract"}]
+                      :paid/x-value 0
                       :paid/value 1}}
            (e/merge-costs-paid (:cost-paid eid1) (:cost-paid eid2))))
     (is (= {:click {:paid/type :click
                     :paid/targets nil
+                    :paid/x-value 0
                     :paid/value 4}
             :credit {:paid/type :credit
                      :paid/targets nil
+                     :paid/x-value 0
                      :paid/value 1}
             :forfeit {:paid/type :forfeit
                       :paid/targets [{:title "NAPD Contract"}]
+                      :paid/x-value 0
                       :paid/value 1}
             :trash {:paid/type :trash
                     :paid/targets [{:title "C.I. Fund"}]
+                    :paid/x-value 0
                     :paid/value 1}}
            (e/merge-costs-paid (:cost-paid eid1) (:cost-paid eid2) (:cost-paid eid3))))))
 
