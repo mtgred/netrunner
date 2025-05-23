@@ -49,7 +49,7 @@
    [game.core.memory :refer [available-mu]]
    [game.core.moving :refer [as-agenda flip-facedown forfeit mill move
                              swap-ice trash trash-cards]]
-   [game.core.payment :refer [can-pay? ->c cost-value]]
+   [game.core.payment :refer [can-pay? ->c cost-value x-cost-value]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prevention :refer [damage-name prevent-damage preventable? prevent-end-run prevent-up-to-n-tags prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
@@ -348,9 +348,9 @@
    {:async true
     :base-play-cost [(->c :x-credits)]
     :choices (req runnable-servers)
-    :msg (msg "make a run on " target " and increase the rez cost of the first unrezzed piece of ice approached by " (cost-value eid :x-credits) " [Credits]")
+    :msg (msg "make a run on " target " and increase the rez cost of the first unrezzed piece of ice approached by " (x-cost-value eid) " [Credits]")
     :prompt "Choose a server"
-    :effect (req (let [bribery-x (cost-value eid :x-credits)]
+    :effect (req (let [bribery-x (x-cost-value eid)]
                    (register-events
                      state side card
                      [{:event :approach-ice
@@ -378,21 +378,13 @@
     :base-play-cost [(->c :x-credits)]
     :change-in-game-state {:req (req (some #(and (rezzed? %)
                                                  (ice? %)
-                                                 (<= (rez-cost state :corp % nil) (cost-value eid :x-credits)))
+                                                 (<= (rez-cost state :corp % nil) (x-cost-value eid)))
                                            (all-installed state :corp)))}
-    ;; note - prompts either strip the eid somewhere, or make up entirely new eids.
-    ;; Ideally we wouldn't need to deref at all here.
-    ;; TODO - see if I can fix that later - nbk, may 2025
-    :effect (req (let [x-val (cost-value eid :x-credits)]
-                   (continue-ability
-                     state side
-                     {:prompt (msg "derez an ice with a rez cost of " x-val " or lower")
-                      :async true
-                      :choices {:req (req (and (rezzed? target)
-                                               (ice? target)
-                                               (<= (rez-cost state :corp target nil) x-val)))}
-                      :effect (req (derez state side eid target))}
-                     card nil)))}})
+    :prompt (msg "derez an ice with a rez cost of " (x-cost-value eid) " or lower")
+    :choices {:req (req (and (rezzed? target)
+                             (ice? target)
+                             (<= (rez-cost state :corp target nil) (x-cost-value eid))))}
+    :effect (req (derez state side eid target))}})
 
 (defcard "Build Script"
   {:on-play

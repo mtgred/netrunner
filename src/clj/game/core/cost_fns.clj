@@ -31,7 +31,21 @@
                            (sum-effects state side :play-cost card))]
       (if (zero? modifications)
         special-cost
-        (merge-costs (concat special-cost [(->c :credit modifications)]))))
+        ;; NOTE - according to the current CR, play/install cost modifications affect the value of X
+        ;; IE:
+        ;; How do cost reductions, such as Career Fair, interact with the value of X?
+        ;;   The Runner decides what the value X will be, and then pays X credits,
+        ;;   minus the applicable discount. The number of power counters placed on Bug Out Bag
+        ;;   is equal to the initial value chosen for X, not the discounted total paid.
+        ;; This means that the X-cost needs to track it's modifiers,
+        ;; rather than have them as a seperate cost.
+        (cond
+          (some #(= :x-credits (:cost/type %)) special-cost)
+          (mapv #(if (= :x-credits (:cost/type %))
+                   (assoc % :cost/offset modifications)
+                   %)
+                special-cost)
+          :else (merge-costs (concat special-cost [(->c :credit modifications)])))))
     [(->c :credit (play-cost state side card args))]))
 
 (defn play-additional-cost-bonus

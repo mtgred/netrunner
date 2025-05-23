@@ -11,13 +11,14 @@
 (defn ->c
   ([type] (->c type 1))
   ([type n] (->c type n nil))
-  ([type n {:keys [additional stealth maximum] :as args}]
+  ([type n {:keys [additional stealth maximum offset] :as args}]
    {:cost/type type
     :cost/amount n
     :cost/additional (boolean additional)
     :cost/stealth stealth
     :cost/maximum maximum
-    :cost/args (not-empty (dissoc args :stealth :additional :maximum))}))
+    :cost/offset offset
+    :cost/args (not-empty (dissoc args :stealth :additional :maximum :offset))}))
 
 (defmulti value :cost/type)
 (defmethod value :default [_] 0)
@@ -48,6 +49,7 @@
          (+ (:cost/amount acc 0) (:cost/amount cur 0))
          (conj {:additional (:cost/additional cur)
                 :maximum (:cost/maximum cur)
+                :offset (:cost/offset cur)
                 :stealth (cond
                            (or (= :all-stealth acc-stealth)
                                (= :all-stealth cur-stealth))
@@ -132,6 +134,10 @@
 (defn cost-value
   [eid cost-type]
   (get-in eid [:cost-paid cost-type :paid/value]))
+
+(defn x-cost-value
+  [eid]
+  (get-in eid [:cost-paid :x-credits :paid/x-value] 0))
 
 ;; the function `pay` is defined in resolve-ability because they're all intermingled
 ;; fuck the restriction against circular dependencies, for real

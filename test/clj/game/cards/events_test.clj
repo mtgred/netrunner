@@ -837,6 +837,25 @@
       (click-card state :runner iw)
       (is (not (rezzed? (refresh iw))) "Runner can derez Ice Wall"))))
 
+(deftest brute-force-hack-interacts-with-donut
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:credits 30
+                        :hand [(qty "Brute-Force-Hack" 2) "Donut Taganes"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (let [iw (get-ice state :hq 0)]
+      (rez state :corp iw)
+      (play-from-hand state :runner "Donut Taganes")
+      (play-from-hand state :runner "Brute-Force-Hack")
+      (click-prompt state :runner "1")
+      (is (no-prompt? state :runner) "X = 0, cannot pick ice wall")
+      (play-from-hand state :runner "Brute-Force-Hack")
+      (click-prompt state :runner "2")
+      (click-card state :runner iw)
+      (is (not (rezzed? (refresh iw))) "Runner can derez Ice Wall"))))
+
 (deftest build-script
   ;; Build Script
   (do-game
