@@ -373,18 +373,16 @@
                  (make-run state side eid target card))}})
 
 (defcard "Brute-Force-Hack"
-  {:on-play
-   {:async true
-    :base-play-cost [(->c :x-credits)]
-    :change-in-game-state {:req (req (some #(and (rezzed? %)
-                                                 (ice? %)
-                                                 (<= (rez-cost state :corp % nil) (x-cost-value eid)))
-                                           (all-installed state :corp)))}
-    :prompt (msg "derez an ice with a rez cost of " (x-cost-value eid) " or lower")
-    :choices {:req (req (and (rezzed? target)
-                             (ice? target)
-                             (<= (rez-cost state :corp target nil) (x-cost-value eid))))}
-    :effect (req (derez state side eid target))}})
+  (letfn [(valid? [state target eid]
+            (and (rezzed? target) (ice? target)
+                 (<= (rez-cost state :corp target nil) (x-cost-value eid))))]
+    {:on-play
+     {:async true
+      :base-play-cost [(->c :x-credits)]
+      :change-in-game-state {:req (req (some #(valid? state % eid) (all-installed state :corp)))}
+      :prompt (msg "derez an ice with a rez cost of " (x-cost-value eid) " or lower")
+      :choices {:req (req (valid? state target eid))}
+      :effect (req (derez state side eid target))}}))
 
 (defcard "Build Script"
   {:on-play
