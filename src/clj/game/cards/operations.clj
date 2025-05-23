@@ -2304,7 +2304,7 @@
              :waiting-prompt true
              :base-play-cost [(->c :x-credits 0 {:maximum (req (count-tags state))})]
              :choices {:req (req (can-be-advanced? state target))}
-             :msg (msg "place " (x-cost-value eid) " advancement counters on " (card-str state target))
+             :msg (msg "place " (quantify (x-cost-value eid) " advancement counter") " on " (card-str state target))
              :async true
              :effect (req (add-prop state side eid target :advance-counter (x-cost-value eid) {:placed true}))}})
 
