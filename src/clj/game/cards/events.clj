@@ -539,7 +539,7 @@
                                    :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to make a run")))}
                                    :yes-ability {:msg (str "make a run on " (zone->name marked-server))
                                                  :async true
-                                                 :effect (effect (make-run eid marked-server))}}}
+                                                 :effect (effect (make-run eid marked-server card))}}}
                                  card nil)))))}})
 
 (defcard "CBI Raid"
@@ -3008,7 +3008,7 @@
              :async true
              :effect (req (when (<= (count (:hand runner)) 2)
                             (pump-all-icebreakers state side 2 :end-of-run))
-                          (make-run state side eid target))}})
+                          (make-run state side eid target card))}})
 
 (defcard "Quality Time"
   {:on-play

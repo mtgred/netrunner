@@ -138,9 +138,7 @@
                                                    :req (req (>= (:click runner) 2))
                                                    :msg (msg "bypass " (card-str state (:ice context)))
                                                    :effect (req (bypass-ice state))}}}])
-                              (wait-for
-                                (make-run state :runner (make-eid state eid) :hq card)
-                                (effect-completed state side eid)))}]
+                              (make-run state side eid :hq card))}]
     {:flags {:runner-phase-12 (req true)}
      :events [{:event :runner-turn-begins
                :skippable true
