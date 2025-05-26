@@ -1295,6 +1295,10 @@
 (defcard "Hermes"
   (let [ab {:interactive (req true)
             :prompt "Choose an unrezzed card"
+            :change-in-game-state {:silent true
+                                   :req (req (some #(and (not (faceup? %))
+                                                         (installed? %))
+                                                   (all-installed state :corp)))}
             :waiting-prompt true
             :choices {:card #(and (not (faceup? %))
                                   (installed? %)

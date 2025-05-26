@@ -3168,7 +3168,7 @@
       (is (find-card "Geothermal Fracking" (:hand (get-corp))) "Geothermal Fracking returned to hand")
       (click-prompt state :runner "Steal")
       (is (find-card "Hostile Takeover" (:scored (get-runner))) "Geothermal Fracking stolen with Gang Sign")
-      (click-prompt state :runner "Done")))
+      (is (no-prompt? state :runner) "No prompt because no targets")))
 
 (deftest leela-patel-trained-pragmatist-issues-with-lingering-successful-run-prompt
     ;; issues with lingering successful run prompt

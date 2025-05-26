@@ -219,7 +219,6 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (click-card state :corp "Gang Sign")
-      (click-prompt state :runner "Done") ; Leela trigger, no Gang Sign prompt
       (is (no-prompt? state :runner) "Runner doesn't get an access prompt")))
 
 (deftest amani-senai-with-sansan-city-grid-5344
