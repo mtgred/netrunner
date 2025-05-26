@@ -4,30 +4,19 @@
    [jinteki.i18n :as i18n]
    [jinteki.utils :refer [str->int]]
    [nr.ajax :refer [GET]]
+   [nr.local-storage :as ls]
    [clojure.string :as str]
    [reagent.core :as r]))
 
 (defn- migrate-legacy-localStorage-keys!
   "Migrates legacy localStorage keys to new consistent kebab-case format"
   []
-  (let [migrations {"custom_bg_url" "custom-bg-url"
-                    "sounds_volume" "sounds-volume"
-                    "lobby_sounds" "lobby-sounds"}]
-    (doseq [[old-key new-key] migrations]
-      (when-let [value (.getItem js/localStorage old-key)]
-        ;; Copy to new key
-        (.setItem js/localStorage new-key value)
-        ;; Remove old key
-        (.removeItem js/localStorage old-key)))))
-
-(defn- get-local-value
-  "Read the value of the given key from localStorage. Return the default-value if no matching key found"
-  [k default-value]
-  (let [rtn (js->clj (.getItem js/localStorage k))]
-    (if (nil? rtn) default-value rtn)))
+  (ls/migrate-keys! {"custom_bg_url" "custom-bg-url"
+                     "sounds_volume" "sounds-volume"
+                     "lobby_sounds" "lobby-sounds"}))
 
 (defn- load-visible-formats
-  "Loading visible formats from localStorage. Accounting for the fact that js->clj doesn't handle sets"
+  "Loading visible formats from localStorage"
   []
   (let [default-visible-formats #{"standard"
                                   "system-gateway"
@@ -36,9 +25,8 @@
                                   "startup"
                                   "eternal"
                                   "preconstructed"
-                                  "casual"}
-        serialized (get-local-value "visible-formats" "")]
-    (if (empty? serialized) default-visible-formats (set (.parse js/JSON serialized)))))
+                                  "casual"}]
+    (ls/load "visible-formats" default-visible-formats)))
 
 (def valid-background-slugs
   #{"apex-bg" "custom-bg"
@@ -78,31 +66,37 @@
   (let [js-user (js->clj js/user :keywordize-keys true)]
     (r/atom {:active-page "/"
              :user js-user
-             :options (-> {:background (get-local-value "background" "worlds2020")
-                           :custom-bg-url (get-local-value "custom-bg-url" "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
-                           :corp-card-sleeve (get-local-value "corp-card-sleeve" "nsg-card-back")
-                           :runner-card-sleeve (get-local-value "runner-card-sleeve" "nsg-card-back")
-                           :card-zoom (get-local-value "card-zoom" "image")
-                           :pin-zoom (= (get-local-value "pin-zoom" "false") "true")
-                           :pronouns "none"
-                           :language (get-local-value "language" nav-lang)
-                           :default-format (get-local-value "default-format" "standard")
-                           :show-alt-art true
-                           :card-resolution "default"
-                           :player-stats-icons (= (get-local-value "player-stats-icons" "true") "true")
-                           :stacked-cards (= (get-local-value "stacked-cards" "true") "true")
-                           :sides-overlap (= (get-local-value "sides-overlap" "true") "true")
-                           :log-timestamps (= (get-local-value "log-timestamps" "true") "true")
-                           :runner-board-order (get-local-value "runner-board-order" "irl")
-                           :deckstats "always"
-                           :gamestats "always"
-                           :log-width (str->int (get-local-value "log-width" "300"))
-                           :log-top (str->int (get-local-value "log-top" "419"))
-                           :log-player-highlight (get-local-value "log-player-highlight" "blue-red")
-                           :sounds (= (get-local-value "sounds" "true") "true")
-                           :lobby-sounds (= (get-local-value "lobby-sounds" "true") "true")
-                           :sounds-volume (str->int (get-local-value "sounds-volume" "100"))
-                           :disable-websockets (= (get-local-value "disable-websockets" "false") "true")}
+             :options (-> {:background (ls/load "background" "worlds2020")
+                           :custom-bg-url (ls/load "custom-bg-url" "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
+                           :corp-card-sleeve (ls/load "corp-card-sleeve" "nsg-card-back")
+                           :runner-card-sleeve (ls/load "runner-card-sleeve" "nsg-card-back")
+                           :card-zoom (ls/load "card-zoom" "image")
+                           :pin-zoom (ls/load "pin-zoom" false)
+                           :pronouns (ls/load "pronouns" "none")
+                           :language (ls/load "language" nav-lang)
+                           :default-format (ls/load "default-format" "standard")
+                           :show-alt-art (ls/load "show-alt-art" true)
+                           :card-resolution (ls/load "card-resolution" "default")
+                           :player-stats-icons (ls/load "player-stats-icons" true)
+                           :stacked-cards (ls/load "stacked-cards" true)
+                           :sides-overlap (ls/load "sides-overlap" true)
+                           :log-timestamps (ls/load "log-timestamps" true)
+                           :runner-board-order (ls/load "runner-board-order" "irl")
+                           :deckstats (ls/load "deckstats" "always")
+                           :gamestats (ls/load "gamestats" "always")
+                           :log-width (ls/load "log-width" 300)
+                           :log-top (ls/load "log-top" 419)
+                           :log-player-highlight (ls/load "log-player-highlight" "blue-red")
+                           :sounds (ls/load "sounds" true)
+                           :lobby-sounds (ls/load "lobby-sounds" true)
+                           :sounds-volume (ls/load "sounds-volume" 100)
+                           :disable-websockets (ls/load "disable-websockets" false)
+                           :pass-on-rez (ls/load "pass-on-rez" false)
+                           :ghost-trojans (ls/load "ghost-trojans" true)
+                           :display-encounter-info (ls/load "display-encounter-info" false)
+                           :alt-arts (ls/load "alt-arts" {})
+                           :bespoke-sounds (ls/load "bespoke-sounds" {})
+                           :blocked-users (ls/load "blocked-users" [])}
                           (merge (:options js-user))
                           (validate-options))
              :cards-loaded false

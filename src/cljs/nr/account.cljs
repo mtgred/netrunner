@@ -10,6 +10,7 @@
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [valid-email?]]
    [nr.avatar :refer [avatar]]
+   [nr.local-storage :as ls]
    [nr.sounds :refer [bespoke-sounds play-sfx random-sound select-random-from-grouping]]
    [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
@@ -37,11 +38,6 @@
                  (assoc params :lang (:language params)))]
     (go (let [response (<! (PUT "/profile" params :json))]
           (callback response)))))
-
-(defn save-to-local-storage!
-  [k v]
-  (when-not (nil? v)
-    (.setItem js/localStorage k v)))
 
 (defn handle-post [event s]
   (.preventDefault event)
@@ -87,29 +83,41 @@
                            :gamestats gamestats
                            :deckstats deckstats
                            :disable-websockets disable-websockets)))
-    (save-to-local-storage! "language" language)
-    (save-to-local-storage! "sounds" sounds)
-    (save-to-local-storage! "default-format" default-format)
-    (save-to-local-storage! "lobby_sounds" lobby-sounds)
-    (save-to-local-storage! "background" background)
-    (save-to-local-storage! "custom_bg_url" custom-bg-url)
-    (save-to-local-storage! "volume" volume)
-    (save-to-local-storage! "log-width" log-width)
-    (save-to-local-storage! "log-top" log-top)
-    (save-to-local-storage! "log-player-highlight" log-player-highlight)
-    (save-to-local-storage! "pass-on-rez" pass-on-rez)
-    (save-to-local-storage! "player-stats-icons" player-stats-icons)
-    (save-to-local-storage! "stacked-cards" stacked-cards)
-    (save-to-local-storage! "ghost-trojans" ghost-trojans)
-    (save-to-local-storage! "display-encounter-info" display-encounter-info)
-    (save-to-local-storage! "sides-overlap" sides-overlap)
-    (save-to-local-storage! "log-timestamps" log-timestamps)
-    (save-to-local-storage! "runner-board-order" runner-board-order)
-    (save-to-local-storage! "corp-card-sleeve" corp-card-sleeve)
-    (save-to-local-storage! "runner-card-sleeve" runner-card-sleeve)
-    (save-to-local-storage! "card-zoom" card-zoom)
-    (save-to-local-storage! "pin-zoom" pin-zoom)
-    (save-to-local-storage! "disable-websockets" disable-websockets))
+    ;; Save ALL settings to localStorage with consistent kebab-case naming
+    (ls/save! "alt-arts" alt-arts)
+    (ls/save! "background" background)
+    (ls/save! "bespoke-sounds" bespoke-sounds)
+    (ls/save! "blocked-users" blocked-users)
+    (ls/save! "card-resolution" card-resolution)
+    (ls/save! "card-zoom" card-zoom)
+    (ls/save! "corp-card-sleeve" corp-card-sleeve)
+    (ls/save! "custom-bg-url" custom-bg-url)
+    (ls/save! "deckstats" deckstats)
+    (ls/save! "default-format" default-format)
+    (ls/save! "disable-websockets" disable-websockets)
+    (ls/save! "display-encounter-info" display-encounter-info)
+    (ls/save! "gamestats" gamestats)
+    (ls/save! "ghost-trojans" ghost-trojans)
+    (ls/save! "language" language)
+    (ls/save! "lobby-sounds" lobby-sounds)
+    (ls/save! "log-player-highlight" log-player-highlight)
+    (ls/save! "log-timestamps" log-timestamps)
+    (ls/save! "log-top" log-top)
+    (ls/save! "log-width" log-width)
+    (ls/save! "pass-on-rez" pass-on-rez)
+    (ls/save! "pin-zoom" pin-zoom)
+    (ls/save! "player-stats-icons" player-stats-icons)
+    (ls/save! "pronouns" pronouns)
+    (ls/save! "runner-board-order" runner-board-order)
+    (ls/save! "runner-card-sleeve" runner-card-sleeve)
+    (ls/save! "show-alt-art" show-alt-art)
+    (ls/save! "sides-overlap" sides-overlap)
+    (ls/save! "sounds" sounds)
+    (ls/save! "sounds-volume" volume)
+    (ls/save! "stacked-cards" stacked-cards)
+    ;; Note: visible-formats is handled separately
+    ;; Note: prizes is handled as part of user data, not a setting
+    ;; TODO: Add archives-sorted, heap-sorted, labeled-cards, labeled-unrezzed-cards when UI is added)
   (post-options #(post-response s %)))
 
 (defn add-user-to-block-list
