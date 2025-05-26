@@ -14,7 +14,8 @@
   []
   (ls/migrate-keys! {"custom_bg_url" "custom-bg-url"
                      "sounds_volume" "sounds-volume"
-                     "lobby_sounds" "lobby-sounds"}))
+                     "lobby_sounds" "lobby-sounds"
+                     "volume" "sounds-volume"}))
 
 (defn- load-visible-formats
   "Loading visible formats from localStorage"

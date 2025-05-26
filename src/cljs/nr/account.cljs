@@ -45,10 +45,8 @@
   (swap! s assoc :flash-message (tr [:settings_updating "Updating profile..."]))
   (let [state-map @s
         ;; Extract all settings from state using the centralized definition
-        ;; Note: volume in state maps to :sounds-volume setting
         settings-map (reduce (fn [m {:keys [key]}]
-                               (let [state-key (if (= key :sounds-volume) :volume key)
-                                     value (get state-map state-key)]
+                               (let [value (get state-map key)]
                                  (if (some? value)
                                    (assoc m key value)
                                    m)))
@@ -342,8 +340,8 @@
             [:input {:type "range"
                      :min 1 :max 100 :step 1
                      :on-mouse-up #(play-sfx [(random-sound)] {:volume (int (.. % -target -value))})
-                     :on-change #(swap! s assoc :volume (.. % -target -value))
-                     :value (or (:volume @s) 50)
+                     :on-change #(swap! s assoc :sounds-volume (.. % -target -value))
+                     :value (or (:sounds-volume @s) 50)
                      :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
 
           [:section
@@ -359,7 +357,7 @@
                                  :on-change #(let [checked (.. % -target -checked)]
                                                (when checked
                                                  (play-sfx [(select-random-from-grouping grouping)]
-                                                           {:volume (or (:volume @s) 50)
+                                                           {:volume (or (:sounds-volume @s) 50)
                                                             :force true}))
                                                (swap! s assoc-in [:bespoke-sounds grouping] checked))}]
                  (tr [:settings_bespoke-sounds group-name] {:sound group-name})]]))]
@@ -641,7 +639,7 @@
         state (r/atom
                (-> (:options @app-state)
                    (select-keys [:pronouns :bespoke-sounds :language :sounds :default-format
-                                 :lobby-sounds :volume :background :custom-bg-url :card-zoom
+                                 :lobby-sounds :sounds-volume :background :custom-bg-url :card-zoom
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
                                  :player-stats-icons :stacked-cards :ghost-trojans
                                  :corp-card-sleeve :runner-card-sleeve :prizes
