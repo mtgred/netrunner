@@ -37,6 +37,8 @@
   ["Protocols checked and re-checked. Prepare to \"test\" their brain against our code."]
   "Shaper"
   ["They seem quite prepared. Have the field units deal with their contacts, they won't be able to face us alone."]}
+ "AU Co.: The Gold Standard in Clones"
+ {"Default" ["I, Phat Gioan Baotixita, make the best company. Don't you agree?"]}
  "Azmari EdTech: Shaping the Future"
  {"Anarch"
   ["Your obsolete ideas and worn-out slogans do not apply to the glorious future we are creating in every young mind we can reach."]
@@ -48,6 +50,8 @@
   ["Try not to fall behind, we have a very rigorous program."]
   "Shaper"
   ["You think you know what true knowledge is? Let us teach you a real lesson, then."]}
+ "BANGUN: When Disaster Strikes"
+ {"Default" ["... we'll be there."]}
  "Blue Sun: Powering the Future"
  {"Anarch" ["You can't fight fusion with petrol bombs."]
   "Criminal" ["Steal all you want, we can generate way more than that."]
