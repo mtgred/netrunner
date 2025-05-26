@@ -171,11 +171,35 @@
     (response 404 {:message "Account not found"})))
 
 (def profile-keys
-  [:background :pronouns :language :default-format :show-alt-art :blocked-users
-   :alt-arts :card-resolution :deckstats :gamestats :card-zoom :pin-zoom :card-back-display
-   :corp-card-sleeve :runner-card-sleeve :prizes :stacked-cards :ghost-trojans :display-encounter-info
-   :sides-overlap :archives-sorted :heap-sorted :log-timestamps
-   :labeled-cards :labeled-unrezzed-cards :bespoke-sounds :pass-on-rez])
+  "Settings that sync across devices via database storage.
+   Device-specific settings like sounds, resolution, and layout preferences
+   are stored only in localStorage."
+  [:alt-arts
+   :archives-sorted
+   :background
+   :bespoke-sounds
+   :blocked-users
+   :card-back-display
+   :card-zoom
+   :corp-card-sleeve
+   :custom-bg-url
+   :deckstats
+   :default-format
+   :display-encounter-info
+   :gamestats
+   :ghost-trojans
+   :heap-sorted
+   :language
+   :log-player-highlight
+   :log-timestamps
+   :pass-on-rez
+   :pin-zoom
+   :pronouns
+   :prizes
+   :runner-board-order
+   :runner-card-sleeve
+   :show-alt-art
+   :stacked-cards])
 
 (defn update-profile-handler
   [{db :system/db

@@ -42,52 +42,80 @@
 (defn handle-post [event s]
   (.preventDefault event)
   (swap! s assoc :flash-message (tr [:settings_updating "Updating profile..."]))
-  (let [{:keys [pronouns bespoke-sounds language sounds default-format
-                lobby-sounds volume background custom-bg-url corp-card-sleeve runner-card-sleeve card-zoom
-                pin-zoom show-alt-art card-resolution pass-on-rez
-                player-stats-icons stacked-cards ghost-trojans prizes
-                display-encounter-info sides-overlap log-timestamps
-                runner-board-order log-width log-top log-player-highlight
-                blocked-users alt-arts gamestats deckstats disable-websockets]} @s]
+  (let [{:keys [alt-arts
+                background
+                bespoke-sounds
+                blocked-users
+                card-back-display
+                card-resolution
+                card-zoom
+                corp-card-sleeve
+                custom-bg-url
+                deckstats
+                default-format
+                disable-websockets
+                display-encounter-info
+                gamestats
+                ghost-trojans
+                language
+                lobby-sounds
+                log-player-highlight
+                log-timestamps
+                log-top
+                log-width
+                pass-on-rez
+                pin-zoom
+                player-stats-icons
+                prizes
+                pronouns
+                runner-board-order
+                runner-card-sleeve
+                show-alt-art
+                sides-overlap
+                sounds
+                stacked-cards
+                volume]} @s]
     (swap! app-state update :options
            (fn [options]
              (m/assoc-some options
-                           :pronouns pronouns
-                           :bespoke-sounds bespoke-sounds
-                           :language language
-                           :sounds sounds
-                           :default-format default-format
-                           :lobby-sounds lobby-sounds
-                           :volume volume
-                           :background background
-                           :custom-bg-url custom-bg-url
-                           :runner-card-sleeve runner-card-sleeve
-                           :corp-card-sleeve corp-card-sleeve
-                           :card-zoom card-zoom
-                           :pin-zoom pin-zoom
-                           :show-alt-art show-alt-art
-                           :card-resolution card-resolution
-                           :pass-on-rez pass-on-rez
-                           :player-stats-icons player-stats-icons
-                           :stacked-cards stacked-cards
-                           :ghost-trojans ghost-trojans
-                           :display-encounter-info display-encounter-info
-                           :sides-overlap sides-overlap
-                           :log-timestamps log-timestamps
-                           :runner-board-order runner-board-order
-                           :log-width log-width
-                           :log-top log-top
-                           :log-player-highlight log-player-highlight
-                           :blocked-users blocked-users
                            :alt-arts alt-arts
-                           :gamestats gamestats
+                           :background background
+                           :bespoke-sounds bespoke-sounds
+                           :blocked-users blocked-users
+                           :card-back-display card-back-display
+                           :card-resolution card-resolution
+                           :card-zoom card-zoom
+                           :corp-card-sleeve corp-card-sleeve
+                           :custom-bg-url custom-bg-url
                            :deckstats deckstats
-                           :disable-websockets disable-websockets)))
+                           :default-format default-format
+                           :disable-websockets disable-websockets
+                           :display-encounter-info display-encounter-info
+                           :gamestats gamestats
+                           :ghost-trojans ghost-trojans
+                           :language language
+                           :lobby-sounds lobby-sounds
+                           :log-player-highlight log-player-highlight
+                           :log-timestamps log-timestamps
+                           :log-top log-top
+                           :log-width log-width
+                           :pass-on-rez pass-on-rez
+                           :pin-zoom pin-zoom
+                           :player-stats-icons player-stats-icons
+                           :pronouns pronouns
+                           :runner-board-order runner-board-order
+                           :runner-card-sleeve runner-card-sleeve
+                           :show-alt-art show-alt-art
+                           :sides-overlap sides-overlap
+                           :sounds sounds
+                           :stacked-cards stacked-cards
+                           :volume volume)))
     ;; Save ALL settings to localStorage with consistent kebab-case naming
     (ls/save! "alt-arts" alt-arts)
     (ls/save! "background" background)
     (ls/save! "bespoke-sounds" bespoke-sounds)
     (ls/save! "blocked-users" blocked-users)
+    (ls/save! "card-back-display" card-back-display)
     (ls/save! "card-resolution" card-resolution)
     (ls/save! "card-zoom" card-zoom)
     (ls/save! "corp-card-sleeve" corp-card-sleeve)
