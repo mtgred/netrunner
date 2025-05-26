@@ -1411,6 +1411,10 @@
                :choices {:card #(and (not (faceup? %))
                                      (installed? %)
                                      (corp? %))}
+               :change-in-game-state {:silent true
+                                      :req (req (some #(and (not (faceup? %))
+                                                            (installed? %))
+                                                      (all-installed state :corp)))}
                :msg (msg "add " (card-str state target) " to HQ")
                :effect (effect (move :corp target :hand))}]
     {:events [(assoc leela :event :agenda-scored)
@@ -2528,9 +2532,9 @@
 (defcard "Tāo Salonga: Telepresence Magician"
   (let [swap-ability
         {:interactive (req true)
+         :change-in-game-state {:silent true :req (req (<= 2 (count (filter ice? (all-installed state :corp)))))}
          :optional
-         {:req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
-          :prompt "Swap 2 pieces of ice?"
+         {:prompt "Swap 2 pieces of ice?"
           :waiting-prompt true
           :yes-ability
           {:prompt "Choose 2 pieces of ice"
