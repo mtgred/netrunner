@@ -67,6 +67,7 @@
     (r/atom {:active-page "/"
              :user js-user
              :options (-> {:alt-arts (ls/load "alt-arts" {})
+                           :archives-sorted (ls/load "archives-sorted" false)
                            :background (ls/load "background" "worlds2020")
                            :bespoke-sounds (ls/load "bespoke-sounds" {})
                            :blocked-users (ls/load "blocked-users" [])
@@ -81,6 +82,9 @@
                            :display-encounter-info (ls/load "display-encounter-info" false)
                            :gamestats (ls/load "gamestats" "always")
                            :ghost-trojans (ls/load "ghost-trojans" true)
+                           :heap-sorted (ls/load "heap-sorted" false)
+                           :labeled-cards (ls/load "labeled-cards" false)
+                           :labeled-unrezzed-cards (ls/load "labeled-unrezzed-cards" false)
                            :language (ls/load "language" nav-lang)
                            :lobby-sounds (ls/load "lobby-sounds" true)
                            :log-player-highlight (ls/load "log-player-highlight" "blue-red")

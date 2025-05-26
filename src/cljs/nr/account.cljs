@@ -43,6 +43,7 @@
   (.preventDefault event)
   (swap! s assoc :flash-message (tr [:settings_updating "Updating profile..."]))
   (let [{:keys [alt-arts
+                archives-sorted
                 background
                 bespoke-sounds
                 blocked-users
@@ -57,6 +58,9 @@
                 display-encounter-info
                 gamestats
                 ghost-trojans
+                heap-sorted
+                labeled-cards
+                labeled-unrezzed-cards
                 language
                 lobby-sounds
                 log-player-highlight
@@ -79,6 +83,7 @@
            (fn [options]
              (m/assoc-some options
                            :alt-arts alt-arts
+                           :archives-sorted archives-sorted
                            :background background
                            :bespoke-sounds bespoke-sounds
                            :blocked-users blocked-users
@@ -93,6 +98,9 @@
                            :display-encounter-info display-encounter-info
                            :gamestats gamestats
                            :ghost-trojans ghost-trojans
+                           :heap-sorted heap-sorted
+                           :labeled-cards labeled-cards
+                           :labeled-unrezzed-cards labeled-unrezzed-cards
                            :language language
                            :lobby-sounds lobby-sounds
                            :log-player-highlight log-player-highlight
@@ -112,6 +120,7 @@
                            :volume volume)))
     ;; Save ALL settings to localStorage with consistent kebab-case naming
     (ls/save! "alt-arts" alt-arts)
+    (ls/save! "archives-sorted" archives-sorted)
     (ls/save! "background" background)
     (ls/save! "bespoke-sounds" bespoke-sounds)
     (ls/save! "blocked-users" blocked-users)
@@ -126,6 +135,9 @@
     (ls/save! "display-encounter-info" display-encounter-info)
     (ls/save! "gamestats" gamestats)
     (ls/save! "ghost-trojans" ghost-trojans)
+    (ls/save! "heap-sorted" heap-sorted)
+    (ls/save! "labeled-cards" labeled-cards)
+    (ls/save! "labeled-unrezzed-cards" labeled-unrezzed-cards)
     (ls/save! "language" language)
     (ls/save! "lobby-sounds" lobby-sounds)
     (ls/save! "log-player-highlight" log-player-highlight)
@@ -144,8 +156,7 @@
     (ls/save! "sounds-volume" volume)
     (ls/save! "stacked-cards" stacked-cards)
     ;; Note: visible-formats is handled separately
-    ;; Note: prizes is handled as part of user data, not a setting
-    ;; TODO: Add archives-sorted, heap-sorted, labeled-cards, labeled-unrezzed-cards when UI is added)
+    ;; Note: prizes is handled as part of user data, not a setting)
   (post-options #(post-response s %)))
 
 (defn add-user-to-block-list
