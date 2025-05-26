@@ -5,6 +5,7 @@
    [clojure.string :as s]
    [goog.dom :as gdom]
    [jinteki.cards :refer [all-cards]]
+   [jinteki.settings :as settings]
    [medley.core :as m]
    [nr.ajax :refer [DELETE GET POST PUT]]
    [nr.appstate :refer [app-state]]
@@ -42,122 +43,28 @@
 (defn handle-post [event s]
   (.preventDefault event)
   (swap! s assoc :flash-message (tr [:settings_updating "Updating profile..."]))
-  (let [{:keys [alt-arts
-                archives-sorted
-                background
-                bespoke-sounds
-                blocked-users
-                card-back-display
-                card-resolution
-                card-zoom
-                corp-card-sleeve
-                custom-bg-url
-                deckstats
-                default-format
-                disable-websockets
-                display-encounter-info
-                gamestats
-                ghost-trojans
-                heap-sorted
-                labeled-cards
-                labeled-unrezzed-cards
-                language
-                lobby-sounds
-                log-player-highlight
-                log-timestamps
-                log-top
-                log-width
-                pass-on-rez
-                pin-zoom
-                player-stats-icons
-                prizes
-                pronouns
-                runner-board-order
-                runner-card-sleeve
-                show-alt-art
-                sides-overlap
-                sounds
-                stacked-cards
-                volume]} @s]
+  (let [state-map @s
+        ;; Extract all settings from state using the centralized definition
+        ;; Note: volume in state maps to :sounds-volume setting
+        settings-map (reduce (fn [m {:keys [key]}]
+                               (let [state-key (if (= key :sounds-volume) :volume key)
+                                     value (get state-map state-key)]
+                                 (if (some? value)
+                                   (assoc m key value)
+                                   m)))
+                             {}
+                             settings/all-settings)]
+    ;; Update app-state with all settings
     (swap! app-state update :options
            (fn [options]
-             (m/assoc-some options
-                           :alt-arts alt-arts
-                           :archives-sorted archives-sorted
-                           :background background
-                           :bespoke-sounds bespoke-sounds
-                           :blocked-users blocked-users
-                           :card-back-display card-back-display
-                           :card-resolution card-resolution
-                           :card-zoom card-zoom
-                           :corp-card-sleeve corp-card-sleeve
-                           :custom-bg-url custom-bg-url
-                           :deckstats deckstats
-                           :default-format default-format
-                           :disable-websockets disable-websockets
-                           :display-encounter-info display-encounter-info
-                           :gamestats gamestats
-                           :ghost-trojans ghost-trojans
-                           :heap-sorted heap-sorted
-                           :labeled-cards labeled-cards
-                           :labeled-unrezzed-cards labeled-unrezzed-cards
-                           :language language
-                           :lobby-sounds lobby-sounds
-                           :log-player-highlight log-player-highlight
-                           :log-timestamps log-timestamps
-                           :log-top log-top
-                           :log-width log-width
-                           :pass-on-rez pass-on-rez
-                           :pin-zoom pin-zoom
-                           :player-stats-icons player-stats-icons
-                           :pronouns pronouns
-                           :runner-board-order runner-board-order
-                           :runner-card-sleeve runner-card-sleeve
-                           :show-alt-art show-alt-art
-                           :sides-overlap sides-overlap
-                           :sounds sounds
-                           :stacked-cards stacked-cards
-                           :volume volume)))
-    ;; Save ALL settings to localStorage with consistent kebab-case naming
-    (ls/save! "alt-arts" alt-arts)
-    (ls/save! "archives-sorted" archives-sorted)
-    (ls/save! "background" background)
-    (ls/save! "bespoke-sounds" bespoke-sounds)
-    (ls/save! "blocked-users" blocked-users)
-    (ls/save! "card-back-display" card-back-display)
-    (ls/save! "card-resolution" card-resolution)
-    (ls/save! "card-zoom" card-zoom)
-    (ls/save! "corp-card-sleeve" corp-card-sleeve)
-    (ls/save! "custom-bg-url" custom-bg-url)
-    (ls/save! "deckstats" deckstats)
-    (ls/save! "default-format" default-format)
-    (ls/save! "disable-websockets" disable-websockets)
-    (ls/save! "display-encounter-info" display-encounter-info)
-    (ls/save! "gamestats" gamestats)
-    (ls/save! "ghost-trojans" ghost-trojans)
-    (ls/save! "heap-sorted" heap-sorted)
-    (ls/save! "labeled-cards" labeled-cards)
-    (ls/save! "labeled-unrezzed-cards" labeled-unrezzed-cards)
-    (ls/save! "language" language)
-    (ls/save! "lobby-sounds" lobby-sounds)
-    (ls/save! "log-player-highlight" log-player-highlight)
-    (ls/save! "log-timestamps" log-timestamps)
-    (ls/save! "log-top" log-top)
-    (ls/save! "log-width" log-width)
-    (ls/save! "pass-on-rez" pass-on-rez)
-    (ls/save! "pin-zoom" pin-zoom)
-    (ls/save! "player-stats-icons" player-stats-icons)
-    (ls/save! "pronouns" pronouns)
-    (ls/save! "runner-board-order" runner-board-order)
-    (ls/save! "runner-card-sleeve" runner-card-sleeve)
-    (ls/save! "show-alt-art" show-alt-art)
-    (ls/save! "sides-overlap" sides-overlap)
-    (ls/save! "sounds" sounds)
-    (ls/save! "sounds-volume" volume)
-    (ls/save! "stacked-cards" stacked-cards)
+             (merge options settings-map)))
+    ;; Save ALL settings to localStorage using centralized definitions
+    (doseq [{:keys [key]} settings/all-settings]
+      (when-let [value (get settings-map key)]
+        (ls/save! (settings/storage-key key) value)))
     ;; Note: visible-formats is handled separately
     ;; Note: prizes is handled as part of user data, not a setting)
-  (post-options #(post-response s %)))
+  (post-options #(post-response s %))))
 
 (defn add-user-to-block-list
   [user s]

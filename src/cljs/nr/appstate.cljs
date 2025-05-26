@@ -2,6 +2,7 @@
   (:require
    [cljs.core.async :refer [<!] :refer-macros [go]]
    [jinteki.i18n :as i18n]
+   [jinteki.settings :as settings]
    [jinteki.utils :refer [str->int]]
    [nr.ajax :refer [GET]]
    [nr.local-storage :as ls]
@@ -66,42 +67,13 @@
   (let [js-user (js->clj js/user :keywordize-keys true)]
     (r/atom {:active-page "/"
              :user js-user
-             :options (-> {:alt-arts (ls/load "alt-arts" {})
-                           :archives-sorted (ls/load "archives-sorted" false)
-                           :background (ls/load "background" "worlds2020")
-                           :bespoke-sounds (ls/load "bespoke-sounds" {})
-                           :blocked-users (ls/load "blocked-users" [])
-                           :card-back-display (ls/load "card-back-display" "default")
-                           :card-resolution (ls/load "card-resolution" "default")
-                           :card-zoom (ls/load "card-zoom" "image")
-                           :corp-card-sleeve (ls/load "corp-card-sleeve" "nsg-card-back")
-                           :custom-bg-url (ls/load "custom-bg-url" "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
-                           :deckstats (ls/load "deckstats" "always")
-                           :default-format (ls/load "default-format" "standard")
-                           :disable-websockets (ls/load "disable-websockets" false)
-                           :display-encounter-info (ls/load "display-encounter-info" false)
-                           :gamestats (ls/load "gamestats" "always")
-                           :ghost-trojans (ls/load "ghost-trojans" true)
-                           :heap-sorted (ls/load "heap-sorted" false)
-                           :labeled-cards (ls/load "labeled-cards" false)
-                           :labeled-unrezzed-cards (ls/load "labeled-unrezzed-cards" false)
-                           :language (ls/load "language" nav-lang)
-                           :lobby-sounds (ls/load "lobby-sounds" true)
-                           :log-player-highlight (ls/load "log-player-highlight" "blue-red")
-                           :log-timestamps (ls/load "log-timestamps" true)
-                           :log-top (ls/load "log-top" 419)
-                           :log-width (ls/load "log-width" 300)
-                           :pass-on-rez (ls/load "pass-on-rez" false)
-                           :pin-zoom (ls/load "pin-zoom" false)
-                           :player-stats-icons (ls/load "player-stats-icons" true)
-                           :pronouns (ls/load "pronouns" "none")
-                           :runner-board-order (ls/load "runner-board-order" "irl")
-                           :runner-card-sleeve (ls/load "runner-card-sleeve" "nsg-card-back")
-                           :show-alt-art (ls/load "show-alt-art" true)
-                           :sides-overlap (ls/load "sides-overlap" true)
-                           :sounds (ls/load "sounds" true)
-                           :sounds-volume (ls/load "sounds-volume" 100)
-                           :stacked-cards (ls/load "stacked-cards" true)}
+             :options (-> (reduce (fn [opts {:keys [key default storage-key]}]
+                                    (let [storage-name (or storage-key (name key))
+                                          ;; Special handling for language default
+                                          default-val (if (= key :language) nav-lang default)]
+                                      (assoc opts key (ls/load storage-name default-val))))
+                                  {}
+                                  settings/all-settings)
                           (merge (:options js-user))
                           (validate-options))
              :cards-loaded false

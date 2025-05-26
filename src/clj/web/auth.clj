@@ -6,6 +6,7 @@
    [clojure.string :as str]
    [crypto.password.bcrypt :as password]
    [jinteki.i18n :as i18n]
+   [jinteki.settings :as settings]
    [jinteki.utils :refer [select-non-nil-keys]]
    [monger.collection :as mc]
    [monger.operators :refer :all]
@@ -174,32 +175,7 @@
   "Settings that sync across devices via database storage.
    Device-specific settings like sounds, resolution, and layout preferences
    are stored only in localStorage."
-  [:alt-arts
-   :archives-sorted
-   :background
-   :bespoke-sounds
-   :blocked-users
-   :card-back-display
-   :card-zoom
-   :corp-card-sleeve
-   :custom-bg-url
-   :deckstats
-   :default-format
-   :display-encounter-info
-   :gamestats
-   :ghost-trojans
-   :heap-sorted
-   :language
-   :log-player-highlight
-   :log-timestamps
-   :pass-on-rez
-   :pin-zoom
-   :pronouns
-   :prizes
-   :runner-board-order
-   :runner-card-sleeve
-   :show-alt-art
-   :stacked-cards])
+  (settings/sync-keys))
 
 (defn update-profile-handler
   [{db :system/db
