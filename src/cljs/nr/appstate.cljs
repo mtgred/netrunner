@@ -7,6 +7,19 @@
    [clojure.string :as str]
    [reagent.core :as r]))
 
+(defn- migrate-legacy-localStorage-keys!
+  "Migrates legacy localStorage keys to new consistent kebab-case format"
+  []
+  (let [migrations {"custom_bg_url" "custom-bg-url"
+                    "sounds_volume" "sounds-volume"
+                    "lobby_sounds" "lobby-sounds"}]
+    (doseq [[old-key new-key] migrations]
+      (when-let [value (.getItem js/localStorage old-key)]
+        ;; Copy to new key
+        (.setItem js/localStorage new-key value)
+        ;; Remove old key
+        (.removeItem js/localStorage old-key)))))
+
 (defn- get-local-value
   "Read the value of the given key from localStorage. Return the default-value if no matching key found"
   [k default-value]
@@ -58,12 +71,15 @@
       (contains? supported-languages lang) lang
       :else "en")))
 
+;; Run migration before creating app-state
+(migrate-legacy-localStorage-keys!)
+
 (def app-state
   (let [js-user (js->clj js/user :keywordize-keys true)]
     (r/atom {:active-page "/"
              :user js-user
              :options (-> {:background (get-local-value "background" "worlds2020")
-                           :custom-bg-url (get-local-value "custom_bg_url" "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
+                           :custom-bg-url (get-local-value "custom-bg-url" "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png")
                            :corp-card-sleeve (get-local-value "corp-card-sleeve" "nsg-card-back")
                            :runner-card-sleeve (get-local-value "runner-card-sleeve" "nsg-card-back")
                            :card-zoom (get-local-value "card-zoom" "image")
@@ -84,8 +100,8 @@
                            :log-top (str->int (get-local-value "log-top" "419"))
                            :log-player-highlight (get-local-value "log-player-highlight" "blue-red")
                            :sounds (= (get-local-value "sounds" "true") "true")
-                           :lobby-sounds (= (get-local-value "lobby_sounds" "true") "true")
-                           :sounds-volume (str->int (get-local-value "sounds_volume" "100"))
+                           :lobby-sounds (= (get-local-value "lobby-sounds" "true") "true")
+                           :sounds-volume (str->int (get-local-value "sounds-volume" "100"))
                            :disable-websockets (= (get-local-value "disable-websockets" "false") "true")}
                           (merge (:options js-user))
                           (validate-options))
