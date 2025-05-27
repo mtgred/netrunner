@@ -326,27 +326,6 @@
                             {:name "Igpay Atinlay" :ref "la-pig"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
            [:div "Some languages are not fully translated yet. If you would like to help with translations, please contact us."]]
-          [:section
-           [:h3 (tr [:settings_sounds "Sounds"])]
-           [:div
-            [:label [:input {:type "checkbox"
-                             :value true
-                             :checked (:lobby-sounds @s)
-                             :on-change #(swap! s assoc :lobby-sounds (.. % -target -checked))}]
-             (tr [:settings_enable-lobby-sounds "Enable lobby sounds"])]]
-           [:div
-            [:label [:input {:type "checkbox"
-                             :value true
-                             :checked (:sounds @s)
-                             :on-change #(swap! s assoc :sounds (.. % -target -checked))}]
-             (tr [:settings_enable-game-sounds "Enable game sounds"])]]
-           [:div (tr [:settings_volume "Volume"])
-            [:input {:type "range"
-                     :min 1 :max 100 :step 1
-                     :on-mouse-up #(play-sfx [(random-sound)] {:volume (int (.. % -target -value))})
-                     :on-change #(swap! s assoc :sounds-volume (.. % -target -value))
-                     :value (or (:sounds-volume @s) 50)
-                     :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
 
           [:section
            [:h3 (tr [:settings_bespoke-sounds "Card-Specific Sounds"] {:sound "header"})]
@@ -381,12 +360,6 @@
            [:div
             [:label [:input {:type "checkbox"
                              :value true
-                             :checked (:player-stats-icons @s)
-                             :on-change #(swap! s assoc :player-stats-icons (.. % -target -checked))}]
-             (tr [:settings_player-stats-icons "Use icons for player stats"])]]
-           [:div
-            [:label [:input {:type "checkbox"
-                             :value true
                              :checked (:stacked-cards @s)
                              :on-change #(swap! s assoc :stacked-cards (.. % -target -checked))}]
              (tr [:settings_stacked-cards "Card stacking (on by default)"])]]
@@ -402,12 +375,6 @@
                              :checked (:display-encounter-info @s)
                              :on-change #(swap! s assoc :display-encounter-info (.. % -target -checked))}]
              (tr [:settings_display-encounter-info "Always display encounter info"])]]
-           [:div
-            [:label [:input {:type "checkbox"
-                             :value true
-                             :checked (:sides-overlap @s)
-                             :on-change #(swap! s assoc :sides-overlap (.. % -target -checked))}]
-             (tr [:settings_sides-overlap "Runner and Corp board may overlap"])]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
@@ -434,11 +401,6 @@
                               :on-change #(swap! s assoc :runner-board-order (.. % -target -value))}]
               (tr [:settings_runner-reverse "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"])]]]
 
-           [:br]
-           [:h4 (tr [:settings_log-size "Log size"])]
-           [:div
-            [log-width-option s]
-            [log-top-option s]]
            [:br]
            [:h4 (tr [:settings_log-player-highlight "Log player highlight"])]
            [:div
@@ -559,14 +521,6 @@
                                       :checked (= (:deckstats @s) (:ref option))}]
                       (:name option)]]))]
 
-          [:section {:id "high-res"}
-           [:h3 (tr [:settings_card-images "Card images"])]
-           [:div
-            [:label [:input {:type "checkbox"
-                             :name "use-high-res"
-                             :checked (= "high" (:card-resolution @s))
-                             :on-change #(swap! s assoc :card-resolution (if (.. % -target -checked) "high" "default"))}]
-             (tr [:settings_high-res "Enable high-resolution card images"])]]]
 
           [:section {:id "alt-art"}
            [:h3 (tr [:settings_alt-art "Alt arts"])]
@@ -624,7 +578,58 @@
                     [:span.blocked-user-name (str "  " bu)]]))]
 
          [:section
-          [:h3  (tr [:settings_connection "Connection"])]
+          [:h3 (tr [:settings_device-specific "Device-specific settings"])]
+          [:p (tr [:settings_device-specific-note "These settings are stored locally on this device and do not sync across devices."])]
+
+          [:h4 (tr [:settings_sounds "Sounds"])]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:lobby-sounds @s)
+                            :on-change #(swap! s assoc :lobby-sounds (.. % -target -checked))}]
+            (tr [:settings_enable-lobby-sounds "Enable lobby sounds"])]]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:sounds @s)
+                            :on-change #(swap! s assoc :sounds (.. % -target -checked))}]
+            (tr [:settings_enable-game-sounds "Enable game sounds"])]]
+          [:div (tr [:settings_volume "Volume"])
+           [:input {:type "range"
+                    :min 1 :max 100 :step 1
+                    :on-mouse-up #(play-sfx [(random-sound)] {:volume (int (.. % -target -value))})
+                    :on-change #(swap! s assoc :sounds-volume (.. % -target -value))
+                    :value (or (:sounds-volume @s) 50)
+                    :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]
+
+          [:h4 (tr [:settings_layout-device "Device Layout"])]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:player-stats-icons @s)
+                            :on-change #(swap! s assoc :player-stats-icons (.. % -target -checked))}]
+            (tr [:settings_player-stats-icons "Use icons for player stats"])]]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:sides-overlap @s)
+                            :on-change #(swap! s assoc :sides-overlap (.. % -target -checked))}]
+            (tr [:settings_sides-overlap "Runner and Corp board may overlap"])]]
+
+          [:h4 (tr [:settings_log-size "Log size"])]
+          [:div
+           [log-width-option s]
+           [log-top-option s]]
+
+          [:h4 (tr [:settings_card-images "Card images"])]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :name "use-high-res"
+                            :checked (= "high" (:card-resolution @s))
+                            :on-change #(swap! s assoc :card-resolution (if (.. % -target -checked) "high" "default"))}]
+            (tr [:settings_high-res "Enable high-resolution card images"])]]
+
+          [:h4 (tr [:settings_connection "Connection"])]
           [:div
            [:label [:input {:type "checkbox"
                             :name "disable-websockets"
