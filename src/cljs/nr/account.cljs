@@ -356,6 +356,15 @@
                [:option {:value k} (tr-format v)]))]]
 
           [:section
+           [:h3 (tr [:settings_gameplay-settings "Gameplay Settings"])]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:pass-on-rez @s)
+                             :on-change #(swap! s assoc :pass-on-rez (.. % -target -checked))}]
+             (tr [:settings_pass-on-rez "Pass priority when rezzing ice"])]]]
+
+          [:section
            [:h3 (tr [:settings_layout-options "Layout options"])]
            [:div
             [:label [:input {:type "checkbox"
@@ -381,6 +390,18 @@
                              :checked (:log-timestamps @s)
                              :on-change #(swap! s assoc :log-timestamps (.. % -target -checked))}]
              (tr [:settings_toggle-log-timestamps "Show log timestamps"])]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:archives-sorted @s)
+                             :on-change #(swap! s assoc :archives-sorted (.. % -target -checked))}]
+             (tr [:settings_sort-archives "Sort Archives"])]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:heap-sorted @s)
+                             :on-change #(swap! s assoc :heap-sorted (.. % -target -checked))}]
+             (tr [:settings_sort-heap "Sort Heap"])]]
 
            [:br]
            [:h4 (tr [:settings_runner-layout "Runner layout from Corp perspective"])]
@@ -475,6 +496,19 @@
                     :style {:maxWidth "200px"}
                     :alt "Runner card back"}]
              [:div {:style {:marginTop "0.5rem" :textAlign "center"}} "Runner card back"]]]]
+
+           [:h3 (tr [:settings_card-back-display "Display Opponent Card backs"])]
+           (doall (for [option [{:name (tr [:settings_card-backs-their-choice "Their Choice"]) :ref "them"}
+                                {:name (tr [:settings_card-backs-my-choice "My Choice"]) :ref "me"}
+                                {:name (tr [:settings_card-backs-ffg "FFG Card Back"]) :ref "ffg"}
+                                {:name (tr [:settings_card-backs-nsg "NSG Card Back"]) :ref "nsg"}]]
+                    [:div.radio {:key (:name option)}
+                     [:label [:input {:type "radio"
+                                      :name "card-back-display"
+                                      :value (:ref option)
+                                      :on-change #(swap! s assoc :card-back-display (.. % -target -value))
+                                      :checked (= (:card-back-display @s) (:ref option))}]
+                      (:name option)]]))
 
           [:section
            [:h3  (tr [:settings_card-preview-zoom "Card preview zoom"])]
@@ -616,6 +650,19 @@
                             :on-change #(swap! s assoc :sides-overlap (.. % -target -checked))}]
             (tr [:settings_sides-overlap "Runner and Corp board may overlap"])]]
 
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:labeled-cards @s)
+                            :on-change #(swap! s assoc :labeled-cards (.. % -target -checked))}]
+            (tr [:settings_label-faceup-cards "Label face up cards"])]]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:labeled-unrezzed-cards @s)
+                            :on-change #(swap! s assoc :labeled-unrezzed-cards (.. % -target -checked))}]
+            (tr [:settings_label-unrezzed-cards "Label unrezzed cards"])]]
+
           [:h4 (tr [:settings_log-size "Log size"])]
           [:div
            [log-width-option s]
@@ -654,7 +701,9 @@
                                  :corp-card-sleeve :runner-card-sleeve :prizes
                                  :display-encounter-info :sides-overlap :log-timestamps
                                  :runner-board-order :log-width :log-top :log-player-highlight
-                                 :blocked-users :alt-arts :gamestats :deckstats :disable-websockets])
+                                 :blocked-users :alt-arts :gamestats :deckstats :disable-websockets
+                                 :archives-sorted :heap-sorted :card-back-display
+                                 :labeled-cards :labeled-unrezzed-cards])
                    (assoc :flash-message ""
                           :all-art-select "wc2015")))]
 
