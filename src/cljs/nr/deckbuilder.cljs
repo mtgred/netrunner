@@ -622,16 +622,17 @@
             (= all-formats-filter @fmt-filter))))
 
 (defn decks-list [_ _ scroll-top]
-  (r/create-class
-    {:display-name "deck-collection"
-     :component-did-mount #(set-scroll-top % @scroll-top)
-     :component-will-unmount #(store-scroll-top % scroll-top)
-     :reagent-render
-     (fn [filtered-decks s _]
-       (into [:div.deck-collection]
-             (for [deck (sort-by (juxt :date :_id) > filtered-decks)]
-               ^{:key (:_id deck)}
-               [deck-entry s deck])))}))
+  (r/with-let [!node-ref (r/atom nil)]
+    (r/create-class
+      {:display-name "deck-collection"
+       :component-did-mount (fn [_] (set-scroll-top @!node-ref @scroll-top))
+       :component-will-unmount (fn [_] (store-scroll-top @!node-ref scroll-top))
+       :reagent-render
+       (fn [filtered-decks s _]
+         (into [:div.deck-collection {:ref #(reset! !node-ref %)}]
+               (for [deck (sort-by (juxt :date :_id) > filtered-decks)]
+                 ^{:key (:_id deck)}
+                 [deck-entry s deck])))})))
 
 (defn deck-collection
   [state decks decks-loaded scroll-top]

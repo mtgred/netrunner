@@ -209,27 +209,28 @@
 (defn log-messages []
   (let [log (r/cursor game-state [:log])
         corp (r/cursor game-state [:corp :user :username])
-        runner (r/cursor game-state [:runner :user :username])]
+        runner (r/cursor game-state [:runner :user :username])
+        !node-ref (r/atom nil)]
     (r/create-class
       {:display-name "log-messages"
 
        :component-did-mount
-       (fn [this]
+       (fn [_]
          (when (:update @should-scroll)
-           (let [n (rdom/dom-node this)]
+           (when-let [n @!node-ref]
              (set! (.-scrollTop n) (.-scrollHeight n)))))
 
        :component-will-update
-       (fn [this]
-         (let [n (rdom/dom-node this)]
+       (fn [_]
+         (when-let [n @!node-ref]
            (reset! should-scroll {:update (or (:send-msg @should-scroll)
                                               (scrolled-to-end? n 15))
                                   :send-msg false})))
 
        :component-did-update
-       (fn [this]
+       (fn [_]
          (when (:update @should-scroll)
-           (let [n (rdom/dom-node this)]
+           (when-let [n @!node-ref]
              (set! (.-scrollTop n) (.-scrollHeight n)))))
 
        :reagent-render
@@ -237,6 +238,7 @@
          (into [:div.messages {:class [(when (:replay @game-state)
                                          "panel-bottom")
                                        (player-highlight-option-class)]
+                               :ref #(reset! !node-ref %)
                                :on-mouse-over #(card-preview-mouse-over % zoom-channel)
                                :on-mouse-out #(card-preview-mouse-out % zoom-channel)
                                :aria-live "polite"}]

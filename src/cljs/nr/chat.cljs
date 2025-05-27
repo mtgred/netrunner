@@ -215,11 +215,12 @@
 (fetch-all-messages)
 
 (defn message-panel [s old scroll-top]
-  (r/with-let [cards-loaded (r/cursor app-state [:cards-loaded])]
+  (r/with-let [cards-loaded (r/cursor app-state [:cards-loaded])
+               !node-ref (r/atom nil)]
     (r/create-class
       {:display-name "message-panel"
-       :component-did-mount #(set-scroll-top % @scroll-top)
-       :component-will-unmount #(store-scroll-top % scroll-top)
+       :component-did-mount (fn [_] (set-scroll-top @!node-ref @scroll-top))
+       :component-will-unmount (fn [_] (store-scroll-top @!node-ref scroll-top))
        :component-did-update
        (fn []
          (when-let [msg-list (:message-list @chat-state)]
@@ -244,7 +245,8 @@
 
        :reagent-render
        (fn [s _old _scroll-top]
-         [:div.blue-shade.panel.message-list {:ref #(swap! chat-state assoc :message-list %)
+         [:div.blue-shade.panel.message-list {:ref #(do (reset! !node-ref %)
+                                                                                        (swap! chat-state assoc :message-list %))
                                               :on-scroll #(let [currElt (.-currentTarget %)
                                                                 scroll-top (.-scrollTop currElt)
                                                                 scroll-height (.-scrollHeight currElt)

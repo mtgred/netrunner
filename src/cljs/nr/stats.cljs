@@ -124,16 +124,17 @@
     [stats-panel stats]))
 
 (defn game-log [_state log-scroll-top]
-  (r/create-class
-    {:display-name "stats-game-log"
-     :component-did-mount #(set-scroll-top % @log-scroll-top)
-     :component-will-unmount #(store-scroll-top % log-scroll-top)
-     :reagent-render
-     (fn [state _log-scroll-top]
-       (let [game (:view-game @state)
-             corp (get-in game [:corp :player :username])
-             runner (get-in game [:runner :player :username])]
-         [:div {:style {:overflow "auto"}}
+  (r/with-let [!node-ref (r/atom nil)]
+    (r/create-class
+      {:display-name "stats-game-log"
+       :component-did-mount (fn [_] (set-scroll-top @!node-ref @log-scroll-top))
+       :component-will-unmount (fn [_] (store-scroll-top @!node-ref log-scroll-top))
+       :reagent-render
+       (fn [state _log-scroll-top]
+         (let [game (:view-game @state)
+               corp (get-in game [:corp :player :username])
+               runner (get-in game [:runner :player :username])]
+           [:div {:style {:overflow "auto"} :ref #(reset! !node-ref %)}
           [:div.panel.messages {:class (player-highlight-option-class)}
            (if (seq (:log game))
              (doall (map-indexed
@@ -147,7 +148,7 @@
                               [:div.username (get-in msg [:user :username])]
                               [:div (render-message (:text msg))]]])))
                       (:log game)))
-             [:h4 (tr [:stats_no-log "No log available"])])]]))}))
+             [:h4 (tr [:stats_no-log "No log available"])])]]))})))
 
 (def faction-icon-memo (memoize faction-icon))
 
@@ -197,16 +198,17 @@
        [:h4 (tr [:stats_winner "Winner"] {:winner (tr-side winner)}) (str user-win)])]))
 
 (defn history [_state list-scroll-top _log-scroll-top]
-  (r/create-class
-    {:display-name "stats-history"
-     :component-did-mount #(set-scroll-top % @list-scroll-top)
-     :component-will-unmount #(store-scroll-top % list-scroll-top)
-     :reagent-render
-     (fn [state _list-scroll-top log-scroll-top]
-       (let [all-games (:games @state)
-             games (if (:filter-replays @state) (filter #(:replay-shared %) all-games) all-games)
-             cnt (count games)]
-         [:div.game-list
+  (r/with-let [!node-ref (r/atom nil)]
+    (r/create-class
+      {:display-name "stats-history"
+       :component-did-mount (fn [_] (set-scroll-top @!node-ref @list-scroll-top))
+       :component-will-unmount (fn [_] (store-scroll-top @!node-ref list-scroll-top))
+       :reagent-render
+       (fn [state _list-scroll-top log-scroll-top]
+         (let [all-games (:games @state)
+               games (if (:filter-replays @state) (filter #(:replay-shared %) all-games) all-games)
+               cnt (count games)]
+           [:div.game-list {:ref #(reset! !node-ref %)}
            [:div.controls
             [:button {:on-click #(swap! state update :filter-replays not)}
              (if (:filter-replays @state)
@@ -220,7 +222,7 @@
              (doall
                (for [game games]
                  ^{:key (:gameid game)}
-                 [game-row state game log-scroll-top])))]))}))
+                 [game-row state game log-scroll-top])))]))})))
 
 (defn right-panel [state list-scroll-top log-scroll-top]
   (if (:view-game @state)

@@ -18,14 +18,15 @@
 
 (defn about-content [state scroll-top]
   (r/with-let [donors (r/cursor state [:donors])
-               alt-info (r/cursor app-state [:alt-info])]
+               alt-info (r/cursor app-state [:alt-info])
+               !node-ref (r/atom nil)]
     (r/create-class
       {:display-name "about-content"
-       :component-did-mount #(set-scroll-top % @scroll-top)
-       :component-will-unmount #(store-scroll-top % scroll-top)
+       :component-did-mount (fn [_] (set-scroll-top @!node-ref @scroll-top))
+       :component-will-unmount (fn [_] (store-scroll-top @!node-ref scroll-top))
        :reagent-render
        (fn [_ _]
-         [:div.about.panel.content-page.blue-shade
+         [:div.about.panel.content-page.blue-shade {:ref #(reset! !node-ref %)}
           [:h3 "About"]
           [:p "This website was founded by " [:a {:href "http://twitter.com/mtgred" :target "_blank"} "@mtgred"]
            ", an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online."]
