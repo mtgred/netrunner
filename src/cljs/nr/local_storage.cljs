@@ -1,6 +1,7 @@
 (ns nr.local-storage
   "Centralized localStorage management with proper serialization"
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [jinteki.settings :as settings]))
 
 (defn- serialize-value
   "Serialize a value for localStorage storage.
@@ -59,3 +60,25 @@
     (when-let [value (.getItem js/localStorage old-key)]
       (.setItem js/localStorage new-key value)
       (.removeItem js/localStorage old-key))))
+
+(defn update-local-storage-settings!
+  "Update localStorage settings based on sync preferences.
+   - Removes all sync settings (they belong in database only)
+   - Optionally saves local-only settings from provided settings-map"
+  ([]
+   (update-local-storage-settings! nil))
+  ([settings-map]
+   (doseq [{:keys [key sync?]} settings/all-settings]
+     (let [storage-key (settings/storage-key key)]
+       (if sync?
+         ;; Remove database-sourced settings from localStorage
+         (.removeItem js/localStorage storage-key)
+         ;; Save local-only settings to localStorage (if provided)
+         (when-let [value (get settings-map key)]
+           (save! storage-key value)))))))
+
+(defn remove-sync-settings!
+  "Remove all sync settings from localStorage.
+   These should only persist in the database, not localStorage after logout."
+  []
+  (update-local-storage-settings!))

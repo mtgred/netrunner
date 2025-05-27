@@ -6,6 +6,7 @@
    [nr.ajax :refer [GET POST]]
    [nr.appstate :refer [app-state]]
    [nr.avatar :refer [avatar]]
+   [nr.local-storage :as ls]
    [nr.translations :refer [tr]]
    [reagent.core :as r]))
 
@@ -36,6 +37,7 @@
 (defn handle-logout [event]
   (.preventDefault event)
   (go (<! (POST "/logout" nil))
+      (ls/remove-sync-settings!)
       (-> js/document .-location (.reload true))))
 
 (defn logged-menu [user]
