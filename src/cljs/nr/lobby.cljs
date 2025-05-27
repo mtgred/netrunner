@@ -8,6 +8,7 @@
    [nr.appstate :refer [app-state current-gameid]]
    [nr.auth :refer [authenticated] :as auth]
    [nr.game-row :refer [game-row]]
+   [nr.local-storage :as ls]
    [nr.gameboard.actions :refer [leave-game!]]
    [nr.new-game :refer [create-new-game]]
    [nr.password-game :refer [password-game]]
@@ -155,7 +156,7 @@
   (if (format-visible? slug)
     (swap! app-state update-in [:visible-formats] difference #{slug})
     (swap! app-state update-in [:visible-formats] union #{slug}))
-  (.setItem js/localStorage "visible-formats" (.stringify js/JSON (clj->js (:visible-formats @app-state)))))
+  (ls/save! "visible-formats" (:visible-formats @app-state)))
 
 (defn format-toggle [slug]
   (r/with-let [id (str "filter-" slug)]

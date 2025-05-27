@@ -7,6 +7,7 @@
    [nr.ajax :refer [DELETE GET PUT]]
    [nr.appstate :refer [app-state]]
    [nr.gameboard.state :refer [game-state last-state replay-side]]
+   [nr.local-storage :as ls]
    [nr.translations :refer [tr]]
    [nr.utils :refer [non-game-toast render-message]]
    [nr.ws :as ws]
@@ -18,7 +19,7 @@
 
 (declare replay-jump replay-jump-to populate-replay-timeline)
 (defn init-replay [app-state state]
-  (.setItem js/localStorage "gameid" "local-replay")
+  (ls/save! "gameid" "local-replay")
   (swap! app-state assoc :gameid "local-replay") ;set for main.cljs
   (populate-replay-timeline state)
   (if (:replay-jump-to state)
