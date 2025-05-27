@@ -30,36 +30,6 @@
                                   "casual"}]
     (ls/load "visible-formats" default-visible-formats)))
 
-(def valid-background-slugs
-  #{"apex-bg" "custom-bg"
-    "find-the-truth-bg" "freelancer-bg"
-    "monochrome-bg" "mushin-no-shin-bg"
-    "push-your-luck-bg" "rumor-mill-bg"
-    "the-root-bg" "traffic-jam-bg"
-    "worlds2020"})
-
-(defn validate-options
-  [opts]
-  (-> opts
-      (update :background #(or (valid-background-slugs %) "worlds2020"))
-      (update :runner-board-order #(case %
-                                     "true" "jnet"
-                                     "false" "irl"
-                                     %))))
-
-;; we only support the following languages
-;; if trs get added for new languages, I guess we need to update this
-(def supported-languages
-  #{"en" "fr" "ja" "ko" "pl" "pt" "ru" "zh-simp"})
-
-(def nav-lang
-  "en-us, en-uk, etc should just be en, fr-CA -> fr, en->en"
-  (let [lang (some-> js/navigator.language (str/split #"-") first)]
-    (cond
-      ;; if we ever implement proper zh, fix this
-      (= lang "zh") "zh-simp"
-      (contains? supported-languages lang) lang
-      :else "en")))
 
 ;; Run migration before creating app-state
 (migrate-legacy-localStorage-keys!)
@@ -68,15 +38,12 @@
   (let [js-user (js->clj js/user :keywordize-keys true)]
     (r/atom {:active-page "/"
              :user js-user
-             :options (-> (reduce (fn [opts {:keys [key default storage-key]}]
-                                    (let [storage-name (or storage-key (name key))
-                                          ;; Special handling for language default
-                                          default-val (if (= key :language) nav-lang default)]
-                                      (assoc opts key (ls/load storage-name default-val))))
-                                  {}
-                                  settings/all-settings)
-                          (merge (:options js-user))
-                          (validate-options))
+             :options (let [defaults (settings/defaults)
+                            localStorage-settings (settings/filter-valid-settings
+                                                    (settings/load-from-storage ls/load))
+                            user-profile-settings (settings/filter-valid-settings
+                                                    (:options js-user))]
+                        (merge defaults localStorage-settings user-profile-settings))
              :cards-loaded false
              :connected false
              :previous-cards {}
