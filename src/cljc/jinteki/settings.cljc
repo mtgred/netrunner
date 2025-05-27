@@ -69,7 +69,6 @@
    - :key - the setting keyword
    - :default - default value if not set
    - :sync? - whether this setting syncs to database (vs local-only)
-   - :storage-key - localStorage key name (if different from key name)
    - :validate-fn - optional validation function that returns true if value is valid"
   [{:key :alt-arts
     :default {}
@@ -214,7 +213,6 @@
    {:key :sounds-volume
     :default 100
     :sync? false  ; device-specific
-    :storage-key "sounds-volume"  ; legacy migration: was stored as "sounds_volume"
     :validate-fn validate-number}
    {:key :stacked-cards
     :default true
@@ -267,12 +265,6 @@
   [key]
   (first (filter #(= (:key %) key) all-settings)))
 
-(defn storage-key
-  "Get the localStorage key for a setting (handles special cases)"
-  [key]
-  (or (:storage-key (get-setting key))
-      (name key)))
-
 (defn filter-valid-settings
   "Filter a settings map to only include valid values, removing invalid ones"
   [settings-map]
@@ -289,8 +281,8 @@
    Takes a storage-load-fn that accepts (storage-key default-value)."
   [storage-load-fn]
   (let [defaults-map (defaults)]
-    (reduce (fn [opts {:keys [key storage-key]}]
-              (let [storage-name (or storage-key (name key))
+    (reduce (fn [opts {:keys [key]}]
+              (let [storage-name (name key)
                     default-val (get defaults-map key)
                     loaded-value (storage-load-fn storage-name default-val)]
                 ;; Only include if different from default (meaning it was actually stored)

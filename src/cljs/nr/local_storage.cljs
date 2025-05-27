@@ -69,7 +69,7 @@
    (update-local-storage-settings! nil))
   ([settings-map]
    (doseq [{:keys [key sync?]} settings/all-settings]
-     (let [storage-key (settings/storage-key key)]
+     (let [storage-key (name key)]
        (if sync?
          ;; Remove database-sourced settings from localStorage
          (.removeItem js/localStorage storage-key)
