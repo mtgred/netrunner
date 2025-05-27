@@ -56,10 +56,14 @@
     (swap! app-state update :options
            (fn [options]
              (merge options settings-map)))
-    ;; Save ALL settings to localStorage using centralized definitions
-    (doseq [{:keys [key]} settings/all-settings]
-      (when-let [value (get settings-map key)]
-        (ls/save! (settings/storage-key key) value)))
+    ;; Save only local-only settings to localStorage, remove database-sourced ones
+    (doseq [{:keys [key sync?]} settings/all-settings]
+      (if sync?
+        ;; Remove database-sourced settings from localStorage
+        (ls/remove! (settings/storage-key key))
+        ;; Save local-only settings to localStorage
+        (when-let [value (get settings-map key)]
+          (ls/save! (settings/storage-key key) value))))
     ;; Note: visible-formats is handled separately
     ;; Note: prizes is handled as part of user data, not a setting)
   (post-options #(post-response s %))))
