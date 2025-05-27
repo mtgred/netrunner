@@ -171,17 +171,12 @@
     :else
     (response 404 {:message "Account not found"})))
 
-(def profile-keys
-  "Settings that sync across devices via database storage.
-   Device-specific settings like sounds, resolution, and layout preferences
-   are stored only in localStorage."
-  (settings/sync-keys))
 
 (defn update-profile-handler
   [{db :system/db
     {username :username :as user} :user
     body :body}]
-  (let [options (select-non-nil-keys body profile-keys)
+  (let [options (select-non-nil-keys body (settings/sync-keys))
         lang (:lang body)]
     (if (active-user? user)
       (if (acknowledged? (mc/update db "users"
