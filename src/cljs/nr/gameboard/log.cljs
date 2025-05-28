@@ -98,72 +98,77 @@
        (sort-by :score)
        (map :match))))
 
-(defn show-command-menu? [s]
-  (seq (:command-matches s)))
+(defn show-completions? [s]
+  (seq (:completions s)))
 
-(defn reset-command-menu
+(defn fill-completion [state completion-text]
+  (do
+    (swap! state assoc :msg (str completion-text " "))
+    (reset-completions state)))
+
+(defn reset-completions
   "Resets the command menu state."
   [state]
-  (swap! state assoc :command-matches '())
-  (swap! state assoc :command-highlight nil))
+  (swap! state assoc :completions nil)
+  (swap! state assoc :completion-highlight nil))
 
-(defn command-menu-key-down-handler
+(defn completions-key-down-handler
   [state e]
-  (when (show-command-menu? @state)
+  (when (show-completions? @state)
     (let [key (-> e .-key)
-          matches (:command-matches @state)
-          match-count (count matches)]
+          completions (:completions @state)
+          completions-count (count completions)]
       (case key
         ;; ArrowDown
         "ArrowDown" (do (.preventDefault e)
-                        (swap! state update :command-highlight #(if % (mod (inc %) match-count) 0)))
+                        (swap! state update :completion-highlight #(if % (mod (inc %) completions-count) 0)))
         ;; ArrowUp
-        "ArrowUp" (when (:command-highlight @state)
+        "ArrowUp" (when (:completion-highlight @state)
                     (.preventDefault e)
-                    (swap! state update :command-highlight #(if % (mod (dec %) match-count) 0)))
+                    (swap! state update :completion-highlight #(if % (mod (dec %) completions-count) 0)))
         ;; Return, Space, ArrowRight, Tab
         ("Enter" "Space" "ArrowRight" "Tab")
-        (when (or (= 1 match-count) (:command-highlight @state))
-          (let [use-index (if (= 1 match-count) 0 (:command-highlight @state))
-                command (nth matches use-index)]
+        (when (or (= 1 completions-count) (:completion-highlight @state))
+          (let [use-index (if (= 1 completions-count) 0 (:completion-highlight @state))
+                completion (:completion-text (nth completions use-index))]
             (.preventDefault e)
-            (swap! state assoc :msg (str command " "))
-            (reset-command-menu state)
+            (fill-completion state completion)
             ;; auto send when no args needed
             (when (and (= key "Enter")
-                       (not (get-in command-info-map [command :has-args])))
+                       (contains? command-info-map completion)
+                       (not (get-in command-info-map [completion :has-args])))
               (send-msg state))))
         ;; else
         nil))))
 
 (defn log-input-change-handler
   [state e]
-  (reset-command-menu state)
+  (reset-completions state)
   (let [input (-> e .-target .-value)]
     (when (= "/" (first input))
-      (swap! state assoc :command-matches (find-matches input commands))
-    )
+      (swap! state assoc :completions
+        (->> (find-matches input commands)
+             (map (fn [match] {:completion-text match :display-text (get-in command-info-map [match :usage])})))))
+     
     (swap! state assoc :msg input)))
   ;;(send-typing state)
 
-(defn command-menu [!input-ref state]
-  (when (show-command-menu? @state)
+(defn completions [!input-ref state]
+  (when (show-completions? @state)
     [:div.command-matches-container.panel.blue-shade
-     {:on-mouse-leave #(swap! state dissoc :command-highlight)}
+     {:on-mouse-leave #(swap! state dissoc :completion-highlight)}
      [:ul.command-matches
       (doall (map-indexed
-               (fn [i match]
+               (fn [i {:keys [completion-text display-text]} completion]
                  [:li.command-match
-                  {:key match
-                   :class (when (= i (:command-highlight @state)) "highlight")}
-                  [:span {:on-mouse-over #(swap! state assoc :command-highlight i)
+                  {:key completion-text
+                   :class (when (= i (:completion-highlight @state)) "highlight")}
+                  [:span {:on-mouse-over #(swap! state assoc :completion-highlight i)
                           :on-click #(do
-                                       (swap! state assoc :msg (str match " "))
-                                       (reset-command-menu state)
-                                       (.focus @!input-ref))}
-
-                          (get-in command-info-map [match :usage])]])
-                      (:command-matches @state)))]]))
+                            (fill-completion state completion-text)
+                            (.focus @!input-ref))}
+                         display-text]])
+               (:completions @state)))]]))
 
 (defn log-input []
   (let [current-game (r/cursor app-state [:current-game])
@@ -175,7 +180,7 @@
         [:div.log-input
          [:div.form-container
           [:form {:on-submit #(do (.preventDefault %)
-                                  (reset-command-menu state)
+                                  (reset-completions state)
                                   (send-msg state))}
            [:input#log-input
             {:placeholder (tr [:chat_placeholder "Say something..."])
@@ -184,11 +189,11 @@
              :ref #(reset! !input-ref %)
              :value (:msg @state)
              ;;:on-blur #(send-typing (atom nil))
-             :on-key-down #(command-menu-key-down-handler state %)
+             :on-key-down #(completions-key-down-handler state %)
              :on-change #(log-input-change-handler state %)}]]]
          [indicate-action]
          [show-decklists]
-         [command-menu !input-ref state]]))))
+         [completions !input-ref state]]))))
 
 (defn format-system-timestamp [timestamp text corp runner]
   (if (get-in @app-state [:options :log-timestamps])
