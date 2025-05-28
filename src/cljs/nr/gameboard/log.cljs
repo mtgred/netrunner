@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as string]
    [jinteki.utils :refer [command-info]]
+   [jinteki.cards :refer [all-cards]]
    [nr.angel-arena.log :as angel-arena-log]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.avatar :refer [avatar]]
@@ -18,8 +19,19 @@
 
 (def commands (distinct (map :name command-info)))
 (def command-info-map (->> command-info
-                           (map (fn [item] [(:name item) (select-keys item [:has-args :usage :help])]))
+                           (map (fn [info] [(:name info) (select-keys info [:has-args :usage :help])]))
                            (into {})))
+
+; Looks up a card based on a a lowercased input
+(defn card-lookup-impl [input]
+  (->> @all-cards
+       (keys)
+       (filter (fn [card] (= (string/lower-case input)
+                             (string/lower-case card))))
+       (first)))
+
+(def card-lookup-memo (memoize card-lookup-impl))
+(defn card-lookup [input] (card-lookup-memo input (:cards-loaded @app-state)))
 
 (defn scrolled-to-end?
   [el tolerance]
@@ -91,11 +103,12 @@
             (+ score (or next-index 0))))))))
 
 (defn find-matches
-  ([input potential-matches]
+  ([potential-matches pattern]
      (->> potential-matches
-       (map (fn [target] {:match target :score (fuzzy-match-score input target)}))
+       (map (fn [target] {:match target :score (fuzzy-match-score pattern target)}))
        (filter :score)
        (sort-by :score)
+       (take 10)
        (map :match))))
 
 (defn show-completions? [s]
@@ -141,14 +154,31 @@
         ;; else
         nil))))
 
+(defn complete-command [state input]
+  (swap! state assoc :completions
+         (->> (find-matches commands input)
+              (map (fn [match] {:completion-text match :display-text (get-in command-info-map [match :usage])})))))
+
+(defn complete-cardname [state full-input card-input]
+  (let [cardnames (->> @all-cards
+                       (keys)
+                       (map string/lower-case))
+        matches (map card-lookup (find-matches cardnames (string/lower-case card-input)))
+                     ; (map card-lookup))
+        complete #(string/replace full-input card-input %)]
+    (swap! state assoc :completions
+           (->> matches
+                (map (fn [match] {:completion-text (complete match) :display-text match}))))))
+
 (defn log-input-change-handler
   [state e]
   (reset-completions state)
-  (let [input (-> e .-target .-value)]
-    (when (= "/" (first input))
-      (swap! state assoc :completions
-        (->> (find-matches input commands)
-             (map (fn [match] {:completion-text match :display-text (get-in command-info-map [match :usage])})))))
+  (let [input (-> e .-target .-value)
+        starts-with? #(string/starts-with? input %)]
+    (cond
+      (starts-with? "/summon ") (let [card (string/replace input #"/summon " "")]
+                                     (complete-cardname state input card))
+      (= "/" (first input)) (complete-command state input))
      
     (swap! state assoc :msg input)))
   ;;(send-typing state)
