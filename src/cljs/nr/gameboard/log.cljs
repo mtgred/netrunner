@@ -22,17 +22,6 @@
                            (map (fn [info] [(:name info) (select-keys info [:has-args :usage :help])]))
                            (into {})))
 
-; Looks up a card based on a a lowercased input
-(defn card-lookup-impl [input]
-  (->> @all-cards
-       (keys)
-       (filter (fn [card] (= (string/lower-case input)
-                             (string/lower-case card))))
-       (first)))
-
-(def card-lookup-memo (memoize card-lookup-impl))
-(defn card-lookup [input] (card-lookup-memo input (:cards-loaded @app-state)))
-
 (defn scrolled-to-end?
   [el tolerance]
   (> tolerance (- (.-scrollHeight el) (.-scrollTop el) (.-clientHeight el))))
@@ -88,19 +77,23 @@
   "Matches if all characters in input appear in target in order.
   Score is sum of matched indices, lower is a better match"
   [input target]
-  (loop [curr-input (first input)
-         rest-input (rest input)
-         target-index (string/index-of target curr-input 0)
-         score target-index]
-    (when target-index
-      (if (not (seq rest-input))
-        score
-        (let [next-index (string/index-of target (first rest-input) (inc target-index))]
-          (recur
-            (first rest-input)
-            (rest rest-input)
-            next-index
-            (+ score (or next-index 0))))))))
+  ;; scoring is case insensitive
+  ;; TODO - scoring for similar letters (e.g. Şifr =~ sifr, 1337 =~ leet)
+  (let [input (string/lower-case input) 
+        target (string/lower-case target)]
+    (loop [curr-input (first input)
+           rest-input (rest input)
+           target-index (string/index-of target curr-input 0)
+           score target-index]
+      (when target-index
+        (if (not (seq rest-input))
+          score
+          (let [next-index (string/index-of target (first rest-input) (inc target-index))]
+            (recur
+              (first rest-input)
+              (rest rest-input)
+              next-index
+              (+ score (or next-index 0)))))))))
 
 (defn find-matches
   ([potential-matches pattern]
@@ -125,6 +118,14 @@
   (swap! state assoc :completions nil)
   (swap! state assoc :completion-highlight nil))
 
+(defn completion-is-final? [state completion]
+  (cond
+    ;; completion is not a base command, e.g. just "/discard-random"
+    ;; this is true if we're doing card completion
+    (not (contains? command-info-map completion)) true
+    ;; completion is not a command that has arguments
+    (not (get-in command-info-map [completion :has-args])) true))
+
 (defn completions-key-down-handler
   [state e]
   (when (show-completions? @state)
@@ -139,8 +140,7 @@
         "ArrowUp" (when (:completion-highlight @state)
                     (.preventDefault e)
                     (swap! state update :completion-highlight #(if % (mod (dec %) completions-count) 0)))
-        ;; Return, Space, ArrowRight, Tab
-        ("Enter" "Space" "ArrowRight" "Tab")
+        ("Enter" " " "ArrowRight" "Tab")
         (when (or (= 1 completions-count) (:completion-highlight @state))
           (let [use-index (if (= 1 completions-count) 0 (:completion-highlight @state))
                 completion (:completion-text (nth completions use-index))]
@@ -148,8 +148,7 @@
             (fill-completion state completion)
             ;; auto send when no args needed
             (when (and (= key "Enter")
-                       (contains? command-info-map completion)
-                       (not (get-in command-info-map [completion :has-args])))
+                       (completion-is-final? state completion))
               (send-msg state))))
         ;; else
         nil))))
@@ -161,10 +160,8 @@
 
 (defn complete-cardname [state full-input card-input]
   (let [cardnames (->> @all-cards
-                       (keys)
-                       (map string/lower-case))
-        matches (map card-lookup (find-matches cardnames (string/lower-case card-input)))
-                     ; (map card-lookup))
+                       (keys))
+        matches (find-matches cardnames card-input)
         complete #(string/replace full-input card-input %)]
     (swap! state assoc :completions
            (->> matches
