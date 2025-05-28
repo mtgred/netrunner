@@ -90,14 +90,13 @@
             next-index
             (+ score (or next-index 0))))))))
 
-(defn find-command-matches
-  ([input commands]
-   (when (= "/" (first input))
-     (->> commands
+(defn find-matches
+  ([input potential-matches]
+     (->> potential-matches
        (map (fn [target] {:match target :score (fuzzy-match-score input target)}))
        (filter :score)
        (sort-by :score)
-       (map :match)))))
+       (map :match))))
 
 (defn show-command-menu? [s]
   (seq (:command-matches s)))
@@ -140,10 +139,12 @@
 (defn log-input-change-handler
   [state e]
   (reset-command-menu state)
-  (swap! state assoc :command-matches (-> e .-target .-value (find-command-matches commands)))
-  (swap! state assoc :msg (-> e .-target .-value))
+  (let [input (-> e .-target .-value)]
+    (when (= "/" (first input))
+      (swap! state assoc :command-matches (find-matches input commands))
+    )
+    (swap! state assoc :msg input)))
   ;;(send-typing state)
-  )
 
 (defn command-menu [!input-ref state]
   (when (show-command-menu? @state)
