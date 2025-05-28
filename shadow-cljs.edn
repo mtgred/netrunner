@@ -1,4 +1,5 @@
 {:lein true
+ :nrepl {:port 39039}
  :builds
  {:app {:target :browser
         :output-dir "resources/public/js"
