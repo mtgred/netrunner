@@ -167,7 +167,6 @@
     :corp   (= (:side card-info) "Corp")
     :runner (= (:side card-info) "Runner")))
 
-; TODO refactor into complete-id, move completion logic into generic function and add the replacement bits in here
 (defn complete-cardname [state full-input card-input]
   (let [cardnames (->> @all-cards
                        (filter filter-side)
