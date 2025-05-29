@@ -29,7 +29,7 @@
 (def valid-card-resolution-options #{"default" "high"})
 (def valid-runner-board-order #{"jnet" "irl"})
 (def valid-log-player-highlight #{"blue-red" "none"})
-(def valid-card-back-display #{"default" "them" "me" "ffg" "nsg"})
+(def valid-card-back-display #{"them" "me" "ffg" "nsg"})
 (def valid-card-sleeves #{"ffg-card-back" "nsg-card-back" "ffg" "nsg"})
 (def valid-formats #{"standard" "throwback" "startup" "system-gateway"
                      "core" "preconstructed" "eternal" "casual"})
@@ -127,10 +127,10 @@
     :validate-fn validate-blocked-users
     :doc "List of usernames to block in chat and lobbies"}
    {:key :card-back-display
-    :default "default"
+    :default "them"
     :sync? true
     :validate-fn #(validate-enum valid-card-back-display %)
-    :doc "Which card backs to display (default/them/me/ffg/nsg)"}
+    :doc "Which card backs to display (them/me/ffg/nsg)"}
    {:key :card-resolution
     :default "default"
     :sync? false  ; device-specific
