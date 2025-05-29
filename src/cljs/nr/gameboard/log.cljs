@@ -118,13 +118,18 @@
   (swap! state assoc :completions nil)
   (swap! state assoc :completion-highlight nil))
 
-(defn completion-is-final? [state completion]
-  (cond
-    ;; completion is not a base command, e.g. just "/discard-random"
-    ;; this is true if we're doing card completion
-    (not (contains? command-info-map completion)) true
-    ;; completion is not a command that has arguments
-    (not (get-in command-info-map [completion :has-args])) true))
+(defn is-command? [completion]
+  (contains? command-info-map completion))
+
+(defn has-args? [completion]
+  (some? (get-in command-info-map [completion :has-args])))
+
+(defn autosend? [completion]
+  ;; Commands with arguments do not autosend
+  (if (and (is-command? completion) (has-args? completion))
+    false
+    ;; Other completion types (commands with no args, card completions) do autosend
+    true))
 
 (defn completions-key-down-handler
   [state e]
@@ -147,8 +152,7 @@
             (.preventDefault e)
             (fill-completion state completion)
             ;; auto send when no args needed
-            (when (and (= key "Enter")
-                       (completion-is-final? state completion))
+            (when (and (= key "Enter") (autosend? completion))
               (send-msg state))))
         ;; else
         nil))))
