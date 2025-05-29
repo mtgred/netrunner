@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out trash-on-empty trash-on-purge get-x-fn rfg-on-empty]]
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out trash-on-empty trash-on-purge get-x-fn rfg-on-empty tutor-abi]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -1306,19 +1306,11 @@
                                       (program? target)))
                        :no-mu true
                        :max-mu 3}]
-   :abilities [{:action true
-                :change-in-game-state {:req (req (seq (:deck runner)))}
-                :label "Search the stack for a virus program and add it to the grip"
-                :prompt "Choose a Virus"
-                :msg (msg "add " (:title target) " from the stack to the grip")
-                :choices (req (cancellable (filter #(and (program? %)
-                                                         (has-subtype? % "Virus"))
-                                                   (:deck runner)) :sorted))
-                :cost [(->c :click 1) (->c :credit 1)]
-                :keep-menu-open :while-clicks-left
-                :effect (effect (trigger-event :searched-stack)
-                                (shuffle! :deck)
-                                (move target :hand))}]})
+   :abilities [(assoc (tutor-abi true #(and (program? %) (has-subtype? % "Virus")))
+                      :action true
+                      :label "Search the stack for a virus program and add it to the grip"
+                      :cost [(->c :click 1) (->c :credit 1)]
+                      :keep-menu-open :while-clicks-left)]})
 
 (defcard "Eater"
   (auto-icebreaker {:abilities [(break-sub 1 1 "All" {:additional-ability {:msg "access not more than 0 cards for the remainder of this run"

@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur defcard drain-credits gain-credits-ability do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand]]
+   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur defcard do-meat-damage draw-abi drain-credits gain-credits-ability do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand tutor-abi]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -37,7 +37,7 @@
    [game.core.moving :refer [as-agenda mill move swap-agendas swap-ice trash
                              trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
-   [game.core.payment :refer [can-pay? cost-target ->c]]
+   [game.core.payment :refer [can-pay? cost-target x-cost-value cost-value ->c]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prevention :refer [damage-boost]]
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
@@ -183,21 +183,13 @@
                                                                                       :display-origin true}})
                                       (continue-ability state side (ab (inc n) total) card nil)))}))]
     {:on-play
-     {:prompt "How many Advertisements do you want to install and rez?"
-      :choices :credit
-      :msg (msg "install and rez " target " Advertisements")
+     {:base-play-cost [(->c :x-credits)]
+      :msg (msg "install and rez " (x-cost-value eid) " Advertisements")
       :async true
-      :effect (effect (continue-ability (ab 0 target) card nil))}}))
+      :effect (effect (continue-ability (ab 0 (x-cost-value eid)) card nil))}}))
 
 (defcard "Aggressive Negotiation"
-  {:on-play
-   {:req (req (:scored-agenda corp-reg))
-    :change-in-game-state {:req (req (seq (:deck corp)))}
-    :prompt "Choose a card"
-    :choices (req (cancellable (:deck corp) :sorted))
-    :msg "search R&D for a card and add it to HQ"
-    :effect (effect (move target :hand)
-                    (shuffle! :deck))}})
+  {:on-play (assoc (tutor-abi nil) :req (req (:scored-agenda corp-reg)))})
 
 (defcard "An Offer You Can't Refuse"
   {:on-play
@@ -226,10 +218,7 @@
               card nil))}})
 
 (defcard "Anonymous Tip"
-  {:on-play
-   {:msg "draw 3 cards"
-    :async true
-    :effect (effect (draw eid 3))}})
+  {:on-play (draw-abi 3)})
 
 (defcard "Archived Memories"
   {:on-play (corp-recur)})
@@ -2311,26 +2300,13 @@
                            (gain-credits state :corp eid (trash-cost state side target))))}})
 
 (defcard "Psychographics"
-  {:on-play
-   {:req (req tagged)
-    :prompt "How many credits do you want to spend?"
-    :choices {:number (req (count-tags state))}
-    :async true
-    :effect (req (let [c target]
-                   (if (can-pay? state side (assoc eid :source card :source-type :ability) card (:title card) (->c :credit c))
-                     (let [new-eid (make-eid state {:source card :source-type :ability})]
-                       (wait-for (pay state :corp new-eid card (->c :credit c))
-                                 (when-let [payment-str (:msg async-result)]
-                                   (system-msg state :corp payment-str))
-                                 (continue-ability
-                                   state side
-                                   {:msg (msg "place " (quantify c " advancement token") " on " (card-str state target))
-                                    :change-in-game-state {:req (req (something-can-be-advanced? state))}
-                                    :choices {:req (req (can-be-advanced? state target))}
-                                    :async true
-                                    :effect (effect (add-prop eid target :advance-counter c {:placed true}))}
-                                   card nil)))
-                     (effect-completed state side eid))))}})
+  {:on-play {:change-in-game-state {:req (req (and tagged (pos? (x-cost-value eid))))}
+             :waiting-prompt true
+             :base-play-cost [(->c :x-credits 0 {:maximum (req (count-tags state))})]
+             :choices {:req (req (can-be-advanced? state target))}
+             :msg (msg "place " (quantify (x-cost-value eid) " advancement counter") " on " (card-str state target))
+             :async true
+             :effect (req (add-prop state side eid target :advance-counter (x-cost-value eid) {:placed true}))}})
 
 (defcard "Psychokinesis"
   (letfn [(install-card [chosen]
@@ -2442,11 +2418,10 @@
                    {:effect (effect (shuffle! :corp :deck))
                     :msg "shuffle R&D"}))]
     {:on-play
-     {:prompt "How many Sysops do you want to search for?"
-      :choices :credit
-      :msg (msg "search for " target " Sysops")
+     {:base-play-cost [(->c :x-credits)]
+      :msg (msg "search for " (x-cost-value eid) " Sysops")
       :async true
-      :effect (effect (continue-ability (rthelp target target []) card nil))}}))
+      :effect (effect (continue-ability (rthelp (x-cost-value eid) (x-cost-value eid) []) card nil))}}))
 
 (defcard "Red Level Clearance"
   (let [all [{:msg "gain 2 [Credits]"
@@ -2729,11 +2704,7 @@
                        :value 2}]})
 
 (defcard "Scorched Earth"
-  {:on-play
-   {:req (req tagged)
-    :msg "do 4 meat damage"
-    :async true
-    :effect (effect (damage eid :meat 4 {:card card}))}})
+  {:on-play (assoc (do-meat-damage 4) :req (req tagged))})
 
 (defcard "SEA Source"
   {:on-play
@@ -2825,17 +2796,7 @@
                                  (add-prop state :corp eid f1 :advance-counter 1 {:placed true}))))}})
 
 (defcard "Shipment from MirrorMorph"
-  (letfn [(shelper [n]
-            (when (< n 3)
-              {:async true
-               :prompt "Choose a card to install"
-               :choices {:card #(and (corp? %)
-                                     (not (operation? %))
-                                     (in-hand? %))}
-               :effect (req (wait-for (corp-install state side target nil {:msg-keys {:install-source card
-                                                                                      :display-origin true}})
-                                      (continue-ability state side (shelper (inc n)) card nil)))}))]
-    {:on-play (corp-install-up-to-n-cards 3)}))
+  {:on-play (corp-install-up-to-n-cards 3)})
 
 (defcard "Shipment from SanSan"
   {:on-play

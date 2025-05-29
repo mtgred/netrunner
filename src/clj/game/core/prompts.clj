@@ -141,8 +141,8 @@
    (letfn [(wrap-function [args kw]
              (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
      (let [targets (:targets args)
-           ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state) card targets) %))
-           ability (update-in ability [:choices :min] #(if (fn? %) (% state side (make-eid state) card targets) %))
+           ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state (:eid ability)) card targets) %))
+           ability (update-in ability [:choices :min] #(if (fn? %) (% state side (make-eid state (:eid ability)) card targets) %))
            all (get-in ability [:choices :all])
            ability (if all (update-in ability [:choices] dissoc :min) ability) ; ignore :min if :all is set
            selectable-cards (compute-selectable state side card ability (get-in ability [:choices :req]) (get-in ability [:choices :card]))

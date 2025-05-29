@@ -215,43 +215,55 @@
 (defmethod label :x-credits [_] (str "X [Credits]"))
 (defmethod payable? :x-credits
   [cost state side eid card]
-  (and (pos? (total-available-credits state side eid card))
+  (and (>= (total-available-credits state side eid card) (or (->> cost :cost/offset) 0))
        (<= (stealth-value cost) (total-available-stealth-credits state side eid card))))
 (defmethod handler :x-credits
   [cost state side eid card]
-  (continue-ability
-    state side
-    {:async true
-     :prompt "How many credits do you want to spend?"
-     :choices {:number (req (if-let [maximum (->> cost :cost/args :maximum)]
-                              (min (total-available-credits state side eid card) maximum)
-                              (total-available-credits state side eid card)))}
-     :effect
-     (req
-       (let [stealth-value (if (= -1 (stealth-value cost)) cost (stealth-value cost))
-             cost target
-             provider-func #(eligible-pay-credit-cards state side eid card)]
-         (cond
-           (and (pos? cost)
-                (pos? (count (provider-func))))
-           (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid cost stealth-value) card nil)
-                     (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
-                     (complete-with-result state side eid {:paid/msg (str "pays " (:msg async-result))
-                                                           :paid/type :x-credits
-                                                           :paid/value (:number async-result)
-                                                           :paid/targets (:targets async-result)}))
-           (pos? cost)
-           (do (lose state side :credit cost)
-               (queue-event state (if (= side :corp) :corp-spent-credits :runner-spent-credits) {:value cost})
-               (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
-               (complete-with-result state side eid {:paid/msg (str "pays " cost " [Credits]")
-                                                     :paid/type :x-credits
-                                                     :paid/value cost}))
-           :else
-           (complete-with-result state side eid {:paid/msg (str "pays 0 [Credits]")
-                                                 :paid/type :x-credits
-                                                 :paid/value 0}))))}
-    card nil))
+  (let [offset (or (->> cost :cost/offset) 0)]
+    (continue-ability
+      state side
+      {:async true
+       :prompt "How many credits do you want to spend?"
+       :choices {:minimum (if (pos? offset) offset 0)
+                 ;; note: maximum is the max X value, rather than the max credit spend
+                 ;; so max + offset is the max credit spend
+                 :number (req
+                           (if-let [maximum (->> cost :cost/maximum)]
+                             (min (total-available-credits state side eid card)
+                                  (+ offset (if (fn? maximum)
+                                              (maximum state side eid card nil)
+                                              maximum)))
+                             (total-available-credits state side eid card)))}
+       :effect
+       (req
+         (let [stealth-value (if (= -1 (stealth-value cost)) cost (stealth-value cost))
+               cost target
+               provider-func #(eligible-pay-credit-cards state side eid card)]
+           (cond
+             (and (pos? cost)
+                  (pos? (count (provider-func))))
+             (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid cost stealth-value) card nil)
+                       (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
+                       (complete-with-result state side eid {:paid/msg (str "pays " (:msg async-result))
+                                                             :paid/type :x-credits
+                                                             :paid/x-value (- (:number async-result)
+                                                                              offset)
+                                                             :paid/value (:number async-result)
+                                                             :paid/targets (:targets async-result)}))
+             (pos? cost)
+             (do (lose state side :credit cost)
+                 (queue-event state (if (= side :corp) :corp-spent-credits :runner-spent-credits) {:value cost})
+                 (swap! state update-in [:stats side :spent :credit] (fnil + 0) cost)
+                 (complete-with-result state side eid {:paid/msg (str "pays " cost " [Credits]")
+                                                       :paid/type :x-credits
+                                                       :paid/x-value (- cost offset)
+                                                       :paid/value cost}))
+             :else
+             (complete-with-result state side eid {:paid/msg (str "pays 0 [Credits]")
+                                                   :paid/type :x-credits
+                                                   :paid/x-value (- offset)
+                                                   :paid/value 0}))))}
+      card nil)))
 
 ;; Expend Helper - this is a dummy cost just for cost strings
 (defmethod value :expend [cost] 1)

@@ -2,7 +2,7 @@
   (:require
     [game.core.card :refer [get-card get-zone has-subtype?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [play-additional-cost-bonus play-cost]]
+    [game.core.cost-fns :refer [play-additional-cost-bonus base-play-cost]]
     [game.core.effects :refer [unregister-static-abilities]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
     [game.core.engine :refer [checkpoint dissoc-req merge-costs-paid pay queue-event resolve-ability should-trigger? unregister-events]]
@@ -85,11 +85,11 @@
 (defn play-instant-costs
   [state side card {:keys [ignore-cost base-cost no-additional-cost cached-costs cost-bonus]}]
   (or cached-costs
-      (let [cost (play-cost state side card {:cost-bonus cost-bonus})
+      (let [cost (base-play-cost state side card {:cost-bonus cost-bonus})
             additional-costs (play-additional-cost-bonus state side card)
             costs (merge-costs
                     [(when-not ignore-cost
-                       [base-cost (->c :credit cost)])
+                       [base-cost cost])
                      (when (and (has-subtype? card "Triple")
                                 (not no-additional-cost))
                        (->c :click 2))

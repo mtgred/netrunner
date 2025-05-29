@@ -101,8 +101,7 @@
 
 (defcard "Akitaro Watanabe"
   {:static-abilities [{:type :rez-cost
-                       :req (req (and (ice? target)
-                                      (= (card->server state card) (card->server state target))))
+                       :req (req (and (ice? target) (protecting-same-server? card target)))
                        :value -2}]})
 
 (defcard "AMAZE Amusements"
