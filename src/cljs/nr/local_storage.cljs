@@ -64,18 +64,22 @@
 (defn update-local-storage-settings!
   "Update localStorage settings based on sync preferences.
    - Removes all sync settings (they belong in database only)
-   - Optionally saves local-only settings from provided settings-map"
+   - Optionally saves local-only settings from provided settings-map
+   - Handles localStorage unavailability gracefully"
   ([]
    (update-local-storage-settings! nil))
   ([settings-map]
-   (doseq [{:keys [key sync?]} settings/all-settings]
-     (let [storage-key (name key)]
-       (if sync?
-         ;; Remove database-sourced settings from localStorage
-         (.removeItem js/localStorage storage-key)
-         ;; Save local-only settings to localStorage (if provided)
-         (when-let [value (get settings-map key)]
-           (save! storage-key value)))))))
+   (try
+     (doseq [{:keys [key sync?]} settings/all-settings]
+       (let [storage-key (name key)]
+         (if sync?
+           ;; Remove database-sourced settings from localStorage
+           (.removeItem js/localStorage storage-key)
+           ;; Save local-only settings to localStorage (if provided)
+           (when-let [value (get settings-map key)]
+             (save! storage-key value)))))
+     (catch :default e
+       (js/console.warn "localStorage not available for settings update:" e)))))
 
 (defn remove-sync-settings!
   "Remove all sync settings from localStorage.

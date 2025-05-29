@@ -29,8 +29,28 @@
 (def valid-card-resolution-options #{"default" "high"})
 (def valid-runner-board-order #{"jnet" "irl"})
 (def valid-log-player-highlight #{"blue-red" "none"})
+(def valid-card-back-display #{"default" "them" "me" "ffg" "nsg"})
+(def valid-card-sleeves #{"ffg-card-back" "nsg-card-back" "ffg" "nsg"})
+(def valid-formats #{"standard" "throwback" "startup" "system-gateway"
+                     "core" "preconstructed" "eternal" "casual"})
 
-;; Validation functions
+;; Validation combinators
+(defn- validate-coll-of
+  "Returns a validator that checks if value is a collection of items matching pred"
+  [item-pred coll-pred]
+  (fn [value]
+    (and (coll-pred value)
+         (every? item-pred value))))
+
+(defn- validate-map-of
+  "Returns a validator that checks if value is a map with keys/vals matching predicates"
+  [key-pred val-pred]
+  (fn [value]
+    (and (map? value)
+         (every? key-pred (keys value))
+         (every? val-pred (vals value)))))
+
+;; Basic validation functions
 (defn- validate-enum [valid-set value]
   "Returns true if value is in the valid set"
   (contains? valid-set value))
@@ -43,25 +63,35 @@
   "Returns true if value is a number"
   (number? value))
 
-(defn- validate-any [value]
-  "Placeholder validator that accepts any value - to be replaced with specific validation later"
-  true)
 
-(defn- validate-blocked-users [value]
+;; Composed validators
+(def validate-blocked-users
   "Validates blocked-users is a vector of strings"
-  (and (vector? value)
-       (every? string? value)))
+  (validate-coll-of string? vector?))
 
-(defn- validate-alt-arts [value]
-  "Validates alt-arts is a map with keyword keys"
-  (and (map? value)
-       (every? keyword? (keys value))))
+(def validate-alt-arts
+  "Validates alt-arts is a map with keyword keys and any values"
+  (validate-map-of keyword? (constantly true)))
 
-(defn- validate-bespoke-sounds [value]
+(def validate-bespoke-sounds
   "Validates bespoke-sounds is a map with keyword keys and boolean values"
-  (and (map? value)
-       (every? keyword? (keys value))
-       (every? boolean? (vals value))))
+  (validate-map-of keyword? boolean?))
+
+(defn- validate-card-sleeve [value]
+  "Validates card sleeve value - accepts base sleeves and any string (for prize sleeves)"
+  (or (contains? valid-card-sleeves value)
+      (string? value)))
+
+(defn- validate-prizes [value]
+  "Validates prizes structure - nil or map with :card-backs containing keyword->boolean map"
+  (or (nil? value)
+      (and (map? value)
+           (or (nil? (:card-backs value))
+               ((validate-map-of keyword? boolean?) (:card-backs value))))))
+
+(def validate-visible-formats
+  "Validates visible-formats is a set of valid format strings"
+  (validate-coll-of #(contains? valid-formats %) set?))
 
 (def all-settings
   "Vector of all application settings with their metadata.
@@ -69,159 +99,198 @@
    - :key - the setting keyword
    - :default - default value if not set
    - :sync? - whether this setting syncs to database (vs local-only)
-   - :validate-fn - optional validation function that returns true if value is valid"
+   - :validate-fn - optional validation function that returns true if value is valid
+   - :doc - optional documentation string describing the setting's purpose"
   [{:key :alt-arts
     :default {}
     :sync? true
-    :validate-fn validate-alt-arts}
+    :validate-fn validate-alt-arts
+    :doc "User's selected alternate art set when :show-alt-art is true"}
    {:key :archives-sorted
     :default false
     :sync? true
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Whether to sort cards in Archives by name"}
    {:key :background
     :default "worlds2020"
     :sync? true
-    :validate-fn #(validate-enum valid-background-slugs %)}
+    :validate-fn #(validate-enum valid-background-slugs %)
+    :doc "Selected game board background or 'custom' for a custom image with :custom-bg-url"}
    {:key :bespoke-sounds
     :default {}
     :sync? true
-    :validate-fn validate-bespoke-sounds}
+    :validate-fn validate-bespoke-sounds
+    :doc "Card-specific sound effect preferences"}
    {:key :blocked-users
     :default []
     :sync? true
-    :validate-fn validate-blocked-users}
+    :validate-fn validate-blocked-users
+    :doc "List of usernames to block in chat and lobbies"}
    {:key :card-back-display
     :default "default"
     :sync? true
-    :validate-fn validate-any}  ; TODO: define valid card back values
+    :validate-fn #(validate-enum valid-card-back-display %)
+    :doc "Which card backs to display (default/them/me/ffg/nsg)"}
    {:key :card-resolution
     :default "default"
     :sync? false  ; device-specific
-    :validate-fn #(validate-enum valid-card-resolution-options %)}
+    :validate-fn #(validate-enum valid-card-resolution-options %)
+    :doc "Card image quality preference for this device"}
    {:key :card-zoom
     :default "image"
     :sync? true
-    :validate-fn #(validate-enum valid-card-zoom-options %)}
+    :validate-fn #(validate-enum valid-card-zoom-options %)
+    :doc "How to display zoomed cards (image/text)"}
    {:key :corp-card-sleeve
     :default "nsg-card-back"
     :sync? true
-    :validate-fn validate-any}  ; TODO: define valid card sleeve values
+    :validate-fn validate-card-sleeve
+    :doc "Selected card back design for Corp deck"}
    {:key :custom-bg-url
     :default "https://nullsignal.games/wp-content/uploads/2022/07/Mechanics-of-Midnight-Sun-Header.png"
     :sync? true
-    :validate-fn string?}
+    :validate-fn string?
+    :doc "URL for custom game board background image"}
    {:key :deckstats
     :default "always"
     :sync? true
-    :validate-fn #(validate-enum valid-stats-options %)}
+    :validate-fn #(validate-enum valid-stats-options %)
+    :doc "When to show deck statistics (always/competitive/none)"}
    {:key :default-format
     :default "standard"
     :sync? true
-    :validate-fn validate-any}  ; TODO: define valid format values
+    :validate-fn #(validate-enum valid-formats %)
+    :doc "Default game format when creating new games"}
    {:key :disable-websockets
     :default false
     :sync? false  ; device-specific
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Disable WebSocket connections on this device (uses polling instead)"}
    {:key :display-encounter-info
     :default false
     :sync? true
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Show detailed encounter information during runs"}
    {:key :gamestats
     :default "always"
     :sync? true
-    :validate-fn #(validate-enum valid-stats-options %)}
+    :validate-fn #(validate-enum valid-stats-options %)
+    :doc "When to record game statistics (always/competitive/none)"}
    {:key :ghost-trojans
     :default true
     :sync? true
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Show ghost images for Trojan programs"}
    {:key :heap-sorted
     :default false
     :sync? true
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Whether to sort cards in Heap by name"}
    {:key :labeled-cards
     :default false
     :sync? false  ; device-specific
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Show card name labels on game board (device-specific)"}
    {:key :labeled-unrezzed-cards
     :default false
     :sync? false  ; device-specific
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Show labels on unrezzed cards (device-specific)"}
    {:key :language
     :default "en"
     :sync? true
-    :validate-fn #(validate-enum valid-languages %)}
+    :validate-fn #(validate-enum valid-languages %)
+    :doc "User interface language preference"}
    {:key :lobby-sounds
     :default true
     :sync? false  ; device-specific
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Play sounds in lobby on this device"}
    {:key :log-player-highlight
     :default "blue-red"
     :sync? true
-    :validate-fn #(validate-enum valid-log-player-highlight %)}
+    :validate-fn #(validate-enum valid-log-player-highlight %)
+    :doc "Color scheme for highlighting players in game log"}
    {:key :log-timestamps
     :default true
     :sync? true
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Show timestamps in game log"}
    {:key :log-top
     :default 419
     :sync? false  ; device-specific
-    :validate-fn validate-number}
+    :validate-fn validate-number
+    :doc "Vertical position of game log panel (device-specific)"}
    {:key :log-width
     :default 300
     :sync? false  ; device-specific
-    :validate-fn validate-number}
+    :validate-fn validate-number
+    :doc "Width of game log panel in pixels (device-specific)"}
    {:key :pass-on-rez
     :default false
     :sync? true
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Automatically pass priority after rezzing cards"}
    {:key :pin-zoom
     :default false
     :sync? true
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Keep card zoom window pinned open"}
    {:key :player-stats-icons
     :default true
     :sync? false  ; device-specific
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Show icons in player stats area (device-specific)"}
    {:key :prizes
     :default nil
     :sync? true
-    :validate-fn validate-any}  ; TODO: define valid prize structure
+    :validate-fn validate-prizes
+    :doc "Unlocked prize content (card backs, etc.); set by admins not user"}
    {:key :pronouns
     :default "none"
     :sync? true
-    :validate-fn #(validate-enum valid-pronouns %)}
+    :validate-fn #(validate-enum valid-pronouns %)
+    :doc "User's preferred pronouns for display"}
    {:key :runner-board-order
     :default "irl"
     :sync? true
-    :validate-fn #(validate-enum valid-runner-board-order %)}
+    :validate-fn #(validate-enum valid-runner-board-order %)
+    :doc "Layout order for Runner board areas (irl/jnet)"}
    {:key :runner-card-sleeve
     :default "nsg-card-back"
     :sync? true
-    :validate-fn validate-any}  ; TODO: define valid card sleeve values
+    :validate-fn validate-card-sleeve
+    :doc "Selected card back design for Runner deck"}
    {:key :show-alt-art
     :default true
     :sync? true
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Display alternate card art when available"}
    {:key :sides-overlap
     :default true
     :sync? false  ; device-specific
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Allow Corp/Runner areas to overlap on small screens (device-specific)"}
    {:key :sounds
     :default true
     :sync? false  ; device-specific
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Enable in-game sound effects on this device"}
    {:key :sounds-volume
     :default 100
     :sync? false  ; device-specific
-    :validate-fn validate-number}
+    :validate-fn validate-number
+    :doc "Sound effects volume level (0-100) on this device"}
    {:key :stacked-cards
     :default true
     :sync? true
-    :validate-fn validate-boolean}
+    :validate-fn validate-boolean
+    :doc "Stack un-iced servers of the same card"}
    {:key :visible-formats
     :default nil
     :sync? false  ; handled separately in account.cljs
-    :validate-fn validate-any}])  ; TODO: define valid format set structure  ; handled separately in account.cljs
+    :validate-fn validate-visible-formats
+    :doc "Set of game formats to show in lobby (device-specific)"}])
 
 (defn setting-keys
   "Returns a vector of all setting keys"

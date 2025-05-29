@@ -40,7 +40,15 @@
     (go (let [response (<! (PUT "/profile" params :json))]
           (callback response)))))
 
-(defn handle-post [event s]
+(defn handle-post
+  "Handles form submission for user settings.
+
+   IMPORTANT: This function intentionally updates app-state immediately (before the
+   server request) to provide instant UI feedback. Settings take effect immediately
+   in the application without waiting for server confirmation. This is a deliberate
+   design choice to improve user experience - the UI reflects changes instantly
+   while the server update happens asynchronously in the background."
+  [event s]
   (.preventDefault event)
   (swap! s assoc :flash-message (tr [:settings_updating "Updating profile..."]))
   (let [state-map @s
@@ -52,7 +60,7 @@
                                    m)))
                              {}
                              settings/all-settings)]
-    ;; Update app-state with all settings
+    ;; Update app-state with all settings (instant UI update)
     (swap! app-state update :options
            (fn [options]
              (merge options settings-map)))
