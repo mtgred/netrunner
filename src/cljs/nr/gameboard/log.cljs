@@ -75,12 +75,13 @@
 
 (defn fuzzy-match-score
   "Matches if all characters in input appear in target in order.
-  Score is sum of matched indices, lower is a better match"
+  Score is sum of matched indices, lower is a better match. Scoring is case insensitive.
+  Unicode NFKD normalization (see https://www.unicode.org/reports/tr15/) is also used to allow fuzzy matching against composite unicode glyphs.
+    e.g. Poétrï decomposes to [ P o e <accent> t r i <umlaut> ]
+  TODO: some cards use 1337, which we could account for too (e.g. D4v1d)"
   [input target]
-  ;; scoring is case insensitive
-  ;; TODO - scoring for similar letters (e.g. Şifr =~ sifr, 1337 =~ leet)
-  (let [input (string/lower-case input) 
-        target (string/lower-case target)]
+  (let [input  (-> input  string/lower-case (.normalize "NFKD"))
+        target (-> target string/lower-case (.normalize "NFKD"))]
     (loop [curr-input (first input)
            rest-input (rest input)
            target-index (string/index-of target curr-input 0)
@@ -108,9 +109,8 @@
   (seq (:completions s)))
 
 (defn fill-completion [state completion-text]
-  (do
-    (swap! state assoc :msg (str completion-text " "))
-    (reset-completions state)))
+  (swap! state assoc :msg (str completion-text " "))
+  (reset-completions state))
 
 (defn reset-completions
   "Resets the command menu state."
@@ -158,9 +158,27 @@
          (->> (find-matches commands input)
               (map (fn [match] {:completion-text match :display-text (get-in command-info-map [match :usage])})))))
 
+(defn filter-side [[card-name card-info]]
+  (case (:side @game-state)
+    :corp   (= (:side card-info) "Corp")
+    :runner (= (:side card-info) "Runner")))
+
+; TODO refactor into complete-id, move completion logic into generic function and add the replacement bits in here
 (defn complete-cardname [state full-input card-input]
   (let [cardnames (->> @all-cards
-                       (keys))
+                       (filter filter-side)
+                       keys)
+        matches (find-matches cardnames card-input)
+        complete #(string/replace full-input card-input %)]
+    (swap! state assoc :completions
+           (->> matches
+                (map (fn [match] {:completion-text (complete match) :display-text match}))))))
+
+(defn complete-identity [state full-input card-input]
+  (let [cardnames (->> @all-cards
+                       (filter filter-side)
+                       (filter (fn [[_ {type :type}]] (= type "Identity")))
+                       keys)
         matches (find-matches cardnames card-input)
         complete #(string/replace full-input card-input %)]
     (swap! state assoc :completions
@@ -175,6 +193,8 @@
     (cond
       (starts-with? "/summon ") (let [card (string/replace input #"/summon " "")]
                                      (complete-cardname state input card))
+      (starts-with? "/replace-id ") (let [card (string/replace input #"/replace-id " "")]
+                                         (complete-identity state input card))
       (= "/" (first input)) (complete-command state input))
      
     (swap! state assoc :msg input)))
