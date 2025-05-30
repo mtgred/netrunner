@@ -160,7 +160,7 @@
 (defn complete-command [state input]
   (swap! state assoc :completions
          (->> (find-matches commands input)
-              (map (fn [match] {:completion-text match :display-text (get-in command-info-map [match :usage])})))))
+              (mapv (fn [match] {:completion-text match :display-text (get-in command-info-map [match :usage])})))))
 
 (defn filter-side [[card-name card-info]]
   (case (:side @game-state)
@@ -175,7 +175,7 @@
         complete #(string/replace full-input card-input %)]
     (swap! state assoc :completions
            (->> matches
-                (map (fn [match] {:completion-text (complete match) :display-text match}))))))
+                (mapv (fn [match] {:completion-text (complete match) :display-text match}))))))
 
 (defn complete-identity [state full-input card-input]
   (let [cardnames (->> @all-cards
@@ -186,7 +186,7 @@
         complete #(string/replace full-input card-input %)]
     (swap! state assoc :completions
            (->> matches
-                (map (fn [match] {:completion-text (complete match) :display-text match}))))))
+                (mapv (fn [match] {:completion-text (complete match) :display-text match}))))))
 
 (defn log-input-change-handler
   [state e]
