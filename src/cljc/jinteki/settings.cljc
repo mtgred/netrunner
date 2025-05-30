@@ -8,7 +8,7 @@
 
    All settings are validated before being stored in app state. Invalid values are
    filtered out at each source level, ensuring app state always contains valid settings."
-  (:require [clojure.string]))
+  (:require [clojure.string :as str]))
 
 ;; Validation constants
 (def valid-background-slugs
@@ -49,19 +49,6 @@
     (and (map? value)
          (every? key-pred (keys value))
          (every? val-pred (vals value)))))
-
-;; Basic validation functions
-(defn- validate-enum [valid-set value]
-  "Returns true if value is in the valid set"
-  (contains? valid-set value))
-
-(defn- validate-boolean [value]
-  "Returns true if value is a boolean"
-  (boolean? value))
-
-(defn- validate-number [value]
-  "Returns true if value is a number"
-  (number? value))
 
 
 ;; Composed validators
@@ -109,12 +96,12 @@
    {:key :archives-sorted
     :default false
     :sync? true
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Whether to sort cards in Archives by name"}
    {:key :background
     :default "worlds2020"
     :sync? true
-    :validate-fn #(validate-enum valid-background-slugs %)
+    :validate-fn #(contains? valid-background-slugs %)
     :doc "Selected game board background or 'custom' for a custom image with :custom-bg-url"}
    {:key :bespoke-sounds
     :default {}
@@ -129,17 +116,17 @@
    {:key :card-back-display
     :default "them"
     :sync? true
-    :validate-fn #(validate-enum valid-card-back-display %)
+    :validate-fn #(contains? valid-card-back-display %)
     :doc "Which card backs to display (them/me/ffg/nsg)"}
    {:key :card-resolution
     :default "default"
     :sync? false  ; device-specific
-    :validate-fn #(validate-enum valid-card-resolution-options %)
+    :validate-fn #(contains? valid-card-resolution-options %)
     :doc "Card image quality preference for this device"}
    {:key :card-zoom
     :default "image"
     :sync? true
-    :validate-fn #(validate-enum valid-card-zoom-options %)
+    :validate-fn #(contains? valid-card-zoom-options %)
     :doc "How to display zoomed cards (image/text)"}
    {:key :corp-card-sleeve
     :default "nsg-card-back"
@@ -154,92 +141,92 @@
    {:key :deckstats
     :default "always"
     :sync? true
-    :validate-fn #(validate-enum valid-stats-options %)
+    :validate-fn #(contains? valid-stats-options %)
     :doc "When to show deck statistics (always/competitive/none)"}
    {:key :default-format
     :default "standard"
     :sync? true
-    :validate-fn #(validate-enum valid-formats %)
+    :validate-fn #(contains? valid-formats %)
     :doc "Default game format when creating new games"}
    {:key :disable-websockets
     :default false
     :sync? false  ; device-specific
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Disable WebSocket connections on this device (uses polling instead)"}
    {:key :display-encounter-info
     :default false
     :sync? true
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Show detailed encounter information during runs"}
    {:key :gamestats
     :default "always"
     :sync? true
-    :validate-fn #(validate-enum valid-stats-options %)
+    :validate-fn #(contains? valid-stats-options %)
     :doc "When to record game statistics (always/competitive/none)"}
    {:key :ghost-trojans
     :default true
     :sync? true
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Show ghost images for Trojan programs"}
    {:key :heap-sorted
     :default false
     :sync? true
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Whether to sort cards in Heap by name"}
    {:key :labeled-cards
     :default false
     :sync? false  ; device-specific
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Show card name labels on game board (device-specific)"}
    {:key :labeled-unrezzed-cards
     :default false
     :sync? false  ; device-specific
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Show labels on unrezzed cards (device-specific)"}
    {:key :language
     :default "en"
     :sync? true
-    :validate-fn #(validate-enum valid-languages %)
+    :validate-fn #(contains? valid-languages %)
     :doc "User interface language preference"}
    {:key :lobby-sounds
     :default true
     :sync? false  ; device-specific
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Play sounds in lobby on this device"}
    {:key :log-player-highlight
     :default "blue-red"
     :sync? true
-    :validate-fn #(validate-enum valid-log-player-highlight %)
+    :validate-fn #(contains? valid-log-player-highlight %)
     :doc "Color scheme for highlighting players in game log"}
    {:key :log-timestamps
     :default true
     :sync? true
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Show timestamps in game log"}
    {:key :log-top
     :default 419
     :sync? false  ; device-specific
-    :validate-fn validate-number
+    :validate-fn number?
     :doc "Vertical position of game log panel (device-specific)"}
    {:key :log-width
     :default 300
     :sync? false  ; device-specific
-    :validate-fn validate-number
+    :validate-fn number?
     :doc "Width of game log panel in pixels (device-specific)"}
    {:key :pass-on-rez
     :default false
     :sync? true
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Automatically pass priority after rezzing cards"}
    {:key :pin-zoom
     :default false
     :sync? true
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Keep card zoom window pinned open"}
    {:key :player-stats-icons
     :default true
     :sync? false  ; device-specific
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Show icons in player stats area (device-specific)"}
    {:key :prizes
     :default nil
@@ -249,12 +236,12 @@
    {:key :pronouns
     :default "none"
     :sync? true
-    :validate-fn #(validate-enum valid-pronouns %)
+    :validate-fn #(contains? valid-pronouns %)
     :doc "User's preferred pronouns for display"}
    {:key :runner-board-order
     :default "irl"
     :sync? true
-    :validate-fn #(validate-enum valid-runner-board-order %)
+    :validate-fn #(contains? valid-runner-board-order %)
     :doc "Layout order for Runner board areas (irl/jnet)"}
    {:key :runner-card-sleeve
     :default "nsg-card-back"
@@ -264,27 +251,27 @@
    {:key :show-alt-art
     :default true
     :sync? true
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Display alternate card art when available"}
    {:key :sides-overlap
     :default true
     :sync? false  ; device-specific
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Allow Corp/Runner areas to overlap on small screens (device-specific)"}
    {:key :sounds
     :default true
     :sync? false  ; device-specific
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Enable in-game sound effects on this device"}
    {:key :sounds-volume
     :default 100
     :sync? false  ; device-specific
-    :validate-fn validate-number
+    :validate-fn number?
     :doc "Sound effects volume level (0-100) on this device"}
    {:key :stacked-cards
     :default true
     :sync? true
-    :validate-fn validate-boolean
+    :validate-fn boolean?
     :doc "Stack un-iced servers of the same card"}
    {:key :visible-formats
     :default nil
@@ -311,7 +298,7 @@
   "Get browser language, mapped to supported language or 'en' fallback"
   []
   #?(:cljs
-     (let [lang (some-> js/navigator.language (clojure.string/split #"-") first)]
+     (let [lang (some-> js/navigator.language (str/split #"-") first)]
        (cond
          ;; if we ever implement proper zh, fix this
          (= lang "zh") "zh-simp"
