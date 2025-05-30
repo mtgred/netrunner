@@ -5,6 +5,7 @@
 		"css:release": "npm run css:build -- -c",
 		"cljs:build": "shadow-cljs compile app",
 		"cljs:watch": "shadow-cljs watch app",
+		"cljs:repl": "shadow-cljs cljs-repl app",
 		"cljs:release": "shadow-cljs release app",
 		"release": "npm run css:release && npm run cljs:release"
 	},

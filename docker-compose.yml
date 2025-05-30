@@ -46,6 +46,7 @@ services:
       - "./shadow-cljs.edn:/usr/src/app/shadow-cljs.edn"
     ports:
       - 9630:9630
+      - 39039:39039
     build:
       dockerfile: docker/Dockerfile
       context: .

@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as string]
    [jinteki.utils :refer [command-info]]
+   [jinteki.cards :refer [all-cards]]
    [nr.angel-arena.log :as angel-arena-log]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.avatar :refer [avatar]]
@@ -18,7 +19,7 @@
 
 (def commands (distinct (map :name command-info)))
 (def command-info-map (->> command-info
-                           (map (fn [item] [(:name item) (select-keys item [:has-args :usage :help])]))
+                           (map (fn [info] [(:name info) (select-keys info [:has-args :usage :help])]))
                            (into {})))
 
 (defn scrolled-to-end?
@@ -74,95 +75,150 @@
 
 (defn fuzzy-match-score
   "Matches if all characters in input appear in target in order.
-  Score is sum of matched indices, lower is a better match"
+  Score is sum of matched indices, lower is a better match. Scoring is case insensitive.
+  Unicode NFKD normalization (see https://www.unicode.org/reports/tr15/) is also used to allow fuzzy matching against composite unicode glyphs.
+    e.g. Poétrï decomposes to [ P o e <accent> t r i <umlaut> ]
+  TODO: some cards use 1337, which we could account for too (e.g. D4v1d)"
   [input target]
-  (loop [curr-input (first input)
-         rest-input (rest input)
-         target-index (string/index-of target curr-input 0)
-         score target-index]
-    (when target-index
-      (if (not (seq rest-input))
-        score
-        (let [next-index (string/index-of target (first rest-input) (inc target-index))]
-          (recur
-            (first rest-input)
-            (rest rest-input)
-            next-index
-            (+ score (or next-index 0))))))))
+  (let [input  (-> input  string/lower-case (.normalize "NFKD"))
+        target (-> target string/lower-case (.normalize "NFKD"))]
+    (loop [curr-input (first input)
+           rest-input (rest input)
+           target-index (string/index-of target curr-input 0)
+           score target-index]
+      (when target-index
+        (if (not (seq rest-input))
+          score
+          (let [next-index (string/index-of target (first rest-input) (inc target-index))]
+            (recur
+              (first rest-input)
+              (rest rest-input)
+              next-index
+              (+ score (or next-index 0)))))))))
 
-(defn find-command-matches
-  ([input commands]
-   (when (= "/" (first input))
-     (->> commands
-       (map (fn [target] {:match target :score (fuzzy-match-score input target)}))
+(defn find-matches
+  ([potential-matches pattern]
+     (->> potential-matches
+       (map (fn [target] {:match target :score (fuzzy-match-score pattern target)}))
        (filter :score)
        (sort-by :score)
-       (map :match)))))
+       (take 10)
+       (map :match))))
 
-(defn show-command-menu? [s]
-  (seq (:command-matches s)))
+(defn show-completions? [s]
+  (seq (:completions s)))
 
-(defn reset-command-menu
+(defn fill-completion [state completion-text]
+  (swap! state assoc :msg (str completion-text " "))
+  (reset-completions state))
+
+(defn reset-completions
   "Resets the command menu state."
   [state]
-  (swap! state assoc :command-matches '())
-  (swap! state assoc :command-highlight nil))
+  (swap! state assoc :completions nil)
+  (swap! state assoc :completion-highlight nil))
 
-(defn command-menu-key-down-handler
+(defn is-command? [completion]
+  (contains? command-info-map completion))
+
+(defn has-args? [completion]
+  (some? (get-in command-info-map [completion :has-args])))
+
+(defn autosend? [completion]
+  ;; Commands with arguments do not autosend
+  (if (and (is-command? completion) (has-args? completion))
+    false
+    ;; Other completion types (commands with no args, card completions) do autosend
+    true))
+
+(defn completions-key-down-handler
   [state e]
-  (when (show-command-menu? @state)
+  (when (show-completions? @state)
     (let [key (-> e .-key)
-          matches (:command-matches @state)
-          match-count (count matches)]
+          completions (:completions @state)
+          completions-count (count completions)]
       (case key
         ;; ArrowDown
         "ArrowDown" (do (.preventDefault e)
-                        (swap! state update :command-highlight #(if % (mod (inc %) match-count) 0)))
+                        (swap! state update :completion-highlight #(if % (mod (inc %) completions-count) 0)))
         ;; ArrowUp
-        "ArrowUp" (when (:command-highlight @state)
+        "ArrowUp" (when (:completion-highlight @state)
                     (.preventDefault e)
-                    (swap! state update :command-highlight #(if % (mod (dec %) match-count) 0)))
-        ;; Return, Space, ArrowRight, Tab
-        ("Enter" "Space" "ArrowRight" "Tab")
-        (when (or (= 1 match-count) (:command-highlight @state))
-          (let [use-index (if (= 1 match-count) 0 (:command-highlight @state))
-                command (nth matches use-index)]
+                    (swap! state update :completion-highlight #(if % (mod (dec %) completions-count) 0)))
+        ("Enter" " " "ArrowRight" "Tab")
+        (when (or (= 1 completions-count) (:completion-highlight @state))
+          (let [use-index (if (= 1 completions-count) 0 (:completion-highlight @state))
+                completion (:completion-text (nth completions use-index))]
             (.preventDefault e)
-            (swap! state assoc :msg (str command " "))
-            (reset-command-menu state)
+            (fill-completion state completion)
             ;; auto send when no args needed
-            (when (and (= key "Enter")
-                       (not (get-in command-info-map [command :has-args])))
+            (when (and (= key "Enter") (autosend? completion))
               (send-msg state))))
         ;; else
         nil))))
 
+(defn complete-command [state input]
+  (swap! state assoc :completions
+         (->> (find-matches commands input)
+              (mapv (fn [match] {:completion-text match :display-text (get-in command-info-map [match :usage])})))))
+
+(defn filter-side [[card-name card-info]]
+  (case (:side @game-state)
+    :corp   (= (:side card-info) "Corp")
+    :runner (= (:side card-info) "Runner")))
+
+(defn complete-cardname [state full-input card-input]
+  (let [cardnames (->> @all-cards
+                       (filter filter-side)
+                       keys)
+        matches (find-matches cardnames card-input)
+        complete #(string/replace full-input card-input %)]
+    (swap! state assoc :completions
+           (->> matches
+                (mapv (fn [match] {:completion-text (complete match) :display-text match}))))))
+
+(defn complete-identity [state full-input card-input]
+  (let [cardnames (->> @all-cards
+                       (filter filter-side)
+                       (filter (fn [[_ {type :type}]] (= type "Identity")))
+                       keys)
+        matches (find-matches cardnames card-input)
+        complete #(string/replace full-input card-input %)]
+    (swap! state assoc :completions
+           (->> matches
+                (mapv (fn [match] {:completion-text (complete match) :display-text match}))))))
+
 (defn log-input-change-handler
   [state e]
-  (reset-command-menu state)
-  (swap! state assoc :command-matches (-> e .-target .-value (find-command-matches commands)))
-  (swap! state assoc :msg (-> e .-target .-value))
+  (reset-completions state)
+  (let [input (-> e .-target .-value)
+        starts-with? #(string/starts-with? input %)]
+    (cond
+      (starts-with? "/summon ") (let [card (string/replace input #"/summon " "")]
+                                     (complete-cardname state input card))
+      (starts-with? "/replace-id ") (let [card (string/replace input #"/replace-id " "")]
+                                         (complete-identity state input card))
+      (= "/" (first input)) (complete-command state input))
+     
+    (swap! state assoc :msg input)))
   ;;(send-typing state)
-  )
 
-(defn command-menu [!input-ref state]
-  (when (show-command-menu? @state)
+(defn completions [!input-ref state]
+  (when (show-completions? @state)
     [:div.command-matches-container.panel.blue-shade
-     {:on-mouse-leave #(swap! state dissoc :command-highlight)}
+     {:on-mouse-leave #(swap! state dissoc :completion-highlight)}
      [:ul.command-matches
       (doall (map-indexed
-               (fn [i match]
+               (fn [i {:keys [completion-text display-text]} completion]
                  [:li.command-match
-                  {:key match
-                   :class (when (= i (:command-highlight @state)) "highlight")}
-                  [:span {:on-mouse-over #(swap! state assoc :command-highlight i)
+                  {:key completion-text
+                   :class (when (= i (:completion-highlight @state)) "highlight")}
+                  [:span {:on-mouse-over #(swap! state assoc :completion-highlight i)
                           :on-click #(do
-                                       (swap! state assoc :msg (str match " "))
-                                       (reset-command-menu state)
-                                       (.focus @!input-ref))}
-
-                          (get-in command-info-map [match :usage])]])
-                      (:command-matches @state)))]]))
+                            (fill-completion state completion-text)
+                            (.focus @!input-ref))}
+                         display-text]])
+               (:completions @state)))]]))
 
 (defn log-input []
   (let [current-game (r/cursor app-state [:current-game])
@@ -174,7 +230,7 @@
         [:div.log-input
          [:div.form-container
           [:form {:on-submit #(do (.preventDefault %)
-                                  (reset-command-menu state)
+                                  (reset-completions state)
                                   (send-msg state))}
            [:input#log-input
             {:placeholder (tr [:chat_placeholder "Say something..."])
@@ -183,11 +239,11 @@
              :ref #(reset! !input-ref %)
              :value (:msg @state)
              ;;:on-blur #(send-typing (atom nil))
-             :on-key-down #(command-menu-key-down-handler state %)
+             :on-key-down #(completions-key-down-handler state %)
              :on-change #(log-input-change-handler state %)}]]]
          [indicate-action]
          [show-decklists]
-         [command-menu !input-ref state]]))))
+         [completions !input-ref state]]))))
 
 (defn format-system-timestamp [timestamp text corp runner]
   (if (get-in @app-state [:options :log-timestamps])
