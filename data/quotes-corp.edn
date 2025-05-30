@@ -1,6 +1,7 @@
 {"A Teia: IP Recovery"
- {"Default"
-  ["Caveant Fugitivi."]}
+ {"Criminal" ["This one won't be returning home with spoils."]
+  "Default" ["Caveant Fugitivi."]
+  "Shaper" ["Even this mind can be dulled by repetition. Strike when they get complacent, but before you get bored."]}
  "Acme Consulting: The Truth You Need"
  {"Anarch"
   ["Some grandstanding vigilante thinks they can threaten us? Our report will conclude all damage was self-inflicted. Case closed."]
@@ -37,6 +38,9 @@
   ["Protocols checked and re-checked. Prepare to \"test\" their brain against our code."]
   "Shaper"
   ["They seem quite prepared. Have the field units deal with their contacts, they won't be able to face us alone."]}
+ "AU Co.: The Gold Standard in Clones"
+ {"Default" ["I, Phật Gioan Baotixita, make the best company. Don't you agree?"]
+  "Shaper" ["I am already bored of this. Let's play a three-round game with this runner!"]}
  "Azmari EdTech: Shaping the Future"
  {"Anarch"
   ["Your obsolete ideas and worn-out slogans do not apply to the glorious future we are creating in every young mind we can reach."]
@@ -48,6 +52,11 @@
   ["Try not to fall behind, we have a very rigorous program."]
   "Shaper"
   ["You think you know what true knowledge is? Let us teach you a real lesson, then."]}
+ "BANGUN: When Disaster Strikes"
+ {"Anarch" ["Where would you be without us? Lost at sea? Engulfed by a disaster without the help of the Vimāna?"]
+  "Criminal" ["Will you support BANGUN off the books, or will you be yet another soul lost in the nick of time?"]
+  "Default" ["... we'll be there."]
+  "Shaper" ["There are questions as dangerous as a disaster. Best be careful what answers you seek, runner."]}
  "Blue Sun: Powering the Future"
  {"Anarch" ["You can't fight fusion with petrol bombs."]
   "Criminal" ["Steal all you want, we can generate way more than that."]
@@ -265,6 +274,8 @@
   ["Our network is our garden. You are welcome to enter, but beware the thorns."]
   "Shaper"
   ["You may appreciate what you find, but that will not let you master it."]}
+ "LEO Construction: Labor Solutions"
+ {"Default" ["Workers of the World, Delivered"]}
  "MirrorMorph: Endless Iteration"
  {"Anarch"
   ["Our subroutines estimate an 92.2% chance of such a reckless runner flatlining themself before even catching a glimpse of our servers. Simulations upon simulations wind up the same."]
@@ -313,6 +324,8 @@
   "Default" ["An unregistered user? Terms and Conditions will apply."]
   "Shaper"
   ["The most dangerous creation of any society is someone who has nothing to lose."]}
+ "Nebula Talent Management: Making Stars"
+ {"Default" ["Igniting your potential."]}
  "NEXT Design: Guarding the Net"
  {"Anarch"
   ["Potential intrusion probability at 96.3% Realigning defense matrix. Deploying countermeasures. Code Yellow in effect."]
@@ -364,8 +377,12 @@
   "Liza Talking Thunder: Prominent Legislator" ["Legislator, always good to see you."]
   "Shaper"
   ["They hunger for our knowledge? Lets show them that their eyes are bigger than their stomachs."]}
+ "Poétrï Luxury Brands: All the Rage"
+ {"Default" ["Fashion fades. Poétrï is eternal."]}
  "Pravdivost Consulting: Political Solutions"
  {"Default" ["Political news, fit for public consumption."]}
+ "PT Untaian: Life's Building Blocks"
+ {"Default" ["The Looming Future."]}
  "SSO Industries: Fueling Innovation"
  {"Anarch"
   ["Luddites. Always on the fringe of civilization. Always trying to get sand into the gears of progress. Always getting ground to dust in the end."]
@@ -427,6 +444,8 @@
  "Strategic Innovations: Future Forward"
  {"Default"
   ["Our dynamic structures have suffered worse than this. By the time they realized what they are dealing with we'll be far beyond them"]}
+ "Synapse Global: Faster than Thought"
+ {"Default" ["Every Impulse Monitored."]}
  "Synthetic Systems: The World Re-imagined"
  {"Default"
   ["They'll find more than they'd hoped for. Everything we make is still bound by natural law, the limits merely exceed most notions."]}
@@ -465,6 +484,9 @@
  {"Default" ["There have been some issues, do what is best for the business."]
   "The Catalyst: Convention Breaker"
   ["We have noticed some disruptions. Soon they will discover that the world is not so kind to those who step out of line."]}
+ "The Zwicky Group: Invisible Hands"
+ {"Anarch" ["Even your light, your destiny has been laid out so clearly by Plutus."]
+  "Default" ["Action at a distance." "Say its name, Sibling."]}
  "Thule Subsea: Safety Below"
  {"Default" ["Join us. Safe, away from the crisis."]}
  "Thunderbolt Armaments: Peace Through Power"

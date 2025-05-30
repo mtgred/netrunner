@@ -112,6 +112,10 @@
   "Skorpios Defense Systems: Persuasive Power"
   ["Bringin' out the big guns, eh? Why don't we see whose are bigger?"]
   "Weyland Consortium" ["Babe, I'm the highest profile target there is. Need some proof?"]}
+ "Barry \"Baz\" Wong: Tri-Maf Veteran"
+ {"BANGUN: When Disaster Strikes" ["Try and cheat me. We'll see how this goes for you."]
+  "Default" ["Try me."]
+  "Weyland Consortium" ["This is simply business. Maybe tomorrow we'll be on the same side."]}
  "Boris \"Syfr\" Kovac: Crafty Veteran"
  {"Default" ["They don't call me \"100% win rate on Jnet\" for nothing."]}
  "Captain Padma Isbister: Intrepid Explorer"
@@ -129,6 +133,11 @@
   ["Sharp sharp sharp! Careful Dino! They might poke your eye out! Yes, the other one..."]
   "NBN" ["Sticks and stones only work in meatspace. Now, let's get in without a trace!"]
   "Weyland Consortium" ["Ohhh! Big bada boom! Cut the blue wire Dino!"]}
+ "Dewi Subrotoputri: Pedagogical Dhalang"
+ {"BANGUN: When Disaster Strikes" ["A classic story of fallen heroes, and such a tragedy is their fall."]
+  "Default" ["Who else will teach the stories of good and evil"]
+  "Jinteki" ["A worthy story to pass on to the next generation. Be wary of a Jinteki scientist and their pursuit of knowledge and power."]
+  "PT Untaian: Life's Building Blocks" ["The archetypal story of Jinteki scientists and the corruption of science. This we must share."]}
  "Edward Kim: Humanity's Hammer"
  {"Argus Security: Protection Guaranteed" ["I've had worse."]
   "Default"
@@ -325,6 +334,13 @@
   "NBN"
   ["They think they are good at turning data into profits? I'll give them a run for their money."]
   "Weyland Consortium" ["Lets see what you have going on up here now that we're alone."]}
+ "Magdalene Keino-Chemutai: Cryptarchitect"
+ {"Default" ["Good design is invisible - but I'll never settle for 'good'."]
+  "Earth Station: SEA Headquarters" ["I've worked in KK on the Mahkota Langit and in Jinja City on the VSEP. It's time I renovate the primogenitor."]
+  "Haas-Bioroid" ["I need access to your bioroids for my project, whether you consent to it or not."]
+  "LEO Construction: Labor Solutions" ["How foolish to think you could replace me. I have been, and will always be, the greatest architect of space elevators."]
+  "NBN" ["This is an inconvenience, but a necessary step for ensuring my project's success."]
+  "Weyland Consortium" ["I am in need of credits and resources for my project. Weyland's will be put to better use with me."]}
  "MaxX: Maximum Punk Rock"
  {"Default" ["All right f**kers. Buckle up."]
   "Haas-Bioroid" ["Time to show these golems how to rock!"]
@@ -335,6 +351,8 @@
  "Mercury: Chrome Libertador"
  {"Default" ["I decided; I am free."]
   "Haas-Bioroid" ["I'm not another Nico, even though your security may mistake me for one."]}
+ "MuslihaT: Multifarious Marketeer"
+ {"Default" ["Peer pressure works."]}
  "Nasir Meidan: Cyber Explorer"
  {"Default"
   ["The unknown brought me here. The boundless net holds infinite secrets, and every discovery propels us further."]
@@ -452,6 +470,8 @@
   ["Creating minds as if they were ingots to be stacked. They've truly lost their humanity."]
   "Weyland Consortium"
   ["They threaten my body, but cannot reach my Soul. We will deliver them a message."]}
+ "Ryō \"Phoenix\" Ōno: Out of the Ashes"
+ {"Default" ["Light up, flame out, and burn it all down."]}
  "Sebastião Souza Pessoa: Activist Organizer"
  {"Default" ["Destroy the mechanisms of domination."]}
  "Silhouette: Stealth Operative"
@@ -528,6 +548,8 @@
   ["They might control the net, but academia created it. Let's see if they've caught on to all our tricks yet."]
   "Weyland Consortium"
   ["Here is a prime example of post-post-post-capitalist economy running rampant. Will they even care if we expose their actions?"]}
+ "Topan: Ormas Leader"
+ {"Default" ["Whatever it takes for us to survive"]}
  "Valencia Estevez: The Angel of Cayambe"
  {"AgInfusion: New Miracles for a New World"
   ["They put what in the food supply? The world's gonna want to hear this..."]
