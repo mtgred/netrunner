@@ -326,8 +326,8 @@
   (into {} (map (fn [{:keys [key default]}]
                   (if (= key :language)
                     [key (browser-language)]
-                    [key default]))
-                all-settings)))
+                    [key default])))
+            all-settings))
 
 (defn get-setting
   "Get a setting definition by key"
