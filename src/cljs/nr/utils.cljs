@@ -368,16 +368,17 @@
     (gstring/format "%.0f" (* 100 (float (/ num1 num2))))))
 
 (defn set-scroll-top
-  "Set the scrollTop parameter of a reagent component"
-  [this scroll-top]
-  (let [node (rd/dom-node this)]
+  "Set the scrollTop parameter of a DOM node"
+  [node scroll-top]
+  (when node
     (set! (.-scrollTop node) scroll-top)))
 
 (defn store-scroll-top
-  "Store the scrollTop parameter of a reagent component in an atom"
-  [this scroll-top-atom]
-  (let [h (.-scrollTop (rd/dom-node this))]
-    (reset! scroll-top-atom h)))
+  "Store the scrollTop parameter of a DOM node in an atom"
+  [node scroll-top-atom]
+  (when node
+    (let [h (.-scrollTop node)]
+      (reset! scroll-top-atom h))))
 
 (defn get-image-path
   "Image search priority: Language > Art > Resolution"

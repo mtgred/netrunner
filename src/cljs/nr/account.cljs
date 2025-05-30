@@ -277,13 +277,14 @@
    ["Worlds 2020" "worlds2020"]])
 
 (defn account-content [_ _ scroll-top]
-  (r/create-class
-    {:display-name "account-content"
-     :component-did-mount #(set-scroll-top % @scroll-top)
-     :component-will-unmount #(store-scroll-top % scroll-top)
-     :reagent-render
-     (fn [user s _]
-       [:div#profile-form.panel.blue-shade.content-page {:ref "profile-form"}
+  (r/with-let [!node-ref (r/atom nil)]
+    (r/create-class
+      {:display-name "account-content"
+       :component-did-mount (fn [_] (set-scroll-top @!node-ref @scroll-top))
+       :component-will-unmount (fn [_] (store-scroll-top @!node-ref scroll-top))
+       :reagent-render
+       (fn [user s _]
+         [:div#profile-form.panel.blue-shade.content-page {:ref #(reset! !node-ref %)}
          [:h2 (tr [:nav_settings "Settings"])]
          [:form {:on-submit #(handle-post % s)}
           [:button.float-right (tr [:settings_update-profile "Update Profile"])]
@@ -689,7 +690,7 @@
      [api-keys s]
 
      [:section
-      [:span.flash-message (:flash-message @s)]]]])}))
+      [:span.flash-message (:flash-message @s)]]]])})))
 
 (defn account []
   (let [user (r/cursor app-state [:user])

@@ -478,11 +478,12 @@
                   :onLoad #(-> % .-target js/$ .show)}]))])))
 
 (defn card-list-view [_ scroll-top]
-  (r/create-class
-    {
-     :display-name "card-list-view"
-     :component-did-mount #(set-scroll-top % @scroll-top)
-     :component-will-unmount #(store-scroll-top % scroll-top)
+  (r/with-let [!node-ref (r/atom nil)]
+    (r/create-class
+      {
+       :display-name "card-list-view"
+       :component-did-mount (fn [_] (set-scroll-top @!node-ref @scroll-top))
+       :component-will-unmount (fn [_] (store-scroll-top @!node-ref scroll-top))
      :reagent-render
      (fn [state _]
        (let [selected (selected-set-name state)
@@ -505,11 +506,11 @@
                         (insert-alt-arts alt-filter)
                         (sort-by (sort-field (:sort-field @state)))
                         (take (* (:page @state) 28)))]
-         [:div.card-list {:on-scroll #(handle-scroll % state)}
+         [:div.card-list {:ref #(reset! !node-ref %) :on-scroll #(handle-scroll % state)}
           (doall
             (for [card cards]
               ^{:key (str (base-image-url card) "-" (:code card))}
-              [card-view card state]))]))}))
+              [card-view card state]))]))})))
 
 (defn handle-search [e state]
   (doseq [filter [:set-filter :type-filter :faction-filter]]

@@ -29,11 +29,11 @@
       {:display-name "lobby-chat"
        :component-did-mount
        (fn []
-         (let [el (rdom/dom-node @message-list)]
+         (when-let [el @message-list]
            (set! (.-scrollTop el) (.-scrollHeight el))))
        :component-did-update
        (fn []
-         (let [el (rdom/dom-node @message-list)]
+         (when-let [el @message-list]
            (when (or @should-scroll
                      (scrolled-to-end? el 15))
              (swap! state assoc :should-scroll false)
