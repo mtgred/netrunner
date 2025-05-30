@@ -10,6 +10,7 @@
    [nr.account :refer [alt-art-name]]
    [nr.ajax :refer [GET]]
    [nr.appstate :refer [app-state]]
+   [nr.local-storage :as ls]
    [nr.translations :refer [clean-input tr tr-data tr-faction tr-format tr-set
                             tr-side tr-type]]
    [nr.utils :refer [banned-span deck-points-card-span faction-icon
@@ -35,7 +36,7 @@
 
 (go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
           lang (get-in @app-state [:options :language] "en")
-          local-cards (js->clj (.parse js/JSON (.getItem js/localStorage "cards")) :keywordize-keys true)
+          local-cards (ls/load "cards" {})
           need-update? (or (not local-cards)
                            (not= server-version (:version local-cards))
                            (not= lang (:lang local-cards)))
@@ -67,7 +68,7 @@
       (reset! cards/cycles cycles)
       (swap! app-state assoc :sets sets :cycles cycles)
       (when need-update?
-        (.setItem js/localStorage "cards" (.stringify js/JSON (clj->js {:cards cards :version server-version :lang lang}))))
+        (ls/save! "cards" {:cards cards :version server-version :lang lang}))
       (reset! all-cards (into {} (map (juxt :title identity) (sort-by :code cards))))
       (swap! app-state assoc
              :cards-loaded true

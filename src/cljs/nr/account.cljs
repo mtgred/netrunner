@@ -5,11 +5,13 @@
    [clojure.string :as s]
    [goog.dom :as gdom]
    [jinteki.cards :refer [all-cards]]
+   [jinteki.settings :as settings]
    [medley.core :as m]
    [nr.ajax :refer [DELETE GET POST PUT]]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [valid-email?]]
    [nr.avatar :refer [avatar]]
+   [nr.local-storage :as ls]
    [nr.sounds :refer [bespoke-sounds play-sfx random-sound select-random-from-grouping]]
    [nr.translations :refer [tr tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
@@ -38,79 +40,35 @@
     (go (let [response (<! (PUT "/profile" params :json))]
           (callback response)))))
 
-(defn save-to-local-storage!
-  [k v]
-  (when-not (nil? v)
-    (.setItem js/localStorage k v)))
+(defn handle-post
+  "Handles form submission for user settings.
 
-(defn handle-post [event s]
+   IMPORTANT: This function intentionally updates app-state immediately (before the
+   server request) to provide instant UI feedback. Settings take effect immediately
+   in the application without waiting for server confirmation. This is a deliberate
+   design choice to improve user experience - the UI reflects changes instantly
+   while the server update happens asynchronously in the background."
+  [event s]
   (.preventDefault event)
   (swap! s assoc :flash-message (tr [:settings_updating "Updating profile..."]))
-  (let [{:keys [pronouns bespoke-sounds language sounds default-format
-                lobby-sounds volume background custom-bg-url corp-card-sleeve runner-card-sleeve card-zoom
-                pin-zoom show-alt-art card-resolution pass-on-rez
-                player-stats-icons stacked-cards ghost-trojans prizes
-                display-encounter-info sides-overlap log-timestamps
-                runner-board-order log-width log-top log-player-highlight
-                blocked-users alt-arts gamestats deckstats disable-websockets]} @s]
+  (let [state-map @s
+        ;; Extract all settings from state using the centralized definition
+        settings-map (reduce (fn [m {:keys [key]}]
+                               (let [value (get state-map key)]
+                                 (if (some? value)
+                                   (assoc m key value)
+                                   m)))
+                             {}
+                             settings/all-settings)]
+    ;; Update app-state with all settings (instant UI update)
     (swap! app-state update :options
            (fn [options]
-             (m/assoc-some options
-                           :pronouns pronouns
-                           :bespoke-sounds bespoke-sounds
-                           :language language
-                           :sounds sounds
-                           :default-format default-format
-                           :lobby-sounds lobby-sounds
-                           :volume volume
-                           :background background
-                           :custom-bg-url custom-bg-url
-                           :runner-card-sleeve runner-card-sleeve
-                           :corp-card-sleeve corp-card-sleeve
-                           :card-zoom card-zoom
-                           :pin-zoom pin-zoom
-                           :show-alt-art show-alt-art
-                           :card-resolution card-resolution
-                           :pass-on-rez pass-on-rez
-                           :player-stats-icons player-stats-icons
-                           :stacked-cards stacked-cards
-                           :ghost-trojans ghost-trojans
-                           :display-encounter-info display-encounter-info
-                           :sides-overlap sides-overlap
-                           :log-timestamps log-timestamps
-                           :runner-board-order runner-board-order
-                           :log-width log-width
-                           :log-top log-top
-                           :log-player-highlight log-player-highlight
-                           :blocked-users blocked-users
-                           :alt-arts alt-arts
-                           :gamestats gamestats
-                           :deckstats deckstats
-                           :disable-websockets disable-websockets)))
-    (save-to-local-storage! "language" language)
-    (save-to-local-storage! "sounds" sounds)
-    (save-to-local-storage! "default-format" default-format)
-    (save-to-local-storage! "lobby_sounds" lobby-sounds)
-    (save-to-local-storage! "background" background)
-    (save-to-local-storage! "custom_bg_url" custom-bg-url)
-    (save-to-local-storage! "volume" volume)
-    (save-to-local-storage! "log-width" log-width)
-    (save-to-local-storage! "log-top" log-top)
-    (save-to-local-storage! "log-player-highlight" log-player-highlight)
-    (save-to-local-storage! "pass-on-rez" pass-on-rez)
-    (save-to-local-storage! "player-stats-icons" player-stats-icons)
-    (save-to-local-storage! "stacked-cards" stacked-cards)
-    (save-to-local-storage! "ghost-trojans" ghost-trojans)
-    (save-to-local-storage! "display-encounter-info" display-encounter-info)
-    (save-to-local-storage! "sides-overlap" sides-overlap)
-    (save-to-local-storage! "log-timestamps" log-timestamps)
-    (save-to-local-storage! "runner-board-order" runner-board-order)
-    (save-to-local-storage! "corp-card-sleeve" corp-card-sleeve)
-    (save-to-local-storage! "runner-card-sleeve" runner-card-sleeve)
-    (save-to-local-storage! "card-zoom" card-zoom)
-    (save-to-local-storage! "pin-zoom" pin-zoom)
-    (save-to-local-storage! "disable-websockets" disable-websockets))
-  (post-options #(post-response s %)))
+             (merge options settings-map)))
+    ;; Update localStorage: remove sync settings, save local-only settings
+    (ls/update-local-storage-settings! settings-map)
+    ;; Note: visible-formats is handled separately
+    ;; Note: prizes is handled as part of user data, not a setting)
+  (post-options #(post-response s %))))
 
 (defn add-user-to-block-list
   [user s]
@@ -370,27 +328,6 @@
                             {:name "Igpay Atinlay" :ref "la-pig"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
            [:div "Some languages are not fully translated yet. If you would like to help with translations, please contact us."]]
-          [:section
-           [:h3 (tr [:settings_sounds "Sounds"])]
-           [:div
-            [:label [:input {:type "checkbox"
-                             :value true
-                             :checked (:lobby-sounds @s)
-                             :on-change #(swap! s assoc :lobby-sounds (.. % -target -checked))}]
-             (tr [:settings_enable-lobby-sounds "Enable lobby sounds"])]]
-           [:div
-            [:label [:input {:type "checkbox"
-                             :value true
-                             :checked (:sounds @s)
-                             :on-change #(swap! s assoc :sounds (.. % -target -checked))}]
-             (tr [:settings_enable-game-sounds "Enable game sounds"])]]
-           [:div (tr [:settings_volume "Volume"])
-            [:input {:type "range"
-                     :min 1 :max 100 :step 1
-                     :on-mouse-up #(play-sfx [(random-sound)] {:volume (int (.. % -target -value))})
-                     :on-change #(swap! s assoc :volume (.. % -target -value))
-                     :value (or (:volume @s) 50)
-                     :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]]
 
           [:section
            [:h3 (tr [:settings_bespoke-sounds "Card-Specific Sounds"] {:sound "header"})]
@@ -405,7 +342,7 @@
                                  :on-change #(let [checked (.. % -target -checked)]
                                                (when checked
                                                  (play-sfx [(select-random-from-grouping grouping)]
-                                                           {:volume (or (:volume @s) 50)
+                                                           {:volume (or (:sounds-volume @s) 50)
                                                             :force true}))
                                                (swap! s assoc-in [:bespoke-sounds grouping] checked))}]
                  (tr [:settings_bespoke-sounds group-name] {:sound group-name})]]))]
@@ -421,13 +358,16 @@
                [:option {:value k} (tr-format v)]))]]
 
           [:section
-           [:h3 (tr [:settings_layout-options "Layout options"])]
+           [:h3 (tr [:settings_gameplay-settings "Gameplay Settings"])]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
-                             :checked (:player-stats-icons @s)
-                             :on-change #(swap! s assoc :player-stats-icons (.. % -target -checked))}]
-             (tr [:settings_player-stats-icons "Use icons for player stats"])]]
+                             :checked (:pass-on-rez @s)
+                             :on-change #(swap! s assoc :pass-on-rez (.. % -target -checked))}]
+             (tr [:settings_pass-on-rez "Pass priority when rezzing ice"])]]]
+
+          [:section
+           [:h3 (tr [:settings_layout-options "Layout options"])]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
@@ -449,15 +389,21 @@
            [:div
             [:label [:input {:type "checkbox"
                              :value true
-                             :checked (:sides-overlap @s)
-                             :on-change #(swap! s assoc :sides-overlap (.. % -target -checked))}]
-             (tr [:settings_sides-overlap "Runner and Corp board may overlap"])]]
-           [:div
-            [:label [:input {:type "checkbox"
-                             :value true
                              :checked (:log-timestamps @s)
                              :on-change #(swap! s assoc :log-timestamps (.. % -target -checked))}]
              (tr [:settings_toggle-log-timestamps "Show log timestamps"])]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:archives-sorted @s)
+                             :on-change #(swap! s assoc :archives-sorted (.. % -target -checked))}]
+             (tr [:settings_sort-archives "Sort Archives"])]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:heap-sorted @s)
+                             :on-change #(swap! s assoc :heap-sorted (.. % -target -checked))}]
+             (tr [:settings_sort-heap "Sort Heap"])]]
 
            [:br]
            [:h4 (tr [:settings_runner-layout "Runner layout from Corp perspective"])]
@@ -478,11 +424,6 @@
                               :on-change #(swap! s assoc :runner-board-order (.. % -target -value))}]
               (tr [:settings_runner-reverse "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"])]]]
 
-           [:br]
-           [:h4 (tr [:settings_log-size "Log size"])]
-           [:div
-            [log-width-option s]
-            [log-top-option s]]
            [:br]
            [:h4 (tr [:settings_log-player-highlight "Log player highlight"])]
            [:div
@@ -558,6 +499,19 @@
                     :alt "Runner card back"}]
              [:div {:style {:marginTop "0.5rem" :textAlign "center"}} "Runner card back"]]]]
 
+           [:h3 (tr [:settings_card-back-display "Display Opponent Card backs"])]
+           (doall (for [option [{:name (tr [:settings_card-backs-their-choice "Their Choice"]) :ref "them"}
+                                {:name (tr [:settings_card-backs-my-choice "My Choice"]) :ref "me"}
+                                {:name (tr [:settings_card-backs-ffg "FFG Card Back"]) :ref "ffg"}
+                                {:name (tr [:settings_card-backs-nsg "NSG Card Back"]) :ref "nsg"}]]
+                    [:div.radio {:key (:name option)}
+                     [:label [:input {:type "radio"
+                                      :name "card-back-display"
+                                      :value (:ref option)
+                                      :on-change #(swap! s assoc :card-back-display (.. % -target -value))
+                                      :checked (= (:card-back-display @s) (:ref option))}]
+                      (:name option)]]))
+
           [:section
            [:h3  (tr [:settings_card-preview-zoom "Card preview zoom"])]
            (doall (for [option [{:name (tr [:settings_card-iamge "Card Image"]) :ref "image"}
@@ -603,14 +557,6 @@
                                       :checked (= (:deckstats @s) (:ref option))}]
                       (:name option)]]))]
 
-          [:section {:id "high-res"}
-           [:h3 (tr [:settings_card-images "Card images"])]
-           [:div
-            [:label [:input {:type "checkbox"
-                             :name "use-high-res"
-                             :checked (= "high" (:card-resolution @s))
-                             :on-change #(swap! s assoc :card-resolution (if (.. % -target -checked) "high" "default"))}]
-             (tr [:settings_high-res "Enable high-resolution card images"])]]]
 
           [:section {:id "alt-art"}
            [:h3 (tr [:settings_alt-art "Alt arts"])]
@@ -668,7 +614,71 @@
                     [:span.blocked-user-name (str "  " bu)]]))]
 
          [:section
-          [:h3  (tr [:settings_connection "Connection"])]
+          [:h3 (tr [:settings_device-specific "Device-specific settings"])]
+          [:p (tr [:settings_device-specific-note "These settings are stored locally on this device and do not sync across devices."])]
+
+          [:h4 (tr [:settings_sounds "Sounds"])]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:lobby-sounds @s)
+                            :on-change #(swap! s assoc :lobby-sounds (.. % -target -checked))}]
+            (tr [:settings_enable-lobby-sounds "Enable lobby sounds"])]]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:sounds @s)
+                            :on-change #(swap! s assoc :sounds (.. % -target -checked))}]
+            (tr [:settings_enable-game-sounds "Enable game sounds"])]]
+          [:div (tr [:settings_volume "Volume"])
+           [:input {:type "range"
+                    :min 1 :max 100 :step 1
+                    :on-mouse-up #(play-sfx [(random-sound)] {:volume (int (.. % -target -value))})
+                    :on-change #(swap! s assoc :sounds-volume (.. % -target -value))
+                    :value (or (:sounds-volume @s) 50)
+                    :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]
+
+          [:h4 (tr [:settings_layout-device "Device Layout"])]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:player-stats-icons @s)
+                            :on-change #(swap! s assoc :player-stats-icons (.. % -target -checked))}]
+            (tr [:settings_player-stats-icons "Use icons for player stats"])]]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:sides-overlap @s)
+                            :on-change #(swap! s assoc :sides-overlap (.. % -target -checked))}]
+            (tr [:settings_sides-overlap "Runner and Corp board may overlap"])]]
+
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:labeled-cards @s)
+                            :on-change #(swap! s assoc :labeled-cards (.. % -target -checked))}]
+            (tr [:settings_label-faceup-cards "Label face up cards"])]]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :value true
+                            :checked (:labeled-unrezzed-cards @s)
+                            :on-change #(swap! s assoc :labeled-unrezzed-cards (.. % -target -checked))}]
+            (tr [:settings_label-unrezzed-cards "Label unrezzed cards"])]]
+
+          [:h4 (tr [:settings_log-size "Log size"])]
+          [:div
+           [log-width-option s]
+           [log-top-option s]]
+
+          [:h4 (tr [:settings_card-images "Card images"])]
+          [:div
+           [:label [:input {:type "checkbox"
+                            :name "use-high-res"
+                            :checked (= "high" (:card-resolution @s))
+                            :on-change #(swap! s assoc :card-resolution (if (.. % -target -checked) "high" "default"))}]
+            (tr [:settings_high-res "Enable high-resolution card images"])]]
+
+          [:h4 (tr [:settings_connection "Connection"])]
           [:div
            [:label [:input {:type "checkbox"
                             :name "disable-websockets"
@@ -687,13 +697,15 @@
         state (r/atom
                (-> (:options @app-state)
                    (select-keys [:pronouns :bespoke-sounds :language :sounds :default-format
-                                 :lobby-sounds :volume :background :custom-bg-url :card-zoom
+                                 :lobby-sounds :sounds-volume :background :custom-bg-url :card-zoom
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
                                  :player-stats-icons :stacked-cards :ghost-trojans
                                  :corp-card-sleeve :runner-card-sleeve :prizes
                                  :display-encounter-info :sides-overlap :log-timestamps
                                  :runner-board-order :log-width :log-top :log-player-highlight
-                                 :blocked-users :alt-arts :gamestats :deckstats :disable-websockets])
+                                 :blocked-users :alt-arts :gamestats :deckstats :disable-websockets
+                                 :archives-sorted :heap-sorted :card-back-display
+                                 :labeled-cards :labeled-unrezzed-cards])
                    (assoc :flash-message ""
                           :all-art-select "wc2015")))]
 

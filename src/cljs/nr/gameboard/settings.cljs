@@ -19,18 +19,6 @@
       [:div
        [:label [:input {:type "checkbox"
                         :value true
-                        :checked (get-in @app-state [:options :labeled-unrezzed-cards])
-                        :on-change #(swap! app-state assoc-in [:options :labeled-unrezzed-cards] (.. % -target -checked))}]
-        (tr [:ingame-settings_label-unrezzed-cards "Label unrezzed cards"])]]
-      [:div
-       [:label [:input {:type "checkbox"
-                        :value true
-                        :checked (get-in @app-state [:options :labeled-cards])
-                        :on-change #(swap! app-state assoc-in [:options :labeled-cards] (.. % -target -checked))}]
-        (tr [:ingame-settings_label-faceup-cards "Label face up cards"])]]
-      [:div
-       [:label [:input {:type "checkbox"
-                        :value true
                         :checked (get-in @app-state [:options :ghost-trojans])
                         :on-change #(swap! app-state assoc-in [:options :ghost-trojans] (.. % -target -checked))}]
         (tr [:ingame-settings_ghost-trojans "Display hosted trojans in rig"])]]
@@ -85,14 +73,6 @@
                         :on-change #(swap! app-state assoc-in [:options :log-timestamps] (.. % -target -checked))}]
         (tr [:ingame-settings_log-timestamps-toggle "Show log timestamps"])]]]
 
-     [:section
-      [:h4 (tr [:ingame-settings_board-overlap "Board overlap"])]
-      [:div
-       [:label [:input {:type "checkbox"
-                        :value true
-                        :checked (get-in @app-state [:options :sides-overlap])
-                        :on-change #(swap! app-state assoc-in [:options :sides-overlap] (.. % -target -checked))}]
-        (tr [:ingame-settings_sides-overlap "Runner and Corp may overlap"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings_card-back-display "Display Opponent Card backs"])]
@@ -125,14 +105,6 @@
                        :on-change #(swap! app-state assoc-in [:options :pin-zoom] (.. % -target -checked))}]
        (tr [:settings_pin-zoom "Keep zoomed cards on screen"])]]
 
-     [:section
-      [:h4 (tr [:ingame-settings_card-images "Card images"])]
-      [:div
-       [:label [:input {:type "checkbox"
-                        :name "use-high-res"
-                        :checked (= "high" (get-in @app-state [:options :card-resolution]))
-                        :on-change #(swap! app-state assoc-in [:options :card-resolution] (if (.. % -target -checked) "high" "default"))}]
-        (tr [:ingame-settings_high-res "Enable high resolution card images"])]]]
 
      [:section
       [:h4 (tr [:ingame-settings_alt-art "Alt arts"])]
@@ -141,4 +113,32 @@
                         :name "show-alt-art"
                         :checked (get-in @app-state [:options :show-alt-art])
                         :on-change #(swap! app-state assoc-in [:options :show-alt-art] (.. % -target -checked))}]
-        (tr [:ingame-settings_show-alt "Show alternate card arts"])]]]]))
+        (tr [:ingame-settings_show-alt "Show alternate card arts"])]]]
+
+     [:section
+      [:h4 (tr [:ingame-settings_device-specific "Device-specific settings"])]
+      [:p (tr [:ingame-settings_device-specific-note "These settings are stored locally and do not sync."])]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :labeled-unrezzed-cards])
+                        :on-change #(swap! app-state assoc-in [:options :labeled-unrezzed-cards] (.. % -target -checked))}]
+        (tr [:ingame-settings_label-unrezzed-cards "Label unrezzed cards"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :labeled-cards])
+                        :on-change #(swap! app-state assoc-in [:options :labeled-cards] (.. % -target -checked))}]
+        (tr [:ingame-settings_label-faceup-cards "Label face up cards"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :value true
+                        :checked (get-in @app-state [:options :sides-overlap])
+                        :on-change #(swap! app-state assoc-in [:options :sides-overlap] (.. % -target -checked))}]
+        (tr [:ingame-settings_sides-overlap "Runner and Corp may overlap"])]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :name "use-high-res"
+                        :checked (= "high" (get-in @app-state [:options :card-resolution]))
+                        :on-change #(swap! app-state assoc-in [:options :card-resolution] (if (.. % -target -checked) "high" "default"))}]
+        (tr [:ingame-settings_high-res "Enable high resolution card images"])]]]]))

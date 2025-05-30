@@ -1,6 +1,7 @@
 (ns nr.gameboard.right-pane
   (:require [cljs.core.async :refer [put!]]
             [nr.appstate :refer [app-state]]
+            [nr.local-storage :as ls]
             [nr.gameboard.card-preview :refer [zoom-channel]]
             [nr.gameboard.diagrams :refer [run-timing-pane turn-timing-pane]]
             [nr.gameboard.log :refer [log-pane]]
@@ -65,8 +66,8 @@
         top (.. ui -position -top)]
     (swap! app-state assoc-in [:options :log-width] width) ;;XXX: rename
     (swap! app-state assoc-in [:options :log-top] top)
-    (.setItem js/localStorage "log-width" width)
-    (.setItem js/localStorage "log-top" top)
+    (ls/save! "log-width" width)
+    (ls/save! "log-top" top)
     (resize-card-zoom)))
 
 (defn- pane-start-resize [event ui]

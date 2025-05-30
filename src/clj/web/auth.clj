@@ -6,6 +6,7 @@
    [clojure.string :as str]
    [crypto.password.bcrypt :as password]
    [jinteki.i18n :as i18n]
+   [jinteki.settings :as settings]
    [jinteki.utils :refer [select-non-nil-keys]]
    [monger.collection :as mc]
    [monger.operators :refer :all]
@@ -170,18 +171,12 @@
     :else
     (response 404 {:message "Account not found"})))
 
-(def profile-keys
-  [:background :pronouns :language :default-format :show-alt-art :blocked-users
-   :alt-arts :card-resolution :deckstats :gamestats :card-zoom :pin-zoom :card-back-display
-   :corp-card-sleeve :runner-card-sleeve :prizes :stacked-cards :ghost-trojans :display-encounter-info
-   :sides-overlap :archives-sorted :heap-sorted :log-timestamps
-   :labeled-cards :labeled-unrezzed-cards :bespoke-sounds :pass-on-rez])
 
 (defn update-profile-handler
   [{db :system/db
     {username :username :as user} :user
     body :body}]
-  (let [options (select-non-nil-keys body profile-keys)
+  (let [options (select-non-nil-keys body (settings/sync-keys))
         lang (:lang body)]
     (if (active-user? user)
       (if (acknowledged? (mc/update db "users"
