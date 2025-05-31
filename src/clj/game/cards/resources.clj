@@ -1939,8 +1939,7 @@
                  :msg (msg "make a run on " target " during which no programs can be used")
                  :makes-run true
                  :async true
-                 :effect (req (wait-for (make-run state :runner (make-eid state eid) target card)
-                                        (effect-completed state side eid)))}]
+                 :effect (req (make-run state side eid target card))}]
     {:implementation "Doesn't prevent program use"
      :flags {:runner-phase-12 (req true)}
      :install-cost-bonus (req (- (get-link state)))
