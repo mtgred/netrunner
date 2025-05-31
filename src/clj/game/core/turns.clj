@@ -6,7 +6,7 @@
     [game.core.drawing :refer [draw]]
     [game.core.effects :refer [unregister-lingering-effects update-lingering-effect-durations any-effects]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-simult unregister-floating-events update-floating-event-durations]]
+    [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-simult unregister-floating-events update-floating-event-durations resolve-durations]]
     [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
     [game.core.gaining :refer [gain lose]]
     [game.core.hand-size :refer [hand-size]]
@@ -38,10 +38,7 @@
   ([state side eid _]
    (turn-message state side true)
    (wait-for (trigger-event-simult state side (if (= side :corp) :corp-turn-begins :runner-turn-begins) nil nil)
-             (unregister-lingering-effects state side :start-of-turn)
-             (unregister-floating-events state side :start-of-turn)
-             (unregister-lingering-effects state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
-             (unregister-floating-events state side (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
+             (resolve-durations state side :start-of-turn (if (= side :corp) :until-corp-turn-begins :until-runner-turn-begins))
              (if (= side :corp)
                (do (update-lingering-effect-durations state side :until-next-corp-turn-begins :until-corp-turn-begins)
                    (update-floating-event-durations state side :until-next-corp-turn-begins :until-corp-turn-begins))
@@ -155,12 +152,7 @@
        (wait-for (trigger-event-simult state side (if (= side :runner) :runner-turn-ends :corp-turn-ends) nil nil)
                  (trigger-event state side (if (= side :runner) :post-runner-turn-ends :post-corp-turn-ends))
                  (swap! state assoc-in [side :register-last-turn] (-> @state side :register))
-                 (unregister-lingering-effects state side :end-of-turn)
-                 (unregister-floating-events state side :end-of-turn)
-                 (unregister-lingering-effects state side :end-of-next-run)
-                 (unregister-floating-events state side :end-of-next-run)
-                 (unregister-lingering-effects state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
-                 (unregister-floating-events state side (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
+                 (resolve-durations state side :end-of-turn :end-of-next-run :end-of-run :end-of-encounter (if (= side :runner) :until-runner-turn-ends :until-corp-turn-ends))
                  (if (= side :corp)
                    (do (update-lingering-effect-durations state side :until-next-corp-turn-ends :until-corp-turn-ends)
                        (update-floating-event-durations state side :until-next-corp-turn-ends :until-corp-turn-ends))

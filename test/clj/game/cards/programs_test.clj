@@ -881,6 +881,19 @@
     (is (= 2 (count (:discard (get-corp)))) "Vanilla Campaign trashed")
     (is (= 0 (get-counters (get-program state 0) :virus)) "No virus counter because not accessed")))
 
+(deftest audrey-v2-strength-resets
+  (do-game
+    (new-game {:corp {:hand ["Rashida Jaheem" "Vanilla"]}
+               :runner {:hand ["Knifed" "Audrey v2" "Sure Gamble"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Audrey v2")
+    (card-ability state :runner (get-program state 0) 1)
+    (click-card state :runner "Knifed")
+    (is (= 3 (get-strength (get-program state 0))))
+    (take-credits state :runner)
+    (is (= 0 (get-strength (get-program state 0))) "Strength resets end of turn")))
+
 (deftest aumakua-automated-test
   (basic-program-test {:name "Aumakua"
                        :counters-modify-strength {:type :virus}
