@@ -764,7 +764,7 @@
                           :waiting-prompt true
                           :yes-ability {:msg (msg "access 1 card from HQ")
                                         :async true
-                                        :effect (effect (access-n-cards eid [:hq] 1))}}}
+                                        :effect (req (access-card state :runner eid (-> corp :hand shuffle first)))}}}
                         card nil))}]
     {:static-abilities [(mu+ 1)]
      :events [{:event :successful-run
