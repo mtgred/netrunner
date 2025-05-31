@@ -4114,22 +4114,20 @@
      :abilities [ability]}))
 
 (defcard "Wyldside"
-  {:flags {:runner-turn-draw true
-           :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
-                                                     (cons (get-in @state [:runner :identity])
-                                                           (all-active-installed state :runner))))))}
-   :events [{:event :runner-turn-begins
-             :automatic :lose-clicks
-             :async true
-             :effect (req (lose-clicks state side 1)
-                          (if (get-in @state [:per-turn (:cid card)])
-                            (effect-completed state side eid)
-                            (do (system-msg state side (str "uses " (:title card) " to draw 2 cards and lose [Click]"))
-                                (draw state side eid 2))))}]
-   :abilities [{:msg "draw 2 cards and lose [Click]"
-                :once :per-turn
-                :async true
-                :effect (effect (draw eid 2))}]})
+  (let [ab {:msg "draw 2 cards and lose [Click]"
+            :once :per-turn
+            :async true
+            :effect (req (lose-clicks state side 1)
+                         (draw state side eid 2))}]
+    {:flags {:runner-turn-draw true
+             :runner-phase-12 (req (< 1 (count (filter #(card-flag? % :runner-turn-draw true)
+                                                       (cons (get-in @state [:runner :identity])
+                                                             (all-active-installed state :runner))))))}
+     :events [(assoc ab
+                     :event :runner-turn-begins
+                     :automatic :lose-clicks
+                     :interactive (req true))]
+     :abilities [ab]}))
 
 (defcard "Xanadu"
   {:static-abilities [{:type :rez-cost

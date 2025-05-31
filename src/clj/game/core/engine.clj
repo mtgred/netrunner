@@ -356,6 +356,7 @@
                (let [existing (get acc (:paid/type cur))
                      cost-obj {:paid/type (:paid/type cur)
                                :paid/value (+ (:paid/value existing 0) (:paid/value cur 0))
+                               :paid/x-value (+ (:paid/x-value existing 0) (:paid/x-value cur 0))
                                :paid/targets (seq (concat (:paid/targets existing) (:paid/targets cur)))}]
                  (assoc acc (:paid/type cur) cost-obj)))
              {}
@@ -430,10 +431,11 @@
           ;; a :number prompt
           (:number choices)
           (let [n ((:number choices) state side eid card targets)
+                m (or (:minimum choices) 0)
                 d (if-let [dfunc (:default choices)]
                     (dfunc state side (make-eid state eid) card targets)
-                    0)]
-            (prompt! state s card prompt {:number n :default d} ab args))
+                    m)]
+            (prompt! state s card prompt {:number n :default d :minimum m} ab args))
           (:card-title choices)
           (let [card-titles (sort (map :title (filter #((:card-title choices) state side (make-eid state eid) nil [%])
                                                       (server-cards))))

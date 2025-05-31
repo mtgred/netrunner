@@ -4,7 +4,7 @@
     [game.core.card-defs :refer [card-def]]
     [game.core.effects :refer [any-effects get-effects sum-effects get-effect-maps get-effect-value is-disabled-reg?]]
     [game.core.eid :refer [make-eid]]
-    [game.core.payment :refer [merge-costs]]))
+    [game.core.payment :refer [->c merge-costs]]))
 
 ;; State-aware cost-generating functions
 (defn play-cost
@@ -19,6 +19,34 @@
            (sum-effects state side :play-cost card)]
           (reduce (fnil + 0 0))
           (max 0)))))
+
+(defn base-play-cost
+  "The play cost for an event or operation, taking into account an X as a cost. Returns a cost vector."
+  [state side {:keys [cost] :as card} {:keys [cost-bonus] :as args}]
+  (if-let [special-cost (get-in (card-def card) [:on-play :base-play-cost])]
+    (let [modifications (+ (or cost-bonus 0)
+                           (if-let [playfun (get-in (card-def card) [:on-play :play-cost-bonus])]
+                             (playfun state side (make-eid state) card nil)
+                             0)
+                           (sum-effects state side :play-cost card))]
+      (if (zero? modifications)
+        special-cost
+        ;; NOTE - according to the current CR, play/install cost modifications affect the value of X
+        ;; IE:
+        ;; How do cost reductions, such as Career Fair, interact with the value of X?
+        ;;   The Runner decides what the value X will be, and then pays X credits,
+        ;;   minus the applicable discount. The number of power counters placed on Bug Out Bag
+        ;;   is equal to the initial value chosen for X, not the discounted total paid.
+        ;; This means that the X-cost needs to track it's modifiers,
+        ;; rather than have them as a seperate cost.
+        (cond
+          (some #(= :x-credits (:cost/type %)) special-cost)
+          (mapv #(if (= :x-credits (:cost/type %))
+                   (assoc % :cost/offset modifications)
+                   %)
+                special-cost)
+          :else (merge-costs (concat special-cost [(->c :credit modifications)])))))
+    [(->c :credit (play-cost state side card args))]))
 
 (defn play-additional-cost-bonus
   [state side card]
