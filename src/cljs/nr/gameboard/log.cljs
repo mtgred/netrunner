@@ -108,15 +108,15 @@
 (defn show-completions? [s]
   (seq (:completions s)))
 
-(defn fill-completion [state completion-text]
-  (swap! state assoc :msg (str completion-text " "))
-  (reset-completions state))
-
 (defn reset-completions
   "Resets the command menu state."
   [state]
   (swap! state assoc :completions nil)
   (swap! state assoc :completion-highlight nil))
+
+(defn fill-completion [state completion-text]
+  (swap! state assoc :msg (str completion-text " "))
+  (reset-completions state))
 
 (defn is-command? [completion]
   (contains? command-info-map completion))
