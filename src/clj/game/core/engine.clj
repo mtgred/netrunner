@@ -1142,6 +1142,13 @@
               (unregister-floating-events state nil duration))
             (effect-completed state nil eid)))
 
+(defn resolve-durations
+  "unregisters all floating and lingering effects for the given durations"
+  [state side & durations]
+  (doseq [duration durations]
+    (unregister-lingering-effects state side duration)
+    (unregister-floating-events state side duration)))
+
 (defn get-old-uniques
   [state side]
   (some->> (all-active-installed state side)
