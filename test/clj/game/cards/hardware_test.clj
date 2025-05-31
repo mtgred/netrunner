@@ -1812,7 +1812,7 @@
   (do-game
     (new-game {:runner {:hand ["Detente"]
                         :deck [(qty "Easy Mark" 3)]}
-               :corp {:hand [(qty "IPO" 2)]}})
+               :corp {:hand [(qty "IPO" 2)] :deck ["Prisec"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Detente")
     (run-empty-server state :archives)
@@ -1821,14 +1821,18 @@
     (is (seq (:hosted (get-hardware state 0))) "Diplomat hosted IPO")
     (click-prompt state :runner "No action")
     (take-credits state :runner)
+    (play-from-hand state :corp "Prisec" "HQ")
     (take-credits state :corp)
     (run-empty-server state :hq)
     (click-prompt state :runner "Yes")
+    (click-prompt state :corp "No")
+    (click-prompt state :runner "No action")
     (card-ability state :runner (get-hardware state 0) 0)
     (click-card state :runner (first (:hosted (get-hardware state 0))))
     (click-card state :runner (second (:hosted (get-hardware state 0))))
     (click-prompt state :runner "Yes")
-    (click-prompt state :runner "No action")))
+    (click-prompt state :runner "No action")
+    (is (no-prompt? state :runner) "No root access")))
 
 (deftest docklands-pass-corp-access-extra-card-on-hq-run
     ;; Corp access extra card on HQ run
