@@ -4533,6 +4533,24 @@
                   (click-card state :corp (get-content state :remote3 0)))
         "Corp gained 2 credits (+1 from Hyobu because the agenda was revealed) and put 1 advancement counter on a card")))
 
+(deftest stoke-vs-ip-enforcement
+  (testing "1 floating tag"
+    (do-game
+      (new-game {:corp {:hand ["IP Enforcement"]}
+                 :runner {:score-area ["Stoke the Embers"] :tags 3}})
+      (play-from-hand state :corp "IP Enforcement")
+      (click-prompts state :corp "2" "Stoke the Embers" "New remote" "Yes" "Stoke the Embers")
+      (is (no-prompt? state :corp) "Stoke did not trigger twice")
+      (is (= 2 (get-counters (get-content state :remote1 0) :advancement)) "1+1 adv")))
+  (testing "no floating tags"
+    (do-game
+      (new-game {:corp {:hand ["IP Enforcement"]}
+                 :runner {:score-area ["Stoke the Embers"] :tags 2}})
+      (play-from-hand state :corp "IP Enforcement")
+      (click-prompts state :corp "2" "Stoke the Embers" "New remote" "Yes" "Stoke the Embers")
+      (is (no-prompt? state :corp) "Stoke did not trigger twice")
+      (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "1+0 adv"))))
+
 (deftest stoke-the-embers-reveal-check
   (do-game
     (new-game {:corp {:id "Hyoubu Institute: Absolute Clarity"
