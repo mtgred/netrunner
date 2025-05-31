@@ -224,6 +224,7 @@
    :prompt-type
    :show-discard
    :selectable
+   :eid
    ;; traces
    :player
    :base
@@ -239,6 +240,7 @@
   [prompt same-side?]
   (when same-side?
     (-> prompt
+        (update :eid #(when (:eid %) (select-keys % [:eid])))
         (update :card #(not-empty (select-non-nil-keys % card-keys)))
         (update :choices (fn [choices]
                            (if (sequential? choices)
