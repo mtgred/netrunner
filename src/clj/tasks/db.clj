@@ -114,12 +114,10 @@
   (let [email (str username "@example.com")
         players {:runner {:player {:username "<nobody>" :emailhash (md5 "nobody@example.com")}
                           :deck-name "Firestorm (Worlds 110th)"
-                          :identity "Ele \"Smoke\" Scovak: Cynosure of the Net"
-                          :agenda-points 0}
+                          :identity "Ele \"Smoke\" Scovak: Cynosure of the Net"}
                  :corp {:player {:username "<nobody>" :emailhash (md5 "nobody@example.com")}
                         :deck-name "That One SYNC Deck -- 35th at Worlds"
-                        :identity "SYNC: Everything, Everywhere"
-                        :agenda-points 0}}
+                        :identity "SYNC: Everything, Everywhere"}}
         side (rand-nth (keys players))
         players (update players side
                         #(assoc % :player {:username username :emailhash (md5 email)}))
