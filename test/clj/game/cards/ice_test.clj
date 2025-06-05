@@ -8628,6 +8628,18 @@
             (run-continue state :movement))
           "Runner got no tag"))))
 
+(deftest virtual-service-agent-regression-other-ice
+  (do-game
+    (new-game {:corp {:hand ["Vanilla" "Virtual Service Agent"]}})
+    (play-from-hand state :corp "Vanilla" "R&D")
+    (play-from-hand state :corp "Virtual Service Agent" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :rd 0))
+    (take-credits state :corp)
+    (run-on state :rd)
+    (run-continue-until state :success)
+    (is (zero? (count-tags state)) "Not tagged")))
+
 (deftest waiver
   ;; Waiver - Trash Runner cards in grip with play/install cost <= trace exceed
   (do-game
