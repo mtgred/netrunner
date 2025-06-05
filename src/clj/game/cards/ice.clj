@@ -4571,8 +4571,9 @@
    :implementation "Might be incorrect if decoder is uninstalled"
    :events [{:event :end-of-encounter
              :req (req (let [printed-sub (first (filter :printed (:subroutines card)))]
-                         (or (not (:broken printed-sub))
-                             (not (contains? (set (:breaker-subtypes printed-sub)) "Decoder")))))
+                         (and (same-card? card (:ice context))
+                              (or (not (:broken printed-sub))
+                                  (not (contains? (set (:breaker-subtypes printed-sub)) "Decoder"))))))
              :msg "give the Runner 1 tag"
              :async true
              :effect (effect (gain-tags eid 1))}]})
