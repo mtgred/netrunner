@@ -7710,8 +7710,10 @@
     (rez state :corp (get-ice state :archives 0))
     (run-continue state)
     (run-continue state)
+    (is (not (last-log-contains? state "decline to install")))
     (is (changed? [(:credit (get-corp)) 0]
-          (click-prompt state :corp "OK"))
+          (click-prompt state :corp "OK")
+          (is (last-log-contains? state "decline to install")))
         "Corp gained no credits")))
 
 (deftest tatu-bola-swaps-correct-ice-when-swapped
