@@ -225,6 +225,7 @@
       :change-in-game-state {:silent true :req (req (some #(and (ice? %) (not (rezzed? %))) (all-installed state :corp)))}
       :choices {:req (req (and (installed? target)
                                (ice? target)
+                               (not (rezzed? target))
                                (can-pay-to-rez? state side eid target args)))}
       :effect (req (rez state side eid target args))})))
 
