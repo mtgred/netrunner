@@ -59,7 +59,7 @@
         prev-k-root (if (= :stock art-set) code (name art-set))
         prev-k (str/join "." ["faces" face "images" (name lang) (name resolution) prev-k-root])
         path (str/join "/" [base-path (name lang) (name resolution) (name art-set) filename])]
-    (mc/update db card-collection {:code code} {$set {k path}})
+    (mc/update db card-collection {:code code} {$addToSet {k path}})
     (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$set {prev-k path}})))
 
 (def ^:const cards-to-skip #{"08012" "09001" "26066" "26120" "35023" "35057"})

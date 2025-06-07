@@ -591,7 +591,7 @@
           ^{:key n}
           [:option {:value n :key n}
            (if indent
-             (str "* " (tr-set n))
+             (str "• " (tr-set n))
              (tr-set n))]))]]
      [simple-filter-builder (tr [:card-browser-form_side "Side"])
       state :side-filter ["Corp" "Runner"] tr-side]
@@ -620,11 +620,14 @@
             alts (:alt-info @app-state)
             info (first (filter #(= (:version %) art) alts))
             blurb (:artist-blurb info)
+            about (:artist-about info)
             link (:artist-link info)]
         (when blurb
           [:div.panel.green-shade.artist-blurb
            [:h4 (tr [:card-browser_artist-info "Artist Info"])]
            [:div blurb]
+           (when (and about (not= about blurb))
+             [:div about])
            (when link
              [:a {:href link} (tr [:card-browser_more-info "More Info"])])])))))
 
