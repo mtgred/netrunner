@@ -1244,9 +1244,9 @@ set_name = {$name ->
     [ams-amt-arts] Ams Alt Arts
     [adam-s.-doyle-alt-arts] Adam S. Doyle Alt Arts
     [brindelmold-alt-arts] Brindelmold Alt Arts
-    [ezbior-alt-arts] Ezboir Alt Arts
+    [ezbior-alt-arts] Ezbior Alt Arts
     [kalypso-alt-arts] Kalypso Alt Arts
-    [elessarellie-alt-arts] ElessarElli Alt Arts
+    [elessarellie-alt-arts] ElessarEllie Alt Arts
     [m.r.-alt-arts] M.R. Alt Arts
     [marys.leyline-alt-arts] mays.leyline Alt Arts
     [nicky-cheng-alt-arts] Nicky Cheng Alt Arts
