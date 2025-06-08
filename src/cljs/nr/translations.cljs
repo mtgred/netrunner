@@ -19,6 +19,7 @@
   (-> (or s "")
       (str/replace " " "-")
       (str/replace "&" "-")
+      (str/replace "." "")
       (str/lower-case)))
 
 (defn tr-fix-server-name
