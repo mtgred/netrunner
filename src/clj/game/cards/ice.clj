@@ -4216,7 +4216,7 @@
                               {:optional
                                {:prompt (msg "Gain 4 [Credits] and swap " (card-str state card) " with a piece of ice in HQ?")
                                 :waiting-prompt true
-                                :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}
+                                :no-ability {:msg "decline to install a card"}
                                 :yes-ability {:prompt "Choose a piece of ice"
                                               :waiting-prompt true
                                               :choices (req (filter ice? (:hand corp)))
@@ -4228,7 +4228,7 @@
                               {:prompt "You have no ice"
                                :choices ["OK"]
                                :waiting-prompt true
-                               :effect (effect (system-msg :runner (str "declines to use " (:title card) " to install a card")))})
+                               :msg "decline to install a card"})
                             card nil))}]
    :subroutines [end-the-run]})
 
