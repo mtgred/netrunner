@@ -1240,6 +1240,27 @@ set_name = {$name ->
     [world-champion-2015] World Champion 2015
     [world-champion-2016] World Champion 2016
     [world-champion-2017] World Champion 2017
+    [nin419-alt-arts] nin419 Alt Arts
+    [ams-alt-arts] Ams Alt Arts
+    [adam-s-doyle-alt-arts] Adam S. Doyle Alt Arts
+    [brindelmold-alt-arts] Brindelmold Alt Arts
+    [ezbior-alt-arts] Ezbior Alt Arts
+    [kalypso-alt-arts] Kalypso Alt Arts
+    [elessarellie-alt-arts] ElessarEllie Alt Arts
+    [mr-alt-arts] M.R. Alt Arts
+    [maysleyline-alt-arts] mays.leyline Alt Arts
+    [nicky-cheng-alt-arts] Nicky Cheng Alt Arts
+    [scott-uminga-alt-arts] Scott Uminga Alt Arts
+    [the-tag-mill-alt-arts] The Tag Mill Alt Arts
+    [valenetrunner-alt-arts] ValeNetrunner Alt Arts
+    [igor-lebedev-alt-arts] Igor Lebedev Alt Arts
+    [gnk-2013] 2013 FFG GNK
+    [gnk-2014] 2014 FFG GNK
+    [gnk-2015] 2015 FFG GNK
+    [gnk-2016] 2016 FFG GNK
+    [gnk-2017] 2017 FFG GNK
+    [nsg-2024-prizing] 2024 NSG Prizing
+    [nsg-2025-prizing] 2025 NSG Prizing
     *[unknown] Unknown Set {$name}
 }
 

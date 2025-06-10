@@ -32,7 +32,7 @@
             (recur (.read in-stream buffer))))))
     (format "%040x" (BigInteger. 1 (.digest digest)))))
 
-(defn list-content [token key lang high]
+(defn list-content [token key lang high verbose]
   (let [url (str "https://api.github.com/repos/"
                  owner "/" repo "/contents/images/"
                  lang "/"
@@ -43,7 +43,8 @@
         {:keys [status body error]} @(http/get url {:headers headers})]
     (if (= 200 status)
       (json/read-str body :key-fn keyword)
-      (println "Error fetching files for url:" url "\n  -- " status body))))
+      (if (or verbose (not high))
+        (println "Error fetching files for url:" url "\n  -- " status body)))))
 
 (defn write-to-file
   [filename data]
@@ -87,18 +88,18 @@
 
 (defn- get-promo-paths
   []
-  (->> "data/promos.edn" slurp edn/read-string (mapv :version)))
+  (->> "data/promos.edn" slurp edn/read-string (mapv :version) (filterv #(not= % "prev"))))
 
 (defn update-promos
-  [{:keys [token lang force]}]
+  [{:keys [token lang force verbose]}]
   (println "updating promo cards...")
   (let [token (str/trim (slurp token))]
     (if (download-github-file token "promos.edn" "data/promos.edn")
       (doseq [path (get-promo-paths)]
         ;; get standard res images
-        (when-let [content (list-content token path lang nil)]
+        (when-let [content (list-content token path lang nil verbose)]
           (cp/pmap 3 #(fetch-image token path lang nil % force) content))
-        (when-let [content (list-content token path lang :high-res)]
+        (when-let [content (list-content token path lang :high-res verbose)]
           (cp/pmap 3 #(fetch-image token path lang :high-res % force) content)))
       (println "Unable to read promo data from remote source - is your key accurate?"))))
 
@@ -117,6 +118,8 @@
    ["-l" "--language LANG" "Which language fragment to check/update. Default is 'en'"
     :id :lang
     :default "en"]
+   ["-v " "--verbose" "Nags you for every path it can't find (ie, high-res images dont exist)"
+    :id :verbose]
    ["-t" "--token PATH" "Path to fetch token from"
     :id :token
     :validate [#(.exists (io/file %))
