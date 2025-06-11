@@ -15,7 +15,7 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-rez-toast defcard offer-jack-out
+   [game.core.def-helpers :refer [corp-rez-toast defcard give-tags offer-jack-out
                                   reorder-choice take-credits get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -286,9 +286,7 @@
              :interactive (req true)
              :trace {:base 5
                      :req (req this-server)
-                     :successful {:msg "give the Runner 1 tag"
-                                  :async true
-                                  :effect (effect (gain-tags :corp eid 1))}
+                     :successful (give-tags 1)
                      :unsuccessful
                      {:async true
                       :msg "trash itself"
@@ -718,9 +716,7 @@
    :on-access {:interactive (req true)
                :trace {:req (req (not (in-discard? card)))
                        :base 3
-                       :successful {:msg "give the Runner 2 tags"
-                                    :async true
-                                    :effect (effect (gain-tags :corp eid 2))}}}})
+                       :successful (give-tags 2)}}})
 
 (defcard "Fractal Threat Matrix"
   {:events [{:event :subroutines-broken
@@ -1546,10 +1542,7 @@
                  (effect
                    (continue-ability
                      (let [n target]
-                       {:async true
-                        :cost [(->c :credit n)]
-                        :msg (str "give the Runner " (quantify n "tag"))
-                        :effect (effect (gain-tags :corp eid n))})
+                       (assoc (give-tags n) :cost [(->c :credit n)]))
                      card nil))}]
     {:on-trash {:silent (req true)
                 :req (req (= :runner side))
