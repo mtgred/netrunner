@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [rez-cost install-cost]]
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-recur defcard do-net-damage gain-credits-ability
+   [game.core.def-helpers :refer [corp-recur defcard do-net-damage gain-credits-ability give-tags
                                   offer-jack-out reorder-choice take-credits get-x-fn]]
    [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -497,10 +497,7 @@
                        :value (req (- (get-counters card :agenda)))}]})
 
 (defcard "Breaking News"
-  {:on-score {:async true
-              :silent (req true)
-              :msg "give the Runner 2 tags"
-              :effect (effect (gain-tags :corp eid 2))}
+  {:on-score (give-tags 2)
    :events (let [event {:unregister-once-resolved true
                         :req (effect (first-event? :agenda-scored #(same-card? card (:card (first %)))))
                         :msg "make the Runner lose 2 tags"
@@ -967,9 +964,7 @@
                                    card nil))))}]})
 
 (defcard "Fly on the Wall"
-  {:on-score {:msg "give the runner 1 tag"
-              :async true
-              :effect (req (gain-tags state :runner eid 1))}})
+  {:on-score (give-tags 1)})
 
 (defcard "Freedom of Information"
   {:advancement-requirement (req (- (count-tags state)))})
@@ -1602,9 +1597,7 @@
   {:advancement-requirement (req (- (or (get-in @state [:runner :brain-damage]) 0)))})
 
 (defcard "Oracle Thinktank"
-  {:stolen {:msg "give the Runner 1 tag"
-            :async true
-            :effect (effect (gain-tags eid 1))}
+  {:stolen (give-tags 1)
    :abilities [{:action true
                 :cost [(->c :click 1) (->c :tag 1)]
                 :req (req (is-scored? state :runner card))
@@ -2060,9 +2053,7 @@
                 :label "give runner 1 tag"
                 :keep-menu-open :while-clicks-left
                 :trace {:base 2
-                        :successful {:msg "give the Runner 1 tag"
-                                     :async true
-                                     :effect (effect (gain-tags eid 1))}}}]})
+                        :successful (give-tags 1)}}]})
 
 (defcard "Salvo Testing"
   {:events [{:event :agenda-scored
@@ -2372,9 +2363,7 @@
 
 (defcard "TGTBT"
   {:flags {:rd-reveal (req true)}
-   :on-access {:msg "give the Runner 1 tag"
-               :async true
-               :effect (effect (gain-tags eid 1))}})
+   :on-access (give-tags 1)})
 
 (defcard "The Cleaners"
   {:prevention [{:prevents :pre-damage
@@ -2446,13 +2435,8 @@
                             card nil))}]})
 
 (defcard "Tomorrow's Headline"
-  (let [ability
-        {:interactive (req true)
-         :msg "give the Runner 1 tag"
-         :async true
-         :effect (req (gain-tags state :corp eid 1))}]
-    {:on-score ability
-     :stolen ability}))
+  {:on-score (give-tags 1)
+   :stolen (give-tags 1)})
 
 (defcard "Transport Monopoly"
   {:on-score (agenda-counters 2)
