@@ -3556,10 +3556,7 @@
              :effect (effect (gain-tags eid 1))}]})
 
 (defcard "Ping"
-  {:on-rez {:req (req (and run this-server))
-            :msg "give the Runner 1 tag"
-            :async true
-            :effect (effect (gain-tags :corp eid 1))}
+  {:on-rez (assoc (give-tags 1) :req (req (and run this-server)))
    :subroutines [end-the-run]})
 
 (defcard "Piranhas"
