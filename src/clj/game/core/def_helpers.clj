@@ -187,7 +187,7 @@
    (resolve-ability state side eid (draw-abi n args) card nil)))
 
 (defn give-tags
-  "Basic give runner n tags subroutine."
+  "Basic give runner n tags ability."
   [n]
   {:label (str "Give the Runner " (quantify n "tag"))
    :msg (str "give the Runner " (quantify n "tag"))
