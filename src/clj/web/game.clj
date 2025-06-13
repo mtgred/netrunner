@@ -9,6 +9,7 @@
    [game.core.diffs :as diffs]
    [game.core.say :refer [make-system-message]]
    [game.core.set-up :refer [init-game]]
+   [game.core.finding :refer [find-latest]]
    [game.main :as main]
    [jinteki.preconstructed :as preconstructed]
    [jinteki.utils :refer [side-from-str]]
@@ -286,9 +287,22 @@
           (lobby/log-delay! timestamp id))
         (catch Exception e
           (ws/chsk-send! uid [:game/error])
-          (println (str "Caught exception"
-                        "\nException Data: " (or (ex-data e) (.getMessage e))
-                        "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100)))))))))
+          (let [last-logs (if @state
+                            ;; this should filter out user-typed messages, so we don't accidentally
+                            ;; spy on private conversations
+                            (->> @state :log
+                                 (filter #(= (:user %) "__system__"))
+                                 (map :text)
+                                 (take-last 5)
+                                 (str/join "\n\t"))
+                            "unable to fetch log from state")
+                card? (when (:card args) (:printed-title (find-latest state (:card args))))]
+            (println (str "Caught exception"
+                          "\nException Data: " (or (ex-data e) (.getMessage e))
+                          "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100))
+                          "\nCommand: " command " - " args
+                          (when card? (str "\nRelevant Card: " card?))
+                          "\nLast messages: " last-logs))))))))
 
 (defmethod ws/-msg-handler :game/resync
   game--resync
