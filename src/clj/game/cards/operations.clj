@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur defcard do-meat-damage draw-abi drain-credits gain-credits-ability do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand tutor-abi]]
+   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur defcard do-meat-damage draw-abi drain-credits gain-credits-ability give-tags do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand tutor-abi]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -394,11 +394,7 @@
                            (effect-completed state side eid))))))}}))
 
 (defcard "Big Brother"
-  {:on-play
-   {:req (req tagged)
-    :msg "give the Runner 2 tags"
-    :async true
-    :effect (effect (gain-tags :corp eid 2))}})
+  {:on-play (assoc (give-tags 2) :req (req tagged))})
 
 (defcard "Big Deal"
   {:on-play
@@ -426,9 +422,7 @@
   {:on-play (choose-one-helper
               {:req (req tagged)}
               [{:option "Give the runner 1 tag"
-                :ability {:msg "give the Runner 1 tag"
-                          :effect (req (gain-tags state side eid 1))
-                          :async true}}
+                :ability (give-tags 1)}
                {:option "Remove any number of tags"
                 :ability {:req (req tagged)
                           :prompt "Remove how many tags?"
@@ -831,11 +825,7 @@
                              (continue-ability state side trash-from-hq card nil)))}}))
 
 (defcard "Distributed Tracing"
-  {:on-play
-   {:req (req (last-turn? state :runner :stole-agenda))
-    :msg "give the runner a tag"
-    :async true
-    :effect (req (gain-tags state :corp eid 1))}})
+  {:on-play (assoc (give-tags 1) :req (req (last-turn? state :runner :stole-agenda)))})
 
 (defcard "Diversified Portfolio"
   (letfn [(number-of-non-empty-remotes [state]
@@ -892,9 +882,7 @@
              :condition :hosted
              :trace {:base 3
                      :req (req (same-card? current-ice (:host card)))
-                     :successful {:msg "give the Runner 1 tag"
-                                  :async true
-                                  :effect (effect (gain-tags :runner eid 1))}}}]})
+                     :successful (give-tags 1)}}]})
 
 (defcard "Economic Warfare"
   {:on-play
@@ -1313,10 +1301,7 @@
    {:trace {:base 4
             :req (req (last-turn? state :runner :made-run))
             :label "Give the Runner 4 tags"
-            :successful
-            {:async true
-             :msg "give the Runner 4 tags"
-             :effect (effect (gain-tags eid 4))}}}})
+            :successful (give-tags 4)}}})
 
 (defcard "Hasty Relocation"
   (letfn [(hr-final [chosen original]
@@ -1704,9 +1689,7 @@
              :interactive (req true)
              :trace {:req (req (first-event? state side :successful-run))
                      :base 2
-                     :successful {:msg "give the Runner 1 tag"
-                                  :async true
-                                  :effect (effect (gain-tags eid 1))}}}]})
+                     :successful (give-tags 1)}}]})
 
 (defcard "Market Forces"
   {:on-play (assoc (drain-credits :corp :runner (req (* 3 (count-tags state))))
@@ -2712,10 +2695,7 @@
     {:base 3
      :req (req (last-turn? state :runner :successful-run))
      :label "Trace 3 - Give the Runner 1 tag"
-     :successful
-     {:msg "give the Runner 1 tag"
-      :async true
-      :effect (effect (gain-tags :corp eid 1))}}}})
+     :successful (give-tags 1)}}})
 
 (defcard "Seamless Launch"
   {:on-play

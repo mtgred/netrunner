@@ -20,7 +20,7 @@
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [play-cost]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard gain-credits-ability
+   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard gain-credits-ability give-tags
                                   reorder-choice spend-credits take-credits trash-on-empty get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
@@ -405,10 +405,7 @@
                 :waiting-prompt true
                 :prompt (msg "Pay 4 [Credits] to use " (:title card) " ability?")
                 :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}
-                :yes-ability {:async true
-                              :cost [(->c :credit 4)]
-                              :msg "give the runner 2 tags"
-                              :effect (req (gain-tags state :corp eid 2))}}}})
+                :yes-ability (assoc (give-tags 2) :cost [(->c :credit 4)])}}})
 
 (defcard "Bio-Ethics Association"
   (let [ability {:req (req unprotected)
@@ -2530,11 +2527,7 @@
 
 (defcard "Public Access Plaza"
   (assoc (creds-on-round-start 1)
-         :on-trash {:async true
-                    :req (req (and (= :runner side)
-                                   (threat-level 2 state)))
-                    :msg "give the Runner 1 tag"
-                    :effect (req (gain-tags state side eid 1))}))
+         :on-trash (assoc (give-tags 1) :req (req (and (= :runner side) (threat-level 2 state))))))
 
 (defcard "Public Health Portal"
   (let [ability {:once :per-turn
@@ -2964,9 +2957,7 @@
                 :effect (effect (continue-ability
                                   {:trace {:base 3
                                            :label "Trace 3 - Give the Runner 1 tag"
-                                           :successful {:msg "give the Runner 1 tag"
-                                                        :async true
-                                                        :effect (effect (gain-tags :runner eid 1))}}}
+                                           :successful (give-tags 1)}}
                                   card nil))}]})
 
 (defcard "Snare!"

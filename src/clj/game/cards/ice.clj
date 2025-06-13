@@ -17,7 +17,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [combine-abilities corp-recur defcard
-                                  do-brain-damage do-net-damage offer-jack-out
+                                  do-brain-damage do-net-damage give-tags offer-jack-out
                                   reorder-choice get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw draw-up-to]]
    [game.core.effects :refer [any-effects get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-effect-by-uuid unregister-static-abilities update-disabled-cards]]
@@ -195,14 +195,6 @@
                                   (str "uses " (:title card) " to end the run"))
                       (end-run state :corp eid card))
                   (continue-ability state side ability card nil)))})
-
-(defn give-tags
-  "Basic give runner n tags subroutine."
-  [n]
-  {:label (str "Give the Runner " (quantify n "tag"))
-   :msg (str "give the Runner " (quantify n "tag"))
-   :async true
-   :effect (effect (gain-tags :corp eid n))})
 
 (def gain-power-counter
   "Places 1 power counter on a card."
@@ -3564,10 +3556,7 @@
              :effect (effect (gain-tags eid 1))}]})
 
 (defcard "Ping"
-  {:on-rez {:req (req (and run this-server))
-            :msg "give the Runner 1 tag"
-            :async true
-            :effect (effect (gain-tags :corp eid 1))}
+  {:on-rez (assoc (give-tags 1) :req (req (and run this-server)))
    :subroutines [end-the-run]})
 
 (defcard "Piranhas"

@@ -186,6 +186,15 @@
   ([state side eid card n args]
    (resolve-ability state side eid (draw-abi n args) card nil)))
 
+(defn give-tags
+  "Basic give runner n tags ability."
+  [n]
+  {:label (str "Give the Runner " (quantify n "tag"))
+   :msg (str "give the Runner " (quantify n "tag"))
+   :interactive (req true)
+   :async true
+   :effect (effect (gain-tags :corp eid n))})
+
 (defn run-server-ability
   "Runs a target server, if possible"
   [server]
