@@ -286,9 +286,20 @@
           (lobby/log-delay! timestamp id))
         (catch Exception e
           (ws/chsk-send! uid [:game/error])
-          (println (str "Caught exception"
-                        "\nException Data: " (or (ex-data e) (.getMessage e))
-                        "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100)))))))))
+          (let [last-logs (if @state
+                            ;; this should filter out user-typed messages, so we don't accidentally
+                            ;; spy on private conversations
+                            (->> @state :log
+                                 (filter #(= (:user %) "__system__"))
+                                 (map :text)
+                                 (take-last 5)
+                                 (str/join "\n\t"))
+                            "unable to fetch log from state")]
+            (println (str "Caught exception"
+                          "\nException Data: " (or (ex-data e) (.getMessage e))
+                          "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100))
+                          "\nCommand: " command " - " args
+                          "\nLast messages: " last-logs))))))))
 
 (defmethod ws/-msg-handler :game/resync
   game--resync
