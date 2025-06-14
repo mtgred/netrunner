@@ -1892,13 +1892,20 @@
               :async true
               :effect (effect (add-counter eid card :agenda 1))}
    :abilities [{:req (req (:run @state))
-                :change-in-game-state {:req (req (not (:forced-encounter state)))}
                 :cost [(->c :agenda 1)]
+                ;; you can't get redirected from a ganked encounter (ie during success)
+                :change-in-game-state {:req (req (not= :success (:phase (:run @state))))}
                 :label "Redirect runner to archives"
                 :msg "make the Runner continue the run on Archives"
                 :async true
                 :effect (req
-                          (if (->> @state :run :phase (= :encounter-ice))
+                          (cond
+                            ;; note that the underlying run is adjusted,
+                            ;; but the encounter does not end -> relevant for konjin, sisyphus, etc
+                            (:forced-encounter @state)
+                            (do (redirect-run state side "Archives" :approach-ice)
+                                (effect-completed state side eid))
+                            (->> @state :run :phase (= :encounter-ice))
                             ;; need to clear the encounter before redirecting, and fire the events
                             (do
                               (when (get-current-encounter state)
@@ -1908,6 +1915,7 @@
                                 (clear-encounter state)
                                 (redirect-run state side "Archives" :approach-ice)
                                 (start-next-phase state side eid)))
+                            :else
                             (do (clear-encounter state)
                                 (redirect-run state side "Archives" :approach-ice)
                                 (start-next-phase state side eid))))}]})
