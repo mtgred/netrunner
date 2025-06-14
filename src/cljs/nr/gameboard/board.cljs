@@ -1718,6 +1718,7 @@
         #(send-command "continue")])
 
      (when (and @run
+                (not (:forced-encounter @game-state))
                 (not= "success" phase))
        [cond-button
         (tr [:game_jack-out "Jack Out"])
