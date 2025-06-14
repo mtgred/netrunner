@@ -3543,6 +3543,46 @@
     (card-ability state :corp (get-scored state :corp 0) 0)
     (is (= [:archives] (get-in @state [:run :server])) "Running on 'chives")))
 
+(deftest proprionegation-for-each-phase-of-the-run
+  (let [starting-state
+        (do-game
+          (new-game {:corp {:hand ["Proprionegation" "Ice Wall" "Vanilla"]}})
+          (play-and-score state "Proprionegation")
+          (play-from-hand state :corp "Ice Wall" "HQ")
+          (play-from-hand state :corp "Vanilla" "Archives")
+          (rez state :corp (get-ice state :hq 0))
+          (rez state :corp (get-ice state :archives 0))
+          (take-credits state :corp)
+          (run-on state :hq {:wait-at-initiation true})
+          @state)]
+    (testing "Initiation Phase"
+      (do-game
+        (atom starting-state)
+        (card-ability state :corp (get-scored state :corp 0) 0)
+        (is (= :approach-ice (:phase (:run @state))) "In approach phase")
+        (run-continue state :encounter-ice)))
+    (testing "Approach Ice"
+      (do-game
+        (atom starting-state)
+        (run-continue state :approach-ice)
+        (card-ability state :corp (get-scored state :corp 0) 0)
+        (is (= :approach-ice (:phase (:run @state))) "In approach phase")
+        (run-continue state :encounter-ice)))
+    (testing "Encounter ice"
+      (do-game
+        (atom starting-state)
+        (run-continue-until state :encounter-ice)
+        (card-ability state :corp (get-scored state :corp 0) 0)
+        (is (= :approach-ice (:phase (:run @state))) "In approach phase")
+        (run-continue state :encounter-ice)))
+    (testing "Movement"
+      (do-game
+        (atom starting-state)
+        (run-continue-until state :movement)
+        (card-ability state :corp (get-scored state :corp 0) 0)
+        (is (= :approach-ice (:phase (:run @state))) "In approach phase")
+        (run-continue state :encounter-ice)))))
+
 (deftest quantum-predictive-model
   ;; Quantum Predictive Model
   (do-game
