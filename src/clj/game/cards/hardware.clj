@@ -426,27 +426,27 @@
                   :req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]
                                 (some #(same-card? boomerang-target (:ice %)) (:encounters @state))
                                 true))
-                  :effect (req (req (let [source (or card (first (get-in eid [:cost-paid :trash-can :paid/targets])))]
-                                    ;; special note: since the source is trashed, auto-pump-impl doesn't pass it on
-                                    ;; to the additional-abi in a nice way. This is a bit of a hack to fix that.
-                                    ;; If we ever rework costs, this might need to be adjusted -nbk, 2025
-                                    (register-events
-                                      state side source
-                                      [{:event :run-ends
-                                        :duration :end-of-run
-                                        :unregister-once-resolved true
-                                        :optional
-                                        {:req (req (and (:successful target)
-                                                        (not (zone-locked? state :runner :discard))
-                                                        (some #(= (:title card) (:title %)) (:discard runner))))
-                                         :once :per-run
-                                         :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
-                                         :yes-ability
-                                         {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
-                                          :effect (effect (move (some #(when (= (:title card) (:title %)) %)
-                                                                      (:discard runner))
-                                                                :deck)
-                                                          (shuffle! :deck))}}}]))))}]}))
+                  :effect (req (let [source (or card (first (get-in eid [:cost-paid :trash-can :paid/targets])))]
+                                 ;; special note: since the source is trashed, auto-pump-impl doesn't pass it on
+                                 ;; to the additional-abi in a nice way. This is a bit of a hack to fix that.
+                                 ;; If we ever rework costs, this might need to be adjusted -nbk, 2025
+                                 (register-events
+                                   state side source
+                                   [{:event :run-ends
+                                     :duration :end-of-run
+                                     :unregister-once-resolved true
+                                     :optional
+                                     {:req (req (and (:successful target)
+                                                     (not (zone-locked? state :runner :discard))
+                                                     (some #(= (:title card) (:title %)) (:discard runner))))
+                                      :once :per-run
+                                      :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
+                                      :yes-ability
+                                      {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
+                                       :effect (effect (move (some #(when (= (:title card) (:title %)) %)
+                                                                   (:discard runner))
+                                                             :deck)
+                                                       (shuffle! :deck))}}}])))}]}))
 
 (defcard "Box-E"
   {:static-abilities [(mu+ 2)

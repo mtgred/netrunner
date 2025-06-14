@@ -667,6 +667,42 @@
       (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
       (is (= 0 (count (:discard (get-runner)))) "Heap is empty again"))))
 
+(deftest boomerang-break-zero-still-shuffles-back
+  (testing "break 0 ability"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (click-card state :runner "Ice Wall")
+      (run-on state :hq)
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state :encounter-ice)
+      (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
+      (card-ability state :runner (get-hardware state 0) 1)
+      (is (= 1 (count (:discard (get-runner)))) "Boomerang in heap")
+      (run-continue-until state :success)
+      (is (= 0 (count (:deck (get-runner)))) "Stack is empty")
+      (click-prompt state :runner "Yes")
+      (is (= 1 (count (:deck (get-runner)))) "Boomerang in stack")
+      (is (= 0 (count (:discard (get-runner)))) "Heap is empty again")))
+  (testing "regular break ability"
+    (do-game
+      (new-game {:runner {:deck ["Boomerang"]}
+                 :corp {:deck ["Ice Wall"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Boomerang")
+      (click-card state :runner "Ice Wall")
+      (run-on state :hq)
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue state :encounter-ice)
+      (is (= 0 (count (:discard (get-runner)))) "Heap is empty")
+      (card-ability state :runner (get-hardware state 0) 0)
+      (click-prompt state :runner "Done")
+      (is (zero? (count (:discard (get-runner)))) "Boomerang not consumed unless actually breaking"))))
+
 (deftest boomerang-only-triggers-once-with-virtuoso-breach
   (do-game
     (new-game {:runner {:hand ["Boomerang" "Virtuoso"]
