@@ -459,6 +459,7 @@
    :decklists
    :encounters
    :end-turn
+   :forced-encounter
    :gameid
    :last-revealed
    :log
