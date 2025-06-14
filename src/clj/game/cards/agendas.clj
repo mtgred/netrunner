@@ -1895,7 +1895,7 @@
                 ;; note that redirection cannot occur during forced encounters, or when not in a run
                 ;; ie: ganked, konjin, etc. This is a good enough stopgap for that for now
                 :change-in-game-state {:req (req (and (->> @state :run :phase (not= :success))
-                                                      (= (count (:encounters @state)) 1)))}
+                                                      (<= (count (:encounters @state)) 1)))}
                 :cost [(->c :agenda 1)]
                 :label "Redirect runner to archives"
                 :msg "make the Runner continue the run on Archives"
