@@ -690,22 +690,22 @@
 (defcard "Cacophony"
   (let [ev {:silent (req true)
             :async true
-            :effect (req (add-counter state side eid card :power 1))}]
+            :effect (req (add-counter state side eid card :power 1))}
+        valid-ctx? (fn [evs] (some #(corp? (:card %)) evs))]
     {:events [{:interactive (req true)
                :async true
                :effect (req (add-counter state side eid card :power 1))
                :event :runner-trash
-               :req (req (letfn [(ctx-valid? [[ctx]] (corp? (:card ctx)))]
-                           (and (ctx-valid? [context])
-                                (first-event? state side :runner-trash ctx-valid?)
-                                (no-event? state :runner :agenda-stolen))))}
+               :once-per-instance true
+               :req (req (and (valid-ctx? targets)
+                              (first-event? state side :runner-trash valid-ctx?)
+                              (no-event? state :runner :agenda-stolen)))}
               {:interactive (req true)
                :effect (req (add-counter state side eid card :power 1))
                :async true
                :event :agenda-stolen
-               :req (req (letfn [(ctx-valid? [[ctx]] (corp? (:card ctx)))]
-                           (and (no-event? state side :runner-trash ctx-valid?)
-                                (first-event? state :runner :agenda-stolen))))}
+               :req (req (and (no-event? state side :runner-trash valid-ctx?)
+                              (first-event? state :runner :agenda-stolen)))}
               {:event :runner-turn-ends
                :interactive (req true)
                :skippable true
