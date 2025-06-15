@@ -4173,6 +4173,33 @@
       (is (no-prompt? state :corp) "Corp is making no decisions")
       (is (refresh spin) "Corp is making no decisions"))))
 
+(deftest light-the-fire-vs-once-per-instance-trashes
+  (do-game
+    (new-game {:runner  {:hand ["Light the Fire!" "Cacophony" (qty "Sure Gamble" 10)]}
+               :corp {:hand ["Aggressive Trendsetting" "Hostile Architecture"
+                             "AR-Enhanced Security" "Prisec" "PAD Campaign"]}})
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Prisec" "New remote")
+    (play-from-hand state :corp "PAD Campaign" "Server 1")
+    (play-from-hand state :corp "Hostile Architecture" "New remote")
+    (play-and-score state "Aggressive Trendsetting")
+    (play-and-score state "AR-Enhanced Security")
+    (take-credits state :corp)
+    (rez state :corp (get-content state :remote2 0))
+    (play-from-hand state :runner "Cacophony")
+    (play-from-hand state :runner "Light the Fire!")
+    (card-ability state :runner (get-resource state 1) 0)
+    (click-prompt state :runner "Server 1")
+    (is (changed? [(count-tags state) 1
+                   (count (:hand (get-runner))) -2]
+          (run-continue-until state :success)
+          (click-prompt state :corp "Aggressive Trendsetting")
+          (click-prompt state :runner "Yes")
+          (click-prompt state :corp "Hostile Architecture"))
+        "2 damage and 1 tag")
+    (is (no-prompt? state :runner))
+    (is (no-prompt? state :corp))))
+
 (deftest logic-bomb
   ;; Logic Bomb
   (do-game
