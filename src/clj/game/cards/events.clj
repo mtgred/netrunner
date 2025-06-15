@@ -213,8 +213,7 @@
                                                               (program? target)
                                                               (resource? target))
                                                           (in-hand*? state target)
-                                                          (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                                                    [(->c :credit (install-cost state side target {:cost-bonus -1}))])))}
+                                                          (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus -1})))}
                                  :async true
                                  :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus -1
                                                                                                                                :msg-keys {:install-source card
@@ -661,9 +660,7 @@
                   :prompt "Choose a program to install"
                   :msg (msg "install " (:title target) " and take 1 tag")
                   :choices (req (filter #(and (program? %)
-                                              (runner-can-install? state side % false)
-                                              (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
-                                                        [(->c :credit (install-cost state side % {:cost-bonus (rd-ice state)}))]))
+                                              (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus (rd-ice state)}))
                                         (:deck runner)))
                   :effect (req (trigger-event state side :searched-stack)
                                (shuffle! state side :deck)
@@ -823,8 +820,7 @@
     :prompt "Choose a card to install"
     :choices {:req (req (and (not (event? target))
                              (in-hand*? state target)
-                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                       [(->c :credit (install-cost state side target {:cost-bonus -8}))])))}
+                             (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus -8})))}
     :async true
     :cancel-effect (req (gain-tags state :runner eid 1))
     :effect (req (let [new-eid (make-eid state {:source card :source-type :runner-install})]
@@ -1229,8 +1225,7 @@
                        " lowering the cost by " trash-cost)
              :choices (req (cancellable (filter #(and (or (program? %)
                                                           (hardware? %))
-                                                      (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
-                                                                [(->c :credit (install-cost state side % {:cost-bonus (- trash-cost)}))]))
+                                                      (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus (- trash-cost)}))
                                                 (:deck runner)) :sorted))
              :effect (req (trigger-event state side :searched-stack)
                           (shuffle! state side :deck)
@@ -1311,8 +1306,7 @@
                        caninst (and (or (hardware? topcard)
                                         (program? topcard)
                                         (resource? topcard))
-                                    (can-pay? state side (assoc eid :source card :source-type :runner-install) topcard nil
-                                              [(->c :credit (install-cost state side topcard {:cost-bonus -10}))]))]
+                                    (runner-can-pay-and-install? state side (assoc eid :source card) topcard {:cost-bonus -10}))]
                    (if caninst
                      (continue-ability
                        state side
@@ -1564,8 +1558,7 @@
                 :choices (concat
                            (->> top-ten
                                 (filter #(and (program? %)
-                                              (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
-                                                        [(->c :credit (install-cost state side % {:cost-bonus -5}))])))
+                                              (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -5})))
                                 (sort-by :title)
                                 (seq))
                            ["Done"])
@@ -1736,8 +1729,7 @@
     :effect (effect (trigger-event :searched-stack)
                     (continue-ability
                       (let [connection target]
-                        (if (can-pay? state side (assoc eid :source card :source-type :runner-install) connection nil
-                                      [(->c :credit (install-cost state side connection))])
+                        (if (runner-can-pay-and-install? state side (assoc eid :source card) connection)
                           {:optional {:prompt (str "Install " (:title connection) "?")
                                       :yes-ability {:async true
                                                     :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) connection nil)
@@ -2031,9 +2023,7 @@
                                                  (->> (:deck runner)
                                                       (filter
                                                         #(and (program? %)
-                                                              (can-pay? state side
-                                                                        (assoc eid :source card :source-type :runner-install)
-                                                                        % nil [(->c :credit (install-cost state side %))])))
+                                                              (runner-can-pay-and-install? state side (assoc eid :source card) %)))
                                                       (sort-by :title)
                                                       (seq))
                                                  ["Done"]))
@@ -2437,14 +2427,12 @@
             (when (< n 3)
               {:async true
                :req (req (some #(and (program? %)
-                                     (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
-                                               [(->c :credit (install-cost state side %))]))
+                                     (runner-can-pay-and-install? state side (assoc eid :source card :source-type :runner-install) %))
                                (all-cards-in-hand* state :runner)))
                :prompt "Choose a program to install"
                :choices {:req (req (and (program? target)
                                         (in-hand*? state target)
-                                        (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                                  [(->c :credit (install-cost state side target))])))}
+                                        (runner-can-pay-and-install? state side (assoc eid :source card :source-type :runner-install) target)))}
                :effect (req (wait-for (runner-install state side target {:msg-keys {:install-source card
                                                                                     :display-origin true}})
                                       (continue-ability state side (mhelper (inc n)) card nil)))}))]
@@ -2569,8 +2557,7 @@
                     (continue-ability
                       (let [icebreaker target]
                         (if (and (:successful-run runner-reg)
-                                 (can-pay? state side (assoc eid :source card :source-type :runner-install) icebreaker nil
-                                           [(->c :credit (install-cost state side icebreaker))]))
+                                 (runner-can-pay-and-install? state side (assoc eid :source card :source-type :runner-install) icebreaker))
                           {:optional
                            {:prompt (str "Install " (:title icebreaker) "?")
                             :yes-ability
@@ -2855,9 +2842,7 @@
                            (->> (:discard runner)
                                 (filter
                                   #(and (program? %)
-                                        (can-pay? state side
-                                                  (assoc eid :source card :source-type :runner-install)
-                                                  % nil [(->c :credit (install-cost state side %))])))
+                                        (runner-can-pay-and-install? state side (assoc eid :source card) %)))
                                 (sort-by :title)
                                 (seq))
                            ["Done"]))
@@ -2883,9 +2868,7 @@
                            (->> (:discard runner)
                                 (filter
                                   #(and (resource? %)
-                                        (can-pay? state side
-                                                  (assoc eid :source card :source-type :runner-install)
-                                                  % nil [(->c :credit (install-cost state side % {:cost-bonus -2}))])))
+                                        (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -2})))
                                 (sort-by :title)
                                 (seq))
                            ["Done"]))
@@ -3121,9 +3104,7 @@
                     :choices
                     {:req (req (and (valid-target? target)
                                     (in-hand*? state target)
-                                    (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                              [(->c :credit (install-cost state side target
-                                                                     {:cost-bonus (- bonus)}))])))}
+                                    (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus (- bonus)})))}
                     :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
                                                     target {:cost-bonus (- bonus)
                                                             :msg-keys {:install-source card
@@ -3234,8 +3215,7 @@
     :choices {:req (req (and (or (hardware? target)
                                  (program? target))
                              (in-hand*? state target)
-                             (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                       [(->c :credit (install-cost state side target {:cost-bonus -3}))])))}
+                             (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus -3})))}
     :change-in-game-state {:req (req (seq (all-cards-in-hand* state :runner)))}
     :async true
     :effect (req (wait-for (runner-install state side (make-eid state {:source card :source-type :runner-install}) target {:cost-bonus -3
@@ -3421,9 +3401,7 @@
                                         (or (in-hand*? state target)
                                             (and (in-discard? target)
                                                  (not (zone-locked? state :runner :discard))))
-                                        (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                                  [(->c :credit (install-cost state side target
-                                                                              {:cost-bonus (- tcost)}))])))}
+                                        (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus (- tcost)})))}
                         :msg (msg "trash " (:title trashed)
                                   " and install " (:title target)
                                   ", lowering the cost by " tcost " [Credits]")
@@ -3445,13 +3423,11 @@
                :req (req (some #(and (program? %)
                                      (runner-can-pay-and-install?
                                        state side
-                                       (assoc eid :source card) %
-                                       {:no-toast true}))
+                                       (assoc eid :source card) %))
                                (:discard runner)))
                :choices {:req (req (and (program? target)
                                         (in-discard? target)
-                                        (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                                  [(->c :credit (install-cost state side target))])))}
+                                        (runner-can-pay-and-install? state side (assoc eid :source card) target)))}
                :async true
                :effect (req (wait-for
                               (runner-install state side target {:msg-keys {:install-source card
@@ -3558,9 +3534,7 @@
                             (shuffle! state side :deck)
                             (effect-completed state side eid)))})
           (install-program [state side eid card revealed-card revealed-cards]
-            (if (can-pay? state side (assoc eid :source card :source-type :runner-install)
-                          revealed-card nil
-                          [(->c :credit (install-cost state side revealed-card {:cost-bonus -10}))])
+            (if (runner-can-pay-and-install? state side (assoc eid :source card) revealed-card {:cost-bonus -10})
               (continue-ability
                 state side
                 {:optional
@@ -3887,9 +3861,7 @@
                               :async true
                               :req (req (not (zone-locked? state :runner :discard)))
                               :choices (req (cancellable (filter #(and (not (event? %))
-                                                                       (runner-can-install? state side % nil)
-                                                                       (can-pay? state side (assoc eid :source card :source-type :runner-install)
-                                                                                 % nil [(->c :credit (install-cost state side % {:cost-bonus -3}))])
+                                                                       (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -3})
                                                                        (in-discard? (get-card state %))) trashed-cards)))
                               :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
                                                      (effect-completed eid))

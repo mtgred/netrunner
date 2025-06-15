@@ -779,15 +779,13 @@
                 {:async true
                  :req (req (and (program? target)
                                 (in-hand*? state target)
-                                (can-pay? state :runner (assoc eid :source card :source-type :runner-install) target nil
-                                          [(->c :credit (install-cost state side target
-                                                                      {:cost-bonus (- (get-counters card :power))}))])))}
-                :effect (req (wait-for (runner-install state side target {:msg-keys {:install-source card
-                                                                                     :display-origin true}
-                                                                          :cost-bonus (- (get-counters card :power))})
-                                       (if (pos? (get-counters card :power))
-                                         (add-counter state side eid card :power -1)
-                                         (effect-completed state side eid))))}]})
+                                (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus (- (get-counters card :power))})))
+                 :effect (req (wait-for (runner-install state side target {:msg-keys {:install-source card
+                                                                                      :display-origin true}
+                                                                           :cost-bonus (- (get-counters card :power))})
+                                        (if (pos? (get-counters card :power))
+                                          (add-counter state side eid card :power -1)
+                                          (effect-completed state side eid))))}}]})
 
 (defcard "Chrome Parlor"
   {:prevention [{:prevents :damage
@@ -2768,14 +2766,10 @@
                   :label "Install hosted card"
                   :cost [(->c :credit 1)]
                   :req (req (and (seq (:hosted card))
-                                 (some #(can-pay? state :runner (assoc eid :source card :source-type :runner-install)
-                                                  % nil
-                                                  [(->c :credit (install-cost state side % {:cost-bonus (discount state card)}))])
+                                 (some #(runner-can-pay-and-install? state :runner (assoc eid :source card) % {:cost-bonus (discount state card)})
                                        (:hosted card))))
                   :choices {:req (req (and (same-card? card (:host target))
-                                           (can-pay? state :runner (assoc eid :source card :source-type :runner-install)
-                                                     target nil
-                                                     [(->c :credit (install-cost state side target {:cost-bonus (discount state card)}))])))}
+                                           (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus (discount state card)})))}
                   :effect (req (runner-install
                                  state side
                                  (assoc eid :source card :source-type :runner-install)
@@ -2956,8 +2950,7 @@
                                                 (hardware? %)
                                                 (and (resource? %)
                                                      (has-subtype? % "Virtual")))
-                                            (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
-                                                      [(->c :credit (install-cost state side %))]))
+                                            (runner-can-pay-and-install? state :runner (assoc eid :source card) %))
                                       (:discard runner)))))
           :effect (req (runner-install state :runner (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
                                                                                                                               :display-origin true
@@ -3049,10 +3042,7 @@
                                             (filter
                                               #(and (program? %)
                                                     (not (has-subtype? % "Virus"))
-                                                    (can-pay? state :runner (assoc eid :source card :source-type :runner-install) % nil
-                                                              [(->c :credit (install-cost
-                                                                              state side %
-                                                                              {:cost-bonus (- (:cost (find-rfg state card)))}))])))
+                                                    (runner-can-pay-and-install? state :runner (assoc eid :source card) % {:cost-bonus (- (:cost (find-rfg state card)))})))
                                             (sort-by :title)
                                             (seq))
                                        ["Done"]))
@@ -3380,9 +3370,7 @@
                                             :not-distinct true
                                             :async true
                                             :choices (req (filter #(and (not (event? %))
-                                                                        (runner-can-install? state side % nil)
-                                                                        (can-pay? state side (assoc eid :source card :source-type :runner-install)
-                                                                                  % nil [(->c :credit (install-cost state side % {:cost-bonus -1}))])) set-aside-cards))
+                                                                        (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -1})) set-aside-cards))
                                             :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
                                                       (enumerate-str (map :title (remove-once #(same-card? % target) set-aside-cards)))
                                                       " are trashed as a result")
@@ -3510,16 +3498,14 @@
                 :label "Install a program or piece of hardware"
                 :req (req (some #(and (or (hardware? %)
                                           (program? %))
-                                      (can-pay? state side (assoc eid :source card :source-type :runner-install) % nil
-                                                [(->c :credit (install-cost state side % {:cost-bonus -1}))]))
-                                (:hand runner)))
+                                      (runner-can-pay-and-install? state side (assoc eid :source card) %  {:cost-bonus -1}))
+                                (all-cards-in-hand* state :runner)))
                 :prompt "Choose a program or piece of hardware to install"
                 :choices
                 {:req (req (and (or (hardware? target)
                                     (program? target))
-                                (in-hand? target)
-                                (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                          [(->c :credit (install-cost state side target {:cost-bonus -1}))])))}
+                                (in-hand*? state target)
+                                (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus -1})))}
                 :once :per-turn
                 :once-key :artist-install
                 :async true
@@ -3719,14 +3705,14 @@
   (let [ability {:label "Install a hosted card (start of turn)"
                  :skippable true
                  :prompt "Choose a hosted card to install"
-                 :req (req (some #(can-pay? state side (assoc eid :source card :source-type :runner-install)
-                                            % nil [(->c :credit (install-cost state side % {:cost-bonus -2}))])
+                 :req (req (some #(runner-can-pay-and-install? state side (assoc eid :source card)
+                                                               % {:cost-bonus -2})
                                  (:hosted card)))
                  :choices
                  {:req (req (and (= "The Supplier" (:title (:host target)))
                                  (runner? target)
-                                 (can-pay? state side (assoc eid :source card :source-type :runner-install)
-                                           target nil [(->c :credit (install-cost state side target {:cost-bonus -2}))])))}
+                                 (runner-can-pay-and-install? state side (assoc eid :source card)
+                                                              target {:cost-bonus -2})))}
                  :once :per-turn
                  :async true
                  :effect
@@ -3840,12 +3826,10 @@
         ability {:async true
                  :prompt "Choose a card in the grip"
                  :waiting-prompt true
-                 :choices
-                 {:req (req (and (runner? target)
-                                 (in-hand? target)
-                                 (not (event? target))
-                                 (can-pay? state side (assoc eid :source card :source-type :runner-install) target nil
-                                           [(->c :credit (install-cost state side target {:cost-bonus -1}))])))}
+                 :choices {:req (req (and (runner? target)
+                                          (in-hand? target)
+                                          (not (event? target))
+                                          (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus -1})))}
                  :effect (effect (runner-install (assoc eid
                                                         :source card
                                                         :source-type :runner-install)

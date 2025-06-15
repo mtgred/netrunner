@@ -1130,9 +1130,7 @@
                   :keep-menu-open :while-clicks-left
                   :label "Install a hosted program"
                   :prompt "Choose a program to install"
-                  :choices (req (cancellable (filter #(can-pay? state side (assoc eid :source card :source-type :runner-install)
-                                                                % nil [(->c :credit (install-cost state side %))])
-                                                     (:hosted card))))
+                  :choices (req (cancellable (filter #(runner-can-pay-and-install? state side (assoc eid :source card) %) (:hosted card))))
                   :async true
                   :effect (req
                             (runner-install state side (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
@@ -2289,9 +2287,7 @@
                                   (filter
                                     #(and (program? %)
                                           (not (has-subtype? % "Daemon"))
-                                          (can-pay? state side
-                                                    (assoc eid :source card :source-type :runner-install)
-                                                    % nil [(->c :credit (install-cost state side %))])))
+                                          (runner-can-pay-and-install? state side (assoc eid :source card) %)))
                                   (sort-by :title)
                                   (seq))
                              ["Done"]))
@@ -3037,9 +3033,7 @@
                                                   (filter
                                                     #(and (program? %)
                                                           (not (install-locked? state side))
-                                                          (can-pay? state side
-                                                                    (assoc eid :source card :source-type :runner-install)
-                                                                    % nil [(->c :credit (install-cost state side %))])))
+                                                          (runner-can-pay-and-install? state side (assoc eid :source card) %)))
                                                   (sort-by :title)
                                                   (seq))
                                              ["Done"]))
@@ -3568,9 +3562,7 @@
                            (->> (:deck runner)
                                 (filter
                                   #(and (is-type? % (:type trashed-card))
-                                        (can-pay? state side
-                                                  (assoc eid :source card :source-type :runner-install)
-                                                  % nil [(->c :credit (install-cost state side % {:cost-bonus -3}))])))
+                                        (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -3})))
                                 (sort-by :title)
                                 (seq))
                            ["Done"]))
