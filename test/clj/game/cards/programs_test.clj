@@ -7136,6 +7136,22 @@
                     (purge state :corp))
           "Both Physarum Entanglers trashed on purge"))))
 
+(deftest physarum-entangler-vs-ravanna-1-0
+  (do-game
+    (new-game {:runner {:hand [(qty "Physarum Entangler" 2) "Trick Shot"]}
+               :corp {:hand ["Ravana 1.0"]}})
+    (play-from-hand state :corp "Ravana 1.0" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Physarum Entangler")
+    (click-card state :runner "Ravana 1.0")
+    (play-from-hand state :runner "Trick Shot")
+    (rez state :corp (get-ice state :rd 0))
+    (run-continue-until state :encounter-ice)
+    (is (changed? [(:credit (get-runner)) 0]
+          (click-prompts state :runner "Yes" "Trick Shot" "Trick Shot"))
+        "Physarum Entangler cost was paid")
+    (is (= :movement (:phase (get-run))) "Runner has bypassed Ravana")))
+
 (deftest pichacao
   ;; Pichação
   (do-game
