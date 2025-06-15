@@ -95,6 +95,11 @@
   (let [prompt (get-prompt state side)]
     (= :waiting (:prompt-type prompt))))
 
+(defn anybody-waiting?
+  "Either side is waiting"
+  [state]
+  (or (waiting? state :runner) (waiting? state :corp)))
+
 (defn expect-type
   [type-name choice]
   (str "Expected a " type-name ", received [ " choice
