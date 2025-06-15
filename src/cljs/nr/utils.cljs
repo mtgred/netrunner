@@ -381,17 +381,23 @@
       (reset! scroll-top-atom h))))
 
 (defn get-image-path
-  "Image search priority: Language > Art > Resolution"
-  [images lang res art]
-  (or (get-in images [lang res art])
-      (and (not= res :default)
-           (get-in images [lang :default art])) ;; check for default res version of art
-      (and (not= art :stock)
-           (or (get-in images [lang res :stock]) ;; check for high res version of stock image
-               (get-in images [lang :default :stock]))) ;; check for default res version of stock image
-      (and (not= lang :en)
-           (get-image-path images :en res art)) ;; repeat search for eng version of the art and resolution
-      "/img/missing.png"))
+  "Image search priority: Resolution > Language > Art"
+  ([images lang res art] (get-image-path images lang res art 0))
+  ([images lang res art depth]
+   (when (< depth 4)
+     (or (get-in images [lang res art])
+         ;; try to downgrade the res first
+         (and (not= res :default)
+              (get-image-path images lang :default art (inc depth)))
+         ;; try to downgrade the language second
+         (and (not= lang :en)
+              (get-image-path images :en res art (inc depth)))
+         ;; try to downgrade the art last
+         (and (not= art :stock)
+              (get-image-path images lang res :stock (inc depth)))
+         ;; fallback if on 0 depth only
+         (and (zero? depth)
+              "img/missing.png")))))
 
 (defn image-or-face [card]
   (cond
