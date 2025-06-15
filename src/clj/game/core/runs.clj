@@ -395,7 +395,12 @@
    (let [old-state (get-in @state [:run :phase])]
      (when new-state
        (set-phase state new-state))
+     (swap! state update :forced-encounter (fnil inc 0))
      (wait-for (encounter-ice state side (make-eid state eid) ice)
+               (swap! state (fn [{:keys [forced-encounter] :as s}]
+                              (if (and forced-encounter (> forced-encounter 1))
+                                (update s :forced-encounter dec)
+                                (dissoc s :forced-encounter))))
                ;; reset the state if needed
                (clear-run-prompts state)
                (if (and (not (:run @state))

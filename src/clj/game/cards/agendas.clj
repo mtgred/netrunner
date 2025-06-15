@@ -32,7 +32,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [update-all-ice update-all-icebreakers]]
+   [game.core.ice :refer [get-current-ice update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
    [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-cards-async swap-ice
@@ -45,7 +45,7 @@
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez rez-multiple-cards]]
-   [game.core.runs :refer [end-run force-ice-encounter redirect-run]]
+   [game.core.runs :refer [clear-encounter end-run get-current-encounter force-ice-encounter redirect-run start-next-phase]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
    [game.core.set-aside :refer [set-aside-for-me]]
@@ -1885,11 +1885,33 @@
               :async true
               :effect (effect (add-counter eid card :agenda 1))}
    :abilities [{:req (req (:run @state))
-                ;; NOTE - this doesn't work during forced encounters, or outside of a run - address that later
                 :cost [(->c :agenda 1)]
+                ;; you can't get redirected from a ganked encounter (ie during success)
+                :change-in-game-state {:req (req (not= :success (:phase (:run @state))))}
                 :label "Redirect runner to archives"
                 :msg "make the Runner continue the run on Archives"
-                :effect (req (redirect-run state side "Archives" :approach-ice))}]})
+                :async true
+                :effect (req
+                          (cond
+                            ;; note that the underlying run is adjusted,
+                            ;; but the encounter does not end -> relevant for konjin, sisyphus, etc
+                            (:forced-encounter @state)
+                            (do (redirect-run state side "Archives" :approach-ice)
+                                (effect-completed state side eid))
+                            (->> @state :run :phase (= :encounter-ice))
+                            ;; need to clear the encounter before redirecting, and fire the events
+                            (do
+                              (when (get-current-encounter state)
+                                (queue-event state :end-of-encounter {:ice (get-current-ice state)}))
+                              (wait-for
+                                (checkpoint state side {:duration :end-of-encounter})
+                                (clear-encounter state)
+                                (redirect-run state side "Archives" :approach-ice)
+                                (start-next-phase state side eid)))
+                            :else
+                            (do (clear-encounter state)
+                                (redirect-run state side "Archives" :approach-ice)
+                                (start-next-phase state side eid))))}]})
 
 (defcard "Quantum Predictive Model"
   {:flags {:rd-reveal (req true)}

@@ -7517,7 +7517,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Transfer of Wealth")
     (card-ability state :corp (get-scored state :corp 0) 0)
-    (run-continue state)
     (is (changed? [(:credit (get-corp)) 0
                    (:credit (get-runner)) 0
                    (count-tags state) 0
