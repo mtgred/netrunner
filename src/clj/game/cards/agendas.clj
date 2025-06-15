@@ -212,6 +212,7 @@
 (defcard "Aggressive Trendsetting"
   {:events [{:event :runner-trash
              :interactive (req true)
+             :once-per-instance true
              :optional {:req (req (letfn [(valid-ctx? [contexts]
                                             (some (every-pred installed? corp?) (map :card contexts)))]
                                     (and (valid-ctx? targets)

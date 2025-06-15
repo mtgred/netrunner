@@ -1397,14 +1397,16 @@
                :effect (effect (lose-credits :runner eid 1))}})
 
 (defcard "Hostile Architecture"
-  (letfn [(valid-trash [target]
-            (and (corp? (:card target))
-                 (installed? (:card target))))]
+  (letfn [(valid-ctx?
+            [evs]
+            (some #(and (->> % :card corp?)
+                        (->> % :card installed?))
+                  evs))]
     {:events [{:event :runner-trash
                :async true
-               :once-per-instance false
-               :req (req (and (valid-trash target)
-                              (first-event? state side :runner-trash #(valid-trash (first %)))))
+               :once-per-instance true
+               :req (req (and (valid-ctx? targets)
+                              (first-event? state side :runner-trash valid-ctx?)))
                :msg "do 2 meat damage"
                :effect (effect (damage :corp eid :meat 2 {:card card}))}]}))
 
