@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur defcard do-meat-damage draw-abi drain-credits gain-credits-ability give-tags do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand tutor-abi]]
+   [game.core.def-helpers :refer [combine-abilities corp-install-up-to-n-cards corp-recur defcard do-meat-damage draw-abi drain-credits gain-credits-ability give-tags do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand tutor-abi]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -665,14 +665,7 @@
                     (play-instant eid target nil))}})
 
 (defcard "Corporate Hospitality"
-  {:on-play {:msg "gain 6 [Credits] and draw 2 cards"
-             :async true
-             :effect (req (wait-for (gain-credits state side 6)
-                                    (wait-for (draw state side (make-eid state eid) 2)
-                                              (continue-ability
-                                                state side
-                                                (corp-recur)
-                                                card nil))))}})
+  {:on-play (combine-abilities (clearance 6 2) (corp-recur))})
 
 (defcard "Corporate Shuffle"
   {:on-play
@@ -1770,7 +1763,7 @@
              :async true
              :effect (req (if (= "Do 1 net damage per tag (up to 3)" target)
                             (damage state :corp eid :net (min 3 (count-tags state)) {:card card})
-                            (wait-for (gain-credits state :corp (make-eid state eid) 4)
+                            (wait-for (gain-credits state side 4 {:suppress-checkpoint true})
                                       (wait-for
                                         (draw state :corp 2)
                                         (continue-ability
