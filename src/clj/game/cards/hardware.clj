@@ -155,6 +155,7 @@
              :optional {:prompt "Remove 1 power counter to draw 2 cards?"
                         :waiting-prompt true
                         :req (req (and (= :runner (:side context))
+                                       (pos? (:amount context))
                                        (pos? (get-counters card :power))))
                         :yes-ability {:cost [(->c :power 1)]
                                       :msg "draw 2 cards"

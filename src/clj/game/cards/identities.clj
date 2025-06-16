@@ -2482,7 +2482,9 @@
 
 (defcard "Synapse Global: Faster than Thought"
   {:events [{:event :runner-lose-tag
-             :req (req (first-event? state side :runner-lose-tag))
+             :req (req (letfn [(valid-ctx? [[ctx]] (pos? (:amount ctx)))]
+                         (and (valid-ctx? targets)
+                              (first-event? state side :runner-lose-tag valid-ctx?))))
              :prompt "Reveal and install a card from HQ?"
              :change-in-game-state {:req (req (seq (:hand corp))) :silent true}
              :choices {:req (req (and (corp? target)

@@ -5258,6 +5258,16 @@
     (click-prompt state :runner "No")
     (is (no-prompt? state :runner) "Panopticon got cancelled, no prompt")))
 
+(deftest synapse-vs-remove-no-tags
+  (do-game
+    (new-game {:corp {:id "Synapse Global: Faster than Thought"
+                      :hand ["Ice Wall"]}
+               :runner {:hand ["Hannah \"Wheels\" Pilintra"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hannah \"Wheels\" Pilintra")
+    (card-ability state :runner (get-resource state 0) 1)
+    (is (no-prompt? state :corp) "No install prompt, because 0 tags were removed")))
+
 (deftest sync-everything-everywhere
   ;; SYNC: Everything, Everywhere
   (do-game
