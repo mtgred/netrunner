@@ -36,7 +36,7 @@
   (let [play-msg (if ignore-cost
                    "play "
                    (build-spend-msg payment-str "play"))]
-    (system-msg state side (str play-msg title  (when as-flashback (str " from " (when (= side :corp) "Archives" "the heap"))) (when ignore-cost " at no cost")))
+    (system-msg state side (str play-msg title  (when as-flashback (str " from " (if (= side :corp) "Archives" "the heap"))) (when ignore-cost " at no cost")))
     (implementation-msg state card)
     (if-let [sfx (:play-sound (card-def card))]
       (play-sfx state side sfx)
