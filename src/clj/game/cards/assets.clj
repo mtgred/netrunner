@@ -20,7 +20,7 @@
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [play-cost]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard gain-credits-ability give-tags
+   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard do-meat-damage do-net-damage gain-credits-ability give-tags
                                   reorder-choice spend-credits take-credits trash-on-empty get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
@@ -71,19 +71,32 @@
   ([cost ability] (assoc (installed-access-trigger cost ability) :advanceable :always))
   ([cost ability prompt] (assoc (installed-access-trigger cost ability prompt) :advanceable :always)))
 
+(defn- take-n-credits-start-of-turn
+  ([n] (take-n-credits-start-of-turn n :credit))
+  ([n counter-type]
+   (let [num-counters (fn [card] (min n (get-counters card counter-type)))]
+     {:msg (msg "gain " (num-counters card) " [Credits]")
+      :once :per-turn
+      :automatic :gain-credits
+      :req (req (and (:corp-phase-12 @state)
+                     (pos? (get-counters card counter-type))))
+      :label (str "Gain " n " [Credits] (start of turn)")
+      :async true
+      :effect (req (take-credits state side eid card counter-type n))})))
+
+(defn- take-n-credits-ability
+  [n]
+  {:label (str "Take " n " [Credits] from this asset")
+   :msg (msg "gain " (min n (get-counters card :credit)) " [Credits]")
+   :async true
+   :effect (req (take-credits state side eid card :credit n))})
+
 (defn campaign
   "Creates a Campaign with X counters draining Y per-turn.
   Trashes itself when out of counters"
   ([counters per-turn] (campaign counters per-turn :credit))
   ([counters per-turn counter-type]
-   (let [num-counters (fn [card] (min per-turn (get-counters card counter-type)))
-         ability {:msg (msg "gain " (num-counters card) " [Credits]")
-                  :once :per-turn
-                  :automatic :gain-credits
-                  :req (req (:corp-phase-12 @state))
-                  :label (str "Gain " per-turn " [Credits] (start of turn)")
-                  :async true
-                  :effect (req (take-credits state side eid card counter-type per-turn))}]
+   (let [ability (take-n-credits-start-of-turn per-turn counter-type)]
      {:data {:counter {counter-type counters}}
       :derezzed-events [corp-rez-toast]
       :events [(trash-on-empty counter-type)
@@ -935,11 +948,9 @@
      :abilities [ability]}))
 
 (defcard "Dedicated Response Team"
-  {:events [{:event :run-ends
-             :req (req (and tagged (:successful target)))
-             :msg "do 2 meat damage"
-             :async true
-             :effect (effect (damage eid :meat 2 {:card card}))}]})
+  {:events [(assoc (do-meat-damage 2)
+                   :event :run-ends
+                   :req (req (and tagged (:successful target))))]})
 
 (defcard "Dedicated Server"
   {:recurring 2
@@ -1919,13 +1930,7 @@
                 :effect (effect (gain-credits eid 2))}]})
 
 (defcard "Marked Accounts"
-  (let [ability {:msg "gain 1 [Credits]"
-                 :label "Take 1 [Credits] (start of turn)"
-                 :automatic :gain-credits
-                 :once :per-turn
-                 :req (req (pos? (get-counters card :credit)))
-                 :async true
-                 :effect (req (take-credits state side eid card :credit 1))}]
+  (let [ability (take-n-credits-start-of-turn 1)]
     {:abilities [ability
                  {:action true
                   :cost [(->c :click 1)]
@@ -2496,13 +2501,10 @@
 (defcard "Private Contracts"
   {:data {:counter {:credit 14}}
    :events [(trash-on-empty :credit)]
-   :abilities [{:action true
-                :cost [(->c :click 1)]
-                :keep-menu-open :while-clicks-left
-                :label "Take hosted credits"
-                :msg (msg "gain " (min 2 (get-counters card :credit)) " [Credits]")
-                :async true
-                :effect (req (take-credits state side eid card :credit 2))}]})
+   :abilities [(assoc (take-n-credits-ability 2)
+                      :action true
+                      :keep-menu-open :while-clicks-left
+                      :cost [(->c :click 1)])]})
 
 (defcard "Project Junebug"
   (advance-ambush 1 {:req (req (pos? (get-counters (get-card state card) :advancement)))
@@ -2718,13 +2720,10 @@
 (defcard "Regolith Mining License"
   {:data {:counter {:credit 15}}
    :events [(trash-on-empty :credit)]
-   :abilities [{:action true
-                :label "Take 3 [Credits] from this asset"
-                :cost [(->c :click 1)]
-                :keep-menu-open :while-clicks-left
-                :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
-                :async true
-                :effect (req (take-credits state side eid card :credit 3))}]})
+   :abilities [(assoc (take-n-credits-ability 3)
+                      :action true
+                      :keep-menu-open :while-clicks-left
+                      :cost [(->c :click 1)])]})
 
 (defcard "Reversed Accounts"
   {:advanceable :always
@@ -2770,12 +2769,10 @@
 
 (defcard "Ronin"
   {:advanceable :always
-   :abilities [{:action true
-                :cost [(->c :click 1) (->c :trash-can)]
-                :req (req (>= (get-counters card :advancement) 4))
-                :msg "do 3 net damage"
-                :async true
-                :effect (effect (damage eid :net 3 {:card card}))}]})
+   :abilities [(assoc (do-net-damage 3)
+                      :action true
+                      :cost [(->c :click 1) (->c :trash-can)]
+                      :req (req (>= (get-counters card :advancement) 4)))]})
 
 (defcard "Roughneck Repair Squad"
   {:abilities [{:action true

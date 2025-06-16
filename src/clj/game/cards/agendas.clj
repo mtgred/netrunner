@@ -924,10 +924,7 @@
 
 (defcard "Fetal AI"
   {:flags {:rd-reveal (req true)}
-   :on-access {:async true
-               :req (req (not (in-discard? card)))
-               :msg "do 2 net damage"
-               :effect (effect (damage eid :net 2 {:card card}))}
+   :on-access (assoc (do-net-damage 2) :req (req (not (in-discard? card))))
    :steal-cost-bonus (req [(->c :credit 2)])})
 
 (defcard "Firmware Updates"
@@ -1034,12 +1031,10 @@
   {:agendapoints-runner (req 2)})
 
 (defcard "Government Contracts"
-  {:abilities [{:action true
-                :cost [(->c :click 2)]
-                :async true
-                :keep-menu-open :while-2-clicks-left
-                :effect (effect (gain-credits eid 4))
-                :msg "gain 4 [Credits]"}]})
+  {:abilities [(assoc (gain-credits-ability 4)
+                      :action true
+                      :cost [(->c :click 2)]
+                      :keep-menu-open :while-2-clicks-left)]})
 
 (defcard "Government Takeover"
   {:abilities [{:action true
