@@ -113,6 +113,11 @@
    :async true
    :effect (effect (end-run :corp eid card))})
 
+(def prevent-runs-this-turn
+  {:label "The Runner cannot make another run this turn"
+   :msg "prevent the Runner from making another run"
+   :effect (effect (register-turn-flag! card :can-run nil))})
+
 (defn- faceup-archives-types
   "helper for the faceup-archives-count cards"
   [corp]
@@ -336,6 +341,17 @@
    :effect (effect (move :runner target :hand true)
                    (system-msg (str "adds " (:title target)
                                     " to the grip")))})
+
+(def add-program-to-top-of-stack
+  {:prompt "Add a program to the top of the stack"
+   :waiting-prompt true
+   :choices {:card #(and (installed? %)
+                         (program? %))}
+   :change-in-game-state {:silent true
+                          :req (req (some program? (all-installed state :runner)))}
+   :label "Add installed program to the top of the stack"
+   :msg (msg "add " (:title target) " to the top of the stack")
+   :effect (effect (move :runner target :deck {:front true}))})
 
 (def trash-program-sub
   {:prompt "Choose a program to trash"
@@ -1443,12 +1459,14 @@
                      2
                      {:async true
                       :label "Look at the top cards of the stack"
-                      :msg "look at top cards of the stack"
+                      :change-in-game-state {:req (req (seq (:deck runner))) :silent true}
+                      :msg (msg "look at " (quantify (min (- target (second targets))
+                                                              (count (:deck runner)))
+                                                         "card")
+                                " from the top of the stack")
                       :waiting-prompt true
                       :effect (req (let [c (- target (second targets))
                                          from (take c (:deck runner))]
-                                     (system-msg state :corp
-                                                 (str "looks at the top " (quantify c "card") " of the stack"))
                                      (if (< 1 c)
                                        (continue-ability state side (dh-trash from) card nil)
                                        (wait-for (trash state side (first from) {:unpreventable true
@@ -1766,9 +1784,7 @@
                    sub]}))
 
 (defcard "Excalibur"
-  {:subroutines [{:label "The Runner cannot make another run this turn"
-                  :msg "prevent the Runner from making another run"
-                  :effect (effect (register-turn-flag! card :can-run nil))}]})
+  {:subroutines [prevent-runs-this-turn]})
 
 (defcard "Executive Functioning"
   {:subroutines [(trace-ability 4 (do-brain-damage 1))]})
@@ -1882,33 +1898,29 @@
                    6
                    {:label "Trash 1 piece of hardware, do 2 meat damage, and end the run"
                     :async true
-                    :effect
-                    (effect
-                      (continue-ability
-                        {:prompt "Choose a piece of hardware to trash"
-                         :label "Trash a piece of hardware"
-                         :choices {:card hardware?}
-                         :msg (msg "trash " (:title target))
-                         :async true
-                         :effect (req (wait-for
-                                        (trash state side target {:cause :subroutine})
-                                        (system-msg state :corp
-                                                    (str "uses " (:title card) " to trash " (:title target)))
-                                        (wait-for (damage state side :meat 2 {:unpreventable true
-                                                                              :card card})
-                                        (system-msg state :corp
-                                                    (str "uses " (:title card) " to deal 2 meat damage"))
-                                        (system-msg state :corp
-                                                    (str "uses " (:title card) " to end the run"))
-                                        (end-run state side eid card))))
-                         :cancel-effect (req (wait-for (damage state side :meat 2 {:unpreventable true
+                    :effect (req (continue-ability
+                                   state side
+                                   (if (some hardware? (all-installed state :runner))
+                                     {:prompt "Choose a piece of hardware to trash"
+                                      :label "Trash a piece of hardware"
+                                      :choices {:card hardware?
+                                                :all true}
+                                      :msg (msg "trash " (:title target) ", do 2 meat damage, and end the run")
+                                      :async true
+                                      :effect (req (wait-for
+                                                     (trash state side target {:cause :subroutine :suppress-checkpoint true})
+                                                     (wait-for
+                                                       (damage state side :meat 2 {:unpreventable true
+                                                                                   :suppress-checkpoint true
                                                                                    :card card})
-                                                       (system-msg state :corp
-                                                                   (str "uses " (:title card) " to deal 2 meat damage"))
-                                                       (system-msg state :corp
-                                                                   (str "uses " (:title card) " to end the run"))
-                                                       (end-run state side eid card)))}
-                        card nil))})]})
+                                                       (end-run state side eid card))))}
+                                     {:async true
+                                      :msg "do 2 meat damage and end the run"
+                                      :effect (req (wait-for (damage state side :meat 2 {:unpreventable true
+                                                                                         :suppress-checkpoint true
+                                                                                         :card card})
+                                                             (end-run state side eid card)))})
+                                   card nil))})]})
 
 (defcard "Flyswatter"
   ;; special note - this will make flyswatter play the purge sound on rez when it purges, instead of the rez sound
@@ -3490,14 +3502,7 @@
                                      card nil))))}]})
 
 (defcard "Owl"
-  {:subroutines [{:choices {:card #(and (installed? %)
-                                        (program? %))}
-                  :change-in-game-state {:silent true
-                                         :req (req (some program? (all-installed state :runner)))}
-                  :label "Add installed program to the top of the stack"
-                  :msg "add 1 installed program to the top of the stack"
-                  :effect (effect (move :runner target :deck {:front true})
-                                  (system-msg (str "adds " (:title target) " to the top of the stack")))}]})
+  {:subroutines [add-program-to-top-of-stack]})
 
 (defcard "Pachinko"
   {:subroutines [end-the-run-if-tagged
@@ -3887,14 +3892,9 @@
              (tag-trace 3)]))
 
 (defcard "Sherlock 1.0"
-  (let [sub (trace-ability 4 {:choices {:card #(and (installed? %)
-                                                    (program? %))}
-                              :label "Add 1 installed program to the top of the stack"
-                              :msg (msg "add " (:title target) " to the top of the stack")
-                              :effect (effect (move :runner target :deck {:front true}))})]
-    {:subroutines [sub
-                   sub]
-     :runner-abilities [(bioroid-break 1 1)]}))
+  {:subroutines [(trace-ability 4 add-program-to-top-of-stack)
+                 (trace-ability 4 add-program-to-top-of-stack)]
+   :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Sherlock 2.0"
   (let [sub (trace-ability 4 {:choices {:card #(and (installed? %)
@@ -4500,9 +4500,7 @@
                    true)]})
 
 (defcard "Uroboros"
-  {:subroutines [(trace-ability 4 {:label "Prevent the Runner from making another run"
-                                   :msg "prevent the Runner from making another run"
-                                   :effect (effect (register-turn-flag! card :can-run nil))})
+  {:subroutines [(trace-ability 4 prevent-runs-this-turn)
                  (trace-ability 4 end-the-run)]})
 
 (defcard "Valentão"

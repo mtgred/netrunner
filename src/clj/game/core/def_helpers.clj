@@ -424,6 +424,9 @@
   ([reveal? restriction]
    {:change-in-game-state {:req (req (seq (get-in @state [side :deck])))}
     :prompt "Choose a card"
+    :label (req (if (= side :corp)
+                  "Search R&D and add 1 card to HQ"
+                  "Search the Stack and add 1 card to the Grip"))
     :choices (req (cancellable
                     (filter #(or (not restriction) (restriction %))
                             (get-in @state [side :deck]))
