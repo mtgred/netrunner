@@ -15,7 +15,7 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-rez-toast defcard give-tags offer-jack-out
+   [game.core.def-helpers :refer [do-net-damage corp-rez-toast defcard give-tags offer-jack-out
                                   reorder-choice take-credits get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -191,9 +191,7 @@
                      :req (req this-server)
                      :successful
                      {:msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
-                      :async true
-                      :effect (effect (set-only-card-to-access card)
-                                      (effect-completed eid))}}}]})
+                      :effect (effect (set-only-card-to-access card))}}}]})
 
 (defcard "Awakening Center"
   {:can-host (req (ice? target))
@@ -452,11 +450,9 @@
      :abilities [ability]}))
 
 (defcard "ChiLo City Grid"
-  {:events [{:event :successful-trace
-             :req (req this-server)
-             :async true
-             :effect (effect (gain-tags :corp eid 1))
-             :msg "give the Runner 1 tag"}]})
+  {:events [(assoc (give-tags 1)
+                   :event :successful-trace
+                   :req (req this-server))]})
 
 (defcard "Code Replicator"
   {:abilities [{:label "Force the runner to approach the passed piece of ice again"
@@ -871,12 +867,9 @@
                :effect (req (continue-ability state :runner prompt-to-trash-agenda-or-etr card nil))}]}))
 
 (defcard "Hokusai Grid"
-  {:events [{:event :successful-run
-             :automatic :corp-damage
-             :req (req this-server)
-             :msg "do 1 net damage"
-             :async true
-             :effect (effect (damage eid :net 1 {:card card}))}]})
+  {:events [(assoc (do-net-damage 1)
+                   :event :successful-run
+                   :req (req this-server))]})
 
 (defcard "Increased Drop Rates"
   {:flags {:rd-reveal (req true)}
@@ -1236,6 +1229,7 @@
 
 (defcard "Midori"
   {:events [{:event :approach-ice
+             :change-in-game-state {:req (req (seq (:hand corp)))}
              :optional
              {:req (req this-server)
               :once :per-run
