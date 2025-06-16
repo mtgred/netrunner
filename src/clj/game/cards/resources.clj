@@ -4013,8 +4013,8 @@
                                                                                                 " to " (decapitalize target))))
                                :else (effect-completed state side eid)))}
    :events [{:event :runner-lose-tag
-             :req (req
-                    (= :runner (:side context)))
+             :req (req (and (= :runner (:side context))
+                            (pos? (:amount context))))
              :msg "gain 1 [Credits]"
              :async true
              :interactive (req true)
