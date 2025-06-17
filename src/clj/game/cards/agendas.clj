@@ -1588,7 +1588,7 @@
                                                          (choose-one-helper
                                                            [{:option (str "Install " (:title target-card))
                                                              :ability {:async true
-                                                                       :effect (req (corp-install state side eid target-card nil {:msg-args {:display-origin true :install-source card}}))}}
+                                                                       :effect (req (corp-install state side eid target-card nil {:ignore-install-cost true :msg-args {:display-origin true :install-source card}}))}}
                                                             {:option (str "Add " (:title target-card) " to HQ")
                                                              :ability {:msg (msg "add " (:title target-card) " to HQ")
                                                                        :effect (req (move state side target-card :hand))}}])
