@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [install-cost rez-additional-cost-bonus rez-cost trash-cost]]
    [game.core.damage :refer [chosen-damage damage
                              enable-runner-damage-choice runner-can-choose-damage?]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard offer-jack-out
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-abi offer-jack-out
                                   reorder-choice spend-credits take-credits trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects register-lingering-effect
@@ -156,10 +156,7 @@
                         :waiting-prompt true
                         :req (req (and (= :runner (:side context))
                                        (pos? (get-counters card :power))))
-                        :yes-ability {:cost [(->c :power 1)]
-                                      :msg "draw 2 cards"
-                                      :async true
-                                      :effect (req (draw state :runner eid 2))}}}
+                        :yes-ability (draw-abi 2 nil {:cost [(->c :power 1)]})}}
             {:event :runner-turn-ends
              :req (req tagged)
              :msg "place 1 power counter on itself"
@@ -202,10 +199,7 @@
 
 (defcard "Astrolabe"
   {:static-abilities [(mu+ 1)]
-   :events [{:event :server-created
-             :msg "draw 1 card"
-             :async true
-             :effect (effect (draw :runner eid 1))}]})
+   :events [(draw-abi 1 nil {:event :server-created})]})
 
 (defcard "Autoscripter"
   {:events [{:event :runner-install
@@ -693,12 +687,9 @@
 
 (defcard "Daredevil"
   {:static-abilities [(mu+ 2)]
-   :events [{:event :run
-             :req (req (and (<= 2 (:position target))
-                            (first-event? state side :run #(<= 2 (:position (first %))))))
-             :msg "draw 2 cards"
-             :async true
-             :effect (effect (draw eid 2))}]})
+   :events [(draw-abi 2 nil {:event :run
+                             :req (req (and (<= 2 (:position target))
+                                            (first-event? state side :run #(<= 2 (:position (first %))))))})]})
 
 (defcard "Dedicated Processor"
   {:implementation "Click Dedicated Processor to use ability"
@@ -1437,9 +1428,7 @@
                                     (program? (:card target))
                                     (first-event? state :runner :runner-install #(program? (:card (first %))))))
                         :autoresolve (get-autoresolve :auto-fire)
-                        :yes-ability {:msg "draw 1 card"
-                                      :async true
-                                      :effect (req (draw state :runner eid 1))}
+                        :yes-ability (draw-abi 1)
                         :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]
    :static-abilities [(mu+ 2)]
    :abilities [(set-autoresolve :auto-fire "LilyPAD")]})
@@ -1487,12 +1476,8 @@
 (defcard "Mâché"
   (letfn [(pred [{:keys [card accessed]}]
             (and accessed (corp? card)))]
-    {:abilities [{:label "Draw 1 card"
-                  :msg "draw 1 card"
-                  :cost [(->c :power 3)]
-                  :keep-menu-open :while-3-power-tokens-left
-                  :async true
-                  :effect (effect (draw :runner eid 1))}]
+    {:abilities [(draw-abi 1 nil {:cost [(->c :power 3)]
+                                  :keep-menu-open :while-3-power-tokens-left})]
      :events [{:event :runner-trash
                :once-per-instance true
                :req (req (and (some pred targets)
@@ -1569,13 +1554,10 @@
                             :effect (effect (runner-install (assoc eid :source card :source-type :runner-install) target {:cost-bonus 1
                                                                                                                           :msg-keys {:display-origin true
                                                                                                                                      :install-source card}}))}}}
-            {:event :runner-install
-             :async true
-             :interactive (req true)
-             :req (req (and (hardware? (:card context))
-                            (first-event? state side :runner-install #(hardware? (:card (first %))))))
-             :msg "draw 1 card"
-             :effect (effect (draw eid 1))}]})
+            (draw-abi 1 nil {:event :runner-install
+                             :interactive (req true)
+                             :req (req (and (hardware? (:card context))
+                                            (first-event? state side :runner-install #(hardware? (:card (first %))))))})]})
 
 (defcard "Māui"
   {:x-fn (req (count (get-in corp [:servers :hq :ices])))
@@ -2460,12 +2442,8 @@
 
 (defcard "Sports Hopper"
   {:static-abilities [(link+ 1)]
-   :abilities [{:label "Draw 3 cards"
-                :msg "draw 3 cards"
-                :change-in-game-state {:req (req (seq (:deck runner)))}
-                :async true
-                :cost [(->c :trash-can)]
-                :effect (effect (draw :runner eid 3))}]})
+   :abilities [(draw-abi 3 nil {:change-in-game-state {:req (req (seq (:deck runner)))}
+                                :cost [(->c :trash-can)]})]})
 
 (defcard "Spy Camera"
   {:abilities [{:action true
