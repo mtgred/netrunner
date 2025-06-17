@@ -20,7 +20,7 @@
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [play-cost]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard do-meat-damage do-net-damage gain-credits-ability give-tags
+   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard do-meat-damage do-net-damage draw-abi gain-credits-ability give-tags
                                   reorder-choice spend-credits take-credits trash-on-empty get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
@@ -49,7 +49,7 @@
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [end-run]]
-   [game.core.say :refer [system-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
    [game.core.set-aside :refer [swap-set-aside-cards]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck
@@ -535,20 +535,15 @@
              :effect (req (add-counter state side eid card :credit 2 nil))}]})
 
 (defcard "Calvin B4L3Y"
-  {:abilities [{:action true
-                :cost [(->c :click 1)]
-                :msg "draw 2 cards"
-                :once :per-turn
-                :async true
-                :effect (effect (draw eid 2))}]
+  {:abilities [(draw-abi 2 nil {:action true
+                                :cost [(->c :click 1)]
+                                :once :per-turn})]
    :on-trash {:interactive (req true)
               :optional
               {:req (req (= :runner side))
                :waiting-prompt true
                :prompt "Draw 2 cards?"
-               :yes-ability {:msg "draw 2 cards"
-                             :async true
-                             :effect (effect (draw eid 2))}}}})
+               :yes-ability (draw-abi 2)}}})
 
 (defcard "Capital Investors"
   {:abilities [{:action true
@@ -862,9 +857,7 @@
                                    {:optional
                                     {:prompt "Draw 1 card?"
                                      :autoresolve (get-autoresolve :auto-fire)
-                                     :yes-ability {:async true
-                                                   :msg "draw 1 card"
-                                                   :effect (effect (draw eid 1))}}}
+                                     :yes-ability (draw-abi 1)}}
                                    card nil))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
@@ -1443,7 +1436,8 @@
                   :label "Gain 4 [Credits] and draw 3 cards"
                   :msg "gain 4 [Credits] and draw 3 cards"
                   :async true
-                  :effect (req (wait-for
+                  :effect (req (play-sfx state side "professional-contacts")
+                               (wait-for
                                  (gain-credits state side 4 {:suppress-checkpoint true})
                                  (wait-for (draw state side 3)
                                    (wait-for
@@ -1621,12 +1615,9 @@
                                 (update-ice-strength target))}]})
 
 (defcard "Jackson Howard"
-  {:abilities [{:action true
-                :cost [(->c :click 1)]
-                :keep-menu-open :while-clicks-left
-                :msg "draw 2 cards"
-                :async true
-                :effect (effect (draw eid 2))}
+  {:abilities [(draw-abi 2 nil {:action true
+                                :cost [(->c :click 1)]
+                                :keep-menu-open :while-clicks-left})
                {:label "Shuffle up to 3 cards from Archives into R&D"
                 :cost [(->c :remove-from-game)]
                 :async true
@@ -1796,9 +1787,7 @@
                                 (shuffle! :deck))}]})
 
 (defcard "Lily Lockwell"
-  {:on-rez {:async true
-            :effect (effect (draw eid 3))
-            :msg "draw 3 cards"}
+  {:on-rez (draw-abi 3)
    :abilities [{:action true
                 :label "Search R&D for an operation"
                 :prompt "Choose an operation to add to the top of R&D"
@@ -2157,10 +2146,7 @@
                   :waiting-prompt true
                   :player :corp
                   :prompt "Draw 1 card?"
-                  :yes-ability
-                  {:msg "draw 1 card"
-                   :async true
-                   :effect (effect (draw :corp eid 1))}}}]
+                  :yes-ability (draw-abi 1)}}]
     {:events [(-> ability
                   (assoc :event :runner-lose-tag)
                   (assoc-in [:optional :req] (req (= (:side context) :runner))))
@@ -2875,7 +2861,8 @@
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :msg "draw 1 card from the bottom of R&D"
-                :effect (effect (move (last (:deck corp)) :hand))}
+                :effect (effect (play-sfx "click-card")
+                                (move (last (:deck corp)) :hand))}
                {:label "Search R&D for an agenda"
                 :prompt "Choose an agenda to add to the bottom of R&D"
                 :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
