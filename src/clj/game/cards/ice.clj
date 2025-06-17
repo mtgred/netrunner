@@ -17,7 +17,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [combine-abilities corp-recur defcard
-                                  do-brain-damage do-net-damage give-tags offer-jack-out
+                                  do-brain-damage do-net-damage draw-abi give-tags offer-jack-out
                                   reorder-choice get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw draw-up-to]]
    [game.core.effects :refer [any-effects get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-effect-by-uuid unregister-static-abilities update-disabled-cards]]
@@ -813,13 +813,7 @@
                           3)]}))
 
 (defcard "Anansi"
-  (let [corp-draw {:optional
-                   {:waiting-prompt true
-                    :prompt "Draw 1 card?"
-                    :yes-ability {:async true
-                                  :msg "draw 1 card"
-                                  :effect (effect (draw eid 1))}}}
-        runner-draw {:player :runner
+  (let [runner-draw {:player :runner
                      :optional
                      {:waiting-prompt true
                       :prompt "Pay 2 [Credits] to draw 1 card?"
@@ -841,8 +835,9 @@
                                      card nil)))}
                    {:label "Draw 1 card, runner draws 1 card"
                     :async true
-                    :effect (req (wait-for (resolve-ability state side corp-draw card nil)
-                                           (continue-ability state :runner runner-draw card nil)))}
+                    :effect (req (wait-for
+                                   (maybe-draw state side card 1)
+                                   (continue-ability state :runner runner-draw card nil)))}
                    (do-net-damage 1)]
      :events [(assoc (do-net-damage 3)
                      :event :end-of-encounter
@@ -1612,16 +1607,9 @@
    :runner-abilities [(bioroid-break 1 1)]})
 
 (defcard "Eli 2.0"
-  {:subroutines [{:label "Draw 1 card"
-                  :optional
-                  {:prompt "Draw 1 card?"
-                   :autoresolve (get-autoresolve :auto-fire)
-                   :yes-ability {:async true
-                                 :msg "draw 1 card"
-                                 :effect (effect (draw eid 1))}}}
+  {:subroutines [(maybe-draw-sub 1)
                  end-the-run
                  end-the-run]
-   :abilities [(set-autoresolve :auto-fire "Eli 2.0 drawing cards")]
    :runner-abilities [(bioroid-break 2 2)]})
 
 (defcard "Empiricist"
@@ -2193,7 +2181,8 @@
          :async true
          :cost [(->c :credit 1)]
          :effect
-         (req (wait-for
+         (req (play-sfx state side "click-draw")
+              (wait-for
                 (draw state side 1)
                 (continue-ability
                   state side
@@ -3329,15 +3318,7 @@
              :async true
              :msg "do 1 core damage"
              :effect (req (wait-for (damage state :runner :brain 1 {:card card})
-                                    (continue-ability
-                                      state side
-                                      {:optional
-                                       {:prompt "Draw 1 card?"
-                                        :autoresolve (get-autoresolve :auto-fire)
-                                        :yes-ability {:async true
-                                                      :msg "draw 1 card"
-                                                      :effect (effect (draw eid 1))}}}
-                                      card nil)))}]
+                                    (maybe-draw state side eid card 1)))}]
     {:subroutines [sub
                    sub]
      :runner-abilities [(bioroid-break 2 2)]
@@ -3689,58 +3670,50 @@
                                     :duration :end-of-run})))}]})
 
 (defcard "Sadaka"
-  (let [maybe-draw-effect
-        {:optional
-         {:waiting-prompt true
-          :prompt "Draw 1 card?"
-          :yes-ability
-          {:async true
-           :effect (effect (draw eid 1))
-           :msg "draw 1 card"}}}]
-    {:subroutines [{:label "Look at the top 3 cards of R&D"
-                    :change-in-game-state {:silent true :req (req (not-empty (:deck corp)))}
-                    :async true
-                    :effect
-                    (effect (continue-ability
-                              (let [top-cards (take 3 (:deck corp))
-                                    top-names (map :title top-cards)]
-                                {:waiting-prompt true
-                                 :prompt (str "The top cards of R&D are (top->bottom): " (enumerate-str top-names))
-                                 :choices ["Arrange cards" "Shuffle R&D"]
-                                 :async true
-                                 :effect
-                                 (req (if (= target "Arrange cards")
-                                        (wait-for
-                                          (resolve-ability state side (reorder-choice :corp top-cards) card nil)
-                                          (system-msg state :corp (str "rearranges the top "
-                                                                       (quantify (count top-cards) "card")
-                                                                       " of R&D"))
-                                          (continue-ability state side maybe-draw-effect card nil))
-                                        (do
-                                          (shuffle! state :corp :deck)
-                                          (system-msg state :corp (str "shuffles R&D"))
-                                          (continue-ability state side maybe-draw-effect card nil))))})
-                              card nil))}
-                   {:label "Trash 1 card in HQ"
-                    :async true
-                    :effect
-                    (req (wait-for
-                           (resolve-ability
-                             state side
-                             {:waiting-prompt true
-                              :prompt "Choose a card in HQ to trash"
-                              :choices (req (cancellable (:hand corp) :sorted))
-                              :async true
-                              :cancel-effect (effect (system-msg :corp (str "declines to use " (:title card)))
-                                                     (effect-completed eid))
-                              :effect (req (wait-for
-                                             (trash state :corp target {:cause :subroutine})
-                                             (system-msg state :corp "trashes a card from HQ")
-                                             (continue-ability state side trash-resource-sub card nil)))}
-                             card nil)
-                           (wait-for (trash state :corp (make-eid state eid) card {:cause-card card})
-                                     (system-msg state :corp (str "uses " (:title card) " to trash itself"))
-                                     (encounter-ends state side eid))))}]}))
+  {:subroutines [{:label "Look at the top 3 cards of R&D"
+                  :change-in-game-state {:silent true :req (req (not-empty (:deck corp)))}
+                  :async true
+                  :effect
+                  (effect (continue-ability
+                            (let [top-cards (take 3 (:deck corp))
+                                  top-names (map :title top-cards)]
+                              {:waiting-prompt true
+                               :prompt (str "The top cards of R&D are (top->bottom): " (enumerate-str top-names))
+                               :choices ["Arrange cards" "Shuffle R&D"]
+                               :async true
+                               :effect
+                               (req (if (= target "Arrange cards")
+                                      (wait-for
+                                        (resolve-ability state side (reorder-choice :corp top-cards) card nil)
+                                        (system-msg state :corp (str "rearranges the top "
+                                                                     (quantify (count top-cards) "card")
+                                                                     " of R&D"))
+                                        (maybe-draw state side eid card 1))
+                                      (do
+                                        (shuffle! state :corp :deck)
+                                        (system-msg state :corp (str "shuffles R&D"))
+                                        (maybe-draw state side eid card 1))))})
+                            card nil))}
+                 {:label "Trash 1 card in HQ"
+                  :async true
+                  :effect
+                  (req (wait-for
+                         (resolve-ability
+                           state side
+                           {:waiting-prompt true
+                            :prompt "Choose a card in HQ to trash"
+                            :choices (req (cancellable (:hand corp) :sorted))
+                            :async true
+                            :cancel-effect (effect (system-msg :corp (str "declines to use " (:title card)))
+                                                   (effect-completed eid))
+                            :effect (req (wait-for
+                                           (trash state :corp target {:cause :subroutine})
+                                           (system-msg state :corp "trashes a card from HQ")
+                                           (continue-ability state side trash-resource-sub card nil)))}
+                           card nil)
+                         (wait-for (trash state :corp (make-eid state eid) card {:cause-card card})
+                                   (system-msg state :corp (str "uses " (:title card) " to trash itself"))
+                                   (encounter-ends state side eid))))}]})
 
 (defcard "Sagittarius"
   (constellation-ice trash-program-sub))
@@ -4180,20 +4153,13 @@
 
 (defcard "Tapestry"
   {:subroutines [runner-loses-click
-                 {:label "Draw 1 card"
-                  :optional
-                  {:prompt "Draw 1 card?"
-                   :autoresolve (get-autoresolve :auto-fire)
-                   :yes-ability {:async true
-                                 :msg "draw 1 card"
-                                 :effect (effect (draw eid 1))}}}
+                 (maybe-draw-sub 1)
                  {:req (req (pos? (count (:hand corp))))
                   :prompt "Choose a card in HQ to move to the top of R&D"
                   :choices {:card #(and (in-hand? %)
                                         (corp? %))}
                   :msg "add 1 card in HQ to the top of R&D"
-                  :effect (effect (move target :deck {:front true}))}]
-  :abilities [(set-autoresolve :auto-fire "Tapestry drawing cards")]})
+                  :effect (effect (move target :deck {:front true}))}]})
 
 (defcard "Tatu-Bola"
   {:events [{:event :pass-ice
