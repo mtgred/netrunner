@@ -15,7 +15,7 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [do-net-damage corp-rez-toast defcard give-tags offer-jack-out
+   [game.core.def-helpers :refer [do-net-damage corp-rez-toast defcard draw-abi give-tags offer-jack-out
                                   reorder-choice take-credits get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -1548,12 +1548,9 @@
 
 (defcard "Panic Button"
   {:install-req (req (filter #{"HQ"} targets))
-   :abilities [{:cost [(->c :credit 1)]
-                :keep-menu-open :while-credits-left
-                :msg "draw 1 card"
-                :req (req (and run (= (target-server run) :hq)))
-                :async true
-                :effect (effect (draw eid 1))}]})
+   :abilities [(draw-abi 1 nil {:cost [(->c :credit 1)]
+                                :keep-menu-open :while-credits-left
+                                :req (req (and run (= (target-server run) :hq)))})]})
 
 (defcard "Port Anson Grid"
   {:on-rez {:msg "prevent the Runner from jacking out unless they trash an installed program"}
