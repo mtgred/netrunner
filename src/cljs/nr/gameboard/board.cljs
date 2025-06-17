@@ -767,7 +767,7 @@
                                               (and (not (any-prompt-open? side)) (playable? card)) "playable"
                                               ghost "ghost"
                                               (and flashback-fake-in-hand flashback-playable seen) "playable flashback known"
-                                              (and flashback-fake-in-hand flashback-playable) "playable flashback"
+                                              (and flashback-fake-in-hand flashback-playable) "playable flashback unknown"
                                               flashback-fake-in-hand "flashback"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
                                               ;; specifically, don't show cards as 'new' during selection prompts, so they dont look like selectable cards (we're running out of colors)
