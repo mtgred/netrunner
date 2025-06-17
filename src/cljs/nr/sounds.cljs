@@ -54,6 +54,8 @@
    "agenda-steal"
    "click-advance"
    "click-card"
+   "click-card-2"
+   "click-card-3"
    "click-credit"
    "click-run"
    "click-remove-tag"

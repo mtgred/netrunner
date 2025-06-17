@@ -3418,7 +3418,7 @@
           (is (not (refresh archer)) "Archer is trashed")))
       (is (find-card "Archer" (:discard (get-corp))) "Archer is in the discard")
       (is (find-card "Oversight AI" (:discard (get-corp))) "Oversight AI is in the discard")
-      (is (last-log-contains? state "Corp uses Oversight AI to trash itself and Archer protecting R&D at position 0.")
+      (is (last-log-contains? state "Corp uses Oversight AI to trash Archer protecting R&D at position 0.")
           "The right information is printed to the log")))
 
 (deftest patch
