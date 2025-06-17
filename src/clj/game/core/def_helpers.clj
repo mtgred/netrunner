@@ -19,7 +19,7 @@
     [game.core.props :refer [add-counter]]
     [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
     [game.core.runs :refer [can-run-server? make-run jack-out]]
-    [game.core.say :refer [system-msg system-say]]
+    [game.core.say :refer [play-sfx system-msg system-say]]
     [game.core.servers :refer [zone->name]]
     [game.core.shuffling :refer [shuffle!]]
     [game.core.to-string :refer [card-str]]
@@ -174,11 +174,19 @@
 (defn draw-abi
   "shorthand ability to draw x cards (apply args to the draw fn)"
   ([x] (draw-abi x nil))
-  ([x args]
-   {:msg (msg "draw " (quantify x "card"))
-    :label (str "Draw " (quantify x "card"))
-    :async true
-    :effect (req (draw state side eid x args))}))
+  ([x draw-args] (draw-abi x draw-args nil))
+  ([x draw-args ab-base]
+   (merge {:msg (msg "draw " (quantify x "card"))
+           :label (str "Draw " (quantify x "card"))
+           :async true
+           :effect (req (when (:action ab-base)
+                          (cond
+                            (= x 1)  (play-sfx state side "click-card")
+                            (= x 2)  (play-sfx state side "click-card-2")
+                            (>= x 3) (play-sfx state side "click-card-3")
+                            :else nil))
+                        (draw state side eid x draw-args))}
+          ab-base)))
 
 (defn draw-loud
   "Draw n cards, using the given card as the source, and logging that cards were drawn"
