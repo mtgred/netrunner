@@ -37,8 +37,8 @@
 (defonce board-dom (atom {}))
 (defonce card-menu (r/atom {}))
 
-(defonce corp-prompt-state (r/cursor game-state [:corp :prompt :prompt-state]))
-(defonce runner-prompt-state (r/cursor game-state [:runner :prompt :prompt-state]))
+(defonce corp-prompt-state (r/cursor game-state [:corp :prompt-state]))
+(defonce runner-prompt-state (r/cursor game-state [:runner :prompt-state]))
 
 (defn is-replay? [] (= "local-replay" (:gameid @app-state [:gameid])))
 
@@ -750,7 +750,7 @@
 (defn card-view
   [{:keys [zone code type abilities counter
            subtypes strength current-strength selected hosted
-           side facedown card-target icon new ghost runner-abilities subroutines
+           side facedown card-target icon new ghost runner-abilities subroutines seen
            subtype-target corp-abilities flashback-fake-in-hand flashback-playable]
     :as card} flipped disable-click]
   (let [title (get-title card)]
@@ -766,7 +766,8 @@
                                                 (same-card? card @gs-encounter-ice) "encountered"
                                               (and (not (any-prompt-open? side)) (playable? card)) "playable"
                                               ghost "ghost"
-                                              (and flashback-fake-in-hand (not (any-prompt-open? side)) flashback-playable) "playable flashback"
+                                              (and flashback-fake-in-hand flashback-playable seen) "playable flashback known"
+                                              (and flashback-fake-in-hand flashback-playable) "playable flashback unknown"
                                               flashback-fake-in-hand "flashback"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
                                               ;; specifically, don't show cards as 'new' during selection prompts, so they dont look like selectable cards (we're running out of colors)
