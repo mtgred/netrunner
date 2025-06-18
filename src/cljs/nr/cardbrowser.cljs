@@ -212,7 +212,10 @@
   [card key]
   (let [lang (get-in @app-state [:options :language] "en")
         res (get-in @app-state [:options :card-resolution] "default")]
-    (if-let [arts (get-in card [:images (keyword lang) (keyword res) key])]
+    (if-let [arts (or (get-in card [:images (keyword lang) (keyword res) key])
+                      (get-in card [:images (keyword lang) :default key])
+                      (get-in card [:images :en (keyword res) key])
+                      (get-in card [:images :en :default key]))]
       (vec (map-indexed (fn [idx item] (assoc card :art key :art-index idx)) arts))
       [(assoc card :art "" :art-index 0)])))
 
@@ -509,7 +512,7 @@
          [:div.card-list {:ref #(reset! !node-ref %) :on-scroll #(handle-scroll % state)}
           (doall
             (for [card cards]
-              ^{:key (str (base-image-url card) "-" (:code card))}
+              ^{:key (str (base-image-url card) "-" (:code card) "-" (get card :art :stock) "-" (get card :art-index 0))}
               [card-view card state]))]))})))
 
 (defn handle-search [e state]
