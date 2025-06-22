@@ -15,6 +15,7 @@
     [game.core.revealing :refer [reveal]]
     [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [get-server-type name-zone zone->name]]
+    [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.utils :refer [quantify same-card?]]
     [game.macros :refer [continue-ability req wait-for]]
@@ -451,31 +452,47 @@
     (swap! state assoc-in [:run :max-access] 0))
   (swap! state assoc-in [:run :only-card-to-access] card))
 
+(defn access-continue
+  [state side eid card title args]
+  (do (when-not (in-discard? card)
+        (swap! state update-in [:stats :runner :access :unique-cards] (fnil #(vec (distinct (conj % (:cid card)))) [])))
+      ;; Indicate that we are in the access step.
+      (swap! state assoc :access card)
+      ;; Reset counters for increasing costs of trash, steal, and access.
+      (swap! state update :bonus dissoc :trash :steal-cost :access-cost)
+      (when (:breach @state)
+        (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
+                       (second (get-zone card)))]
+          (swap! state update-in [:breach :cards-accessed zone] (fnil inc 0))))
+      (when (:run @state)
+        (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
+                       (second (get-zone card)))]
+          (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
+      ;; First trigger pre-access-card, then move to determining if we can trash or steal.
+      (wait-for (trigger-event-sync state side :pre-access-card card)
+                (access-pay state side eid card title args))))
+
 (defn access-card
   "Apply game rules for accessing the given card."
   ([state side eid card] (access-card state side eid card (:title card) nil))
   ([state side eid card title] (access-card state side eid card title nil))
   ([state side eid card title args]
    (let [only-card (get-only-card-to-access state)]
-     (if (and only-card (not (same-card? only-card card)))
+     (cond
+       (and only-card (not (same-card? only-card card)))
        (effect-completed state side eid)
-       (do (when-not (in-discard? card)
-             (swap! state update-in [:stats :runner :access :unique-cards] (fnil #(vec (distinct (conj % (:cid card)))) [])))
-           ;; Indicate that we are in the access step.
-           (swap! state assoc :access card)
-           ;; Reset counters for increasing costs of trash, steal, and access.
-           (swap! state update :bonus dissoc :trash :steal-cost :access-cost)
-           (when (:breach @state)
-             (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
-                            (second (get-zone card)))]
-               (swap! state update-in [:breach :cards-accessed zone] (fnil inc 0))))
-           (when (:run @state)
-             (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
-                            (second (get-zone card)))]
-               (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
-           ;; First trigger pre-access-card, then move to determining if we can trash or steal.
-           (wait-for (trigger-event-sync state side :pre-access-card card)
-                     (access-pay state side eid card title args)))))))
+       (contains? (get-in @state [:breach :installed] #{}) (:cid card))
+       (let [c card]
+         (continue-ability
+           state side
+           {:optional
+            {:prompt (str "Proceed to access " (card-str state card) "?")
+             :waiting-prompt true
+             :yes-ability {:async true
+                           :effect (req (access-continue state side eid c title args))}
+             :no-ability {:effect (req (system-msg state side (str "does not access " (card-str state card))))}}}
+           nil nil))
+       :else (access-continue state side eid card title args)))))
 
 (defn get-all-hosted [hosts]
   (let [hosted-cards (mapcat :hosted hosts)]

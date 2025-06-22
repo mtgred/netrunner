@@ -232,6 +232,8 @@
             (queue-event state :corp-install {:card (get-card state moved-card)
                                               :install-state install-state})
             (update-disabled-cards state)
+            (when (:breach @state)
+              (swap! state update-in [:breach :installed] (fnil conj #{}) (:cid moved-card)))
             (case install-state
               ;; Ignore all costs
               :rezzed-no-cost
