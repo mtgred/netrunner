@@ -4703,6 +4703,23 @@
     (click-prompts state :corp "PAD Campaign" "New remote")
     (is (= "PAD Campaign" (:title (get-content state :remote1 0))) "installed other in new remote")))
 
+(deftest poetri-luxury-brands-steal-no-forced-trap
+  (doseq [access-snare? ["Yes" "No"]]
+    (do-game
+      (new-game {:corp {:id "Poétrï Luxury Brands: All the Rage"
+                        :hand ["Tucana" "Hostile Takeover" "Snare!"]}})
+      (play-from-hand state :corp "Hostile Takeover" "New remote")
+      (play-from-hand state :corp "Tucana" "Server 1")
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (click-prompts state :runner "Tucana" "No action" "Steal")
+      (click-prompts state :corp "Snare!" "Server 1")
+      (click-prompt state :runner access-snare?)
+      (case access-snare?
+        "Yes" (click-prompt state :corp "No")
+        "No" (do (is (no-prompt? state :corp))
+                 (is (no-prompt? state :runner)))))))
+
 (deftest pravdivost-consulting-fake-prompt
   ;; Pravdivost Consulting: Political Solutions
   (do-game
