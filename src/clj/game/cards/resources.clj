@@ -2411,9 +2411,7 @@
        :ability {:async true
                  :msg "trash itself"
                  :effect (req (trash state side eid card {:cause-card card}))}}
-      {:option "Trash a random card from the grip"
-       :req (req (can-pay? state :runner eid card nil [(->c :randomly-trash-from-hand 1)]))
-       :ability {:effect (req (continue-ability state side {:cost [(->c :randomly-trash-from-hand 1)] :msg :cost} card nil))}}])
+      (assoc (cost-option [(->c :randomly-trash-from-hand 1)]) :title "Trash a random card from the grip")])
     ;; companion-builder: ability
     {:req (req (pos? (get-counters (get-card state card) :credit)))
      :msg "take 1 [Credits]"
