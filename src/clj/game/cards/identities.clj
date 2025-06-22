@@ -2089,6 +2089,7 @@
                :async true
                :prompt "Install a non-agenda from HQ?"
                :change-in-game-state {:silent true :req (req (seq (:hand corp)))}
+               :waiting-prompt true
                :choices {:card (every-pred corp? in-hand? (complement agenda?) (complement operation?))}
                :effect (req (corp-install state side eid target nil {:msg-keys {:install-source card}}))}
               score-ev]}))
