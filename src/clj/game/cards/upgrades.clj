@@ -1283,6 +1283,7 @@
                                                         :choices {:card #(and (ice? %)
                                                                               (or (in-hand? %)
                                                                                   (in-discard? %)))}
+                                                        :msg (msg "swap " (card-str state (get-current-ice state)) " with " (card-str state target))
                                                         :effect (req
                                                                   (let [approached-ice (get-current-ice state)]
                                                                     (swap-cards-async state side eid approached-ice target)))}
