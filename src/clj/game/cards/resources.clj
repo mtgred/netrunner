@@ -17,6 +17,7 @@
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [can-charge charge-ability]]
    [game.core.checkpoint :refer [fake-checkpoint]]
+   [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [has-trash-ability? install-cost rez-cost
                                trash-cost]]
    [game.core.costs :refer [total-available-credits]]
@@ -142,6 +143,7 @@
               (assoc place-credit :event :agenda-stolen)
               {:event :runner-turn-ends
                :req (req (<= 3 (get-counters (get-card state card) :credit)))
+               :interactive (req true)
                :async true
                :effect (effect (continue-ability turn-ends-ability card targets))}]
      :abilities [ability]}))
@@ -2403,21 +2405,15 @@
          (or (= 0 (count (:cost-paid eid)))
              (:x-cost eid))
          (= :play (:source-type eid))))
-    ;; companion-builder: turn-ends-ability
-    {:prompt "Choose one"
-     :waiting-prompt true
-     :choices (req [(when (can-pay? state :runner
-                                 (assoc eid :source card :source-type :ability)
-                                 card nil :randomly-trash-from-hand 1)
-                       "Trash a random card from the grip")
-                     "Trash Mystic Maemi"])
-     :msg (msg (if (= target "Trash Mystic Maemi")
-                 "trash itself"
-                 (decapitalize target)))
-     :async true
-     :effect (req (if (= target "Trash Mystic Maemi")
-                    (trash state :runner eid card {:cause-card card})
-                    (pay state :runner (assoc eid :source card :source-type :ability) card [(->c :randomly-trash-from-hand 1)])))}
+   ;; companion-builder: turn-ends-ability
+   (choose-one-helper
+     [{:option "Trash Mystic Maemi"
+       :ability {:async true
+                 :msg "trash itself"
+                 :effect (req (trash state side eid card {:cause-card card}))}}
+      {:option "Trash a random card from the grip"
+       :req (req (can-pay? state :runner eid card nil [(->c :randomly-trash-from-hand 1)]))
+       :ability {:effect (req (continue-ability state side {:cost [(->c :randomly-trash-from-hand 1)] :msg :cost} card nil))}}])
     ;; companion-builder: ability
     {:req (req (pos? (get-counters (get-card state card) :credit)))
      :msg "take 1 [Credits]"

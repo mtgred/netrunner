@@ -901,6 +901,8 @@
             (complete-with-result
               state side eid
               {:paid/msg (str "trashes " (quantify (count async-result) "card")
+                              (when (= side :runner)
+                                (str " (" (enumerate-str (map :title async-result)) ")"))
                              " randomly from "
                              (if (= :corp side) "HQ" "the grip"))
                :paid/type :randomly-trash-from-hand
