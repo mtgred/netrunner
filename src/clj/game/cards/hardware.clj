@@ -36,7 +36,7 @@
    [game.core.ice :refer [all-subs-broken? any-subs-broken? auto-icebreaker break-sub pump
                           reset-all-ice update-all-ice update-all-icebreakers
                           update-breaker-strength]]
-   [game.core.installing :refer [runner-can-install? runner-can-pay-and-install? runner-install]]
+   [game.core.installing :refer [runner-can-pay-and-install? runner-install]]
    [game.core.link :refer [get-link link+]]
    [game.core.memory :refer [caissa-mu+ expected-mu mu+ update-mu virus-mu+]]
    [game.core.moving :refer [as-agenda mill move swap-agendas trash trash-cards]]
