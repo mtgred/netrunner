@@ -161,7 +161,6 @@
     (play-from-hand state :runner "Corroder")
     (play-from-hand state :runner "Clone Chip")
     (play-from-hand state :runner "Paparazzi")
-    (play-from-hand state :runner "Parasite")
     (let [hqiwall0 (get-ice state :hq 0)
           hqiwall1 (get-ice state :hq 1)
           rdiwall (get-ice state :rd 0)
@@ -172,6 +171,7 @@
           pap (get-resource state 0)]
       (rez state :corp hqiwall0)
       (rez state :corp jh1)
+      (play-from-hand state :runner "Parasite")
       (click-card state :runner (refresh hqiwall0))
       (is (= (core/card-str state (refresh hqiwall0)) "Ice Wall protecting HQ at position 0"))
       (is (= (core/card-str state (refresh hqiwall1)) "ice protecting HQ at position 1"))
