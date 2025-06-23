@@ -1022,7 +1022,7 @@
                :skippable true
                :async true
                :location :discard
-               :req (req (runner-can-install? state side card nil))
+               :req (req (runner-can-install? state side eid card nil))
                :effect (effect
                          (continue-ability
                            {:optional
@@ -3698,7 +3698,7 @@
                  :once :per-turn
                  :async true
                  :effect
-                 (req (if-not (runner-can-install? state side target nil)
+                 (req (if-not (runner-can-install? state side eid target nil)
                         (effect-completed state side eid)
                         (do (update! state side
                                      (-> card
