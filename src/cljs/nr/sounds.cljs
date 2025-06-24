@@ -57,6 +57,8 @@
    "click-card-2"
    "click-card-3"
    "click-credit"
+   "click-credit-2"
+   "click-credit-3"
    "click-run"
    "click-remove-tag"
    "game-end"
