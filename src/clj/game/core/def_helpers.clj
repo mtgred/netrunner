@@ -19,7 +19,7 @@
     [game.core.props :refer [add-counter]]
     [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
     [game.core.runs :refer [can-run-server? make-run jack-out]]
-    [game.core.say :refer [system-msg system-say]]
+    [game.core.say :refer [play-sfx system-msg system-say]]
     [game.core.servers :refer [zone->name]]
     [game.core.shuffling :refer [shuffle!]]
     [game.core.to-string :refer [card-str]]
@@ -171,14 +171,30 @@
    :effect (effect (system-msg (str "trashes " (:title card)))
                    (trash eid card {:unpreventable true :source-card card}))})
 
+(defn pick-tiered-sfx
+  [base upper-limit n]
+  (cond
+    (not (pos? n)) nil
+    (= n 1) base
+    (< n upper-limit) (str base "-" n)
+    :else (str base "-" upper-limit)))
+
+(defn play-tiered-sfx
+  [state side base upper-limit n]
+  (when-let [sfx (pick-tiered-sfx base upper-limit n)]
+    (play-sfx state side sfx)))
+
 (defn draw-abi
   "shorthand ability to draw x cards (apply args to the draw fn)"
   ([x] (draw-abi x nil))
-  ([x args]
-   {:msg (msg "draw " (quantify x "card"))
-    :label (str "Draw " (quantify x "card"))
-    :async true
-    :effect (req (draw state side eid x args))}))
+  ([x draw-args] (draw-abi x draw-args nil))
+  ([x draw-args ab-base]
+   (merge {:msg (msg "draw " (quantify x "card"))
+           :label (str "Draw " (quantify x "card"))
+           :async true
+           :effect (req (when (:action ab-base) (play-tiered-sfx state side "click-card" 3 x))
+                        (draw state side eid x draw-args))}
+          ab-base)))
 
 (defn draw-loud
   "Draw n cards, using the given card as the source, and logging that cards were drawn"
@@ -252,6 +268,29 @@
                    (gain-credits state side eid n args))
          (effect-completed state side eid)))
      (effect-completed state side eid))))
+
+(defn take-n-credits-ability
+  ([n] (take-n-credits-ability n "card" nil))
+  ([n t] (take-n-credits-ability n t nil))
+  ([n t ab-base]
+   (merge
+     {:label (str "Take " n " [Credits] from this " t)
+      :change-in-game-state {:req (req (pos? (get-counters card :credit))) :silent (req (not (:action ab-base)))}
+      :msg (msg "gain " (min n (get-counters card :credit)) " [Credits]")
+      :async true
+      :effect (req (when (:action ab-base) (play-tiered-sfx state side "click-credit" 3 n))
+                   (take-credits state side eid card :credit n))}
+     ab-base)))
+
+(defn take-all-credits-ability
+  [ab-base]
+  (merge
+    {:label "Take all hosted credits"
+     :change-in-game-state {:req (req (pos? (get-counters card :credit)))}
+     :async true
+     :effect (req (when (:action ab-base) (play-tiered-sfx state side "click-credit" 3 (get-counters card :credit)))
+                  (take-credits state side eid card :credit :all))}
+    ab-base))
 
 (defn in-hand*?
   "Card is 'in-hand' for the purposes of being installed only"
@@ -424,6 +463,9 @@
   ([reveal? restriction]
    {:change-in-game-state {:req (req (seq (get-in @state [side :deck])))}
     :prompt "Choose a card"
+    :label (req (if (= side :corp)
+                  "Search R&D and add 1 card to HQ"
+                  "Search the Stack and add 1 card to the Grip"))
     :choices (req (cancellable
                     (filter #(or (not restriction) (restriction %))
                             (get-in @state [side :deck]))
