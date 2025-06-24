@@ -14,13 +14,13 @@
    [game.core.cost-fns :refer [install-cost rez-additional-cost-bonus rez-cost trash-cost]]
    [game.core.damage :refer [chosen-damage damage
                              enable-runner-damage-choice runner-can-choose-damage?]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-abi offer-jack-out
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-abi offer-jack-out play-tiered-sfx
                                   reorder-choice spend-credits take-credits trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects register-lingering-effect
                               unregister-effect-by-uuid unregister-effects-for-card unregister-lingering-effects]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
-   [game.core.engine :refer [can-trigger? register-events
+   [game.core.engine :refer [can-trigger? not-used-once? register-events
                              register-once register-suppress resolve-ability trigger-event
                              unregister-floating-events unregister-suppress-by-uuid]]
    [game.core.events :refer [event-count first-event? first-run-event? first-trash? no-event?
@@ -817,31 +817,26 @@
 
 (defcard "Doppelgänger"
   {:static-abilities [(mu+ 1)]
-   :events [{:event :runner-install
-             :req (req (same-card? card (:card context)))
-             :silent (req true)
-             :effect (effect (update! (assoc card :dopp-active true)))}
-            {:event :runner-turn-begins
-             :effect (effect (update! (assoc card :dopp-active true)))}
-            {:event :run-ends
+   :events [{:event :run-ends
              :interactive (req true)
-             :optional
-             {:req (req (and (:successful target)
-                             (:dopp-active (get-card state card))))
-              :prompt "Make another run?"
-              :yes-ability {:prompt "Choose a server"
-                            :async true
-                            :choices (req runnable-servers)
-                            :msg (msg "make a run on " target)
-                            :makes-run true
-                            :effect (effect (update! (dissoc card :dopp-active))
-                                            (unregister-lingering-effects :end-of-run)
-                                            (unregister-floating-events :end-of-run)
-                                            (update-all-icebreakers)
-                                            (update-all-ice)
-                                            (reset-all-ice)
-                                            (clear-wait-prompt :corp)
-                                            (make-run eid target (get-card state card)))}}}]})
+             :change-in-game-state {:silent true :req (req (not-used-once? state {:once :per-turn} card))}
+             :optional {:req (req (and (:successful target)
+                                       (not-used-once? state {:once :per-turn} card)))
+                        :prompt "Make another run?"
+                        :yes-ability {:prompt "Choose a server"
+                                      :once :per-turn
+                                      :async true
+                                      :choices (req runnable-servers)
+                                      :msg (msg "make a run on " target)
+                                      :makes-run true
+                                      :effect (effect (unregister-lingering-effects :end-of-run)
+                                                      (unregister-floating-events :end-of-run)
+                                                      (register-once {:once :per-turn} card)
+                                                      (update-all-icebreakers)
+                                                      (update-all-ice)
+                                                      (reset-all-ice)
+                                                      (clear-wait-prompt :corp)
+                                                      (make-run eid target (get-card state card)))}}}]})
 
 (defcard "Dorm Computer"
   {:data {:counter {:power 4}}
@@ -1929,6 +1924,7 @@
                 :async true
                 :msg (msg "gain " (inc (get-counters card :credit)) " [Credits]")
                 :effect (req (let [credits (inc (get-counters card :credit))]
+                               (play-tiered-sfx state side "click-credit" credits 3)
                                (wait-for
                                  (add-counter state side card :credit (-(dec credits)))
                                  (gain-credits state :runner eid credits))))}]})
@@ -2136,6 +2132,10 @@
                             (reveal state :corp eid card)))}]})
 
 (defcard "Replicator"
+  ;; TODO - NOTE: this should allow you to
+  ;; 1) shuffle the deck even if you have no copy of the hardware
+  ;; 2) fail to find the hardware and shuffle the deck even if a copy exists
+  ;;  -nbkelly, 2025
   (letfn [(hardware-and-in-deck? [target runner]
             (and (hardware? target)
                  (some #(= (:title %) (:title target)) (:deck runner))))]
@@ -2809,5 +2809,6 @@
                 :once :per-turn
                 :msg "gain 1 [Credits] and draw 2 cards"
                 :async true
-                :effect (req (wait-for (gain-credits state side 1)
+                :effect (req (play-sfx state side "professional-contacts")
+                             (wait-for (gain-credits state side 1 {:suppress-checkpoint true})
                                        (draw state side eid 2)))}]})
