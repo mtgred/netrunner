@@ -171,6 +171,19 @@
    :effect (effect (system-msg (str "trashes " (:title card)))
                    (trash eid card {:unpreventable true :source-card card}))})
 
+(defn pick-tiered-sfx
+  [base upper-limit n]
+  (cond
+    (not (pos? n)) nil
+    (= n 1) base
+    (< n upper-limit) (str base "-" n)
+    :else (str base "-" upper-limit)))
+
+(defn play-tiered-sfx
+  [state side base upper-limit n]
+  (when-let [sfx (pick-tiered-sfx base upper-limit n)]
+    (play-sfx state side sfx)))
+
 (defn draw-abi
   "shorthand ability to draw x cards (apply args to the draw fn)"
   ([x] (draw-abi x nil))
@@ -179,12 +192,7 @@
    (merge {:msg (msg "draw " (quantify x "card"))
            :label (str "Draw " (quantify x "card"))
            :async true
-           :effect (req (when (:action ab-base)
-                          (cond
-                            (= x 1)  (play-sfx state side "click-card")
-                            (= x 2)  (play-sfx state side "click-card-2")
-                            (>= x 3) (play-sfx state side "click-card-3")
-                            :else nil))
+           :effect (req (when (:action ab-base) (play-tiered-sfx state side "click-card" 3 x))
                         (draw state side eid x draw-args))}
           ab-base)))
 
@@ -260,6 +268,29 @@
                    (gain-credits state side eid n args))
          (effect-completed state side eid)))
      (effect-completed state side eid))))
+
+(defn take-n-credits-ability
+  ([n] (take-n-credits-ability n "card" nil))
+  ([n t] (take-n-credits-ability n t nil))
+  ([n t ab-base]
+   (merge
+     {:label (str "Take " n " [Credits] from this " t)
+      :change-in-game-state {:req (req (pos? (get-counters card :credit))) :silent (req (not (:action ab-base)))}
+      :msg (msg "gain " (min n (get-counters card :credit)) " [Credits]")
+      :async true
+      :effect (req (when (:action ab-base) (play-tiered-sfx state side "click-credit" 3 n))
+                   (take-credits state side eid card :credit n))}
+     ab-base)))
+
+(defn take-all-credits-ability
+  [ab-base]
+  (merge
+    {:label "Take all hosted credits"
+     :change-in-game-state {:req (req (pos? (get-counters card :credit)))}
+     :async true
+     :effect (req (when (:action ab-base) (play-tiered-sfx state side "click-credit" 3 (get-counters card :credit)))
+                  (take-credits state side eid card :credit :all))}
+    ab-base))
 
 (defn in-hand*?
   "Card is 'in-hand' for the purposes of being installed only"
