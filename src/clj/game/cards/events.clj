@@ -891,21 +891,15 @@
 
 (defcard "Data Breach"
   {:makes-run true
-   :on-play {:async true
-             :change-in-game-state {:req (req rd-runnable)}
-             :effect (req (wait-for
-                            (make-run state side :rd card)
-                            (let [card (get-card state card)]
-                              (if (:run-again card)
-                                (make-run state side eid :rd card)
-                                (effect-completed state side eid)))))}
+   :on-play (run-server-ability :rd)
    :events [{:event :run-ends
+             :unregister-once-resolved true
              :optional {:req (req (and (:successful target)
+                                       this-card-run
                                        (not (:run-again card))
                                        (= [:rd] (:server target))))
                         :prompt "Make another run on R&D?"
-                        :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                      (update! (assoc card :run-again true)))}}}]})
+                        :yes-ability (run-server-ability :rd)}}]})
 
 (defcard "Day Job"
   {:on-play

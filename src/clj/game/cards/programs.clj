@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out trash-on-empty trash-on-purge get-x-fn rfg-on-empty tutor-abi]]
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out play-tiered-sfx trash-on-empty trash-on-purge get-x-fn rfg-on-empty tutor-abi]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -52,7 +52,7 @@
                            get-current-encounter make-run successful-run-replace-breach
                            update-current-encounter]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [system-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? protecting-same-server?
                               remote->name target-server unknown->kw zone->name]]
    [game.core.shuffling :refer [shuffle!]]
@@ -934,7 +934,8 @@
                 :cost [(->c :click 1)]
                 :label "Gain 2 [Credits] for each hosted virus counter, then remove all virus counters"
                 :async true
-                :effect (req (wait-for (gain-credits state side (* 2 (get-virus-counters state card)))
+                :effect (req (play-tiered-sfx state side "click-credit" (* 2 (get-virus-counters state card)) 3)
+                          (wait-for (gain-credits state side (* 2 (get-virus-counters state card)))
                                        (update! state side (assoc-in card [:counter :virus] 0))
                                        (doseq [h (filter #(= "Hivemind" (:title %)) (all-active-installed state :runner))]
                                          (update! state side (assoc-in h [:counter :virus] 0)))
@@ -1486,7 +1487,8 @@
                 :label "Gain 2 [Credits] for each hosted virus counter"
                 :msg (msg (str "gain " (* 2 (get-virus-counters state card)) " [Credits]"))
                 :async true
-                :effect (effect (gain-credits eid (* 2 (get-virus-counters state card))))}]})
+                :effect (effect (play-tiered-sfx "click-credit" (* 2 (get-virus-counters state card)) 3)
+                                (gain-credits eid (* 2 (get-virus-counters state card))))}]})
 
 (defcard "Flashbang"
   (auto-icebreaker {:abilities [{:label "Derez a Sentry being encountered"
@@ -2052,7 +2054,8 @@
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :async true
-                :effect (effect (gain-credits eid 2))
+                :effect (effect (play-sfx "click-credit-2")
+                                (gain-credits eid 2))
                 :msg "gain 2 [Credits]"}]})
 
 (defcard "Makler"

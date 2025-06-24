@@ -16,7 +16,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [do-net-damage corp-rez-toast defcard draw-abi give-tags offer-jack-out
-                                  reorder-choice take-credits get-x-fn]]
+                                  reorder-choice take-credits take-all-credits-ability get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
@@ -1682,14 +1682,9 @@
      :once :per-turn
      :async true
      :effect (effect (add-counter eid card :credit 3 nil))}
-    {:action true
-     :cost [(->c :click 1)]
-     :msg (msg "gain " (get-counters card :credit) " [Credits]")
-     :change-in-game-state {:req (req (pos? (get-counters card :credit)))}
-     :once :per-turn
-     :label "Take all credits"
-     :async true
-     :effect (req (take-credits state side eid card :credit :all))}]})
+    (take-all-credits-ability {:cost [(->c :click 1)]
+                               :action true
+                               :once :per-turn})]})
 
 (defcard "Signal Jamming"
   {:abilities [{:label "Cards cannot be installed until the end of the run"
