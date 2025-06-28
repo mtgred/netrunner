@@ -10,10 +10,12 @@
 (defn remove-from-prompt-queue
   [state side prompt]
   (swap! state update-in [side :prompt] (fn [pr] (remove #(= % prompt) pr)))
+  (swap! state update-in [side :prompt] vec)
   (set-prompt-state state side))
 
 (defn add-to-prompt-queue
   "Adds a newly created prompt to the current prompt queue"
   [state side prompt]
   (swap! state update-in [side :prompt] #(cons prompt %))
+  (swap! state update-in [side :prompt] vec)
   (set-prompt-state state side))
