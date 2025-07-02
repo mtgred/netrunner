@@ -3421,6 +3421,7 @@
                                        (effect-completed state side eid)))))}))
         ability {:async true
                  :automatic :last ;; so it can go after rashida
+                 :interactive (req true)
                  :label "resolve an ability (start of turn)"
                  :once :per-turn
                  :effect (effect (continue-ability (choice all (if (< 1 (count (filter asset? (all-active-installed state :corp))))
