@@ -1999,7 +1999,16 @@
                                 card nil)))}
               :no-ability
               {:effect (effect (system-msg (str "declines to use " (:title card))))}}})]
-    {:events [{:event :corp-trash
+    {:abilities [(choose-one-helper
+                   {:label "Always pause at start of turn"}
+                   [{:option "Always pause at turn start"
+                     :ability {:effect (req (update! state side (assoc-in card [:special :pause-at-phase-12] true))
+                                            (toast state :corp "The game will always pause at the start of the turn"))}}
+                    {:option "Only if triggered by cards in play"
+                     :ability {:effect (req (update! state side (dissoc-in card [:special :pause-at-phase-12]))
+                                            (toast state :corp "The game only pause at turn start if triggered by cards in play"))}}])]
+     :flags {:corp-phase-12 (req (get-in card [:special :pause-at-phase-12]))}
+     :events [{:event :corp-trash
                :req (req (and
                            (installed? (:card context))
                            (not (:during-installation context))
