@@ -5152,6 +5152,7 @@
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
                         :hand ["Ice Wall"]}
                  :runner {:hand ["Simulchip" "Chisel"]
+                          :discard ["Fermenter"]
                           :credits 20}})
       (play-from-hand state :corp "Ice Wall" "HQ")
       (let [iw (get-ice state :hq 0)]

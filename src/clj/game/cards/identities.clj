@@ -611,7 +611,6 @@
 (defcard "Cerebral Imaging: Infinite Frontiers"
   {:static-abilities [(corp-hand-size+ (req (- (:credit corp) 5)))]})
 
-
 (defcard "Chaos Theory: Wünderkind"
   {:static-abilities [(mu+ 1)]})
 

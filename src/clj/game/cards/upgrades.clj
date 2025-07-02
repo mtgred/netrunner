@@ -15,8 +15,8 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-rez-toast defcard give-tags offer-jack-out
-                                  reorder-choice take-credits get-x-fn]]
+   [game.core.def-helpers :refer [do-net-damage corp-rez-toast defcard draw-abi give-tags offer-jack-out
+                                  reorder-choice take-credits take-all-credits-ability get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
@@ -191,9 +191,7 @@
                      :req (req this-server)
                      :successful
                      {:msg "prevent the Runner from accessing cards other than Ash 2X3ZB9CY"
-                      :async true
-                      :effect (effect (set-only-card-to-access card)
-                                      (effect-completed eid))}}}]})
+                      :effect (effect (set-only-card-to-access card))}}}]})
 
 (defcard "Awakening Center"
   {:can-host (req (ice? target))
@@ -452,11 +450,9 @@
      :abilities [ability]}))
 
 (defcard "ChiLo City Grid"
-  {:events [{:event :successful-trace
-             :req (req this-server)
-             :async true
-             :effect (effect (gain-tags :corp eid 1))
-             :msg "give the Runner 1 tag"}]})
+  {:events [(assoc (give-tags 1)
+                   :event :successful-trace
+                   :req (req this-server))]})
 
 (defcard "Code Replicator"
   {:abilities [{:label "Force the runner to approach the passed piece of ice again"
@@ -871,12 +867,9 @@
                :effect (req (continue-ability state :runner prompt-to-trash-agenda-or-etr card nil))}]}))
 
 (defcard "Hokusai Grid"
-  {:events [{:event :successful-run
-             :automatic :corp-damage
-             :req (req this-server)
-             :msg "do 1 net damage"
-             :async true
-             :effect (effect (damage eid :net 1 {:card card}))}]})
+  {:events [(assoc (do-net-damage 1)
+                   :event :successful-run
+                   :req (req this-server))]})
 
 (defcard "Increased Drop Rates"
   {:flags {:rd-reveal (req true)}
@@ -1236,6 +1229,7 @@
 
 (defcard "Midori"
   {:events [{:event :approach-ice
+             :change-in-game-state {:req (req (seq (:hand corp)))}
              :optional
              {:req (req this-server)
               :once :per-run
@@ -1555,12 +1549,9 @@
 
 (defcard "Panic Button"
   {:install-req (req (filter #{"HQ"} targets))
-   :abilities [{:cost [(->c :credit 1)]
-                :keep-menu-open :while-credits-left
-                :msg "draw 1 card"
-                :req (req (and run (= (target-server run) :hq)))
-                :async true
-                :effect (effect (draw eid 1))}]})
+   :abilities [(draw-abi 1 nil {:cost [(->c :credit 1)]
+                                :keep-menu-open :while-credits-left
+                                :req (req (and run (= (target-server run) :hq)))})]})
 
 (defcard "Port Anson Grid"
   {:on-rez {:msg "prevent the Runner from jacking out unless they trash an installed program"}
@@ -1692,14 +1683,9 @@
      :once :per-turn
      :async true
      :effect (effect (add-counter eid card :credit 3 nil))}
-    {:action true
-     :cost [(->c :click 1)]
-     :msg (msg "gain " (get-counters card :credit) " [Credits]")
-     :change-in-game-state {:req (req (pos? (get-counters card :credit)))}
-     :once :per-turn
-     :label "Take all credits"
-     :async true
-     :effect (req (take-credits state side eid card :credit :all))}]})
+    (take-all-credits-ability {:cost [(->c :click 1)]
+                               :action true
+                               :once :per-turn})]})
 
 (defcard "Signal Jamming"
   {:abilities [{:label "Cards cannot be installed until the end of the run"

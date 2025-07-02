@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur defcard do-meat-damage draw-abi drain-credits gain-credits-ability give-tags do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand tutor-abi]]
+   [game.core.def-helpers :refer [combine-abilities corp-install-up-to-n-cards corp-recur defcard do-meat-damage draw-abi drain-credits gain-credits-ability give-tags do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand tutor-abi]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -76,6 +76,13 @@
 ;; helper for the faceup-archives-count cards
 (defn- faceup-archives-types [corp]
   (count (distinct (map :type (filter faceup? (:discard corp))))))
+
+(defn- clearance
+  [creds cards]
+  {:msg (str "gain " creds " [Credits] and draw " (quantify cards "card"))
+   :async true
+   :effect (req (wait-for (gain-credits state side creds {:suppress-checkpoint true})
+                          (draw state side eid cards)))})
 
 ;; Card definitions
 (defcard "24/7 News Cycle"
@@ -462,11 +469,7 @@
     :effect (effect (gain-clicks 2))}})
 
 (defcard "Blue Level Clearance"
-  {:on-play
-   {:msg "gain 5 [Credits] and draw 2 cards"
-    :async true
-    :effect (req (wait-for (gain-credits state side 5)
-                           (draw state side eid 2)))}})
+  {:on-play (clearance 5 2)})
 
 (defcard "BOOM!"
   {:on-play
@@ -662,14 +665,7 @@
                     (play-instant eid target nil))}})
 
 (defcard "Corporate Hospitality"
-  {:on-play {:msg "gain 6 [Credits] and draw 2 cards"
-             :async true
-             :effect (req (wait-for (gain-credits state side 6)
-                                    (wait-for (draw state side (make-eid state eid) 2)
-                                              (continue-ability
-                                                state side
-                                                (corp-recur)
-                                                card nil))))}})
+  {:on-play (combine-abilities (clearance 6 2) (corp-recur))})
 
 (defcard "Corporate Shuffle"
   {:on-play
@@ -1095,11 +1091,11 @@
    {:req (req tagged)
     :change-in-game-state {:req (req (some resource? (all-installed state :runner)))}
     :msg (msg "trash " (enumerate-str (map :title (sort-by :title targets))))
-    :choices {:max 2
+    :choices {:max (req (min 2 (count (filter resource? (all-installed state :runner)))))
               :card #(and (installed? %)
                           (resource? %))}
     :async true
-    :effect (effect (trash-cards :runner eid targets {:cause-card card}))}})
+    :effect (req (trash-cards state side eid targets {:cause-card card}))}})
 
 (defcard "Friends in High Places"
   (let [fhelper (fn fhp [n] {:prompt "Choose a card in Archives to install"
@@ -1241,11 +1237,7 @@
                              card nil)))}})
 
 (defcard "Green Level Clearance"
-  {:on-play
-   {:msg "gain 3 [Credits] and draw 1 card"
-    :async true
-    :effect (req (wait-for (gain-credits state side 3)
-                           (draw state side eid 1)))}})
+  {:on-play (clearance 3 1)})
 
 (defcard "Hangeki"
   {:on-play
@@ -1756,11 +1748,9 @@
     {:req (req (last-turn? state :runner :stole-agenda))
      :base 6
      :label "Trace 6 - Give the Runner X tags"
-     :successful {:msg "give the Runner X tags"
+     :successful {:msg (msg "give the Runner " (quantify (- target (second targets)) "tag"))
                   :async true
-                  :effect (effect (system-msg
-                                    (str "gives the Runner " (quantify (- target (second targets)) "tag")))
-                                  (gain-tags eid (- target (second targets))))}}}})
+                  :effect (effect (gain-tags eid (- target (second targets))))}}}})
 
 (defcard "Mindscaping"
   {:on-play {:prompt "Choose one"
@@ -1773,7 +1763,7 @@
              :async true
              :effect (req (if (= "Do 1 net damage per tag (up to 3)" target)
                             (damage state :corp eid :net (min 3 (count-tags state)) {:card card})
-                            (wait-for (gain-credits state :corp (make-eid state eid) 4)
+                            (wait-for (gain-credits state side 4 {:suppress-checkpoint true})
                                       (wait-for
                                         (draw state :corp 2)
                                         (continue-ability
@@ -2030,7 +2020,7 @@
              :async true
              :req (req (and (same-card? (:ice context) (:host card))
                             (:all-subs-broken context)))
-             :msg (msg "trash itself and " (card-str state (:ice context)))
+             :msg (msg "trash " (card-str state (:ice context)))
              :effect (effect (trash :corp eid (:ice context) {:unpreventable true :cause-card card}))}]})
 
 (defcard "Patch"
@@ -3329,21 +3319,19 @@
   {:on-play
    {:async true
     :effect (req (wait-for
-                   (gain-credits state side 10)
-                   (wait-for
-                     (draw state side 4)
-                     (continue-ability
-                       state side
-                       {:prompt "Choose a card in HQ to install"
-                        :choices {:card #(and (in-hand? %)
-                                              (corp? %)
-                                              (not (operation? %)))}
-                        :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
-                                               (effect-completed eid))
-                        :async true
-                        :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
-                                                                                 :display-origin true}}))}
-                       card nil))))}})
+                   (resolve-ability state side (clearance 10 4) card nil)
+                   (continue-ability
+                     state side
+                     {:prompt "Choose a card in HQ to install"
+                      :choices {:card #(and (in-hand? %)
+                                            (corp? %)
+                                            (not (operation? %)))}
+                      :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
+                                             (effect-completed eid))
+                      :async true
+                      :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                               :display-origin true}}))}
+                     card nil)))}})
 
 (defcard "Under the Bus"
   {:on-play
@@ -3361,11 +3349,7 @@
                            (gain-bad-publicity eid 1))}})
 
 (defcard "Violet Level Clearance"
-  {:on-play
-   {:msg "gain 8 [Credits] and draw 4 cards"
-    :async true
-    :effect (req (wait-for (gain-credits state side 8)
-                           (draw state side eid 4)))}})
+  {:on-play (clearance 8 4)})
 
 (defcard "Voter Intimidation"
   {:on-play

@@ -891,21 +891,15 @@
 
 (defcard "Data Breach"
   {:makes-run true
-   :on-play {:async true
-             :change-in-game-state {:req (req rd-runnable)}
-             :effect (req (wait-for
-                            (make-run state side :rd card)
-                            (let [card (get-card state card)]
-                              (if (:run-again card)
-                                (make-run state side eid :rd card)
-                                (effect-completed state side eid)))))}
+   :on-play (run-server-ability :rd)
    :events [{:event :run-ends
+             :unregister-once-resolved true
              :optional {:req (req (and (:successful target)
+                                       this-card-run
                                        (not (:run-again card))
                                        (= [:rd] (:server target))))
                         :prompt "Make another run on R&D?"
-                        :yes-ability {:effect (effect (clear-wait-prompt :corp)
-                                                      (update! (assoc card :run-again true)))}}}]})
+                        :yes-ability (run-server-ability :rd)}}]})
 
 (defcard "Day Job"
   {:on-play
@@ -2589,6 +2583,7 @@
                              state side
                              {:optional
                               {:prompt (msg "Pay 1 [Credits] to add " (:title card) " to Grip?")
+                               :req (req (can-pay? state side eid card nil [(->c :credit 1)]))
                                :yes-ability
                                {:cost [(->c :credit 1)]
                                 :msg "add itself to the Grip"
@@ -2954,11 +2949,7 @@
                           (make-run state side eid target card))}})
 
 (defcard "Quality Time"
-  {:on-play
-   {:msg "draw 5 cards"
-    :change-in-game-state {:req (req (seq (:deck runner)))}
-    :async true
-    :effect (effect (draw eid 5))}})
+  {:on-play (draw-abi 5)})
 
 (defcard "Queen's Gambit"
   {:on-play
@@ -3155,15 +3146,16 @@
    :events [(successful-run-replace-breach
               {:target-server :archives
                :this-card-run true
-               :ability
-               {:async true
-                :req (req (not (zone-locked? state :runner :discard)))
-                :prompt "Choose a program to install"
-                :choices (req (filter program? (:discard runner)))
-                :effect (effect (runner-install (assoc eid :source card :source-type :runner-install)
-                                                target {:msg-keys {:install-source card
-                                                                   :display-origin true}
-                                                        :ignore-all-cost true}))}})]})
+               :ability {:async true
+                         :req (req (and (not (zone-locked? state :runner :discard))
+                                        (seq (filter #(and (program? %) (runner-can-install? state side eid % {:no-toast true})) (:discard runner)))))
+                         :prompt "Choose a program to install"
+                         :waiting-prompt true
+                         :choices (req (filter #(and (program? %) (runner-can-install? state side eid % {:no-toast true})) (:discard runner)))
+                         :effect (req (runner-install state side eid target
+                                                      {:msg-keys {:install-source card
+                                                                  :display-origin true}
+                                                       :ignore-all-cost true}))}})]})
 
 (defcard "Rigged Results"
   (letfn [(choose-ice []
@@ -3366,7 +3358,7 @@
 
 (defcard "Satellite Uplink"
   {:on-play
-   {:choices {:max 2
+   {:choices {:max (req (min 2 (count (filter (complement faceup?) (all-installed state :corp)))))
               :card #(and (corp? %)
                           (installed? %)
                           (not (rezzed? %)))}
@@ -3770,10 +3762,11 @@
     :async true
     :effect (effect
               (continue-ability
-                (let [where target]
+                (let [where target
+                      where-key (if (= where "Heap") :discard :deck)]
                   {:prompt "Choose a program to install"
                    :choices (req (cancellable
-                                   (filter program? ((if (= where "Heap") :discard :deck) runner))))
+                                   (filter #(and (program? %) (runner-can-install? state side eid % {:no-toast true})) (where-key runner))))
                    :async true
                    :effect (req (when (= where "Stack")
                                   (trigger-event state side :searched-stack)
@@ -4031,13 +4024,13 @@
    :events [(successful-run-replace-breach
               {:target-server :hq
                :this-card-run true
-               :ability
-               {:async true
-                :prompt "How many [Credits] do you want to spend?"
-                :choices :credit
-                :msg (msg "make the Corp lose " target " [Credits]")
-                :effect (req (wait-for (lose-credits state :corp (make-eid state eid) target)
-                                       (continue-ability state side (gain-tags-ability 1) card nil)))}})]})
+               :ability {:cost [(->c :x-credits)]
+                         :async true
+                         :change-in-game-state {:req (req (pos? (cost-value eid :x-credits)))}
+                         :msg (msg "make the corp lose " (cost-value eid :x-credits) " [Credits]")
+                         :effect (req (wait-for
+                                        (lose-credits state :corp (cost-value eid :x-credits))
+                                        (continue-ability state side (gain-tags-ability 1) card nil)))}})]})
 
 (defcard "VRcation"
   {:on-play
