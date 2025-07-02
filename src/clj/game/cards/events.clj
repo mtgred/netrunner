@@ -1773,6 +1773,7 @@
                                           (program? target))
                                       (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus -1})))}
              :async true
+             :waiting-prompt true
              :effect (req (wait-for (runner-install state side target {:cost-bonus -1
                                                                        :msg-keys {:install-source card
                                                                                   :display-origin true}})
