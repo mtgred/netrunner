@@ -3368,7 +3368,9 @@
           "Gained no credits on run on mark when breach is replaced")
       (is (changed? [(:credit (get-runner)) 0]
             (run-empty-server state :archives))
-          "Gained no credits on sunsequent runs with breach on mark even if breach didn't happen yet")))
+          "Gained no credits on sunsequent runs with breach on mark even if breach didn't happen yet")
+      (take-credits state :runner)
+      (is (not (:card-target (get-resource state 0))) "No card target text after mark is unset at  end of turn")))
 
 (deftest info-bounty-with-virtuoso
     ;; Info Bounty - interaction with Virtuoso
