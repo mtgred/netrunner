@@ -19,7 +19,7 @@
     [game.core.props :refer [add-counter]]
     [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
     [game.core.runs :refer [can-run-server? make-run jack-out]]
-    [game.core.say :refer [system-msg system-say]]
+    [game.core.say :refer [play-sfx system-msg system-say]]
     [game.core.servers :refer [zone->name]]
     [game.core.shuffling :refer [shuffle!]]
     [game.core.to-string :refer [card-str]]
@@ -196,21 +196,36 @@
    :effect (effect (gain-tags :corp eid n))})
 
 (defn run-server-ability
-  "Runs a target server, if possible"
-  [server]
-  {:async true
-   :change-in-game-state {:req (req (can-run-server? state server))}
-   :label (str "run " (zone->name server))
-   :msg (str "make a run on " (zone->name server))
-   :effect (req (make-run state side eid server card))})
+  "Runs a target server, if possible. "
+  ([server] (run-server-ability server nil))
+  ([server {:keys [events] :as ab-base}]
+   (merge {:async true
+           :change-in-game-state {:req (req (can-run-server? state server))}
+           :label (str "run " (zone->name server))
+           :msg (str "make a run on " (zone->name server))
+           :makes-run true
+           :effect (req (when (seq events)
+                          (register-events state side card events))
+                        (when (:action ab-base)
+                          (play-sfx state side "click-run"))
+                        (make-run state side eid server card))}
+          (dissoc ab-base :events))))
 
-(def run-any-server-ability
-  {:async true
-   :prompt "Choose a server"
-   :choices (req runnable-servers)
-   :label "Run any server"
-   :msg (msg "make a run on " target)
-   :effect (effect (make-run eid target card))})
+(defn run-any-server-ability
+  ([] (run-any-server-ability nil))
+  ([{:keys [events] :as ab-base}]
+   (merge {:async true
+           :prompt "Choose a server"
+           :choices (req runnable-servers)
+           :label "Run a server"
+           :makes-run true
+           :msg (msg "make a run on " target)
+           :effect (req (when (seq events)
+                          (register-events state side card events))
+                        (when (:action ab-base)
+                          (play-sfx state side "click-run"))
+                        (make-run state side eid target card))}
+          (dissoc ab-base :events))))
 
 (def run-remote-server-ability
   {:async true
