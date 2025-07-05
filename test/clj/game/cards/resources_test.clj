@@ -2456,6 +2456,17 @@
       (click-prompt state :runner "No action")
       (is (empty? (get-run)) "Run has ended"))))
 
+(deftest eru-persists
+  (do-game
+    (new-game {:runner {:hand ["Eru Ayase-Pessoa"]}
+               :corp {:hand ["IPO"] :deck ["Rashida Jaheem"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Eru Ayase-Pessoa")
+    (card-ability state :runner (get-resource state 0) 0)
+    ;;(trash state :runner (get-resource state 0))
+    (run-continue-until state :success)
+    (do-trash-prompt state 1)))
+
 (deftest fan-site
   ;; Fan Site - Add to score area as 0 points when Corp scores an agenda
   (do-game

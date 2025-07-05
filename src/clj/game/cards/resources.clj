@@ -560,6 +560,7 @@
                   :events [(successful-run-replace-breach
                              {:target-server :hq
                               :duration :end-of-run
+                              :unregister-once-resolved true
                               :mandatory true
                               :ability {:msg "breach R&D, accessing 1 additional card"
                                         :async true
@@ -1466,8 +1467,9 @@
                   :action true
                   :events [(successful-run-replace-breach
                              {:target-server :archives
-                              :this-card-run true
                               :mandatory true
+                              :duration :end-of-run
+                              :unregister-once-resolved true
                               :ability {:msg "breach R&D"
                                         :async true
                                         :effect (req (breach-server state :runner eid [:rd] nil))}})]})]})
