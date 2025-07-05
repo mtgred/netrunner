@@ -2463,7 +2463,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Eru Ayase-Pessoa")
     (card-ability state :runner (get-resource state 0) 0)
-    ;;(trash state :runner (get-resource state 0))
+    (trash state :runner (get-resource state 0))
     (run-continue-until state :success)
     (do-trash-prompt state 1)))
 
