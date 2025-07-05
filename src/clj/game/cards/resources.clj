@@ -553,17 +553,20 @@
              :effect (effect (lose-clicks 1))}]})
 
 (defcard "Beatriz Friere Gonzalez"
-  {:abilities [(assoc (run-server-ability :hq) :action true :cost [(->c :click 2)])]
-   :events [(successful-run-replace-breach
-              {:target-server :hq
-               :this-card-run true
-               :mandatory true
-               :ability {:msg "breach R&D, accessing 1 additional card"
-                         :async true
-                         :effect (req (register-events
-                                        state side
-                                        card [(breach-access-bonus :rd 1 {:duration :end-of-run})])
-                                      (breach-server state :runner eid [:rd] nil))}})]})
+  {:abilities [(run-server-ability
+                 :hq
+                 {:action true
+                  :cost [(->c :click 2)]
+                  :events [(successful-run-replace-breach
+                             {:target-server :hq
+                              :duration :end-of-run
+                              :mandatory true
+                              :ability {:msg "breach R&D, accessing 1 additional card"
+                                        :async true
+                                        :effect (req (register-events
+                                                       state side
+                                                       card [(breach-access-bonus :rd 1 {:duration :end-of-run})])
+                                                     (breach-server state :runner eid [:rd] nil))}})]})]})
 
 (defcard "Beth Kilrain-Chang"
   (let [ability {:once :per-turn
@@ -964,16 +967,10 @@
                                      ;; Can't pay, don't access cards
                                      (do (system-msg state :runner (str "could not afford to use " (:title card)))
                                          (effect-completed state nil eid)))))}})]
-    {:abilities [{:action true
-                  :cost [(->c :click 1) (->c :trash-can)]
-                  :label "Run a server"
-                  :makes-run true
-                  :prompt "Choose a server"
-                  :msg (msg "make a run on " target)
-                  :choices (req runnable-servers)
-                  :async true
-                  :effect (effect (register-events card [ability])
-                                  (make-run eid target card))}]}))
+    {:abilities [(run-any-server-ability
+                   {:action true
+                    :cost [(->c :click 1) (->c :trash-can)]
+                    :events [ability]})]}))
 
 (defcard "Crash Space"
   {:prevention [{:prevents :damage
@@ -1197,7 +1194,7 @@
                 :async true
                 :req (req (pos? (get-counters (get-card state card) :credit)))
                 :effect (req (spend-credits state side eid card :credit 1))}
-               (assoc run-any-server-ability :action true :cost [(->c :click 1)])]
+               (run-any-server-ability {:action true :cost [(->c :click 1)]})]
    :interactions {:pay-credits {:req (req (and (get-in card [:special :run-id])
                                                (= (get-in card [:special :run-id]) (:run-id run))))
                                 :type :credit}}})
@@ -1455,28 +1452,25 @@
                :effect (req (maybe-trash-myself state side eid card))}]}))
 
 (defcard "Eru Ayase-Pessoa"
-  (let [constant-effect
-        {:event :breach-server
-         :automatic :pre-breach
-         :req (req (and (threat-level 3 state)
-                        (= :rd target)
-                        (= :archives (first (:server run)))))
-         :msg "access 1 additional card"
-         :effect (effect (access-bonus :rd 1))}
-        replace-breach-event
-        (successful-run-replace-breach
-          {:target-server :archives
-           :this-card-run true
-           :mandatory true
-           :ability {:msg "breach R&D"
-                     :async true
-                     :effect (req (breach-server state :runner eid [:rd] nil))}})]
-    {:events [constant-effect
-              replace-breach-event]
-     :abilities [(assoc (run-server-ability :archives)
-                        :cost [(->c :gain-tag 1) (->c :click 1)]
-                        :once :per-turn
-                        :action true)]}))
+  {:events [{:event :breach-server
+             :automatic :pre-breach
+             :req (req (and (threat-level 3 state)
+                            (= :rd target)
+                            (= :archives (first (:server run)))))
+             :msg "access 1 additional card"
+             :effect (effect (access-bonus :rd 1))}]
+   :abilities [(run-server-ability
+                 :archives
+                 {:cost [(->c :gain-tag 1) (->c :click 1)]
+                  :once :per-turn
+                  :action true
+                  :events [(successful-run-replace-breach
+                             {:target-server :archives
+                              :this-card-run true
+                              :mandatory true
+                              :ability {:msg "breach R&D"
+                                        :async true
+                                        :effect (req (breach-server state :runner eid [:rd] nil))}})]})]})
 
 (defcard "Fall Guy"
   (letfn [(valid-context? [context] (not= :ability-cost (:cause context)))]
@@ -1685,7 +1679,6 @@
                            :req (req (and (or (= :meat (:type context))
                                               (= :net (:type context)))
                                           (preventable? context)))
-
                            :msg (msg "prevent " (:remaining context) " " (damage-name state) " damage")
                            :effect (req (wait-for (prevent-damage state side :all)
                                                   (continue-ability
