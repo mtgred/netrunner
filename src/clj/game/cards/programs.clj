@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out trash-on-empty trash-on-purge get-x-fn rfg-on-empty tutor-abi]]
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out run-server-ability trash-on-empty trash-on-purge get-x-fn rfg-on-empty tutor-abi]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -492,14 +492,9 @@
                    :msg (msg "shuffle " (card-str state target) " into R&D")
                    :effect (effect (move :corp target :deck)
                                    (shuffle! :corp :deck))}})]
-    {:abilities [{:action true
-                  :cost [(->c :click 1)]
-                  :msg "make a run on R&D"
-                  :makes-run true
-                  :async true
-                  :change-in-game-state {:req (req rd-runnable)}
-                  :effect (effect (register-events card [ability])
-                                  (make-run eid :rd card))}]}))
+    {:abilities [(run-server-ability :rd {:action true
+                                          :cost [(->c :click 1)]
+                                          :events [ability]})]}))
 
 (defcard "Ankusa"
   (auto-icebreaker {:abilities [(break-sub 2 1 "Barrier")
@@ -900,13 +895,7 @@
                             this-card-run))
              :effect (effect (register-events
                               card [(breach-access-bonus :rd (max 0 (get-virus-counters state card)) {:duration :end-of-run})]))}]
-   :abilities [{:action true
-                :cost [(->c :click 1)]
-                :msg "make a run on R&D"
-                :makes-run true
-                :async true
-                :change-in-game-state {:req (req rd-runnable)}
-                :effect (req (make-run state side eid :rd card))}
+   :abilities [(run-server-ability :rd {:action true :cost [(->c :click 1)]})
                (set-autoresolve :auto-place-counter "Conduit placing virus counters on itself")]})
 
 (defcard "Consume"
@@ -1383,14 +1372,9 @@
                   {:msg (msg "reveal " (enumerate-str (map :title (:hand corp))) " from HQ")
                    :async true
                    :effect (effect (reveal eid (:hand corp)))}})]
-    {:abilities [{:action true
-                  :cost [(->c :click 1)]
-                  :change-in-game-state {:req (req hq-runnable)}
-                  :msg "make a run on HQ"
-                  :makes-run true
-                  :async true
-                  :effect (effect (register-events card [ability])
-                                  (make-run eid :hq card))}]}))
+    {:abilities [(run-server-ability :hq {:action true
+                                          :cost [(->c :click 1)]
+                                          :events [ability]})]}))
 
 (defcard "Faerie"
   (auto-icebreaker {:abilities [(break-sub 0 1 "Sentry")
@@ -1888,14 +1872,9 @@
                    :async true
                    :effect (effect (shuffle! :corp :deck)
                                    (trash eid (assoc target :seen true) {:cause-card card}))}})]
-    {:abilities [{:action true
-                  :cost [(->c :click 1)]
-                  :change-in-game-state {:req (req rd-runnable)}
-                  :msg "make a run on R&D"
-                  :makes-run true
-                  :async true
-                  :effect (effect (register-events card [ability])
-                                  (make-run eid :rd card))}]}))
+    {:abilities [(run-server-ability :rd {:action true
+                                          :cost [(->c :click 1)]
+                                          :events [ability]})]}))
 
 ;; TODO - this card is overly messy and can be cleaned up. NBKelly, 2024
 (defcard "Knight"
@@ -3070,22 +3049,16 @@
                                        :repeatable false})]}))
 
 (defcard "Sneakdoor Beta"
-  {:abilities [{:action true
-                :cost [(->c :click 1)]
-                :change-in-game-state {:req (req archives-runnable)}
-                :msg "make a run on Archives"
-                :makes-run true
-                :async true
-                :effect (effect (register-events
-                                  card
-                                  [{:event :pre-successful-run
-                                    :duration :end-of-run
-                                    :unregister-once-resolved true
-                                    :interactive (req true)
-                                    :msg "change the attacked server to HQ"
-                                    :req (req (= :archives (-> run :server first)))
-                                    :effect (req (swap! state assoc-in [:run :server] [:hq]))}])
-                                (make-run eid :archives (get-card state card)))}]})
+  {:abilities [(run-server-ability :archives
+                                   {:action true
+                                    :cost [(->c :click 1)]
+                                    :events [{:event :pre-successful-run
+                                              :duration :end-of-run
+                                              :unregister-once-resolved true
+                                              :interactive (req true)
+                                              :msg "change the attacked server to HQ"
+                                              :req (req (= :archives (-> run :server first)))
+                                              :effect (req (swap! state assoc-in [:run :server] [:hq]))}]})]})
 
 (defcard "Sneakdoor Prime A"
   {:abilities [{:action true
@@ -3187,15 +3160,10 @@
                                                  (str "trash " position (:title target)))))
                                    :effect (effect (trash :runner eid (assoc target :seen true) {:cause-card card}))}
                                   card nil)))}})]
-    {:abilities [{:action true
-                  :cost [(->c :click 1)]
-                  :once :per-turn
-                  :msg "make a run on R&D"
-                  :makes-run true
-                  :change-in-game-state {:req (req rd-runnable)}
-                  :async true
-                  :effect (effect (register-events card [ability])
-                                  (make-run eid :rd card))}]}))
+    {:abilities [(run-server-ability :rd {:action true
+                                          :cost [(->c :click 1)]
+                                          :once :per-turn
+                                          :events [ability]})]}))
 
 (defcard "Study Guide"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
