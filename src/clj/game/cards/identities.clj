@@ -16,7 +16,7 @@
                                rez-additional-cost-bonus rez-cost]]
    [game.core.damage :refer [chosen-damage corp-can-choose-damage? damage
                              enable-corp-damage-choice]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? corp-recur defcard offer-jack-out with-revealed-hand]]
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? corp-recur defcard offer-jack-out run-server-ability with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw]]
    [game.core.effects :refer [register-lingering-effect is-disabled?]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
@@ -2015,26 +2015,21 @@
                                 card nil)))}]}))
 
 (defcard "Omar Keung: Conspiracy Theorist"
-  {:abilities [{:action true
-                :cost [(->c :click 1)]
-                :msg "make a run on Archives"
-                :once :per-turn
-                :makes-run true
-                :async true
-                :change-in-game-state {:req (req archives-runnable)}
-                :effect (effect (update! (assoc-in card [:special :omar-run] true))
-                                (make-run eid :archives (get-card state card)))}]
-   :events [{:event :pre-successful-run
-             :interactive (req true)
-             :req (req (and (get-in card [:special :omar-run])
-                            (= :archives (-> run :server first))))
-             :prompt "Choose one"
-             :choices ["HQ" "R&D"]
-             :msg (msg "change the attacked server to " target)
-             :effect (req (let [target-server (if (= target "HQ") :hq :rd)]
-                            (swap! state assoc-in [:run :server] [target-server])))}
-            {:event :run-ends
-             :effect (effect (update! (dissoc-in card [:special :omar-run])))}]})
+  {:abilities [(run-server-ability
+                 :archives
+                 {:action true
+                  :cost [(->c :click 1)]
+                  :once :per-turn
+                  :events [{:event :pre-successful-run
+                            :interactive (req true)
+                            :duration :end-of-run
+                            :unregister-once-resolved true
+                            :req (req (= :archives (-> run :server first)))
+                            :prompt "Choose one"
+                            :choices ["HQ" "R&D"]
+                            :msg (msg "change the attacked server to " target)
+                            :effect (req (let [target-server (if (= target "HQ") :hq :rd)]
+                                           (swap! state assoc-in [:run :server] [target-server])))}]})]})
 
 (defcard "Nova Initiumia: Catalyst & Impetus"
   ;; No special implementation
