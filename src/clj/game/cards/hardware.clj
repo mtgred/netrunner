@@ -15,7 +15,7 @@
    [game.core.damage :refer [chosen-damage damage
                              enable-runner-damage-choice runner-can-choose-damage?]]
    [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard offer-jack-out
-                                  reorder-choice spend-credits take-credits trash-on-empty get-x-fn]]
+                                  reorder-choice run-any-server-ability spend-credits take-credits trash-on-empty get-x-fn]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects register-lingering-effect
                               unregister-effect-by-uuid unregister-effects-for-card unregister-lingering-effects]]
@@ -862,15 +862,9 @@
              :async true
              :msg "avoid all tags"
              :effect (req (prevent-tag state :runner eid :all))}]
-   :abilities [{:action true
-                :cost [(->c :click 1) (->c :power 1)]
-                :change-in-game-state {:req (req (seq runnable-servers))}
-                :prompt "Choose a server"
-                :choices (req runnable-servers)
-                :msg "make a run and avoid all tags for the remainder of the run"
-                :makes-run true
-                :async true
-                :effect (effect (make-run eid target card))}]})
+   :abilities [(run-any-server-ability {:action true
+                                        :cost [(->c :click 1) (->c :power 1)]
+                                        :msg "make a run and avoid all tags for the remainder of the run"})]})
 
 (defcard "Dyson Fractal Generator"
   {:recurring 1
