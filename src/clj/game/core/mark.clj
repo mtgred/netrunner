@@ -1,6 +1,7 @@
 (ns game.core.mark
   (:require
-   [game.core.engine :refer [trigger-event]]
+   [game.core.card :refer [get-card]]
+   [game.core.engine :refer [trigger-event register-events]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name]]
    [game.core.update :refer [update!]]
@@ -28,4 +29,11 @@
   {:event :mark-changed
    :silent (req true)
    :interactive (req false)
-   :effect (req (update! state :runner (assoc card :card-target (central->name (:mark @state)))))})
+   :effect (req (update! state :runner (assoc card :card-target (central->name (:mark @state))))
+                (register-events
+                  state side card
+                  [{:event :post-runner-turn-ends
+                    :silent true
+                    :unregister-once-resolved true
+                    :effect (req (when (get-card state card)
+                                   (update! state :runner (dissoc (get-card state card) :card-target))))}]))})
