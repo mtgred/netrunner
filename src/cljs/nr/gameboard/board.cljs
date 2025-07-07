@@ -250,9 +250,9 @@
         runner-specs (get-in @app-state [:current-game :runner-spectators])
         me (:user @app-state)]
     (cond
-      (some #(= (:uid %) (:uid me)) corp-specs)
+      (some #(= (-> % :user :username) (:username me)) corp-specs)
       :corp
-      (some #(= (:uid %) (:uid me)) runner-specs)
+      (some #(= (-> % :user :username) (:username me)) runner-specs)
       :runner
       :else
       nil)))
