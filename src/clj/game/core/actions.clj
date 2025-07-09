@@ -299,6 +299,7 @@
         prompt (or (first-selection-by-eid state side eid)
                    (first (get-in @state [side :selected])))
         ability (:ability prompt)
+        card (when (:card ability) (get-card state (:card ability)))
         card-req (:req prompt)
         card-condition (:card prompt)
         cid (:not-self prompt)]
@@ -306,7 +307,7 @@
     (when (and (not= (:cid target) cid)
                (cond
                  card-condition (card-condition target)
-                 card-req (card-req state side (:eid ability) (get-card state (:card ability)) [target])
+                 card-req (card-req state side (:eid ability) card [target])
                  :else true))
       (let [c (update-in target [:selected] not)]
         (update! state side c)
@@ -315,8 +316,7 @@
                            (first (get-in @state [side :selected])))
               prompt (or
                        (first-prompt-by-eid state side eid :select)
-                       (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt]))))
-              card (:card prompt)]
+                       (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt]))))]
           (when (= (count (:cards selected)) (or (:max selected) 1))
             (resolve-select state side eid card (select-keys prompt [:cancel-effect]) update! resolve-ability)))))))
 
