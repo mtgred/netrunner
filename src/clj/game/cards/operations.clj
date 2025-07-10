@@ -1784,7 +1784,7 @@
             (wait-for (corp-install state side (first target-cards) "New remote" {:counters {:advance-counter 2}
                                                                                   :msg-keys {:install-source card
                                                                                              :display-origin true}})
-                      (let [installed-card async-result]
+                      (when-let [installed-card async-result]
                         (register-turn-flag!
                           state side
                           card :can-rez
@@ -1798,10 +1798,10 @@
                           (fn [state _ card]
                             (if (same-card? card installed-card)
                               ((constantly false) (toast state :corp "Cannot score due to Mitosis." "warning"))
-                              true)))
-                        (if (seq (rest target-cards))
-                          (mitosis-ability state side card eid (rest target-cards))
-                          (effect-completed state side eid)))))]
+                              true))))
+                      (if (seq (rest target-cards))
+                        (mitosis-ability state side card eid (rest target-cards))
+                        (effect-completed state side eid))))]
     {:on-play
      {:prompt "Choose 2 cards to install in new remote servers"
       :change-in-game-state {:req (req (seq (:hand corp)))}
@@ -1823,7 +1823,7 @@
     :effect (req (wait-for (corp-install state side target "New remote" {:counters {:advance-counter 3}
                                                                          :msg-keys {:install-source card
                                                                                     :display-origin true}})
-                           (let [installed-card async-result]
+                           (when-let [installed-card async-result]
                              (register-persistent-flag!
                                state side
                                installed-card :can-rez
@@ -1839,15 +1839,15 @@
                                    ((constantly false) (toast state :corp "Cannot score due to Mushin No Shin." "warning"))
                                    true)))
                              (register-events
-                              state side installed-card
-                              [{:event :corp-turn-begins
-                                :duration :until-corp-turn-begins
-                                :unregister-once-resolved true
-                                :async true
-                                :effect (req
-                                         (clear-persistent-flag! state :corp installed-card :can-rez)
-                                         (effect-completed state side eid))}])
-                             (effect-completed state side eid))))}})
+                               state side installed-card
+                               [{:event :corp-turn-begins
+                                 :duration :until-corp-turn-begins
+                                 :unregister-once-resolved true
+                                 :async true
+                                 :effect (req
+                                           (clear-persistent-flag! state :corp installed-card :can-rez)
+                                           (effect-completed state side eid))}]))
+                           (effect-completed state side eid)))}})
 
 (defcard "Mutate"
   {:on-play
