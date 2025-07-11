@@ -317,12 +317,12 @@
       (when (and lobby (lobby/in-lobby? uid lobby))
         (if-let [state (:state lobby)]
           (send-state-to-uid! uid :game/resync lobby (diffs/public-states state))
-          (println (str "resync request unknown state"
-                        "\nGameID:" gameid
-                        "\nGameID by ClientID:" gameid
-                        "\nClientID:" uid
-                        "\nPlayers:" (map #(select-keys % [:uid :side]) (:players lobby))
-                        "\nSpectators" (map #(select-keys % [:uid]) (:spectators lobby))))))
+          (timbre/error (str "resync request unknown state"
+                             "\nGameID:" gameid
+                             "\nGameID by ClientID:" gameid
+                             "\nClientID:" uid
+                             "\nPlayers:" (map #(select-keys % [:uid :side]) (:players lobby))
+                             "\nSpectators" (map #(select-keys % [:uid]) (:spectators lobby))))))
       (lobby/log-delay! timestamp id))))
 
 (defmethod ws/-msg-handler :game/watch
