@@ -10,7 +10,8 @@
    [game.core.say :refer [system-msg]]
    [game.core.set-up :refer [build-card]]
    [game.utils :refer [same-card? server-cards server-card]]
-   [clojure.string :as string]))
+   [clojure.string :as string]
+   [taoensso.timbre :as timbre]))
 
 ;; store all this in memory once so we don't need to recalculate it a trillion times
 ;; everything should be a vec, so rand-nth will be O[1] instead of O[n/2]
@@ -33,7 +34,7 @@
 
 (defn- set-cards! []
   (when-not @has-been-set?
-    (println "assigning server cards for turmoil")
+    (timbre/info "assigning server cards for turmoil")
     (reset! agenda-by-points
             (->> (server-cards)
                  (filterv agenda?)
