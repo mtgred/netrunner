@@ -28,7 +28,7 @@
    :output-fn timbre/default-output-fn
    :fn (fn [{:keys [output_ context]}]
          (when (= (:type context) :moderator))
-         (spit "logs/clojure.log" (str @output_ "\n") :append true))})
+         (spit "logs/mod-actions.log" (str @output_ "\n") :append true))})
 
 (defn timbre-init!
   []
