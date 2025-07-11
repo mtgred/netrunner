@@ -15,7 +15,8 @@
    [web.pages :as pages]
    [web.user :refer [active-user?]]
    [web.utils :refer [json-response response mongo-time-to-utc-string]]
-   [web.ws :as ws]))
+   [web.ws :as ws]
+   [taoensso.timbre :as timbre]))
 
 (defn clear-userstats-handler
   "Clear any statistics for a given user-id contained in a request"
@@ -113,11 +114,11 @@
   (doseq [player original-players]
     (if (:side player)
       (inc-game-stats db (get-in player [:user :_id]) (game-record-start player))
-      (println "NULL start player side in stats for gameid" gameid)))
+      (timbre/error (str "NULL start player side in stats for gameid" gameid))))
   (doseq [player ending-players]
     (if (:side player)
       (inc-game-stats db (get-in player [:user :_id]) (game-record-end state player))
-      (println "NULL end player side in stats for gameid" gameid))))
+      (timbre/error (str "NULL end player side in stats for gameid" gameid)))))
 
 (defn push-stats-update
   "Gather updated deck and user stats and send via web socket to clients"
@@ -209,8 +210,8 @@
         ;;            (:winner @state))
         ;;   (angel-arena-stats/game-finished db game))
         (catch Exception e
-          (println "Caught exception saving game stats: " (.getMessage e))
-          (println "Stats: " (:stats @state)))))))
+          (timbre/error (str "Caught exception saving game stats: " (.getMessage e))
+                         "\nStats: " (:stats @state)))))))
 
 (defn history
   [{db :system/db
@@ -345,7 +346,7 @@
                  {$set {:replay-shared true}})
       (response 200 {:message "Shared"})
       (catch Exception e
-        (println "Caught exception sharing game: " (.getMessage e))
+        (timbre/error (str "Caught exception sharing game: " (.getMessage e)))
         (response 500 {:message "Server error"})))
     (response 401 {:message "Unauthorized"})))
 
