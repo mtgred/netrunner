@@ -15,7 +15,7 @@
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs ->c]]
     [game.core.prevention :refer [resolve-encounter-prevention resolve-end-run-prevention resolve-jack-out-prevention]]
     [game.core.prompts :refer [clear-run-prompts clear-wait-prompt show-run-prompts show-prompt show-wait-prompt]]
-    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.say :refer [play-sfx system-msg n-last-logs]]
     [game.core.servers :refer [is-remote? target-server unknown->kw zone->name]]
     [game.core.subtypes :refer [update-all-subtypes]]
     [game.core.to-string :refer [card-str]]
@@ -24,7 +24,8 @@
     [game.utils :refer [dissoc-in same-card?]]
     [jinteki.utils :refer [count-bad-pub other-side]]
     [clojure.stacktrace :refer [print-stack-trace]]
-    [clojure.string :as string]))
+    [clojure.string :as string]
+    [taoensso.timbre :as timbre]))
 
 (declare handle-end-run jack-out forced-encounter-cleanup run-cleanup gain-run-credits pass-ice successful-run)
 
@@ -526,18 +527,21 @@
 (defmethod start-next-phase :default
   [state _ _]
   (when-not (= :success (:phase (:run @state)))
-    (.println *err* (with-out-str
-                      (print-stack-trace
-                        (Exception. "no phase found and not accessing cards")
-                        2500)))))
+    (timbre/error (str "start-next-phase :default: \n"
+                       (with-out-str
+                         (print-stack-trace
+                           (Exception. "no phase found and not accessing cards")
+                           2500))
+                       "\n" (n-last-logs state 5) "\n"))))
 
 (defmethod continue :default
   [state _ _]
-  (.println *err* (with-out-str
-                    (print-stack-trace
-                      (Exception.
-                        (str "Continue clicked at the wrong time, run phase: " (:phase (:run @state))))
-                      2500))))
+  (timbre/error (str "continue :default: \n"
+                     (with-out-str (print-stack-trace
+                                     (Exception.
+                                       (str "Continue clicked at the wrong time, run phase: " (:phase (:run @state))))
+                                     2500))
+                     "\n" (n-last-logs state 5) "\n")))
 
 (defn redirect-run
   ([state side server] (redirect-run state side server nil))
