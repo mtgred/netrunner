@@ -33,11 +33,11 @@
 (defn timbre-init!
   []
   (io/make-parents "logs/clojure.log")
-  (println "initialized timbre")
   ;; todo - back up the logs files or something like that
   ;; maybe we can actually just have an indexed html that points to different log files?
   ;; that would actually be sick as hell
   (timbre/merge-config!
     {:appenders {:default default-appender
+                 :println {:enabled? false}
                  :error exceptions-appender
                  :mod-action mod-action-appender}}))
