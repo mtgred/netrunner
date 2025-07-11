@@ -298,12 +298,10 @@
                                  (str/join "\n\t"))
                             "unable to fetch log from state")
                 card? (when (:card args) (:printed-title (find-latest state (:card args))))]
-            (timbre/error (str "Caught exception"
-                               "\nException Data: " (or (ex-data e) (.getMessage e))
-                               "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100))
-                               "\nCommand: " command " - " args
-                               (when card? (str "\nRelevant Card: " card?))
-                               "\nLast messages: " last-logs))))))))
+            (timbre/error e (str "Caught exception"
+                                 "\nCommand: " command " - " args
+                                 (when card? (str "\nRelevant Card: " card?))
+                                 "\nLast messages: " last-logs))))))))
 
 (defmethod ws/-msg-handler :game/resync
   game--resync

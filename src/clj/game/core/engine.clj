@@ -284,12 +284,8 @@
         :else (check-ability state side ability card targets)))
     ;; Something has gone terribly wrong, error out
     :else
-    (timbre/error (str (with-out-str
-                         (print-stack-trace
-                           (Exception. (str "Ability is nil????" ability card targets))
-                           2500))
-                       "\n"
-                       (n-last-logs state 5)))))
+    (timbre/error (Exception. (str "Ability is nil????" ability card targets))
+                  (n-last-logs state 5))))
 
 ;;; Checking functions for resolve-ability
 (defn- check-choices

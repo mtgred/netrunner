@@ -210,8 +210,7 @@
         ;;            (:winner @state))
         ;;   (angel-arena-stats/game-finished db game))
         (catch Exception e
-          (timbre/error (str "Caught exception saving game stats: " (.getMessage e))
-                         "\nStats: " (:stats @state)))))))
+          (timbre/error e (str "Caught exception saving game stats: " (:stats @state))))))))
 
 (defn history
   [{db :system/db
@@ -346,7 +345,7 @@
                  {$set {:replay-shared true}})
       (response 200 {:message "Shared"})
       (catch Exception e
-        (timbre/error (str "Caught exception sharing game: " (.getMessage e)))
+        (timbre/error e "Caught exception sharing game")
         (response 500 {:message "Server error"})))
     (response 401 {:message "Unauthorized"})))
 
