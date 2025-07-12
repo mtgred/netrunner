@@ -244,6 +244,8 @@ diagrams_run-timing_initiation-b = Runner gains Bad Publicity credits
 
 diagrams_run-timing_initiation-c = Run formally begins - Run events fire
 
+diagrams_run-timing_initiation-c-2 = Paid Ability Window. Corp may rez non-ice cards during this window.
+
 diagrams_run-timing_initiation-d = Proceed to the outermost ice, if applicable, and begin the approach phase (6.9.2)
 
 diagrams_run-timing_initiation-e = Otherwise, proceed to the movement phase (6.9.4)
@@ -660,6 +662,8 @@ ingame-settings_alt-art = Alt arts
 
 ingame-settings_board-overlap = Board overlap
 
+ingame-settings_card-back-display = Display Opponent Card backs
+
 ingame-settings_card-backs = Card backs
 
 ingame-settings_card-image = Card Image
@@ -671,6 +675,10 @@ ingame-settings_card-sorting = Sorting
 ingame-settings_card-stacking = Card settings
 
 ingame-settings_card-text = Card Text
+
+ingame-settings_device-specific = Device-specific settings
+
+ingame-settings_device-specific-note = These settings are stored locally and do not sync.
 
 ingame-settings_display-encounter-info = Always display encounter info
 
@@ -1276,9 +1284,11 @@ settings_background = Game board background
 
 settings_bespoke-sounds = {$sound ->
     [archer] Archer
+    [bling] Bling
     [end-of-the-line] End of the Line
     [harmonics] Harmonics Suite (Bloop, Echo, Pulse, Wave)
     [header] Card-Specific Sounds
+    [illumination] Ilumination
     *[unknown] Unknown bespoke sound ({$sound})
 }
 
@@ -1302,7 +1312,17 @@ settings_blocked = Blocked users
 
 settings_cancel = Cancel
 
+settings_card-back-display = Display Opponent Card backs
+
 settings_card-backs = Card backs
+
+settings_card-backs-ffg = FFG Card Back
+
+settings_card-backs-my-choice = My Choice
+
+settings_card-backs-nsg = NSG Card Back
+
+settings_card-backs-their-choice = Their Choice
 
 settings_card-iamge = Card Image
 
@@ -1320,6 +1340,8 @@ settings_comp-only = Competitive Lobby Only
 
 settings_connection = Connection
 
+settings_corp-card-sleeve = Corp card backs
+
 settings_create-api-key = Create API Key
 
 settings_current-email = Current email
@@ -1329,6 +1351,10 @@ settings_deck-stats = Deck statistics
 settings_delete-api-key = Delete
 
 settings_desired-email = Desired email
+
+settings_device-specific = Device-specific settings
+
+settings_device-specific-note = These settings are stored locally on this device and do not sync across devices.
 
 settings_disable-websockets = Disable websockets - requires browser refresh after clicking Update Profile [Not Recommended!]
 
@@ -1350,6 +1376,8 @@ settings_ffg = FFG
 
 settings_game-stats = Game Win/Lose statistics
 
+settings_gameplay-settings = Gameplay Settings
+
 settings_get-log-top = Get current log top
 
 settings_get-log-width = Get current log width
@@ -1362,7 +1390,13 @@ settings_invalid-email = No account with that email address exists
 
 settings_invalid-password = Invalid login or password
 
+settings_label-faceup-cards = Label face up cards
+
+settings_label-unrezzed-cards = Label unrezzed cards
+
 settings_language = Language
+
+settings_layout-device = Device Layout
 
 settings_layout-options = Layout options
 
@@ -1380,6 +1414,8 @@ settings_none = None
 
 settings_nsg = NSG
 
+settings_pass-on-rez = Pass priority when rezzing ice
+
 settings_pin-zoom = Keep zoomed cards on screen
 
 settings_player-stats-icons = Use icons for player stats
@@ -1387,6 +1423,8 @@ settings_player-stats-icons = Use icons for player stats
 settings_pronouns = Pronouns
 
 settings_reset = Reset All to Official Art
+
+settings_runner-card-sleeve = Runner card backs
 
 settings_runner-classic = Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)
 
@@ -1401,6 +1439,10 @@ settings_set-all = Set all cards to
 settings_show-alt = Show alternate card arts
 
 settings_sides-overlap = Runner and Corp board may overlap
+
+settings_sort-archives = Sort Archives
+
+settings_sort-heap = Sort Heap
 
 settings_sounds = Sounds
 
@@ -1532,13 +1574,13 @@ stats_view-games = Return to stats screen
 stats_view-log = View log
 
 stats_win-method = Win method: {$reason ->
-  [null] (none)
-  *[other] {$reason}
+    [null] (none)
+    *[other] {$reason}
 }
 
 stats_winner = Winner: {$winner ->
-  [null] (none)
-  *[other] {$winner}
+    [null] (none)
+    *[other] {$winner}
 }
 
 stats_won = Won: {$won} ({NUMBER($percent, style: "percent")})
