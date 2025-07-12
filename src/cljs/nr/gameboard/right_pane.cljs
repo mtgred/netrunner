@@ -15,27 +15,27 @@
 (defonce available-tabs
   {:log
    {:hiccup [log-pane]
-    :label (tr [:log_game-log "Game Log"])}
+    :label [tr [:log_game-log "Game Log"]]}
 
    :notes
    {:hiccup [notes-pane]
-    :label (tr [:log_annotating "Annotating"])}
+    :label [tr [:log_annotating "Annotating"]]}
 
    :notes-shared
    {:hiccup [notes-shared-pane]
-    :label (tr [:log_shared "Shared Annotations"])}
+    :label [tr [:log_shared "Shared Annotations"]]}
 
    :run-timing
    {:hiccup [run-timing-pane]
-    :label (tr [:log_run-timing "Run Timing"])}
+    :label [tr [:log_run-timing "Run Timing"]]}
 
    :turn-timing
    {:hiccup [turn-timing-pane]
-    :label (tr [:log_turn-timing "Turn Timing"])}
+    :label [tr [:log_turn-timing "Turn Timing"]]}
 
    :settings
    {:hiccup [settings-pane]
-    :label (tr [:log_settings "Settings"])}})
+    :label [tr [:log_settings "Settings"]]}})
 
 (defn- resize-card-zoom
   "Resizes the card zoom based on the values in the app-state"
