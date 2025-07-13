@@ -1402,7 +1402,8 @@
                :prompt "Choose an unrezzed card to return to HQ"
                :choices {:card #(and (not (faceup? %))
                                      (installed? %)
-                                     (corp? %))}
+                                     (corp? %))
+                         :all true}
                :change-in-game-state {:silent true
                                       :req (req (some #(and (not (faceup? %))
                                                             (installed? %))

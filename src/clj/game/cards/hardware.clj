@@ -1284,7 +1284,8 @@
             :waiting-prompt true
             :choices {:card #(and (not (faceup? %))
                                   (installed? %)
-                                  (corp? %))}
+                                  (corp? %))
+                      :all true}
             :msg (msg "add " (card-str state target) " to HQ")
             :effect (effect (move :corp target :hand))}]
     {:static-abilities [(mu+ 1)]
