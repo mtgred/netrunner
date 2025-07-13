@@ -25,7 +25,7 @@
    [nr.gameboard.right-pane :refer [content-pane]]
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
-   [nr.translations :refer [tr tr-game-prompt tr-side]]
+   [nr.translations :refer [tr tr-data tr-game-prompt tr-side]]
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
                      image-or-face map-longest render-icons render-message]]
    [nr.ws :as ws]
@@ -753,7 +753,7 @@
            side facedown card-target icon new ghost runner-abilities subroutines seen
            subtype-target corp-abilities flashback-fake-in-hand flashback-playable]
     :as card} flipped disable-click]
-  (let [title (or (-> (get @all-cards (get-title card)) :localized :title) (get-title card))]
+  (let [title (tr-data :title (get @all-cards (:title card)))]
     (r/with-let [gs-prompt-state (r/cursor game-state [(keyword (lower-case side)) :prompt-state])
                  gs-encounter-ice (r/cursor game-state [:encounters :ice])
                  as-button (r/cursor app-state [:button])
