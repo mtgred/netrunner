@@ -398,11 +398,7 @@
                       ;; fallback if on 0 depth only
                       (and (zero? depth)
                            "img/missing.png"))]
-       (if (sequential? result)
-         result
-         (if result
-           [result]
-           nil))))))
+       (when result (if (sequential? result) result [result]))))))
 
 (defn image-or-face [card]
   (cond
