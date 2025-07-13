@@ -125,20 +125,20 @@
                               (trash state side eid target nil)
                               (wait-for (resolve-ability
                                           state side
-                                          (make-eid state eid)
-                                          {:prompt (str "Pay the additional cost to trash " (:title target) "?")
-                                           :choices [(when can-pay cost-strs) "No"]
-                                           :async true
-                                           :effect (req (if (= target "No")
-                                                          (do (system-msg state side (str "declines to pay the additional cost to trash " (:title target)))
-                                                              (effect-completed state side eid))
-                                                          (wait-for (pay state side (make-eid state
-                                                                                              (assoc eid
-                                                                                                     :additional-costs additional-costs
-                                                                                                     :source-type :trash-card))
-                                                                         nil additional-costs)
-                                                                    (system-msg state side (str (:msg async-result) " as an additional cost to trash " (:title target)))
-                                                                    (complete-with-result state side eid target))))}
+                                          (let [target-card target]
+                                            {:prompt (str "Pay the additional cost to trash " (:title target-card) "?")
+                                             :choices [(when can-pay cost-strs) "No"]
+                                             :async true
+                                             :effect (req (if (= target "No")
+                                                            (do (system-msg state side (str "declines to pay the additional cost to trash " (:title target-card)))
+                                                                (effect-completed state side eid))
+                                                            (wait-for (pay state side (make-eid state
+                                                                                                (assoc eid
+                                                                                                       :additional-costs additional-costs
+                                                                                                       :source-type :trash-card))
+                                                                           nil additional-costs)
+                                                                      (system-msg state side (str (:msg async-result) " as an additional cost to trash " (:title target-card)))
+                                                                      (complete-with-result state side eid target))))})
                                           card targets)
                                         (if async-result
                                           (trash state side eid target nil)
