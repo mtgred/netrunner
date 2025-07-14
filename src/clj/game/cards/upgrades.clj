@@ -2016,7 +2016,6 @@
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
    :static-abilities [{:type :gain-encounter-ability
                        :req (req (and (protecting-same-server? card target)
-                                      (some #(:printed %) (:subroutines target))
                                       (not (:disabled target))))
                        :value (req {:async true
                                     :ability-name "ZATO City Grid"
@@ -2024,17 +2023,19 @@
                                     :optional
                                     {:waiting-prompt true
                                      :prompt "Trash ice to fire a (printed) subroutine?"
-                                     :yes-ability {:msg (msg "trash " (card-str state (:ice context)))
-                                                   :async true
+                                     :yes-ability {:async true
                                                    :effect (req (let [target-ice (:ice context)]
-                                                                  (wait-for (trash state side target-ice {:cause-card target-ice})
-                                                                            (continue-ability
-                                                                              state side
-                                                                              {:prompt "Choose a subroutine to resolve"
-                                                                               :choices (req (unbroken-subroutines-choice target-ice))
-                                                                               :msg (msg "resolves the subroutine (\"[Subroutine] "
-                                                                                         target "\") from " (:title target-ice))
-                                                                               :async true
-                                                                               :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines target-ice)))]
-                                                                                              (resolve-subroutine! state side eid target-ice (assoc sub :external-trigger true))))}
-                                                                              card nil))))}}})}]})
+                                                                  (continue-ability
+                                                                    state side
+                                                                    (if (seq (filter :printed (:subroutines target-ice)))
+                                                                      {:prompt "Choose a subroutine to resolve"
+                                                                       :choices (req (unbroken-subroutines-choice target-ice))
+                                                                       :cost [(->c :trash-can)]
+                                                                       :msg (msg "resolve (\"[Subroutine] "
+                                                                                 target "\")")
+                                                                       :async true
+                                                                       :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines target-ice)))]
+                                                                                      (resolve-subroutine! state side eid target-ice (assoc sub :external-trigger true))))}
+                                                                      {:cost [(->c :trash-can)]
+                                                                       :change-in-game-state {:req (req false)}})
+                                                                    card nil)))}}})}]})

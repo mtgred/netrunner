@@ -228,8 +228,9 @@
                    (trigger-event-simult state side :subroutine-fired nil {:sub sub :ice ice})
                    (when (:run @state)
                      (swap! state update-in [:run :subroutines-fired] (fnil inc 0)))
+                   ;; note that the only way a sub should fire without the ice existing is through zato city grid (or maybe nanisivik?)
                    (wait-for
-                     (resolve-ability state side (make-eid state eid) (:sub-effect sub) (get-card state ice) nil)
+                     (resolve-ability state side (make-eid state eid) (:sub-effect sub) (or (get-card state ice) ice) nil)
                      (checkpoint state nil eid {:duration :subroutine-currently-resolving}))))))))
 
 (defn- resolve-next-unbroken-sub
