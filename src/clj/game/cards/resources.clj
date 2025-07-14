@@ -3462,7 +3462,7 @@
                 :once :per-turn
                 :once-key :artist-credits
                 :async true
-                :effect (effect (play-sfx "click-credits-2")
+                :effect (effect (play-sfx "click-credit-2")
                                 (gain-credits eid 2))}
                {:action true
                 :cost [(->c :click 1)]
@@ -3823,7 +3823,7 @@
                 :msg "gain 2 [Credits]"
                 :once :per-turn
                 :async true
-                :effect (effect (play-sfx "click-credits-2")
+                :effect (effect (play-sfx "click-credit-2")
                                 (gain-credits eid 2))}]
    :on-trash {:async true
               :effect (effect (damage eid :meat 3 {:unboostable true :card card}))}})
