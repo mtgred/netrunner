@@ -244,6 +244,8 @@ diagrams_run-timing_initiation-b = 潜袭者获得负面声誉信用点
 
 diagrams_run-timing_initiation-c = 潜袭正式开始 —— 潜袭事件结算
 
+diagrams_run-timing_initiation-c-2 = 付费能力窗口。公司可以激活非防火墙卡牌
+
 diagrams_run-timing_initiation-d = 如可能，接驳最外层的防火墙，并开始接驳阶段（6.9.2）
 
 diagrams_run-timing_initiation-e = 否则，进入到移动阶段（6.9.4）
@@ -660,6 +662,8 @@ ingame-settings_alt-art = 异画卡
 
 ingame-settings_board-overlap = 面板重叠
 
+ingame-settings_card-back-display = 显示对手牌背
+
 ingame-settings_card-backs = 卡背
 
 ingame-settings_card-image = 卡牌图像
@@ -672,11 +676,15 @@ ingame-settings_card-stacking = 卡牌设置
 
 ingame-settings_card-text = 卡牌文本
 
+ingame-settings_device-specific = 设备特殊设置
+
+ingame-settings_device-specific-note = 这些设置存储在此设备上，不会跨设备同步。
+
 ingame-settings_display-encounter-info = 始终显示遭遇信息
 
 ingame-settings_game-settings = 游戏设置
 
-ingame-settings_ghost-trojans = 在设备显示负载木马 
+ingame-settings_ghost-trojans = 在设备显示负载木马
 
 ingame-settings_high-res = 启用高分辨率卡牌图像
 
@@ -688,7 +696,7 @@ ingame-settings_log-timestamps = 日志时间戳
 
 ingame-settings_log-timestamps-toggle = 显示日志时间戳
 
-ingame-settings_pass-on-rez = Pass priority when rezzing ice 激活防火墙时让过优先权
+ingame-settings_pass-on-rez = 激活防火墙时让过优先权
 
 ingame-settings_preview-zoom = 卡片预览缩放
 
@@ -898,7 +906,7 @@ log_remote-annotations-fail = 无法获取远程注释。
 
 log_run-timing = 潜袭时序
 
-log_settings = 设置
+log_settings = 游戏设置
 
 log_shared = 共享注释
 
@@ -1276,9 +1284,11 @@ settings_background = 游戏背景
 
 settings_bespoke-sounds = {$sound ->
     [archer] 射手
+    [bling] 炫灵
     [end-of-the-line] 穷途末路
     [harmonics] 和声组合（海洋怪声，回声，脉动，波动）
     [header] 卡牌特定声音
+    [illumination] 映照
     *[unknown] 未知特定声音 ({$sound})
 }
 
@@ -1302,7 +1312,17 @@ settings_blocked = 黑名单
 
 settings_cancel = 取消
 
+settings_card-back-display = 显示对手牌背
+
 settings_card-backs = 卡背
+
+settings_card-backs-ffg = FFG 牌背
+
+settings_card-backs-my-choice = 我的选择
+
+settings_card-backs-nsg = NSG 牌背
+
+settings_card-backs-their-choice = 对手选择
 
 settings_card-iamge = 卡牌图像
 
@@ -1320,6 +1340,8 @@ settings_comp-only = 仅竞技厅
 
 settings_connection = 连接
 
+settings_corp-card-sleeve = 公司牌背
+
 settings_create-api-key = 创建API密钥
 
 settings_current-email = 旧邮箱
@@ -1329,6 +1351,10 @@ settings_deck-stats = 牌组统计
 settings_delete-api-key = 删除
 
 settings_desired-email = 新邮箱
+
+settings_device-specific = 设备特殊设置
+
+settings_device-specific-note = 这些设置存储在此设备上，不会跨设备同步。
 
 settings_disable-websockets = 禁用 websockets - 单击更新配置文件后需要刷新浏览器 [不建议！]
 
@@ -1350,6 +1376,8 @@ settings_ffg = FFG
 
 settings_game-stats = 对战胜负统计
 
+settings_gameplay-settings = 游戏设置
+
 settings_get-log-top = 获取当前日志框顶部坐标
 
 settings_get-log-width = 获取当前日志框宽度
@@ -1362,7 +1390,13 @@ settings_invalid-email = 没有使用该邮箱地址的账号
 
 settings_invalid-password = 用户名或密码无效
 
+settings_label-faceup-cards = 贴标签于面朝上卡牌
+
+settings_label-unrezzed-cards = 贴标签于未激活卡牌
+
 settings_language = 语言
+
+settings_layout-device = 设备布局
 
 settings_layout-options = 布局选项
 
@@ -1380,6 +1414,8 @@ settings_none = 关闭
 
 settings_nsg = NSG
 
+settings_pass-on-rez = 激活防火墙时让过优先权
+
 settings_pin-zoom = 在屏幕上保持缩放卡牌
 
 settings_player-stats-icons = 使用图标显示玩家统计
@@ -1387,6 +1423,8 @@ settings_player-stats-icons = 使用图标显示玩家统计
 settings_pronouns = 代词
 
 settings_reset = 将所有卡牌重设为原始卡面
+
+settings_runner-card-sleeve = 潜袭者牌背
 
 settings_runner-classic = 经典jnet布局（自上而下：程序、硬件、资源）
 
@@ -1401,6 +1439,10 @@ settings_set-all = 将所有卡牌设为
 settings_show-alt = 显示异画卡
 
 settings_sides-overlap = 潜袭者和公司面板可以重叠
+
+settings_sort-archives = 排序档案库
+
+settings_sort-heap = 排序堆阵
 
 settings_sounds = 音效
 
@@ -1532,13 +1574,13 @@ stats_view-games = 返回统计界面
 stats_view-log = 查看记录
 
 stats_win-method = 胜利方式: {$reason ->
-  [null] (无)
-  *[other] {$reason}
+    [null] (无)
+    *[other] {$reason}
 }
 
 stats_winner = 胜者: {$winner ->
-  [null] (无)
-  *[other] {$winner}
+    [null] (无)
+    *[other] {$winner}
 }
 
 stats_won = 胜利: {$won} ({NUMBER($percent, style: "percent")})
