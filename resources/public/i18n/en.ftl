@@ -16,6 +16,10 @@ annotations_save-local = Save
 
 annotations_turn-placeholder = Notes for this turn
 
+card-backs_ffg-card-back = FFG Card Backs
+
+card-backs_nsg-card-back = NSG Card Backs
+
 card-browser-form_faction = Faction
 
 card-browser-form_format = Format
@@ -207,6 +211,12 @@ deck-builder_notes = Notes
 deck-builder_reset = Reset
 
 deck-builder_save = Save
+
+deck-builder_show-credit-cost = Show Credit Cost
+
+deck-builder_show-memory-cost = Show Memory Cost
+
+deck-builder_view-options = View Options
 
 deck-builder_why = Why?
 
@@ -890,8 +900,11 @@ lobby_type = {$type ->
     [angel-arena] Angel Arena
     [casual] Casual
     [competitive] Competitive
+    [join] Join
+    [rejoin] Rejoin
     [tournament] Tournament
-    *[unknown] Unknown lobby type
+    [watch] Watch
+    *[unknown] Unknown lobby type ({$type})
 }
 
 lobby_waiting = Waiting players deck selection
@@ -942,6 +955,8 @@ nav_game-count = {$cnt ->
 nav_help = Help
 
 nav_play = Play
+
+nav_prizes = Prizes
 
 nav_settings = Settings
 
@@ -1324,6 +1339,8 @@ settings_card-backs-nsg = NSG Card Back
 
 settings_card-backs-their-choice = Their Choice
 
+settings_card-backs-tip = You can earn more card backs by placing well in select online tournaments. If you're an artist with art that you think would make for a good card back, please feel free to contact us
+
 settings_card-iamge = Card Image
 
 settings_card-images = Card images
@@ -1339,6 +1356,8 @@ settings_change-email = Change email
 settings_comp-only = Competitive Lobby Only
 
 settings_connection = Connection
+
+settings_corp-card-back = Corp card back
 
 settings_corp-card-sleeve = Corp card backs
 
@@ -1396,6 +1415,8 @@ settings_label-unrezzed-cards = Label unrezzed cards
 
 settings_language = Language
 
+settings_language-tip = Some languages are not fully translated yet. If you would like to help with translations, please contact us.
+
 settings_layout-device = Device Layout
 
 settings_layout-options = Layout options
@@ -1422,7 +1443,13 @@ settings_player-stats-icons = Use icons for player stats
 
 settings_pronouns = Pronouns
 
+settings_pronouns-here = here
+
+settings_pronouns-request = If your personal pronouns are not represented, you can request them
+
 settings_reset = Reset All to Official Art
+
+settings_runner-card-back = Runner card back
 
 settings_runner-card-sleeve = Runner card backs
 
@@ -1574,6 +1601,11 @@ stats_view-games = Return to stats screen
 stats_view-log = View log
 
 stats_win-method = Win method: {$reason ->
+    [Agenda] Agenda
+    [Claim] Claim
+    [Concede] Concede
+    [Decked] Decked
+    [Flatline] Flatline
     [null] (none)
     *[other] {$reason}
 }
