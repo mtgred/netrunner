@@ -1,5 +1,19 @@
 (ns nr.help
-  (:require [jinteki.utils :refer [command-info]]))
+  (:require [jinteki.utils :refer [command-info]]
+            [reagent.core :as r]
+            [clojure.string :as str]))
+
+(defn scroll-to-element [id]
+  (when-let [element (.getElementById js/document (str/replace id #"^#" ""))]
+    (.scrollIntoView element #js {"behavior" "smooth"})))
+
+(defn handle-anchor-click [e]
+  (when-let [anchor (-> e .-target .-href)]
+    (when (str/includes? anchor "#")
+      (.preventDefault e)
+      (let [hash (last (str/split anchor #"#"))]
+        (set! (.-hash js/window.location) hash)
+        (scroll-to-element hash)))))
 
 (def keyboard-control-info
   [{:name "Space"
@@ -336,9 +350,26 @@
           content])])))
 
 (defn help []
-  [:div.page-container
-   [:div.help-bg]
-   [:div.help.panel.content-page.blue-shade
-    [:h2 "Help Topics"]
-    help-toc
-    help-contents]])
+  (r/create-class
+   {:component-did-mount
+    (fn []
+      (let [hash (.-hash js/window.location)]
+        (when-not (str/blank? hash)
+          (js/setTimeout #(scroll-to-element hash) 100)))
+      (.addEventListener js/document "click"
+        (fn [e]
+          (when-let [target (.-target e)]
+            (when (and (.-href target) (= (.-tagName target) "A"))
+              (handle-anchor-click e))))))
+    :component-will-unmount
+    (fn []
+      (.removeEventListener js/document "click" handle-anchor-click))
+    :reagent-render
+    (fn []
+      [:div.page-container
+       [:div.help-bg]
+       [:div.help.panel.content-page.blue-shade
+        [:h2 "Help Topics"]
+        [:div 
+          (into [:div] 
+            (concat [help-toc] help-contents))]]])}))
