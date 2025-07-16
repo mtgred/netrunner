@@ -16,6 +16,10 @@ annotations_save-local = 保存
 
 annotations_turn-placeholder = 关于此回合的注释
 
+card-backs_nsg-card-back = NSG 牌背
+
+card-backs_ffg-card-back = FFG 牌背
+
 card-browser-form_faction = 派系
 
 card-browser-form_format = 赛制
@@ -211,6 +215,12 @@ deck-builder_save = 保存
 deck-builder_why = 为什么？
 
 deck-builder_won = 胜利: {$won} ({NUMBER($percent, style: "percent")})
+
+deck-builder_view-options = 查看选项
+
+deck-builder_show-credit-cost = 显示信用点费用
+
+deck-builder_show-memory-cost = 显示内存费用
 
 diagrams_run-timing_approach = 6.9.2: 接驳防火墙阶段
 
@@ -532,7 +542,7 @@ game_mute = 禁止旁观者发言
 
 game_no-current-run = 当前无潜袭进行中
 
-game_no-further = 没有响应
+game_no-further = 无更多响应
 
 game_ok = OK
 
@@ -646,17 +656,41 @@ game_unknown-phase = 未知阶段
 
 game_unmute = 允许旁观者发言
 
-game_win-claimed = {$winner} ({$side})于第{$turn}回合因声明而获胜
+game_win-claimed = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合因声明而获胜
 
-game_win-conceded = {$winner} ({$side})于第{$turn}回合因对手投降而获胜
+game_win-conceded = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合因对手投降而获胜
 
-game_win-decked = {$winner} ({$side})于第{$turn}回合因公司无牌可抽而获胜
+game_win-decked = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合因公司无牌可抽而获胜
 
-game_win-flatlined = {$winner} ({$side})于第{$turn}回合通过杀死潜袭者而获胜
+game_win-flatlined = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合通过杀死潜袭者而获胜
 
-game_win-other = {$winner} ({$side})于第{$turn}回合因{$reason}而获胜
+game_win-other = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合因{$reason}而获胜
 
-game_win-points = {$winner} ({$side})于第{$turn}回合因议案分数而获胜
+game_win-points = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合因议案分数而获胜
 
 ingame-settings_alt-art = 异画卡
 
@@ -805,9 +839,9 @@ lobby_no-games = 当前无对战
 
 lobby_not-allowed = 操作被禁止
 
-lobby_open-decklists = 公开牌组列表
+lobby_open-decklists = 公开牌组
 
-lobby_open-decklists-b = (公开牌组列表)
+lobby_open-decklists-b = (公开牌组)
 
 lobby_options = 选项
 
@@ -890,8 +924,11 @@ lobby_type = {$type ->
     [angel-arena] 天使竞技场
     [casual] 休闲
     [competitive] 竞技
+    [join] 加入
+    [rejoin] 重新加入
     [tournament] 比赛
-    *[unknown] 未知大厅类型
+    [watch] 观战
+    *[unknown] 未知大厅类型 ({$type})
 }
 
 lobby_waiting = 等待玩家选择牌组
@@ -942,6 +979,8 @@ nav_game-count = {$cnt ->
 nav_help = 帮助
 
 nav_play = 对战
+
+nav_prizes = 奖励
 
 nav_settings = 设置
 
@@ -1324,6 +1363,8 @@ settings_card-backs-nsg = NSG 牌背
 
 settings_card-backs-their-choice = 对手选择
 
+settings_card-backs-tip = 通过在选定的在线锦标赛中获得高名次，你可以获得更多的牌背。如果你是一位艺术家，有认为适合做牌背的艺术作品，请随时联系我们
+
 settings_card-iamge = 卡牌图像
 
 settings_card-images = 卡牌图像
@@ -1339,6 +1380,8 @@ settings_change-email = 更换电子邮箱
 settings_comp-only = 仅竞技厅
 
 settings_connection = 连接
+
+settings_corp-card-back = 公司牌背
 
 settings_corp-card-sleeve = 公司牌背
 
@@ -1396,6 +1439,8 @@ settings_label-unrezzed-cards = 贴标签于未激活卡牌
 
 settings_language = 语言
 
+settings_language-tip = 有些语言尚未完全翻译。如果您想帮助翻译，请联系我们。
+
 settings_layout-device = 设备布局
 
 settings_layout-options = 布局选项
@@ -1422,7 +1467,13 @@ settings_player-stats-icons = 使用图标显示玩家统计
 
 settings_pronouns = 代词
 
+settings_pronouns-here = 此处
+
+settings_pronouns-request = 如果你的人称代词没有出现，你可以请求它们在
+
 settings_reset = 将所有卡牌重设为原始卡面
+
+settings_runner-card-back = 潜袭者牌背
 
 settings_runner-card-sleeve = 潜袭者牌背
 
@@ -1574,6 +1625,11 @@ stats_view-games = 返回统计界面
 stats_view-log = 查看记录
 
 stats_win-method = 胜利方式: {$reason ->
+    [Agenda] 议案
+    [Claim] 宣称
+    [Concede] 投降
+    [Decked] 无牌可抽
+    [Flatline] 杀死潜袭者
     [null] (无)
     *[other] {$reason}
 }

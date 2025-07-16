@@ -1204,7 +1204,7 @@
                [card-view card flipped]]))))
       (if central-view
         [label content (assoc opts :classes "server-label" :hide-cursor true)]
-        [label content (assoc opts :classes "server-label" :hide-cursor true :name (str "Server " key))])]]))
+        [label content (assoc opts :classes "server-label" :hide-cursor true :name (str (tr [:game_server "Server"] {:num key})))])]]))
 
 (defn stacked-label [cursor similar-servers opts]
   (let [similar-server-names (->> similar-servers

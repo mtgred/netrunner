@@ -866,16 +866,16 @@
 (defn view-toggles
   [s deck]
   [:div.decklist-view-options
-   [:h4 "View Options"]
+   [:h4 (tr [:deck-builder_view-options "View Options"])]
    (when (= (:side (:identity deck)) "Runner")
      [:div
       [:input {:type "checkbox" :checked (:show-mu-cost @s)
                :on-change #(swap! s assoc :show-mu-cost (.. % -target -checked))}]
-      [:span "Show Memory Cost"]])
+      [:span (tr [:deck-builder_show-memory-cost "Show Memory Cost"])]])
    [:div
     [:input {:type "checkbox" :checked (:show-credit-cost @s)
              :on-change #(swap! s assoc :show-credit-cost (.. % -target -checked))}]
-    [:span "Show Credit Cost"]]])
+    [:span (tr [:deck-builder_show-credit-cost "Show Credit Cost"])]]])
 
 (defn selected-panel
   [s]
