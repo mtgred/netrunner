@@ -4,9 +4,11 @@
    [potemkin :refer [import-vars]]
    [web.core]
    [web.system :as system]
+   [web.logs :refer [timbre-init!]]
    [tasks.nrdb :as nrdb]))
 
 (ig-repl/set-prep! (fn [] (system/server-config)))
+(timbre-init!)
 
 (import-vars
   [integrant.repl

@@ -20,7 +20,8 @@
    [web.mongodb :as mongodb]
    [web.stats :as stats]
    [web.ws :as ws]
-   [taoensso.encore :as enc]))
+   [taoensso.encore :as enc]
+   [taoensso.timbre :as timbre]))
 
 (read-write/print-time-literals-clj!)
 
@@ -79,8 +80,8 @@
                 (swap! cleaned! + (count stale))
                 (swap! (:occupants pool) set/difference stale))))
           (if (pos? @cleaned!)
-            (println "cleaned up" @cleaned! "stale pool occupants!")
-            (println "all pools are tidy!"))))))
+            (timbre/info (str "cleaned up" @cleaned! "stale pool occupants!"))
+            (timbre/info "all pools are tidy!"))))))
 
 (defonce lobby-pool (cp/threadpool 1 {:name "lobbies-thread"}))
 (defmacro lobby-thread [& expr] `(cp/future lobby-pool ~@expr))

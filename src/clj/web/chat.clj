@@ -9,7 +9,8 @@
    [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user? visible-to-user]]
    [web.utils :refer [response mongo-time-to-utc-string]]
-   [web.ws :as ws]))
+   [web.ws :as ws]
+   [taoensso.timbre :as timbre]))
 
 (def msg-collection "messages")
 (def log-collection "moderator_actions")
@@ -103,7 +104,7 @@
     timestamp :timestamp}]
   (when-let [id (:_id msg)]
     (when (or isadmin ismoderator)
-      (println username "deleted message" msg "\n")
+      (timbre/info {:type :mod-action} (str username "deleted message" msg "\n"))
       (mc/remove-by-id db msg-collection (->object-id id))
       (mc/insert db log-collection
                  {:moderator username
@@ -123,7 +124,7 @@
     timestamp :timestamp}]
   (when (and sender
              (or isadmin ismoderator))
-    (println username "deleted all messages from user" sender "\n")
+    (timbre/info {:type :mod-action} (str username "deleted all messages from user" sender "\n"))
     (mc/remove db msg-collection {:username sender})
     (mc/insert db log-collection
                {:moderator username

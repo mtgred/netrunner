@@ -107,3 +107,16 @@
                        (update :sfx #(take 3 %))
                        (update :sfx-current-id inc))
                    state))))
+
+(defn n-last-logs
+  "Gets the n last log messages not sent by a user (ie game logs only)"
+  [state n]
+  (if @state
+    ;; this should filter out user-typed messages, so we don't accidentally
+    ;; spy on private conversations
+    (->> @state :log
+         (filter #(= (:user %) "__system__"))
+         (map :text)
+         (take-last n)
+         (str/join "\n\t"))
+    "unable to fetch log from state"))

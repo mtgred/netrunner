@@ -7,11 +7,12 @@
     [game.core.prevention :refer [resolve-damage-prevention]]
     [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
-    [game.core.say :refer [system-msg]]
+    [game.core.say :refer [system-msg n-last-logs]]
     [game.core.winning :refer [flatline]]
     [game.macros :refer [wait-for]]
     [game.utils :refer [dissoc-in enumerate-str side-str]]
-    [jinteki.utils :refer [str->int]]))
+    [jinteki.utils :refer [str->int]]
+    [taoensso.timbre :as timbre]))
 
 (defn damage-name [damage-type]
   (case damage-type
@@ -64,7 +65,7 @@
   (wait-for (trigger-event-simult state side :pre-resolve-damage nil dmg-type side n)
             (if (not (pos? n))
               (do ;; shouldn't be possible, should be handled before getting here
-                (println "attempted to resolve 0 damage")
+                (timbre/error (str "attempted to resolve 0 damage: \n" (n-last-logs state 5) "\n"))
                 (effect-completed state side eid))
               (let [hand (get-in @state [:runner :hand])
                     chosen-cards (seq (get-chosen-damage state))

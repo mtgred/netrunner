@@ -26,7 +26,7 @@
               ajax-post-fn ajax-get-or-ws-handshake-fn private]} chsk-server
       conns_ (:conns_ private)]
   (defonce handshake-handler (fn [& args] (try (apply ajax-get-or-ws-handshake-fn args)
-                                               (catch Exception _ (println "Caught an error in the handshake handler")))))
+                                               (catch Exception _ (timbre/error "Caught an error in the handshake handler")))))
   (defonce post-handler ajax-post-fn)
   (defonce connected-sockets connected-uids)
   (defonce ch-chsk ch-recv)
@@ -74,7 +74,7 @@
   msg-handler--default
   ;; Handles any hecked messages from the client
   [{:keys [id ?data uid ?reply-fn]}]
-  (println "Unhandled WS msg" id uid (pr-str ?data))
+  (timbre/error (str "Unhandled WS msg" id uid (pr-str ?data)))
   (when ?reply-fn
     (?reply-fn {:msg "Unhandled event"})))
 
@@ -94,5 +94,4 @@
   (try
     (-msg-handler (assoc event :timestamp (inst/now)))
     (catch Exception e
-      (println "Caught an error in the message handler")
-      (println (.printStackTrace e)))))
+      (timbre/error e "Caught an error in the message handler"))))

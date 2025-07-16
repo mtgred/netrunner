@@ -13,11 +13,12 @@
    [game.core.flags :refer [can-trash? untrashable-while-resources? untrashable-while-rezzed?]]
    [game.core.payment :refer [->c can-pay?]]
    [game.core.prompts :refer [clear-wait-prompt]]
-   [game.core.say :refer [enforce-msg]]
+   [game.core.say :refer [enforce-msg n-last-logs]]
    [game.core.to-string :refer [card-str]]
    [game.utils :refer [dissoc-in enumerate-str quantify]]
    [game.macros :refer [msg req wait-for]]
-   [jinteki.utils :refer [other-side]]))
+   [jinteki.utils :refer [other-side]]
+   [taoensso.timbre :as timbre]))
 
 ;; DOCUMENTATION FOR THE PREVENTION SYSTEM
 ;;   Interrupts/prevention abilities in the CR are awkward, because:
@@ -135,7 +136,7 @@
               (swap! state update-in [:prevent key :remaining] #(max 0 (- % n)))))
         (trigger-event-sync state side eid (if (= side :corp) :corp-prevent :runner-prevent) {:type key
                                                                                               :amount n}))
-    (do (println "tried to prevent " (name key) " outside of a " (name key) "  prevention window (eid: " eid ")")
+    (do (timbre/error (str "tried to prevent " (name key) " outside of a " (name key) "  prevention window (eid: " eid ")\n" (n-last-logs state 5)))
         (effect-completed state side eid))))
 
 (defn- fetch-and-clear!
@@ -327,7 +328,8 @@
     (get-in @state [:prevent :damage])
     :damage
     :else
-    (do (println "attempt to pick damage key when no damage prevention is active")
+    (do (timbre/error (str "attempt to pick damage key when no damage prevention is active: \n "
+                           (n-last-logs state 5)))
         nil)))
 
 (defn damage-type
@@ -499,7 +501,8 @@
          :effect (req (swap! state update-in [:prevent :expose :remaining] (fn [v] (filterv #(not (same-card? % target)) v)))
                       (swap! state update-in [:prevent :expose :prevented] (fnil inc 0)))}
         card nil))
-    (do (println "tried to prevent expose outside of an expose prevention window")
+    (do (timbre/error (str "tried to prevent expose outside of an expose prevention window\n"
+                           (n-last-logs state 5)))
         (effect-completed state side eid))))
 
 (defn resolve-expose-prevention-for-side

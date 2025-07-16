@@ -17,7 +17,8 @@
    [web.app-state :as app-state]
    [web.lobby :as lobby]
    [web.stats :as stats]
-   [web.ws :as ws]))
+   [web.ws :as ws]
+   [taoensso.timbre :as timbre]))
 
 (defn game-diff-json
   "Converts the appropriate diff to json"
@@ -297,12 +298,10 @@
                                  (str/join "\n\t"))
                             "unable to fetch log from state")
                 card? (when (:card args) (:printed-title (find-latest state (:card args))))]
-            (println (str "Caught exception"
-                          "\nException Data: " (or (ex-data e) (.getMessage e))
-                          "\nStacktrace: " (with-out-str (stacktrace/print-stack-trace e 100))
-                          "\nCommand: " command " - " args
-                          (when card? (str "\nRelevant Card: " card?))
-                          "\nLast messages: " last-logs))))))))
+            (timbre/error e (str "Caught exception"
+                                 "\nCommand: " command " - " args
+                                 (when card? (str "\nRelevant Card: " card?))
+                                 "\nLast messages: " last-logs))))))))
 
 (defmethod ws/-msg-handler :game/resync
   game--resync
@@ -316,12 +315,12 @@
       (when (and lobby (lobby/in-lobby? uid lobby))
         (if-let [state (:state lobby)]
           (send-state-to-uid! uid :game/resync lobby (diffs/public-states state))
-          (println (str "resync request unknown state"
-                        "\nGameID:" gameid
-                        "\nGameID by ClientID:" gameid
-                        "\nClientID:" uid
-                        "\nPlayers:" (map #(select-keys % [:uid :side]) (:players lobby))
-                        "\nSpectators" (map #(select-keys % [:uid]) (:spectators lobby))))))
+          (timbre/error (str "resync request unknown state"
+                             "\nGameID:" gameid
+                             "\nGameID by ClientID:" gameid
+                             "\nClientID:" uid
+                             "\nPlayers:" (map #(select-keys % [:uid :side]) (:players lobby))
+                             "\nSpectators" (map #(select-keys % [:uid]) (:spectators lobby))))))
       (lobby/log-delay! timestamp id))))
 
 (defmethod ws/-msg-handler :game/watch
