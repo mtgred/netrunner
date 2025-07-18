@@ -9,7 +9,30 @@
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [name-zone]]
    [game.macros :refer [continue-ability msg req]]
-   [game.utils :refer [enumerate-str quantify]]))
+   [game.utils :refer [enumerate-str quantify]])
+  (:import [java.security SecureRandom]))
+
+(defn- generate-seed
+  ;; Note: around 220 bytes of entropy are needed to be able to produce all random
+  ;; combinations of a singleton 49 card list.
+  ;; 1024 bytes allows us to do 170 card lists, and is not much more expensive.
+  ;; see: https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#Pseudorandom_generators
+  "generates 1024 bits of entropy as a byte array"
+  []
+  (let [seed-bytes (byte-array 128)]
+    (.nextBytes (SecureRandom.) seed-bytes)
+    seed-bytes))
+(defonce rng (SecureRandom. (generate-seed)))
+
+(defn- shuffle-coll
+  ;; Ref: https://github.com/clojure/clojure/blob/ce55092f2b2f5481d25cff6205470c1335760ef6/src/clj/clojure/core.clj#L7342
+  ;; we're just substituting in a good rng source (1024 bits of entropy) rather than the default used by java (40 bits of entropy)
+  ;; this should theoretically be invisible, since any random slice of the possible sets of deck orderings is also random,
+  ;; but it is "more correct" to do - anyone playing more than 170 cards can live with it - nbk, 2025
+  [^java.util.Collection c]
+  (let [al (java.util.ArrayList. c)]
+    (java.util.Collections/shuffle al rng)
+    (clojure.lang.RT/vector (.toArray al))))
 
 (defn shuffle!
   "Shuffles the vector in @state [side kw]."
@@ -22,7 +45,7 @@
                (= :deck kw))
       (swap! state assoc-in [:run :shuffled-during-access :rd] true))
     (swap! state update-in [:stats side :shuffle-count] (fnil + 0) 1)
-    (swap! state update-in [side kw] shuffle)))
+    (swap! state update-in [side kw] shuffle-coll)))
 
 (defn shuffle-cards-into-deck!
   "Shuffles a given set of cards into the deck. Will print out what's happened. Will always shuffle."
