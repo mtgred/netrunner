@@ -12,17 +12,17 @@
    [game.utils :refer [enumerate-str quantify]])
   (:import [java.security SecureRandom]))
 
-(defn- generate-seed
+
+(defonce rng
   ;; Note: around 220 bytes of entropy are needed to be able to produce all random
   ;; combinations of a singleton 49 card list.
   ;; 1024 bytes allows us to do 170 card lists, and is not much more expensive.
   ;; see: https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle#Pseudorandom_generators
-  "generates 1024 bits of entropy as a byte array"
-  []
-  (let [seed-bytes (byte-array 128)]
+  (let [rand (SecureRandom.)
+        seed-bytes (byte-array 128)]
     (.nextBytes (SecureRandom.) seed-bytes)
-    seed-bytes))
-(defonce rng (SecureRandom. (generate-seed)))
+    (.setSeed rand seed-bytes)
+    rand))
 
 (defn- shuffle-coll
   ;; Ref: https://github.com/clojure/clojure/blob/ce55092f2b2f5481d25cff6205470c1335760ef6/src/clj/clojure/core.clj#L7342
