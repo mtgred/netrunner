@@ -2829,6 +2829,22 @@
       (click-prompts state :corp "Yes" "Project Atlas" "Install Project Atlas" "New remote")
       (is (= "Project Atlas" (:title (get-content state :remote2 0)))))))
 
+(deftest off-the-books-ignores-cost
+  (do-game
+    (new-game {:corp {:hand ["Off the Books" "Vanilla"] :deck ["Ice Wall"]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Off the Books" "New remote")
+    (let [pr (get-content state :remote1 0)]
+      (advance state pr 5)
+      (score state :corp (refresh pr)))
+    (let [scored (get-scored state :corp 0)]
+      (is (= 2 (get-counters (refresh scored) :agenda)) "should have 2 agenda counters")
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (is (changed? [(:credit (get-corp)) 0]
+            (click-prompts state :corp "Yes" "Ice Wall" "Install Ice Wall" "HQ")
+            (is (= "Ice Wall" (:title (get-ice state :hq 1)))))))))
+
 (deftest ontological-dependence
   ;; Ontological Dependence
   (do-game
@@ -4573,6 +4589,24 @@
                   (click-prompt state :corp "Yes")
                   (click-card state :corp (get-content state :remote3 0)))
         "Corp gained 2 credits (+1 from Hyobu because the agenda was revealed) and put 1 advancement counter on a card")))
+
+(deftest stoke-vs-ip-enforcement
+  (testing "1 floating tag"
+    (do-game
+      (new-game {:corp {:hand ["IP Enforcement"]}
+                 :runner {:score-area ["Stoke the Embers"] :tags 3}})
+      (play-from-hand state :corp "IP Enforcement")
+      (click-prompts state :corp "2" "Stoke the Embers" "New remote" "Yes" "Stoke the Embers")
+      (is (no-prompt? state :corp) "Stoke did not trigger twice")
+      (is (= 2 (get-counters (get-content state :remote1 0) :advancement)) "1+1 adv")))
+  (testing "no floating tags"
+    (do-game
+      (new-game {:corp {:hand ["IP Enforcement"]}
+                 :runner {:score-area ["Stoke the Embers"] :tags 2}})
+      (play-from-hand state :corp "IP Enforcement")
+      (click-prompts state :corp "2" "Stoke the Embers" "New remote" "Yes" "Stoke the Embers")
+      (is (no-prompt? state :corp) "Stoke did not trigger twice")
+      (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "1+0 adv"))))
 
 (deftest stoke-the-embers-reveal-check
   (do-game

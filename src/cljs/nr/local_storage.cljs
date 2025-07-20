@@ -76,8 +76,8 @@
            ;; Remove database-sourced settings from localStorage
            (.removeItem js/localStorage storage-key)
            ;; Save local-only settings to localStorage (if provided)
-           (when-let [value (get settings-map key)]
-             (save! storage-key value)))))
+           (when (contains? settings-map key)
+             (save! storage-key (get settings-map key))))))
      (catch :default e
        (js/console.warn "localStorage not available for settings update:" e)))))
 

@@ -6737,7 +6737,7 @@
         (take-credits state :corp)
         (take-credits state :runner)
         (is (changed? [(count (:hand (get-corp))) 2]
-              (click-prompt state :corp "Add this asset to HQ"))
+              (click-prompts state :corp "Wall to Wall" "Add this asset to HQ"))
             "Added this asset to HQ (and took mandatory draw)")
         (is (no-prompt? state :corp) "No further options because PAD Campaign is rezzed"))))
 

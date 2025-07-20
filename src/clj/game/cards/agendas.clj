@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [rez-cost install-cost]]
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-recur defcard do-net-damage gain-credits-ability give-tags
+   [game.core.def-helpers :refer [corp-recur defcard do-net-damage draw-abi gain-credits-ability give-tags
                                   offer-jack-out reorder-choice take-credits get-x-fn]]
    [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -46,7 +46,7 @@
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez rez rez-multiple-cards]]
    [game.core.runs :refer [clear-encounter end-run get-current-encounter force-ice-encounter redirect-run start-next-phase]]
-   [game.core.say :refer [system-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
    [game.core.set-aside :refer [set-aside-for-me]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck
@@ -883,12 +883,9 @@
               :effect (req (shuffle-into-deck state side :hand)
                            (add-counter state side eid card :agenda 1 nil))
               :interactive (req true)}
-   :abilities [{:action true
-                :cost [(->c :click 1) (->c :agenda 1)]
-                :msg "draw 5 cards"
-                :keep-menu-open :while-agenda-tokens-left
-                :async true
-                :effect (effect (draw eid 5))}]})
+   :abilities [(draw-abi 5 nil {:action true
+                                :cost [(->c :click 1) (->c :agenda 1)]
+                                :keep-menu-open :while-agenda-tokens-left})]})
 
 (defcard "Explode-a-palooza"
   {:flags {:rd-reveal (req true)}
@@ -924,10 +921,7 @@
 
 (defcard "Fetal AI"
   {:flags {:rd-reveal (req true)}
-   :on-access {:async true
-               :req (req (not (in-discard? card)))
-               :msg "do 2 net damage"
-               :effect (effect (damage eid :net 2 {:card card}))}
+   :on-access (assoc (do-net-damage 2) :req (req (not (in-discard? card))))
    :steal-cost-bonus (req [(->c :credit 2)])})
 
 (defcard "Firmware Updates"
@@ -1034,12 +1028,10 @@
   {:agendapoints-runner (req 2)})
 
 (defcard "Government Contracts"
-  {:abilities [{:action true
-                :cost [(->c :click 2)]
-                :async true
-                :keep-menu-open :while-2-clicks-left
-                :effect (effect (gain-credits eid 4))
-                :msg "gain 4 [Credits]"}]})
+  {:abilities [(assoc (gain-credits-ability 4)
+                      :action true
+                      :cost [(->c :click 2)]
+                      :keep-menu-open :while-2-clicks-left)]})
 
 (defcard "Government Takeover"
   {:abilities [{:action true
@@ -1511,7 +1503,9 @@
                 :label "Draw 4 cards"
                 :msg "draw 4 cards"
                 :async true
-                :effect (req (wait-for
+                :effect (req
+                          (play-sfx state side "click-card-2")
+                          (wait-for
                                (draw state side 4)
                                (let [c-hand (count (:hand corp))]
                                  (continue-ability
@@ -1526,6 +1520,7 @@
                                                    (move state side t :deck))
                                                  (shuffle! state side :deck))}
                                    card nil))))}]})
+
 (defcard "NEXT Wave 2"
   {:on-score
    {:async true
@@ -1588,7 +1583,7 @@
                                                          (choose-one-helper
                                                            [{:option (str "Install " (:title target-card))
                                                              :ability {:async true
-                                                                       :effect (req (corp-install state side eid target-card nil {:msg-args {:display-origin true :install-source card}}))}}
+                                                                       :effect (req (corp-install state side eid target-card nil {:ignore-install-cost true :msg-args {:display-origin true :install-source card}}))}}
                                                             {:option (str "Add " (:title target-card) " to HQ")
                                                              :ability {:msg (msg "add " (:title target-card) " to HQ")
                                                                        :effect (req (move state side target-card :hand))}}])

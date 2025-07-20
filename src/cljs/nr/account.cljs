@@ -308,8 +308,8 @@
              (for [[title ref] pronoun-list]
                [:option {:value ref :key ref}
                 (tr [:pronouns title] {:pronoun ref})]))]
-           [:div "If your personal pronouns are not represented, you can request them "
-            [:a {:href "https://github.com/mtgred/netrunner/issues"} "here"]]]
+           [:div (tr [:settings_pronouns-request "If your personal pronouns are not represented, you can request them"]) " "
+            [:a {:href "https://github.com/mtgred/netrunner/issues"} (tr [:settings_pronouns-here "here"])]]]
           [:section
            [:h3 (tr [:settings_language "Language"])]
            [:select {:value (:language @s "en")
@@ -328,7 +328,7 @@
                             {:name "Русский" :ref "ru"}
                             {:name "Igpay Atinlay" :ref "la-pig"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
-           [:div "Some languages are not fully translated yet. If you would like to help with translations, please contact us."]]
+           [:div (tr [:settings_language-tip "Some languages are not fully translated yet. If you would like to help with translations, please contact us."])]]
 
           [:section
            [:h3 (tr [:settings_bespoke-sounds "Card-Specific Sounds"] {:sound "header"})]
@@ -469,7 +469,7 @@
             (doall
               (for [[k v] (card-backs/card-backs-for-side :corp (-> @s :prizes :card-backs))]
                 [:option {:value k :key k}
-                 (tr [(keyword (str "card-backs_" k)) (:name v)])]))]
+                 (tr [(keyword (str "card-backs_" (name k))) (:name v)])]))]
 
 
            [:h3 (tr [:settings_runner-card-sleeve "Runner card backs"])]
@@ -478,8 +478,8 @@
             (doall
               (for [[k v] (card-backs/card-backs-for-side :runner (-> @s :prizes :card-backs))]
                 [:option {:value k :key k}
-                 (tr [(keyword (str "card-backs_" k)) (:name v)])]))]
-           [:div "You can earn more card backs by placing well in select online tournaments. If you're an artist with art that you think would make for a good card back, please feel free to contact us"]
+                 (tr [(keyword (str "card-backs_" (name k))) (:name v)])]))]
+           [:div (tr [:settings_card-backs-tip "You can earn more card backs by placing well in select online tournaments. If you're an artist with art that you think would make for a good card back, please feel free to contact us"])]
 
            [:div {:style {:display "flex" :justifyContent "center"}}
             [:div
@@ -489,7 +489,7 @@
                               ".png")
                     :style {:maxWidth "200px"}
                     :alt "Corp card back"}]
-             [:div {:style {:marginTop "0.5rem" :textAlign "center"}} "Corp card back"]]
+             [:div {:style {:marginTop "0.5rem" :textAlign "center"}} (tr [:settings_corp-card-back "Corp card back"])]]
 
             [:div
              {:style {:display "flex" :flexDirection "column" :alighItems "center" :margin "1rem"}}
@@ -498,7 +498,7 @@
                               ".png")
                     :style {:maxWidth "200px"}
                     :alt "Runner card back"}]
-             [:div {:style {:marginTop "0.5rem" :textAlign "center"}} "Runner card back"]]]]
+             [:div {:style {:marginTop "0.5rem" :textAlign "center"}} (tr [:settings_runner-card-back "Runner card back"])]]]]
 
            [:h3 (tr [:settings_card-back-display "Display Opponent Card backs"])]
            (doall (for [option [{:name (tr [:settings_card-backs-their-choice "Their Choice"]) :ref "them"}

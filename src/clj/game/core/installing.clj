@@ -232,6 +232,8 @@
             (queue-event state :corp-install {:card (get-card state moved-card)
                                               :install-state install-state})
             (update-disabled-cards state)
+            (when (:breach @state)
+              (swap! state update-in [:breach :installed] (fnil conj #{}) (:cid moved-card)))
             (case install-state
               ;; Ignore all costs
               :rezzed-no-cost
@@ -419,13 +421,21 @@
            (corp-install-pay state side eid card server args))))))
 
 ;;; Installing a runner card
+(defn- card-has-a-valid-host?
+  "Checks if the specified card has a valid host (in the cases where it needs one)"
+  [state side eid card facedown]
+  (or facedown
+      (if-let [host-req (->> card card-def :hosting :req)]
+        (some #(host-req state side eid card [%]) (concat (all-installed state :corp) (all-installed state :runner)))
+        true)))
+
 (defn- runner-can-install-reason
   "Checks if the specified card can be installed.
    Checks uniqueness of card and installed console.
    Returns true if there are no problems
    Returns :req if card-def :req check fails
    !! NB: This should only be used in a check with `true?` as all return values are truthy"
-  [state side card facedown]
+  [state side eid card facedown]
   (let [card-req (:req (card-def card))]
     (cond
       ;; Can always install a card facedown
@@ -433,7 +443,9 @@
       ;; Installing not locked
       (install-locked? state :runner) :lock-install
       ;; Req check
-      (and card-req (not (card-req state side (make-eid state) card nil))) :req
+      (and card-req (not (card-req state side eid card nil))) :req
+      ;; if the card requires a host, there is a valid host
+      (not (card-has-a-valid-host? state side eid card facedown)) :no-valid-host
       ;; The card's zone is locked
       (zone-locked? state side (first (get-zone card))) :locked-zone
       ;; Nothing preventing install
@@ -441,9 +453,9 @@
 
 (defn runner-can-install?
   "Checks `runner-can-install-reason` if not true, toasts reason and returns false"
-  ([state side card] (runner-can-install? state side card nil))
-  ([state side card {:keys [facedown no-toast]}]
-   (let [reason (runner-can-install-reason state side card facedown)
+  ([state side eid card] (runner-can-install? state side eid card nil))
+  ([state side eid card {:keys [facedown no-toast]}]
+   (let [reason (runner-can-install-reason state side eid card facedown)
          reason-toast #(do (when-not no-toast (toast state side % "warning")) false)
          title (:title card)]
      (case reason
@@ -451,6 +463,8 @@
        (reason-toast (str "Unable to install " title " since installing is currently locked"))
        :req
        (reason-toast (str "Installation requirements are not fulfilled for " title))
+       :no-valid-host
+       (reason-toast (str "There is no valid host for " title))
        :locked-zone
        (reason-toast (str "Unable to install " title " because it is currently in a locked zone"))
        ;; else
@@ -568,7 +582,7 @@
   ([state side eid card {:keys [facedown] :as args}]
    (let [eid (assoc eid :source-type :runner-install)
          costs (runner-install-cost state side (assoc card :facedown facedown) args)]
-     (and (runner-can-install? state side card args)
+     (and (runner-can-install? state side eid card args)
           (can-pay? state side eid card nil costs)
           ;; explicitly return true
           true))))

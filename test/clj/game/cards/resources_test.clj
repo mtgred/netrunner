@@ -3379,7 +3379,9 @@
           "Gained no credits on run on mark when breach is replaced")
       (is (changed? [(:credit (get-runner)) 0]
             (run-empty-server state :archives))
-          "Gained no credits on sunsequent runs with breach on mark even if breach didn't happen yet")))
+          "Gained no credits on sunsequent runs with breach on mark even if breach didn't happen yet")
+      (take-credits state :runner)
+      (is (not (:card-target (get-resource state 0))) "No card target text after mark is unset at  end of turn")))
 
 (deftest info-bounty-with-virtuoso
     ;; Info Bounty - interaction with Virtuoso
@@ -4484,7 +4486,8 @@
         (is (= 3 (get-counters (refresh mm) :credit)) "+1c from start of turn")
         (take-credits state :runner)
         (is (changed? [(count (:hand (get-runner))) -1]
-              (click-prompt state :runner "Trash a random card from the grip"))
+              (click-prompt state :runner "Trash a random card from the grip")
+              (is (last-log-contains? state "Runner trashes 1 card \\(Sure Gamble\\) randomly from the grip to satisfy Mystic Maemi.")))
             "Trashed one card from grip")
         (take-credits state :corp)
         (play-from-hand state :runner "Sure Gamble")

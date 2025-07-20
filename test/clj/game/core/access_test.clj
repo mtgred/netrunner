@@ -132,7 +132,8 @@
           (card-subroutine state :corp (refresh ansel) 1)
           (click-card state :corp "Ganked!")
           (click-prompt state :corp "R&D")
-          (encounter-continue state))
+          (encounter-continue state)
+          (click-prompt state :runner "Yes"))
         (click-prompt state :corp "No")
         (click-prompt state :runner "No action")))))
 
@@ -273,7 +274,8 @@
          (card-subroutine state :corp (refresh ansel) 1)
          (click-card state :corp "Ganked!")
          (click-prompt state :corp "HQ")
-         (encounter-continue state))
+         (encounter-continue state)
+         (click-prompt state :runner "Yes"))
        (click-prompt state :corp "No")
        (click-prompt state :runner "No action")))))
 
@@ -544,7 +546,8 @@
           (card-subroutine state :corp (refresh ansel) 1)
           (click-card state :corp "Ganked!")
           (click-prompt state :corp "Archives")
-          (encounter-continue state))
+          (encounter-continue state)
+          (click-prompt state :runner "Yes"))
         (click-prompt state :corp "No")
         (click-prompt state :runner "No action")))))
 
@@ -580,7 +583,8 @@
           (card-subroutine state :corp (refresh ansel) 1)
           (click-card state :corp "Ganked!")
           (click-prompt state :corp "Server 1")
-          (encounter-continue state))
+          (encounter-continue state)
+          (click-prompt state :runner "Yes"))
         (click-prompt state :corp "No")
         (click-prompt state :runner "No action")))))
 

@@ -2087,6 +2087,8 @@
           "Ice Wall got +2 strength")
       (take-credits state :corp)
       (click-prompt state :corp "Yes")
+      (is (not-any? #(= (:value %) "Server 1") (:choices (get-prompt state :corp)))
+          "Current server is not listed as an option")
       (click-prompt state :corp "R&D")
       (is (not (no-prompt? state :corp)) "Corp has Isaac Liberdade prompt")
       (is (changed? [(get-strength (refresh tithe)) 2

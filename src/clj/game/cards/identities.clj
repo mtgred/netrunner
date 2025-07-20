@@ -611,7 +611,6 @@
 (defcard "Cerebral Imaging: Infinite Frontiers"
   {:static-abilities [(corp-hand-size+ (req (- (:credit corp) 5)))]})
 
-
 (defcard "Chaos Theory: Wünderkind"
   {:static-abilities [(mu+ 1)]})
 
@@ -1403,7 +1402,8 @@
                :prompt "Choose an unrezzed card to return to HQ"
                :choices {:card #(and (not (faceup? %))
                                      (installed? %)
-                                     (corp? %))}
+                                     (corp? %))
+                         :all true}
                :change-in-game-state {:silent true
                                       :req (req (some #(and (not (faceup? %))
                                                             (installed? %))
@@ -1999,7 +1999,16 @@
                                 card nil)))}
               :no-ability
               {:effect (effect (system-msg (str "declines to use " (:title card))))}}})]
-    {:events [{:event :corp-trash
+    {:abilities [(choose-one-helper
+                   {:label "Always pause at start of turn"}
+                   [{:option "Always pause at turn start"
+                     :ability {:effect (req (update! state side (assoc-in card [:special :pause-at-phase-12] true))
+                                            (toast state :corp "The game will always pause at the start of the turn"))}}
+                    {:option "Only if triggered by cards in play"
+                     :ability {:effect (req (update! state side (dissoc-in card [:special :pause-at-phase-12]))
+                                            (toast state :corp "The game only pause at turn start if triggered by cards in play"))}}])]
+     :flags {:corp-phase-12 (req (get-in card [:special :pause-at-phase-12]))}
+     :events [{:event :corp-trash
                :req (req (and
                            (installed? (:card context))
                            (not (:during-installation context))
@@ -2084,6 +2093,7 @@
                :async true
                :prompt "Install a non-agenda from HQ?"
                :change-in-game-state {:silent true :req (req (seq (:hand corp)))}
+               :waiting-prompt true
                :choices {:card (every-pred corp? in-hand? (complement agenda?) (complement operation?))}
                :effect (req (corp-install state side eid target nil {:msg-keys {:install-source card}}))}
               score-ev]}))
@@ -2477,7 +2487,9 @@
 
 (defcard "Synapse Global: Faster than Thought"
   {:events [{:event :runner-lose-tag
-             :req (req (first-event? state side :runner-lose-tag))
+             :req (req (letfn [(valid-ctx? [[ctx]] (pos? (:amount ctx)))]
+                         (and (valid-ctx? targets)
+                              (first-event? state side :runner-lose-tag valid-ctx?))))
              :prompt "Reveal and install a card from HQ?"
              :change-in-game-state {:req (req (seq (:hand corp))) :silent true}
              :choices {:req (req (and (corp? target)

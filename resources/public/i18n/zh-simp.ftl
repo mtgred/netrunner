@@ -16,6 +16,10 @@ annotations_save-local = 保存
 
 annotations_turn-placeholder = 关于此回合的注释
 
+card-backs_nsg-card-back = NSG 牌背
+
+card-backs_ffg-card-back = FFG 牌背
+
 card-browser-form_faction = 派系
 
 card-browser-form_format = 赛制
@@ -33,7 +37,7 @@ card-browser-form_sort-by = {$by ->
     [name] 牌名
     [set-number] 系列编号
     [type] 类别
-    *[unknown] undefined
+    *[unknown] 未知排序选项 ({$by})
 }
 
 card-browser-form_type = 类别
@@ -42,7 +46,7 @@ card-browser_advancement = 推进需求: {$requirement}
 
 card-browser_agenda-points = 议案分数: {$points}
 
-card-browser_artist-info = 艺术家
+card-browser_artist-info = 艺术家信息
 
 card-browser_clear = 清除
 
@@ -86,7 +90,7 @@ card-type_name = {$type ->
     [program] 程序
     [resource] 资源
     [upgrade] 升级
-    *[unknown] undefined
+    *[unknown] 未知卡牌类别 ({$type})
 }
 
 chat_block = 屏蔽用户
@@ -119,6 +123,11 @@ deck-builder_agenda-points = 议案分数
 
 deck-builder_cancel = 取消
 
+deck-builder_card-count = {$cnt ->
+    [one] {$cnt}张卡牌
+    *[other] {$cnt}张卡牌
+}
+
 deck-builder_card-name = 卡牌名称
 
 deck-builder_clear-stats = 清除统计数据
@@ -135,12 +144,14 @@ deck-builder_deck-copy-suffix = 复制
 
 deck-builder_deck-count = {$cnt ->
     [zero] 没有牌组
-    *[other] 套牌组
+    [one] {$cnt}套牌组
+    *[other] {$cnt}套牌组
 }
 
 deck-builder_deck-count-filtered = {$cnt ->
     [zero] 没有牌组（过滤后）
-    *[other] 套牌组（过滤后）
+    [one] {$cnt}套牌组（过滤后）
+    *[other] {$cnt}套牌组（过滤后）
 }
 
 deck-builder_deck-name = 牌组名称
@@ -187,6 +198,8 @@ deck-builder_max = 最多
 
 deck-builder_min = 最少
 
+deck-builder_min-deck-size = (最少{$cnt}张)
+
 deck-builder_new-corp = 新建公司牌组
 
 deck-builder_new-deck = 新建牌组
@@ -202,6 +215,12 @@ deck-builder_save = 保存
 deck-builder_why = 为什么？
 
 deck-builder_won = 胜利: {$won} ({NUMBER($percent, style: "percent")})
+
+deck-builder_view-options = 查看选项
+
+deck-builder_show-credit-cost = 显示信用点费用
+
+deck-builder_show-memory-cost = 显示内存费用
 
 diagrams_run-timing_approach = 6.9.2: 接驳防火墙阶段
 
@@ -234,6 +253,8 @@ diagrams_run-timing_initiation-a = 潜袭者宣布攻击的服务器
 diagrams_run-timing_initiation-b = 潜袭者获得负面声誉信用点
 
 diagrams_run-timing_initiation-c = 潜袭正式开始 —— 潜袭事件结算
+
+diagrams_run-timing_initiation-c-2 = 付费能力窗口。公司可以激活非防火墙卡牌
 
 diagrams_run-timing_initiation-d = 如可能，接驳最外层的防火墙，并开始接驳阶段（6.9.2）
 
@@ -361,7 +382,7 @@ faction_name = {$faction ->
     [shaper] 塑造者
     [sunny-lebeau] 桑妮·勒博
     [weyland-consortium] 威兰财团
-    *[unknown] undefined
+    *[other] 未知派系 ({$faction})
 }
 
 format_name = {$format ->
@@ -378,17 +399,27 @@ format_name = {$format ->
     [startup] 新启
     [sunset] 落日
     [system-gateway] 核心网关
-    [throwback] undefined
-    *[unknown] undefined
+    [throwback] Throwback
+    *[other] 未知赛制 ({$format})
 }
 
 game_abilities = 能力
 
 game_actions = 操作
 
-game_agenda-count = {$agenda-point} 议案分数
+game_agenda-count = {$agenda-point ->
+    [one] {$agenda-point}议案分数
+    *[other] {$agenda-point}议案分数
+}
+
+game_agenda-count-with-req = {$agenda-point ->
+    [one] {$agenda-point}议案分数
+    *[other] {$agenda-point}议案分数
+} (需要{$agenda-point-req})
 
 game_approach-ice = 接驳防火墙
+
+game_approach-server = 接驳服务器
 
 game_archives = 档案库 ({$faceup} ↑ {$facedown} ↓)
 
@@ -398,19 +429,25 @@ game_auto-pass = 自动让过优先权
 
 game_bad-pub-count = {$base} 负面声誉
 
-game_bad-pub-count-additional = {$base} 负面声誉 + {$additional} 负面声誉
+game_bad-pub-count-additional = {$base} + {$additional} 负面声誉
 
 game_beat-trace = 击败追踪
 
-game_brain-damage = 脑部伤害
+game_brain-damage = {NUMBER($dmg)} 核心伤害
 
 game_breach-server = 侵入服务器
 
 game_card = 卡牌
 
-game_card-count = {$cnt} 张卡牌。
+game_card-count = {$cnt ->
+    [one] {$cnt}张卡牌
+    *[other] {$cnt}张卡牌
+}
 
-game_click-count = {$click} 时点
+game_click-count = {$click ->
+    [one] {$click} 时点
+    *[other] {$click} 时点
+}
 
 game_close = 关闭
 
@@ -420,19 +457,27 @@ game_concede = 投降
 
 game_continue = 继续
 
-game_continue-to = 继续 {$phase}
+game_continue-to = 继续{$phase}
 
 game_corp-view = 公司视图
 
-game_credit-count = {$credit} 信用点
+game_credit-count = {$credit ->
+    [one] {$credit} 信用点
+    *[other] {$credit} 信用点
+}
 
-game_credit-count-with-run-credits = {$credit} 信用点（{$run-credit} 个本次潜袭专用）
+game_credit-count-with-run-credits = {$credit ->
+    [one] {$credit} 信用点
+    *[other] {$credit} 信用点
+} ({$run-credit} 个本次潜袭专用)
 
 game_credits = 个信用点
 
 game_current = 局势
 
 game_current-phase = 当前阶段
+
+game_destroyed = Destroyed
 
 game_draw = 抽牌
 
@@ -442,7 +487,10 @@ game_end-turn = 结束回合
 
 game_error = 内部服务器错误。请在聊天中键入/bug并按照说明操作。
 
-game_face-down-count = {$total}张卡牌，{$facedown}张牌面朝下。
+game_face-down-count = {$total ->
+    [one] {$total}张卡牌，{$facedown}张牌面朝下。
+    *[other] {$total}张卡牌，{$facedown}张牌面朝下。
+}
 
 game_fire-unbroken = 结算未破解的子进程
 
@@ -465,6 +513,8 @@ game_initiation = 发起潜袭
 game_jack-out = 退出潜袭
 
 game_keep = 保留
+
+game_last-revealed = 上次展示
 
 game_leave = 离开对战
 
@@ -492,7 +542,7 @@ game_mute = 禁止旁观者发言
 
 game_no-current-run = 当前无潜袭进行中
 
-game_no-further = 没有响应
+game_no-further = 无更多响应
 
 game_ok = OK
 
@@ -503,14 +553,15 @@ game_prompt = {$msg ->
     [archives] 档案库
     [derez] 关闭
     [expend] 消耗
+    [cast-as-a-sorcery] Cast as a Sorcery
     [hq] 总部
     [new-remote] 新远程
     [r-d] 研发中心
     [rez] 激活
     [score] 计分
-    [server-num] 服务器 {$num}
     [trash] 销毁
-    *[unknown] undefined
+    [server-num] 服务器 {$num}
+    *[unknown] 未知游戏提示 ({$msg})
 }
 
 game_purge = 清除病毒指示物
@@ -519,7 +570,11 @@ game_reconnected-to-server = 已重新连接到服务器
 
 game_remove-tag = 移除锁定标记
 
+game_reveal-my-hand = 展示我的手牌
+
 game_rez = 激活
+
+game_rez-all = 激活全部
 
 game_rfg = 移出游戏
 
@@ -543,9 +598,14 @@ game_set-aside = 设置一旁
 
 game_show = 显示
 
+game_show-decklists = 显示/隐藏牌组列表
+
 game_shuffle = 洗牌
 
-game_spec-count = {$cnt} 位观众
+game_spec-count = {$cnt ->
+    [one] {$cnt}位观众
+    *[other] {$cnt}位观众
+}
 
 game_spec-view = 旁观者视图
 
@@ -563,15 +623,28 @@ game_subs = 子进程
 
 game_success = 成功
 
-game_tag-count = {$base} 锁定标记
+game_tag-count = {$base ->
+    [one] {$base} 锁定标记
+    *[other] {$base} 锁定标记
+}
 
-game_tag-count-additional = {$base} + {$additional} 锁定标记
+game_tag-count-additional = {$total ->
+    [one] {$base} + {$additional} 锁定标记
+    *[other] {$base} + {$additional} 锁定标记
+}
 
 game_take-clicks = 进入行动阶段
 
-game_time-taken = 对战用时：{$time}分钟
+game_time-taken = Time taken: {$time ->
+    [one] {$time} 分钟
+    *[other] {$time} 分钟
+}
+
+game_timeout-soon = 游戏将在30秒内因不活动而超时
 
 game_trace = 追踪强度
+
+game_trash-like-cards = 提供销毁如卡牌
 
 game_trash-resource = 销毁资源
 
@@ -583,21 +656,47 @@ game_unknown-phase = 未知阶段
 
 game_unmute = 允许旁观者发言
 
-game_win-claimed = {$winner} ({$side})于第{$turn}回合因声明而获胜
+game_win-claimed = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合因声明而获胜
 
-game_win-conceded = {$winner} ({$side})于第{$turn}回合因对手投降而获胜
+game_win-conceded = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合因对手投降而获胜
 
-game_win-decked = {$winner} ({$side})于第{$turn}回合因公司无牌可抽而获胜
+game_win-decked = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合因公司无牌可抽而获胜
 
-game_win-flatlined = {$winner} ({$side})于第{$turn}回合通过杀死潜袭者而获胜
+game_win-flatlined = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合通过杀死潜袭者而获胜
 
-game_win-other = {$winner} ({$side})于第{$turn}回合因{$reason}而获胜
+game_win-other = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合因{$reason}而获胜
 
-game_win-points = {$winner} ({$side})于第{$turn}回合因议案分数而获胜
+game_win-points = {$winner} ({$side ->
+    [runner] 潜袭者
+    [corp] 公司
+    *[other] {$side}
+})于第{$turn}回合因议案分数而获胜
 
 ingame-settings_alt-art = 异画卡
 
 ingame-settings_board-overlap = 面板重叠
+
+ingame-settings_card-back-display = 显示对手牌背
 
 ingame-settings_card-backs = 卡背
 
@@ -611,7 +710,15 @@ ingame-settings_card-stacking = 卡牌设置
 
 ingame-settings_card-text = 卡牌文本
 
-ingame-settings_ghost-trojans = 对于被负载的程序显示鬼影
+ingame-settings_device-specific = 设备特殊设置
+
+ingame-settings_device-specific-note = 这些设置存储在此设备上，不会跨设备同步。
+
+ingame-settings_display-encounter-info = 始终显示遭遇信息
+
+ingame-settings_game-settings = 游戏设置
+
+ingame-settings_ghost-trojans = 在设备显示负载木马
 
 ingame-settings_high-res = 启用高分辨率卡牌图像
 
@@ -619,7 +726,13 @@ ingame-settings_label-faceup-cards = 贴标签于面朝上卡牌
 
 ingame-settings_label-unrezzed-cards = 贴标签于未激活卡牌
 
-ingame-settings_preview-zoom = 卡牌预览缩放
+ingame-settings_log-timestamps = 日志时间戳
+
+ingame-settings_log-timestamps-toggle = 显示日志时间戳
+
+ingame-settings_pass-on-rez = 激活防火墙时让过优先权
+
+ingame-settings_preview-zoom = 卡片预览缩放
 
 ingame-settings_runner-board-order = 潜袭者面板顺序
 
@@ -638,6 +751,16 @@ ingame-settings_sort-archives = 排序档案库
 ingame-settings_sort-heap = 排序堆阵
 
 ingame-settings_stack-cards = 启用服务器堆叠
+
+lobby_turmoil = Turmoil
+
+lobby_turmoil-details = The fickle winds of fate shall decide your future.
+
+lobby_turmoil-theme = "FINUKA DISPOSES"
+
+lobby_turmoil-info = This lobby is running in turmoil mode. The winds of fate shall decide your path to the future.
+
+lobby_span-turmoil = (turmoil)
 
 lobby_aborted = 连接已中断
 
@@ -675,9 +798,15 @@ lobby_filter = 过滤
 
 lobby_format = 赛制
 
-lobby_game-count = {$cnt} 局对战
+lobby_game-count = {$cnt ->
+    [one] {$cnt} 局对战
+    *[other] {$cnt} 局对战
+}
 
-lobby_game-count-filtered = {$cnt} 局对战（过滤后）
+lobby_game-count-filtered = {$cnt ->
+    [one] {$cnt} 局对战（过滤后）
+    *[other] {$cnt} 局对战（过滤后）
+}
 
 lobby_gateway-format = {$format ->
     [Beginner] 初学者
@@ -687,7 +816,7 @@ lobby_gateway-format = {$format ->
     [Intermediate] 进阶
     [intermediate-info] 此大厅为公司和潜袭者使用核心网关进阶牌组而准备。这些牌组比初学者牌组稍大。游戏按7点议案分数进行。
     [intermediate-ul] 核心网关 - 进阶教学牌组
-    *[unknown] undefined
+    *[unknown] 未知网关赛制 ({$format})
 }
 
 lobby_hidden = 允许旁观者查看玩家的隐藏信息
@@ -709,6 +838,10 @@ lobby_new-game = 新建对战
 lobby_no-games = 当前无对战
 
 lobby_not-allowed = 操作被禁止
+
+lobby_open-decklists = 公开牌组
+
+lobby_open-decklists-b = (公开牌组)
 
 lobby_options = 选项
 
@@ -762,7 +895,10 @@ lobby_singleton-example = 1) 复始：触媒&促力 2) 安培：全民的义体
 
 lobby_singleton-restriction = 这局要求为单张卡牌模式。这意味着牌组中每种同名卡牌限1张。
 
-lobby_spectator-count = {$cnt} 位观众
+lobby_spectator-count = {$cnt ->
+    [one] {$cnt}位观众
+    *[other] {$cnt}位观众
+}
 
 lobby_spectators = 允许旁观
 
@@ -785,11 +921,14 @@ lobby_title-error = 请设置房间名。
 lobby_too-little-data = 数据不足
 
 lobby_type = {$type ->
+    [angel-arena] 天使竞技场
     [casual] 休闲
     [competitive] 竞技
-    [angel-arena] 天使竞技场
+    [join] 加入
+    [rejoin] 重新加入
     [tournament] 比赛
-    *[unknown] undefined
+    [watch] 观战
+    *[unknown] 未知大厅类型 ({$type})
 }
 
 lobby_waiting = 等待玩家选择牌组
@@ -804,7 +943,7 @@ log_remote-annotations-fail = 无法获取远程注释。
 
 log_run-timing = 潜袭时序
 
-log_settings = 设置
+log_settings = 游戏设置
 
 log_shared = 共享注释
 
@@ -832,11 +971,16 @@ nav_deck-builder = 牌组构筑
 
 nav_features = 站点功能
 
-nav_game-count = {$cnt} 局对战
+nav_game-count = {$cnt ->
+    [one] {$cnt} 局对战
+    *[other] {$cnt} 局对战
+}
 
 nav_help = 帮助
 
 nav_play = 对战
+
+nav_prizes = 奖励
 
 nav_settings = 设置
 
@@ -898,7 +1042,7 @@ preconstructed_worlds-2015-a-ul = Worlds 2015: Foodcoatshop vs. The Morning Afte
 
 preconstructed_worlds-2015-b = Worlds 2015: Timmy Wong (C) vs. Dan D'Argenio (R)
 
-preconstructed_worlds-2015-b-tag = Dan D'Argenio (C) vs. Timmy Wong (R)
+preconstructed_worlds-2015-b-tag = Timmy Wong (C) vs. Dan D'Argenio (R)
 
 preconstructed_worlds-2015-b-ul = Worlds 2015: Yellow Shell vs. Radisson Cheese Plate
 
@@ -958,7 +1102,7 @@ preconstructed_worlds-2019-b-tag = Testrunning (C) vs. Pinsel (R)
 
 preconstructed_worlds-2019-b-ul = Worlds 2019: 2 Grid for 2 Place vs. Trash Panda
 
-preconstructed_worlds-2019-info = 256 players played in the first even Project NISEI Netrunner World Championship in 2019. This tournament was held in Rotterdam, NL, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Uprising Booster Pack
+preconstructed_worlds-2019-info = 256 players played in the first ever Project NISEI Netrunner World Championship in 2019. This tournament was held in Rotterdam, NL, and consisted of 9 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Uprising Booster Pack
 
 preconstructed_worlds-2020-a = Worlds 2020: Limes (C) vs. tf34 (R)
 
@@ -1000,13 +1144,13 @@ preconstructed_worlds-2022-b-tag = skry (C) vs. William Huang (R)
 
 preconstructed_worlds-2022-b-ul = Worlds 2022: Dies to Doom Blade vs. ApocoLat
 
-preconstructed_worlds-2022-info = 158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 8(?) rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun.
+preconstructed_worlds-2022-info = 158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 7 rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun.
 
 preconstructed_worlds-2023-a = Worlds 2023: William Huang (C) vs. cableCarnage (R)
 
 preconstructed_worlds-2023-a-tag = William Huang (C) vs. cableCarnage (R)
 
-preconstructed_worlds-2023-a-ul = Worlds 2023: The Worlds Grid vs. sableCarnage
+preconstructed_worlds-2023-a-ul = Worlds 2023: The Worlds Grind vs. sableCarnage
 
 preconstructed_worlds-2023-b = Worlds 2023: cableCarnage (C) vs. William Huang (R)
 
@@ -1014,28 +1158,28 @@ preconstructed_worlds-2023-b-tag = cableCarnage (C) vs. William Huang (R)
 
 preconstructed_worlds-2023-b-ul = Worlds 2023: tableCarnage vs. You *do* always come back!
 
-preconstructed_worlds-2023-info = 254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 8 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative.
+preconstructed_worlds-2023-info = 254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 9 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative.
 
 pronouns = {$pronoun ->
     [any] 随意
     [blank] [空白]
     [ey] Ey/em
-    [faefaer] undefined
+    [faefaer] Fae/Faer
     [he] 他（He/him）
-    [heit] undefined
-    [heshe] undefined
+    [heit] He/it
+    [heshe] He/She/they
     [hethey] 他（He/they）
     [it] 它（It）
     [myodb] 不愿透露
     [ne] Ne/nem
     *[none] 未设定
     [she] 她（She/her）
-    [sheit] undefined
+    [sheit] She/it
     [shethey] 她（She/they）
     [they] They/them
     [ve] Ve/ver
     [xe] Xe/xem
-    [xi] undefined
+    [xi] Xi/xir
     [zehir] Ze/hir
     [zezir] Ze/zir
 }
@@ -1071,6 +1215,7 @@ set_name = {$name ->
     [draft-cycle] 轮抽循环
     [earth-s-scion] 地球子孙
     [escalation] 事态升级
+    [elevation] 仰望
     [fear-and-loathing] 恐惧与憎恶
     [fear-the-masses] 群众可畏
     [first-contact] 初遇之际
@@ -1142,7 +1287,28 @@ set_name = {$name ->
     [world-champion-2015] 世界冠军2015
     [world-champion-2016] 世界冠军2016
     [world-champion-2017] 世界冠军2017
-    *[unknown] undefined
+    [nin419-alt-arts] nin419 Alt Arts
+    [ams-alt-arts] Ams Alt Arts
+    [adam-s-doyle-alt-arts] Adam S. Doyle Alt Arts
+    [brindelmold-alt-arts] Brindelmold Alt Arts
+    [ezbior-alt-arts] Ezbior Alt Arts
+    [kalypso-alt-arts] Kalypso Alt Arts
+    [elessarellie-alt-arts] ElessarEllie Alt Arts
+    [mr-alt-arts] M.R. Alt Arts
+    [maysleyline-alt-arts] mays.leyline Alt Arts
+    [nicky-cheng-alt-arts] Nicky Cheng Alt Arts
+    [scott-uminga-alt-arts] Scott Uminga Alt Arts
+    [the-tag-mill-alt-arts] The Tag Mill Alt Arts
+    [valenetrunner-alt-arts] ValeNetrunner Alt Arts
+    [igor-lebedev-alt-arts] Igor Lebedev Alt Arts
+    [gnk-2013] 2013 FFG GNK
+    [gnk-2014] 2014 FFG GNK
+    [gnk-2015] 2015 FFG GNK
+    [gnk-2016] 2016 FFG GNK
+    [gnk-2017] 2017 FFG GNK
+    [nsg-2024-prizing] 2024 NSG Prizing
+    [nsg-2025-prizing] 2025 NSG Prizing
+    *[unknown] 未知系列 {$name}
 }
 
 settings_alt-art = 异画卡
@@ -1156,16 +1322,18 @@ settings_avatar = 头像
 settings_background = 游戏背景
 
 settings_bespoke-sounds = {$sound ->
-    [bespoke-sounds-header] 卡牌特定声音
     [archer] 射手
+    [bling] 炫灵
     [end-of-the-line] 穷途末路
     [harmonics] 和声组合（海洋怪声，回声，脉动，波动）
-    *[unknown] undefined
+    [header] 卡牌特定声音
+    [illumination] 映照
+    *[unknown] 未知特定声音 ({$sound})
 }
 
 settings_bg = {$slug ->
     [apex-bg] 尖峰
-    [custom-bg] 自定义背景
+    [custom-bg] 自定义背景（在下面输入URL）
     [find-the-truth-bg] 找出真相
     [freelancer-bg] 自由职业者
     [monochrome-bg] 纯黑
@@ -1174,8 +1342,7 @@ settings_bg = {$slug ->
     [rumor-mill-bg] 谣言工厂
     [the-root-bg] 根基
     [traffic-jam-bg] 交通阻塞
-    [worlds2020] 世界2020
-    *[unknown] undefined
+    *[worlds2020] 世界2020
 }
 
 settings_block = 屏蔽
@@ -1184,7 +1351,19 @@ settings_blocked = 黑名单
 
 settings_cancel = 取消
 
+settings_card-back-display = 显示对手牌背
+
 settings_card-backs = 卡背
+
+settings_card-backs-ffg = FFG 牌背
+
+settings_card-backs-my-choice = 我的选择
+
+settings_card-backs-nsg = NSG 牌背
+
+settings_card-backs-their-choice = 对手选择
+
+settings_card-backs-tip = 通过在选定的在线锦标赛中获得高名次，你可以获得更多的牌背。如果你是一位艺术家，有认为适合做牌背的艺术作品，请随时联系我们
 
 settings_card-iamge = 卡牌图像
 
@@ -1200,6 +1379,12 @@ settings_change-email = 更换电子邮箱
 
 settings_comp-only = 仅竞技厅
 
+settings_connection = 连接
+
+settings_corp-card-back = 公司牌背
+
+settings_corp-card-sleeve = 公司牌背
+
 settings_create-api-key = 创建API密钥
 
 settings_current-email = 旧邮箱
@@ -1209,6 +1394,14 @@ settings_deck-stats = 牌组统计
 settings_delete-api-key = 删除
 
 settings_desired-email = 新邮箱
+
+settings_device-specific = 设备特殊设置
+
+settings_device-specific-note = 这些设置存储在此设备上，不会跨设备同步。
+
+settings_disable-websockets = 禁用 websockets - 单击更新配置文件后需要刷新浏览器 [不建议！]
+
+settings_display-encounter-info = 始终显示遭遇信息
 
 settings_email = 电子邮箱
 
@@ -1226,6 +1419,8 @@ settings_ffg = FFG
 
 settings_game-stats = 对战胜负统计
 
+settings_gameplay-settings = 游戏设置
+
 settings_get-log-top = 获取当前日志框顶部坐标
 
 settings_get-log-width = 获取当前日志框宽度
@@ -1238,7 +1433,15 @@ settings_invalid-email = 没有使用该邮箱地址的账号
 
 settings_invalid-password = 用户名或密码无效
 
+settings_label-faceup-cards = 贴标签于面朝上卡牌
+
+settings_label-unrezzed-cards = 贴标签于未激活卡牌
+
 settings_language = 语言
+
+settings_language-tip = 有些语言尚未完全翻译。如果您想帮助翻译，请联系我们。
+
+settings_layout-device = 设备布局
 
 settings_layout-options = 布局选项
 
@@ -1250,9 +1453,13 @@ settings_log-player-highlight-red-blue = 公司：蓝色 / 潜袭者：红色
 
 settings_log-size = 日志栏尺寸
 
+settings_log-timestamps = 日志时间戳
+
 settings_none = 关闭
 
 settings_nsg = NSG
+
+settings_pass-on-rez = 激活防火墙时让过优先权
 
 settings_pin-zoom = 在屏幕上保持缩放卡牌
 
@@ -1260,7 +1467,15 @@ settings_player-stats-icons = 使用图标显示玩家统计
 
 settings_pronouns = 代词
 
+settings_pronouns-here = 此处
+
+settings_pronouns-request = 如果你的人称代词没有出现，你可以请求它们在
+
 settings_reset = 将所有卡牌重设为原始卡面
+
+settings_runner-card-back = 潜袭者牌背
+
+settings_runner-card-sleeve = 潜袭者牌背
 
 settings_runner-classic = 经典jnet布局（自上而下：程序、硬件、资源）
 
@@ -1276,9 +1491,15 @@ settings_show-alt = 显示异画卡
 
 settings_sides-overlap = 潜袭者和公司面板可以重叠
 
+settings_sort-archives = 排序档案库
+
+settings_sort-heap = 排序堆阵
+
 settings_sounds = 音效
 
 settings_stacked-cards = 默认启用服务器堆叠
+
+settings_toggle-log-timestamps = 显示日志时间戳
 
 settings_update = 更换
 
@@ -1297,7 +1518,7 @@ side_name = {$side ->
     [any-side] 任意阵营
     [corp] 公司
     [runner] 潜袭者
-    *[unknown] undefined
+    *[unknown] 未知阵营 ({$side})
 }
 
 stats_all-games = 显示所有记录
@@ -1338,15 +1559,24 @@ stats_format = 赛制: {$format}
 
 stats_game-stats = 胜负统计
 
-stats_game-title = {$title} ({$cnt} 个回合)
+stats_game-title = {$title} ({$cnt ->
+    [one] {$cnt} 个回合
+    *[other] {$cnt} 个回合
+})
 
 stats_launch = 播放录像
 
 stats_lobby = 大厅: {$lobby}
 
-stats_log-count = {$cnt} 条记录
+stats_log-count = {$cnt ->
+    [one] {$cnt} 条记录
+    *[other] {$cnt} 条记录
+}
 
-stats_log-count-filtered = {$cnt} 条记录（过滤后）
+stats_log-count-filtered = {$cnt ->
+    [one] {$cnt} 条记录
+    *[other] {$cnt} 条记录
+}（过滤后）
 
 stats_lost = 败北: {$lost} ({NUMBER($percent, style: "percent")})
 
@@ -1370,6 +1600,8 @@ stats_psi-game-total-wins = 灵能赌博：胜利次数
 
 stats_rashida-count = 拉什达次数
 
+stats_replay-shared = 录像已分享
+
 stats_runner-stats = 潜袭者统计
 
 stats_runs-made = 潜袭次数
@@ -1392,8 +1624,19 @@ stats_view-games = 返回统计界面
 
 stats_view-log = 查看记录
 
-stats_win-method = 胜利方式: {$reason}
+stats_win-method = 胜利方式: {$reason ->
+    [Agenda] 议案
+    [Claim] 宣称
+    [Concede] 投降
+    [Decked] 无牌可抽
+    [Flatline] 杀死潜袭者
+    [null] (无)
+    *[other] {$reason}
+}
 
-stats_winner = 胜者: {$winner}
+stats_winner = 胜者: {$winner ->
+    [null] (无)
+    *[other] {$winner}
+}
 
 stats_won = 胜利: {$won} ({NUMBER($percent, style: "percent")})

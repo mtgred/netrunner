@@ -25,7 +25,7 @@
    [nr.gameboard.right-pane :refer [content-pane]]
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
-   [nr.translations :refer [tr tr-game-prompt tr-side]]
+   [nr.translations :refer [tr tr-data tr-game-prompt tr-side]]
    [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
                      image-or-face map-longest render-icons render-message]]
    [nr.ws :as ws]
@@ -37,8 +37,8 @@
 (defonce board-dom (atom {}))
 (defonce card-menu (r/atom {}))
 
-(defonce corp-prompt-state (r/cursor game-state [:corp :prompt :prompt-state]))
-(defonce runner-prompt-state (r/cursor game-state [:runner :prompt :prompt-state]))
+(defonce corp-prompt-state (r/cursor game-state [:corp :prompt-state]))
+(defonce runner-prompt-state (r/cursor game-state [:runner :prompt-state]))
 
 (defn is-replay? [] (= "local-replay" (:gameid @app-state [:gameid])))
 
@@ -250,9 +250,9 @@
         runner-specs (get-in @app-state [:current-game :runner-spectators])
         me (:user @app-state)]
     (cond
-      (some #(= (:uid %) (:uid me)) corp-specs)
+      (some #(= (-> % :user :username) (:username me)) corp-specs)
       :corp
-      (some #(= (:uid %) (:uid me)) runner-specs)
+      (some #(= (-> % :user :username) (:username me)) runner-specs)
       :runner
       :else
       nil)))
@@ -416,14 +416,14 @@
 (defn card-zoom-display
   [zoom-card img-side]
   (r/with-let [pin (r/cursor app-state [:options :pin-zoom])
-               card-zoom-type (r/cursor @app-state [:options :card-zoom])]
+               card-zoom-type (r/cursor app-state [:options :card-zoom])]
     (when-let [card @zoom-card]
       [:<>
        [:div.card-preview.blue-shade
         {:on-click #(reset! img-side (not @img-side))}
         (let [url (image-url card)
               show-img (= "image" (or @card-zoom-type "image"))]
-          (if (and @img-side url show-img)
+          (if (and url (if show-img @img-side (not @img-side)))
             [:img {:src url :alt (get-title card) :onLoad #(-> % .-target js/$ .show)}]
             [card-as-text card false]))]
        (when (or @pin false)
@@ -750,10 +750,10 @@
 (defn card-view
   [{:keys [zone code type abilities counter
            subtypes strength current-strength selected hosted
-           side facedown card-target icon new ghost runner-abilities subroutines
+           side facedown card-target icon new ghost runner-abilities subroutines seen
            subtype-target corp-abilities flashback-fake-in-hand flashback-playable]
     :as card} flipped disable-click]
-  (let [title (get-title card)]
+  (let [title (tr-data :title (get @all-cards (:title card)))]
     (r/with-let [gs-prompt-state (r/cursor game-state [(keyword (lower-case side)) :prompt-state])
                  gs-encounter-ice (r/cursor game-state [:encounters :ice])
                  as-button (r/cursor app-state [:button])
@@ -766,7 +766,8 @@
                                                 (same-card? card @gs-encounter-ice) "encountered"
                                               (and (not (any-prompt-open? side)) (playable? card)) "playable"
                                               ghost "ghost"
-                                              (and flashback-fake-in-hand (not (any-prompt-open? side)) flashback-playable) "playable flashback"
+                                              (and flashback-fake-in-hand flashback-playable seen) "playable flashback known"
+                                              (and flashback-fake-in-hand flashback-playable) "playable flashback unknown"
                                               flashback-fake-in-hand "flashback"
                                               (graveyard-highlight-card? card) "graveyard-highlight"
                                               ;; specifically, don't show cards as 'new' during selection prompts, so they dont look like selectable cards (we're running out of colors)
@@ -1203,7 +1204,7 @@
                [card-view card flipped]]))))
       (if central-view
         [label content (assoc opts :classes "server-label" :hide-cursor true)]
-        [label content (assoc opts :classes "server-label" :hide-cursor true :name (str "Server " key))])]]))
+        [label content (assoc opts :classes "server-label" :hide-cursor true :name (str (tr [:game_server "Server"] {:num key})))])]]))
 
 (defn stacked-label [cursor similar-servers opts]
   (let [similar-server-names (->> similar-servers
