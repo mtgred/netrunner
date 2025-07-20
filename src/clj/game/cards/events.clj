@@ -80,7 +80,7 @@
 (defn- cutlery
   [subtype]
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :subroutines-broken
              :async true
              :req (req (let [pred (every-pred :all-subs-broken #(has-subtype? (:ice %) subtype))]
@@ -237,7 +237,7 @@
                                      (continue-ability state side (choice (remove-once #(= % chosen) abis) (dec rem)) card nil)
                                      (effect-completed state side eid)))))})]
     {:makes-run true
-     :on-play run-any-server-ability
+     :on-play (run-any-server-ability)
      :interactions {:pay-credits {:req (req (and (= :runner-trash-corp-cards (:source-type eid))
                                                (corp? target)))
                                   :type :credit}}
@@ -640,7 +640,7 @@
 
 (defcard "Clean Getaway"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :successful-run
              :req (req this-card-run)
              :msg "gain 6 [Credits]"
@@ -673,7 +673,7 @@
   {:implementation "Used programs restriction not enforced"
    :makes-run true
    :data {:counter {:credit 4}}
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :interactions {:pay-credits {:req (req run)
                                 :type :credit}}
    :events [{:event :run-ends
@@ -699,7 +699,7 @@
                                            :msg-keys {:display-origin true
                                                       :install-source card}}))})]
     {:makes-run true
-     :on-play run-any-server-ability
+     :on-play (run-any-server-ability)
      :events [{:event :encounter-ice
                :skippable true
                :optional
@@ -745,7 +745,7 @@
                                                        card nil)
                                       (continue-ability
                                         state side
-                                        run-any-server-ability
+                                        (run-any-server-ability)
                                         (get-card state card) nil)))}}))
 
 (defcard "Contaminate"
@@ -783,7 +783,7 @@
 
 (defcard "Credit Crash"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :pre-access-card
              :once :per-run
              :async true
@@ -1034,10 +1034,10 @@
               :effect (req (wait-for (expose state side [target])
                                      (continue-ability
                                        state side
-                                       run-any-server-ability
+                                       (run-any-server-ability)
                                        card nil)))
               :cancel-effect (effect (continue-ability
-                                       run-any-server-ability
+                                       (run-any-server-ability)
                                        card nil))}]
         choice (fn choice [abis]
                  {:prompt "Choose an ability to resolve"
@@ -1055,7 +1055,7 @@
 
 (defcard "Diana's Hunt"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :encounter-ice
              :skippable true
              :optional
@@ -1117,7 +1117,7 @@
 
 (defcard "Dirty Laundry"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :run-ends
              :req (req (and (:successful target)
                             this-card-run))
@@ -1354,7 +1354,7 @@
 
 (defcard "Exploratory Romp"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [(successful-run-replace-breach
               {:mandatory true
                :this-card-run true
@@ -1963,7 +1963,7 @@
 
 (defcard "Inside Job"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :encounter-ice
              :automatic :bypass
              :req (req (and (first-run-event? state side :encounter-ice)
@@ -2045,7 +2045,7 @@
                                      (continue-ability state side (choice (remove-once #(= % chosen) abis) (dec rem)) card nil)
                                      (effect-completed state side eid)))))})]
     {:makes-run true
-     :on-play run-any-server-ability
+     :on-play (run-any-server-ability)
      :events [{:event :successful-run
                :automatic :gain-credits
                :interactive (req true)
@@ -2097,7 +2097,7 @@
 
 (defcard "Katorga Breakout"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :successful-run
              :automatic :draw-cards
              :req (req (and this-card-run
@@ -2255,7 +2255,7 @@
 
 (defcard "Leave No Trace"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :run-ends
              :async true
              :effect (req (let [rezzed-ice (->> (run-events target :rez)
@@ -2339,7 +2339,7 @@
 
 (defcard "Mad Dash"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :run-ends
              :async true
              :req (req this-card-run)
@@ -2650,7 +2650,7 @@
                                           (continue-ability state side (ashes-recur) (get-card state next-out-of-ashes) nil)
                                           (effect-completed state side eid))))}}})]
     {:makes-run true
-     :on-play run-any-server-ability
+     :on-play (run-any-server-ability)
      :events [{:event :runner-turn-begins
                :skippable true
                :async true
@@ -2672,7 +2672,7 @@
    :data {:counter {:credit 5}}
    :interactions {:pay-credits {:req (req run)
                                 :type :credit}}
-   :on-play run-any-server-ability})
+   :on-play (run-any-server-ability)})
 
 (defcard "Paper Tripping"
   {:on-play
@@ -2692,7 +2692,7 @@
 
 (defcard "Pinhole Threading"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [(successful-run-replace-breach
               {:mandatory true
                :this-card-run true
@@ -2793,7 +2793,7 @@
 
 (defcard "Prey"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :pass-ice
              :req (req (and (rezzed? (:ice context))
                             (not-used-once? state {:once :per-run} card)
@@ -2989,7 +2989,7 @@
 
 (defcard "Raindrops Cut Stone"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :subroutine-fired
              :req (req (some #(= % :play-area) (:zone card)))
              :async true
@@ -3074,7 +3074,7 @@
 
 (defcard "Recon"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :encounter-ice
              :skippable true
              :optional (:optional (offer-jack-out
@@ -3113,7 +3113,7 @@
   (letfn [(opt-run []
             {:optional
              {:prompt "Run a server?"
-              :yes-ability run-any-server-ability
+              :yes-ability (run-any-server-ability)
                :no-ability {:effect (effect (system-msg (str "declines to use " (:title card) " to make a run")))}}})]
     {:makes-run true
      :on-play
@@ -3330,7 +3330,7 @@
    :static-abilities [{:type :rez-additional-cost
                        :req (req (and run (ice? target)))
                        :value (req [(->c :credit (:cost target))])}]
-   :on-play run-any-server-ability})
+   :on-play (run-any-server-ability)})
 
 (defcard "S-Dobrado"
   {:makes-run true
@@ -3450,7 +3450,7 @@
                       :value (->c :credit 1)}]})
 
 (defcard "Shred"
-  {:on-play run-any-server-ability
+  {:on-play (run-any-server-ability)
    :makes-run true
    :static-abilities [{:type :prevention
                        :req (req (and run (first-run-event? state side :end-run-interrupt)))
@@ -3489,7 +3489,7 @@
 
 (defcard "Singularity"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [(successful-run-replace-breach
               {:target-server :remote
                :this-card-run true
@@ -3566,7 +3566,7 @@
 
 (defcard "Spear Phishing"
   {:makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :events [{:event :encounter-ice
              :automatic :bypass
              :req (req (= 1 run-position))
@@ -3599,13 +3599,13 @@
     :effect (req (wait-for (expose state side [target])
                            (continue-ability
                              state side
-                             run-any-server-ability
+                             (run-any-server-ability)
                              card nil)))}})
 
 (defcard "Spree"
   {:data {:counter {:power 3}}
    :makes-run true
-   :on-play run-any-server-ability
+   :on-play (run-any-server-ability)
    :abilities [{:cost [(->c :power 1)]
                 :label "Host an installed trojan on a piece of ice protecting this server"
                 :prompt "Choose an installed trojan"
@@ -3952,7 +3952,7 @@
                                       card nil)))}]})
 
 (defcard "Tread Lightly"
-  {:on-play run-any-server-ability
+  {:on-play (run-any-server-ability)
    :makes-run true
    :static-abilities [{:type :rez-additional-cost
                        :req (req (and run (ice? target)))
