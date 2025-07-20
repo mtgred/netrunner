@@ -33,6 +33,9 @@
 (defn timbre-init!
   []
   (io/make-parents "logs/clojure.log")
+  ;; clojure.log and exceptions.log can be cleaned up between each run
+  (when-let [f (io/file "logs/clojure.log")] (when (.exists f) (.delete f)))
+  (when-let [f (io/file "logs/exceptions.log")] (when (.exists f) (.delete f)))
   ;; todo - back up the logs files or something like that
   ;; maybe we can actually just have an indexed html that points to different log files?
   ;; that would actually be sick as hell
