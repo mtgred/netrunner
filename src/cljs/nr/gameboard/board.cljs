@@ -416,14 +416,14 @@
 (defn card-zoom-display
   [zoom-card img-side]
   (r/with-let [pin (r/cursor app-state [:options :pin-zoom])
-               card-zoom-type (r/cursor @app-state [:options :card-zoom])]
+               card-zoom-type (r/cursor app-state [:options :card-zoom])]
     (when-let [card @zoom-card]
       [:<>
        [:div.card-preview.blue-shade
         {:on-click #(reset! img-side (not @img-side))}
         (let [url (image-url card)
               show-img (= "image" (or @card-zoom-type "image"))]
-          (if (and @img-side url show-img)
+          (if (and url (if show-img @img-side (not @img-side)))
             [:img {:src url :alt (get-title card) :onLoad #(-> % .-target js/$ .show)}]
             [card-as-text card false]))]
        (when (or @pin false)
