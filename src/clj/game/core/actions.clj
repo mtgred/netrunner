@@ -207,9 +207,9 @@
 
 (defn- prompt-error
   [context prompt prompt-args]
-  (timbre/error (str (with-out-str (print-stack-trace (Exception. (str "Error " context))))
-                     "\nPrompt: " prompt
-                     "\nPrompt args: " prompt-args)))
+  (timbre/error (Exception. (str "Error " context
+                                 "\nPrompt: " prompt
+                                 "\nPrompt args: " prompt-args))))
 
 (defn- maybe-pay
   [state side eid card choices choice]

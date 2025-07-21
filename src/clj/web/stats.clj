@@ -114,11 +114,11 @@
   (doseq [player original-players]
     (if (:side player)
       (inc-game-stats db (get-in player [:user :_id]) (game-record-start player))
-      (timbre/error (str "NULL start player side in stats for gameid" gameid))))
+      (timbre/error (str "NULL start player side in stats for gameid " gameid))))
   (doseq [player ending-players]
     (if (:side player)
       (inc-game-stats db (get-in player [:user :_id]) (game-record-end state player))
-      (timbre/error (str "NULL end player side in stats for gameid" gameid)))))
+      (timbre/error (str "NULL end player side in stats for gameid " gameid)))))
 
 (defn push-stats-update
   "Gather updated deck and user stats and send via web socket to clients"

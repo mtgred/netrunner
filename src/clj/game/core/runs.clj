@@ -527,21 +527,14 @@
 (defmethod start-next-phase :default
   [state _ _]
   (when-not (= :success (:phase (:run @state)))
-    (timbre/error (str "start-next-phase :default: \n"
-                       (with-out-str
-                         (print-stack-trace
-                           (Exception. "no phase found and not accessing cards")
-                           2500))
-                       "\n" (n-last-logs state 5) "\n"))))
+    (timbre/error (Exception. "no phase found and not accessing cards")
+                  (str "start-next-phase :default:\n" (n-last-logs state 5) "\n"))))
 
 (defmethod continue :default
   [state _ _]
-  (timbre/error (str "continue :default: \n"
-                     (with-out-str (print-stack-trace
-                                     (Exception.
-                                       (str "Continue clicked at the wrong time, run phase: " (:phase (:run @state))))
-                                     2500))
-                     "\n" (n-last-logs state 5) "\n")))
+  (timbre/error (Exception.
+                  (str "Continue clicked at the wrong time, run phase: " (:phase (:run @state))))
+                (str "continue :default:\n" (n-last-logs state 5) "\n")))
 
 (defn redirect-run
   ([state side server] (redirect-run state side server nil))
