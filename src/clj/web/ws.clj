@@ -26,7 +26,7 @@
               ajax-post-fn ajax-get-or-ws-handshake-fn private]} chsk-server
       conns_ (:conns_ private)]
   (defonce handshake-handler (fn [& args] (try (apply ajax-get-or-ws-handshake-fn args)
-                                               (catch Exception _ (timbre/error "Caught an error in the handshake handler")))))
+                                               (catch Exception ex (timbre/error ex "Caught an error in the handshake handler")))))
   (defonce post-handler ajax-post-fn)
   (defonce connected-sockets connected-uids)
   (defonce ch-chsk ch-recv)
