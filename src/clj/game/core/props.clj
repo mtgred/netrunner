@@ -31,7 +31,6 @@
   "Adds n counters of the specified type to a card"
   ([state side eid card prop-type n] (add-counter state side eid card prop-type n nil))
   ([state side eid card prop-type n {:keys [placed suppress-checkpoint] :as args}]
-   ;;(println "N: " n ", card: " (:title card), ", side: " side ", prop-type: " prop-type ", args: " args)
    (if-let [card (get-card state card)]
      (if (= prop-type :advancement)
        ;; if advancement counter use existing system

@@ -347,7 +347,6 @@
      (effect-completed state side eid)
      (wait-for (resolve-trash-prevention state side cards args)
                (let [trashlist (:remaining async-result)
-                     ;;_ (println "async result: " trashlist)
                      _ (update-current-ice-to-trash state (map :card trashlist))]
                  (wait-for
                    (trigger-event-sync state side :pre-trash-interrupt (map :card trashlist))

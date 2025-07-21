@@ -14,14 +14,15 @@
     [game.core.payment :refer [build-spend-msg can-pay? handler]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
-    [game.core.say :refer [system-msg system-say]]
+    [game.core.say :refer [system-msg system-say n-last-logs]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [dissoc-in distinct-by enumerate-str in-coll? remove-once same-card? server-cards side-str to-keyword]]
     [jinteki.utils :refer [other-side]]
     [game.core.memory :refer [update-mu]]
-    [game.core.to-string :refer [card-str]]))
+    [game.core.to-string :refer [card-str]]
+    [taoensso.timbre :as timbre]))
 
 ;; resolve-ability docs
 
@@ -283,10 +284,8 @@
         :else (check-ability state side ability card targets)))
     ;; Something has gone terribly wrong, error out
     :else
-    (.println *err* (with-out-str
-                      (print-stack-trace
-                        (Exception. (str "Ability is nil????" ability card targets))
-                        2500)))))
+    (timbre/error (Exception. (str "Ability is nil????" ability card targets))
+                  (n-last-logs state 5))))
 
 ;;; Checking functions for resolve-ability
 (defn- check-choices

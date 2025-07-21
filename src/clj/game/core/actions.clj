@@ -22,13 +22,14 @@
     [game.core.prompts :refer [resolve-select first-prompt-by-eid first-selection-by-eid]]
     [game.core.props :refer [add-counter add-prop set-prop]]
     [game.core.runs :refer [continue get-runnable-zones]]
-    [game.core.say :refer [play-sfx system-msg implementation-msg]]
+    [game.core.say :refer [play-sfx system-msg implementation-msg n-last-logs]]
     [game.core.servers :refer [name-zone zones->sorted-names]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]))
+    [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]
+    [taoensso.timbre :as timbre]))
 
 (defn- update-click-state
   "Update :click-states to hold latest 4 moments before performing actions."
@@ -206,9 +207,9 @@
 
 (defn- prompt-error
   [context prompt prompt-args]
-  (.println *err* (with-out-str (print-stack-trace (Exception. (str "Error " context)))))
-  (.println *err* (str "Prompt: " prompt))
-  (.println *err* (str "Prompt args: " prompt-args)))
+  (timbre/error (Exception. (str "Error " context
+                                 "\nPrompt: " prompt
+                                 "\nPrompt args: " prompt-args))))
 
 (defn- maybe-pay
   [state side eid card choices choice]
