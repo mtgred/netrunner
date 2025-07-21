@@ -316,7 +316,7 @@
   [card show-extra-info]
   (let [title (tr-data :title card)
         icon (faction-icon (:faction card) title)
-        uniq (when (:uniqueness card) "◇ ")
+        uniq (when (:uniqueness card) "◆ ")
         subtypes (or (tr-data :keywords card)
                      (when (seq (:subtypes card))
                        (s/join " - " (tr-data :subtypes card)))
@@ -367,9 +367,9 @@
                          c (text-class-for-status status)]
                      ^{:key k}
                      [:div.format-item {:class c} (tr-format name)
-                      (cond (:banned status) banned-span
-                            (:restricted status) restricted-span
-                            (:rotated status) rotated-span
+                      (cond (:banned status) (banned-span)
+                            (:restricted status) (restricted-span)
+                            (:rotated status) (rotated-span)
                             (:points status) (deck-points-card-span (:points status)))])))]
 
          [:div.pack

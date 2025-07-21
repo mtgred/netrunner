@@ -602,7 +602,7 @@
                           :style {:text-decoration :line-through}})
              (render-icons (str " [Subroutine]" " " (:label sub)))]
             [:span.float-right
-             (cond (:broken sub) banned-span
+             (cond (:broken sub) (banned-span)
                    (:fired sub) "✅")]])
          subroutines))]))
 
@@ -655,7 +655,7 @@
                             :style {:text-decoration :line-through}})
                (render-icons (str " [Subroutine] " (:label sub)))]
               [:span.float-right
-               (cond (:broken sub) banned-span
+               (cond (:broken sub) (banned-span)
                      (:fired sub) "✅")]]))
          subroutines))]))
 
@@ -733,7 +733,7 @@
                                  :style {:text-decoration :line-through}})
                     (render-icons (str " [Subroutine] " (:label sub)))]
                    [:span.float-right
-                    (cond (:broken sub) banned-span
+                    (cond (:broken sub) (banned-span)
                           (:fired sub) "✅")]]))
               subroutines))])]))))
 

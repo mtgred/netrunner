@@ -416,10 +416,10 @@
           (alliance-dots influence)
           (influence-dots influence))])
      (if banned
-       banned-span
+       (banned-span)
        [:span {:key "restricted"}
-        (when restricted restricted-span)
-        (when rotated rotated-span)
+        (when restricted (restricted-span))
+        (when rotated (rotated-span))
         (when points (deck-points-card-span points))])]))
 
 (defn deck-influence-html
@@ -752,9 +752,9 @@
             :on-mouse-leave #(put! zoom-channel false) }
        (tr-data :title id)
        (let [status (format-status (:format deck) id)]
-         (cond (:banned status) banned-span
-               (:restricted status) restricted-span
-               (:rotated status) rotated-span
+         (cond (:banned status) (banned-span)
+               (:restricted status) (restricted-span)
+               (:rotated status) (rotated-span)
                (:points status) (deck-points-card-span (:points status))))]
       (let [cnt (validator/card-count cards)
             min-count (validator/min-deck-size id)]

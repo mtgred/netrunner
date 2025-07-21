@@ -64,6 +64,12 @@ card-browser_min-deck-size = Minimum deck size: {$min-deck-size}
 
 card-browser_more-info = More Info
 
+card-browser_removed = Removed
+
+card-browser_restricted = Restricted
+
+card-browser_rotated = Rotated
+
 card-browser_select-art = Select Art
 
 card-browser_selected-art = Selected Alt Art

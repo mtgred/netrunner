@@ -9,7 +9,7 @@
    [goog.string :as gstring]
    [goog.string.format]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr-data]]
+   [nr.translations :refer [tr tr-data]]
    [flatland.ordered.map :refer [ordered-map]]
    [reagent.dom :as rd]))
 
@@ -22,18 +22,18 @@
 (def rotated-dot (str "↻" zws))     ; on the rotation list
 (def deck-points-dot (str "❖" zws)) ; costs deck points
 
-(def banned-span
-  [:span.invalid {:title "Removed"} " " banned-dot])
+(defn banned-span []
+  [:span.invalid {:title (tr [:card-browser_removed "Removed"])} " " banned-dot])
 
-(def restricted-span
-  [:span {:title "Restricted"} " " restricted-dot])
+(defn restricted-span []
+  [:span {:title (tr [:card-browser_restricted "Restricted"])} " " restricted-dot])
 
-(def rotated-span
-  [:span.casual {:title "Rotated"} " " rotated-dot])
+(defn rotated-span []
+  [:span.casual {:title (tr [:card-browser_rotated "Rotated"])} " " rotated-dot])
 
 (defn deck-points-card-span [points]
   [:span.legal {:title (when points
-                         (str "Deck points: " points))}
+                         (str (tr [:deck-builder_deck-points "Deck points"]) ": " points))}
    " " deck-points-dot])
 
 (defn- make-dots
