@@ -753,7 +753,7 @@
            side facedown card-target icon new ghost runner-abilities subroutines seen
            subtype-target corp-abilities flashback-fake-in-hand flashback-playable]
     :as card} flipped disable-click]
-  (let [title (tr-data :title (get @all-cards (:title card)))]
+  (let [title (get-title card)]
     (r/with-let [gs-prompt-state (r/cursor game-state [(keyword (lower-case side)) :prompt-state])
                  gs-encounter-ice (r/cursor game-state [:encounters :ice])
                  as-button (r/cursor app-state [:button])
@@ -804,7 +804,7 @@
         (when-let [url (image-url card)]
           [:div
            [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]]))
-      [:span.cardname title]
+      [:span.cardname (tr-data :title (get @all-cards (:title card)))]
       [:div.counters
        (when counter
          (doall
