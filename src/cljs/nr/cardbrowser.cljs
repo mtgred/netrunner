@@ -367,9 +367,9 @@
                          c (text-class-for-status status)]
                      ^{:key k}
                      [:div.format-item {:class c} (tr-format name)
-                      (cond (:banned status) (banned-span)
-                            (:restricted status) (restricted-span)
-                            (:rotated status) (rotated-span)
+                      (cond (:banned status) [banned-span]
+                            (:restricted status) [restricted-span]
+                            (:rotated status) [restricted-span]
                             (:points status) (deck-points-card-span (:points status)))])))]
 
          [:div.pack
