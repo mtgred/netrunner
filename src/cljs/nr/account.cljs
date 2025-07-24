@@ -265,7 +265,6 @@
 
 (def background-list
   [["Apex" "apex-bg"]
-   ["Custom BG (input URL below)" "custom-bg"]
    ["Find The Truth" "find-the-truth-bg"]
    ["Freelancer" "freelancer-bg"]
    ["Monochrome" "monochrome-bg"]
@@ -274,7 +273,8 @@
    ["Rumor Mill" "rumor-mill-bg"]
    ["The Root" "the-root-bg"]
    ["Traffic Jam" "traffic-jam-bg"]
-   ["Worlds 2020" "worlds2020"]])
+   ["Worlds 2020" "worlds2020"] 
+   ["Custom BG (input URL below)" "custom-bg"]])
 
 (defn account-content [_ _ scroll-top]
   (r/with-let [!node-ref (r/atom nil)]

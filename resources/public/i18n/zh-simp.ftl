@@ -64,6 +64,12 @@ card-browser_min-deck-size = 牌组张数下限: {$min-deck-size}
 
 card-browser_more-info = 更多信息
 
+card-browser_removed = 移除
+
+card-browser_restricted = 受限
+
+card-browser_rotated = 轮替
+
 card-browser_select-art = 选择卡面
 
 card-browser_selected-art = 已选卡面
@@ -421,7 +427,7 @@ game_approach-ice = 接驳防火墙
 
 game_approach-server = 接驳服务器
 
-game_archives = 档案库 ({$faceup} ↑ {$facedown} ↓)
+game_archives = 档案库({$faceup}↑{$facedown}↓)
 
 game_attempt-reconnect = 尝试重新连接
 
