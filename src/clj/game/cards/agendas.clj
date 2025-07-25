@@ -2191,25 +2191,29 @@
                :req (req (and (rezzed-gate-or-sentry context)
                               (first-event? state side :pass-ice
                                             #(rezzed-gate-or-sentry (first %)))))
-               :prompt (msg "Make the runner encounter " (:title (:ice context)) " again?")
-               :choices (req [(when (can-pay? state :corp eid card nil (->c :credit 1))
-                                "Pay 1 [Credit]")
-                              (when (can-pay? state :corp eid card nil (->c :trash-from-hand 1))
-                                "Trash 1 card from HQ")
-                              "Done"])
-               :async true
-               :effect (req (if (= target "Done")
-                              (effect-completed state side eid)
-                              (let [enc-ice current-ice]
-                                (continue-ability
-                                  state side
-                                  {:cost (if (= target "Pay 1 [Credit]")
-                                           (->c :credit 1)
-                                           (->c :trash-from-hand 1))
-                                   :msg (msg "make the runner encounter " (card-str state enc-ice) " again")
-                                   :async true
-                                   :effect (req (force-ice-encounter state side eid enc-ice))}
-                                  card nil))))}]}))
+               :effect (req (let [enc-ice (get-card state (:ice context))]
+                              (continue-ability
+                                state side
+                                {:prompt (msg "Make the runner encounter " (:title (:ice context)) " again?")
+                                 :choices (req [(when (can-pay? state :corp eid card nil (->c :credit 1))
+                                                  "Pay 1 [Credit]")
+                                                (when (can-pay? state :corp eid card nil (->c :trash-from-hand 1))
+                                                  "Trash 1 card from HQ")
+                                                "Done"])
+                                 :async true
+                                 :effect (req (if (= target "Done")
+                                                (effect-completed state side eid)
+                                                (continue-ability
+                                                  state side
+                                                  {:cost (if (= target "Pay 1 [Credit]")
+                                                           (->c :credit 1)
+                                                           (->c :trash-from-hand 1))
+                                                   :change-in-game-state {:req (req (and enc-ice (rezzed? enc-ice)))}
+                                                   :msg (msg "make the runner encounter " (card-str state enc-ice) " again")
+                                                   :async true
+                                                   :effect (req (force-ice-encounter state side eid enc-ice))}
+                                                  card nil)))}
+                              card targets)))}]}))
 
 (defcard "Slash and Burn Agriculture"
   {:expend {:req (req (some #(can-be-advanced? state %) (all-installed state :corp)))
