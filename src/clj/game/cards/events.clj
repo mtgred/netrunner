@@ -3954,9 +3954,9 @@
 (defcard "Tread Lightly"
   {:on-play run-any-server-ability
    :makes-run true
-   :static-abilities [{:type :rez-additional-cost
+   :static-abilities [{:type :rez-cost
                        :req (req (and run (ice? target)))
-                       :value (req [(->c :credit 3)])}]})
+                       :value 3}]})
 
 (defcard "Trick Shot"
   {:makes-run true
