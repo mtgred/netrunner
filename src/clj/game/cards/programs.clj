@@ -416,17 +416,14 @@
                :interactive (req true)
                :optional
                {:req (req (and (has-subtype? (:ice context) "Sentry")
-                               (can-pay? state :runner eid card nil [(->c :credit 2)])
-                               (some #(has-subtype? % "Stealth")
-                                     (all-active state :runner))))
+                               (can-pay? state side (assoc eid :source-type :ability) card nil [(->c :credit 2 {:stealth :all-stealth})])))
                 :once :per-turn
                 :prompt (msg "Pay 2 [Credits] to bypass " (:title (:ice context)) "?")
-                :yes-ability
-                {:cost [(->c :credit 2 {:stealth :all-stealth})]
-                 :msg (msg "bypass " (:title (:ice context)))
-                 :effect (req (bypass-ice state))}}}]
+                :yes-ability {:cost [(->c :credit 2 {:stealth :all-stealth})]
+                              :msg (msg "bypass " (:title (:ice context)))
+                              :effect (req (bypass-ice state))}}}]
      :abilities [(break-sub 1 2 "Sentry")
-                 (strength-pump (->c :credit 1 {:stealth 1}) 2 :end-of-encounter)]}))
+                 (strength-pump (->c :credit 1 {:stealth :all-stealth}) 2 :end-of-encounter)]}))
 
 (defcard "Aghora"
   (swap-with-in-hand "Aghora"

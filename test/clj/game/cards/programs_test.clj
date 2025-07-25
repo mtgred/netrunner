@@ -392,7 +392,7 @@
       (core/gain state :runner :click 1)
       (run-on state "HQ")
       (rez state :corp (get-ice state :hq 0))
-      (run-continue state)
+      (run-continue state :encounter-ice)
       (click-prompt state :runner "Yes")
       (click-card state :runner (get-program state 1))
       (click-card state :runner (get-program state 2))
