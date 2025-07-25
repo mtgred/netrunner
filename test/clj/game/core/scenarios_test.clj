@@ -5,6 +5,37 @@
    [game.core.card :refer :all]
    [game.test-framework :refer :all]))
 
+(deftest tread-lightly-vovo-combine-well
+  (do-game
+    (new-game {:corp {:hand ["Tithe" "Vovô Ozetti"]}
+               :runner {:hand ["Tread Lightly"]}})
+    (play-from-hand state :corp "Tithe" "HQ")
+    (play-from-hand state :corp "Vovô Ozetti" "HQ")
+    (rez state :corp (get-content state :hq 0))
+    (take-credits state :corp)
+    (click-prompt state :corp "No")
+    (play-from-hand state :runner "Tread Lightly")
+    (click-prompt state :runner "HQ")
+    (is (changed? [(:credit (get-corp)) -2]
+          (rez state :corp (get-ice state :hq 0)))
+        "Spent 2 credits to rez tithe: (1 - 2 + 3) :: 2")))
+
+(deftest hernando-cortez-vovo-combine-not-well
+  (do-game
+    (new-game {:corp {:hand ["Tithe" "Vovô Ozetti"]
+                      :credits 20}
+               :runner {:hand ["Hernando Cortez"]}})
+    (play-from-hand state :corp "Tithe" "HQ")
+    (play-from-hand state :corp "Vovô Ozetti" "HQ")
+    (rez state :corp (get-content state :hq 0))
+    (take-credits state :corp)
+    (click-prompt state :corp "No")
+    (play-from-hand state :runner "Hernando Cortez")
+    (run-on state :hq)
+    (is (changed? [(:credit (get-corp)) -2]
+          (rez state :corp (get-ice state :hq 0)))
+        "Spent 2 credits to rez tithe: (1 - 2 :: 0) + 2 :: 2")))
+
 (deftest masterwork-overinstall-boomerang-complex-case
   (testing "for issue #7303"
     (dotimes [order 2]

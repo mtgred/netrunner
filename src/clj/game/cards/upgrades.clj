@@ -1917,9 +1917,9 @@
 
 (defcard "Vovô Ozetti"
    {:static-abilities [{:type :rez-cost
-                       :req (req (and (or (ice? target)
-                                          (threat-level 4 state))
-                                      (= (card->server state card) (card->server state target))))
+                        :req (req (and (or (ice? target)
+                                           (threat-level 4 state))
+                                       (= (card->server state card) (card->server state target))))
                         :value -2}]
     :events [(mobile-sysop-event)]})
 
