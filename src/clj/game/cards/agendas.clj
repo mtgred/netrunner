@@ -2191,6 +2191,7 @@
                :req (req (and (rezzed-gate-or-sentry context)
                               (first-event? state side :pass-ice
                                             #(rezzed-gate-or-sentry (first %)))))
+               :async true
                :effect (req (let [enc-ice (get-card state (:ice context))]
                               (continue-ability
                                 state side
