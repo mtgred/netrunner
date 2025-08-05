@@ -218,6 +218,20 @@
     (click-prompt state :corp "Ice Wall")
     (is (= 2 (count (:hand (get-corp)))) "Drew 2")))
 
+(deftest au-co-vs-attini
+  (do-game
+    (new-game {:corp {:hand ["Attini"]
+                      :id "AU Co.: The Gold Standard in Clones"}
+               :runner {:hand [(qty "Ika" 5)]}})
+    (play-from-hand state :corp "Attini" "HQ")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue-until state :encounter-ice)
+    (card-subroutine state :corp (get-ice state :hq 0) 0)
+    (click-prompt state :runner "Take 1 net damage")
+    (is (= 1 (get-counters (:identity (get-corp)) :power)))))
+
 (deftest au-co-works-with-start-of-turn
   (do-game
     (new-game {:corp {:hand ["Cohort Guidance Program" "IPO" "Bladderwort"]

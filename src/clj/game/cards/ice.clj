@@ -921,7 +921,7 @@
                                                 "Pay 2 [Credits]")])
                                :effect
                                (req (if (= "Take 1 net damage" target)
-                                      (damage state side eid :net 1 {:card card})
+                                      (damage state :corp eid :net 1 {:card card})
                                       (pay state :runner eid card (->c :credit 2))))
                                :msg (msg (if (= "Take 1 net damage" target)
                                            "do 1 net damage"
