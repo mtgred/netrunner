@@ -526,13 +526,14 @@
   (active? (get-card state card)))
 (defmethod handler :remove-from-game
   [cost state side eid card]
-  (move state side card :rfg)
-  (complete-with-result
-    state side eid
-    {:paid/msg (str "removes " (:title card) " from the game")
-     :paid/type :remove-from-game
-     :paid/value 1
-     :paid/targets [card]}))
+  (let [c (move state side card :rfg)]
+    (complete-with-result
+      state side eid
+      {:paid/msg (str "removes " (:title card) " from the game")
+       :paid/type :remove-from-game
+       :paid/value 1
+       :paid/product c
+       :paid/targets [card]})))
 
 ;; RfgProgram
 (defmethod value :rfg-program [cost] (:cost/amount cost))

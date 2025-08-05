@@ -357,6 +357,7 @@
                      cost-obj {:paid/type (:paid/type cur)
                                :paid/value (+ (:paid/value existing 0) (:paid/value cur 0))
                                :paid/x-value (+ (:paid/x-value existing 0) (:paid/x-value cur 0))
+                               :paid/product (:paid/product cur)
                                :paid/targets (seq (concat (:paid/targets existing) (:paid/targets cur)))}]
                  (assoc acc (:paid/type cur) cost-obj)))
              {}
