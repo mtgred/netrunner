@@ -1117,6 +1117,16 @@
       (run-continue state)
       (is (= 2 (get-strength (refresh berserker))) "Berserker gains 0 strength from Enigma (non-barrier)"))))
 
+(deftest bishop-hosts
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]} :runner {:hand ["Bishop"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Bishop")
+    (card-ability state :runner (get-program state 0) 0)
+    (click-card state :runner "Ice Wall")
+    (is (= "Bishop" (->> (get-ice state :hq 0) :hosted first :title)))))
+
 (deftest black-orchestra
   (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
