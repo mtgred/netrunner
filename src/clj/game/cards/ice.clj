@@ -1371,7 +1371,7 @@
                                      :req (req (or (some program? (all-installed state :runner))
                                                    (and
                                                      (wonder-sub card 3)
-                                                     (some resource? all-installed state :runner))))}
+                                                     (some resource? (all-installed state :runner)))))}
               :effect (req (wait-for (resolve-ability state side trash-program-sub card nil)
                                      (if (wonder-sub card 3)
                                        (continue-ability
