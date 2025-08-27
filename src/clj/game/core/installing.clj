@@ -582,7 +582,7 @@
   ([state side eid card {:keys [facedown] :as args}]
    (let [eid (assoc eid :source-type :runner-install)
          costs (runner-install-cost state side (assoc card :facedown facedown) args)]
-     (and (runner-can-install? state side eid card args)
+     (and (runner-can-install? state side eid card {:no-toast true})
           (can-pay? state side eid card nil costs)
           ;; explicitly return true
           true))))

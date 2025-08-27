@@ -3413,11 +3413,7 @@
     {:on-play {:prompt "Choose a program to install"
                :label "Install program from the heap"
                :show-discard true
-               :req (req (some #(and (program? %)
-                                     (runner-can-pay-and-install?
-                                       state side
-                                       (assoc eid :source card) %))
-                               (:discard runner)))
+               :change-in-game-state {:req (req (some program? (:discard runner)))}
                :choices {:req (req (and (program? target)
                                         (in-discard? target)
                                         (runner-can-pay-and-install? state side (assoc eid :source card) target)))}
