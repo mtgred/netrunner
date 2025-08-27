@@ -1412,6 +1412,18 @@
     (is (= ["Ika" "No action"] (sort (prompt-buttons :runner)))
         "No prompt to bottom light the fire!")))
 
+(deftest buffer-drive-vs-annicam
+    ;; The player may move one card trashed from the Grip by the Runner to the bottom of the Stack
+    (do-game
+      (new-game {:runner {:hand ["Buffer Drive" "Aniccam" "Strike Fund"]
+                          :credits 19}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Buffer Drive")
+      (play-from-hand state :runner "Aniccam")
+      (damage state :corp :net 1)
+      (click-prompts state :runner "Strike Fund" "Yes" "Buffer Drive" "Strike Fund")
+      (is-hand? state :runner ["Strike Fund"])))
+
 (deftest capstone
   ;; Capstone
   (do-game

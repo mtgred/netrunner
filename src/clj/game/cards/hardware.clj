@@ -172,6 +172,7 @@
                                 (letfn [(event-targets? [targets]
                                           (some #(event? (:card %)) targets))]
                                   (first-trash? state event-targets?))))
+                 :change-in-game-state {:silent true :req (req (seq (:deck runner)))}
                  :msg "draw 1 card"
                  :effect (effect (draw :runner eid 1))}]
     {:static-abilities [(mu+ 1)]
@@ -468,6 +469,7 @@
          :req (req
                 (and (some grip-or-stack-trash? targets)
                      (first-trash? state #(some grip-or-stack-trash? %))))
+         :interactive (req true)
          :prompt "Choose 1 trashed card to add to the bottom of the stack"
          :choices (req (conj (sort (keep #(->> (:moved-card %) :title) (filter grip-or-stack-trash? targets))) "No action"))
          :async true
