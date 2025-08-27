@@ -806,6 +806,22 @@
     (run-continue state)
     (is (= 1 (count (:discard (get-runner)))) "Hush is still installed")))
 
+(deftest arissana-complicated-case
+  (do-game
+    (new-game {:runner {:id "Arissana Rocha Nahu: Street Artist" :hand ["Propeller" "Hermes"]}
+               :corp {:hand ["Bumi 1.0" "Vanilla" "Send a Message"]}})
+    (play-from-hand state :corp "Bumi 1.0" "R&D")
+    (play-from-hand state :corp "Vanilla" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hermes")
+    (run-on state :hq)
+    (card-ability state :runner (:identity (get-runner)) 0)
+    (click-prompt state :runner "Propeller")
+    (run-continue-until state :success)
+    (click-prompts state :runner "Steal" "Vanilla")
+    (click-card state :corp "Bumi 1.0")
+    (is-discard? state :runner ["Propeller"])))
+
 (deftest armand-geist-walker-tech-lord-async-costs-with-sync-abilities
     ;; async costs with sync abilities
     (do-game
