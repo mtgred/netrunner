@@ -2181,7 +2181,7 @@
          :async true
          :cost [(->c :credit 1)]
          :effect
-         (req (play-sfx state side "click-draw")
+         (req (play-sfx state side "click-card")
               (wait-for
                 (draw state side 1)
                 (continue-ability
