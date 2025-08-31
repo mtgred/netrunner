@@ -729,31 +729,37 @@
   {:flags {:rd-reveal (req true)}
    :on-access
    {:optional
-    {:req (req (and (not (in-discard? card))
-                    (some #(and (ice? %)
-                                (protecting-same-server? card %))
-                          (all-active-installed state :corp))))
+    {:req (req (not (in-discard? card)))
      :waiting-prompt true
      :prompt (msg "Trash " (:title card) " to force the Runner to encounter a piece of ice?")
      :yes-ability
      {:async true
-      :choices {:req (req (and (ice? target)
-                               (installed? target)
-                               (rezzed? target)
-                               (protecting-same-server? card target)))}
-      :msg (msg "force the Runner to encounter " (card-str state target))
-      :effect (req
-                ;; note - post-access events (like maw, aeneas informant)
-                ;; need to fire before ganked does - same for corp side post-access events
-                (let [target-card target]
-                  (register-events
-                    state side card
-                    [{:event :post-access-card
-                      :duration :end-of-run
-                      :unregister-once-resolved true
-                      :async true
-                      :effect (req (force-ice-encounter state side eid target-card))}]))
-                (trash state side eid (assoc card :seen true) {:unpreventable true :cause-card card}))}
+      :effect (req (continue-ability
+                     state side
+                     (if (some #(and (ice? %) (rezzed? %) (protecting-same-server? card %))
+                               (all-active-installed state :corp))
+                       {:async true
+                        :choices {:req (req (and (ice? target)
+                                                 (installed? target)
+                                                 (rezzed? target)
+                                                 (protecting-same-server? card target)))}
+                        :msg (msg "force the Runner to encounter " (card-str state target))
+                        :effect (req
+                                  ;; note - post-access events (like maw, aeneas informant)
+                                  ;; need to fire before ganked does - same for corp side post-access events
+                                  (let [target-card target]
+                                    (register-events
+                                      state side card
+                                      [{:event :post-access-card
+                                        :duration :end-of-run
+                                        :unregister-once-resolved true
+                                        :async true
+                                        :effect (req (force-ice-encounter state side eid target-card))}]))
+                                  (trash state side eid (assoc card :seen true) {:unpreventable true :cause-card card}))}
+                       {:async true
+                        :msg "trash itself"
+                        :effect (req (trash state side eid (assoc card :seen true) {:unpreventable true :cause-card card}))})
+                     card nil))}
      :no-ability {:effect (effect (system-msg (str "declines to use " (:title card))))}}}})
 
 (defcard "Georgia Emelyov"
