@@ -26,7 +26,8 @@
   ["If you really think we are worth taking down, we will defend ourselves."]
   "Criminal" ["Is this attack coming from our deployed cybernetics?"
               "The penny-pinchers are always the hardest to work with."]
-  "Default" ["Affordable, Effective, and Uncompromising."]
+  "Default" ["Affordable, Effective, and Uncompromising."
+             "You do realize we make prosthetics?"]
   "Shaper" ["If this is a prank I am going to be so mad!"]}
  "Argus Security: Protection Guaranteed"
  {"Anarch" ["These hackers are a tough breed, but we will break them nonetheless."]
