@@ -434,6 +434,7 @@
       (let [in-hand (:title (first (:hand (get-runner))))
             in-deck (:title (first (:deck (get-runner))))]
         (take-credits state :corp)
+        (click-prompt state :runner "Buffer Drive") ;; do buffer before aniccam triggers
         (click-prompt state :runner in-deck)
         (is (= [in-hand in-deck] (map :title (:hand (get-runner)))) "Aniccam drew the bottomed card")))))
 
