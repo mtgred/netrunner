@@ -633,6 +633,24 @@
                           (is (last-log-contains? state (str "to install " target " protecting Server 1")) "Exposed the info")
                           (is (no-prompt? state :runner) "Access over"))))))))))))
 
+(deftest esa-v-thule-hidden-info-known
+  (do-game
+    (new-game {:runner {:id "Esâ Afontov: Eco-Insurrectionist"
+                        :hand ["Ika" "Jailbreak"]}
+               :corp {:hand ["IPO"]
+                      :id "Thule Subsea: Safety Below"
+                      :deck ["Project Atlas" "Vanilla" "Ice Wall"]}})
+    (stack-deck state :corp ["Vanilla" "Project Atlas" "Ice Wall"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jailbreak")
+    (click-prompt state :runner "R&D")
+    (run-continue-until state :success)
+    (click-prompts state :runner "No action" "Steal" "Suffer 1 core damage" "Yes")
+    (click-prompt state :corp "Done")
+    (is (last-log-contains? state "trashes Vanilla and 1 unknown card") "Revealed known info")
+    (is (some #(and (:seen %) (= (:title %) "Vanilla")) (:discard (get-corp))) "Seen vanilla")
+    (is (some #(and (not (:seen %)) (= (:title %) "Ice Wall")) (:discard (get-corp))) "Unseen Iwall")))
+
 (deftest companions
   ;; Fencer Fueno, Mystic Maemi, Trickster Taka:
   ;; Gain 1c on start of turn or agenda steal
