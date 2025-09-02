@@ -209,6 +209,10 @@
         dest-zone (get-in @state (cons :corp slot))
         install-state (or (:install-state cdef) install-state)
         no-msg (not (if (nil? display-message) true display-message))
+        ;; if cards are no longer candidates, but get installed during a breach, it is known
+        from-zone (or (#{:discard :deck :hand} (first (get-zone card)))
+                      (second (get-zone card)))
+        args (update-in args [:msg-keys :known] #(or % (contains? (set (get-in @state [:breach :known-cids from-zone] [])) (:cid card))))
         c (-> card
               (assoc :advanceable (:advanceable cdef) :new true)
               (dissoc :seen :disabled))]
