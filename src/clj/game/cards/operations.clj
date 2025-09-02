@@ -1574,7 +1574,7 @@
                 :ability {:choices {:req (req (and (corp? target)
                                                    (installed? target)
                                                    (can-be-advanced? state target)))}
-                          ;; note - this is sokka's champ card, so I'm throwing this tiny easter egg in - nbk, 2025
+                          ;; note - this is sokka's champ card (one of three), so I'm throwing this tiny easter egg in - nbk, 2025
                           :msg (msg "place 1 " (when (= (get-in @state [side :user :username]) "Sokka234") "solid gold ") "advancement counter on " (card-str state target))
                           :async true
                           :effect (req (add-prop state side eid target :advance-counter 1 {:placed true}))}}
@@ -1583,17 +1583,16 @@
                 :ability {:msg "draw 1 card"
                           :async true
                           :effect (req (wait-for (draw state side 1)
-                                                 (if (seq (:hand corp))
-                                                   (continue-ability
-                                                     state side
-                                                     {:prompt "Shuffle 1 card into R&D"
-                                                      :choices {:card (every-pred corp? in-hand?)
-                                                                :mandatory true}
-                                                      :msg "shuffle 1 card from HQ into R&D"
-                                                      :effect (req (move state side target :deck)
-                                                                   (shuffle! state :corp :deck))}
-                                                     card nil)
-                                                   (effect-completed state side eid))))}}])})
+                                                 (continue-ability
+                                                   state side
+                                                   {:prompt "Shuffle 1 card into R&D"
+                                                    :req (req (seq (:hand corp)))
+                                                    :choices {:card (every-pred corp? in-hand?)
+                                                              :all true}
+                                                    :msg "shuffle 1 card from HQ into R&D"
+                                                    :effect (req (move state side target :deck)
+                                                                 (shuffle! state :corp :deck))}
+                                                   card nil)))}}])})
 
 (defcard "Kill Switch"
   (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title (or (:card context) target)))
