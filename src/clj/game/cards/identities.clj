@@ -395,39 +395,33 @@
                                (not (install-locked? state side))))
                 :async true
                 :label "Install a program from the grip"
-                :effect
-                (effect
-                  (continue-ability
-                    {:prompt "Choose a program to install"
-                     :waiting-prompt true
-                     :choices (req (cancellable
-                                     (filter #(and (program? %)
-                                                   (runner-can-pay-and-install?
-                                                     state side
-                                                     (assoc eid :source-type :runner-install) % {:no-toast true}))
-                                             (all-cards-in-hand* state :runner))))
-                     :async true
-                     :effect (req (wait-for (runner-install state :runner
-                                                            (assoc (make-eid state eid) :source card :source-type :runner-install)
-                                                            (assoc-in target [:special :street-artist] true) {:msg-keys {:install-source card
-                                                                                                                         :display-origin true}})
-                                            (register-once state side {:once :per-turn} card)
-                                            (register-events
-                                              state side card
-                                              [{:event :run-ends
-                                                :interactive (req true)
-                                                :duration :end-of-run
-                                                :req (req (some #(get-in % [:special :street-artist]) (all-installed state :runner)))
-                                                :async true
-                                                :effect (req (doseq [program (filter #(get-in % [:special :street-artist]) (all-installed state :runner))]
-                                                               (if (has-subtype? program "Trojan")
-                                                                 (do (update! state :runner (dissoc-in program [:special :street-artist]))
-                                                                     (effect-completed state side eid))
-                                                                 (do
-                                                                   (system-msg state side (str "uses " (:title card) " to trash " (:title program)))
-                                                                   (trash-cards state side eid [program] {:cause-card card})))))}])
-                                            (effect-completed state side eid)))}
-                    card nil))}]})
+                :prompt "Choose a program to install"
+                :waiting-prompt true
+                :choices (req (cancellable
+                                (filter #(and (program? %)
+                                              (runner-can-pay-and-install?
+                                                state side
+                                                (assoc eid :source-type :runner-install) % {:no-toast true}))
+                                        (all-cards-in-hand* state :runner))))
+                :effect (req (wait-for
+                               (runner-install state :runner
+                                               (assoc (make-eid state eid) :source card :source-type :runner-install)
+                                               target {:msg-keys {:install-source card
+                                                                  :display-origin true}})
+                               (register-once state side {:once :per-turn} card)
+                               (when-let [installed-card async-result]
+                                 (when run
+                                   (register-events
+                                     state side card
+                                     [{:event :run-ends
+                                       :interactive (req true)
+                                       :duration :end-of-run
+                                       :change-in-game-state {:silent true :req (req (when-let [c (get-card state installed-card)]
+                                                                                       (not (has-subtype? c "Trojan"))))}
+                                       :async true
+                                       :msg (msg "trash " (:title installed-card))
+                                       :effect (req (trash state side eid installed-card))}])))
+                               (effect-completed state side eid)))}]})
 
 (defcard "Asa Group: Security Through Vigilance"
   {:events [{:event :corp-install
