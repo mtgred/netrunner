@@ -22,7 +22,13 @@
   "Shaper"
   ["Putting technology in the service of crime does not pay off in the long run."]}
  "Ampère: Cybernetics For Anyone"
- {"Default" ["Affordable, Effective, and Uncompromising."]}
+ {"Anarch"
+  ["If you really think we are worth taking down, we will defend ourselves."]
+  "Criminal" ["Is this attack coming from our deployed cybernetics?"
+              "The penny-pinchers are always the hardest to work with."]
+  "Default" ["Affordable, Effective, and Uncompromising."
+             "You do realize we make prosthetics?"]
+  "Shaper" ["If this is a prank I am going to be so mad!"]}
  "Argus Security: Protection Guaranteed"
  {"Anarch" ["These hackers are a tough breed, but we will break them nonetheless."]
   "Criminal" ["We have so much more than a few measily credits in store for this one."]
@@ -222,7 +228,14 @@
   ["Data goes comes in, we use it, data goes out. A runner is approaching? We can use that too."]
   "Shaper" ["They will know only what we want them to know and no more."]}
  "Issuaq Adaptics: Sustaining Diversity"
- {"Default" ["Bringing Mother Nature up to speed."]}
+ {"Anarch" ["You can't poison wells to save water."]
+  "Criminal" ["You think yourself the hero? You're just a scavenger."]
+  "Default"
+  ["Bringing Mother Nature up to speed."
+   "Get the unlabelled file, we may need to consider \"emergency\" measures."
+   "We can undo extinction. We can even redo it."]
+  "Shaper"
+  ["There is so much you could learn from us, if you'd just stop and listen."]}
  "Jemison Astronautics: Sacrifice. Audacity. Success."
  {"Anarch"
   ["The audacity of this attack... These saboteurs can thrash all they want. We will move Mars forward without them."]
@@ -366,7 +379,11 @@
  "Nuvem SA: Law of the Land"
  {"Default" ["Our fist shall hold the world."]}
  "Ob Superheavy Logistics: Extract. Export. Excel."
- {"Default" ["Take all that is offered, and more."]}
+ {"Anarch" ["We take what we want. That's all there is to it."]
+  "Criminal" ["You count by tens. We count by trillions."]
+  "Default" ["Take all that is offered, and more."
+             "There appears to be some resistance at the new site."]
+  "Shaper" ["You are wasting time on useless details."]}
  "Pālanā Foods: Sustainable Growth"
  {"Anarch"
   ["An appetite for justice? Let us teach them better than to bite the hand that feeds."]
@@ -380,7 +397,11 @@
  "Poétrï Luxury Brands: All the Rage"
  {"Default" ["Fashion fades. Poétrï is eternal."]}
  "Pravdivost Consulting: Political Solutions"
- {"Default" ["Political news, fit for public consumption."]}
+ {"Anarch" ["Leave it at \"demands\" and then move on to the protest."]
+  "Criminal" ["Make sure to frame them as part of a growing trend of crime."]
+  "Default" ["Political news, fit for public consumption."
+             "Never let facts get in the way of our story."]
+  "Shaper" ["They have to be crazy, they can't just be eccentric."]}
  "PT Untaian: Life's Building Blocks"
  {"Default" ["The Looming Future."]}
  "SSO Industries: Fueling Innovation"
@@ -488,7 +509,12 @@
  {"Anarch" ["Even your light, your destiny has been laid out so clearly by Plutus."]
   "Default" ["Action at a distance." "Say its name, Sibling."]}
  "Thule Subsea: Safety Below"
- {"Default" ["Join us. Safe, away from the crisis."]}
+ {"Anarch"
+  ["You don't need to worry, just accept the world the way we have made it."]
+  "Criminal" ["You are exactly the type we could be shielding people from."]
+  "Default" ["Join us. Safe, away from the crisis."
+             "There is nothing to fear here, there is just us."]
+  "Shaper" ["Wild dreams and creative imagination, all on tape."]}
  "Thunderbolt Armaments: Peace Through Power"
  {"Default" ["Strength in the palm of your hand."]}
  "Titan Transnational: Investing In Your Future"
