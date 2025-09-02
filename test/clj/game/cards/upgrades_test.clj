@@ -1665,24 +1665,22 @@
        (is (core/get-current-encounter state) "The runner should be encountering ice wall")
        (is (= (refresh iw) (core/get-current-ice state)) "The runner should be encountering Ice Wall"))))
 
-(deftest ganked-no-access-ability-when-there-are-no-rezzed-ice-protecting-the-server
-    ;; No access ability when there are no rezzed ice protecting the server
-    (do-game
-     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
-                       :hand ["Ice Wall" "Enigma" "Ganked!"]}})
-     (play-from-hand state :corp "Ice Wall" "HQ")
-     (play-from-hand state :corp "Enigma" "R&D")
-     (rez state :corp (get-ice state :rd 0))
-     (take-credits state :corp)
-     (run-on state :hq)
-     (run-continue state)
-     (run-continue state)
-     (is (last-log-contains? state "Runner accesses Ganked!") "Ganked! message printed to log")
-     (is (accessing state "Ganked!") "Runner has normal access prompt")
-     (click-prompt state :runner "No action")
-     (is (not (get-run)) "Run has been ended")
-     (is (no-prompt? state :corp) "No more prompts")
-     (is (no-prompt? state :runner) "No more prompts")))
+(deftest ganked-ncigs-is-gone-so-we-can-trash-it-for-absolutely-no-reason-at-all
+  ;; No access ability when there are no rezzed ice protecting the server
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Ganked!"]}
+               ;; plausible deniability
+               :runner {:id "René \"Loup\" Arcemont: Party Animal"}})
+    (take-credits state :corp)
+    (run-on state :hq)
+    (run-continue-until state :success)
+    (is (last-log-contains? state "Runner accesses Ganked!") "Ganked! message printed to log")
+    (click-prompt state :corp "Yes")
+    (is (not (accessing state "Ganked!")) "Runner has no normal access prompt")
+    (is (not (get-run)) "Run has been ended")
+    (is (no-prompt? state :corp) "No more prompts")
+    (is (no-prompt? state :runner) "No more prompts")))
 
 (deftest ganked-vs-fc3.0-run-actually-ends
   (do-game
