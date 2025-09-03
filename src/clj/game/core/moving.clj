@@ -46,10 +46,23 @@
       (uninstall-effect state side (make-eid state) card nil)))
   card))
 
+(defn- should-moved-card-be-known?
+  [state side {:keys [cid] :as card} to]
+  (and (= to :discard)
+       (= side :corp)
+       (or
+         ;; if the card is currently being accessed, it should be faceup - ie heliamphora into mavirus trashing that same mavirus
+         (same-card? card (:access @state))
+         ;; if the card is a known card from the current breach
+         (let [from-zone (or (#{:discard :deck :hand} (first (get-zone card)))
+                             (second (get-zone card)))]
+           (contains? (set (get-in @state [:breach :known-cids from-zone] [])) cid)))))
+
 (defn- get-moved-card
   "Get the moved cards with correct abilities and keys hooked up / removed etc."
   [state side {:keys [zone host installed] :as card} to]
   (let [zone (if host (map to-keyword (:zone host)) zone)
+
         src-zone (first zone)
         target-zone (if (vector? to) (first to) to)
         same-zone? (= src-zone target-zone)
@@ -93,6 +106,9 @@
               ;; Moving card to HQ or R&D, explicitly mark as not seen
               (#{:hand :deck} (first dest))
               (dissoc card :seen)
+              ;; card is known from a rules POV, and should be faceup
+              (should-moved-card-be-known? state side card (first dest))
+              (assoc card :seen true)
               ;; Else return card
               :else
               card)

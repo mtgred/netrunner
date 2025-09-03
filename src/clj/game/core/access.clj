@@ -463,6 +463,7 @@
       (when (:breach @state)
         (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))
                        (second (get-zone card)))]
+          (swap! state update-in [:breach :known-cids zone] conj (:cid card))
           (swap! state update-in [:breach :cards-accessed zone] (fnil inc 0))))
       (when (:run @state)
         (let [zone (or (#{:discard :deck :hand} (first (get-zone card)))

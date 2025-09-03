@@ -7,7 +7,7 @@
     [game.core.moving :refer [trash-cards]]
     [game.core.say :refer [system-msg]]
     [game.macros :refer [req msg continue-ability]]
-    [game.utils :refer [pluralize]]))
+    [game.utils :refer [enumerate-str pluralize quantify]]))
 
 (defn choosing-prompt-req
   [n]
@@ -27,16 +27,30 @@
           selected-hq (count targets)
           selected-rd (min (count (:deck corp))
                            (- n selected-hq))
-          to-trash (concat targets (take selected-rd (:deck corp)))]
+          to-trash (concat targets (take selected-rd (:deck corp)))
+          known-hq-cards (filter #(contains? (set (get-in @state [:breach :known-cids :hand] [])) (:cid %)) to-trash)
+          known-rd-cards (filter #(contains? (set (get-in @state [:breach :known-cids :deck] [])) (:cid %)) to-trash)
+          unknown-hq-cards (- selected-hq (count known-hq-cards))
+          unknown-rd-cards (- selected-rd (count known-rd-cards))]
       (system-msg state side
                   (str
                     "trashes"
                     (when (pos? selected-hq)
-                      (str " " selected-hq " " (pluralize "card" selected-hq) " from HQ"))
+                      (if (seq known-hq-cards)
+                        (str " " (enumerate-str (concat (map :title known-hq-cards)
+                                                        (when (pos? unknown-hq-cards)
+                                                          [(quantify unknown-hq-cards "unknown card")])))
+                             " from HQ")
+                        (str " " (quantify selected-hq "card") " from HQ")))
                     (when (and (pos? selected-hq) (pos? selected-rd))
                       " and")
                     (when (pos? selected-rd)
-                      (str " " selected-rd " " (pluralize "card" selected-rd) " from the top of R&D"))))
+                      (if (seq known-rd-cards)
+                        (str " " (enumerate-str (concat (map :title known-rd-cards)
+                                                        (when (pos? unknown-rd-cards)
+                                                          [(quantify unknown-rd-cards "unknown card")])))
+                             " from R&D")
+                        (str " " (quantify selected-rd "card") " from the top of R&D")))))
       (trash-cards state side eid to-trash {:unpreventable true}))))
 
 (defn sabotage-ability

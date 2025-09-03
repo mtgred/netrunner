@@ -39,6 +39,11 @@
   [state side kw]
   (when (contains? #{:deck :hand :discard} kw)
     (trigger-event state side (when (= :deck kw) (if (= :corp side) :corp-shuffle-deck :runner-shuffle-deck)))
+    (when (and (:breach @state)
+               (= :corp side)
+               (= :deck kw))
+      ;; we no longer know the cards in R&D, even if they were candidates before
+      (swap! state assoc-in [:breach :known-cids :deck] []))
     (when (and (:access @state)
                (:run @state)
                (= :corp side)

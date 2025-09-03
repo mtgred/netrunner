@@ -593,6 +593,65 @@
           (click-prompt state :runner "2 [Credits]")
           (is (not (:run @state)) "Corp won Caprice psi game and ended the run"))))))
 
+(deftest poetri-hidden-info-game
+  ;; during a breach, if a known card (already seen) would move positions, it is known which card it is
+  ;; ie, poetri installing a known card
+  (dotimes [x 100]
+    (let [unseen (atom #{"Hostile Takeover" "Ice Wall" "Tollbooth"})]
+      (do-game
+        (new-game {:corp {:id "Poétrï Luxury Brands: All the Rage"
+                          :hand (vec @unseen)}
+                   :runner {:hand ["Legwork"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Legwork")
+        (run-continue-until state :success)
+        ;; first access
+        (let [cur (-> @state :runner :prompt first :card :title)]
+          (swap! unseen disj cur)
+          (if (= cur "Hostile Takeover")
+            ;; install either one, doesn't matter
+            (do (click-prompt state :runner "Steal")
+                (click-prompts state :corp (first (shuffle @unseen)) "New remote")
+                (is (second-last-log-contains? state "install ice protecting Server 1")
+                    "New remote, no leaked info")
+                (click-prompt state :runner "No action")
+                (is (no-prompt? state :runner) "Saw 2 cards, access over"))
+            ;; second access
+            (do (click-prompt state :runner "No action")
+                (let [cur (-> @state :runner :prompt first :card :title)]
+                  (swap! unseen disj cur)
+                  (if (= cur "Hostile Takeover")
+                    (do (click-prompt state :runner "Steal")
+                        (click-prompts state :corp (first @unseen) "New remote")
+                        (is (last-log-contains? state "install ice protecting Server 1")
+                            "New remote, no leaked info")
+                        (is (no-prompt? state :runner) "Saw 2 cards, access over"))
+                    (do (click-prompt state :runner "No action")
+                        ;; third access -> this time we just install an ice, and it will be known
+                        (let [target (first (shuffle ["Ice Wall" "Tollbooth"]))]
+                          (click-prompt state :runner "Steal")
+                          (click-prompts state :corp target "New remote")
+                          (is (last-log-contains? state (str "to install " target " protecting Server 1")) "Exposed the info")
+                          (is (no-prompt? state :runner) "Access over"))))))))))))
+
+(deftest esa-v-thule-hidden-info-known
+  (do-game
+    (new-game {:runner {:id "Esâ Afontov: Eco-Insurrectionist"
+                        :hand ["Ika" "Jailbreak"]}
+               :corp {:hand ["IPO"]
+                      :id "Thule Subsea: Safety Below"
+                      :deck ["Project Atlas" "Vanilla" "Ice Wall"]}})
+    (stack-deck state :corp ["Vanilla" "Project Atlas" "Ice Wall"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Jailbreak")
+    (click-prompt state :runner "R&D")
+    (run-continue-until state :success)
+    (click-prompts state :runner "No action" "Steal" "Suffer 1 core damage" "Yes")
+    (click-prompt state :corp "Done")
+    (is (last-log-contains? state "trashes Vanilla and 1 unknown card") "Revealed known info")
+    (is (some #(and (:seen %) (= (:title %) "Vanilla")) (:discard (get-corp))) "Seen vanilla")
+    (is (some #(and (not (:seen %)) (= (:title %) "Ice Wall")) (:discard (get-corp))) "Unseen Iwall")))
+
 (deftest companions
   ;; Fencer Fueno, Mystic Maemi, Trickster Taka:
   ;; Gain 1c on start of turn or agenda steal
