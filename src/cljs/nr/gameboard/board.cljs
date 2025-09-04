@@ -940,13 +940,18 @@
        hand))])
 
 (defn hand-view []
-  (let [s (r/atom {})]
+  (let [s (r/atom {})
+        ordering (r/atom :natural)]
     (fn [side hand hand-size hand-count popup popup-direction discard]
       (let [flashbacks (if discard (map #(assoc % :flashback-fake-in-hand true) (filter :flashback-playable @discard))
                            [])
             printed-size (if (nil? @hand-count) (count @hand) @hand-count)
             size (+ printed-size (count flashbacks))
-            filled-hand (concat (map #(dissoc % :flashback) @hand)
+            sorted-hand (case @ordering
+                          :natural @hand
+                          :title (sort-by :title @hand)
+                          :type (sort-by (juxt :type :title) @hand))
+            filled-hand (concat (map #(dissoc % :flashback) sorted-hand)
                                 flashbacks
                                 (repeat (- size (+ (count @hand) (count flashbacks))) {:side (if (= :corp side) "Corp" "Runner")}))]
         [:div.hand-container
@@ -959,9 +964,16 @@
                                        (tr [:game_grip "Grip"]))
                                :fn (fn [_] (str printed-size "/" (:total @hand-size)))}]]
           (when popup
-            [:div.panel.blue-shade.hand-expand
-             {:on-click #(-> (:hand-popup @s) js/$ .fadeToggle)}
-             "+"])]
+            [:div.hand-controls
+             [:div.panel.blue-shade.hand-expand
+              {:on-click #(-> (:hand-popup @s) js/$ .fadeToggle)}
+              "+"]
+             [:div.panel.blue-shade.hand-sort
+              {:on-click (fn [] (reset! ordering (case @ordering :natural :title :title :type :type :natural)))}
+              (case @ordering
+                :natural "#"
+                :title "t"
+                :type "y")]])]
          (when popup
            [:div.panel.blue-shade.popup {:ref #(swap! s assoc :hand-popup %) :class popup-direction}
             [:div
