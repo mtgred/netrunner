@@ -913,11 +913,28 @@
   {:agendapoints-runner (req 1)})
 
 (defcard "False Lead"
-  {:abilities [{:change-in-game-state {:req (req (<= 2 (:click runner)))}
-                :label "runner loses [Click][Click]"
-                :msg "force the Runner to lose [Click][Click]"
-                :cost [(->c :forfeit-self)]
-                :effect (effect (lose-clicks :runner 2))}]})
+  (let [ab {:change-in-game-state {:req (req (<= 2 (:click runner)))}
+            :label "runner loses [Click][Click]"
+            :msg "force the Runner to lose [Click][Click]"
+            :cost [(->c :forfeit-self)]
+            :effect (effect (lose-clicks :runner 2))}]
+    ;; this even doesn't correlate 1:1 with the card text -
+    ;; this exists so you can avoid needing to click this before the runner clicks a basic action
+    ;; (ie click racing your opponent).
+    {:events [{:event :post-runner-turn-begins
+               :optional {:req (req (case (get-in card [:special :ask-when-runner-turn-starts] nil)
+                                      "Always" true
+                                      "When tagged" tagged
+                                      nil))
+                          :prompt "Fire False Lead?"
+                          :waiting-prompt true
+                          :yes-ability ab}}]
+     :abilities [ab
+                 {:label "Ask when runner turn begins?"
+                  :prompt "Ask to use False Lead after the Runner turn begins?"
+                  :choices ["Always" "Never" "When tagged"]
+                  :effect (req (update! state side (assoc-in card [:special :ask-when-runner-turn-starts] target))
+                               (toast state :corp (str "False Lead prompt set to: " target) "warning"))}]}))
 
 (defcard "Fetal AI"
   {:flags {:rd-reveal (req true)}
