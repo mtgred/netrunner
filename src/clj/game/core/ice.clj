@@ -259,7 +259,9 @@
                               :source-type :subroutine})]
      (resolve-unbroken-subs! state side eid ice)))
   ([state side eid ice]
-   (if-let [subroutines (seq (remove #(or (:broken %) (= false (:resolve %))) (:subroutines ice)))]
+   ;; note - do not resolve subroutines that players have already manually resolved
+   ;; this has led to a few game loses over the last year, do not change this later - nbk, 2025
+   (if-let [subroutines (seq (remove #(or (:broken %) (:fired %) (= false (:resolve %))) (:subroutines ice)))]
      (wait-for (resolve-next-unbroken-sub state side (make-eid state eid) ice subroutines)
                (system-msg state :corp (str "resolves " (quantify (count async-result) "unbroken subroutine")
                                             " on " (:title ice)
