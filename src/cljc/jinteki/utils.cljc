@@ -134,6 +134,9 @@
    {:name "/charge"
     :usage "/charge"
     :help "Charge an installed card"}
+   {:name "/choose-hq-access"
+    :usage "/choose-hq-access"
+    :help "allows the corp player to choose the cards accessed from HQ during this run. Use this for manual fixes that require a re-run"}
    {:name "/clear-win"
     :usage "/clear-win"
     :help "requests game to clear the current win state.  Requires both players to request it"}
