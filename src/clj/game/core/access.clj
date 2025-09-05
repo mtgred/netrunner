@@ -1324,12 +1324,15 @@
 
 (defn turn-archives-faceup
   [state side server]
+  ;; note - in a paper game, players may freely re-order Archives
+  ;; We don't have that functionality, so we have to pseudo-shuffle archives before cards are flipped
+  ;; in order to stop information leaking that should not be leaking (ie order of cards trashed)
+  ;;   --nbk, 2025
   (when (= :archives (get-server-type (first server)))
-    (doseq [card (get-in @state [:corp :discard])]
-      ;; this lets us distinguish the most freshly revealed cards from archives
-      (if (:seen card)
-        (update! state side (dissoc card :new))
-        (update! state side (assoc card :seen true :new true))))))
+    (let [discard (get-in @state [:corp :discard])
+          known   (->> discard (filter :seen) (map #(dissoc % :new)))
+          unknown (->> discard (filter (complement :seen)) shuffle (map #(assoc % :seen true :new true)))]
+      (swap! state assoc-in [:corp :discard] (concat known unknown)))))
 
 (defn clean-access-args
   [{:keys [access-first] :as args}]
