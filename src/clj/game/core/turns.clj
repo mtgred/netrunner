@@ -50,8 +50,10 @@
                              (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
                (effect-completed state nil eid))
              (swap! state dissoc (if (= side :corp) :corp-phase-12 :runner-phase-12))
-             (when (= side :corp)
-               (update-all-advancement-requirements state)))))
+             (wait-for (trigger-event-simult state side (if (= side :corp) :post-corp-turn-begins :post-runner-turn-begins) nil nil)
+                       (when (= side :corp)
+                         (update-all-advancement-requirements state))
+                       (effect-completed state side eid)))))
 
 (defn start-turn
   "Start turn."

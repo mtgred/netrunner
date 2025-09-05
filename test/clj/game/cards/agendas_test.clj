@@ -1476,6 +1476,46 @@
     (card-ability state :corp (get-scored state :corp 0) 0)
     (is (= 2 (:click (get-runner))) "Runner should lose 2 clicks from False Lead")))
 
+(deftest false-lead-no-prompt
+  ;; False Lead
+  (do-game
+    (new-game {:corp {:score-area ["False Lead"]}})
+    (take-credits state :corp)
+    (is (no-prompt? state :corp) "No prompt")))
+
+(deftest false-lead-yes-prompt
+  ;; False Lead
+  (do-game
+    (new-game {:corp {:score-area ["False Lead"]}})
+    (card-ability state :corp (get-scored state :corp 0) 1)
+    (click-prompt state :corp "Always")
+    (take-credits state :corp)
+    (is (changed? [(:click (get-runner)) -2]
+          (click-prompt state :corp "Yes"))
+        "Fired false lead")))
+
+(deftest false-lead-when-tagged-prompt-fires
+  ;; False Lead
+  (do-game
+    (new-game {:corp {:score-area ["False Lead"]}
+               :runner {:tags 4}})
+    (card-ability state :corp (get-scored state :corp 0) 1)
+    (click-prompt state :corp "When tagged")
+    (take-credits state :corp)
+    (is (changed? [(:click (get-runner)) -2]
+          (click-prompt state :corp "Yes"))
+        "Fired false lead")))
+
+(deftest false-lead-when-tagged-prompt-fizzles
+  ;; False Lead
+  (do-game
+    (new-game {:corp {:score-area ["False Lead"]}
+               :runner {:tags 0}})
+    (card-ability state :corp (get-scored state :corp 0) 1)
+    (click-prompt state :corp "When tagged")
+    (take-credits state :corp)
+    (is (no-prompt? state :corp))))
+
 (deftest fetal-ai
   ;; Fetal AI
   (do-game
