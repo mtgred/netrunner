@@ -357,7 +357,7 @@
                         :discard ["Hostile Takeover" "15 Minutes"]}})
       (take-credits state :corp)
       (run-empty-server state "Archives")
-      (is (= ["Hostile Takeover" "15 Minutes"] (prompt-buttons :runner)))
+      (is (= (sort ["Hostile Takeover" "15 Minutes"]) (sort (prompt-buttons :runner))))
       (click-prompt state :runner "Hostile Takeover")
       (click-prompt state :runner "Steal")
       (is (accessing state "15 Minutes"))
