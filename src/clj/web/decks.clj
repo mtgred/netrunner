@@ -12,7 +12,8 @@
    [web.mongodb :refer [->object-id ->object-id]]
    [web.nrdb :as nrdb]
    [web.utils :refer [response mongo-time-to-utc-string]]
-   [web.ws :as ws]))
+   [web.ws :as ws]
+   [taoensso.timbre :as timbre]))
 
 (defn decks-handler
   [{db :system/db
@@ -93,8 +94,9 @@
           (response 403 {:message "Forbidden"}))
         (response 403 {:message "Locked"}))
       (response 401 {:message "Unauthorized"}))
-    (catch Exception _
+    (catch Exception e
       ;; Deleting a deck that was never saved throws an exception
+      (timbre/info e "failed to delete a decklist")
       (response 409 {:message "Unknown deck id"}))))
 
 (defmethod ws/-msg-handler :decks/import
@@ -118,6 +120,7 @@
           (mc/insert db "decks" deck)
           (ws/broadcast-to! [uid] :decks/import-success "Imported"))
         (ws/broadcast-to! [uid] :decks/import-failure "Failed to parse imported deck.")))
-    (catch Exception _
+    (catch Exception e
+      (timbre/info e "failed to import decklist")
       (ws/broadcast-to! [uid] :decks/import-failure "Failed to import deck.")))
   (lobby/log-delay! timestamp id))
