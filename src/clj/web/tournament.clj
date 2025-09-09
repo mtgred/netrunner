@@ -9,6 +9,7 @@
    [org.httpkit.client :as http]
    ; [web.lobby :refer [all-games refresh-lobby close-lobby]]
    [web.mongodb :refer [find-maps-case-insensitive]]
+   [web.app-state :as app-state]
    [web.stats :refer [fetch-elapsed]]
    [web.utils :refer [response]]
    [web.ws :as ws]))
@@ -220,3 +221,36 @@
   tournament--delete
   [event]
   ((wrap-with-to-handler delete-tables) event))
+
+(defn- view-tables
+  [{uid :uid}]
+  ;; find all tables in the tournament lobbie
+  ;; strip them to just:
+  ;;   id, player1, player2, title, time-extension
+  (let [strip-players (fn [players] (mapv #(select-keys % [:uid :side]) players))
+        comp-lobbies (->> (app-state/get-lobbies)
+                          (filter #(= (:room %) "competitive"))
+                          (map #(select-keys % [:gameid :title :players :time-extension :excluded?]))
+                          (map #(update % :players strip-players)))]
+    (ws/broadcast-to! [uid] :tournament/view-tables {:competitive-lobbies (vec comp-lobbies)
+                                                     :tournament-state (app-state/tournament-state)})))
+
+;; gets a list of all competitive lobbies
+(defmethod ws/-msg-handler :tournament/view-tables
+  tournament--view-tables
+  [event]
+  ((wrap-with-to-handler view-tables) event))
+
+(defn- update-tables
+  [{{:keys [competitive-lobbies]} :?data
+    uid :uid}]
+  (let [competitive-lobbies (mapv #(select-keys % [:gameid :excluded? :time-extension]) competitive-lobbies)
+        to-update (into {} (map (juxt :gameid identity) competitive-lobbies))]
+    (swap! app-state/app-state update :lobbies
+           #(merge-with merge % (select-keys to-update (keys %))))
+    (view-tables {:uid uid})))
+
+(defmethod ws/-msg-handler :tournament/update-tables
+  tournament--update-tables
+  [event]
+  ((wrap-with-to-handler update-tables) event))
