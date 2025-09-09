@@ -9,6 +9,7 @@
 (defonce app-state
   (atom {:lobbies {}
          :lobby-updates {}
+         :tournament nil
          :users {}}))
 
 (defonce lobby-subs-timeout-hours 1)
@@ -48,6 +49,9 @@
 
 (defn get-lobbies []
   (vals (:lobbies @app-state)))
+
+(defn tournament-state []
+  (:tournament @app-state nil))
 
 (defn get-lobby
   ([gameid] (get-lobby gameid (:lobbies @app-state)))
