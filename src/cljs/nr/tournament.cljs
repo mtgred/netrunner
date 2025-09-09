@@ -1,229 +1,210 @@
 (ns nr.tournament
-  (:require [nr.appstate :refer [app-state]]
-            [nr.ws :as ws]
-            [nr.avatar :refer [avatar]]
-            [nr.stats :refer [faction-icon-memo]]
-            [jinteki.utils :refer [slugify str->int]]
-            [reagent.core :as r]))
+  (:require
+   [nr.appstate :refer [app-state]]
+   [nr.ws :as ws]
+   [nr.avatar :refer [avatar]]
+   [nr.stats :refer [faction-icon-memo]]
+   [jinteki.utils :refer [slugify str->int]]
+   [nr.utils :refer [cond-button non-game-toast]]
+   ["react" :as react]
+   [reagent.core :as r]
+   [clojure.string :as str]))
 
-(defn change-cobra-link
-  [state value]
-  (swap! state dissoc :cobra-link)
-  (swap! state assoc :url value))
+;; STATE MANAGEMENT
 
-(defn cobra-link
-  [state]
+(defonce active-round
+  ^{:doc "State of any active tournament timer from the appstate (remote)"}
+  (r/atom nil))
+
+(defonce stored-tables
+  ^{:doc "State of all competitive lobbies as of last load"}
+  (r/atom []))
+
+(defonce action-summary
+  ^{:doc "State of all tables that do not follow normal settings - ie have a time extension, or are excluded"}
+  (r/atom []))
+
+(defonce tournament-state
+  ^{:doc "State of the timer to be created"}
+  (r/atom {:reporting {:self-reporting false
+                       :self-reporting-url "https://tournaments.nullsignal.games/"}
+           :round-start {:alert true
+                         :one-minute-warning true
+                         :start-in 5}
+           :round {:time-in-round 40
+                   :time-expiry-text "TIME IN ROUND"
+                   :time-expiry-rules-text "Time has been called. The active player finishes their turn, then the opposing player takes a turn. If the game has not concluded by the end of that turn, then the game is decided on agenda points."
+                   :explain-time-resolution true
+                   :twenty-minute-warning false
+                   :five-minute-warning true
+                   :one-minute-warning false}}))
+
+;; SOME HELPER FUNCTIONS FOR THE INPUTS
+
+(defn- check-helper
+  [state keyseq label]
   [:div
-   [:h3 "Public Cobr.ai tournament"]
-   [:input {:placeholder "cobr.ai tournament link"
-            :type "text"
-            :value (:url @state)
-            :on-change #(change-cobra-link state (-> % .-target .-value))}]])
+   [:label
+    [:input {:type "checkbox"
+             :value true
+             :checked (get-in @state (vec keyseq) true)
+             :on-change #(let [checked (.. % -target -checked)]
+                           (swap! state assoc-in (vec keyseq) checked))}]
+    label]])
 
-(defn parse-id
-  [{value :url}]
-  (let [link (first (next (re-find #"(?:tournaments/)(\d+)" value)))
-        number (re-find #"\d+" value)]
-    (or link number)))
-
-(defn process-link
-  [state]
-  (when (not-empty (:url @state))
-    (swap! state assoc :cobra-link (parse-id @state))
-    (ws/ws-send! [:tournament/fetch {:cobra-link (:cobra-link @state)}])))
-
-(defn load-tournament-button
-  [state]
-  [:button {:on-click #(process-link state)} "Load tournament"])
-
-(defn missing-players
-  [state]
-  (when (:cobra-link @state)
-    (let [players (:missing-players @state)]
-      [:div
-       [:h3 "Players in Cobra with no registered jnet accounts"]
-       [:ul.missing-players
-        (doall
-          (map-indexed
-            (fn [idx player]
-              ^{:key idx} [:li player])
-            players))]])))
-
-(defn delete-all-tables
-  [state]
-  (ws/ws-send! [:tournament/delete {:cobra-link (:cobra-link @state)}]))
-
-(defn delete-tournament-button
-  [state]
-  (when (:cobra-link @state)
-    [:div
-     [:h4 "Delete all tables for this tournament?"]
-     [:button {:on-click #(delete-all-tables state)} "Delete tables"]]))
-
-(defn round-selector
-  [state]
-  (when (:cobra-link @state)
-    [:div
-     [:h3 "Select round"]
-     [:select {:value (or (:selected-round @state) (count (:rounds @state)))
-               :on-change #(swap! state assoc :selected-round (.. % -target -value))}
-      (doall
-        (for [round (range 1 (inc (count (:rounds @state))))]
-          ^{:key round}
-          [:option {:value (dec round)}
-           (str "Round " round)]))]]))
-
-(defn create-tables
-  [state]
-  (ws/ws-send! [:tournament/create (select-keys @state
-                                     [:cobra-link :selected-round :save-replays? :timer :single-sided?])]))
-
-(defn select-round-button
-  [state]
-  (when (:cobra-link @state)
-    [:button {:on-click #(create-tables state)}
-     "Create tables for this round"]))
-
-(defn success
-  [state]
-  (let [results (:results @state)
-        result-type (:result-type @state)]
-    (when results
-      [:<>
-       [:h2 "Success!"]
-       [:p (str results " tables have been " result-type)]])))
-
-(defn save-replay-option
-  [state]
-  (when (:cobra-link @state)
-    [:p
-     [:label
-      [:input {:type "checkbox" :checked (:save-replays? @state)
-               :on-change #(swap! state assoc :save-replays? (.. % -target -checked))}]
-      (str "🟢 Save replays")]]))
-
-(defn timed-option
-  [s]
-  (when (:cobra-link @s)
-    [:<> [:p
-          [:label
-           [:input {:type "checkbox" :checked (:timed @s)
-                    :on-change #(let [checked (.. % -target -checked)]
-                                  (swap! s assoc :timed checked)
-                                  (swap! s assoc :timer (if checked 35 nil)))}]
-           "Round timer"]]
-     (when (:timed @s)
-       [:p
-        [:input.game-title {:on-change #(swap! s assoc :timer (-> % (.. -target -value) str->int))
-                            :type "number"
-                            :value (:timer @s)
-                            :placeholder "Timer length (minutes)"}]])
-     [:div.infobox.blue-shade {:style {:display (if (:timed @s) "block" "none")}}
-      [:p "Timer is only for convenience: the game will not stop when timer runs out."]]]))
-
-(defn single-sided-option
-  [state]
-  (when (:cobra-link @state)
-    [:<>
-     [:p
-      [:label
-       [:input {:type "checkbox" :checked (:single-sided? @state)
-                :on-change #(swap! state assoc :single-sided? (.. % -target -checked))}]
-       (str "Single-sided round?")]]
-     [:div.infobox.blue-shade {:style {:display (if (:single-sided? @state) "block" "none")}}
-      [:p "A second game will not be created when the first is completed."]]]))
-
-(defn tournament-container
-  [state]
-  [:div.panel.tournament-settings-container
-   [:h1 "Tournament stuff"]
-   (when (:cobra-link @state)
-     [:h2 (:tournament-name @state)])
-   [cobra-link state]
-   [load-tournament-button state]
-   [missing-players state]
-   [delete-tournament-button state]
-   [round-selector state]
-   [timed-option state]
-   [save-replay-option state]
-   [single-sided-option state]
-   [select-round-button state]
-   [success state]])
-
-(defn load-players
-  [state json]
-  (swap! state merge (:data json)))
-
-(defn store-results
-  [state result-type json]
-  (let [json-key (keyword (str result-type "-rounds"))]
-    (swap! state assoc
-           :results (get-in json [:data json-key])
-           :result-type result-type)))
-
-(defn deck-info
-  [deck]
+(defn- minutes-helper
+  [state keyseq label-pre label-post]
   [:div
-   [:div.id-info
-    [:span.id-label "ID: "]
-    [:span.id-title.influence {:class (slugify (get-in deck [:identity :faction]))}
-     (get-in deck [:identity :title])]]
-   [:div.hash-info
-    [:span.hash-label "Hash: "]
-    [:span.hash-value (:hash deck)]]])
+   [:label
+    label-pre
+    [:input {:type "number"
+             :min 0
+             :step 1
+             :style {:width "10ch"}
+             :value (get-in @state (vec keyseq) 5)
+             :on-change #(swap! state assoc-in (vec keyseq) (.. % -target -valueAsNumber))}]
+    label-post]])
 
-(defn player-info
-  [player]
+(defn- dividerlabel
+  [text]
+  [:div {:style {:display "flex"
+                 :align-items "center"
+                 :margin "12px 0"}}
+   [:div {:style {:flex "1" :height "1px" :background "#ccc"}}]
+   [:span {:style {:margin "0 8px"}} text]
+   [:div {:style {:flex "1" :height "1px" :background "#ccc"}}]])
+
+(defn- text-helper
+  [state keyseq label]
   [:div
-   [:span.player
-    [avatar player {:opts {:size 24}}]
-    (get-in player [:player :username]) " - "
-    (when-let [id (get-in player [:deck :identity])]
-      (str (faction-icon-memo (:faction id) (:title id)) " " (:title id)))]]
-  [:div.player-info
-   [:div.user-info
-    [:span.username-label "Username: "]
-    [:span.username-value (get-in player [:user :username])]]
-   [:div.side-info
-    [:span.side-label "Side: "]
-    [:span.side-value (:side player)]]
-   (when (:deck player)
-     [deck-info (:deck player)])])
+   [:label
+    label
+    [:input {:type "text"
+             :style {:width "100%"}
+             :value (get-in @state (vec keyseq) "placeholder")
+             :on-change #(swap! state assoc-in (vec keyseq) (.. % -target -value))}]]])
 
-(defn game-info
-  [game]
-  [:div.gameline
-   [:div [:span.game-title (str (:title game))]]
-   [:div.game-status
-    (if (:started game)
-        [:span.started (str "Started " (.toLocaleTimeString (js/Date. (:start-date game))))]
-        [:span.not-started (str "Not started")])]
-   [:div.players
-    [player-info (first (:players game))]
-    [player-info (second (:players game))]]])
+;; FORMATTING/BODY
 
-(defonce state (r/atom {:selected-round "0"}))
+(defn timer-management
+  []
+  [:div
+   [:h3 "Set up a round"]
+   [:form
+    ;; print a message that the round is starting
+    [:fieldset
+     [:legend "Reporting"]
+     [check-helper tournament-state [:reporting :self-reporting] "Encourage self-reporting?"]
+     [text-helper tournament-state [:reporting :self-reporting-url] "Link for reporting: "]]
+    [:fieldset
+     [:legend "Round start"]
+     [check-helper tournament-state [:round-start :alert] "Inform players about round start?"]
+     [check-helper tournament-state [:round-start :one-minute-warning] "Inform players 1 minute before round start?"]
+     [minutes-helper tournament-state [:round-start :start-in] "Round starts in " " minutes"]]
+    [:fieldset
+     [:legend "Round properties"]
+     [minutes-helper tournament-state [:round :time-in-round] "Round is " " minutes long"]
+     [text-helper tournament-state [:round :time-expiry-text] "Time call: "]
+     [check-helper tournament-state [:round :explain-time-resolution] "Explain resolution when calling time in round (text below)?"]
+     [text-helper tournament-state [:round :time-expiry-rules-text] "Time rules explainer: "]
+     [dividerlabel "Warnings"]
+     [check-helper tournament-state [:round :twenty-minute-warning] "Give players a 20-minute warning (half-way for 40 minute rounds)"]
+     [check-helper tournament-state [:round :five-minute-warning] "Give players a 5-minute warning"]
+     [check-helper tournament-state [:round :one-minute-warning] "Give players a 1-minute warning"]]]
+   [:p]
+   [cond-button "Declare Round"
+    (not @active-round)
+    (fn []
+      (non-game-toast "locking in a round structure..." "info" nil)
+      (ws/ws-send! [:tournament/declare-round {:tournament-settings @tournament-state}]))]
+   [:p]])
 
-(defmethod ws/event-msg-handler :tournament/loaded [{data :?data}]
-  (load-players state data))
+(defn tournament-lobbies-container
+  []
+  [:div
+   [:h3 "Tournament lobbies"]
+   [:div "Here you can load all lobbies in the competitive channel, set time extensions on specific lobbies, and exclude lobbies from timers and announcements."]
+   [:p]
+   [:div
+    [:button
+     {:type "button"
+      ;; TODO - sent a thing to refresh the tournament lobbies
+      :on-click (fn []
+                  (do (ws/ws-send! [:tournament/update-tables {:competitive-lobbies @stored-tables}])
+                      (non-game-toast "locking in changes..." "info" nil)))}
+     "Commit Changes"]]
+   [:p]
 
-(defmethod ws/event-msg-handler :tournament/created [{data :?data}]
-  (store-results state "created" data))
+   ;; table of all active competitive lobbies
+   [:table {:style {:border-collapse "collapse"
+                    :text-align "center"
+                    :width "100%"}}
+    [:thead
+     [:tr
+      (for [h ["Lobby name" "Corporation" "Runner" "Excluded?" "Time ext (min)"]]
+        ^{:key h} [:th {:style {:border "1px solid #ccc" :padding "4px"}} h])]]
 
-(defmethod ws/event-msg-handler :tournament/deleted [{data :?data}]
-  (store-results state "deleted" data))
+    [:tbody
+     (doall
+       (for [{:keys [gameid title corp runner excluded? time-extension] :as row} @stored-tables
+             :let [idx (.indexOf @stored-tables row)]]
+         ^{:key gameid}
+         [:tr
+          [:td title]
+          [:td corp]
+          [:td runner]
+          [:td [:input {:type "checkbox"
+                        :checked (if excluded? true false)
+                        :on-change #(swap! stored-tables update-in [idx :excluded?] not)}]]
+          [:td [:input {:type "number"
+                        :min 0
+                        :step 1
+                        :value (or time-extension 0)
+                        :on-change #(let [v (.. % -target -valueAsNumber)]
+                                      (swap! stored-tables assoc-in [idx :time-extension] v))
+                        :style {:width "10ch"}}]]]))]]])
+
+(defn- split-players [competitive-lobbies]
+  (mapv (fn [lobby]
+          (let [corp   (filter #(= (:side % nil) "Corp")   (:players lobby))
+                runner (filter #(= (:side % nil) "Runner") (:players lobby))]
+            (-> lobby
+                (assoc :corp (:uid corp "-") :runner (:uid runner "-"))
+                (dissoc :players))))
+        competitive-lobbies))
+
+(defn active-round-section []
+  [:div
+   [:h3 "Active Round"]
+   [:div [:button
+          {:type "button"
+           ;; TODO - sent a thing to refresh the tournament lobbies
+           :on-click (fn []
+                       (ws/ws-send! [:tournament/view-tables {}])
+                       (non-game-toast "refreshing tables..." "info" nil))}
+          "Refresh State"]]
+   (if-not @active-round
+     [:div "There is no currently active round. Set one up below."]
+     [:div "There is currently an active round. TODO: fixme"]
+     ;; TODO
+     )
+   [:p]])
+
+(defmethod ws/event-msg-handler :tournament/view-tables [{{:keys [competitive-lobbies tournament-state]} :?data}]
+  (let [player-split (split-players competitive-lobbies)]
+    (reset! stored-tables player-split)
+    (reset! action-summary (filter #(or (pos? (:time-extension % 0))(:excluded? %)) player-split)))
+  (reset! active-round tournament-state)
+  (non-game-toast "tables refreshed!" "info" nil))
 
 (defn tournament []
-  (r/with-let [user (r/cursor app-state [:user])
-               cobra-link (r/cursor state [:cobra-link])
-               games (r/cursor app-state [:games])]
+  (r/with-let [user (r/cursor app-state [:user])]
+    ;; this is bad practice I think? I will fix it later
     [:div.container
      [:div.about-bg]
      (when (:tournament-organizer @user)
-       [:div.lobby.panel.blue-shade
-        [tournament-container state]
-        [:ul.game-list
-         (let [filtered-games (filter #(and @cobra-link (= @cobra-link (:cobra-link %))) @games)]
-           (doall (for [game filtered-games]
-                    ^{:key (:gameid game)}
-                    [game-info game])))]])]))
+       [:div.container.panel.blue-shade.content-page
+        [:h1 "Tournament Manager"]
+        [:hr] [active-round-section]
+        [:hr] [timer-management]
+        [:hr] [tournament-lobbies-container]])]))
