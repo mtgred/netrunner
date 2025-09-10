@@ -89,6 +89,8 @@
   "Note: if the lobby isn't actually real, or has been nulled somehow, executing on the lobby thread is safe"
   `(cp/future (get-in ~lobby [:pool :pool] lobby-pool) ~@expr))
 
+(defmulti assign-tournament-properties identity)
+
 (defn validate-precon
   [format client-precon client-gateway-type]
   (let [target (if (= format "system-gateway") client-gateway-type client-precon)
@@ -217,7 +219,11 @@
    :started
    :timer
    :title
-   :old])
+   :old
+   ;; for tournament system
+   :time-extension
+   :excluded?
+   ])
 
 (defn lobby-summary
   "Strips private server information from a game map, preparing to send the game to clients."
@@ -340,6 +346,7 @@
                                register-lobby lobby uid)
           lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
       (when lobby?
+        (assign-tournament-properties lobby?)
         (send-lobby-state lobby?)
         (broadcast-lobby-list))
       (log-delay! timestamp id))))
