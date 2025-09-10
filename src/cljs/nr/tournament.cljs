@@ -43,46 +43,33 @@
 
 (defn- check-helper
   [state keyseq label]
-  [:div
-   [:label
-    [:input {:type "checkbox"
-             :value true
-             :checked (get-in @state (vec keyseq) true)
-             :on-change #(let [checked (.. % -target -checked)]
-                           (swap! state assoc-in (vec keyseq) checked))}]
-    label]])
+  [:div [:label [:input {:type "checkbox" :value true :checked (get-in @state (vec keyseq) true)
+                         :on-change #(let [checked (.. % -target -checked)]
+                                       (swap! state assoc-in (vec keyseq) checked))}]
+         label]])
 
 (defn- minutes-helper
   [state keyseq label-pre label-post]
-  [:div
-   [:label
-    label-pre
-    [:input {:type "number"
-             :min 0
-             :step 1
-             :style {:width "10ch"}
-             :value (get-in @state (vec keyseq) 5)
-             :on-change #(swap! state assoc-in (vec keyseq) (.. % -target -valueAsNumber))}]
-    label-post]])
+  [:div [:label
+         label-pre
+         [:input {:type "number" :min 0 :step 1 :style {:width "10ch"}
+                  :value (get-in @state (vec keyseq) 5)
+                  :on-change #(swap! state assoc-in (vec keyseq) (.. % -target -valueAsNumber))}]
+         label-post]])
 
 (defn- dividerlabel
   [text]
-  [:div {:style {:display "flex"
-                 :align-items "center"
-                 :margin "12px 0"}}
+  [:div {:style {:display "flex" :align-items "center" :margin "12px 0"}}
    [:div {:style {:flex "1" :height "1px" :background "#ccc"}}]
    [:span {:style {:margin "0 8px"}} text]
    [:div {:style {:flex "1" :height "1px" :background "#ccc"}}]])
 
 (defn- text-helper
   [state keyseq label]
-  [:div
-   [:label
-    label
-    [:input {:type "text"
-             :style {:width "100%"}
-             :value (get-in @state (vec keyseq) "placeholder")
-             :on-change #(swap! state assoc-in (vec keyseq) (.. % -target -value))}]]])
+  [:div [:label label
+         [:input {:type "text" :style {:width "100%"}
+                  :value (get-in @state (vec keyseq) "placeholder")
+                  :on-change #(swap! state assoc-in (vec keyseq) (.. % -target -value))}]]])
 
 ;; FORMATTING/BODY
 
@@ -117,6 +104,12 @@
     (fn []
       (non-game-toast "locking in a round structure..." "info" nil)
       (ws/ws-send! [:tournament/declare-round {:tournament-settings @tournament-state}]))]
+   [cond-button "Conclude Round"
+    @active-round
+    (fn []
+      (when (js/confirm "Are you sure you want to conclude the round? This CANNOT be undone")
+        (non-game-toast "attempting to conclude round..." "info" nil)
+        (ws/ws-send! [:tournament/conclude-round {}])))]
    [:p]])
 
 (defn tournament-lobbies-container
@@ -190,13 +183,6 @@
      )
    [:p]])
 
-(defmethod ws/event-msg-handler :tournament/view-tables [{{:keys [competitive-lobbies tournament-state]} :?data}]
-  (let [player-split (split-players competitive-lobbies)]
-    (reset! stored-tables player-split)
-    (reset! action-summary (filter #(or (pos? (:time-extension % 0))(:excluded? %)) player-split)))
-  (reset! active-round tournament-state)
-  (non-game-toast "tables refreshed!" "info" nil))
-
 (defn tournament []
   (r/with-let [user (r/cursor app-state [:user])]
     ;; this is bad practice I think? I will fix it later
@@ -208,3 +194,17 @@
         [:hr] [active-round-section]
         [:hr] [timer-management]
         [:hr] [tournament-lobbies-container]])]))
+
+
+;; ws handlers
+
+(defmethod ws/event-msg-handler :tournament/view-tables [{{:keys [competitive-lobbies tournament-state] :as d} :?data}]
+  (let [player-split (split-players competitive-lobbies)]
+    (reset! stored-tables player-split)
+    (reset! action-summary (filter #(or (pos? (:time-extension % 0))(:excluded? %)) player-split)))
+  (js/console.log (str "Data: " d))
+  (reset! active-round tournament-state)
+  (non-game-toast "tables refreshed!" "info" nil))
+
+(defmethod ws/event-msg-handler :tournament/declare-round [{{:keys [error]} :?data}]
+  (non-game-toast error "error" nil))
