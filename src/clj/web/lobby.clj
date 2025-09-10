@@ -223,14 +223,20 @@
    ;; for tournament system
    :time-extension
    :excluded?
+   :round-end-time
    ])
+
+(defn maybe-round-end-time
+  [lobby]
+  (when (= (:room lobby) "competitive")
+    (:round-end (app-state/tournament-state) nil)))
 
 (defn lobby-summary
   "Strips private server information from a game map, preparing to send the game to clients."
   ([lobby] (lobby-summary lobby nil))
   ([lobby participating?]
    (-> lobby
-       (assoc :old (> (count (or (:messages lobby) [])) 10)) 
+       (assoc :old (> (count (or (:messages lobby) [])) 10))
        (update :password boolean)
        (update :players #(prepare-players lobby %))
        (update :spectators #(prepare-players lobby %))
@@ -238,6 +244,8 @@
        (update :runner-spectators #(prepare-players lobby %))
        (update :original-players prepare-original-players)
        (update :messages #(when participating? %))
+       ;; if there's a current tournament, insert the end time for the round
+       (assoc :round-end-time (maybe-round-end-time lobby))
        (select-non-nil-keys lobby-keys))))
 
 (defn get-blocked-list [user]
