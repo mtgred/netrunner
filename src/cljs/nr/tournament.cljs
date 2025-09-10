@@ -5,6 +5,9 @@
    [nr.avatar :refer [avatar]]
    [nr.stats :refer [faction-icon-memo]]
    [jinteki.utils :refer [slugify str->int]]
+   [cljc.java-time.instant :as inst]
+   [cljc.java-time.duration :as duration]
+   [cljc.java-time.temporal.chrono-unit :as chrono]
    [nr.utils :refer [cond-button non-game-toast]]
    ["react" :as react]
    [reagent.core :as r]
@@ -118,10 +121,14 @@
    [:h3 "Tournament lobbies"]
    [:div "Here you can load all lobbies in the competitive channel, set time extensions on specific lobbies, and exclude lobbies from timers and announcements."]
    [:p]
-   [:div
+   [:div [:button
+          {:type "button"
+           :on-click (fn []
+                       (ws/ws-send! [:tournament/view-tables {}])
+                       (non-game-toast "refreshing tables..." "info" nil))}
+          "Refresh State"]
     [:button
      {:type "button"
-      ;; TODO - sent a thing to refresh the tournament lobbies
       :on-click (fn []
                   (do (ws/ws-send! [:tournament/update-tables {:competitive-lobbies @stored-tables}])
                       (non-game-toast "locking in changes..." "info" nil)))}
@@ -159,16 +166,56 @@
 
 (defn- split-players [competitive-lobbies]
   (mapv (fn [lobby]
-          (let [corp   (filter #(= (:side % nil) "Corp")   (:players lobby))
-                runner (filter #(= (:side % nil) "Runner") (:players lobby))]
+          (let [corp   (first (filter #(= (:side % nil) "Corp")   (:players lobby)))
+                runner (first (filter #(= (:side % nil) "Runner") (:players lobby)))]
             (-> lobby
                 (assoc :corp (:uid corp "-") :runner (:uid runner "-"))
                 (dissoc :players))))
         competitive-lobbies))
 
+(defn- time-until
+  "Helper method for game-time. Computes how many minutes since game start"
+  [end]
+  (let [now (inst/now)
+        diff (duration/between now end)
+        total-seconds (duration/get diff chrono/seconds)
+        minutes (quot total-seconds 60)
+        seconds (abs (rem total-seconds 60))]
+    [minutes seconds]))
+
+(defn countdown [target-time]
+  (let [remaining (r/atom nil)
+        interval (r/atom nil)]
+    (r/create-class
+      {:component-did-mount
+       (fn []
+         (reset! interval
+                 ;; Update timer at most every 1 sec
+                 (js/setInterval #(reset! remaining (time-until target-time)) 1000)))
+       :component-will-unmount
+       (fn []
+         (js/clearInterval @interval)
+         (reset! interval nil))
+       :reagent-render
+       (fn []
+         [:span {:style (when (<= (first @remaining) 0) {:color "red"})}
+          (str (first @remaining) " minutes and " (second @remaining) " seconds remaining until the round ends")])})))
+
 (defn active-round-section []
   [:div
    [:h3 "Active Round"]
+   (if-not @active-round
+     [:div "There is no currently active round. Set one up below."]
+     [:div {:style {:display "flex"
+                    :flex-direction "column"
+                    :gap "6px"}}
+      [:ul
+       [:li (str (:source-uid @active-round) " declared the round")]
+       [:li [countdown (:round-end @active-round)]]
+       (when (:round-20m-warning @active-round) [:li "There is a 20m warning"])
+       (when (:round-5m-warning @active-round) [:li "There is a 5m warning"])
+       (when (:round-1m-warning @active-round) [:li "There is a 1m warning"])
+       (when-let [u (:report-match @active-round)] [:li (str "Players will be asked to report at: " u)])]])
    [:div [:button
           {:type "button"
            ;; TODO - sent a thing to refresh the tournament lobbies
@@ -176,11 +223,7 @@
                        (ws/ws-send! [:tournament/view-tables {}])
                        (non-game-toast "refreshing tables..." "info" nil))}
           "Refresh State"]]
-   (if-not @active-round
-     [:div "There is no currently active round. Set one up below."]
-     [:div "There is currently an active round. TODO: fixme"]
-     ;; TODO
-     )
+
    [:p]])
 
 (defn tournament []
@@ -192,6 +235,9 @@
        [:div.container.panel.blue-shade.content-page
         [:h1 "Tournament Manager"]
         [:hr] [active-round-section]
+
+        ;; TODO - actions taken
+
         [:hr] [timer-management]
         [:hr] [tournament-lobbies-container]])]))
 
