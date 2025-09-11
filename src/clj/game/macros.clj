@@ -53,8 +53,8 @@
       runner-currently-drawing (seq (peek (get-in @state [:runner :register :currently-drawing])))
       ;; intended to pick out cards that have moved as part of paying a cost
       source-card (or (game.core.card/get-card state card)
-                      (game.core.card/get-card state (game.core.payment/cost-product eid :remove-from-game)))
-      ]
+                      (game.core.card/get-card state
+                                               (first (game.core.payment/cost-targets eid :remove-from-game))))]
     (partition 2)
     (map (juxt first identity))
     (into {})))

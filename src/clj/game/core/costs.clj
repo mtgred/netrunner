@@ -532,8 +532,7 @@
       {:paid/msg (str "removes " (:title card) " from the game")
        :paid/type :remove-from-game
        :paid/value 1
-       :paid/product c
-       :paid/targets [card]})))
+       :paid/targets [c]})))
 
 ;; RfgProgram
 (defmethod value :rfg-program [cost] (:cost/amount cost))

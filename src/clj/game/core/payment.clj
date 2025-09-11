@@ -135,10 +135,6 @@
   [eid cost-type]
   (get-in eid [:cost-paid cost-type :paid/value]))
 
-(defn cost-product
-  [eid cost-type]
-  (get-in eid [:cost-paid cost-type :paid/product]))
-
 (defn x-cost-value
   [eid]
   (get-in eid [:cost-paid :x-credits :paid/x-value] 0))
