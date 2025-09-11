@@ -20,7 +20,11 @@
   (r/atom nil))
 
 (defonce stored-tables
-  ^{:doc "State of all competitive lobbies as of last load"}
+  ^{:doc "State of all competitive lobbies (editable)"}
+  (r/atom []))
+
+(defonce invariable-tables
+  ^{:doc "Stored tables, but doesn't change as you edit things"}
   (r/atom []))
 
 (defonce action-summary
@@ -217,8 +221,8 @@
        (when (:round-1m-warning @active-round) [:li "There is a 1m warning"])
        (when-let [u (:report-match @active-round)] [:li (str "Players will be asked to report at: " u)])]])
    [:h3 "Actions Taken"]
-   (let [excluded (filter #(:excluded? %) @stored-tables)
-         extensions (filter #(pos? (:time-extension % 0)) @stored-tables)]
+   (let [excluded (filter #(:excluded? %) @invariable-tables)
+         extensions (filter #(pos? (:time-extension % 0)) @invariable-tables)]
      [:div
       (when (seq excluded)
         [:div "Excluded tables: " (str/join ", " (map :title excluded))])
@@ -258,6 +262,7 @@
 (defmethod ws/event-msg-handler :tournament/view-tables [{{:keys [competitive-lobbies tournament-state] :as d} :?data}]
   (let [player-split (split-players competitive-lobbies)]
     (reset! stored-tables player-split)
+    (reset! invariable-tables player-split)
     (reset! action-summary (filter #(or (pos? (:time-extension % 0))(:excluded? %)) player-split)))
   (js/console.log (str "Data: " d))
   (reset! active-round tournament-state)
