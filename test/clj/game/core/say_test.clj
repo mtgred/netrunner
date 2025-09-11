@@ -69,16 +69,27 @@
           (is (no-prompt? state :runner) "Prompt is cleared")
           (is (= 4 (get-counters (refresh hotel) :power)) "Charged Earthrise Hotel")))))
 
-  (testing "/click"
+  (testing "/choose-hq-access"
     (let [user {:username "Corp"}]
       (do-game
-        (new-game)
-        (core/command-parser state :corp {:user user :text "/click 3"})
-        (is (= 3 (:click (get-corp))) "Corp has 3 clicks")
-        (core/command-parser state :corp {:user user :text "/click -5"})
-        (is (= 0 (:click (get-corp))) "Corp has 0 clicks")
-        (core/command-parser state :corp {:user user :text "/click 99999999999999999999999999999999999999999999"})
-        (is (= 1000 (:click (get-corp))) "Corp has 1000 clicks"))))
+        (new-game {:corp {:hand ["IPO" "Hedge Fund" "Beanstalk Royalties"]}
+                   :runner {:hand ["Legwork"]}})
+        (take-credits state :corp)
+        (play-from-hand state :runner "Legwork")
+        (core/command-parser state :corp {:user user :text "/choose-hq-access"})
+        (run-continue-until state :success)
+        (click-card state :corp "IPO")
+        (accessing state "IPO")
+        (click-prompt state :runner "No action")
+        (click-card state :corp "Hedge Fund")
+        (accessing state "Hedge Fund")
+        (click-prompt state :runner "No action")
+        (click-card state :corp "Beanstalk Royalties")
+        (accessing state "Beanstalk Royalties")
+        (click-prompt state :runner "No action")
+        (run-empty-server state :hq)
+        (click-prompt state :runner "No action")
+        (is (no-prompt? state :corp) "Did not persist across runs"))))
 
   (testing "/counter"
     (let [user {:username "Corp"}]
