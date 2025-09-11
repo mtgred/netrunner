@@ -189,6 +189,7 @@
     (r/create-class
       {:component-did-mount
        (fn []
+         (reset! remaining (time-until target-time))
          (reset! interval
                  ;; Update timer at most every 1 sec
                  (js/setInterval #(reset! remaining (time-until target-time)) 1000)))
@@ -206,19 +207,34 @@
    [:h3 "Active Round"]
    (if-not @active-round
      [:div "There is no currently active round. Set one up below."]
-     [:div {:style {:display "flex"
-                    :flex-direction "column"
-                    :gap "6px"}}
-      [:ul
+     [:div
+      [:ul {:style {:list-style "disc"
+                    :padding-left "20px"}}
        [:li (str (:source-uid @active-round) " declared the round")]
        [:li [countdown (:round-end @active-round)]]
        (when (:round-20m-warning @active-round) [:li "There is a 20m warning"])
        (when (:round-5m-warning @active-round) [:li "There is a 5m warning"])
        (when (:round-1m-warning @active-round) [:li "There is a 1m warning"])
        (when-let [u (:report-match @active-round)] [:li (str "Players will be asked to report at: " u)])]])
+   [:h3 "Actions Taken"]
+   (let [excluded (filter #(:excluded? %) @stored-tables)
+         extensions (filter #(pos? (:time-extension % 0)) @stored-tables)]
+     [:div
+      (when (seq excluded)
+        [:div "Excluded tables: " (str/join ", " (map :title excluded))])
+      (when (seq extensions)
+        [:div
+         "Time extensions:"
+         [:ul {:style {:list-style "disc"
+                       :padding-left "20px"}}
+          (doall
+            (for [{:keys [gameid title time-extension]} extensions]
+              ^{:key (str gameid "-" time-extension " minutes")}
+              [:li (str title ": " time-extension)]))]])])
+   [:p]
+
    [:div [:button
           {:type "button"
-           ;; TODO - sent a thing to refresh the tournament lobbies
            :on-click (fn []
                        (ws/ws-send! [:tournament/view-tables {}])
                        (non-game-toast "refreshing tables..." "info" nil))}
@@ -228,19 +244,14 @@
 
 (defn tournament []
   (r/with-let [user (r/cursor app-state [:user])]
-    ;; this is bad practice I think? I will fix it later
     [:div.container
      [:div.about-bg]
      (when (:tournament-organizer @user)
        [:div.container.panel.blue-shade.content-page
         [:h1 "Tournament Manager"]
         [:hr] [active-round-section]
-
-        ;; TODO - actions taken
-
         [:hr] [timer-management]
         [:hr] [tournament-lobbies-container]])]))
-
 
 ;; ws handlers
 
