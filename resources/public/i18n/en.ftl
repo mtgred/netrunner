@@ -504,6 +504,7 @@ game_gain-credit = Gain Credit
 
 game_game-start = Game start: {$timestamp}
 
+
 game_grip = Grip
 
 game_heap = Heap ({$cnt})
@@ -585,6 +586,10 @@ game_rez-all = Rez All
 game_rfg = Removed from the game
 
 game_rnd = R&D
+
+game_round-end = Round end: {$timestamp}
+
+game_round-extension = (Includes {$minutes}m time extension)
 
 game_run = Run
 
