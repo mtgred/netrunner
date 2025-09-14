@@ -1653,6 +1653,15 @@
       (run-jack-out state)
       (is (= 2 (get-strength (refresh faust))) "Dean Lister effect ends after run"))))
 
+(deftest dean-lister-ncigs
+  (do-game
+    (new-game {:runner {:hand ["Dean Lister"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dean Lister")
+    (run-on state :hq)
+    (card-ability state :runner (get-resource state 0) 0)
+    (is-discard? state :runner ["Dean Lister"])))
+
 (deftest debbie-downtown-moreira
   (do-game
     (new-game {:corp {:hand ["Rashida Jaheem"]}
