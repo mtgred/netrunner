@@ -416,15 +416,9 @@
                  (select-keys [:cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
                  (assoc :targets targets))]
     (if-not (change-in-game-state? state side ability card targets)
-      (if-let [ncigs-cost (:ncigs-cost choices)]
-        ;; do-ability will handle the ncigs implications regardless of the choice state
-        ;; but this also does the costs
-        ;; we can check for a `:when` key in choices, and if it's there and resolves true,
-        ;; then apply costs, otherwise simply do nothing without forcing payment
-        (if (ncigs-cost state side eid card targets)
-          (do-ability state side (dissoc ability :choices) card targets)
-          (do-nothing state side eid ability card))
-        (do-nothing state side eid ability card))
+      (if (get-in ability [:change-in-game-state :pay-cost] nil)
+        (do-ability state side (dissoc ability :choices) card targets)
+        (do-ability state side (dissoc ability :choices :cost) card targets))
       (if (map? choices)
         ;; Two types of choices use maps: select prompts, and :number prompts.
         (cond
