@@ -5392,6 +5392,7 @@
         (card-ability state :corp spin 0)
         (click-card state :corp "Ice Wall")
         (click-card state :corp "Enigma")
+        (is (last-log-contains? state "uses Spin Doctor") "tracks source card properly")
         (is (find-card "Spin Doctor" (:rfg (get-corp))) "Spin Doctor is rfg'd")
         (is (find-card "Ice Wall" (:deck (get-corp))) "Ice Wall is shuffled back into the deck")
         (is (find-card "Enigma" (:deck (get-corp))) "Enigma is shuffled back into the deck"))))

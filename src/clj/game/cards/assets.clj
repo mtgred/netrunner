@@ -1984,24 +1984,24 @@
                                       (continue-ability
                                         state side
                                         (moon-pool-place-advancements agenda-count)
-                                        card nil)
+                                        source-card nil)
                                       (effect-completed state side eid)))))
            :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to reveal any cards in Archives"))
                                   (effect-completed eid))}
           moon-pool-discard-ability
-            {:prompt "Choose up to 2 cards from HQ to trash"
-             :choices {:card #(and (corp? %)
-                                   (in-hand? %))
-                       :max 2}
-             :async true
-             :msg (msg "trash " (quantify (count targets) "card") " from HQ")
-             :effect (req (wait-for (trash-cards state :corp targets {:cause-card card})
-                                    (continue-ability
-                                      state side
-                                      moon-pool-reveal-ability
-                                      card nil)))
-             :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash any cards from HQ"))
-                                    (continue-ability moon-pool-reveal-ability card nil))}]
+          {:prompt "Choose up to 2 cards from HQ to trash"
+           :choices {:card #(and (corp? %)
+                                 (in-hand? %))
+                     :max 2}
+           :async true
+           :msg (msg "trash " (quantify (count targets) "card") " from HQ")
+           :effect (req (wait-for (trash-cards state :corp targets {:cause-card card})
+                                  (continue-ability
+                                    state side
+                                    moon-pool-reveal-ability
+                                    card nil)))
+           :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash any cards from HQ"))
+                                  (continue-ability moon-pool-reveal-ability card nil))}]
       {:abilities [{:label "Trash up to 2 cards from HQ. Shuffle up to 2 cards from Archives into R&D"
                     :cost [(->c :remove-from-game)]
                     :async true
@@ -2978,7 +2978,7 @@
    :abilities [{:label "Shuffle up to 2 cards from Archives into R&D"
                 :cost [(->c :remove-from-game)]
                 :async true
-                :effect (effect (shuffle-into-rd-effect eid card 2))}]})
+                :effect (effect (shuffle-into-rd-effect eid source-card 2))}]})
 
 (defcard "Storgotic Resonator"
   {:abilities [{:action true
