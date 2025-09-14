@@ -10,6 +10,7 @@
    [game.core.charge :refer [charge-card]]
    [game.core.damage :refer [damage]]
    [game.core.drawing :refer [draw]]
+   [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.engine :refer [resolve-ability trigger-event]]
    [game.core.flags :refer [is-scored?]]
@@ -447,6 +448,16 @@
                                           :gameid (:gameid @state)}))))}
       nil nil)))
 
+(defn command-choose-hq-accesses
+  [state side]
+  (when (:run @state)
+    (system-msg state :corp "will be choosing the cards accessed from HQ this run")
+    (register-lingering-effect
+      state side (make-card {:title "/choose-hq-access command"})
+      {:type :corp-choose-hq-access
+       :duration :end-of-run
+       :value true})))
+
 (defn parse-command
   [state text]
   (let [[command & args] (safe-split text #" ")
@@ -475,6 +486,7 @@
                                              :effect (req (charge-card %1 %2 eid target))
                                              :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                             (make-card {:title "/charge command"}) nil)
+            "/choose-hq-access" #(command-choose-hq-accesses %1 %2)
             "/clear-win"  clear-win
             "/click"      #(swap! %1 assoc-in [%2 :click] (constrain-value value 0 1000))
             "/close-prompt" command-close-prompt
