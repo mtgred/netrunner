@@ -25,7 +25,10 @@
  :web/email {:host nil
              :user nil
              :pass nil
-             :ssl  nil}
+             :ssl  nil
+             :from "support@jinteki.net"
+             :reset-subject "Jinteki Password Reset"
+             :confirm-reset-subject "Your password has been changed"}
  :web/app {:server-mode #ig/ref :server/mode
            :mongodb/connection #ig/ref :mongodb/connection
            :web/auth #ig/ref :web/auth
