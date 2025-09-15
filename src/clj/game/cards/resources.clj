@@ -1170,7 +1170,10 @@
                                   true)))))}]})
 
 (defcard "Dean Lister"
-  {:abilities [{:change-in-game-state {:req (req run)}
+  {:abilities [{:req (req run)
+                :trash-icon true
+                :change-in-game-state {:req (req (some #(has-subtype? % "Icebreaker") (all-installed state :runner)))
+                                       :pay-cost true}
                 :label "pump icebreaker"
                 :msg (msg "give +1 strength for each card in [their] Grip to " (:title target) " until the end of the run")
                 :choices {:card #(and (installed? %)

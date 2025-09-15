@@ -416,7 +416,9 @@
                  (select-keys [:cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
                  (assoc :targets targets))]
     (if-not (change-in-game-state? state side ability card targets)
-      (do-nothing state side eid ability card)
+      (if (get-in ability [:change-in-game-state :pay-cost] nil)
+        (do-ability state side (dissoc ability :choices) card targets)
+        (do-ability state side (dissoc ability :choices :cost) card targets))
       (if (map? choices)
         ;; Two types of choices use maps: select prompts, and :number prompts.
         (cond
