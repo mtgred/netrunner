@@ -33,14 +33,15 @@
           (when reply-fn (reply-fn 200)))
       (when reply-fn (reply-fn 403)))))
 
+(defn- get-comp-lobbies [] (->> (app-state/get-lobbies) (filter #(= (:room %) "competitive"))))
+
 (defn- view-tables
   [{uid :uid}]
   ;; find all tables in the tournament lobbie
   ;; strip them to just:
   ;;   id, player1, player2, title, time-extension
   (let [strip-players (fn [players] (mapv #(select-keys % [:uid :side]) players))
-        comp-lobbies (->> (app-state/get-lobbies)
-                          (filter #(= (:room %) "competitive"))
+        comp-lobbies (->> (get-comp-lobbies)
                           (map #(select-keys % [:gameid :title :players :time-extension :excluded?]))
                           (map #(update % :players strip-players)))]
     (ws/broadcast-to! [uid] :tournament/view-tables {:competitive-lobbies (vec comp-lobbies)
@@ -94,7 +95,7 @@
       (cancel-tasks-for-lobby! actual-lobby)
       (if (:started actual-lobby)
         ;; in game - use the in-game thing
-        (handle-message-and-send-diffs! actual-lobby nil nil (str "[!] " msg))
+        (lobby/game-thread actual-lobby (handle-message-and-send-diffs! actual-lobby :system {:uid "TOURNAMENT SCHEDULER" :username "TOURNAMENT SCHEDULER"} (str "[!] " msg)))
         (lobby/lobby-thread
           (let [timestamp (inst/now)
                 message (core/make-message {:user {:username "TOURNAMENT SCHEDULER" :uid "TOURNAMENT SCHEDULER"} :text msg})
@@ -120,7 +121,7 @@
     (when round-start-1m-alert (schedule-task [gameid :round-start-1m] (inst/minus round-start (duration/of-minutes 1)) (fn [] (alert-lobby lobby "The round will begin in one minute."))))
 
     (when round-end            (schedule-task [gameid :round-end]      (offset-time round-end time-extension 0) (fn [] (alert-lobby lobby round-time-call))))
-    (when round-time-explainer (schedule-task [gameid :round-explain]  (offset-time round-end time-extension 5) (fn [] (alert-lobby lobby round-time-explainer))))
+    (when round-time-explainer (schedule-task [gameid :round-explain]  (offset-time round-end time-extension 0) (fn [] (alert-lobby lobby round-time-explainer))))
     (when round-1m-warning     (schedule-task [gameid :round-1m-warn]  (inst/plus round-end (duration/of-minutes (- (or time-extension 0) 1))) (fn [] (alert-lobby lobby "1 minute remaining in the round"))))
     (when round-5m-warning     (schedule-task [gameid :round-5m-warn]  (inst/plus round-end (duration/of-minutes (- (or time-extension 0) 5))) (fn [] (alert-lobby lobby "5 minutes remaining in the round"))))
     (when round-20m-warning    (schedule-task [gameid :round-20m-warn] (inst/plus round-end (duration/of-minutes (- (or time-extension 0) 20))) (fn [] (alert-lobby lobby "20 minutes remaining in the round"))))
@@ -181,8 +182,9 @@
                              }]
       (when-not (app-state/tournament-state)
         (swap! app-state/app-state assoc :tournament tournament-config)
-        (doseq [lobby (->> (app-state/get-lobbies)
-                           (filter #(= (:room %) "competitive")))]
+        (doseq [lobby (get-comp-lobbies)]
+          (when (and (zero? start-in) round-start-alert)
+            (alert-lobby lobby "The round has begun!"))
           (schedule-lobby! lobby)))
         ;; schedule
       (view-tables {:uid uid}))))
@@ -210,10 +212,19 @@
         to-update (into {} (map (juxt :gameid identity) competitive-lobbies))]
     (swap! app-state/app-state update :lobbies
            #(merge-with merge % (select-keys to-update (keys %))))
-    (doseq [lobby (->> (app-state/get-lobbies)
-                       (filter #(= (:room %) "competitive")))]
+    (doseq [lobby (get-comp-lobbies)]
       (schedule-lobby! lobby))
     (view-tables {:uid uid})))
+
+(defn- to-announce!
+  [{{:keys [msg]} :?data uid :uid}]
+  (doseq [lobby (get-comp-lobbies)] (alert-lobby lobby msg))
+  (ws/broadcast-to! [uid] :tournament/announce {:success true}))
+
+(defmethod ws/-msg-handler :tournament/announce
+  tournament--announce
+  [event]
+  ((wrap-with-to-handler to-announce!) event))
 
 (defmethod ws/-msg-handler :tournament/update-tables
   tournament--update-tables
