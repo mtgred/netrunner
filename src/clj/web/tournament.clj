@@ -53,7 +53,7 @@
   [keyvec]
   (when-let [{:keys [stop-chan]} (get-in @tasks keyvec nil)]
     (async/close! stop-chan)
-    (swap! tasks dissoc key)))
+    (swap! tasks assoc-in keyvec nil)))
 
 (defn cancel-tasks-for-lobby!
   "Cancel tasks for a given lobby"
@@ -66,8 +66,8 @@
   []
   (doseq [outer (keys @tasks)
           inner (keys (get @tasks outer []))]
-    (cancel-task! [outer inner])
-    (reset! tasks {})))
+    (cancel-task! [outer inner]))
+  (reset! tasks {}))
 
 (defn schedule-task
   "schedules a task under `keyvec` to occur at `time`.
