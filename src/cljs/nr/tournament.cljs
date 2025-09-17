@@ -246,6 +246,22 @@
 
    [:p]])
 
+(defn announce-section []
+  (r/with-let [announce-text (r/atom {:msg ""})]
+    [:div
+     [:h3 "Announcements"]
+     ;; print a message that the round is starting
+     [:fieldset
+      [:legend "Announce"]
+      [text-helper announce-text [:msg]
+       "Make an announcement to all non-excluded tournament lobbies"]
+      [cond-button "Announce"
+       (not (str/blank? (:msg @announce-text)))
+       (fn []
+         (non-game-toast "announcing..." "info" nil)
+         (ws/ws-send! [:tournament/announce @announce-text])
+         (reset! announce-text {:msg ""}))]]]))
+
 (defn tournament []
   (r/with-let [user (r/cursor app-state [:user])]
     [:div.container
@@ -253,6 +269,7 @@
      (when (:tournament-organizer @user)
        [:div.container.panel.blue-shade.content-page
         [:h1 "Tournament Manager"]
+        [:hr] [announce-section]
         [:hr] [active-round-section]
         [:hr] [timer-management]
         [:hr] [tournament-lobbies-container]])]))

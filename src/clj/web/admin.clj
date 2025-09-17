@@ -94,6 +94,7 @@
            (or (:isadmin user)
                (and (:ismoderator user)
                     (or (= user-type :specials)
+                        (= user-type :tos)
                         (= user-type :banned))))
            (not-empty username))
     (let [field (user-type->field user-type)
