@@ -2060,7 +2060,7 @@
                             (first-event? state side :run)))
              :waiting-prompt true
              :skippable true
-             :choices {:not-self nil
+             :choices {:not-self true
                        :req (req (and (runner? target)
                                       (installed? target)))}
              :msg (msg "trash " (:title target) " to gain " (:cost target)
