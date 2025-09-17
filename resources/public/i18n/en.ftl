@@ -1281,10 +1281,14 @@ set_name = {$name ->
     [ezbior-alt-arts] Ezbior Alt Arts
     [kalypso-alt-arts] Kalypso Alt Arts
     [elessarellie-alt-arts] ElessarEllie Alt Arts
+    [lucius-felimus-alt-arts] Lucius Felimus Alt Arts
     [mr-alt-arts] M.R. Alt Arts
     [maysleyline-alt-arts] mays.leyline Alt Arts
+    [monde-alt-arts] Monde Alt Arts
     [nicky-cheng-alt-arts] Nicky Cheng Alt Arts
+    [plural-alt-arts] Plural Alt Arts
     [scott-uminga-alt-arts] Scott Uminga Alt Arts
+    [stwyde-alt-arts] Stwyde Alt Arts
     [the-tag-mill-alt-arts] The Tag Mill Alt Arts
     [valenetrunner-alt-arts] ValeNetrunner Alt Arts
     [igor-lebedev-alt-arts] Igor Lebedev Alt Arts
