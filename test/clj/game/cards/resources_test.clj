@@ -3891,8 +3891,11 @@
     (let [dc (get-resource state 1)]
       (is (changed? [(:credit (get-runner)) 3
                      (count (:hand (get-runner))) 1]
-                    (click-card state :runner dc))
+            (click-card state :runner (get-resource state 0))
+            (is (not (no-prompt? state :runner)) "can't trash self")
+            (click-card state :runner dc))
           "sells casts for 3 credits and a card")
+      (is (is-discard? state :runner ["Daily Casts"]))
       (is (= (refresh dc) nil) "Daily Casts should be in Heap"))))
 
 (deftest kongamato
