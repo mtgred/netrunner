@@ -116,9 +116,18 @@ deck-builder_card-name = Nom de la carte
 
 deck-builder_clear-stats = Effacer les statistiques
 
+deck-builder_cleanup-decks = Nettoyer les decks...
+
+deck-builder_cannot-be-undone = Ceci ne peut pas être annulé.
+
 deck-builder_completed = Terminées: {$completed}
 
 deck-builder_confirm-delete = Confirmer l'effacement
+
+deck-builder_confirm-delete-multiple = Supprimer {$cnt ->
+    [one] {$cnt} deck sélectionné
+    *[other] {$cnt} decks sélectionnés
+}?
 
 deck-builder_create-game = Créer une partie
 
@@ -145,6 +154,20 @@ deck-builder_decklist = Liste de cartes
 deck-builder_decklist-inst = (Saisissez ou copiez une liste, elle sera analysée)
 
 deck-builder_delete = Effacer
+
+deck-builder_delete-selected = Supprimer la sélection
+
+deck-builder_deleted-decks-success = Supprimé {$cnt ->
+    [one] {$cnt} deck
+    *[other] {$cnt} decks
+}
+
+deck-builder_deletion-success-and-or-failure = Supprimé {$success ->
+    [one] {$success} deck
+    *[other] {$success} decks
+}. {$failed} ont échoué.
+
+deck-builder_deletion-in-progress = Suppression de deck en cours. Quitter cette page peut causer des problèmes.
 
 deck-builder_edit = Éditer
 
@@ -189,6 +212,10 @@ deck-builder_new-runner = Nouveau deck Runner
 deck-builder_notes = Notes
 
 deck-builder_reset = Réinitialiser
+
+deck-builder_select-all = Tout sélectionner
+
+deck-builder_unselect-all = Tout désélectionner
 
 deck-builder_save = Sauvegarder
 

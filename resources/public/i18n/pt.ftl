@@ -111,9 +111,18 @@ deck-builder_card-name = Nome da carta
 
 deck-builder_clear-stats = Limpar estatísticas
 
+deck-builder_cleanup-decks = Limpar baralhos...
+
+deck-builder_cannot-be-undone = Isso não pode ser desfeito.
+
 deck-builder_completed = Completas: {$completed}
 
 deck-builder_confirm-delete = Confirmar exclusão
+
+deck-builder_confirm-delete-multiple = Excluir {$cnt ->
+    [one] {$cnt} deck selecionado
+    *[other] {$cnt} decks selecionados
+}?
 
 deck-builder_copy = Copiar
 
@@ -144,6 +153,20 @@ deck-builder_decklist = Lista
 deck-builder_decklist-inst = (Digite ou cole a lista do baralho, ela sera filtrada)
 
 deck-builder_delete = Deletar
+
+deck-builder_delete-selected = Excluir selecionados
+
+deck-builder_deleted-decks-success = Deletado {$cnt ->
+    [one] {$cnt} deck
+    *[other] {$cnt} decks
+}
+
+deck-builder_deletion-success-and-or-failure = Deletado {$success ->
+    [one] {$success} deck
+    *[other] {$success} decks
+}. {$failed} falharam.
+
+deck-builder_deletion-in-progress = Exclusão de deck em andamento. Sair desta página pode causar problemas.
 
 deck-builder_edit = Editar
 
@@ -184,6 +207,10 @@ deck-builder_new-runner = Novo baralho de Runner
 deck-builder_notes = Notas
 
 deck-builder_reset = Resetar
+
+deck-builder_select-all = Selecionar tudo
+
+deck-builder_unselect-all = Desmarcar tudo
 
 deck-builder_save = Salvar
 

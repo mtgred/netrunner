@@ -128,9 +128,19 @@ deck-builder_card-name = Название карты
 
 deck-builder_clear-stats = Сбросить статистику
 
+deck-builder_cleanup-decks = Очистить колоды...
+
+deck-builder_cannot-be-undone = Это нельзя отменить.
+
 deck-builder_completed = Зав.: {$completed}
 
 deck-builder_confirm-delete = Подтвердить удаление
+
+deck-builder_confirm-delete-multiple = Удалить {$cnt ->
+    [one] {$cnt} выбранную колоду
+    [few] {$cnt} выбранные колоды
+    *[other] {$cnt} выбранных колод
+}?
 
 deck-builder_copy = Скопировать
 
@@ -165,6 +175,22 @@ deck-builder_decklist = Список карт
 deck-builder_decklist-inst = (Напишите или вставьте список карт, он будет распознан)
 
 deck-builder_delete = Удалить
+
+deck-builder_delete-selected = Удалить выбранные
+
+deck-builder_deleted-decks-success = Удалено {$cnt ->
+    [one] {$cnt} колода
+    [few] {$cnt} колоды
+    *[other] {$cnt} колод
+}
+
+deck-builder_deletion-success-and-or-failure = Удалено {$success ->
+    [one] {$success} колода
+    [few] {$success} колоды
+    *[other] {$success} колод
+}. {$failed} не удалось.
+
+deck-builder_deletion-in-progress = Удаление колоды в процессе. Покидание этой страницы может вызвать проблемы.
 
 deck-builder_edit = Изменить
 
@@ -207,6 +233,10 @@ deck-builder_new-runner = Создать Бегущего
 deck-builder_notes = Примечания
 
 deck-builder_reset = Сброс
+
+deck-builder_select-all = Выбрать все
+
+deck-builder_unselect-all = Снять выделение
 
 deck-builder_save = Сохранить
 

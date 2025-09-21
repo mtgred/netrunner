@@ -111,9 +111,15 @@ deck-builder_card-name = 카드 이름
 
 deck-builder_clear-stats = 기록 초기화
 
+deck-builder_cleanup-decks = 덱 정리...
+
+deck-builder_cannot-be-undone = 이것은 복구할 수 없습니다.
+
 deck-builder_completed = 완료됨: {$completed}
 
 deck-builder_confirm-delete = 삭제 확인
+
+deck-builder_confirm-delete-multiple = 선택한 {$cnt}개의 덱을 삭제하시겠습니까?
 
 deck-builder_create-game = 게임 생성
 
@@ -136,6 +142,14 @@ deck-builder_decklist = 덱 리스트
 deck-builder_decklist-inst = (덱 리스트를 입력하거나 붙여 넣으십시오)
 
 deck-builder_delete = 삭제
+
+deck-builder_delete-selected = 선택 항목 삭제
+
+deck-builder_deleted-decks-success = {$cnt}개의 덱을 삭제했습니다
+
+deck-builder_deletion-success-and-or-failure = {$success}개의 덱을 삭제했습니다. {$failed}개가 실패했습니다.
+
+deck-builder_deletion-in-progress = 덱 삭제가 진행 중입니다. 이 페이지를 벗어나면 문제가 발생할 수 있습니다.
 
 deck-builder_edit = 편집
 
@@ -176,6 +190,10 @@ deck-builder_new-runner = 새로운 러너 덱
 deck-builder_notes = 메모
 
 deck-builder_reset = 리셋
+
+deck-builder_select-all = 모두 선택
+
+deck-builder_unselect-all = 모두 선택 해제
 
 deck-builder_save = 저장
 

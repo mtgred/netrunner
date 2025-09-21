@@ -113,9 +113,19 @@ deck-builder_card-name = Nazwa karty
 
 deck-builder_clear-stats = Usuń statystyki
 
+deck-builder_cleanup-decks = Wyczyść talie...
+
+deck-builder_cannot-be-undone = Nie można tego cofnąć.
+
 deck-builder_completed = Ukończone: {$completed}
 
 deck-builder_confirm-delete = Potwierdź usunięcie
+
+deck-builder_confirm-delete-multiple = Usunąć {$cnt ->
+    [one] {$cnt} wybraną talię
+    [few] {$cnt} wybrane talie
+    *[other] {$cnt} wybranych talii
+}?
 
 deck-builder_create-game = Stwórz stół
 
@@ -140,6 +150,22 @@ deck-builder_decklist = Lista kart
 deck-builder_decklist-inst = (Wpisz lub wklej listę kart z talii, zostanie przeanalizowana)
 
 deck-builder_delete = Usuń
+
+deck-builder_delete-selected = Usuń zaznaczone
+
+deck-builder_deleted-decks-success = Usunięto {$cnt ->
+    [one] {$cnt} talię
+    [few] {$cnt} talie
+    *[other] {$cnt} talii
+}
+
+deck-builder_deletion-success-and-or-failure = Usunięto {$success ->
+    [one] {$success} talię
+    [few] {$success} talie
+    *[other] {$success} talii
+}. {$failed} nie powiodło się.
+
+deck-builder_deletion-in-progress = Usuwanie talii w toku. Opuszczenie tej strony może spowodować problemy.
 
 deck-builder_edit = Edytuj
 
@@ -180,6 +206,10 @@ deck-builder_new-runner = Nowa talia Runnera
 deck-builder_notes = Notatki
 
 deck-builder_reset = Zresetuj
+
+deck-builder_select-all = Zaznacz wszystko
+
+deck-builder_unselect-all = Odznacz wszystko
 
 deck-builder_save = Zapisz
 
