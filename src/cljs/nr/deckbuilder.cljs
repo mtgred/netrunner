@@ -689,10 +689,10 @@
     (let [deck-id (:_id deck)
           selected? (contains? @selected-decks deck-id)]
       [:div.deckline {:class (str (when (= deck-id (get @state-deck :_id)) "active ")
-                                   (when (and @cleanup-mode selected?) "selected"))
+                                  (when (and @cleanup-mode selected?) "selected"))
                       :on-click (if @cleanup-mode
                                   #(swap! s update :selected-decks
-                                         (if selected? disj conj) deck-id)
+                                          (if selected? disj conj) deck-id)
                                   #(put! select-channel deck))}
        (when @cleanup-mode
          [:input.cleanup-checkbox {:type "checkbox"
@@ -761,7 +761,7 @@
                fmt-filter (r/cursor state [:format-filter])]
     (when-not (:edit @state)
       (if
-        (not @decks-loaded)
+       (not @decks-loaded)
         [:div.deck-collection
          [:h4 (tr [:deck-builder_loading-msg "Loading deck collection..."])]]
         (let [filtered-decks (->> @decks
@@ -771,7 +771,7 @@
               n (count filtered-decks)]
           [:<>
            [:div.deck-count
-                        [:h4
+            [:h4
              (if (filter-selected side-filter faction-filter fmt-filter)
                (tr [:deck-builder_deck-count-filtered "Deck Count (filtered)"] {:cnt n})
                (tr [:deck-builder_deck-count "Deck Count"] {:cnt n}))
@@ -779,8 +779,7 @@
                [:div.cleanup-link-container
                 [:span.cleanup-link
                  {:on-click #(swap! state assoc :cleanup-mode true :selected-decks #{} :deck nil)}
-                (tr [:deck-builder_cleanup-decks "Cleanup decks..."])]])
-             ]]
+                 (tr [:deck-builder_cleanup-decks "Cleanup decks..."])]])]]
            [decks-list filtered-decks state scroll-top]])))))
 
 (defn line-span
@@ -1130,17 +1129,17 @@
       [:div.button-bar.cleanup-button-bar
        [:button {:disabled @deleting
                  :on-click #(when-not @deleting
-                             (swap! s assoc :selected-decks
-                                    (into #{} (map :_id decks))))}
+                              (swap! s assoc :selected-decks
+                                     (into #{} (map :_id decks))))}
         (tr [:deck-builder_select-all "Select All"])]
        [:button {:disabled @deleting
                  :on-click #(when-not @deleting
-                             (swap! s assoc :selected-decks #{}))}
+                              (swap! s assoc :selected-decks #{}))}
         (tr [:deck-builder_unselect-all "Unselect All"])]
        [:button {:class (when (or (not has-selection) @deleting) "disabled")
                  :disabled (or (not has-selection) @deleting)
                  :on-click #(when (and has-selection (not @deleting))
-                             (reagent-modals/modal!
+                              (reagent-modals/modal!
                                [delete-confirm-modal selected-count
                                 (fn [] (delete-selected-decks! s))]))}
         (cond
@@ -1149,8 +1148,8 @@
           :else (tr [:deck-builder_delete-selected "Delete Selected"]))]
        [:button {:disabled @deleting
                  :on-click #(when-not @deleting
-                             (set! (.-onbeforeunload js/window) nil)
-                             (swap! s assoc :cleanup-mode false :selected-decks #{}))}
+                              (set! (.-onbeforeunload js/window) nil)
+                              (swap! s assoc :cleanup-mode false :selected-decks #{}))}
         (tr [:deck-builder_cancel "Cancel"])]])))
 
 (defn collection-buttons [s user decks-loaded]
