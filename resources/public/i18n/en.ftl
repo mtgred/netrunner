@@ -830,7 +830,9 @@ lobby_no-valid-decks-format = {$format ->
     *[unknown] This lobby is for the $format format
 }
 
-lobby_no-valid-decks-help = Please check the validity of your decklists and ensure you are queueing for a game of the appropriate format. If you are a new player and wish to play the learner decks, you need to create or join a game of the System Gateway format.
+lobby_no-valid-decks-help = {$format ->
+    *[unknown] Please check the validity of your decklists and ensure you are queueing for a game of the appropriate format. If you are a new player and wish to play the learner decks, you need to create or join a game of the System Gateway format.
+}
 
 lobby_not-allowed = Not allowed
 

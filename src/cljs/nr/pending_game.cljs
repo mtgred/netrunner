@@ -76,7 +76,7 @@
         [:div
          [:h3 (tr [:lobby_no-valid-decks "You do not have any decks that are valid for this format"])]
          [:h3 (tr [:lobby_no-valid-decks-format (str "This lobby is for the " fmt " format") {:format fmt}])]
-         [:h4 (tr [:lobby_no-valid-decks-help "Please check the validity of your decklists and ensure you are queueing for a game of the appropriate format. If you are a new player and wish to play the learner decks, you need to create or join a game of the System Gateway format."])]]))))
+         [:h4 (tr [:lobby_no-valid-decks-help "Please check the validity of your decklists and ensure you are queueing for a game of the appropriate format. If you are a new player and wish to play the learner decks, you need to create or join a game of the System Gateway format." {:format fmt}])]]))))
 
 (defn- first-user?
   "Is this user the first user in the game?"
