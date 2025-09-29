@@ -1661,6 +1661,15 @@
     (run-on state :hq)
     (card-ability state :runner (get-resource state 0) 0)
     (is (no-prompt? state :runner) "No prompt because no targets")
+    (is (is-discard? state :runner ["Dean Lister"]) "Dean lister is trashed"))
+  ;; you still target something outside of a run
+  (do-game
+    (new-game {:runner {:hand ["Dean Lister" "Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dean Lister")
+    (play-from-hand state :runner "Ika")
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-card state :runner "Ika")
     (is (is-discard? state :runner ["Dean Lister"]) "Dean lister is trashed")))
 
 (deftest debbie-downtown-moreira
