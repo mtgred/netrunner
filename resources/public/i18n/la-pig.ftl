@@ -95,7 +95,7 @@ deck-builder_card-name = Ardcay amenay
 
 deck-builder_clear-stats = Earclay Atsstay
 
-deck-builder_cleanup-decks = Eanupclway ecksday...
+deck-builder_cleanup-decks = Eanupclay ecksday...
 
 deck-builder_cannot-be-undone = Isthay annotcay ebay undoneway.
 
