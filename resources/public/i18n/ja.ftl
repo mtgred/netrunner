@@ -67,15 +67,9 @@ deck-builder_card-name = カード名
 
 deck-builder_clear-stats = 統計を削除
 
-deck-builder_cleanup-decks = デッキを整理...
-
-deck-builder_cannot-be-undone = これは元に戻せません。
-
 deck-builder_completed = 完了: {$completed}
 
 deck-builder_confirm-delete = 削除の実行
-
-deck-builder_confirm-delete-multiple = 選択した{$cnt}個のデッキを削除しますか？
 
 deck-builder_copy = コピー
 
@@ -104,14 +98,6 @@ deck-builder_decklist = カードリスト
 deck-builder_decklist-inst = ({"{"}枚数{"}"}[半角スペース]{"{"}カード名（英語）{"}"}で入力)
 
 deck-builder_delete = 削除
-
-deck-builder_delete-selected = 選択したものを削除
-
-deck-builder_deleted-decks-success = {$cnt}個のデッキを削除しました
-
-deck-builder_deletion-success-and-or-failure = {$success}個のデッキを削除しました。{$failed}個は失敗しました。
-
-deck-builder_deletion-in-progress = デッキの削除中です。このページを離れると問題が発生する可能性があります。
 
 deck-builder_edit = 編集
 
@@ -148,10 +134,6 @@ deck-builder_new-runner = 新規ランナー
 deck-builder_notes = メモ
 
 deck-builder_reset = リセット
-
-deck-builder_select-all = すべて選択
-
-deck-builder_unselect-all = すべて選択解除
 
 deck-builder_save = 保存
 

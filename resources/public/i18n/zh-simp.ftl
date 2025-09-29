@@ -138,15 +138,9 @@ deck-builder_card-name = 卡牌名称
 
 deck-builder_clear-stats = 清除统计数据
 
-deck-builder_cleanup-decks = 清理套牌...
-
-deck-builder_cannot-be-undone = 此操作无法撤销。
-
 deck-builder_completed = 完成: {$completed}
 
 deck-builder_confirm-delete = 确认删除
-
-deck-builder_confirm-delete-multiple = 删除已选择的{$cnt}个牌组吗？
 
 deck-builder_copy = 复制
 
@@ -177,14 +171,6 @@ deck-builder_decklist = 牌表
 deck-builder_decklist-inst = （在此输入或粘贴牌表，系统会自动解析）
 
 deck-builder_delete = 删除
-
-deck-builder_delete-selected = 删除所选
-
-deck-builder_deleted-decks-success = 已删除 {$cnt} 个牌组
-
-deck-builder_deletion-success-and-or-failure = 已删除 {$success} 个牌组。{$failed} 个失败。
-
-deck-builder_deletion-in-progress = 牌组删除进行中。离开此页面可能会导致问题。
 
 deck-builder_edit = 编辑
 
@@ -229,10 +215,6 @@ deck-builder_new-runner = 新建潜袭者牌组
 deck-builder_notes = 备注
 
 deck-builder_reset = 重置
-
-deck-builder_select-all = 全选
-
-deck-builder_unselect-all = 取消全选
 
 deck-builder_save = 保存
 
