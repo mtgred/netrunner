@@ -73,6 +73,7 @@
             :post #'decks/decks-create-handler
             :put #'decks/decks-save-handler}]
        ["/:id" {:delete #'decks/decks-delete-handler}]]
+      ["/decks-bulk-delete" {:post #'decks/decks-bulk-delete-handler}]
       ["/api-keys" {:middleware [::auth]}
        ["" {:get #'api-keys/api-keys-handler
             :post #'api-keys/api-keys-create-handler}]

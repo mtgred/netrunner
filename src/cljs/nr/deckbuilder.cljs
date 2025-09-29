@@ -267,45 +267,80 @@
                 (swap! s assoc :deck nil)
                 (end-delete s))))))))
 
-(defn- execute-deck-deletion
-  "Asynchronously deletes a single deck and returns a channel for the result."
-  [deck-id]
+(defn- execute-bulk-deck-deletion
+  "Asynchronously deletes multiple decks in a single request and returns a channel for results.
+   Returns: {:successful [id1 id2 ...]
+             :failed [{:id ... :reason keyword :message string} ...]}"
+  [deck-ids]
   (go
     (try
-      (let [response (<! (DELETE (str "/data/decks/" deck-id)))]
+      (let [response (<! (POST "/data/decks-bulk-delete" {:deck-ids (vec deck-ids)} :json))]
         (cond
           (= 200 (:status response))
-          {:success deck-id}
-
-          (= 404 (:status response))
-          {:success deck-id} ; Already deleted
+          (let [results (:json response)
+                successful (filter #(= "deleted" (:status %)) results)
+                failed (filter #(not= "deleted" (:status %)) results)]
+            {:successful (map :id successful)
+             :failed (map (fn [{:keys [id status error]}]
+                            {:id id
+                             :reason (case status
+                                       "unauthorized" :unauthorized
+                                       :unknown)
+                             :message error})
+                          failed)})
 
           (nil? response)
-          {:failed {:id deck-id :error "Network timeout"}}
+          {:successful []
+           :failed (map (fn [id]
+                          {:id id
+                           :reason :network-timeout
+                           :message "Network timeout"})
+                        deck-ids)}
 
           :else
-          {:failed {:id deck-id :error (str "HTTP " (:status response))}}))
+          {:successful []
+           :failed (map (fn [id]
+                          {:id id
+                           :reason :http-error
+                           :message (str "HTTP " (:status response))})
+                        deck-ids)}))
       (catch js/Error e
-        {:failed {:id deck-id :error (str "Error: " (.-message e))}}))))
+        {:successful []
+         :failed (map (fn [id]
+                        {:id id
+                         :reason :client-error
+                         :message (str "Error: " (.-message e))})
+                      deck-ids)}))))
 
 (defn- format-deletion-feedback
-  "Formats deletion results into user feedback messages."
+  "Formats deletion results into user feedback messages.
+   success-count: Number of successfully deleted decks
+   failed-count: Number of failed deletion attempts"
   [success-count failed-count]
   (cond
-      (zero? failed-count)
-      {:message (tr [:deck-builder_deleted-decks-success] {:cnt success-count})
-       :type "success"}
+    (zero? failed-count)
+    {:message (tr [:deck-builder_deleted-decks-success] {:cnt success-count})
+     :type "success"}
 
-      :else
-      {:message (tr [:deck-builder_deletion-success-and-or-failure] {:success success-count :failed failed-count})
-       :type "warning"}))
+    (zero? success-count)
+    {:message (tr [:deck-builder_deletion-success-and-or-failure]
+                  {:success success-count :failed failed-count})
+     :type "error"}
+
+    :else
+    {:message (tr [:deck-builder_deletion-success-and-or-failure]
+                  {:success success-count :failed failed-count})
+     :type "warning"}))
 
 (defn- update-ui-after-deletion
-  "Updates UI state after deletion completion."
+  "Updates UI state after deletion completion.
+   successful-ids: Set of successfully deleted deck IDs"
   [s successful-ids]
   ;; Remove successfully deleted decks from app state
+  ;; Convert IDs to strings for consistent comparison (handles ObjectId vs string differences)
   (when (seq successful-ids)
-    (load-decks (remove #(contains? successful-ids (:_id %)) (:decks @app-state))))
+    (let [success-id-strings (set (map str successful-ids))]
+      (load-decks (remove #(contains? success-id-strings (str (:_id %))) (:decks @app-state)))))
 
   ;; Clear beforeunload handler and update component state
   (set! (.-onbeforeunload js/window) nil)
@@ -321,35 +356,29 @@
    Updates component state and shows appropriate toast messages."
   [s]
   (authenticated
-    (fn [_]
+   (fn [_]
       ;; Atomically set deletion state and capture selected deck IDs
-      (let [deletion-state (swap! s (fn [current-state]
-                                      (let [selected-deck-ids (get current-state :selected-decks #{})]
-                                        (if (pos? (count selected-deck-ids))
-                                          (assoc current-state
-                                                 :deleting true
-                                                 :deletion-ids selected-deck-ids)
-                                          current-state))))
-            selected-deck-ids (get deletion-state :deletion-ids #{})]
-        (when (seq selected-deck-ids)
+     (let [deletion-state (swap! s (fn [current-state]
+                                     (let [selected-deck-ids (get current-state :selected-decks #{})]
+                                       (if (pos? (count selected-deck-ids))
+                                         (assoc current-state
+                                                :deleting true
+                                                :deletion-ids selected-deck-ids)
+                                         current-state))))
+           selected-deck-ids (get deletion-state :deletion-ids #{})]
+       (when (seq selected-deck-ids)
           ;; Set beforeunload handler to prevent navigation during deletion
-          (set! (.-onbeforeunload js/window)
-                #(clj->js (tr [:deck-builder_deletion-in-progress "Deck deletion in progress. Leaving this page may cause issues."])))
-          (go
-            ;; Delete decks sequentially to avoid server overload
-            (loop [remaining selected-deck-ids
-                   successful []
-                   failed []]
-              (if (empty? remaining)
-                ;; Process final results
-                (let [feedback (format-deletion-feedback (count successful) (count failed))]
-                  (update-ui-after-deletion s (set successful))
-                  (non-game-toast (:message feedback) (:type feedback) nil))
-                ;; Delete next deck
-                (let [result (<! (execute-deck-deletion (first remaining)))]
-                  (if (:success result)
-                    (recur (rest remaining) (conj successful (:success result)) failed)
-                    (recur (rest remaining) successful (conj failed (:failed result)))))))))))))
+         (set! (.-onbeforeunload js/window)
+               #(clj->js (tr [:deck-builder_deletion-in-progress "Deck deletion in progress. Leaving this page may cause issues."])))
+         (go
+            ;; Delete all decks in a single bulk request
+           (let [bulk-result (<! (execute-bulk-deck-deletion selected-deck-ids))
+                 successful-ids (:successful bulk-result)
+                 failed-items (:failed bulk-result)
+                 feedback (format-deletion-feedback (count successful-ids) (count failed-items))]
+              ;; Process final results
+             (update-ui-after-deletion s (set successful-ids))
+             (non-game-toast (:message feedback) (:type feedback) nil))))))))
 
 (defn- legal-in-format
   [card format]
