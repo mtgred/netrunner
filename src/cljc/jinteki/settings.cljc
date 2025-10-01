@@ -17,7 +17,7 @@
     "the-root-bg" "traffic-jam-bg" "worlds2020"})
 
 (def valid-languages
-  #{"en" "fr" "ja" "ko" "pl" "pt" "ru" "zh-simp"})
+  #{"en" "es" "de" "ca" "it" "fr" "ja" "ko" "pl" "pt" "ru" "zh-simp" "zh-trad"})
 
 (def valid-pronouns
   #{"none" "any" "myodb" "blank" "they" "she" "sheit" "shethey"
