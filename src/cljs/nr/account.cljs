@@ -316,6 +316,7 @@
                      :on-change #(swap! s assoc :language (.. % -target -value))}
             (doall
               (for [option [{:name "English" :ref "en"}
+                            {:name "Spanish" :ref "es"}
                             {:name "中文 (Simplified)" :ref "zh-simp"}
                             {:name "中文 (Traditional) (Cards only)" :ref "zh-trad"}
                             {:name "Français" :ref "fr"}
@@ -326,10 +327,10 @@
                             {:name "Polski" :ref "pl"}
                             {:name "Português" :ref "pt"}
                             {:name "Русский" :ref "ru"}
+                            {:name "Catalan" :ref "ca"}
                             {:name "Igpay Atinlay" :ref "la-pig"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
            [:div (tr [:settings_language-tip "Some languages are not fully translated yet. If you would like to help with translations, please contact us."])]]
-
           [:section
            [:h3 (tr [:settings_bespoke-sounds "Card-Specific Sounds"] {:sound "header"})]
            (doall
