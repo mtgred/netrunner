@@ -139,6 +139,8 @@
                     position:relative;
                     overflow: visible;
                     width: auto;
+                    flex-shrink: 1;
+                    min-height: 1px;
                     justify-content flex-end;
 
                     .card-cost
@@ -146,6 +148,7 @@
                         margin-top: .25rem;
                         margin-right: 2rem;
                         display: inline-flex;
+                        min-height: 1px;
                         position: absolute;
                         justify-content: left;
 
@@ -156,7 +159,7 @@
                     .cost-item
                         display: inline-flex;
                         margin-inline: .1rem;
-
+                        min-height: 1px;
                         .credit
                             margin-left: .1rem
 
