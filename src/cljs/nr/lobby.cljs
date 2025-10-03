@@ -3,6 +3,7 @@
   (:require
    [cljs.core.async :refer [<!] :as async]
    [clojure.set :refer [difference union]]
+   [jinteki.messages :refer [game-creation-paused-msg]]
    [nr.ajax :refer [GET]]
    [nr.angel-arena.lobby :as angel-arena]
    [nr.appstate :refer [app-state current-gameid]]
@@ -35,6 +36,9 @@
 
 (defmethod ws/event-msg-handler :lobby/toast [{{:keys [message type]} :?data}]
   (non-game-toast message type {:time-out 30000 :close-button true}))
+
+(defmethod ws/event-msg-handler :lobby/pause-status [{{:keys [paused]} :?data}]
+  (swap! app-state assoc :pause-game-creation paused))
 
 (defmethod ws/event-msg-handler :lobby/timeout
   [{{:keys [gameid]} :?data}]
@@ -172,7 +176,8 @@
 (defn new-game-button [s games gameid user]
   [cond-button (tr [:lobby_new-game "New game"])
    ;; TODO: rewrite this check
-   (and (not (or @gameid
+   (and (not (:pause-game-creation @app-state))
+        (not (or @gameid
                  (:editing @s)
                  (= "tournament" (:room @s))))
         (->> @games
@@ -183,7 +188,10 @@
       (fn [_]
         (swap! s assoc :editing true)
         (-> ".game-title" js/$ .select)
-        (resume-sound)))])
+        (resume-sound)))
+   (when (:pause-game-creation @app-state)
+     {:class "paused"
+      :title (tr [:lobby_creation-paused game-creation-paused-msg])})])
 
 (defn reload-lobby-button []
   [:button.reload-button {:type "button"

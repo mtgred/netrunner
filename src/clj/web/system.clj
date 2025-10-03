@@ -21,6 +21,7 @@
    [medley.core :refer [deep-merge]]
    [monger.collection :as mc]
    [monger.core :as mg]
+   [monger.operators :refer :all]
    [org.httpkit.server :refer [run-server server-stop!]]
    [taoensso.sente :as sente]
    [time-literals.data-readers]
@@ -31,7 +32,7 @@
    [web.lobby :as lobby]
    [web.telemetry]
    [web.utils :refer [tick]]
-   [web.versions :refer [banned-msg frontend-version]]
+   [web.versions :refer [banned-msg frontend-version pause-game-creation]]
    [web.ws :refer [ch-chsk event-msg-handler]]))
 
 (read-write/print-time-literals-clj!)
@@ -115,6 +116,16 @@
           (mc/insert-and-return "config" {:version initial
                                           :cards-version 0}))
         (reset! frontend-version initial))))
+
+(defmethod ig/init-key :web/pause-game-creation [_ {initial :initial
+                                                    {:keys [db]} :mongo}]
+  (if-let [config (mc/find-one-as-map db "config" nil)]
+    (do (reset! pause-game-creation (:pause-game-creation config false))
+        config)
+    (do (doto db
+          (mc/create "config" nil)
+          (mc/insert-and-return "config" {:pause-game-creation initial}))
+        (reset! pause-game-creation initial))))
 
 (defmethod ig/init-key :sente/router [_ _opts]
   (sente/start-server-chsk-router!

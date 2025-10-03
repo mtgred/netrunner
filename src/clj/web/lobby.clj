@@ -10,6 +10,7 @@
    [crypto.password.bcrypt :as bcrypt]
    [game.core :as core]
    [game.utils :refer [server-card]]
+   [jinteki.messages :refer [game-creation-paused-msg]]
    [jinteki.utils :refer [select-non-nil-keys side-from-str superuser?]]
    [jinteki.preconstructed :refer [all-matchups]]
    [jinteki.validator :as validator]
@@ -19,6 +20,7 @@
    [web.app-state :as app-state]
    [web.mongodb :as mongodb]
    [web.stats :as stats]
+   [web.versions :refer [pause-game-creation]]
    [web.ws :as ws]
    [taoensso.encore :as enc]
    [taoensso.timbre :as timbre]))
@@ -339,6 +341,22 @@
 (defn send-message [lobby message]
   (update lobby :messages conj message))
 
+(defn try-create-lobby!
+  "Attempts to create a new lobby if conditions are met.
+  Creates lobby, registers it, assigns tournament properties if applicable,
+  and broadcasts state to participants."
+  [uid user options]
+  (let [lobby (-> (create-new-lobby {:uid uid :user user :options options})
+                  (send-message
+                   (core/make-system-message (str (:username user) " has created the game."))))
+        new-app-state (swap! app-state/app-state update :lobbies
+                             register-lobby lobby uid)
+        lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
+    (when lobby?
+      (assign-tournament-properties lobby?)
+      (send-lobby-state lobby?)
+      (broadcast-lobby-list))))
+
 (defmethod ws/-msg-handler :lobby/create
   lobby--create
   [{{user :user} :ring-req
@@ -347,17 +365,11 @@
     id :id
     timestamp :timestamp}]
   (lobby-thread
-    (let [lobby (-> (create-new-lobby {:uid uid :user user :options ?data})
-                    (send-message
-                      (core/make-system-message (str (:username user) " has created the game."))))
-          new-app-state (swap! app-state/app-state update :lobbies
-                               register-lobby lobby uid)
-          lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
-      (when lobby?
-        (assign-tournament-properties lobby?)
-        (send-lobby-state lobby?)
-        (broadcast-lobby-list))
-      (log-delay! timestamp id))))
+   (if @pause-game-creation
+     (ws/chsk-send! uid [:lobby/toast {:message game-creation-paused-msg
+                                       :type "error"}])
+     (try-create-lobby! uid user ?data))
+   (log-delay! timestamp id)))
 
 (defn clear-lobby-state [uid]
   (when uid
@@ -677,7 +689,7 @@
     lobbies))
 
 (defn swap-text
-  "Returns an appropriate message indicating that the players have swapped sides, 
+  "Returns an appropriate message indicating that the players have swapped sides,
   where `player1-side` is the side that host is switching to"
   [players player1-side]
   (let [[player1 player2] (if (> (count players) 1)

@@ -1,11 +1,12 @@
 (ns nr.new-game
   (:require
+   [jinteki.messages :refer [game-creation-paused-msg]]
    [jinteki.utils :refer [str->int]]
    [jinteki.preconstructed :refer [all-matchups matchup-by-key]]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [authenticated] :as auth]
    [nr.translations :refer [tr tr-format tr-side]]
-   [nr.utils :refer [slug->format]]
+   [nr.utils :refer [slug->format cond-button]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 
@@ -42,9 +43,12 @@
 
 (defn button-bar [state lobby-state options]
   [:div.button-bar
-   [:button {:type "button"
-             :on-click #(create-game state lobby-state options)}
-    (tr [:lobby_create "Create"])]
+   [cond-button (tr [:lobby_create "Create"])
+    (not (:pause-game-creation @app-state))
+    #(create-game state lobby-state options)
+    (when (:pause-game-creation @app-state)
+      {:class "paused"
+       :title (tr [:lobby_creation-paused game-creation-paused-msg])})]
    [:button {:type "button"
              :on-click #(do (.preventDefault %)
                             (swap! lobby-state assoc :editing false))}

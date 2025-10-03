@@ -1,5 +1,6 @@
 (ns nr.pending-game
   (:require
+   [jinteki.messages :refer [game-creation-paused-msg]]
    [jinteki.validator :refer [singleton-deck? trusted-deck-status]]
    [jinteki.preconstructed :refer [matchup-by-key]]
    [nr.appstate :refer [app-state current-gameid]]
@@ -86,8 +87,12 @@
 (defn start-button [current-game user gameid players]
   (when (first-user? @players @user)
     [cond-button (tr [:lobby_start "Start"])
-     (or (every? :deck @players) (is-preconstructed? current-game))
-     #(ws/ws-send! [:game/start {:gameid @gameid}])]))
+     (and (not (:pause-game-creation @app-state))
+          (or (every? :deck @players) (is-preconstructed? current-game)))
+     #(ws/ws-send! [:game/start {:gameid @gameid}])
+     (when (:pause-game-creation @app-state)
+       {:class "paused"
+        :title (tr [:lobby_creation-paused game-creation-paused-msg])})]))
 
 (defn leave-button [gameid]
   [:button

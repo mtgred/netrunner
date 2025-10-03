@@ -9,7 +9,7 @@
    [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user?]]
    [web.utils :refer [response]]
-   [web.versions :refer [frontend-version banned-msg]]
+   [web.versions :refer [frontend-version banned-msg pause-game-creation]]
    [web.ws :as ws]))
 
 (defmethod ws/-msg-handler :admin/announce
@@ -144,3 +144,26 @@
       (mc/update db "config" {} {$set {:version version}})
       (response 200 {:message "ok" :version version}))
     (response 400 {:message "Missing version item"})))
+
+(defn pause-game-creation-handler [{db :system/db}]
+  (let [config (mc/find-one-as-map db "config" nil)
+        paused (:pause-game-creation config false)]
+    (response 200 {:message "ok" :paused paused})))
+
+(defn pause-game-creation-update-handler! [{db :system/db
+                                            {paused :paused} :body}]
+  (if (some? paused)
+    (try
+      (let [update-result (mc/update db "config" {} {$set {:pause-game-creation paused}})]
+        (if (acknowledged? update-result)
+          (do
+            ;; Update atom only after DB write succeeds to maintain consistency
+            (reset! pause-game-creation paused)
+            ;; Broadcast to all connected users
+            (doseq [uid (ws/connected-uids)]
+              (ws/chsk-send! uid [:lobby/pause-status {:paused paused}]))
+            (response 200 {:message "ok" :paused paused}))
+          (response 500 {:message "Failed to update database"})))
+      (catch Exception _
+        (response 500 {:message "Database error"})))
+    (response 400 {:message "Missing paused value"})))

@@ -11,12 +11,14 @@
    [game.core.set-up :refer [init-game]]
    [game.core.finding :refer [find-latest]]
    [game.main :as main]
+   [jinteki.messages :refer [game-creation-paused-msg]]
    [jinteki.preconstructed :as preconstructed]
    [jinteki.utils :refer [side-from-str]]
    [medley.core :refer [find-first]]
    [web.app-state :as app-state]
    [web.lobby :as lobby]
    [web.stats :as stats]
+   [web.versions :refer [pause-game-creation]]
    [web.ws :as ws]
    [taoensso.timbre :as timbre]))
 
@@ -171,6 +173,24 @@
       (assoc lobbies gameid g))
     lobbies))
 
+(defn try-start-game!
+  "Attempts to start a game if conditions are met.
+  Checks that the lobby exists, the user is the first player, and the game hasn't started yet.
+  If all conditions pass, starts the game, updates stats, and broadcasts state to participants."
+  [db uid gameid]
+  (let [{:keys [players started] :as lobby} (app-state/get-lobby gameid)]
+    (when (and lobby (lobby/first-player? uid lobby) (not started))
+      (let [now (inst/now)
+            new-app-state
+            (swap! app-state/app-state
+                   update :lobbies handle-start-game gameid players now)
+            lobby? (get-in new-app-state [:lobbies gameid])]
+        (when lobby?
+          (stats/game-started db lobby?)
+          (lobby/send-lobby-state lobby?)
+          (lobby/broadcast-lobby-list)
+          (send-state-to-participants :game/start lobby? (diffs/public-states (:state lobby?))))))))
+
 (defmethod ws/-msg-handler :game/start
   game--start
   [{{db :system/db} :ring-req
@@ -179,19 +199,11 @@
     id :id
     timestamp :timestamp}]
   (lobby/lobby-thread
-    (let [{:keys [players started] :as lobby} (app-state/get-lobby gameid)]
-      (when (and lobby (lobby/first-player? uid lobby) (not started))
-        (let [now (inst/now)
-              new-app-state
-              (swap! app-state/app-state
-                     update :lobbies handle-start-game gameid players now)
-              lobby? (get-in new-app-state [:lobbies gameid])]
-          (when lobby?
-            (stats/game-started db lobby?)
-            (lobby/send-lobby-state lobby?)
-            (lobby/broadcast-lobby-list)
-            (send-state-to-participants :game/start lobby? (diffs/public-states (:state lobby?)))))))
-    (lobby/log-delay! timestamp id)))
+   (if @pause-game-creation
+     (ws/chsk-send! uid [:lobby/toast {:message game-creation-paused-msg
+                                       :type "error"}])
+     (try-start-game! db uid gameid))
+   (lobby/log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :game/leave
   game--leave

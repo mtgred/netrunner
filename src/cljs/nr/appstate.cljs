@@ -53,12 +53,17 @@
              :visible-formats (load-visible-formats)
              :channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
                         :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}
-             :games [] :current-game nil})))
+             :games [] :current-game nil
+             :pause-game-creation false})))
 
 (go (let [lang (get-in @app-state [:options :language] "en")
           response (<! (GET (str "/data/language/" lang)))]
       (when (= 200 (:status response))
         (i18n/insert-lang! lang (:json response)))))
+
+(go (let [response (<! (GET "/pause-game-creation"))]
+      (when (= 200 (:status response))
+        (swap! app-state assoc :pause-game-creation (get-in response [:json :paused] false)))))
 
 (defn current-gameid [app-state]
   (get-in @app-state [:current-game :gameid]))

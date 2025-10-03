@@ -80,6 +80,7 @@
       ["/language/:lang" {:get #'data/lang-handler}]]
      ["/chat/config" {:get #'chat/config-handler :middleware [::forgery]}]
      ["/messages/:channel" {:get #'chat/messages-handler :middleware [::forgery]}]
+     ["/pause-game-creation" {:get #'admin/pause-game-creation-handler :middleware [::forgery]}]
      ["/reset/:token" {:get #'pages/reset-password-page
                        :post #'auth/reset-password-handler}]
      ["/replay/:gameid" {:get #'stats/replay-handler :middleware [::forgery]}]
@@ -128,7 +129,8 @@
       ["/banned" {:get #'admin/banned-message-handler
                    :put #'admin/banned-message-update-handler}]
       ["/features" {:get #'admin/features-handler
-                    :put #'admin/features-update-handler}]]]
+                    :put #'admin/features-update-handler}]
+      ["/pause-game-creation" {:put #'admin/pause-game-creation-update-handler!}]]]
     {:reitit.middleware/registry
      {::auth auth/wrap-authentication-required
       ::tournament-auth auth/wrap-tournament-auth-required
