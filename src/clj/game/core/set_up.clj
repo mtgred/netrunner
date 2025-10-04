@@ -126,7 +126,7 @@
                      :title "Runner Basic Action Card"})))
 
 (defn- sort-deck-for-display
-  "Sorts deck cards by type then title for display in decklist"
+  "Sorts deck cards by type then title for display in decklist with type dividers"
   [deck]
   (->> deck
        (group-by :title)
@@ -134,8 +134,13 @@
               [title (count cards) (:type (first cards))]))
        (sort-by (fn [[title _qty card-type]]
                   [card-type title]))
-       (map (fn [[title qty _type]]
-              [title qty]))))
+       (partition-by (fn [[_title _qty card-type]] card-type))
+       (mapcat (fn [type-group]
+                 (let [card-type (nth (first type-group) 2)]
+                   (cons [card-type "divider"]
+                         (map (fn [[title qty _type]]
+                                [title qty])
+                              type-group)))))))
 
 (defn- set-deck-lists
   [state]
