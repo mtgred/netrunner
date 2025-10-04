@@ -125,10 +125,22 @@
                      :type "Basic Action"
                      :title "Runner Basic Action Card"})))
 
+(defn- sort-deck-for-display
+  "Sorts deck cards by type then title for display in decklist"
+  [deck]
+  (->> deck
+       (group-by :title)
+       (map (fn [[title cards]]
+              [title (count cards) (:type (first cards))]))
+       (sort-by (fn [[title _qty card-type]]
+                  [card-type title]))
+       (map (fn [[title qty _type]]
+              [title qty]))))
+
 (defn- set-deck-lists
   [state]
-  (let [runner-cards (sort-by key (frequencies (map :title (get-in @state [:runner :deck]))))
-        corp-cards (sort-by key (frequencies (map :title (get-in @state [:corp :deck]))))]
+  (let [runner-cards (sort-deck-for-display (get-in @state [:runner :deck]))
+        corp-cards (sort-deck-for-display (get-in @state [:corp :deck]))]
     (swap! state assoc :decklists {:corp corp-cards :runner runner-cards})))
 
 (defn init-game
