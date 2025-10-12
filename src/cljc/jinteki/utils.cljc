@@ -70,6 +70,10 @@
   (or (:isadmin user)
       (:ismoderator user)))
 
+(defn to?
+  [user]
+  (:tournament-organizer user))
+
 (defn capitalize [string]
   (if (pos? (count string))
     (str (str/upper-case (first string)) (subs string 1))
