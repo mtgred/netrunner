@@ -13,9 +13,15 @@
   ([resource params]
    (i18n/format language-cursor resource params)))
 
+(defn- i18n-keys
+  "put params into tr-element as data if needed"
+  [params]
+  (into {} (map (fn [[k v]] [(keyword (str "data-i18n-param-" (name k))) (str v)])) params))
+
 (defn tr-element
   ([element resource] (tr-element element resource nil))
-  ([element resource params] [element {:data-i18n-key (first resource)} (tr resource params)]))
+  ([element resource params]
+   [element (merge {:data-i18n-key (first resource)} (i18n-keys params)) (tr resource params)]))
 
 (defn tr-span
   ([resource] (tr-element :span resource nil))
