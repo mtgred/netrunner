@@ -15,25 +15,49 @@ about_about = About
 
 about_alt-art-management = Management/handling/processing of community alt arts for jinteki.net. If you want your art on jinteki.net, contact one of us.
 
+about_bug-reports = Bug reports and feature suggestions can be submitted here.
+
 about_development = Development
+
+about_disclaimer = Disclaimer
+
+about_donations = Donations
+
+about_donations-long = Donations are appreciated and help finance fast servers. You can support the project financially with PayPal or Bitcoin. Alternate art cards will be enabled on your account as a token of gratitude. Please specify your username with your donation.
+
+about_front-end-client = Front-end client:
 
 about_founded-by = This website was founded by @mtgred, an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online.
 
 about_founder-attribution = Founder, original sole developer. Retired.
 
+about_game-engine = Game engine:
+
 about_high-res-images = High-resolution scans for FFG cards.
 
 about_maintainer-attribution = Project maintainer, lead developer.
 
+about_open-source = The code is open source and available on
+
 about_past-contributors = Many past contributors
+
+about_server = Server:
 
 about_start-of-game-quotes = Corp and Runner quotes for start-of-game splash screen.
 
 about_software-development-team = Software Development Team
 
+about_thank-you = Many thanks to all the donors. Your contributions and kind words are greatly appreciated. You help finance fast servers.
+
+about_tech-stack = Tech Stack
+
 about_translated-images = Processing/handling of translated NSG card images, and card backs for community tournaments.
 
-about_ui-translators "UI Translators"
+about_netrunner-trademark = Netrunner is a trademark of Fantasy Flight Publishing, Inc. and/or Wizards of the Coast LLC.
+
+about_ui-translators = UI Translators
+
+about_unaffiliated = This is website is not affiliated with Fantasy Flight Games or Wizards of the Coast.
 
 annotations_available-annotations = Available annotations
 
