@@ -1,7 +1,7 @@
 (ns nr.player-view
   (:require [reagent.core :as r]
             [nr.avatar :refer [avatar]]
-            [nr.translations :refer [tr tr-side]]
+            [nr.translations :refer [tr tr-span tr-side]]
             [nr.utils :refer [faction-icon notnum->zero num->percent]]))
 
 (defn user-status-span
@@ -10,10 +10,10 @@
   (r/with-let [started (get-in player [:user :stats :games-started])
                completed (get-in player [:user :stats :games-completed])
                completion-rate (str (notnum->zero (num->percent completed started)) "%")
-               completion-rate (if (< started 10) (tr [:lobby_too-little-data "Too little data"]) completion-rate)]
+               completion-rate (if (< started 10) [tr-span [:lobby_too-little-data "Too little data"]] completion-rate)]
     [:span.user-status (get-in player [:user :username])
      [:div.status-tooltip.blue-shade
-      [:div (tr [:lobby_completion-rate "Game Completion Rate"]) ": " completion-rate]]]))
+      [:div [tr-span [:lobby_completion-rate "Game Completion Rate"]] ": " completion-rate]]]))
 
 
 (defn player-view
