@@ -13,13 +13,19 @@
    [nr.avatar :refer [avatar]]
    [nr.local-storage :as ls]
    [nr.sounds :refer [bespoke-sounds play-sfx random-sound select-random-from-grouping]]
-   [nr.translations :refer [tr tr-format]]
+   [nr.translations :refer [tr tr-span tr-element tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top]]
    [jinteki.i18n :as i18n]
    [jinteki.card-backs :as card-backs]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]))
+
+;; TODO - can we pass hiccup to the toast?
+
+(defn- tr-option
+  [tr-vec ref]
+  {:name (tr tr-vec) :ref ref :data-i18n-key (first tr-vec)})
 
 (defn post-response [s response]
   (case (:status response)
@@ -143,7 +149,7 @@
        [:button.update-log-width {:type "button"
                                   :on-click #(do (swap! s assoc :log-width (get-in @app-state [:options :log-width]))
                                                  (reset! log-width (get-in @app-state [:options :log-width])))}
-        (tr [:settings_get-log-width "Get current log width"])]])))
+        [tr-span [:settings_get-log-width "Get current log width"]]]])))
 
 (defn log-top-option [s]
   (let [log-top (r/atom (:log-top @s))]
@@ -157,14 +163,14 @@
        [:button.update-log-width {:type "button"
                                   :on-click #(do (swap! s assoc :log-top (get-in @app-state [:options :log-top]))
                                                  (reset! log-top (get-in @app-state [:options :log-top])))}
-        (tr [:settings_get-log-top "Get current log top"])]])))
+        [tr-span [:settings_get-log-top "Get current log top"]]]])))
 
 (defn change-email [_]
   (let [email-state (r/atom {:flash-message ""
                              :email ""})]
     (fn [s]
       [:div
-       [:h3 (tr [:settings_email-title "Change email address"])]
+       [tr-element :h3 [:settings_email-title "Change email address"]]
        [:p.flash-message (:flash-message @email-state)]
        [:form {:on-submit (fn [event]
                             (.preventDefault event)
@@ -176,13 +182,14 @@
                                         (-> js/document .-location (.reload true))
                                         (swap! email-state assoc :flash-message message)))))))}
         (when-let [email (:email @s)]
-          [:p [:label.email (tr [:settings_current-email "Current email"]) ": "]
+          [:p [tr-element :label.email [:settings_current-email "Current email"]] ": "
            [:input.email {:type "text"
                           :value email
                           :name "current-email"
                           :read-only true}]])
-        [:p [:label.email (tr [:settings_desired-email "Desired email"]) ": "]
+        [:p [tr-element :label.email [:settings_desired-email "Desired email"]] ": "
          [:input.email {:type "text"
+                        :data-i18n-key :settings_email-placeholder
                         :placeholder (tr [:settings_email-placeholder "Email address"])
                         :name "email"
                         :on-change #(let [value (-> % .-target .-value)]
@@ -196,10 +203,10 @@
            [:button
             {:disabled disabled
              :class (when disabled "disabled")}
-            (tr [:settings_update "Update"])])
+            [tr-span [:settings_update "Update"]]])
          [:button {:on-click #(do (.preventDefault %)
                                   (reagent-modals/close-modal!))}
-          (tr [:settings_cancel "Cancel"])]]]])))
+          [tr-span [:settings_cancel "Cancel"]]]]]])))
 
 (defn- update-api-keys-response [response s]
   (let [status (:status response)]
@@ -221,7 +228,7 @@
 (defn- api-keys [s]
   (r/with-let [keys-cursor (r/cursor s [:api-keys])]
     [:section
-     [:h3 (tr [:settings_api-keys "API Keys"])]
+     [tr-element :h3 [:settings_api-keys "API Keys"]]
      [:div.news-box.panel.blue-shade
       [:ul.list
        (doall
@@ -232,13 +239,13 @@
              [:button.delete
               {:on-click #(do (.preventDefault %)
                               (delete-api-key (:_id d) s))}
-              (tr [:settings_delete-api-key "Delete"])]]
+              [tr-span [:settings_delete-api-key "Delete"]]]]
             [:span.date
              (format-date-time ISO-ish-formatter (:date d))]
             [:span.title (:api-key d "")]]))]]
      [:button {:on-click #(do (.preventDefault %)
                               (create-api-key s))}
-      (tr [:settings_create-api-key "Create API Key"])]]))
+      [tr-span [:settings_create-api-key "Create API Key"]]]]))
 
 (def pronoun-list
   [["Unspecified" "none"]
@@ -273,7 +280,7 @@
    ["Rumor Mill" "rumor-mill-bg"]
    ["The Root" "the-root-bg"]
    ["Traffic Jam" "traffic-jam-bg"]
-   ["Worlds 2020" "worlds2020"] 
+   ["Worlds 2020" "worlds2020"]
    ["Custom BG (input URL below)" "custom-bg"]])
 
 (defn account-content [_ _ scroll-top]
@@ -285,33 +292,33 @@
        :reagent-render
        (fn [user s _]
          [:div#profile-form.panel.blue-shade.content-page {:ref #(reset! !node-ref %)}
-         [:h2 (tr [:nav_settings "Settings"])]
+         [tr-element :h2 [:nav_settings "Settings"]]
          [:form {:on-submit #(handle-post % s)}
-          [:button.float-right (tr [:settings_update-profile "Update Profile"])]
+          [tr-element :button.float-right [:settings_update-profile "Update Profile"]]
           [:section
-           [:h3 (tr [:settings_email "Email"])]
+           [tr-element :h3 [:settings_email "Email"]]
            [:a {:href ""
                 :on-click #(do
                              (.preventDefault %)
                              (reagent-modals/modal! [change-email s]))}
-            (tr [:settings_change-email "Change email"])]]
+            [tr-span [:settings_change-email "Change email"]]]]
           [:section
-           [:h3 (tr [:settings_avatar "Avatar"])]
+           [tr-element :h3 [:settings_avatar "Avatar"]]
            [avatar @user {:opts {:size 38}}]
            [:a {:href "http://gravatar.com" :target "_blank"}
-            (tr [:settings_change-avatar "Change on gravatar.com"])]]
+            [tr-span [:settings_change-avatar "Change on gravatar.com"]]]]
           [:section
-           [:h3 (tr [:settings_pronouns "Pronouns"])]
+           [tr-element :h3 [:settings_pronouns "Pronouns"]]
            [:select {:value (:pronouns @s "none")
                      :on-change #(swap! s assoc :pronouns (.. % -target -value))}
             (doall
              (for [[title ref] pronoun-list]
-               [:option {:value ref :key ref}
+               [:option {:value ref :key ref :data-i18n-key :pronouns :data-i18n-value title}
                 (tr [:pronouns title] {:pronoun ref})]))]
-           [:div (tr [:settings_pronouns-request "If your personal pronouns are not represented, you can request them"]) " "
-            [:a {:href "https://github.com/mtgred/netrunner/issues"} (tr [:settings_pronouns-here "here"])]]]
+           [:div [tr-span [:settings_pronouns-request "If your personal pronouns are not represented, you can request them"]] " "
+            [:a {:href "https://github.com/mtgred/netrunner/issues"} [tr-span [:settings_pronouns-here "here"]]]]]
           [:section
-           [:h3 (tr [:settings_language "Language"])]
+           [tr :h3 [:settings_language "Language"]]
            [:select {:value (:language @s "en")
                      :on-change #(swap! s assoc :language (.. % -target -value))}
             (doall
@@ -328,10 +335,10 @@
                             {:name "Русский" :ref "ru"}
                             {:name "Igpay Atinlay" :ref "la-pig"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
-           [:div (tr [:settings_language-tip "Some languages are not fully translated yet. If you would like to help with translations, please contact us."])]]
+           [:div [tr-span [:settings_language-tip "Some languages are not fully translated yet. If you would like to help with translations, please contact us."]]]]
 
           [:section
-           [:h3 (tr [:settings_bespoke-sounds "Card-Specific Sounds"] {:sound "header"})]
+           [tr-element :h3 [:settings_bespoke-sounds "Card-Specific Sounds"] {:sound "header"}]
            (doall
              (for [grouping (distinct (map :grouping (vals bespoke-sounds)))
                    :let [group-name (name grouping)]]
@@ -346,68 +353,68 @@
                                                            {:volume (or (:sounds-volume @s) 50)
                                                             :force true}))
                                                (swap! s assoc-in [:bespoke-sounds grouping] checked))}]
-                 (tr [:settings_bespoke-sounds group-name] {:sound group-name})]]))]
+                 [tr-span [:settings_bespoke-sounds group-name] {:sound group-name}]]]))]
 
           [:section
-           [:h3 (tr [:lobby_default-game-format "Default game format"])]
+           [tr-element :h3 [:lobby_default-game-format "Default game format"]]
            [:select.format
             {:value (or (:default-format @s) "standard")
              :on-change #(swap! s assoc :default-format (.. % -target -value))}
             (doall
              (for [[k v] slug->format]
                ^{:key k}
-               [:option {:value k} (tr-format v)]))]]
+               [:option {:value k :data-i18n-key k} (tr-format v)]))]]
 
           [:section
-           [:h3 (tr [:settings_gameplay-settings "Gameplay Settings"])]
+           [tr-element :h3 [:settings_gameplay-settings "Gameplay Settings"]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:pass-on-rez @s)
                              :on-change #(swap! s assoc :pass-on-rez (.. % -target -checked))}]
-             (tr [:settings_pass-on-rez "Pass priority when rezzing ice"])]]]
+             [tr-span [:settings_pass-on-rez "Pass priority when rezzing ice"]]]]]
 
           [:section
-           [:h3 (tr [:settings_layout-options "Layout options"])]
+           [tr-element :h3 [:settings_layout-options "Layout options"]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:stacked-cards @s)
                              :on-change #(swap! s assoc :stacked-cards (.. % -target -checked))}]
-             (tr [:settings_stacked-cards "Card stacking (on by default)"])]]
+             [tr-span [:settings_stacked-cards "Card stacking (on by default)"]]]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:ghost-trojans @s)
                              :on-change #(swap! s assoc :ghost-trojans (.. % -target -checked))}]
-             (tr [:settings_ghost-trojans "Display ghosts for hosted programs"])]]
+             [tr-span [:settings_ghost-trojans "Display ghosts for hosted programs"]]]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:display-encounter-info @s)
                              :on-change #(swap! s assoc :display-encounter-info (.. % -target -checked))}]
-             (tr [:settings_display-encounter-info "Always display encounter info"])]]
+             [tr-span [:settings_display-encounter-info "Always display encounter info"]]]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:log-timestamps @s)
                              :on-change #(swap! s assoc :log-timestamps (.. % -target -checked))}]
-             (tr [:settings_toggle-log-timestamps "Show log timestamps"])]]
+             [tr-span [:settings_toggle-log-timestamps "Show log timestamps"]]]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:archives-sorted @s)
                              :on-change #(swap! s assoc :archives-sorted (.. % -target -checked))}]
-             (tr [:settings_sort-archives "Sort Archives"])]]
+             [tr-span [:settings_sort-archives "Sort Archives"]]]]
            [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:heap-sorted @s)
                              :on-change #(swap! s assoc :heap-sorted (.. % -target -checked))}]
-             (tr [:settings_sort-heap "Sort Heap"])]]
+             [tr-span [:settings_sort-heap "Sort Heap"]]]]
 
            [:br]
-           [:h4 (tr [:settings_runner-layout "Runner layout from Corp perspective"])]
+           [tr-element :h4 [:settings_runner-layout "Runner layout from Corp perspective"]]
            [:div
             [:div.radio
              [:label [:input {:name "runner-board-order"
@@ -415,7 +422,7 @@
                               :value "jnet"
                               :checked (= "jnet" (:runner-board-order @s))
                               :on-change #(swap! s assoc :runner-board-order (.. % -target -value))}]
-              (tr [:settings_runner-classic "Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)"])]]
+              [tr-span [:settings_runner-classic "Runner rig layout is classic jnet (Top to bottom: Programs, Hardware, Resources)"]]]]
 
             [:div.radio
              [:label [:input {:name "runner-board-order"
@@ -423,10 +430,10 @@
                               :value "irl"
                               :checked (= "irl" (:runner-board-order @s))
                               :on-change #(swap! s assoc :runner-board-order (.. % -target -value))}]
-              (tr [:settings_runner-reverse "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"])]]]
+              [tr-span [:settings_runner-reverse "Runner rig layout is reversed (Top to bottom: Resources, Hardware, Programs)"]]]]]
 
            [:br]
-           [:h4 (tr [:settings_log-player-highlight "Log player highlight"])]
+           [tr-element :h4 [:settings_log-player-highlight "Log player highlight"]]
            [:div
             [:div.radio
              [:label [:input {:name "log-player-highlight"
@@ -434,7 +441,7 @@
                               :value "blue-red"
                               :checked (= "blue-red" (:log-player-highlight @s))
                               :on-change #(swap! s assoc :log-player-highlight (.. % -target -value))}]
-              (tr [:settings_log-player-highlight-red-blue "Corp: Blue / Runner: Red"])]]
+              [tr-span [:settings_log-player-highlight-red-blue "Corp: Blue / Runner: Red"]]]]
 
             [:div.radio
              [:label [:input {:name "log-player-highlight"
@@ -442,12 +449,12 @@
                               :value "none"
                               :checked (= "none" (:log-player-highlight @s))
                               :on-change #(swap! s assoc :log-player-highlight (.. % -target -value))}]
-              (tr [:settings_log-player-highlight-none "None"])]]]]
+              [tr-span [:settings_log-player-highlight-none "None"]]]]]]
 
           (let [custom-bg-selected (= (:background @s) "custom-bg" )
                 custom-bg-url (r/cursor s [:custom-bg-url])]
             [:section
-             [:h3 (tr [:settings_background "Game board background"])]
+             [tr-element :h3 [:settings_background "Game board background"]]
              (doall (for [[title slug] background-list]
                       [:div.radio {:key slug}
                        [:label [:input {:type "radio"
@@ -455,7 +462,7 @@
                                         :value slug
                                         :on-change #(swap! s assoc :background (.. % -target -value))
                                         :checked (= (:background @s) slug)}]
-                        (tr [:settings_bg title] {:slug slug})]]))
+                        [tr-span [:settings_bg title] {:slug slug}]]]))
 
              [:div [:input {:type "text"
                             :hidden (not custom-bg-selected)
@@ -463,7 +470,7 @@
                             :value @custom-bg-url}]]])
 
           [:section
-           [:h3 (tr [:settings_corp-card-sleeve "Corp card backs"])]
+           [tr-element :h3 [:settings_corp-card-sleeve "Corp card backs"]]
            [:select {:value (:corp-card-sleeve @s "nsg-card-back")
                      :on-change #(swap! s assoc :corp-card-sleeve (or (.. % -target -value) "nsg-card-back"))}
             (doall
@@ -472,14 +479,14 @@
                  (tr [(keyword (str "card-backs_" (name k))) (:name v)])]))]
 
 
-           [:h3 (tr [:settings_runner-card-sleeve "Runner card backs"])]
+           [tr-element :h3 [:settings_runner-card-sleeve "Runner card backs"]]
            [:select {:value (:runner-card-sleeve @s "nsg-card-back")
                      :on-change #(swap! s assoc :runner-card-sleeve (or (.. % -target -value) "nsg-card-back"))}
             (doall
               (for [[k v] (card-backs/card-backs-for-side :runner (-> @s :prizes :card-backs))]
                 [:option {:value k :key k}
                  (tr [(keyword (str "card-backs_" (name k))) (:name v)])]))]
-           [:div (tr [:settings_card-backs-tip "You can earn more card backs by placing well in select online tournaments. If you're an artist with art that you think would make for a good card back, please feel free to contact us"])]
+           [:div [tr-span [:settings_card-backs-tip "You can earn more card backs by placing well in select online tournaments. If you're an artist with art that you think would make for a good card back, please feel free to contact us"]]]
 
            [:div {:style {:display "flex" :justifyContent "center"}}
             [:div
@@ -489,7 +496,7 @@
                               ".png")
                     :style {:maxWidth "200px"}
                     :alt "Corp card back"}]
-             [:div {:style {:marginTop "0.5rem" :textAlign "center"}} (tr [:settings_corp-card-back "Corp card back"])]]
+             [:div {:style {:marginTop "0.5rem" :textAlign "center"}} [tr-span [:settings_corp-card-back "Corp card back"]]]]
 
             [:div
              {:style {:display "flex" :flexDirection "column" :alighItems "center" :margin "1rem"}}
@@ -498,81 +505,81 @@
                               ".png")
                     :style {:maxWidth "200px"}
                     :alt "Runner card back"}]
-             [:div {:style {:marginTop "0.5rem" :textAlign "center"}} (tr [:settings_runner-card-back "Runner card back"])]]]]
+             [:div {:style {:marginTop "0.5rem" :textAlign "center"}} [tr-span [:settings_runner-card-back "Runner card back"]]]]]
 
-           [:h3 (tr [:settings_card-back-display "Display Opponent Card backs"])]
-           (doall (for [option [{:name (tr [:settings_card-backs-their-choice "Their Choice"]) :ref "them"}
-                                {:name (tr [:settings_card-backs-my-choice "My Choice"]) :ref "me"}
-                                {:name (tr [:settings_card-backs-ffg "FFG Card Back"]) :ref "ffg"}
-                                {:name (tr [:settings_card-backs-nsg "NSG Card Back"]) :ref "nsg"}]]
+           [tr-element :h3 [:settings_card-back-display "Display Opponent Card backs"]]
+           (doall (for [option [(tr-option [:settings_card-backs-their-choice "Their Choice"] "them")
+                                (tr-option [:settings_card-backs-my-choice "My Choice"] "me")
+                                (tr-option [:settings_card-backs-ffg "FFG Card Back"] "ffg")
+                                (tr-option [:settings_card-backs-nsg "NSG Card Back"] "nsg")]]
                     [:div.radio {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "card-back-display"
                                       :value (:ref option)
                                       :on-change #(swap! s assoc :card-back-display (.. % -target -value))
                                       :checked (= (:card-back-display @s) (:ref option))}]
-                      (:name option)]]))
+                      [:span {:data-i18n-key (:data-i18n-key option)} (:name option)]]]))]
 
           [:section
-           [:h3  (tr [:settings_card-preview-zoom "Card preview zoom"])]
-           (doall (for [option [{:name (tr [:settings_card-iamge "Card Image"]) :ref "image"}
-                                {:name (tr [:settings_card-text "Card Text"]) :ref "text"}]]
+           [tr-element :h3 [:settings_card-preview-zoom "Card preview zoom"]]
+           (doall (for [option [(tr-option [:settings_card-image "Card Image"] "image")
+                                (tr-option [:settings_card-text "Card Text"] "text")]]
                     [:div.radio {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "card-zoom"
                                       :value (:ref option)
                                       :on-change #(swap! s assoc :card-zoom (.. % -target -value))
                                       :checked (= (:card-zoom @s) (:ref option))}]
-                      (:name option)]]))
+                      [:span {:data-i18n-key (:data-i18n-key option)} (:name option)]]]))
            [:br]
            [:div
             [:label [:input {:type "checkbox"
                              :name "pin-zoom"
                              :checked (:pin-zoom @s)
                              :on-change #(swap! s assoc :pin-zoom (.. % -target -checked))}]
-             (tr [:settings_pin-zoom "Keep zoomed cards on screen"])]]]
+             [tr-span [:settings_pin-zoom "Keep zoomed cards on screen"]]]]]
 
           [:section
-           [:h3 (tr [:settings_game-stats " Game Win/Lose statistics "])]
-           (doall (for [option [{:name (tr [:settings_always "Always"])                      :ref "always"}
-                                {:name (tr [:settings_comp-only "Competitive Lobby Only"])   :ref "competitive"}
-                                {:name (tr [:settings_none "None"])                          :ref "none"}]]
+           [tr-element :h3 [:settings_game-stats " Game Win/Lose statistics "]]
+           (doall (for [option [(tr-option [:settings_always "Always"] "always")
+                                (tr-option [:settings_comp-only "Competitive Lobby Only"] "competitive")
+                                (tr-option [:settings_none "None"] "none")]]
                     [:div {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "gamestats"
                                       :value (:ref option)
                                       :on-change #(swap! s assoc :gamestats (.. % -target -value))
                                       :checked (= (:gamestats @s) (:ref option))}]
-                      (:name option)]]))]
+                      [:span {:data-i18n-key (:data-i18n-key option)} (:name option)]]]))]
 
           [:section
-           [:h3 (tr [:settings_deck-stats " Deck statistics "])]
-           (doall (for [option [{:name (tr [:settings_always "Always"])                      :ref "always"}
-                                {:name (tr [:settings_comp-only "Competitive Lobby Only"])   :ref "competitive"}
-                                {:name (tr [:settings_none "None"])                          :ref "none"}]]
+           [tr-element :h3 [:settings_deck-stats " Deck statistics "]]
+           (doall (for [option [(tr-option [:settings_always "Always"] "always")
+                                (tr-option [:settings_comp-only "Competitive Lobby Only"] "competitive")
+                                (tr-option [:settings_none "None"] "none")]]
                     [:div {:key (:name option)}
                      [:label [:input {:type "radio"
                                       :name "deckstats"
                                       :value (:ref option)
                                       :on-change #(swap! s assoc :deckstats (.. % -target -value))
                                       :checked (= (:deckstats @s) (:ref option))}]
-                      (:name option)]]))]
+                      [:span {:data-i18n-key (:data-i18n-key option)} (:name option)]]]))]
 
 
           [:section {:id "alt-art"}
-           [:h3 (tr [:settings_alt-art "Alt arts"])]
+           [tr-element :h3 [:settings_alt-art "Alt arts"]]
            [:div
             [:label [:input {:type "checkbox"
                              :name "show-alt-art"
                              :checked (:show-alt-art @s)
                              :on-change #(swap! s assoc :show-alt-art (.. % -target -checked))}]
-             (tr [:settings_show-alt "Show alternate card arts"])]]
+             [tr-span [:settings_show-alt "Show alternate card arts"]]]]
            [:br]
 
            (when (and (:special @user) (:show-alt-art @s) (:alt-info @app-state))
              [:div {:id "my-alt-art"}
               [:div {:id "set-all"}
-               (tr [:settings_set-all "Set all cards to"]) ": "
+               [tr-span [:settings_set-all "Set all cards to"]] ": "
                [:select {:ref "all-art-select"
                          :value (:all-art-select @s)
                          :on-change #(swap! s assoc :all-art-select (-> % .-target .-value))}
@@ -582,7 +589,7 @@
                [:button
                 {:type "button"
                  :on-click #(reset-card-art s)}
-                (tr [:settings_set "Set"])]]
+                [tr-span [:settings_set "Set"]]]]
               [:div.reset-all
                (let [disabled (empty? (:alt-arts @s))]
                  [:button
@@ -590,10 +597,10 @@
                    :disabled disabled
                    :class (if disabled "disabled" "")
                    :on-click #(clear-card-art s)}
-                  (tr [:settings_reset "Reset All to Official Art"])])]])]
+                  [tr-span [:settings_reset "Reset All to Official Art"]]])]])]
 
          [:section
-          [:h3 (tr [:settings_blocked "Blocked users"])]
+          [tr-element :h3 [:settings_blocked "Blocked users"]]
           [:div
            [:input {:on-change #(swap! s assoc :block-user-input (-> % .-target .-value))
                     :on-key-down (fn [e]
@@ -603,11 +610,12 @@
                     :ref "block-user-input"
                     :value (:block-user-input @s)
                     :type "text"
+                    :data-i18n-key :settings_user-name
                     :placeholder (tr [:settings_user-name "User name"])}]
            [:button.block-user-btn {:type "button"
                                     :name "block-user-button"
                                     :on-click #(add-user-to-block-list user s)}
-            (tr [:settings_block "Block user"])]]
+            [tr-span [:settings_block "Block user"]]]]
           (doall (for [bu (:blocked-users @s)]
                    [:div.line {:key bu}
                     [:button.small.unblock-user {:type "button"
@@ -615,23 +623,23 @@
                     [:span.blocked-user-name (str "  " bu)]]))]
 
          [:section
-          [:h3 (tr [:settings_device-specific "Device-specific settings"])]
-          [:p (tr [:settings_device-specific-note "These settings are stored locally on this device and do not sync across devices."])]
+          [tr-element :h3 [:settings_device-specific "Device-specific settings"]]
+          [tr-element :p  [:settings_device-specific-note "These settings are stored locally on this device and do not sync across devices."]]
 
-          [:h4 (tr [:settings_sounds "Sounds"])]
+          [tr-element :h4 [:settings_sounds "Sounds"]]
           [:div
            [:label [:input {:type "checkbox"
                             :value true
                             :checked (:lobby-sounds @s)
                             :on-change #(swap! s assoc :lobby-sounds (.. % -target -checked))}]
-            (tr [:settings_enable-lobby-sounds "Enable lobby sounds"])]]
+            [tr-span [:settings_enable-lobby-sounds "Enable lobby sounds"]]]]
           [:div
            [:label [:input {:type "checkbox"
                             :value true
                             :checked (:sounds @s)
                             :on-change #(swap! s assoc :sounds (.. % -target -checked))}]
-            (tr [:settings_enable-game-sounds "Enable game sounds"])]]
-          [:div (tr [:settings_volume "Volume"])
+            [tr-span [:settings_enable-game-sounds "Enable game sounds"]]]]
+          [:div [tr-span [:settings_volume "Volume"]]
            [:input {:type "range"
                     :min 1 :max 100 :step 1
                     :on-mouse-up #(play-sfx [(random-sound)] {:volume (int (.. % -target -value))})
@@ -639,58 +647,58 @@
                     :value (or (:sounds-volume @s) 50)
                     :disabled (not (or (:sounds @s) (:lobby-sounds @s)))}]]
 
-          [:h4 (tr [:settings_layout-device "Device Layout"])]
+          [tr-element :h4 [:settings_layout-device "Device Layout"]]
           [:div
            [:label [:input {:type "checkbox"
                             :value true
                             :checked (:player-stats-icons @s)
                             :on-change #(swap! s assoc :player-stats-icons (.. % -target -checked))}]
-            (tr [:settings_player-stats-icons "Use icons for player stats"])]]
+            [tr-span [:settings_player-stats-icons "Use icons for player stats"]]]]
           [:div
            [:label [:input {:type "checkbox"
                             :value true
                             :checked (:sides-overlap @s)
                             :on-change #(swap! s assoc :sides-overlap (.. % -target -checked))}]
-            (tr [:settings_sides-overlap "Runner and Corp board may overlap"])]]
+            [tr-span [:settings_sides-overlap "Runner and Corp board may overlap"]]]]
 
           [:div
            [:label [:input {:type "checkbox"
                             :value true
                             :checked (:labeled-cards @s)
                             :on-change #(swap! s assoc :labeled-cards (.. % -target -checked))}]
-            (tr [:settings_label-faceup-cards "Label face up cards"])]]
+            [tr-span [:settings_label-faceup-cards "Label face up cards"]]]]
           [:div
            [:label [:input {:type "checkbox"
                             :value true
                             :checked (:labeled-unrezzed-cards @s)
                             :on-change #(swap! s assoc :labeled-unrezzed-cards (.. % -target -checked))}]
-            (tr [:settings_label-unrezzed-cards "Label unrezzed cards"])]]
+            [tr-span [:settings_label-unrezzed-cards "Label unrezzed cards"]]]]
 
-          [:h4 (tr [:settings_log-size "Log size"])]
+          [tr-element :h4 [:settings_log-size "Log size"]]
           [:div
            [log-width-option s]
            [log-top-option s]]
 
-          [:h4 (tr [:settings_card-images "Card images"])]
+          [tr-element :h4 [:settings_card-images "Card images"]]
           [:div
            [:label [:input {:type "checkbox"
                             :name "use-high-res"
                             :checked (= "high" (:card-resolution @s))
                             :on-change #(swap! s assoc :card-resolution (if (.. % -target -checked) "high" "default"))}]
-            (tr [:settings_high-res "Enable high-resolution card images"])]]
+            [tr-span [:settings_high-res "Enable high-resolution card images"]]]]
 
-          [:h4 (tr [:settings_connection "Connection"])]
+          [tr-element :h4 [:settings_connection "Connection"]]
           [:div
            [:label [:input {:type "checkbox"
                             :name "disable-websockets"
                             :checked (:disable-websockets @s)
                             :on-change #(swap! s assoc :disable-websockets (.. % -target -checked))}]
-            (tr [:settings_disable-websockets "Disable websockets - requires browser refresh after clicking Update Profile [Not Recommended!]"])]]]
+            [tr-span [:settings_disable-websockets "Disable websockets - requires browser refresh after clicking Update Profile [Not Recommended!]"]]]]]
 
-     [api-keys s]
+          [api-keys s]
 
-     [:section
-      [:span.flash-message (:flash-message @s)]]]])})))
+          [:section
+           [:span.flash-message (:flash-message @s)]]]])})))
 
 (defn account []
   (let [user (r/cursor app-state [:user])
