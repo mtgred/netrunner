@@ -9,9 +9,10 @@
    [goog.string :as gstring]
    [goog.string.format]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr tr-data]]
+   [nr.translations :refer [tr tr-span tr-data]]
    [flatland.ordered.map :refer [ordered-map]]
-   [reagent.dom :as rd]))
+   [reagent.dom :as rd]
+   [reagent.dom.server :as rdom-server]))
 
 ;; Dot definitions
 (def zws "\u200B")                  ; zero-width space for wrapping dots
@@ -114,12 +115,12 @@
 (defn tr-non-game-toast
   "Display a toast warning with the specified translation vector."
   ([tr-vec toast-type] (tr-non-game-toast tr-vec toast-type nil))
-  ([tr-vec toast-type options]
+  ([tr-vec toast-type options] (tr-non-game-toast tr-vec nil toast-type options))
+  ([tr-vec tr-params toast-type options]
    (set! (.-options js/toastr) (toastr-options options))
    (let [f (aget js/toastr toast-type)
-         msg (str "<span data-i18n-key=\"" (name (first tr-vec)) "\">" (tr tr-vec) "</span>")]
+         msg (rdom-server/render-to-string (tr-span tr-vec tr-params))]
      (f msg))))
-
 
 (defn map-longest
   [f default & colls]
