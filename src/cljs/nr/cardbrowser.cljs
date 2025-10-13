@@ -16,7 +16,8 @@
    [nr.utils :refer [banned-span deck-points-card-span faction-icon
                      format->slug get-image-path image-or-face influence-dots
                      non-game-toast render-icons restricted-span rotated-span
-                     set-scroll-top slug->format store-scroll-top]]
+                     set-scroll-top slug->format store-scroll-top
+                     tr-non-game-toast]]
    [reagent.core :as r]))
 
 (defonce cards-channel (chan))
@@ -264,8 +265,8 @@
   (if (= 200 (:status response))
     (let [new-alts (get-in response [:json :altarts] {})]
       (swap! app-state assoc-in [:user :options :alt-arts] new-alts)
-      (non-game-toast (tr [:card-browser_update-success "Updated Art"]) "success" nil))
-    (non-game-toast (tr [:card-browser_update-failure "Failed to Update Art"]) "error" nil)))
+      (tr-non-game-toast [:card-browser_update-success "Updated Art"] "success" nil))
+    (tr-non-game-toast [:card-browser_update-failure "Failed to Update Art"] "error" nil)))
 
 (defn- future-selected-alt-art [card]
   (let [future-code (keyword (:future-version card))
