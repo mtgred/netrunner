@@ -15,7 +15,7 @@
 
 (defn tr-element
   ([element resource] (tr-element element resource nil))
-  ([element resource params] [element {:data-i18-key (first resource)} (tr resource params)]))
+  ([element resource params] [element {:data-i18n-key (first resource)} (tr resource params)]))
 
 (defn tr-span
   ([resource] (tr-element :span resource nil))
