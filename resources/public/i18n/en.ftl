@@ -826,6 +826,8 @@ lobby_both-perspective = Both
 
 lobby_cancel = Cancel
 
+lobby_cannot-select-deck = Cannot select that deck
+
 lobby_chat = Chat
 
 lobby_closed-msg = Game lobby closed due to inactivity
@@ -961,6 +963,11 @@ lobby_timed-game = Start with timer
 lobby_timed-game-details = Timer is only for convenience: the game will not stop when timer runs out.
 
 lobby_timer-length = Timer length (minutes)
+
+lobby_timer-set-for = {$minutes ->
+    [one] Game timer set for {$cnt} minute
+    *[other] Game timer set for {$cnt} minutes
+}
 
 lobby_title = Title
 
