@@ -15,7 +15,7 @@
    [nr.sounds :refer [bespoke-sounds play-sfx random-sound select-random-from-grouping]]
    [nr.translations :refer [tr tr-span tr-element tr-format]]
    [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
-                     set-scroll-top slug->format store-scroll-top]]
+                     set-scroll-top slug->format store-scroll-top tr-non-game-toast]]
    [jinteki.i18n :as i18n]
    [jinteki.card-backs :as card-backs]
    [reagent-modals.modals :as reagent-modals]
@@ -29,13 +29,13 @@
 
 (defn post-response [s response]
   (case (:status response)
-    401 (non-game-toast (tr [:settings_invalid-password "Invalid login or password"]) "error" nil)
-    404 (non-game-toast (tr [:settings_invalid-email "No account with that email address exists"]) "error" nil)
+    401 (tr-non-game-toast [:settings_invalid-password "Invalid login or password"] "error" nil)
+    404 (tr-non-game-toast [:settings_invalid-email "No account with that email address exists"] "error" nil)
     ;; else
     (do (when-let [json (:json response)]
           (when (and (:lang json) (:content json))
             (i18n/insert-lang! (:lang json) (:content json))))
-        (non-game-toast (tr [:settings_updated "Profile updated - Please refresh your browser"]) "success" nil)))
+        (tr-non-game-toast [:settings_updated "Profile updated - Please refresh your browser"] "success" nil)))
   (swap! s assoc :flash-message ""))
 
 (defn post-options [callback]
@@ -214,8 +214,8 @@
             (= 201 status))
       (do
         (go (swap! s assoc :api-keys (:json (<! (GET "/data/api-keys")))))
-        (non-game-toast "Updated API Keys" "success" nil))
-      (non-game-toast "Failed to update API Keys" "error" nil))))
+        (tr-non-game-toast [:settings_api-keys-updated "Updated API keys"] "success" nil))
+      (tr-non-game-toast [:settings_api-keys-not-updated "Failed to update API keys"] "error" nil))))
 
 (defn- delete-api-key [id s]
   (go (let [response (<! (DELETE (str "/data/api-keys/" id)))]
