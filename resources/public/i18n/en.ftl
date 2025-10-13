@@ -1,3 +1,16 @@
+lang_english = English
+lang_spanish = Spanish
+lang_chinese_simp = Chinese (Simplified)
+lang_chinese_trad = Chinese (Traditional)
+lang_german = German
+lang_italian = Italian
+lang_japanese = Japanese
+lang_korean = Korean
+lang_pig_latin = Pig-Latin
+lang_Portuguese = Portuguese
+lang_catalan = Catalan
+lang_russian = Russian
+
 about_about = About
 
 about_alt-art-management = Management/handling/processing of community alt arts for jinteki.net. If you want your art on jinteki.net, contact one of us.
@@ -8,17 +21,19 @@ about_founded-by = This website was founded by @mtgred, an avid Netrunner player
 
 about_founder-attribution = Founder, original sole developer. Retired.
 
+about_high-res-images = High-resolution scans for FFG cards.
+
 about_maintainer-attribution = Project maintainer, lead developer.
 
 about_past-contributors = Many past contributors
 
-about_start-of-game-quotes = "Corp and Runner quotes for start-of-game splash screen."
+about_start-of-game-quotes = Corp and Runner quotes for start-of-game splash screen.
 
 about_software-development-team = Software Development Team
 
 about_translated-images = Processing/handling of translated NSG card images, and card backs for community tournaments.
 
-
+about_ui-translators "UI Translators"
 
 annotations_available-annotations = Available annotations
 
