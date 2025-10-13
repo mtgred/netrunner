@@ -42,7 +42,7 @@
             [linked-person "butzopower" "https://github.com/butzopower"] ", "
             [linked-person "francescopellegrini" "https://github.com/francescopellegrini"] ": "
             [tr-span [:about_active-contributors "Current active contributors."]]]
-            [:li [:a {:href "https://github.com/mtgred/netrunner/graphs/contributors" :target "_blank" :data-i18-key :about_past-contributors} (tr [:about_past-contributors "Many past contributors"])]]]
+            [:li [:a {:href "https://github.com/mtgred/netrunner/graphs/contributors" :target "_blank" :data-i18n-key :about_past-contributors} (tr [:about_past-contributors "Many past contributors"])]]]
 
           [tr-element :h4 [:about_content-creators "Content Creators"]]
           [:ul.list.compact
@@ -82,7 +82,7 @@
 
           [:p [tr-span [:about_open-source "The code is open source and available on"]] " " [:a {:href "https://github.com/mtgred/netrunner" :target "_blank"} "Github"] "."]
 
-          [:a {:href "https://github.com/mtgred/netrunner/issues" :target "_blank" :data-i18-key :about_bug-reports} (tr [:about_bug-reports "Bug reports and feature suggestions can be submitted here."])]
+          [:a {:href "https://github.com/mtgred/netrunner/issues" :target "_blank" :data-i18n-key :about_bug-reports} (tr [:about_bug-reports "Bug reports and feature suggestions can be submitted here."])]
 
           [tr-element :h3 [:about_donations "Donations"]]
           [tr-element :p [:about_donations-long "Donations are appreciated and help finance fast servers. You can support the project financially with PayPal or Bitcoin. Alternate art cards will be enabled on your account as a token of gratitude. Please specify your username with your donation."]]
