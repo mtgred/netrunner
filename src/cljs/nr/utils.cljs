@@ -111,6 +111,16 @@
    (let [f (aget js/toastr toast-type)]
      (f msg))))
 
+(defn tr-non-game-toast
+  "Display a toast warning with the specified translation vector."
+  ([tr-vec toast-type] (tr-non-game-toast tr-vec toast-type nil))
+  ([tr-vec toast-type options]
+   (set! (.-options js/toastr) (toastr-options options))
+   (let [f (aget js/toastr toast-type)
+         msg (str "<span data-i18n-key=\"" (name (first tr-vec)) "\">" (tr tr-vec) "</span>")]
+     (f msg))))
+
+
 (defn map-longest
   [f default & colls]
   (lazy-seq
