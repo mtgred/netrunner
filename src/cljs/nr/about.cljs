@@ -36,7 +36,7 @@
           [tr-element :h4 [:about_software-development-team "Software Development Team"]]
           [:ul.list.compact
            [:li [linked-person "@mtgred" "http://twitter.com/mtgred"] ": " [tr-span [:about_founder-attribution "Founder, original sole developer. Retired."]]]
-           [:li [linked-person "NoahTheDuke" "https://noahbogart.com/"] ": " [tr-span [:about_maintainer-attribution "Project maintainer, lead developer."]]]
+           [:li [linked-person "NoahTheDuke" "https://github.com/noahtheduke"] ": " [tr-span [:about_maintainer-attribution "Project maintainer, lead developer."]]]
            [:li
             [linked-person "nbkelly" "https://ko-fi.com/nbkelly"] ", "
             [linked-person "butzopower" "https://github.com/butzopower"] ", "
@@ -48,7 +48,7 @@
           [:ul.list.compact
            [:li
             [linked-person "0thmxma" "https://web-cdn.bsky.app/profile/0thmxma.bsky.social"] ", "
-            [linked-person "Sanjay" "https://nullsignal.games/blog/author/sanjay-kulkacek/"] ", "
+            [linked-person "Sanjay" "https://stimhack.com/yugioh-and-you-by-sanjay/"] ", "
             "quarg, "
             [linked-person "znsolomon" "https://contactthearchivists.podbean.com/"]
             ", hbarsquared, yankeeflatline, rumirumirumirumi: "
