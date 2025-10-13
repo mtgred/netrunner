@@ -13,6 +13,14 @@
   ([resource params]
    (i18n/format language-cursor resource params)))
 
+(defn tr-element
+  ([element resource] (tr-element element resource nil))
+  ([element resource params] [element {:data-i18-key (first resource)} (tr resource params)]))
+
+(defn tr-span
+  ([resource] (tr-element :span resource nil))
+  ([resource params] (tr-element :span resource params)))
+
 (defn clean-input
   [s]
   (assert (seq s) "Given empty string")
