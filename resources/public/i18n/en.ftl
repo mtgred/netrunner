@@ -1,3 +1,25 @@
+about_about = About
+
+about_alt-art-management = Management/handling/processing of community alt arts for jinteki.net. If you want your art on jinteki.net, contact one of us.
+
+about_development = Development
+
+about_founded-by = This website was founded by @mtgred, an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online.
+
+about_founder-attribution = Founder, original sole developer. Retired.
+
+about_maintainer-attribution = Project maintainer, lead developer.
+
+about_past-contributors = Many past contributors
+
+about_start-of-game-quotes = "Corp and Runner quotes for start-of-game splash screen."
+
+about_software-development-team = Software Development Team
+
+about_translated-images = Processing/handling of translated NSG card images, and card backs for community tournaments.
+
+
+
 annotations_available-annotations = Available annotations
 
 annotations_clear = Clear local annotations

@@ -4,6 +4,7 @@
    [cljs.core.async :refer [<!]]
    [nr.ajax :refer [GET]]
    [nr.appstate :refer [app-state]]
+   [nr.translations :refer [tr tr-element]]
    [nr.utils :refer [set-scroll-top store-scroll-top]]
    [reagent.core :as r]))
 
@@ -16,6 +17,8 @@
             (filter #(contains? % :artist-about))
             (map single-artist))])
 
+(defn- linked-person [name url] [:a {:href url :target "_blank"} name])
+
 (defn about-content [state scroll-top]
   (r/with-let [donors (r/cursor state [:donors])
                alt-info (r/cursor app-state [:alt-info])
@@ -27,24 +30,39 @@
        :reagent-render
        (fn [_ _]
          [:div.about.panel.content-page.blue-shade {:ref #(reset! !node-ref %)}
-          [:h3 "About"]
-          [:p "This website was founded by " [:a {:href "http://twitter.com/mtgred" :target "_blank"} "@mtgred"]
-           ", an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online."]
-
-          [:h3 "Development"]
-          [:h4 "Software Development Team"]
+          (tr-element :h3 [:about_about "About"])
+          ;; note - I couldn't think of a good way to do this in terms of a single tr call
+          ;; without requiring us to parse the output and insert the href in afterwards,
+          ;; so I moved it slightly down a little into the dev team area
+          (tr-element :p [:about_founded-by "This website was founded by @mtgred, an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online."])
+          (tr-element :h3 [:about_development "Development"])
+          (tr-element :h4 [:about_software-development-team "Software Development Team"])
           [:ul.list.compact
-           [:li "mtgred: Founder, original sole developer. Retired."]
-           [:li "NoahTheDuke: Project maintainer, lead developer."]
-           [:li "nbkelly, butzopower, francescopellegrini: Current active contributors."]
-           [:li [:a {:href "https://github.com/mtgred/netrunner/graphs/contributors" :target "_blank"} "Many past contributors"]]]
+           [:li (linked-person "@mtgred" "http://twitter.com/mtgred") ": " (tr-element :span [:about_founder-attribution "Founder, original sole developer. Retired."])]
+           [:li (linked-person "NoahTheDuke" "https://noahbogart.com/") ": " (tr-element :span [:about_maintainer-attribution "Project maintainer, lead developer."])]
+           [:li
+            (linked-person "nbkelly" "https://ko-fi.com/nbkelly") ", "
+            (linked-person "butzopower" "https://github.com/butzopower") ", "
+            (linked-person "francescopellegrini" "https://github.com/francescopellegrini") ": "
+            (tr-element :span [:about_active-contributors "Current active contributors."])]
+           [:li [:a {:href "https://github.com/mtgred/netrunner/graphs/contributors" :target "_blank" :data-i18-key :about_past-contributors} (tr [:about_past-contributors "Many past contributors"])]]]
 
-          [:h4 "Content Creators"]
+          (tr-element :h4 [:about_content-creators "Content Creators"])
           [:ul.list.compact
-           [:li "0thmxma, Sanjay, quarg, znsolomon, hbarsquared, yankeeflatline, rumirumirumirumi: Corp and Runner quotes for start-of-game splash screen."]
-           [:li "PopTartNZ: High-resolution card images."]
-           [:li "Rhahi: Labelling and other QoL functionality ported with permission from "
-            [:a {:href "https://addons.mozilla.org/en-US/firefox/addon/cyberfeeder/" :target "_blank"} "Cyberfeeder"] " Firefox plugin"]
+           [:li
+            (linked-person "0thmxma" "https://web-cdn.bsky.app/profile/0thmxma.bsky.social") ", "
+            (linked-person "Sanjay" "https://nullsignal.games/blog/author/sanjay-kulkacek/") ", "
+            "quarg, znsolomon, hbarsquared, yankeeflatline, rumirumirumirumi: "
+            (tr-element :span [:about_start-of-game-quotes "Corp and Runner quotes for start-of-game splash screen."])]
+           [:li (linked-person "nbkelly" "https://ko-fi.com/nbkelly") ": "
+            (tr-element :span [:about_translated-images "Processing/handling of translated NSG card images, and card backs for community tournaments."])]
+           [:li (linked-person "nbkelly" "https://ko-fi.com/nbkelly") ", " (linked-person "xiaat" "https://github.com/xiaat") ": "
+            (tr-element :span [:about_alt-art-management "Management/handling/processing of community alt arts for jinteki.net. If you want your art on jinteki.net, contact one of us."])]
+
+           [:li "PopTartNZ: " (tr-element :span [:about_high-res-images "High-resolution scans for FFG cards."])]
+           [:li
+            (linked-person "Rhahi" "https://github.com/Rhahi") ": Labelling and other QoL functionality ported with permission from "
+            [:a {:href "https://addons.mozilla.org/en-US/firefox/addon/cyberfeeder/" :target "_blank"} "Cyberfeeder firefox plugin"]]
            [make-artists alt-info]]
 
           [:h4 "UI Translators"]
