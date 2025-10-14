@@ -5,7 +5,7 @@
    [nr.avatar :refer [avatar]]
    [nr.gameboard.actions :refer [send-command]]
    [nr.gameboard.state :refer [game-state not-spectator?]]
-   [nr.translations :refer [tr tr-pronouns]]))
+   [nr.translations :refer [tr tr-span tr-element tr-pronouns]]))
 
 (defn stat-controls
   "Create an overlay to increase/decrease a player attribute (e.g. credits)."
@@ -42,7 +42,7 @@
        (let [{:keys [available used only-for]} memory
              unused (- available used)
              label (if icon? [:<> unused "/" available " " [:span.anr-icon.mu]]
-                       (tr [:game_mu-count] {:unused unused :available available}))]
+                       [tr-span [:game_mu-count] {:unused unused :available available}])]
          (ctrl :memory [:div label (when (neg? unused) [:div.warning "!"])]))))))
 
 (defn- display-special-memory
@@ -59,10 +59,10 @@
                    mu-type-name (capitalize (name mu-type))]]
          ^{:key mu-type-name}
          [:div (if icon? [:<> unused "/" available " " mu-type-name " " [:span.anr-icon.mu]]
-                   (tr [:game_special-mu-count]
-                       {:unused unused
-                        :available available
-                        :mu-type mu-type-name}))]))])))
+                   [tr-span [:game_special-mu-count]
+                    {:unused unused
+                     :available available
+                     :mu-type mu-type-name}])]))])))
 
 (defmulti stats-area
   (fn [player] (get-in @player [:identity :side])))
@@ -84,35 +84,35 @@
              (ctrl :link [:div link " " [:span.anr-icon.link]])]
             [display-special-memory memory true]]
            [:<>
-            (ctrl :click [:div (tr [:game_click-count] {:click click})])
+            (ctrl :click [:div [tr-span [:game_click-count] {:click click}]])
             (ctrl :credit [:div (if (pos? run-credit)
-                                  (tr [:game_credit-count-with-run-credits]
-                                      {:credit credit
-                                       :run-credit run-credit})
-                                  (tr [:game_credit-count] {:credit credit}))])
+                                  [tr-span [:game_credit-count-with-run-credits]
+                                   {:credit credit
+                                    :run-credit run-credit}]
+                                  [tr-span [:game_credit-count] {:credit credit}])])
             [display-memory memory]
             [display-special-memory memory]
-            (ctrl :link [:div (str link " " (tr [:game_link-strength "Link Strength"]))])])
+            (ctrl :link [:div (str link " " [tr-span [:game_link-strength "Link Strength"]])])])
          (let [{:keys [base total is-tagged]} tag
                additional (- total base)
                show-tagged (or is-tagged (pos? total))]
            (ctrl :tag [:div (if (pos? additional)
-                              (tr [:game_tag-count-additional]
-                                  {:base base
-                                   :additional additional
-                                   :total total})
-                              (tr [:game_tag-count] {:base base}))
+                              [tr-span [:game_tag-count-additional]
+                               {:base base
+                                :additional additional
+                                :total total}]
+                              [tr-span [:game_tag-count] {:base base}])
                        (when show-tagged [:div.warning "!"])]))
          (ctrl
           :brain-damage
-          [:div (tr [:game_brain-damage "Core Damage"] {:dmg brain-damage})])
+          [tr-element :div [:game_brain-damage "Core Damage"] {:dmg brain-damage}])
          (when (= (:side @game-state) :runner)
            (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :value (.. % -target -checked)})]
              [:div [:label [:input {:type "checkbox"
                                     :value true
                                     :checked trash-like-cards
                                     :on-click toggle-offer-trash}]
-                    (tr [:game_trash-like-cards "Offer to trash like cards"])]]))]))))
+                    [tr-span [:game_trash-like-cards "Offer to trash like cards"]]]]))]))))
 
 (defmethod stats-area "Corp" [corp]
   (let [ctrl (stat-controls-for-side :corp)]
@@ -125,21 +125,21 @@
             (ctrl :click [:div click " " [:span.anr-icon.click]])
             (ctrl :credit [:div credit " " [:span.anr-icon.credit]])]
            [:<>
-            (ctrl :click [:div (tr [:game_click-count] {:click click})])
-            (ctrl :credit [:div (tr [:game_credit-count] {:credit credit})])])
+            (ctrl :click [tr-element :div [:game_click-count] {:click click}])
+            (ctrl :credit [tr-element :div [:game_credit-count] {:credit credit}])])
          (let [{:keys [base additional]} bad-publicity]
            (ctrl :bad-publicity [:div (if-not (pos? additional)
-                                        (tr [:game_bad-pub-count] {:base base})
-                                        (tr [:game_bad-pub-count-additional]
-                                            {:base base
-                                             :additional additional}))]))
+                                        [tr-span [:game_bad-pub-count] {:base base}]
+                                        [tr-span [:game_bad-pub-count-additional]
+                                         {:base base
+                                          :additional additional}])]))
          (when (= (:side @game-state) :corp)
            (let [toggle-offer-trash #(send-command "set-property" {:key :trash-like-cards :value (.. % -target -checked)})]
              [:div [:label [:input {:type "checkbox"
                                     :value true
                                     :checked trash-like-cards
                                     :on-click toggle-offer-trash}]
-                    (tr [:game_trash-like-cards "Offer to trash like cards"])]]))]))))
+                    [tr-span [:game_trash-like-cards "Offer to trash like cards"]]]]))]))))
 
 (defn stats-view
   [player]

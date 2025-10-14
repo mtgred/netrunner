@@ -565,7 +565,6 @@ game_gain-credit = Gain Credit
 
 game_game-start = Game start: {$timestamp}
 
-
 game_grip = Grip
 
 game_heap = Heap ({$cnt})
@@ -1238,6 +1237,8 @@ pronouns = {$pronoun ->
     [zehir] Ze/hir
     [zezir] Ze/zir
 }
+
+replay_share-timestamp = Share timestamp
 
 set_name = {$name ->
     [a23-seconds] 23 Seconds
