@@ -6,7 +6,7 @@
    [nr.gameboard.replay :refer [init-replay]]
    [nr.gameboard.state :refer [check-lock? game-state get-side last-state
                                parse-state]]
-   [nr.translations :refer [tr]]
+   [nr.translations :refer [tr-span]]
    [nr.utils :refer [toastr-options]]
    [nr.sounds :refer [play-sfx]]
    [nr.ws :as ws]
@@ -53,19 +53,19 @@
 (declare toast)
 (defn handle-timeout [gameid]
   (when (= gameid (current-gameid app-state))
-    (toast (tr [:game_inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true})
+    (toast [:game_inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true}
     (leave-game!)))
 
 (defn handle-timeout-soon [gameid]
   (when (= gameid (current-gameid app-state))
     (play-sfx ["time-out"])
-    (toast (tr [:game_timeout-soon "Game will time out within 30 seconds for inactivity"])
+    (toast [:game_timeout-soon "Game will time out within 30 seconds for inactivity"]
            "error"
            {:time-out 29000
             :close-button true})))
 
 (defn handle-error []
-  (toast (tr [:game_error "Internal Server Error. Please type /bug in the chat and follow the instructions."])
+  (toast [:game_error "Internal Server Error. Please type /bug in the chat and follow the instructions."]
          "error"
          {:time-out 0
           :close-button true})
@@ -112,13 +112,15 @@
             (js/escape (str "Please describe the circumstances of your error here.\n\n\nStack Trace:\n```clojure\n"
                          error
                          "\n```")))]
-    (str "<div>"
-      msg
-      "<br/>"
-      "<button type=\"button\" class=\"reportbtn\" style=\"margin-top: 5px\" "
-      "onclick=\"window.open('https://github.com/mtgred/netrunner/issues/new?body="
-      (build-report-url error)
-      "');\">Report on GitHub</button></div>")))
+    (reagent.dom.server/render-to-string
+      [:div msg [:br]
+       [:a.button
+        {:type "button"
+         :href (str "https://github.com/mtgred/netrunner/issues/new?body="  (build-report-url error))
+         :target "_blank"
+         :class "reportbtn"
+         :style {:margin-top "5px"}}
+        [tr-span [:game_report-on-github "Report on Github"]]]])))
 
 (defn ack-toast ([id] (send-command "toast" {:id id})))
 
@@ -127,8 +129,9 @@
   Sends a command to clear any server side toasts."
   [msg toast-type options]
   (set! (.-options js/toastr) (toastr-options options))
-  (when-let [f (aget js/toastr (if (= "exception" toast-type) "error" toast-type))]
-    (f (if (= "exception" toast-type) (build-exception-msg msg (:last-error @game-state)) msg))))
+  (let [msg (if (vector? msg) [tr-span msg] msg)]
+    (when-let [f (aget js/toastr (if (= "exception" toast-type) "error" toast-type))]
+      (f (if (= "exception" toast-type) (build-exception-msg msg (:last-error @game-state)) msg)))))
 
 (defonce side (r/cursor game-state [:side]))
 (defonce me-toasts (ratom/reaction (get-in @game-state [@side :toast])))
