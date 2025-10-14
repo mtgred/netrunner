@@ -10,6 +10,7 @@
   (atom {:lobbies {}
          :lobby-updates {}
          :tournament nil
+         :allow-game-creation true
          :users {}}))
 
 (defonce lobby-subs-timeout-hours 1)

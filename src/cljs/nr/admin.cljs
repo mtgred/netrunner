@@ -11,10 +11,12 @@
    [reagent.core :as r]
    [taoensso.sente :as sente]))
 
-(def admin-state (r/atom {}))
+(def admin-state
+  (r/atom {:pause-game-creation (not (:allow-game-creation @app-state))}))
 
 (go (swap! admin-state assoc :news (:json (<! (GET "/data/news")))))
-(go (when (:isadmin (:user @app-state)) (swap! admin-state assoc :version (:json (<! (GET "/admin/version"))))))
+(when (:isadmin (:user @app-state))
+  (go (swap! admin-state assoc :version (:json (<! (GET "/admin/version"))))))
 
 (defn- post-data [url callback data]
   (go (let [response (<! (POST url data :json))]
@@ -70,9 +72,18 @@
                8000
                update-announce-response))
 
+(defn- update-pause-game-creation
+  [paused]
+  ;; flips the value because the button is for "paused" and the state is for "allowed"
+  (ws/ws-send! [:admin/allow-game-creation (not paused)]
+               8000
+               (fn [response]
+                 (swap! admin-state assoc :pause-game-creation (not response)))))
+
 (defn admin-container []
   (r/with-let [news (r/cursor admin-state [:news])
                version (r/cursor admin-state [:version])
+               pause-game-creation (r/cursor admin-state [:pause-game-creation])
                s (r/atom {})]
     [:div.container.panel.blue-shade.content-page
      [:h3 "Site News"]
@@ -157,7 +168,16 @@
             disabled (s/blank? msg)]
         [:button {:disabled disabled
                   :class (if disabled "disabled" "")}
-         "Send"])]]))
+         "Send"])]
+
+     [:br]
+     [:h3 "Game Creation Control"]
+     [:div.panel.blue-shade
+      [:label
+       [:input {:type "checkbox"
+                :checked @pause-game-creation
+                :on-change #(update-pause-game-creation (.. % -target -checked))}]
+       " Pause new game creation (allows draining games before maintenance)"]]]))
 
 
 (defn admin []

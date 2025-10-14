@@ -171,15 +171,9 @@
       (assoc lobbies gameid g))
     lobbies))
 
-(defmethod ws/-msg-handler :game/start
-  game--start
-  [{{db :system/db} :ring-req
-    uid :uid
-    {gameid :gameid} :?data
-    id :id
-    timestamp :timestamp}]
-  (lobby/lobby-thread
-    (let [{:keys [players started] :as lobby} (app-state/get-lobby gameid)]
+(defn try-start-game
+  [db uid gameid]
+  (let [{:keys [players started] :as lobby} (app-state/get-lobby gameid)]
       (when (and lobby (lobby/first-player? uid lobby) (not started))
         (let [now (inst/now)
               new-app-state
@@ -190,7 +184,20 @@
             (stats/game-started db lobby?)
             (lobby/send-lobby-state lobby?)
             (lobby/broadcast-lobby-list)
-            (send-state-to-participants :game/start lobby? (diffs/public-states (:state lobby?)))))))
+            (send-state-to-participants :game/start lobby? (diffs/public-states (:state lobby?))))))))
+
+(defmethod ws/-msg-handler :game/start
+  game--start
+  [{{db :system/db} :ring-req
+    uid :uid
+    {gameid :gameid} :?data
+    id :id
+    timestamp :timestamp}]
+  (lobby/lobby-thread
+    (if (:allow-game-creation @app-state/app-state)
+      (try-start-game db uid gameid)
+      (ws/chsk-send! uid [:lobby/toast {:message :lobby_creation-paused
+                                        :type "error"}]))
     (lobby/log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :game/leave

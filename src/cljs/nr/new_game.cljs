@@ -5,7 +5,7 @@
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [authenticated] :as auth]
    [nr.translations :refer [tr tr-format tr-side]]
-   [nr.utils :refer [slug->format]]
+   [nr.utils :refer [cond-button slug->format]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 
@@ -42,9 +42,11 @@
 
 (defn button-bar [state lobby-state options]
   [:div.button-bar
-   [:button {:type "button"
-             :on-click #(create-game state lobby-state options)}
-    (tr [:lobby_create "Create"])]
+   [cond-button (tr [:lobby_create "Create"])
+    (:allow-game-creation @app-state)
+    #(create-game state lobby-state options)
+    (when-not (:allow-game-creation @app-state)
+      {:title (tr [:lobby_creation-paused "Game creation is currently paused for maintenance."])})]
    [:button {:type "button"
              :on-click #(do (.preventDefault %)
                             (swap! lobby-state assoc :editing false))}
