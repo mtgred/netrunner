@@ -8,34 +8,34 @@
             [nr.gameboard.replay :refer [notes-pane notes-shared-pane]]
             [nr.gameboard.state :refer [game-state]]
             [nr.gameboard.settings :refer [settings-pane]]
-            [nr.translations :refer [tr]]
+            [nr.translations :refer [tr-span]]
             [reagent.core :as r]))
 
 (defonce loaded-tabs (r/atom {}))
 (defonce available-tabs
   {:log
    {:hiccup [log-pane]
-    :label [tr [:log_game-log "Game Log"]]}
+    :label [:log_game-log "Game Log"]}
 
    :notes
    {:hiccup [notes-pane]
-    :label [tr [:log_annotating "Annotating"]]}
+    :label [:log_annotating "Annotating"]}
 
    :notes-shared
    {:hiccup [notes-shared-pane]
-    :label [tr [:log_shared "Shared Annotations"]]}
+    :label [:log_shared "Shared Annotations"]}
 
    :run-timing
    {:hiccup [run-timing-pane]
-    :label [tr [:log_run-timing "Run Timing"]]}
+    :label [:log_run-timing "Run Timing"]}
 
    :turn-timing
    {:hiccup [turn-timing-pane]
-    :label [tr [:log_turn-timing "Turn Timing"]]}
+    :label [:log_turn-timing "Turn Timing"]}
 
    :settings
    {:hiccup [settings-pane]
-    :label [tr [:log_settings "Settings"]]}})
+    :label [:log_settings "Settings"]}})
 
 (defn- resize-card-zoom
   "Resizes the card zoom based on the values in the app-state"
@@ -82,16 +82,15 @@
 (defn- tab-selector [selected-tab]
   [:div.panel.panel-top.blue-shade.selector
    (doall (for [[tab {:keys [label]}] (seq @loaded-tabs)]
-            (do (prn label)
-                [:a {:key tab
-                     :on-click #(reset! selected-tab tab)}
-                 label])))])
+            [:a {:key tab
+                 :on-click #(reset! selected-tab tab)}
+             [tr-span label]]))])
 
 (defn load-tab [tab]
   (let [{:keys [hiccup label]}
         (get available-tabs tab
              {:hiccup [:div.error "This should not happen"]
-              :label "???"})]
+              :label [:log_unknown "???"]})]
     (swap! loaded-tabs assoc tab {:hiccup hiccup :label label})))
 
 (defn unload-tab [tab]
