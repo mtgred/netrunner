@@ -8,10 +8,15 @@
 (def language-cursor
   (r/cursor app-state [:options :language]))
 
+(defn tr-with-info
+  ([resource] (tr-with-info resource nil))
+  ([resource params]
+   (i18n/format language-cursor resource params)))
+
 (defn tr
   ([resource] (tr resource nil))
   ([resource params]
-   (i18n/format language-cursor resource params)))
+   (:translation (tr-with-info resource params))))
 
 (defn- i18n-keys
   "put params into tr-element as data if needed"
@@ -21,7 +26,16 @@
 (defn tr-element
   ([element resource] (tr-element element resource nil))
   ([element resource params]
-   [element (merge {:data-i18n-key (first resource)} (i18n-keys params)) (tr resource params)]))
+   ;; note - sometimes a nil value will be passed into a tr, or the key is computed on the frontend
+   ;; and the 'else' value is nil (ie no run phase), so we need to make sure there is no black
+   ;; screen in a case like this.
+   (if (seq resource)
+     (let [{translation :translation
+            success? :target-language} (tr-with-info resource params)]
+       [element
+        (merge {:data-i18n-key (first resource) :data-i18n-success success?} (i18n-keys params))
+        (or translation "-")])
+     [element {:data-i18n-failure true} "[no resource]"])))
 
 (defn tr-span
   ([resource] (tr-element :span resource nil))
