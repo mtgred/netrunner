@@ -889,7 +889,7 @@ lobby_no-games = No games
 lobby_no-valid-decks = You do not have any decks that are valid for this format
 
 lobby_no-valid-decks-format = {$format ->
-    *[unknown] This lobby is for the $format format
+    *[unknown] This lobby is for the {$format} format
 }
 
 lobby_no-valid-decks-help = {$format ->
