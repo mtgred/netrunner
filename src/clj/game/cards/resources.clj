@@ -1170,8 +1170,7 @@
                                   true)))))}]})
 
 (defcard "Dean Lister"
-  {:abilities [{:req (req run)
-                :trash-icon true
+  {:abilities [{:trash-icon true
                 :change-in-game-state {:req (req (some #(has-subtype? % "Icebreaker") (all-installed state :runner)))
                                        :pay-cost true}
                 :label "pump icebreaker"
@@ -1179,14 +1178,15 @@
                 :choices {:card #(and (installed? %)
                                       (has-subtype? % "Icebreaker"))}
                 :cost [(->c :trash-can)]
-                :effect (effect (register-lingering-effect
-                                  card
-                                  (let [breaker target]
-                                    {:type :breaker-strength
-                                     :duration :end-of-run
-                                     :req (req (same-card? breaker target))
-                                     :value (req (count (:hand runner)))}))
-                                (update-breaker-strength target))}]})
+                :effect (req (when run
+                               (register-lingering-effect
+                                 state side card
+                                 (let [breaker target]
+                                   {:type :breaker-strength
+                                    :duration :end-of-run
+                                    :req (req (same-card? breaker target))
+                                    :value (req (count (:hand runner)))}))
+                               (update-breaker-strength state side target)))}]})
 
 (defcard "Debbie \"Downtown\" Moreira"
   {:on-install {:req (req (threat-level 4 state))
@@ -2060,7 +2060,7 @@
                             (first-event? state side :run)))
              :waiting-prompt true
              :skippable true
-             :choices {:not-self nil
+             :choices {:not-self true
                        :req (req (and (runner? target)
                                       (installed? target)))}
              :msg (msg "trash " (:title target) " to gain " (:cost target)

@@ -1661,6 +1661,15 @@
     (run-on state :hq)
     (card-ability state :runner (get-resource state 0) 0)
     (is (no-prompt? state :runner) "No prompt because no targets")
+    (is (is-discard? state :runner ["Dean Lister"]) "Dean lister is trashed"))
+  ;; you still target something outside of a run
+  (do-game
+    (new-game {:runner {:hand ["Dean Lister" "Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Dean Lister")
+    (play-from-hand state :runner "Ika")
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-card state :runner "Ika")
     (is (is-discard? state :runner ["Dean Lister"]) "Dean lister is trashed")))
 
 (deftest debbie-downtown-moreira
@@ -3891,8 +3900,11 @@
     (let [dc (get-resource state 1)]
       (is (changed? [(:credit (get-runner)) 3
                      (count (:hand (get-runner))) 1]
-                    (click-card state :runner dc))
+            (click-card state :runner (get-resource state 0))
+            (is (not (no-prompt? state :runner)) "can't trash self")
+            (click-card state :runner dc))
           "sells casts for 3 credits and a card")
+      (is (is-discard? state :runner ["Daily Casts"]))
       (is (= (refresh dc) nil) "Daily Casts should be in Heap"))))
 
 (deftest kongamato

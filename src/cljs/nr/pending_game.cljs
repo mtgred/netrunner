@@ -35,37 +35,48 @@
 
 (defn select-deck-modal [user current-game]
   (r/with-let [decks (r/cursor app-state [:decks])]
-    [:div
-     [tr-element :h3 [:lobby_select-title "Select your deck"]]
-     [:div.deck-collection.lobby-deck-selector
-      (let [fmt (:format @current-game)
-            players (:players @current-game)
-            singleton? (:singleton @current-game)
-            singleton-fn? (fn [deck] (or (not singleton?) (singleton-deck? deck)))
-            ;;(or (not singleton?) (singleton-id? (get-in deck [:identity])))) -- this one restricts to the ids only
-            side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
-            same-side? (fn [deck] (= side (get-in deck [:identity :side])))
-            legal? (fn [deck fmt] (or (= "casual" fmt)
-                                      (get-in deck [:status (keyword fmt) :legal]
-                                              (get-in (trusted-deck-status (assoc deck :format fmt))
-                                                      [(keyword fmt) :legal]
-                                                      false))))]
-        (doall
-         (for [deck (->> @decks
-                         (filter same-side?)
-                         (filter singleton-fn?)
-                         (filter #(legal? % fmt))
-                         (sort-by :date)
-                         (reverse))]
-           [:div.deckline {:key (:_id deck)
-                           :on-click #(select-deck deck)}
-            [:img {:src (image-url (:identity deck))
-                   :alt (get-in deck [:identity :title] "")}]
-            [:div.float-right [deck-format-status-span deck fmt true]]
-            [:h4 (:name deck)]
-            [:div.float-right
-             (format-date-time mdy-formatter (:date deck))]
-            [:p (get-in deck [:identity :title])]])))]]))
+    (let [fmt (:format @current-game)
+          players (:players @current-game)
+          singleton? (:singleton @current-game)
+          singleton-fn? (fn [deck] (or (not singleton?) (singleton-deck? deck)))
+          ;;(or (not singleton?) (singleton-id? (get-in deck [:identity])))) -- this one restricts to the ids only
+          side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
+          same-side? (fn [deck] (= side (get-in deck [:identity :side])))
+          legal? (fn [deck fmt] (or (= "casual" fmt)
+                                    (get-in deck [:status (keyword fmt) :legal]
+                                            (get-in (trusted-deck-status (assoc deck :format fmt))
+                                                    [(keyword fmt) :legal]
+                                                    false))))
+          appropriate-decks (->> @decks
+                                 (filter same-side?)
+                                 (filter singleton-fn?)
+                                 (filter #(legal? % fmt))
+                                 (sort-by :date)
+                                 (reverse))]
+      (if (seq appropriate-decks)
+        [:div
+         [tr-element :h3 [:lobby_select-title "Select your deck"]]
+         [:div.deck-collection.lobby-deck-selector
+          (doall
+            (for [deck (->> @decks
+                            (filter same-side?)
+                            (filter singleton-fn?)
+                            (filter #(legal? % fmt))
+                            (sort-by :date)
+                            (reverse))]
+              [:div.deckline {:key (:_id deck)
+                              :on-click #(select-deck deck)}
+               [:img {:src (image-url (:identity deck))
+                      :alt (get-in deck [:identity :title] "")}]
+               [:div.float-right [deck-format-status-span deck fmt true]]
+               [:h4 (:name deck)]
+               [:div.float-right
+                (format-date-time mdy-formatter (:date deck))]
+               [:p (get-in deck [:identity :title])]]))]]
+        [:div
+         [tr-element :h3 [:lobby_no-valid-decks "You do not have any decks that are valid for this format"]]
+         [tr-element :h3 [:lobby_no-valid-decks-format (str "This lobby is for the " fmt " format") {:format fmt}]]
+         [tr-element :h4 [:lobby_no-valid-decks-help "Please check the validity of your decklists and ensure you are queueing for a game of the appropriate format. If you are a new player and wish to play the learner decks, you need to create or join a game of the System Gateway format." {:format fmt}]]]))))
 
 (defn- first-user?
   "Is this user the first user in the game?"
