@@ -64,7 +64,9 @@
          resource (if (vector? resource) resource [resource])
          [raw-id fallback] resource
          id (name raw-id)
-         bundle (get-bundle lang)]
-     (or (get-translation bundle id params)
-         fallback
-         (get-translation (get-bundle "en") id params)))))
+         bundle (get-bundle lang)
+         target-translation (get-translation bundle id params)]
+     (cond
+       target-translation {:translation target-translation :target-language true}
+       fallback {:translation fallback :target-language nil}
+       :else {:translation (get-translation (get-bundle "en") id params) :target-language nil}))))
