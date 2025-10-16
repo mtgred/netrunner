@@ -75,7 +75,7 @@
                [:p (get-in deck [:identity :title])]]))]]
         [:div
          [tr-element :h3 [:lobby_no-valid-decks "You do not have any decks that are valid for this format"]]
-         [tr-element :h3 [:lobby_no-valid-decks-format (str "This lobby is for the " fmt " format") {:format fmt}]]
+         [tr-element :h3 [:lobby_no-valid-decks-format (str "This lobby is for the " fmt " format")] {:format fmt}]
          [tr-element :h4 [:lobby_no-valid-decks-help "Please check the validity of your decklists and ensure you are queueing for a game of the appropriate format. If you are a new player and wish to play the learner decks, you need to create or join a game of the System Gateway format." {:format fmt}]]]))))
 
 (defn- first-user?
