@@ -1,16 +1,3 @@
-lang_english = English
-lang_spanish = Spanish
-lang_chinese_simp = Chinese (Simplified)
-lang_chinese_trad = Chinese (Traditional)
-lang_german = German
-lang_italian = Italian
-lang_japanese = Japanese
-lang_korean = Korean
-lang_pig_latin = Pig-Latin
-lang_Portuguese = Portuguese
-lang_catalan = Catalan
-lang_russian = Russian
-
 about_about = About
 
 about_alt-art-management = Management/handling/processing of community alt arts for jinteki.net. If you want your art on jinteki.net, contact one of us.
@@ -798,6 +785,30 @@ ingame-settings_sort-archives = Sort Archives
 ingame-settings_sort-heap = Sort Heap
 
 ingame-settings_stack-cards = Stack cards
+
+lang_ca = Catalan
+
+lang_de = German
+
+lang_en = English
+
+lang_es = Spanish
+
+lang_it = Italian
+
+lang_ja = Japanese
+
+lang_ko = Korean
+
+lang_la-pig = Pig-Latin
+
+lang_pt = Portuguese
+
+lang_ru = Russian
+
+lang_zh-simp = Chinese (Simplified)
+
+lang_zh-trad = Chinese (Traditional)
 
 lobby_turmoil = Turmoil
 
