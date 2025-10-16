@@ -42,8 +42,9 @@
     (response 200 {})))
 
 (defn lang-handler [{{lang :lang} :path-params}]
-  (let [content (i18n/get-content lang)]
-    (response 200 (pr-str content))))
+  (if-let [content (i18n/get-content lang)]
+    (response 200 (pr-str content))
+    (response 200 {})))
 
 (defn alt-arts-handler [{db :system/db}]
   (response 200 (mapv #(dissoc % :_id) (mc/find-maps db "altarts"))))
