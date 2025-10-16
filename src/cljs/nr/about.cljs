@@ -65,14 +65,14 @@
 
           [tr-element :h4 [:about_ui-translators "UI Translators"]]
           [:ul.list.compact
-           [:li [tr-span [:lang_chinese_simp "Chinese (Simplified)"]] ": " [linked-person "bbbbbbbbba" "https://github.com/bbbbbbbbba"] ", " [linked-person "klingeling" "https://github.com/klingeling"]]
-           [:li [tr-span [:lang_french "French"]] ": canisinhorto"]
-           [:li [tr-span [:lang_japanese "Japanese"]] ": " [linked-person "csbisa" "https://github.com/csbisa"]]
-           [:li [tr-span [:lang_korean "Korean"]] ": Seojun Park"]
-           [:li [tr-span [:lang_pig-latin "Pig-Latin"]] ": " [linked-person "jwarwick" "https://github.com/jwarwick"]]
-           [:li [tr-span [:lang_polish "Polish"]] ": " [linked-person "vesperius" "https://vesper.cyberpunk.me/"]]
-           [:li [tr-span [:lang_portuguese "Portuguese"]] ": Vacilotto"]
-           [:li [tr-span [:lang_russian "Russian"]] ": " [linked-person "xiaat" "https://github.com/xiaat"]]]
+           [:li [tr-span [:lang_zh-simp "Chinese (Simplified)"]] ": " [linked-person "bbbbbbbbba" "https://github.com/bbbbbbbbba"] ", " [linked-person "klingeling" "https://github.com/klingeling"]]
+           [:li [tr-span [:lang_fr "French"]] ": canisinhorto"]
+           [:li [tr-span [:lang_ja "Japanese"]] ": " [linked-person "csbisa" "https://github.com/csbisa"]]
+           [:li [tr-span [:lang_ko "Korean"]] ": Seojun Park"]
+           [:li [tr-span [:lang_la-pig "Pig-Latin"]] ": " [linked-person "jwarwick" "https://github.com/jwarwick"]]
+           [:li [tr-span [:lang_pl "Polish"]] ": " [linked-person "vesperius" "https://vesper.cyberpunk.me/"]]
+           [:li [tr-span [:lang_pt "Portuguese"]] ": Vacilotto"]
+           [:li [tr-span [:lang_ru "Russian"]] ": " [linked-person "xiaat" "https://github.com/xiaat"]]]
 
           [tr-element :h4 [:about_tech-stack "Tech Stack"]]
           [:ul.list.compact
