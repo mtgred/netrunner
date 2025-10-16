@@ -20,7 +20,7 @@
    (defn load-dictionary!
      [dir]
      ;; List of supported language files (based on resources/public/i18n directory)
-     (let [languages ["en" "fr" "ja" "ko" "la-pig" "pl" "pt" "ru" "zh-simp"]
+     (let [languages ["en" "es" "ca" "fr" "it" "ja" "ko" "la-pig" "pl" "pt" "ru" "zh-simp" "zh-trad"]
            ;; Try loading each language directly as a resource (works in both jar and filesystem)
            langs (->> languages
                       (keep (fn [lang]
@@ -40,7 +40,7 @@
 
 #?(:clj
    (comment
-     (load-dictionary! "resources/public/i18n")))
+     (load-dictionary! "public/i18n")))
 
 (defn get-content
   [lang]
