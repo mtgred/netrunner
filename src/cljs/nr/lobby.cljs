@@ -124,7 +124,7 @@
        {:class "current"}
        {:on-click #(do (swap! s assoc :room room)
                        (swap! s dissoc :editing))})
-     [tr-span [(keyword room-name) (str/capitalize room-name)] {:type room-name}]
+     [tr-span [(keyword (str "lobby_" room-name)) (str/capitalize room-name)] {:type room-name}]
      (room-count-str open-count closed-count)]))
 
 (defn game-list [state user games current-game]

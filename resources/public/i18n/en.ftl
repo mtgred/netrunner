@@ -834,6 +834,8 @@ lang_en = English
 
 lang_es = Spanish
 
+lang_fr = French
+
 lang_it = Italian
 
 lang_ja = Japanese
@@ -841,6 +843,8 @@ lang_ja = Japanese
 lang_ko = Korean
 
 lang_la-pig = Pig-Latin
+
+lang_pl = Polish
 
 lang_pt = Portuguese
 
@@ -879,6 +883,8 @@ lobby_cancel = Cancel
 lobby_cannot-select-deck = Cannot select that deck
 
 lobby_chat = Chat
+
+lobby_casual = Casual
 
 lobby_closed-msg = Game lobby closed due to inactivity
 
@@ -1034,6 +1040,8 @@ lobby_title = Title
 lobby_title-error = Please fill a game title.
 
 lobby_too-little-data = Too little data
+
+lobby_tournament = Tournament
 
 lobby_type = {$type ->
     [angel-arena] Angel Arena
