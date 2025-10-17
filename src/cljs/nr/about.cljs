@@ -4,7 +4,7 @@
    [cljs.core.async :refer [<!]]
    [nr.ajax :refer [GET]]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr tr-element tr-span]]
+   [nr.translations :refer [tr tr-element tr-element-with-embedded-content tr-span]]
    [nr.utils :refer [set-scroll-top store-scroll-top]]
    [reagent.core :as r]))
 
@@ -42,7 +42,7 @@
             [linked-person "butzopower" "https://github.com/butzopower"] ", "
             [linked-person "francescopellegrini" "https://github.com/francescopellegrini"] ": "
             [tr-span [:about_active-contributors "Current active contributors."]]]
-            [:li [:a {:href "https://github.com/mtgred/netrunner/graphs/contributors" :target "_blank" :data-i18n-key :about_past-contributors} (tr [:about_past-contributors "Many past contributors"])]]]
+            [:li [:a {:href "https://github.com/mtgred/netrunner/graphs/contributors" :target "_blank"} [tr-span [:about_past-contributors "Many past contributors."]]]]]
 
           [tr-element :h4 [:about_content-creators "Content Creators"]]
           [:ul.list.compact
@@ -80,9 +80,11 @@
            [:li [tr-element :b [:about_server "Server:"]] " Clojure. Ring and Compojure running on http-kit. Sente for websocket communications."]
            [:li [tr-element :b [:about_front-end-client "Front-end client:"]] " ClojureScript. Reagent (React). "]]
 
-          [:p [tr-span [:about_open-source "The code is open source and available on"]] " " [:a {:href "https://github.com/mtgred/netrunner" :target "_blank"} "Github"] "."]
+          (let [link [:a {:href "https://github.com/mtgred/netrunner/issues" :target "_blank"} [tr-span [:about_url-github "Github"]]]]
+            [tr-element-with-embedded-content :p [:about_open-source [:span "The code is open source and available on" link "."]] {:link link}])
 
-          [:a {:href "https://github.com/mtgred/netrunner/issues" :target "_blank" :data-i18n-key :about_bug-reports} (tr [:about_bug-reports "Bug reports and feature suggestions can be submitted here."])]
+          (let [link [:a {:href "https://github.com/mtgred/netrunner/issues" :target "_blank"} [tr-span [:about_url-here "here"]]]]
+            [tr-element-with-embedded-content :p [:about_bug-reports [:span "Bug reports and feature suggestions can be submitted " link "."]] {:link link}])
 
           [tr-element :h3 [:about_donations "Donations"]]
           [tr-element :p [:about_donations-long "Donations are appreciated and help finance fast servers. You can support the project financially with PayPal or Bitcoin. Alternate art cards will be enabled on your account as a token of gratitude. Please specify your username with your donation."]]

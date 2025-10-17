@@ -1,8 +1,12 @@
 about_about = About
 
+about_active-contributors = Current active contributors.
+
 about_alt-art-management = Management/handling/processing of community alt arts for jinteki.net. If you want your art on jinteki.net, contact one of us.
 
-about_bug-reports = Bug reports and feature suggestions can be submitted here.
+about_bug-reports = Bug reports and feature suggestions can be submitted [link].
+
+about_content-creators = Content Creators
 
 about_development = Development
 
@@ -24,7 +28,7 @@ about_high-res-images = High-resolution scans for FFG cards.
 
 about_maintainer-attribution = Project maintainer, lead developer.
 
-about_open-source = The code is open source and available on
+about_open-source = The code is open source and available on [link].
 
 about_past-contributors = Many past contributors
 
@@ -45,6 +49,10 @@ about_netrunner-trademark = Netrunner is a trademark of Fantasy Flight Publishin
 about_ui-translators = UI Translators
 
 about_unaffiliated = This is website is not affiliated with Fantasy Flight Games or Wizards of the Coast.
+
+about_url-github = Github
+
+about_url-here = Here
 
 annotations_available-annotations = Available annotations
 
