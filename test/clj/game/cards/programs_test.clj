@@ -2332,6 +2332,16 @@
       (click-prompt state :runner "No action")
       (is (no-prompt? state :runner) "No prompt with only 1 installed ice")))
 
+(deftest corsiar-test
+  (do-game
+    (run-and-encounter-ice-test "Ice Wall" {:rig ["Mantle" "Corsiar"]})
+    (is (changed? [(get-strength (get-ice state :hq 0)) -3]
+          (card-ability state :runner (get-program state 1) 1)
+          (click-card state :runner "Mantle"))
+        "Spent a stealth")
+    (card-ability state :runner (get-program state 1) 0)
+    (click-prompt state :runner "End the run")))
+
 (deftest corroder
   ;; Corroder
   (do-game
