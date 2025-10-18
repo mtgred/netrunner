@@ -990,53 +990,58 @@
 
 (defn identity-view [render-side identity hand-count]
   (let [is-runner (= :runner render-side)
-        title (if is-runner [:game_grip "Grip"] [:game_hq "HQ"])]
+        hand-count-str (str " (" hand-count ")")
+        title (if is-runner
+                [:game_grip-count (str "Grip" hand-count-str)]
+                [:game_hq-count (str "HQ" hand-count-str)])]
     [:div.blue-shade.identity
      [card-view @identity]
      [:div.header {:class "darkbg server-label"}
       ;; TODO - can the tr take in hand count?
-      [tr-span title] " (" hand-count ")"]]))
+      [tr-span title {:cnt hand-count}]]]))
 
 (defn deck-view [render-side player-side identity deck deck-count]
   (let [is-runner (= :runner render-side)
-        tr-vec (if is-runner [:game_stack "Stack"] [:game_rnd "R&D"])
-        title (tr tr-vec)
+        deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)
+        tr-vec (if is-runner
+                 [:game_stack-count (str "Stack (" deck-count-number ")")]
+                 [:game_rnd-count (str "R&D (" deck-count-number ")")])
+        title (tr (if is-runner [:game_stack "Stack"] [:game_rnd "R&D"]))
         ref (if is-runner "stack" "rd")
         menu-ref (keyword (str ref "-menu"))
         content-ref (keyword (str ref "-content"))]
     (fn [render-side player-side identity deck]
       ;; deck-count is only sent to live games and does not exist in the replay
-      (let [deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)]
-        [:div.deck-container (drop-area title {})
-         [:div.blue-shade.deck {:on-click (when (and (= render-side player-side) (not-spectator?))
-                                            #(let [popup-display (-> (content-ref @board-dom) .-style .-display)]
-                                               (if (or (empty? popup-display)
-                                                       (= "none" popup-display))
-                                                 (-> (menu-ref @board-dom) js/$ .toggle)
-                                                 (close-popup % (content-ref @board-dom) "stops looking at their deck" false true))))}
-          (when (pos? deck-count-number)
-            [facedown-card (:side @identity) ["bg"] nil])
-          ;; todo - again, can we pass the server count into the tr?
-          [:div.header {:class "darkbg server-label"}
-           [tr-span tr-vec] " (" deck-count-number ")"]]
-         (when (and (= render-side player-side) (not (is-replay?)))
-           [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
-            [:div {:on-click #(do (send-command "shuffle")
-                                  (-> (menu-ref @board-dom) js/$ .fadeOut))}
-             [tr-span [:game_shuffle "Shuffle"]]]
-            [:div {:on-click #(show-deck % ref)}
-             [tr-span [:game_show "Show"]]]])
-         (when (and (= render-side player-side) (not (is-replay?)))
-           [:div.panel.blue-shade.popup {:ref #(swap! board-dom assoc content-ref %)}
-            [:div
-             [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" false true)}
-              [tr-span [:game_close "Close"]]]
-             [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" true true)}
-              [tr-span [:game_close-shuffle "Close & Shuffle"]]]]
-            (doall
-              (for [card @deck]
-                ^{:key (:cid card)}
-                [card-view card]))])]))))
+      [:div.deck-container (drop-area title {})
+       [:div.blue-shade.deck {:on-click (when (and (= render-side player-side) (not-spectator?))
+                                          #(let [popup-display (-> (content-ref @board-dom) .-style .-display)]
+                                             (if (or (empty? popup-display)
+                                                     (= "none" popup-display))
+                                               (-> (menu-ref @board-dom) js/$ .toggle)
+                                               (close-popup % (content-ref @board-dom) "stops looking at their deck" false true))))}
+        (when (pos? deck-count-number)
+          [facedown-card (:side @identity) ["bg"] nil])
+        ;; todo - again, can we pass the server count into the tr?
+        [:div.header {:class "darkbg server-label"}
+         [tr-span tr-vec {:cnt deck-count-number}]]
+       (when (and (= render-side player-side) (not (is-replay?)))
+         [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
+          [:div {:on-click #(do (send-command "shuffle")
+                                (-> (menu-ref @board-dom) js/$ .fadeOut))}
+           [tr-span [:game_shuffle "Shuffle"]]]
+          [:div {:on-click #(show-deck % ref)}
+           [tr-span [:game_show "Show"]]]])
+       (when (and (= render-side player-side) (not (is-replay?)))
+         [:div.panel.blue-shade.popup {:ref #(swap! board-dom assoc content-ref %)}
+          [:div
+           [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" false true)}
+            [tr-span [:game_close "Close"]]]
+           [:a {:on-click #(close-popup % (content-ref @board-dom) "stops looking at their deck" true true)}
+            [tr-span [:game_close-shuffle "Close & Shuffle"]]]]
+          (doall
+            (for [card @deck]
+              ^{:key (:cid card)}
+              [card-view card]))])]])))
 
 (defn discard-view-runner [player-side discard]
   (let [s (r/atom {})]
@@ -1102,10 +1107,10 @@
               [:div (draw-card c false)]))]]))))
 
 (defn rfg-view
-  ([cards name popup] (rfg-view cards name popup nil))
-  ([cards name popup noclick]
+  ([cards tr-vec popup] (rfg-view cards tr-vec popup nil))
+  ([cards tr-vec popup noclick]
    (let [dom (atom {})]
-     (fn [cards name popup]
+     (fn [cards tr-vec popup]
        (when-not (empty? @cards)
          (let [size (count @cards)]
            [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")
@@ -1116,7 +1121,7 @@
                                                  :style {:left (when (> size 1) (* (/ 128 size) i))}}
                               [:div [card-view card nil noclick]]])
                            @cards))
-            [label @cards {:name name}]
+            [label @cards {:tr-vec tr-vec}]
             (when popup
               [:div.panel.blue-shade.popup {:ref #(swap! dom assoc :rfg-popup %)
                                             :class "opponent"}
@@ -1128,8 +1133,8 @@
                    ^{:key (:cid c)}
                    [card-view c]))])]))))))
 
-(defn play-area-view [user name cards]
-  (fn [user name cards]
+(defn play-area-view [user tr-vec cards]
+  (fn [user tr-vec cards]
     (let [size (count @cards)]
       (when (pos? size)
         [:div.panel.blue-shade.rfg {:class (when (> size 2) "squeeze")}
@@ -1142,7 +1147,7 @@
                              [card-view card]
                              [facedown-card (:side card)])])
                         @cards))
-         [label @cards {:name name}]]))))
+         [label @cards {:tr-vec tr-vec}]]))))
 
 (defn scored-view [scored agenda-point agenda-point-req me?]
   (let [size (count @scored)
@@ -1783,7 +1788,8 @@
                                    (-> "#trace-submit" js/$ .click)
                                    (.stopPropagation %))}
        (doall (for [i (range (inc choices))]
-                [:option {:value i :key i} i]))] (tr [:game_credits "credits"])]
+                [:option {:value i :key i} i]))]
+      [tr-span [:game_credits "credits"]]]
      (when (or unbeatable beat-trace)
        (let [beat-vec (if unbeatable
                         [:game_unbeatable "Make Unbeatable"]
@@ -1875,7 +1881,8 @@
                                         (-> "#counter-submit" js/$ .click)
                                         (.stopPropagation %))}
             (doall (for [i (range (inc num-counters))]
-                     [:option {:key i :value i :data-i18n-key :game_credits} i]))] (tr [:game_credits "credits"])]
+                     [:option {:key i :value i :data-i18n-key :game_credits} i]))]
+           [tr-span [:game_credits "credits"]]]
           [:button#counter-submit {:on-click #(send-command "choice"
                                              {:eid (prompt-eid (:side @game-state)) :choice (-> "#credit" js/$ .val str->int)})}
            [tr-span [:game_ok "OK"]]]])
@@ -2411,17 +2418,17 @@
                     [:div
                      (when-not (:replay @game-state)
                        [starting-timestamp @start-date @timer])
-                     [rfg-view op-rfg (tr [:game_rfg "Removed from the game"]) true]
-                     [rfg-view me-rfg (tr [:game_rfg "Removed from the game"]) true]
-                     [rfg-view op-set-aside (tr [:game_set-aside "Set aside"]) false]
-                     [rfg-view me-set-aside (tr [:game_set-aside "Set aside"]) false]
-                     [rfg-view op-destroyed (tr [:game_destroyed "Destroyed"]) false]
-                     [rfg-view me-destroyed (tr [:game_destroyed "Destroyed"]) false]
-                     [play-area-view op-user (tr [:game_play-area "Play Area"]) op-play-area]
-                     [play-area-view me-user (tr [:game_play-area "Play Area"]) me-play-area]
-                     [rfg-view op-current (tr [:game_current "Current"]) false]
-                     [rfg-view me-current (tr [:game_current "Current"]) false]
-                     [rfg-view last-revealed (tr [:game_last-revealed "Last Revealed"]) false true]])
+                     [rfg-view op-rfg [:game_rfg "Removed from the game"] true]
+                     [rfg-view me-rfg [:game_rfg "Removed from the game"] true]
+                     [rfg-view op-set-aside [:game_set-aside "Set aside"] false]
+                     [rfg-view me-set-aside [:game_set-aside "Set aside"] false]
+                     [rfg-view op-destroyed [:game_destroyed "Destroyed"] false]
+                     [rfg-view me-destroyed [:game_destroyed "Destroyed"] false]
+                     [play-area-view op-user [:game_play-area "Play Area"] op-play-area]
+                     [play-area-view me-user [:game_play-area "Play Area"] me-play-area]
+                     [rfg-view op-current [:game_current "Current"] false]
+                     [rfg-view me-current [:game_current "Current"] false]
+                     [rfg-view last-revealed [:game_last-revealed "Last Revealed"] false true]])
                   (when (or (not= @side :spectator)
                             (and (spectator-view-hidden?) (spectate-side)))
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters

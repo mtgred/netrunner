@@ -562,9 +562,13 @@ game_game-start = Game start: {$timestamp}
 
 game_grip = Grip
 
+game_grip-count = Grip ({$cnt})
+
 game_heap = Heap ({$cnt})
 
 game_hq = HQ
+
+game_hq-count = HQ ({$cnt})
 
 game_inactivity = Game closed due to inactivity
 
@@ -642,6 +646,8 @@ game_rfg = Removed from the game
 
 game_rnd = R&D
 
+game_rnd-count = R&D ({$cnt})
+
 game_round-end = Round end: {$timestamp}
 
 game_round-extension = (Includes {$minutes}m time extension)
@@ -678,6 +684,8 @@ game_spec-view = Spectator View
 game_special-mu-count = {$unused} of {$available} {$mu-type} MU unused
 
 game_stack = Stack
+
+game_stack-count = Stack ({$cnt})
 
 game_start = Start Game
 
