@@ -221,7 +221,7 @@
           (run-empty-server state "Server 1")
           (click-card state :runner dh)
           (click-prompt state :runner "Pay 5 [Credits] to trash") ; trash Director Haas
-          (click-prompt state :runner "Done")
+          (click-prompts state :runner "Worlds Plaza" "No action" "No action")
           (is (= 3 (:click-per-turn (get-corp))) "Corp down to 3 clicks per turn"))))))
 
 (deftest trash-remove-per-turn-restriction
