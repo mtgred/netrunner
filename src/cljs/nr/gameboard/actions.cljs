@@ -130,7 +130,6 @@
   [msg toast-type options]
   (set! (.-options js/toastr) (toastr-options options))
   (let [msg (if (vector? msg) [tr-span msg] msg)]
-    (prn msg)
     (when-let [f (aget js/toastr (if (= "exception" toast-type) "error" toast-type))]
       (f (if (= "exception" toast-type) (build-exception-msg msg (:last-error @game-state))
              (if (vector? msg) (reagent.dom.server/render-to-string msg) msg))))))
