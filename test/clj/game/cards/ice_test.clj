@@ -1145,6 +1145,14 @@
   ;; etr
   (do-game (etr-sub "Biawak" 2)))
 
+(deftest biawak-fire-all-subs
+  (do-game
+    (run-and-encounter-ice-test "Biawak" nil {:rig ["Fermenter" "Daily Casts"]})
+    (fire-subs state (get-ice state :hq 0))
+    (click-prompts state :corp "Trash a program" "Fermenter" "Trash a resource" "Daily Casts")
+    (is (not (:run @state)) "Run ended")
+    (is (no-prompt? state :runner))))
+
 (deftest blockchain-face-up-transactions
   ;; Face up transactions
   (do-game
