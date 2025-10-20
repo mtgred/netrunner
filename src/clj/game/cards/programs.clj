@@ -1933,6 +1933,29 @@
                     [(break-sub 2 0 "Barrier")
                      (strength-pump 3 6)]))
 
+(defcard "Lampades"
+  {:interactions
+   {:access-ability
+    {:async true
+     :trash? true
+     :once :per-turn
+     :label "Trash card"
+     :req (req (and (not (:disabled card))
+                    (not (agenda? target))
+                    (not (in-discard? target))
+                    (can-pay? state side eid card [(->c :power 1) (->c :credit (:cost target 0) {:stealth :all-stealth})])))
+     :waiting-prompt true
+     :effect (req (let [accessed-card target
+                        play-or-rez (:cost target)]
+                    (continue-ability
+                      state side
+                      {:async true
+                       :cost [(->c :power 1) (->c :credit (:cost accessed-card 0) {:stealth :all-stealth})]
+                       :msg (msg "trash " (:title accessed-card))
+                       :effect (effect (trash eid (assoc accessed-card :seen true) {:accessed true}))}
+                      card nil)))}}
+   :data {:counter {:power 3}}})
+
 (defcard "Lamprey"
   {:events [{:event :successful-run
              :automatic :drain-credits
