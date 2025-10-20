@@ -5701,6 +5701,32 @@
     (is (= nil (:reason @state)) "no win happened yet")
     (is (not (= :corp (:winner @state))) "Corp doesn't win")))
 
+(deftest superpositional-cyclotron-test-humanoid-resources-test
+  (do-game
+    (new-game {:corp {:hand ["Humanoid Resources" "Superpositional Cyclotron" "Consulting Visit"]
+                      :deck ["Beanstalk Royalties"]
+                      :credits 20}})
+    (play-from-hand state :corp "Superpositional Cyclotron" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Humanoid Resources" "New remote")
+    (rez state :corp (get-content state :remote2 0))
+    (card-ability state :corp (get-content state :remote2 0) 0)
+    (click-prompt state :corp "Done")
+    (click-prompt state :corp "Consulting Visit")
+    (click-prompt state :corp "Beanstalk Royalties")))
+
+(deftest superpositional-cyclotron-test
+  (do-game
+    (new-game {:corp {:hand ["Superpositional Cyclotron" "Consulting Visit"]
+                      :deck ["Consulting Visit" "Beanstalk Royalties"]
+                      :credits 18}})
+    (play-from-hand state :corp "Superpositional Cyclotron" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (is (changed? [(:click (get-corp)) -1]
+          (play-from-hand state :corp "Superpositional Cyclotron")))
+    (is (= ["Beanstalk Royalties" "Done"] (prompt-titles :corp)) "Only beanstalk playable")))
+
 (deftest synth-dna-modification
   ;; Synth DNA Modification
   (do-game

@@ -3022,6 +3022,13 @@
              :msg "win the game"
              :effect (req (win state :corp (:title card)))}]})
 
+(defcard "Superpositional Cyclotron"
+  {:static-abilities [{:type :play-additional-cost
+                       :req (req (and (corp? target)
+                                      (no-event? state side :play-operation #(has-subtype? (:card (first %)) "Double"))
+                                      (has-subtype? target "Double")))
+                       :value [(->c :click -1)]}]})
+
 (defcard "Sundew"
   {:events [{:event :runner-spent-click
              :req (req (first-event? state side :runner-spent-click))
