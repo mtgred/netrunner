@@ -1588,6 +1588,117 @@
              {:qty 1 :card "DJ Fenris"}
              {:qty 1 :card "Hannah \"Wheels\" Pilintra"}])))
 
+(def worlds-2025-zomzraft-runs
+  (matchup
+    [:preconstructed.worlds-2025-a "Worlds 2025: davz131 (C) vs. ZomZraft (C)"]
+    [:preconstructed.worlds-2025-a-tag "davz131 (R) vs. ZomZraft (C)"]
+    [:preconstructed.worlds-2025-info "361 players played in the fourth Netrunner world championship run by Null Signal Games. In this tournament, ZomZraft (Epiphany, Hoshiko) won the title of Netrunner World Champion in a final game Against davz131 (Au Co, Esa). The tournament was held at Dovecot Studios in Edenburg on the 18th and 19th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Elevation."]
+    [:preconstructed.worlds-2025-a-ul "Worlds 2025: SBT Bytes vs. Vampire"]
+    (precon "davz131 - 2025: SBT Bytes"
+            {:title "AU Co.: The Gold Standard in Clones" :side "Corp" :code 35046}
+            [{:qty 3 :card "Fujii Asset Retrieval"}
+             {:qty 1 :card "Longevity Serum"}
+             {:qty 3 :card "See How They Run"}
+             {:qty 3 :card "False Lead"}
+             {:qty 3 :card "Bladderwort"}
+             {:qty 2 :card "Byte!"}
+             {:qty 3 :card "Cohort Guidance Program"}
+             {:qty 3 :card "Moon Pool"}
+             {:qty 3 :card "Phật Gioan Baotixita"}
+             {:qty 3 :card "Spin Doctor"}
+             {:qty 3 :card "Anemone"}
+             {:qty 1 :card "Diviner"}
+             {:qty 1 :card "Phoneutria"}
+             {:qty 3 :card "Semak-samun"}
+             {:qty 1 :card "Flyswatter"}
+             {:qty 3 :card "Hansei Review"}
+             {:qty 2 :card "Mindscaping"}
+             {:qty 1 :card "Hedge Fund"}
+             {:qty 3 :card "Petty Cash"}
+             {:qty 2 :card "Oppo Research"}
+             {:qty 2 :card "End of the Line"}])
+    (precon "ZomZraft - 2025: Vampire"
+            {:title "Hoshiko Shiro: Untold Protagonist" :side "Runner" :code 26066}
+            [{:qty 3 :card "Steelskin Scarring"}
+             {:qty 3 :card "Strike Fund"}
+             {:qty 3 :card "The Price"}
+             {:qty 1 :card "Ashen Epilogue"}
+             {:qty 3 :card "Pinhole Threading"}
+             {:qty 1 :card "Illumination"}
+             {:qty 3 :card "Bling"}
+             {:qty 3 :card "Devil Charm"}
+             {:qty 3 :card "Gachapon"}
+             {:qty 1 :card "Solidarity Badge"}
+             {:qty 1 :card "Buffer Drive"}
+             {:qty 3 :card "Simulchip"}
+             {:qty 2 :card "Audrey v2"}
+             {:qty 3 :card "Botulus"}
+             {:qty 3 :card "Chisel"}
+             {:qty 3 :card "Fermenter"}
+             {:qty 3 :card "Gourmand"}
+             {:qty 2 :card "Cookbook"}
+             {:qty 1 :card "Fencer Fueno"}
+             {:qty 2 :card "Lago Paranoá Shelter"}
+             {:qty 2 :card "Paladin Poemu"}
+             {:qty 2 :card "The Twinning"}])))
+
+(def worlds-2025-zomzraft-corps
+  (matchup
+    [:preconstructed.worlds-2025-b "Worlds 2025: ZomZraft (C) vs davz131 (R)"]
+    [:preconstructed.worlds-2025-b-tag "ZomZraft (C) vs. davz131 (R)"]
+    [:preconstructed.worlds-2025-info "361 players played in the fourth Netrunner world championship run by Null Signal Games. In this tournament, ZomZraft (Epiphany, Hoshiko) won the title of Netrunner World Champion in a final game Against davz131 (Au Co, Esa). The tournament was held at Dovecot Studios in Edenburg on the 18th and 19th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Elevation."]
+    [:preconstructed.worlds-2025-b-ul "Worlds 2025: Constrictor vs. Esâ me, I'm back"]
+    (precon "ZomZraft - 2025: Constrictor"
+            {:title "Epiphany Analytica: Nations Undivided" :side "Corp" :code 34048}
+            [{:qty 3 :card "Artificial Cryptocrash"}
+             {:qty 2 :card "Freedom of Information"}
+             {:qty 3 :card "Stoke the Embers"}
+             {:qty 1 :card "Tomorrow's Headline"}
+             {:qty 1 :card "Offworld Office"}
+             {:qty 3 :card "Balanced Coverage"}
+             {:qty 1 :card "Chekist Scion"}
+             {:qty 3 :card "Federal Fundraising"}
+             {:qty 1 :card "Public Access Plaza"}
+             {:qty 3 :card "Spin Doctor"}
+             {:qty 3 :card "B-1001"}
+             {:qty 2 :card "The Powers That Be"}
+             {:qty 1 :card "Wage Workers"}
+             {:qty 2 :card "Warm Reception"}
+             {:qty 3 :card "Working Prototype"}
+             {:qty 1 :card "Mestnichestvo"}
+             {:qty 3 :card "Ping"}
+             {:qty 1 :card "Starlit Knight"}
+             {:qty 3 :card "Virtual Service Agent"}
+             {:qty 1 :card "Bigger Picture"}
+             {:qty 1 :card "IP Enforcement"}
+             {:qty 3 :card "Oppo Research"}
+             {:qty 1 :card "Shipment from Vladisibirsk"}
+             {:qty 1 :card "Retribution"}
+             {:qty 2 :card "The Holo Man"}])
+    (precon "davz131 - 2025: Esâ me, I'm back"
+            {:title "Esâ Afontov: Eco-Insurrectionist" :side "Runner" :code 33001}
+            [{:qty 2 :card "Chastushka"}
+             {:qty 2 :card "Finality"}
+             {:qty 1 :card "Katorga Breakout"}
+             {:qty 3 :card "Raindrops Cut Stone"}
+             {:qty 2 :card "Running Hot"}
+             {:qty 3 :card "Steelskin Scarring"}
+             {:qty 3 :card "Strike Fund"}
+             {:qty 3 :card "Wildcat Strike"}
+             {:qty 1 :card "Ashen Epilogue"}
+             {:qty 3 :card "Sure Gamble"}
+             {:qty 1 :card "Pinhole Threading"}
+             {:qty 1 :card "Ritual"}
+             {:qty 3 :card "Ghosttongue"}
+             {:qty 3 :card "Marrow"}
+             {:qty 1 :card "Hippocampic Mechanocytes"}
+             {:qty 2 :card "Begemot"}
+             {:qty 1 :card "Fermenter"}
+             {:qty 5 :card "Matryoshka"}
+             {:qty 1 :card "Cupellation"}
+             {:qty 1 :card "Mystic Maemi"}
+             {:qty 3 :card "Dr. Nuka Vrolyck"}])))
+
 ;; Utility
 
 (defn matchup-by-key
@@ -1622,7 +1733,9 @@
     :worlds-2023-a worlds-2023-sokka-corps
     :worlds-2023-b worlds-2023-sokka-runs
     :worlds-2024-a worlds-2024-deer-runs
-    :worlds-2024-b worlds-2024-deer-corps))
+    :worlds-2024-b worlds-2024-deer-corps
+    :worlds-2025-a worlds-2025-zomzraft-runs
+    :worlds-2025-b worlds-2025-zomzraft-corps))
 
 (def all-matchups
   "A set of all preconstructed matchups (by key).
@@ -1639,4 +1752,5 @@
     :worlds-2021-a :worlds-2021-b
     :worlds-2022-a :worlds-2022-b
     :worlds-2023-a :worlds-2023-b
-    :worlds-2024-a :worlds-2024-b})
+    :worlds-2024-a :worlds-2024-b
+    :worlds-2025-a :worlds-2025-b})
