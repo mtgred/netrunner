@@ -194,10 +194,10 @@
     id :id
     timestamp :timestamp}]
   (lobby/lobby-thread
-    (if (:allow-game-creation @app-state/app-state)
-      (try-start-game db uid gameid)
+    (if (:block-game-creation @app-state/app-state)
       (ws/chsk-send! uid [:lobby/toast {:message :lobby_creation-paused
-                                        :type "error"}]))
+                                        :type "error"}])
+      (try-start-game db uid gameid))
     (lobby/log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :game/leave

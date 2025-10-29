@@ -145,13 +145,13 @@
       (response 200 {:message "ok" :version version}))
     (response 400 {:message "Missing version item"})))
 
-(defmethod ws/-msg-handler :admin/allow-game-creation
-  admin--allow-game-creation
+(defmethod ws/-msg-handler :admin/block-game-creation
+  admin--block-game-creation
   [{{user :user} :ring-req
-    allow? :?data
+    block? :?data
     ?reply-fn :?reply-fn}]
   (when (and (active-user? user)
              (or (:ismoderator user) (:isadmin user)))
-    (let [allow? (boolean allow?)]
-      (swap! app-state/app-state assoc :allow-game-creation allow?)
-      (when ?reply-fn (?reply-fn allow?)))))
+    (let [block? (boolean block?)]
+      (swap! app-state/app-state assoc :block-game-creation block?)
+      (when ?reply-fn (?reply-fn block?)))))

@@ -55,7 +55,7 @@
                         :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}
              :games []
              :current-game nil
-             :allow-game-creation true})))
+             :block-game-creation false})))
 
 (go (let [lang (get-in @app-state [:options :language] "en")
           response (<! (GET (str "/data/language/" lang)))]

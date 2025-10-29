@@ -12,7 +12,7 @@
    [taoensso.sente :as sente]))
 
 (def admin-state
-  (r/atom {:pause-game-creation (not (:allow-game-creation @app-state))}))
+  (r/atom {:pause-game-creation (:block-game-creation @app-state)}))
 
 (go (swap! admin-state assoc :news (:json (<! (GET "/data/news")))))
 (when (:isadmin (:user @app-state))
@@ -74,11 +74,10 @@
 
 (defn- update-pause-game-creation
   [paused]
-  ;; flips the value because the button is for "paused" and the state is for "allowed"
-  (ws/ws-send! [:admin/allow-game-creation (not paused)]
+  (ws/ws-send! [:admin/block-game-creation paused]
                8000
                (fn [response]
-                 (swap! admin-state assoc :pause-game-creation (not response)))))
+                 (swap! admin-state assoc :pause-game-creation response))))
 
 (defn admin-container []
   (r/with-let [news (r/cursor admin-state [:news])

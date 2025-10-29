@@ -38,10 +38,10 @@
   (let [msg (if (keyword? message) (tr message) message)]
     (non-game-toast msg type {:time-out 30000 :close-button true})))
 
-(defmethod ws/event-msg-handler :lobby/allow-game-creation
+(defmethod ws/event-msg-handler :lobby/block-game-creation
   lobby__pause-game-creation
   [{data :?data}]
-  (swap! app-state assoc :allow-game-creation data))
+  (swap! app-state assoc :block-game-creation data))
 
 (defmethod ws/event-msg-handler :lobby/timeout
   [{{:keys [gameid]} :?data}]
@@ -188,7 +188,7 @@
              empty?))
    #(authenticated
       (fn [_]
-        (ws/ws-send! [:lobby/allow-game-creation])
+        (ws/ws-send! [:lobby/block-game-creation])
         (swap! s assoc :editing true)
         (-> ".game-title" js/$ .select)
         (resume-sound)))])

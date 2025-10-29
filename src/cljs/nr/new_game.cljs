@@ -43,9 +43,9 @@
 (defn button-bar [state lobby-state options]
   [:div.button-bar
    [cond-button (tr [:lobby_create "Create"])
-    (:allow-game-creation @app-state)
+    (not (:block-game-creation @app-state))
     #(create-game state lobby-state options)
-    (when-not (:allow-game-creation @app-state)
+    (when (:block-game-creation @app-state)
       {:title (tr [:lobby_creation-paused "Game creation is currently paused for maintenance."])})]
    [:button {:type "button"
              :on-click #(do (.preventDefault %)
@@ -276,6 +276,11 @@
        [button-bar state lobby-state options]
        (when-let [message @flash-message]
          [:p.flash-message message])
+       (when (:block-game-creation @app-state)
+         [:div.infobox.blue-shade
+          [:p
+           {:style {:margin "10px 5px 10px 0px"}}
+           (tr [:lobby_creation-paused "Game creation is currently paused for maintenance."])]])
        [:div.content
         [title-section title]
         [side-section side]

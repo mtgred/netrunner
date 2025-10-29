@@ -360,10 +360,10 @@
     id :id
     timestamp :timestamp}]
   (lobby-thread
-    (if (:allow-game-creation @app-state/app-state)
-      (try-create-lobby uid user ?data)
+    (if (:block-game-creation @app-state/app-state)
       (ws/chsk-send! uid [:lobby/toast {:message :lobby_creation-paused
-                                        :type "error"}]))
+                                        :type "error"}])
+      (try-create-lobby uid user ?data))
     (log-delay! timestamp id)))
 
 (defn clear-lobby-state [uid]
@@ -385,17 +385,17 @@
     id :id
     timestamp :timestamp}]
   (lobby-thread (send-lobby-list uid)
-                (ws/chsk-send! uid [:lobby/allow-game-creation
-                                    (:allow-game-creation @app-state/app-state)])
+                (ws/chsk-send! uid [:lobby/block-game-creation
+                                    (:block-game-creation @app-state/app-state)])
                 (log-delay! timestamp id)))
 
-(defmethod ws/-msg-handler :lobby/allow-game-creation
-  lobby--allow-game-creation
+(defmethod ws/-msg-handler :lobby/block-game-creation
+  lobby--block-game-creation
   [{uid :uid
     id :id
     timestamp :timestamp}]
-  (lobby-thread (ws/chsk-send! uid [:lobby/allow-game-creation
-                                    (:allow-game-creation @app-state/app-state)])
+  (lobby-thread (ws/chsk-send! uid [:lobby/block-game-creation
+                                    (:block-game-creation @app-state/app-state)])
                 (log-delay! timestamp id)))
 
 (defn player?
