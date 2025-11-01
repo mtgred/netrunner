@@ -29,11 +29,13 @@
   (when-let [prompt (find-first #(and (= (:eid eid) (:eid (:eid %)))
                                       (= :waiting (:prompt-type %)))
                                 (get-in @state [side :prompt]))]
-    (remove-from-prompt-queue state side prompt)
     ;; note - it's possible to stack multiple wait prompts onto the same eid
     ;; in these cases, we must clear each one of these or else the game will need to be
     ;; salvaged via close-prompt commands
-    (clear-eid-wait-prompt state side eid)))
+    (doseq [prompt (filter #(and (= (:eid eid) (:eid (:eid %)))
+                                 (= :waiting (:prompt-type %)))
+                           (get-in @state [side :prompt]))]
+      (remove-prompt-from-queue state side prompt))))
 
 (defn effect-completed
   [state _ eid]
