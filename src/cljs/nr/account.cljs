@@ -722,7 +722,7 @@
           [api-keys s]
 
           [:section
-           [:span.flash-message (:flash-message @s)]]]])})))
+           [:span.flash-message (:flash-message @s)]]]]})))
 
 (defn account []
   (let [user (r/cursor app-state [:user])
