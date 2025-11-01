@@ -226,6 +226,7 @@
           _ (when (agenda? c)
               (update-advancement-requirement state moved-card))
           moved-card (get-card state moved-card)]
+      (unregister-events state side moved-card)
       ;; Check to see if a second agenda/asset was installed.
       (wait-for
         (corp-install-asset-agenda state side moved-card dest-zone server)
