@@ -1157,9 +1157,9 @@
      [label @scored {:name (tr [:game_scored-area "Scored Area"])}]
      [:div.stats-area
       (ctrl :agenda-point [:div (if (= 7 point-req)
-                                  (tr [:game_agenda-count] 
+                                  (tr [:game_agenda-count]
                                       {:agenda-point @agenda-point})
-                                  (tr [:game_agenda-count-with-req] 
+                                  (tr [:game_agenda-count-with-req]
                                       {:agenda-point @agenda-point
                                        :agenda-point-req point-req}))])]]))
 
@@ -1418,11 +1418,16 @@
   "Builds the in-game decklist display"
   [corp-list runner-list]
   (let [lists (map-longest list nil corp-list runner-list)
-        card-qty (fn [c] (second c))
-        card-name (fn [c] [:div {:text-align "left"
-                                 :on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                                 :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
-                           (render-message (first c))])]
+        is-divider? (fn [c] (= "divider" (second c)))
+        card-qty (fn [c] (if (is-divider? c) "" (second c)))
+        card-name (fn [c]
+                    (if (is-divider? c)
+                      [:div {:text-align "left"}
+                       [:strong (render-message (first c))]]
+                      [:div {:text-align "left"
+                             :on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                             :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
+                       (render-message (first c))]))]
     [:div
      [:table.decklists.table
       [:tbody
