@@ -35,7 +35,7 @@
                   {} (:cards format))))
 
 (go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
-          lang (get-in @app-state [:options :language] "en")
+          lang (get-in @app-state [:options :card-language] "en")
           local-cards (ls/load "cards" {})
           need-update? (or (not local-cards)
                            (not= server-version (:version local-cards))
@@ -185,7 +185,7 @@
 (defn image-url
   ([card] (image-url card false))
   ([card allow-all-users]
-   (let [lang (get-in @app-state [:options :language] "en")
+   (let [lang (get-in @app-state [:options :card-language] "en")
          res (get-in @app-state [:options :card-resolution] "default")
          art (if (show-alt-art? allow-all-users)
                (get-in @app-state [:options :alt-arts (keyword (:code card))] "stock")
@@ -196,7 +196,7 @@
 (defn- base-image-url
   "The default card image. Displays an alternate image if the card is specified as one."
   [card]
-   (let [lang (get-in @app-state [:options :language] "en")
+   (let [lang (get-in @app-state [:options :card-language] "en")
          res (get-in @app-state [:options :card-resolution] "default")
          art (if (keyword? (:art card)) (:art card) :stock)
          art-index (get card :art-index 0)]
@@ -210,7 +210,7 @@
 
 (defn- card-arts-for-key
   [card key]
-  (let [lang (get-in @app-state [:options :language] "en")
+  (let [lang (get-in @app-state [:options :card-language] "en")
         res (get-in @app-state [:options :card-resolution] "default")]
     (if-let [arts (or (get-in card [:images (keyword lang) (keyword res) key])
                       (get-in card [:images (keyword lang) :default key])
@@ -221,7 +221,7 @@
 
 (defn- expand-alts
   [only-version acc card]
-   (let [lang (get-in @app-state [:options :language] "en")
+   (let [lang (get-in @app-state [:options :card-language] "en")
          res (get-in @app-state [:options :card-resolution] "default")
          alt-versions (remove #{:prev} (map keyword (map :version (:alt-info @app-state))))
          images (select-keys (merge (get-in (:images card) [(keyword lang) :default])
@@ -405,7 +405,7 @@
       (concat runner-factions corp-factions))))
 
 (defn- filter-alt-art-cards [cards]
-  (let [lang (get-in @app-state [:options :language] "en")
+  (let [lang (get-in @app-state [:options :card-language] "en")
         res (get-in @app-state [:options :card-resolution] "default")]
     (filter #(or (not-empty (dissoc (get-in (:images %) [(keyword lang) (keyword res)]) :stock))
                  (contains? % :future-version)
@@ -416,7 +416,7 @@
   (when-let [alt-key (alt-version-from-string setname)]
     (if (= alt-key :prev)
       (filter #(or (contains? % :future-version) (contains? % :previous-versions)) cards)
-      (let [lang (get-in @app-state [:options :language] "en")
+      (let [lang (get-in @app-state [:options :card-language] "en")
             res (get-in @app-state [:options :card-resolution] "default")]
         (filter #(get-in (:images %) [(keyword lang) (keyword res) alt-key]) cards)))))
 

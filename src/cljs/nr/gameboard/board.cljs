@@ -51,7 +51,7 @@
     @runner-prompt-state))
 
 (defn- image-url [{:keys [side code] :as card}]
-  (let [lang (get-in @app-state [:options :language] "en")
+  (let [lang (get-in @app-state [:options :card-language] "en")
         res (get-in @app-state [:options :card-resolution] "default")
         special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
         special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
