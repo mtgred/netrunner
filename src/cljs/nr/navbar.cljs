@@ -4,7 +4,7 @@
    [goog.history.EventType :as EventType]
    [nr.appstate :refer [app-state]]
    [nr.routes :as routes]
-   [nr.translations :refer [tr]])
+   [nr.translations :refer [tr tr-span]])
   (:import
    goog.history.Html5History))
 
@@ -84,4 +84,4 @@
                ; :on-click #(.setToken history route)
                :data-target "#main"
                :data-slide-to idx}
-          [:a {:href route} (tr title)]])))])
+          [:a {:href route} [tr-span title]]])))])

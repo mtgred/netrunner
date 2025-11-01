@@ -2,7 +2,7 @@
   (:require
     [nr.auth :refer [authenticated]]
     [nr.ws :as ws]
-    [nr.translations :refer [tr]]
+    [nr.translations :refer [tr-span]]
     [reagent.core :as r]))
 
 (defn on-load [onload-ev]
@@ -39,14 +39,14 @@
         [:button {:type "button"
                   :on-click #(do (.preventDefault %)
                                  (create-game state))}
-         (tr [:lobby_start-replay "Start replay"])]
+         [tr-span [:lobby_start-replay "Start replay"]]]
         [:button {:type "button"
                   :on-click #(do (.preventDefault %)
                                  (swap! lobby-state dissoc :replay))}
-         (tr [:lobby_cancel "Cancel"])]]
+         [tr-span [:lobby_cancel "Cancel"]]]]
        (when (:flash-message @state)
          [:p.flash-message
-          (tr [:lobby_replay-invalid-file "Select a valid replay file."])])
+          [tr-span [:lobby_replay-invalid-file "Select a valid replay file."]]])
        [:div [:input {:field :file
                       :type :file
                       :on-change #(swap! state assoc :replay-file (aget (.. % -target -files) 0))}]]])))

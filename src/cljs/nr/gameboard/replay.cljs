@@ -8,8 +8,8 @@
    [nr.appstate :refer [app-state]]
    [nr.gameboard.state :refer [game-state last-state replay-side]]
    [nr.local-storage :as ls]
-   [nr.translations :refer [tr]]
-   [nr.utils :refer [non-game-toast render-message]]
+   [nr.translations :refer [tr tr-span tr-element]]
+   [nr.utils :refer [tr-non-game-toast render-message]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 
@@ -348,7 +348,7 @@
            [:input {:style (if @show-replay-link {:display "inline"} {:display "none"})
                     :type "text" :read-only true
                     :value (generate-replay-link (.-origin (.-location js/window)))}]
-           [:button {:on-click #(swap! show-replay-link not)} "Share timestamp"]])])}))
+           [:button {:on-click #(swap! show-replay-link not)} [tr-span [:replay_share-timestamp "Share timestamp"]]]])])}))
 
 (defn get-remote-annotations [gameid]
   (go (let [{:keys [status json]} (<! (GET (str "/profile/history/annotations/" gameid)))]
@@ -367,8 +367,8 @@
                                    (get-in @game-state [:runner :user :username])))))))
           ; Error handling does not work, as GET tries to parse something despite the connection
           ; timing out -- lostgeek (2021/02/14)
-          (non-game-toast (tr [:log_remote-annotations-fail "Could not get remote annotations."])
-                          "error" {:time-out 3 :close-button true})))))
+          (tr-non-game-toast  [:log_remote-annotations-fail "Could not get remote annotations."]
+                              "error" {:time-out 3 :close-button true})))))
 
 (defn load-remote-annotations [pos]
   (let [anno (nth (:remote-annotations @replay-status) pos)]
@@ -451,6 +451,7 @@
 (defn notes-pane []
   [:div.notes
    [:div.turn [:textarea#notes-turn {:placeholder (tr [:annotations_turn-placeholder "Notes for this turn"])
+                                     :data-i18n-key :annotations_turn-placeholder
                                      :on-change #(update-notes)}]]
    (letfn
      [(create-buttons [types]
@@ -467,17 +468,18 @@
       [:div.notes-separator]
       (create-buttons [:a :b :c :d])])
    [:div.click [:textarea#notes-click {:placeholder (tr [:annotations_click-placeholder "Notes for this click"])
+                                       :data-i18n-key :annotations_click-placeholder
                                        :on-change #(update-notes)}]]])
 (defn notes-shared-pane []
   (let [annotation-options (r/atom {:file ""})]
     [:div.notes-shared
      (when (not= "local-replay" (:gameid @game-state))
        [:div.remote-annotations
-        [:h4 (tr [:annotations_available-annotations "Available annotations"]) " "
+        [:h4 [tr-span [:annotations_available-annotations "Available annotations"]] " "
          [:button.small {:type "button"
                          :on-click #(get-remote-annotations (:gameid @game-state))} "⟳"]]
         (if (empty? (:remote-annotations @replay-status))
-          (tr [:annotations_no-published-annotations "No published annotations."])
+          [tr-span [:annotations_no-published-annotations "No published annotations."]]
           [:ul
            (doall
              (for [[n anno] (map-indexed vector (:remote-annotations @replay-status))]
@@ -490,18 +492,19 @@
                                   :on-click #(delete-remote-annotations n)} "X"])]))])
         [:div.button-row
          [:button {:type "button"
-                   :on-click #(publish-annotations)} (tr [:annotations_publish "Publish"])]]
+                   :on-click #(publish-annotations)}
+          [tr-span [:annotations_publish "Publish"]]]]
         [:hr]])
-     [:h4 (tr [:annotations_import-local "Import local annotation file"])]
+     [tr-element :h4 [:annotations_import-local "Import local annotation file"]]
      [:input {:field :file
               :type :file
               :on-change #(swap! replay-status assoc :annotations-file (aget (.. % -target -files) 0))}]
      [:div.button-row
       [:button {:type "button" :on-click #(load-annotations-file)}
-       (tr [:annotations_load-local "Load"])]
+       [tr-span [:annotations_load-local "Load"]]]
       [:button {:type "button" :on-click #(save-annotations-file)}
-       (tr [:annotations_save-local "Save"])]
+       [tr-span [:annotations_save-local "Save"]]]
       [:button {:type "button" :on-click #(swap! replay-status assoc :annotations
                                                  {:turns {:corp {} :runner {}}
                                                   :clicks {}})}
-       (tr [:annotations_clear "Clear"])]]]))
+       [tr-span [:annotations_clear "Clear"]]]]]))

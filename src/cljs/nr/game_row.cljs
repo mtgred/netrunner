@@ -9,7 +9,7 @@
    [nr.auth :refer [authenticated] :as auth]
    [nr.player-view :refer [player-view]]
    [nr.sounds :refer [resume-sound]]
-   [nr.translations :refer [tr tr-format]]
+   [nr.translations :refer [tr tr-format tr-span]]
    [nr.utils :refer [slug->format]]
    [nr.ws :as ws]
    [reagent.core :as r]))
@@ -55,22 +55,22 @@
   (if-not spectatorhands
     [:button {:on-click #(do (join-game lobby-state game "watch")
                              (resume-sound))}
-     (tr [:lobby_watch "Watch"])]
+     [tr-span [:lobby_watch "Watch"]]]
     (letfn [(join-fn [side]
               #(do (join-game lobby-state game "watch" side)
                    (resume-sound)))]
       [:div.split-button
        [:button {:on-click (join-fn nil)}
-        (tr [:lobby_watch "Watch"])]
+        [tr-span [:lobby_watch "Watch"]]]
        [:button.dropdown-toggle {:data-toggle "dropdown"}
         [:b.caret]]
        [:ul.dropdown-menu.blue-shade
         [:a.block-link {:on-click (join-fn "Corp")}
-       (tr [:lobby_corp-perspective "Corp Perspective"])]
+       [tr-span [:lobby_corp-perspective "Corp Perspective"]]]
       [:a.block-link {:on-click (join-fn "Runner")}
-       (tr [:lobby_runner-perspective "Runner Perspective"])]
+       [tr-span [:lobby_runner-perspective "Runner Perspective"]]]
       [:a.block-link {:on-click (join-fn nil)}
-       (tr [:lobby_both-perspective "Both"])]]])))
+       [tr-span [:lobby_both-perspective "Both"]]]]])))
 
 (defn- watch-protected-game-button
   [spectatorhands lobby-state game]
@@ -81,7 +81,7 @@
                                (swap! lobby-state assoc :password-game {:game game :action "watch"})))
                            (do (join-game lobby-state game "watch")
                                (resume-sound)))}
-     (tr [:lobby_watch "Watch"])]
+     [tr-span [:lobby_watch "Watch"]]]
     (letfn [(join-fn
               [side]
               #(if (:password game)
@@ -92,16 +92,16 @@
                      (resume-sound))))]
       [:div.split-button
        [:button {:on-click (join-fn nil)}
-        (tr [:lobby_watch "Watch"])]
+        [tr-span [:lobby_watch "Watch"]]]
        [:button.dropdown-toggle {:data-toggle "dropdown"}
         [:b.caret]]
        [:ul.dropdown-menu.blue-shade
         [:a.block-link {:on-click (join-fn "Corp")}
-       (tr [:lobby_corp-perspective "Corp Perspective"])]
+       [tr-span [:lobby_corp-perspective "Corp Perspective"]]]
       [:a.block-link {:on-click (join-fn "Runner")}
-       (tr [:lobby_runner-perspective "Runner Perspective"])]
+       [tr-span [:lobby_runner-perspective "Runner Perspective"]]]
       [:a.block-link {:on-click (join-fn nil)}
-       (tr [:lobby_both-perspective "Both"])]]])))
+       [tr-span [:lobby_both-perspective "Both"]]]]])))
 
 (defn watch-button [lobby-state user game current-game editing]
   (when (can-watch? user game current-game editing)
@@ -125,23 +125,23 @@
       [:div.split-button
        [:button {:on-click #(do (join-game lobby-state game "join")
                                 (resume-sound))}
-        (tr [:lobby_join "Join"])]
+        [tr-span [:lobby_join "Join"]]]
        [:button.dropdown-toggle {:data-toggle "dropdown"}
         [:b.caret]]
        [:ul.dropdown-menu.blue-shade
         [:a.block-link {:on-click #(do (join-game lobby-state game "join" "Corp")
                                        (resume-sound))}
-         (tr [:lobby_as-corp "As Corp"])]
+         [tr-span [:lobby_as-corp "As Corp"]]]
         [:a.block-link {:on-click #(do (join-game lobby-state game "join" "Runner")
                                        (resume-sound))}
-         (tr [:lobby_as-runner "As Runner"])]]]
+         [tr-span [:lobby_as-runner "As Runner"]]]]]
       [:button {:on-click #(if (:password game)
                              (authenticated
                                (fn [_]
                                  (swap! lobby-state assoc :password-game {:game game :action "join"})))
                              (do (join-game lobby-state game "join")
                                  (resume-sound)))}
-       (tr [:lobby_join "Join"])])))
+       [tr-span [:lobby_join "Join"]]])))
 
 (defn can-rejoin? [user {:keys [started players original-players]} current-game editing]
   (and (= 1 (count players))
@@ -158,68 +158,69 @@
                                (swap! lobby-state assoc :password-game {:game game :action "rejoin"})))
                            (do (join-game lobby-state game "rejoin")
                                (resume-sound)))}
-     (tr [:lobby_rejoin "Rejoin"])]))
+     [tr-span [:lobby_rejoin "Rejoin"]]]))
 
 (defn mod-menu-popup [s user {gameid :gameid room :room}]
   (when (and (:show-mod-menu @s)
              (or (superuser? @user) (to? @user)))
     [:div.ctrl-menu
+
      (if (superuser? @user)
        [:div.panel.blue-shade.mod-menu
         [:div {:on-click #(do (reset-game-name gameid)
                               (swap! s assoc :show-mod-menu false))}
-         (tr [:lobby_reset "Reset Game Name"])]
+         [tr-span [:lobby_reset "Reset Game Name"]]]
         [:div {:on-click #(do (delete-game gameid)
                               (swap! s assoc :show-mod-menu false))}
          (tr [:lobby_delete "Delete Game"])]
         [:div {:on-click #(swap! s assoc :show-mod-menu false)}
-         (tr [:lobby_cancel "Cancel"])]
+         [tr-span [:lobby_cancel "Cancel"]]]
         (if (= room "competitive")
           [:div {:on-click #(do (shift-game gameid "casual")
                                 (swap! s assoc :show-mod-menu false))}
-           (tr [:lobby_shift-to-casual "Shift game to Casual lobby"])]
+           [tr-span [:lobby_shift-to-casual "Shift game to Casual lobby"]]]
           [:div {:on-click #(do (shift-game gameid "competitive")
                                 (swap! s assoc :show-mod-menu false))}
-           (tr [:lobby_shift-to-casual "shift game to Tournament lobby"])])]
+           [tr-span [:lobby_shift-to-casual "shift game to Tournament lobby"]]])]
        [:div.panel.blue-shade.mod-menu
         (if (= room "competitive")
           [:div {:on-click #(do (shift-game gameid "casual")
                                 (swap! s assoc :show-mod-menu false))}
-           (tr [:lobby_shift-to-casual "Shift game to Casual lobby"])]
+           [tr-span [:lobby_shift-to-casual "Shift game to Casual lobby"]]]
           [:div {:on-click #(do (shift-game gameid "competitive")
                                 (swap! s assoc :show-mod-menu false))}
-           (tr [:lobby_shift-to-casual "shift game to Tournament lobby"])])])]))
+           [tr-span [:lobby_shift-to-casual "shift game to Tournament lobby"]]])])]))
 
 (defn game-title [s user game]
   [:h4 {:on-click #(swap! s update :show-mod-menu not)
         :class (when (or (superuser? @user) (to? @user)) "clickable")}
    (when (:save-replay game) "🟢")
    (when (:password game)
-     [:<> "[" (tr [:lobby_private "PRIVATE"]) "] "])
+     [:<> "[" [tr-span [:lobby_private "PRIVATE"]] "] "])
    (:title game)
    (let [c (count (:spectators game))]
      (when (pos? c)
-       [:<> " (" (tr [:lobby_spectator-count] {:cnt c}) ")"]))])
+       [:<> " (" [tr-span [:lobby_spectator-count] {:cnt c}] ")"]))])
 
 (defn- precon-span [precon]
   (when precon
-    [:span.format-precon ": " (tr (:tr-tag (matchup-by-key precon)))]))
+    [:span.format-precon ": " [tr-span (:tr-tag (matchup-by-key precon))]]))
 
 (defn- precon-under-span [precon]
   (when precon
-    [:span.format-precon-deck-names (tr (:tr-underline (matchup-by-key precon)))]))
+    [:span.format-precon-deck-names [tr-span (:tr-underline (matchup-by-key precon))]]))
 
 (defn- open-decklists-span [precon open-decklists]
   (when (and open-decklists (not precon))
-    [:span.open-decklists " " (tr [:lobby_open-decklists-b "(open decklists)"])]))
+    [:span.open-decklists " " [tr-span [:lobby_open-decklists-b "(open decklists)"]]]))
 
 (defn game-format [{fmt :format singleton? :singleton turmoil? :turmoil precon :precon open-decklists :open-decklists}]
   [:div {:class "game-format"}
-   [:span.format-label (tr [:lobby_format "Format"]) ":  "]
+   [:span.format-label [tr-span [:lobby_format "Format"]] ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
    [precon-span precon]
-   (when singleton? [:span.format-singleton " " (tr [:lobby_singleton-b "(singleton)"])])
-   (when turmoil? [:span.turmoil " " (tr [:lobby_span-turmoil "(turmoil)"])])
+   (when singleton? [:span.format-singleton " " [tr-span [:lobby_singleton-b "(singleton)"]]])
+   (when turmoil? [:span.turmoil " " [tr-span [:lobby_span-turmoil "(turmoil)"]]])
    [open-decklists-span precon open-decklists]
    [precon-under-span precon]])
 

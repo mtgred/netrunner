@@ -4,7 +4,7 @@
    [jinteki.preconstructed :refer [all-matchups matchup-by-key]]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [authenticated] :as auth]
-   [nr.translations :refer [tr tr-format tr-side]]
+   [nr.translations :refer [tr tr-format tr-side tr-element tr-span]]
    [nr.utils :refer [cond-button slug->format]]
    [nr.ws :as ws]
    [reagent.core :as r]))
@@ -42,7 +42,7 @@
 
 (defn button-bar [state lobby-state options]
   [:div.button-bar
-   [cond-button (tr [:lobby_create "Create"])
+   [cond-button [tr-span [:lobby_create "Create"]]
     (not (:block-game-creation @app-state))
     #(create-game state lobby-state options)
     (when (:block-game-creation @app-state)
@@ -50,20 +50,21 @@
    [:button {:type "button"
              :on-click #(do (.preventDefault %)
                             (swap! lobby-state assoc :editing false))}
-    (tr [:lobby_cancel "Cancel"])]])
+    [tr-span [:lobby_cancel "Cancel"]]]])
 
 (defn title-section [title-state]
   [:section
-   [:h3 (tr [:lobby_title "Title"])]
+   [tr-element :h3 [:lobby_title "Title"]]
    [:input.game-title
     {:on-change #(reset! title-state (.. % -target -value))
      :value @title-state
+     :data-i18n-key :lobby_title
      :placeholder (tr [:lobby_title "Title"])
      :maxLength "100"}]])
 
 (defn side-section [side-state]
   [:section
-   [:h3 (tr [:lobby_side "Side"])]
+   [tr-element :h3 [:lobby_side "Side"]]
    (doall
      (for [option ["Any Side" "Corp" "Runner"]]
        ^{:key option}
@@ -80,19 +81,19 @@
   [:label
    [:input {:type "checkbox" :checked (:singleton @options)
             :on-change #(swap! options assoc :singleton (.. % -target -checked))}]
-   (tr [:lobby_singleton "Singleton"])])
+   [tr-span [:lobby_singleton "Singleton"]]])
 
 (defn turmoil-mode [options]
   [:span [:label
           [:input {:type "checkbox" :checked (:turmoil @options)
                    :on-change #(swap! options assoc :turmoil (.. % -target -checked))}]
-          (tr [:lobby_turmoil "Turmoil"])]])
+          [tr-span [:lobby_turmoil "Turmoil"]]]])
 
 (defn open-decklists [options]
   [:label
    [:input {:type "checkbox" :checked (:open-decklists @options)
             :on-change #(swap! options assoc :open-decklists (.. % -target -checked))}]
-   (tr [:lobby_open-decklists "Open Decklists"])])
+   [tr-span [:lobby_open-decklists "Open Decklists"]]])
 
 (defn gateway-constructed-choice [fmt-state gateway-type]
   [:div
@@ -106,7 +107,8 @@
                         :value option
                         :on-change #(reset! gateway-type (.. % -target -value))
                         :checked (= @gateway-type option)}]
-              (str (tr [:lobby_gateway-format option] {:format option}) "    ")]]))])
+               [tr-span [:lobby_gateway-format option] {:format option}]
+               "    "]]))])
 
 (defn precon-choice [fmt-state precon]
   [:div
@@ -124,7 +126,7 @@
 
 (defn format-section [fmt-state options gateway-type precon]
   [:section
-   [:h3 (tr [:lobby_default-game-format "Default game format"])]
+   [tr-element :h3 [:lobby_default-game-format "Default game format"]]
    [:select.format
     {:value (or @fmt-state "standard")
      :on-change #(reset! fmt-state (.. % -target -value))}
@@ -138,19 +140,19 @@
    [precon-choice fmt-state precon]
    [:div.infobox.blue-shade
     {:style {:display (if (:turmoil @options) "block" "none")}}
-    [:p (tr [:lobby_turmoil-details "The fickle winds of fate shall decide your future."])]
-    [:p (tr [:lobby_turmoil-theme "\"FINUKA DISPOSES\""])]]
+    [tr-element :p [:lobby_turmoil-details "The fickle winds of fate shall decide your future."]]
+    [tr-element :p [:lobby_turmoil-theme "\"FINUKA DISPOSES\""]]]
    [:div.infobox.blue-shade
     {:style {:display (if (:singleton @options) "block" "none")}}
-    [:p (tr [:lobby_singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."])]
-    [:p (tr [:lobby_singleton-example "1) Nova Initiumia: Catalyst & Impetus 2) Ampere: Cybernetics For Anyone"])]]])
+    [tr-element :p [:lobby_singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."]]
+    [tr-element :p [:lobby_singleton-example "1) Nova Initiumia: Catalyst & Impetus 2) Ampere: Cybernetics For Anyone"]]]])
 
 (defn allow-spectators [options]
   [:p
     [:label
      [:input {:type "checkbox" :checked (:allow-spectator @options)
               :on-change #(swap! options assoc :allow-spectator (.. % -target -checked))}]
-     (tr [:lobby_spectators "Allow spectators"])]])
+     [tr-span [:lobby_spectators "Allow spectators"]]]])
 
 (defn toggle-hidden-info [options]
   [:<>
@@ -159,11 +161,11 @@
      [:input {:type "checkbox" :checked (:spectatorhands @options)
               :on-change #(swap! options assoc :spectatorhands (.. % -target -checked))
               :disabled (not (:allow-spectator @options))}]
-     (tr [:lobby_hidden "Make players' hidden information visible to spectators"])]]
+     [tr-span [:lobby_hidden "Make players' hidden information visible to spectators"]]]]
    [:div.infobox.blue-shade
     {:style {:display (if (:spectatorhands @options) "block" "none")}}
-    [:p (tr [:lobby_hidden-details "This will reveal both players' hidden information to ALL spectators of your game, including hand and face-down cards."])]
-    [:p (tr [:lobby_hidden-password "We recommend using a password to prevent strangers from spoiling the game."])]]])
+    [tr-element :p [:lobby_hidden-details "This will reveal both players' hidden information to ALL spectators of your game, including hand and face-down cards."]]
+    [tr-element :p [:lobby_hidden-password "We recommend using a password to prevent strangers from spoiling the game."]]]])
 
 (defn password-input [options]
   [:<>
@@ -174,11 +176,12 @@
                             (swap! options assoc :protected checked)
                             (when (not checked)
                               (swap! options assoc :password "")))}]
-     (tr [:lobby_password-protected "Password protected"])]]
+     [tr-span [:lobby_password-protected "Password protected"]]]]
    (when (:protected @options)
      [:p
       [:input.game-title {:on-change #(swap! options assoc :password (.. % -target -value))
                           :value (:password @options)
+                          :data-i18n-key :lobby_password
                           :placeholder (tr [:lobby_password "Password"])
                           :maxLength "30"}]])])
 
@@ -192,7 +195,7 @@
                 :on-change #(let [checked (.. % -target -checked)]
                               (swap! options assoc :timed checked)
                               (swap! options assoc :timer (if checked 35 nil)))}]
-       (tr [:lobby_timed-game "Start with timer"])]])
+       [tr-span [:lobby_timed-game "Start with timer"]]]])
    (when (:timed @options)
      [:p
       [:input.game-title {:on-change #(let [value (str->int (.. % -target -value))]
@@ -200,10 +203,11 @@
                                           (swap! options assoc :timer value)))
                           :type "number"
                           :value (:timer @options)
+                          :data-i18n-key :lobby_timer-length
                           :placeholder (tr [:lobby_timer-length "Timer length (minutes)"])}]])
    [:div.infobox.blue-shade
     {:style {:display (if (:timed @options) "block" "none")}}
-    [:p (tr [:lobby_timed-game-details "Timer is only for convenience: the game will not stop when timer runs out."])]]])
+    [tr-element :p [:lobby_timed-game-details "Timer is only for convenience: the game will not stop when timer runs out."]]]])
 
 (defn save-replay [options]
   [:<>
@@ -212,12 +216,12 @@
      [:input {:type "checkbox"
               :checked (:save-replay @options)
               :on-change #(swap! options assoc :save-replay (.. % -target -checked))}]
-     "🟢 " (tr [:lobby_save-replay "Save replay"])]]
+     "🟢 " [tr-span [:lobby_save-replay "Save replay"]]]]
    [:div.infobox.blue-shade
     {:style {:display (if (:save-replay @options) "block" "none")}}
-    [:p (tr [:lobby_save-replay-details "This will save a replay file of this match with open information (e.g. open cards in hand). The file is available only after the game is finished."])]
-    [:p (tr [:lobby_save-replay-unshared "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."])]
-    [:p (tr [:lobby_save-replay-beta "BETA Functionality: Be aware that we might need to reset the saved replays, so make sure to download games you want to keep. Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."])]]])
+    [tr-element :p [:lobby_save-replay-details "This will save a replay file of this match with open information (e.g. open cards in hand). The file is available only after the game is finished."]]
+    [tr-element :p [:lobby_save-replay-unshared "Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards."]]
+    [tr-element :p [:lobby_save-replay-beta "BETA Functionality: Be aware that we might need to reset the saved replays, so make sure to download games you want to keep. Also, please keep in mind that we might need to do future changes to the site that might make replays incompatible."]]]])
 
 (defn api-access [options user]
   [:<>
@@ -228,16 +232,16 @@
                 :type "checkbox"
                 :checked (:api-access @options)
                 :on-change #(swap! options assoc :api-access (.. % -target -checked))}]
-       (tr [:lobby_api-access "Allow API access to game information"])
+       [tr-span [:lobby_api-access "Allow API access to game information"]]
        (when (not has-keys)
-         [:<> " " (tr [:lobby_api-requires-key "(Requires an API Key in Settings)"])])]])
+         [:<> " " [tr-span [:lobby_api-requires-key "(Requires an API Key in Settings)"]]])]])
    [:div.infobox.blue-shade
     {:style {:display (if (:api-access @options) "block" "none")}}
-    [:p (tr [:lobby_api-access-details "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings."])]]])
+    [tr-element :p [:lobby_api-access-details "This allows access to information about your game to 3rd party extensions. Requires an API Key to be created in Settings."]]]])
 
 (defn options-section [options user]
   [:section
-   [:h3 (tr [:lobby_options "Options"])]
+   [tr-element :h3 [:lobby_options "Options"]]
    [allow-spectators options]
    [toggle-hidden-info options]
    [open-decklists options]

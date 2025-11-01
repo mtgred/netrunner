@@ -7,7 +7,7 @@
    [nr.appstate :refer [app-state]]
    [nr.avatar :refer [avatar]]
    [nr.local-storage :as ls]
-   [nr.translations :refer [tr]]
+   [nr.translations :refer [tr tr-span]]
    [reagent.core :as r]))
 
 (defn authenticated [f]
@@ -49,13 +49,13 @@
      [:b.caret]]
     [:div.dropdown-menu.blue-shade.float-right
      (when (:isadmin user)
-       [:a.block-link {:href "/admin"} "[" (tr [:menu_admin "Admin"]) "]"])
+       [:a.block-link {:href "/admin"} "[" [tr-span [:menu_admin "Admin"]] "]"])
      (when (:ismoderator user)
-       [:a.block-link "[" (tr [:menu_moderator "Moderator"]) "]"])
+       [:a.block-link "[" [tr-span [:menu_moderator "Moderator"]] "]"])
      (when (:special user)
-       [:a.block-link "[" (tr [:menu_donor "Donor"]) "]"])
-     [:a.block-link {:href "/account"} (tr [:menu_settings "Settings"])]
-     [:a.block-link {:on-click #(handle-logout %)} (tr [:menu_logout "Jack out"])]]]])
+       [:a.block-link "[" [tr-span [:menu_donor "Donor"]] "]"])
+     [:a.block-link {:href "/account"} [tr-span [:menu_settings "Settings"]]]
+     [:a.block-link {:on-click #(handle-logout %)} [tr-span [:menu_logout "Jack out"]]]]]])
 
 (defn unlogged-menu []
   [:ul

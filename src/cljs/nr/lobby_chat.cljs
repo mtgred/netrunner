@@ -1,7 +1,7 @@
 (ns nr.lobby-chat
   (:require
    [nr.avatar :refer [avatar]]
-   [nr.translations :refer [tr]]
+   [nr.translations :refer [tr tr-element]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [reagent.dom :as rdom]))
@@ -41,7 +41,7 @@
        :reagent-render
        (fn [current-game messages]
          [:div.chat-box
-          [:h3 (tr [:lobby_chat "Chat"])]
+          [tr-element :h3 [:lobby_chat "Chat"]]
           (into [:div.message-list {:ref #(swap! state assoc :message-list %)}]
                 (map
                   (fn [{:keys [user text timestamp]}]
@@ -57,7 +57,8 @@
            [:form.msg-box {:on-submit #(do (.preventDefault %)
                                            (send-message state current-game))}
             [:input {:placeholder (tr [:chat_placeholder "Say something..."])
+                     :data-i18n-key :chat_placeholder
                      :type "text"
                      :value @current-input
                      :on-change #(swap! state assoc :msg (-> % .-target .-value))}]
-            [:button (tr [:chat_send "Send"])]]]])})))
+            [tr-element :button  [:chat_send "Send"]]]]])})))

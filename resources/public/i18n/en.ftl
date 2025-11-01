@@ -1,3 +1,59 @@
+about_about = About
+
+about_active-contributors = Current active contributors.
+
+about_alt-art-management = Management/handling/processing of community alt arts for jinteki.net. If you want your art on jinteki.net, contact one of us.
+
+about_bug-reports = Bug reports and feature suggestions can be submitted [link].
+
+about_content-creators = Content Creators
+
+about_development = Development
+
+about_disclaimer = Disclaimer
+
+about_donations = Donations
+
+about_donations-long = Donations are appreciated and help finance fast servers. You can support the project financially with PayPal or Bitcoin. Alternate art cards will be enabled on your account as a token of gratitude. Please specify your username with your donation.
+
+about_front-end-client = Front-end client:
+
+about_founded-by = This website was founded by @mtgred, an avid Netrunner player from Belgium. The goal is to provide a great way to create and test Netrunner decks online.
+
+about_founder-attribution = Founder, original sole developer. Retired.
+
+about_game-engine = Game engine:
+
+about_high-res-images = High-resolution scans for FFG cards.
+
+about_maintainer-attribution = Project maintainer, lead developer.
+
+about_open-source = The code is open source and available on [link].
+
+about_past-contributors = Many past contributors
+
+about_server = Server:
+
+about_start-of-game-quotes = Corp and Runner quotes for start-of-game splash screen.
+
+about_software-development-team = Software Development Team
+
+about_thank-you = Many thanks to all the donors. Your contributions and kind words are greatly appreciated. You help finance fast servers.
+
+about_tech-stack = Tech Stack
+
+about_translated-images = Processing/handling of translated NSG card images, and card backs for community tournaments.
+
+about_netrunner-trademark = Netrunner is a trademark of Fantasy Flight Publishing, Inc. and/or Wizards of the Coast LLC.
+
+about_ui-translators = UI Translators
+
+about_unaffiliated = This is website is not affiliated with Fantasy Flight Games or Wizards of the Coast.
+
+about_url-github = Github
+
+about_url-here = Here
+
 annotations_available-annotations = Available annotations
 
 annotations_clear = Clear local annotations
@@ -531,12 +587,15 @@ game_gain-credit = Gain Credit
 
 game_game-start = Game start: {$timestamp}
 
-
 game_grip = Grip
+
+game_grip-count = Grip ({$cnt})
 
 game_heap = Heap ({$cnt})
 
 game_hq = HQ
+
+game_hq-count = HQ ({$cnt})
 
 game_inactivity = Game closed due to inactivity
 
@@ -614,6 +673,8 @@ game_rfg = Removed from the game
 
 game_rnd = R&D
 
+game_rnd-count = R&D ({$cnt})
+
 game_round-end = Round end: {$timestamp}
 
 game_round-extension = (Includes {$minutes}m time extension)
@@ -650,6 +711,8 @@ game_spec-view = Spectator View
 game_special-mu-count = {$unused} of {$available} {$mu-type} MU unused
 
 game_stack = Stack
+
+game_stack-count = Stack ({$cnt})
 
 game_start = Start Game
 
@@ -766,6 +829,74 @@ ingame-settings_sort-heap = Sort Heap
 
 ingame-settings_stack-cards = Stack cards
 
+landing_github = Github
+
+landing_jinteki-is-free = Jinteki.net is the product of voluntary contributions made by many individuals. If you wish to make Jinteki.net better, found a bug and need to report an issue, or just like reading code, simply visit our [link] page.
+
+landing_make-jinteki-better = Making Jinteki.net better:
+
+landing_moderators-arent-judges = Moderators are not here to settle rules disputes or otherwise serve as judges. If there is a rules disagreement, bringing it to a community space is the best plan for resolution.
+
+landing_moderators-will-respond = Moderators will respond to offenses by attempting to contact users for resolution where possible. Repeated/severe offenses will be reviewed by the moderation team and met with temporary or permanent bans. All bans are reviewed by the entire moderation team.
+
+landing_please-be-nice = Please be respectful. Any disrespectful conduct will not be tolerated regardless of the circumstance or rationale.
+
+landing_please-be-nice-in-global = The global chat tab should only be used for Netrunner-related discussion (including unofficial rules clarifications) and for trying to reach out to users who may have disconnected. Inappropriate use of global chat includes disputes with other players, airing grievances, and everything outlined as unacceptable behavior below.
+
+landing_please-dont-do-these = Examples of unacceptable behavior include, but are not limited to, the following:
+
+landing_please-no-harassment = Harassing your opponent based on their playstyle or deck.
+
+landing_please-no-misgendering = Deliberately using incorrect pronouns for a person, especially after being informed of the correct ones. If unsure, use gender-neutral language.
+
+landing_please-no-smut = The use of sexualized language or imagery.
+
+landing_please-no-trigger-mocking = Making light of/making mocking comments about trigger warnings or content warnings.
+
+landing_please-no-trolling = Trolling, insulting/derogatory comments, casual use of slurs, pejorative language, personal/political attacks, harassment, intimidation, threats, or anything outside the scope of playing Netrunner.
+
+landing_please-no-ugly-titles = Game titles which could reasonably be considered inappropriate or offensive
+
+landing_prison-decks-exist = There are many deck archetypes and playstyles in Netrunner. All are valid and should be respected. If you do not wish to play against a certain deck or playstyle please write it in the game title (“No Project Vacheron” or “Experienced/New players only”). If the game has already started, politely explain to your opponent and concede the game.
+
+landing_report-here = To report an incident or to contact the moderation team please email [email] If reporting an incident, please include screenshots if possible.
+
+landing_rules-are-incomplete = This website is for the facilitation of Netrunner games online. Please note that jinteki.net may not provide a complete implementation of the rules of the game.
+
+landing_use-header = The use of Jinteki.net:
+
+landing_visit-neh-for-rules = Visit [link] for links to rules and other resources
+
+landing_welcome = Welcome!
+
+lang_ca = Catalan
+
+lang_de = German
+
+lang_en = English
+
+lang_es = Spanish
+
+lang_fr = French
+
+lang_it = Italian
+
+lang_ja = Japanese
+
+lang_ko = Korean
+
+lang_la-pig = Pig-Latin
+
+lang_pl = Polish
+
+lang_pt = Portuguese
+
+lang_ru = Russian
+
+lang_zh-simp = Chinese (Simplified)
+
+lang_zh-trad = Chinese (Traditional)
+
 lobby_turmoil = Turmoil
 
 lobby_turmoil-details = The fickle winds of fate shall decide your future.
@@ -792,7 +923,11 @@ lobby_both-perspective = Both
 
 lobby_cancel = Cancel
 
+lobby_cannot-select-deck = Cannot select that deck
+
 lobby_chat = Chat
+
+lobby_casual = Casual
 
 lobby_closed-msg = Game lobby closed due to inactivity
 
@@ -856,7 +991,7 @@ lobby_no-games = No games
 lobby_no-valid-decks = You do not have any decks that are valid for this format
 
 lobby_no-valid-decks-format = {$format ->
-    *[unknown] This lobby is for the $format format
+    *[unknown] This lobby is for the {$format} format
 }
 
 lobby_no-valid-decks-help = {$format ->
@@ -940,11 +1075,18 @@ lobby_timed-game-details = Timer is only for convenience: the game will not stop
 
 lobby_timer-length = Timer length (minutes)
 
+lobby_timer-set-for = {$minutes ->
+    [one] Game timer set for {$cnt} minute
+    *[other] Game timer set for {$cnt} minutes
+}
+
 lobby_title = Title
 
 lobby_title-error = Please fill a game title.
 
 lobby_too-little-data = Too little data
+
+lobby_tournament = Tournament
 
 lobby_type = {$type ->
     [angel-arena] Angel Arena
@@ -1210,6 +1352,8 @@ pronouns = {$pronoun ->
     [zezir] Ze/zir
 }
 
+replay_share-timestamp = Share timestamp
+
 set_name = {$name ->
     [a23-seconds] 23 Seconds
     [a-study-in-static] A Study in Static
@@ -1346,6 +1490,10 @@ settings_alt-art = Alt arts
 settings_always = Always
 
 settings_api-keys = API Keys
+
+settings_api-keys-not-updated = Updated API keys
+
+settings_api-keys-updated = Fauled to update API keys
 
 settings_avatar = Avatar
 

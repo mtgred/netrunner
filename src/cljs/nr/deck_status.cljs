@@ -1,7 +1,7 @@
 (ns nr.deck-status
   (:require
     [jinteki.validator :refer [calculate-deck-status trusted-deck-status]]
-    [nr.translations :refer [tr tr-format]]
+    [nr.translations :refer [tr tr-format tr-span]]
     [nr.utils :refer [slug->format]]
     [clojure.string :as str]))
 
@@ -36,8 +36,8 @@
         message [:<> (tr-format (get slug->format (:format deck-status) "Standard"))
                      " "
                      (if (= "invalid" status)
-                       (tr [:deck-builder_illegal "illegal"])
-                       (tr [:deck-builder_legal "legal"]))]]
+                       [tr-span [:deck-builder_illegal "illegal"]]
+                       [tr-span [:deck-builder_legal "legal"]])]]
     [:<>
      [:span.deck-status.shift-tooltip {:class status} message
       (when tooltip?
@@ -46,7 +46,7 @@
        (when (and tooltip? (= "invalid" status))
          [:span.deck-status.shift-tooltip.invalid-explanation
           {:class status}
-          (tr [:deck-builder_why "Why?"])
+          [tr-span [:deck-builder_why "Why?"]]
           [:span.status-tooltip.blue-shade
            [:span.invalid reason]]]))]))
 
