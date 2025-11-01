@@ -1501,7 +1501,6 @@
                  :async true
                  :effect (req
                            (let [updated-card (update! state side (update target :counter {}))]
-                             (unregister-events state side updated-card)
                              (corp-install state side eid (get-card state target) nil
                                            {:msg-keys {:install-source card
                                                        :known true
