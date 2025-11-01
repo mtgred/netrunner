@@ -343,10 +343,14 @@
     "log-player-highlight-red-blue"))
 
 (defn cond-button
-  [text cond f]
-  (if cond
-    [:button {:on-click f :key text} text]
-    [:button.disabled {:key text} text]))
+  "Conditional button component. Renders enabled/disabled button based on condition.
+  Accepts optional attributes map to merge into button element."
+  ([text cond f]
+   (cond-button text cond f nil))
+  ([text cond f attrs]
+   (if cond
+     [:button (merge {:on-click f :key text} attrs) text]
+     [:button.disabled (merge {:key text} attrs) text])))
 
 (defn checkbox-button [on-text off-text on-cond f]
   (if on-cond

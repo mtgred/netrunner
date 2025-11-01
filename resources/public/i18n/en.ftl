@@ -937,6 +937,8 @@ lobby_corp-perspective = Corp Perspective
 
 lobby_create = Create
 
+lobby_creation-paused = Game creation is currently paused for maintenance. Please try again later.
+
 lobby_deck-selected = Deck selected
 
 lobby_default-game-format = Default game format

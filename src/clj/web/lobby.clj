@@ -339,6 +339,19 @@
 (defn send-message [lobby message]
   (update lobby :messages conj message))
 
+(defn try-create-lobby
+  [uid user ?data]
+  (let [lobby (-> (create-new-lobby {:uid uid :user user :options ?data})
+                  (send-message
+                   (core/make-system-message (str (:username user) " has created the game."))))
+        new-app-state (swap! app-state/app-state update :lobbies
+                             register-lobby lobby uid)
+        lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
+    (when lobby?
+      (assign-tournament-properties lobby?)
+      (send-lobby-state lobby?)
+      (broadcast-lobby-list))))
+
 (defmethod ws/-msg-handler :lobby/create
   lobby--create
   [{{user :user} :ring-req
@@ -347,17 +360,11 @@
     id :id
     timestamp :timestamp}]
   (lobby-thread
-    (let [lobby (-> (create-new-lobby {:uid uid :user user :options ?data})
-                    (send-message
-                      (core/make-system-message (str (:username user) " has created the game."))))
-          new-app-state (swap! app-state/app-state update :lobbies
-                               register-lobby lobby uid)
-          lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
-      (when lobby?
-        (assign-tournament-properties lobby?)
-        (send-lobby-state lobby?)
-        (broadcast-lobby-list))
-      (log-delay! timestamp id))))
+    (if (:block-game-creation @app-state/app-state)
+      (ws/chsk-send! uid [:lobby/toast {:message :lobby_creation-paused
+                                        :type "error"}])
+      (try-create-lobby uid user ?data))
+    (log-delay! timestamp id)))
 
 (defn clear-lobby-state [uid]
   (when uid
@@ -378,6 +385,17 @@
     id :id
     timestamp :timestamp}]
   (lobby-thread (send-lobby-list uid)
+                (ws/chsk-send! uid [:lobby/block-game-creation
+                                    (:block-game-creation @app-state/app-state)])
+                (log-delay! timestamp id)))
+
+(defmethod ws/-msg-handler :lobby/block-game-creation
+  lobby--block-game-creation
+  [{uid :uid
+    id :id
+    timestamp :timestamp}]
+  (lobby-thread (ws/chsk-send! uid [:lobby/block-game-creation
+                                    (:block-game-creation @app-state/app-state)])
                 (log-delay! timestamp id)))
 
 (defn player?

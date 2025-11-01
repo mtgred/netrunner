@@ -461,6 +461,8 @@ lobby_completion-rate = Amegay Ompletioncay Ateray
 
 lobby_create = Eatecray
 
+lobby_creation-paused = Amegay eationcray isyay urrentlycay ausedpay orfay aintenancemay. Easeplay itray againyay aterlay.
+
 lobby_deck-selected = Eckday electedsay
 
 lobby_delete = Eleteday Amegay

@@ -53,7 +53,9 @@
              :visible-formats (load-visible-formats)
              :channels {:general [] :america [] :europe [] :asia-pacific [] :united-kingdom [] :français []
                         :español [] :italia [] :polska [] :português [] :sverige [] :stimhack-league [] :русский []}
-             :games [] :current-game nil})))
+             :games []
+             :current-game nil
+             :block-game-creation false})))
 
 (go (let [lang (get-in @app-state [:options :language] "en")
           response (<! (GET (str "/data/language/" lang)))]
