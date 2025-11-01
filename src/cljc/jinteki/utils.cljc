@@ -68,8 +68,11 @@
 (defn superuser?
   [user]
   (or (:isadmin user)
-      (:ismoderator user)
-      (:tournament-organizer user)))
+      (:ismoderator user)))
+
+(defn to?
+  [user]
+  (:tournament-organizer user))
 
 (defn capitalize [string]
   (if (pos? (count string))
