@@ -7,6 +7,7 @@
    [jinteki.utils :refer [slugify]]
    [jinteki.validator :refer [calculate-deck-status]]
    [monger.collection :as mc]
+   [monger.operators :refer [$in $ne]]
    [monger.result :refer [acknowledged?]]
    [web.lobby :as lobby]
    [web.mongodb :refer [->object-id ->object-id]]
@@ -124,3 +125,47 @@
       (timbre/info e "failed to import decklist")
       (ws/broadcast-to! [uid] :decks/import-failure "Failed to import deck.")))
   (lobby/log-delay! timestamp id))
+
+(defn decks-bulk-delete-handler
+  "Handles bulk deletion of multiple decks with detailed per-deck status reporting."
+  [{db :system/db
+    {username :username} :user
+    {:keys [deck-ids]} :body}]
+  (try
+    (cond
+      (not (and username deck-ids (sequential? deck-ids)))
+      (response 401 {:message "Unauthorized or invalid request"})
+
+      (empty? deck-ids)
+      ;; Handle empty deck-ids array
+      (response 200 [])
+
+      :else
+      (let [;; Convert deck IDs to object IDs for MongoDB queries
+            deck-object-ids (map ->object-id deck-ids)
+
+            ;; Perform atomic deletion: only delete decks that exist and are owned by user
+            _ (mc/remove db "decks"
+                         {:_id {$in deck-object-ids}
+                          :username username})
+
+            ;; Query for remaining decks after deletion to determine which failed
+            remaining-decks (mc/find-maps db "decks"
+                                          {:_id {$in deck-object-ids} :username username}
+                                          [:_id])
+            ;; Create map from string ID to deck for O(1) lookup
+            remaining-decks-by-id (into {} (map (fn [deck] [(str (:_id deck)) deck]) remaining-decks))
+
+            ;; Generate per-deck status results
+            results (map (fn [deck-id]
+                           (if (get remaining-decks-by-id deck-id)
+                             ;; Deck still exists, so deletion failed
+                             {:id deck-id :status "not deleted" :error "Deck could not be deleted"}
+                             ;; Deck no longer exists, so deletion succeeded (or deck never existed, which is also success)
+                             {:id deck-id :status "deleted"}))
+                         deck-ids)]
+
+        (response 200 results)))
+    (catch Exception e
+      (timbre/info e "Failed to bulk delete decks")
+      (response 500 {:message "Internal server error"}))))

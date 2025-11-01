@@ -73,6 +73,39 @@
                 button
                     width: 135px
 
+            .cleanup-link-container
+                text-align: right
+                float: right
+
+                .cleanup-link
+                    cursor: pointer
+                    color: gold-base // Override existing link styles
+                    font-weight: normal // Override existing link styles
+
+                    &:hover
+                        color: gold-light // Override existing link styles
+
+            .cleanup-button-bar
+                margin-bottom: 10px
+
+                button
+                    margin-right: 5px
+                    margin-bottom: 5px
+
+                    &.disabled
+                        opacity: 0.5 // Semi-transparent for disabled state
+                        cursor: not-allowed
+
+            .deckline
+                &.selected
+                    background-color: rgba(255, 215, 0, 0.1) // Subtle gold highlight for selected decks
+
+                .cleanup-checkbox
+                    margin-right: 8px // Space between checkbox and deck image
+                    margin-left: 2px // Small offset from left edge
+                    cursor: pointer
+                    vertical-align: middle
+
             .deckfilter
                 margin-bottom: 10px
 
@@ -250,7 +283,7 @@
         outline: none
         padding: 6px 12px
         color: white-solid
-        transition(all 0.2s ease-in-out) 
+        transition(all 0.2s ease-in-out)
         box-shadow(0 6px 12px alpha(black-solid, o-20))
 
         > div

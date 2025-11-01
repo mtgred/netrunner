@@ -267,6 +267,119 @@
                 (swap! s assoc :deck nil)
                 (end-delete s))))))))
 
+(defn- execute-bulk-deck-deletion
+  "Asynchronously deletes multiple decks in a single request and returns a channel for results.
+   Returns: {:successful [id1 id2 ...]
+             :failed [{:id ... :reason keyword :message string} ...]}"
+  [deck-ids]
+  (go
+    (try
+      (let [response (<! (POST "/data/decks-bulk-delete" {:deck-ids (vec deck-ids)} :json))]
+        (cond
+          (= 200 (:status response))
+          (let [results (:json response)
+                successful (filter #(= "deleted" (:status %)) results)
+                failed (filter #(not= "deleted" (:status %)) results)]
+            {:successful (map :id successful)
+             :failed (map (fn [{:keys [id status error]}]
+                            {:id id
+                             :reason (case status
+                                       "unauthorized" :unauthorized
+                                       :unknown)
+                             :message error})
+                          failed)})
+
+          (nil? response)
+          {:successful []
+           :failed (map (fn [id]
+                          {:id id
+                           :reason :network-timeout
+                           :message "Network timeout"})
+                        deck-ids)}
+
+          :else
+          {:successful []
+           :failed (map (fn [id]
+                          {:id id
+                           :reason :http-error
+                           :message (str "HTTP " (:status response))})
+                        deck-ids)}))
+      (catch js/Error e
+        {:successful []
+         :failed (map (fn [id]
+                        {:id id
+                         :reason :client-error
+                         :message (str "Error: " (.-message e))})
+                      deck-ids)}))))
+
+(defn- format-deletion-feedback
+  "Formats deletion results into user feedback messages.
+   success-count: Number of successfully deleted decks
+   failed-count: Number of failed deletion attempts"
+  [success-count failed-count]
+  (cond
+    (zero? failed-count)
+    {:message (tr [:deck-builder_deleted-decks-success] {:cnt success-count})
+     :type "success"}
+
+    (zero? success-count)
+    {:message (tr [:deck-builder_deletion-success-and-or-failure]
+                  {:success success-count :failed failed-count})
+     :type "error"}
+
+    :else
+    {:message (tr [:deck-builder_deletion-success-and-or-failure]
+                  {:success success-count :failed failed-count})
+     :type "warning"}))
+
+(defn- update-ui-after-deletion
+  "Updates UI state after deletion completion.
+   successful-ids: Set of successfully deleted deck IDs"
+  [s successful-ids]
+  ;; Remove successfully deleted decks from app state
+  ;; Convert IDs to strings for consistent comparison (handles ObjectId vs string differences)
+  (when (seq successful-ids)
+    (let [success-id-strings (set (map str successful-ids))]
+      (load-decks (remove #(contains? success-id-strings (str (:_id %))) (:decks @app-state)))))
+
+  ;; Clear beforeunload handler and update component state
+  (set! (.-onbeforeunload js/window) nil)
+  (swap! s assoc
+         :deleting false
+         :cleanup-mode false
+         :selected-decks #{}
+         :deletion-ids #{}
+         :deck nil))
+
+(defn delete-selected-decks!
+  "Deletes all selected decks with error handling and user feedback.
+   Updates component state and shows appropriate toast messages."
+  [s]
+  (authenticated
+   (fn [_]
+      ;; Atomically set deletion state and capture selected deck IDs
+     (let [deletion-state (swap! s (fn [current-state]
+                                     (let [selected-deck-ids (get current-state :selected-decks #{})]
+                                       (if (pos? (count selected-deck-ids))
+                                         (assoc current-state
+                                                :deleting true
+                                                :deletion-ids selected-deck-ids)
+                                         current-state))))
+           selected-deck-ids (get deletion-state :deletion-ids #{})]
+       (when (seq selected-deck-ids)
+          ;; Set beforeunload handler to prevent navigation during deletion
+         (set! (.-onbeforeunload js/window)
+               #(clj->js (tr [:deck-builder_deletion-in-progress "Deck deletion in progress. Leaving this page may cause issues."])))
+         (go
+            ;; Delete all decks in a single bulk request
+           (let [bulk-result (<! (execute-bulk-deck-deletion selected-deck-ids))
+                 successful-ids (:successful bulk-result)
+                 failed-items (:failed bulk-result)
+                 feedback (format-deletion-feedback (count successful-ids) (count failed-items))]
+              ;; Process final results
+             (update-ui-after-deletion s (set successful-ids))
+             (non-game-toast (:message feedback) (:type feedback) nil))))))))
+
 (defn- legal-in-format
   [card format]
   (or (= "casual" format)
@@ -335,6 +448,21 @@
          [tr-span [:deck-builder_import "Import"]]])
       [:button {:on-click #(reagent-modals/close-modal!)}
        [tr-span [:deck-builder_cancel "Cancel"]]]]]))
+
+(defn delete-confirm-modal
+  "Renders a confirmation modal for multi-deck deletion.
+   deck-count: Number of decks to be deleted
+   on-confirm: Function to call when user confirms deletion"
+  [deck-count on-confirm]
+  [:div
+   [:h3 (tr [:deck-builder_confirm-delete-multiple] {:cnt deck-count})]
+   [:p (tr [:deck-builder_cannot-be-undone "This cannot be undone."])]
+   [:p.float-right
+    [:button.delete
+     {:on-click #(do (on-confirm) (reagent-modals/close-modal!))}
+     (tr [:deck-builder_delete "Delete"])]
+    [:button {:on-click #(reagent-modals/close-modal!)}
+     (tr [:deck-builder_cancel "Cancel"])]]])
 
 (defn load-decks-from-json
   [json]
@@ -585,17 +713,29 @@
          " - " [tr-span [:deck-builder_lost "Lost"] {:lost losses}]]))))
 
 (defn deck-entry [s deck]
-  (r/with-let [state-deck (r/cursor s [:deck])]
-    [:div.deckline {:class (when (= (:_id deck) (:_id @state-deck)) "active")
-                    :on-click #(put! select-channel deck)}
-     [:img {:src (image-url (:identity deck))
-            :alt (get-in deck [:identity :title] "")}]
-     [:span.float-right
-      [deck-status-span deck]
-      [:p (deck-date deck)]]
-     [:h4 (deck-name deck)]
-     [:span (tr-data :title (:identity deck))]
-     [deck-stats-line deck]]))
+  (r/with-let [state-deck (r/cursor s [:deck])
+               cleanup-mode (r/cursor s [:cleanup-mode])
+               selected-decks (r/cursor s [:selected-decks])]
+    (let [deck-id (:_id deck)
+          selected? (contains? @selected-decks deck-id)]
+      [:div.deckline {:class (str (when (= deck-id (get @state-deck :_id)) "active ")
+                                  (when (and @cleanup-mode selected?) "selected"))
+                      :on-click (if @cleanup-mode
+                                  #(swap! s update :selected-decks
+                                          (if selected? disj conj) deck-id)
+                                  #(put! select-channel deck))}
+       (when @cleanup-mode
+         [:input.cleanup-checkbox {:type "checkbox"
+                                   :checked selected?
+                                   :on-click #(.stopPropagation %)}])
+       [:img {:src (image-url (:identity deck))
+              :alt (get-in deck [:identity :title] "")}]
+       [:span.float-right
+        [deck-status-span deck]
+        [:p (deck-date deck)]]
+       [:h4 (deck-name deck)]
+       [:span (tr-data :title (:identity deck))]
+       [deck-stats-line deck]])))
 
 (def all-sides-filter "Any Side")
 (def all-factions-filter "Any Faction")
@@ -622,6 +762,15 @@
             (= all-factions-filter @faction-filter)
             (= all-formats-filter @fmt-filter))))
 
+(defn- get-filtered-decks [state decks]
+  (let [side-filter (r/cursor state [:side-filter])
+        faction-filter (r/cursor state [:faction-filter])
+        fmt-filter (r/cursor state [:format-filter])]
+    (->> decks
+         (filter-side side-filter)
+         (filter-faction faction-filter)
+         (filter-format fmt-filter))))
+
 (defn decks-list [_ _ scroll-top]
   (r/with-let [!node-ref (r/atom nil)]
     (r/create-class
@@ -642,7 +791,7 @@
                fmt-filter (r/cursor state [:format-filter])]
     (when-not (:edit @state)
       (if
-        (not @decks-loaded)
+       (not @decks-loaded)
         [:div.deck-collection
          [tr-element :h4 [:deck-builder_loading-msg "Loading deck collection..."]]]
         (let [filtered-decks (->> @decks
@@ -652,7 +801,15 @@
               n (count filtered-decks)]
           [:<>
            [:div.deck-count
-            [tr-element :h4 (if (filter-selected side-filter faction-filter fmt-filter) [:deck-builder_deck-count-filtered "Deck Count (filtered)"] [:deck-builder_deck-count "Deck Count"]) {:cnt n}]]
+            [:h4
+             (if (filter-selected side-filter faction-filter fmt-filter)
+               (tr [:deck-builder_deck-count-filtered "Deck Count (filtered)"] {:cnt n})
+               (tr [:deck-builder_deck-count "Deck Count"] {:cnt n}))
+             (when-not (:cleanup-mode @state)
+               [:div.cleanup-link-container
+                [:span.cleanup-link
+                 {:on-click #(swap! state assoc :cleanup-mode true :selected-decks #{} :deck nil)}
+                 (tr [:deck-builder_cleanup-decks "Cleanup decks..."])]])]]
            [decks-list filtered-decks state scroll-top]])))))
 
 (defn line-span
@@ -994,18 +1151,52 @@
     [tr-element :h3 [:deck-builder_notes "Notes"]]]
    [notes-textbox s]])
 
+(defn cleanup-buttons
+  "Renders the button bar for cleanup mode with select all, unselect all, delete, and cancel actions.
+   s: Component state atom
+   decks: Collection of deck maps for select all functionality"
+  [s decks]
+  (r/with-let [deleting (r/cursor s [:deleting])]
+    (let [selected-count (count (get @s :selected-decks #{}))
+          has-selection (pos? selected-count)]
+      [:div.button-bar.cleanup-button-bar
+       [:button {:disabled @deleting
+                 :on-click #(when-not @deleting
+                              (swap! s assoc :selected-decks
+                                     (into #{} (map :_id decks))))}
+        (tr [:deck-builder_select-all "Select All"])]
+       [:button {:disabled @deleting
+                 :on-click #(when-not @deleting
+                              (swap! s assoc :selected-decks #{}))}
+        (tr [:deck-builder_unselect-all "Unselect All"])]
+       [:button {:class (when (or (not has-selection) @deleting) "disabled")
+                 :disabled (or (not has-selection) @deleting)
+                 :on-click #(when (and has-selection (not @deleting))
+                              (reagent-modals/modal!
+                               [delete-confirm-modal selected-count
+                                (fn [] (delete-selected-decks! s))]))}
+        (cond
+          @deleting "Deleting..."
+          has-selection (str (tr [:deck-builder_delete-selected "Delete Selected"]) " (" selected-count ")")
+          :else (tr [:deck-builder_delete-selected "Delete Selected"]))]
+       [:button {:disabled @deleting
+                 :on-click #(when-not @deleting
+                              (set! (.-onbeforeunload js/window) nil)
+                              (swap! s assoc :cleanup-mode false :selected-decks #{}))}
+        (tr [:deck-builder_cancel "Cancel"])]])))
+
 (defn collection-buttons [s user decks-loaded]
   [:div.button-bar
    [cond-button [tr-span [:deck-builder_new-corp "New Corp deck"]]
-   (and @user @decks-loaded) #(do
+   (and @user @decks-loaded (not @cleanup-mode)) #(do
                                 (reset-deck-filters s)
                                 (new-deck s "Corp"))]
    [cond-button [tr-span [:deck-builder_new-runner "New Runner deck"]]
-    (and @user @decks-loaded) #(do
+    (and @user @decks-loaded (not @cleanup-mode)) #(do
                                  (reset-deck-filters s)
                                  (new-deck s "Runner"))]
    [cond-button [tr-span [:deck-builder_import-button "Import deck"]]
-    (and @user @decks-loaded)
+    (and @user @decks-loaded (not @cleanup-mode))
     #(reagent-modals/modal! [import-deck-modal]
                             {:shown (fn [] (.focus (.getElementById js/document "nrdb-input")))})]])
 
@@ -1050,12 +1241,17 @@
 
 (defn list-panel
   [s user decks decks-loaded scroll-top]
-  (r/with-let [zoom-card (r/cursor s [:zoom])]
+  (r/with-let [zoom-card (r/cursor s [:zoom])
+               cleanup-mode (r/cursor s [:cleanup-mode])]
     [:div.decks
      [collection-buttons s user decks-loaded]
      [filter-builder s decks-loaded scroll-top]
+     (when @cleanup-mode
+       ;; Pass filtered decks to cleanup-buttons for Select All
+       (let [filtered-decks (get-filtered-decks s @decks)]
+         [cleanup-buttons s filtered-decks]))
      [deck-collection s decks decks-loaded scroll-top]
-     [:div {:class (when (:edit @s) "edit")}
+     [:div {:class (when (get @s :edit) "edit")}
       (when-let [line @zoom-card]
         (let [art (:art line)
               id (:id line)
@@ -1080,7 +1276,10 @@
                    :faction-filter all-factions-filter
                    :format-filter all-formats-filter
                    :show-credit-cost false
-                   :show-mu-cost false})
+                   :show-mu-cost false
+                   :cleanup-mode false
+                   :selected-decks #{}
+                   :deleting false})
         decks (r/cursor app-state [:decks])
         user (r/cursor app-state [:user])
         decks-loaded (r/cursor app-state [:decks-loaded])

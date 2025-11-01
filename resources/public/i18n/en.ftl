@@ -194,9 +194,18 @@ deck-builder_card-name = Card name
 
 deck-builder_clear-stats = Clear Stats
 
+deck-builder_cleanup-decks = Cleanup decks...
+
+deck-builder_cannot-be-undone = This cannot be undone.
+
 deck-builder_completed = Completed: {$completed}
 
 deck-builder_confirm-delete = Confirm Delete
+
+deck-builder_confirm-delete-multiple = Delete {$cnt ->
+    [one] {$cnt} selected deck
+    *[other] {$cnt} selected decks
+}?
 
 deck-builder_copy = Copy
 
@@ -227,6 +236,20 @@ deck-builder_decklist = Decklist
 deck-builder_decklist-inst = (Type or paste a decklist, it will be parsed)
 
 deck-builder_delete = Delete
+
+deck-builder_delete-selected = Delete Selected
+
+deck-builder_deleted-decks-success = Deleted {$cnt ->
+    [one] {$cnt} deck
+    *[other] {$cnt} decks
+}
+
+deck-builder_deletion-success-and-or-failure = Deleted {$success ->
+    [one] {$success} deck
+    *[other] {$success} decks
+}. {$failed} failed.
+
+deck-builder_deletion-in-progress = Deck deletion in progress. Leaving this page may cause issues.
 
 deck-builder_edit = Edit
 
@@ -274,9 +297,13 @@ deck-builder_reset = Reset
 
 deck-builder_save = Save
 
+deck-builder_select-all = Select All
+
 deck-builder_show-credit-cost = Show Credit Cost
 
 deck-builder_show-memory-cost = Show Memory Cost
+
+deck-builder_unselect-all = Unselect All
 
 deck-builder_view-options = View Options
 
@@ -1517,6 +1544,8 @@ settings_card-backs-tip = You can earn more card backs by placing well in select
 settings_card-iamge = Card Image
 
 settings_card-images = Card images
+
+settings_card-language = Card language
 
 settings_card-preview-zoom = Card preview zoom
 

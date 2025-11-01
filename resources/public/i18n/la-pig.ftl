@@ -95,9 +95,18 @@ deck-builder_card-name = Ardcay amenay
 
 deck-builder_clear-stats = Earclay Atsstay
 
+deck-builder_cleanup-decks = Eanupclay ecksday...
+
+deck-builder_cannot-be-undone = Isthay annotcay ebay undoneway.
+
 deck-builder_completed = Ompletedcay: {$completed}
 
 deck-builder_confirm-delete = Onfirmcay Eleteday
+
+deck-builder_confirm-delete-multiple = Eleteday {$cnt ->
+    [one] {$cnt} electedsay eckday
+    *[other] {$cnt} electedsay ecksday
+}?
 
 deck-builder_create-game = Eatecray Amegay
 
@@ -124,6 +133,20 @@ deck-builder_decklist = Ecklistday
 deck-builder_decklist-inst = (Ypetay oryay astepay ayay ecklistday, ityay illway ebay arsedpay)
 
 deck-builder_delete = Eleteday
+
+deck-builder_delete-selected = Eleteday Electedsay
+
+deck-builder_deleted-decks-success = Eletedday {$cnt ->
+    [one] {$cnt} eckday
+    *[other] {$cnt} ecksday
+}
+
+deck-builder_deletion-success-and-or-failure = Eletedday {$success ->
+    [one] {$success} eckday
+    *[other] {$success} ecksday
+}. {$failed} ailedfay.
+
+deck-builder_deletion-in-progress = Eckday eletiond-ay in-ay ogrespay-ay. Eavinglay isthay agepay aymay ausecay issuesway.
 
 deck-builder_edit = Edityay
 
@@ -166,6 +189,10 @@ deck-builder_new-runner = Ewnay Unnerray eckday
 deck-builder_notes = Otesnay
 
 deck-builder_reset = Esetray
+
+deck-builder_select-all = Electsay Allway
+
+deck-builder_unselect-all = Unselectway Allway
 
 deck-builder_save = Avesay
 

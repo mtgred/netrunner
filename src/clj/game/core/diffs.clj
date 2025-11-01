@@ -391,6 +391,7 @@
    :corp-card-sleeve
    :runner-card-sleeve
    :language
+   :card-language
    :pronouns
    :show-alt-art])
 

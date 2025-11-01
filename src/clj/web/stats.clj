@@ -214,21 +214,24 @@
 
 (defn history
   [{db :system/db
-    {username :username :as user} :user}]
-  (if (active-user? user)
-    (let [games (->> (mq/with-collection db game-log-coll
-                       (mq/find {$or [{:corp.player.username username}
-                                      {:runner.player.username username}]})
-                       (mq/fields {:replay 0 :log 0 :_id 0})
-                       (mq/sort (array-map :start-date -1))
-                       (mq/limit 100))
-                     (into []))
-          games (map #(update % :creation-date mongo-time-to-utc-string) games)
-          games (map #(update % :start-date mongo-time-to-utc-string) games)
-          games (map #(update % :end-date mongo-time-to-utc-string) games)
-          ]
-      (response 200 games))
-    (response 401 {:message "Unauthorized"})))
+    {username :username :as user} :user
+    {:keys [skip]} :params}] 
+  (let [skip (or (some-> skip Integer/parseInt) 0)]
+    (if (active-user? user)
+      (let [games (->> (mq/with-collection db game-log-coll
+                         (mq/find {$or [{:corp.player.username username}
+                                        {:runner.player.username username}]})
+                         (mq/fields {:replay 0 :log 0 :_id 0})
+                         (mq/sort (array-map :start-date -1))
+                         (mq/skip skip)
+                         (mq/limit 100))
+                       (into []))
+            games (map #(update % :creation-date mongo-time-to-utc-string) games)
+            games (map #(update % :start-date mongo-time-to-utc-string) games)
+            games (map #(update % :end-date mongo-time-to-utc-string) games)
+            ]
+        (response 200 games))
+      (response 401 {:message "Unauthorized"}))))
 
 (defn fetch-log
   [{db :system/db

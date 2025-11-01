@@ -118,6 +118,11 @@
     :sync? true
     :validate-fn #(contains? valid-card-back-display %)
     :doc "Which card backs to display (them/me/ffg/nsg)"}
+   {:key :card-language
+    :default "en"
+    :sync? true
+    :validate-fn #(contains? valid-languages %)
+    :doc "Card language preference"}
    {:key :card-resolution
     :default "default"
     :sync? false  ; device-specific

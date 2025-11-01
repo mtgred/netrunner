@@ -132,7 +132,7 @@
 
 (defn- reset-card-art [s]
   (let [art (:all-art-select @s)
-        lang (keyword (get-in @app-state [:options :language] "en"))
+        lang (keyword (get-in @app-state [:options :card-language] "en"))
         res (keyword (get-in @app-state [:options :card-resolution] "default"))]
     (doseq [card (vals @all-cards)]
       (update-card-art card art lang res s))))
@@ -325,10 +325,10 @@
               (for [option [{:name "English" :ref "en"}
                             {:name "Spanish" :ref "es"}
                             {:name "中文 (Simplified)" :ref "zh-simp"}
-                            {:name "中文 (Traditional) (Cards only)" :ref "zh-trad"}
+                            {:name "中文 (Traditional)" :ref "zh-trad"}
                             {:name "Français" :ref "fr"}
-                            {:name "Deutsch (Cards only)" :ref "de"}
-                            {:name "Italiano (Cards only)" :ref "it"}
+                            {:name "Deutsch" :ref "de"}
+                            {:name "Italiano" :ref "it"}
                             {:name "日本語" :ref "ja"}
                             {:name "한국어" :ref "ko"}
                             {:name "Polski" :ref "pl"}
@@ -338,6 +338,28 @@
                             {:name "Igpay Atinlay" :ref "la-pig"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
            [:div [tr-span [:settings_language-tip "Some languages are not fully translated yet. If you would like to help with translations, please contact us."]]]]
+           [:div [tr-span [:settings_language-tip "Some languages are not fully translated yet. If you would like to help with translations, please contact us."]]]]
+
+          [:section
+           [tr-element :h3 [:settings_card-language "Card language"]]
+           [:select {:value (:card-language @s "en")
+                     :on-change #(swap! s assoc :card-language (.. % -target -value))}
+            (doall
+              (for [option [{:name "English" :ref "en"}
+                            {:name "Spanish" :ref "es"}
+                            {:name "中文 (Simplified)" :ref "zh-simp"}
+                            {:name "中文 (Traditional)" :ref "zh-trad"}
+                            {:name "Français" :ref "fr"}
+                            {:name "Deutsch" :ref "de"}
+                            {:name "Italiano" :ref "it"}
+                            {:name "日本語" :ref "ja"}
+                            {:name "한국어" :ref "ko"}
+                            {:name "Polski" :ref "pl"}
+                            {:name "Português" :ref "pt"}
+                            {:name "Русский" :ref "ru"}
+                            {:name "Catalan" :ref "ca"}
+                            {:name "Igpay Atinlay" :ref "la-pig"}]]
+                [:option {:value (:ref option) :key (:ref option)} (:name option)]))]]
 
           [:section
            [tr-element :h3 [:settings_bespoke-sounds "Card-Specific Sounds"] {:sound "header"}]
@@ -707,7 +729,7 @@
         scroll-top (atom 0)
         state (r/atom
                (-> (:options @app-state)
-                   (select-keys [:pronouns :bespoke-sounds :language :sounds :default-format
+                   (select-keys [:pronouns :bespoke-sounds :language :card-language :sounds :default-format
                                  :lobby-sounds :sounds-volume :background :custom-bg-url :card-zoom
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
                                  :player-stats-icons :stacked-cards :ghost-trojans

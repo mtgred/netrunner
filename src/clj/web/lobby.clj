@@ -10,7 +10,7 @@
    [crypto.password.bcrypt :as bcrypt]
    [game.core :as core]
    [game.utils :refer [server-card]]
-   [jinteki.utils :refer [select-non-nil-keys side-from-str superuser?]]
+   [jinteki.utils :refer [select-non-nil-keys side-from-str superuser? to?]]
    [jinteki.preconstructed :refer [all-matchups]]
    [jinteki.validator :as validator]
    [medley.core :refer [find-first]]
@@ -714,6 +714,30 @@
           (broadcast-lobby-list))))
     (log-delay! timestamp id)))
 
+(defmethod ws/-msg-handler :lobby/shift-game
+  lobby--shift-game
+  [{{db :system/db user :user} :ring-req
+    {:keys [gameid room]} :?data
+    id :id
+    timestamp :timestamp}]
+  (lobby-thread
+    (when-let [lobby (app-state/get-lobby gameid)]
+      (when (or (superuser? user) (to? user))
+        (let [player-name (-> lobby :original-players first :user :username)
+              game-name (:title lobby)
+              new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :room] room)]
+          (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
+          (broadcast-lobby-list)
+          (broadcast-lobby-list [id])
+          (mc/insert db "moderator_actions"
+                     {:moderator (:username user)
+                      :action :shift-game
+                      :game-name game-name
+                      :first-player player-name
+                      :target-room room
+                      :date (inst/now)}))))
+    (log-delay! timestamp id)))
+
 (defmethod ws/-msg-handler :lobby/rename-game
   lobby--rename-game
   [{{db :system/db user :user} :ring-req
@@ -728,6 +752,7 @@
               new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :title] (str player-name "'s game"))]
           (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
           (broadcast-lobby-list)
+          (broadcast-lobby-list [id])
           (mc/insert db "moderator_actions"
                      {:moderator (:username user)
                       :action :rename-game
@@ -749,6 +774,7 @@
       (when (and (superuser? user) lobby)
         (close-lobby! db lobby)
         (broadcast-lobby-list)
+        (broadcast-lobby-list [id])
         (mc/insert db "moderator_actions"
                    {:moderator (:username user)
                     :action :delete-game

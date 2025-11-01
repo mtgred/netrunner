@@ -51,7 +51,7 @@
     @runner-prompt-state))
 
 (defn- image-url [{:keys [side code] :as card}]
-  (let [lang (get-in @app-state [:options :language] "en")
+  (let [lang (get-in @app-state [:options :card-language] "en")
         res (get-in @app-state [:options :card-resolution] "default")
         special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
         special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
@@ -1167,6 +1167,7 @@
                             [tr-element :div [:game_agenda-count-with-req] {:agenda-point @agenda-point
                                                                             :agenda-point-req point-req}]))]]))
 
+
 (defn run-arrow [run]
   [:div.run-arrow [:div {:class (cond
                                   (= "movement" (:phase run))
@@ -1422,11 +1423,16 @@
   "Builds the in-game decklist display"
   [corp-list runner-list]
   (let [lists (map-longest list nil corp-list runner-list)
-        card-qty (fn [c] (second c))
-        card-name (fn [c] [:div {:text-align "left"
-                                 :on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                                 :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
-                           (render-message (first c))])]
+        is-divider? (fn [c] (= "divider" (second c)))
+        card-qty (fn [c] (if (is-divider? c) "" (second c)))
+        card-name (fn [c]
+                    (if (is-divider? c)
+                      [:div {:text-align "left"}
+                       [:strong (render-message (first c))]]
+                      [:div {:text-align "left"
+                             :on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                             :on-mouse-out #(card-preview-mouse-out % zoom-channel)}
+                       (render-message (first c))]))]
     [:div
      [:table.decklists.table
       [:tbody

@@ -1,6 +1,6 @@
 (ns nr.game-row
   (:require
-   [jinteki.utils :refer [superuser?]]
+   [jinteki.utils :refer [superuser? to?]]
    [jinteki.preconstructed :refer [matchup-by-key]]
    [cljc.java-time.instant :as inst]
    [cljc.java-time.duration :as duration]
@@ -25,6 +25,12 @@
   (authenticated
     (fn [_]
       (ws/ws-send! [:lobby/delete-game {:gameid gameid}]))))
+
+(defn- shift-game
+  [gameid room]
+  (authenticated
+    (fn [_]
+      (ws/ws-send! [:lobby/shift-game {:gameid gameid :room room}]))))
 
 (defn join-game
   ([lobby-state game action] (join-game lobby-state game action nil))
@@ -154,23 +160,40 @@
                                (resume-sound)))}
      [tr-span [:lobby_rejoin "Rejoin"]]]))
 
-(defn mod-menu-popup [s user {gameid :gameid}]
+(defn mod-menu-popup [s user {gameid :gameid room :room}]
   (when (and (:show-mod-menu @s)
-             (superuser? @user))
+             (or (superuser? @user) (to? @user)))
     [:div.ctrl-menu
-     [:div.panel.blue-shade.mod-menu
-      [:div {:on-click #(do (reset-game-name gameid)
-                            (swap! s assoc :show-mod-menu false))}
-       [tr-span [:lobby_reset "Reset Game Name"]]]
-      [:div {:on-click #(do (delete-game gameid)
-                            (swap! s assoc :show-mod-menu false))}
-       [tr-span [:lobby_delete "Delete Game"]]]
-      [:div {:on-click #(swap! s assoc :show-mod-menu false)}
-       [tr-span [:lobby_cancel "Cancel"]]]]]))
+
+     (if (superuser? @user)
+       [:div.panel.blue-shade.mod-menu
+        [:div {:on-click #(do (reset-game-name gameid)
+                              (swap! s assoc :show-mod-menu false))}
+         [tr-span [:lobby_reset "Reset Game Name"]]]
+        [:div {:on-click #(do (delete-game gameid)
+                              (swap! s assoc :show-mod-menu false))}
+         (tr [:lobby_delete "Delete Game"])]
+        [:div {:on-click #(swap! s assoc :show-mod-menu false)}
+         [tr-span [:lobby_cancel "Cancel"]]]
+        (if (= room "competitive")
+          [:div {:on-click #(do (shift-game gameid "casual")
+                                (swap! s assoc :show-mod-menu false))}
+           [tr-span [:lobby_shift-to-casual "Shift game to Casual lobby"]]]
+          [:div {:on-click #(do (shift-game gameid "competitive")
+                                (swap! s assoc :show-mod-menu false))}
+           [tr-span [:lobby_shift-to-casual "shift game to Tournament lobby"]]])]
+       [:div.panel.blue-shade.mod-menu
+        (if (= room "competitive")
+          [:div {:on-click #(do (shift-game gameid "casual")
+                                (swap! s assoc :show-mod-menu false))}
+           [tr-span [:lobby_shift-to-casual "Shift game to Casual lobby"]]]
+          [:div {:on-click #(do (shift-game gameid "competitive")
+                                (swap! s assoc :show-mod-menu false))}
+           [tr-span [:lobby_shift-to-casual "shift game to Tournament lobby"]]])])]))
 
 (defn game-title [s user game]
   [:h4 {:on-click #(swap! s update :show-mod-menu not)
-        :class (when (superuser? @user) "clickable")}
+        :class (when (or (superuser? @user) (to? @user)) "clickable")}
    (when (:save-replay game) "🟢")
    (when (:password game)
      [:<> "[" [tr-span [:lobby_private "PRIVATE"]] "] "])
