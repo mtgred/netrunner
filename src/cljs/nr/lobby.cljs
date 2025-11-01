@@ -33,8 +33,15 @@
 (defmethod ws/event-msg-handler :lobby/notification [{data :?data}]
   (play-sound data))
 
-(defmethod ws/event-msg-handler :lobby/toast [{{:keys [message type]} :?data}]
-  (non-game-toast message type {:time-out 30000 :close-button true}))
+(defmethod ws/event-msg-handler :lobby/toast
+  [{{:keys [message type]} :?data}]
+  (let [msg (if (keyword? message) (tr message) message)]
+    (non-game-toast msg type {:time-out 30000 :close-button true})))
+
+(defmethod ws/event-msg-handler :lobby/block-game-creation
+  lobby__pause-game-creation
+  [{data :?data}]
+  (swap! app-state assoc :block-game-creation data))
 
 (defmethod ws/event-msg-handler :lobby/timeout
   [{{:keys [gameid]} :?data}]
@@ -181,6 +188,7 @@
              empty?))
    #(authenticated
       (fn [_]
+        (ws/ws-send! [:lobby/block-game-creation])
         (swap! s assoc :editing true)
         (-> ".game-title" js/$ .select)
         (resume-sound)))])

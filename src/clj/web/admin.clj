@@ -144,3 +144,14 @@
       (mc/update db "config" {} {$set {:version version}})
       (response 200 {:message "ok" :version version}))
     (response 400 {:message "Missing version item"})))
+
+(defmethod ws/-msg-handler :admin/block-game-creation
+  admin--block-game-creation
+  [{{user :user} :ring-req
+    block? :?data
+    ?reply-fn :?reply-fn}]
+  (when (and (active-user? user)
+             (or (:ismoderator user) (:isadmin user)))
+    (let [block? (boolean block?)]
+      (swap! app-state/app-state assoc :block-game-creation block?)
+      (when ?reply-fn (?reply-fn block?)))))
