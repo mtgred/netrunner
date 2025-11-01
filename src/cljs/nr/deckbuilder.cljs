@@ -788,6 +788,7 @@
   [state decks decks-loaded scroll-top]
   (r/with-let [side-filter (r/cursor state [:side-filter])
                faction-filter (r/cursor state [:faction-filter])
+               cleanup-mode (r/cursor state [:cleanup-mode])
                fmt-filter (r/cursor state [:format-filter])]
     (when-not (:edit @state)
       (if
@@ -1186,19 +1187,20 @@
         (tr [:deck-builder_cancel "Cancel"])]])))
 
 (defn collection-buttons [s user decks-loaded]
-  [:div.button-bar
-   [cond-button [tr-span [:deck-builder_new-corp "New Corp deck"]]
-   (and @user @decks-loaded (not @cleanup-mode)) #(do
-                                (reset-deck-filters s)
-                                (new-deck s "Corp"))]
-   [cond-button [tr-span [:deck-builder_new-runner "New Runner deck"]]
-    (and @user @decks-loaded (not @cleanup-mode)) #(do
-                                 (reset-deck-filters s)
-                                 (new-deck s "Runner"))]
-   [cond-button [tr-span [:deck-builder_import-button "Import deck"]]
-    (and @user @decks-loaded (not @cleanup-mode))
-    #(reagent-modals/modal! [import-deck-modal]
-                            {:shown (fn [] (.focus (.getElementById js/document "nrdb-input")))})]])
+  (r/with-let [cleanup-mode (r/cursor s [:cleanup-mode])]
+    [:div.button-bar
+     [cond-button [tr-span [:deck-builder_new-corp "New Corp deck"]]
+      (and @user @decks-loaded (not @cleanup-mode)) #(do
+                                                       (reset-deck-filters s)
+                                                       (new-deck s "Corp"))]
+     [cond-button [tr-span [:deck-builder_new-runner "New Runner deck"]]
+      (and @user @decks-loaded (not @cleanup-mode)) #(do
+                                                       (reset-deck-filters s)
+                                                       (new-deck s "Runner"))]
+     [cond-button [tr-span [:deck-builder_import-button "Import deck"]]
+      (and @user @decks-loaded (not @cleanup-mode))
+      #(reagent-modals/modal! [import-deck-modal]
+                              {:shown (fn [] (.focus (.getElementById js/document "nrdb-input")))})]]))
 
 (defn- simple-filter-builder
   [state state-key options decks-loaded callback scroll-top translator]
