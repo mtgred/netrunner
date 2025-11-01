@@ -35,7 +35,7 @@
     (doseq [prompt (filter #(and (= (:eid eid) (:eid (:eid %)))
                                  (= :waiting (:prompt-type %)))
                            (get-in @state [side :prompt]))]
-      (remove-prompt-from-queue state side prompt))))
+      (remove-from-prompt-queue state side prompt))))
 
 (defn effect-completed
   [state _ eid]
