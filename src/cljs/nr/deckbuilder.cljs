@@ -726,8 +726,7 @@
                                   #(put! select-channel deck))}
        (when @cleanup-mode
          [:input.cleanup-checkbox {:type "checkbox"
-                                   :checked selected?
-                                   :on-click #(.stopPropagation %)}])
+                                   :checked selected?}])
        [:img {:src (image-url (:identity deck))
               :alt (get-in deck [:identity :title] "")}]
        [:span.float-right

@@ -89,6 +89,8 @@
                 margin-bottom: 10px
 
                 button
+                    width: auto // Override fixed 135px width to fit button text
+                    padding: 0 12px // Add horizontal padding for proper spacing
                     margin-right: 5px
                     margin-bottom: 5px
 
@@ -101,10 +103,11 @@
                     background-color: rgba(255, 215, 0, 0.1) // Subtle gold highlight for selected decks
 
                 .cleanup-checkbox
+                    float: left
                     margin-right: 8px // Space between checkbox and deck image
                     margin-left: 2px // Small offset from left edge
+                    margin-top: 22px // Vertically center in 65px container (~21px checkbox height)
                     cursor: pointer
-                    vertical-align: middle
 
             .deckfilter
                 margin-bottom: 10px
