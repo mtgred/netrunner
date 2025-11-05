@@ -1366,6 +1366,7 @@
     (play-from-hand state :corp "Tithe" "HQ")
     (is (changed? [(:credit (get-corp)) -4]
           (expend state :corp (find-card "Eminent Domain" (:hand (get-corp))))
+          (click-card state :corp "Eminent Domain") ;; cannot target self - no error
           (click-card state :corp "Pharos")
           (click-prompt state :corp "HQ")
           (is (= "Pharos" (get-title (get-ice state :hq 1))))
