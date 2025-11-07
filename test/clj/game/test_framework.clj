@@ -622,6 +622,18 @@
   ([state side title & prompts]
    `(error-wrapper (play-from-hand-with-prompts-impl ~state ~side ~title ~(vec prompts)))))
 
+(defn play-cards-impl
+  ([state side plays]
+   (doseq [play plays]
+     (if (string? play)
+       (play-from-hand state side play)
+       (play-from-hand-with-prompts-impl state side (first play) (rest play))))))
+
+(defmacro play-cards
+  ([state side] `nil)
+  ([state side & plays]
+   `(error-wrapper (play-cards-impl ~state ~side ~(vec plays)))))
+
 ;;; Run functions
 (defn run-on-impl
   [state server {:keys [wait-at-initiation]}]
