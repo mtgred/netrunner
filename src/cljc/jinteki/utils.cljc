@@ -320,6 +320,9 @@
    {:name "/trash"
     :usage "/trash"
     :help "Trash an installed card"}
+   {:name "/undo-paid-ability"
+    :usage "/undo-paid-ability"
+    :help "Resets the game back to start of the last paid ability.  One paid ability only retained."}
    {:name "/undo-click"
     :usage "/undo-click"
     :help "Resets the game back to start of the click.  One click only retained. Only allowed for active player"}
