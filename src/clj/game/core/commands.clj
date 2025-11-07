@@ -197,6 +197,24 @@
     (system-msg state side (str "sets " server " as the mark for this turn"))
     (set-mark state (unknown->kw server))))
 
+(defn command-undo-paid-ability
+  "Resets the game state back to start of the paid ability"
+  [state side]
+  (when-let [last-paw-state (:paid-ability-state @state)]
+    (let [current-log (:log @state)
+          current-history (:history @state)
+          previous-click-states (:click-states @state)
+          turn-state (:turn-state @state)
+          last-paw-state (assoc last-paw-state
+                                :log current-log
+                                :click-states previous-click-states
+                                :turn-state turn-state
+                                :history current-history)]
+      (reset! state last-paw-state))
+    (system-say state side (str "[!] " (if (= side :corp) "Corp" "Runner") " uses the undo-paid-ability command"))
+    (doseq [s [:runner :corp]]
+      (toast state s "Game reset to start of last paid ability"))))
+
 (defn command-undo-click
   "Resets the game state back to start of the click"
   [state side]
@@ -634,6 +652,7 @@
                                                           {:base (constrain-value value -1000 1000)
                                                            :msg "resolve successful trace effect"}))
             "/trash"      command-trash
+            "/undo-paid-ability" #(command-undo-paid-ability %1 %2)
             "/undo-click" #(command-undo-click %1 %2)
             "/undo-turn"  #(command-undo-turn %1 %2)
             "/unique"     #(command-unique %1 %2)
