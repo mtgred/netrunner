@@ -318,6 +318,26 @@
         (core/command-parser state :corp {:user user :text "/trace 99999999999999999999999999999999999999999999"})
         (is (= 1000 (:base (prompt-map :corp))) "Base trace should now be 1000"))))
 
+  (testing "/undo-paid-ability"
+    (let [r {:username "Runner"}]
+      (do-game
+        (new-game {:corp {:hand ["NASX"] :credits 10}})
+        (letfn [(load-nasx [] (card-ability state :corp (get-content state :remote1 0) 2))
+                (undo-paw [side] (core/command-parser state side {:user r :text "/undo-paid-ability"}))]
+          (play-from-hand state :corp "NASX" "New remote")
+          (rez state :corp (get-content state :remote1 0))
+          (is (changed? [(:credit (get-corp)) -2] (load-nasx)) "Loaded nasx")
+          (is (changed? [(:credit (get-corp)) 2] (undo-paw :corp)) "Undid paid ability")
+          (is (get-content state :remote1 0) "NASX still installed")
+          (is (changed? [(:credit (get-corp)) -2] (load-nasx)) "Loaded nasx")
+          (take-credits state :corp)
+          (is (changed? [(:credit (get-corp)) 0] (undo-paw :corp)) "No PA to undo")
+          (run-on state :remote1)
+          (is (changed? [(:credit (get-corp)) -2] (load-nasx)) "Loaded nasx")
+          (is (changed? [(:credit (get-corp)) 2] (undo-paw :runner)) "Undid paid ability")
+          (is (changed? [(:credit (get-corp)) -2] (load-nasx)) "Loaded nasx")
+          (is (:run @state) "Run did not get undone, last PA was during run")))))
+
   (testing "/undo-click"
     (let [r {:username "Runner"}]
       (do-game
