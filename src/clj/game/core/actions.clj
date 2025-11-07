@@ -31,13 +31,30 @@
     [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]
     [taoensso.timbre :as timbre]))
 
+(defn- without-history
+  "Returns the given atom without history keys"
+  [state]
+  (dissoc state :log :history :click-states :turn-state :paid-ability-state))
+
 (defn- update-click-state
   "Update :click-states to hold latest 4 moments before performing actions."
   [state ability]
   (when (:action ability)
-    (let [state' (dissoc @state :log :history :click-states :turn-state)
+    (let [state' (without-history @state)
           click-states (vec (take-last 4 (conj (:click-states @state) state')))]
       (swap! state assoc :click-states click-states))))
+
+(defn- update-paid-ability-state
+  "Holds a single state for undo-paid-ability command. Gets cleared on taking an action"
+  [state ability]
+  (if (:action ability)
+    (swap! state dissoc :paid-ability-state)
+    (swap! state assoc :paid-ability-state (without-history @state))))
+
+(defn- update-history!
+  [state ability]
+  (update-paid-ability-state state ability)
+  (update-click-state state ability))
 
 (defn- no-blocking-prompt?
   [state side]
@@ -64,7 +81,7 @@
         ability (assoc ability :cost cost)]
     (when (or (nil? cost)
               (can-pay? state side eid card (:title card) cost))
-      (update-click-state state ability)
+      (update-history! state ability)
       (if (:action ability)
         (let [stripped-card (select-keys card [:cid :type :title])]
           (wait-for
