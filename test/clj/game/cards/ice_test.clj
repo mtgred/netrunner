@@ -3609,6 +3609,20 @@
     (click-prompt state :runner "Give the Runner 1 tag")
     (is (no-prompt? state :runner) "Can no longer break stuff")))
 
+(deftest hammer-restrictions-while-hushed
+  (do-game
+    (new-game {:corp {:hand ["Hammer"] :credits 10}
+               :runner {:hand ["Botulus" "Cookbook" "Hush"] :credits 15}})
+    (play-from-hand state :corp "Hammer" "HQ")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (play-cards state :runner "Cookbook" ["Botulus" "Hammer"] ["Hush" "Hammer"])
+    (run-on state :hq)
+    (run-continue-until state :encounter-ice)
+    (card-ability state :runner (first (:hosted (get-ice state :hq 0))) 0)
+    (click-prompts state :runner "Choose a resource or piece of hardware to trash" "Give the Runner 1 tag")
+    (is (no-prompt? state :runner) "No more virus counters")))
+
 (deftest harvester
   ;; Harvester - draw 3, then discard
   (do-game

@@ -197,7 +197,8 @@
                                                                      :icebreaker card})
     (for [sub (remove #(or (:broken %)
                            (not (if (fn? (:breakable %))
-                                  ((:breakable %) state side eid ice [card])
+                                  (or (is-disabled-reg? state ice)
+                                      ((:breakable %) state side eid ice [card]))
                                   (:breakable % true))))
                       (:subroutines ice))]
       (make-label (:sub-effect sub)))))
@@ -524,7 +525,8 @@
                                                          :early-exit true})
                    (let [subroutines (filter #(and (not (:broken %))
                                                    (if (fn? (:breakable %))
-                                                     ((:breakable %) state side eid ice [card])
+                                                     (or (is-disabled-reg? state ice)
+                                                         ((:breakable %) state side eid ice [card]))
                                                      (:breakable % true)))
                                              (:subroutines ice))
                          idx (:idx (first targets))
@@ -786,7 +788,7 @@
                                     (:break break-ability 1))
               unbroken-subs (count (remove :broken (:subroutines current-ice)))
               no-unbreakable-subs (empty? (filter #(if (fn? (:breakable %)) ; filter for possibly unbreakable subs
-                                                     (not= :unrestricted ((:breakable %) state side eid current-ice [card]))
+                                                     (or (is-disabled-reg? state current-ice) (not= :unrestricted ((:breakable %) state side eid current-ice [card])))
                                                      (not (:breakable % true))) ; breakable is a bool
                                                   (:subroutines current-ice)))
               can-auto-break (not (any-effects state side :cannot-auto-break-subs-on-ice true? {:ice current-ice :breaker card}))
