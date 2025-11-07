@@ -828,8 +828,9 @@
   (let [expend-abi {:req (req (some corp-installable-type? (:hand corp)))
                     :cost [(->c :credit 1)]
                     :prompt "Choose 1 card to install and rez, paying 5 [Credits] less"
-                    :choices {:card #(and (in-hand? %)
-                                          (corp-installable-type? %))}
+                    :choices {:req (req (and (in-hand? target)
+                                             (corp-installable-type? target)
+                                             (not (same-card? card target))))}
                     :msg "install and rez 1 card from HQ, paying 5 [Credits] less"
                     :async true
                     :effect (req (corp-install state side eid target nil
