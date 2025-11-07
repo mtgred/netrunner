@@ -1001,16 +1001,16 @@
       [tr-span title {:cnt hand-count}]]]))
 
 (defn deck-view [render-side player-side identity deck deck-count]
-  (let [is-runner (= :runner render-side)
-        deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)
-        tr-vec (if is-runner
-                 [:game_stack-count (str "Stack (" deck-count-number ")")]
-                 [:game_rnd-count (str "R&D (" deck-count-number ")")])
-        title (tr (if is-runner [:game_stack "Stack"] [:game_rnd "R&D"]))
-        ref (if is-runner "stack" "rd")
-        menu-ref (keyword (str ref "-menu"))
-        content-ref (keyword (str ref "-content"))]
-    (fn [render-side player-side identity deck]
+  (fn [render-side player-side identity deck deck-count]
+    (let [is-runner (= :runner render-side)
+          deck-count-number (if (nil? @deck-count) (count @deck) @deck-count)
+          tr-vec (if is-runner
+                   [:game_stack-count (str "Stack (" deck-count-number ")")]
+                   [:game_rnd-count (str "R&D (" deck-count-number ")")])
+          title (tr (if is-runner [:game_stack "Stack"] [:game_rnd "R&D"]))
+          ref (if is-runner "stack" "rd")
+          menu-ref (keyword (str ref "-menu"))
+          content-ref (keyword (str ref "-content"))]
       ;; deck-count is only sent to live games and does not exist in the replay
       [:div.deck-container (drop-area title {})
        [:div.blue-shade.deck {:on-click (when (and (= render-side player-side) (not-spectator?))
