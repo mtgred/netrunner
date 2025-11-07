@@ -43,7 +43,7 @@
   [state side command]
   (let [prompt-type (get-in @state [side :prompt-state :prompt-type])]
     ;; we can process these commands whenever, they are for fixing stuff
-    (or (contains? #{"/close-prompt" "/undo-click" "/undo-turn" "/swap-sides" "/save-replay"} (str/trim command))
+    (or (contains? #{"/close-prompt" "/undo-click" "/undo-turn" "/undo-paid-ability" "/swap-sides" "/save-replay"} (str/trim command))
         ;; but otherwise, we should not process commands unless there is no prompt,
         ;; or just a run prompt
         (not prompt-type)

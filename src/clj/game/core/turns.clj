@@ -71,6 +71,7 @@
     ;; Functions to set up state for undo-turn functionality
     (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
     (swap! state assoc :click-states [])
+    (swap! state dissoc :paid-ability-state)
     (swap! state assoc :turn-state (dissoc @state :log :history :turn-state))
 
     ;; resolve turmoil (april fools)
@@ -148,6 +149,7 @@
   ([state side eid _]
    (wait-for
      (trigger-event-simult state side (if (= side :runner) :runner-action-phase-ends :corp-action-phase-ends) nil nil)
+     (swap! state dissoc :paid-ability-state)
      (wait-for
        (handle-end-of-turn-discard state side nil)
        (turn-message state side false)
