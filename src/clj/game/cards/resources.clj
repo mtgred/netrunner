@@ -4001,10 +4001,13 @@
 (defcard "Wasteland"
   {:events [{:event :runner-trash
              :once-per-instance true
-             :req (req (and (first-installed-trash-own? state :runner)
-                            (some #(and (installed? (:card %))
-                                        (runner? (:card %)))
-                                  targets)))
+             :req (req (letfn [(valid-ctx?
+                                 [targets]
+                                 (some
+                                   (every-pred installed? runner? (complement condition-counter?))
+                                   (map :card targets)))]
+                         (and (valid-ctx? targets)
+                              (first-event? state side :runner-trash valid-ctx?))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]})
