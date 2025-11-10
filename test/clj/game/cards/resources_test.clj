@@ -7916,6 +7916,22 @@
     (is (= 4 (count (:discard (get-runner)))) "Fall Guy trashed")
     (is (= 8 (:credit (get-runner))) "Gained 2c from Fall Guy but no credits from Wasteland")))
 
+(deftest wasteland-vs-cond-counter
+  ;; Wasteland - Gain 1c the first time you trash an installed card of yours each turn
+  (do-game
+    (new-game {:corp {:hand ["IPO"]}
+               :runner {:hand ["Wasteland" "Jarogniew Mercs" "On the Lam" "Isolation"]
+                        :credits 7}})
+    (take-credits state :corp)
+    (play-cards state :runner "Wasteland" ["On the Lam" "Wasteland"] "Jarogniew Mercs")
+    (is (changed? [(:credit (get-runner)) 0
+                   (count-tags state) 0]
+          (click-prompts state :runner "On the Lam" "Yes" "1"))
+        "Did not gain a credit from wasteland")
+    (is (changed? [(:credit (get-runner)) (+ 5 1)]
+          (play-cards state :runner ["Isolation" "Jarogniew Mercs"]))
+        "Gained from isolation")))
+
 (deftest whistleblower-agenda-interactions
   (doseq [agenda-name ["The Future Perfect" "NAPD Contract" "Degree Mill" "Ikawah Project" "Obokata Protocol"]]
     (testing (str "Whistleblower " agenda-name " interaction")
