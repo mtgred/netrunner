@@ -4,8 +4,8 @@
                   :kaocha.filter/focus-meta ^:replace [:kaocha/focus]
                   :kaocha.filter/skip-meta ^:replace [:kaocha/skip]
                   :kaocha/ns-patterns ["-test$"]
-                  :kaocha/source-paths ["src"]
-                  :kaocha/test-paths ["test"]}]
+                  :kaocha/source-paths ["src" "dev/src/clj"]
+                  :kaocha/test-paths ["test" "dev/test"]}]
   :kaocha/color? true
   :kaocha/fail-fast? false
   :kaocha/reporter #profile {:default kaocha.report.progress/report
