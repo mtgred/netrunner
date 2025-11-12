@@ -303,6 +303,7 @@
     {:label "Take all hosted credits"
      :change-in-game-state {:req (req (pos? (get-counters card :credit)))}
      :async true
+     :msg (msg "gain " (get-counters card :credit) " [Credits]")
      :effect (req (when (:action ab-base) (play-tiered-sfx state side "click-credit" 3 (get-counters card :credit)))
                   (take-credits state side eid card :credit :all))}
     ab-base))
