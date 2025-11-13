@@ -1170,8 +1170,7 @@
                                   true)))))}]})
 
 (defcard "Dean Lister"
-  {:abilities [{:trash-icon true
-                :change-in-game-state {:req (req (some #(has-subtype? % "Icebreaker") (all-installed state :runner)))
+  {:abilities [{:change-in-game-state {:req (req (some #(has-subtype? % "Icebreaker") (all-installed state :runner)))
                                        :pay-cost true}
                 :label "pump icebreaker"
                 :msg (msg "give +1 strength for each card in [their] Grip to " (:title target) " until the end of the run")
@@ -2832,7 +2831,7 @@
 (defcard "Political Operative"
   {:req (req (some #{:hq} (:successful-run runner-reg)))
    :abilities [{:async true
-                :trash-icon true
+                :fake-cost [(->c :trash-can)]
                 :label "Trash a rezzed card"
                 :effect
                 (effect
@@ -3101,7 +3100,7 @@
 
 (defcard "Salvaged Vanadis Armory"
   {:events [{:event :damage
-             :trash-icon true
+             :fake-cost [(->c :trash-can)]
              :optional
              {:waiting-prompt true
               :prompt "Trash Salvaged Vanadis Armory to force the Corp to trash the top cards of R&D?"
@@ -3324,7 +3323,7 @@
    ;; req to use ability - can pay to install at least one of the cards
    :abilities [{:async true
                 :fake-cost [(->c :trash-can)]
-                :trash-icon true
+                :label "Install a hosted card"
                 :change-in-game-state {:req (req (some #(and (not (event? (get-card state %)))
                                                              (runner-can-pay-and-install?
                                                                state side
@@ -3342,13 +3341,19 @@
                                     :waiting-prompt true
                                     :not-distinct true
                                     :async true
-                                    :choices (req (filter #(and (not (event? %))
-                                                                (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -1})) set-aside-cards))
-                                    :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
-                                              (enumerate-str (map :title (remove-once #(same-card? % target) set-aside-cards)))
-                                              " are trashed as a result")
-                                    :effect (req (wait-for (runner-install state side (make-eid  state (assoc eid :source card :source-type :runner-install)) target {:cost-bonus -1})
-                                                           (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card})))}
+                                    :choices (req (if-let [options (seq (filter #(and (not (event? %))
+                                                                                      (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -1})) set-aside-cards))]
+                                                    options
+                                                    ["Done"]))
+                                    :msg (msg (if (= target "Done")
+                                                (str "trash " (enumerate-str (map :title set-aside-cards)))
+                                                (str "install " (:title target) ", lowering its install cost by 1 [Credits]. "
+                                                     (enumerate-str (map :title (remove-once #(same-card? % target) set-aside-cards)))
+                                                     " are trashed as a result")))
+                                    :effect (req (if (= target "Done")
+                                                   (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card})
+                                                   (wait-for (runner-install state side (make-eid  state (assoc eid :source card :source-type :runner-install)) target {:cost-bonus -1})
+                                                             (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card}))))}
                                    card nil))))}]})
 
 (defcard "Symmetrical Visage"
