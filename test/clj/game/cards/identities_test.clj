@@ -845,6 +845,24 @@
       (is (last-log-contains? state "trashes All-nighter to use All-nighter")
           "All-nighter is now logged correctly, having paid all costs")))
 
+(deftest armand-geist-walker-functions-correctly-in-eternal
+  (do-game
+    (new-game {:runner {:id "Armand \"Geist\" Walker: Tech Lord"
+                        :deck [(qty "Ika" 10)]
+                        :hand ["Simulchip" "Tech Trader" "Rezeki"]}
+               :corp {:hand ["IPO"]}})
+    (take-credits state :corp)
+    (play-cards state :runner "Simulchip" "Rezeki" "Tech Trader")
+    (is (changed? [(count (:hand (get-runner))) 0]
+          (card-ability state :runner "Simulchip" 0)
+          (click-card state :runner "Rezeki"))
+        "No checkpoint yet")
+    (is (changed? [(:credit (get-runner)) 1
+                   (count (:hand (get-runner))) 1]
+          (click-prompt state :runner "Tech Trader"))
+        "1 draw 1 cred")
+    (click-card state :runner "Rezeki")))
+
 (deftest asa-group-security-through-vigilance-asa-group-should-not-allow-installing-operations
     ;; Asa Group should not allow installing operations
     (do-game
