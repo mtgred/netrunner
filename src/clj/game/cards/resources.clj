@@ -3323,7 +3323,7 @@
                                (host state side (get-card state card) c {:facedown true})))}
    ;; req to use ability - can pay to install at least one of the cards
    :abilities [{:async true
-                :label "install a hosted card"
+                :fake-cost [(->c :trash-can)]
                 :trash-icon true
                 :change-in-game-state {:req (req (some #(and (not (event? (get-card state %)))
                                                              (runner-can-pay-and-install?
@@ -3334,22 +3334,22 @@
                                                                 :no-toast true}))
                                                        (seq (:hosted card))))}
                 :effect (req (let [set-aside-cards (set-aside state side eid (:hosted card))]
-                               (wait-for (trash state side card {:cause :ability-cost :cause-card card})
-                                         (system-msg state side "trashed")
-                                         (continue-ability
-                                           state side
-                                           {:prompt "Choose a set-aside card to install"
-                                            :waiting-prompt true
-                                            :not-distinct true
-                                            :async true
-                                            :choices (req (filter #(and (not (event? %))
-                                                                        (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -1})) set-aside-cards))
-                                            :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
-                                                      (enumerate-str (map :title (remove-once #(same-card? % target) set-aside-cards)))
-                                                      " are trashed as a result")
-                                            :effect (req (wait-for (runner-install state side (make-eid  state (assoc eid :source card :source-type :runner-install)) target {:cost-bonus -1})
-                                                                   (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card})))}
-                                           card nil))))}]})
+                               (wait-for
+                                 (pay state side card (->c :trash-can))
+                                 (continue-ability
+                                   state side
+                                   {:prompt "Choose a set-aside card to install"
+                                    :waiting-prompt true
+                                    :not-distinct true
+                                    :async true
+                                    :choices (req (filter #(and (not (event? %))
+                                                                (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -1})) set-aside-cards))
+                                    :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
+                                              (enumerate-str (map :title (remove-once #(same-card? % target) set-aside-cards)))
+                                              " are trashed as a result")
+                                    :effect (req (wait-for (runner-install state side (make-eid  state (assoc eid :source card :source-type :runner-install)) target {:cost-bonus -1})
+                                                           (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card})))}
+                                   card nil))))}]})
 
 (defcard "Symmetrical Visage"
   {:events [{:event :runner-click-draw
