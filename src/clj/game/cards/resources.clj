@@ -3384,11 +3384,11 @@
                                             (gain-tags :runner eid 1))}}}]})
 
 (defcard "Tech Trader"
-  {:events [{:event :runner-trash
-             :req (req (and (= side :runner)
-                            (= :ability-cost (:cause target))))
-             :msg "gain 1 [Credits]"
+  {:events [{:event :costs-paid
              :async true
+             :interactive (req true)
+             :req (req (->> context :payment (map :paid/type) (some #{:trash-can})))
+             :msg "gain 1 [Credits]"
              :effect (effect (gain-credits eid 1))}]})
 
 (defcard "Technical Writer"
