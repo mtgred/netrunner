@@ -367,7 +367,7 @@
                 :effect (req (doseq [c (:hosted card)]
                                (move state side c :hand)))}
                {:label "Add all hosted cards to the grip"
-                :trash-icon true
+                :fake-cost [(->c :trash-can)]
                 :async true
                 :effect (req (let [hosted-cards (:hosted card)]
                                (doseq [c hosted-cards]
@@ -2099,7 +2099,7 @@
   {:prevention [{:prevents :damage
                  :type :ability
                  :ability {:async true
-                           :trash-icon true
+                           :fake-cost [(->c :trash-can)]
                            :req (req (and (preventable? context)
                                           (same-card? (:source-card context) (:access @state))))
                            :effect (req (continue-ability
