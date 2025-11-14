@@ -1517,7 +1517,7 @@
                          (some (every-pred rezzed? (complement agenda?))
                                (all-installed state :corp))))
              :choices {:card (every-pred installed? corp? rezzed? (complement agenda?))}
-             :cost [(->c :trash-can 1)]
+             :cost [(->c :trash-self 1)]
              :async true
              :effect (req (derez state side eid target))}]})
 

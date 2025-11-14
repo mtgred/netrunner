@@ -929,7 +929,7 @@
                    :prompt (msg "Trash " (:title card) " and pay " (rez-cost state :corp (:card context))
                                 " [Credits] to derez " (:title (:card context)) "?")
                    :yes-ability
-                   {:cost [(->c :credit (rez-cost state :corp (:card context))) (->c :trash-can)]
+                   {:cost [(->c :credit (rez-cost state :corp (:card context))) (->c :trash-self)]
                     :async true
                     :effect (req (wait-for
                                    (derez state :runner (:card context) {:msg-keys {:source-card card :and-then " and prevent the Corp from rezzing it for the remainder of this turn."}})
@@ -1581,7 +1581,7 @@
              :skippable true
              :optional {:req (req (<= 15 (:credit corp)))
                         :prompt (msg "Trash Fransofia Ward to bypass " (:title (:ice context)) "?")
-                        :yes-ability {:cost [(->c :trash-can)]
+                        :yes-ability {:cost [(->c :trash-self)]
                                       :msg (msg "bypass " (:title (:ice context)))
                                       :effect (req (bypass-ice state))}}}]})
 
