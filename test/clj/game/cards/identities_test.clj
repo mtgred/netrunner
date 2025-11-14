@@ -863,6 +863,18 @@
         "1 draw 1 cred")
     (click-card state :runner "Rezeki")))
 
+(deftest armand-geist-walker-does-not-trigger-from-trash-self-costs
+  (do-game
+    (run-and-encounter-ice-test "Hammer"
+                                {:runner {:id "Armand \"Geist\" Walker: Tech Lord"
+                                          :deck [(qty "Ika" 10)]}
+                                 :corp {:credits 25}}
+                                {:rig ["Fransofia Ward"]})
+    (is (changed? [(count (:hand (get-runner))) 0
+                   (count (:discard (get-runner))) 1]
+          (click-prompt state :runner "Yes"))
+        "Bypassed using trash-self on ward, did not draw")))
+
 (deftest asa-group-security-through-vigilance-asa-group-should-not-allow-installing-operations
     ;; Asa Group should not allow installing operations
     (do-game
