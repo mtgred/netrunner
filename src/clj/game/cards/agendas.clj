@@ -34,8 +34,8 @@
    [game.core.hosting :refer [host]]
    [game.core.ice :refer [get-current-ice update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [card-init]]
-   [game.core.installing :refer [corp-install corp-install-msg]]
-   [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-cards-async swap-ice
+   [game.core.installing :refer [corp-install corp-install-msg swap-cards-async]]
+   [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-ice
                              trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? ->c]]
