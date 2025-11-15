@@ -836,7 +836,7 @@
 (defn rez-impl
   ([state side card] (rez-impl state side card nil))
   ([state _side card {:keys [expect-rez] :or {expect-rez true}}]
-   (let [card (get-card state card)]
+   (let [card (maybe-card state card)]
      (is' (installed? card) (str (:title card) " is installed"))
      (is' (not (rezzed? card)) (str (:title card) " is unrezzed"))
      (when (and (installed? card)
