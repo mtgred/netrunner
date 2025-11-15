@@ -2989,6 +2989,35 @@
     (click-prompt state :runner "Yes")
     (is (= 2 (:random-access-limit (core/num-cards-to-access state :runner :rd nil))))))
 
+(deftest devas-work-with-mu-blanking-hosts
+  (do-game
+    (new-game {:corp {:hand ["IPO"]}
+               :runner {:hand ["Sadyojata" "Aghora" "NetChip"]
+                        :credits 20}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (play-cards state :runner "NetChip" ["Aghora" "NetChip"])
+    (is (changed? [(core/available-mu state) 0]
+          (card-ability state :runner "Aghora" 2)
+          (click-card state :runner "Sadyojata"))
+        "No memory")))
+
+(deftest devas-fire-events-on-swap-async-install
+  (do-game
+    (new-game {:corp {:hand ["IPO"]}
+               :runner {:hand ["Vamadeva" "Aghora" "Scheherazade"
+                               "Technical Writer"]
+                        :credits 20}})
+    (take-credits state :corp)
+    (core/gain state :runner :click 10)
+    (play-cards state :runner "Technical Writer" "Scheherazade" ["Aghora" "Scheherazade"])
+    (is (changed? [(core/available-mu state) 0
+                   (:credit (get-runner)) -1
+                   (get-counters (get-resource state 0) :credit) 1]
+          (card-ability state :runner "Aghora" 2)
+          (click-card state :runner "Vamadeva"))
+        "Scheherezade and tech writer fired")))
+
 (deftest dhegdheer-with-credit-savings
   ;; with credit savings
   (do-game
