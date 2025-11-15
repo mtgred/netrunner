@@ -875,6 +875,18 @@
           (click-prompt state :runner "Yes"))
         "Bypassed using trash-self on ward, did not draw")))
 
+(deftest armand-geist-walker-does-not-trigger-from-corp-trash-effects
+  (do-game
+    (new-game
+      {:runner {:id "Armand \"Geist\" Walker: Tech Lord"
+                :deck [(qty "Ika" 10)]}
+       :corp {:hand ["Mavirus"]}})
+    (play-from-hand state :corp "Mavirus" "New remote")
+    (rez state :corp "Mavirus")
+    (is (changed? [(count (:hand (get-runner))) 0]
+          (card-ability state :corp "Mavirus" 0))
+        "Did not draw from corp trash can")))
+
 (deftest asa-group-security-through-vigilance-asa-group-should-not-allow-installing-operations
     ;; Asa Group should not allow installing operations
     (do-game
