@@ -228,6 +228,11 @@
     :sync? true
     :validate-fn boolean?
     :doc "Keep card zoom window pinned open"}
+   {:key :pin-base-art
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Zoom window will always use base art if possible"}
    {:key :player-stats-icons
     :default true
     :sync? false  ; device-specific
