@@ -3392,7 +3392,8 @@
   {:events [{:event :costs-paid
              :async true
              :interactive (req true)
-             :req (req (->> context :payment (map :paid/type) (some #{:trash-can})))
+             :req (req (and (= :runner (:side context))
+                            (->> context :payment (map :paid/type) (some #{:trash-can}))))
              :msg "gain 1 [Credits]"
              :effect (effect (gain-credits eid 1))}]})
 

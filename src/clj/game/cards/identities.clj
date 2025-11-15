@@ -385,7 +385,8 @@
   {:events [{:event :costs-paid
              :async true
              :interactive (req true)
-             :req (req (->> context :payment (map :paid/type) (some #{:trash-can})))
+             :req (req (and (= :runner (:side context))
+                            (->> context :payment (map :paid/type) (some #{:trash-can}))))
              :msg "draw 1 card"
              :effect (effect (draw eid 1))}]})
 
