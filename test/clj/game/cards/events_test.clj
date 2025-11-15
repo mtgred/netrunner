@@ -3928,6 +3928,21 @@
       (run-continue state)
       (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")))
 
+(deftest inside-job-vs-doppelganger
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Inside Job" "Doppelgänger"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (play-cards state :runner "Doppelgänger" ["Inside Job" "HQ"])
+    (run-continue-until state :encounter-ice)
+    (is (= :movement (:phase @run)) "Bypassed")
+    (run-continue-until state :success)
+    (click-prompts state :runner "Yes" "HQ")
+    (run-continue-until state :encounter-ice)
+    (is (= :encounter (:phase @run)) "Did not bypass on doppel run")))
+
 (deftest inside-job-only-bypasses-one-ice
     ;; Only bypasses one ice
     (do-game
