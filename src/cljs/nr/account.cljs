@@ -21,8 +21,6 @@
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]))
 
-;; TODO - can we pass hiccup to the toast?
-
 (defn- tr-option
   [tr-vec ref]
   {:name (tr tr-vec) :ref ref :data-i18n-key (first tr-vec)})
@@ -555,6 +553,13 @@
                                       :on-change #(swap! s assoc :card-zoom (.. % -target -value))
                                       :checked (= (:card-zoom @s) (:ref option))}]
                       [:span {:data-i18n-key (:data-i18n-key option)} (:name option)]]]))
+           [:br]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :name "pin-base-art"
+                             :checked (:pin-base-art @s)
+                             :on-change #(swap! s assoc :pin-base-art (.. % -target -checked))}]
+             [tr-span [:settings_pin-base-art "Zoomed cards always use base art"]]]]
            [:br]
            [:div
             [:label [:input {:type "checkbox"
