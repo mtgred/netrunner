@@ -103,7 +103,7 @@
 (defn expect-type
   [type-name choice]
   (str "Expected a " type-name ", received [ " choice
-                                            " ] of type " (type choice) "."))
+       " ] of type " (type choice) "."))
 
 (defn click-card-impl
   [state side card]
@@ -415,10 +415,24 @@
      (core/fake-checkpoint state)
      state)))
 
+(defn maybe-card
+  "Query a card by name if possible, for the use of card abilities"
+  [state card]
+  (if (map? card)
+    (get-card state card)
+    (let [all-cards (core/get-all-cards state)
+          matching-cards (filter #(= card (core/get-title %)) all-cards)]
+      (if (= (count matching-cards) 1)
+        (first matching-cards)
+        (is' (= 1 (count matching-cards))
+             (str "Expected to use ability for card [ " card
+                  " ] but found " (count matching-cards)
+                  " matching cards."))))))
+
 ;;; Card related functions
 (defn card-ability-impl
   [state side card ability & targets]
-  (let [card (get-card state card)
+  (let [card (maybe-card state card)
         ability (cond
                   (number? ability) ability
                   (string? ability) (some #(when (= (:label (second %)) ability) (first %)) (map-indexed vector (:abilities card)))
@@ -822,7 +836,7 @@
 (defn rez-impl
   ([state side card] (rez-impl state side card nil))
   ([state _side card {:keys [expect-rez] :or {expect-rez true}}]
-   (let [card (get-card state card)]
+   (let [card (maybe-card state card)]
      (is' (installed? card) (str (:title card) " is installed"))
      (is' (not (rezzed? card)) (str (:title card) " is unrezzed"))
      (when (and (installed? card)

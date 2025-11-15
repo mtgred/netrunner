@@ -379,7 +379,7 @@
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
    :abilities [{:label "Place 1 advancement token on a card in this server"
                 :async true
-                :trash-icon true
+                :fake-cost [(->c :trash-can)]
                 :effect (effect (continue-ability
                                   {:prompt "Choose a card in this server"
                                    :choices {:card #(in-same-server? % card)}

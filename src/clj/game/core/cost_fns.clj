@@ -141,12 +141,11 @@
         prevents  (map :ability (:prevention (card-def card)))
         access-ab [(get-in (card-def card) [:interactions :access-ability])]
         events (:events (card-def card))]
-    (or (some :trash-icon (concat abilities events prevents access-ab))
-        (some #(= :trash-can (:cost/type %))
-              (->> (concat abilities events prevents access-ab)
-                   (map :cost)
-                   (vec)
-                   (merge-costs))))))
+    (some #(= :trash-can (:cost/type %))
+          (->> (concat abilities events prevents access-ab)
+               (map (fn [ab] [(:cost ab) (:fake-cost ab)]))
+               (vec)
+               (merge-costs)))))
 
 (defn card-ability-cost
   "Returns a list of all costs (printed and additional) required to use a given ability"

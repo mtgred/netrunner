@@ -3435,14 +3435,10 @@
                                  "Street Peddler"]
                           :credits 100}})
       (take-credits state :corp)
-      (play-from-hand state :runner "Masterwork (v37)")
-      (play-from-hand state :runner "Street Peddler")
-      (play-from-hand state :runner "DJ Fenris")
-      (click-prompt state :runner "Hayley Kaplan: Universal Scholar")
-      (play-from-hand state :runner "The Class Act")
+      (play-cards state :runner "Masterwork (v37)" "Street Peddler" ["DJ Fenris" "Hayley Kaplan: Universal Scholar"] "The Class Act")
       (take-credits state :runner)
       (is (= 5 (count (:hand (get-runner)))) "Starts with 5 cards in hand")
-      (card-ability state :runner (get-resource state 0) 0)
+      (card-ability state :runner "Street Peddler" 0)
       (is (= 5 (count (:set-aside (get-runner)))) "Geist's draw triggers The Class Act, and street peddler has three set-aside cards")
       (is (= "The Class Act" (:title (:card (prompt-map :runner)))))
       ;; click the drawn card, which is last in the set-aside zone
