@@ -78,7 +78,7 @@
 
 (defn- init-game-state
   "Initialises the game state"
-  [{:keys [players gameid timer spectatorhands api-access save-replay room turmoil] :as game}]
+  [{:keys [players gameid timer spectatorhands api-access save-replay room] :as game}]
   (let [corp (some #(when (corp? %) %) players)
         runner (some #(when (runner? %) %) players)
         corp-deck (create-deck (:deck corp))
@@ -106,7 +106,6 @@
         (inst/now)
         {:timer timer
          :spectatorhands spectatorhands
-         :turmoil turmoil
          :api-access api-access
          :save-replay save-replay}
         (new-corp (:user corp) corp-identity corp-options (map #(assoc % :zone [:deck]) corp-deck) corp-deck-id corp-quote)
