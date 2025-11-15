@@ -570,7 +570,6 @@
    remove-from-currently-drawing
    swap-agendas
    swap-cards
-   swap-cards-async
    swap-ice
    swap-installed
    trash

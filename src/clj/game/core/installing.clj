@@ -4,7 +4,7 @@
     [clojure.string :as string]
     [game.core.agendas :refer [update-advancement-requirement]]
     [game.core.board :refer [all-installed get-remotes installable-servers server->zone all-installed-runner-type]]
-    [game.core.card :refer [agenda? asset? condition-counter? convert-to-condition-counter  corp? event? get-card get-zone has-subtype? ice? installed? operation? program? resource? rezzed? upgrade?]]
+    [game.core.card :refer [agenda? asset? card-index condition-counter? convert-to-condition-counter  corp? event? get-card get-zone has-subtype? ice? installed? operation? program? resource? rezzed? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.costs :refer [total-available-credits]]
@@ -16,7 +16,7 @@
     [game.core.ice :refer [update-breaker-strength]]
     [game.core.initializing :refer [ability-init card-init corp-ability-init runner-ability-init]]
     [game.core.memory :refer [available-mu expected-mu sufficient-mu? update-mu]]
-    [game.core.moving :refer [move trash trash-cards]]
+    [game.core.moving :refer [move trash trash-cards swap-cards swap-installed]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c value]]
     [game.core.props :refer [add-prop]]
     [game.core.revealing :refer [reveal]]
@@ -797,3 +797,41 @@
                   (register-events state side card events)
                   (register-static-abilities state side card)
                   (complete-with-result state side eid card))))))
+
+(defn swap-cards-async
+  "Swaps two cards when one or both aren't installed"
+  [state side eid a b]
+  (if (= side :corp)
+    (let [async-result (swap-cards state side a b)
+          moved-a (first async-result)
+          moved-b (second async-result)
+          install-event (= 1 (count (filter installed? [moved-a moved-b])))]
+      ;; todo - we might need behaviour for runner swap installs down the line, depending on future cards
+      ;; that's a problem for another day
+      (if install-event
+        (let [installed-card (if (installed? moved-a) moved-a moved-b)
+              cdef (card-def installed-card)]
+          (queue-event state :corp-install {:card (get-card state installed-card)
+                                            :install-state (:install-state cdef)})
+          (wait-for (checkpoint state nil (make-eid state eid))
+                    (complete-with-result state side eid async-result)))
+        (complete-with-result state side eid async-result)))
+    ;; runner side
+    (case (count (filter installed? [a b]))
+      0 (complete-with-result state side eid (swap-cards state side a b))
+      1 (let [old-installed (first (filter installed? [a b]))
+              to-install (first (filter (complement installed?) [a b]))
+              moved-a (move state side old-installed (get-zone to-install) {:index (card-index state to-install)
+                                                                            :suppress-event true
+                                                                            :swap true})
+              install-args {:previous-zone (:zone to-install)
+                            :host-card (when-let [host (:host old-installed)]
+                                         (get-card state host))
+                            :no-mu (when-let [host (:host old-installed)]
+                                     (:no-mu (some-hosting-effect state host)))
+                            :no-msg true}]
+          (wait-for
+            (runner-install-continue state side to-install install-args)
+            (complete-with-result state side eid [async-result moved-a])))
+      ;; this should not be possible
+      2 (complete-with-result state side eid nil))))

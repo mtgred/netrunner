@@ -38,9 +38,9 @@
                           update-ice-strength]]
    [game.core.identities :refer [disable-card enable-card]]
    [game.core.initializing :refer [card-init]]
-   [game.core.installing :refer [corp-install corp-install-msg]]
+   [game.core.installing :refer [corp-install corp-install-msg swap-cards-async]]
    [game.core.memory :refer [available-mu init-mu-cost]]
-   [game.core.moving :refer [as-agenda forfeit mill move swap-cards swap-cards-async
+   [game.core.moving :refer [as-agenda forfeit mill move swap-cards
                              swap-ice swap-installed trash
                              trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]

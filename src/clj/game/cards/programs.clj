@@ -36,7 +36,7 @@
                           unbroken-subroutines-choice update-all-icebreakers update-breaker-strength]]
    [game.core.initializing :refer [ability-init card-init subroutines-init]]
    [game.core.installing :refer [install-locked? runner-can-install? runner-can-pay-and-install?
-                                 runner-install]]
+                                 runner-install swap-cards-async]]
    [game.core.link :refer [get-link]]
    [game.core.mark :refer [identify-mark-ability mark-changed-event]]
    [game.core.memory :refer [available-mu expected-mu update-mu]]
@@ -88,14 +88,7 @@
                   :choices {:card #(and (in-hand? %)
                                         (has-subtype? % "Deva"))}
                   :msg (msg "swap in " (:title target) " from the grip")
-                  :effect (req (if-let [hostcard (:host card)]
-                                 (let [hosted (host state side (get-card state hostcard) target)]
-                                   (card-init state side hosted {:resolve-effect false
-                                                                 :init-data true})
-                                   (move state side card :hand))
-                                 (let [[_ moved-target] (swap-cards state side card target)]
-                                   (card-init state side moved-target {:resolve-effect false
-                                                                       :init-data true}))))}]}))
+                  :effect (req (swap-cards-async state side eid card target))}]}))
 
 (defn- install-from-heap
   "Install-from-heap ability for conspiracy breakers

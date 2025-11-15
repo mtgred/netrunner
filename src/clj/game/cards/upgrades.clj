@@ -30,9 +30,9 @@
    [game.core.hand-size :refer [corp-hand-size+ update-hand-size]]
    [game.core.ice :refer [all-subs-broken? get-current-ice get-run-ices pump-ice resolve-subroutine!
                           unbroken-subroutines-choice update-all-ice update-all-icebreakers]]
-   [game.core.installing :refer [corp-install]]
+   [game.core.installing :refer [corp-install swap-cards-async]]
    [game.core.moving :refer [mill move remove-from-currently-drawing
-                             swap-cards swap-cards-async swap-ice trash trash-cards]]
+                             swap-cards swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? cost-value ->c]]
    [game.core.play-instants :refer [play-instant]]
