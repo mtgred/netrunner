@@ -138,6 +138,7 @@
    "system-gateway" "System Gateway"
    "core" "Core"
    "preconstructed" "Preconstructed"
+   "chimera" "Chimera"
    "eternal" "Eternal"
    "casual" "Casual"))
 
@@ -149,6 +150,7 @@
    "System Gateway" "system-gateway"
    "Core" "core"
    "Preconstructed" "preconstructed"
+   "Chimera" "chimera"
    "Eternal" "eternal"
    "Casual" "casual"))
 
