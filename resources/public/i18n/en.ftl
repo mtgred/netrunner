@@ -478,6 +478,7 @@ format_name = {$format ->
     [all] All
     [any-format] Any Format
     [casual] Casual
+    [chimera] Chimera
     [classic] Classic
     [core-experience] Core Experience
     [core] Core
