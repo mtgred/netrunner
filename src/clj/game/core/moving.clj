@@ -401,6 +401,16 @@
                        (swap! state update-in [:stats :corp :shuffle-count] (fnil + 0) 1)
                        (swap! state update-in [:corp :deck] shuffle)
                        (trigger-event state side :corp-shuffle-deck))
+                     ;; TODO - used exclusively for hellion beta test
+                     (when (and (:access @state)
+                                (some #(same-card? (:access @state) %) (map :card trashlist))
+                                (= :runner side))
+                       (swap! state assoc-in [:runner :register :trashed-accessed-card] true))
+                     ;; TODO - used exclusively for aumakua
+                     (when (and (:breach @state)
+                                (some #(same-card? (:access @state) %) (map :card trashlist))
+                                (= :runner side))
+                       (swap! state assoc-in [:breach :did-trash] true))
                      (swap! state update-in [:trash :trash-list :card] dissoc eid)
                      (when (and side (seq (remove #{side} (map #(to-keyword (:side %)) (map :card trashlist)))))
                        (swap! state assoc-in [side :register :trashed-card] true))
