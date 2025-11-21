@@ -576,15 +576,25 @@
                               card nil)))}]})
 
 (defcard "Blue Sun: Powering the Future"
-  {:flags {:corp-phase-12 (req (and (not (:disabled card))
-                                    (not (is-disabled? state side card))
-                                    (some rezzed? (all-installed state :corp))))}
-   :abilities [{:choices {:card rezzed?}
-                :label "Add 1 rezzed card to HQ and gain credits equal to its rez cost"
-                :msg (msg "add " (:title target) " to HQ and gain " (rez-cost state side target) " [Credits]")
-                :async true
-                :effect (effect (move target :hand)
-                                (gain-credits eid (rez-cost state side target)))}]})
+  (let [blue-sun {:choices {:card rezzed?}
+                  :label "Add 1 rezzed card to HQ and gain credits equal to its rez cost"
+                  :msg (msg "add " (:title target) " to HQ and gain "
+                            (rez-cost state side target) " [Credits]")
+                  :change-in-game-state {:req (req (some rezzed? (all-installed state :corp)))
+                                         :silent true}
+                  :async true
+                  :once :per-turn
+                  :effect (effect (move target :hand)
+                                  (gain-credits eid (rez-cost state side target)))}]
+    {:flags {:corp-phase-12 (req (and (not (:disabled card))
+                                      (not (is-disabled? state side card))
+                                      (not-used-once? state {:once :per-turn} card)
+                                      (some rezzed? (all-installed state :corp))))}
+     :events [(merge {:event :corp-turn-begins
+                      :automatic :last
+                      :skippable true}
+                     blue-sun)]
+   :abilities [blue-sun]}))
 
 (defcard "Boris \"Syfr\" Kovac: Crafty Veteran"
   {:events [{:event :pre-start-game
