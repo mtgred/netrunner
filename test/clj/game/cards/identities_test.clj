@@ -1418,7 +1418,7 @@
       (take-credits state :corp)
       (run-empty-server state "Archives")
       (run-empty-server state "HQ")
-      (click-prompt state :runner "OK")
+      (click-prompt state :runner "[Edward Kim] Trash")
       (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first")
       (is (no-prompt? state :corp))
       (is (no-prompt? state :runner))
@@ -1445,7 +1445,7 @@
         (run-continue state)
         (is (= 1 (count (:discard (get-corp)))))
         (run-empty-server state "HQ")
-        (click-prompt state :runner "OK")
+        (click-prompt state :runner "[Edward Kim] Trash")
         (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
 
 (deftest edward-kim-humanity-s-hammer-do-not-trigger-maw-on-first-operation-access-due-to-trash
@@ -1459,7 +1459,7 @@
       (play-from-hand state :runner "Maw")
       (is (zero? (count (:discard (get-corp)))) "No cards in Archives")
       (run-empty-server state "HQ")
-      (click-prompt state :runner "OK")
+      (click-prompt state :runner "[Edward Kim] Trash")
       (is (= 1 (count (:discard (get-corp)))) "Only one card trashed from HQ, by Ed Kim")
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
@@ -1489,7 +1489,7 @@
       (play-from-hand state :runner "Gang Sign")
       (take-credits state :runner)
       (play-and-score state "Hostile Takeover")
-      (click-prompt state :runner "OK")
+      (click-prompt state :runner "[Edward Kim] Trash")
       (is (no-prompt? state :corp))
       (is (no-prompt? state :runner))
       (is (nil? (get-run)) "No run has been created")))
@@ -1514,7 +1514,7 @@
                  :runner {:id "Edward Kim: Humanity's Hammer"}})
       (take-credits state :corp)
       (run-empty-server state "HQ")
-      (click-prompt state :runner "OK")
+      (click-prompt state :runner "[Edward Kim] Trash")
       (is (last-log-contains? state "Runner uses Edward Kim: Humanity's Hammer to trash Hedge"))))
 
 (deftest esa-afontov-eco-insurrectionist

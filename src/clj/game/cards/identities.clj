@@ -763,7 +763,7 @@
                               state side
                               (let [c target]
                                 {:prompt (str "You accessed" (:title c))
-                                 :choices ["OK"]
+                                 :choices ["[Edward Kim] Trash"]
                                  :async true
                                  :msg (msg "trash " (:title c))
                                  :effect (req (trash state side eid c nil))})
