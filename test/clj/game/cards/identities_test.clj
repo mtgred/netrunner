@@ -698,6 +698,21 @@
     (is (= 1 (-> (get-corp) :discard count)) "Alice ability should trash 1 card from HQ")
     (is (-> (get-corp) :discard first :seen not) "Discarded card should be facedown when access is replaced")))
 
+(deftest alice-merchant-vs-sabotage
+  ;; Alice Merchant
+  (do-game
+    (new-game {:runner {:id "Alice Merchant: Clan Agitator"
+                        :deck ["Nga" "Dirty Laundry"]}
+               :corp {:hand ["IPO"]
+                      :deck ["Hedge Fund"]}})
+    (take-credits state :corp)
+    (play-cards state :runner "Nga" ["Dirty Laundry" "Archives"])
+    (run-continue-until state :success)
+    (click-prompts state :runner "Nga" "Yes")
+    (click-card state :corp "IPO")
+    (is (no-prompt? state :corp))
+    (is (no-prompt? state :runner))))
+
 (deftest andromeda-dispossessed-ristie
   ;; Andromeda - 9 card starting hand, 1 link
   (do-game
