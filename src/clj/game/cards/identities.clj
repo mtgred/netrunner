@@ -754,21 +754,20 @@
 
 (defcard "Edward Kim: Humanity's Hammer"
   {:events [{:event :access
-             :once :per-turn
              :req (req (and (operation? target)
                             (first-event? state side :access #(operation? (first %)))))
              :async true
              :effect (req (if (in-discard? target)
                             (effect-completed state side eid)
-                            (do (when run
-                                  (swap! state assoc-in [:run :did-trash] true))
-                                (swap! state assoc-in [:runner :register :trashed-card] true)
-                                (swap! state assoc-in [:runner :register :trashed-accessed-card] true)
-                                (system-msg state :runner
-                                            (str "uses " (:title card) " to"
-                                                 " trash " (:title target)
-                                                 " at no cost"))
-                                (trash state side eid target nil))))}]})
+                            (continue-ability
+                              state side
+                              (let [c target]
+                                {:prompt (str "You accessed" (:title c))
+                                 :choices ["OK"]
+                                 :async true
+                                 :msg (msg "trash " (:title c))
+                                 :effect (req (trash state side eid c nil))})
+                              card nil)))}]})
 
 (defcard "Ele \"Smoke\" Scovak: Cynosure of the Net"
   {:recurring 1
