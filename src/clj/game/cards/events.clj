@@ -693,11 +693,22 @@
              :effect (req (when (= :deck where)
                             (trigger-event state side :searched-stack)
                             (shuffle! state side :deck))
-                          (runner-install state side (assoc eid :source card :source-type :runner-install)
-                                          (assoc-in target [:special :compile-installed] true)
-                                          {:ignore-all-cost true
-                                           :msg-keys {:display-origin true
-                                                      :install-source card}}))})]
+                          (wait-for
+                            (runner-install state side target
+                                            {:ignore-all-cost true
+                                             :msg-keys {:display-origin true
+                                                        :install-source card}})
+                            (when-let [installed-card async-result]
+                              (register-events
+                                state side card
+                                [{:duration :end-of-run
+                                  :event :run-ends
+                                  :interactive (req true)
+                                  :change-in-game-state {:req (req (installed? (get-card state installed-card)))
+                                                         :silent true}
+                                  :msg (msg "move " (card-str state installed-card) " to the bottom of the stack")
+                                  :effect (req (move state side installed-card :deck))}]))
+                            (effect-completed state side eid)))})]
     {:makes-run true
      :on-play (run-any-server-ability)
      :events [{:event :encounter-ice
@@ -711,18 +722,7 @@
                  :choices (req (if (not (zone-locked? state :runner :discard)) ["Stack" "Heap"] ["Stack"]))
                  :effect (effect (continue-ability
                                    (compile-fn (if (= "Stack" target) :deck :discard))
-                                   card nil))}}}
-              {:event :run-ends
-               :async true
-               :interactive (req true)
-               :effect (req (let [compile-installed (first (filterv #(get-in % [:special :compile-installed])
-                                                                    (all-active-installed state :runner)))]
-                              (if (some? compile-installed)
-                                (do (system-msg state :runner (str "moved " (:title compile-installed)
-                                                                   " to the bottom of the Stack"))
-                                    (move state :runner compile-installed :deck)
-                                    (effect-completed state side eid))
-                                (effect-completed state side eid))))}]}))
+                                   card nil))}}}]}))
 
 (defcard "Concerto"
   (letfn [(reveal-and-load-credits [stack]
