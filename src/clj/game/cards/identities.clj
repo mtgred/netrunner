@@ -324,8 +324,9 @@
              :interactive (req true)
              :automatic :force-discard
              :req (req (and (= :archives (target-server context))
-                            (first-successful-run-on-server? state :archives)
-                            (not-empty (:hand corp))))
+                            (first-successful-run-on-server? state :archives)))
+             :change-in-game-state {:silent true
+                                    :req (req (seq (:hand corp)))}
              :waiting-prompt true
              :prompt "Choose a card in HQ to discard"
              :player :corp
@@ -335,7 +336,6 @@
              :msg "force the Corp to trash 1 card from HQ"
              :async true
              :effect (effect (trash :corp eid target nil))}]})
-
 
 (defcard "Ampère: Cybernetics For Anyone"
   ;; No special implementation
@@ -376,6 +376,7 @@
              :async true
              :choices ["Take 1 tag" "Suffer 2 meat damage"]
              :player :runner
+             :display-side :corp
              :msg (msg "force the Runner to " (decapitalize target))
              :effect (req (if (= target "Take 1 tag")
                             (gain-tags state :runner eid 1)
