@@ -190,6 +190,7 @@
                      (update-floating-event-durations state side :until-next-corp-turn-ends :until-corp-turn-ends))
                  (do (update-lingering-effect-durations state side :until-next-runner-turn-ends :until-runner-turn-ends)
                      (update-floating-event-durations state side :until-next-runner-turn-ends :until-runner-turn-ends)))
+               (swap! state assoc :end-turn true)
                (clean-set-aside! state side)
                (doseq [card (all-active-installed state :runner)]
                  ;; Clear :installed :this-turn as turn has ended
@@ -242,7 +243,6 @@
 (defn end-turn
   ([state side _] (end-turn state side (make-eid state) nil))
   ([state side eid _]
-   (swap! state assoc :end-turn true)
    (wait-for
      (trigger-event-simult state side (if (= side :runner) :runner-action-phase-ends :corp-action-phase-ends) nil nil)
      (swap! state dissoc :paid-ability-state)
