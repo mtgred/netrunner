@@ -88,6 +88,7 @@
                   :choices {:card #(and (in-hand? %)
                                         (has-subtype? % "Deva"))}
                   :msg (msg "swap in " (:title target) " from the grip")
+                  :async true
                   :effect (req (swap-cards-async state side eid card target))}]}))
 
 (defn- install-from-heap
