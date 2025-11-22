@@ -36,8 +36,13 @@
   "set properties of the game state that need to be adjustable by the frontend
   ie: * do we want an offer to trash like cards on installs?"
   [state side {:keys [key value]}]
-  (case key
-    :trash-like-cards (swap! state assoc-in [side :trash-like-cards] value)))
+  (let [acceptable-keys #{:trash-like-cards :auto-purge
+                          :force-phase-12-self :force-phase-12-opponent
+                          :force-post-discard-self :force-post-discard-opponent}]
+    (cond
+      (acceptable-keys key) (swap! state assoc-in [side :properties key] value)
+      ;; will throw error otherwise
+      )))
 
 (defn should-process-command?
   [state side command]
