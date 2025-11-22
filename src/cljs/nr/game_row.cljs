@@ -214,13 +214,12 @@
   (when (and open-decklists (not precon))
     [:span.open-decklists " " [tr-span [:lobby_open-decklists-b "(open decklists)"]]]))
 
-(defn game-format [{fmt :format singleton? :singleton turmoil? :turmoil precon :precon open-decklists :open-decklists}]
+(defn game-format [{fmt :format singleton? :singleton precon :precon open-decklists :open-decklists}]
   [:div {:class "game-format"}
    [:span.format-label [tr-span [:lobby_format "Format"]] ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
    [precon-span precon]
    (when singleton? [:span.format-singleton " " [tr-span [:lobby_singleton-b "(singleton)"]]])
-   (when turmoil? [:span.turmoil " " [tr-span [:lobby_span-turmoil "(turmoil)"]]])
    [open-decklists-span precon open-decklists]
    [precon-under-span precon]])
 
