@@ -39,7 +39,7 @@
   ([memory] (display-memory memory false))
   ([memory icon?]
    (let [ctrl (stat-controls-for-side :runner)]
-     (fn [memory]
+     (fn []
        (let [{:keys [available used only-for]} memory
              unused (- available used)
              label (if icon? [:<> unused "/" available " " [:span.anr-icon.mu]]
@@ -68,9 +68,9 @@
 (defmulti stats-area
   (fn [player] (get-in @player [:identity :side])))
 
-(defmethod stats-area "Runner" [_runner]
+(defmethod stats-area "Runner" [runner]
   (let [ctrl (stat-controls-for-side :runner)]
-    (fn [runner]
+    (fn []
       (let [{:keys [click credit run-credit memory link tag brain-damage]} @runner
             base-credit (- credit run-credit)
             plus-run-credit (when (pos? run-credit) (str "+" run-credit))
@@ -110,7 +110,7 @@
 
 (defmethod stats-area "Corp" [corp]
   (let [ctrl (stat-controls-for-side :corp)]
-    (fn [corp]
+    (fn []
       (let [{:keys [click credit bad-publicity active]} @corp
             icons? (get-in @app-state [:options :player-stats-icons] true)]
         [:div.stats-area
@@ -158,13 +158,13 @@
 (defn- gameplay-boolean
   [player target-side key tr-key tr-text]
   (fn []
-    (when (or (not target-side)
-              (= target-side (:side @game-state)))
-      (let [val (:key @player)]
+    (let [val (get-in @player [:properties key] false)]
+      (when (or (not target-side)
+                (= target-side (:side @game-state)))
         [:div [:label [:input {:type "checkbox"
-                               :value true
+                               :key key
                                :checked val
-                               :on-click #(send-command "set-property" {:key key :value (.. % -target -checked)})}]
+                               :on-change #(send-command "set-property" {:key key :value (.. % -target -checked)})}]
                [tr-span [tr-key tr-text]]]]))))
 
 (defn- in-game-options
@@ -177,34 +177,27 @@
 
      ;; Corp Side: auto-purge with mavirus/csv
      [tr-element :h4 [:gameplay-options_timing-windows "Timing Windows"]]
+
      ;; corp perspective window forcing
      [gameplay-boolean player :corp :force-phase-12-self :game_force-phase-12-self-corp "Corp pre-draw PAW"]
      [gameplay-boolean player :corp :force-phase-12-opponent :game_force-phase-12-opponent-corp "Runner turn-begins PAW"]
      [gameplay-boolean player :corp :force-post-discard-self :game_force-post-discard-self-corp "Corp post-discard PAW"]
-     [gameplay-boolean player :corp :force-post-discard-runner :game_force-post-discard-opponent-corp "Runner post-discard PAW"]
+     [gameplay-boolean player :corp :force-post-discard-opponent :game_force-post-discard-opponent-corp "Runner post-discard PAW"]
+
      ;; runner perspective window forcing
      [gameplay-boolean player :runner :force-phase-12-self :game_force-phase-12-self-runner "Runner turn-begins PAW"]
      [gameplay-boolean player :runner :force-phase-12-opponent :game_force-phase-12-opponent-runner "Corp pre-draw PAW"]
      [gameplay-boolean player :runner :force-post-discard-self :game_force-post-discard-self-runner "Runner post-discard PAW"]
-     [gameplay-boolean player :runner :force-post-discard-runner :game_force-post-discard-opponent-runner "Corp post-discard PAW"]
-
-     ;; Runner side: ???
-
-     ;; Force pre-turn-begins window
-
-     ;; Force post-discard window
+     [gameplay-boolean player :runner :force-post-discard-opponent :game_force-post-discard-opponent-runner "Corp post-discard PAW"]
 
      ]))
-
 
 (defn stats-view
   [player]
   (let [selected-tab (r/atom :stats)]
     (fn []
       (let [show-tabs? (really-my-side? (get-in @player [:identity :side]))
-            set-tab! #(do (prn "setting tab: ")
-                          (reset! selected-tab %)
-                          (prn "tab is: " @selected-tab))]
+            set-tab! #(reset! selected-tab %)]
         [:div.panel.blue-shade.stats {:class (when (:active @player) "active-player")}
          (if-not show-tabs?
            [render-player-panel player]
