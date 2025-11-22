@@ -1441,6 +1441,29 @@
           (is (= (inc deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
           (is (nil? (get-program state 0)))))))
 
+(deftest compile-test-vs-hosting
+    ;; vs ending the run via corp action. #3639
+    (do-game
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["Ice Wall"]}
+                 :runner {:deck ["Gordian Blade"]
+                          :hand ["NetChip" "Compile"]}})
+      (play-from-hand state :corp "Ice Wall" "Archives")
+      (let [iw (get-ice state :archives 0)]
+        (take-credits state :corp)
+        (play-from-hand state :runner "NetChip")
+        (play-from-hand state :runner "Compile")
+        (click-prompt state :runner "Archives")
+        (run-continue state)
+        (rez state :corp iw)
+        (run-continue state)
+        (click-prompts state :runner "Yes" "Stack" "Gordian Blade" "NetChip")
+        (is (:installed (first (:hosted (get-hardware state 0)))) "Gordian Blade should be installed")
+        (let [deck (count (:deck (get-runner)))]
+          (fire-subs state iw)
+          (is (= (inc deck) (count (:deck (get-runner)))) "Gordian Blade should be back in stack")
+          (is (nil? (first (:hosted (get-hardware state 0)))) "Gordian Blade should be gone")))))
+
 (deftest compile-test-only-asks-once-per-run-issue-4749
     ;; Only asks once per run. Issue #4749
     (do-game
@@ -3927,6 +3950,21 @@
       (rez state :corp (get-ice state :hq 0))
       (run-continue state)
       (is (= :movement (:phase (get-run))) "Run has bypassed Ice Wall")))
+
+(deftest inside-job-vs-doppelganger
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Inside Job" "Doppelgänger"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (play-cards state :runner "Doppelgänger" ["Inside Job" "HQ"])
+    (run-continue-until state :encounter-ice)
+    (is (= :movement (:phase (:run @state))) "Bypassed")
+    (run-continue-until state :success)
+    (click-prompts state :runner "Yes" "HQ")
+    (run-continue-until state :encounter-ice)
+    (is (= :encounter-ice (:phase (:run @state))) "Did not bypass on doppel run")))
 
 (deftest inside-job-only-bypasses-one-ice
     ;; Only bypasses one ice

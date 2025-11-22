@@ -119,11 +119,6 @@
     [:div.infobox.blue-shade
      [tr-element :p [:lobby_singleton-restriction "This lobby is running in singleton mode. This means decklists will be restricted to only those which do not contain any duplicate cards."]]]))
 
-(defn turmoil-info-box [current-game]
-  (when (:turmoil-mode @current-game)
-    [:div.infobox.blue-shade
-     [tr-element :p [:lobby_turmoil-info "This lobby is running in turmoil mode. The winds of fate shall decide your path to the future."]]]))
-
 (defn swap-sides-button [user gameid players]
   (when (first-user? @players @user)
     (if (< 1 (count @players))
@@ -231,7 +226,6 @@
       [precon-info-box current-game]
       [singleton-info-box current-game]
       [chimera-info-box current-game]
-      [turmoil-info-box current-game]
       (when-not (or (every? :deck @players)
                     (not (is-constructed? current-game)))
         [tr-element :div.flash-message [:lobby_waiting "Waiting players deck selection"]])

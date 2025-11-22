@@ -2682,7 +2682,6 @@
              :async true
              :effect (effect (add-counter eid card :advancement 1 {:placed true}))}]
    :abilities [{:label "Move hosted advancement tokens to another card"
-                :trash-icon true
                 :cost [(->c :trash-can)]
                 :async true
                 :prompt "How many hosted advancement tokens do you want to move?"

@@ -382,10 +382,11 @@
                             (damage state :runner eid :meat 2 {:unboostable true :card card})))}]})
 
 (defcard "Armand \"Geist\" Walker: Tech Lord"
-  {:events [{:event :runner-trash
+  {:events [{:event :costs-paid
              :async true
              :interactive (req true)
-             :req (req (and (= side :runner) (= :ability-cost (:cause target))))
+             :req (req (and (= :runner (:side context))
+                            (->> context :payment (map :paid/type) (some #{:trash-can}))))
              :msg "draw 1 card"
              :effect (effect (draw eid 1))}]})
 

@@ -572,23 +572,8 @@
         (when (in-hand? moved-b) (add-to-currently-drawing state b-side moved-b)))
       [(get-card state moved-a) (get-card state moved-b)])))
 
-(defn swap-cards-async
-  "Swaps two cards when one or both aren't installed"
-  [state side eid a b]
-  (let [async-result (swap-cards state side a b)
-        moved-a (first async-result)
-        moved-b (second async-result)
-        install-event (= 1 (count (filter installed? [moved-a moved-b])))]
-    ;; todo - we might need behaviour for runner swap installs down the line, depending on future cards
-    ;; that's a problem for another day
-    (if (and install-event (= :corp side))
-      (let [installed-card (if (installed? moved-a) moved-a moved-b)
-            cdef (card-def installed-card)]
-        (queue-event state :corp-install {:card (get-card state installed-card)
-                                          :install-state (:install-state cdef)})
-        (wait-for (checkpoint state nil (make-eid state eid))
-                  (complete-with-result state side eid async-result)))
-      (complete-with-result state side eid async-result))))
+;; SWAP CARDS ASYNC:
+;;   SEE: Installing. Circular dependency issues (and it installs in this cases).
 
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side).
