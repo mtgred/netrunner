@@ -20,6 +20,7 @@
     [game.core.winning :refer [flatline]]
     [game.macros :refer [continue-ability req wait-for]]
     [game.utils :refer [dissoc-in enumerate-str quantify]]
+    [jinteki.utils :refer [other-side]]
     [clojure.string :as string]))
 
 (defn- turn-message
@@ -54,6 +55,24 @@
                        (when (= side :corp)
                          (update-all-advancement-requirements state))
                        (effect-completed state side eid)))))
+
+(defn phase-12-pass-priority
+  ([state side _] (phase-12-pass-priority state side (make-eid state) nil))
+  ([state side eid _]
+   (cond
+     (:corp-phase-12 @state)
+     (do (swap! state assoc-in [:corp-phase-12 side] true)
+         (if (and (get-in @state [:corp-phase-12 :corp])
+                  (get-in @state [:corp-phase-12 :runner]))
+           (end-phase-12 state :corp eid _)
+           (effect-completed state side eid)))
+     (:runner-phase-12 @state)
+     (do (swap! state assoc-in [:runner-phase-12 side] true)
+         (if (and (get-in @state [:runner-phase-12 :corp])
+                  (get-in @state [:runner-phase-12 :runner]))
+           (end-phase-12 state :runner eid _)
+           (effect-completed state side eid)))
+     :else nil)))
 
 (defn start-turn
   "Start turn."
@@ -98,16 +117,25 @@
         (neg? extra-clicks) (lose state side :click (abs extra-clicks))
         (pos? extra-clicks) (gain state side :click extra-clicks))
       (swap! state dissoc-in [side :extra-click-temp])
-      (swap! state assoc phase true)
+      (swap! state assoc phase {:active true})
       (trigger-event state side phase nil)
-      (if (not-empty start-cards)
+      (cond
+        (get-in @state [(other-side side) :properties :force-phase-12-opponent])
+        (do (toast state side
+                   (str "players may use abilities "
+                        (if (= side :corp)
+                          " between the start of your turn and your mandatory draw"
+                          " before you can take your first click"))
+                   "info")
+            (swap! state assoc-in [phase :requires-consent] true))
+        (or (get-in @state [side :properties :force-phase-12-self]) (not-empty start-cards))
         (toast state side
                (str "You may use " (enumerate-str (map :title start-cards))
                     (if (= side :corp)
                       " between the start of your turn and your mandatory draw."
                       " before taking your first click."))
                "info")
-        (end-phase-12 state side _)))))
+        :else (end-phase-12 state side _)))))
 
 (defn- handle-end-of-turn-discard
   [state side eid _]
