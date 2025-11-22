@@ -301,6 +301,23 @@
                                                   :paid/value 1
                                                   :paid/targets [card]})))
 
+;; like trash can, but does not fire trash can abilities
+(defmethod value :trash-self [cost] (:cost/amount cost))
+(defmethod label :trash-self [cost] "trash itself")
+(defmethod payable? :trash-self
+  [cost state side eid card]
+  (and (installed? (get-card state card))
+       (= 1 (value cost))))
+(defmethod handler :trash-self
+  [cost state side eid card]
+  (wait-for (trash state side card {:cause :ability-cost
+                                    :unpreventable true
+                                    :suppress-checkpoint true})
+            (complete-with-result state side eid {:paid/msg (str "trashes " (:printed-title card))
+                                                  :paid/type :trash-self
+                                                  :paid/value 1
+                                                  :paid/targets [card]})))
+
 ;; Forfeit
 (defmethod value :forfeit [cost] (:cost/amount cost))
 (defmethod label :forfeit [cost] (str "forfeit " (quantify (value cost) "Agenda")))

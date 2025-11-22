@@ -1259,7 +1259,7 @@
 (defcard "Disrupter"
   {:events
    [{:event :initialize-trace
-     :trash-icon true
+     :fake-cost [(->c :trash-can)]
      :optional
      {:waiting-prompt true
       :prompt "Trash Disrupter to reduce the base trace strength to 0?"
@@ -1549,7 +1549,6 @@
                                   (not (agenda? target))
                                   (not (in-discard? target))))
                    :cost [(->c :trash-can)]
-                   :trash-icon true
                    :msg (msg "trash " (:title target))
                    :async true
                    :effect (req (wait-for
