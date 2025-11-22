@@ -342,7 +342,7 @@
                    (if (>= credcost discount) discount credcost) 0)
         args (if discount (assoc args :cost-bonus (- appldisc discount)) args)
         costs (conj costs (->c :credit (- 0 appldisc)))
-        corp-wants-to-trash? (and (get-in @state [:corp :trash-like-cards])
+        corp-wants-to-trash? (and (get-in @state [:corp :properties :trash-like-cards])
                                   (seq (get-in @state (concat [:corp] slot)))
                                   (not resolved-optional-trash))]
     (if (and (not corp-wants-to-trash?) (corp-can-pay-and-install? state side eid card server (assoc args :cached-costs costs)))
@@ -596,7 +596,7 @@
   [state side eid card {:keys [no-mu facedown host-card resolved-optional-trash] :as args}]
   (let [costs (runner-install-cost state side (assoc card :facedown facedown) (dissoc args :cached-costs))
         available-mem (available-mu state)
-        runner-wants-to-trash? (and (get-in @state [:runner :trash-like-cards])
+        runner-wants-to-trash? (and (get-in @state [:runner :properties :trash-like-cards])
                                     (not resolved-optional-trash))]
     (if-not (runner-can-pay-and-install? state side eid card (assoc args :cached-costs costs))
       (effect-completed state side eid)
