@@ -27,6 +27,7 @@
                                   "startup"
                                   "eternal"
                                   "preconstructed"
+                                  "chimera"
                                   "casual"}]
     (ls/load "visible-formats" default-visible-formats)))
 
