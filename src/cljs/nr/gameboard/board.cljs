@@ -1897,7 +1897,6 @@
        :else
        (doall (for [{:keys [idx uuid value]} choices
                     :when (not= value "Hide")]
-                ;; HERE
                 [:button {:key idx
                           :on-click #(do (send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice {:uuid uuid}})
                                          (card-highlight-mouse-out % value button-channel))
@@ -1924,10 +1923,23 @@
         [tr-span [:game_start-turn "Start Turn"]]]))
    (when (and (= (keyword @active-player) side)
               (or @runner-phase-12 @corp-phase-12))
-     [:button {:on-click #(send-command "end-phase-12")}
-      (if (= side :corp)
-        [tr-span [:game_mandatory-draw "Mandatory Draw"]]
-        [tr-span [:game_take-clicks "Take Clicks"]])])
+     (let [phase (if @runner-phase-12 @runner-phase-12 @corp-phase-12)]
+       [cond-button
+        (if (= side :corp) [tr-span [:game_mandatory-draw "Mandatory Draw"]] [tr-span [:game_take-clicks "Take Clicks"]])
+        (if (:requires-consent phase)
+          (not (side phase))
+          true)
+        #(send-command (if (:requires-consent phase)
+                         "end-phase-12"
+                         "phase-12-pass-priority"))]))
+   (when (and (not= (keyword @active-player) side)
+              (or @runner-phase-12 @corp-phase-12))
+     (let [phase (if @runner-phase-12 @runner-phase-12 @corp-phase-12)]
+       (when (:requires-consent phase)
+         [cond-button
+          (if (= side :runner) [tr-span [:game_allow-mandatory-draw "Allow Mandatory Draw"]] [tr-span [:game_allow-take-clicks "Allow Take Clicks"]])
+          (not (side phase))
+          #(send-command "phase-12-pass-priority")])))
    (when (= side :runner)
      [:div
       [cond-button [tr-span [:game_remove-tag "Remove Tag"]]
