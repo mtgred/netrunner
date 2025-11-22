@@ -1567,7 +1567,7 @@
           "Draws 1 card")
       (take-credits state :runner)
       (take-credits state :corp)
-      (is (true? (:runner-phase-12 @state)))
+      (is (:runner-phase-12 @state))
       (card-ability state :runner chop-bot 0)
       (click-card state :runner (find-card "Spy Camera" (get-hardware state)))
       (is (zero? (count (:deck (get-runner)))))
