@@ -1285,6 +1285,23 @@
         (is (zero? (get-counters (refresh cache) :virus))
             "Cache has no counters"))))
 
+(deftest cyberdex-virus-suite-smart-purge
+  ;; Don't interrupt archives access, #1647
+  (do-game
+    (new-game {:corp {:discard [(qty "Cyberdex Virus Suite" 5) "Braintrust"]}
+               :runner {:deck ["Cache"]}})
+    (take-credits state :corp)
+    (swap! state assoc-in [:corp :properties :auto-purge] true)
+    (play-from-hand state :runner "Cache")
+    (run-empty-server state :archives)
+    (dotimes [_ 5]
+      (click-prompt state :runner "Cyberdex Virus Suite"))
+    (is (zero? (get-counters (get-program state 0) :virus))
+        "Cache has no counters")
+    (click-prompt state :runner "Steal")
+    (is (no-prompt? state :corp) "Corp didn't need to interact for trivial purges")
+    (is (no-prompt? state :runner))))
+
 (deftest daniela-jorge-inacio
   (do-game
       (new-game {:corp {:hand ["Daniela Jorge Inácio" "House of Knives"]}
