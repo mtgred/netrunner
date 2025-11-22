@@ -334,6 +334,10 @@
   (let [num (remote->num server)]
     [tr-span [:game_server "Server"] {:num num}]))
 
+(defn remote->str-name [server]
+  (let [num (remote->num server)]
+   (tr [:game_server "Server"] {:num num})))
+
 (defn zone->sort-key [zone]
   (case (if (keyword? zone) zone (last zone))
     :archives -3
@@ -1226,17 +1230,19 @@
                [card-view card flipped]]))))
       (if central-view
         [label content (assoc opts :classes "server-label" :hide-cursor true)]
-        [label content (assoc opts :classes "server-label" :hide-cursor true :tr-vec [:game_server "Server"] :tr-params {:num key})])]]))
+        [label content (assoc opts :classes "server-label" :hide-cursor true :name (str (tr [:game_server "Server"] {:num key})) :tr-vec [:game_server "Server"] :tr-params {:num key})])]]))
 
 (defn stacked-label [cursor similar-servers opts]
   (let [similar-server-names (->> similar-servers
                                   (map first)
-                                  (map remote->name))
+                                  (map remote->str-name))
         full-server-names (cons (get-in opts [:opts :name]) similar-server-names)
         numbers (map #(second (split % " ")) full-server-names)]
     [label full-server-names (assoc opts
                                         :classes "server-label"
                                         :name (str "Servers " (join ", " numbers))
+                                        :tr-vec [:game_server "Server"] 
+                                        :tr-params {:num (join ", " numbers)}
                                         :hide-cursor true)]))
 
 (defn stacked-view [{:keys [key server similar-servers central-view run]} opts]
@@ -1306,14 +1312,14 @@
             [server-view {:key num
                           :server (second server)
                           :run (when (= server-type (str "remote" num)) @run)}
-             {:opts {:name (remote->name (first server))}}]
+             {:opts {:name (remote->str-name (first server))}}]
             [stacked-view {:key num
                            :server (second server)
                            :similar-servers similar-servers
                            :run (when
                                   (some #(= server-type (str "remote" %)) (map #(remote->num (first %)) all-servers))
                                   (= server-type (str "remote" num)) @run)}
-             {:opts {:name (remote->name (first server))}}])))
+             {:opts {:name (remote->str-name (first server))}}])))
       [server-view {:key "hq"
                     :server (:hq @servers)
                     :central-view [identity-view :corp identity hand-count-number]
