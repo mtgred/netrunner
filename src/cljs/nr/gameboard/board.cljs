@@ -50,23 +50,26 @@
     @corp-prompt-state
     @runner-prompt-state))
 
-(defn- image-url [{:keys [side code] :as card}]
-  (let [lang (get-in @app-state [:options :card-language] "en")
-        res (get-in @app-state [:options :card-resolution] "default")
-        special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
-        special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
-        viewer-wants-art (get-in @app-state [:options :show-alt-art])
-        show-art (and special-user special-wants-art viewer-wants-art)
-        art (if show-art
-              (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)] "stock")
-              "stock")
-        card (if (or (:face card) (:images card)) card (get @all-cards (get-title card)))
-        images (image-or-face card)]
-    (if (sequential? art)
-      (let [art-urls (get-image-path images (keyword lang) (keyword res) (keyword (first art)))
-            chosen-art (nth art-urls (second art))]
-        [chosen-art])
-      (first (get-image-path images (keyword lang) (keyword res) (keyword art))))))
+(defn- image-url
+  ([card] (image-url card nil))
+  ([{:keys [side code] :as card} {:keys [zoom?] :as opts}]
+   (let [lang (get-in @app-state [:options :card-language] "en")
+         res (get-in @app-state [:options :card-resolution] "default")
+         special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
+         special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
+         viewer-wants-art (and (get-in @app-state [:options :show-alt-art])
+                               (not (and zoom? (get-in @app-state [:options :pin-base-art]))))
+         show-art (and special-user special-wants-art viewer-wants-art)
+         art (if show-art
+               (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)] "stock")
+               "stock")
+         card (if (or (:face card) (:images card)) card (get @all-cards (get-title card)))
+         images (image-or-face card)]
+     (if (sequential? art)
+       (let [art-urls (get-image-path images (keyword lang) (keyword res) (keyword (first art)))
+             chosen-art (nth art-urls (second art))]
+         [chosen-art])
+       (first (get-image-path images (keyword lang) (keyword res) (keyword art)))))))
 
 
 (defonce button-channel (chan))
@@ -421,7 +424,7 @@
       [:<>
        [:div.card-preview.blue-shade
         {:on-click #(reset! img-side (not @img-side))}
-        (let [url (image-url card)
+        (let [url (image-url card {:zoom? true})
               show-img (= "image" (or @card-zoom-type "image"))]
           (if (and url (if show-img @img-side (not @img-side)))
             [:img {:src url :alt (get-title card) :onLoad #(-> % .-target js/$ .show)}]
@@ -746,6 +749,8 @@
                     (condition-counter? card)
                     (faceup? card)
                     (= (:side host) "Runner"))))))
+
+;; HERE
 
 (defn card-view
   [{:keys [zone code type abilities counter

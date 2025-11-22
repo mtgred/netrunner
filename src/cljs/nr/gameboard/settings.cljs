@@ -99,11 +99,19 @@
                                  :on-change #(swap! app-state assoc-in [:options :card-zoom] (.. % -target -value))
                                  :checked (= (get-in @app-state [:options :card-zoom]) (:ref option))}]
                  [tr-span (:name option)]]]))
-      [:label [:input {:type "checkbox"
-                       :name "pin-zoom"
-                       :checked (get-in @app-state [:options :pin-zoom])
-                       :on-change #(swap! app-state assoc-in [:options :pin-zoom] (.. % -target -checked))}]
-       [tr-span [:settings_pin-zoom "Keep zoomed cards on screen"]]]]
+
+      [:div
+       [:label [:input {:type "checkbox"
+                        :name "pin-base-art"
+                        :checked (get-in @app-state [:options :pin-base-art] false)
+                        :on-change #(swap! app-state assoc-in [:options :pin-base-art] (.. % -target -checked))}]
+        [tr-span [:settings_pin-base-art "Zoomed cards always use base art"]]]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :name "pin-zoom"
+                        :checked (get-in @app-state [:options :pin-zoom])
+                        :on-change #(swap! app-state assoc-in [:options :pin-zoom] (.. % -target -checked))}]
+        [tr-span [:settings_pin-zoom "Keep zoomed cards on screen"]]]]]
 
 
      [:section
