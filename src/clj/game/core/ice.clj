@@ -662,7 +662,7 @@
                              true))]
      (merge
        (when (some #(= :trash-can (:cost/type %)) (merge-costs cost))
-         {:trash-icon true})
+         {:fake-cost [(->c :trash-can)]})
        {:async true
         :req (req (and (break-req state side eid card targets)
                        (strength-req state side eid card targets)))
