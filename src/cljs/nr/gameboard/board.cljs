@@ -1023,7 +1023,7 @@
           [facedown-card (:side @identity) ["bg"] nil])
         ;; todo - again, can we pass the server count into the tr?
         [:div.header {:class "darkbg server-label"}
-         [tr-span tr-vec {:cnt deck-count-number}]]
+         [tr-span tr-vec {:cnt deck-count-number}]]]
        (when (and (= render-side player-side) (not (is-replay?)))
          [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
           [:div {:on-click #(do (send-command "shuffle")
@@ -1041,7 +1041,7 @@
           (doall
             (for [card @deck]
               ^{:key (:cid card)}
-              [card-view card]))])]])))
+              [card-view card]))])])))
 
 (defn discard-view-runner [player-side discard]
   (let [s (r/atom {})]
