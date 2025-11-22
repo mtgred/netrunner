@@ -80,6 +80,11 @@
                      (wait-for (resolve-ability state side callback c nil)
                                (effect-completed state side eid))))}}}))
 
+(defn- can-smart-purge?
+  [state]
+  (and (get-in @state [:corp :properties :auto-purge])
+       (not (#{"Acacia" "Fester" "Heliamphora"} (map :title (all-installed state :runner))))))
+
 ;; Card definitions
 
 (defcard "Adrian Seis"
@@ -509,19 +514,26 @@
                        :value true}]})
 
 (defcard "Cyberdex Virus Suite"
-  {:flags {:rd-reveal (req true)}
-   :poison true
-   :on-access {:optional
-               {:waiting-prompt true
-                :prompt "Purge virus counters?"
-                :yes-ability {:msg "purge virus counters"
-                              :async true
-                              :effect (effect (purge eid))}}}
-   :abilities [{:label "Purge virus counters"
-                :msg "purge virus counters"
-                :cost [(->c :trash-can)]
-                :async true
-                :effect (effect (purge eid))}]})
+  (let [resolve-purge {:msg "purge virus counters"
+                       :async true
+                       :effect (effect (purge eid))}]
+    {:flags {:rd-reveal (req true)}
+     :poison true
+     :on-access {:async true
+                 :effect (req (continue-ability
+                                state side
+                                (if (can-smart-purge? state)
+                                  resolve-purge
+                                  {:optional
+                                   {:waiting-prompt true
+                                    :prompt "Purge virus counters?"
+                                    :yes-ability resolve-purge}})
+                                card nil))}
+     :abilities [{:label "Purge virus counters"
+                  :msg "purge virus counters"
+                  :cost [(->c :trash-can)]
+                  :async true
+                  :effect (effect (purge eid))}]}))
 
 (defcard "Daniela Jorge Inácio"
   (let [steal-cost {:type :steal-additional-cost
@@ -1179,33 +1191,39 @@
              :effect (effect (lose-clicks :runner 1))}]})
 
 (defcard "Mavirus"
-  {:flags {:rd-reveal (req true)}
-   :poison true
-   :on-access {:optional
-               {:waiting-prompt true
-                :prompt "Purge virus counters?"
-                :yes-ability
-                {:msg (msg "purge virus counters")
-                 :async true
-                 :effect (req (wait-for
-                                (purge state side)
-                                (if (rezzed? card)
-                                  (do
-                                    (system-msg state side (str "uses " (:title card) " to do 1 net damage"))
-                                    (damage state side eid :net 1 {:card card}))
-                                  (effect-completed state side eid))))}
-                :no-ability {:async true
-                             :effect (req (system-msg state :corp (str "declines to use " (:title card)))
-                                          (if (rezzed? card)
-                                            (do
-                                              (system-msg state side (str "uses " (:title card) " to do 1 net damage"))
-                                              (damage state side eid :net 1 {:card card}))
-                                            (effect-completed state side eid)))}}}
-   :abilities [{:label "Purge virus counters"
-                :msg "purge virus counters"
-                :cost [(->c :trash-can)]
-                :async true
-                :effect (effect (purge eid))}]})
+  (let [resolve-purge {:msg (msg "purge virus counters")
+                       :async true
+                       :effect (req (wait-for
+                                      (purge state side)
+                                      (if (rezzed? card)
+                                        (do
+                                          (system-msg state side (str "uses " (:title card) " to do 1 net damage"))
+                                          (damage state side eid :net 1 {:card card}))
+                                        (effect-completed state side eid))))}]
+    {:flags {:rd-reveal (req true)}
+     :poison true
+     :on-access {:async true
+                 :effect (req (continue-ability
+                                state side
+                                (if (can-smart-purge? state)
+                                  resolve-purge
+                                  {:optional
+                                   {:waiting-prompt true
+                                    :prompt "Purge virus counters?"
+                                    :yes-ability resolve-purge
+                                    :no-ability {:async true
+                                                 :effect (req (system-msg state :corp (str "declines to use " (:title card)))
+                                                              (if (rezzed? card)
+                                                                (do
+                                                                  (system-msg state side (str "uses " (:title card) " to do 1 net damage"))
+                                                                  (damage state side eid :net 1 {:card card}))
+                                                                (effect-completed state side eid)))}}})
+                                card nil))}
+     :abilities [{:label "Purge virus counters"
+                  :msg "purge virus counters"
+                  :cost [(->c :trash-can)]
+                  :async true
+                  :effect (effect (purge eid))}]}))
 
 (defcard "Mercia B4LL4RD"
   {:events [{:event :corp-action-phase-ends
