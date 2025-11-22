@@ -1897,7 +1897,6 @@
        :else
        (doall (for [{:keys [idx uuid value]} choices
                     :when (not= value "Hide")]
-                ;; HERE
                 [:button {:key idx
                           :on-click #(do (send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice {:uuid uuid}})
                                          (card-highlight-mouse-out % value button-channel))
@@ -1907,74 +1906,96 @@
                           #(card-highlight-mouse-out % value button-channel)}
                  (render-message (or (not-empty (get-title value)) value))])))]))
 
-(defn basic-actions [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me]}]
-  [:div.panel.blue-shade
-   (if (= (keyword @active-player) side)
-     ;; !!here
-     (when (and (not (or @runner-phase-12 @corp-phase-12))
-                (zero? (:click @me))
-                (not @end-turn))
-       [:button {:on-click #(do (close-card-menu)
-                                (send-command "end-turn"))}
-        [tr-span [:game_end-turn "End Turn"]]])
-     (when @end-turn
-       [:button {:on-click #(do
-                              (swap! app-state assoc :start-shown true)
-                              (send-command "start-turn"))}
-        [tr-span [:game_start-turn "Start Turn"]]]))
-   (when (and (= (keyword @active-player) side)
-              (or @runner-phase-12 @corp-phase-12))
-     [:button {:on-click #(send-command "end-phase-12")}
-      (if (= side :corp)
-        [tr-span [:game_mandatory-draw "Mandatory Draw"]]
-        [tr-span [:game_take-clicks "Take Clicks"]])])
-   (when (= side :runner)
-     [:div
-      [cond-button [tr-span [:game_remove-tag "Remove Tag"]]
-       (and (not (or @runner-phase-12 @corp-phase-12))
-            (playable? (get-in @me [:basic-action-card :abilities 5]))
-            (pos? (get-in @me [:tag :base])))
-       #(send-command "remove-tag")]
-      [:div.run-button.menu-container
-       [cond-button [tr-span [:game_run "Run"]]
-        (and (not (or @runner-phase-12 @corp-phase-12))
-             (pos? (:click @me)))
-        #(do (send-command "generate-runnable-zones")
-             (if (= :run-button (:source @card-menu))
-               (close-card-menu)
-               (open-card-menu :run-button)))]
-       [:div.panel.blue-shade.servers-menu (when (= :run-button (:source @card-menu))
-                                             {:class "active-menu"
-                                              :style {:display "inline"}})
-        [:ul
-         (let [servers (get-in @game-state [:runner :runnable-list])]
-           (doall
-             (map-indexed (fn [_ label]
-                            ^{:key label}
-                            [card-menu-item (tr-game-prompt label)
-                             #(do (close-card-menu)
-                                  (send-command "run" {:server label}))])
-                          servers)))]]]])
-   (when (= side :corp)
-     [cond-button [tr-span [:game_purge "Purge"]]
-      (and (not (or @runner-phase-12 @corp-phase-12))
-           (playable? (get-in @me [:basic-action-card :abilities 6])))
-      #(send-command "purge")])
-   (when (= side :corp)
-     [cond-button [tr-span [:game_trash-resource "Trash Resource"]]
-      (and (not (or @runner-phase-12 @corp-phase-12))
-           (playable? (get-in @me [:basic-action-card :abilities 5]))
-           (is-tagged? game-state))
-      #(send-command "trash-resource")])
-   [cond-button [tr-span [:game_draw "Draw"]]
-    (and (not (or @runner-phase-12 @corp-phase-12))
-         (playable? (get-in @me [:basic-action-card :abilities 1]))
-         (pos? (:deck-count @me)))
-    #(send-command "draw")]
-   [cond-button [tr-span [:game_gain-credit "Gain Credit"]]
-    (and (not (or @runner-phase-12 @corp-phase-12))
-         (playable? (get-in @me [:basic-action-card :abilities 0])))
-    #(send-command "credit")]])
+(defn basic-actions [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me runner-post-discard corp-post-discard]}]
+  (let [phase-12 (or @runner-phase-12 @corp-phase-12)
+        post-discard (or @corp-post-discard @runner-post-discard)
+        phase-locked (or phase-12 post-discard)]
+    [:div.panel.blue-shade
+     (if (= (keyword @active-player) side)
+       (when (and (not phase-locked) (zero? (:click @me)) (not @end-turn))
+         [:button {:on-click #(do (close-card-menu)
+                                  (send-command "end-turn"))}
+          [tr-span [:game_end-turn "End Turn"]]])
+       (when (and @end-turn (not post-discard))
+         [:button {:on-click #(do
+                                (swap! app-state assoc :start-shown true)
+                                (send-command "start-turn"))}
+          [tr-span [:game_start-turn "Start Turn"]]]))
+     ;; POST-DISCARD PHASE
+     (when (and (= (keyword @active-player) side) post-discard)
+       [cond-button
+        [tr-span [:game_continue-end-turn "Continue End Turn"]]
+        (if (:requires-consent post-discard)
+          (not (side post-discard))
+          true)
+        #(send-command (if (:requires-consent post-discard)
+                         "post-discard-pass-priority"
+                         "end-post-discard"))])
+     (when (and (not= (keyword @active-player) side) (:requires-consent post-discard))
+       [cond-button
+        [tr-span [:game_allow-turn-end "Allow Turn End"]]
+        (not (side post-discard))
+        #(send-command "post-discard-pass-priority")])
+     ;; PHASE 1.2
+     (when (and (= (keyword @active-player) side) phase-12)
+       [cond-button
+        (if (= side :corp) [tr-span [:game_mandatory-draw "Mandatory Draw"]] [tr-span [:game_take-clicks "Take Clicks"]])
+        (if (:requires-consent phase-12)
+          (not (side phase-12))
+          true)
+        #(send-command (if (:requires-consent phase-12)
+                         "phase-12-pass-priority"
+                         "end-phase-12"))])
+     (when (and (not= (keyword @active-player) side) (:requires-consent phase-12))
+       [cond-button
+        (if (= side :runner) [tr-span [:game_allow-mandatory-draw "Allow Mandatory Draw"]] [tr-span [:game_allow-take-clicks "Allow Take Clicks"]])
+        (not (side phase-12))
+        #(send-command "phase-12-pass-priority")])
+     ;; BASIC ACTIONS
+     (when (= side :runner)
+       [:div
+        [cond-button [tr-span [:game_remove-tag "Remove Tag"]]
+         (and (not phase-locked)
+              (playable? (get-in @me [:basic-action-card :abilities 5]))
+              (pos? (get-in @me [:tag :base])))
+         #(send-command "remove-tag")]
+        [:div.run-button.menu-container
+         [cond-button [tr-span [:game_run "Run"]]
+          (and (not phase-locked) (pos? (:click @me)))
+          #(do (send-command "generate-runnable-zones")
+               (if (= :run-button (:source @card-menu))
+                 (close-card-menu)
+                 (open-card-menu :run-button)))]
+         [:div.panel.blue-shade.servers-menu (when (= :run-button (:source @card-menu))
+                                               {:class "active-menu"
+                                                :style {:display "inline"}})
+          [:ul
+           (let [servers (get-in @game-state [:runner :runnable-list])]
+             (doall
+               (map-indexed (fn [_ label]
+                              ^{:key label}
+                              [card-menu-item (tr-game-prompt label)
+                               #(do (close-card-menu)
+                                    (send-command "run" {:server label}))])
+                            servers)))]]]])
+     (when (= side :corp)
+       [cond-button [tr-span [:game_purge "Purge"]]
+        (and (not phase-locked) (playable? (get-in @me [:basic-action-card :abilities 6])))
+        #(send-command "purge")])
+     (when (= side :corp)
+       [cond-button [tr-span [:game_trash-resource "Trash Resource"]]
+        (and (not phase-locked)
+             (playable? (get-in @me [:basic-action-card :abilities 5]))
+             (is-tagged? game-state))
+        #(send-command "trash-resource")])
+     [cond-button [tr-span [:game_draw "Draw"]]
+      (and (not phase-locked)
+           (playable? (get-in @me [:basic-action-card :abilities 1]))
+           (pos? (:deck-count @me)))
+      #(send-command "draw")]
+     [cond-button [tr-span [:game_gain-credit "Gain Credit"]]
+      (and (not phase-locked) (playable? (get-in @me [:basic-action-card :abilities 0])))
+      #(send-command "credit")]]))
 
 (defn button-pane [{:keys [side prompt-state]}]
   (let [autocomp (r/track (fn [] (get-in @prompt-state [:choices :autocomplete])))
@@ -2262,7 +2283,9 @@
         turn (r/cursor game-state [:turn])
         end-turn (r/cursor game-state [:end-turn])
         corp-phase-12 (r/cursor game-state [:corp-phase-12])
+        corp-post-discard (r/cursor game-state [:corp-post-discard])
         runner-phase-12 (r/cursor game-state [:runner-phase-12])
+        runner-post-discard (r/cursor game-state [:runner-post-discard])
         corp (r/cursor game-state [:corp])
         runner (r/cursor game-state [:runner])
         active-player (r/cursor game-state [:active-player])
@@ -2440,6 +2463,8 @@
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters
                                   :end-turn end-turn :runner-phase-12 runner-phase-12
                                   :corp-phase-12 corp-phase-12 :corp corp :runner runner
+                                  :runner-post-discard runner-post-discard
+                                  :corp-post-discard corp-post-discard
                                   :me me :opponent opponent :prompt-state prompt-state}])]]
 
                 [:div.me

@@ -20,7 +20,7 @@
    [game.core.set-up :refer [keep-hand mulligan]]
    [game.core.shuffling :refer [shuffle-deck]]
    [game.core.toasts :refer [ack-toast]]
-   [game.core.turns :refer [end-phase-12 end-turn start-turn]]
+   [game.core.turns :refer [end-phase-12 phase-12-pass-priority end-turn end-turn-continue post-discard-pass-priority start-turn]]
    [game.core.winning :refer [concede]]))
 
 (defn checkpoint+clean-up
@@ -36,8 +36,13 @@
   "set properties of the game state that need to be adjustable by the frontend
   ie: * do we want an offer to trash like cards on installs?"
   [state side {:keys [key value]}]
-  (case key
-    :trash-like-cards (swap! state assoc-in [side :trash-like-cards] value)))
+  (let [acceptable-keys #{:trash-like-cards :auto-purge
+                          :force-phase-12-self :force-phase-12-opponent
+                          :force-post-discard-self :force-post-discard-opponent}]
+    (cond
+      (acceptable-keys key) (swap! state assoc-in [side :properties key] value)
+      ;; will throw error otherwise
+      )))
 
 (defn should-process-command?
   [state side command]
@@ -73,8 +78,11 @@
    "draw" #'click-draw
    "dynamic-ability" #'play-dynamic-ability
    "end-phase-12" #'end-phase-12
+   "phase-12-pass-priority" #'phase-12-pass-priority
    "start-next-phase" #'start-next-phase
    "end-turn" #'end-turn
+   "post-discard-pass-priority" #'post-discard-pass-priority
+   "end-post-discard" #'end-turn-continue
    "flashback" #'flashback
    "generate-install-list" #'generate-install-list
    "generate-runnable-zones" #'generate-runnable-zones
