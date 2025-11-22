@@ -20,7 +20,7 @@
    [game.core.set-up :refer [keep-hand mulligan]]
    [game.core.shuffling :refer [shuffle-deck]]
    [game.core.toasts :refer [ack-toast]]
-   [game.core.turns :refer [end-phase-12 phase-12-pass-priority end-turn start-turn]]
+   [game.core.turns :refer [end-phase-12 phase-12-pass-priority end-turn end-turn-continue post-discard-pass-priority start-turn]]
    [game.core.winning :refer [concede]]))
 
 (defn checkpoint+clean-up
@@ -81,6 +81,8 @@
    "phase-12-pass-priority" #'phase-12-pass-priority
    "start-next-phase" #'start-next-phase
    "end-turn" #'end-turn
+   "post-discard-pass-priority" #'post-discard-pass-priority
+   "end-post-discard" #'end-turn-continue
    "flashback" #'flashback
    "generate-install-list" #'generate-install-list
    "generate-runnable-zones" #'generate-runnable-zones

@@ -457,6 +457,7 @@
    ;; :angel-arena-info
    :corp
    :corp-phase-12
+   :corp-post-discard
    :decklists
    :encounters
    :end-turn
@@ -472,6 +473,7 @@
    :run
    :runner
    :runner-phase-12
+   :runner-post-discard
    :sfx
    :sfx-current-id
    :start-date
