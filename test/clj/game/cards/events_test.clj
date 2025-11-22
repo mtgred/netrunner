@@ -3937,11 +3937,11 @@
     (rez state :corp (get-ice state :hq 0))
     (play-cards state :runner "Doppelgänger" ["Inside Job" "HQ"])
     (run-continue-until state :encounter-ice)
-    (is (= :movement (:phase @run)) "Bypassed")
+    (is (= :movement (:phase (:run @state))) "Bypassed")
     (run-continue-until state :success)
     (click-prompts state :runner "Yes" "HQ")
     (run-continue-until state :encounter-ice)
-    (is (= :encounter (:phase @run)) "Did not bypass on doppel run")))
+    (is (= :encounter-ice (:phase (:run @state))) "Did not bypass on doppel run")))
 
 (deftest inside-job-only-bypasses-one-ice
     ;; Only bypasses one ice
