@@ -38,13 +38,12 @@
 (defn- display-memory
   ([memory] (display-memory memory false))
   ([memory icon?]
-   (let [ctrl (stat-controls-for-side :runner)]
-     (fn []
-       (let [{:keys [available used only-for]} memory
-             unused (- available used)
-             label (if icon? [:<> unused "/" available " " [:span.anr-icon.mu]]
-                       [tr-span [:game_mu-count] {:unused unused :available available}])]
-         (ctrl :memory [:div label (when (neg? unused) [:div.warning "!"])]))))))
+   (let [ctrl (stat-controls-for-side :runner)
+         {:keys [available used]} memory
+         unused (- available used)
+         label (if icon? [:<> unused "/" available " " [:span.anr-icon.mu]]
+                   [tr-span [:game_mu-count] {:unused unused :available available}])]
+     (ctrl :memory [:div label (when (neg? unused) [:div.warning "!"])]))))
 
 (defn- display-special-memory
   ([memory] (display-special-memory memory false))
