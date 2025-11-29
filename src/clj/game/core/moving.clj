@@ -21,7 +21,7 @@
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [wait-for when-let*]]
-    [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
+    [game.utils :refer [dissoc-in make-cid make-timestamp remove-once same-card? same-side? to-keyword]]
     [medley.core :refer [insert-nth]]))
 
 (defn- trim-cause-card
@@ -62,7 +62,6 @@
   "Get the moved cards with correct abilities and keys hooked up / removed etc."
   [state side {:keys [zone host installed] :as card} to]
   (let [zone (if host (map to-keyword (:zone host)) zone)
-
         src-zone (first zone)
         target-zone (if (vector? to) (first to) to)
         same-zone? (= src-zone target-zone)
@@ -141,10 +140,16 @@
                      (contains? #{:deck :hand :discard} target-zone))
               (make-cid)
               (:cid c))
+        timestamp (if (or (and (not (contains? #{:deck :hand :discard} src-zone))
+                               (contains? #{:deck :hand :discard} target-zone))
+                          (and (not installed) to-installed))
+                    (make-timestamp)
+                    (:timestamp c))
         moved-card (assoc c :zone dest
                             :host nil
                             :hosted hosted
                             :cid cid
+                            :timestamp timestamp
                             :previous-zone (:zone c))
         ;; Set up abilities for stolen agendas
         moved-card (if (and (= :scored (first dest))

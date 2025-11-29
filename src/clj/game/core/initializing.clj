@@ -15,7 +15,7 @@
     [game.core.props :refer [add-counter]]
     [game.core.update :refer [update!]]
     [game.macros :refer [req]]
-    [game.utils :refer [make-cid server-card to-keyword]]
+    [game.utils :refer [make-cid make-timestamp server-card to-keyword]]
     [jinteki.utils :refer [make-label]]))
 
 (defn subroutines-init
@@ -199,6 +199,7 @@
                 :subroutines (subroutines-init (assoc card :cid cid) cdef)
                 :abilities (ability-init cdef)
                 :x-fn (:x-fn cdef)
+                :timestamp (make-timestamp)
                 :poison (:poison cdef)
                 :highlight-in-discard (:highlight-in-discard cdef)
                 :printed-title (:title card))

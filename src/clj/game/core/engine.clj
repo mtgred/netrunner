@@ -1160,7 +1160,7 @@
            (reduce-kv
              (fn [acc _title cards]
                (if (< 1 (count cards))
-                 (conj! acc (butlast cards))
+                 (conj! acc (butlast (sort-by :timestamp cards)))
                  acc))
              (transient []))
            persistent!

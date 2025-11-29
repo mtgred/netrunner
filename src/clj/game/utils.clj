@@ -2,10 +2,14 @@
   (:require
     [jinteki.cards :refer [all-cards]]
     [clojure.string :as str]
-    [clj-uuid :as uuid]))
+    [clj-uuid :as uuid]
+    [cljc.java-time.instant :as inst]))
 
 (defn make-cid []
   (uuid/to-string (uuid/v4)))
+
+(defn make-timestamp []
+  (inst/now))
 
 (defn server-card
   ([title] (server-card title true))
