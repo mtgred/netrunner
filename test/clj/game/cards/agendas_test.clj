@@ -2758,6 +2758,17 @@
     (click-prompt state :corp "Done")
     (is (= 2 (count (:hand (get-corp)))) "Next Big Thing shuffled 2 cards")))
 
+(deftest next-big-thing-shuffle-all-back-test
+  (do-game
+    (new-game {:corp {:hand ["Next Big Thing" "Subliminal Messaging" "Ice Wall" "Vanilla"]
+                      :deck ["Hedge Fund" "NGO Front" "Project Atlas" "IPO"]}})
+    (play-and-score state "Next Big Thing")
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (is (= 7 (count (:hand (get-corp)))) "Next Big Thing drew 2 cards")
+    (doseq [c (map :title (:hand (get-corp)))]
+      (click-card state :corp c))
+    (is (= 0 (count (:hand (get-corp)))) "Next Big Thing shuffled 7 cards")))
+
 (deftest next-wave-2
   ;; NEXT Wave 2
   (do-game

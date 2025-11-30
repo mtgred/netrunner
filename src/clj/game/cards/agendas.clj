@@ -1525,19 +1525,18 @@
                           (play-sfx state side "click-card-2")
                           (wait-for
                                (draw state side 4)
-                               (let [c-hand (count (:hand corp))]
-                                 (continue-ability
-                                   state side
-                                   {:prompt "Shuffle any number of cards into R&D"
-                                    :waiting-prompt true
-                                    :choices {:max c-hand
-                                              :card (every-pred corp? in-hand?)}
-                                    :msg (msg "shuffle " (quantify (count targets) "card")
-                                              " from HQ into R&D")
-                                    :effect (req (doseq [t targets]
-                                                   (move state side t :deck))
-                                                 (shuffle! state side :deck))}
-                                   card nil))))}]})
+                               (continue-ability
+                                 state side
+                                 {:prompt "Shuffle any number of cards into R&D"
+                                  :waiting-prompt true
+                                  :choices {:max (req (count (:hand corp)))
+                                            :card (every-pred corp? in-hand?)}
+                                  :msg (msg "shuffle " (quantify (count targets) "card")
+                                            " from HQ into R&D")
+                                  :effect (req (doseq [t targets]
+                                                 (move state side t :deck))
+                                               (shuffle! state side :deck))}
+                                 card nil)))}]})
 
 (defcard "NEXT Wave 2"
   {:on-score
