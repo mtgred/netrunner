@@ -5,6 +5,7 @@
    [cljc.java-time.instant :as inst]
    [cljc.java-time.duration :as duration]
    [cljc.java-time.temporal.chrono-unit :as chrono]
+   [clojure.string :as s]
    [nr.appstate :refer [app-state]]
    [nr.auth :refer [authenticated] :as auth]
    [nr.player-view :refer [player-view]]
@@ -206,22 +207,37 @@
   (when precon
     [:span.format-precon ": " [tr-span (:tr-tag (matchup-by-key precon))]]))
 
-(defn- precon-under-span [precon]
-  (when precon
-    [:span.format-precon-deck-names [tr-span (:tr-underline (matchup-by-key precon))]]))
+(def descriptions
+  {:pending-game_meta-deck "Looking For: Meta Decks"
+   :pending-game_casual "Looking For: Casual Games"
+   :pending-game_competitive "Looking For: Competitive Games"
+   :pending-game_new-player "Looking To: Learn the game"})
+
+(defn description-span [description]
+  (when (and description (not= description :new-game_default))
+    (let [k (keyword (str "pending-game_" (last (s/split (name description) #"_"))))]
+      [:span.format-precon-deck-names {:class "game-description"}
+       [tr-span [k (k descriptions)]]])))
+
+(defn- precon-under-span [precon description]
+  (cond
+    precon [:span.format-precon-deck-names [tr-span (:tr-underline (matchup-by-key precon))]]
+    description [description-span description]
+    :else nil))
 
 (defn- open-decklists-span [precon open-decklists]
   (when (and open-decklists (not precon))
     [:span.open-decklists " " [tr-span [:lobby_open-decklists-b "(open decklists)"]]]))
 
-(defn game-format [{fmt :format singleton? :singleton precon :precon open-decklists :open-decklists}]
+(defn game-format [{fmt :format singleton? :singleton precon :precon open-decklists :open-decklists
+                    description :description}]
   [:div {:class "game-format"}
    [:span.format-label [tr-span [:lobby_format "Format"]] ":  "]
    [:span.format-type (tr-format (slug->format fmt "Unknown"))]
    [precon-span precon]
    (when singleton? [:span.format-singleton " " [tr-span [:lobby_singleton-b "(singleton)"]]])
    [open-decklists-span precon open-decklists]
-   [precon-under-span precon]])
+   [precon-under-span precon description]])
 
 (defn- time-since
   "Helper method for game-time. Computes how many minutes since game start"

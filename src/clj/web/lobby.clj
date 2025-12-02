@@ -106,7 +106,7 @@
     user :user
     {:keys [gameid now
             allow-spectator api-access format mute-spectators password room save-replay
-            precon gateway-type side singleton spectatorhands timer title open-decklists]
+            precon gateway-type side singleton spectatorhands timer title open-decklists description]
      :or {gameid (random-uuid)
           now (inst/now)}} :options}]
   (let [player {:user user
@@ -127,6 +127,7 @@
      :allow-spectator allow-spectator
      :api-access api-access
      :format format
+     :description description
      :mute-spectators mute-spectators
      :password (when (not-empty password) (bcrypt/encrypt password))
      :room room
@@ -217,6 +218,7 @@
    :timer
    :title
    :old
+   :description
    ;; for tournament system
    :time-extension
    :excluded?
