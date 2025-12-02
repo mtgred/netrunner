@@ -208,8 +208,7 @@
     [:span.format-precon ": " [tr-span (:tr-tag (matchup-by-key precon))]]))
 
 (def descriptions
-  {:pending-game_default ""
-   :pending-game_meta-deck "Looking For: Meta Decks"
+  {:pending-game_meta-deck "Looking For: Meta Decks"
    :pending-game_casual "Looking For: Casual Games"
    :pending-game_competitive "Looking For: Competitive Games"
    :pending-game_new-player "Looking To: Learn the game"})
