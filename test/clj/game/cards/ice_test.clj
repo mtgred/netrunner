@@ -6305,6 +6305,12 @@
       (fire-subs state png1)
       (is (not (:run @state)) "Run ended"))))
 
+(deftest ping-no-tag-outside-of-run
+  (do-game
+    (new-game {:corp {:hand ["Ping"]}})
+    (play-cards state :corp ["Ping" "HQ" :rezzed])
+    (is (zero? (count-tags state)) "Did not take a tag")))
+
 (deftest piranhas-take-bad-pub
   (do-game
     (new-game {:corp {:hand ["Piranhas"]
