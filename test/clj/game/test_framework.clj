@@ -9,6 +9,7 @@
    [game.core.card :refer [active? get-card get-counters get-title installed?
                            rezzed?]]
    [game.core.eid :as eid]
+   [game.core.events :refer [turn-events]]
    [game.core.ice :refer [active-ice?]]
    [game.core.initializing :refer [make-card]]
    [game.core.threat :refer [threat-level]]
@@ -616,6 +617,17 @@
   ([state side title server]
    `(error-wrapper (play-from-hand-impl ~state ~side ~title ~server))))
 
+(defn- split-on-keywords [coll]
+  (reduce (fn [acc x]
+            (if (keyword? x)
+              (conj acc x)
+              (let [last-el (peek acc)]
+                (if (vector? last-el)
+                  (conj (pop acc) (conj last-el x))
+                  (conj acc [x])))))
+          []
+          coll))
+
 (defn play-from-hand-with-prompts-impl
   [state side title choices]
   (let [card (find-card title (get-in @state [side :hand]))]
@@ -627,7 +639,20 @@
               (println title " was instead found in the opposing hand - was the wrong side used?")))
           true)
       (when-let [played (core/process-action "play" state side {:card card})]
-        (click-prompts-impl state side choices)))))
+        (let [choice-sets (split-on-keywords choices)]
+          (doseq [cs choice-sets]
+            (cond
+              (vector? cs) (click-prompts-impl state side cs)
+              (#{:rez :rezzed} cs)
+              (if-let [tgt (->> (turn-events state side :corp-install)
+                                (apply concat)
+                                (map :card)
+                                (filter #(= (:title %) title))
+                                (filter (complement rezzed?))
+                                last)]
+                (core/process-action "rez" state :corp {:card tgt})
+                (throw (Exception. (str title " not found in an unrezzed state to be rezzed")))))))))))
+
 
 (defmacro play-from-hand-with-prompts
   "Play a card from hand based on it's title, and then click any number of prompts
