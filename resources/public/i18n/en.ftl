@@ -1161,6 +1161,24 @@ nav_users = Users
 
 nav_welcome = Welcome
 
+new-game_default = No special conditions
+
+new-game_meta-deck = Play against meta decks
+
+new-game_casual = Casual play
+
+new-game_competitive = Play competitive games
+
+new-game_new-player = Learning the game
+
+pending-game_meta-deck = Looking For: Meta Decks
+
+pending-game_casual = Looking For: Casual Games
+
+pending-game_competitive = Looking For: Competitive Games
+
+pending-game_new-player = Looking To: Learn the game
+
 preconstructed_worlds-2012-a = Worlds 2012: Ben Marsh (C) vs. Jeremy Zwirn (R)
 
 preconstructed_worlds-2012-a-tag = Ben Marsh (C) vs. Jeremy Zwirn (R)

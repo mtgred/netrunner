@@ -12,6 +12,7 @@
 (def new-game-keys
   [:allow-spectator
    :api-access
+   :description
    :format
    :password
    :room
@@ -24,6 +25,13 @@
    :open-decklists
    :timer
    :title])
+
+(def descriptions
+  {:new-game_default "No special conditions"
+   :new-game_meta-deck "Play against meta decks"
+   :new-game_casual "Casual play"
+   :new-game_competitive "Play competitive games"
+   :new-game_new-player "Learning the game"})
 
 (defn create-game [state lobby-state options]
   (authenticated
@@ -134,6 +142,18 @@
     {:style {:display (if (:singleton @options) "block" "none")}}
     [tr-element :p [:lobby_singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."]]
     [tr-element :p [:lobby_singleton-example "1) Nova Initiumia: Catalyst & Impetus 2) Ampere: Cybernetics For Anyone"]]]])
+
+(defn description-section [description-state]
+  [:section
+   [tr-element :h4 [:lobby_game-description "Game Description"]]
+   [:select.description
+    {:value (or @description-state :new-game_default)
+     :on-change #(reset! description-state (.. % -target -value))}
+    (doall (for [[k v] descriptions]
+             ^{:key k}
+             [:option {:value k
+                       :data-i18n-key k}
+              (tr [k v])]))]])
 
 (defn allow-spectators [options]
   [:p
@@ -261,6 +281,7 @@
                precon (r/cursor state [:precon])
                gateway-type (r/cursor state [:gateway-type])
                fmt (r/cursor state [:format])
+               description (r/cursor state [:description])
                flash-message (r/cursor state [:flash-message])]
     (fn [lobby-state user]
       [:div
@@ -276,4 +297,5 @@
         [title-section title]
         [side-section side]
         [format-section fmt options gateway-type precon]
+        [description-section description]
         [options-section options user]]])))

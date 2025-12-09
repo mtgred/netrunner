@@ -50,23 +50,46 @@
                         :credits 100}})
     (take-credits state :corp)
     (play-from-hand state :runner "Kati Jones")
+    (card-ability state :runner (get-resource state 0) 0)
+    (is (= 3 (get-counters (get-resource state 0) :credit)) "Placed 3")
     (play-from-hand state :runner "Kati Jones")
+    (is (= 0 (get-counters (get-resource state 0) :credit)) "Correct kati was trashed")
     (is (find-card "Kati Jones" (get-resource state)))
     (is (last-log-contains? state "Kati Jones is trashed."))))
 
 (deftest installing-second-unique-on-off-campus-apartment-trashes-first-test
-  (do-game
-    (new-game {:runner {:hand [(qty "Kati Jones" 2) "Off-Campus Apartment"]
-                        :credits 100}})
-    (take-credits state :corp)
-    (play-from-hand state :runner "Kati Jones")
-    (play-from-hand state :runner "Off-Campus Apartment")
-    (let [oca (get-resource state 1)]
-      (play-from-hand state :runner "Kati Jones")
-      (click-prompt state :runner "Off-Campus Apartment")
-      (is (find-card "Kati Jones" (:hosted (refresh oca))))
+  (testing "Should trash the kati in the rig"
+    (do-game
+      (new-game {:runner {:hand [(qty "Kati Jones" 2) "Off-Campus Apartment"]
+                          :credits 100}})
+      (take-credits state :corp)
+      (play-cards state :runner "Off-Campus Apartment" ["Kati Jones" "The Rig"] ["Kati Jones" "Off-Campus Apartment"])
+      (is (find-card "Kati Jones" (:hosted (get-resource state 0))))
       (is (= "Kati Jones" (:title (get-discarded state :runner))))
-      (is (last-log-contains? state "Kati Jones is trashed.")))))
+      (is (last-log-contains? state "Kati Jones is trashed."))))
+  (testing "Should trash the kati on OCA"
+    (do-game
+      (new-game {:runner {:hand [(qty "Kati Jones" 2) "Off-Campus Apartment"]
+                          :credits 100}})
+      (take-credits state :corp)
+      (play-cards state :runner "Off-Campus Apartment" ["Kati Jones" "Off-Campus Apartment"] ["Kati Jones" "The Rig"])
+      (is (= "Kati Jones" (:title (get-resource state 1))))
+      (is (not (find-card "Kati Jones" (:hosted (get-resource state 0)))))
+      (is (= "Kati Jones" (:title (get-discarded state :runner))))
+      (is (last-log-contains? state "Kati Jones hosted on .* is trashed."))))
+  (testing "Should trash the loaded kati on OCA"
+    (do-game
+      (new-game {:runner {:hand [(qty "Kati Jones" 2) "Off-Campus Apartment"]
+                          :credits 100}})
+      (take-credits state :corp)
+      (play-cards state :runner "Off-Campus Apartment" ["Kati Jones" "Off-Campus Apartment"])
+      (card-ability state :runner (first (:hosted (get-resource state 0))) 0)
+      (is (= 3 (get-counters (first (:hosted (get-resource state 0))) :credit)) "Placed 3")
+      (play-cards state :runner ["Kati Jones" "Off-Campus Apartment"])
+      (is (= 0 (get-counters (first (:hosted (get-resource state 0))) :credit)) "Correct kati trash")
+      (is (find-card "Kati Jones" (:hosted (get-resource state 0))))
+      (is (= "Kati Jones" (:title (get-discarded state :runner))))
+      (is (last-log-contains? state "Kati Jones hosted on .* is trashed.")))))
 
 (deftest installing-second-hivemind-trashes-hosted-hivemind-test
   (do-game
