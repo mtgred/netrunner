@@ -8,7 +8,7 @@
     [game.core.initializing :refer [card-init]]
     [game.core.memory :refer [init-mu-cost]]
     [game.core.update :refer [update! update-hosted!]]
-    [game.utils :refer [remove-once same-card?]]))
+    [game.utils :refer [make-timestamp remove-once same-card?]]))
 
 (defn remove-from-host
   "Removes a card from its host."
@@ -54,6 +54,7 @@
                          :host (dissoc card :hosted)
                          :facedown facedown
                          :zone [:onhost] ;; hosted cards should not be in :discard or :hand etc
+                         :timestamp (make-timestamp)
                          :previous-zone (:zone target))
            ;; Update any cards hosted by the target, so their :host has the updated zone.
            target (update target :hosted #(map (fn [h] (assoc h :host target)) %))
