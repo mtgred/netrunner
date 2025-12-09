@@ -276,57 +276,6 @@
     (when (not= "Identity" (:type card))
       (send-command "move" {:card card :server server}))))
 
-;; touch support
-(defonce touchmove (atom {}))
-
-(defn release-touch [^js/$ card]
-  (-> card (.removeClass "disable-transition"))
-  (-> card (.css "position" ""))
-  (-> card (.css "top" "")))
-
-(defn update-card-position [^js/$ card touch]
-  (-> card (.css "left" (str (- (int (aget touch "pageX")) 30) "px")))
-  (-> card (.css "top"  (str (- (int (aget touch "pageY")) 42) "px"))))
-
-(defn get-card [e _server]
-  (-> e .-target js/$ (.closest ".card-wrapper")))
-
-(defn get-server-from-touch [touch]
-  (let [cX (.. touch -clientX)
-        cY (.. touch -clientY)
-        server (-> (js/document.elementFromPoint cX cY)
-                   js/$
-                   (.closest "[data-server]")
-                   (.attr "data-server"))]
-    [server (> (+ (abs (- (:x @touchmove) cX))
-                  (abs (- (:y @touchmove) cY)))
-               30)]))
-
-(defn handle-touchstart [e cursor]
-  (let [touch (aget (.. e -targetTouches) 0)
-        [server _] (get-server-from-touch touch)
-        card (get-card e server)]
-    (-> card (.addClass "disable-transition"))
-    (reset! touchmove {:card (.stringify js/JSON (clj->js @cursor))
-                       :x (.. touch -clientX)
-                       :y (.. touch -clientY)
-                       :start-server server})))
-
-(defn handle-touchmove [e]
-  (let [touch (aget (.. e -targetTouches) 0)
-        card (get-card e (:start-server @touchmove))]
-    (-> card (.css "position" "fixed"))
-    (update-card-position card touch)))
-
-(defn handle-touchend [e]
-  (let [touch (aget (.. e -changedTouches) 0)
-        card (get-card e (:start-server @touchmove))
-        [server moved-enough] (get-server-from-touch touch)]
-    (release-touch card)
-    (when (and server moved-enough (not= server (:start-server @touchmove)))
-      (let [cardinfo (-> @touchmove :card ((.-parse js/JSON)) (js->clj :keywordize-keys true))]
-        (send-command "move" {:card cardinfo :server server})))))
-
 (defn remote->num [server]
   (-> server str (clojure.string/split #":remote") last str->int))
 
@@ -786,9 +735,6 @@
                                                       (playable? card)))
                                          0)
                             :draggable (when (and (not-spectator?) (not disable-click) (not flashback-fake-in-hand)) true)
-                            :on-touch-start #(handle-touchstart % card)
-                            :on-touch-end   #(handle-touchend %)
-                            :on-touch-move  #(handle-touchmove %)
                             :on-drag-start #(handle-dragstart % card)
                             :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                             :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
