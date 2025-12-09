@@ -324,8 +324,9 @@
              :interactive (req true)
              :automatic :force-discard
              :req (req (and (= :archives (target-server context))
-                            (first-successful-run-on-server? state :archives)
-                            (not-empty (:hand corp))))
+                            (first-successful-run-on-server? state :archives)))
+             :change-in-game-state {:silent true
+                                    :req (req (seq (:hand corp)))}
              :waiting-prompt true
              :prompt "Choose a card in HQ to discard"
              :player :corp
@@ -335,7 +336,6 @@
              :msg "force the Corp to trash 1 card from HQ"
              :async true
              :effect (effect (trash :corp eid target nil))}]})
-
 
 (defcard "Ampère: Cybernetics For Anyone"
   ;; No special implementation
@@ -376,6 +376,7 @@
              :async true
              :choices ["Take 1 tag" "Suffer 2 meat damage"]
              :player :runner
+             :display-side :corp
              :msg (msg "force the Runner to " (decapitalize target))
              :effect (req (if (= target "Take 1 tag")
                             (gain-tags state :runner eid 1)
@@ -576,15 +577,25 @@
                               card nil)))}]})
 
 (defcard "Blue Sun: Powering the Future"
-  {:flags {:corp-phase-12 (req (and (not (:disabled card))
-                                    (not (is-disabled? state side card))
-                                    (some rezzed? (all-installed state :corp))))}
-   :abilities [{:choices {:card rezzed?}
-                :label "Add 1 rezzed card to HQ and gain credits equal to its rez cost"
-                :msg (msg "add " (:title target) " to HQ and gain " (rez-cost state side target) " [Credits]")
-                :async true
-                :effect (effect (move target :hand)
-                                (gain-credits eid (rez-cost state side target)))}]})
+  (let [blue-sun {:choices {:card rezzed?}
+                  :label "Add 1 rezzed card to HQ and gain credits equal to its rez cost"
+                  :msg (msg "add " (:title target) " to HQ and gain "
+                            (rez-cost state side target) " [Credits]")
+                  :change-in-game-state {:req (req (some rezzed? (all-installed state :corp)))
+                                         :silent true}
+                  :async true
+                  :once :per-turn
+                  :effect (effect (move target :hand)
+                                  (gain-credits eid (rez-cost state side target)))}]
+    {:flags {:corp-phase-12 (req (and (not (:disabled card))
+                                      (not (is-disabled? state side card))
+                                      (not-used-once? state {:once :per-turn} card)
+                                      (some rezzed? (all-installed state :corp))))}
+     :events [(merge {:event :corp-turn-begins
+                      :automatic :last
+                      :skippable true}
+                     blue-sun)]
+   :abilities [blue-sun]}))
 
 (defcard "Boris \"Syfr\" Kovac: Crafty Veteran"
   {:events [{:event :pre-start-game
@@ -744,21 +755,20 @@
 
 (defcard "Edward Kim: Humanity's Hammer"
   {:events [{:event :access
-             :once :per-turn
              :req (req (and (operation? target)
                             (first-event? state side :access #(operation? (first %)))))
              :async true
              :effect (req (if (in-discard? target)
                             (effect-completed state side eid)
-                            (do (when run
-                                  (swap! state assoc-in [:run :did-trash] true))
-                                (swap! state assoc-in [:runner :register :trashed-card] true)
-                                (swap! state assoc-in [:runner :register :trashed-accessed-card] true)
-                                (system-msg state :runner
-                                            (str "uses " (:title card) " to"
-                                                 " trash " (:title target)
-                                                 " at no cost"))
-                                (trash state side eid target nil))))}]})
+                            (continue-ability
+                              state side
+                              (let [c target]
+                                {:prompt (str "You accessed" (:title c))
+                                 :choices ["OK"]
+                                 :async true
+                                 :msg (msg "trash " (:title c))
+                                 :effect (req (trash state side eid c nil))})
+                              card nil)))}]})
 
 (defcard "Ele \"Smoke\" Scovak: Cynosure of the Net"
   {:recurring 1

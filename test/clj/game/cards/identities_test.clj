@@ -698,6 +698,21 @@
     (is (= 1 (-> (get-corp) :discard count)) "Alice ability should trash 1 card from HQ")
     (is (-> (get-corp) :discard first :seen not) "Discarded card should be facedown when access is replaced")))
 
+(deftest alice-merchant-vs-sabotage
+  ;; Alice Merchant
+  (do-game
+    (new-game {:runner {:id "Alice Merchant: Clan Agitator"
+                        :deck ["Nga" "Dirty Laundry"]}
+               :corp {:hand ["IPO"]
+                      :deck ["Hedge Fund"]}})
+    (take-credits state :corp)
+    (play-cards state :runner "Nga" ["Dirty Laundry" "Archives"])
+    (run-continue-until state :success)
+    (click-prompts state :runner "Nga" "Yes")
+    (click-card state :corp "IPO")
+    (is (no-prompt? state :corp))
+    (is (no-prompt? state :runner))))
+
 (deftest andromeda-dispossessed-ristie
   ;; Andromeda - 9 card starting hand, 1 link
   (do-game
@@ -1059,7 +1074,8 @@
       (is (= 3 (get-counters (refresh rs) :power)) "Reduced Service should have 3 counters on itself")
       (take-credits state :corp)
       (take-credits state :runner)
-      (card-ability state :corp (get-in @state [:corp :identity]) 0)
+      (start-turn state :corp)
+      (end-phase-12 state :corp)
       (click-card state :corp rs)
       (is (nil? (refresh rs)) "Reduced Service is picked up")
       (is (find-card "Reduced Service" (:hand (get-corp))) "Reduced Service is now in HQ"))
@@ -1444,6 +1460,7 @@
       (take-credits state :corp)
       (run-empty-server state "Archives")
       (run-empty-server state "HQ")
+      (click-prompt state :runner "OK")
       (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first")
       (is (no-prompt? state :corp))
       (is (no-prompt? state :runner))
@@ -1470,6 +1487,7 @@
         (run-continue state)
         (is (= 1 (count (:discard (get-corp)))))
         (run-empty-server state "HQ")
+        (click-prompt state :runner "OK")
         (is (= 2 (count (:discard (get-corp)))) "1 operation trashed from HQ; accessed non-operation in Archives first"))))
 
 (deftest edward-kim-humanity-s-hammer-do-not-trigger-maw-on-first-operation-access-due-to-trash
@@ -1483,6 +1501,7 @@
       (play-from-hand state :runner "Maw")
       (is (zero? (count (:discard (get-corp)))) "No cards in Archives")
       (run-empty-server state "HQ")
+      (click-prompt state :runner "OK")
       (is (= 1 (count (:discard (get-corp)))) "Only one card trashed from HQ, by Ed Kim")
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")
@@ -1512,6 +1531,7 @@
       (play-from-hand state :runner "Gang Sign")
       (take-credits state :runner)
       (play-and-score state "Hostile Takeover")
+      (click-prompt state :runner "OK")
       (is (no-prompt? state :corp))
       (is (no-prompt? state :runner))
       (is (nil? (get-run)) "No run has been created")))
@@ -1536,7 +1556,8 @@
                  :runner {:id "Edward Kim: Humanity's Hammer"}})
       (take-credits state :corp)
       (run-empty-server state "HQ")
-      (is (last-log-contains? state "Runner uses Edward Kim: Humanity's Hammer to trash Hedge Fund at no cost."))))
+      (click-prompt state :runner "OK")
+      (is (last-log-contains? state "Runner uses Edward Kim: Humanity's Hammer to trash Hedge"))))
 
 (deftest esa-afontov-eco-insurrectionist
   (testing "happy path"
