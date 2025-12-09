@@ -1551,7 +1551,7 @@
 (defcard "Find the Truth"
   {:events [{:event :post-runner-draw
              :msg (msg "reveal that they drew "
-                       (enumerate-str (map :title runner-currently-drawing)))
+                       (enumerate-cards runner-currently-drawing))
              :async true
              :effect (req (let [current-draws runner-currently-drawing]
                             (reveal state side eid current-draws)))}
@@ -2118,7 +2118,7 @@
                   :change-in-game-state {:req (req (seq (:deck runner)))}
                   :keep-menu-open :while-clicks-left
                   :label "Reveal the top 4 cards of the stack"
-                  :msg (msg "reveal " (enumerate-str (map :title (take 4 (:deck runner)))) " from the top of the stack")
+                  :msg (msg "reveal " (enumerate-cards (take 4 (:deck runner))) " from the top of the stack")
                   :async true
                   :effect (req (let [from (take 4 (:deck runner))]
                                  (wait-for (reveal state side from)
@@ -2995,7 +2995,7 @@
    :on-trash {:async true
               :effect (req (system-msg state :runner
                                        (str "trashes "
-                                            (enumerate-str (map :title (take 3 (:deck runner))))
+                                            (enumerate-cards (take 3 (:deck runner)))
                                             " from the stack due to " (:title card) " being trashed"))
                            (mill state :runner eid :runner 3))}})
 
@@ -3346,9 +3346,9 @@
                                                     options
                                                     ["Done"]))
                                     :msg (msg (if (= target "Done")
-                                                (str "trash " (enumerate-str (map :title set-aside-cards)))
+                                                (str "trash " (enumerate-cards set-aside-cards :sorted))
                                                 (str "install " (:title target) ", lowering its install cost by 1 [Credits]. "
-                                                     (enumerate-str (map :title (remove-once #(same-card? % target) set-aside-cards)))
+                                                     (enumerate-cards (remove-once #(same-card? % target) set-aside-cards) :sorted)
                                                      " are trashed as a result")))
                                     :effect (req (if (= target "Done")
                                                    (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card})
@@ -3514,7 +3514,7 @@
                           :req (req (and (runner? target)
                                          (in-discard? target)
                                          (has-trash-ability? target)))}
-                :msg (msg "shuffle " (enumerate-str (map :title targets))
+                :msg (msg "shuffle " (enumerate-cards targets :sorted)
                           " into the stack")
                 :async true
                 :effect (req (doseq [c targets] (move state side c :deck))

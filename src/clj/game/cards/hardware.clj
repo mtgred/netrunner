@@ -299,7 +299,7 @@
                                                      (host state side card (first (:deck runner))))}}}
               {:event :runner-turn-ends
                :req (req (seq (:hosted card)))
-               :msg (msg "trash " (enumerate-str (map :title (:hosted card))))
+               :msg (msg "trash " (enumerate-cards (:hosted (get-card state card)) :sorted))
                :async true
                :effect (req (trash-cards state :runner eid (:hosted card)))}]}))
 
@@ -513,7 +513,7 @@
                                            (wait-for (draw state side (count (filter overlap trashed-card-names)))
                                                      (system-msg state side
                                                                  (str "uses " (:title card) " to trash "
-                                                                      (enumerate-str (map :title trashed-cards))
+                                                                      (enumerate-cards trashed-cards)
                                                                       " from the grip and draw "
                                                                       (quantify (count async-result) "card")))
                                                      (effect-completed state side eid))))))}]})
@@ -1068,8 +1068,8 @@
 
 (defcard "Gachapon"
   (letfn [(shuffle-end [remove-from-game shuffle-back]
-            {:msg (msg "shuffle " (enumerate-str (map :title shuffle-back)) " into the stack"
-                       " and remove " (enumerate-str (map :title remove-from-game)) " from the game")
+            {:msg (msg "shuffle " (enumerate-cards shuffle-back :sorted) " into the stack"
+                       " and remove " (enumerate-cards remove-from-game :sorted) " from the game")
              :effect (req
                        (doseq [c remove-from-game]
                          (move state side c :rfg))
@@ -1085,14 +1085,14 @@
                                 (empty? set-aside-cards))]
               {:prompt (msg (if finished?
                               (str "Removing: " (if (not-empty set-aside-cards)
-                                                  (enumerate-str (map :title set-aside-cards))
+                                                  (enumerate-cards set-aside-cards :sorted)
                                                   "nothing")
                                    "[br]Shuffling: " (if (not-empty to-shuffle)
-                                                       (enumerate-str (map :title to-shuffle))
+                                                       (enumerate-cards to-shuffle :sorted)
                                                        "nothing"))
                               (str "Choose " (- 3 (count to-shuffle)) " more cards to shuffle back."
                                    (when (not-empty to-shuffle)
-                                     (str "[br]Currently shuffling back: " (enumerate-str (map :title to-shuffle)))))))
+                                     (str "[br]Currently shuffling back: " (enumerate-cards to-shuffle :sorted))))))
                :async true
                :not-distinct true ; show cards separately
                :choices (req (if finished?
@@ -1118,12 +1118,12 @@
                                (let [set-aside-cards (sort-by :title (get-set-aside state side eid))]
                                  (system-msg state side (str (:latest-payment-str eid) "to use " (get-title card)
                                                              " to set aside "
-                                                             (enumerate-str (map get-title set-aside-cards))
+                                                             (enumerate-cards set-aside-cards)
                                                              " from the top of the stack"))
                                  (wait-for (resolve-ability state side
                                                             {:async true
                                                              :prompt (str "The set aside cards are: "
-                                                                          (enumerate-str (map get-title set-aside-cards)))
+                                                                          (enumerate-cards set-aside-cards))
                                                              :choices ["OK"]}
                                                             card nil)
                                            (continue-ability
@@ -1493,7 +1493,7 @@
                 :action true
                 :choices {:req (req (and (in-hand? target) (program? target) ))
                           :max (req (count (filter program? (:hand runner))))}
-                :msg (msg "host " (enumerate-str (map :title targets)))
+                :msg (msg "host " (enumerate-cards targets :sorted))
                 :effect (req (doseq [t targets] (host state side card t)))}
                {:cost [(->c :credit 0)]
                 :label "Install a hosted program"
@@ -1992,7 +1992,7 @@
                         {:msg "look at the top 2 cards of the stack"
                          :choices ["OK"]
                          :prompt (msg "The top 2 cards of the stack are "
-                                      (enumerate-str (map :title (take 2 (:deck runner)))))}}}]
+                                      (enumerate-cards (take 2 (:deck runner))))}}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
                {:label "Reveal and install top card of the stack"
                 :once :per-turn
@@ -2626,7 +2626,7 @@
                                            :all true
                                            :card #(and (in-hand? %)
                                                        (runner? %))}
-                                 :msg (msg "trash " (enumerate-str (map :title targets)))
+                                 :msg (msg "trash " (enumerate-cards targets :sorted))
                                  :effect (effect (chosen-damage :runner targets))})
                               card nil)))}]})
 

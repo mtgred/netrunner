@@ -5,7 +5,7 @@
    [game.core.engine :refer [queue-event checkpoint]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [name-zone]]
-   [game.utils :refer [enumerate-str]]
+   [game.utils :refer [enumerate-str enumerate-cards]]
    [jinteki.utils :refer [other-side]]))
 
 (defn reveal-hand
@@ -35,7 +35,7 @@
   "Trigger the event for revealing one or more cards, and also handle the log printout"
   [state side eid card {:keys [forced and-then no-event] :as args} & targets]
   (let [cards-by-zone (group-by #(select-keys % [:side :zone]) (flatten targets))
-        strs (map #(str (enumerate-str (map :title (get cards-by-zone %)))
+        strs (map #(str (enumerate-cards (get cards-by-zone %) :sorted)
                         " from " (name-zone (:side %) (:zone %)))
                   (keys cards-by-zone))
         ;; it's awkward to template a string that could refer to one or many

@@ -26,7 +26,7 @@
     [game.core.toasts :refer [toast]]
     [game.core.tags :refer [gain-tags]]
     [game.macros :refer [continue-ability effect msg req wait-for]]
-    [game.utils :refer [enumerate-str remove-once same-card? server-card to-keyword quantify]]
+    [game.utils :refer [enumerate-cards remove-once same-card? server-card to-keyword quantify]]
     [jinteki.utils :refer [other-side]]))
 
 (defn combine-abilities
@@ -84,9 +84,9 @@
   ([reorder-side wait-side chosen original dest]
    {:prompt (if (= dest "bottom")
               (str "The bottom cards of " (if (= reorder-side :corp) "R&D" "the stack")
-                   " will be " (enumerate-str (map :title (reverse chosen))) ".")
+                   " will be " (enumerate-cards (reverse chosen)) ".")
               (str "The top cards of " (if (= reorder-side :corp) "R&D" "the stack")
-                   " will be " (enumerate-str (map :title chosen)) "."))
+                   " will be " (enumerate-cards chosen) "."))
    :choices ["Done" "Start over"]
    :async true
    :effect (req

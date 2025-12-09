@@ -10,7 +10,7 @@
     [game.core.say :refer [system-msg n-last-logs]]
     [game.core.winning :refer [flatline]]
     [game.macros :refer [wait-for]]
-    [game.utils :refer [dissoc-in enumerate-str side-str]]
+    [game.utils :refer [dissoc-in enumerate-cards enumerate-str side-str]]
     [jinteki.utils :refer [str->int]]
     [taoensso.timbre :as timbre]))
 
@@ -76,7 +76,7 @@
                                        (concat chosen-cards))]
                 (when (= dmg-type :brain)
                   (swap! state update-in [:runner :brain-damage] #(+ % n)))
-                (when-let [trashed-msg (enumerate-str (map get-title cards-trashed))]
+                (when-let [trashed-msg (enumerate-cards cards-trashed :sorted)]
                   (system-msg state :runner (str "trashes " trashed-msg " due to " (damage-name dmg-type) " damage"))
                   (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)
                   (swap! state update-in [:stats :corp :damage dmg-type] (fnil + 0) n)

@@ -205,7 +205,7 @@
                                                  (continue-ability
                                                    state side
                                                    {:async true
-                                                    :prompt (str "The top of R&D is (top->bottom): " (enumerate-str (map :title top-3)) ". Choose a card to trash")
+                                                    :prompt (str "The top of R&D is (top->bottom): " (enumerate-cards top-3) ". Choose a card to trash")
                                                     :not-distinct true
                                                     :choices (req top-3)
                                                     :msg (msg (let [target-position (first (positions #{target} (take 3 (:deck corp))))
@@ -612,7 +612,7 @@
 (defcard "Chronos Protocol: Haas-Bioroid"
   {:events [{:event :damage
              :req (req (= (:damage-type context) :brain))
-             :msg (msg "remove all copies of " (enumerate-str (map :title (:cards-trashed context))) ", everywhere, from the game")
+             :msg (msg "remove all copies of " (enumerate-cards (:cards-trashed context)) ", everywhere, from the game")
              :effect (req (doseq [c (:cards-trashed context)
                                   :let [all-candidates (filter #(and (not (in-rfg? %))
                                                                      (runner? %)
@@ -784,7 +784,7 @@
                                (wait-for (resolve-ability state side
                                                           {:async true
                                                            :waiting-prompt true
-                                                           :prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title top)))
+                                                           :prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-cards top))
                                                            :choices ["OK"]}
                                                           card nil)
                                          (continue-ability
@@ -985,12 +985,12 @@
 (defcard "Harishchandra Ent.: Where You're the Star"
   (letfn [(format-grip [runner]
             (if (pos? (count (:hand runner)))
-              (enumerate-str (map :title (sort-by :title (:hand runner))))
+              (enumerate-cards (:hand runner) :sorted)
               "no cards"))]
     {:events [{:event :post-runner-draw
                :req (req (is-tagged? state))
                :msg (msg "see that the Runner drew: "
-                         (enumerate-str (map :title runner-currently-drawing)))}
+                         (enumerate-cards runner-currently-drawing))}
               {:event :tags-changed
                :effect (req (if (is-tagged? state)
                               (when-not (get-in @state [:runner :openhand])
@@ -1460,7 +1460,7 @@
 (defcard "MaxX: Maximum Punk Rock"
   (let [ability {:msg (msg (let [deck (:deck runner)]
                              (if (pos? (count deck))
-                               (str "trash " (enumerate-str (map :title (take 2 deck))) " from the stack and draw 1 card")
+                               (str "trash " (enumerate-cards (take 2 deck)) " from the stack and draw 1 card")
                                "trash the top 2 cards from the stack and draw 1 card - but the stack is empty")))
                  :label "trash and draw cards"
                  :once :per-turn
@@ -2064,7 +2064,7 @@
                             :ability (remote-choice %)})
                         cards))
         ev {:prompt (msg "The top of R&D is (in order): "
-                         (enumerate-str (map :title (take 3 (:deck corp)))))
+                         (enumerate-cards (take 3 (:deck corp))))
             :async true
             :msg (msg "look at the top 3 cards of R&D")
             :effect (req (let [top-3 (take 3 (:deck corp))]
@@ -2072,7 +2072,7 @@
                              state side
                              (choose-one-helper
                                {:prompt (str "The top of R&D is (in order): "
-                                             (enumerate-str (map :title top-3)))
+                                             (enumerate-cards top-3))
                                 :optional true}
                                (opts-fn top-3))
                              card nil)))}

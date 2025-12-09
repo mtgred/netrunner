@@ -169,7 +169,7 @@
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "program") " to trash")
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card (every-pred installed? program?)}
-                     :msg (msg "trash " (enumerate-str (map :title targets)))
+                     :msg (msg "trash " (enumerate-cards targets))
                      :async true
                      :effect (effect (trash-cards eid targets {:cause-card card}))}))
 
@@ -1974,7 +1974,7 @@
                                  (in-discard? %)
                                  (not (faceup? %)))
                      :max 2}
-           :msg (msg "reveal " (enumerate-str (map :title targets)) " from Archives and shuffle them into R&D")
+           :msg (msg "reveal " (enumerate-cards targets :sorted) " from Archives and shuffle them into R&D")
            :effect (req (wait-for (reveal state side targets)
                                   (doseq [c targets]
                                     (move state side c :deck))
@@ -2083,7 +2083,7 @@
                 :msg (msg "shuffle "
                           (let [seen (filter :seen targets)
                                 n (count (filter #(not (:seen %)) targets))]
-                            (str (enumerate-str (map :title seen))
+                            (str (enumerate-cards seen :sorted)
                                  (when (pos? n)
                                    (str (when-not (empty? seen) " and ")
                                         (quantify n "card")))))
@@ -2168,7 +2168,7 @@
      :choices {:card #(and (installed? %)
                            (runner? %))
                :max (req (get-counters (get-card state card) :advancement))}
-     :msg (msg "shuffle " (enumerate-str (map :title targets)) " into the stack")
+     :msg (msg "shuffle " (enumerate-cards targets) " into the stack")
      :effect (req (doseq [c targets]
                     (move state :runner c :deck {:shuffled true}))
                   (shuffle! state :runner :deck)
@@ -2888,7 +2888,7 @@
                      :waiting-prompt true
                      :req (req (pos? (get-counters (get-card state card) :advancement)))
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
-                     :msg (msg "trash " (enumerate-str (map :title targets)))
+                     :msg (msg "trash " (enumerate-cards targets))
                      :choices {:max (req (get-counters (get-card state card) :advancement))
                                :card #(and (installed? %)
                                            (hardware? %))}

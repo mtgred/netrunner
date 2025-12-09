@@ -6599,7 +6599,7 @@
     (card-ability state :corp (get-content state :remote1 0) 0)
     (click-prompt state :corp "Always")
     (play-and-score state "15 Minutes")
-    (is (last-log-contains? state "Sure Gamble, Hippo, and Endurance") "Revealed Runner grip")
+    (is (last-log-contains? state "Endurance, Hippo, and Sure Gamble") "Revealed Runner grip")
     (is (changed? [(count (:hand (get-runner))) -1]
           (click-card state :corp "Hippo"))
         "Hippo was discarded")
