@@ -1,8 +1,9 @@
 (ns game.utils
   (:require
-    [jinteki.cards :refer [all-cards]]
-    [clojure.string :as str]
-    [clj-uuid :as uuid]))
+   [game.core.card :refer [get-title]]
+   [jinteki.cards :refer [all-cards]]
+   [clojure.string :as str]
+   [clj-uuid :as uuid]))
 
 (defn make-cid []
   (uuid/to-string (uuid/v4)))
@@ -128,8 +129,9 @@
   ([cards] (enumerate-cards cards nil))
   ([cards sorted] (enumerate-cards cards sorted "and"))
   ([cards sorted sep]
-   (let [cards (if sorted (sort-by :title cards) cards)]
-     (enumerate-str (map #(or (:title %) (:printed-title %)) cards) sep))))
+   (let [cards (map get-title cards)
+         cards (if sorted (sort cards) cards)]
+     (enumerate-str cards sep))))
 
 (defn in-coll?
   "true if coll contains elm"
