@@ -123,6 +123,14 @@
      (str/join (str " " sep " ") strings)
     (str (apply str (interpose ", " (butlast strings))) (str ", " sep " ") (last strings)))))
 
+(defn enumerate-cards
+  "Enumerates a collection of cards, optionally in sorted order"
+  ([cards] (enumerate-cards cards nil))
+  ([cards sorted] (enumerate-cards cards sorted "and"))
+  ([cards sorted sep]
+   (let [cards (if sorted (sort-by :title cards) cards)]
+     (enumerate-str (map #(or (:title %) (:printed-title %)) cards) sep))))
+
 (defn in-coll?
   "true if coll contains elm"
   [coll elm]
