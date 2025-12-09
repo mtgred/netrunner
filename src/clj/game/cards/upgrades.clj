@@ -246,7 +246,7 @@
                 :cost [(->c :click 1)]
                 :change-in-game-state {:req (req (pos? (count (:deck corp))))}
                 :async true
-                :msg (msg (str "reveal " (enumerate-str (map :title (take 3 (:deck corp)))) " from the top of R&D"))
+                :msg (msg (str "reveal " (enumerate-cards (take 3 (:deck corp))) " from the top of R&D"))
                 :label "Add 1 card from top 3 of R&D to HQ"
                 :waiting-prompt true
                 :effect (req
@@ -732,7 +732,7 @@
                             (protecting-same-server? card (:ice context))))
              :msg (msg (let [deck (:deck runner)]
                          (if (pos? (count deck))
-                           (str "trash " (enumerate-str (map :title (take 2 deck))) " from the stack")
+                           (str "trash " (enumerate-cards (take 2 deck)) " from the stack")
                            "trash no cards from the stack (it is empty)")))
              :async true
              :effect (effect (mill :corp eid :runner 2))}]})
@@ -1958,7 +1958,7 @@
                        :max n
                        :card #(and (runner? %)
                                    (installed? %))}
-             :msg (msg "force the Runner to trash " (enumerate-str (map :title targets)))
+             :msg (msg "force the Runner to trash " (enumerate-cards targets))
              :effect (req (trash-cards state :runner eid targets {:unpreventable true
                                                                   :cause-card card
                                                                   :cause :forced-to-trash}))})
