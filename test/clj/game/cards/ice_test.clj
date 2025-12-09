@@ -3649,6 +3649,18 @@
       (is (no-prompt? state :runner) "No more prompts for the Runner")
       (is (no-prompt? state :corp) "No more prompts for the Corp"))))
 
+(deftest harvester-actually-is-a-discard
+  (do-game
+    (subroutine-test "Harvester" 0 {:runner {:id "Magdalene Keino-Chemutai: Cryptarchitect"
+                                             :hand [(qty "Sure Gamble" 4) "Rezeki"]
+                                             :deck ["Strike Fund" "Ika" "Steelskin Scarring"]}})
+    (is (= 8 (count (:hand (get-runner)))) "Drew 3")
+    (click-prompts state :runner "Strike Fund" "Rezeki" "Steelskin Scarring")
+    (is (= 3 (count (:discard (get-runner)))) "Discarded 3")
+    (click-prompt state :runner "Rezeki")
+    (is (= "Rezeki" (:title (get-program state 0))) "Rezeki installed from discard")
+    (is (no-prompt? state :runner) "No prompts for strike fund/steelskin")))
+
 (deftest herald
   ;; Herald
   (do-game
