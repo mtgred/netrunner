@@ -185,7 +185,7 @@
                       (resolve-ability state side
                                        {:async true
                                         :prompt (str "The top cards of R&D are (top->bottom): "
-                                                     (enumerate-str (map get-title choices)))
+                                                     (enumerate-cards choices))
                                         :choices ["OK"]}
                                        card nil)
                       (continue-ability state side (abt choices) card nil))))}}}}))
@@ -258,7 +258,7 @@
     :effect (req (continue-ability
                    state side
                    {:prompt (msg "The top cards of R&D are (top->bottom): "
-                                 (enumerate-str (map :title (take 5 (:deck corp)))))
+                                 (enumerate-cards (take 5 (:deck corp))))
                     :choices ["OK"]
                     :async true
                     :req (req (not-empty (:deck corp)))
@@ -1727,7 +1727,7 @@
                 :msg (msg "force the Runner to trash " (trash-count-str (:card context)) " and take 1 bad publicity")
                 :async true
                 :effect (req (wait-for (trash-cards state side targets {:cause-card card :cause :forced-to-trash})
-                                       (system-msg state side (str "trashes " (enumerate-str (map :title targets))))
+                                       (system-msg state side (str "trashes " (enumerate-cards targets)))
                                        (gain-bad-publicity state :corp eid 1)))}}))
 
 (defcard "Project Atlas"
@@ -1950,7 +1950,7 @@
 
 (defcard "Reeducation"
   (letfn [(corp-final [chosen original]
-            {:prompt (str "The bottom cards of R&D will be " (enumerate-str (map :title chosen)))
+            {:prompt (str "The bottom cards of R&D will be " (enumerate-cards chosen))
              :choices ["Done" "Start over"]
              :async true
              :msg (req (let [n (count chosen)]
@@ -2500,7 +2500,7 @@
                :req (req (same-card? card (:card context)))
                :msg (msg (if (pos? (count (:deck runner)))
                            (str "trash "
-                                (enumerate-str (map :title (take (adv4? state card) (:deck runner))))
+                                (enumerate-cards (take (adv4? state card) (:deck runner)))
                                 " from the stack")
                            "trash no cards from the stack (it is empty)"))
                :effect (effect (mill :corp eid :runner (adv4? state card)))}]}))
