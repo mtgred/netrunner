@@ -1,4 +1,4 @@
-about_about = About
+about_about = Chi siamo
 
 about_active-contributors = Contributori attivi attuali.
 
@@ -42,7 +42,7 @@ about_thank-you = Grazie mille a tutti i donatori. I vostri contributi e le vost
 
 about_tech-stack = Stack Tecnologico
 
-about_translated-images = Processing/handling of translated NSG card images, and card backs for community tournaments.
+about_translated-images = Gestione/elaborazione delle immagini delle carte NSG tradotte e dei dorsi delle carte per i tornei della community.
 
 about_netrunner-trademark = Netrunner è un marchio registrato di Fantasy Flight Publishing, Inc. e/o Wizards of the Coast LLC.
 
@@ -100,7 +100,7 @@ card-browser-form_type = Tipo
 
 card-browser_advancement = Requisiti avanzati: {$requirement}
 
-card-browser_agenda-points = Punti obbiettivo: {$points}
+card-browser_agenda-points = Punti obiettivo: {$points}
 
 card-browser_artist-info = Info Artista
 
@@ -141,7 +141,7 @@ card-browser_update-failure = Aggiornamento illustrazione fallito
 card-browser_update-success = Illustrazione aggiornata
 
 card-type_name = {$type ->
-    [agenda] Obbiettivo
+    [agenda] Obiettivo
     [all] Tutto
     [asset] Asset
     [event] Evento
@@ -181,7 +181,7 @@ deck-builder_add-cards = Aggiungi carta
 
 deck-builder_add-to-deck = Aggiungi al mazzo
 
-deck-builder_agenda-points = Punti obbiettivo
+deck-builder_agenda-points = Punti obiettivo
 
 deck-builder_cancel = Annulla
 
@@ -313,7 +313,7 @@ deck-builder_won = Vittoria: {$won} ({NUMBER($percent, style: "percent")})
 
 diagrams_run-timing_approach = 6.9.2: Fase di Approccio Ghiaccio
 
-diagrams_run-timing_approach-a = Stai approcciando un pezzo di ghiaccio. Gli eventi di approccio si risolvono
+diagrams_run-timing_approach-a = Stai approcciando un ghiaccio. Gli eventi di approccio si risolvono
 
 diagrams_run-timing_approach-b = Finestra di abilità a pagamento. La Corp può rivelare il ghiaccio approcciato, o carte non-ghiaccio, durante questa finestra
 
@@ -325,7 +325,7 @@ diagrams_run-timing_disclaimer = Questa struttura è stata semplificata per chia
 
 diagrams_run-timing_encounter = 6.9.3: Fase di Incontro Ghiaccio
 
-diagrams_run-timing_encounter-a = Stai incontrando un pezzo di ghiaccio. Gli eventi di incontro si risolvono
+diagrams_run-timing_encounter-a = Stai incontrando un ghiaccio. Gli eventi di incontro si risolvono
 
 diagrams_run-timing_encounter-b = Finestra di abilità a pagamento. Il ghiaccio incontrato può essere interfacciato durante questa finestra
 
@@ -351,7 +351,7 @@ diagrams_run-timing_initiation-e = Altrimenti, procedi alla fase di movimento (6
 
 diagrams_run-timing_movement = 6.9.4: Fase di movimento
 
-diagrams_run-timing_movement-a = Se stavi incontrando o approcciando un pezzo di ghiaccio, lo superi. Gli eventi di superamento del ghiaccio si risolvono
+diagrams_run-timing_movement-a = Se stavi incontrando o approcciando un ghiaccio, lo superi. Gli eventi di superamento del ghiaccio si risolvono
 
 diagrams_run-timing_movement-b = Se non ci sono altri pezzi di ghiaccio verso l'interno dopo quello superato, si risolvono gli eventi "quando superi tutti i ghiacci sul server"
 
@@ -361,81 +361,81 @@ diagrams_run-timing_movement-d = Il Runner può disconnettersi. Se lo fa, proced
 
 diagrams_run-timing_movement-e = Il Runner procede alla posizione successiva verso l'interno, se possibile
 
-diagrams_run-timing_movement-f = Finestra di abilità a pagamento. The corporation may rez non-ice cards
+diagrams_run-timing_movement-f = Finestra di abilità a pagamento. La Corp può rivelare carte non-ghiaccio
 
-diagrams_run-timing_movement-g = If you are approaching another ice, return to the approach ice phase (6.9.2)
+diagrams_run-timing_movement-g = Se stai approcciando un altro ghiaccio, torna alla fase di approccio ghiaccio (6.9.2)
 
-diagrams_run-timing_movement-h = The runner approaches the attacked server. Approach events resolve
+diagrams_run-timing_movement-h = Il Runner approccia il server attaccato. Si risolvono gli eventi di approccio
 
-diagrams_run-timing_movement-i = Continue to the success phase (6.9.5)
+diagrams_run-timing_movement-i = Continua alla fase di successo (6.9.5)
 
-diagrams_run-timing_run-ends = 6.9.6: Run Ends Phase
+diagrams_run-timing_run-ends = 6.9.6: Fase di fine incursione
 
-diagrams_run-timing_run-ends-a = Any open priority windows complete or are closed
+diagrams_run-timing_run-ends-a = Qualsiasi finestra di priorità aperta viene completata o chiusa
 
-diagrams_run-timing_run-ends-b = The runner loses any unspent bad publicity credits
+diagrams_run-timing_run-ends-b = Il Runner perde eventuali crediti di cattiva pubblicità non spesi
 
-diagrams_run-timing_run-ends-c = If the success phase was not reached and the server still exists, the run becomes unsuccessful
+diagrams_run-timing_run-ends-c = Se la fase di successo non è stata raggiunta e il server esiste ancora, l'incursione non ha successo
 
-diagrams_run-timing_run-ends-d = The run ends. Run ends events resolve
+diagrams_run-timing_run-ends-d = L'incursione termina. Si risolvono gli eventi di fine incursione
 
-diagrams_run-timing_success = 6.9.5: Success Phase
+diagrams_run-timing_success = 6.9.5: Fase di successo
 
-diagrams_run-timing_success-a = The run is declared successful. Successful run events are met
+diagrams_run-timing_success-a = L'incursione è dichiarata riuscita. Si attivano gli eventi di incursione riuscita
 
-diagrams_run-timing_success-b = The runner breaches the attacked server
+diagrams_run-timing_success-b = Il Runner viola il server attaccato
 
-diagrams_run-timing_success-c = The success phase is complete. Continue to the run ends phase (6.9.6)
+diagrams_run-timing_success-c = La fase di successo è completa. Continua alla fase di fine incursione (6.9.6)
 
-diagrams_turn_corp-action-phase = 5.6.2: Action Phase
+diagrams_turn_corp-action-phase = 5.6.2: Fase di azione
 
-diagrams_turn_corp-action-phase-a = Finestra di abilità a pagamento. Corp may rez non-ice cards or score agendas during this window
+diagrams_turn_corp-action-phase-a = Finestra di abilità a pagamento. La Corp può rivelare carte non-ghiaccio o segnare obiettivi durante questa finestra
 
-diagrams_turn_corp-action-phase-b = If the corporation has unspent [Clicks], they take an action
+diagrams_turn_corp-action-phase-b = Se la Corporation ha [Click] non spesi, esegue un'azione
 
-diagrams_turn_corp-action-phase-c = If an action occured, return to (a)
+diagrams_turn_corp-action-phase-c = Se è stata eseguita un'azione, torna a (a)
 
-diagrams_turn_corp-action-phase-d = The action phase is complete. Proceed to the discard phase (5.6.3)
+diagrams_turn_corp-action-phase-d = La fase di azione è completa. Procedi alla fase di scarto (5.6.3)
 
-diagrams_turn_corp-discard-phase = 5.6.3: Discard phase
+diagrams_turn_corp-discard-phase = 5.6.3: Fase di scarto
 
-diagrams_turn_corp-discard-phase-a = The corporation discards to maximum hand size, if applicable
+diagrams_turn_corp-discard-phase-a = La Corporation scarta fino alla dimensione massima della mano, se applicabile
 
-diagrams_turn_corp-discard-phase-b = Finestra di abilità a pagamento. Corp may rez non-ice cards during this window
+diagrams_turn_corp-discard-phase-b = Finestra di abilità a pagamento. La Corp può rivelare carte non-ghiaccio durante questa finestra
 
-diagrams_turn_corp-discard-phase-c = If the corporation has any [Clicks] remaining, they lose those [Clicks]
+diagrams_turn_corp-discard-phase-c = Se la Corporation ha ancora [Click] rimanenti, li perde
 
-diagrams_turn_corp-discard-phase-d = The Corporations turn formally ends. Turn end triggers resolve
+diagrams_turn_corp-discard-phase-d = Il turno della Corporation termina formalmente. Si risolvono i trigger di fine turno
 
-diagrams_turn_corp-discard-phase-e = Proceed to the Runner turn
+diagrams_turn_corp-discard-phase-e = Procedi al turno del Runner
 
-diagrams_turn_corp-draw-phase = 5.6.1: Draw Phase
+diagrams_turn_corp-draw-phase = 5.6.1: Fase di pesca
 
-diagrams_turn_corp-draw-phase-a = Corporation gains allotted clicks (default: [click][click][click])
+diagrams_turn_corp-draw-phase-a = La Corporation ottiene i click assegnati (default: [click][click][click])
 
-diagrams_turn_corp-draw-phase-b = Finestra di abilità a pagamento. Corp may rez non-ice cards or score agendas during this window
+diagrams_turn_corp-draw-phase-b = Finestra di abilità a pagamento. La Corp può rivelare carte non-ghiaccio o segnare obiettivi durante questa finestra
 
-diagrams_turn_corp-draw-phase-c = Corporation recurring credits refill
+diagrams_turn_corp-draw-phase-c = I crediti ricorrenti della Corporation si ricaricano
 
-diagrams_turn_corp-draw-phase-d = The turn formally begins. Turn begins events resolve
+diagrams_turn_corp-draw-phase-d = Il turno inizia formalmente. Si risolvono gli eventi di inizio turno
 
-diagrams_turn_corp-draw-phase-e = The corporation performs their mandatory draw
+diagrams_turn_corp-draw-phase-e = La Corporation effettua la pesca obbligatoria
 
-diagrams_turn_corp-draw-phase-f = Proceed to the action phase (5.6.2)
+diagrams_turn_corp-draw-phase-f = Procedi alla fase di azione (5.6.2)
 
-diagrams_turn_corp-turn = Corporation Turn
+diagrams_turn_corp-turn = Turno della Corporation
 
-diagrams_turn_runner-action-phase = 5.7.1: Action Phase
+diagrams_turn_runner-action-phase = 5.7.1: Fase di azione
 
-diagrams_turn_runner-action-phase-a = Runner gains allotted clicks (default: [click][click][click][click])
+diagrams_turn_runner-action-phase-a = Il Runner ottiene i click assegnati (default: [click][click][click][click])
 
-diagrams_turn_runner-action-phase-b = Finestra di abilità a pagamento. Corp may rez non-ice cards
+diagrams_turn_runner-action-phase-b = Finestra di abilità a pagamento. La Corp può rivelare carte non-ghiaccio
 
-diagrams_turn_runner-action-phase-c = Runner recurring credits refill
+diagrams_turn_runner-action-phase-c = I crediti ricorrenti del Runner si ricaricano
 
-diagrams_turn_runner-action-phase-d = The turn formally begins. Turn begins events resolve
+diagrams_turn_runner-action-phase-d = Il turno inizia formalmente. Si risolvono gli eventi di inizio turno
 
-diagrams_turn_runner-action-phase-e = Finestra di abilità a pagamento. Corp may rez non-ice cards
+diagrams_turn_runner-action-phase-e = Finestra di abilità a pagamento. La Corp può rivelare carte non-ghiaccio
 
 diagrams_turn_runner-action-phase-f = Se il Runner ha [Click] non spesi, esegue un'azione
 
@@ -498,16 +498,16 @@ game_abilities = Abilità
 game_actions = Azioni
 
 game_agenda-count = {$agenda-point ->
-    [one] {$agenda-point} Punto obbiettivo
-    *[other] {$agenda-point} Punti obbiettivo
+    [one] {$agenda-point} Punto obiettivo
+    *[other] {$agenda-point} Punti obiettivo
 }
 
 game_agenda-count-with-req = {$agenda-point ->
-    [one] {$agenda-point} Punto obbiettivo
-    *[other] {$agenda-point} Punti obbiettivo
+    [one] {$agenda-point} Punto obiettivo
+    *[other] {$agenda-point} Punti obiettivo
 } ({$agenda-point-req} richiesto)
 
-game_approach-ice = Approccia pezzo di ghiaccio
+game_approach-ice = Approccia ghiaccio
 
 game_approach-server = Approccia server
 
@@ -536,7 +536,7 @@ game_card-count = {$cnt ->
 
 game_click-count = {$click ->
     [one] {$click} click
-    *[other] {$click} clicks
+    *[other] {$click} click
 }
 
 game_close = Chiudi
@@ -571,7 +571,7 @@ game_destroyed = Distrutto
 
 game_draw = Pesca
 
-game_encounter-ice = Incontra pezzo di ghiaccio
+game_encounter-ice = Incontra ghiaccio
 
 game_end-turn = Fine turno
 
@@ -768,7 +768,7 @@ game_win-flatlined = {$winner} ({$side}) vince per flatline al turno {$turn}
 
 game_win-other = {$winner} ({$side}) vince per {$reason} al turno {$turn}
 
-game_win-points = {$winner} ({$side}) vince per punti obbiettivo al turno {$turn}
+game_win-points = {$winner} ({$side}) vince per punti obiettivo al turno {$turn}
 
 ingame-settings_alt-art = Illustrazione alternative
 
@@ -780,7 +780,7 @@ ingame-settings_card-backs = Dorsi carta
 
 ingame-settings_card-image = Immagine carta
 
-ingame-settings_card-images = Immegini carta
+ingame-settings_card-images = Immagini carta
 
 ingame-settings_card-sorting = Ordinamento
 
