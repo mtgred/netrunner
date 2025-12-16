@@ -375,10 +375,11 @@
                         ; and we're still accessing the card
                         (if (and (get-card state c)
                                  (same-card? c (:access @state)))
-                          (if (agenda? c)
-                            (access-agenda state side eid c)
-                            ;; Accessing a non-agenda
-                            (access-non-agenda state side eid c))
+                          (let [c (get-card state c)]
+                            (if (agenda? c)
+                              (access-agenda state side eid c)
+                              ;; Accessing a non-agenda
+                              (access-non-agenda state side eid c)))
                           (access-end state side eid c
                                       {:trashed (find-cid (:cid c) (get-in @state [:corp :discard]))
                                        :stolen (and (agenda? c)
