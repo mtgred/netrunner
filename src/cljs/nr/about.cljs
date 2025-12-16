@@ -67,7 +67,7 @@
           [:ul.list.compact
            [:li [tr-span [:lang_zh-simp "Chinese (Simplified)"]] ": " [linked-person "bbbbbbbbba" "https://github.com/bbbbbbbbba"] ", " [linked-person "klingeling" "https://github.com/klingeling"]]
            [:li [tr-span [:lang_fr "French"]] ": canisinhorto"]
-           [:li [tr-span [:lang_it "Italian"]] ": " [linked-person "gianluks90" "https://github.com/Gianluks90"]
+           [:li [tr-span [:lang_it "Italian"]] ": " [linked-person "gianluks90" "https://github.com/Gianluks90"]]
            [:li [tr-span [:lang_ja "Japanese"]] ": " [linked-person "csbisa" "https://github.com/csbisa"]]
            [:li [tr-span [:lang_ko "Korean"]] ": Seojun Park"]
            [:li [tr-span [:lang_la-pig "Pig-Latin"]] ": " [linked-person "jwarwick" "https://github.com/jwarwick"]]
