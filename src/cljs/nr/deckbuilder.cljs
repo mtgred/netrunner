@@ -239,7 +239,9 @@
         selected (or (:old-deck @s) (first decks))]
     (end-edit s)
     (load-decks decks)
-    (when selected (put! select-channel selected))))
+    (if selected
+      (put! select-channel selected)
+      (swap! s assoc :deck nil))))
 
 (defn delete-deck [s]
   (swap! s assoc :delete true)
