@@ -18,7 +18,7 @@
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [all-cards-in-hand* in-hand*?
                                   breach-access-bonus defcard draw-abi drain-credits gain-credits-ability  offer-jack-out
-                                  reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability tutor-abi with-revealed-hand]]
+                                  reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability scry tutor-abi with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid
@@ -621,13 +621,7 @@
              :async true
              :effect (req (if (= target "Done")
                             (do (system-msg state :corp "declines to reveal an agenda from HQ")
-                                (continue-ability
-                                  state :runner
-                                  {:msg "look at the top 3 cards of R&D"
-                                   :prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-cards (take 3 (:deck corp))))
-                                   :waiting-prompt true
-                                   :choices ["OK"]}
-                                  card nil))
+                                (scry state :runner eid card :corp 3))
                             (do
                               (wait-for (reveal-loud state side card {:forced true} target)
                                         (continue-ability

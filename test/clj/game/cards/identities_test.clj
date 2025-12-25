@@ -1579,7 +1579,7 @@
                           :hand [(qty "Amped Up" 5)]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Amped Up")
-      (is (= "Draw 1 card?" (:msg (prompt-map :runner))))
+      (is (= "Draw 1 card and sabotage 2?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       (is (= "Choose up to 2 cards to trash from HQ. Remainder will be trashed from top of R&D."
              (:msg (prompt-map :corp))))
@@ -1598,7 +1598,7 @@
                           :hand ["Marrow" "Sure Gamble"]}})
       (take-credits state :corp)
       (play-from-hand state :runner "Marrow")
-      (click-prompt state :runner "No")
+      (click-prompt state :runner "Yes")
       (click-prompt state :corp "Done")
       (take-credits state :runner)
       (play-and-score state "Longevity Serum")
