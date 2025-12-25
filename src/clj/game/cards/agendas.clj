@@ -34,8 +34,8 @@
    [game.core.hosting :refer [host]]
    [game.core.ice :refer [get-current-ice update-all-ice update-all-icebreakers]]
    [game.core.initializing :refer [card-init]]
-   [game.core.installing :refer [corp-install corp-install-msg]]
-   [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-cards-async swap-ice
+   [game.core.installing :refer [corp-install corp-install-msg swap-cards-async]]
+   [game.core.moving :refer [forfeit mill move move-zone swap-cards swap-ice
                              trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? ->c]]
@@ -185,7 +185,7 @@
                       (resolve-ability state side
                                        {:async true
                                         :prompt (str "The top cards of R&D are (top->bottom): "
-                                                     (enumerate-str (map get-title choices)))
+                                                     (enumerate-cards choices))
                                         :choices ["OK"]}
                                        card nil)
                       (continue-ability state side (abt choices) card nil))))}}}}))
@@ -258,7 +258,7 @@
     :effect (req (continue-ability
                    state side
                    {:prompt (msg "The top cards of R&D are (top->bottom): "
-                                 (enumerate-str (map :title (take 5 (:deck corp)))))
+                                 (enumerate-cards (take 5 (:deck corp))))
                     :choices ["OK"]
                     :async true
                     :req (req (not-empty (:deck corp)))
@@ -1525,19 +1525,18 @@
                           (play-sfx state side "click-card-2")
                           (wait-for
                                (draw state side 4)
-                               (let [c-hand (count (:hand corp))]
-                                 (continue-ability
-                                   state side
-                                   {:prompt "Shuffle any number of cards into R&D"
-                                    :waiting-prompt true
-                                    :choices {:max c-hand
-                                              :card (every-pred corp? in-hand?)}
-                                    :msg (msg "shuffle " (quantify (count targets) "card")
-                                              " from HQ into R&D")
-                                    :effect (req (doseq [t targets]
-                                                   (move state side t :deck))
-                                                 (shuffle! state side :deck))}
-                                   card nil))))}]})
+                               (continue-ability
+                                 state side
+                                 {:prompt "Shuffle any number of cards into R&D"
+                                  :waiting-prompt true
+                                  :choices {:max (req (count (:hand corp)))
+                                            :card (every-pred corp? in-hand?)}
+                                  :msg (msg "shuffle " (quantify (count targets) "card")
+                                            " from HQ into R&D")
+                                  :effect (req (doseq [t targets]
+                                                 (move state side t :deck))
+                                               (shuffle! state side :deck))}
+                                 card nil)))}]})
 
 (defcard "NEXT Wave 2"
   {:on-score
@@ -1727,7 +1726,7 @@
                 :msg (msg "force the Runner to trash " (trash-count-str (:card context)) " and take 1 bad publicity")
                 :async true
                 :effect (req (wait-for (trash-cards state side targets {:cause-card card :cause :forced-to-trash})
-                                       (system-msg state side (str "trashes " (enumerate-str (map :title targets))))
+                                       (system-msg state side (str "trashes " (enumerate-cards targets)))
                                        (gain-bad-publicity state :corp eid 1)))}}))
 
 (defcard "Project Atlas"
@@ -1950,7 +1949,7 @@
 
 (defcard "Reeducation"
   (letfn [(corp-final [chosen original]
-            {:prompt (str "The bottom cards of R&D will be " (enumerate-str (map :title chosen)))
+            {:prompt (str "The bottom cards of R&D will be " (enumerate-cards chosen))
              :choices ["Done" "Start over"]
              :async true
              :msg (req (let [n (count chosen)]
@@ -2500,7 +2499,7 @@
                :req (req (same-card? card (:card context)))
                :msg (msg (if (pos? (count (:deck runner)))
                            (str "trash "
-                                (enumerate-str (map :title (take (adv4? state card) (:deck runner))))
+                                (enumerate-cards (take (adv4? state card) (:deck runner)))
                                 " from the stack")
                            "trash no cards from the stack (it is empty)"))
                :effect (effect (mill :corp eid :runner (adv4? state card)))}]}))

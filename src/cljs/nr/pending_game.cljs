@@ -8,7 +8,7 @@
    [nr.deckbuilder :refer [deck-name]]
    [nr.lobby-chat :refer [lobby-chat]]
    [nr.player-view :refer [player-view]]
-   [nr.translations :refer [tr tr-element tr-span tr-side]]
+   [nr.translations :refer [tr tr-element tr-element-with-embedded-content tr-span tr-side]]
    [nr.utils :refer [cond-button format-date-time mdy-formatter
                      tr-non-game-toast non-game-toast]]
    [nr.ws :as ws]
@@ -19,7 +19,8 @@
 (defn is-constructed?
   "Games using the starter decks are not constructed"
   [current-game]
-  (not (:precon @current-game)))
+  (and (not (:precon @current-game))
+       (not= "chimera" (:format @current-game))))
 
 (defn is-preconstructed?
   [current-game]
@@ -86,7 +87,9 @@
 (defn start-button [current-game user gameid players]
   (when (first-user? @players @user)
     [cond-button [tr-span [:lobby_start "Start"]]
-     (or (every? :deck @players) (is-preconstructed? current-game))
+     (or (every? :deck @players)
+         (is-preconstructed? current-game)
+         (= "chimera" (:format current-game)))
      #(ws/ws-send! [:game/start {:gameid @gameid}])]))
 
 (defn leave-button [gameid]
@@ -105,15 +108,16 @@
     [:div.infobox.blue-shade
      [tr-element :p (:tr-desc (matchup-by-key precon))]]))
 
+(defn chimera-info-box [current-game]
+  (when (= "chimera" (:format @current-game))
+    [:div.infobox.blue-shade
+     (let [link [:a {:href "https://www.playchimera.net" :target "_blank"} "playchimera.net"]]
+       [tr-element-with-embedded-content :p [:lobby_chimera-info [:span "Chimera is a format in which each player plays with randomly generated decklists. Visit " link " for more info on the rules and decisions behind the format."]] {:link link} nil])]))
+
 (defn singleton-info-box [current-game]
   (when (:singleton @current-game)
     [:div.infobox.blue-shade
      [tr-element :p [:lobby_singleton-restriction "This lobby is running in singleton mode. This means decklists will be restricted to only those which do not contain any duplicate cards."]]]))
-
-(defn turmoil-info-box [current-game]
-  (when (:turmoil-mode @current-game)
-    [:div.infobox.blue-shade
-     [tr-element :p [:lobby_turmoil-info "This lobby is running in turmoil mode. The winds of fate shall decide your path to the future."]]]))
 
 (defn swap-sides-button [user gameid players]
   (when (first-user? @players @user)
@@ -221,7 +225,7 @@
       [:h2 (:title @current-game)]
       [precon-info-box current-game]
       [singleton-info-box current-game]
-      [turmoil-info-box current-game]
+      [chimera-info-box current-game]
       (when-not (or (every? :deck @players)
                     (not (is-constructed? current-game)))
         [tr-element :div.flash-message [:lobby_waiting "Waiting players deck selection"]])

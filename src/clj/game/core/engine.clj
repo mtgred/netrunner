@@ -1160,7 +1160,7 @@
            (reduce-kv
              (fn [acc _title cards]
                (if (< 1 (count cards))
-                 (conj! acc (butlast cards))
+                 (conj! acc (butlast (sort-by :timestamp cards)))
                  acc))
              (transient []))
            persistent!
@@ -1299,6 +1299,8 @@
       (complete-with-result state side eid nil)
       (wait-for (pay-next state side (make-eid state eid) costs card [])
                 (let [payment-result async-result]
+                  (queue-event state :costs-paid {:side side
+                                                  :payment async-result})
                   (wait-for (checkpoint state nil (make-eid state eid) nil)
                             (complete-with-result
                               state side eid

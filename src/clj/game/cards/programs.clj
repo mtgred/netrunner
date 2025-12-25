@@ -36,7 +36,7 @@
                           unbroken-subroutines-choice update-all-icebreakers update-breaker-strength]]
    [game.core.initializing :refer [ability-init card-init subroutines-init]]
    [game.core.installing :refer [install-locked? runner-can-install? runner-can-pay-and-install?
-                                 runner-install]]
+                                 runner-install swap-cards-async]]
    [game.core.link :refer [get-link]]
    [game.core.mark :refer [identify-mark-ability mark-changed-event]]
    [game.core.memory :refer [available-mu expected-mu update-mu]]
@@ -88,14 +88,8 @@
                   :choices {:card #(and (in-hand? %)
                                         (has-subtype? % "Deva"))}
                   :msg (msg "swap in " (:title target) " from the grip")
-                  :effect (req (if-let [hostcard (:host card)]
-                                 (let [hosted (host state side (get-card state hostcard) target)]
-                                   (card-init state side hosted {:resolve-effect false
-                                                                 :init-data true})
-                                   (move state side card :hand))
-                                 (let [[_ moved-target] (swap-cards state side card target)]
-                                   (card-init state side moved-target {:resolve-effect false
-                                                                       :init-data true}))))}]}))
+                  :async true
+                  :effect (req (swap-cards-async state side eid card target))}]}))
 
 (defn- install-from-heap
   "Install-from-heap ability for conspiracy breakers
@@ -740,7 +734,7 @@
                                     (system-msg state side (str payment-str
                                                                 " to use " (:title card)
                                                                 " to force the Corp to reveal they drew "
-                                                                (enumerate-str (map :title cards))))
+                                                                (enumerate-cards cards)))
                                     (effect-completed state side eid))))))}}}]})
 
 (defcard "Bukhgalter"
@@ -1107,7 +1101,7 @@
                                                     card nil))))}))]
     {:on-install {:async true
                   :interactive (req (some #(card-flag? % :runner-install-draw true) (all-active state :runner)))
-                  :msg (msg "reveal " (enumerate-str (map :title (take 5 (:deck runner)))) " from the top of the stack")
+                  :msg (msg "reveal " (enumerate-cards (take 5 (:deck runner))) " from the top of the stack")
                   :waiting-prompt true
                   :effect (req (let [from (take 5 (:deck runner))]
                                  (wait-for (reveal state side from)
@@ -1266,7 +1260,7 @@
 (defcard "Disrupter"
   {:events
    [{:event :initialize-trace
-     :trash-icon true
+     :fake-cost [(->c :trash-can)]
      :optional
      {:waiting-prompt true
       :prompt "Trash Disrupter to reduce the base trace strength to 0?"
@@ -1367,7 +1361,7 @@
                  {:target-server :hq
                   :duration :end-of-run
                   :ability
-                  {:msg (msg "reveal " (enumerate-str (map :title (:hand corp))) " from HQ")
+                  {:msg (msg "reveal " (enumerate-cards (:hand corp) :sorted) " from HQ")
                    :async true
                    :effect (effect (reveal eid (:hand corp)))}})]
     {:abilities [(run-server-ability :hq {:action true
@@ -1556,7 +1550,6 @@
                                   (not (agenda? target))
                                   (not (in-discard? target))))
                    :cost [(->c :trash-can)]
-                   :trash-icon true
                    :msg (msg "trash " (:title target))
                    :async true
                    :effect (req (wait-for
@@ -3136,8 +3129,7 @@
                   {:async true
                    :msg (msg "reveal " (->> (:deck corp)
                                             (take 3)
-                                            (map :title)
-                                            (enumerate-str))
+                                            (enumerate-cards))
                              " from the top of R&D")
                    :effect (req (wait-for
                                  (reveal state side (take 3 (:deck corp)))
@@ -3336,7 +3328,7 @@
                                :all true
                                :card #(and (runner? %)
                                            (in-discard? %))}
-                     :msg (msg "shuffle " (enumerate-str (map :title targets))
+                     :msg (msg "shuffle " (enumerate-cards targets)
                                " into the stack")
                      :effect (req (doseq [c targets] (move state side c :deck))
                                   (shuffle! state side :deck))}

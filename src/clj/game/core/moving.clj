@@ -21,7 +21,7 @@
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [wait-for when-let*]]
-    [game.utils :refer [dissoc-in make-cid remove-once same-card? same-side? to-keyword]]
+    [game.utils :refer [dissoc-in make-cid make-timestamp remove-once same-card? same-side? to-keyword]]
     [medley.core :refer [insert-nth]]))
 
 (defn- trim-cause-card
@@ -62,7 +62,6 @@
   "Get the moved cards with correct abilities and keys hooked up / removed etc."
   [state side {:keys [zone host installed] :as card} to]
   (let [zone (if host (map to-keyword (:zone host)) zone)
-
         src-zone (first zone)
         target-zone (if (vector? to) (first to) to)
         same-zone? (= src-zone target-zone)
@@ -141,10 +140,16 @@
                      (contains? #{:deck :hand :discard} target-zone))
               (make-cid)
               (:cid c))
+        timestamp (if (or (and (not (contains? #{:deck :hand :discard} src-zone))
+                               (contains? #{:deck :hand :discard} target-zone))
+                          (and (not installed) to-installed))
+                    (make-timestamp)
+                    (:timestamp c))
         moved-card (assoc c :zone dest
                             :host nil
                             :hosted hosted
                             :cid cid
+                            :timestamp timestamp
                             :previous-zone (:zone c))
         ;; Set up abilities for stolen agendas
         moved-card (if (and (= :scored (first dest))
@@ -582,23 +587,8 @@
         (when (in-hand? moved-b) (add-to-currently-drawing state b-side moved-b)))
       [(get-card state moved-a) (get-card state moved-b)])))
 
-(defn swap-cards-async
-  "Swaps two cards when one or both aren't installed"
-  [state side eid a b]
-  (let [async-result (swap-cards state side a b)
-        moved-a (first async-result)
-        moved-b (second async-result)
-        install-event (= 1 (count (filter installed? [moved-a moved-b])))]
-    ;; todo - we might need behaviour for runner swap installs down the line, depending on future cards
-    ;; that's a problem for another day
-    (if (and install-event (= :corp side))
-      (let [installed-card (if (installed? moved-a) moved-a moved-b)
-            cdef (card-def installed-card)]
-        (queue-event state :corp-install {:card (get-card state installed-card)
-                                          :install-state (:install-state cdef)})
-        (wait-for (checkpoint state nil (make-eid state eid))
-                  (complete-with-result state side eid async-result)))
-      (complete-with-result state side eid async-result))))
+;; SWAP CARDS ASYNC:
+;;   SEE: Installing. Circular dependency issues (and it installs in this cases).
 
 (defn swap-agendas
   "Swaps the two specified agendas, first one scored (on corp side), second one stolen (on runner side).

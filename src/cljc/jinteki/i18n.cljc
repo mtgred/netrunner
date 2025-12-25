@@ -27,8 +27,9 @@
                               (let [res-path (str dir "/" lang ".ftl")
                                     ;; Try to load from classpath (including jar)
                                     res (io/resource res-path)]
-                                (when res
-                                  [lang (slurp res)])))))
+                                ;; Skip empty placeholder files
+                                (when-let [content (some-> res slurp not-empty)]
+                                  [lang content])))))
            errors (volatile! [])]
        (doseq [[lang content] langs]
          (try (insert-lang! lang content)

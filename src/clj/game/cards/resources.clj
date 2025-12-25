@@ -929,7 +929,7 @@
                    :prompt (msg "Trash " (:title card) " and pay " (rez-cost state :corp (:card context))
                                 " [Credits] to derez " (:title (:card context)) "?")
                    :yes-ability
-                   {:cost [(->c :credit (rez-cost state :corp (:card context))) (->c :trash-can)]
+                   {:cost [(->c :credit (rez-cost state :corp (:card context))) (->c :trash-self)]
                     :async true
                     :effect (req (wait-for
                                    (derez state :runner (:card context) {:msg-keys {:source-card card :and-then " and prevent the Corp from rezzing it for the remainder of this turn."}})
@@ -1170,8 +1170,7 @@
                                   true)))))}]})
 
 (defcard "Dean Lister"
-  {:abilities [{:trash-icon true
-                :change-in-game-state {:req (req (some #(has-subtype? % "Icebreaker") (all-installed state :runner)))
+  {:abilities [{:change-in-game-state {:req (req (some #(has-subtype? % "Icebreaker") (all-installed state :runner)))
                                        :pay-cost true}
                 :label "pump icebreaker"
                 :msg (msg "give +1 strength for each card in [their] Grip to " (:title target) " until the end of the run")
@@ -1552,7 +1551,7 @@
 (defcard "Find the Truth"
   {:events [{:event :post-runner-draw
              :msg (msg "reveal that they drew "
-                       (enumerate-str (map :title runner-currently-drawing)))
+                       (enumerate-cards runner-currently-drawing))
              :async true
              :effect (req (let [current-draws runner-currently-drawing]
                             (reveal state side eid current-draws)))}
@@ -1582,7 +1581,7 @@
              :skippable true
              :optional {:req (req (<= 15 (:credit corp)))
                         :prompt (msg "Trash Fransofia Ward to bypass " (:title (:ice context)) "?")
-                        :yes-ability {:cost [(->c :trash-can)]
+                        :yes-ability {:cost [(->c :trash-self)]
                                       :msg (msg "bypass " (:title (:ice context)))
                                       :effect (req (bypass-ice state))}}}]})
 
@@ -2119,7 +2118,7 @@
                   :change-in-game-state {:req (req (seq (:deck runner)))}
                   :keep-menu-open :while-clicks-left
                   :label "Reveal the top 4 cards of the stack"
-                  :msg (msg "reveal " (enumerate-str (map :title (take 4 (:deck runner)))) " from the top of the stack")
+                  :msg (msg "reveal " (enumerate-cards (take 4 (:deck runner))) " from the top of the stack")
                   :async true
                   :effect (req (let [from (take 4 (:deck runner))]
                                  (wait-for (reveal state side from)
@@ -2832,7 +2831,7 @@
 (defcard "Political Operative"
   {:req (req (some #{:hq} (:successful-run runner-reg)))
    :abilities [{:async true
-                :trash-icon true
+                :fake-cost [(->c :trash-can)]
                 :label "Trash a rezzed card"
                 :effect
                 (effect
@@ -2996,7 +2995,7 @@
    :on-trash {:async true
               :effect (req (system-msg state :runner
                                        (str "trashes "
-                                            (enumerate-str (map :title (take 3 (:deck runner))))
+                                            (enumerate-cards (take 3 (:deck runner)))
                                             " from the stack due to " (:title card) " being trashed"))
                            (mill state :runner eid :runner 3))}})
 
@@ -3101,7 +3100,7 @@
 
 (defcard "Salvaged Vanadis Armory"
   {:events [{:event :damage
-             :trash-icon true
+             :fake-cost [(->c :trash-can)]
              :optional
              {:waiting-prompt true
               :prompt "Trash Salvaged Vanadis Armory to force the Corp to trash the top cards of R&D?"
@@ -3323,8 +3322,8 @@
                                (host state side (get-card state card) c {:facedown true})))}
    ;; req to use ability - can pay to install at least one of the cards
    :abilities [{:async true
-                :label "install a hosted card"
-                :trash-icon true
+                :fake-cost [(->c :trash-can)]
+                :label "Install a hosted card"
                 :change-in-game-state {:req (req (some #(and (not (event? (get-card state %)))
                                                              (runner-can-pay-and-install?
                                                                state side
@@ -3334,22 +3333,28 @@
                                                                 :no-toast true}))
                                                        (seq (:hosted card))))}
                 :effect (req (let [set-aside-cards (set-aside state side eid (:hosted card))]
-                               (wait-for (trash state side card {:cause :ability-cost :cause-card card})
-                                         (system-msg state side "trashed")
-                                         (continue-ability
-                                           state side
-                                           {:prompt "Choose a set-aside card to install"
-                                            :waiting-prompt true
-                                            :not-distinct true
-                                            :async true
-                                            :choices (req (filter #(and (not (event? %))
-                                                                        (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -1})) set-aside-cards))
-                                            :msg (msg "install " (:title target) ", lowering its install cost by 1 [Credits]. "
-                                                      (enumerate-str (map :title (remove-once #(same-card? % target) set-aside-cards)))
-                                                      " are trashed as a result")
-                                            :effect (req (wait-for (runner-install state side (make-eid  state (assoc eid :source card :source-type :runner-install)) target {:cost-bonus -1})
-                                                                   (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card})))}
-                                           card nil))))}]})
+                               (wait-for
+                                 (pay state side card (->c :trash-can))
+                                 (continue-ability
+                                   state side
+                                   {:prompt "Choose a set-aside card to install"
+                                    :waiting-prompt true
+                                    :not-distinct true
+                                    :async true
+                                    :choices (req (if-let [options (seq (filter #(and (not (event? %))
+                                                                                      (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -1})) set-aside-cards))]
+                                                    options
+                                                    ["Done"]))
+                                    :msg (msg (if (= target "Done")
+                                                (str "trash " (enumerate-cards set-aside-cards :sorted))
+                                                (str "install " (:title target) ", lowering its install cost by 1 [Credits]. "
+                                                     (enumerate-cards (remove-once #(same-card? % target) set-aside-cards) :sorted)
+                                                     " are trashed as a result")))
+                                    :effect (req (if (= target "Done")
+                                                   (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card})
+                                                   (wait-for (runner-install state side (make-eid  state (assoc eid :source card :source-type :runner-install)) target {:cost-bonus -1})
+                                                             (trash-cards state side (assoc eid :source card) (filter #(not (same-card? % target)) set-aside-cards) {:unpreventable true :cause-card card}))))}
+                                   card nil))))}]})
 
 (defcard "Symmetrical Visage"
   {:events [{:event :runner-click-draw
@@ -3384,11 +3389,12 @@
                                             (gain-tags :runner eid 1))}}}]})
 
 (defcard "Tech Trader"
-  {:events [{:event :runner-trash
-             :req (req (and (= side :runner)
-                            (= :ability-cost (:cause target))))
-             :msg "gain 1 [Credits]"
+  {:events [{:event :costs-paid
              :async true
+             :interactive (req true)
+             :req (req (and (= :runner (:side context))
+                            (->> context :payment (map :paid/type) (some #{:trash-can}))))
+             :msg "gain 1 [Credits]"
              :effect (effect (gain-credits eid 1))}]})
 
 (defcard "Technical Writer"
@@ -3508,7 +3514,7 @@
                           :req (req (and (runner? target)
                                          (in-discard? target)
                                          (has-trash-ability? target)))}
-                :msg (msg "shuffle " (enumerate-str (map :title targets))
+                :msg (msg "shuffle " (enumerate-cards targets :sorted)
                           " into the stack")
                 :async true
                 :effect (req (doseq [c targets] (move state side c :deck))
@@ -4001,10 +4007,13 @@
 (defcard "Wasteland"
   {:events [{:event :runner-trash
              :once-per-instance true
-             :req (req (and (first-installed-trash-own? state :runner)
-                            (some #(and (installed? (:card %))
-                                        (runner? (:card %)))
-                                  targets)))
+             :req (req (letfn [(valid-ctx?
+                                 [targets]
+                                 (some
+                                   (every-pred installed? runner? (complement condition-counter?))
+                                   (map :card targets)))]
+                         (and (valid-ctx? targets)
+                              (first-event? state side :runner-trash valid-ctx?))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits eid 1))}]})

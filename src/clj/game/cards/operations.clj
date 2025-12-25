@@ -138,7 +138,7 @@
                  :choices ["OK"]
                  :async true
                  :effect (req (trash-cards state side eid remaining-cards {:unpreventable true :cause-card card}))})))]
-   {:prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-str (map :title (take 3 (:deck corp)))))
+   {:prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-cards (take 3 (:deck corp))))
     :change-in-game-state {:req (req (seq (:deck corp)))}
     :choices ["OK"]
     :async true
@@ -389,7 +389,7 @@
                                    (wait-for
                                      (gain-credits state :runner (count trashed-cards))
                                      (system-msg state :runner
-                                                 (str "trashes " (enumerate-str (map :title trashed-cards))
+                                                 (str "trashes " (enumerate-cards trashed-cards)
                                                       " and gains " (count trashed-cards)
                                                       " [Credits]"))
                                      (effect-completed state side eid)))))}
@@ -576,7 +576,7 @@
               :card #(and (corp? %)
                           (in-hand? %))}
     :change-in-game-state {:req (req (seq (:hand corp)))}
-    :msg (msg "reveal " (enumerate-str (map :title (sort-by :title targets))) " from HQ and gain " (* 2 (count targets)) " [Credits]")
+    :msg (msg "reveal " (enumerate-cards targets :sorted) " from HQ and gain " (* 2 (count targets)) " [Credits]")
     :async true
     :effect (req (wait-for
                    (reveal state side targets)
@@ -1090,7 +1090,7 @@
   {:on-play
    {:req (req tagged)
     :change-in-game-state {:req (req (some resource? (all-installed state :runner)))}
-    :msg (msg "trash " (enumerate-str (map :title (sort-by :title targets))))
+    :msg (msg "trash " (enumerate-cards targets :sorted))
     :choices {:max (req (min 2 (count (filter resource? (all-installed state :runner)))))
               :card #(and (installed? %)
                           (resource? %))}
@@ -1174,7 +1174,7 @@
                                                        (system-msg
                                                          state :runner
                                                          (str (:msg async-result) " to prevent the trashing of "
-                                                              (enumerate-str (map :title (sort-by :title targets)))))
+                                                              (enumerate-cards targets :sorted)))
                                                        (effect-completed state side (make-result eid targets))))}
                                card nil)
                              (let [prevented async-result
@@ -1187,7 +1187,7 @@
                                                      (str "trashes all "
                                                           (when (seq prevented) "other ")
                                                           typemsg
-                                                          ": " (enumerate-str (map :title (sort-by :title async-result)))))
+                                                          ": " (enumerate-cards async-result :sorted)))
                                          (wait-for (gain-bad-publicity state :corp 1)
                                                    (when async-result
                                                      (system-msg state :corp "takes 1 bad publicity from Game Over"))
@@ -1292,7 +1292,7 @@
 
 (defcard "Hasty Relocation"
   (letfn [(hr-final [chosen original]
-            {:prompt (str "The top cards of R&D will be " (enumerate-str (map :title chosen)))
+            {:prompt (str "The top cards of R&D will be " (enumerate-cards chosen))
              :choices ["Done" "Start over"]
              :async true
              :effect (req (if (= target "Done")
@@ -1358,7 +1358,7 @@
                             :all true
                             :card #(and (installed? %)
                                         (not (program? %)))}
-                  :msg (msg "trash " (enumerate-str (map :title (sort-by :title targets))))
+                  :msg (msg "trash " (enumerate-cards targets :sorted))
                   :async true
                   :effect (effect (trash-cards eid targets {:cause-card card}))}
      :unsuccessful {:msg "take 1 bad publicity"
@@ -1475,7 +1475,7 @@
                                      (system-msg
                                        state :corp
                                        (str "uses " (:title card) " to reveal "
-                                            (enumerate-str (map :title (sort-by :title (:hand runner))))
+                                            (enumerate-cards (:hand runner) :sorted)
                                             " from the grip and trash up to " x " resources or events"))
                                      (continue-ability state side (iop (dec x)) card nil))))}
        :unsuccessful {:msg "take 1 bad publicity"
@@ -1639,7 +1639,7 @@
               :card #(and (rezzed? %)
                           (not (agenda? %)))}
     :change-in-game-state {:req (req (some rezzed? (all-installed state :corp)))}
-    :msg (msg "trash " (enumerate-str (map :title targets))
+    :msg (msg "trash " (enumerate-cards targets)
               " and gain " (* (count targets) 3) " [Credits]")
     :async true
     :effect (req (wait-for (trash-cards state side targets {:cause-card card})
@@ -1888,7 +1888,7 @@
     :choices {:max (req (count (filter #(not (agenda? %)) (all-active-installed state :corp))))
               :card #(and (rezzed? %)
                           (not (agenda? %)))}
-    :msg (msg "trash " (enumerate-str (map :title targets))
+    :msg (msg "trash " (enumerate-cards targets :sorted)
               " and give the runner " (quantify (count targets) "tag"))
     :async true
     :effect (req (wait-for (trash-cards state side targets {:cause-card card})
@@ -2292,7 +2292,7 @@
       (effect
         (continue-ability
           (let [top-five (take 5 (:deck corp))]
-            {:prompt (str "The top cards of R&D are (top->bottom): " (enumerate-str (map get-title top-five)))
+            {:prompt (str "The top cards of R&D are (top->bottom): " (enumerate-cards top-five))
              :waiting-prompt true
              :choices ["OK"]
              :async true
@@ -2642,7 +2642,7 @@
     :async true
     :effect (req (system-msg state side
                              (str "uses " (:title card) " to reveal "
-                                  (enumerate-str (map :title (sort-by :title (:hand runner))))
+                                  (enumerate-cards (:hand runner) :sorted)
                                   " from the grip and trash any copies of " target))
                  (let [cards (filter #(= target (:title %)) (:hand runner))]
                    (wait-for
@@ -2734,7 +2734,7 @@
     :choices {:card #(and (installed? %)
                           (runner? %))
               :max 2}
-    :msg (msg (str "move " (enumerate-str (map :title targets)) " to the grip"))
+    :msg (msg "move " (enumerate-str targets) " to the grip")
     :effect (req (doseq [c targets]
                    (move state :runner c :hand)))}})
 
@@ -2911,7 +2911,7 @@
     :prompt "Choose one"
     :choices ["Event" "Hardware" "Program" "Resource"]
     :msg (msg "name " target
-              ", reveal " (enumerate-str (map :title (:hand runner)))
+              ", reveal " (enumerate-cards (:hand runner) :sorted)
               " from the grip, and gain "
               (* 2 (count (filter #(is-type? % target) (:hand runner)))) " [Credits]")
     :async true
@@ -3305,7 +3305,7 @@
                                       :effect (req (doseq [t targets]
                                                      (move state :runner t :deck))
                                                    (shuffle! state :runner :deck))
-                                      :msg (msg "shuffle " (enumerate-str (map :title targets)) " into the Stack")})
+                                      :msg (msg "shuffle " (enumerate-cards targets) " into the Stack")})
                                      card nil)))}]
     {:on-play {:async true
                :change-in-game-state {:req (req (some #(or (not (rezzed? %)) (can-be-advanced? state %)) (all-installed state :corp)))}

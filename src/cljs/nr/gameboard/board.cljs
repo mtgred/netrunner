@@ -50,23 +50,26 @@
     @corp-prompt-state
     @runner-prompt-state))
 
-(defn- image-url [{:keys [side code] :as card}]
-  (let [lang (get-in @app-state [:options :card-language] "en")
-        res (get-in @app-state [:options :card-resolution] "default")
-        special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
-        special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
-        viewer-wants-art (get-in @app-state [:options :show-alt-art])
-        show-art (and special-user special-wants-art viewer-wants-art)
-        art (if show-art
-              (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)] "stock")
-              "stock")
-        card (if (or (:face card) (:images card)) card (get @all-cards (get-title card)))
-        images (image-or-face card)]
-    (if (sequential? art)
-      (let [art-urls (get-image-path images (keyword lang) (keyword res) (keyword (first art)))
-            chosen-art (nth art-urls (second art))]
-        [chosen-art])
-      (first (get-image-path images (keyword lang) (keyword res) (keyword art))))))
+(defn- image-url
+  ([card] (image-url card nil))
+  ([{:keys [side code] :as card} {:keys [zoom?] :as opts}]
+   (let [lang (get-in @app-state [:options :card-language] "en")
+         res (get-in @app-state [:options :card-resolution] "default")
+         special-user (get-in @game-state [(keyword (lower-case side)) :user :special])
+         special-wants-art (get-in @game-state [(keyword (lower-case side)) :user :options :show-alt-art])
+         viewer-wants-art (and (get-in @app-state [:options :show-alt-art])
+                               (not (and zoom? (get-in @app-state [:options :pin-base-art]))))
+         show-art (and special-user special-wants-art viewer-wants-art)
+         art (if show-art
+               (get-in @game-state [(keyword (lower-case side)) :user :options :alt-arts (keyword code)] "stock")
+               "stock")
+         card (if (or (:face card) (:images card)) card (get @all-cards (get-title card)))
+         images (image-or-face card)]
+     (if (sequential? art)
+       (let [art-urls (get-image-path images (keyword lang) (keyword res) (keyword (first art)))
+             chosen-art (nth art-urls (second art))]
+         [chosen-art])
+       (first (get-image-path images (keyword lang) (keyword res) (keyword art)))))))
 
 
 (defonce button-channel (chan))
@@ -273,63 +276,16 @@
     (when (not= "Identity" (:type card))
       (send-command "move" {:card card :server server}))))
 
-;; touch support
-(defonce touchmove (atom {}))
-
-(defn release-touch [^js/$ card]
-  (-> card (.removeClass "disable-transition"))
-  (-> card (.css "position" ""))
-  (-> card (.css "top" "")))
-
-(defn update-card-position [^js/$ card touch]
-  (-> card (.css "left" (str (- (int (aget touch "pageX")) 30) "px")))
-  (-> card (.css "top"  (str (- (int (aget touch "pageY")) 42) "px"))))
-
-(defn get-card [e _server]
-  (-> e .-target js/$ (.closest ".card-wrapper")))
-
-(defn get-server-from-touch [touch]
-  (let [cX (.. touch -clientX)
-        cY (.. touch -clientY)
-        server (-> (js/document.elementFromPoint cX cY)
-                   js/$
-                   (.closest "[data-server]")
-                   (.attr "data-server"))]
-    [server (> (+ (abs (- (:x @touchmove) cX))
-                  (abs (- (:y @touchmove) cY)))
-               30)]))
-
-(defn handle-touchstart [e cursor]
-  (let [touch (aget (.. e -targetTouches) 0)
-        [server _] (get-server-from-touch touch)
-        card (get-card e server)]
-    (-> card (.addClass "disable-transition"))
-    (reset! touchmove {:card (.stringify js/JSON (clj->js @cursor))
-                       :x (.. touch -clientX)
-                       :y (.. touch -clientY)
-                       :start-server server})))
-
-(defn handle-touchmove [e]
-  (let [touch (aget (.. e -targetTouches) 0)
-        card (get-card e (:start-server @touchmove))]
-    (-> card (.css "position" "fixed"))
-    (update-card-position card touch)))
-
-(defn handle-touchend [e]
-  (let [touch (aget (.. e -changedTouches) 0)
-        card (get-card e (:start-server @touchmove))
-        [server moved-enough] (get-server-from-touch touch)]
-    (release-touch card)
-    (when (and server moved-enough (not= server (:start-server @touchmove)))
-      (let [cardinfo (-> @touchmove :card ((.-parse js/JSON)) (js->clj :keywordize-keys true))]
-        (send-command "move" {:card cardinfo :server server})))))
-
 (defn remote->num [server]
   (-> server str (clojure.string/split #":remote") last str->int))
 
 (defn remote->name [server]
   (let [num (remote->num server)]
     [tr-span [:game_server "Server"] {:num num}]))
+
+(defn remote->str-name [server]
+  (let [num (remote->num server)]
+   (tr [:game_server "Server"] {:num num})))
 
 (defn zone->sort-key [zone]
   (case (if (keyword? zone) zone (last zone))
@@ -421,7 +377,7 @@
       [:<>
        [:div.card-preview.blue-shade
         {:on-click #(reset! img-side (not @img-side))}
-        (let [url (image-url card)
+        (let [url (image-url card {:zoom? true})
               show-img (= "image" (or @card-zoom-type "image"))]
           (if (and url (if show-img @img-side (not @img-side)))
             [:img {:src url :alt (get-title card) :onLoad #(-> % .-target js/$ .show)}]
@@ -747,6 +703,8 @@
                     (faceup? card)
                     (= (:side host) "Runner"))))))
 
+;; HERE
+
 (defn card-view
   [{:keys [zone code type abilities counter
            subtypes strength current-strength selected hosted
@@ -777,9 +735,6 @@
                                                       (playable? card)))
                                          0)
                             :draggable (when (and (not-spectator?) (not disable-click) (not flashback-fake-in-hand)) true)
-                            :on-touch-start #(handle-touchstart % card)
-                            :on-touch-end   #(handle-touchend %)
-                            :on-touch-move  #(handle-touchmove %)
                             :on-drag-start #(handle-dragstart % card)
                             :on-drag-end #(-> % .-target js/$ (.removeClass "dragged"))
                             :on-mouse-enter #(when (or (not (or (not code) flipped facedown))
@@ -1023,7 +978,7 @@
           [facedown-card (:side @identity) ["bg"] nil])
         ;; todo - again, can we pass the server count into the tr?
         [:div.header {:class "darkbg server-label"}
-         [tr-span tr-vec {:cnt deck-count-number}]]
+         [tr-span tr-vec {:cnt deck-count-number}]]]
        (when (and (= render-side player-side) (not (is-replay?)))
          [:div.panel.blue-shade.menu {:ref #(swap! board-dom assoc menu-ref %)}
           [:div {:on-click #(do (send-command "shuffle")
@@ -1041,7 +996,7 @@
           (doall
             (for [card @deck]
               ^{:key (:cid card)}
-              [card-view card]))])]])))
+              [card-view card]))])])))
 
 (defn discard-view-runner [player-side discard]
   (let [s (r/atom {})]
@@ -1221,17 +1176,19 @@
                [card-view card flipped]]))))
       (if central-view
         [label content (assoc opts :classes "server-label" :hide-cursor true)]
-        [label content (assoc opts :classes "server-label" :hide-cursor true :tr-vec [:game_server "Server"] :tr-params {:num key})])]]))
+        [label content (assoc opts :classes "server-label" :hide-cursor true :name (str (tr [:game_server "Server"] {:num key})) :tr-vec [:game_server "Server"] :tr-params {:num key})])]]))
 
 (defn stacked-label [cursor similar-servers opts]
   (let [similar-server-names (->> similar-servers
                                   (map first)
-                                  (map remote->name))
+                                  (map remote->str-name))
         full-server-names (cons (get-in opts [:opts :name]) similar-server-names)
         numbers (map #(second (split % " ")) full-server-names)]
     [label full-server-names (assoc opts
                                         :classes "server-label"
                                         :name (str "Servers " (join ", " numbers))
+                                        :tr-vec [:game_server "Server"] 
+                                        :tr-params {:num (join ", " numbers)}
                                         :hide-cursor true)]))
 
 (defn stacked-view [{:keys [key server similar-servers central-view run]} opts]
@@ -1301,14 +1258,14 @@
             [server-view {:key num
                           :server (second server)
                           :run (when (= server-type (str "remote" num)) @run)}
-             {:opts {:name (remote->name (first server))}}]
+             {:opts {:name (remote->str-name (first server))}}]
             [stacked-view {:key num
                            :server (second server)
                            :similar-servers similar-servers
                            :run (when
                                   (some #(= server-type (str "remote" %)) (map #(remote->num (first %)) all-servers))
                                   (= server-type (str "remote" num)) @run)}
-             {:opts {:name (remote->name (first server))}}])))
+             {:opts {:name (remote->str-name (first server))}}])))
       [server-view {:key "hq"
                     :server (:hq @servers)
                     :central-view [identity-view :corp identity hand-count-number]
@@ -1897,7 +1854,6 @@
        :else
        (doall (for [{:keys [idx uuid value]} choices
                     :when (not= value "Hide")]
-                ;; HERE
                 [:button {:key idx
                           :on-click #(do (send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice {:uuid uuid}})
                                          (card-highlight-mouse-out % value button-channel))
@@ -1907,74 +1863,96 @@
                           #(card-highlight-mouse-out % value button-channel)}
                  (render-message (or (not-empty (get-title value)) value))])))]))
 
-(defn basic-actions [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me]}]
-  [:div.panel.blue-shade
-   (if (= (keyword @active-player) side)
-     ;; !!here
-     (when (and (not (or @runner-phase-12 @corp-phase-12))
-                (zero? (:click @me))
-                (not @end-turn))
-       [:button {:on-click #(do (close-card-menu)
-                                (send-command "end-turn"))}
-        [tr-span [:game_end-turn "End Turn"]]])
-     (when @end-turn
-       [:button {:on-click #(do
-                              (swap! app-state assoc :start-shown true)
-                              (send-command "start-turn"))}
-        [tr-span [:game_start-turn "Start Turn"]]]))
-   (when (and (= (keyword @active-player) side)
-              (or @runner-phase-12 @corp-phase-12))
-     [:button {:on-click #(send-command "end-phase-12")}
-      (if (= side :corp)
-        [tr-span [:game_mandatory-draw "Mandatory Draw"]]
-        [tr-span [:game_take-clicks "Take Clicks"]])])
-   (when (= side :runner)
-     [:div
-      [cond-button [tr-span [:game_remove-tag "Remove Tag"]]
-       (and (not (or @runner-phase-12 @corp-phase-12))
-            (playable? (get-in @me [:basic-action-card :abilities 5]))
-            (pos? (get-in @me [:tag :base])))
-       #(send-command "remove-tag")]
-      [:div.run-button.menu-container
-       [cond-button [tr-span [:game_run "Run"]]
-        (and (not (or @runner-phase-12 @corp-phase-12))
-             (pos? (:click @me)))
-        #(do (send-command "generate-runnable-zones")
-             (if (= :run-button (:source @card-menu))
-               (close-card-menu)
-               (open-card-menu :run-button)))]
-       [:div.panel.blue-shade.servers-menu (when (= :run-button (:source @card-menu))
-                                             {:class "active-menu"
-                                              :style {:display "inline"}})
-        [:ul
-         (let [servers (get-in @game-state [:runner :runnable-list])]
-           (doall
-             (map-indexed (fn [_ label]
-                            ^{:key label}
-                            [card-menu-item (tr-game-prompt label)
-                             #(do (close-card-menu)
-                                  (send-command "run" {:server label}))])
-                          servers)))]]]])
-   (when (= side :corp)
-     [cond-button [tr-span [:game_purge "Purge"]]
-      (and (not (or @runner-phase-12 @corp-phase-12))
-           (playable? (get-in @me [:basic-action-card :abilities 6])))
-      #(send-command "purge")])
-   (when (= side :corp)
-     [cond-button [tr-span [:game_trash-resource "Trash Resource"]]
-      (and (not (or @runner-phase-12 @corp-phase-12))
-           (playable? (get-in @me [:basic-action-card :abilities 5]))
-           (is-tagged? game-state))
-      #(send-command "trash-resource")])
-   [cond-button [tr-span [:game_draw "Draw"]]
-    (and (not (or @runner-phase-12 @corp-phase-12))
-         (playable? (get-in @me [:basic-action-card :abilities 1]))
-         (pos? (:deck-count @me)))
-    #(send-command "draw")]
-   [cond-button [tr-span [:game_gain-credit "Gain Credit"]]
-    (and (not (or @runner-phase-12 @corp-phase-12))
-         (playable? (get-in @me [:basic-action-card :abilities 0])))
-    #(send-command "credit")]])
+(defn basic-actions [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me runner-post-discard corp-post-discard]}]
+  (let [phase-12 (or @runner-phase-12 @corp-phase-12)
+        post-discard (or @corp-post-discard @runner-post-discard)
+        phase-locked (or phase-12 post-discard)]
+    [:div.panel.blue-shade
+     (if (= (keyword @active-player) side)
+       (when (and (not phase-locked) (zero? (:click @me)) (not @end-turn))
+         [:button {:on-click #(do (close-card-menu)
+                                  (send-command "end-turn"))}
+          [tr-span [:game_end-turn "End Turn"]]])
+       (when (and @end-turn (not post-discard))
+         [:button {:on-click #(do
+                                (swap! app-state assoc :start-shown true)
+                                (send-command "start-turn"))}
+          [tr-span [:game_start-turn "Start Turn"]]]))
+     ;; POST-DISCARD PHASE
+     (when (and (= (keyword @active-player) side) post-discard)
+       [cond-button
+        [tr-span [:game_continue-end-turn "Continue End Turn"]]
+        (if (:requires-consent post-discard)
+          (not (side post-discard))
+          true)
+        #(send-command (if (:requires-consent post-discard)
+                         "post-discard-pass-priority"
+                         "end-post-discard"))])
+     (when (and (not= (keyword @active-player) side) (:requires-consent post-discard))
+       [cond-button
+        [tr-span [:game_allow-turn-end "Allow Turn End"]]
+        (not (side post-discard))
+        #(send-command "post-discard-pass-priority")])
+     ;; PHASE 1.2
+     (when (and (= (keyword @active-player) side) phase-12)
+       [cond-button
+        (if (= side :corp) [tr-span [:game_mandatory-draw "Mandatory Draw"]] [tr-span [:game_take-clicks "Take Clicks"]])
+        (if (:requires-consent phase-12)
+          (not (side phase-12))
+          true)
+        #(send-command (if (:requires-consent phase-12)
+                         "phase-12-pass-priority"
+                         "end-phase-12"))])
+     (when (and (not= (keyword @active-player) side) (:requires-consent phase-12))
+       [cond-button
+        (if (= side :runner) [tr-span [:game_allow-mandatory-draw "Allow Mandatory Draw"]] [tr-span [:game_allow-take-clicks "Allow Take Clicks"]])
+        (not (side phase-12))
+        #(send-command "phase-12-pass-priority")])
+     ;; BASIC ACTIONS
+     (when (= side :runner)
+       [:div
+        [cond-button [tr-span [:game_remove-tag "Remove Tag"]]
+         (and (not phase-locked)
+              (playable? (get-in @me [:basic-action-card :abilities 5]))
+              (pos? (get-in @me [:tag :base])))
+         #(send-command "remove-tag")]
+        [:div.run-button.menu-container
+         [cond-button [tr-span [:game_run "Run"]]
+          (and (not phase-locked) (pos? (:click @me)))
+          #(do (send-command "generate-runnable-zones")
+               (if (= :run-button (:source @card-menu))
+                 (close-card-menu)
+                 (open-card-menu :run-button)))]
+         [:div.panel.blue-shade.servers-menu (when (= :run-button (:source @card-menu))
+                                               {:class "active-menu"
+                                                :style {:display "inline"}})
+          [:ul
+           (let [servers (get-in @game-state [:runner :runnable-list])]
+             (doall
+               (map-indexed (fn [_ label]
+                              ^{:key label}
+                              [card-menu-item (tr-game-prompt label)
+                               #(do (close-card-menu)
+                                    (send-command "run" {:server label}))])
+                            servers)))]]]])
+     (when (= side :corp)
+       [cond-button [tr-span [:game_purge "Purge"]]
+        (and (not phase-locked) (playable? (get-in @me [:basic-action-card :abilities 6])))
+        #(send-command "purge")])
+     (when (= side :corp)
+       [cond-button [tr-span [:game_trash-resource "Trash Resource"]]
+        (and (not phase-locked)
+             (playable? (get-in @me [:basic-action-card :abilities 5]))
+             (is-tagged? game-state))
+        #(send-command "trash-resource")])
+     [cond-button [tr-span [:game_draw "Draw"]]
+      (and (not phase-locked)
+           (playable? (get-in @me [:basic-action-card :abilities 1]))
+           (pos? (:deck-count @me)))
+      #(send-command "draw")]
+     [cond-button [tr-span [:game_gain-credit "Gain Credit"]]
+      (and (not phase-locked) (playable? (get-in @me [:basic-action-card :abilities 0])))
+      #(send-command "credit")]]))
 
 (defn button-pane [{:keys [side prompt-state]}]
   (let [autocomp (r/track (fn [] (get-in @prompt-state [:choices :autocomplete])))
@@ -2262,7 +2240,9 @@
         turn (r/cursor game-state [:turn])
         end-turn (r/cursor game-state [:end-turn])
         corp-phase-12 (r/cursor game-state [:corp-phase-12])
+        corp-post-discard (r/cursor game-state [:corp-post-discard])
         runner-phase-12 (r/cursor game-state [:runner-phase-12])
+        runner-post-discard (r/cursor game-state [:runner-post-discard])
         corp (r/cursor game-state [:corp])
         runner (r/cursor game-state [:runner])
         active-player (r/cursor game-state [:active-player])
@@ -2440,6 +2420,8 @@
                     [button-pane {:side me-side :active-player active-player :run run :encounters encounters
                                   :end-turn end-turn :runner-phase-12 runner-phase-12
                                   :corp-phase-12 corp-phase-12 :corp corp :runner runner
+                                  :runner-post-discard runner-post-discard
+                                  :corp-post-discard corp-post-discard
                                   :me me :opponent opponent :prompt-state prompt-state}])]]
 
                 [:div.me

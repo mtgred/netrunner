@@ -13,6 +13,7 @@
    [game.main :as main]
    [jinteki.preconstructed :as preconstructed]
    [jinteki.utils :refer [side-from-str]]
+   [jinteki.chimera :as chimera]
    [medley.core :refer [find-first]]
    [web.app-state :as app-state]
    [web.lobby :as lobby]
@@ -154,7 +155,11 @@
   [game]
   (if-let [precon (:precon game)]
     (set-precon-match game (preconstructed/matchup-by-key precon))
-    game))
+    (if (= "chimera" (:format game))
+      (let [corp-deck (chimera/make-corp-deck)
+            runner-deck (chimera/make-runner-deck)]
+        (set-precon-match game {:corp corp-deck :runner runner-deck}))
+      game)))
 
 (defn handle-start-game [lobbies gameid players now]
   (if-let [lobby (get lobbies gameid)]

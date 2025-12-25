@@ -22,7 +22,7 @@
    [game.core.update :refer [update!]]
    [game.core.virus :refer [number-of-virus-counters]]
    [game.macros :refer [continue-ability req wait-for]]
-   [game.utils :refer [enumerate-str quantify same-card?]]))
+   [game.utils :refer [enumerate-cards enumerate-str quantify same-card?]]))
 
 ;; Click
 (defmethod value :click [cost] (:cost/amount cost))
@@ -301,6 +301,23 @@
                                                   :paid/value 1
                                                   :paid/targets [card]})))
 
+;; like trash can, but does not fire trash can abilities
+(defmethod value :trash-self [cost] (:cost/amount cost))
+(defmethod label :trash-self [cost] "trash itself")
+(defmethod payable? :trash-self
+  [cost state side eid card]
+  (and (installed? (get-card state card))
+       (= 1 (value cost))))
+(defmethod handler :trash-self
+  [cost state side eid card]
+  (wait-for (trash state side card {:cause :ability-cost
+                                    :unpreventable true
+                                    :suppress-checkpoint true})
+            (complete-with-result state side eid {:paid/msg (str "trashes " (:printed-title card))
+                                                  :paid/type :trash-self
+                                                  :paid/value 1
+                                                  :paid/targets [card]})))
+
 ;; Forfeit
 (defmethod value :forfeit [cost] (:cost/amount cost))
 (defmethod label :forfeit [cost] (str "forfeit " (quantify (value cost) "Agenda")))
@@ -326,7 +343,7 @@
                   (complete-with-result
                     state side eid
                     {:paid/msg (str "forfeits " (quantify (value cost) "agenda")
-                                    " (" (enumerate-str (map :title targets)) ")")
+                                    " (" (enumerate-cards targets :sorted) ")")
                      :paid/type :forfeit
                      :paid/value (value cost)
                      :paid/targets targets}))}
@@ -373,7 +390,7 @@
                                         (complete-with-result
                                           state side eid
                                           {:paid/msg (str "reveals and trashes " (quantify (count async-result) "card")
-                                                          " (" (enumerate-str (map :title targets)) ")"
+                                                          " (" (enumerate-cards targets :sorted) ")"
                                                           " from " hand)
                                            :paid/type :trash-from-hand
                                            :paid/value (count async-result)
@@ -388,7 +405,7 @@
                                                                                                    :suppress-checkpoint true}))
                                                 (complete-with-result
                                                   state side eid
-                                                  {:paid/msg (str "forfeits an agenda (" (enumerate-str (map :title targets)) ")")
+                                                  {:paid/msg (str "forfeits an agenda (" (enumerate-cards targets :sorted) ")")
                                                    :paid/type :forfeit
                                                    :paid/value 1
                                                    :paid/targets targets}))}]
@@ -902,7 +919,7 @@
               state side eid
               {:paid/msg (str "trashes " (quantify (count async-result) "card")
                               (when (= side :runner)
-                                (str " (" (enumerate-str (map :title async-result)) ")"))
+                                (str " (" (enumerate-cards async-result :sorted) ")"))
                              " randomly from "
                              (if (= :corp side) "HQ" "the grip"))
                :paid/type :randomly-trash-from-hand
@@ -926,7 +943,7 @@
                         (complete-with-result
                           state side eid
                           {:paid/msg (str "reveals and trashes " (quantify (count async-result) "card")
-                                          " (" (enumerate-str (map :title to-trash)) ")"
+                                          " (" (enumerate-cards to-trash :sorted) ")"
                                           " from " hand)
                            :paid/type :reveal-and-randomly-trash-from-hand
                            :paid/value (count async-result)
@@ -947,7 +964,7 @@
                                (if (= :runner side) "[their] grip" "HQ")
                                (when (and (= :runner side)
                                           (pos? (count async-result)))
-                                 (str " (" (enumerate-str (map :title async-result)) ")")))
+                                 (str " (" (enumerate-cards async-result :sorted) ")")))
                  :paid/type :trash-entire-hand
                  :paid/value (count async-result)
                  :paid/targets async-result}))))
@@ -973,7 +990,7 @@
                               state side eid
                               {:paid/msg (str "trashes " (quantify (count async-result) "piece")
                                              " of hardware"
-                                             " (" (enumerate-str (map :title targets)) ")"
+                                             " (" (enumerate-cards targets :sorted) ")"
                                              " from [their] grip")
                                :paid/type :trash-hardware-from-hand
                                :paid/value (count async-result)
@@ -1000,7 +1017,7 @@
                             (complete-with-result
                               state side eid
                               {:paid/msg (str "trashes " (quantify (count async-result) "program")
-                                             " (" (enumerate-str (map :title targets)) ")"
+                                             " (" (enumerate-cards targets :sorted) ")"
                                              " from the grip")
                                :paid/type :trash-program-from-hand
                                :paid/value (count async-result)
@@ -1027,7 +1044,7 @@
                             (complete-with-result
                               state side eid
                               {:paid/msg (str "trashes " (quantify (count async-result) "resource")
-                                             " (" (enumerate-str (map :title targets)) ")"
+                                             " (" (enumerate-cards targets :sorted) ")"
                                              " from the grip")
                                :paid/type :trash-resource-from-hand
                                :paid/value (count async-result)
@@ -1104,7 +1121,7 @@
                     (complete-with-result
                       state side eid
                       {:paid/msg (str "shuffles " (quantify (count cards) "card")
-                                     " (" (enumerate-str (map :title cards)) ")"
+                                     " (" (enumerate-cards cards :sorted) ")"
                                      " into " (if (= :corp side) "R&D" "the stack"))
                        :paid/type :shuffle-installed-to-stack
                        :paid/value (count cards)
@@ -1207,7 +1224,7 @@
                     (complete-with-result
                       state side eid
                       {:paid/msg (str "adds " (quantify (count cards) "hosted card")
-                                      " to HQ (" (enumerate-str (map :title cards)) ")")
+                                      " to HQ (" (enumerate-cards cards :sorted) ")")
                        :paid/type :hosted-to-hq
                        :paid/value (count cards)
                        :paid/targets cards})))}

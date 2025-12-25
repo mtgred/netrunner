@@ -1,11 +1,16 @@
 (ns game.utils
   (:require
-    [jinteki.cards :refer [all-cards]]
-    [clojure.string :as str]
-    [clj-uuid :as uuid]))
+   [game.core.card :refer [get-title]]
+   [jinteki.cards :refer [all-cards]]
+   [clojure.string :as str]
+   [clj-uuid :as uuid]
+   [cljc.java-time.instant :as inst]))
 
 (defn make-cid []
   (uuid/to-string (uuid/v4)))
+
+(defn make-timestamp []
+  (inst/now))
 
 (defn server-card
   ([title] (server-card title true))
@@ -122,6 +127,15 @@
    (if (<= (count strings) 2)
      (str/join (str " " sep " ") strings)
     (str (apply str (interpose ", " (butlast strings))) (str ", " sep " ") (last strings)))))
+
+(defn enumerate-cards
+  "Enumerates a collection of cards, optionally in sorted order"
+  ([cards] (enumerate-cards cards nil))
+  ([cards sorted] (enumerate-cards cards sorted "and"))
+  ([cards sorted sep]
+   (let [cards (map get-title cards)
+         cards (if sorted (sort cards) cards)]
+     (enumerate-str cards sep))))
 
 (defn in-coll?
   "true if coll contains elm"

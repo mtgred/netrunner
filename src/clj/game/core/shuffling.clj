@@ -9,7 +9,7 @@
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [name-zone]]
    [game.macros :refer [continue-ability msg req]]
-   [game.utils :refer [enumerate-str quantify]])
+   [game.utils :refer [enumerate-str enumerate-cards quantify]])
   (:import [java.security SecureRandom]))
 
 
@@ -65,7 +65,7 @@
          rhs (if (= shuffle-side :corp) "Archives" "the Stack")]
      (if (seq targets)
        (let [cards-by-zone (group-by #(select-keys % [:side :zone]) (flatten targets))
-             strs (enumerate-str (map #(str (enumerate-str (map :title (get cards-by-zone %)))
+             strs (enumerate-str (map #(str (enumerate-cards (get cards-by-zone %) :sorted)
                                             " from " (name-zone (:side %) (:zone %)))
                                       (keys cards-by-zone)))]
          (doseq [t targets]
@@ -96,7 +96,7 @@
       :msg (msg "shuffle "
                 (let [seen (filter :seen targets)
                       m (count (filter #(not (:seen %)) targets))]
-                  (str (enumerate-str (map :title seen))
+                  (str (enumerate-cards seen :sorted)
                        (when (pos? m)
                          (str (when-not (empty? seen) " and ")
                               (quantify m "unseen card")))))

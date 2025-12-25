@@ -101,21 +101,23 @@
        (map #(if (= (:title %) "The Catalyst: Convention Breaker") (insert-starter-info %) %))
        (map #(if (= (:title %) "The Syndicate: Profit over Principle") (insert-starter-info %) %))))
 
-(defn- expand-face [card acc f]
-  (let [flip (f (:flips card))
+(defn- expand-face [card names acc f]
+  (let [flip (f (:faces card))
         updated (-> card
                     (assoc :title (:title flip)
                            :text (:text flip)
+                           :title (get names f (:title flip))
                            :images (:images (f (:faces card))))
-                    (dissoc :faces :flips))]
+                    (dissoc :faces :flips :named-faces))]
     (conj acc updated)))
 
 (defn- expand-one-flip [acc card]
-  (let [faces (keys (:flips card))]
-    (reduce (partial expand-face card) acc faces)))
+  (let [faces (keys (:faces card))
+        named-faces (:named-faces card {})]
+    (reduce (partial expand-face card named-faces) acc faces)))
 
 (defn- generate-flip-cards [cards]
-  (let [flips (filter :flips cards)
+  (let [flips (filter :faces cards)
         modified (reduce expand-one-flip [] flips)]
     (into {} (map (juxt :title identity) (sort-by :code modified)))))
 
@@ -250,10 +252,13 @@
 (defn- expand-flips
   [acc card]
   (if-let [faces (:faces card)]
-    (->> (keys faces)
-         (map #(assoc card :images (get-in card [:faces % :images])))
-         (map #(dissoc % :faces))
-         (concat acc))
+    (let [named-faces (get card :named-faces {})]
+      (->> (keys faces)
+           (map #(assoc card
+                        :images (get-in card [:faces % :images])
+                        :title (get named-faces % (:title card))))
+           (map #(dissoc % :faces :named-faces))
+           (concat acc)))
     (conj acc card)))
 
 (defn- insert-flip-arts
