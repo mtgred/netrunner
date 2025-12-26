@@ -5701,6 +5701,37 @@
     (is (= nil (:reason @state)) "no win happened yet")
     (is (not (= :corp (:winner @state))) "Corp doesn't win")))
 
+(deftest superpositional-cyclotron-test-humanoid-resources-test
+  (do-game
+    (new-game {:corp {:hand ["Humanoid Resources" "Superpositional Cyclotron" "Consulting Visit"]
+                      :deck [(qty "Beanstalk Royalties" 4)]
+                      :credits 20}})
+    (play-from-hand state :corp "Superpositional Cyclotron" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (core/gain state :corp :click 2)
+    (play-from-hand state :corp "Humanoid Resources" "New remote")
+    (rez state :corp (get-content state :remote2 0))
+    (card-ability state :corp (get-content state :remote2 0) 0)
+    (click-prompt state :corp "Done")
+    (click-prompt state :corp "Consulting Visit")
+    (click-prompt state :corp "Beanstalk Royalties")))
+
+(deftest superpositional-cyclotron-workds-only-once-test
+  (do-game
+    (new-game {:corp {:hand ["Superpositional Cyclotron" "Consulting Visit"]
+                      :deck ["Consulting Visit" "Beanstalk Royalties"]
+                      :credits 18}})
+    (play-from-hand state :corp "Superpositional Cyclotron" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (is (changed? [(:click (get-corp)) -1]
+          (play-from-hand state :corp "Consulting Visit"))
+        "Not asked to pay an empty cost")
+    (is (changed? [(:click (get-corp)) -1]
+          (click-prompt state :corp "Consulting Visit")
+          (click-prompt state :corp "Yes"))
+        "Choose to pay the additional click cost")
+    (is (= ["Beanstalk Royalties" "Cancel"] (prompt-titles :corp)) "Only beanstalk playable")))
+
 (deftest synth-dna-modification
   ;; Synth DNA Modification
   (do-game

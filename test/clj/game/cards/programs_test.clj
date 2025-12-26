@@ -2332,6 +2332,16 @@
       (click-prompt state :runner "No action")
       (is (no-prompt? state :runner) "No prompt with only 1 installed ice")))
 
+(deftest corsair-test
+  (do-game
+    (run-and-encounter-ice-test "Ice Wall" nil {:rig ["Mantle" "Corsair"]})
+    (is (changed? [(get-strength (get-ice state :hq 0)) -3]
+          (card-ability state :runner (get-program state 1) 1)
+          (click-card state :runner "Mantle"))
+        "Spent a stealth")
+    (card-ability state :runner (get-program state 1) 0)
+    (click-prompt state :runner "End the run")))
+
 (deftest corroder
   ;; Corroder
   (do-game
@@ -5165,6 +5175,21 @@
         (run-continue state)
         (is (not (has-subtype? (get-ice state :hq 0) "Barrier")) "Enigma doesn't has Barrier subtype")
         (is (prompt-is-card? state :runner laamb) "Laamb opens the prompt a second time"))))
+
+(deftest lampades-test
+  (doseq [c ["PAD Campaign" "Tiered Subscription"]]
+    (do-game
+      (new-game {:runner {:hand ["Lampades" "Ghost Runner" "Ika"]}
+                 :corp {:hand [c]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Lampades")
+      (play-from-hand state :runner "Ghost Runner")
+      (run-empty-server state :hq)
+      (click-prompt state :runner "[Lampades] Trash card")
+      (when (= c "PAD Campaign") (click-prompts state :runner "Ghost Runner" "Ghost Runner"))
+      (is (no-prompt? state :runner))
+      (is (= 1 (count (:discard (get-corp)))))
+      (is (= 0 (count (:discard (get-runner)))) "0 in discard"))))
 
 (deftest lamprey
   ;; Lamprey - Corp loses 1 credit for each successful HQ run; trashed on purge

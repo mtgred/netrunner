@@ -1043,6 +1043,19 @@
         :msg (msg "make the Runner lose " (count-resources state) " [Credits]")
         :effect (effect (lose-credits :runner eid (count-resources state)))}}}}))
 
+(defcard "Flood the Market"
+  (letfn [(full-servers [state]
+            (count (filter #(and (not-empty (:content %))
+                                 (not-empty (:ices %)))
+                           (vals (get-remotes state)))))]
+    {:on-play {:change-in-game-state {:req (req (pos? (full-servers state)))}
+               :async true
+               :prompt (msg "Choose a card and place " (quantify (full-servers state) "advancement counter") " on it")
+               :choices {:req (req (and (installed? target)
+                                        (can-be-advanced? state target)))}
+               :msg (msg "place " (quantify (full-servers state) "advancement counter") " on " (card-str state target))
+               :effect (req (add-counter state state eid target :advancement (full-servers state)))}}))
+
 (defcard "Focus Group"
   {:on-play
    {:req (req (last-turn? state :runner :successful-run))
