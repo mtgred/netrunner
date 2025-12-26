@@ -361,9 +361,8 @@
        [:div.heading (tr [:card-browser_implementation-note "Implementation note"] {:impl impl})])
 
      [:div.text.card-body
-      (when (:type card)
-        [:p [:span.type (tr-type (:type card))]
-         (if-not subtypes "" (str ": " subtypes))])
+      [:p [:span.type (tr-type (:type card))]
+       (if-not subtypes "" (str ": " subtypes))]
       [:pre (render-icons (tr-data :text (get @all-cards (:title card))))]
 
       (when show-extra-info

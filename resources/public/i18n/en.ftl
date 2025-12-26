@@ -152,6 +152,7 @@ card-type_name = {$type ->
     [program] Program
     [resource] Resource
     [upgrade] Upgrade
+    [rules-insert] Rules Insert
     *[unknown] Unknown card type ({$type})
 }
 
@@ -1442,6 +1443,7 @@ set_name = {$name ->
     [red-sand-cycle] Red Sand Cycle
     [reign-and-reverie] Reign and Reverie
     [revised-core-set] Revised Core Set
+    [rules] Rules Inserts
     [salsette-island] Salsette Island
     [salvaged-memories] Salvaged Memories
     [sansan-cycle] SanSan Cycle
