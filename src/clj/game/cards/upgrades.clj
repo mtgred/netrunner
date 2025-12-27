@@ -382,14 +382,14 @@
 
 (defcard "Calibration Testing"
   {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
-   :abilities [{:label "Place 1 advancement token on a card in this server"
+   :abilities [{:label "Place 1 advancement counter on a card in this server"
                 :async true
                 :fake-cost [(->c :trash-can)]
                 :effect (effect (continue-ability
                                   {:prompt "Choose a card in this server"
                                    :choices {:card #(in-same-server? % card)}
                                    :async true
-                                   :msg (msg "place an advancement token on " (card-str state target))
+                                   :msg (msg "place an advancement counter on " (card-str state target))
                                    :cost [(->c :trash-can)]
                                    :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}
                                   card nil))}]})
@@ -1502,7 +1502,7 @@
              :req (req (and (same-server? card (:card context))
                             (= 1 (count (filter #(= (second (get-zone (:card %))) (second (get-zone card)))
                                                 (map first (turn-events state side :advance)))))))
-             :msg (msg "place 1 additional advancement token on " (card-str state (:card context)))
+             :msg (msg "place 1 additional advancement counter on " (card-str state (:card context)))
              :async true
              :effect (effect (add-prop :corp eid (:card context) :advance-counter 1 {:placed true}))}]})
 

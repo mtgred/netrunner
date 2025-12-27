@@ -230,7 +230,7 @@
                        :all true}
              :effect (effect (complete-with-result eid targets))})]
     {:advanceable :always
-     :abilities [{:label "Swap 1 card in HQ and Archives for each advancement token"
+     :abilities [{:label "Swap 1 card in HQ and Archives for each advancement counter"
                   :cost [(->c :trash-can)]
                   :msg (msg "swap "
                          (quantify (max (count (:discard corp))
@@ -274,9 +274,9 @@
      :abilities [(set-autoresolve :auto-fire "Amani Senai")]}))
 
 (defcard "Anson Rose"
-  (let [ability {:label "Place 1 advancement token (start of turn)"
+  (let [ability {:label "Place 1 advancement counter (start of turn)"
                  :once :per-turn
-                 :msg "place 1 advancement token on itself"
+                 :msg "place 1 advancement counter on itself"
                  :async true
                  :effect (effect (add-prop eid card :advance-counter 1 {:placed true}))}]
     {:derezzed-events [corp-rez-toast]
@@ -292,9 +292,9 @@
                                 state side
                                 {:optional
                                  {:waiting-prompt true
-                                  :prompt (str "Move advancement tokens to " icename "?")
+                                  :prompt (str "Move advancement counters to " icename "?")
                                   :yes-ability
-                                  {:prompt "How many advancement tokens do you want to move?"
+                                  {:prompt "How many advancement counters do you want to move?"
                                    :choices {:number (req (get-counters card :advancement))}
                                    :async true
                                    :effect (req (wait-for
@@ -330,8 +330,8 @@
      :abilities [{:req (req (and (:corp-phase-12 @state)
                                  (counters-available? state)))
                   :once :per-turn
-                  :label "Remove an advancement token (start of turn)"
-                  :prompt "Choose a card to remove an advancement token from"
+                  :label "Remove an advancement counter (start of turn)"
+                  :prompt "Choose a card to remove an advancement counter from"
                   :choices {:card #(and (pos? (get-counters % :advancement))
                                      (installed? %))}
                   :async true
@@ -784,7 +784,7 @@
                                :choices {:req (req (and (ice? target)
                                                         (not (same-card? from-ice target))
                                                         (can-be-advanced? state target)))}
-                               :msg (msg "move an advancement token from "
+                               :msg (msg "move an advancement counter from "
                                          (card-str state from-ice)
                                          " to "
                                          (card-str state target))
@@ -1008,12 +1008,12 @@
                                            (in-server? %))
                                      (all-installed state :corp)))}
    :abilities [{:cost [(->c :credit 1)]
-                :label "Place 1 advancement token on a card that can be advanced in a server"
+                :label "Place 1 advancement counter on a card that can be advanced in a server"
                 :choices {:req (req (and (can-be-advanced? state target)
                                          (installed? target)
                                          (in-server? target)))} ; should be *in* a server
                 :once :per-turn
-                :msg (msg "place 1 advancement token on " (card-str state target))
+                :msg (msg "place 1 advancement counter on " (card-str state target))
                 :async true
                 :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
 
@@ -1143,7 +1143,7 @@
 
 (defcard "Exposé"
   {:advanceable :always
-   :abilities [{:label "Remove 1 bad publicity for each advancement token on Exposé"
+   :abilities [{:label "Remove 1 bad publicity for each advancement counter on Exposé"
                 :msg (msg "remove " (get-counters card :advancement) " bad publicity")
                 :cost [(->c :trash-can)]
                 :effect (effect (lose-bad-publicity (get-counters card :advancement)))}]})
@@ -1326,7 +1326,7 @@
 (defcard "GRNDL Refinery"
   {:advanceable :always
    :abilities [{:action true
-                :label "Gain 4 [Credits] for each advancement token on GRNDL Refinery"
+                :label "Gain 4 [Credits] for each advancement counter on GRNDL Refinery"
                 :cost [(->c :click 1) (->c :trash-can)]
                 :msg (msg "gain " (* 4 (get-counters card :advancement)) " [Credits]")
                 :async true
@@ -2056,10 +2056,10 @@
                 :keep-menu-open :while-advancement-tokens-left
                 :req (req (and (pos? (get-counters card :advancement))
                                (not-empty (all-active-installed state :corp))))
-                :label "Move an advancement token to a faceup card"
+                :label "Move an advancement counter to a faceup card"
                 :prompt "Choose a faceup card"
                 :choices {:card faceup?}
-                :msg (msg "move an advancement token to " (card-str state target))
+                :msg (msg "move an advancement counter to " (card-str state target))
                 :async true
                 :effect (req (wait-for (add-prop state side card :advance-counter -1 {:placed true})
                                        (add-prop state side eid target :advance-counter 1 {:placed true})))}]})
@@ -2296,9 +2296,9 @@
   {:abilities [{:action true
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
-                :label "Place 1 advancement token on a card"
+                :label "Place 1 advancement counter on a card"
                 :choices {:card installed?}
-                :msg (msg "place 1 advancement token on " (card-str state target))
+                :msg (msg "place 1 advancement counter on " (card-str state target))
                 :async true
                 :effect (req (wait-for
                                (add-prop state :corp target :advance-counter 1 {:placed true})
@@ -2678,13 +2678,13 @@
   {:events [{:event :damage
              :req (req (and (pos? (:amount context))
                             (= :meat (:damage-type context))))
-             :msg "place 1 advancement token on itself"
+             :msg "place 1 advancement counter on itself"
              :async true
              :effect (effect (add-counter eid card :advancement 1 {:placed true}))}]
-   :abilities [{:label "Move hosted advancement tokens to another card"
+   :abilities [{:label "Move hosted advancement counters to another card"
                 :cost [(->c :trash-can)]
                 :async true
-                :prompt "How many hosted advancement tokens do you want to move?"
+                :prompt "How many hosted advancement counters do you want to move?"
                 :choices {:number (req (get-counters card :advancement))
                           :default (req (get-counters card :advancement))}
                 :effect (req (let [num-counters target]
@@ -2693,7 +2693,7 @@
                                  {:async true
                                   :prompt "Choose a card that can be advanced"
                                   :choices {:req (req (can-be-advanced? state target))}
-                                  :effect (effect (system-msg (str "uses " (:title card) " to move " (quantify num-counters "hosted advancement token") " to " (card-str state target)))
+                                  :effect (effect (system-msg (str "uses " (:title card) " to move " (quantify num-counters "hosted advancement counter") " to " (card-str state target)))
                                                   (add-counter eid target :advancement num-counters {:placed true}))}
                                  card nil)))}]})
 
@@ -2963,9 +2963,9 @@
    :poison true
    :on-access {:optional
                {:waiting-prompt true
-                :prompt "Place 1 advancement token on a card that can be advanced?"
-                :yes-ability {:msg (msg "place 1 advancement token on " (card-str state target))
-                              :prompt "Choose a card to place an advancement token on"
+                :prompt "Place 1 advancement counter on a card that can be advanced?"
+                :yes-ability {:msg (msg "place 1 advancement counter on " (card-str state target))
+                              :prompt "Choose a card to place an advancement counter on"
                               :choices {:req (req (can-be-advanced? state target))}
                               :async true
                               :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}}}})
@@ -3140,7 +3140,7 @@
 
 (defcard "Test Ground"
   {:advanceable :always
-   :abilities [{:label "Derez 1 card for each advancement token"
+   :abilities [{:label "Derez 1 card for each advancement counter"
                 :req (req (pos? (get-counters card :advancement)))
                 :cost [(->c :trash-can)]
                 :async true

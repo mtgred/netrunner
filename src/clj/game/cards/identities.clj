@@ -884,7 +884,7 @@
              :prompt "Choose a piece of ice to place 1 advancement counter on"
              :choices {:card #(and (installed? %)
                                    (ice? %))}
-             :msg (msg "place 1 advancement token on " (card-str state target))
+             :msg (msg "place 1 advancement counter on " (card-str state target))
              :async true
              :effect (req (add-prop state :corp eid target :advance-counter 1 {:placed true}))}]})
 
@@ -1183,10 +1183,10 @@
              (effect
                (continue-ability
                  (let [p (inc (get-agenda-points (:card context)))]
-                   {:prompt "Choose a card to place advancement tokens on"
+                   {:prompt "Choose a card to place advancement counters on"
                     :choices {:card #(and (installed? %)
                                           (corp? %))}
-                    :msg (msg "place " (quantify p "advancement token")
+                    :msg (msg "place " (quantify p "advancement counter")
                               " on " (card-str state target))
                     :async true
                     :effect (effect (add-prop :corp eid target :advance-counter p {:placed true}))})
@@ -1216,7 +1216,7 @@
                                "The Tank"
                                (toast state :corp "Flip to: The Tank (Shuffle Archives into R&D)" "info")
                                "The Greenhouse"
-                               (toast state :corp "Flip to: The Greenhouse (Place 4 advancement tokens on a card)" "info")
+                               (toast state :corp "Flip to: The Greenhouse (Place 4 advancement counters on a card)" "info")
                                ;; default case
                                (toast state :corp "No flip identity specified" "info")))}
                {:action true
@@ -2223,7 +2223,7 @@
                   :choices {:card #(and (or (asset? %) (agenda? %) (upgrade? %))
                                         (corp? %)
                                         (in-hand? %))}
-                  :msg (msg "install a card in a remote server and place 1 advancement token on it")
+                  :msg (msg "install a card in a remote server and place 1 advancement counter on it")
                   :effect (effect (continue-ability (install-card target) card nil))}]
      :events [{:event :corp-turn-begins
                :silent (req true)
@@ -2375,7 +2375,7 @@
                {:req (req (and (not-empty (installed-faceup-agendas state))
                                (not-empty (ice-with-no-advancement-tokens state))))
                 :waiting-prompt true
-                :prompt "Place advancement tokens on an installed piece of ice?"
+                :prompt "Place advancement counters on an installed piece of ice?"
                 :autoresolve (get-autoresolve :auto-fire)
                 :yes-ability
                 {:async true
@@ -2385,10 +2385,10 @@
                                                        (reduce +))]
                                 (continue-ability
                                   state side
-                                  {:prompt (str "Choose a piece of ice with no advancement tokens to place "
-                                                (quantify agenda-points "advancement token") " on")
+                                  {:prompt (str "Choose a piece of ice with no advancement counters to place "
+                                                (quantify agenda-points "advancement counter") " on")
                                    :choices {:card #(selectable-ice? %)}
-                                   :msg (msg "place " (quantify agenda-points "advancement token")
+                                   :msg (msg "place " (quantify agenda-points "advancement counter")
                                              " on " (card-str state target))
                                    :async true
                                    :effect (effect (add-prop eid target :advance-counter agenda-points {:placed true}))}
@@ -2549,8 +2549,8 @@
   {:flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
                                     (not (is-disabled? state side card))
                                     (not-last-turn? state :runner :successful-run)))}
-   :abilities [{:msg (msg "place 1 advancement token on " (card-str state target))
-                :label "Place 1 advancement token on a card if the Runner did not make a successful run last turn"
+   :abilities [{:msg (msg "place 1 advancement counter on " (card-str state target))
+                :label "Place 1 advancement counter on a card if the Runner did not make a successful run last turn"
                 :choices {:card installed?}
                 :req (req (and (:corp-phase-12 @state)
                                (not-last-turn? state :runner :successful-run)))
@@ -2751,7 +2751,7 @@
                                 :type :recurring}}})
 
 (defcard "Weyland Consortium: Builder of Nations"
-  {:implementation "[Erratum] The first time an encounter with a piece of ice with at least 1 advancement token ends each turn, do 1 meat damage."
+  {:implementation "[Erratum] The first time an encounter with a piece of ice with at least 1 advancement counter ends each turn, do 1 meat damage."
    :events [{:event :end-of-encounter
              :async true
              :req (req (and (rezzed? (:ice context))

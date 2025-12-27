@@ -750,7 +750,7 @@
 
 (defcard "Contaminate"
   {:on-play
-   {:msg (msg "place 3 virus tokens on " (:title target))
+   {:msg (msg "place 3 virus counters on " (:title target))
     :choices {:req (req (and (installed? target)
                              (runner? target)
                              (zero? (get-virus-counters state target))))}
@@ -1362,7 +1362,7 @@
                {:req (req (some #(and (pos? (get-counters % :advancement))
                                       (= (first (:server run)) (second (get-zone %))))
                                 (all-installed state :corp)))
-                :prompt "How many advancements tokens do you want to remove?"
+                :prompt "How many advancements counters do you want to remove?"
                 :choices ["0" "1" "2" "3"]
                 :async true
                 :waiting-prompt true
@@ -1371,7 +1371,7 @@
                                  state side
                                  {:choices {:card #(and (pos? (get-counters % :advancement))
                                                         (= (first (:server run)) (second (get-zone %))))}
-                                  :msg (msg "remove " (quantify c "advancement token")
+                                  :msg (msg "remove " (quantify c "advancement counter")
                                             " from " (card-str state target))
                                   :async true
                                   :effect (req (let [to-remove (min c (get-counters target :advancement))]
@@ -2954,7 +2954,7 @@
 (defcard "Queen's Gambit"
   {:on-play
    {:choices ["0" "1" "2" "3"]
-    :prompt "How many advancement tokens do you want to place?"
+    :prompt "How many advancement counters do you want to place?"
     :async true
     :effect (effect
               (continue-ability
@@ -2962,7 +2962,7 @@
                   {:choices {:card #(and (is-remote? (second (get-zone %)))
                                          (= (last (get-zone %)) :content)
                                          (not (:rezzed %)))}
-                   :msg (msg "place " (quantify c "advancement token") " on " (card-str state target) " and gain " (* 2 c) " [Credits]")
+                   :msg (msg "place " (quantify c "advancement counter") " on " (card-str state target) " and gain " (* 2 c) " [Credits]")
                    :async true
                    :effect (req (wait-for
                                   (gain-credits state side (* 2 c))
@@ -3692,7 +3692,7 @@
     {:on-play
      {:req (req (placed-virus-cards state))
       :choices {:req (req (some #(same-card? % target) (placed-virus-cards state)))}
-      :msg (msg "place 2 virus tokens on " (:title target))
+      :msg (msg "place 2 virus counters on " (:title target))
       :async true
       :effect (effect (add-counter :runner eid target :virus 2 nil))}}))
 
