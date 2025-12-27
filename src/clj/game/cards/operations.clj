@@ -709,7 +709,7 @@
                               (or (installed? %)
                                   (:host %))
                               (not (facedown? %))))}
-    :msg (msg "place 3 advancement tokens on " (card-str state target))
+    :msg (msg "place 3 advancement counters on " (card-str state target))
     :async true
     :effect (req (add-counter state side eid target :advancement 3 {:placed true})
                  (register-turn-flag!
@@ -929,7 +929,7 @@
 
 (defcard "Enhanced Login Protocol"
   {:on-play {:msg (str "add an additional cost of [Click]"
-                       " to make the first run not through a card ability this turn")}
+                       " to make the first run not through a card ability each turn")}
    :static-abilities
    [{:type :run-additional-cost
      :req (req (and (no-event? state side :run #(:click-run (:cost-args (first %))))
@@ -1020,6 +1020,9 @@
     :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
     :async true
     :msg (msg "reveal " (:title target) " from R&D and add it to HQ")
+    :cancel-effect (req (system-msg state side (str "uses " (:title card) " to shuffle R&D"))
+                        (shuffle! state side :deck)
+                        (effect-completed state side eid))
     :effect (req (wait-for (reveal state side target)
                            (shuffle! state side :deck)
                            (move state side target :hand)
@@ -1036,14 +1039,9 @@
        :waiting-prompt true
        :prompt "Trash a resource?"
        :yes-ability
-       {:prompt "Choose a resource to trash"
-        :choices {:card #(and (resource? %)
-                           (installed? %))}
-        :async true
-        :effect (effect (system-msg :runner
-                                    (str "trashes " (:title target)
-                                         " to prevent Financial Collapse"))
-                  (trash :runner eid target {:unpreventable true :cause-card card :cause :forced-to-trash}))}
+       {:display-side :runner
+        :cost [(->c :resource 1)]
+        :msg :cost}
        :no-ability
        {:player :corp
         :async true
@@ -1073,7 +1071,7 @@
                                                        (system-msg state :corp payment-str))
                                                      (continue-ability
                                                        state :corp
-                                                       {:msg (msg "place " (quantify c " advancement token") " on "
+                                                       {:msg (msg "place " (quantify c " advancement counter") " on "
                                                                   (card-str state target))
                                                         :choices {:card installed?}
                                                         :async true
@@ -1534,7 +1532,7 @@
 
 (defcard "Kakurenbo"
   (let [install-abi {:async true
-                     :prompt "Choose an agenda, asset or upgrade to install from Archives and place 2 advancement tokens on"
+                     :prompt "Choose an agenda, asset or upgrade to install from Archives and place 2 advancement counters on"
                      :show-discard true
                      :not-distinct true
                      :choices {:card #(and (or (agenda? %)
@@ -2685,7 +2683,7 @@
     :choices {:card #(and (corp? %)
                           (installed? %)
                           (not= :this-turn (installed? %)))}
-    :msg (msg "place 2 advancement tokens on " (card-str state target))
+    :msg (msg "place 2 advancement counters on " (card-str state target))
     :async true
     :effect (effect (add-prop eid target :advance-counter 2 {:placed true}))}})
 
@@ -2745,7 +2743,7 @@
                              (installed? target)
                              (can-be-advanced? state target)))}
     :change-in-game-state {:req (req (something-can-be-advanced? state))}
-    :msg (msg "place 1 advancement token on " (quantify (count targets) "card"))
+    :msg (msg "place 1 advancement counters on " (quantify (count targets) "card"))
     :async true
     :effect (req (let [[f1 f2] targets]
                                (if f2
@@ -2759,14 +2757,14 @@
 (defcard "Shipment from SanSan"
   {:on-play
    {:choices ["0" "1" "2"]
-    :prompt "How many advancement tokens do you want to place?"
+    :prompt "How many advancement counters do you want to place?"
     :change-in-game-state {:req (req (something-can-be-advanced? state))}
     :async true
     :effect (req (let [c (str->int target)]
                    (continue-ability
                      state side
                      {:choices {:req (req (can-be-advanced? state target))}
-                      :msg (msg "place " (quantify c "advancement token") " on " (card-str state target))
+                      :msg (msg "place " (quantify c "advancement counter") " on " (card-str state target))
                       :async true
                       :effect (effect (add-prop :corp eid target :advance-counter c {:placed true}))}
                      card nil)))}})
@@ -2776,7 +2774,7 @@
    {:req (req (not-last-turn? state :runner :successful-run))
     :choices {:card #(and (corp? %)
                           (installed? %))}
-    :msg (msg "place 2 advancement tokens on " (card-str state target))
+    :msg (msg "place 2 advancement counters on " (card-str state target))
     :async true
     :effect (effect (add-prop eid target :advance-counter 2 {:placed true}))}})
 
