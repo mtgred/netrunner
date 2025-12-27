@@ -333,8 +333,9 @@
     :msg (msg "trash " (card-str state target) " and gain "
               (* 3 (get-counters target :advancement)) " [Credits]")
     :async true
-    :effect (req (wait-for (gain-credits state side (* 3 (get-counters target :advancement)))
-                           (trash state side eid target {:cause-card card})))}})
+    :effect (req (wait-for
+                   (gain-credits state side (* 3 (get-counters target :advancement)) {:suppress-checkpoint true})
+                   (trash state side eid target {:cause-card card})))}})
 
 (defcard "Backroom Machinations"
   {:on-play
@@ -391,7 +392,7 @@
                           :async true
                           :effect
                           (req (wait-for
-                                 (trash-cards state :runner targets {:unpreventable true :cause-card card :cause :forced-to-trash})
+                                 (trash-cards state :runner targets {:unpreventable true :cause-card card :cause :forced-to-trash :suppress-checkpoint true})
                                  (let [trashed-cards async-result]
                                    (wait-for
                                      (gain-credits state :runner (count trashed-cards))
@@ -680,7 +681,8 @@
                     (draw eid 5))}})
 
 (defcard "Cyberdex Trial"
-  {:on-play
+  {:play-sound "virus-purge"
+   :on-play
    {:msg "purge virus counters"
     :async true
     :effect (effect (purge eid))}})
