@@ -3273,7 +3273,7 @@
                :runner {:hand ["Sure Gamble"]}})
     (play-from-hand state :corp "O₂ Shortage")
     (is (changed? [(count (:hand (get-runner))) -1]
-          (click-prompt state :runner "Trash 1 random card from the grip"))
+          (click-prompt state :runner "Trash 1 card randomly from your hand"))
         "Runner discarded a single card")
     (play-from-hand state :corp "O₂ Shortage")
     (is (= ["The Corp gains [Click][Click]"] (prompt-buttons :runner)) "Runner has no longer the option to trash from the grip")

@@ -84,6 +84,12 @@
    :effect (req (wait-for (gain-credits state side creds {:suppress-checkpoint true})
                           (draw state side eid cards)))})
 
+(defn- gain-n-clicks
+  "Ability to gain n clicks"
+  [n]
+  {:msg (str "gain " (apply str (repeat n "[Click]")))
+   :effect (req (gain-clicks state side n))})
+
 ;; Card definitions
 (defcard "24/7 News Cycle"
   {:on-play
@@ -244,6 +250,7 @@
    {:change-in-game-state {:req (req (and (not-empty (:discard runner))
                                           (not (zone-locked? state :runner :discard))))}
     :prompt "Name a card to remove all copies in the Heap from the game"
+    :show-discard true
     :choices (req (cancellable (:discard runner) :sorted))
     :msg (msg "remove all copies of " (:title target) " in the Heap from the game")
     :async true
@@ -464,9 +471,7 @@
                             (trash state :corp eid card {:cause-card card})))}]})
 
 (defcard "Biotic Labor"
-  {:on-play
-   {:msg "gain [Click][Click]"
-    :effect (effect (gain-clicks 2))}})
+  {:on-play (gain-n-clicks 2)})
 
 (defcard "Blue Level Clearance"
   {:on-play (clearance 5 2)})
@@ -1895,9 +1900,7 @@
                            (gain-tags state :corp eid (count targets))))}})
 
 (defcard "Nanomanagement"
-  {:on-play
-   {:msg "gain [Click][Click]"
-    :effect (effect (gain-clicks 2))}})
+  {:on-play (gain-n-clicks 2)})
 
 (defcard "NAPD Cordon"
   (lockdown
@@ -1957,21 +1960,12 @@
 
 (defcard "O₂ Shortage"
   {:on-play
-   {:async true
-    :player :runner
-    :waiting-prompt true
-    :prompt "Choose one"
-    :choices (req [(when-not (empty? (:hand runner))
-                     "Trash 1 random card from the grip")
-                   "The Corp gains [Click][Click]"])
-    :msg (msg (if (= target "The Corp gains [Click][Click]")
-                 "gain [Click][Click]"
-                 (str "force the Runner to " (decapitalize target))))
-    :effect (req (if (= target "The Corp gains [Click][Click]")
-                   (do (gain-clicks state :corp 2)
-                       (effect-completed state side eid))
-                   (let [c (take 1 (shuffle (:hand runner)))]
-                     (trash-cards state :runner eid c {:cause-card card :cause :forced-to-trash}))))}})
+   (choose-one-helper
+     {:player :runner}
+     [(cost-option [(->c :randomly-trash-from-hand 1)] :runner)
+      {:option "The Corp gains [Click][Click]"
+       :player :corp
+       :ability (gain-n-clicks 2)}])})
 
 (defcard "Observe and Destroy"
   {:on-play
@@ -2103,8 +2097,7 @@
                             (continue-ability
                               state side
                               (when-not (some #{:hand} (:previous-zone card))
-                                {:msg "gain [Click]"
-                                 :effect (req (gain-clicks state side 1))})
+                                (gain-n-clicks 1))
                               card nil)))}})
 
 (defcard "Pivot"
@@ -2397,8 +2390,7 @@
              {:msg "draw 2 cards"
               :async true
               :effect (effect (draw eid 2))}
-             {:msg "gain [Click]"
-              :effect (effect (gain-clicks 1))}
+             (gain-n-clicks 1)
              {:prompt "Choose a non-agenda to install"
               :msg "install a non-agenda from hand"
               :choices {:card #(and (not (agenda? %))
