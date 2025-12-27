@@ -1724,8 +1724,8 @@
                :player :runner}
               [(cost-option [(->c :credit 8)] :runner)
                {:option "Corp does 4 meat damage"
-                :ability {:msg (msg "do 4 meat damage")
-                          :display-side :corp
+                :player :corp
+                :ability {:msg "do 4 meat damage"
                           :async true
                           :effect (req (damage state :corp eid :meat 4))}}])})
 
@@ -1757,31 +1757,30 @@
                   :effect (effect (gain-tags eid (- target (second targets))))}}}})
 
 (defcard "Mindscaping"
-  {:on-play {:prompt "Choose one"
-             :waiting-prompt true
-             :choices ["Gain 4 [Credits] and draw 2 cards"
-                       "Do 1 net damage per tag (up to 3)"]
-             :msg (msg (if (= target "Do 1 net damage per tag (up to 3)")
-                         (str "do " (min 3 (count-tags state)) " net damage")
-                         (decapitalize target)))
-             :async true
-             :effect (req (if (= "Do 1 net damage per tag (up to 3)" target)
-                            (damage state :corp eid :net (min 3 (count-tags state)) {:card card})
-                            (wait-for (gain-credits state side 4 {:suppress-checkpoint true})
-                                      (wait-for
-                                        (draw state :corp 2)
-                                        (continue-ability
-                                          state side
-                                          {:req (req (pos? (count (:hand corp))))
-                                           :prompt "Choose 1 card to add to the top of R&D"
-                                           :waiting-prompt true
-                                           :msg "add 1 card from HQ to the top of R&D"
-                                           :choices {:card #(and (in-hand? %)
-                                                                 (corp? %))
-                                                     ;; just incase everything gets jinja'd out of hand
-                                                     :all (req (not (zero? (count (:hand corp)))))}
-                                           :effect (effect (move target :deck {:front true}))}
-                                          card nil)))))}})
+  {:on-play
+   (choose-one-helper
+     [{:option "Gain 4 [Credits] and draw 2 cards"
+       :ability {:msg "gain 4 [Credits] and draw 2 cards"
+                 :async true
+                 :effect (req (wait-for (gain-credits state side 4 {:suppress-checkpoint true})
+                                        (wait-for
+                                          (draw state :corp 2)
+                                          (continue-ability
+                                            state side
+                                            {:req (req (pos? (count (:hand corp))))
+                                             :prompt "Choose 1 card to add to the top of R&D"
+                                             :waiting-prompt true
+                                             :msg "add 1 card from HQ to the top of R&D"
+                                             :choices {:card #(and (in-hand? %)
+                                                                   (corp? %))
+                                                       ;; just incase everything gets jinja'd out of hand
+                                                       :all (req (not (zero? (count (:hand corp)))))}
+                                             :effect (effect (move target :deck {:front true}))}
+                                            card nil))))}}
+      {:option "Do 1 net damage per tag (up to 3)"
+       :ability {:async true
+                 :msg (msg "do " (min 3 (count-tags state)) " net damage")
+                 :effect (req (damage state side eid :net (min 3 (count-tags state)) {:card card}))}}])})
 
 (defcard "Mitosis"
   (letfn [(mitosis-ability [state side card eid target-cards]
@@ -2231,9 +2230,10 @@
             {:prompt "Choose a remote server"
              :choices (req (conj (vec (get-remote-names state)) "New remote"))
              :async true
-             :effect (effect (corp-install eid (assoc chosen :advance-counter 3) target {:ignore-all-cost true
-                                                                                         :msg-keys {:install-source card
-                                                                                                    :display-origin true}}))})]
+             :effect (effect (corp-install eid chosen target {:ignore-all-cost true
+                                                              :counters {:advance-counter 3}
+                                                              :msg-keys {:install-source card
+                                                                         :display-origin true}}))})]
     {:on-play
      {:prompt "Choose a piece of ice in HQ to install"
       :change-in-game-state {:req (req (seq (:hand corp)))}
@@ -2632,11 +2632,9 @@
     :choices {:card-title (req (and (runner? target)
                                     (not (identity? target))))}
     :async true
-    :effect (req (system-msg state side
-                             (str "uses " (:title card) " to reveal "
-                                  (enumerate-cards (:hand runner) :sorted)
-                                  " from the grip and trash any copies of " target))
-                 (let [cards (filter #(= target (:title %)) (:hand runner))]
+    :msg (msg "reveal "(enumerate-cards (:hand runner) :sorted)
+              " from the grip and trash any copies of " target)
+    :effect (req (let [cards (filter #(= target (:title %)) (:hand runner))]
                    (wait-for
                      (reveal state side cards)
                      (trash-cards state side eid cards {:unpreventable true :cause-card card}))))}})
@@ -2652,9 +2650,7 @@
                             (or (has-subtype? % "Virtual")
                                 (has-subtype? % "Chip")))}
       :msg (msg "remove " (card-str state target) " from game")
-      :async true
-      :effect (effect (move :runner target :rfg)
-                      (effect-completed eid))}}}})
+      :effect (effect (move :runner target :rfg))}}}})
 
 (defcard "Scarcity of Resources"
   {:on-play {:msg "increase the install cost of resources by 2"}
@@ -2726,7 +2722,7 @@
     :choices {:card #(and (installed? %)
                           (runner? %))
               :max 2}
-    :msg (msg "move " (enumerate-str targets) " to the grip")
+    :msg (msg "move " (enumerate-cards targets) " to the grip")
     :effect (req (doseq [c targets]
                    (move state :runner c :hand)))}})
 
