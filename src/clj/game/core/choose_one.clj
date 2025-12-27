@@ -60,19 +60,22 @@
                  (if-not (seq xs)
                    (effect-completed state side eid )
                    (if (= target (costed-str (first xs)))
-                     ;; allow for resolving multiple options, like deuces wild
-                     (wait-for
-                       (resolve-ability
-                         state side (make-eid state eid)
-                         (assoc (:ability (first xs)) :cost (:cost (first xs)))
-                         card nil) ;; below is maybe superflous
-                       (if (and count (> count 1) (not= target "Done"))
-                         ;; the 'Done' is already there, so can dissoc optional
-                         (let [args (assoc args :count (dec count) :optional next-optional)
-                               xs (if no-prune full
-                                      (vec (remove #(= target (costed-str %)) full)))]
-                           (continue-ability state side (choose-one-helper args xs) card nil))
-                         (effect-completed state side eid)))
+                     (let [ab (assoc (:ability (first xs))
+                                     :cost (:cost (first xs)))
+                           ab-side (or (:player (first xs)) side)]
+                       ;; allow for resolving multiple options, like deuces wild
+                       (wait-for
+                         (resolve-ability
+                           state ab-side (make-eid state eid)
+                           ab
+                           card nil) ;; below is maybe superflous
+                         (if (and count (> count 1) (not= target "Done"))
+                           ;; the 'Done' is already there, so can dissoc optional
+                           (let [args (assoc args :count (dec count) :optional next-optional)
+                                 xs (if no-prune full
+                                        (vec (remove #(= target (costed-str %)) full)))]
+                             (continue-ability state side (choose-one-helper args xs) card nil))
+                           (effect-completed state side eid))))
                      (resolve-choices (rest xs) full state side eid card target))))]
          (merge
            base-map
