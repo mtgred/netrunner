@@ -1476,7 +1476,9 @@
                                                                (runner? target)
                                                                (or (resource? target)
                                                                    (event? target))))
-                                                :max x}
+                                                :max (req (min x (count (filter #(or (resource? %)
+                                                                                     (event? %))
+                                                                                (:hand runner)))))}
                                       :msg (msg "trash " (enumerate-cards targets))
                                       :effect (req (trash-cards state side eid targets {:cause-card card}))})
                                    card nil)))}
@@ -2139,8 +2141,8 @@
                                  (continue-ability
                                    state side
                                    (trash-type (str "piece of hardware that costs " max-cost " or less")
-                                               #(and (hardware? target)
-                                                     (<= (:cost target) max-cost))
+                                               #(and (hardware? %)
+                                                     (<= (:cost %) max-cost))
                                                :loud)
                                    card nil)))}}}})
 
@@ -2493,16 +2495,8 @@
   {:on-play (gain-credits-ability 15)})
 
 (defcard "Retribution"
-  {:on-play
-   {:req (req tagged)
-    :change-in-game-state {:req (req (some #(or (program? %) (hardware? %)) (all-installed state :runner)))}
-    :prompt "Choose a program or piece of hardware to trash"
-    :choices {:req (req (and (installed? target)
-                             (or (program? target)
-                                 (hardware? target))))}
-    :msg (msg "trash " (card-str state target))
-    :async true
-    :effect (effect (trash eid target {:cause-card card}))}})
+  {:on-play (trash-type "program of piece of hardware" #(or (program? %) (hardware? %))
+                        :loud 1 nil {:req (req tagged)})})
 
 (defcard "Reuse"
   {:on-play
