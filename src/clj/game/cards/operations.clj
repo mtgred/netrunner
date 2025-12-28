@@ -1466,22 +1466,20 @@
   {:on-play
    {:trace
     {:base 2
-     :successful {:async true
-                  :effect (req (let [x (- target (second targets))]
-                                 (continue-ability
-                                   state side
-                                   (with-revealed-hand :runner {:event-side :corp}
-                                     {:prompt (str "Trash up to " x " resources and/or events from the grip")
-                                      :choices {:req (req (and (in-hand? target)
-                                                               (runner? target)
-                                                               (or (resource? target)
-                                                                   (event? target))))
-                                                :max (req (min x (count (filter #(or (resource? %)
-                                                                                     (event? %))
-                                                                                (:hand runner)))))}
-                                      :msg (msg "trash " (enumerate-cards targets))
-                                      :effect (req (trash-cards state side eid targets {:cause-card card}))})
-                                   card nil)))}
+     :successful (with-revealed-hand :runner {:event-side :corp}
+                   {:prompt (msg "Trash up to " (- target (second targets))
+                                 " resources and/or events from the grip")
+                    :choices {:req (req (and (in-hand? target)
+                                             (runner? target)
+                                             (or (resource? target)
+                                                 (event? target))))
+                              :max (req (min (- target (second targets))
+                                             (count (filter #(or (resource? %)
+                                                                 (event? %))
+                                                            (:hand runner)))))}
+                    :async true
+                    :msg (msg "trash " (enumerate-cards targets))
+                    :effect (req (trash-cards state side eid targets {:cause-card card}))})
      :unsuccessful {:msg "take 1 bad publicity"
                     :async true
                     :effect (effect (gain-bad-publicity :corp eid 1))}}}})
