@@ -80,8 +80,7 @@
                                   [lambdaisland/kaocha "1.68.1059"]
                                   [thheller/shadow-cljs "2.28.21"]]
                    :plugins [[lein-eftest "0.6.0"]
-                             ;;[cider/cider-nrepl "0.47.1"]
-                             ]
+                             [cider/cider-nrepl "0.47.1"]]
                    :eftest {:report eftest.report.pretty/report
                             :fail-fast? false}
                    :source-paths ["src/clj" "src/cljs" "src/cljc" "src/css"
