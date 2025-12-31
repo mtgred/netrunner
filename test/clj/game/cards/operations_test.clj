@@ -2473,24 +2473,22 @@
   ;; Invasion of Privacy - Full test
   (do-game
     (new-game {:corp {:deck [(qty "Invasion of Privacy" 3)]}
-               :runner {:deck [(qty "Sure Gamble" 2) "Fall Guy" (qty "Cache" 2)]}})
+               :runner {:deck ["Sure Gamble" "Easy Mark" "Fall Guy" (qty "Cache" 2)]}})
     (core/gain state :corp :click 3 :credit 6)
     ;; trash 2 cards
     (play-from-hand state :corp "Invasion of Privacy")
     (click-prompt state :corp "0") ; default trace
     (click-prompt state :runner "0") ; Runner won't match
     (is (= 5 (count (:hand (get-runner)))))
-    (is (= ["Fall Guy" "Sure Gamble" "Cancel"] (prompt-titles :corp)))
-    (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
-    (click-prompt state :corp (find-card "Sure Gamble" (:hand (get-runner))))
+    (click-card state :corp "Sure Gamble")
+    (click-card state :corp "Easy Mark")
     (is (= 3 (count (:hand (get-runner)))))
     ;; able to trash 2 cards but only 1 available target in Runner's hand
     (play-from-hand state :corp "Invasion of Privacy")
     (click-prompt state :corp "0") ; default trace
     (click-prompt state :runner "0") ; Runner won't match
     (is (= 3 (count (:hand (get-runner)))))
-    (is (= ["Fall Guy" "Cancel"] (prompt-titles :corp)))
-    (click-prompt state :corp (find-card "Fall Guy" (:hand (get-runner))))
+    (click-card state :corp "Fall Guy")
     (is (no-prompt? state :corp) "No prompt for second card")
     (is (= 2 (count (:hand (get-runner)))))
     ;; failed trace - take the bad publicity
@@ -3273,7 +3271,7 @@
                :runner {:hand ["Sure Gamble"]}})
     (play-from-hand state :corp "O₂ Shortage")
     (is (changed? [(count (:hand (get-runner))) -1]
-          (click-prompt state :runner "Trash 1 random card from the grip"))
+          (click-prompt state :runner "Trash 1 card randomly from your hand"))
         "Runner discarded a single card")
     (play-from-hand state :corp "O₂ Shortage")
     (is (= ["The Corp gains [Click][Click]"] (prompt-buttons :runner)) "Runner has no longer the option to trash from the grip")

@@ -4119,7 +4119,7 @@
       (is (= 2 (get-strength (refresh akhet))) "No str gain while hushed")
       (run-continue-until state :encounter-ice)
       (card-ability state :runner cleaver 0)
-      (click-prompt state :runner "Gain 1 [Credit]. Place 1 advancement token")
+      (click-prompt state :runner "Gain 1 [Credit]. Place 1 advancement counter")
       (click-prompt state :runner "End the run"))))
 
 (deftest hush-vs-anansi

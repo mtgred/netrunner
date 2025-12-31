@@ -3646,7 +3646,7 @@
     {:events [maybe-spend-2
               {:event :runner-install
                :once :per-turn
-               :msg "place 2 virus tokens on itself"
+               :msg "place 2 virus counters on itself"
                :req (req (has-subtype? (:card context) "Virus"))
                :async true
                :effect (effect (add-counter eid card :virus 2))}]}))
@@ -3738,7 +3738,7 @@
              :label (str "Shortcut: Bounce " name)
              :cost [(->c :click 1)]
              :keep-menu-open :while-clicks-left
-             :msg (msg "bounce off of " name " for a token (shortcut)")
+             :msg (msg "bounce off of " name " for a counter (shortcut)")
              :async true
              :effect (req (swap! state assoc-in [:runner :register :made-click-run] true)
                           (swap! state update-in [:runner :register :unsuccessful-run] conj server)
