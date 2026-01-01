@@ -3127,7 +3127,21 @@
         (run-empty-server state :remote1)
         (is (changed? [(:credit (get-runner)) -8]
               (click-prompt state :runner "Pay to steal"))
-            "Paid 8c to steal 1adv Atlas"))))
+            "Paid 8c to steal 2adv Atlas"))))
+
+(deftest napd-cordon-vs-award-bait
+  ;; NAPD Cordon
+  (do-game
+      (new-game {:corp {:deck ["NAPD Cordon" "Award Bait"]}
+                 :runner {:credits 8}})
+      (play-cards state :corp ["Award Bait" "New remote"] "NAPD Cordon")
+      (take-credits state :corp)
+      (run-empty-server state :remote1)
+      (click-prompts state :corp "2" "Award Bait")
+      (is (= 2 (get-counters (get-content state :remote1 0) :advancement)) "Placed on AB")
+      (is (changed? [(:credit (get-runner)) -8]
+            (click-prompt state :runner "Pay to steal"))
+          "Paid 8c to steal 2adv Award Bait")))
 
 (deftest net-watchlist
   (doseq [[ice cost] [["Fire Wall" -12] ["Spiderweb" -9] ["Ice Wall" -3]]]
