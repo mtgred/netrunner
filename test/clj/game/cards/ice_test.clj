@@ -2068,14 +2068,16 @@
       (is (changed? [(count (:hand (get-corp))) 2]
                     (click-prompt state :corp "Yes")
                     (is (nil? (refresh (get-ice state :hq 0)))))
-          "Hangman returned to HQ + corp mandatory drew")
+          "Descent returned to HQ + corp mandatory drew")
       (expend state :corp (find-card "Descent" (:hand (get-corp))))
       (is (changed? [(count (:hand (get-corp))) -1
                      (count (:discard (get-corp))) -1
                      (count (:deck (get-corp))) 2]
                     (click-card state :corp "Ikawah Project")
-                    (click-card state :corp "Project Atlas"))
-          "The 2 agendas are shuffled into R&D and Hangman is expended"))))
+                    (click-card state :corp "Project Atlas")
+                    (is (last-log-contains? state ".*uses Descent to reveal Ikawah Project from Archives and Project Atlas from HQ and.*")))
+          "The 2 agendas are shuffled into R&D and Hangman is expended"))
+    (is (:seen (first (:discard (get-corp)))) "Trashed faceup")))
 
 (deftest diviner
   ;; Diviner
@@ -8214,6 +8216,7 @@
             (click-card state :corp enigma))
           "Enigma got 3 advancement counters")
       (is (= 4 (:credit (get-corp))) "Expend cost was payed")
+      (is (:seen (first (:discard (get-corp)))) "Expended faceup")
       (is (= 1 (count (:discard (get-corp)))) "Tree Line discarded as cost"))))
 
 (deftest tributary
