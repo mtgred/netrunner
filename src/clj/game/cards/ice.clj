@@ -2194,7 +2194,7 @@
                    :async true
                    :show-discard true
                    :effect (req (wait-for
-                                  (reveal-loud state side card {:and-then "shuffle [them] into R&D"}
+                                  (reveal-loud state side {:title "Descent"} {:and-then " and shuffle [them] into R&D"}
                                                targets)
                                   (doseq [c targets]
                                     (move state :corp c :deck))
