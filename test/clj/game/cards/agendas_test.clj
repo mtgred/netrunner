@@ -4642,6 +4642,16 @@
                   (click-card state :corp (get-content state :remote3 0)))
         "Corp gained 2 credits (+1 from Hyobu because the agenda was revealed) and put 1 advancement counter on a card")))
 
+(deftest stoke-vs-trust-op
+  (do-game
+    (new-game {:corp {:hand ["Trust Operation"]
+                      :discard ["Stoke the Embers"]}
+               :runner {:tags 1}})
+    (play-cards state :corp ["Trust Operation" "Done"
+                             "Stoke the Embers" "New remote"
+                             "Yes" "Stoke the Embers"])
+    (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "1 adv")))
+
 (deftest stoke-vs-ip-enforcement
   (testing "1 floating tag"
     (do-game
