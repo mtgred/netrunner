@@ -335,12 +335,12 @@
    :on-access {:async true
                :req (req (not-empty (filter #(can-be-advanced? state %) (all-installed state :corp))))
                :waiting-prompt true
-               :prompt "How many advancement tokens do you want to place?"
+               :prompt "How many advancement counters do you want to place?"
                :choices ["0" "1" "2"]
                :effect (effect (continue-ability
                                  (let [c (str->int target)]
                                    {:choices {:req (req (can-be-advanced? state target))}
-                                    :msg (msg "place " (quantify c "advancement token")
+                                    :msg (msg "place " (quantify c "advancement counter")
                                               " on " (card-str state target))
                                     :async true
                                     :effect (req (add-prop state :corp eid target :advance-counter c {:placed true}))})
@@ -1142,7 +1142,7 @@
                               state side
                               {:choices {:not-self true
                                          :req (req (can-be-advanced? state target))}
-                               :msg (msg "place " (quantify n "advancement token")
+                               :msg (msg "place " (quantify n "advancement counter")
                                          " on " (card-str state target))
                                :async true
                                :effect (effect (add-prop :corp eid target :advance-counter n {:placed true}))}
@@ -1229,10 +1229,10 @@
      :req (req (some #(and (= (last (get-zone %)) :content)
                            (is-remote? (second (get-zone %))))
                      (all-installed state :corp)))
-     :prompt "Choose a card to place 2 advancement tokens on"
+     :prompt "Choose a card to place 2 advancement counters on"
      :choices {:card #(and (= (last (get-zone %)) :content)
                            (is-remote? (second (get-zone %))))}
-     :msg (msg "place 2 advancement token on " (card-str state target))
+     :msg (msg "place 2 advancement counters on " (card-str state target))
      :async true
      :effect (effect (add-prop :corp eid target :advance-counter 2 {:placed true}))}]})
 
@@ -1732,7 +1732,7 @@
 (defcard "Project Atlas"
   project-agenda
   {:abilities [{:cost [(->c :agenda 1)]
-                :keep-menu-open false ; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
+                :keep-menu-open false ;; not using :while-agenda-tokens-left as the typical use case is only one token, even if there are multiple
                 :prompt "Choose a card"
                 :label "Search R&D and add 1 card to HQ"
                 ;; we need the req or the prompt will still show
@@ -1802,7 +1802,7 @@
                      (effect-completed state side eid)))
    :events [{:event :runner-turn-begins
              :req (req (pos? (get-counters card :agenda)))
-             :msg (msg "remove 1 agenda token from " (:title card))
+             :msg (msg "remove 1 agenda counter from " (:title card))
              :async true
              :effect (req (if (pos? (get-counters card :agenda))
                             (wait-for
@@ -1887,9 +1887,9 @@
              :skippable true
              :interactive (req true)
              :waiting-prompt true
-             :prompt "Choose a card that can be advanced to place 1 advancement token on"
+             :prompt "Choose a card that can be advanced to place 1 advancement counter on"
              :choices {:req (req (can-be-advanced? state card))}
-             :msg (msg "place 1 advancement token on " (card-str state target))
+             :msg (msg "place 1 advancement counter on " (card-str state target))
              :async true
              :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))}]})
 
@@ -2022,8 +2022,8 @@
 (defcard "Remastered Edition"
   {:on-score (agenda-counters 1)
    :abilities [{:cost [(->c :agenda 1)]
-                :msg (msg "place 1 advancement token on " (card-str state target))
-                :label "place 1 advancement token"
+                :msg (msg "place 1 advancement counter on " (card-str state target))
+                :label "place 1 advancement counter"
                 :keep-menu-open :while-agenda-tokens-left
                 :choices {:card installed?}
                 :async true

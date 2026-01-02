@@ -768,7 +768,10 @@ game_win-flatlined = {$winner} ({$side}) wins by flatline on turn {$turn}
 
 game_win-other = {$winner} ({$side}) wins by {$reason} on turn {$turn}
 
-game_win-points = {$winner} ({$side}) wins by scoring agenda points on turn {$turn}
+game_win-points = {$winner} ({$side}) wins by {$side ->
+    [runner] stealing
+    *[other] scoring
+} agenda points on turn {$turn}
 
 ingame-settings_alt-art = Alt arts
 
