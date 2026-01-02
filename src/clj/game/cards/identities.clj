@@ -1299,17 +1299,17 @@
                                                                              :include-cost-from-eid eid
                                                                              :install-source card}})
                                (when-let [installed-card async-result]
-                                 (do (add-icon state side card installed-card "K" (faction-label card))
-                                     (register-events
-                                       state side card
-                                       [{:event :runner-turn-ends
-                                         :interactive (req (get-card state installed-card))
-                                         :silent (req (not (get-card state installed-card)))
-                                         :change-in-game-state {:silent true
-                                                                :req (req (get-card state installed-card))}
-                                         :ability-name (str "Kabonesa Wu (" (:title installed-card) ")")
-                                         :msg (msg "remove " (:title installed-card) " from the game")
-                                         :effect (req (move state side (get-card state installed-card) :rfg))}])))
+                                 (add-icon state side card installed-card "K" (faction-label card))
+                                 (register-events
+                                   state side card
+                                   [{:event :runner-turn-ends
+                                     :interactive (req (get-card state installed-card))
+                                     :silent (req (not (get-card state installed-card)))
+                                     :change-in-game-state {:silent true
+                                                            :req (req (get-card state installed-card))}
+                                     :ability-name (str "Kabonesa Wu (" (:title installed-card) ")")
+                                     :msg (msg "remove " (:title installed-card) " from the game")
+                                     :effect (req (move state side (get-card state installed-card) :rfg))}]))
                                (effect-completed state side eid)))}]})
 
 (defcard "Kate \"Mac\" McCaffrey: Digital Tinker"
