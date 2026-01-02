@@ -7676,6 +7676,25 @@
     (is (= 0 (count (:discard (get-runner)))) "took 0 net damage")
     (is (not (:run @state)) "Run ended")))
 
+(deftest underdome-irregulars
+  (doseq [opt [:draw :tag]]
+    (do-game
+      (new-game {:corp {:hand ["Vanilla"]}
+                 :runner {:tags 3 :hand ["Underdome Irregulars"] :deck ["Ika" "Ika"]}})
+      (play-from-hand state :corp "Vanilla" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Underdome Irregulars")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :runner)
+      (case opt
+        :tag  (is (changed? [(count-tags state) -1]
+                    (click-prompt state :runner "Remove 1 tag")))
+        :draw (is (changed? [(count (:hand (get-runner))) 2]
+                    (click-prompt state :runner "Draw 2 cards"))))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (is (no-prompt? state :runner)))))
+
 (deftest urban-art-vernissage
   (do-game
       (new-game {:runner {:hand ["Urban Art Vernissage" "Botulus" "Monkeywrench"]

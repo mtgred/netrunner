@@ -1858,6 +1858,22 @@
         (is (not (refresh kati)) "Kati Jones should be trashed")
         (is (= credits (:credit (get-runner))) "Runner should lose no credits"))))
 
+(deftest flood-the-market-test
+  (do-game
+    (new-game {:corp {:hand [(qty "Ice Wall" 3)
+                             (qty "Project Atlas" 3)
+                             "Flood the Market"]}})
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Project Atlas" "Server 1")
+    (play-from-hand state :corp "Project Atlas" "Server 2")
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (play-from-hand state :corp "Flood the Market")
+    (click-card state :corp (get-content state :remote1 0))
+    (is (= 2 (get-counters (get-content state :remote1 0) :advancement)))))
+
 (deftest focus-group-regular-scenario-can-afford
     ;; Regular scenario - can afford
     (do-game
