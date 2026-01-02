@@ -3906,6 +3906,32 @@
                                 (shuffle! :deck)
                                 (move target :hand))}]})
 
+(defcard "Underdome Irregulars"
+  {:events [{:event :runner-action-phase-ends
+             :interactive (req true)
+             :async true
+             :effect (req
+                       (continue-ability
+                         state side
+                         (if (no-event? state :corp :rez #(ice? (:card (first %))))
+                           {:msg "trash itself"
+                            :async true
+                            :effect (req (trash state side eid card))}
+                           (choose-one-helper
+                             {:event :runner-action-phase-ends
+                              :interactive (req true)}
+                             [{:option "Draw 2 cards"
+                               :ability {:change-in-game-state {:silent true :req (req (seq (get-in @state [:runner :deck])))}
+                                         :msg "draw 2 cards"
+                                         :async true
+                                         :effect (req (draw state side eid 2))}}
+                              {:option "Remove 1 tag"
+                               :ability {:change-in-game-state {:silent true :req (req tagged)}
+                                         :msg "remove 1 tag"
+                                         :async true
+                                         :effect (req (lose-tags state side eid 1))}}]))
+                         card nil))}]})
+
 (defcard "Underworld Contact"
   (let [ability {:label "Gain 1 [Credits] (start of turn)"
                  :once :per-turn
