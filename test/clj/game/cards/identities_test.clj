@@ -5483,6 +5483,16 @@
             (click-card state :runner (refresh iw)))
           "Available MU should not change"))))
 
+(deftest tennin-institute-secrets-within
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]
+                      :id "Tennin Institute: The Secrets Within"}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (click-card state :corp "Ice Wall")
+    (is (= 1 (get-counters (get-ice state :hq 0) :advancement)) "placed a counter")))
+
 (deftest the-collective-williams-wu-et-al
   (do-game
     (new-game {:runner {:id "The Collective: Williams, Wu, et al."}})

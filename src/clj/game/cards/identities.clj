@@ -2545,17 +2545,16 @@
               (assoc swap-ability :event :agenda-stolen)]}))
 
 (defcard "Tennin Institute: The Secrets Within"
-  {:flags {:corp-phase-12 (req (and (not (:disabled (get-card state card)))
-                                    (not (is-disabled? state side card))
-                                    (not-last-turn? state :runner :successful-run)))}
-   :abilities [{:msg (msg "place 1 advancement token on " (card-str state target))
-                :label "Place 1 advancement token on a card if the Runner did not make a successful run last turn"
-                :choices {:card installed?}
-                :req (req (and (:corp-phase-12 @state)
-                               (not-last-turn? state :runner :successful-run)))
-                :once :per-turn
-                :async true
-                :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
+  {:events [{:msg (msg "place 1 advancement token on " (card-str state target))
+             :label "Place 1 advancement token on a card if the Runner did not make a successful run last turn"
+             :choices {:card installed?}
+             :event :corp-turn-begins
+             :req (req (and (not-last-turn? state :runner :successful-run)))
+             :waiting-prompt true
+             :once :per-turn
+             :async true
+             :interactive (req true)
+             :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "The Catalyst: Convention Breaker"
   ;; No special implementation
