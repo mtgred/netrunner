@@ -55,6 +55,7 @@
     "Diana's Hunt"
     "Direct Access"
     "Employee Strike"
+    "Eureka!"
     "Exclusive Party"
     "Exploratory Romp"
     "Fear the Masses"
