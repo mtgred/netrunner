@@ -770,12 +770,22 @@
                (sort-by key counter))))
        (when (pos? (get-counters card :advancement))
          [:div.darkbg.advance-counter.counter {:key "adv"} (get-counters card :advancement)])]
-      (when (and (or current-strength strength)
-                 (or (ice? card)
-                     (has-subtype? card "Icebreaker"))
-                 (active? card))
-        [:div.darkbg.strength (or current-strength strength)])
-      (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
+        (when (and (or current-strength strength)
+                   (or (ice? card)
+                       (has-subtype? card "Icebreaker"))
+                   (active? card))
+          [:div.darkbg.strength (or current-strength strength)])
+        (when (seq icon)
+          [:div.icon-bar
+           {:class "icon-bar"}
+           (doall
+             (for [[char source-cid color] icon]
+               ^{:key [source-cid]}
+               [:div.darkbg.icon {:class color} char]))])
+        (when-let [c icon]
+          (prn icon))
+        ;; (when-let [{:keys [char cid color]} icon]
+        ;;   [:div.darkbg.icon {:class color} char])
       (when card-target [:div.darkbg.card-target card-target])
       (when subtype-target [:div.darkbg.subtype-target subtype-target])
       (when (active? card)

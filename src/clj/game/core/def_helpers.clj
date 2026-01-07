@@ -27,7 +27,7 @@
     [game.core.tags :refer [gain-tags]]
     [game.macros :refer [continue-ability effect msg req wait-for]]
     [game.utils :refer [enumerate-cards remove-once same-card? server-card to-keyword quantify]]
-    [jinteki.utils :refer [other-side]]))
+    [jinteki.utils :refer [faction-label other-side]]))
 
 (defn combine-abilities
   "Combines two or more abilities to a single one. Labels are joined together with a period between parts."
@@ -554,6 +554,10 @@
                                  (when-not was-open? (conceal-hand state target-side))
                                  (unregister-ev-callback)
                                  (effect-completed state side eid)))))})))
+
+(defn make-icon
+  [text card]
+  [text (:cid card) (faction-label card)])
 
 (defmacro defcard
   "Define a card to be returned from card-def. The definition consists of the

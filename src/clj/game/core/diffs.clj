@@ -7,7 +7,7 @@
    [game.core.card-defs :refer [card-def]]
    [game.core.cost-fns :refer [card-ability-cost]]
    [game.core.engine :refer [can-trigger?]]
-   [game.core.effects :refer [any-effects is-disabled-reg?]]
+   [game.core.effects :refer [any-effects is-disabled-reg? get-effects]]
    [game.core.installing :refer [corp-can-pay-and-install?
                                  runner-can-pay-and-install?]]
    [game.core.payment :refer [can-pay? ->c]]
@@ -111,6 +111,11 @@
            (map-indexed (fn [ab-idx ab] (ability-summary state side card ab-idx ab)))
            (into [])))
 
+(defn icon-summary [card state]
+  (if-let [icons (seq (get-effects state nil :icon card))]
+    (assoc card :icon (vec icons))
+    card))
+
 (def subroutine-keys
   [:broken
    :fired
@@ -206,11 +211,13 @@
         (flashback-playable? state side)
         (playable-as-if-in-hand? state side)
         (card-abilities-summary state side)
+        (icon-summary state)
         (select-non-nil-keys card-keys))
     (-> (cond-> card
           (:host card) (-> (dissoc-in [:host :hosted])
                            (update :host card-summary state side))
           (:hosted card) (update :hosted cards-summary state side))
+        (icon-summary state)
         (private-card))))
 
 (defn cards-summary [cards state side]
