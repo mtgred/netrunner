@@ -699,6 +699,7 @@
                                              :msg-keys {:display-origin true
                                                         :install-source card}})
                             (when-let [installed-card async-result]
+                              (add-icon state side card installed-card "C" (faction-label card))
                               (register-events
                                 state side card
                                 [{:duration :end-of-run
@@ -826,7 +827,8 @@
     :effect (req (let [new-eid (make-eid state {:source card :source-type :runner-install})]
                    (wait-for (runner-install state :runner new-eid target {:msg-keys {:install-source card
                                                                                       :display-origin true}
-                                                                           :cost-bonus -8})
+                                                                           :cost-bonus -8
+                                                                           :suppress-checkpoint true})
                              (gain-tags state :runner eid 1))))}})
 
 (defcard "Cyber Threat"
@@ -1479,7 +1481,7 @@
 
 (defcard "Finality"
   {:makes-run true
-   :on-play (assoc (run-server-ability :rd) :additional-cost [(->c :brain 1)])
+   :on-play (run-server-ability :rd {:additional-cost [(->c :brain 1)]})
    :events [{:event :successful-run
              :silent (req true)
              :req (req (and (= :rd (target-server context))
@@ -1493,7 +1495,7 @@
     :change-in-game-state {:req (req (or (seq (:deck runner))
                                          (seq (:deck corp))))}
     :async true
-    :effect (req (wait-for (draw state :runner 3)
+    :effect (req (wait-for (draw state :runner 3 {:suppress-checkpoint true})
                            (draw state :corp eid 3)))}})
 
 (defcard "Forged Activation Orders"
@@ -1531,8 +1533,7 @@
     :msg (msg "forfeit " (get-title card) " and give the Corp 1 bad publicity")
     :async true
     :effect (req (wait-for (forfeit state side (make-eid state eid) target {:msg false})
-                           (gain-bad-publicity state :corp 1)
-                           (effect-completed state side eid)))}})
+                           (gain-bad-publicity state :corp eid 1)))}})
 
 (defcard "Frantic Coding"
   {:on-play
