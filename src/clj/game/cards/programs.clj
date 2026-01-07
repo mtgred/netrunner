@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [install-cost rez-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out play-tiered-sfx run-server-ability trash-on-empty trash-on-purge get-x-fn rfg-on-empty tutor-abi]]
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-loud offer-jack-out play-tiered-sfx run-server-ability trash-on-empty trash-on-purge get-x-fn rfg-on-empty tutor-abi make-icon]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects is-disabled-reg? register-lingering-effect unregister-effects-for-card update-disabled-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -45,7 +45,7 @@
    [game.core.payment :refer [build-cost-label can-pay? cost-target cost-value ->c value]]
    [game.core.prevention :refer [preventable? prevent-damage prevent-end-run prevent-up-to-n-damage prevent-trash-installed-by-type]]
    [game.core.prompts :refer [cancellable]]
-   [game.core.props :refer [add-counter add-icon remove-icon]]
+   [game.core.props :refer [add-counter]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
    [game.core.runs :refer [active-encounter? bypass-ice continue end-run
@@ -1421,33 +1421,32 @@
 
 (defcard "Femme Fatale"
   (auto-icebreaker
-    {:on-install
-     {:prompt "Choose a piece of ice to target for bypassing"
-      :choices {:card ice?}
-      :effect (req (let [ice target]
-                     (add-icon state side card ice "FF" (faction-label card))
-                     (system-msg state side
-                                 (str "selects " (card-str state ice)
-                                      " for " (:title card) "'s bypass ability"))
-                     (register-events
-                       state side card
-                       [{:event :encounter-ice
-                         :skippable true
-                         :interactive (req true)
-                         :optional
-                         {:req (req (and (same-card? ice (:ice context))
-                                         (can-pay? state :runner eid (:ice context) nil [(->c :credit (count (:subroutines (get-card state ice))))])))
-                          :prompt (msg "Pay " (count (:subroutines (get-card state ice)))
-                                       " [Credits] to bypass " (:title ice) "?")
-                          :yes-ability {:async true
-                                        :effect (req (wait-for
-                                                       (pay state side (make-eid state eid) card [(->c :credit (count (:subroutines (get-card state ice))))])
-                                                       (let [payment-str (:msg async-result)
-                                                             msg-ab {:msg (str "bypass " (:title (:ice context)))}]
-                                                         (print-msg state side msg-ab card nil payment-str))
-                                                       (bypass-ice state)
-                                                       (effect-completed state side eid)))}}}])))}
-     :leave-play (effect (remove-icon card))
+    {:on-install {:prompt "Choose a piece of ice to target for bypassing"
+                  :choices {:card ice?}
+                  :msg (msg "target " (card-str state target))
+                  :effect (req (update! state side (assoc-in (get-card state card) [:special :femme] target)))}
+     :static-abilities [{:type :icon
+                         :req (req (same-card? target (get-in card [:special :femme])))
+                         :value (req (make-icon "FF" card))}]
+     :events [{:event :encounter-ice
+               :skippable true
+               :interactive (req true)
+               :change-in-game-state {:silent true
+                                      :req (req (let [ice (get-card state (:ice context))]
+                                                  (can-pay? state :runner eid card nil [(->c :credit (count (:subroutines ice)))])))}
+               :req (req (same-card? (get-in card [:special :femme]) (:ice context)))
+               :async true
+               ;; TODO - can we make cost a (potential) 5-fn?
+               :effect (req (let [ice (:ice context)
+                                  c (count (:subroutines (get-card state ice)))]
+                              (continue-ability
+                                state side
+                                {:optional
+                                 {:prompt (msg "Pay " c " [Credits] to bypass " (:title ice) "?")
+                                  :yes-ability {:cost [(->c :credit c)]
+                                                :msg (msg "bypass " (:title (:ice context)))
+                                                :effect (req (bypass-ice state))}}}
+                                card targets)))}]
      :abilities [(break-sub 1 1 "Sentry")
                  (strength-pump 2 1)]}))
 
