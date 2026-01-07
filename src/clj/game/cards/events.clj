@@ -702,7 +702,12 @@
                                              :msg-keys {:display-origin true
                                                         :install-source card}})
                             (when-let [installed-card async-result]
-                              (add-icon state side card installed-card "C" (faction-label card))
+                              (register-lingering-effect
+                                state side card
+                                {:type :icon
+                                 :duration :end-of-run
+                                 :req (req (same-card? target installed-card))
+                                 :value (make-icon "C" card)})
                               (register-events
                                 state side card
                                 [{:duration :end-of-run
@@ -1082,8 +1087,7 @@
                                 (system-msg state :runner (str "trashes " (quantify (count installed-cards) "card")
                                                                " (" (enumerate-cards installed-cards :sorted)
                                                                ") at the end of the run from Diana's Hunt"))
-                                (trash-cards state :runner eid installed-cards {:unpreventable true
-                                                                                :cause-card card}))
+                                (trash-cards state :runner eid installed-cards {:cause-card card}))
                               (effect-completed state side eid))))}]})
 
 (defcard "Diesel"

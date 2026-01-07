@@ -47,19 +47,3 @@
   Example: (set-prop ... card :counter 4 :current-strength 0)"
   [state side card & args]
   (update! state side (apply assoc (cons card args))))
-
-(defn add-icon
-  "Adds an icon to a card. E.g. a Femme Fatale token.
-  Card is the card adding the icon, target is card receiving the icon."
-  [state side card target char color]
-  ;; add icon
-  (set-prop state side target :icon {:char char :color color :card card})
-  ;; specify icon target on card
-  (set-prop state side card :icon-target target))
-
-(defn remove-icon
-  "Remove the icon associated with the card and target."
-  ([state side card] (remove-icon state side card (:icon-target card)))
-  ([state side card target]
-   (when target (set-prop state side (find-latest state target) :icon nil))
-   (set-prop state side (find-latest state card) :icon-target nil)))
