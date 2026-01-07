@@ -2150,11 +2150,11 @@
             vbg (get-resource state 1)]
         (click-prompt state :runner "Dr. Lovegood")
         (click-card state :runner blackfile)
-        (is (:icon (refresh blackfile)) "The Black File has an icon")
+        (is (has-icon? state (refresh blackfile) "DL") "The Black File has an icon")
         (is (= 0 (get-counters (refresh blackfile) :power)) "Black File has still 0 power counters")
         (is (= 1 (get-counters (refresh vbg) :virus)) "Virus Breeding Ground has 1 virus counter")
         (take-credits state :runner)
-        (is (nil? (:icon (refresh blackfile)))))))
+        (is (no-icons? state (refresh blackfile))))))
 
 (deftest dr-nuka-vrolyck
   (do-game

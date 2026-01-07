@@ -8,6 +8,7 @@
    [game.core.board :refer [server-list]]
    [game.core.card :refer [active? get-card get-counters get-title installed?
                            rezzed?]]
+   [game.core.diffs :refer [icon-summary]]
    [game.core.eid :as eid]
    [game.core.events :refer [turn-events]]
    [game.core.ice :refer [active-ice?]]
@@ -1255,6 +1256,18 @@
      (fire-subs state ice)
      state)))
 
+(defn card-icons
+  [state card]
+  (when-let [icons (seq (:icon (icon-summary card state)))]
+    (mapv first icons)))
+
+(defn has-icon?
+  [state card icon]
+  (some #(= % icon) (card-icons state card)))
+
+(defn no-icons?
+  [state card]
+  (not (card-icons state card)))
 
 (defn is-deck-stacked-impl
   [state side expected-deck]
