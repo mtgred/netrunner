@@ -17,11 +17,16 @@
                      "lobby_sounds" "lobby-sounds"
                      "volume" "sounds-volume"}))
 
+;; TODO - add a workaround so new formats are not auto-hidden
+(def new-formats
+  #{"quick-draft"})
+
 (defn- load-visible-formats
   "Loading visible formats from localStorage"
   []
   (let [default-visible-formats #{"standard"
                                   "system-gateway"
+                                  "quick-draft"
                                   "core"
                                   "throwback"
                                   "startup"
