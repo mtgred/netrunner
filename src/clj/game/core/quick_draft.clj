@@ -1,6 +1,6 @@
 (ns game.core.quick-draft
   (:require
-   [game.core.card :refer [corp? ice? identity? agenda? runner? has-subtype?]]
+   [game.core.card :refer [corp? ice? identity? agenda? runner? has-subtype? has-any-subtype? program?]]
    [game.core.initializing :refer [card-init make-card]]
    [game.core.toasts :refer [toast]]
    [jinteki.cards :refer [all-cards]]
@@ -8,8 +8,7 @@
    [jinteki.chimera :refer [runner-bans corp-bans]]
    [game.core.eid :refer [effect-completed]]
    [game.macros :refer [continue-ability req msg]]
-   [game.utils :refer [server-card same-side?]]
-   ))
+   [game.utils :refer [server-card same-side?]]))
 
 
 
@@ -107,7 +106,8 @@
 
 (defn- generate-corp-quick-draft
   []
-  (let [corp-cards (filter corp? (vals @all-cards))
+  (let [corp-cards (filter #(and (corp? %)
+                                 (not= "tdc" (:set_code %))) (vals @all-cards))
         corp-format-cards (filter #(and (not (corp-bans (:title %)))
                                         (not (identity? %))
                                         (not (agenda? %)))
@@ -143,23 +143,28 @@
 
 (def valid-runner-ids
   ["Hayley Kaplan: Universal Scholar"
-   "Nero Severn: Information Broker"
    "Lat: Ethical Freelancer"
    "Jamie \"Bzzz\" Micken: Techno Savant"
+   "Ele \"Smoke\" Scovak: Cynosure of the Net"
+   "Nasir Meidan: Cyber Explorer"
+   "Rielle \"Kit\" Peddler: Transhuman"
+   "Captain Padma Isbister: Intrepid Explorer"
+
+   "Nero Severn: Information Broker"
    "Boris \"Syfr\" Kovac: Crafty Veteran"
-   "Wyvern: Chemically Enhanced"
    "Barry \"Baz\" Wong: Tri-Maf Veteran"
    "Silhouette: Stealth Operative"
-   "Ele \"Smoke\" Scovak: Cynosure of the Net"
+   "Zahya Sadeghi: Versatile Smuggler"
+   "Az McCaffrey: Mechanical Prodigy"
+   "Gabriel Santiago: Consummate Professional"
+
+   "Wyvern: Chemically Enhanced"
    "Edward Kim: Humanity's Hammer"
    "Nathaniel \"Gnat\" Hall: One-of-a-Kind"
+   "Topan: Ormas Leader"
+   "Sebastião Souza Pessoa: Activist Organizer"
    "Quetzal: Free Spirit"
-   "Reina Roja: Freedom Fighter"
-   "Nasir Meidan: Cyber Explorer"
-   "Rielle “Kit” Peddler: Transhuman"
-   "Zahya Sadeghi: Versatile Smuggler"
-   "Captain Padma Isbister: Intrepid Explorer"
-   "Az McCaffrey: Mechanical Prodigy"])
+   "Reina Roja: Freedom Fighter"])
 
 ;; Corp is 34 cards, ?? picks
 ;; Runner should be 6 + 6 = 12 (3 picks)
@@ -167,10 +172,14 @@
 
 (defn- generate-runner-quick-draft
   []
-  (let [runner-cards (filter runner? (vals @all-cards))
+  (let [runner-cards (filter #(and (runner? %)
+                                   (not= "tdc" (:set_code %)))
+                             (vals @all-cards))
         runner-format-cards (filter #(and (not (runner-bans (:title %)))
                                           (not (identity? %)))
                                     runner-cards)
+        not-main-breaker? (fn [c] (not (has-any-subtype? c ["Fracter" "Decoder" "Killer"])))
+        non-programs (filter not-main-breaker? runner-format-cards)
         fracters (filter #(has-subtype? % "Fracter") runner-format-cards)
         decoders (filter #(has-subtype? % "Decoder") runner-format-cards)
         killers  (filter #(has-subtype? % "Killer")  runner-format-cards)
@@ -181,17 +190,17 @@
      (generate-pick decoders 2 6 "decoder")
      (generate-pick killers  2 6 "killer")
      ;; 12
-     (generate-pick runner-format-cards 3 8 "card")
-     (generate-pick runner-format-cards 3 8 "card")
-     (generate-pick runner-format-cards 3 8 "card")
-     (generate-pick runner-format-cards 3 8 "card")
+     (generate-pick non-programs 3 9 "card")
+     (generate-pick runner-format-cards 3 10 "card")
+     (generate-pick non-programs 3 9 "card")
+     (generate-pick runner-format-cards 3 10 "card")
      ;; 24
      {:type :identity
       :prompt "Choose your identity"
       :choices (take 4 (shuffle valid-runner-ids))}
+     (generate-pick non-programs 2 12 "card")
      (generate-pick runner-format-cards 2 12 "card")
-     (generate-pick runner-format-cards 2 12 "card")
-     (generate-pick runner-format-cards 2 12 "card")
+     (generate-pick non-programs 2 12 "card")
      (generate-pick runner-format-cards 2 12 "card")]))
 
 (defn- generate-quick-draft
