@@ -484,6 +484,7 @@ format_name = {$format ->
     [core] Core
     [eternal] Eternal
     [preconstructed] Preconstructed
+    [quick-draft] Quick Draft
     [socr] SOCR
     [standard] Standard
     [startup] Startup
