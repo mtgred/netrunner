@@ -2,6 +2,7 @@
   (:require
    [game.core.card :refer [corp? ice? identity? agenda? runner? has-subtype? has-any-subtype? program?]]
    [game.core.initializing :refer [card-init make-card]]
+   [game.core.say :refer [system-msg]]
    [game.core.toasts :refer [toast]]
    [jinteki.cards :refer [all-cards]]
    [jinteki.utils :refer [other-side]]
@@ -250,7 +251,8 @@
                   :qty 3
                   :choices (map :title ice)}
         corp-info {:type :info
-                    :prompt "Your deck starts with 3 copies of Hedge Fund and 2 copies of Jackson Howard"}]
+                   :cards ["Hedge Fund" "Hedge Fund" "Hedge Fund" "Jackson Howard" "Jackson Howard"]
+                   :prompt "Your deck starts with 3 copies of Hedge Fund and 2 copies of Jackson Howard"}]
     [corp-info
      {:type :deck
       :prompt "Choose an agenda (This game will be played to 6 points. You will receive 2 copies, and have 14 points in your deck)"
@@ -316,6 +318,8 @@
         decoders (filter #(has-subtype? % "Decoder") runner-format-cards)
         killers  (filter #(has-subtype? % "Killer")  runner-format-cards)
         runner-info {:type :info
+                     :cards ["Blueberry!™ Diesel" "Blueberry!™ Diesel" "Blueberry!™ Diesel"
+                             "Sure Gamble" "Sure Gamble" "Crypsis"]
                      :prompt "Your deck starts with 3 copies of Blueberry!™ Diesel, 2 copies of Sure Gamble, and 1 copy of Crypsis"}]
     [runner-info
      (generate-pick fracters 2 6 "fracter")
@@ -371,8 +375,15 @@
     (catch Exception ex
       (toast state side (str card-name " isn't a real card")))))
 
+(defn- add-cards
+  ([state side cards]
+   (let [cards (mapv #(assoc (build-card %) :zone [:deck]) cards)]
+     (swap! state update-in [side :deck] into cards)))
+  ([state side qty card]
+   (add-cards state side (repeat qty card))))
+
 (defn- resolve-quick-draft
-  [state side eid draft-queue draft-state]
+  [state side eid draft-queue]
   (if (seq (side draft-queue))
     (let [[item & rem] (side draft-queue)
           next-queue (assoc draft-queue side rem)]
@@ -383,40 +394,29 @@
                  :choices ["OK"]
                  :waiting-prompt true
                  :async true
-                 :effect (req (resolve-quick-draft
-                                state (other-side side) eid
-                                next-queue draft-state))}
+                 :effect (req (add-cards state side (:cards item))
+                              (resolve-quick-draft state (other-side side) eid next-queue))}
           :deck {:prompt (str (:prompt item) " - you have " (count (side draft-queue)) " picks remaining")
                  :choices (:choices item)
                  :async true
                  :waiting-prompt true
-                 :effect (req (resolve-quick-draft
-                                state (other-side side) eid
-                                next-queue
-                                (update-in draft-state [side :deck] into (repeat (:qty item) target))))}
+                 :effect (req
+                           (add-cards state side (:qty item) target)
+                           (resolve-quick-draft state (other-side side) eid next-queue))}
           :identity {:prompt (str (:prompt item) " - you have " (count (side draft-queue)) " picks remaining")
                      :choices (:choices item)
                      :async true
                      :waiting-prompt true
-                     :msg (msg "selects " target " as their identity")
                      :effect (req
+                               (system-msg state side (str "selects " target " as their identity"))
                                (set-id state side target)
-                               (resolve-quick-draft
-                                    state (other-side side) eid
-                                    next-queue
-                                    (assoc-in draft-state [side :identity] target)))})
+                               (resolve-quick-draft state (other-side side) eid next-queue))})
         nil nil))
-    (let [c-deck
-          (mapv #(assoc % :zone [:deck])
-                (shuffle (mapv build-card (:deck (:corp draft-state)))))
-          r-deck
-          (mapv #(assoc % :zone [:deck])
-                (shuffle (mapv build-card (:deck (:runner draft-state)))))]
-      (swap! state assoc-in [:corp :deck] c-deck)
-      (swap! state assoc-in [:runner :deck] r-deck)
-      (swap! state assoc-in [:runner :agenda-point-req] 6)
-      (swap! state assoc-in [:corp :agenda-point-req] 5)
-      (effect-completed state side eid))))
+    (do (swap! state update-in [:corp   :deck] shuffle)
+        (swap! state update-in [:runner :deck] shuffle)
+        (swap! state assoc-in [:runner :agenda-point-req] 6)
+        (swap! state assoc-in [:corp :agenda-point-req] 5)
+        (effect-completed state side eid))))
 
 (defn check-quick-draft
   [state format eid]
@@ -424,7 +424,4 @@
     (effect-completed state nil eid)
     (let [draft-state (generate-quick-draft)]
       (resolve-quick-draft
-        state :corp eid draft-state
-        {:corp {:deck ["Hedge Fund" "Hedge Fund" "Hedge Fund" "Jackson Howard" "Jackson Howard"]}
-         :runner {:deck ["Blueberry!™ Diesel" "Blueberry!™ Diesel" "Blueberry!™ Diesel"
-                         "Sure Gamble" "Sure Gamble" "Crypsis"]}}))))
+        state :corp eid draft-state))))
