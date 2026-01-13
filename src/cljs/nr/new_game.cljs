@@ -140,8 +140,7 @@
    [precon-choice fmt-state precon]
    [:div.infobox.blue-shade
     {:style {:display (if (= @fmt-state "quick-draft") "block" "none")}}
-    [:p (tr [:lobby_quick-draft "Quickly draft a deck to play against your opponent"])]
-    [:p (tr [:lobby_quick-draft-info "Play a game with a deck built on-the-fly to a lower than normal agenda point total."])]]
+    [:p (tr [:lobby_quick-draft "Quickly draft a deck to play against your opponent, using a smaller deck size and lower than normal agenda-point total."])]]
    [:div.infobox.blue-shade
     {:style {:display (if (:singleton @options) "block" "none")}}
     [tr-element :p [:lobby_singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."]]
