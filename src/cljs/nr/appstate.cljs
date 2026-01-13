@@ -7,6 +7,7 @@
    [nr.ajax :refer [GET]]
    [nr.local-storage :as ls]
    [clojure.string :as str]
+   [clojure.set :as set]
    [reagent.core :as r]))
 
 (defn- migrate-legacy-localStorage-keys!
@@ -17,9 +18,18 @@
                      "lobby_sounds" "lobby-sounds"
                      "volume" "sounds-volume"}))
 
-;; TODO - add a workaround so new formats are not auto-hidden
-(def new-formats
-  #{"quick-draft"})
+
+;; These "new-formats" will automatically be added into the visible-formats for a player exactly once
+(def new-formats #{"quick-draft" "chimera"})
+
+(defn- get-new-formats!
+  "Mark formats when they get added so they are discoverable"
+  []
+  (let [seen-formats (ls/load "seen-formats" #{})
+        fresh-formats (set/difference new-formats seen-formats)
+        new-seen-formats (set/union fresh-formats seen-formats)]
+    (ls/save! "seen-formats" new-seen-formats)
+    fresh-formats))
 
 (defn- load-visible-formats
   "Loading visible formats from localStorage"
@@ -33,9 +43,14 @@
                                   "eternal"
                                   "preconstructed"
                                   "chimera"
-                                  "casual"}]
-    (ls/load "visible-formats" default-visible-formats)))
-
+                                  "casual"}
+        visible (ls/load "visible-formats" default-visible-formats)
+        unseen (get-new-formats!)]
+    (if (seq unseen)
+      (let [visible (set/union visible unseen)]
+        (ls/save! "visible-formats" visible)
+        visible)
+      visible)))
 
 ;; Run migration before creating app-state
 (migrate-legacy-localStorage-keys!)
