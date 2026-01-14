@@ -16,7 +16,7 @@
                                rez-additional-cost-bonus rez-cost]]
    [game.core.damage :refer [chosen-damage corp-can-choose-damage? damage
                              enable-corp-damage-choice]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? corp-recur defcard offer-jack-out run-server-ability scry with-revealed-hand]]
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? corp-recur defcard make-icon offer-jack-out run-server-ability scry with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw]]
    [game.core.effects :refer [register-lingering-effect is-disabled?]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
@@ -43,7 +43,7 @@
    [game.core.pick-counters :refer [pick-virus-counters-to-spend]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
-   [game.core.props :refer [add-counter add-prop add-icon]]
+   [game.core.props :refer [add-counter add-prop]]
    [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
    [game.core.rezzing :refer [can-pay-to-rez? rez]]
    [game.core.runs :refer [end-run get-current-encounter make-run redirect-run
@@ -1299,7 +1299,12 @@
                                                                              :include-cost-from-eid eid
                                                                              :install-source card}})
                                (when-let [installed-card async-result]
-                                 (add-icon state side card installed-card "K" (faction-label card))
+                                 (register-lingering-effect
+                                   state side card
+                                   {:type :icon
+                                    :req (req (same-card? installed-card target))
+                                    :value (make-icon "WU" card)
+                                    :duration :post-runner-turn-ends})
                                  (register-events
                                    state side card
                                    [{:event :runner-turn-ends

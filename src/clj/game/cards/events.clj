@@ -19,7 +19,7 @@
    [game.core.def-helpers :refer [all-cards-in-hand* in-hand*?
                                   breach-access-bonus defcard draw-abi drain-credits gain-credits-ability  offer-jack-out
                                   reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability scry tutor-abi with-revealed-hand
-                                  make-icon]]
+                                  make-icon
                                   reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability scry tutor-abi with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
