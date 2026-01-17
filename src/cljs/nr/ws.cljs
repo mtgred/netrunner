@@ -16,6 +16,7 @@
           "/chsk"
           ?csrf-token
           {:type (if (get-in @app-state [:options :disable-websockets]) :ajax :auto)
+           :ws-kalive-ms 2500 ;; note - supposedly this will help SEA/LATAM connections
            :wrap-recv-evs? false})]
     (def chsk chsk)
     (def ch-chsk ch-recv)
