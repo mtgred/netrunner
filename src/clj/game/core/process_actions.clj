@@ -6,7 +6,7 @@
                               generate-runnable-zones move-card expend-ability
                               play play-ability play-corp-ability
                               play-dynamic-ability play-runner-ability play-subroutine play-unbroken-subroutines remove-tag
-                              resolve-prompt score select trash-resource view-deck]]
+                              resolve-prompt score select trash-button trash-resource view-deck]]
    [game.core.card :refer [get-card]]
    [game.core.change-vals :refer [change]]
    [game.core.checkpoint :refer [fake-checkpoint]]
@@ -107,7 +107,7 @@
    "system-msg" #(system-msg %1 %2 (:msg %3))
    "toast" #'ack-toast
    "toggle-auto-no-action" #'toggle-auto-no-action
-   "trash" #(trash %1 %2 (make-eid %1) (get-card %1 (:card %3)) (dissoc %3 :card))
+   "trash" #(trash-button %1 %2 (make-eid %1) (get-card %1 (:card %3)))
    "trash-resource" #'trash-resource
    "unbroken-subroutines" #'play-unbroken-subroutines
    "view-deck" #'view-deck})
