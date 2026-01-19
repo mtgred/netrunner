@@ -5486,15 +5486,16 @@
   (do-game
     (new-game {:runner {:hand ["Malandragem" "Chisel"]
                         :credits 20}
-               :corp {:hand ["Ice Wall"]}})
-    (play-from-hand state :corp "Ice Wall" "HQ")
+               :corp {:hand ["Tree Line"]}})
+    (play-from-hand state :corp "Tree Line" "HQ")
     (take-credits state :corp)
-    (play-cards state :runner "Malandragem" ["Chisel" "Ice Wall"])
+    (play-cards state :runner "Malandragem" ["Chisel" "Tree Line"])
     (run-on state :hq)
     (rez state :corp (get-ice state :hq 0))
     (run-continue-until state :encounter-ice)
     (click-prompt state :runner "Chisel")
-    (is (= 0 (get-strength (get-ice state :hq 0))) "Runner given option to hit chisel first")))
+    (is (= 3 (get-strength (get-ice state :hq 0))) "Runner given option to hit chisel first")
+    (click-prompt state :runner "Yes")))
 
 (deftest malandragem-once-per-turn
   (do-game
@@ -5546,7 +5547,8 @@
     (rez state :corp (get-ice state :archives 0))
     (run-continue state)
     (is (changed? [(count (:rfg (get-runner))) 1]
-                  (click-prompt state :runner "Yes"))
+          (click-prompt state :runner "Malandragem (rfg)")
+          (click-prompt state :runner "Yes"))
         "RFG Malandragem")
     (is (= :movement (:phase (get-run))) "Run has bypassed Lotus Field")))
 

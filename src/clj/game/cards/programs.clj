@@ -2057,10 +2057,11 @@
              :skippable true
              :interactive (req true)
              :ability-name "Malandragem (Power counter)"
+             :change-in-game-state {:silent true
+                                    :req (req (>= 3 (ice-strength state side current-ice)))}
              :optional {:prompt "Remove 1 power counter to bypass encountered ice?"
                         :once :per-turn
-                        :req (req (and (>= 3 (ice-strength state side current-ice))
-                                       (<= 1 (get-counters (get-card state card) :power))))
+                        :req (req (<= 1 (get-counters (get-card state card) :power)))
                         :yes-ability {:cost [(->c :power 1)]
                                       :msg (msg "bypass " (card-str state current-ice))
                                       :effect (req (bypass-ice state))}}}]})
