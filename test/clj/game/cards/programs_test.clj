@@ -5482,6 +5482,20 @@
     ;; No Malandragem prompt because it's once per turn
     (is (no-prompt? state :runner))))
 
+(deftest malandragem-vs-chisel
+  (do-game
+    (new-game {:runner {:hand ["Malandragem" "Chisel"]
+                        :credits 20}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-cards state :runner "Malandragem" ["Chisel" "Ice Wall"])
+    (run-on state :hq)
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue-until state :encounter-ice)
+    (click-prompt state :runner "Chisel")
+    (is (= 0 (get-strength (get-ice state :hq 0))) "Runner given option to hit chisel first")))
+
 (deftest malandragem-once-per-turn
   (do-game
     (new-game {:runner {:hand ["Malandragem"]}

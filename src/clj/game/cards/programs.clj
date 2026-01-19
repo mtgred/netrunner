@@ -811,6 +811,7 @@
    :events [{:event :encounter-ice
              :automatic :pre-bypass
              :req (req (same-card? (:ice context) (:host card)))
+             :interactive (req true)
              :async true
              :effect (req (if (pos? (ice-strength state side (:ice context)))
                             (do (system-msg state side (str "uses " (:title card) " to place 1 virus counter on itself"))
