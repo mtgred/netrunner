@@ -68,6 +68,7 @@
    "professional-contacts"
    "rez-ice"
    "rez-other"
+   "redirect"
    "run-successful"
    "run-unsuccessful"
    "shuffle"

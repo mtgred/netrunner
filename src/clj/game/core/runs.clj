@@ -551,6 +551,7 @@
        (trigger-event state side :pre-redirect-server
                       {:server (first (:server (:run @state)))
                        :new-server dest})
+       (play-sfx state side "redirect")
        (swap! state update :run
               assoc
               :position num-ice
