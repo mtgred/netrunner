@@ -70,6 +70,7 @@
    "rez-other"
    "run-successful"
    "run-unsuccessful"
+   "shuffle"
    "time-out"
    "virus-purge"])
 
