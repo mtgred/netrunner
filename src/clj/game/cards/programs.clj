@@ -811,6 +811,7 @@
    :events [{:event :encounter-ice
              :automatic :pre-bypass
              :req (req (same-card? (:ice context) (:host card)))
+             :interactive (req true)
              :async true
              :effect (req (if (pos? (ice-strength state side (:ice context)))
                             (do (system-msg state side (str "uses " (:title card) " to place 1 virus counter on itself"))
@@ -2056,10 +2057,11 @@
              :skippable true
              :interactive (req true)
              :ability-name "Malandragem (Power counter)"
+             :change-in-game-state {:silent true
+                                    :req (req (>= 3 (ice-strength state side current-ice)))}
              :optional {:prompt "Remove 1 power counter to bypass encountered ice?"
                         :once :per-turn
-                        :req (req (and (>= 3 (ice-strength state side current-ice))
-                                       (<= 1 (get-counters (get-card state card) :power))))
+                        :req (req (<= 1 (get-counters (get-card state card) :power)))
                         :yes-ability {:cost [(->c :power 1)]
                                       :msg (msg "bypass " (card-str state current-ice))
                                       :effect (req (bypass-ice state))}}}]})
