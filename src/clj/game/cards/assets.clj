@@ -3022,7 +3022,7 @@
              :msg "win the game"
              :effect (req (win state :corp (:title card)))}]})
 
-(defcard "Superpositional Cyclotron"
+(defcard "Synchrocyclotron"
   {:static-abilities [{:type :play-additional-cost
                        :req (req (and (corp? target)
                                       (no-event? state side :play-operation #(has-subtype? (:card (first %)) "Double"))
