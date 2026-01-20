@@ -217,6 +217,11 @@
           ;; default
           nil)))))
 
+(defn trash-button
+  [state side eid card]
+  (system-msg state side (str "trashes " (card-str state card)))
+  (trash state side eid card {:unpreventable true}))
+
 (defn- finish-prompt [state side prompt card]
   (when-let [end-effect (:end-effect prompt)]
     (end-effect state side (make-eid state) card nil))
