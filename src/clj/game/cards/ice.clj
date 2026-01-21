@@ -3270,7 +3270,8 @@
                  (rez-an-ice {:cost-bonus -2})
                  (resolve-another-subroutine
                    #(has-subtype? % "Sentry")
-                   "Resolve subroutine on another rezzed Sentry")
+                   "Resolve subroutine on a rezzed Sentry"
+                   true)
                  (resolve-another-subroutine
                    #(has-subtype? % "Code Gate")
                    "Resolve subroutine on another rezzed Code Gate")]})

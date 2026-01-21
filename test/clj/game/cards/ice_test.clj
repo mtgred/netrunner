@@ -5747,6 +5747,29 @@
     (click-prompt state :corp "End the run")
     (is (not (:run @state)) "Run ended by Guard")))
 
+(deftest mycoweb-sentry-self-test
+  ;; Mycoweb - can fire 3rd sub if turned into sentry
+  (do-game
+    (new-game {:corp {:deck ["Mycoweb" "Ice Wall"] :credits 100}
+               :runner {:deck ["Chromatophores"]}})
+    (play-from-hand state :corp "Mycoweb" "HQ")
+    (play-from-hand state :corp "Ice Wall" "R&D")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Chromatophores")
+    (click-card state :runner "Mycoweb")
+    (let [mycoweb (get-ice state :hq 0)
+          icewall (get-ice state :rd 0)]
+      (run-on state "HQ")
+      (rez state :corp mycoweb)
+      (run-continue state)
+      (card-subroutine state :corp mycoweb 2)
+      (click-card state :corp "Mycoweb")
+      (is (changed? [(:credit (get-corp)) 0]
+                    (click-prompt state :corp "Rez an ice, paying 2 less"))
+          "able to fire another sub on same Mycoweb")
+      (click-card state :corp icewall)
+      (is (rezzed? (refresh icewall))))))
+
 (deftest n-pot-full-subs-test
   (do-game (etr-sub "N-Pot" 0))
   ;; threat 2 - etr
