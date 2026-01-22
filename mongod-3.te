@@ -1,0 +1,18 @@
+
+module mongod-3 1.0;
+
+require {
+	type sysctl_net_t;
+	type mongod_t;
+	class dir search;
+	class file { getattr open read };
+}
+
+#============= mongod_t ==============
+
+#!!!! This avc is allowed in the current policy
+allow mongod_t sysctl_net_t:dir search;
+
+#!!!! This avc is allowed in the current policy
+allow mongod_t sysctl_net_t:file { getattr read };
+allow mongod_t sysctl_net_t:file open;

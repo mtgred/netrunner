@@ -1,0 +1,11 @@
+
+module my-mongod 1.0;
+
+require {
+	type mongod_t;
+	type sysctl_net_t;
+	class dir search;
+}
+
+#============= mongod_t ==============
+allow mongod_t sysctl_net_t:dir search;
