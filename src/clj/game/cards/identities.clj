@@ -2804,3 +2804,35 @@
                :once :per-turn
                :async true
                :effect (req (gain-credits state :runner eid (total-cards-accessed context)))}}}]})
+
+(defcard "Haze: SOB"
+   {:events [{:event :pre-start-game
+              :req (req (= side :runner))
+              :async true
+              :waiting-prompt true
+              :effect (req (let [consoles (->> (server-cards)
+                                                 (filter #(has-subtype? % "Console"))
+                                                 (map make-card)
+                                                 (map #(assoc % :zone [:play-area]))
+                                                 (into []))]
+                             ;; Add consoles to :play-area - assumed to be empty
+                             (swap! state assoc-in [:runner :play-area] consoles)
+                             (continue-ability
+                               state side
+                               {:prompt (str "Which console did Haze five finger discount:")
+                                :choices {:max 1
+                                          :all true
+                                          :card #(and (runner? %)
+                                                      (in-play-area? %))}
+                                :async true
+                                :effect (req (wait-for
+                                               (runner-install
+                                                 state side
+                                                 (make-eid state eid) (first targets)
+                                                 {:ignore-all-cost true
+                                                  :custom-message (fn [_] (str "starts with " (:title (first targets)) " in play"))})
+                                               
+                                                   (swap! state assoc-in [:runner :play-area] [])
+                                                   (effect-completed state nil eid))
+                                             )}
+                               card nil)))}]})
