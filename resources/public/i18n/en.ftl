@@ -523,7 +523,7 @@ game_bad-pub-count-additional = {$base} + {$additional} Bad Publicity
 
 game_beat-trace = Beat Trace
 
-game_brain-damage = {NUMBER($dmg)} Core Damage
+game_brain-damage = {NUMBER($dmg)} Brain Damage
 
 game_breach-server = Breach server
 
@@ -1453,6 +1453,7 @@ set_name = {$name ->
     [sovereign-sight] Sovereign Sight
     [spin-cycle] Spin Cycle
     [station-one] Station One
+    [stratification-cycle] Stratification
     [system-core-2019] System Core 2019
     [system-gateway] System Gateway
     [system-update-2021] System Update 2021
@@ -1469,6 +1470,7 @@ set_name = {$name ->
     [the-valley] The Valley
     [trace-amount] Trace Amount
     [true-colors] True Colors
+    [underbelly] Underbelly
     [unreleased] Unreleased
     [up-and-over] Up and Over
     [uprising] Uprising
