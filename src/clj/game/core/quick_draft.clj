@@ -145,7 +145,7 @@
     "Surveillance Network Key 2"
     })
 
-;; How are we doing this shit?
+;; How are we doing this?
 ;; CORP:
 ;;  We must have agendas.
 ;;  We need to draft agendas.
@@ -168,7 +168,8 @@
 ;;    3 copies of blueberry diesel
 ;;    3 copies of sure gamble
 ;;    2 copies of crypsis
-
+;;
+;; Full up to date explanation can be found here: https://github.com/mtgred/netrunner/wiki/Drafting-on-Jinteki.net-%E2%80%90-Quick-Draft-Format
 
 ;; each draft instance looks like one of the following:
 ;;
