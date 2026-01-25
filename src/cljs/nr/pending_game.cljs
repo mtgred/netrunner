@@ -20,6 +20,7 @@
   "Games using the starter decks are not constructed"
   [current-game]
   (and (not (:precon @current-game))
+       (not= "quick-draft" (:format @current-game))
        (not= "chimera" (:format @current-game))))
 
 (defn is-preconstructed?

@@ -11,6 +11,7 @@
    [game.core.initializing :refer [card-init make-card]]
    [game.core.player :refer [new-corp new-runner]]
    [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
+   [game.core.quick-draft :refer [check-quick-draft]]
    [game.core.say :refer [system-msg system-say implementation-msg]]
    [game.core.shuffling :refer [shuffle-into-deck]]
    [game.core.state :refer [new-state]]
@@ -165,10 +166,12 @@
     (create-basic-action-cards state)
     (fake-checkpoint state)
     (let [eid (make-eid state)]
-      (wait-for (trigger-event-sync state :corp :pre-start-game nil)
-                (wait-for (trigger-event-sync state :runner :pre-start-game nil)
-                          (init-hands state)
-                          (fake-checkpoint state)
-                          (effect-completed state nil eid))))
+      (wait-for
+        (check-quick-draft state (:format game))
+        (wait-for (trigger-event-sync state :corp :pre-start-game nil)
+                  (wait-for (trigger-event-sync state :runner :pre-start-game nil)
+                            (init-hands state)
+                            (fake-checkpoint state)
+                            (effect-completed state nil eid)))))
     (swap! state assoc :history [(:hist-state (public-states state))])
     state))

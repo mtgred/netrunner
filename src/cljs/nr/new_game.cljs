@@ -139,6 +139,9 @@
    [gateway-constructed-choice fmt-state gateway-type]
    [precon-choice fmt-state precon]
    [:div.infobox.blue-shade
+    {:style {:display (if (= @fmt-state "quick-draft") "block" "none")}}
+    [:p (tr [:lobby_quick-draft "Quickly draft a deck to play against your opponent, using a smaller deck size and lower than normal agenda-point total."])]]
+   [:div.infobox.blue-shade
     {:style {:display (if (:singleton @options) "block" "none")}}
     [tr-element :p [:lobby_singleton-details "This will restrict decklists to only those which do not contain any duplicate cards. It is recommended you use the listed singleton-based identities."]]
     [tr-element :p [:lobby_singleton-example "1) Nova Initiumia: Catalyst & Impetus 2) Ampere: Cybernetics For Anyone"]]]])
