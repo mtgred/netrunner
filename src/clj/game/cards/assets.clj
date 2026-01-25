@@ -1096,25 +1096,18 @@
 
 (defcard "Executive Boot Camp"
   {:derezzed-events [corp-rez-toast]
-   :flags {:corp-phase-12 (req (some #(not (rezzed? %)) (all-installed state :corp)))}
-   ; A card rezzed by Executive Bootcamp is ineligible to receive the turn-begins event for this turn.
-   :suppress [{:event :corp-turn-begins
-               :req (req (= (:cid target) (:ebc-rezzed (get-card state card))))}]
-   :events [{:event :corp-turn-ends
-             :silent (req true)
-             :req (req (:ebc-rezzed card))
-             :effect (effect (update! (dissoc card :ebc-rezzed)))}]
-   :abilities [{:async true
-                :once :per-turn
-                :choices {:req (req (and (corp? target)
-                                         (not (rezzed? target))
-                                         (can-pay-to-rez? state side (assoc eid :source card)
-                                                          target {:cost-bonus -1})))}
-                :label "Rez a card, lowering the cost by 1 [Credits] (start of turn)"
-                :effect (req (wait-for (rez state side target {:no-warning true :cost-bonus -1})
-                                       (update! state side (assoc card :ebc-rezzed (:cid target)))
-                                       (effect-completed state side eid)))}
-               {:prompt "Choose an asset to reveal and add to HQ"
+   :events [{:event :corp-turn-begins
+             :interactive (req true)
+             :prompt "Rez a card, paying 1 [Credit] less"
+             :choices {:req (req (and (corp? target)
+                                      (installed? target)
+                                      (not (rezzed? target))
+                                      (can-pay-to-rez? state side eid target {:cost-bonus -1})))}
+             :change-in-game-state {:req (req (some #(not (rezzed? %)) (all-installed state :corp)))
+                                    :silent true}
+             :async true
+             :effect (req (rez state side eid target {:cost-bonus -1 :no-warning true}))}]
+   :abilities [{:prompt "Choose an asset to reveal and add to HQ"
                 :msg (msg "reveal " (:title target) ", add it to HQ, and shuffle R&D")
                 :choices (req (cancellable (filter asset?
                                                    (:deck corp))
