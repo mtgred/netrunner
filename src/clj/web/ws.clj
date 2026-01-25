@@ -19,7 +19,8 @@
 
 (let [chsk-server (sente/make-channel-socket-server!
                     (get-sch-adapter)
-                    {:user-id-fn (fn [ring-req]
+                    {:ws-kalive-ms 2500
+                     :user-id-fn (fn [ring-req]
                                    (or (-> ring-req :session :uid)
                                        (:client-id ring-req)))})
       {:keys [ch-recv send-fn connected-uids
