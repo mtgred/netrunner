@@ -236,6 +236,8 @@
                 eid (assoc eid :source moved-card)]
             (queue-event state :corp-install {:card (get-card state moved-card)
                                               :install-state install-state})
+            (when-let [dre (:derezzed-events cdef)]
+              (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
             (update-disabled-cards state)
             (when (:breach @state)
               (swap! state update-in [:breach :installed] (fnil conj #{}) (:cid moved-card)))
@@ -262,9 +264,7 @@
               (let [eid (assoc eid :source-type :rez)]
                 (cond
                   (agenda? moved-card)
-                  (do (when-let [dre (:derezzed-events cdef)]
-                        (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
-                      (reveal-if-unrezzed state side eid moved-card))
+                  (reveal-if-unrezzed state side eid moved-card)
                   (zero? cost-bonus)
                   (wait-for
                     (checkpoint state nil (make-eid state eid))
@@ -290,10 +290,8 @@
                 (wait-for (checkpoint state nil (make-eid state eid))
                           (complete-with-result state side eid (get-card state moved-card))))
               ;; All other cards
-              (do (when-let [dre (:derezzed-events cdef)]
-                    (register-events state side moved-card (map #(assoc % :condition :derezzed) dre)))
-                  (wait-for (checkpoint state nil (make-eid state eid))
-                            (complete-with-result state side eid (get-card state moved-card)))))))))))
+              (wait-for (checkpoint state nil (make-eid state eid))
+                        (complete-with-result state side eid (get-card state moved-card))))))))))
 
 (defn get-slot
   [state card server {:keys [host-card]}]
