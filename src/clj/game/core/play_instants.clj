@@ -82,32 +82,45 @@
                                   (queue-event state resolved-event {:card card :event resolved-event})
                                   (checkpoint state nil eid {:duration resolved-event})))))))))
 
+(defn- remove-negative-costs
+  [cost-vec]
+  (vec (keep #(cond
+                (= (:cost/type %) :credit) (update % :cost/amount (fn [v] (max v 0)))
+                (pos? (:cost/amount %)) %
+                (#{:x-credits :x-tags :x-power} (:cost/type %)) %)
+             cost-vec)))
+
+(defn- play-instant-additional-costs
+  [state side card {:keys [ignore-cost base-cost no-additional-cost cached-costs cost-bonus] :as args}]
+  (cond
+    ignore-cost nil
+    no-additional-cost nil
+    :else (remove-negative-costs
+            (merge-costs [(play-additional-cost-bonus state side card)
+                          (when (has-subtype? card "Triple")
+                            (->c :click 2))
+                          (when
+                              (and (has-subtype? card "Double")
+                                   (not (get-in @state [side :register :double-ignore-additional])))
+                            (->c :click 1))]))))
+
 (defn play-instant-costs
-  [state side card {:keys [ignore-cost base-cost no-additional-cost cached-costs cost-bonus]}]
+  [state side card {:keys [ignore-cost base-cost no-additional-cost cached-costs cost-bonus] :as args}]
   (or cached-costs
       (let [cost (base-play-cost state side card {:cost-bonus cost-bonus})
-            additional-costs (play-additional-cost-bonus state side card)
+            additional-costs (play-instant-additional-costs state side card args)
             costs (merge-costs
                     [(when-not ignore-cost
                        [base-cost cost])
-                     (when (and (has-subtype? card "Triple")
-                                (not no-additional-cost))
-                       (->c :click 2))
-                     (when (and (has-subtype? card "Double")
-                                (not no-additional-cost)
-                                (not (get-in @state [side :register :double-ignore-additional])))
-                       (->c :click 1))
                      (when-not (or no-additional-cost ignore-cost)
                        [additional-costs])])]
-        costs)))
+        (remove-negative-costs costs))))
 
 (defn- can-decline-instant?
-  ([state side eid card {:keys [ignore-cost no-additional-cost]}]
+  ([state side eid card {:keys [ignore-cost no-additional-cost] :as args}]
    (and (not no-additional-cost)
         (not ignore-cost)
-        (or (has-subtype? card "Double")
-            (has-subtype? card "Triple")
-            (seq (play-additional-cost-bonus state side card))))))
+        (seq (play-instant-additional-costs state side card args)))))
 
 (defn can-play-instant?
   ([state side eid card] (can-play-instant? state side eid card nil))

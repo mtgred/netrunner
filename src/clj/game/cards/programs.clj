@@ -985,6 +985,16 @@
   (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
                                 (strength-pump 1 1)]}))
 
+(defcard "Corsair"
+  (auto-icebreaker {:abilities [(break-sub 1 1 "Barrier")
+                                {:label "Give -3 strength to encountered Barrier"
+                                 :req (req (and (active-encounter? state)
+                                                (has-subtype? current-ice "Barrier")))
+                                 :keep-menu-open true
+                                 :msg (msg "give -3 strength to " (:title current-ice))
+                                 :effect (effect (pump-ice current-ice -3))
+                                 :cost [(->c :credit 1 {:stealth :all-stealth})]}]}))
+
 (defcard "Cradle"
   (auto-icebreaker {:abilities [(break-sub 2 0 "Code Gate")]
                     :static-abilities [(breaker-strength-bonus (req (- (count (:hand runner)))))]}))
@@ -1916,6 +1926,29 @@
   (give-ice-subtype 2 "Barrier"
                     [(break-sub 2 0 "Barrier")
                      (strength-pump 3 6)]))
+
+(defcard "Lampades"
+  {:interactions
+   {:access-ability
+    {:async true
+     :trash? true
+     :once :per-turn
+     :label "Trash card"
+     :req (req (and (not (:disabled card))
+                    (not (agenda? target))
+                    (not (in-discard? target))
+                    (can-pay? state side eid card [(->c :power 1) (->c :credit (:cost target 0) {:stealth :all-stealth})])))
+     :waiting-prompt true
+     :effect (req (let [accessed-card target
+                        play-or-rez (:cost target)]
+                    (continue-ability
+                      state side
+                      {:async true
+                       :cost [(->c :power 1) (->c :credit (:cost accessed-card 0) {:stealth :all-stealth})]
+                       :msg (msg "trash " (:title accessed-card))
+                       :effect (effect (trash eid (assoc accessed-card :seen true) {:accessed true}))}
+                      card nil)))}}
+   :data {:counter {:power 3}}})
 
 (defcard "Lamprey"
   {:events [{:event :successful-run

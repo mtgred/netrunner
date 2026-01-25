@@ -1474,6 +1474,7 @@ set_name = {$name ->
     [uprising] Uprising
     [uprising-booster-pack] Uprising Booster Pack
     [upstalk] Upstalk
+    [vantage-point] Vantage Point
     [what-lies-ahead] What Lies Ahead
     [whispers-in-nalubaale] Whispers in Nalubaale
     [world-champion-2015] World Champion 2015
