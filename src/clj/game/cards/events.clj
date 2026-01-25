@@ -18,6 +18,8 @@
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [all-cards-in-hand* in-hand*?
                                   breach-access-bonus defcard draw-abi drain-credits gain-credits-ability  offer-jack-out
+                                  reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability scry tutor-abi with-revealed-hand
+                                  make-icon
                                   reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability scry tutor-abi with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
@@ -53,7 +55,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prevention :refer [damage-name prevent-damage preventable? prevent-end-run prevent-up-to-n-tags prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
-   [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
+   [game.core.props :refer [add-counter add-prop]]
    [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
    [game.core.runs :refer [bypass-ice can-run-server? gain-next-run-credits get-runnable-zones
@@ -480,19 +482,21 @@
    {:prompt "Choose a card in or protecting a remote server"
     :choices {:card #(is-remote? (second (get-zone %)))}
     :msg (msg "prevent the Corp from rezzing " (card-str state target) " for the rest of the turn")
-    :effect (req (add-icon state side card target "CP" (faction-label card))
-                 (let [t target]
-                   (register-events state side card
-                     [{:event :post-runner-turn-ends
-                       :duration :end-of-turn
-                       :unregister-once-resolved true
-                       :effect (effect (remove-icon card t))}]))
-                 (register-turn-flag! state side card :can-rez
-                                      (fn [state _side card]
-                                        (if (same-card? card target)
-                                          ((constantly false)
-                                           (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
-                                           true))))}})
+    :effect (req
+              (let [t target
+                    c card]
+                (register-lingering-effect
+                  state side card
+                  {:type :icon
+                   :req (req (same-card? target t))
+                   :duration :post-runner-turn-ends
+                   :value (make-icon "CP" c)}))
+              (register-turn-flag! state side card :can-rez
+                                   (fn [state _side card]
+                                     (if (same-card? card target)
+                                       ((constantly false)
+                                        (toast state :corp "Cannot rez the rest of this turn due to Careful Planning"))
+                                       true))))}})
 
 (defcard "Carpe Diem"
   {:makes-run true
@@ -693,6 +697,12 @@
                                              :msg-keys {:display-origin true
                                                         :install-source card}})
                             (when-let [installed-card async-result]
+                              (register-lingering-effect
+                                state side card
+                                {:type :icon
+                                 :duration :end-of-run
+                                 :req (req (same-card? target installed-card))
+                                 :value (make-icon "C" card)})
                               (register-events
                                 state side card
                                 [{:duration :end-of-run
@@ -820,7 +830,8 @@
     :effect (req (let [new-eid (make-eid state {:source card :source-type :runner-install})]
                    (wait-for (runner-install state :runner new-eid target {:msg-keys {:install-source card
                                                                                       :display-origin true}
-                                                                           :cost-bonus -8})
+                                                                           :cost-bonus -8
+                                                                           :suppress-checkpoint true})
                              (gain-tags state :runner eid 1))))}})
 
 (defcard "Cyber Threat"
@@ -1071,8 +1082,7 @@
                                 (system-msg state :runner (str "trashes " (quantify (count installed-cards) "card")
                                                                " (" (enumerate-cards installed-cards :sorted)
                                                                ") at the end of the run from Diana's Hunt"))
-                                (trash-cards state :runner eid installed-cards {:unpreventable true
-                                                                                :cause-card card}))
+                                (trash-cards state :runner eid installed-cards {:cause-card card}))
                               (effect-completed state side eid))))}]})
 
 (defcard "Diesel"
@@ -1473,7 +1483,7 @@
 
 (defcard "Finality"
   {:makes-run true
-   :on-play (assoc (run-server-ability :rd) :additional-cost [(->c :brain 1)])
+   :on-play (run-server-ability :rd {:additional-cost [(->c :brain 1)]})
    :events [{:event :successful-run
              :silent (req true)
              :req (req (and (= :rd (target-server context))
@@ -1487,7 +1497,7 @@
     :change-in-game-state {:req (req (or (seq (:deck runner))
                                          (seq (:deck corp))))}
     :async true
-    :effect (req (wait-for (draw state :runner 3)
+    :effect (req (wait-for (draw state :runner 3 {:suppress-checkpoint true})
                            (draw state :corp eid 3)))}})
 
 (defcard "Forged Activation Orders"
@@ -1525,8 +1535,7 @@
     :msg (msg "forfeit " (get-title card) " and give the Corp 1 bad publicity")
     :async true
     :effect (req (wait-for (forfeit state side (make-eid state eid) target {:msg false})
-                           (gain-bad-publicity state :corp 1)
-                           (effect-completed state side eid)))}})
+                           (gain-bad-publicity state :corp eid 1)))}})
 
 (defcard "Frantic Coding"
   {:on-play
@@ -3883,20 +3892,19 @@
     :choices {:card (every-pred ice? installed?)}
     :change-in-game-state {:req (req (some ice? (all-installed state :corp)))}
     :msg (msg "make " (card-str state target) " gain Sentry, Code Gate, and Barrier until the end of the turn")
-    :effect (req (register-lingering-effect state side card
-                 (let [ice target]
-                   {:type :gain-subtype
-                    :duration :end-of-turn
-                    :req (req (same-card? ice target))
-                    :value ["Sentry" "Code Gate" "Barrier"]}))
-                 (add-icon state side card target "T" (faction-label card))
-                 (let [t target]
-                   (register-events
+    :effect (req (let [ice target]
+                   (register-lingering-effect
                      state side card
-                     [{:event :runner-turn-ends
-                       :duration :end-of-turn
-                       :unregister-once-resolved true
-                       :effect (effect (remove-icon card t))}])))}})
+                     {:type :gain-subtype
+                      :duration :end-of-turn
+                      :req (req (same-card? ice target))
+                      :value ["Sentry" "Code Gate" "Barrier"]})
+                   (register-lingering-effect
+                     state side card
+                     {:type :icon
+                      :duration :end-of-turn
+                      :req (req (same-card? ice target))
+                      :value (make-icon "T" card)})))}})
 
 (defcard "Trade-In"
   ;; TODO: look at me plz 👀

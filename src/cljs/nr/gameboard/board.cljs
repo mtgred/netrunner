@@ -40,6 +40,8 @@
 (defonce corp-prompt-state (r/cursor game-state [:corp :prompt-state]))
 (defonce runner-prompt-state (r/cursor game-state [:runner :prompt-state]))
 
+(defonce icon-hovered (r/atom {}))
+
 (defn is-replay? [] (= "local-replay" (:gameid @app-state [:gameid])))
 
 (defn- prompt-eid [side] (get-in @game-state [side :prompt-state :eid]))
@@ -709,7 +711,7 @@
   [{:keys [zone code type abilities counter
            subtypes strength current-strength selected hosted
            side facedown card-target icon new ghost runner-abilities subroutines seen
-           subtype-target corp-abilities flashback-fake-in-hand flashback-playable]
+           subtype-target corp-abilities flashback-fake-in-hand flashback-playable cid]
     :as card} flipped disable-click]
   (let [title (get-title card)]
     (r/with-let [gs-prompt-state (r/cursor game-state [(keyword (lower-case side)) :prompt-state])
@@ -718,17 +720,19 @@
                  gs-side (r/cursor game-state [:side])
                  as-stacked-cards (r/cursor app-state [:options :stacked-cards])]
       [:div.card-frame.menu-container
-       [:div.blue-shade.card {:class (str (cond selected "selected"
-                                                (contains? (into #{} (get-in @gs-prompt-state [:selectable])) (:cid card)) "selectable"
-                                                (same-card? card @as-button) "hovered"
-                                                (same-card? card @gs-encounter-ice) "encountered"
-                                              (and (not (any-prompt-open? side)) (playable? card)) "playable"
-                                              ghost "ghost"
-                                              (and flashback-fake-in-hand flashback-playable seen) "playable flashback known"
-                                              (and flashback-fake-in-hand flashback-playable) "playable flashback unknown"
-                                              flashback-fake-in-hand "flashback"
-                                              (graveyard-highlight-card? card) "graveyard-highlight"
-                                              ;; specifically, don't show cards as 'new' during selection prompts, so they dont look like selectable cards (we're running out of colors)
+       [:div.blue-shade.card {:class (str (cond
+                                            (= cid @icon-hovered) "icon-hovered"
+                                            selected "selected"
+                                            (contains? (into #{} (get-in @gs-prompt-state [:selectable])) cid) "selectable"
+                                            (same-card? card @as-button) "hovered"
+                                            (same-card? card @gs-encounter-ice) "encountered"
+                                            (and (not (any-prompt-open? side)) (playable? card)) "playable"
+                                            ghost "ghost"
+                                            (and flashback-fake-in-hand flashback-playable seen) "playable flashback known"
+                                            (and flashback-fake-in-hand flashback-playable) "playable flashback unknown"
+                                            flashback-fake-in-hand "flashback"
+                                            (graveyard-highlight-card? card) "graveyard-highlight"
+                                            ;; specifically, don't show cards as 'new' during selection prompts, so they dont look like selectable cards (we're running out of colors)
                                             (and new (not (seq (get-in @gs-prompt-state [:selectable])))) "new"))
                             :tab-index (when (and (not disable-click)
                                                   (or (active? card)
@@ -770,12 +774,26 @@
                (sort-by key counter))))
        (when (pos? (get-counters card :advancement))
          [:div.darkbg.advance-counter.counter {:key "adv"} (get-counters card :advancement)])]
-      (when (and (or current-strength strength)
-                 (or (ice? card)
-                     (has-subtype? card "Icebreaker"))
-                 (active? card))
-        [:div.darkbg.strength (or current-strength strength)])
-      (when-let [{:keys [char color]} icon] [:div.darkbg.icon {:class color} char])
+        (when (and (or current-strength strength)
+                   (or (ice? card)
+                       (has-subtype? card "Icebreaker"))
+                   (active? card))
+          [:div.darkbg.strength (or current-strength strength)])
+        (when (seq icon)
+          [:div.icon-bar
+           {:class "icon-bar"}
+           (doall
+             (for [[char source-cid color] icon]
+               ^{:key [source-cid]}
+               [:div.darkbg.icon
+                {:class color
+                 :on-mouse-enter #(reset! icon-hovered source-cid)
+                 :on-mouse-leave #(reset! icon-hovered nil)}
+                char]))])
+        (when-let [c icon]
+          (prn icon))
+        ;; (when-let [{:keys [char cid color]} icon]
+        ;;   [:div.darkbg.icon {:class color} char])
       (when card-target [:div.darkbg.card-target card-target])
       (when subtype-target [:div.darkbg.subtype-target subtype-target])
       (when (active? card)

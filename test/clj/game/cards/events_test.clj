@@ -1084,7 +1084,7 @@
       (click-card state :runner v1)
       (is (not (no-prompt? state :runner)) "Can't target card in central server")
       (click-card state :runner v2)
-      (is (:icon (refresh v2)) "Vanilla has an icon")
+      (is (has-icon? state (refresh v2) "CP") "Vanilla has an icon")
       (rez state :corp v2 {:expect-rez false})
       (is (not (rezzed? (refresh v2))) "Prevented remote ice from rezzing")
       (take-credits state :runner)
@@ -1095,7 +1095,7 @@
       (play-from-hand state :runner "Careful Planning")
       (click-card state :runner pad)
       (rez state :corp pad {:expect-rez false})
-      (is (:icon (refresh pad)) "PAD Campaign has an icon")
+      (is (has-icon? state (refresh pad) "CP") "PAD Campaign has an icon")
       (is (not (rezzed? (refresh pad))) "Prevented remote server contents from rezzing")
       (take-credits state :runner)
       (is (nil? (:icon (refresh pad))))
@@ -1757,7 +1757,7 @@
     (testing "Femme Fatale can still target ice when installed with Credit Kiting, issue #3715"
       (let [iw (get-ice state :rd 0)]
         (click-card state :runner iw)
-        (is (:icon (refresh iw)) "Ice Wall has an icon")))
+        (is (has-icon? state (refresh iw) "FF") "Ice Wall has an icon")))
     (is (= 1 (count-tags state)) "Runner gained a tag")))
 
 (deftest cyber-threat-corp-rezzes-a-piece-of-ice
@@ -7519,7 +7519,7 @@
     (play-from-hand state :runner "Tinkering")
     (let [iwall (get-ice state :hq 0)]
       (click-card state :runner iwall)
-      (is (:icon (refresh iwall)) "Ice Wall has an icon")
+      (is (has-icon? state (refresh iwall) "T") "Ice Wall has an icon")
       (is (has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
       (is (has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
@@ -7528,7 +7528,7 @@
       (is (has-subtype? (refresh iwall) "Code Gate") "Ice Wall has Code Gate")
       (is (has-subtype? (refresh iwall) "Sentry") "Ice Wall has Sentry")
       (take-credits state :runner)
-      (is (nil? (:icon (refresh iwall))))
+      (is (no-icons? state (refresh iwall)))
       (is (has-subtype? (refresh iwall) "Barrier") "Ice Wall has Barrier")
       (is (not (has-subtype? (refresh iwall) "Code Gate")) "Ice Wall does not have Code Gate")
       (is (not (has-subtype? (refresh iwall) "Sentry")) "Ice Wall does not have Sentry"))))

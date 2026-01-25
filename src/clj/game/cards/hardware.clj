@@ -15,7 +15,7 @@
    [game.core.damage :refer [chosen-damage damage
                              enable-runner-damage-choice runner-can-choose-damage?]]
    [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-abi offer-jack-out play-tiered-sfx
-                                  reorder-choice run-any-server-ability spend-credits take-credits trash-on-empty get-x-fn]]
+                                  reorder-choice run-any-server-ability spend-credits take-credits trash-on-empty get-x-fn make-icon]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects register-lingering-effect
                               unregister-effect-by-uuid unregister-effects-for-card unregister-lingering-effects]]
@@ -45,7 +45,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prevention :refer [damage-name damage-type preventable? prevent-damage prevent-encounter prevent-end-run prevent-tag prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
-   [game.core.props :refer [add-counter add-icon remove-icon]]
+   [game.core.props :refer [add-counter]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
    [game.core.runs :refer [bypass-ice end-run
@@ -384,9 +384,11 @@
                   :msg (msg "target " (card-str state target))
                   :choices {:card #(and (installed? %)
                                         (ice? %))}
-                  :effect (effect (add-icon card target "B" (faction-label card))
-                                  (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))}
-     :leave-play (effect (remove-icon card))
+                  :effect (effect (update! (assoc-in (get-card state card) [:special :boomerang-target] target)))}
+     :static-abilities [{:type :icon
+                         :req (req (same-card? target (get-in card [:special :boomerang-target])))
+                         :while-disabled true
+                         :value (req (make-icon "B" card))}]
      :abilities [(break-sub
                    [(->c :trash-can)] 2 "All"
                    {:req (req (if-let [boomerang-target (get-in card [:special :boomerang-target])]

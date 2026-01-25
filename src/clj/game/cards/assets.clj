@@ -21,7 +21,7 @@
    [game.core.cost-fns :refer [play-cost]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard do-meat-damage do-net-damage draw-abi gain-credits-ability give-tags
-                                  reorder-choice spend-credits take-credits take-n-credits-ability trash-on-empty get-x-fn with-revealed-hand]]
+                                  make-icon reorder-choice spend-credits take-credits take-n-credits-ability trash-on-empty get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
    [game.core.effects :refer [is-disabled-reg? register-lingering-effect update-disabled-cards]]
@@ -44,7 +44,7 @@
    [game.core.payment :refer [can-pay? cost-value ->c]]
    [game.core.play-instants :refer [can-play-instant? play-instant]]
    [game.core.prompts :refer [cancellable]]
-   [game.core.props :refer [add-counter add-icon add-prop remove-icon set-prop]]
+   [game.core.props :refer [add-counter add-prop set-prop]]
    [game.core.prevention :refer [damage-name preventable? prevent-bad-publicity prevent-damage prevent-expose]]
    [game.core.revealing :refer [reveal]]
    [game.core.rezzing :refer [can-pay-to-rez? derez rez]]
@@ -1851,8 +1851,7 @@
 (defcard "Malia Z0L0K4"
   (let [unmark
         (req (when-let [malia-target (get-in card [:special :malia-target])]
-               (update! state side (assoc-in (get-card state card) [:special :malia-target] nil))
-               (remove-icon state :runner card (get-card state malia-target)))
+               (update! state side (assoc-in (get-card state card) [:special :malia-target] nil)))
              (update-disabled-cards state)
              (trigger-event-sync state nil eid :disabled-cards-updated))]
     {:on-rez {:msg (msg "blank the text box of " (card-str state target))
@@ -1860,12 +1859,19 @@
                                     (installed? %)
                                     (resource? %)
                                     (not (has-subtype? % "Virtual")))}
-              :effect (req (add-icon state side card target "MZ" (faction-label card))
-                           (update! state side (assoc-in (get-card state card) [:special :malia-target] target))
+              :effect (req (update! state side (assoc-in (get-card state card) [:special :malia-target] target))
                            (update-disabled-cards state))}
      :leave-play unmark
      :move-zone unmark
-     :static-abilities [{:type :disable-card
+     :static-abilities [{:type :icon
+                         :req (req
+                                (let [malia-target (get-in (get-card state card) [:special :malia-target])]
+                                  (or (same-card? target malia-target)
+                                      (and (same-card? (:host target) malia-target)
+                                           (= (:title malia-target) "DJ Fenris")
+                                           (= (:type target) "Fake-Identity")))))
+                        :value (req (make-icon "MZ" card))}
+                        {:type :disable-card
                          :req (req
                                 (let [malia-target (get-in (get-card state card) [:special :malia-target])]
                                   (or (same-card? target malia-target)
@@ -3239,10 +3245,11 @@
             :choices {:card #(and (ice? %)
                                   (rezzed? %)
                                   (has-subtype? % "Bioroid"))}
-            :effect (effect (add-icon card target "TMB" (faction-label card))
-                            (update! (assoc-in (get-card state card) [:special :trieste-target] target)))}
-   :leave-play (effect (remove-icon card))
-   :static-abilities [{:type :prevent-paid-ability
+            :effect (effect (update! (assoc-in (get-card state card) [:special :trieste-target] target)))}
+   :static-abilities [{:type :icon
+                       :req (req (same-card? target (get-in card [:special :trieste-target])))
+                       :value (req (make-icon "TMB" card))}
+                      {:type :prevent-paid-ability
                        :req (req
                               (let [[break-card break-ability] targets]
                                 (and

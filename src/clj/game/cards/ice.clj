@@ -17,7 +17,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [combine-abilities corp-recur defcard
-                                  do-brain-damage do-net-damage draw-abi give-tags offer-jack-out
+                                  do-brain-damage do-net-damage draw-abi give-tags make-icon offer-jack-out
                                   reorder-choice get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw draw-up-to]]
    [game.core.effects :refer [any-effects get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-effect-by-uuid unregister-static-abilities update-disabled-cards]]
@@ -46,7 +46,7 @@
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
    [game.core.payment :refer [can-pay? cost->string build-cost-label ->c]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
-   [game.core.props :refer [add-counter add-icon add-prop remove-icon]]
+   [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
    [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [can-pay-to-rez? derez get-rez-cost rez]]
@@ -2079,11 +2079,12 @@
                                      (:title target)
                                      " abilities for the remainder of the run")
                            :effect (req (let [t target]
-                                          (add-icon state side card target "H" (faction-label card))
-                                          (register-events state side card
-                                            [{:event :run-ends
-                                              :duration :end-of-run
-                                              :effect (effect (remove-icon card t))}])
+                                          (register-lingering-effect
+                                            state side card
+                                            {:type :icon
+                                             :duration :end-of-run
+                                             :req (req (same-card? t target))
+                                             :value (make-icon "H" card)})
                                           (register-lingering-effect state side card (prevent-sub-break-by t))
                                           (effect-completed state side eid)))}
                           card nil))}

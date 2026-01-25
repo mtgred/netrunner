@@ -623,9 +623,7 @@
 (expose-vars
   [game.core.props
    add-counter
-   add-icon
    add-prop
-   remove-icon
    set-prop])
 
 (expose-vars

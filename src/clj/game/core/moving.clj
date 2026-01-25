@@ -418,7 +418,9 @@
                        (swap! state assoc-in [:breach :did-trash] true))
                      (swap! state update-in [:trash :trash-list :card] dissoc eid)
                      (when (and side (seq (remove #{side} (map #(to-keyword (:side %)) (map :card trashlist)))))
-                       (swap! state assoc-in [side :register :trashed-card] true))
+                       (swap! state assoc-in [side :register :trashed-card] true)
+                       (when accessed
+                         (swap! state assoc-in [side :register :trashed-accessed-card] true)))
                      ;; Pseudo-shuffle archives. Keeps seen cards in play order and shuffles unseen cards.
                      (swap! state assoc-in [:corp :discard]
                             (vec (sort-by #(if (:seen %) -1 1) (get-in @state [:corp :discard]))))
