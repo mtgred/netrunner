@@ -1099,6 +1099,7 @@
    :events [{:event :corp-turn-begins
              :interactive (req true)
              :prompt "Rez a card, paying 1 [Credit] less"
+             :waiting-prompt true
              :choices {:req (req (and (corp? target)
                                       (installed? target)
                                       (not (rezzed? target))
