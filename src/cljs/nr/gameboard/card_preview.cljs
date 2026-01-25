@@ -4,9 +4,15 @@
 
 (defonce zoom-channel (chan))
 
+(defn- safe-get-attribute [target attribute]
+  (when (.-getAttribute target)
+    (.getAttribute target attribute)))
+
 (defn- get-card-data-title [e]
   (let [target (.. e -target)
-        title (.getAttribute target "data-card-title")]
+        title (or (safe-get-attribute target "data-card-title")
+                  (when (= "BUTTON" (.-tagName target))
+                    (some-> target .-firstChild (safe-get-attribute "data-card-title"))))]
     (not-empty title)))
 
 (defn put-game-card-in-channel
