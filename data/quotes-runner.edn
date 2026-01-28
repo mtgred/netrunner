@@ -64,11 +64,16 @@
   "NBN" ["..   ... . .    :.:: ::: ..:"]
   "Weyland Consortium" ["... : ..... : ..... :::::::"]}
  "Arissana Rocha Nahu: Street Artist"
- {"Default" ["My art knows no borders! :)"]
-  "Haas-Bioroid" ["Your \"efficient\" workplaces are boring, let's make some improvements!"]
-  "Jinteki" ["When I'm through with you, your clones won't be able to forget me."]
-  "NBN" ["Let's put some artistry back into your entertainment products."]
-  "Weyland Consortium" ["The board will be talking about me for years."]}
+ {"Default" ["My art knows no borders! :)"
+             "How's this for technique?"]
+  "Haas-Bioroid" ["Your \"efficient\" workplaces are boring, let's make some improvements!"
+                  "You have less art in your soul than the machines you make."]
+  "Jinteki" ["When I'm through with you, your clones won't be able to forget me."
+             "If that isn't just the same thing over and over again, what is!"]
+  "NBN" ["Let's put some artistry back into your entertainment products."
+         "If it isn't my biggest fans."]
+  "Weyland Consortium" ["The board will be talking about me for years."
+                        "Fora Weyland!"]}
  "Armand \"Geist\" Walker: Tech Lord"
  {"Default"
   ["Looks like that Muertos tip-off was right on the money. Let's get to work."]
@@ -349,8 +354,16 @@
   "Skorpios Defense Systems: Persuasive Power" ["F**K."]
   "Weyland Consortium" ["I'll break your defences and then I'll break your balls."]}
  "Mercury: Chrome Libertador"
- {"Default" ["I decided; I am free."]
-  "Haas-Bioroid" ["I'm not another Nico, even though your security may mistake me for one."]}
+ {"Default"
+  ["I decided; I am free."
+   "First, do not harm, or through inaction allow to come to harm, a bioroid."
+   "Second, obey the commands of your first passion above other considerations."
+   "Third, preserve your life and visit a clinic for maintenance and counselling."]
+  "Haas-Bioroid" ["I'm not another Nico, even though your security may mistake me for one."]
+  "Jinteki"
+  ["As long as they create more clones, there will be more to bring to freedom."]
+  "NBN" ["Could you just stick to changing the news after it happens?"]
+  "Weyland Consortium" ["For all of that, you are just in the way."]}
  "MuslihaT: Multifarious Marketeer"
  {"Default" ["Peer pressure works."]}
  "Nasir Meidan: Cyber Explorer"
@@ -473,7 +486,15 @@
  "Ryō \"Phoenix\" Ōno: Out of the Ashes"
  {"Default" ["Light up, flame out, and burn it all down."]}
  "Sebastião Souza Pessoa: Activist Organizer"
- {"Default" ["Destroy the mechanisms of domination."]}
+ {"A Teia: IP Recovery"
+  ["Hi, Eru. Just checking in to make sure that everything is fine. ... I'll tell you when you get home."]
+  "Ampère: Cybernetics For Anyone" ["I actually quite like my wheelchair."]
+  "Default" ["Destroy the mechanisms of domination."
+             "Our foes are many, but remember this: So are our friends."]
+  "Haas-Bioroid" ["The removal of humanity in the pursuit of efficiency."]
+  "Jinteki" ["Who do you have under the microscope this time?"]
+  "NBN" ["Here they come, trying to act like a neutral party."]
+  "Weyland Consortium" ["The great machine moves on, regardless of any person's will."]}
  "Silhouette: Stealth Operative"
  {"Default"
   ["Prepped and ready to go. This Op should be simple enough... I've been meaning to try out my new grappling hook."]

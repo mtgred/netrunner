@@ -1,7 +1,12 @@
 {"A Teia: IP Recovery"
- {"Criminal" ["This one won't be returning home with spoils."]
-  "Default" ["Caveant Fugitivi."]
-  "Shaper" ["Even this mind can be dulled by repetition. Strike when they get complacent, but before you get bored."]}
+ {"Akiko Nisei: Head Case" ["Hang on, we got something on this one."]
+  "Anarch" ["We have found source of interference. Remove it as needed."]
+  "Criminal" ["This one won't be returning home with spoils."]
+  "Default" ["Caveant Fugitivi."
+             "Don't make such a mess we got to explain it to big J."]
+  "Ken \"Express\" Tenma: Disappeared Clone" ["Wow, it's still alive somehow."]
+  "Shaper"
+  ["Even this mind can be dulled by repetition. Strike when they get complacent, but before you get bored."]}
  "Acme Consulting: The Truth You Need"
  {"Anarch"
   ["Some grandstanding vigilante thinks they can threaten us? Our report will conclude all damage was self-inflicted. Case closed."]
@@ -112,6 +117,13 @@
   "Default" ["Thinking of going up without paying fare? Take em' down."]
   "Shaper"
   ["A crafty one getting this far, but they won't go so far once the gravity flips."]}
+ "Epiphany Analytica: Nations Undivided"
+ {"Anarch" ["It will be easy enough to spin the story once they make a mess."]
+  "Criminal"
+  ["Crime rates are up, that could lead to an easy tough on crime campaign."]
+  "Default" ["Results, Delivered."
+             "We will need the team members to burn the midnight oil."]
+  "Shaper" ["Artistic is like eccentric. Eccentric is like out of touch."]}
  "Fringe Applications: Tomorrow, Today"
  {"Anarch"
   ["We all take risks to get where nobody else dares. Some of us take the wrong kinds of risks, though."]
@@ -121,8 +133,6 @@
   ["We are moving forward on this. Let go of the license and liquidate the assets. It's good policy, despite what some may think."]
   "Shaper"
   ["It's quite inspiring what you have there. It's a shame we can't come to an agreement and work together."]}
- "Epiphany Analytica: Nations Undivided"
- {"Default" ["Results, Delivered."]}
  "GRNDL: Power Unleashed"
  {"Anarch" ["Those Molotov cocktails burn only half as bright on biofuels."]
   "Criminal"
@@ -377,7 +387,12 @@
   "Shaper"
   ["Definitely a clever sort, to make it this far. Despite their preparedness, we know they will not make it much further."]}
  "Nuvem SA: Law of the Land"
- {"Default" ["Our fist shall hold the world."]}
+ {"Anarch"
+  ["You say you want to change the world? So do we; we are not content."]
+  "Criminal" ["This just got much easier to explain away."]
+  "Default" ["Our fist shall hold the world."
+             "Can we use this for anything? No? Get rid of it."]
+  "Shaper" ["We will win on any battlefield you face us on."]}
  "Ob Superheavy Logistics: Extract. Export. Excel."
  {"Anarch" ["We take what we want. That's all there is to it."]
   "Criminal" ["You count by tens. We count by trillions."]
@@ -516,7 +531,11 @@
              "There is nothing to fear here, there is just us."]
   "Shaper" ["Wild dreams and creative imagination, all on tape."]}
  "Thunderbolt Armaments: Peace Through Power"
- {"Default" ["Strength in the palm of your hand."]}
+ {"Anarch" ["For every shot they fire, fire three back."]
+  "Criminal" ["Fill the night with fire until there is no where else to hide."]
+  "Default" ["Strength in the palm of your hand."
+             "Let's blow up some cockroaches."]
+  "Shaper" ["Letting everyone follow any idea will just lead to disorder."]}
  "Titan Transnational: Investing In Your Future"
  {"Anarch"
   ["There is no future for those who fight it.//Biting the hand that feeds the market? They'll earn much more than a slap to the face."]
