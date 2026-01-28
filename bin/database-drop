@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+set -eux -o pipefail
+
+docker exec -it mongodb /usr/bin/mongosh netrunner --eval 'db.dropDatabase()'
+bin/down

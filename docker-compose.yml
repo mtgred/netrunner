@@ -17,6 +17,7 @@ services:
       - "./package.json:/usr/src/app/package.json"
       - "./src:/usr/src/app/src"
       - "./test:/usr/src/app/test"
+      - "./tests.edn:/usr/src/app/tests.edn"
       - "./docker/docker-prod.edn:/usr/src/app/resources/prod.edn" # Override server configs
     depends_on:
       - database
