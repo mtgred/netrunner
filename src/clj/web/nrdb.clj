@@ -7,7 +7,7 @@
             [taoensso.timbre :as timbre]))
 
 (def nrdb-decklist-url "https://netrunnerdb.com/api/2.0/public/")
-(def nrdb-readable-url "https://netrunnerdb.com/en/")
+(def nrdb-readable-url "https://netrunnerdb.com/en/decklist/")
 
 (def private-endpoint "deck/")
 (def public-endpoint "decklist/")
