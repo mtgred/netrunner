@@ -1616,6 +1616,7 @@
   {:subroutines [{:label "Draw 1 card. You may add 1 card from HQ to the top of R&D."
                   :msg "draw 1 card"
                   :async true
+                  :waiting-prompt true
                   :effect (req (wait-for (draw state side 1)
                                          (continue-ability
                                            state side
