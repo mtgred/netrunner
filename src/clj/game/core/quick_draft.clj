@@ -1,14 +1,16 @@
 (ns game.core.quick-draft
   (:require
    [game.core.card :refer [corp? ice? identity? agenda? runner? has-subtype? has-any-subtype? program?]]
+   [game.core.engine :refer [resolve-ability]]
    [game.core.initializing :refer [card-init make-card]]
+   [game.core.prompts :refer [show-wait-prompt show-prompt clear-wait-prompt]]
    [game.core.say :refer [system-msg]]
    [game.core.toasts :refer [toast]]
    [jinteki.cards :refer [all-cards]]
    [jinteki.utils :refer [other-side]]
    [jinteki.chimera :refer [corp-bans]]
    [game.core.eid :refer [effect-completed]]
-   [game.macros :refer [continue-ability req msg]]
+   [game.macros :refer [continue-ability req msg wait-for]]
    [game.utils :refer [server-card same-side?]]))
 
 (def runner-bans
@@ -254,27 +256,27 @@
         corp-info {:type :info
                    :cards ["Hedge Fund" "Hedge Fund" "Hedge Fund" "Jackson Howard" "Jackson Howard"]
                    :prompt "Your deck starts with 3 copies of Hedge Fund and 2 copies of Jackson Howard"}]
-    [corp-info
-     {:type :deck
-      :prompt "Choose an agenda (This game will be played to 6 points. You will receive 2 copies, and have 14 points in your deck)"
-      :qty 2
-      :choices (take 5 (shuffle valid-3pointers))}
-     {:type :deck
-      :prompt "Choose an agenda (This game will be played to 6 points. You will receive 4 copies, and have 14 points in your deck)"
-      :qty 4
-      :choices (take 5 (shuffle valid-2pointers))}
-     corp-ice
-     (generate-pick corp-format-cards 3 9 "card")
-     (generate-pick corp-format-cards 3 9 "card")
-     (generate-pick corp-format-cards 3 9 "card")
-     (generate-pick corp-format-cards 3 9 "card")
-     {:type :identity
-      :prompt "Choose your identity"
-      :choices (take 4 (shuffle valid-corp-ids))}
-     (generate-pick corp-format-cards 2 12 "card")
-     (generate-pick corp-format-cards 2 12 "card")
-     (generate-pick corp-format-cards 2 12 "card")
-     (generate-pick corp-format-cards 2 12 "card")]))
+    {:info corp-info
+     :stage-one [{:type :deck
+                  :prompt "Choose an agenda (This game will be played to 6 points. You will receive 2 copies, and have 14 points in your deck)"
+                  :qty 2
+                  :choices (take 5 (shuffle valid-3pointers))}
+                 {:type :deck
+                  :prompt "Choose an agenda (This game will be played to 6 points. You will receive 4 copies, and have 14 points in your deck)"
+                  :qty 4
+                  :choices (take 5 (shuffle valid-2pointers))}
+                 corp-ice
+                 (generate-pick corp-format-cards 3 9 "card")
+                 (generate-pick corp-format-cards 3 9 "card")
+                 (generate-pick corp-format-cards 3 9 "card")
+                 (generate-pick corp-format-cards 3 9 "card")]
+     :identity {:type :identity
+                :prompt "Choose your identity"
+                :choices (take 4 (shuffle valid-corp-ids))}
+     :stage-two [(generate-pick corp-format-cards 2 12 "card")
+                 (generate-pick corp-format-cards 2 12 "card")
+                 (generate-pick corp-format-cards 2 12 "card")
+                 (generate-pick corp-format-cards 2 12 "card")]}))
 
 (def valid-runner-ids
   ["Hayley Kaplan: Universal Scholar"
@@ -322,28 +324,50 @@
                      :cards ["Blueberry!™ Diesel" "Blueberry!™ Diesel" "Blueberry!™ Diesel"
                              "Sure Gamble" "Sure Gamble" "Crypsis"]
                      :prompt "Your deck starts with 3 copies of Blueberry!™ Diesel, 2 copies of Sure Gamble, and 1 copy of Crypsis"}]
-    [runner-info
-     (generate-pick fracters 2 6 "fracter")
-     (generate-pick decoders 2 6 "decoder")
-     (generate-pick killers  2 6 "killer")
-     ;; 12
-     (generate-pick non-programs 3 9 "card")
-     (generate-pick runner-format-cards 3 10 "card")
-     (generate-pick non-programs 3 9 "card")
-     (generate-pick runner-format-cards 3 10 "card")
-     ;; 24
-     {:type :identity
-      :prompt "Choose your identity"
-      :choices (take 4 (shuffle valid-runner-ids))}
-     (generate-pick non-programs 2 12 "card")
-     (generate-pick runner-format-cards 2 12 "card")
-     (generate-pick non-programs 2 12 "card")
-     (generate-pick runner-format-cards 2 12 "card")]))
+    {:info runner-info
+     :stage-one [(generate-pick fracters 2 6 "fracter")
+                 (generate-pick decoders 2 6 "decoder")
+                 (generate-pick killers  2 6 "killer")
+                 (generate-pick non-programs 3 9 "card")
+                 (generate-pick runner-format-cards 3 10 "card")
+                 (generate-pick non-programs 3 9 "card")
+                 (generate-pick runner-format-cards 3 10 "card")]
+     :identity {:type :identity
+                :prompt "Choose your identity"
+                :choices (take 4 (shuffle valid-runner-ids))}
+     :stage-two [(generate-pick non-programs 2 12 "card")
+                 (generate-pick runner-format-cards 2 12 "card")
+                 (generate-pick non-programs 2 12 "card")
+                 (generate-pick runner-format-cards 2 12 "card")]}))
+
+(defn- combine [corp runner]
+  (vec (map (fn [c r]
+              {:type :deck
+               :corp c
+               :runner r})
+            corp runner)))
 
 (defn- generate-quick-draft
   []
-  {:corp   (generate-corp-quick-draft)
-   :runner (generate-runner-quick-draft)})
+  (let [corp   (generate-corp-quick-draft)
+        runner (generate-runner-quick-draft)
+        corp-info (:info corp)
+        runner-info (:info runner)
+        corp-stage-one (:stage-one corp)
+        runner-stage-one (:stage-one runner)
+        corp-id (:identity corp)
+        runner-id (:identity runner)
+        corp-stage-two (:stage-two corp)
+        runner-stage-two (:stage-two runner)]
+    (concat
+      [{:type :info
+        :corp corp-info
+        :runner runner-info}]
+      (combine corp-stage-one runner-stage-one)
+      [{:type :identity
+        :corp corp-id
+        :runner runner-id}]
+      (combine corp-stage-two runner-stage-two))))
 
 ;; so final format is:
 ;;  Start with some quality
@@ -383,40 +407,84 @@
   ([state side qty card]
    (add-cards state side (repeat qty card))))
 
+(defn- maybe-complete
+  [state side eid f]
+  #(let [target (:value %)
+         os (other-side side)
+         other-side-complete? (-> @state :draft os)]
+     (wait-for
+       (f state side nil [target])
+       (if-not other-side-complete?
+         ^:ignore-async-check
+         (do (swap! state assoc-in [:draft side] true)
+             (show-wait-prompt state side "your opponent to pick an option")
+             ;; do not complete an eid intentionally - it should remain open until both players complete
+             )
+         (do (clear-wait-prompt state (other-side side))
+             (effect-completed state side eid))))))
+
+(defn- show-draft-prompt
+  [state side eid corp runner]
+  (swap! state assoc :draft {})
+  (show-prompt state :corp nil   (:prompt corp)   (:choices corp)   (maybe-complete state :corp eid   (:effect corp))   {:prompt-type :draft})
+  (show-prompt state :runner nil (:prompt runner) (:choices runner) (maybe-complete state :runner eid (:effect runner)) {:prompt-type :draft}))
+
+(defn- info-prompt
+  [{:keys [cards prompt]} remaining]
+  {:prompt (str prompt " - you have " remaining " picks to make")
+   :choices ["OK"]
+   :async true
+   :effect (req (add-cards state side cards)
+                (effect-completed state side eid))})
+
+(defn- deck-prompt
+  [{:keys [choices prompt qty]} remaining]
+  {:prompt (str prompt " - you have " remaining " picks remaining")
+   :choices choices
+   :async true
+   :waiting-prompt true
+   :effect (req
+             (add-cards state side qty target)
+             (effect-completed state side eid))})
+
+(defn- id-prompt
+  [state side corp runner remaining]
+  (let [runner-prompt {:prompt (str (:prompt runner) " - you have " remaining " picks remaining")
+                       :choices (:choices runner)
+                       :waiting-prompt true
+                       :effect (req (system-msg state side (str "selects " target " as their identity"))
+                                    (set-id state side target))}]
+    {:prompt (str (:prompt corp) " - you have " remaining " picks remaining")
+     :choices (:choices corp)
+     :waiting-prompt true
+     :async true
+     :effect (req (system-msg state side (str "selects " target " as their identity"))
+                  (continue-ability state :runner runner-prompt nil nil))}))
+
 (defn- resolve-quick-draft
   [state side eid draft-queue]
-  (if (seq (side draft-queue))
-    (let [[item & rem] (side draft-queue)
-          next-queue (assoc draft-queue side rem)]
-      (continue-ability
-        state side
-        (case (:type item)
-          :info {:prompt (str (:prompt item) " - you have " (dec (count (side draft-queue))) " picks to make")
-                 :choices ["OK"]
-                 :waiting-prompt true
-                 :async true
-                 :effect (req (add-cards state side (:cards item))
-                              (resolve-quick-draft state (other-side side) eid next-queue))}
-          :deck {:prompt (str (:prompt item) " - you have " (count (side draft-queue)) " picks remaining")
-                 :choices (:choices item)
-                 :async true
-                 :waiting-prompt true
-                 :effect (req
-                           (add-cards state side (:qty item) target)
-                           (resolve-quick-draft state (other-side side) eid next-queue))}
-          :identity {:prompt (str (:prompt item) " - you have " (count (side draft-queue)) " picks remaining")
-                     :choices (:choices item)
-                     :async true
-                     :waiting-prompt true
-                     :effect (req
-                               (system-msg state side (str "selects " target " as their identity"))
-                               (set-id state side target)
-                               (resolve-quick-draft state (other-side side) eid next-queue))})
-        nil nil))
+  (if (seq draft-queue)
+    (let [{:keys [corp runner] :as item} (first draft-queue)
+          next-queue (rest draft-queue)
+          remaining (count next-queue)]
+      (case (:type item)
+        :info (wait-for
+                (show-draft-prompt
+                  state side
+                  (info-prompt corp   remaining)
+                  (info-prompt runner remaining))
+                (resolve-quick-draft state side eid next-queue))
+        :deck (wait-for
+                (show-draft-prompt
+                  state side
+                  (deck-prompt corp remaining)
+                  (deck-prompt runner remaining))
+                (resolve-quick-draft state side eid next-queue))
+        :identity (wait-for
+                    (resolve-ability state side (id-prompt state :corp corp runner remaining) nil nil)
+                    (resolve-quick-draft state side eid next-queue))))
     (do (swap! state update-in [:corp   :deck] shuffle)
         (swap! state update-in [:runner :deck] shuffle)
-        (swap! state assoc-in [:runner :agenda-point-req] 6)
-        (swap! state assoc-in [:corp :agenda-point-req] 5)
         (effect-completed state side eid))))
 
 (defn check-quick-draft
@@ -424,5 +492,6 @@
   (if (not= format "quick-draft")
     (effect-completed state nil eid)
     (let [draft-state (generate-quick-draft)]
-      (resolve-quick-draft
-        state :corp eid draft-state))))
+      (swap! state assoc-in [:runner :agenda-point-req] 6)
+      (swap! state assoc-in [:corp :agenda-point-req] 5)
+      (resolve-quick-draft state :corp eid draft-state))))
