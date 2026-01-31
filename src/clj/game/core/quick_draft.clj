@@ -208,7 +208,7 @@
    "Cyberdex Sandbox"
    "Broad Daylight"
    "Above the Law"
-   "Tomorrowʼs Headline"
+   "Tomorrow's Headline"
    "Project Beale"])
 
 (def valid-corp-ids
