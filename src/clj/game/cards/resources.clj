@@ -1259,8 +1259,7 @@
                                                               (not= (-> runner :identity :faction)
                                                                     (:faction %))
                                                               (not (is-draft-id? %))
-                                                              (or (= :casual format)
-                                                                  (= :preconstructed format)
+                                                              (or (#{:casual :quick-draft :preconstructed} format)
                                                                   (legal? format :legal %))))
                                                 (sort-by :title)))
         fenris-effect {:async true
