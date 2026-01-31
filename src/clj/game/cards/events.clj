@@ -3026,8 +3026,7 @@
                                            (= (:faction runner-identity) (:faction %))
                                            (not (is-draft-id? %))
                                            (not= (:title runner-identity) (:title %))
-                                           (or (= :casual format)
-                                               (= :preconstructed format)
+                                           (or (#{:casual :quick-draft :preconstructed} format)
                                                (legal? format :legal %)))
                         swappable-ids (filter is-swappable (server-cards))]
                     (sort-by :title swappable-ids)))
