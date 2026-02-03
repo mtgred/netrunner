@@ -66,8 +66,10 @@
 ;;; Helper functions for Draft cards
 (def draft-points-target
   "Set each side's agenda points target at 6, per draft format rules"
-  (req (swap! state assoc-in [:runner :agenda-point-req] 6)
-       (swap! state assoc-in [:corp :agenda-point-req] 6)))
+  (req (when (= 7 (get-in @state [:runner :agenda-point-req]))
+         (swap! state assoc-in [:runner :agenda-point-req] 6))
+       (when (= 7 (get-in @state [:corp :agenda-point-req]))
+         (swap! state assoc-in [:corp :agenda-point-req] 6))))
 
 (defn- has-most-faction?
   "Checks if the faction has a plurality of rezzed / installed cards"
