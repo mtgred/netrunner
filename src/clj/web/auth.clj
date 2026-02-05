@@ -111,7 +111,6 @@
                       (some-> headers (get "x-real-ip"))
                       remote-address)
         user (mc/find-one-as-map db "users" {:username username})]
-    (prn client-ip)
     (cond
       (and user (password/check password (:password user)) (:banned user))
       (response 403 {:error (or @banned-msg "Account Locked")})
