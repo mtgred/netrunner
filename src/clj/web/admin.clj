@@ -12,6 +12,11 @@
    [web.versions :refer [frontend-version banned-msg]]
    [web.ws :as ws]))
 
+(defn- last-ip-address
+  "Legacy because I got it wrong the first time"
+  [user]
+  (or (:last-ip-address user) (:lastIpAddress user)))
+
 (defmethod ws/-msg-handler :admin/announce
   admin--announce
   [{{user :user} :ring-req
@@ -115,6 +120,76 @@
               (ws/broadcast-to! [(:uid connected-user)] :system/force-disconnect {}))))
         (ws/broadcast-to! [uid] :admin/user-edit {:error "Not found"})))
     (ws/broadcast-to! [uid] :admin/user-edit {:error "Not allowed"})))
+
+(def ip-ban-collection "ip-bans")
+
+(defmethod ws/-msg-handler :admin/look-up-ip
+  admin--look-up-ip
+  [{{db :system/db user :user} :ring-req
+    {:keys [username] :as data} :?data
+    uid :uid}]
+  (if (and (active-user? user)
+           (or (:ismoderator user) (:isadmin user)))
+    (if-let [res (mc/find-one-as-map db user-collection {:username username}
+                                         {:username 1
+                                          :lastIpAddress 1
+                                          :last-ip-address 1
+                                          :_id 0})]
+      (ws/broadcast-to! [uid] :admin/look-up-ip {:success (-> res
+                                                              (dissoc :lastIpAddress)
+                                                              (assoc :last-ip-address (last-ip-address res)))})
+      (ws/broadcast-to! [uid] :admin/look-up-ip {:error "Not found"}))
+    (ws/broadcast-to! [uid] :admin/look-up-ip {:error "Not allowed"})))
+
+(defmethod ws/-msg-handler :admin/fetch-ip-bans
+  admin--fetch-ip-bans
+  [{{db :system/db user :user} :ring-req
+    uid :uid}]
+  (if (and (active-user? user)
+           (or (:ismoderator user) (:isadmin user)))
+    (let [ip-bans (mc/find-maps db ip-ban-collection {}
+                                {:username 1
+                                 :ip-address 1
+                                 :_id 0})]
+      (ws/broadcast-to! [uid] :admin/fetch-ip-bans {:success ip-bans}))
+    (ws/broadcast-to! [uid] :admin/fetch-ip-bans {:error "Not allowed"})))
+
+(defmethod ws/-msg-handler :admin/ip-ban-user
+  admin--ip-ban-user
+  [{{db :system/db user :user} :ring-req
+    {:keys [username] :as data} :?data
+    uid :uid}]
+  (if (and (active-user? user)
+           (or (:ismoderator user) (:isadmin user)))
+    (if-let [res (mc/find-one-as-map db user-collection {:username username}
+                                         {:username 1
+                                          :lastIpAddress 1
+                                          :last-ip-address 1
+                                          :_id 0})]
+      (if-let [ip (last-ip-address res)]
+        (do
+          (prn "res: " res)
+          (prn "ip: " ip)
+          (mc/insert db ip-ban-collection {:username username :ip-address ip})
+          (ws/broadcast-to! [uid] :admin/ip-ban-user {:success {:username username
+                                                                :ip-address ip}}))
+        (ws/broadcast-to! [uid] :admin/ip-ban-user {:error "Legacy user? No IP Address on record"}))
+      (ws/broadcast-to! [uid] :admin/ip-ban-user {:error "Not found"}))
+    (ws/broadcast-to! [uid] :admin/ip-ban-user {:error "Not allowed"})))
+
+(defmethod ws/-msg-handler :admin/ip-unban-user
+  admin--ip-unban-user
+    [{{db :system/db user :user} :ring-req
+    {:keys [username] :as data} :?data
+      uid :uid}]
+  (if (and (active-user? user)
+           (or (:ismoderator user) (:isadmin user)))
+    (let [result (mc/remove db ip-ban-collection {:username username})
+          n (.getN result)]
+      (if (pos? n)
+        (ws/broadcast-to! [uid] :admin/ip-unban-user {:success username})
+        (ws/broadcast-to! [uid] :admin/ip-unban-user {:error "Not found"})))
+    (ws/broadcast-to! [uid] :admin/ip-unban-user {:error "Not allowed"})))
 
 (defmethod ws/-msg-handler :admin/fetch-users
   admin--fetch-users
