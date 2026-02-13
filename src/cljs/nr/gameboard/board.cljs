@@ -2401,11 +2401,11 @@
                 [:div.inner-leftpane
                  [:div.left-inner-leftpane
                   [:div
-                   [stats-view opponent]
+                   ^{:key [:opponent op-side]} [stats-view opponent]
                    [scored-view op-scored op-agenda-point op-agenda-point-req false]]
                   [:div
                    [scored-view me-scored me-agenda-point me-agenda-point-req true]
-                   [stats-view me]]]
+                   ^{:key [:me me-side]} [stats-view me]]]
 
                  [:div.right-inner-leftpane
                   (let [op-rfg (r/cursor game-state [op-side :rfg])
