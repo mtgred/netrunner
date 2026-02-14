@@ -3500,6 +3500,19 @@
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total"))))
 
+(deftest meiles-u-only-the-brightest-basic
+  (doseq [[s sn] [[:hq "HQ"] [:rd "R&D"] ["Archives" :archives]]]
+    (do-game
+      (new-game {:corp {:id "Méliès U: Only the Brightest"
+                        :hand ["IPO"]
+                        :deck ["Snare!"]
+                        :discard ["Beanstalk Royalties"]}})
+      (take-credits state :corp)
+      (click-prompt state :corp "R&D")
+      (run-empty-server state :rd)
+      (click-prompts state :corp "Yes" "IPO" "Snare!")
+      (is (is-hand? state :corp ["IPO" "Snare!"])))))
+
 (deftest mercury-chrome-libertador
   (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
@@ -5750,6 +5763,16 @@
         "Spent 2 to install earthrise hotel")
     (click-prompt state :runner "Yes")
     (is (= 2 (count (:hand (get-runner)))) "Took damage, then drew up")))
+
+(deftest virtual-intelligence-p-i-you-can-call-me-vic
+  (doseq [tags [0 1]]
+    (do-game
+      (new-game {:runner {:id "Virtual Intelligence, P.I.: \"You Can Call Me Vic\"" :tags tags :deck [(qty "Ika" 15)]}})
+      (take-credits state :corp)
+      (is (changed? [(count (:hand (get-runner))) 1]
+            (card-ability state :runner (get-in @state [:runner :identity]) 0))
+          "Drew 1 card")
+      (is (= 0 (count-tags state)) "Untagged"))))
 
 (deftest weyland-consortium-because-we-built-it-pay-credits-prompt
     ;; Pay-credits prompt
