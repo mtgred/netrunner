@@ -2805,6 +2805,19 @@
              ;; This doesn't use `gain-bad-publicity` to avoid the event
              :effect (effect (gain :corp :bad-publicity 1))}]})
 
+(defcard "Virtual Intelligence, P.I.: \"You Can Call Me Vic\""
+  {:abilities [{:cost [(->c :click 1) (->c :credit 1)]
+                :action true
+                :once :per-turn
+                :label "Draw 1 card and remove 1 tag."
+                :msg (msg (if tagged "draw 1 card and remove 1 tag" "draw 1 card"))
+                :async true
+                :change-in-game-state {:req (req (or tagged (seq (:deck runner))))}
+                :effect (req (if tagged
+                               (wait-for (draw state side 1 {:suppress-checkpoint true})
+                                         (lose-tags state side eid 1))
+                               (draw state side eid 1)))}]})
+
 (defcard "Weyland Consortium: Because We Built It"
   {:recurring 1
    :interactions {:pay-credits {:req (req (let [ab-target (:card (get-ability-targets eid))]

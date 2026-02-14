@@ -5764,6 +5764,16 @@
     (click-prompt state :runner "Yes")
     (is (= 2 (count (:hand (get-runner)))) "Took damage, then drew up")))
 
+(deftest virtual-intelligence-p-i-you-can-call-me-vic
+  (doseq [tags [0 1]]
+    (do-game
+      (new-game {:runner {:id "Virtual Intelligence, P.I.: \"You Can Call Me Vic\"" :tags tags :deck [(qty "Ika" 15)]}})
+      (take-credits state :corp)
+      (is (changed? [(count (:hand (get-runner))) 1]
+            (card-ability state :runner (get-in @state [:runner :identity]) 0))
+          "Drew 1 card")
+      (is (= 0 (count-tags state)) "Untagged"))))
+
 (deftest weyland-consortium-because-we-built-it-pay-credits-prompt
     ;; Pay-credits prompt
     (do-game
