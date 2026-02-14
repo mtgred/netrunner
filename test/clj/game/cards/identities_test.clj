@@ -3500,6 +3500,19 @@
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total"))))
 
+(deftest meiles-u-only-the-brightest-basic
+  (doseq [[s sn] [[:hq "HQ"] [:rd "R&D"] ["Archives" :archives]]]
+    (do-game
+      (new-game {:corp {:id "Méliès U: Only the Brightest"
+                        :hand ["IPO"]
+                        :deck ["Snare!"]
+                        :discard ["Beanstalk Royalties"]}})
+      (take-credits state :corp)
+      (click-prompt state :corp "R&D")
+      (run-empty-server state :rd)
+      (click-prompts state :corp "Yes" "IPO" "Snare!")
+      (is (is-hand? state :corp ["IPO" "Snare!"])))))
+
 (deftest mercury-chrome-libertador
   (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

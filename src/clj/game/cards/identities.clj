@@ -1481,6 +1481,64 @@
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 
+(defcard "Méliès U: Only the Brightest"
+  {:events [;; At game start, you're on the front face
+            {:event :pre-first-turn
+             :req (req (= side :corp))
+             :effect (effect (update!
+                               (assoc card
+                                      :face :front
+                                      :melies-target (first (shuffle ["HQ" "R&D" "Archives"])))))}
+            ;; When your turn ends, you secretly choose a server
+            {:event :corp-turn-ends
+             :prompt "Choose a server"
+             :interactive (req true)
+             :choices ["HQ" "R&D" "Archives"]
+             :msg (msg "secretly choose a server")
+             :effect (req (update! state side (assoc card :melies-target target)))}
+            ;; When the runner discard phase ends while you're on the front, you gain 1c
+            {:event :runner-turn-ends
+             :req (req (= (:face card) :front))
+             :msg "gain 1 [Credit]"
+             :async true
+             :effect (req (gain-credits state side eid 1))}
+            ;; when our turn begins and we are not on the front face, we flip
+            {:event :corp-turn-begins
+             :silent (req true)
+             :effect (effect (update! (assoc card :face :front)))}
+            ;; When the runner makes a successful run on a central
+            ;; while we're on a front face, we flip and maybe do something
+            {:event :successful-run
+             :req (req (and (= (:face card) :front) (is-central? (:server context))))
+             :msg (msg "flip to "
+                       (case (:melies-target card)
+                         "HQ" "Tenure Floors: Méliès U"
+                         "R&D" "Subsurface Labs: Méliès U"
+                         "Archives" "Disposal Grounds: Méliès U"
+                         "this shouldn't occur"))
+             :async true
+             :effect (req (let [[target-zone face] (case (:melies-target card)
+                                                     "HQ"  [:hq :tenure]
+                                                     "R&D" [:rd :subsurface]
+                                                     "Archives" [:archives :disposal]
+                                                     [:hq :tenure])]
+                            (update! state side (assoc card :face face))
+                            (if (and (-> context :server first (= target-zone))
+                                     (seq (:deck corp)))
+                              (continue-ability
+                                state side
+                                {:optional
+                                 {:prompt (msg "The top card of R&D is " (:title (first (:deck corp))) ". Trash it?")
+                                  :waiting-prompt true
+                                  :req (req (seq (:hand runner)))
+                                  :yes-ability {:cost [(->c :trash-from-deck 1)]
+                                                :once :per-turn
+                                                :msg "add 1 card from Archives to HQ"
+                                                :async true
+                                                :effect (effect (continue-ability (corp-recur) card nil))}}}
+                                card nil)
+                              (effect-completed state side eid))))}]})
+
 (defcard "Mercury: Chrome Libertador"
   {:events [{:event :breach-server
              :automatic :pre-breach
