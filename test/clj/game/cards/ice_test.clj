@@ -7948,6 +7948,7 @@
     (run-continue state)
     (card-ability state :runner (get-program state 0) 0)
     (click-prompt state :runner "End the run")
+    (select-bad-pub state 1)
     (run-continue state)
     (click-prompt state :corp "Yes")
     (click-card state :corp "Ice Wall")

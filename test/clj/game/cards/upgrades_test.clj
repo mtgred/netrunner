@@ -1803,7 +1803,7 @@
 (deftest giordano-memorial-field
   ;; Giordano Memorial Field
   (do-game
-      (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
+      (new-game {:corp {:deck ["Giordano Memorial Field" "Greenmail"]}
                  :runner {:deck [(qty "Fan Site" 3)]}})
       (play-from-hand state :corp "Giordano Memorial Field" "New remote")
       (rez state :corp (get-content state :remote1 0))
@@ -1812,7 +1812,7 @@
       (play-from-hand state :runner "Fan Site")
       (play-from-hand state :runner "Fan Site")
       (take-credits state :runner)
-      (play-and-score state "Hostile Takeover")
+      (play-and-score state "Greenmail")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (let [credits (:credit (get-runner))]
@@ -1827,8 +1827,9 @@
 (deftest giordano-memorial-field-payable-with-net-mercur
     ;; Payable with net mercur
     (do-game
-      (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
-                 :runner {:deck [(qty "Fan Site" 3) "Net Mercur"]}})
+      (new-game {:corp {:deck ["Giordano Memorial Field" "Greenmail"]}
+                 :runner {:deck [(qty "Fan Site" 3) "Net Mercur"]
+                          :credits 6}})
       (play-from-hand state :corp "Giordano Memorial Field" "New remote")
       (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
@@ -1837,7 +1838,7 @@
       (play-from-hand state :runner "Fan Site")
       (play-from-hand state :runner "Net Mercur")
       (take-credits state :runner)
-      (play-and-score state "Hostile Takeover")
+      (play-and-score state "Greenmail")
       (take-credits state :corp)
       (let [nm (get-resource state 0)]
         (core/command-counter state :runner '("c" "3"))
@@ -2039,6 +2040,7 @@
     (click-prompt state :runner "Take 1 tag")
     (is (= 1 (count-tags state)) "Runner takes 1 tag to prevent Corp from removing 1 BP")
     (click-prompt state :runner "Pay 2 [Credits] to trash") ; trash
+    (select-bad-pub state 1)
     (run-empty-server state "Archives")
     (is (= 1 (count-bad-pub state)))
     (click-prompt state :runner "The Corp removes 1 bad publicity")

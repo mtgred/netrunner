@@ -378,14 +378,17 @@
     (run-empty-server state :remote1)
     (click-prompt state :corp "No")
     (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (select-bad-pub state 1)
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :hq)
     (click-prompt state :corp "No")
     (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (select-bad-pub state 1)
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")
     (run-empty-server state :rd)
     (click-prompt state :corp "No")
     (click-prompt state :runner "Pay 1 [Credits] to trash")
+    (select-bad-pub state 1)
     (is (= 5 (:credit (get-runner))) "1 BP credit spent to trash CVS")))
 
 (deftest run-psi-bad-publicity-credits

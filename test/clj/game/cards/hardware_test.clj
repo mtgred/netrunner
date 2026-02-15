@@ -1314,6 +1314,7 @@
       (click-card state :corp "Hostile Takeover")
       (run-continue state)
       (card-ability state :runner (get-program state 0) 2)
+      (select-bad-pub state 1)
       (card-ability state :runner (get-program state 0) 2)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "Gain 2 [Credits]")
@@ -1932,7 +1933,7 @@
       (is (:run @state) "New run started")
       (run-continue state)
       (is (= [:rd] (:server (:run @state))) "Running on R&D")
-      (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
+      (is (= 1 (:bad-publicity-available (:run @state))) "Runner has 1 BP credit")))
 
 (deftest doppelganger-makers-eye-interaction
     ;; Makers eye interaction

@@ -143,8 +143,6 @@
   ([provider-func outereid target-count stealth-target selected-cards pre-chosen uses] (pick-credit-providing-cards provider-func outereid target-count stealth-target selected-cards pre-chosen {} 0))
   ([provider-func outereid target-count stealth-target selected-cards pre-chosen uses bad-pub-available] (pick-credit-providing-cards provider-func outereid target-count stealth-target selected-cards pre-chosen {} bad-pub-available 0))
   ([provider-func outereid target-count stealth-target selected-cards pre-chosen uses bad-pub-available bad-pub-spent]
-   (prn "available: " bad-pub-available)
-   (prn "spent: " bad-pub-spent)
    (let [counter-count (+ (reduce + 0 (map #(:number (second %) 0) selected-cards))
                           (or bad-pub-spent 0))
          selected-stealth (filter #(has-subtype? (:card (second %)) "Stealth") selected-cards)
@@ -228,15 +226,12 @@
                        ")")
           :offer-bad-pub? (when can-use-bad-pub? bad-pub-available)
           :choices {:card #(in-coll? (map :cid provider-cards) (:cid %))}
-          :effect (req (prn "target: " target)
-                       (if (= target "Bad Publicity")
-                         (do (prn "bad pub picked")
-                             (continue-ability
-                               state side
-                               ;;[provider-func outereid target-count stealth-target       selected-cards pre-chosen uses bad-pub-available]
-                               (pick-credit-providing-cards
-                                 provider-func eid target-count stealth-target           selected-cards (when (should-auto-repeat? state side) target) uses (dec bad-pub-available) (inc bad-pub-spent))
-                               card targets))
+          :effect (req (if (= target "Bad Publicity")
+                         (continue-ability
+                           state side
+                           (pick-credit-providing-cards
+                             provider-func eid target-count stealth-target           selected-cards (when (should-auto-repeat? state side) target) uses (dec bad-pub-available) (inc bad-pub-spent))
+                           card targets)
                          (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
                                pay-function (if (= :custom pay-credits-type)
                                               (-> target card-def :interactions :pay-credits :custom)

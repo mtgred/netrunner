@@ -230,6 +230,10 @@
   [state cost]
   (click-prompt state :runner (str "Pay " cost " [Credits] to trash")))
 
+(defn select-bad-pub
+  [state expected]
+  (click-prompt state :runner (str "Bad Publicity (" expected " available)")))
+
 ;; General utilities necessary for starting a new game
 (defn find-card
   "Copied from core so we can check printed title too"
