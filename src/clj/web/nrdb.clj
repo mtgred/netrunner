@@ -7,7 +7,7 @@
             [taoensso.timbre :as timbre]))
 
 (def nrdb-decklist-url "https://netrunnerdb.com/api/2.0/public/")
-(def nrdb-readable-url "https://netrunnerdb.com/en/decklist/")
+(def nrdb-base-url "https://netrunnerdb.com/en/")
 
 (def private-endpoint "deck/")
 (def public-endpoint "decklist/")
@@ -17,7 +17,7 @@
    returns: [:public/:private/:unknown, id]"
   [input]
   (let [id (if (str/includes? input "/")
-             (let [frame (second (str/split input #"decklist/|deck/"))]
+             (let [frame (second (str/split input #"decklist/|deck/view/|deck/"))]
                (first (str/split frame #"/")))
              input)
         endpoint (cond
@@ -44,9 +44,14 @@
   [db cards]
   (reduce-kv (reduce-card db) {:identity nil :cards []} cards))
 
-(defn- parse-nrdb-deck [db deck]
+(defn- readable-url [endpoint id]
+  (case endpoint
+    :private (str nrdb-base-url "deck/view/" id)
+    (str nrdb-base-url "decklist/" id)))
+
+(defn- parse-nrdb-deck [endpoint db deck]
   (merge {:name (:name deck)
-          :notes (str "imported from " nrdb-readable-url (:id deck))}
+          :notes (str "imported from " (readable-url endpoint (:id deck)))}
          (parse-cards db (:cards deck))))
 
 (defn- parse-response [endpoint db body]
@@ -54,7 +59,7 @@
     (cond
       (not (:success parsed)) (timbre/info (Exception. "NRDB Query did not return success using endpoint: " endpoint))
       (not= 1 (:total parsed)) (timbre/info (Exception. "NRDB Query did not return one element"))
-      (contains? parsed :data) (parse-nrdb-deck db (first (:data parsed)))
+      (contains? parsed :data) (parse-nrdb-deck endpoint db (first (:data parsed)))
       :else (timbre/info (Exception. "NRDB Query does not have a data field")))))
 
 (defn try-download-public-decklist
