@@ -1,24 +1,26 @@
 (ns game.core.pick-counters
   (:require
-    [game.core.card :refer [get-card get-counters has-subtype? installed? runner?]]
-    [game.core.card-defs :refer [card-def]]
-    [game.core.eid :refer [effect-completed make-eid complete-with-result]]
-    [game.core.engine :refer [resolve-ability queue-event]]
-    [game.core.gaining :refer [lose]]
-    [game.core.props :refer [add-counter]]
-    [game.core.update :refer [update!]]
-    [game.macros :refer [continue-ability req wait-for]]
-    [game.utils :refer [enumerate-str in-coll? quantify same-card?]]))
+   [game.core.bad-publicity :refer [spend-bad-publicity]]
+   [game.core.card :refer [get-card get-counters has-subtype? installed? runner?]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.eid :refer [effect-completed make-eid complete-with-result]]
+   [game.core.engine :refer [resolve-ability queue-event]]
+   [game.core.gaining :refer [lose]]
+   [game.core.props :refer [add-counter]]
+   [game.core.update :refer [update!]]
+   [game.macros :refer [continue-ability req wait-for]]
+   [game.utils :refer [enumerate-str in-coll? quantify same-card?]]))
 
 (defn- pick-counter-triggers
-  [state side eid current-cards selected-cards counter-type counter-count message]
+  [state side eid current-cards selected-cards counter-type counter-count message credits]
   (if-let [[_ selected] (first current-cards)]
     (if-let [{:keys [card number]} selected]
       (do (queue-event state :counter-added {:card (get-card state card) :counter-type counter-type :amount number})
-          (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-type counter-count message))
-      (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-type counter-count message))
+          (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-type counter-count message credits))
+      (pick-counter-triggers state side eid (rest current-cards) selected-cards counter-type counter-count message credits))
     (complete-with-result state side eid {:number counter-count
                                           :msg message
+                                          :credits-spent-from-pool credits
                                           :targets (keep #(:card (second %)) selected-cards)})))
 
 (defn pick-virus-counters-to-spend
@@ -56,7 +58,7 @@
                                                           title (:title card)]
                                                       (str (quantify number "virus counter") " from " title))
                                                    (vals selected-cards)))]
-                       (pick-counter-triggers state side eid selected-cards selected-cards :virus counter-count message)))))
+                       (pick-counter-triggers state side eid selected-cards selected-cards :virus counter-count message 0)))))
     :cancel-effect (if target-count
                      (req (doseq [{:keys [card number]} (vals selected-cards)]
                             (update! state :runner (update-in (get-card state card) [:counter :virus] + number)))
@@ -73,6 +75,11 @@
     (do (queue-event state :spent-credits-from-card {:card (first cards)})
         (trigger-spend-credits-from-cards state side eid (rest cards)))
     (effect-completed state side eid)))
+
+(defn- queue-spend-from-bad-pub
+  [state side spent]
+  (when (and spent (pos? spent))
+    (queue-event state :bad-publicity-spent {:value spent})))
 
 (defn- take-counters-of-type
   "This builds an effect to remove a single counter of the given type, including credits. This does not fire any events."
@@ -133,8 +140,13 @@
   ([provider-func outereid target-count stealth-target] (pick-credit-providing-cards provider-func outereid target-count stealth-target (hash-map)))
   ([provider-func outereid target-count stealth-target selected-cards] (pick-credit-providing-cards provider-func outereid target-count stealth-target selected-cards nil))
   ([provider-func outereid target-count stealth-target selected-cards pre-chosen] (pick-credit-providing-cards provider-func outereid target-count stealth-target selected-cards pre-chosen {}))
-  ([provider-func outereid target-count stealth-target selected-cards pre-chosen uses]
-   (let [counter-count (reduce + 0 (map #(:number (second %) 0) selected-cards))
+  ([provider-func outereid target-count stealth-target selected-cards pre-chosen uses] (pick-credit-providing-cards provider-func outereid target-count stealth-target selected-cards pre-chosen {} 0))
+  ([provider-func outereid target-count stealth-target selected-cards pre-chosen uses bad-pub-available] (pick-credit-providing-cards provider-func outereid target-count stealth-target selected-cards pre-chosen {} bad-pub-available 0))
+  ([provider-func outereid target-count stealth-target selected-cards pre-chosen uses bad-pub-available bad-pub-spent]
+   (prn "available: " bad-pub-available)
+   (prn "spent: " bad-pub-spent)
+   (let [counter-count (+ (reduce + 0 (map #(:number (second %) 0) selected-cards))
+                          (or bad-pub-spent 0))
          selected-stealth (filter #(has-subtype? (:card (second %)) "Stealth") selected-cards)
          stealth-count (reduce + 0 (map #(:number (second %) 0) selected-stealth))
          provider-cards (if (= (- counter-count target-count) (- stealth-count stealth-target))
@@ -145,6 +157,7 @@
          provider-cards (filter #(not (get-in (card-def %) [:interactions :pay-credits :cost-reduction])) provider-cards)
          ;; note - this allows holding the shift key while clicking a card to keep picking that card while possible
          ;; ie: taking 5cr from miss bones with one click, instead of waiting for 5 server round-trips
+         can-use-bad-pub? (and (pos? bad-pub-available) (not= stealth-target target-count) true)
          should-auto-repeat? (fn [state side] (get-in @state [side :shift-key-select] nil))
          pay-rest (req
                     (if (and (<= (- target-count counter-count) (get-in @state [side :credit]))
@@ -152,31 +165,37 @@
                       (let [remainder (max 0 (- target-count counter-count))
                             remainder-str (when (pos? remainder)
                                             (str remainder " [Credits]"))
-                            card-strs (when (pos? (count selected-cards))
-                                        (str (enumerate-str (map #(let [{:keys [card number]} %
-                                                                        title (:title card)]
-                                                                    (str number " [Credits] from " title))
-                                                                 (vals selected-cards)))))
+                            card-strs (when (or (pos? (count selected-cards)) (pos? bad-pub-spent))
+                                        (enumerate-str (concat (mapv #(let [{:keys [card number]} %
+                                                                            title (:title card)]
+                                                                        (str number " [Credits] from " title))
+                                                                     (vals selected-cards))
+                                                               (when (pos? bad-pub-spent)
+                                                                 [(str bad-pub-spent "[Credits] from bad publicity")]))))
                             message (str card-strs
                                          (when (and card-strs remainder-str)
                                            " and ")
                                          remainder-str
                                          (when (and card-strs remainder-str)
                                            " from [their] credit pool"))]
+                        (when (pos? bad-pub-spent)
+                          (spend-bad-publicity state side bad-pub-spent))
                         (lose state side :credit remainder)
                         (let [cards (->> (vals selected-cards)
                                          (map :card)
                                          (remove #(-> (card-def %) :interactions :pay-credits :cost-reduction)))]
                           (wait-for (trigger-spend-credits-from-cards state side cards)
-                                        ; Now we trigger all of the :counter-added events we'd neglected previously
-                                    (pick-counter-triggers state side eid selected-cards selected-cards :credit target-count message))))
+                                    (queue-spend-from-bad-pub state side bad-pub-spent)
+                                    ;; Now we trigger all of the :counter-added events we'd neglected previously
+                                    (pick-counter-triggers state side eid selected-cards selected-cards :credit target-count message remainder))))
                       (continue-ability
                         state side
-                        (pick-credit-providing-cards provider-func eid target-count stealth-target selected-cards uses)
+                        (pick-credit-providing-cards provider-func eid target-count stealth-target selected-cards uses bad-pub-available bad-pub-spent)
                         card nil)))]
-     (if (or (not (pos? target-count))        ; there is a limit
-             (<= target-count counter-count)  ; paid everything
-             (zero? (count provider-cards)))  ; no more additional credit sources found
+     (if (or (not (pos? target-count))             ;; there is a limit
+             (<= target-count counter-count)       ;; paid everything
+             (and (zero? (count provider-cards))  ;; no more additional credit sources found
+                  (not can-use-bad-pub?)))
        {:async true
         :effect pay-rest}
        (if (and pre-chosen (in-coll? (map :cid provider-cards) (:cid pre-chosen)))
@@ -207,22 +226,33 @@
                          (str ", " (min stealth-count stealth-target) " of " stealth-target " stealth")
                          "")
                        ")")
+          :offer-bad-pub? (when can-use-bad-pub? bad-pub-available)
           :choices {:card #(in-coll? (map :cid provider-cards) (:cid %))}
-          :effect (req (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
-                             pay-function (if (= :custom pay-credits-type)
-                                            (-> target card-def :interactions :pay-credits :custom)
-                                            (take-counters-of-type pay-credits-type))
-                             custom-ability ^:ignore-async-check {:async true
-                                                                  :effect pay-function}
-                             neweid (make-eid state outereid)
-                             providing-card target]
-                         (wait-for (resolve-ability state side neweid custom-ability providing-card [card])
-                                   (continue-ability state side
-                                                     (pick-credit-providing-cards
-                                                       provider-func eid target-count stealth-target
+          :effect (req (prn "target: " target)
+                       (if (= target "Bad Publicity")
+                         (do (prn "bad pub picked")
+                             (continue-ability
+                               state side
+                               ;;[provider-func outereid target-count stealth-target       selected-cards pre-chosen uses bad-pub-available]
+                               (pick-credit-providing-cards
+                                 provider-func eid target-count stealth-target           selected-cards (when (should-auto-repeat? state side) target) uses (dec bad-pub-available) (inc bad-pub-spent))
+                               card targets))
+                         (let [pay-credits-type (-> target card-def :interactions :pay-credits :type)
+                               pay-function (if (= :custom pay-credits-type)
+                                              (-> target card-def :interactions :pay-credits :custom)
+                                              (take-counters-of-type pay-credits-type))
+                               custom-ability ^:ignore-async-check {:async true
+                                                                    :effect pay-function}
+                               neweid (make-eid state outereid)
+                               providing-card target]
+                           (wait-for (resolve-ability state side neweid custom-ability providing-card [card])
+                                     (continue-ability state side
+                                                       (pick-credit-providing-cards
+                                                         provider-func eid target-count stealth-target
                                                        (update selected-cards (:cid providing-card)
                                                                #(assoc % :card providing-card :number (+ (:number % 0) async-result)))
                                                        (when (should-auto-repeat? state side) target)
-                                                       (use-card uses providing-card async-result))
-                                                     card targets))))
+                                                       (use-card uses providing-card async-result)
+                                                       bad-pub-available bad-pub-spent)
+                                                     card targets)))))
           :cancel-effect pay-rest})))))

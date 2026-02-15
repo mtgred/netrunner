@@ -1,6 +1,7 @@
 (ns game.core.prompts
   (:require
    [clj-uuid :as uuid]
+   [clojure.string :as str]
    [game.core.board :refer [get-all-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
@@ -32,7 +33,7 @@
   ([state side card message choices f] (show-prompt state side (make-eid state) card message choices f nil))
   ([state side card message choices f args] (show-prompt state side (make-eid state) card message choices f args))
   ([state side eid card message choices f
-    {:keys [waiting-prompt prompt-type show-discard cancel-effect end-effect targets selectable]}]
+    {:keys [waiting-prompt prompt-type show-discard cancel-effect end-effect targets selectable offer-bad-pub?]}]
    (let [prompt (if (string? message) message (message state side eid card targets))
          choices (choice-parser choices)
          selectable (update-selectable selectable choices)
@@ -43,6 +44,7 @@
                   :effect f
                   :card card
                   :selectable selectable
+                  :offer-bad-pub? offer-bad-pub?
                   :prompt-type (or prompt-type :other)
                   :show-discard show-discard
                   :cancel-effect cancel-effect
@@ -139,6 +141,18 @@
         (cancel-effect nil)
         (effect-completed state side (:eid (:ability selected)))))))
 
+(defn resolve-select-special!
+  "Resolves a selection prompt by invoking the prompt's ability with the targeted cards.
+  Called when the user clicks 'Done' or selects the :max number of cards."
+  [state side card args update! resolve-ability button]
+  (let [selected (get-in @state [side :selected 0])
+        cards (map #(dissoc % :selected) (:cards selected))
+        prompt (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt])))]
+    (swap! state update-in [side :selected] #(vec (rest %)))
+    (when prompt
+      (remove-from-prompt-queue state side prompt))
+    (resolve-ability state side (:ability selected) card [button])))
+
 (defn- compute-selectable
   [state side card ability req-fn card-fn]
   (let [valid (filter #(not= (:zone %) [:deck]) (get-all-cards state))
@@ -191,27 +205,31 @@
                             (str " " (pluralize "target" min-choices))
                             " a target"))
                         " for " (:title card)))
-                    (if all ["Hide"] ["Done"])
+                    (concat (when (:offer-bad-pub? ability) [(str "Bad Publicity (" (:offer-bad-pub? ability) " available)")])
+                            (if all ["Hide"] ["Done"]))
                     (if all
                       (fn [_]
                         ; "Hide" was selected. Show toast and reapply select prompt. This allows players to access
                         ; prompts that lie "beneath" the current select prompt.
                         (toast state side (str "You must choose " max-choices " " (pluralize "card" max-choices)))
                         (show-select state side card ability update! resolve-ability args))
-                      (fn [_]
+                      (fn [s]
                         (let [selected (or (first-selection-by-eid state side (:eid ability))
                                            (get-in @state [side :selected 0]))
                               cards (map #(dissoc % :selected) (:cards selected))]
-                          ; check for :min. If not enough cards are selected, show toast and stay in select prompt
-                          (if (and min-choices (< (count cards) min-choices))
-                            (do
-                              (toast state side (str "You must choose at least " min-choices " " (pluralize "card" min-choices)))
-                              (show-select state side card ability update! resolve-ability args))
-                            (resolve-select state side (:eid ability) card
-                                            (select-keys (wrap-function args :cancel-effect) [:cancel-effect])
-                                            update! resolve-ability)))))
+                          ;; check for :min. If not enough cards are selected, show toast and stay in select prompt
+                          (if (and s (str/starts-with? (:value s) "Bad Publicity")) ;; this is an evil hack
+                            (resolve-select-special! state side card ability update! resolve-ability "Bad Publicity")
+                            (if (and min-choices (< (count cards) min-choices))
+                              (do
+                                (toast state side (str "You must choose at least " min-choices " " (pluralize "card" min-choices)))
+                                (show-select state side card ability update! resolve-ability args))
+                              (resolve-select state side (:eid ability) card
+                                              (select-keys (wrap-function args :cancel-effect) [:cancel-effect])
+                                              update! resolve-ability))))))
                     (-> args
                         (assoc :prompt-type :select
+                               :offer-bad-pub? (:offer-bad-pub? ability)
                                :selectable selectable-cards
                                :show-discard (:show-discard ability))
                         (wrap-function :cancel-effect)))))))
