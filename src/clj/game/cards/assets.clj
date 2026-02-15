@@ -54,7 +54,7 @@
    [game.core.set-aside :refer [swap-set-aside-cards]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck
                                 shuffle-into-rd-effect]]
-   [game.core.tags :refer [gain-tags]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.threat :refer [threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -2238,6 +2238,25 @@
                                   (damage state :corp eid :brain 1 {:card card}))
                               (do (as-agenda state :runner card -1)
                                   (effect-completed state side eid))))}})
+
+(defcard "Nihilo Agent"
+  {:data {:counter {:power 3}}
+   :events [(trash-on-empty :power)
+            {:event :corp-turn-ends
+             :msg "take 1 bad publicity and give the Runner 1 tag"
+             :async true
+             :effect (req (wait-for
+                            (gain-bad-publicity state :corp 1 {:suppress-checkpoint true})
+                            (wait-for
+                              (add-counter state side card :power -1 {:suppress-checkpoint true})
+                              (gain-tags state side eid 1))))}
+            {:event :corp-turn-begins
+             :change-in-game-state {:silent true
+                                    :req (req (or tagged (pos? (count-bad-pub state))))}
+             :msg "remove 1 bad publicity and 1 tag"
+             :async true
+             :effect (req (wait-for (lose-bad-publicity state :corp 1 {:suppress-checkpoint true})
+                                    (lose-tags state side eid 1)))}]})
 
 (defcard "Open Forum"
   {:events [{:event :corp-mandatory-draw

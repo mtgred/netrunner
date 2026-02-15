@@ -3319,6 +3319,12 @@
    {:psi {:req (req (seq (:scored runner)))
           :not-equal (trash-type "resource" resource? :loud)}}})
 
+(defcard "Vulture Fund"
+  {:on-play {:msg "gain 14 [Credits] and take 1 bad publicity"
+             :async true
+             :effect (req (wait-for (gain-credits state side 14 {:suppress-checkpoint true})
+                                    (gain-bad-publicity state side eid 1)))}})
+
 (defcard "Wake Up Call"
   {:on-play
    {:rfg-instead-of-trashing true

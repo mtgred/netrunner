@@ -4100,6 +4100,24 @@
               (take-credits state :runner))
             "Drew 2 cards -> mandatory + nico trash effect"))))
 
+(deftest nihilo-agent
+  (do-game
+    (new-game {:corp {:hand ["Nihilo Agent"]}})
+    (play-from-hand state :corp "Nihilo Agent" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (dotimes [n 3]
+      (is (not (jinteki.utils/is-tagged? state)) "Not tagged")
+      (take-credits state :corp)
+      (start-turn state :runner)
+      (is (= 1 (count-bad-pub state)) "Took 1 bad pub")
+      (is (jinteki.utils/is-tagged? state) "tagged")
+      (take-credits state :runner)
+      (when-not (= n 2)
+        (is (= 0 (count-bad-pub state)) "lost 1 bad pub")
+	(is (not (jinteki.utils/is-tagged? state)) "untagged again")))
+    (is (= 1 (count-bad-pub state)) "Took 1 bad pub")
+    (is (jinteki.utils/is-tagged? state) "tagged")))
+
 (deftest open-forum
   ;; Open Forum
   (do-game

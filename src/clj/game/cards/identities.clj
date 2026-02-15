@@ -755,6 +755,21 @@
                   :req (req (:flipped card))
                   :effect flip-effect}]}))
 
+(defcard "Editorial Division: Ad Nihilum"
+  {:events [{:event :corp-gain-bad-publicity
+             :optional {:req (req (let [valid-ctx? (fn [[ctx]] (pos? (:amount ctx)))]
+                                    (and (valid-ctx? targets)
+                                         (first-event? state side :corp-gain-bad-publicity valid-ctx?))))
+                        :prompt "Search for a card?"
+                        :waiting-prompt true
+                        :yes-ability {:prompt "Choose a card"
+                                      :msg (msg "add " (:title target) " to HQ from R&D") ;; TODO - once the illicit->liability change is through, we can adjust this (or just leave it)
+                                      :choices (req (cancellable (filter #(has-any-subtype? % ["Illicit" "Black Ops" "Gray Ops" "Liability"]) (filter (complement agenda?) (:deck corp))) :sorted))
+                                      :cancel-effect (effect (system-msg (str "shuffles R&D"))
+                                                             (shuffle! :deck))
+                                      :effect (effect (shuffle! :deck)
+                                                      (move target :hand))}}}]})
+
 (defcard "Edward Kim: Humanity's Hammer"
   {:events [{:event :access
              :req (req (and (operation? target)

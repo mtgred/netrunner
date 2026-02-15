@@ -5622,6 +5622,13 @@
     (click-card state :corp "Kati Jones")
     (is (not (get-resource state 0)) "Kati Jones is trashed")))
 
+(deftest vulture-fund-test
+  (do-game
+    (new-game {:corp {:hand ["Vulture Fund"] :credits 7}})
+    (is (changed? [(:credit (get-corp)) 7
+                   (count-bad-pub state) 1]
+          (play-from-hand state :corp "Vulture Fund")))))
+
 (deftest wake-up-call-should-fire-after-using-en-passant-to-trash-ice
     ;; should fire after using En Passant to trash ice
     (do-game

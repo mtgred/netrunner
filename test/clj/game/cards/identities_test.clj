@@ -1441,6 +1441,15 @@
       (click-card state :corp "NASX")
       (is (= "NASX" (:title (first (:hosted (get-content state :remote1 0))))))))
 
+(deftest editorial-division-ad-nihilum
+  (do-game
+    (new-game {:corp {:id "Editorial Division: Ad Nihilum"
+                      :hand ["Too Big to Fail"]
+                      :deck ["Closed Accounts"]}})
+    (play-from-hand state :corp "Too Big to Fail")
+    (click-prompts state :corp "Yes" "Closed Accounts")
+    (is-hand? state :corp ["Closed Accounts"])))
+
 (deftest edward-kim-humanity-s-hammer-trash-first-operation-accessed-each-turn-but-not-if-first-one-was-in-archives
     ;; Trash first operation accessed each turn, but not if first one was in Archives
     (do-game
