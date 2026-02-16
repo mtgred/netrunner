@@ -1515,11 +1515,13 @@
              :effect (effect (update!
                                (assoc card
                                       :face :front
-                                      :melies-target (first (shuffle ["HQ" "R&D" "Archives"])))))}
+                                      :melies-target (first (shuffle ["HQ" "R&D" "Archives"]))))
+                             (system-msg "reveals that the three hidden faces of Méliès U: Only the Brightest are: Tenure Floors: Méliès U, Subsurface Labs: Méliès U, and Disposal Grounds: Méliès U"))}
             ;; When your turn ends, you secretly choose a server
             {:event :corp-turn-ends
              :prompt "Choose a server"
              :interactive (req true)
+             :waiting-prompt true
              :choices ["HQ" "R&D" "Archives"]
              :msg (msg "secretly choose a server")
              :effect (req (update! state side (assoc card :melies-target target)))}
