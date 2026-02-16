@@ -2379,6 +2379,19 @@
       (card-ability state :runner (get-resource state 0) 0)
       (is (no-prompt? state :corp) "No Hayley wait prompt for facedown installs.")))
 
+(deftest hiram-0mission-svensson-shadow-of-the-past
+  (do-game
+    (new-game {:corp {:deck ["IPO"] :hand ["Beanstalk Royalties"]}
+               :runner {:id "Hiram \"0mission\" Svensson: Shadow of the Past"
+                        :hand ["Sports Hopper"]}})
+    (play-from-hand state :corp "Beanstalk Royalties")
+    (is (no-prompt? state :runner))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sports Hopper")
+    (click-prompt state :runner "Noted")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-prompt state :runner "Noted")))
+
 (deftest hoshiko-shiro-untold-protagonist-id-ability
     ;; ID ability
     (do-game

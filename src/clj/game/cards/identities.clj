@@ -1054,6 +1054,18 @@
                             :prompt-type :bogus}))
                        card nil))}]})
 
+(defcard "Hiram \"0mission\" Svensson: Shadow of the Past"
+  (let [scry {:change-in-game-state {:silent (req true)
+                                     :req (req (seq (:deck corp)))}
+              :msg "look at the top card of R&D"
+              :interactive (req true)
+              :skippable true
+              :waiting-prompt true
+              :prompt (msg "The top card of R&D is " (:title (first (:deck corp))))
+              :choices ["Noted"]}]
+    {:events [(assoc scry :event :runner-install :req (req (hardware? (:card context))))
+              (assoc scry :event :runner-trash :req (req (some hardware? (map :card targets))))]}))
+
 (defcard "Hoshiko Shiro: Untold Protagonist"
   (let [flip-effect (req (update! state side (if (:flipped card)
                                                (assoc card
