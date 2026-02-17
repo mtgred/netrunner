@@ -21,7 +21,7 @@
 
 (def valid-pronouns
   #{"none" "any" "myodb" "blank" "they" "she" "sheit" "shethey"
-    "he" "heit" "hethey" "heshe" "it" "faefaer" "ne" "ve" "ey"
+    "he" "heit" "hethey" "heshe" "heshe2" "it" "faefaer" "ne" "ve" "ey"
     "zehir" "zezir" "xe" "xi"})
 
 (def valid-stats-options #{"always" "competitive" "none"})
