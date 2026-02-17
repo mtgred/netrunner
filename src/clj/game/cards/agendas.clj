@@ -1509,7 +1509,7 @@
                                             :card (every-pred corp? in-hand?)}
                                   :msg (msg "shuffle " (quantify (count targets) "card")
                                             " from HQ into R&D")
-                                  :cancel-effect shuffle-my-deck!
+                                  :cancel shuffle-my-deck!
                                   :effect (req (doseq [t targets]
                                                  (move state side t :deck))
                                                (shuffle! state side :deck))}

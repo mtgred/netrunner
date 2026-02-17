@@ -1450,12 +1450,16 @@
   {:static-abilities [(mu+ 1)
                       (runner-hand-size+ 1)]
    :events [{:event :agenda-scored
-             :prompt "Choose a card"
-             :msg "add 1 card from the stack to the grip"
-             :choices (req (cancellable (:deck runner)))
-             :effect (effect (trigger-event :searched-stack)
-                             (shuffle! :deck)
-                             (move target :hand))}]})
+             :change-in-game-state {:silent true
+                                    :req (req (seq (:deck runner)))}
+             :optional {:prompt "Search for a card?"
+                        :waiting-prompt true
+                        :yes-ability {:prompt "Choose a card"
+                                      :msg "add 1 card from the stack to the grip"
+                                      :choices (req (:deck runner))
+                                      :effect (effect (trigger-event :searched-stack)
+                                                      (shuffle! :deck)
+                                                      (move target :hand))}}}]})
 
 (defcard "Lucky Charm"
   {:prevention [{:prevents :end-run
@@ -1789,9 +1793,7 @@
          :effect (effect (runner-install
                           (assoc eid :source card :source-type :runner-install)
                           target {:msg-keys {:install-source card
-                                             :display-origin true}}))
-         :cancel-effect (effect (system-msg :runner (str "declines to use " (:title card) " to install a card"))
-                                (effect-completed eid))}
+                                             :display-origin true}}))}
         gain-credit-ability
         {:interactive (req true)
          :async true
@@ -1906,7 +1908,8 @@
                                                 (register-once state side patchwork-ability card)
                                                 (effect-completed state side (make-result eid 2))))
                          ; provide 0 credits
-                         :cancel-effect (effect (effect-completed (make-result eid 0)))}
+                         :cancel {:async true
+                                  :effect (req (effect-completed state side (make-result eid 0)))}}
                         card nil)))
        :type :custom
        :cost-reduction true}}}))

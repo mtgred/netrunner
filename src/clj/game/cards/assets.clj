@@ -1180,9 +1180,7 @@
            {:optional
             {:prompt "Look at the top 3 cards of R&D?"
              :waiting-prompt true
-             :no-ability
-             {:async true
-              :effect (effect (continue-ability draw-ab card nil))}
+             :no-ability draw-ab
              :yes-ability
              {:msg "rearrange the top 3 cards of R&D"
               :async true

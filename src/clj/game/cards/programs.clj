@@ -55,7 +55,7 @@
    [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? protecting-same-server?
                               remote->name target-server unknown->kw zone->name]]
-   [game.core.shuffling :refer [shuffle!]]
+   [game.core.shuffling :refer [shuffle! shuffle-my-deck!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.threat :refer [threat threat-level]]
@@ -390,8 +390,7 @@
                                                  :msg (msg "trash " (:title target) " to draw 1 card")
                                                  :effect (req (wait-for (trash state side target {:unpreventable true
                                                                                                   :cause-card card})
-                                                                        (draw state :runner eid 1)))
-                                                 :cancel-effect (effect (effect-completed eid))}
+                                                                        (draw state :runner eid 1)))}
                                                 card nil))}]}))
 
 (defcard "Abagnale"
@@ -1097,8 +1096,7 @@
 (defcard "Customized Secretary"
   (letfn [(custsec-host [cards]
             (if (empty? (filter program? cards))
-              {:msg "shuffle the stack"
-               :effect (effect (shuffle! :deck))}
+              shuffle-my-deck!
               {:prompt "Choose a program to host"
                :choices (concat (filterv program? cards) ["Done"])
                :async true
@@ -2627,9 +2625,9 @@
                                                 (runner-install state side eid target {:ignore-all-cost true
                                                                                        :msg-keys {:display-origin true
                                                                                                   :install-source card}})))
-                                 :cancel-effect (req (system-msg state side (str "uses Pawn to trash itself"))
-                                                     (trash state side eid card {:cause-card card
-                                                                                 :unpreventable true}))}
+                                 :cancel {:msg "trash itself"
+                                          :effect (req (trash state side eid card {:cause-card card
+                                                                                   :unpreventable true}))}}
                                 card nil)))}]
    :abilities [{:action true
                 :label "Host on the outermost piece of ice of a central server"
@@ -3574,8 +3572,6 @@
                          :req (req (and (runner? target)
                                         (installed? target)))}
                :msg (msg "trash " (:title target))
-               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                      (effect-completed eid))
                :effect
                (req (let [facedown-target (facedown? target)]
                       (wait-for (trash state side target {:unpreventable true :cause-card card})
