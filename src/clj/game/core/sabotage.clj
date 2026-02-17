@@ -65,7 +65,8 @@
                                  :card #(and (corp? %)
                                              (in-hand? %))}
                        :async true
-                       :cancel-effect (trash-selected-req n)
+                       :cancel {:async true
+                                :effect (trash-selected-req n)}
                        :effect (trash-selected-req n)})
         check-forcing-ab {:async true
                           :effect (req

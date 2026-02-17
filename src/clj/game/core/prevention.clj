@@ -377,7 +377,7 @@
      :async true
      :msg (msg "prevent " target " " (damage-name state) " damage")
      :effect (req (prevent-damage state side eid target))
-     :cancel-effect (req (prevent-damage state side eid 0))}))
+     :cancel {:effect (req (prevent-damage state side eid 0))}}))
 
 (defn resolve-pre-damage-for-side
   [state side eid]
@@ -570,7 +570,7 @@
      :async true
      :msg (msg "avoid " (quantify target "tag"))
      :effect (req (prevent-tag state side eid target))
-     :cancel-effect (req (prevent-tag state side eid 0))}))
+     :cancel{ :effect (req (prevent-tag state side eid 0))}}))
 
 (defn resolve-tag-prevention-for-side
   [state side eid]

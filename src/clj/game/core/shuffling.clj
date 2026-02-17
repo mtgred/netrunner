@@ -86,6 +86,10 @@
     (move-zone state side zone :deck))
   (shuffle! state side :deck))
 
+(def shuffle-my-deck!
+  {:msg (msg "shuffle " (if (= side :runner) "the stack" "R&D"))
+   :effect (req (shuffle! state side :deck))})
+
 (defn shuffle-into-rd-effect
   ([state side eid card n] (shuffle-into-rd-effect state side eid card n false))
   ([state side eid card n all?]
@@ -108,10 +112,7 @@
       :effect (req (doseq [c targets]
                      (move state side c :deck))
                    (shuffle! state side :deck))
-      :cancel-effect (req
-                      (system-msg state side (str " uses " (:title card) " to shuffle R&D"))
-                      (shuffle! state side :deck)
-                      (effect-completed state side eid))}
+      :cancel shuffle-my-deck!}
      card nil)))
 
 (defn shuffle-deck
