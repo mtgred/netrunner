@@ -465,7 +465,7 @@
                   (let [cancel-f (:cancel-effect args)
                         cancel-m (:cancel-msg args)
                         cancel-ab (when (or cancel-f cancel-m)
-                                    (req (resolve-ability state side eid {:effect cancel-f :async (:async args) :msg cancel-m} card targets)))]
+                                    (req (resolve-ability state side eid {:effect cancel-f :async (when cancel-f true) :msg cancel-m} card targets)))]
                     (if cancel-ab
                       (assoc args :cancel-effect #(cancel-ab state side (:eid ability) card [%]))
                       args))))))
