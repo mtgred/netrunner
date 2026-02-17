@@ -148,8 +148,9 @@
             {:async true
              :prompt "Choose a card to install and rez at no cost"
              :choices (cancellable (filter ice? choices) :sorted)
+             :cancel-msg (msg "trash " (quantify (count choices) " card") " from the top of R&D")
              :cancel-effect (effect (unregister-events card)
-                                    (system-msg (str "declines to use " (get-title card) " to install any of the top 3 cards or R&D"))
+
                                     (trash-cards eid choices {:unpreventable true :cause-card card}))
              :effect (req (wait-for (corp-install state side target nil
                                                   {:ignore-all-cost true
@@ -254,6 +255,7 @@
    {:interactive (req true)
     :async true
     :msg "look at the top 5 cards of R&D"
+    :waiting-prompt true
     ;; this is explicitly so the prompt shows up before we look at the menu
     :effect (req (continue-ability
                    state side
@@ -274,13 +276,7 @@
                                                          :msg-keys {:install-source card
                                                                     :origin-index target-position
                                                                     :display-origin true}
-                                                         :install-state :rezzed-no-cost})))
-                                       :cancel-effect
-                                       (effect (system-msg
-                                                 (str "declines to use "
-                                                      (get-title card)
-                                                      " to install any of the top 5 cards of R&D"))
-                                               (effect-completed eid))}
+                                                         :install-state :rezzed-no-cost})))}
                                       card nil))}
                    card nil))}})
 
@@ -757,8 +753,6 @@
     :prompt "Choose a card to derez"
     :choices {:card #(rezzed? %)}
     :async true
-    :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                           (effect-completed eid))
     :effect (req (derez state side eid target))}})
 
 (defcard "Eden Fragment"
@@ -817,10 +811,10 @@
                                                        (shuffle! state side :deck)
                                                        (move state side c :deck {:front true}))
                                                      (effect-completed state side eid)))
+                                      :cancel-msg "shuffle R&D"
                                       :cancel-effect (req (continue-ability
                                                             state side
                                                             {:cost [(->c :agenda 1)]
-                                                             :msg "shuffle R&D"
                                                              :effect (req (shuffle! state side :deck))}
                                                             card nil))}}}]})
 
@@ -1064,8 +1058,8 @@
                       :async true
                       :choices (req (cancellable (:deck corp) :sorted))
                       :msg (msg "add " (:title target) " to HQ from R&D")
+                      :cancel-msg "shuffle R&D"
                       :cancel-effect (req (shuffle! state side :deck)
-                                          (system-msg state side (str "shuffles R&D"))
                                           (effect-completed state side eid))
                       :effect (req (move state side target :hand)
                                    (if (< n 3)
@@ -1174,9 +1168,7 @@
                                     (in-discard? %)
                                     (not (faceup? %)))}
               :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
-                                                                       :display-origin true}}))
-              :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                     (effect-completed eid))}})
+                                                                       :display-origin true}}))}})
 
 (defcard "Hyperloop Extension"
   {:on-score (gain-credits-ability 3)
@@ -1245,8 +1237,6 @@
     :msg (msg "trash " (card-str state target))
     :req (req (some rezzed? (all-installed state :corp)))
     :choices {:card #(rezzed? %)}
-    :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                           (effect-completed eid))
     :effect (req (let [target-cost (:cost target)]
                    (wait-for (trash state side target {:cause-card card})
                              (continue-ability
@@ -1279,9 +1269,7 @@
                       (update-all-advancement-requirements state)
                       (update-all-agenda-points state)
                       (check-win-by-agenda state side)
-                      (effect-completed state side eid))
-         :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                (effect-completed eid))}]
+                      (effect-completed state side eid))}]
     {:on-score {:async true
                 :effect (req (wait-for
                                (draw-up-to state side card 3)
@@ -2012,9 +2000,7 @@
                                      (update-all-advancement-requirements state)
                                      (update-all-agenda-points state)
                                      (check-win-by-agenda state side)
-                                     (effect-completed state side eid)))
-              :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                     (effect-completed eid))}})
+                                     (effect-completed state side eid)))}})
 
 (defcard "Regulatory Capture"
   {:advancement-requirement (req (- (min 4 (count-bad-pub state))))})
