@@ -52,7 +52,7 @@
    [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
    [game.core.set-aside :refer [swap-set-aside-cards]]
-   [game.core.shuffling :refer [shuffle! shuffle-into-deck
+   [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-my-deck!
                                 shuffle-into-rd-effect]]
    [game.core.tags :refer [gain-tags]]
    [game.core.threat :refer [threat-level]]
@@ -1114,6 +1114,7 @@
                                                    (:deck corp))
                                            :sorted))
                 :cost [(->c :credit 1) (->c :trash-can)]
+                :cancel (assoc shuffle-my-deck! :cost [(->c :credit 1) (->c :trash-can)])
                 :label "Search R&D for an asset"
                 :async true
                 :effect (req (wait-for
@@ -1130,6 +1131,7 @@
                                                    (:deck corp))
                                            :sorted))
                 :cost [(->c :click 1)]
+                :cancel (assoc shuffle-my-deck! :cost [(->c :click 1)] :action true)
                 :keep-menu-open :while-clicks-left
                 :label "Search R&D for an Executive, Sysop, or Character"
                 :effect (effect (move target :hand)
@@ -1369,9 +1371,9 @@
                                                   (wait-for
                                                     (add-prop state :corp from-ice :advance-counter -1)
                                                     (continue-ability state :corp political card nil))))
-                                :cancel-effect (effect (continue-ability political card nil))})
+                                :cancel political})
                              card nil))
-                 :cancel-effect (effect (continue-ability political card nil))}]
+                 :cancel political}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
@@ -1771,6 +1773,7 @@
                 :choices (req (cancellable (filter ice? (:deck corp)) :sorted))
                 :label "Search R&D for a piece of ice"
                 :cost [(->c :click 1) (->c :credit 1)]
+                :cancel (assoc shuffle-my-deck! :cost [(->c :credit 1) (->c :click 1)] :action true)
                 :keep-menu-open :while-clicks-left
                 :effect (effect (move target :hand)
                                 (shuffle! :deck))}]})
@@ -1964,8 +1967,7 @@
                                         (moon-pool-place-advancements (dec x))
                                         card nil)
                                       (effect-completed state side eid))))
-             :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to place advancement counters"))
-                                   (effect-completed eid))})]
+             :cancel {:msg "decline to place advancement counters"}})]
     (let [moon-pool-reveal-ability
           {:prompt "Choose up to 2 facedown cards from Archives to shuffle into R&D"
            :async true
@@ -1986,8 +1988,7 @@
                                         (moon-pool-place-advancements agenda-count)
                                         source-card nil)
                                       (effect-completed state side eid)))))
-           :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to reveal any cards in Archives"))
-                                  (effect-completed eid))}
+           :cancel shuffle-my-deck!}
           moon-pool-discard-ability
           {:prompt "Choose up to 2 cards from HQ to trash"
            :choices {:card #(and (corp? %)
@@ -2000,8 +2001,8 @@
                                     state side
                                     moon-pool-reveal-ability
                                     card nil)))
-           :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash any cards from HQ"))
-                                  (continue-ability moon-pool-reveal-ability card nil))}]
+           :cancel {:msg "decline to trash any cards from HQ"
+                    :effect (req (continue-ability state side moon-pool-reveal-ability card nil))}}]
       {:abilities [{:label "Trash up to 2 cards from HQ. Shuffle up to 2 cards from Archives into R&D"
                     :cost [(->c :remove-from-game)]
                     :async true
@@ -2032,6 +2033,7 @@
                                                            true))
                                                    (:deck corp))
                                            :sorted))
+                :cancel (assoc shuffle-my-deck! :action true :cost [(->c :click 1)])
                 :msg (msg "reveal " (:title target)
                           " from R&D and "
                           (if (= (:type target) "Operation") "play" "install")
@@ -2859,6 +2861,7 @@
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :msg "draw 1 card from the bottom of R&D"
+                ;; TODO - this does not interact with DBS or other draw effects, and it should
                 :effect (effect (play-sfx "click-card")
                                 (move (last (:deck corp)) :hand))}
                {:label "Search R&D for an agenda"
@@ -2866,6 +2869,7 @@
                 :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
                 :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
                 :cost [(->c :trash-can)]
+                :cancel (assoc shuffle-my-deck! :cost [(->c :trash-can)])
                 :async true
                 :effect (req (wait-for
                                (reveal state side target)
@@ -2876,6 +2880,8 @@
                 :prompt "Choose an agenda to add to the bottom of R&D"
                 :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
                 :choices (req (cancellable (filter agenda? (:discard corp)) :sorted))
+                :cancel {:msg "do nothing"
+                         :cost [(->c :trash-can)]}
                 :cost [(->c :trash-can)]
                 :async true
                 :effect (req (wait-for

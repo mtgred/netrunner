@@ -2395,6 +2395,7 @@
 (defcard "The Future is Now"
   {:on-score {:interactive (req true)
               :prompt "Choose a card to add to HQ"
+              :change-in-game-state {:req (req (seq (:deck corp)))}
               :choices (req (:deck corp))
               :msg "add a card from R&D to HQ and shuffle R&D"
               :req (req (pos? (count (:deck corp))))
