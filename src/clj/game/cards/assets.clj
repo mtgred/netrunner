@@ -3054,8 +3054,6 @@
                            :req (req (and (corp? target)
                                           (installed? target)))}
                  :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
-                 :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                        (effect-completed eid))
                  :effect (req (wait-for (trash state side target {:unpreventable true
                                                                   :cause-card card})
                                         (gain-credits state side eid 3)))}]
@@ -3392,7 +3390,6 @@
               :async true
               :choices {:card #(and (ice? %)
                                     (installed? %))}
-              :cancel-effect (effect (effect-completed eid))
               :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}
              {:label "add this asset to HQ"
               :msg "add itself to HQ"
