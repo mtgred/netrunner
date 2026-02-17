@@ -90,6 +90,13 @@
   {:msg (msg "shuffle " (if (= side :runner) "the stack" "R&D"))
    :effect (req (shuffle! state side :deck))})
 
+(def fail-to-find!
+  "Fail to find a card when searching the stack (runner), triggers the stack searched event if runner"
+  {:msg (msg "shuffle " (if (= side :runner) "the stack" "R&D"))
+   :effect (req (when (= side :runner)
+                  (trigger-event state side :searched-stack))
+                (shuffle! state side :deck))})
+
 (defn shuffle-into-rd-effect
   ([state side eid card n] (shuffle-into-rd-effect state side eid card n false))
   ([state side eid card n all?]
