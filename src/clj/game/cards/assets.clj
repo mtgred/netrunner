@@ -2000,6 +2000,7 @@
                                     moon-pool-reveal-ability
                                     card nil)))
            :cancel {:msg "decline to trash any cards from HQ"
+                    :async true
                     :effect (req (continue-ability state side moon-pool-reveal-ability card nil))}}]
       {:abilities [{:label "Trash up to 2 cards from HQ. Shuffle up to 2 cards from Archives into R&D"
                     :cost [(->c :remove-from-game)]

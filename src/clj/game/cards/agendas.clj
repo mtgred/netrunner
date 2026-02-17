@@ -1348,6 +1348,7 @@
     :msg (msg "trash " (quantify (count targets) "card") " from HQ")
     :async true
     :cancel {:msg "decline trashing any cards from HQ"
+             :async true
              :effect (req (shuffle-into-rd-effect state side eid card 3))}
     :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                            (shuffle-into-rd-effect state side eid card 3)))}})
