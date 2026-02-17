@@ -2626,6 +2626,7 @@
                                                                                        :msg-keys {:display-origin true
                                                                                                   :install-source card}})))
                                  :cancel {:msg "trash itself"
+                                          :async true
                                           :effect (req (trash state side eid card {:cause-card card
                                                                                    :unpreventable true}))}}
                                 card nil)))}]

@@ -177,6 +177,7 @@
                                     (ad state eid card remaining starting-shuffle-count)
                                     card nil))))
                  :cancel {:msg (msg "trash " (quantify (count remaining-cards) "card") " from the top of R&D")
+                          :async true
                           :effect (req (trash-cards state side eid remaining-cards {:unpreventable true :cause-card card}))}}
                 :else
                 {:prompt "There are no playable cards"
@@ -188,6 +189,7 @@
     :change-in-game-state {:req (req (seq (:deck corp)))}
     :choices ["OK"]
     :async true
+    :waiting-prompt true
     :effect (req (continue-ability
                    state side
                    (ad state eid card (take 3 (:deck corp)) (shuffle-count-fn state))
@@ -838,7 +840,8 @@
                                                                                                                          :display-origin true}}))})
                                                  card nil)
                                                (end-effect state side eid card targets)))
-                        :cancel {:effect end-effect}}
+                        :cancel {:async true
+                                 :effect end-effect}}
                        card nil))))}})
 
 (defcard "Distract the Masses"

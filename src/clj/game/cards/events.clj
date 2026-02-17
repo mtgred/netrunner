@@ -861,7 +861,8 @@
                                                              (can-pay? state side eid card nil
                                                                        [(->c :credit (rez-cost state side %))]))}
                                        :effect (effect (rez :corp eid target))
-                                       :cancel {:effect (effect (register-run-flag!
+                                       :cancel {:async true
+                                                :effect (effect (register-run-flag!
                                                                   card
                                                                   :can-rez
                                                                   (fn [state _side card]
