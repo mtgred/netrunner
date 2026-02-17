@@ -2886,7 +2886,7 @@
 (defcard "Shattered Remains"
   (advance-ambush 1 {:async true
                      :waiting-prompt true
-                     :req (req (pos? (get-counters (get-card state card) :advancement)))
+                     :change-in-game-state {:req (req (pos? (get-counters (get-card state card) :advancement)))}
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
                      :msg (msg "trash " (enumerate-cards targets))
                      :choices {:max (req (get-counters (get-card state card) :advancement))
