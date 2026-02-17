@@ -413,7 +413,7 @@
   (let [s (or player side)
         ab (dissoc ability :choices :waiting-prompt)
         args (-> ability
-                 (select-keys [:cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
+                 (select-keys [:async :cancel-effect :cancel-msg :prompt-type :show-discard :end-effect :waiting-prompt])
                  (assoc :targets targets))]
     (if-not (change-in-game-state? state side ability card targets)
       (if (get-in ability [:change-in-game-state :pay-cost] nil)
@@ -462,9 +462,13 @@
   ([state side card message choices ability args]
    (let [f #(resolve-ability state side ability card [%])]
      (show-prompt state side (:eid ability) card message choices f
-                  (if-let [cancel-f (:cancel-effect args)]
-                    (assoc args :cancel-effect #(cancel-f state side (:eid ability) card [%]))
-                    args)))))
+                  (let [cancel-f (:cancel-effect args)
+                        cancel-m (:cancel-msg args)
+                        cancel-ab (when (or cancel-f cancel-m)
+                                    (req (resolve-ability state side eid {:effect cancel-f :async (:async args) :msg cancel-m} card targets)))]
+                    (if cancel-ab
+                      (assoc args :cancel-effect #(cancel-ab state side (:eid ability) card [%]))
+                      args))))))
 
 ;; EVENTS
 
