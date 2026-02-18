@@ -6,7 +6,7 @@
                               generate-runnable-zones move-card expend-ability
                               play play-ability play-corp-ability
                               play-dynamic-ability play-runner-ability play-subroutine play-unbroken-subroutines remove-tag
-                              resolve-prompt score select trash-button trash-resource view-deck]]
+                              resolve-bad-pub-choice resolve-prompt score select trash-button trash-resource view-deck]]
    [game.core.card :refer [get-card]]
    [game.core.change-vals :refer [change]]
    [game.core.checkpoint :refer [fake-checkpoint]]
@@ -67,6 +67,7 @@
 (def commands
   {"ability" #'play-ability
    "advance" #'click-advance
+   "bad-pub-choice" #'resolve-bad-pub-choice
    "change" #'change
    "choice" #'resolve-prompt
    "close-deck" #'close-deck

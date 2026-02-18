@@ -141,7 +141,7 @@
         (cancel-effect nil)
         (effect-completed state side (:eid (:ability selected)))))))
 
-(defn resolve-select-special!
+(defn resolve-select-bad-publicity!
   "Resolves a selection prompt by invoking the prompt's ability with the targeted cards.
   Called when the user clicks 'Done' or selects the :max number of cards."
   [state side card args update! resolve-ability button]
@@ -205,8 +205,7 @@
                             (str " " (pluralize "target" min-choices))
                             " a target"))
                         " for " (:title card)))
-                    (concat (when (:offer-bad-pub? ability) [(str "Bad Publicity (" (:offer-bad-pub? ability) " available)")])
-                            (if all ["Hide"] ["Done"]))
+                    (if all ["Hide"] ["Done"])
                     (if all
                       (fn [_]
                         ; "Hide" was selected. Show toast and reapply select prompt. This allows players to access
@@ -214,12 +213,12 @@
                         (toast state side (str "You must choose " max-choices " " (pluralize "card" max-choices)))
                         (show-select state side card ability update! resolve-ability args))
                       (fn [s]
-                        (let [selected (or (first-selection-by-eid state side (:eid ability))
-                                           (get-in @state [side :selected 0]))
-                              cards (map #(dissoc % :selected) (:cards selected))]
-                          ;; check for :min. If not enough cards are selected, show toast and stay in select prompt
-                          (if (and s (str/starts-with? (:value s) "Bad Publicity")) ;; this is an evil hack
-                            (resolve-select-special! state side card ability update! resolve-ability "Bad Publicity")
+                        (if (= s :bad-publicity)
+                          (resolve-select-bad-publicity! state side card ability update! resolve-ability :bad-publicity)
+                          (let [selected (or (first-selection-by-eid state side (:eid ability))
+                                             (get-in @state [side :selected 0]))
+                                cards (map #(dissoc % :selected) (:cards selected))]
+                            ;; check for :min. If not enough cards are selected, show toast and stay in select prompt
                             (if (and min-choices (< (count cards) min-choices))
                               (do
                                 (toast state side (str "You must choose at least " min-choices " " (pluralize "card" min-choices)))

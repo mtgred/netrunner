@@ -226,7 +226,7 @@
                        ")")
           :offer-bad-pub? (when can-use-bad-pub? bad-pub-available)
           :choices {:card #(in-coll? (map :cid provider-cards) (:cid %))}
-          :effect (req (if (= target "Bad Publicity")
+          :effect (req (if (= target :bad-publicity)
                          (continue-ability
                            state side
                            (pick-credit-providing-cards
