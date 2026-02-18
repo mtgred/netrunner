@@ -52,7 +52,7 @@
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? name-zone
                               target-server zone->name]]
-   [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-cards-into-deck!]]
+   [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-cards-into-deck! shuffle-my-deck!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -765,8 +765,7 @@
                         :yes-ability {:prompt "Choose a card"
                                       :msg (msg "add " (:title target) " to HQ from R&D") ;; TODO - once the illicit->liability change is through, we can adjust this (or just leave it)
                                       :choices (req (cancellable (filter #(has-any-subtype? % ["Illicit" "Black Ops" "Gray Ops" "Liability"]) (filter (complement agenda?) (:deck corp))) :sorted))
-                                      :cancel-effect (effect (system-msg (str "shuffles R&D"))
-                                                             (shuffle! :deck))
+                                      :cancel shuffle-my-deck!
                                       :effect (effect (shuffle! :deck)
                                                       (move target :hand))}}}]})
 

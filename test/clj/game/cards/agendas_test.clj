@@ -2272,6 +2272,35 @@
                     (click-prompt state :corp "Done"))
           (str "Corp drew " n " cards")))))
 
+(deftest let-them-dream
+  (doseq [[from agenda] [["HQ" "Project Atlas"] ["R&D" "Ikawah Project"] ["Archives" "Project Kusanagi"]]
+          to ["HQ" "Bottom of R&D"]]
+    (do-game
+      (new-game {:corp {:hand ["Let Them Dream" "Project Atlas"]
+                        :deck [(qty "IPO" 15) "Ikawah Project"]
+                        :discard ["Project Kusanagi"]}})
+      (play-and-score state "Let Them Dream")
+      (click-prompts state :corp "Yes" from agenda to)
+      (case to
+        :hand (is-hand? state :corp [agenda])
+        :deck (is (= (:title (last (:deck (get-corp)))) agenda))))))
+
+(deftest let-them-dream-points
+  ;; Global Food Initiative
+  (do-game
+    (new-game {:corp {:deck [(qty "Let Them Dream" 2)]}})
+    (testing "Corp scores"
+      (is (zero? (:agenda-point (get-runner))) "Runner should start with 0 agenda points")
+      (is (zero? (:agenda-point (get-corp))) "Corp should start with 0 agenda points")
+      (play-and-score state "Let Them Dream")
+      (click-prompt state :corp "No")
+      (is (= 2 (:agenda-point (get-corp))) "Corp should gain 2 agenda points"))
+    (testing "Runner steals"
+      (play-from-hand state :corp "Let Them Dream" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :remote2)
+      (click-prompt state :runner "Steal")
+      (is (= 1 (:agenda-point (get-runner))) "Runner should gain 1 agenda points, not 2"))))
 
 (deftest license-acquisition
   ;; License Acquisition
@@ -2591,6 +2620,16 @@
       (play-and-score state "Megaprix Qualifier") ;; 7 points
       (is (= 7 (:agenda-point (get-corp))) "Corp at 7 points")
       (is (= :corp (:winner @state)) "Corp has won")))
+
+(deftest melies-city-luxury-line
+  (do-game
+    (new-game {:corp {:hand [(qty "Méliès City Luxury Line" 2)]}})
+    ;; play and score spends 1 click
+    (is (changed? [(:click (get-corp)) 0]
+          (play-and-score state "Méliès City Luxury Line")))
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Pay to steal")))
 
 (deftest merger
   ;; Merger
