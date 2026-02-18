@@ -3265,6 +3265,25 @@
                           (swap! state assoc-in [:runner :register :double-ignore-additional] true))}]
    :leave-play (req (swap! state update-in [:runner :register] dissoc :double-ignore-additional))})
 
+(defcard "Stick and Poke"
+  {:events [{:event :encounter-ice
+             :req (req (first-event? state side :encounter-ice))
+             :interactive (req true)
+             :effect (req (register-lingering-effect
+                            state side card
+                            (let [ice (:ice context)]
+                              {:duration :end-of-encounter
+                               :type :additional-subroutines
+                               :req (req (and (rezzed? target) (same-card? target ice)))
+                               :value {:position :front
+                                       :subroutines
+                                       [{:label "[Stick] Do 1 net damage. The Runner draws 1 card."
+                                         :msg "Do 1 net damage"
+                                         :async true
+                                         :effect (req (wait-for
+                                                        (damage state side :net 1)
+                                                        (draw-loud state :runner eid card 1)))}]}})))}]})
+
 (defcard "Stim Dealer"
   {:events [{:event :runner-turn-begins
              :async true
