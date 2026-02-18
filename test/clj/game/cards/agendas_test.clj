@@ -2280,10 +2280,10 @@
                         :deck [(qty "IPO" 15) "Ikawah Project"]
                         :discard ["Project Kusanagi"]}})
       (play-and-score state "Let Them Dream")
-      (click-prompts state :corp "Yes" from agenda to)
+      (click-prompts state :corp from agenda to)
       (case to
-        :hand (is-hand? state :corp [agenda])
-        :deck (is (= (:title (last (:deck (get-corp)))) agenda))))))
+        "HQ"            (some #(= (:title %) agenda) (:hand (get-corp)))
+        "Bottom of R&D" (is (= (:title (last (:deck (get-corp)))) agenda))))))
 
 (deftest let-them-dream-points
   ;; Global Food Initiative
@@ -2293,7 +2293,7 @@
       (is (zero? (:agenda-point (get-runner))) "Runner should start with 0 agenda points")
       (is (zero? (:agenda-point (get-corp))) "Corp should start with 0 agenda points")
       (play-and-score state "Let Them Dream")
-      (click-prompt state :corp "No")
+      (click-prompt state :corp "Done")
       (is (= 2 (:agenda-point (get-corp))) "Corp should gain 2 agenda points"))
     (testing "Runner steals"
       (play-from-hand state :corp "Let Them Dream" "New remote")
