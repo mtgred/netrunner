@@ -1842,6 +1842,16 @@
                              :effect (req (access-bonus state :runner target -1))}
                             card targets))}]})
 
+(defcard "Magistrate Revontulet"
+  {:static-abilities [{:type :steal-additional-cost
+                       :req (req (agenda? target))
+                       :value (req [(->c :credit 3)])}]
+   :events [{:event :agenda-scored
+             :async true
+             :interactive (req true)
+             :msg "force the Runner to lose 3 [Credits]"
+             :effect (req (lose-credits state :runner eid 3))}]})
+
 (defcard "Malia Z0L0K4"
   (let [unmark
         (req (when-let [malia-target (get-in card [:special :malia-target])]

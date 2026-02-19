@@ -3392,6 +3392,29 @@
     (is (no-prompt? state :runner) "No prompt")
     (is (not (:run @state)) "Access ended after 1 card seen - todachine did his work")))
 
+(deftest magistrate-revontuler
+  (do-game
+    (new-game {:corp {:hand ["Magistrate Revontulet" "Greenmail" "Project Beale" "Project Atlas"]}
+	       :runner {:credits 20}})
+    (play-from-hand state :corp "Magistrate Revontulet" "New remote")
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (is (rezzed? (get-content state :remote1 0)))
+    (play-and-score state "Greenmail")
+    (is (changed? [(:credit (get-runner)) -3]
+          (click-prompt state :corp "Greenmail"))
+        "Taxed on score")
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (is (changed? [(:credit (get-runner)) -3]
+          (click-prompt state :runner "Pay to steal"))
+	"paid 3 to steal")
+    (is (no-prompt? state :runner))
+    (run-empty-server state :remote2)
+    (is (changed? [(:credit (get-runner)) -3]
+          (click-prompt state :runner "Pay to steal"))
+        "paid 3 to steal")))
+
 (deftest malia-icon-goes-away-with-cupellation
   (do-game
     (new-game {:corp {:hand ["Malia Z0L0K4"]}
