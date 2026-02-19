@@ -509,7 +509,8 @@
   ([state server]
    (->> (get-in @state [:corp :servers server :content])
         get-all-content
-        (filter #(can-access? state :runner %))))
+        (filter #(can-access? state :runner %))
+        (filter #(not (any-effects state :runner :disable-access-candidacy true? % [%])))))
   ([state server already-accessed-fn]
    (remove already-accessed-fn (root-content state server))))
 
@@ -626,7 +627,7 @@
 
 (defn access-helper-rd
   [state {:keys [chosen random-access-limit] :as access-amount} already-accessed {:keys [no-root] :as args}]
-  (let [current-available (set (concat (map :cid (get-in @state [:corp :deck]))
+  (let [current-available (set (concat (if-not (any-effects state :runner :disable-random-accesses true? {:server :rd}) (map :cid (get-in @state [:corp :deck])) [])
                                        (map :cid (root-content state :rd))))
         already-accessed (clj-set/intersection already-accessed current-available)
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
@@ -814,7 +815,8 @@
 (defn access-helper-hq
   [state {:keys [chosen random-access-limit] :as access-amount}
    already-accessed {:keys [no-root access-first] :as args}]
-  (let [hand (when (not (:prevent-hand-access (:run @state)))
+  (let [hand (when (not (or (:prevent-hand-access (:run @state))
+                            (any-effects state :runner :disable-random-accesses true? {:server :hq})))
                (get-in @state [:corp :hand]))
         current-available (set (concat (map :cid hand)
                                        (map :cid (root-content state :hq))))
