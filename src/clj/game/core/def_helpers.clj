@@ -21,7 +21,7 @@
     [game.core.runs :refer [can-run-server? make-run jack-out]]
     [game.core.say :refer [play-sfx system-msg system-say]]
     [game.core.servers :refer [zone->name]]
-    [game.core.shuffling :refer [shuffle!]]
+    [game.core.shuffling :refer [shuffle! fail-to-find!]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.core.tags :refer [gain-tags]]
@@ -492,11 +492,7 @@
               (if reveal? (:title target) "a card")
               " and add it to "
               (if (= side :corp) "HQ" "[their] Grip"))
-    :cancel-effect (req (when (= side :runner)
-                          (trigger-event state side :searched-stack))
-                        (system-msg state side "shuffles their deck!")
-                        (shuffle! state side :deck)
-                        (effect-completed state side eid))
+    :cancel fail-to-find!
     :async true
     :effect (req (when (= side :runner)
                    (trigger-event state side :searched-stack))

@@ -4500,8 +4500,9 @@
     (play-from-hand state :corp "Project Atlas" "Server 1")
     (score-agenda state :corp (get-content state :remote1 1))
     (is (changed? [(:credit (get-corp)) -2]
+          (click-prompt state :corp "Yes")
           (is (= ["Fire Wall" "Ice Wall" "Cancel"] (prompt-titles :corp)))
-          (click-prompt state :corp "Fire Wall")
+          (click-prompts state :corp "Fire Wall")
           (is (= ["Archives" "R&D" "HQ" "Server 1" "New remote"] (prompt-buttons :corp)))
           (click-prompt state :corp "HQ")
           (is (= "Fire Wall" (:title (first (get-in @state [:corp :servers :hq :ices])))) "Fire Wall on HQ"))
@@ -4520,6 +4521,7 @@
     (click-prompt state :runner "Pay 1 [Credits] to trash")
     (is (changed? [(:credit (get-corp)) -2]
           (click-prompt state :runner "Steal")
+          (click-prompt state :corp "Yes")
           (is (= ["Fire Wall" "Ice Wall" "Cancel"] (prompt-titles :corp)) "Tucana persistent, effect fires")
           (click-prompt state :corp "Fire Wall")
           (is (= ["Archives" "R&D" "HQ" "New remote"] (prompt-buttons :corp)) "Corp choices should not include original server as it's gone")

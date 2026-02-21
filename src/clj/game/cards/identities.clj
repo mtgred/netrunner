@@ -52,7 +52,7 @@
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? name-zone
                               target-server zone->name]]
-   [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-cards-into-deck!]]
+   [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-cards-into-deck! fail-to-find!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -801,9 +801,6 @@
                                             :not-distinct true
                                             :choices (cancellable (filter #(corp-installable-type? %) top))
                                             :async true
-                                            :cancel-effect
-                                            (effect (system-msg (str "declines to use " (get-title card) " to install a card from the top of R&D"))
-                                                    (effect-completed eid))
                                             :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
                                                                                                      :origin-index (first (keep-indexed #(when (same-card? target %2) %1) top))
                                                                                                      :display-origin true}}))}
@@ -1293,6 +1290,8 @@
                                                         [(->c :credit (install-cost state side % {:cost-bonus -1}))]))
                                         (:deck runner))))
                 :async true
+                :waiting-prompt true
+                :cancel (assoc fail-to-find! :action true :cost [(->c :click 1)])
                 :effect (req (trigger-event state side :searched-stack)
                              (shuffle! state side :deck)
                              (wait-for
@@ -2109,9 +2108,7 @@
              :prompt "Choose a card that can be advanced to place 1 advancement counter on"
              :choices {:req (req (and (installed? target) (can-be-advanced? state target)))}
              :msg (msg "place 1 advancement counter on " (card-str state target))
-             :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))
-             :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                    (effect-completed eid))}]})
+             :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "PT Untaian: Life's Building Blocks"
   {:events [{:event :corp-turn-ends

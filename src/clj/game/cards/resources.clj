@@ -76,7 +76,7 @@
                               protecting-same-server? remote->name target-server unknown->kw
                               zone->name zones->sorted-names]]
    [game.core.set-aside :refer [set-aside set-aside-for-me]]
-   [game.core.shuffling :refer [shuffle!]]
+   [game.core.shuffling :refer [shuffle! shuffle-my-deck! fail-to-find!]]
    [game.core.tags :refer [gain-tags gain-tags-ability lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -253,9 +253,8 @@
                  :choices {:not-self true
                            :req (req (and (runner? target)
                                           (installed? target)))}
+                 :waiting-prompt true
                  :msg (msg "trash " (:title target) " and gain 3 [Credits]")
-                 :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                        (effect-completed eid))
                  :effect (req (wait-for (trash state side target {:unpreventable true :cause-card card})
                                         (gain-credits state side eid 3)))}]
     {:flags {:runner-phase-12 (req (>= (count (all-installed state :runner)) 2))}
@@ -367,6 +366,7 @@
                 :req (req (not (install-locked? state side)))
                 :cost [(->c :forfeit)]
                 :choices (req (cancellable (filter #(not (event? %)) (:deck runner)) :sorted))
+                :cancel (assoc fail-to-find! :cost [(->c :forfeit)])
                 :async true
                 :effect (effect (trigger-event :searched-stack)
                                 (shuffle! :deck)
@@ -398,27 +398,21 @@
                     (cancellable (filter #(and (not-hosted? %)
                                                (has-any-subtype? % ["Virus" "Weapon"]))
                                          (:deck runner)) :sorted)))
+             :cancel shuffle-my-deck!
              :async true
              :waiting-prompt true
-             :msg (msg "host " (get-title target) " on itself")
+             :msg (msg "host " (get-title target) " on itself" (when (= x 1) " and shuffle the stack"))
              :effect (req (host state side card target)
                           (if (> x 1)
                             (continue-ability state side (search-and-host (dec x)) card nil)
-                            (effect-completed state side eid)))})
+                            (do (shuffle! state side :deck)
+                                (effect-completed state side eid))))})
           (trash-if-empty [state side eid card]
             (if-not (empty? (:hosted (get-card state card)))
               (effect-completed state side eid)
               (do (system-msg state side (str "trashes " (get-title card)))
                   (trash state side eid card {:unpreventable true :source-card card}))))]
-    {:on-install {:msg "shuffle the stack"
-                  :async true
-                  :effect (req (wait-for (resolve-ability state side
-                                                          (make-eid state eid) 
-                                                          (search-and-host 2)
-                                                          card nil)
-                                         (trigger-event state side :searched-stack)
-                                         (shuffle! state side :deck)
-                                         (effect-completed state side eid)))}
+    {:on-install (search-and-host 2)
      :events [{:event :runner-turn-begins
                :skippable true
                :label "Add a hosted card to the grip (start of turn)"
@@ -426,10 +420,10 @@
                :choices {:req (req (same-card? card (:host target)))}
                :msg (msg "add " (get-title target) " to the grip")
                :once :per-turn
-               :cancel-effect (req (system-msg state side (str "declines to use " (get-title card)))
-                                   (trash-if-empty state side eid card))
                :async true
                :waiting-prompt true
+               :cancel {:async true
+                        :effect (req (trash-if-empty state side eid card))}
                :effect (req (move state side target :hand)
                             (trash-if-empty state side eid card))}]}))
 
@@ -640,6 +634,7 @@
                                        (continue-ability
                                          state side
                                          {:prompt "Choose a card in the grip to shuffle back into the stack"
+                                          :req (req (seq (:hand runner)))
                                           :choices {:card #(and (in-hand? %)
                                                                 (runner? %))}
                                           :effect (effect (move target :deck)
@@ -851,19 +846,20 @@
              :choices {:card #(and (= (last (get-zone %)) :ices)
                                    (= chosen-server (rest (butlast (get-zone %)))))}
              :async true
-             :effect (effect (system-msg (str "trashes " (card-str state target)))
-                             (trash :corp eid target {:unpreventable true :cause-card card :cause :forced-to-trash}))
-             :cancel-effect (effect (system-msg (str "declines to trash a piece of ice protecting " (zone->name chosen-server)))
-                                    (register-events
-                                      :runner card
-                                      [{:event :breach-server
-                                        :automatic :pre-breach
-                                        :duration :until-runner-turn-ends
-                                        :req (req (#{:hq :rd} target))
-                                        :once :per-turn
-                                        :msg (msg "access 2 additional cards from " (zone->name target))
-                                        :effect (effect (access-bonus :runner target 2))}])
-                                    (effect-completed eid))})]
+             :display-side :corp
+             :msg (msg "trash " (card-str state target))
+             :effect (req (trash state :corp eid target {:unpreventable true :cause-card card :cause :forced-to-trash}))
+             :cancel {:display-side :corp
+                      :msg (msg "decline to trash a piece of ice protecting " (zone->name chosen-server))
+                      :effect (req (register-events
+                                     state :runner card
+                                     [{:event :breach-server
+                                       :automatic :pre-breach
+                                       :duration :until-runner-turn-ends
+                                       :req (req (#{:hq :rd} target))
+                                       :once :per-turn
+                                       :msg (msg "access 2 additional cards from " (zone->name target))
+                                       :effect (effect (access-bonus :runner target 2))}]))}})]
     {:events [{:event :runner-turn-begins
                :async true
                :interactive (req true)
@@ -1055,6 +1051,7 @@
                                                          (has-subtype? % "Virus"))
                                                    (:deck runner)) :sorted))
                 :cost [(->c :click 1) (->c :virus 3) (->c :trash-can)]
+                :cancel (assoc fail-to-find! :cost [(->c :click 1) (->c :virus 3) (->c :trash-can)] :action true)
                 :effect (effect (trigger-event :searched-stack)
                                 (shuffle! :deck)
                                 (runner-install (assoc eid :source card :source-type :runner-install) target {:msg-keys {:install-source card
@@ -3807,8 +3804,7 @@
                                                         :source-type :runner-install)
                                                  target {:cost-bonus -1
                                                          :msg-keys {:install-source card
-                                                                    :display-origin true}}))
-                 :cancel-effect (effect (effect-completed eid))}]
+                                                                    :display-origin true}}))}]
     {:events [(assoc ability
                      :event :runner-lose-tag
                      :req (req (and (first-event-check state first-event? no-event?)
@@ -3903,6 +3899,9 @@
                 :label "Search stack for a piece of hardware"
                 :choices (req (cancellable (filter hardware? (:deck runner)) :sorted))
                 :cost [(->c :click 2)]
+                :cancel (assoc fail-to-find!
+                               :cost [(->c :click 2)]
+                               :msg "shuffle the stack")
                 :keep-menu-open :while-2-clicks-left
                 :change-in-game-state {:req (req (seq (:deck runner)))}
                 :effect (effect (trigger-event :searched-stack)
@@ -3962,8 +3961,6 @@
                                           (installed? target)
                                           (is-eligible? target)))}
                  :msg (msg "add " (:title target) " to the grip and place 2 [Credits] on itself")
-                 :cancel-effect (req (system-msg state :runner (str "declines to use " (:title card)))
-                                     (effect-completed state side eid))
                  :effect (req (move state side target :hand)
                               (add-counter state side eid card :credit 2))}]
     {:interactions {:pay-credits {:req (req (= :runner-install (:source-type eid)))
