@@ -790,8 +790,6 @@
                  :on-mouse-enter #(reset! icon-hovered source-cid)
                  :on-mouse-leave #(reset! icon-hovered nil)}
                 char]))])
-        (when-let [c icon]
-          (prn icon))
         ;; (when-let [{:keys [char cid color]} icon]
         ;;   [:div.darkbg.icon {:class color} char])
       (when card-target [:div.darkbg.card-target card-target])
