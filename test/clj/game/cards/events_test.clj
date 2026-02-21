@@ -4429,6 +4429,44 @@
       (run-continue state)
       (is (get-ice state :hq 0) "Second Ice Wall is not trashed")))
 
+(deftest kompromat-test
+  (testing "Kompromat"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]}
+                 :runner {:hand ["Kompromat"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Kompromat")
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue-until state :encounter-ice)
+      (fire-subs state (get-ice state :hq 0))
+      (is (no-prompt? state :corp))))
+  (testing "Kompromat successful"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]}
+                 :runner {:hand ["Kompromat"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Kompromat")
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue-until state :success)
+      (click-card state :corp "Ice Wall"))))
+
+(deftest kompromat-test-take-bp
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Kompromat"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Kompromat")
+    (click-prompt state :runner "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue-until state :success)
+    (click-prompt state :corp "Done")
+    (is (= 1 (count-bad-pub state)))))
+
 (deftest kraken
   ;; Kraken
   (do-game
@@ -7307,6 +7345,24 @@
       (run-continue state)
       (is (= 2 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 2 strength")
       (is (= 2 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 2 strength"))))
+
+(deftest tailgate-test
+  (dotimes [ices 4]
+    (do-game
+      (new-game {:corp {:hand (vec (take (+ 4 ices) ["Hedge Fund" "Hedge Fund" "Hedge Fund"
+                                                     "Hedge Fund"
+                                                     "Vanilla" "Vanilla" "Vanilla"]))}
+                 :runner {:hand ["Tailgate"]}})
+      (dotimes [_ ices]
+        (play-from-hand state :corp "Vanilla" "HQ"))
+      (take-credits state :corp)
+      (is (changed? [(:credit (get-runner)) (min 0 (- ices 3))]
+            (play-from-hand state :runner "Tailgate"))
+          "discounted")
+      (run-continue-until state :success)
+      (dotimes [n 3]
+        (click-prompt state :runner "No action"))
+      (is (no-prompt? state :runner)))))
 
 (deftest test-run-programs-hosted-after-install-get-returned-to-stack-issue-1081
     ;; Programs hosted after install get returned to Stack. Issue #1081
