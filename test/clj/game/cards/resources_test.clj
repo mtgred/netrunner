@@ -6184,6 +6184,25 @@
             (is (no-prompt? state :runner) "Runner has no Friday Chip prompt"))
           "Friday Chip shouldn't gain counters from Spoilers")))
 
+(deftest stick-and-poke
+  (do-game
+    (new-game {:corp {:hand ["Vanilla"]}
+               :runner {:hand ["Stick and Poke" "Stick and Poke"] :deck ["Ika"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (is (changed? [(count (:subroutines (get-ice state :hq 0))) 0]
+          (play-from-hand state :runner "Stick and Poke")
+          (core/fake-checkpoint state))
+        "Gained no sub")
+    (run-on state :hq)
+    (is (changed? [(count (:subroutines (get-ice state :hq 0))) 1]
+          (run-continue-until state :encounter-ice))
+        "gained sub")
+    (card-subroutine state :corp (get-ice state :hq 0) 0)
+    (is-discard? state :runner ["Stick and Poke"])
+    (is-hand? state :runner ["Ika"])))
+
 (deftest stim-dealer
   ;; Stim Dealer - Take 1 brain damage when it accumulates 2 power counters
   (do-game

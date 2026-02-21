@@ -1782,7 +1782,7 @@
       [tr-span [:game_ok "OK"]]]]))
 
 (defn prompt-div
-  [me {:keys [card msg prompt-type choices] :as prompt-state}]
+  [me {:keys [card msg prompt-type choices offer-bad-pub?] :as prompt-state}]
   (let [id (atom 0)]
     [:div.panel.blue-shade
      (when (and card (not= "Basic Action" (:type card)))
@@ -1870,16 +1870,21 @@
 
        ;; otherwise choice of all present choices
        :else
-       (doall (for [{:keys [idx uuid value]} choices
-                    :when (not= value "Hide")]
-                [:button {:key idx
-                          :on-click #(do (send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice {:uuid uuid}})
-                                         (card-highlight-mouse-out % value button-channel))
-                          :on-mouse-over
-                          #(card-highlight-mouse-over % value button-channel)
-                          :on-mouse-out
-                          #(card-highlight-mouse-out % value button-channel)}
-                 (render-message (or (not-empty (get-title value)) value))])))]))
+       (concat [(when offer-bad-pub?
+                  ;; TODO - translate this
+                  [:button {:key "Bad Pub"
+                            :on-click #(send-command "bad-pub-choice" {:eid (prompt-eid (:side @game-state))})}
+                   (str "Bad Publicity (" offer-bad-pub? " available)")])]
+               (doall (for [{:keys [idx uuid value]} choices
+                            :when (not= value "Hide")]
+                        [:button {:key idx
+                                  :on-click #(do (send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice {:uuid uuid}})
+                                                 (card-highlight-mouse-out % value button-channel))
+                                  :on-mouse-over
+                                  #(card-highlight-mouse-over % value button-channel)
+                                  :on-mouse-out
+                                  #(card-highlight-mouse-out % value button-channel)}
+                         (render-message (or (not-empty (get-title value)) value))]))))]))
 
 (defn basic-actions [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me runner-post-discard corp-post-discard]}]
   (let [phase-12 (or @runner-phase-12 @corp-phase-12)

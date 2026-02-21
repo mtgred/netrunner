@@ -1589,6 +1589,57 @@
         (take-credits state :runner)
         (is (= (+ 3 total-corp-credits) (:credit (get-corp))) "Corp does not gain any extra c with agenda")))))
 
+(letfn [(setup-state []
+          (let [state (new-game {:runner {:hand ["Cupellation" "HQ Interface"]
+                                          :credits 10}
+                                 :corp {:hand ["Flagship" "Research Station" "Hedge Fund" "Hedge Fund"]
+                                        :credits 10}})]
+            (play-from-hand state :corp "Flagship" "HQ")
+            (play-from-hand state :corp "Research Station" "HQ")
+            (rez state :corp (get-content state :hq 0))
+            (rez state :corp (get-content state :hq 1))
+            (take-credits state :corp)
+            (play-from-hand state :runner "HQ Interface")
+            state))]
+  ;; access both upgrades, cannot access anything else
+  (deftest flagship-normal-case-two-upgrades
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompts state :runner "Research Station" "No action" "No action")
+      (is (no-prompt? state :runner)))
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompts state :runner "Flagship" "No action" "Research Station" "No action")
+      (is (no-prompt? state :runner))))
+  ;; upgrade and a card from hand
+  (deftest flagship-normal-case-one-upgrade
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompts state :runner "Card from hand" "No action" "No action")
+      (is (no-prompt? state :runner)))
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompts state :runner "Flagship" "No action" "Card from hand" "No action")
+      (is (no-prompt? state :runner))))
+  (deftest flagship-normal-case-trash-station
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Flagship")
+      (do-trash-prompt state 4)
+      (click-prompts state :runner "Card from hand" "No action")
+      (is (no-prompt? state :runner)))
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompts state :runner "Card from hand" "No action")
+      (do-trash-prompt state 4)
+      (is (no-prompt? state :runner)))))
+
 (deftest forced-connection
   ;; Forced Connection - ambush, trace(3) give the runner 2 tags
   (do-game
@@ -1803,7 +1854,7 @@
 (deftest giordano-memorial-field
   ;; Giordano Memorial Field
   (do-game
-      (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
+      (new-game {:corp {:deck ["Giordano Memorial Field" "Greenmail"]}
                  :runner {:deck [(qty "Fan Site" 3)]}})
       (play-from-hand state :corp "Giordano Memorial Field" "New remote")
       (rez state :corp (get-content state :remote1 0))
@@ -1812,7 +1863,7 @@
       (play-from-hand state :runner "Fan Site")
       (play-from-hand state :runner "Fan Site")
       (take-credits state :runner)
-      (play-and-score state "Hostile Takeover")
+      (play-and-score state "Greenmail")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (let [credits (:credit (get-runner))]
@@ -1827,8 +1878,9 @@
 (deftest giordano-memorial-field-payable-with-net-mercur
     ;; Payable with net mercur
     (do-game
-      (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
-                 :runner {:deck [(qty "Fan Site" 3) "Net Mercur"]}})
+      (new-game {:corp {:deck ["Giordano Memorial Field" "Greenmail"]}
+                 :runner {:deck [(qty "Fan Site" 3) "Net Mercur"]
+                          :credits 6}})
       (play-from-hand state :corp "Giordano Memorial Field" "New remote")
       (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
@@ -1837,7 +1889,7 @@
       (play-from-hand state :runner "Fan Site")
       (play-from-hand state :runner "Net Mercur")
       (take-credits state :runner)
-      (play-and-score state "Hostile Takeover")
+      (play-and-score state "Greenmail")
       (take-credits state :corp)
       (let [nm (get-resource state 0)]
         (core/command-counter state :runner '("c" "3"))
@@ -2039,6 +2091,7 @@
     (click-prompt state :runner "Take 1 tag")
     (is (= 1 (count-tags state)) "Runner takes 1 tag to prevent Corp from removing 1 BP")
     (click-prompt state :runner "Pay 2 [Credits] to trash") ; trash
+    (select-bad-pub state 1)
     (run-empty-server state "Archives")
     (is (= 1 (count-bad-pub state)))
     (click-prompt state :runner "The Corp removes 1 bad publicity")

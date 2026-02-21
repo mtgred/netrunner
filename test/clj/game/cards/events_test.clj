@@ -39,23 +39,21 @@
     ;; New Angeles City Hall interaction
     (do-game
       (new-game {:runner {:deck ["Account Siphon"
-                                 "New Angeles City Hall"]}})
-      (core/gain state :corp :bad-publicity 1)
-      (is (= 1 (count-bad-pub state)) "Corp has 1 bad publicity")
-      (core/lose state :runner :credit 1)
-      (is (= 4 (:credit (get-runner))) "Runner has 4 credits")
-      (take-credits state :corp) ; pass to runner's turn by taking credits
-      (is (= 8 (:credit (get-corp))) "Corp has 8 credits")
+                                 "New Angeles City Hall"]
+                          :credits 4}
+                 :corp {:bad-pub 1}})
+      (take-credits state :corp)
       (play-from-hand state :runner "New Angeles City Hall")
       (is (= 3 (:credit (get-runner))) "Runner has 3 credits")
-      (let [nach (get-resource state 0)]
-        (play-run-event state "Account Siphon" :hq)
-        (click-prompt state :runner "Account Siphon")
-        (is (= 4 (:credit (get-runner))) "Runner still has 4 credits due to BP")
-        (click-prompt state :runner "New Angeles City Hall")
-        (click-prompt state :runner "Yes")
-        (is (= 2 (:credit (get-runner))) "Runner has 2 credits left")
-        (click-prompt state :runner "Yes"))
+      (play-run-event state "Account Siphon" :hq)
+      (click-prompt state :runner "Account Siphon")
+      (is (changed? [(:credit (get-runner)) -1]
+            (click-prompt state :runner "New Angeles City Hall")
+            (click-prompt state :runner "Yes")
+            (select-bad-pub state 1))
+          "Spent 1 + 1 from bad pub")
+      (is (= 2 (:credit (get-runner))) "Runner has 2 credits left")
+      (click-prompt state :runner "Yes")
       (is (zero? (count-tags state)) "Runner did not take any tags")
       (is (= 10 (:credit (get-runner))) "Runner gained 10 credits")
       (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))
@@ -1681,7 +1679,7 @@
     (play-from-hand state :runner "Investigative Journalism")
     (is (= "Investigative Journalism" (:title (get-resource state 1))) "IJ able to be installed")
     (run-on state "HQ")
-    (is (= 1 (:run-credit (get-runner))) "1 run credit from bad publicity")
+    (is (= 1 (:bad-publicity-available (:run @state))) "1 run credit from bad publicity")
     (run-jack-out state)
     (play-from-hand state :runner "Activist Support")
     (take-credits state :runner)
@@ -4431,6 +4429,44 @@
       (run-continue state)
       (is (get-ice state :hq 0) "Second Ice Wall is not trashed")))
 
+(deftest kompromat-test
+  (testing "Kompromat"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]}
+                 :runner {:hand ["Kompromat"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Kompromat")
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue-until state :encounter-ice)
+      (fire-subs state (get-ice state :hq 0))
+      (is (no-prompt? state :corp))))
+  (testing "Kompromat successful"
+    (do-game
+      (new-game {:corp {:hand ["Ice Wall"]}
+                 :runner {:hand ["Kompromat"]}})
+      (play-from-hand state :corp "Ice Wall" "HQ")
+      (take-credits state :corp)
+      (play-from-hand state :runner "Kompromat")
+      (click-prompt state :runner "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (run-continue-until state :success)
+      (click-card state :corp "Ice Wall"))))
+
+(deftest kompromat-test-take-bp
+  (do-game
+    (new-game {:corp {:hand ["Ice Wall"]}
+               :runner {:hand ["Kompromat"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Kompromat")
+    (click-prompt state :runner "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (run-continue-until state :success)
+    (click-prompt state :corp "Done")
+    (is (= 1 (count-bad-pub state)))))
+
 (deftest kraken
   ;; Kraken
   (do-game
@@ -6500,13 +6536,14 @@
 (deftest rumor-mill-full-test
     ;; Full test
     (do-game
-      (new-game {:corp {:deck [(qty "Project Atlas" 2)
+      (new-game {:corp {:hand [(qty "Project Atlas" 2)
                                "Caprice Nisei" "Chairman Hiro" "Cybernetics Court"
                                "Elizabeth Mills" "Ibrahim Salem"
-                               "Housekeeping" "Director Haas" "Oberth Protocol"]}
+                               "Housekeeping" "Director Haas" "Oberth Protocol"]
+                        :credits 100
+                        :bad-pub 1}
                  :runner {:deck ["Rumor Mill"]}})
-      (core/gain state :corp :credit 100 :click 100 :bad-publicity 1)
-      (draw state :corp 100)
+      (core/gain state :corp :click 100)
       (play-from-hand state :corp "Caprice Nisei" "New remote")
       (play-from-hand state :corp "Chairman Hiro" "New remote")
       (play-from-hand state :corp "Cybernetics Court" "New remote")
@@ -6542,9 +6579,11 @@
       ;; Trashable execs
       (run-empty-server state :remote2)
       (click-prompt state :runner "Pay 6 [Credits] to trash")
+      (select-bad-pub state 1)
       (is (empty? (:scored (get-runner))) "Chairman Hiro not added to runner's score area")
       (run-empty-server state "R&D")
       (click-prompt state :runner "Pay 5 [Credits] to trash")
+      (select-bad-pub state 1)
       (is (empty? (:scored (get-runner))) "Director Haas not added to runner's score area")
       (take-credits state :runner)
       ;; Trash RM, make sure everything works again
@@ -7306,6 +7345,24 @@
       (run-continue state)
       (is (= 2 (core/breaker-strength state :runner (refresh c1))) "Corroder 1 has 2 strength")
       (is (= 2 (core/breaker-strength state :runner (refresh c2))) "Corroder 2 has 2 strength"))))
+
+(deftest tailgate-test
+  (dotimes [ices 4]
+    (do-game
+      (new-game {:corp {:hand (vec (take (+ 4 ices) ["Hedge Fund" "Hedge Fund" "Hedge Fund"
+                                                     "Hedge Fund"
+                                                     "Vanilla" "Vanilla" "Vanilla"]))}
+                 :runner {:hand ["Tailgate"]}})
+      (dotimes [_ ices]
+        (play-from-hand state :corp "Vanilla" "HQ"))
+      (take-credits state :corp)
+      (is (changed? [(:credit (get-runner)) (min 0 (- ices 3))]
+            (play-from-hand state :runner "Tailgate"))
+          "discounted")
+      (run-continue-until state :success)
+      (dotimes [n 3]
+        (click-prompt state :runner "No action"))
+      (is (no-prompt? state :runner)))))
 
 (deftest test-run-programs-hosted-after-install-get-returned-to-stack-issue-1081
     ;; Programs hosted after install get returned to Stack. Issue #1081

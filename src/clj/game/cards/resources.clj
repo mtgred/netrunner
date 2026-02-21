@@ -22,7 +22,7 @@
                                trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-abi offer-jack-out
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-abi draw-loud offer-jack-out
                                   reorder-choice spend-credits take-credits take-n-credits-ability take-all-credits-ability trash-on-empty do-net-damage
                                   play-tiered-sfx
                                   run-any-server-ability run-server-ability make-icon]]
@@ -66,7 +66,7 @@
    [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [derez rez]]
    [game.core.runs :refer [active-encounter? bypass-ice can-run-server? get-runnable-zones
-                           gain-run-credits get-current-encounter
+                           get-current-encounter
                            update-current-encounter
                            make-run set-next-phase
                            successful-run-replace-breach total-cards-accessed]]
@@ -3261,6 +3261,25 @@
              :effect (req (lose-clicks state :runner 1)
                           (swap! state assoc-in [:runner :register :double-ignore-additional] true))}]
    :leave-play (req (swap! state update-in [:runner :register] dissoc :double-ignore-additional))})
+
+(defcard "Stick and Poke"
+  {:events [{:event :encounter-ice
+             :req (req (first-event? state side :encounter-ice))
+             :interactive (req true)
+             :effect (req (register-lingering-effect
+                            state side card
+                            (let [ice (:ice context)]
+                              {:duration :end-of-encounter
+                               :type :additional-subroutines
+                               :req (req (and (rezzed? target) (same-card? target ice)))
+                               :value {:position :front
+                                       :subroutines
+                                       [{:label "[Stick] Do 1 net damage. The Runner draws 1 card."
+                                         :msg "Do 1 net damage"
+                                         :async true
+                                         :effect (req (wait-for
+                                                        (damage state side :net 1)
+                                                        (draw-loud state :runner eid card 1)))}]}})))}]})
 
 (defcard "Stim Dealer"
   {:events [{:event :runner-turn-begins

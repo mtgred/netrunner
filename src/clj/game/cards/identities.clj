@@ -52,7 +52,7 @@
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? name-zone
                               target-server zone->name]]
-   [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-cards-into-deck! fail-to-find!]]
+   [game.core.shuffling :refer [fail-to-find! shuffle! shuffle-into-deck shuffle-cards-into-deck! shuffle-my-deck!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -755,6 +755,20 @@
                   :req (req (:flipped card))
                   :effect flip-effect}]}))
 
+(defcard "Editorial Division: Ad Nihilum"
+  {:events [{:event :corp-gain-bad-publicity
+             :optional {:req (req (let [valid-ctx? (fn [[ctx]] (pos? (:amount ctx)))]
+                                    (and (valid-ctx? targets)
+                                         (first-event? state side :corp-gain-bad-publicity valid-ctx?))))
+                        :prompt "Search for a card?"
+                        :waiting-prompt true
+                        :yes-ability {:prompt "Choose a card"
+                                      :msg (msg "add " (:title target) " to HQ from R&D") ;; TODO - once the illicit->liability change is through, we can adjust this (or just leave it)
+                                      :choices (req (cancellable (filter #(has-any-subtype? % ["Illicit" "Black Ops" "Gray Ops" "Liability"]) (filter (complement agenda?) (:deck corp))) :sorted))
+                                      :cancel shuffle-my-deck!
+                                      :effect (effect (shuffle! :deck)
+                                                      (move target :hand))}}}]})
+
 (defcard "Edward Kim: Humanity's Hammer"
   {:events [{:event :access
              :req (req (and (operation? target)
@@ -1035,6 +1049,18 @@
                             :choices ["Carry on!"]
                             :prompt-type :bogus}))
                        card nil))}]})
+
+(defcard "Hiram \"0mission\" Svensson: Shadow of the Past"
+  (let [scry {:change-in-game-state {:silent (req true)
+                                     :req (req (seq (:deck corp)))}
+              :msg "look at the top card of R&D"
+              :interactive (req true)
+              :skippable true
+              :waiting-prompt true
+              :prompt (msg "The top card of R&D is " (:title (first (:deck corp))))
+              :choices ["Noted"]}]
+    {:events [(assoc scry :event :runner-install :req (req (hardware? (:card context))))
+              (assoc scry :event :runner-trash :req (req (some hardware? (map :card targets))))]}))
 
 (defcard "Hoshiko Shiro: Untold Protagonist"
   (let [flip-effect (req (update! state side (if (:flipped card)
@@ -1479,6 +1505,66 @@
                                         (some #(card-flag? % :runner-turn-draw true) (all-active-installed state :runner))))}
      :events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
+
+(defcard "Méliès U: Only the Brightest"
+  {:events [;; At game start, you're on the front face
+            {:event :pre-first-turn
+             :req (req (= side :corp))
+             :effect (effect (update!
+                               (assoc card
+                                      :face :front
+                                      :melies-target (first (shuffle ["HQ" "R&D" "Archives"]))))
+                             (system-msg "reveals that the three hidden faces of Méliès U: Only the Brightest are: Tenure Floors: Méliès U, Subsurface Labs: Méliès U, and Disposal Grounds: Méliès U"))}
+            ;; When your turn ends, you secretly choose a server
+            {:event :corp-turn-ends
+             :prompt "Choose a server"
+             :interactive (req true)
+             :waiting-prompt true
+             :choices ["HQ" "R&D" "Archives"]
+             :msg (msg "secretly choose a server")
+             :effect (req (update! state side (assoc card :melies-target target)))}
+            ;; When the runner discard phase ends while you're on the front, you gain 1c
+            {:event :runner-turn-ends
+             :req (req (= (:face card) :front))
+             :msg "gain 1 [Credit]"
+             :async true
+             :effect (req (gain-credits state side eid 1))}
+            ;; when our turn begins and we are not on the front face, we flip
+            {:event :corp-turn-begins
+             :silent (req true)
+             :effect (effect (update! (assoc card :face :front)))}
+            ;; When the runner makes a successful run on a central
+            ;; while we're on a front face, we flip and maybe do something
+            {:event :successful-run
+             :req (req (and (= (:face card) :front) (is-central? (:server context))))
+             :msg (msg "flip to "
+                       (case (:melies-target card)
+                         "HQ" "Tenure Floors: Méliès U"
+                         "R&D" "Subsurface Labs: Méliès U"
+                         "Archives" "Disposal Grounds: Méliès U"
+                         "this shouldn't occur"))
+             :async true
+             :effect (req (let [[target-zone face] (case (:melies-target card)
+                                                     "HQ"  [:hq :tenure]
+                                                     "R&D" [:rd :subsurface]
+                                                     "Archives" [:archives :disposal]
+                                                     [:hq :tenure])]
+                            (update! state side (assoc card :face face))
+                            (if (and (-> context :server first (= target-zone))
+                                     (seq (:deck corp)))
+                              (continue-ability
+                                state side
+                                {:optional
+                                 {:prompt (msg "The top card of R&D is " (:title (first (:deck corp))) ". Trash it?")
+                                  :waiting-prompt true
+                                  :req (req (seq (:hand runner)))
+                                  :yes-ability {:cost [(->c :trash-from-deck 1)]
+                                                :once :per-turn
+                                                :msg "add 1 card from Archives to HQ"
+                                                :async true
+                                                :effect (effect (continue-ability (corp-recur) card nil))}}}
+                                card nil)
+                              (effect-completed state side eid))))}]})
 
 (defcard "Mercury: Chrome Libertador"
   {:events [{:event :breach-server
@@ -2743,6 +2829,19 @@
                             (zero? (count-bad-pub state))))
              ;; This doesn't use `gain-bad-publicity` to avoid the event
              :effect (effect (gain :corp :bad-publicity 1))}]})
+
+(defcard "Virtual Intelligence, P.I.: \"You Can Call Me Vic\""
+  {:abilities [{:cost [(->c :click 1) (->c :credit 1)]
+                :action true
+                :once :per-turn
+                :label "Draw 1 card and remove 1 tag."
+                :msg (msg (if tagged "draw 1 card and remove 1 tag" "draw 1 card"))
+                :async true
+                :change-in-game-state {:req (req (or tagged (seq (:deck runner))))}
+                :effect (req (if tagged
+                               (wait-for (draw state side 1 {:suppress-checkpoint true})
+                                         (lose-tags state side eid 1))
+                               (draw state side eid 1)))}]})
 
 (defcard "Weyland Consortium: Because We Built It"
   {:recurring 1

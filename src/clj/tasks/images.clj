@@ -47,7 +47,7 @@
 ;; so long as it either has front,back,or some numbers behind it
 ;; the excess dots are because the lookbehind needs to be fixed width
 ;; but this ensures we don't split on "front.", and instead split on "." for multi-faced cards
-(def ^:cost image-select-regex #"(?<=(.tank|house|ewery|front|.back|....[0123456789]))[a-zA-Z]*\.")
+(def ^:cost image-select-regex #"(?<=(.tank|house|ewery|front|posal|rface|enure|.back|....[0123456789]))[a-zA-Z]*\.")
 
 (defn- add-flip-card-image
   [db base-path lang resolution art-set filename]
@@ -62,7 +62,7 @@
     (mc/update db card-collection {:code code} {$addToSet {k path}})
     (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$set {prev-k path}})))
 
-(def ^:const cards-to-skip #{"08012" "09001" "26066" "26120" "35023" "35057"})
+(def ^:const cards-to-skip #{"08012" "09001" "26066" "26120" "35023" "35057" "36036"})
 
 (defn- add-card-image
   "Add an image to a card in the db"

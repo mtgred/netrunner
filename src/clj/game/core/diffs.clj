@@ -232,6 +232,8 @@
    :show-discard
    :selectable
    :eid
+   ;; bad pub
+   :offer-bad-pub?
    ;; traces
    :player
    :base
@@ -363,6 +365,7 @@
 (def runner-keys
   [:rig
    :run-credit
+   :bad-pub-credit
    :link
    :tag
    :memory
@@ -385,6 +388,7 @@
         (update :deck deck-summary runner-player? runner)
         (update :hand hand-summary state runner-player? :runner runner)
         (update :discard prune-cards)
+        (assoc :bad-pub-credit (get-in @state [:run :bad-publicity-available] 0))
         (assoc
           :deck-count (count (:deck runner))
           :hand-count (count (:hand runner))

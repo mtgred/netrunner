@@ -1,6 +1,6 @@
 (ns game.core.costs
   (:require
-   [game.core.bad-publicity :refer [gain-bad-publicity]]
+   [game.core.bad-publicity :refer [gain-bad-publicity bad-publicity-available]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type]]
    [game.core.card :refer [active? agenda? corp? facedown? get-card get-counters get-zone hardware? has-subtype? ice? in-hand? installed? program? resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
@@ -139,6 +139,7 @@
   [state side eid card]
   (if-not (any-effects state side :cannot-pay-credit)
     (+ (get-in @state [side :credit])
+       (bad-publicity-available state side)
        (->> (concat (eligible-pay-credit-cards state side eid card)
                     (eligible-reduce-credit-cards state side eid card))
             (map #(+ (get-counters % :recurring)
@@ -186,8 +187,9 @@
       (let [updated-cost (max 0 (- (value cost) (or (:reduction async-result) 0)))]
         (cond
           (and (pos? updated-cost)
-               (pos? (count (provider-func))))
-          (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid updated-cost (stealth-value cost)) card nil)
+               (or (pos? (count (provider-func)))
+                   (pos? (bad-publicity-available state side))))
+          (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid updated-cost (stealth-value cost) (hash-map) nil {} (bad-publicity-available state side)) card nil)
                    (let [pay-async-result async-result]
                      (queue-event state (if (= side :corp) :corp-spent-credits :runner-spent-credits) {:value updated-cost})
                      (swap! state update-in [:stats side :spent :credit] (fnil + 0) updated-cost)

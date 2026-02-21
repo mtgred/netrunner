@@ -2180,6 +2180,45 @@
 (defcard "Knifed"
   (cutlery "Barrier"))
 
+(defcard "Kompromat"
+  (letfn [(iced-servers [state side eid card]
+            (filter #(-> (get-in @state (cons :corp (server->zone state %))) :ices count pos?)
+                    (zones->sorted-names (get-runnable-zones state side eid card nil))))]
+    {:makes-run true
+     :on-play {:async true
+               :rfg-instead-of-trashing true
+               :change-in-game-state {:req (req (seq (iced-servers state side eid card)))}
+               :prompt "Choose an iced server"
+               :choices (req (iced-servers state side eid card))
+               :effect (req (make-run state side eid target card))}
+     :events [{:event :run-ends
+               :req (req (and this-card-run (:successful context)))
+               :async true
+               :interactive (req true)
+               :effect (req (let [valid-ice (filter #(and (ice? %)
+                                                          (rezzed? %)
+                                                          (= (first (:server context)) (second (get-zone %))))
+                                                    (all-installed state :corp))]
+                              (continue-ability
+                                state side
+                                (if (seq valid-ice)
+                                  {:prompt "Derez an ice? (if you click done, you take a bad publicity)"
+                                   :player :corp
+                                   :waiting-prompt true
+                                   :choices {:req (req (some #(same-card? % target) valid-ice))}
+                                   :cancel {:display-side :runner
+                                            :msg "give the Corp 1 bad publicity"
+                                            :async true
+                                            :effect (req (gain-bad-publicity state :runner eid 1))}
+                                   :msg (msg "derez " (card-str state target))
+                                   :display-side :corp
+                                   :async true
+                                   :effect (req (derez state side eid target {:no-msg true}))}
+                                  {:msg "give the Corp 1 bad publicity"
+                                   :async true
+                                   :effect (req (gain-bad-publicity state :runner eid 1))})
+                                card nil)))}]}))
+
 (defcard "Kraken"
   {:on-play
    {:req (req (:stole-agenda runner-reg))
@@ -3760,6 +3799,17 @@
                             (update-breaker-strength state side (:card context)))}
               (assoc ability :event :corp-turn-ends)
               (assoc ability :event :runner-turn-ends)]}))
+
+(defcard "Tailgate"
+  {:makes-run true
+   :on-play (run-server-ability
+              :hq
+              {:play-cost-bonus (req (- (count (get-in @state [:corp :servers :hq :ices]))))})
+   :events [{:event :successful-run
+             :silent (req true)
+             :req (req (and (= :hq (target-server context)) this-card-run))
+             :effect (effect (register-events
+                               card [(breach-access-bonus :hq 2 {:duration :end-of-run})]))}]})
 
 (defcard "Test Run"
   {:on-play

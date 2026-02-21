@@ -3189,6 +3189,16 @@
                                           :once :per-turn
                                           :events [ability]})]}))
 
+(defcard "Stowaway"
+  trojan
+  {:events [{:event :successful-run
+             :req (req (= (second (get-zone (get-card state (:host card))))
+                          (target-server context)))
+             :async true
+             :msg "gain 2 [Credits]"
+             :automatic :gain-credits
+             :effect (req (gain-credits state side eid 2))}]})
+
 (defcard "Study Guide"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
                                 {:cost [(->c :credit 2)]

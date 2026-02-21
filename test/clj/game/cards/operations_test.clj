@@ -3121,6 +3121,34 @@
    (is (= 2 (count-tags state)) "Runner should have two tags from MAD")
    (is (= 3 (count (:discard (get-corp)))) "MAD + 2 cards in discard")))
 
+(deftest myoshu
+  (do-game
+    (new-game {:corp {:credits 50
+                      :hand ["Greenmail" "Myōshu"]}})
+    (play-from-hand state :corp "Greenmail" "New remote")
+    (dotimes [_ 2]
+      (click-advance state :corp (get-content state :remote1 0)))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (score state :corp (get-content state :remote1 0))
+    (is (changed? [(:credit (get-corp)) -10
+                   (:agenda-point (get-corp)) 2]
+          (play-from-hand state :corp "Myōshu"))
+        "Traded 10c for 2 agenda points")))
+
+(deftest myoshu-doesnt-work-if-installed-this-turn
+  (do-game
+    (new-game {:corp {:credits 50
+                      :hand ["Greenmail" "Myōshu"]}})
+    (core/gain state :corp :click 4)
+    (play-from-hand state :corp "Greenmail" "New remote")
+    (dotimes [_ 2]
+      (click-advance state :corp (get-content state :remote1 0)))
+    (score state :corp (get-content state :remote1 0))
+    (is (changed? [(:credit (get-corp)) 0]
+          (play-from-hand state :corp "Myōshu"))
+        "Could not play, installed the greenmail this turn")))
+
 (deftest nanomanagement
   ;; Biotic Labor - Gain 2 clicks
   (do-game
@@ -5621,6 +5649,13 @@
     (click-prompt state :runner "0 [Credits]")
     (click-card state :corp "Kati Jones")
     (is (not (get-resource state 0)) "Kati Jones is trashed")))
+
+(deftest vulture-fund-test
+  (do-game
+    (new-game {:corp {:hand ["Vulture Fund"] :credits 7}})
+    (is (changed? [(:credit (get-corp)) 7
+                   (count-bad-pub state) 1]
+          (play-from-hand state :corp "Vulture Fund")))))
 
 (deftest wake-up-call-should-fire-after-using-en-passant-to-trash-ice
     ;; should fire after using En Passant to trash ice

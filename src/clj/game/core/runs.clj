@@ -159,8 +159,8 @@
                    (wait-for
                      (gain-run-credits state side
                                        (make-eid state eid)
-                                       (+ (or (get-in @state [:runner :next-run-credit]) 0)
-                                          (count-bad-pub state)))
+                                       (get-in @state [:runner :next-run-credit] 0))
+                     (swap! state assoc-in [:run :bad-publicity-available] (count-bad-pub state))
                      (swap! state assoc-in [:runner :next-run-credit] 0)
                      (swap! state update-in [:runner :register :made-run] conj (first s))
                      (swap! state update-in [:stats side :runs :started] (fnil inc 0))

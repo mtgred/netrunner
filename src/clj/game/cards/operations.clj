@@ -1906,6 +1906,11 @@
     :effect (req (wait-for (trash-cards state side targets {:cause-card card})
                            (gain-tags state :corp eid (count targets))))}})
 
+(defcard "Myōshu"
+  {:on-play {:req (req (not (no-event? state side :agenda-scored #(->> % first :scored-card :installed (not= :this-turn)))))
+             :msg "add itself to [their] score area as an Agenda worth 2 points"
+             :effect (req (as-agenda state side card 2))}})
+
 (defcard "Nanomanagement"
   {:on-play (gain-n-clicks 2)})
 
@@ -3309,6 +3314,12 @@
   {:on-play
    {:psi {:req (req (seq (:scored runner)))
           :not-equal (trash-type "resource" resource? :loud)}}})
+
+(defcard "Vulture Fund"
+  {:on-play {:msg "gain 14 [Credits] and take 1 bad publicity"
+             :async true
+             :effect (req (wait-for (gain-credits state side 14 {:suppress-checkpoint true})
+                                    (gain-bad-publicity state side eid 1)))}})
 
 (defcard "Wake Up Call"
   {:on-play

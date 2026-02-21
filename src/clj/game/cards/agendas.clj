@@ -43,7 +43,7 @@
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
-   [game.core.revealing :refer [reveal]]
+   [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [derez rez rez-multiple-cards]]
    [game.core.runs :refer [clear-encounter end-run get-current-encounter force-ice-encounter redirect-run start-next-phase]]
    [game.core.say :refer [play-sfx system-msg]]
@@ -51,7 +51,7 @@
    [game.core.set-aside :refer [set-aside-for-me]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-my-deck!
                                 shuffle-into-rd-effect]]
-   [game.core.tags :refer [gain-tags]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
@@ -1281,6 +1281,38 @@
                                                      :duration :end-of-run})
                                                   (effect-completed state side eid)))}}]})
 
+(defcard "Let Them Dream"
+  (letfn [(move-to [c from]
+            (choose-one-helper
+              (let [and-then (fn [s] (str (if (= from :rd) ", shuffle R&D, and then " " and ") s))]
+                {:prompt (str "Move " (:title c) " where?")}
+                [{:option "HQ"
+                  :ability {:async true
+                            :effect (req (when (= from :rd) (shuffle! state side :deck))
+                                         (move state side c :hand)
+                                         (reveal-loud state side eid card {:and-then (and-then "add it to HQ")} c))}}
+                 {:option "Bottom of R&D"
+                  :ability {:async true
+                            :effect (req (when (= from :rd) (shuffle! state side :deck))
+                                         (move state side c :deck)
+                                         (reveal-loud state side eid card {:and-then (and-then "add it to the bottom of R&D")} c))}}])))
+          (find-ab [zone]
+            {:prompt "Choose an agenda"
+             :show-discard (= zone :archives)
+             :choices (if (= zone :rd)
+                        (req (cancellable (filter agenda? (:deck corp)) :sorted))
+                        {:card #(and (agenda? %) (if (= zone :hq) (in-hand? %) (in-discard? %)))})
+             :effect (req (continue-ability state side (move-to target zone) card nil))
+             :async true
+             :cancel-effect shuffle-my-deck!})]
+    {:on-score (choose-one-helper
+                 {:optional true
+                  :prompt "Search for an Agenda from where?"}
+                 [{:option "HQ" :ability (find-ab :hq)}
+                  {:option "R&D" :ability (find-ab :rd)}
+                  {:option "Archives" :ability (find-ab :archives)}])
+     :agendapoints-runner (req 1)}))
+
 (defcard "License Acquisition"
   {:on-score {:interactive (req true)
               :prompt "Choose an asset or upgrade to install from Archives or HQ"
@@ -1408,6 +1440,11 @@
    :static-abilities [{:type :advancement-requirement
                        :req (req (= (:title target) "Medical Breakthrough"))
                        :value -1}]})
+
+(defcard "Méliès City Luxury Line"
+  {:steal-cost-bonus (req [(->c :click 1)])
+   :on-score {:msg "gain [Click]"
+              :effect (req (gain-clicks state :corp 1))}})
 
 (defcard "Megaprix Qualifier"
   {:on-score {:silent (req true)
@@ -2545,3 +2582,22 @@
                                       (not (has-subtype? target "Virtual"))
                                       (not (:facedown (second targets)))))
                        :value 1}]})
+
+(defcard "Witch Hunt"
+  (let [bp {:msg "take 1 bad publicity"
+            :async true
+            :effect (effect (gain-bad-publicity :corp eid 1))}]
+    {:stolen bp
+     :on-score bp
+     :events [{:unregister-once-resolved true
+               :event :corp-action-phase-ends
+               :duration :end-of-turn
+               :req (effect (first-event? :agenda-scored #(same-card? card (:card (first %)))))
+               :msg (msg (if tagged
+                           "Remove all tags, and then give the Runner 3 tags"
+                           "give the Runner 3 tags"))
+               :async true
+               :effect (req (if tagged
+                              (wait-for (lose-tags state side :all {:suppress-checkpoint true})
+                                        (gain-tags state side eid 3))
+                              (gain-tags state side eid 3)))}]}))

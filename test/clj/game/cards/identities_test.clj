@@ -1441,6 +1441,15 @@
       (click-card state :corp "NASX")
       (is (= "NASX" (:title (first (:hosted (get-content state :remote1 0))))))))
 
+(deftest editorial-division-ad-nihilum
+  (do-game
+    (new-game {:corp {:id "Editorial Division: Ad Nihilum"
+                      :hand ["Too Big to Fail"]
+                      :deck ["Closed Accounts"]}})
+    (play-from-hand state :corp "Too Big to Fail")
+    (click-prompts state :corp "Yes" "Closed Accounts")
+    (is-hand? state :corp ["Closed Accounts"])))
+
 (deftest edward-kim-humanity-s-hammer-trash-first-operation-accessed-each-turn-but-not-if-first-one-was-in-archives
     ;; Trash first operation accessed each turn, but not if first one was in Archives
     (do-game
@@ -2369,6 +2378,19 @@
       (take-credits state :corp)
       (card-ability state :runner (get-resource state 0) 0)
       (is (no-prompt? state :corp) "No Hayley wait prompt for facedown installs.")))
+
+(deftest hiram-0mission-svensson-shadow-of-the-past
+  (do-game
+    (new-game {:corp {:deck ["IPO"] :hand ["Beanstalk Royalties"]}
+               :runner {:id "Hiram \"0mission\" Svensson: Shadow of the Past"
+                        :hand ["Sports Hopper"]}})
+    (play-from-hand state :corp "Beanstalk Royalties")
+    (is (no-prompt? state :runner))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sports Hopper")
+    (click-prompt state :runner "Noted")
+    (card-ability state :runner (get-hardware state 0) 0)
+    (click-prompt state :runner "Noted")))
 
 (deftest hoshiko-shiro-untold-protagonist-id-ability
     ;; ID ability
@@ -3499,6 +3521,19 @@
         (is (= 4 (count (:discard (get-runner)))) "MaxX discarded 2 cards at start of turn")
         (is (= 3 (:click (get-runner))) "Wyldside caused 1 click to be lost")
         (is (= 3 (count (:hand (get-runner)))) "3 cards drawn total"))))
+
+(deftest meiles-u-only-the-brightest-basic
+  (doseq [[s sn] [[:hq "HQ"] [:rd "R&D"] ["Archives" :archives]]]
+    (do-game
+      (new-game {:corp {:id "Méliès U: Only the Brightest"
+                        :hand ["IPO"]
+                        :deck ["Snare!"]
+                        :discard ["Beanstalk Royalties"]}})
+      (take-credits state :corp)
+      (click-prompt state :corp "R&D")
+      (run-empty-server state :rd)
+      (click-prompts state :corp "Yes" "IPO" "Snare!")
+      (is (is-hand? state :corp ["IPO" "Snare!"])))))
 
 (deftest mercury-chrome-libertador
   (do-game
@@ -5750,6 +5785,16 @@
         "Spent 2 to install earthrise hotel")
     (click-prompt state :runner "Yes")
     (is (= 2 (count (:hand (get-runner)))) "Took damage, then drew up")))
+
+(deftest virtual-intelligence-p-i-you-can-call-me-vic
+  (doseq [tags [0 1]]
+    (do-game
+      (new-game {:runner {:id "Virtual Intelligence, P.I.: \"You Can Call Me Vic\"" :tags tags :deck [(qty "Ika" 15)]}})
+      (take-credits state :corp)
+      (is (changed? [(count (:hand (get-runner))) 1]
+            (card-ability state :runner (get-in @state [:runner :identity]) 0))
+          "Drew 1 card")
+      (is (= 0 (count-tags state)) "Untagged"))))
 
 (deftest weyland-consortium-because-we-built-it-pay-credits-prompt
     ;; Pay-credits prompt
