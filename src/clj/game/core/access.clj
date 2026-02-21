@@ -864,9 +864,10 @@
                                                     :chosen (inc chosen)}
                                              (conj already-accessed (:cid target)) args)
                                            card nil)))
-                  :cancel-effect (req (let [accessed (first (drop-while already-accessed-fn (access-cards-from-hq state)))]
-                                        (system-msg state side (str "randomly chooses " (:title accessed) " to be accessed"))
-                                        (wait-for (access-card state side accessed (:title accessed))
+                  :cancel {:async true
+                           :effect (req (let [accessed (first (drop-while already-accessed-fn (access-cards-from-hq state)))]
+                                          (system-msg state side (str "randomly chooses " (:title accessed) " to be accessed"))
+                                          (wait-for (access-card state side accessed (:title accessed))
                                                   (continue-ability
                                                     state side
                                                     (access-helper-hq
@@ -874,7 +875,7 @@
                                                              :total-mod (access-bonus-count state side :total)
                                                              :chosen (inc chosen)}
                                                       (conj already-accessed (:cid accessed)) args)
-                                                    card nil))))}
+                                                    card nil))))}}
                  card nil)
                ;; normal access
                (let [accessed (first (drop-while already-accessed-fn (access-cards-from-hq state)))]

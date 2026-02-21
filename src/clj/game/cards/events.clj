@@ -67,7 +67,7 @@
                               target-server unknown->kw zone->name
                               zones->sorted-names]]
    [game.core.set-aside :refer [get-set-aside set-aside]]
-   [game.core.shuffling :refer [shuffle! shuffle-into-deck]]
+   [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-my-deck! fail-to-find!]]
    [game.core.tags :refer [gain-tags gain-tags-ability lose-tags]]
    [game.core.threat :refer [threat threat-level]]
    [game.core.to-string :refer [card-str]]
@@ -569,7 +569,6 @@
                        :choices {:card #(and (rezzed? %)
                                              (= t (:title %)))}
                        :msg (msg "trash " (card-str state target))
-                       :cancel-effect (req (effect-completed state side eid))
                        :effect (effect (trash eid target {:cause-card card}))}})]
     {:makes-run true
      :on-play (run-server-ability :archives)
@@ -603,7 +602,6 @@
                                    :choices {:card #(and (rezzed? %)
                                                          (contains? isec (:title %)))}
                                    :msg (msg "trash " (card-str state target))
-                                   :cancel-effect (req (effect-completed state side eid))
                                    :effect (effect (trash eid target {:cause-card card}))}
                                   card nil)
                                 (effect-completed state side eid))))}]}))
@@ -688,6 +686,7 @@
             {:prompt "Choose a program to install"
              :choices (req (cancellable (filter program? (get runner where))))
              :async true
+             :cancel (when (= :deck where) fail-to-find!)
              :effect (req (when (= :deck where)
                             (trigger-event state side :searched-stack)
                             (shuffle! state side :deck))
@@ -826,7 +825,9 @@
                              (in-hand*? state target)
                              (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus -8})))}
     :async true
-    :cancel-effect (req (gain-tags state :runner eid 1))
+    :cancel {:msg "take 1 tag"
+             :async true
+             :effect (req (gain-tags state :runner eid 1))}
     :effect (req (let [new-eid (make-eid state {:source card :source-type :runner-install})]
                    (wait-for (runner-install state :runner new-eid target {:msg-keys {:install-source card
                                                                                       :display-origin true}
@@ -860,16 +861,16 @@
                                                              (can-pay? state side eid card nil
                                                                        [(->c :credit (rez-cost state side %))]))}
                                        :effect (effect (rez :corp eid target))
-                                       :cancel-effect
-                                       (effect (register-run-flag!
-                                                 card
-                                                 :can-rez
-                                                 (fn [state _side card]
-                                                   (if (ice? card)
-                                                     ((constantly false)
-                                                      (toast state :corp "Cannot rez ice on this run due to Cyber Threat"))
-                                                     true)))
-                                               (make-run eid serv card))}
+                                       :cancel {:async true
+                                                :effect (effect (register-run-flag!
+                                                                  card
+                                                                  :can-rez
+                                                                  (fn [state _side card]
+                                                                    (if (ice? card)
+                                                                      ((constantly false)
+                                                                       (toast state :corp "Cannot rez ice on this run due to Cyber Threat"))
+                                                                      true)))
+                                                                (make-run eid serv card))}}
                          :no-ability {:async true
                                       :effect (effect (register-run-flag!
                                                         card
@@ -1004,6 +1005,8 @@
                     (continue-ability
                       (when (has-subtype? target "Virus")
                         {:prompt "Choose a virus to add to Grip"
+                         :change-in-game-state {:silent true
+                                                :req (req (seq (filter #(has-subtype? % "Virus") (:discard runner))))}
                          :msg (msg "add " (:title target) " to [their] Grip")
                          :choices (req (cancellable (filter #(has-subtype? % "Virus") (:discard runner)) :sorted))
                          :effect (effect (move target :hand))})
@@ -1041,12 +1044,11 @@
                                        state side
                                        (run-any-server-ability)
                                        card nil)))
-              :cancel-effect (effect (continue-ability
-                                       (run-any-server-ability)
-                                       card nil))}]
+              :cancel (run-any-server-ability)}]
         choice (fn choice [abis]
                  {:prompt "Choose an ability to resolve"
                   :choices (map #(capitalize (:msg %)) abis)
+                  :waiting-prompt true
                   :async true
                   :effect (req (let [chosen (some #(when (= target (capitalize (:msg %))) %) abis)]
                                  (wait-for
@@ -1225,6 +1227,9 @@
                                                           (hardware? %))
                                                       (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus (- trash-cost)}))
                                                 (:deck runner)) :sorted))
+             :cancel {:msg (msg "trash " (if (empty? to-trash) "no cards" (enumerate-cards to-trash :sorted)) " and shuffle the stack")
+                      :effect (req (trigger-event state side :searched-stack)
+                                   (shuffle! state side :deck))}
              :effect (req (trigger-event state side :searched-stack)
                           (shuffle! state side :deck)
                           (runner-install state side (assoc eid :source card :source-type :runner-install)
@@ -1237,7 +1242,7 @@
                                 (program? %))
                          (in-hand? %))
                 :max (req (count (:hand runner)))}
-      :cancel-effect (effect (continue-ability (ec 0 []) card nil))
+      :cancel (ec 0 [])
       :async true
       :effect (req (let [trash-cost (reduce + (keep :cost targets))
                          to-trash targets]
@@ -1262,7 +1267,7 @@
                                    (filter (complement rezzed?)))))}
     :msg (msg "trash " (card-str state target))
     :async true
-    :cancel-effect (req (do-nothing state side eid nil card))
+    :cancel {:msg "do nothing"}
     :effect (effect (trash eid target {:cause-card card}))}})
 
 (defcard "Encore"
@@ -1723,6 +1728,7 @@
     :choices (req (cancellable (filter #(has-subtype? % "Connection") (:deck runner)) :sorted))
     :msg (msg "add " (:title target) " from the stack to the grip and shuffle the stack")
     :async true
+    :cancel fail-to-find!
     :effect (effect (trigger-event :searched-stack)
                     (continue-ability
                       (let [connection target]
@@ -2455,6 +2461,11 @@
             {:prompt (str "Choose a " (decapitalize type) " resource")
              :choices (req (cancellable (filter #(has-subtype? % type)
                                                 (:deck runner)) :sorted))
+             :cancel {:async true
+                      :msg "shuffle the stack"
+                      :effect (req (trigger-event state side :searched-stack)
+                                   (shuffle! state side :deck)
+                                   (continue-ability state side (credit-gain-abi type) card nil))}
              :msg (msg "add " (:title target) " from the stack to the grip and shuffle the stack")
              :async true
              :effect (effect (trigger-event :searched-stack)
@@ -2549,6 +2560,7 @@
    {:prompt "Choose an Icebreaker"
     :change-in-game-state {:req (req (seq (:deck runner)))}
     :choices (req (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))
+    :cancel fail-to-find!
     :msg (msg "add " (:title target) " from the stack to the grip and shuffle the stack")
     :async true
     :effect (effect (trigger-event :searched-stack)
@@ -3126,7 +3138,7 @@
       :choices {:card #(and (installed? %)
                             (corp? %))}
       :msg (msg "add " (card-str state target) " to HQ")
-      :cancel-effect (effect (continue-ability (opt-run) card nil))
+      :cancel (opt-run)
       :effect (effect (move :corp target :hand)
                       (continue-ability (opt-run) card nil))}}))
 
@@ -3425,7 +3437,7 @@
                                                                             :display-origin true
                                                                             :include-cost-from-eid eid}})
                               (continue-ability state side bottom-one-program card nil)))
-               :cancel-effect (req (continue-ability state side bottom-one-program card nil))}}))
+               :cancel bottom-one-program}}))
 
 (defcard "Scrubbed"
   {:events [{:event :encounter-ice
@@ -3757,6 +3769,7 @@
     :choices (req ["Stack"
                    (when (not (zone-locked? state :runner :discard)) "Heap")])
     :msg (msg "install a program from the " target)
+    :waiting-prompt true
     :async true
     :effect (effect
               (continue-ability
@@ -3766,6 +3779,7 @@
                    :choices (req (cancellable
                                    (filter #(and (program? %) (runner-can-install? state side eid % {:no-toast true})) (where-key runner))))
                    :async true
+                   :cancel (when (= where "Stack") fail-to-find!)
                    :effect (req (when (= where "Stack")
                                   (trigger-event state side :searched-stack)
                                   (shuffle! state side :deck))
@@ -3855,8 +3869,6 @@
                               :choices (req (cancellable (filter #(and (not (event? %))
                                                                        (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus -3})
                                                                        (in-discard? (get-card state %))) trashed-cards)))
-                              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
-                                                     (effect-completed eid))
                               :effect (req (let [card-to-install (first (seq (filter #(and (= (:title target) (:title %)) (in-discard? (get-card state %))) trashed-cards)))]
                                              (runner-install state side (assoc eid :source card :source-type :runner-install) card-to-install {:cost-bonus -3
                                                                                                                                                :msg-keys {:install-source card

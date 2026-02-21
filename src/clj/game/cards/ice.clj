@@ -56,7 +56,7 @@
    [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name protecting-same-server?
                               target-server zone->name]]
-   [game.core.shuffling :refer [shuffle!]]
+   [game.core.shuffling :refer [shuffle! shuffle-my-deck!]]
    [game.core.subtypes :refer [update-all-subtypes]]
    [game.core.tags :refer [gain-tags lose-tags sum-tag-effects]]
    [game.core.threat :refer [threat threat-level]]
@@ -876,6 +876,7 @@
                   :label "Look at the top 5 cards of R&D"
                   :msg "look at the top 5 cards of R&D"
                   :prompt (msg "The top cards of R&D are (top->bottom) " (enumerate-cards (take 5 (:deck corp))))
+                  :waiting-prompt true
                   :choices ["OK"]
                   :req (req (not-empty (:deck corp)))
                   :effect
@@ -883,12 +884,11 @@
                             {:prompt "Choose a card to install"
                              :choices (cancellable (filter corp-installable-type? (take 5 (:deck corp))))
                              :async true
+                             :waiting-prompt true
                              :effect (effect (corp-install eid target nil {:ignore-all-cost true
                                                                            :msg-keys {:install-source card
                                                                                       :origin-index (first (positions #{target} (take 5 (:deck corp))))
-                                                                                      :display-origin true}}))
-                             :cancel-effect (effect (system-msg "does not install any of the top 5 cards")
-                                                    (effect-completed eid))}
+                                                                                      :display-origin true}}))}
                             card nil))}
                  (install-from-hq-or-archives-sub)]})
 
@@ -1155,9 +1155,7 @@
                                                         :msg-keys {:install-source card
                                                                    :display-origin true}
                                                         :index (:index card)})
-                                         (effect-completed state side eid)))
-                  :cancel-effect (effect (system-msg :corp (str "declines to use " (:title card) " to install a card"))
-                                         (effect-completed eid))}
+                                         (effect-completed state side eid)))}
                  end-the-run
                  end-the-run]
    :runner-abilities [(bioroid-break 1 1)]})
@@ -1380,7 +1378,6 @@
                                           :msg (msg "trash " (:title target))
                                           :choices {:card #(and (installed? %)
                                                                 (resource? %))}
-                                          :cancel-effect (req (effect-completed state side eid))
                                           :async true
                                           :effect (effect (trash eid target {:cause :subroutine}))}
                                          card nil)
@@ -1989,9 +1986,7 @@
                                              (move state :corp c :deck))
                                            (shuffle! state :corp :deck)
                                            (effect-completed state :corp eid)))
-                            :cancel-effect (effect (system-msg (str "uses " (:title card) " to shuffle R&D"))
-                                                   (shuffle! :deck)
-                                                   (effect-completed eid))}
+                            :cancel shuffle-my-deck!}
         draw-reveal-shuffle {:async true
                              :label "Draw cards, reveal and shuffle agendas"
                              :waiting-prompt true
@@ -2102,8 +2097,6 @@
                       :req (req (and (installed? target)
                                      (rezzed? target)))}
             :waiting-prompt true
-            :cancel-effect (effect (system-msg :corp (str "declines to use " (:title card)))
-                                   (effect-completed eid))
             :async true
             :effect (req (wait-for
                            (derez state side target)
@@ -2313,9 +2306,7 @@
                      :async true
                      :choices (req (cancellable (:deck corp) :sorted))
                      :msg "add 1 card to HQ from R&D"
-                     :cancel-effect (req (shuffle! state side :deck)
-                                         (system-msg state side (str "shuffles R&D"))
-                                         (effect-completed state side eid))
+                     :cancel shuffle-my-deck!
                      :effect (req (move state side target :hand)
                                   (if (< n 2)
                                     (continue-ability state side (hort (inc n)) card nil)
@@ -3396,8 +3387,7 @@
                   :effect (req (doseq [c targets]
                                  (move state :corp c :deck))
                                (shuffle! state :corp :deck))
-                  :cancel-effect (effect (shuffle! :corp :deck)
-                                         (effect-completed eid))
+                  :cancel shuffle-my-deck!
                   :msg (msg "shuffle " (quantify (count targets) "card") " from HQ into R&D")}]})
 
 (defcard "NEXT Silver"
@@ -3567,7 +3557,8 @@
                                      :msg (msg "forfeit " (:title target) " to pay for 10 [Credits] its rez cost")
                                      :effect (req (wait-for (forfeit state side target)
                                                             (effect-completed state side (make-result eid 10))))
-                                     :cancel-effect (effect (effect-completed (make-result eid 0)))}
+                                     :cancel {:async true
+                                              :effect (effect (effect-completed (make-result eid 0)))}}
                                     card nil)))
                    :type :custom
                    :while-inactive true}}})
@@ -3692,8 +3683,6 @@
                             :prompt "Choose a card in HQ to trash"
                             :choices (req (cancellable (:hand corp) :sorted))
                             :async true
-                            :cancel-effect (effect (system-msg :corp (str "declines to use " (:title card)))
-                                                   (effect-completed eid))
                             :effect (req (wait-for
                                            (trash state :corp target {:cause :subroutine})
                                            (system-msg state :corp "trashes a card from HQ")
@@ -4544,10 +4533,8 @@
   {:subroutines [{:label "Search R&D and add 1 card to HQ"
                   :prompt "Choose a card to add to HQ"
                   :msg "add a card from R&D to HQ"
-                  :choices (req (cancellable (:deck corp) :sorted))
-                  :cancel-effect (effect (system-msg "shuffles R&D")
-                                         (shuffle! :deck)
-                                         (effect-completed eid))
+                  :change-in-game-state {:req (req (seq (:deck corp)))}
+                  :choices (req (sort (:deck corp)))
                   :effect (effect (shuffle! :deck)
                                   (move target :hand))}]})
 
@@ -4559,9 +4546,7 @@
                              :async true
                              :msg (msg "reveal " (:title target) " from R&D and add it to HQ")
                              :choices (req (cancellable (filter #(ice? %) (:deck corp)) :sorted))
-                             :cancel-effect (effect (system-msg (str "uses " (:title card) " to shuffle R&D"))
-                                                    (shuffle! :deck)
-                                                    (effect-completed eid))
+                             :cancel shuffle-my-deck!
                              :effect (req (wait-for (reveal state side target)
                                                     (shuffle! state side :deck)
                                                     (move state side target :hand)

@@ -3554,13 +3554,13 @@
         (run-on state :remote2)
         (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Yagi-Uda should have a counter to start with")
         (card-ability state :corp pyu-scored 0)
-        (is (= 0 (get-counters (refresh pyu-scored) :agenda)) "Using Yagi-Uda should remove counter")
+        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "don't spend the counter until the action is committed")
         (click-prompt state :corp "Done")
-        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during first selection should bring back counter")
+        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling should not spend the counter")
         (card-ability state :corp pyu-scored 0)
         (click-card state :corp eli1)
         (click-prompt state :corp "Done")
-        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during second selection should bring back counter"))))
+        (is (= 1 (get-counters (refresh pyu-scored) :agenda)) "Cancelling during second selection should also not spend the counter"))))
 
 (deftest project-yagi-uda-jack-out
     ;; jack out

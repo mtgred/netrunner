@@ -59,15 +59,15 @@
                                                       (str (quantify number "virus counter") " from " title))
                                                    (vals selected-cards)))]
                        (pick-counter-triggers state side eid selected-cards selected-cards :virus counter-count message 0)))))
-    :cancel-effect (if target-count
-                     (req (doseq [{:keys [card number]} (vals selected-cards)]
-                            (update! state :runner (update-in (get-card state card) [:counter :virus] + number)))
-                          (complete-with-result state side eid :cancel))
-                     (req (let [message (enumerate-str (map #(let [{:keys [card number]} %
-                                                               title (:title card)]
-                                                           (str (quantify number "virus counter") " from " title))
-                                                        (vals selected-cards)))]
-                           (complete-with-result state side eid {:number counter-count :msg message}))))}))
+    :cancel {:effect (if target-count
+                       (req (doseq [{:keys [card number]} (vals selected-cards)]
+                              (update! state :runner (update-in (get-card state card) [:counter :virus] + number)))
+                            (complete-with-result state side eid :cancel))
+                       (req (let [message (enumerate-str (map #(let [{:keys [card number]} %
+                                                                     title (:title card)]
+                                                                 (str (quantify number "virus counter") " from " title))
+                                                              (vals selected-cards)))]
+                              (complete-with-result state side eid {:number counter-count :msg message}))))}}))
 
 (defn- trigger-spend-credits-from-cards
   [state side eid cards]
@@ -130,8 +130,9 @@
                                                              #(assoc % :card providing-card :number (+ (:number % 0) async-result)))
                                                      (use-card uses providing-card async-result))
                                                    card targets))))
-        :cancel-effect (req (complete-with-result state side eid {:reduction counter-count
-                                                                  :targets (keep #(:card (second %)) selected-cards)}))}))))
+        :cancel{:async true
+                :effect (req (complete-with-result state side eid {:reduction counter-count
+                                                                   :targets (keep #(:card (second %)) selected-cards)}))}}))))
 
 (defn pick-credit-providing-cards
   "Similar to pick-virus-counters-to-spend. Works on :recurring and normal credits."
@@ -250,4 +251,5 @@
                                                        (use-card uses providing-card async-result)
                                                        bad-pub-available bad-pub-spent)
                                                      card targets)))))
-          :cancel-effect pay-rest})))))
+          :cancel {:async true
+                   :effect pay-rest}})))))

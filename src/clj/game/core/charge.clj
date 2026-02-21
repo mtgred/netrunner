@@ -35,6 +35,4 @@
       :choices {:card #(can-charge state side %)}
       :async true
       :msg (msg "charge " (:title target) (when (> n 1) (str n " times")))
-      :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to charge a card"))
-                             (effect-completed eid))
       :effect (req (charge-card state side eid target n))})))

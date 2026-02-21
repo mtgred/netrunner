@@ -47,7 +47,7 @@
    [game.core.servers :refer [central->zone from-same-server? in-same-server?
                               is-central? protecting-same-server? same-server?
                               target-server unknown->kw zone->name]]
-   [game.core.shuffling :refer [shuffle!]]
+   [game.core.shuffling :refer [shuffle! shuffle-my-deck!]]
    [game.core.tags :refer [gain-tags]]
    [game.core.threat :refer [threat-level]]
    [game.core.to-string :refer [card-str]]
@@ -174,7 +174,6 @@
                                (in-hand? %)
                                (corp? %))}
          :async true
-         :cancel-effect (req (effect-completed state side eid))
          :effect (req (corp-install state :corp eid target nil {:ignore-all-cost true
                                                                 :counters {:advance-counter 1}
                                                                 :msg-keys {:install-source card
@@ -1150,19 +1149,17 @@
              :optional
              {:prompt "Search R&D for non-agenda card?"
               :req (req (= (:previous-zone (:card context)) (get-zone card)))
-              :yes-ability
-              {:prompt "Choose a card"
-               :choices (req (cancellable (filter #(not (agenda? %)) (:deck corp))
-                                          :sorted))
-               :msg (msg "reveal " (:title target) " from R&D and add it to HQ")
-               :async true
-               :effect (req (wait-for
-                              (reveal state side target)
-                              (shuffle! state side :deck)
-                              (move state side target :hand)
-                              (effect-completed state side eid)))}
-              :no-ability
-              {:effect (effect (system-msg (str "declines to use " (:title card))))}}}]})
+              :yes-ability {:prompt "Choose a card"
+                            :choices (req (cancellable (filter #(not (agenda? %)) (:deck corp))
+                                                       :sorted))
+                            :msg (msg "reveal " (:title target) " from R&D and add it to HQ")
+                            :async true
+                            :cancel shuffle-my-deck!
+                            :effect (req (wait-for
+                                           (reveal state side target)
+                                           (shuffle! state side :deck)
+                                           (move state side target :hand)
+                                           (effect-completed state side eid)))}}}]})
 
 (defcard "Manegarm Skunkworks"
   {:events [{:event :approach-server
@@ -1908,20 +1905,21 @@
                             (draw state side eid 1)))}]})
 
 (defcard "Tucana"
-  (let [ability {:async true
-                 :prompt "Choose a piece of ice to install and rez"
-                 :waiting-prompt true
-                 :interactive (req true)
-                 :choices (req (cancellable (filter ice? (:deck corp)) true))
-                 :msg (msg "install and rez " (card-str state target) ", paying a total of 3 [Credits] less")
-                 :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3
-                                                                                                  :msg-keys {:install-source card
-                                                                                                             :display-origin true}})
-                                        (shuffle! state :corp :deck)
-                                        (system-msg state side (str "shuffles R&D"))
-                                        (effect-completed state side eid)))
-                 :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                        (effect-completed eid))}]
+  (let [ability {:optional {:prompt "Search R&D for an ice?"
+                            :waiting-prompt true
+                            :yes-ability {:async true
+                                          :prompt "Choose a piece of ice to install and rez"
+                                          :waiting-prompt true
+                                          :interactive (req true)
+                                          :choices (req (cancellable (filter ice? (:deck corp)) true))
+                                          :msg (msg "install and rez " (card-str state target) ", paying a total of 3 [Credits] less")
+                                          :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3
+                                                                                                                           :msg-keys {:install-source card
+                                                                                                                                      :display-origin true}})
+                                                                 (shuffle! state :corp :deck)
+                                                                 (system-msg state side (str "shuffles R&D"))
+                                                                 (effect-completed state side eid)))
+                                          :cancel shuffle-my-deck!}}}]
     {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
      :events [(assoc ability
                      :event :agenda-stolen

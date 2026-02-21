@@ -308,9 +308,9 @@
         (when match
           (remove-from-prompt-queue state side prompt)
           (if (= (:value match) "Cancel")
-            (do (if-let [cancel-effect (:cancel-effect prompt)]
+            (do (if-let [cancel (:cancel prompt)]
                   ;; trigger the cancel effect
-                  (cancel-effect choice)
+                  (cancel choice)
                   (effect-completed state side (:eid prompt)))
                 (finish-prompt state side prompt card))
             (do (effect match)
@@ -357,7 +357,7 @@
                        (first-prompt-by-eid state side eid :select)
                        (first (filter #(= :select (:prompt-type %)) (get-in @state [side :prompt]))))]
           (when (= (count (:cards selected)) (or (:max selected) 1))
-            (resolve-select state side eid card (select-keys prompt [:cancel-effect]) update! resolve-ability)))))))
+            (resolve-select state side eid card (select-keys prompt [:cancel]) update! resolve-ability)))))))
 
 (defn play-auto-pump
   "Use the 'match strength with ice' function of icebreakers."

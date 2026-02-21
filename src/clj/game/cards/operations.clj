@@ -48,7 +48,7 @@
    [game.core.runs :refer [end-run make-run]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [is-remote? remote->name zone->name]]
-   [game.core.shuffling :refer [shuffle! shuffle-into-deck
+   [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-my-deck!
                                 shuffle-into-rd-effect]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.threat :refer [threat threat-level]]
@@ -176,16 +176,20 @@
                                     state side
                                     (ad state eid card remaining starting-shuffle-count)
                                     card nil))))
-                 :cancel-effect (req (trash-cards state side eid remaining-cards {:unpreventable true :cause-card card}))}
+                 :cancel {:msg (msg "trash " (quantify (count remaining-cards) "card") " from the top of R&D")
+                          :async true
+                          :effect (req (trash-cards state side eid remaining-cards {:unpreventable true :cause-card card}))}}
                 :else
                 {:prompt "There are no playable cards"
                  :choices ["OK"]
                  :async true
+                 :msg (msg "trash " (quantify (count remaining-cards) "card") " from the top of R&D")
                  :effect (req (trash-cards state side eid remaining-cards {:unpreventable true :cause-card card}))})))]
    {:prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-cards (take 3 (:deck corp))))
     :change-in-game-state {:req (req (seq (:deck corp)))}
     :choices ["OK"]
     :async true
+    :waiting-prompt true
     :effect (req (continue-ability
                    state side
                    (ad state eid card (take 3 (:deck corp)) (shuffle-count-fn state))
@@ -213,8 +217,7 @@
              :choices {:card #(and (corp-installable-type? %)
                                    (in-hand? %))}
              :async true
-             :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card from HQ"))
-                                    (continue-ability lose-click-abi card nil))
+             :cancel lose-click-abi
              :effect (req (wait-for (corp-install state side target nil {:msg-keys {:install-source card
                                                                                     :display-origin true}})
                                     (continue-ability state side lose-click-abi card nil)))}}))
@@ -495,7 +498,7 @@
                                                           (not (rezzed? %)))
                                                     (all-installed state :corp)))}
              :async true
-             :cancel-effect (req (do-nothing state side eid nil card))
+             :cancel {:msg "do nothing"}
              :effect (req (wait-for (rez state side target {:ignore-cost :all-costs})
                                     (install-as-condition-counter state side eid card (:card async-result))))}
    :events [{:event :subroutines-broken
@@ -702,6 +705,7 @@
                                   (<= (:cost %) (:credit corp)))
                             (:deck corp))
                     :sorted))
+    :cancel shuffle-my-deck!
     :msg (msg "search R&D for " (:title target) " and play it")
     :async true
     :effect (effect (shuffle! :deck)
@@ -836,8 +840,8 @@
                                                                                                                          :display-origin true}}))})
                                                  card nil)
                                                (end-effect state side eid card targets)))
-                        :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
-                                               (end-effect eid card targets))}
+                        :cancel {:async true
+                                 :effect end-effect}}
                        card nil))))}})
 
 (defcard "Distract the Masses"
@@ -852,7 +856,7 @@
                        :effect (req (wait-for
                                       (trash-cards state side targets {:cause-card card})
                                       (continue-ability state side shuffle-two card nil)))
-                       :cancel-effect (effect (continue-ability shuffle-two card nil))}]
+                       :cancel shuffle-two}]
     {:on-play
      {:rfg-instead-of-trashing true
       :msg "give The Runner 2 [Credits]"
@@ -1007,8 +1011,6 @@
                               :async true
                               :waiting-prompt true
                               :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
-                              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash an installed card"))
-                                                     (effect-completed eid))
                               :effect (req (wait-for (trash state side target {:cause-card card})
                                                      (gain-credits state side eid 3)))}
                              card nil)))}})
@@ -1059,9 +1061,7 @@
     :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
     :async true
     :msg (msg "reveal " (:title target) " from R&D and add it to HQ")
-    :cancel-effect (req (system-msg state side (str "uses " (:title card) " to shuffle R&D"))
-                        (shuffle! state side :deck)
-                        (effect-completed state side eid))
+    :cancel shuffle-my-deck!
     :effect (req (wait-for (reveal state side target)
                            (shuffle! state side :deck)
                            (move state side target :hand)
@@ -1262,8 +1262,6 @@
                                                     (corp-installable-type? %)
                                                     (in-hand? %))}
                               :async true
-                              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card from HQ"))
-                                                     (effect-completed eid))
                               :effect (req (wait-for (corp-install state :corp (make-eid state eid) target nil {:msg-keys {:install-source card
                                                                                                                            :display-origin true}})
                                                      (let [installed-card async-result]
@@ -1534,7 +1532,8 @@
                          :default (req 0)}
                :async true
                :effect (req (resolve-fixed-cost-abi state side eid card target))
-               :cancel-effect (req (resolve-fixed-cost-abi state side eid card 0))}}))
+               :cancel {:async true
+                        :effect (req (resolve-fixed-cost-abi state side eid card 0))}}}))
 
 
 (defcard "IPO"
@@ -1559,18 +1558,19 @@
       :choices {:max (req (count (:hand corp)))
                 :card #(and (corp? %)
                             (in-hand? %))}
-      :msg (msg "trash " (quantify (count targets) "card") " in HQ")
+      :msg (msg "trash " (quantify (count targets) "card") " in HQ and turn Archives face-down")
       :async true
       :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                              (doseq [c (:discard (:corp @state))]
                                (update! state side (assoc-in c [:seen] false)))
                              (shuffle! state :corp :discard)
                              (continue-ability state side install-abi card nil)))
-      :cancel-effect (req (system-msg state :corp (str "declines to use " (:title card) " to trash any cards from HQ"))
-                          (doseq [c (:discard (:corp @state))]
-                            (update! state side (assoc-in c [:seen] false)))
-                          (shuffle! state :corp :discard)
-                          (continue-ability state side install-abi card nil))}}))
+      :cancel {:msg "turn Archives face-down"
+               :async true
+               :effect (req (doseq [c (:discard (:corp @state))]
+                              (update! state side (assoc-in c [:seen] false)))
+                            (shuffle! state :corp :discard)
+                            (continue-ability state side install-abi card nil))}}}))
 
 (defcard "Key Performance Indicators"
   {:on-play (choose-one-helper
@@ -1641,8 +1641,6 @@
                                                     (corp-installable-type? %)
                                                     (in-hand? %))}
                               :async true
-                              :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
-                                                     (effect-completed eid))
                               :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
                                                                                        :display-origin true}}))}
                              card nil)))}})
@@ -2238,7 +2236,7 @@
                          (corp? %)
                          (ice? %))}
       :msg "install a piece of ice from HQ and place 3 advancements on it"
-      :cancel-effect (req (effect-completed state side eid))
+      :cancel {:msg "do nothing"}
       :async true
       :effect (effect (continue-ability (install-card target) card nil))}}))
 
@@ -2296,9 +2294,7 @@
                   (cancellable (filter #(and (corp-installable-type? %)
                                              (some #{"New remote"} (installable-servers state %)))
                                        top-five))
-                  :effect (effect (continue-ability (install-card target) card nil))
-                  :cancel-effect (effect (system-msg (str "declines to use " (get-title card) " to install a card from the top of R&D"))
-                                         (effect-completed eid))}
+                  :effect (effect (continue-ability (install-card target) card nil))}
                  card nil))})
           card nil))}}))
 
@@ -2367,13 +2363,13 @@
                                                              (not-any? #{(:title %)} selected)) (:deck corp)) :sorted))
                     :msg (msg "add " (:title target) " to HQ")
                     :async true
+                    :cancel shuffle-my-deck!
                     :effect (req (move state side target :hand)
                                  (continue-ability
                                    state side
                                    (rt total (dec left) (cons (:title target) selected))
                                    card nil))}
-                   {:effect (effect (shuffle! :corp :deck))
-                    :msg "shuffle R&D"}))]
+                   shuffle-my-deck!))]
     {:on-play
      {:base-play-cost [(->c :x-credits)]
       :msg (msg "search for " (x-cost-value eid) " Sysops")
@@ -3231,8 +3227,6 @@
                                        (in-discard? %))}
                  :msg (msg "install and rez " (:title target) ", ignoring all costs")
                  :async true
-                 :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
-                                        (effect-completed eid))
                  :effect (effect (corp-install eid target nil {:ignore-all-cost true
                                                                :msg-keys {:install-source card
                                                                           :display-origin true}
@@ -3245,9 +3239,7 @@
                :choices {:card #(and (installed? %)
                                      (resource? %))}
                :async true
-               :cancel-effect (effect
-                               (system-msg (str "declines to use " (:title card) " to trash a resource"))
-                               (continue-ability ability card nil))
+               :cancel ability
                :effect (req (wait-for (trash state side target {:cause-card card})
                                       (continue-ability state side ability card nil)))}}))
 
@@ -3289,8 +3281,6 @@
                       :choices {:card #(and (in-hand? %)
                                             (corp? %)
                                             (not (operation? %)))}
-                      :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to install a card"))
-                                             (effect-completed eid))
                       :async true
                       :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
                                                                                :display-origin true}}))}
@@ -3308,8 +3298,9 @@
     :async true
     :effect (req (wait-for (trash state side target {:cause-card card :suppress-checkpoint true})
                            (gain-bad-publicity state :corp eid 1)))
-    :cancel-effect (effect (system-msg (str "uses " (:title card) " to take 1 bad publicity"))
-                           (gain-bad-publicity eid 1))}})
+    :cancel {:msg "take 1 bad publicity"
+             :async true
+             :effect (req (gain-bad-publicity state side eid 1))}}})
 
 (defcard "Violet Level Clearance"
   {:on-play (clearance 8 4)})

@@ -373,8 +373,7 @@
                                                                   (trash-cards state side targets {:keep-server-alive true :suppress-checkpoint true :during-installation true})
                                                                   (corp-install-pay state side eid c server (assoc args :resolved-optional-trash true))))
                                                             (do (toast state :corp (str "You must either trash at least " need-to-trash " ice, or trash none of them"))
-                                                                (continue-ability state side (trash-all-or-none) c targets))))
-                                             :cancel-effect (req (effect-completed state side eid))})]
+                                                                (continue-ability state side (trash-all-or-none) c targets))))})]
                 (continue-ability state side (trash-all-or-none) nil nil))
               (and corp-wants-to-trash? (zero? need-to-trash))
               (continue-ability
@@ -388,7 +387,8 @@
                                   (wait-for
                                     (trash-cards state side targets {:keep-server-alive true :suppress-checkpoint true :during-installation true})
                                     (corp-install-pay state side eid c server (assoc args :resolved-optional-trash true)))))
-                 :cancel-effect (req (corp-install-pay state side eid c server (assoc args :resolved-optional-trash true)))}
+                 :cancel {:async true
+                          :effect (req (corp-install-pay state side eid c server (assoc args :resolved-optional-trash true)))}}
                 nil nil)
               :else (effect-completed state side eid))))))
 
@@ -619,12 +619,13 @@
            :effect (req (wait-for (trash-cards state side (make-eid state eid) targets {:unpreventable true :suppress-checkpoint true})
                                   (update-mu state)
                                   (runner-install-pay state side eid card (assoc args :resolved-optional-trash true))))
-           :cancel-effect (req (update-mu state)
-                               (if (and (= available-mem (available-mu state))
-                                        ;;(not runner-wants-to-trash?)
-                                        (not (or no-mu (sufficient-mu? state card))))
-                                 (effect-completed state side eid)
-                                 (runner-install-pay state side eid card (assoc args :resolved-optional-trash true))))}
+           :cancel {:async true
+                    :effect (req (update-mu state)
+                                 (if (and (= available-mem (available-mu state))
+                                          ;;(not runner-wants-to-trash?)
+                                          (not (or no-mu (sufficient-mu? state card))))
+                                   (effect-completed state side eid)
+                                   (runner-install-pay state side eid card (assoc args :resolved-optional-trash true))))}}
           card nil)
         (let [played-card (move state side (assoc card :facedown facedown) :play-area {:suppress-event true})]
           (wait-for (pay state side (make-eid state eid) card costs)

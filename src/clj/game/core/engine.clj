@@ -123,9 +123,9 @@
 ; :not-distinct -- boolean
 ;   By default, duplicate entries of the same string will be combined into a single button.
 ;   If set to true, duplicate entries of the same string will be shown as multiple buttons.
-; :cancel-effect -- 5-fn
+; :cancel -- ability-map
 ;   If a prompt with the choice "Cancel" is clicked, the prompt exits without doing anything else
-;   and this function will be called.
+;   and this ability map will get resolved
 
 ; SIMULTANEOUS EFFECT RESOLUTION KEYS
 ; :interactive -- 5-fn. when simultaneous effect resolution has been enabled for a specific event, the user receives
@@ -413,7 +413,7 @@
   (let [s (or player side)
         ab (dissoc ability :choices :waiting-prompt)
         args (-> ability
-                 (select-keys [:cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
+                 (select-keys [:async :cancel :prompt-type :show-discard :end-effect :waiting-prompt])
                  (assoc :targets targets))]
     (if-not (change-in-game-state? state side ability card targets)
       (if (get-in ability [:change-in-game-state :pay-cost] nil)
@@ -462,8 +462,8 @@
   ([state side card message choices ability args]
    (let [f #(resolve-ability state side ability card [%])]
      (show-prompt state side (:eid ability) card message choices f
-                  (if-let [cancel-f (:cancel-effect args)]
-                    (assoc args :cancel-effect #(cancel-f state side (:eid ability) card [%]))
+                  (if-let [cancel (:cancel args)]
+                    (assoc args :cancel #(resolve-ability state side (:eid ability) cancel card [%]))
                     args)))))
 
 ;; EVENTS

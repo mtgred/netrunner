@@ -33,7 +33,7 @@
   ([state side card message choices f] (show-prompt state side (make-eid state) card message choices f nil))
   ([state side card message choices f args] (show-prompt state side (make-eid state) card message choices f args))
   ([state side eid card message choices f
-    {:keys [waiting-prompt prompt-type show-discard cancel-effect end-effect targets selectable offer-bad-pub?]}]
+    {:keys [waiting-prompt prompt-type show-discard cancel end-effect targets selectable offer-bad-pub?]}]
    (let [prompt (if (string? message) message (message state side eid card targets))
          choices (choice-parser choices)
          selectable (update-selectable selectable choices)
@@ -47,7 +47,7 @@
                   :offer-bad-pub? offer-bad-pub?
                   :prompt-type (or prompt-type :other)
                   :show-discard show-discard
-                  :cancel-effect cancel-effect
+                  :cancel cancel
                   :end-effect end-effect}]
      (when (or (#{:waiting :run} prompt-type)
                (:number choices)
@@ -137,8 +137,8 @@
       (do (doseq [card cards]
             (update! state side card))
           (resolve-ability state side (:ability selected) card cards))
-      (if-let [cancel-effect (:cancel-effect args)]
-        (cancel-effect nil)
+      (if-let [cancel (:cancel args)]
+        (cancel nil)
         (effect-completed state side (:eid (:ability selected)))))))
 
 (defn resolve-select-bad-publicity!
@@ -167,7 +167,7 @@
    ;; if :max or :min are a function, call them and assoc its return value as the new :max / :min number of cards
    ;; that can be selected.
    (letfn [(wrap-function [args kw]
-             (let [f (kw args)] (if f (assoc args kw #(f state side (:eid ability) card [%])) args)))]
+             (let [ab (kw args)] (if ab (assoc args kw #(resolve-ability state side (:eid ability) ab card [%])) args)))]
      (let [targets (:targets args)
            ability (update-in ability [:choices :max] #(if (fn? %) (% state side (make-eid state (:eid ability)) card targets) %))
            ability (update-in ability [:choices :min] #(if (fn? %) (% state side (make-eid state (:eid ability)) card targets) %))
@@ -224,14 +224,14 @@
                                 (toast state side (str "You must choose at least " min-choices " " (pluralize "card" min-choices)))
                                 (show-select state side card ability update! resolve-ability args))
                               (resolve-select state side (:eid ability) card
-                                              (select-keys (wrap-function args :cancel-effect) [:cancel-effect])
+                                              (select-keys (wrap-function args :cancel) [:cancel])
                                               update! resolve-ability))))))
                     (-> args
                         (assoc :prompt-type :select
                                :offer-bad-pub? (:offer-bad-pub? ability)
                                :selectable selectable-cards
                                :show-discard (:show-discard ability))
-                        (wrap-function :cancel-effect)))))))
+                        (wrap-function :cancel)))))))
 
 (defn show-wait-prompt
   "Shows a 'Waiting for ...' prompt to the given side with the given message.
