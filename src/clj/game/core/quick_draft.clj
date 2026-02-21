@@ -187,7 +187,7 @@
    "City Works Project"
    "Degree Mill"
    "Elective Upgrade"
-   "Fuji Asset Retrieval"
+   "Fujii Asset Retrieval"
    "Global Food Initiative"
    "Ikawah Project"
    "Obokata Protocol"
