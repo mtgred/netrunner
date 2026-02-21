@@ -21,6 +21,7 @@
   (let [cmd-source (with-out-str (repl/source game.core.commands/parse-command))
         implemented-cmds (map str (re-seq #"(?<=\")\/[^ \"]*(?=\")" cmd-source))
         documented-cmds (map :name command-info)]
+    (is true) ;; so kaocha doesn't fail this test with no assertions 
     (doseq [cmd implemented-cmds]
       (when-not (some #(= % cmd) documented-cmds)
         (is false (str "command '" cmd "' is undocumented"))))

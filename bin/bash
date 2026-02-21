@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+docker exec -it netrunner-server-1 /bin/bash "$@"
