@@ -5336,3 +5336,15 @@
       (play-from-hand state :runner "Hunting Grounds")
       (card-ability state :runner (get-resource state 0) 0)
       (is (= 3 (:credit (get-runner))) "Shouldn't lose any credits")))
+
+(deftest witch-hunt-correct-tags
+  (doseq [t [0 1 2 3 4 5 6]]
+    (do-game
+      (new-game {:corp {:hand ["Witch Hunt"]}})
+      (play-and-score state "Witch Hunt")
+      (take-credits state :corp)
+      (is (= 3 (count-tags state)))
+      (take-credits state :runner)
+      (is (changed? [(count-tags state) 0
+                     (count-bad-pub state) 0]
+            (take-credits state :corp))))))

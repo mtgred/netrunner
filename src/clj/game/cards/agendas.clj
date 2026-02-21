@@ -51,7 +51,7 @@
    [game.core.set-aside :refer [set-aside-for-me]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-my-deck!
                                 shuffle-into-rd-effect]]
-   [game.core.tags :refer [gain-tags]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
@@ -2582,3 +2582,22 @@
                                       (not (has-subtype? target "Virtual"))
                                       (not (:facedown (second targets)))))
                        :value 1}]})
+
+(defcard "Witch Hunt"
+  (let [bp {:msg "take 1 bad publicity"
+            :async true
+            :effect (effect (gain-bad-publicity :corp eid 1))}]
+    {:stolen bp
+     :on-score bp
+     :events [{:unregister-once-resolved true
+               :event :corp-action-phase-ends
+               :duration :end-of-turn
+               :req (effect (first-event? :agenda-scored #(same-card? card (:card (first %)))))
+               :msg (msg (if tagged
+                           "Remove all tags, and then give the Runner 3 tags"
+                           "give the Runner 3 tags"))
+               :async true
+               :effect (req (if tagged
+                              (wait-for (lose-tags state side :all {:suppress-checkpoint true})
+                                        (gain-tags state side eid 3))
+                              (gain-tags state side eid 3)))}]}))
