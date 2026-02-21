@@ -130,9 +130,9 @@
                                                              #(assoc % :card providing-card :number (+ (:number % 0) async-result)))
                                                      (use-card uses providing-card async-result))
                                                    card targets))))
-        :cancel{:async true
-                :effect (req (complete-with-result state side eid {:reduction counter-count
-                                                                   :targets (keep #(:card (second %)) selected-cards)}))}}))))
+        :cancel {:async true
+                 :effect (req (complete-with-result state side eid {:reduction counter-count
+                                                                    :targets (keep #(:card (second %)) selected-cards)}))}}))))
 
 (defn pick-credit-providing-cards
   "Similar to pick-virus-counters-to-spend. Works on :recurring and normal credits."
