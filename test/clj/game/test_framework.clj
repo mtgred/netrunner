@@ -232,7 +232,7 @@
 
 (defn select-bad-pub
   [state expected]
-  (click-prompt state :runner (str "Bad Publicity (" expected " available)")))
+  (core/process-action "bad-pub-choice" state :runner {:eid (:eid (get-prompt state :runner))}))
 
 ;; General utilities necessary for starting a new game
 (defn find-card
