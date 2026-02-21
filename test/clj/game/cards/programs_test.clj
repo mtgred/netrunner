@@ -8468,6 +8468,19 @@
        (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
        (is (= "Herald" (-> (get-corp) :deck first :title)) "Herald now on top of R&D"))))
 
+(deftest stowaway-test
+  (do-game
+    (new-game {:runner {:hand ["Stowaway"]}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Stowaway")
+    (click-card state :runner "Ice Wall")
+    (run-on state :hq)
+    (is (changed? [(:credit (get-runner)) 2]
+          (run-continue-until state :success))
+        "Gained 2c for a successful run on stowaway server")))
+
 (deftest study-guide
   ;; Study Guide - 2c to add a power counter; +1 strength per counter
   (do-game
