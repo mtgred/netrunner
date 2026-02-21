@@ -1906,6 +1906,11 @@
     :effect (req (wait-for (trash-cards state side targets {:cause-card card})
                            (gain-tags state :corp eid (count targets))))}})
 
+(defcard "Myōshu"
+  {:on-play {:req (req (not (no-event? state side :agenda-scored #(->> % first :scored-card :installed (not= :this-turn)))))
+             :msg "add itself to [their] score area as an Agenda worth 2 points"
+             :effect (req (as-agenda state side card 2))}})
+
 (defcard "Nanomanagement"
   {:on-play (gain-n-clicks 2)})
 

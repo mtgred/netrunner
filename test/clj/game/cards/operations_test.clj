@@ -3121,6 +3121,34 @@
    (is (= 2 (count-tags state)) "Runner should have two tags from MAD")
    (is (= 3 (count (:discard (get-corp)))) "MAD + 2 cards in discard")))
 
+(deftest myoshu
+  (do-game
+    (new-game {:corp {:credits 50
+                      :hand ["Greenmail" "Myōshu"]}})
+    (play-from-hand state :corp "Greenmail" "New remote")
+    (dotimes [_ 2]
+      (click-advance state :corp (get-content state :remote1 0)))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (score state :corp (get-content state :remote1 0))
+    (is (changed? [(:credit (get-corp)) -10
+                   (:agenda-point (get-corp)) 2]
+          (play-from-hand state :corp "Myōshu"))
+        "Traded 10c for 2 agenda points")))
+
+(deftest myoshu-doesnt-work-if-installed-this-turn
+  (do-game
+    (new-game {:corp {:credits 50
+                      :hand ["Greenmail" "Myōshu"]}})
+    (core/gain state :corp :click 4)
+    (play-from-hand state :corp "Greenmail" "New remote")
+    (dotimes [_ 2]
+      (click-advance state :corp (get-content state :remote1 0)))
+    (score state :corp (get-content state :remote1 0))
+    (is (changed? [(:credit (get-corp)) 0]
+          (play-from-hand state :corp "Myōshu"))
+        "Could not play, installed the greenmail this turn")))
+
 (deftest nanomanagement
   ;; Biotic Labor - Gain 2 clicks
   (do-game

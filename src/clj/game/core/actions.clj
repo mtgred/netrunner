@@ -758,6 +758,7 @@
     (when-let [on-score (:on-score (card-def c))]
       (register-pending-event state :agenda-scored c on-score))
     (queue-event state :agenda-scored {:card c
+                                       :scored-card card
                                        :advancement-requirement advancement-requirement
                                        :advancement-tokens advancement-tokens
                                        :points points})
