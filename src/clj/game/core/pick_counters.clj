@@ -59,7 +59,8 @@
                                                       (str (quantify number "virus counter") " from " title))
                                                    (vals selected-cards)))]
                        (pick-counter-triggers state side eid selected-cards selected-cards :virus counter-count message 0)))))
-    :cancel {:effect (if target-count
+    :cancel {:async true
+             :effect (if target-count
                        (req (doseq [{:keys [card number]} (vals selected-cards)]
                               (update! state :runner (update-in (get-card state card) [:counter :virus] + number)))
                             (complete-with-result state side eid :cancel))
