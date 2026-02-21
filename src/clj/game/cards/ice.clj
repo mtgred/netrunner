@@ -1769,6 +1769,22 @@
                    sub
                    sub]}))
 
+(defcard "Event Horizon"
+  {:subroutines [(choose-one-helper
+                   {:label "Trash 1 program unless runner pays 3 [Credits]"
+                    :player :runner}
+                   [(cost-option [(->c :credit 3)] :runner)
+                    {:option "The Corp trashes a Program"
+                     :ability {:async true
+                               :effect (req (continue-ability state :corp trash-program-sub card nil))}}])
+                 (end-the-run-unless-runner-pays (->c :credit 3))]
+   :abilities [{:label "End the run"
+                :msg "end the run"
+                :async true
+                :req (req this-server run)
+                :cost [(->c :trash-can)]
+                :effect (req (end-run state side eid card))}]})
+
 (defcard "Excalibur"
   {:subroutines [prevent-runs-this-turn]})
 
@@ -1919,6 +1935,15 @@
                       (play-sfx state side "virus-purge")
                       (purge state side eid))}
    :subroutines [end-the-run]})
+
+(defcard "Flywheel"
+  (let [sub {:label "Gain 1 [Credit]. You may draw 1 card"
+             :async true
+             :msg "gain 1 [Credit]"
+             :effect (req (wait-for
+                            (gain-credits state side 1)
+                            (maybe-draw state side eid card 1)))}]
+    {:subroutines [sub sub]}))
 
 (defcard "Formicary"
   {:derezzed-events

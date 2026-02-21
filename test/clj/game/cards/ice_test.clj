@@ -2379,6 +2379,30 @@
     (is (= 1 (count (:subroutines (get-ice state :hq 0)))))
     (is (= 0 (:index (first (:subroutines (get-ice state :hq 0))))))))
 
+(deftest event-horizon-subs
+  (doseq [opt [:pay :resolve]]
+    (do-game
+      (subroutine-test "Event Horizon" 0 nil {:rig ["Rezeki"]})
+      (case opt
+        :resolve (do (click-prompt state :runner "The Corp trashes a Program")
+                     (click-card state :corp "Rezeki")
+                     (is (= 1 (count (:discard (get-runner))))))
+        :pay (click-prompt state :runner "Pay 3 [Credits]")))
+    (do-game
+      (subroutine-test "Event Horizon" 1)
+      (case opt
+        :resolve (do (click-prompt state :runner "End the run")
+                     (is (not (:run @state))))
+        :pay (click-prompt state :runner "Pay 3 [Credits]")))))
+
+(deftest event-horizon-ability-end-the-run
+  (do-game
+    (run-and-encounter-ice-test "Event Horizon")
+    (is (:run @state) "Running")
+    (card-ability state :corp (get-ice state :hq 0) 0)
+    (is (not (:run @state)) "Run ended")
+    (is (= "Event Horizon" (-> (get-corp) :discard first :title)) "Event Horizon trashed")))
+
 (deftest excalibur
   ;; Excalibur - Prevent Runner from making another run this turn
   (do-game
@@ -2586,6 +2610,20 @@
     (is (= "Lamprey" (get-in @state [:runner :discard 0 :title])) "Trashed due to purge")))
 
 (deftest flyswatter-etr-sub (do-game (etr-sub "Flyswatter" 0)))
+
+(deftest flywheel-subs
+  (doseq [sub [0 1]
+          opt [:draw :no-draw]]
+    (do-game
+      (subroutine-test "Flywheel" sub {:corp {:deck [(qty "IPO" 10)]}})
+      (is (= 6 (:credit (get-corp))) "Gained 1 credit")
+      (case opt
+        :draw    (is (changed? [(count (:hand (get-corp))) 1]
+                       (click-prompt state :corp "Yes"))
+                     "Drew and gained a cred")
+        :no-draw (is (changed? [(count (:hand (get-corp))) 0]
+                       (click-prompt state :corp "No"))
+                     "Did not draw, just gained a cred")))))
 
 (deftest formicary-verifies-basic-functionality
   ;; Verifies basic functionality
