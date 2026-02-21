@@ -19,6 +19,7 @@ pom.xml
 .eastwood
 .cache
 *.archive
+*.swp
 
 data/**
 !data/promos.edn
@@ -34,14 +35,6 @@ data/**
 /resources/public/css/
 /resources/public/img/cards/
 /resources/public/sound/
-/data/andb-*.json
-/data/cards*.edn
-/data/cycles.edn
-/data/formats.edn
-/data/mwls.edn
-/data/sets.edn
-/data/img
-/data/card-backs.edn
 /.lein-failures
 
 config.edn
