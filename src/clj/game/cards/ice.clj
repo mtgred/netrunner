@@ -3480,6 +3480,10 @@
              :effect (effect (trash :corp eid card {:cause-card card :cause :effect}))}]
    :subroutines [end-the-run]})
 
+(defcard "Paywall"
+  {:on-encounter (runner-loses-credits 1)
+   :subroutines [(end-the-run-unless-runner-pays (->c :credit 1))]})
+
 (defcard "Peeping Tom"
   (let [sub (end-the-run-unless-runner
               "takes 1 tag"

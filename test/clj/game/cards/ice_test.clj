@@ -6230,6 +6230,15 @@
       (auto-pump-and-break state corroder)
       (is (nil? (get-ice state :hq 0)) "Paper Wall was trashed"))))
 
+(deftest paywall-test
+  (do-game
+    (run-and-encounter-ice-test "Paywall")
+    (is (= 4 (:credit (get-runner))) "lose 1 credit on encounter")
+    (fire-subs state (get-ice state :hq 0))
+    (click-prompt state :runner "Pay 1 [Credits]")
+    (is (:run @state) "run not ended")
+    (is (= 3 (:credit (get-runner))) "paid 1 to not etr")))
+
 (deftest peeping-tom
   ;;Peeping Tom - Counts # of chosen card type in Runner grip
   (do-game
