@@ -444,6 +444,14 @@
                                                              :deck)
                                                        (shuffle! :deck))}}}])))}]}))
 
+(defcard "Borrowed Goods"
+  {:on-install {:change-in-game-state {:req (req (not tagged)) :silent true}
+                :msg "take 1 tag"
+                :interactive (req true)
+                :async true
+                :effect (req (gain-tags state side eid 1))}
+   :static-abilities [(mu+ 1)]})
+
 (defcard "Box-E"
   {:static-abilities [(mu+ 2)
                       (runner-hand-size+ 2)]})

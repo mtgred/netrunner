@@ -1044,6 +1044,18 @@
      (click-prompt state :runner "End the run")
      (is (:broken (first (:subroutines (refresh iw)))) "Ice Wall has been broken"))))
 
+(deftest borrowed-goods-test
+  (do-game
+    (new-game {:runner {:hand [(qty "Borrowed Goods" 4)]}})
+    (take-credits state :corp)
+    (is (changed? [(count-tags state) 1]
+          (play-from-hand state :runner "Borrowed Goods"))
+        "Took a tag")
+    (dotimes [_ 3]
+      (is (changed? [(count-tags state) 0]
+            (play-from-hand state :runner "Borrowed Goods"))
+          "Did not take a tag"))))
+
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
   (do-game
