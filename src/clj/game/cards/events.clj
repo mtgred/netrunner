@@ -264,6 +264,33 @@
                                (move state :corp c :deck))
                              (shuffle! state :corp :deck))}})]})
 
+(defcard "Beta Build"
+  {:makes-run true
+   :on-play {:async true
+             :effect (req (wait-for
+                            (resolve-ability
+                              state side
+                              {:prompt "Install a non-virus program"
+                               :choices (req (cancellable (filter #(and (program? %)
+                                                                        (runner-can-install? state side eid % {:no-toast true}))
+                                                                  (:deck runner))))
+                               :async true
+                               :effect (req (wait-for
+                                              (runner-install state side target {:ignore-all-cost :true :msg-keys {:display-origin true :source-card card}})
+                                              (complete-with-result state side eid async-result)))}
+                              card nil)
+                            (let [installed-card async-result]
+                              (resolve-ability state side eid
+                                               (run-any-server-ability {:events [{:event :run-ends
+                                                                                  :unregister-once-resolved true
+                                                                                  :duration :end-of-run
+                                                                                  :change-in-game-state {:silent true
+                                                                                                         :req (req (get-card state installed-card))}
+                                                                                  :async true
+                                                                                  :msg (msg "add " (:title installed-card) " to the top of the stack")
+                                                                                  :effect (req (move state side installed-card :deck {:front true}))}]})
+                                               card nil))))}})
+
 (defcard "Black Hat"
   {:on-play
    {:trace

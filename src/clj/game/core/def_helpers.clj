@@ -233,6 +233,7 @@
    (merge {:async true
            :prompt "Choose a server"
            :choices (req runnable-servers)
+           :req (req (seq runnable-servers))
            :label "Run a server"
            :makes-run true
            :msg (msg "make a run on " target)

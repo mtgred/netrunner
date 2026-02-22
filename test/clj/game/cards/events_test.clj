@@ -505,6 +505,30 @@
         (is (= (inc n) (count (get-in @state [:corp :deck]))) "1 card was shuffled into R&D")
         (is (zero? (count (get-in @state [:corp :servers :remote2 :content]))) "No cards left in server 3"))))
 
+(deftest beta-build
+  (do-game
+    (new-game {:runner {:hand ["Beta Build"] :deck ["Orca"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Beta Build")
+    (click-prompt state :runner "Orca")
+    (is (= "Orca" (:title (get-program state 0))))
+    (click-prompt state :runner "HQ")
+    (run-continue-until state :success)
+    (click-prompt state :runner "No action")
+    (is-deck? state :runner ["Orca"])))
+
+#_(deftest ^:kaocha/pending beta-build-cannot-run
+    ;; note that peace in our time needs to be updated currently, it forbids
+    ;; run events when it should not
+    (do-game
+      (new-game {:runner {:hand ["Beta Build" "Peace in Our Time"]
+                          :deck ["Orca"]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Peace in Our Time")
+      (play-from-hand state :runner "Beta Build")
+      (click-prompt state :runner "Orca")
+      (is (no-prompt? state :runner))))
+
 (deftest black-hat
   ;; Black Hat
   (do-game
