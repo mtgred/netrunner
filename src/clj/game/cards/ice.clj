@@ -2697,6 +2697,27 @@
                              :effect (effect (continue-ability on-rez-ability card nil))}
                :no-ability {:effect (effect (system-msg :corp (str "declines to use " (:title card))))}}}}))
 
+(defcard "Knowledge Seeker"
+  {:events [{:event :end-of-encounter
+             :req (req (and (= (:ice context) card)
+                            (>= (get-counters card :virus) 3)))
+             :interactive (req true)
+             :async true
+             :msg "purge virus counters and derez itself"
+             :effect (req (wait-for (derez state side card)
+                                    (play-sfx state side "virus-purge")
+                                    (purge state side eid)))}]
+   :subroutines [{:label "Place 1 virus counter on this card"
+                  :msg "place 1 virus counter on itself"
+                  :effect (req (add-counter state side eid card :virus 1))
+                  :async true}
+                 {:label "Rearrange the top 4 cards of R&D"
+                  :async true
+                  :waiting-prompt true
+                  :change-in-game-state {:silent true :req (req (seq (:deck corp)))}
+                  :effect (req (resolve-ability state side eid (reorder-choice :corp (take 4 (:deck corp))) card targets))}
+                 end-the-run]})
+
 (defcard "Komainu"
     {:on-encounter {:interactive (req true)
                     :effect (req (let [sub-count (count (:hand runner))]
