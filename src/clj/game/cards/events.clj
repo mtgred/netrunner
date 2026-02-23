@@ -286,7 +286,6 @@
                                                                                   :duration :end-of-run
                                                                                   :change-in-game-state {:silent true
                                                                                                          :req (req (get-card state installed-card))}
-                                                                                  :async true
                                                                                   :msg (msg "add " (:title installed-card) " to the top of the stack")
                                                                                   :effect (req (move state side installed-card :deck {:front true}))}]})
                                                card nil))))}})

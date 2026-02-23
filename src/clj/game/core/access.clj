@@ -629,7 +629,6 @@
   [state {:keys [chosen random-access-limit] :as access-amount} already-accessed {:keys [no-root] :as args}]
   (let [current-available (set (concat (if-not (any-effects state :runner :disable-random-accesses true? {:server :rd}) (map :cid (get-in @state [:corp :deck])) [])
                                        (map :cid (root-content state :rd))))
-        already-accessed (clj-set/intersection already-accessed current-available)
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
         deck (access-cards-from-rd state)
@@ -820,7 +819,6 @@
                (get-in @state [:corp :hand]))
         current-available (set (concat (map :cid hand)
                                        (map :cid (root-content state :hq))))
-        already-accessed (clj-set/intersection already-accessed current-available)
 
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
