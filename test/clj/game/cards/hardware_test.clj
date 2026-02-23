@@ -4866,6 +4866,20 @@
     (is (= 0 (count (:hand (get-runner)))))
     (is (= ["Easy Mark" "Ika"] (map :title (:discard (get-runner)))))))
 
+(deftest rotary-test
+  (do-game
+    (new-game {:runner {:hand ["Rotary"]}
+               :corp {:hand [(qty "IPO" 4)]
+                      :deck ["IPO" "IPO" "IPO"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rotary")
+    (run-empty-server state :rd)
+    (is (changed? [(count-tags state) 1]
+          (click-prompt state :runner "Yes"))
+        "Tag on")
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "No action")))
+
 (deftest rubicon-switch
   ;; Rubicon Switch
   (do-game
@@ -5822,6 +5836,20 @@
       (click-prompt state :runner "Steal")
       (is (= 3 (:agenda-point (get-runner))) "Runner got 3 points")
       (is (= 2 (count (:scored (get-runner)))) "Runner got 2 cards in score area")))
+
+(deftest touchstone-test
+  (do-game
+    (new-game {:runner {:hand ["Touchstone" "Clean Getaway"]}
+               :corp {:hand ["PAD Campaign"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Touchstone")
+    (play-from-hand state :runner "Clean Getaway")
+    (click-prompt state :runner "HQ")
+    (run-continue-until state :success)
+    (is (changed? [(:credit (get-runner)) -3]
+          (do-trash-prompt state 4)
+          (click-card state :runner "Touchstone"))
+        "3 + 1 for touchstone")))
 
 (deftest turntable
   ;; Turntable - Swap a stolen agenda for a scored agenda

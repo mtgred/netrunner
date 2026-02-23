@@ -52,7 +52,7 @@
                            get-current-encounter jack-out make-run
                            successful-run-replace-breach total-cards-accessed]]
    [game.core.say :refer [play-sfx system-msg]]
-   [game.core.servers :refer [target-server is-central?]]
+   [game.core.servers :refer [target-server is-central? zone->name]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.threat :refer [threat-level]]
@@ -2215,6 +2215,23 @@
                :effect (effect (continue-ability ability card nil))}]
      :abilities [ability]}))
 
+(defcard "Rotary"
+  {:static-abilities [(mu+ 1)]
+   :events [{:event :breach-server
+             :automatic :pre-breach
+             :optional {:req (req (or (= target :rd) (= target :hq)))
+                        :prompt "Tag 1 tag to see an additional card?"
+                        :yes-ability {:cost [(->c :gain-tag 1)]
+                                      :msg (msg "access 1 additional card from " (zone->name target))
+                                      :effect (effect (access-bonus target 1))}}}]
+   :corp-abilities [{:action true
+                     :label "Trash Rotary"
+                     :async true
+                     :cost [(->c :click 1) (->c :credit 2)]
+                     :req (req (and tagged (= :corp side)))
+                     :effect (effect (system-msg :corp "spends [Click] and 2 [Credits] to trash Rotary")
+                                     (trash :corp eid card {:cause-card card}))}]})
+
 (defcard "Rubicon Switch"
   {:abilities [{:action true
                 :cost [(->c :click 1)(->c :x-credits)]
@@ -2655,6 +2672,14 @@
                          :effect (req (if (get-only-card-to-access state)
                                         (effect-completed state nil eid)
                                         (access-card state side eid (nth (:deck corp) (dec (str->int target))) "an unseen card")))}})]})
+
+(defcard "Touchstone"
+  {:events [{:event :play-event
+             :req (req (first-event? state side :play-event))
+             :async true
+             :effect (req (add-counter state side eid card :credit 1))}]
+   :interactions {:pay-credits {:req (req run)
+                                :type :credit}}})
 
 (defcard "Turntable"
   {:static-abilities [(mu+ 1)]
