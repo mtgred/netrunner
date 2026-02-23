@@ -608,6 +608,26 @@
       (is (waiting? state :runner)
           "Runner has prompt to wait for Corp to use Ganked!"))))
 
+(deftest ansel-2.0-subs-test
+  (testing "trash 1 installed card"
+    (do-game
+      (subroutine-test "Ansel 2.0" 0 nil {:rig ["Fermenter"]})
+      (click-card state :corp "Fermenter")
+      (is (= "Fermenter" (->> (get-runner) :discard first :title)) "Trashed fermenter")))
+  (testing "remove a card in the heap from the game"
+    (do-game
+      (subroutine-test "Ansel 2.0" 1 {:runner {:discard ["Fermenter" "Ika" "Rezeki"]}})
+      (click-card state :corp "Fermenter")
+      (is (= ["Ika" "Rezeki"] (->> (get-runner) :discard (mapv :title))) "Only ika/zeki in bin")))
+  (testing "install a card from HQ or Archives"
+    (doseq [zone [:hand :discard]]
+      (do-game
+        (subroutine-test "Ansel 2.0" 2 {:corp {zone ["PAD Campaign"]}})
+        (click-card state :corp "PAD Campaign")
+        (click-prompt state :corp "New remote"))))
+  (testing "end the run"
+    (do-game (etr-sub "Ansel 2.0" 3))))
+
 (deftest anvil
   (do-game
     (new-game {:corp {:hand ["Anvil" "Ice Wall"]}

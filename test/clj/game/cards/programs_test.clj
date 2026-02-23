@@ -1003,6 +1003,54 @@
                     (card-ability state :runner (refresh baba) 2))
           "Spent 1c to boost baba yaga"))))
 
+(deftest baker-stealth-hq
+  (do-game
+    (new-game {:runner {:hand ["Baker" "Mantle"]}
+               :corp {:hand [(qty "Rashida Jaheem" 3)]
+                      :deck ["Hostile Takeover"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Baker")
+    (play-from-hand state :runner "Mantle")
+    (card-ability state :runner (get-program state 0) 0)
+    (run-continue-until state :success)
+    (click-prompt state :runner "Pay 1 [Credits]: Switch to HQ")
+    (click-card state :runner "Mantle")
+    (do-trash-prompt state 1)
+    (run-empty-server state :archives)
+    (is (no-prompt? state :runner))))
+
+(deftest baker-stealth-rd
+  (do-game
+    (new-game {:runner {:hand ["Baker" "Mantle"]}
+               :corp {:hand [(qty "Rashida Jaheem" 3)]
+                      :deck ["Hostile Takeover"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Baker")
+    (play-from-hand state :runner "Mantle")
+    (card-ability state :runner (get-program state 0) 0)
+    (run-continue-until state :success)
+    (click-prompt state :runner "Pay 1 [Credits]: Switch to R&D")
+    (click-card state :runner "Mantle")
+    (click-prompt state :runner "Steal")
+    (run-empty-server state :archives)
+    (is (no-prompt? state :runner))))
+
+(deftest baker-vs-skunkworks
+  (do-game
+    (new-game {:runner {:hand ["Baker" "Mantle"]}
+               :corp {:hand [(qty "Rashida Jaheem" 3) "Manegarm Skunkworks"]
+                      :deck ["Hostile Takeover"]}})
+    (play-cards state :corp ["Manegarm Skunkworks" "HQ" :rezzed])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Baker")
+    (play-from-hand state :runner "Mantle")
+    (card-ability state :runner (get-program state 0) 0)
+    (run-continue-until state :success)
+    (click-prompt state :runner "Pay 1 [Credits]: Switch to HQ")
+    (click-card state :runner "Mantle")
+    (click-prompt state :runner "End the run")
+    (is (not (:run @state)) "Skunkworks fired on HQ approach")))
+
 (deftest bankroll
   ;; Bankroll - Includes check for Issue #4334
   (do-game

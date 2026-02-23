@@ -743,6 +743,21 @@
                  cannot-steal-or-trash-sub]
    :runner-abilities [(bioroid-break 1 1)]})
 
+(defcard "Ansel 2.0"
+  {:runner-abilities [(bioroid-break 2 2)]
+   :subroutines [trash-installed-sub
+                 {:label  "Remove 1 card in the Heap from the game"
+                  :change-in-game-state {:req (req (and (seq (:discard runner))
+                                                        (not (zone-locked? state :runner :discard))))}
+                  :prompt  "Choose a card in the heap to remove from the game"
+                  :show-other-player-discard true
+                  :waiting-prompt true
+                  :choices {:card (every-pred runner? in-discard?)}
+                  :msg     (msg "remove " (:title target) " from the game")
+                  :effect  (req (move state :runner target :rfg))}
+                 (install-from-hq-or-archives-sub)
+                 end-the-run]})
+
 (defcard "Anvil"
   (letfn [(encounter-ab []
             {:optional {:prompt "Trash another card?"

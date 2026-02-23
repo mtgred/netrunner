@@ -559,6 +559,27 @@
      :hosted-gained gain-abis
      :hosted-lost gain-abis}))
 
+(defcard "Baker"
+  (letfn [(switch-server [key serv]
+            {:option (str "Switch to " serv)
+             :cost [(->c :credit 1 {:stealth :all-stealth})]
+             :ability {:msg (str "change the attacked server to " serv)
+                       :effect (req (swap! state assoc-in [:run :server] [key]))}})]
+    {:abilities [(run-server-ability
+                   :archives
+                   {:action true
+                    :cost [(->c :click 1)]
+                    :once :per-turn
+                    :events [(choose-one-helper
+                               {:event :pre-approach-server
+                                :req (req (= :archives (-> run :server first)))
+                                :duration :end-of-run
+                                :unregister-once-resolved true
+                                :interactive (req true)
+                                :optional true}
+                               [(switch-server :hq "HQ")
+                                (switch-server :rd "R&D")])]})]}))
+
 (defcard "Bankroll"
   {:special {:auto-place-credit :always}
    :events [{:event :successful-run
