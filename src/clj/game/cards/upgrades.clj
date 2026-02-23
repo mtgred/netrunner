@@ -22,7 +22,7 @@
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [dissoc-req pay register-default-events
                              register-events resolve-ability unregister-events]]
-   [game.core.events :refer [first-event? first-run-event? no-event? turn-events run-event-count]]
+   [game.core.events :refer [first-event? first-run-event? no-event? turn-events run-event-count run-events]]
    [game.core.finding :refer [find-cid find-latest]]
    [game.core.flags :refer [clear-persistent-flag! is-scored? register-persistent-flag!
                             register-run-flag!]]
@@ -726,43 +726,40 @@
                        :successful (give-tags 2)}}})
 
 (defcard "Flagship"
-  (let [lockdown (fn [state side card]
-                   (register-lingering-effect
-                     state side card
-                     {:type :disable-random-accesses
-                      :value true
-                      :duration :end-of-run})
-                   (register-lingering-effect
-                     state side card
-                     {:type :disable-access-candidacy
-                      :req (req (not (same-card? card target)))
-                      :duration :end-of-run
-                      :value true}))
-        ev {:event :post-access-card
-            :once :per-run
-            :msg "prevent the Runner from accessing other cards this run"
-            :req (req (and run this-server
-                           (not (same-card? card target))))
-            :effect (req ;; random accesses get disabled after your first access that is not this card
-	              (lockdown state side card))}]
-    ;; NOTE: Based on the CR, this invalidates all other cards as access candidates
-    ;; when you touch a card other than this card.
-    ;; This means that if you cupellate this, you dodge it,
-    ;; but if you access another card first, then cupellate this, you do not
+  (let [other-cards-accessed (fn [state card] (map :cid (filter #(not= (:cid %) (:cid card)) (apply concat (run-events state :runner :access)))))
+        prevent-random {:type :disable-random-accesses
+                        :value true
+                        :req (req (and run this-server (seq (other-cards-accessed state card))))}
+        prevent-installed {:type :disable-access-candidacy
+                           :value true
+                           :req (req (and run this-server
+                                          (not (same-card? card target))
+                                          (seq (other-cards-accessed state card))))}]
     {:static-abilities [{:type :block-successful-run
                          :req (req this-server)
-                         :value true}]
-     :events [ev]
+                         :value true}
+                        prevent-random
+                        prevent-installed]
      :on-trash {:req (req (and run (= :runner side)))
-		:effect (req (if (>= (run-event-count state side :access) 2)
-                               (lockdown state side card)
-                               (register-events
-                                 state side card
-                                 [{:duration :end-of-run
-                                   :event :access
-                                   :req (req run)
-                                   :effect (req (lockdown state side card))}])))}}))
-
+                :effect (req
+                          (let [c (:card context)]
+                            (register-lingering-effect
+                              state side (:card context)
+                              {:type :disable-random-accesses
+                               :value true
+                               :duration :end-of-run
+                               :req (req
+                                      (and run
+                                           (= (:server run) [(second (get-zone c))])
+                                           (seq (other-cards-accessed state c))))})
+                            (register-lingering-effect
+                              state side (:card context)
+                              {:type :disable-access-candidacy
+                               :value true
+                               :duration :end-of-run
+                               :req (req (and run
+                                              (= (:server run) [(second (get-zone c))])
+                                              (seq (other-cards-accessed state c))))})))}}))
 
 (defcard "Fractal Threat Matrix"
   {:events [{:event :subroutines-broken
