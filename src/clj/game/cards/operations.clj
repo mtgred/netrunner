@@ -29,7 +29,7 @@
    [game.core.gaining :refer [gain-clicks gain-credits lose-clicks
                               lose-credits]]
    [game.core.hand-size :refer [runner-hand-size+]]
-   [game.core.ice :refer [update-all-ice]]
+   [game.core.ice :refer [resolve-subroutine! unbroken-subroutines-choice update-all-ice]]
    [game.core.identities :refer [disable-identity enable-identity]]
    [game.core.initializing :refer [ability-init card-init]]
    [game.core.installing :refer [corp-install corp-install-msg install-as-condition-counter]]
@@ -3306,6 +3306,27 @@
     :cancel {:msg "take 1 bad publicity"
              :async true
              :effect (req (gain-bad-publicity state side eid 1))}}})
+
+(defcard "Unleash"
+  {:on-play {:additional-cost [(->c :tag 1)]
+             :change-in-game-state {:req (req (some (every-pred ice? (complement rezzed?)) (all-installed state :corp)))}
+             :choices {:card (every-pred ice? installed? (complement rezzed?))}
+             :async true
+             :effect (req (wait-for
+                            (rez state side target {:ignore-cost :all-costs})
+                            (let [rezzed-card (get-card state target)]
+                              (if (and rezzed-card (rezzed? rezzed-card) (seq (:subroutines rezzed-card)))
+                                (continue-ability
+                                  state side
+                                  {:prompt "Choose a subroutine to resolve"
+                                   :choices (req (unbroken-subroutines-choice rezzed-card))
+                                   :msg (msg "resolve the subroutine (\"[subroutine] "
+                                             target "\") from " (:title rezzed-card))
+                                   :async true
+                                   :effect (req (let [sub (first (filter #(= target (make-label (:sub-effect %))) (:subroutines rezzed-card)))]
+                                                  (resolve-subroutine! state side eid rezzed-card (assoc sub :external-trigger true))))}
+                                  card nil)
+                                (effect-completed state side eid)))))}})
 
 (defcard "Violet Level Clearance"
   {:on-play (clearance 8 4)})

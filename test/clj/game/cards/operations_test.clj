@@ -5622,6 +5622,17 @@
     (is (= 2 (count (:discard (get-runner)))) "Runner has 2 trashed cards")
     (is (= 1 (count-bad-pub state)) "Corp takes 1 bad pub")))
 
+(deftest unleash-test
+  (do-game
+    (new-game {:corp {:hand ["Unleash" "Neural Katana"]}
+               :runner {:hand [(qty "Ika" 5)] :tags 1}})
+    (play-from-hand state :corp "Neural Katana" "HQ")
+    (is (changed? [(count (:hand (get-runner))) -3
+                   (count-tags state) -1]
+          (play-from-hand state :corp "Unleash")
+          (click-prompts state :corp "Neural Katana" "Do 3 net damage"))
+        "Neural katana was unleashed")))
+
 (deftest violet-level-clearance
   ;; Violet Level Clearance
   (do-game
