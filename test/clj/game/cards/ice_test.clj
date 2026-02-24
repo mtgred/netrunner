@@ -8154,6 +8154,31 @@
       (click-prompt state :runner "2")
       (is (not (rezzed? (refresh tmi)))))))
 
+(deftest tocsin-sub-0-lose-2-creds
+  (do-game
+    (subroutine-test "Tocsin" 0 {:runner {:credits 3}})
+    (is (= 1 (:credit (get-runner))) "lost 2 credits")))
+
+(deftest tocsin-sub-1-etr (do-game (new-game (etr-sub "Tocsin" 1))))
+(deftest tocsin-sub-2-etr (do-game (new-game (etr-sub "Tocsin" 2))))
+
+(deftest tocsin-expend-ability
+  (do-game
+    (new-game {:corp {:hand ["Tocsin"]
+                      :deck ["Guard" "Ice Wall"]}})
+    (expend state :corp (first (:hand (get-corp))))
+    (click-prompts state :corp "Ice Wall" "Guard" "OK")
+    (is-hand? state :corp ["Guard" "Ice Wall"])))
+
+(deftest tocsin-expend-ability-with-cancel
+  (do-game
+    (new-game {:corp {:hand ["Tocsin"]
+                      :deck ["Guard" "Ice Wall"]}})
+    (expend state :corp (first (:hand (get-corp))))
+    (click-prompts state :corp "Ice Wall" "Guard" "I want to start over" "Ice Wall" "Cancel" "OK")
+    (is-hand? state :corp ["Ice Wall"])))
+
+
 (deftest tour-guide-rez-before-other-assets
   ;; Rez before other assets
   (do-game
@@ -8717,6 +8742,35 @@
           "paid 1c to place a token on ngo front")
       (card-subroutine state :corp (refresh vas) 0)
       (is (= 1 (count-tags state)) "Runner took 1 tag"))))
+
+(deftest vertigo-sub-0-lose-click
+  (do-game
+    (subroutine-test "Vertigo" 0)
+    (is (= 2 (:click (get-runner))) "Lost a click")))
+
+(deftest vertigo-skill-issue
+  (doseq [target ["Rashida Jaheem" "Project Atlas"]]
+    (do-game
+      (new-game {:corp {:hand [target "Vertigo"]}})
+      (play-from-hand state :corp "Vertigo" "HQ")
+      (take-credits state :corp)
+      (rez state :corp (get-ice state :hq 0))
+      (core/lose state :runner :click 3)
+      (run-on state :hq)
+      (run-continue-until state :success)
+      (is (= ["No action"] (prompt-titles :runner)) "Cannot trash/steal due to Vertigo"))))
+
+(deftest vicsek-test-x-damage-and-x-tags
+  (dotimes [x 10]
+    (do-game (subroutine-test "Vicsek" 0 {:runner {:tags x :hand (inc x)}})
+             (is (= x (count (:discard (get-runner)))))
+             (is (= (* 2 x) (count-tags state))))))
+
+(deftest viksek-give-a-tag-and-trash-itself
+  (dotimes [x 10]
+    (do-game (subroutine-test "Vicsek" 1 {:runner {:tags x}})
+             (is (= (inc x) (count-tags state)))
+             (is (= "Vicsek" (:title (first (:discard (get-corp))))) "Trashed itself"))))
 
 (deftest virtual-service-agent
   (do-game
