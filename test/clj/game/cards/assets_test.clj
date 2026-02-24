@@ -1904,6 +1904,18 @@
       (is (= 3 (core/trash-cost state :runner (refresh ep2)))
           "Trash cost increased to 3 by one active Encryption Protocol"))))
 
+(deftest esca
+  (doseq [[tags damage] [[0 0] [1 1] [15 1]]]
+    (do-game
+      (new-game {:corp {:discard ["Esca"]}
+                 :runner {:hand ["Ika" "Ika"]
+                          :tags tags}})
+      (take-credits state :corp)
+      (is (changed? [(:credit (get-runner)) -1
+                     (count (:hand (get-runner))) (- damage)]
+            (run-empty-server state :archives))
+          "Tanked it"))))
+
 (deftest estelle-moon
   ;; Estelle Moon
   (letfn [(estelle-test [number]

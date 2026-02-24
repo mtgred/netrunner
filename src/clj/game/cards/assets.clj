@@ -1071,6 +1071,20 @@
                        :req (req (installed? target))
                        :value 1}]})
 
+(defcard "Esca"
+  {:flags {:rd-reveal (req true)}
+   :poison true
+   :on-access {:msg "force the Runner to lose 1 [Credits]"
+               :async true
+               :effect (req (wait-for (lose-credits state :runner 1)
+                                      (continue-ability
+                                        state side
+                                        {:req (req tagged)
+                                         :msg "do 1 net damage"
+                                         :async true
+                                         :effect (req (damage state side eid :net 1))}
+                                        card nil)))}})
+
 (defcard "Estelle Moon"
   {:events [{:event :corp-install
              :req (req (and (or (asset? (:card context))
