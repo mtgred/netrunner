@@ -2451,6 +2451,39 @@
       (run-on state "HQ")
       (is (:run @state) "Run initiated ok"))))
 
+(deftest ezam-subroutines-test
+  (testing "Look at the top card of R&D. Place it on the bottom."
+    (do-game
+      (subroutine-test "ezaM" 0 {:corp {:deck ["PAD Campaign" "IPO"]}})
+      (let [d (map :title (:deck (get-corp)))]
+        (click-prompt state :corp "Place it on the bottom of R&D")
+        (is-deck? state :corp (reverse d)))))
+  (testing "Look at the top card of R&D. Leave it there."
+    (do-game
+      (subroutine-test "ezaM" 0 {:corp {:deck ["PAD Campaign" "IPO"]}})
+      (let [d (map :title (:deck (get-corp)))]
+        (click-prompt state :corp "Done")
+        (is-deck? state :corp d))))
+  (testing "Give ice +1 strength."
+    (do-game
+      (subroutine-test "ezaM" 1)
+      (is (= (get-strength (get-ice state :hq 0)) (+ 1 (:strength (get-ice state :hq 0))))
+          "Ice strength boosted")
+      (run-continue-until state :success)
+      (is (= (get-strength (get-ice state :hq 0)) (:strength (get-ice state :hq 0)))
+          "Ice strength reset"))))
+
+(deftest ezam-swaps-with-other-ice
+  (do-game
+    (new-game {:corp {:hand ["ezaM" "Vanilla"]}})
+    (play-from-hand state :corp "ezaM" "HQ")
+    (play-from-hand state :corp "Vanilla" "Archives")
+    (rez state :corp (get-ice state :hq 0))
+    (card-ability state :corp (get-ice state :hq 0) 0)
+    (click-card state :corp "Vanilla")
+    (is (= "Vanilla" (:title (get-ice state :hq 0))))
+    (is (= "ezaM" (:title (get-ice state :archives 0))))))
+
 (deftest f2p
   ;; F2P
   (do-game

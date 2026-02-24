@@ -1806,6 +1806,34 @@
 (defcard "Executive Functioning"
   {:subroutines [(trace-ability 4 (do-brain-damage 1))]})
 
+(defcard "ezaM"
+  {:subroutines [{:label "Look at the top card of R&D"
+                  :change-in-game-state {:silent true :req (req (seq (:deck corp)))}
+                  :waiting-prompt true
+                  :prompt (msg "The top card of R&D is " (get-in @state [:corp :deck 0 :title]))
+                  :choices (req [(when (not= (count (:deck corp)) 1)
+                                   "Place it on the bottom of R&D")
+                                 "Done"])
+                  :msg (msg "look at the top card of R&D" (when-not (= target "Done") " and add it to the bottom of R&D"))
+                  :effect (req (when-not (= target "Done") (move state side (first (:deck corp)) :deck)))}
+                 {:label "Each piece of ice gets +1 strength for the remainder of this run."
+                  :msg "give +1 strength to all ice for the remainder of the run"
+                  :effect (effect (register-lingering-effect
+                                    card
+                                    (let [c-ice card]
+                                      {:type :ice-strength
+                                       :duration :end-of-run
+                                       :value 1}))
+                                  (update-all-ice))}]
+   :abilities [{:cost [(->c :click 1)]
+                :action true
+                :label "Swap this ice with another installed ice."
+                :choices {:req (req (and (ice? target)
+                                         (installed? target)
+                                         (not (same-card? card target))))}
+                :msg (msg "swap itself with " (card-str state target))
+                :effect (req (swap-ice state side card target))}]})
+
 (defcard "F2P"
   {:subroutines [add-runner-card-to-grip
                  (give-tags 1)]
