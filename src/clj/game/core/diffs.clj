@@ -230,6 +230,7 @@
    :card
    :prompt-type
    :show-discard
+   :show-opponent-discard
    :selectable
    :eid
    ;; bad pub

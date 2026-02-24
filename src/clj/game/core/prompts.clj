@@ -33,7 +33,7 @@
   ([state side card message choices f] (show-prompt state side (make-eid state) card message choices f nil))
   ([state side card message choices f args] (show-prompt state side (make-eid state) card message choices f args))
   ([state side eid card message choices f
-    {:keys [waiting-prompt prompt-type show-discard cancel end-effect targets selectable offer-bad-pub?]}]
+    {:keys [waiting-prompt prompt-type show-discard show-opponent-discard cancel end-effect targets selectable offer-bad-pub?]}]
    (let [prompt (if (string? message) message (message state side eid card targets))
          choices (choice-parser choices)
          selectable (update-selectable selectable choices)
@@ -47,6 +47,7 @@
                   :offer-bad-pub? offer-bad-pub?
                   :prompt-type (or prompt-type :other)
                   :show-discard show-discard
+                  :show-opponent-discard show-opponent-discard
                   :cancel cancel
                   :end-effect end-effect}]
      (when (or (#{:waiting :run} prompt-type)
@@ -230,6 +231,7 @@
                         (assoc :prompt-type :select
                                :offer-bad-pub? (:offer-bad-pub? ability)
                                :selectable selectable-cards
+                               :show-opponent-discard (:show-opponent-discard ability)
                                :show-discard (:show-discard ability))
                         (wrap-function :cancel)))))))
 

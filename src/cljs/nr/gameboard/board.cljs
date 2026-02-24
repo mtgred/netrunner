@@ -1981,7 +1981,9 @@
   (let [autocomp (r/track (fn [] (get-in @prompt-state [:choices :autocomplete])))
         show-discard? (r/track (fn [] (get-in @prompt-state [:show-discard])))
         prompt-type (r/track (fn [] (get-in @prompt-state [:prompt-type])))
-        opened-by-system (r/atom false)]
+        discard-opened-by-system (r/atom false)
+        show-opponent-discard? (r/track (fn [] (get-in @prompt-state [:show-opponent-discard])))
+        opponent-discard-opened-by-system (r/atom false)]
     (r/create-class
       {:display-name "button-pane"
 
@@ -1990,9 +1992,14 @@
          (when (pos? (count @autocomp))
            (-> "#card-title" js/$ (.autocomplete (clj->js {"source" @autocomp}))))
          (cond @show-discard? (do (-> ".me .discard-container .popup" js/$ .fadeIn)
-                                  (reset! opened-by-system true))
-               @opened-by-system (do (-> ".me .discard-container .popup" js/$ .fadeOut)
-                                     (reset! opened-by-system false)))
+                                  (reset! discard-opened-by-system true))
+               @discard-opened-by-system (do (-> ".me .discard-container .popup" js/$ .fadeOut)
+                                             (reset! discard-opened-by-system false)))
+         (cond @show-opponent-discard? (do (-> ".opponent .discard-container .popup" js/$ .fadeIn)
+                                           (reset! opponent-discard-opened-by-system true))
+               @opponent-discard-opened-by-system (do (-> ".opponent .discard-container .popup" js/$ .fadeOut)
+                                                      (reset! opponent-discard-opened-by-system false)))
+
          (if (= "select" @prompt-type)
            (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
            (set! (.-cursor (.-style (.-body js/document))) "default"))
