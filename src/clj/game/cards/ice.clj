@@ -4315,6 +4315,44 @@
                                    :effect (effect (derez eid card))}}}
    :subroutines [end-the-run]})
 
+(defcard "Tocsin"
+  (letfn [(next-t [t] (when (= t "Barrier") "Sentry"))
+          (search-for-type [t chosen]
+            (if t
+              {:prompt (str "Pick a " t " to add to HQ")
+               :choices (req (cancellable (filter #(has-subtype? % t) (:deck corp)) :sorted))
+               :async true
+               :effect (req (continue-ability state side (search-for-type (next-t t) (conj chosen target)) card nil))
+               :cancel {:async true
+                        :effect (req (continue-ability
+                                       state side
+                                       (search-for-type (next-t t) chosen)
+                                       card nil))}}
+              (choose-one-helper
+                {:prompt (if (seq chosen)
+                           (str "You will tutor " (enumerate-cards chosen))
+                           "You will shuffle R&D")}
+                [{:option "OK"
+                  :ability (if (seq chosen)
+                             {:async true
+                              :effect (req (wait-for
+                                             (reveal-loud state side card {:and-then ", and add [them] to HQ"} (vec chosen))
+                                             (doseq [c chosen] (move state :corp c :hand))
+                                             (shuffle! state :corp :deck)
+                                             (effect-completed state side eid)))}
+                             {:msg "shuffle R&D"
+                              :effect (req (shuffle! state side :deck))})}
+                 {:option "I want to start over"
+                  :ability (search-for-type "Barrier" #{})}])))]
+    {:subroutines [(runner-loses-credits 2)
+                   end-the-run
+                   end-the-run]
+     :expend {:change-in-game-state {:req (req (seq (:deck corp)))}
+              :cost [(->c :credit 1)]
+              :msg "search R&D for up to 1 barrier and up to 1 sentry"
+              :async true
+              :effect (req (continue-ability state side (search-for-type "Barrier" #{}) card nil))}}))
+
 (defcard "Tollbooth"
   {:on-encounter {:async true
                   :effect (req (wait-for (pay state :runner (make-eid state eid) card [(->c :credit 3)])
@@ -4534,6 +4572,42 @@
   {:subroutines [(gain-credits-sub 2)
                  (runner-loses-credits 2)
                  (trace-ability 2 (give-tags 1))]})
+
+(defcard "Vertigo"
+  ;; "When the Runner passes this ice, if they have no remaining {click}, they
+  ;; cannot steal or trash cards for the remainder of this run.
+  ;; {sub} The Runner loses {click}."
+  {:events [{:event :pass-ice
+             :req (req (same-card? (:ice context) card))
+             :change-in-game-state {:silent true :req (req (zero? (:click runner)))}
+             :msg "prevent the Runner from stealing or trashing Corp cards for the remainder of the run"
+             :effect (effect (register-run-flag!
+                               card :can-steal
+                               (fn [state _side _card]
+                                 ((constantly false)
+                                  (toast state :runner "Cannot steal due to Vertigo." "warning"))))
+                             (register-run-flag!
+                               card :can-trash
+                               (fn [state _side card]
+                                 ((constantly (not (corp? card)))
+                                  (toast state :runner "Cannot trash due to Vertigo." "warning")))))}]
+   :subroutines [runner-loses-click]})
+
+(defcard "Vicsek"
+  {:subroutines [{:label "Do X damage and give the Runner X tags."
+                  :async true
+                  :change-in-game-state {:silent true :req (req tagged)}
+                  :effect (req (let [x (count-tags state)]
+                                 (wait-for (gain-tags state :side x {:suppress-checkpoint true})
+                                           (damage state side eid :net x))))}
+                 {:label "Give the Runner 1 tag. Trash this ice."
+                  :async true
+                  :msg (msg "give the runner 1 tag")
+                  :effect (req (wait-for
+                                 (gain-tags state side 1)
+                                 (wait-for
+                                   (trash state side card {:cause :subroutine})
+                                   (encounter-ends state side eid))))}]})
 
 (defcard "Vikram 1.0"
   {:implementation "Program prevention is not implemented"
