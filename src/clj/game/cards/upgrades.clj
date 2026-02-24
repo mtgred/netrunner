@@ -1840,6 +1840,24 @@
     {:abilities [abi]
      :events [(mobile-sysop-event :corp-turn-begins)]}))
 
+(defcard "The Red Room"
+  {:install-req (req (filter #{"R&D" "HQ" "Archives"} targets))
+   :events [{:event :agenda-stolen
+             :async true
+             :effect (req (add-counter state side eid card :power 1))
+             :req (req (and (first-event? state side :agenda-stolen)
+                            (no-event? state side :agenda-scored)))}
+            {:event :agenda-scored
+             :async true
+             :effect (req (add-counter state side eid card :power 1))
+             :req (req (and (first-event? state side :agenda-scored)
+                            (no-event? state side :agenda-stolen)))}]
+   :abilities [{:cost [(->c :power 1)]
+                :req (req (and run (not this-server)))
+                :async true
+                :effect (req (end-run state side eid card))
+                :msg "End the run"}]})
+
 (defcard "The Twins"
   {:events [{:event :pass-ice
              :optional

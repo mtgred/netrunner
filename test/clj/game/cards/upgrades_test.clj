@@ -4280,6 +4280,18 @@
                       (click-card state :corp van))
             "Corp placed 2 advancement counters on Vanilla")))))
 
+(deftest the-red-room-test
+  (do-game
+    (new-game {:corp {:hand ["The Red Room" "Hostile Takeover"]}})
+    (play-from-hand state :corp "The Red Room" "R&D")
+    (rez state :corp (get-content state :rd 0))
+    (play-and-score state "Hostile Takeover")
+    (click-prompt state :corp "Hostile Takeover")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (card-ability state :corp (get-content state :rd 0) 0)
+    (is (not (:run @state)) "Ended the run")))
+
 (deftest the-twins
   ;; The Twins
   (do-game
