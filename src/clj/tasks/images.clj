@@ -80,11 +80,52 @@
            (mc/update db card-collection {:code code} {$addToSet {k path}})
            (mc/update db card-collection {:previous-versions {$elemMatch {:code code}}} {$addToSet {prev-k path}})))))))
 
+(def ^:private format-rank
+  {"gif" 0
+   "jpg" 1
+   "jpeg" 1
+   "png" 2})
+
+(defn- normalize-fmt [s]
+  (some-> s str/lower-case))
+
+(defn- higher-quality?
+  "True if fmt1 is higher quality than fmt2. Unknown formats are treated as lowest quality."
+  [fmt1 fmt2]
+  (> (get format-rank (normalize-fmt fmt1) -1)
+     (get format-rank (normalize-fmt fmt2) -1)))
+
+(defn- add-best-card
+  "Add a card to the map; if the card-id already exists, keep the highest quality one."
+  [acc card]
+  (let [card-name (.getName card)
+        [card-id fmt] (str/split card-name #"\." 2)
+        curr-card     (get acc card-id)
+        curr-card-name (if (nil? curr-card) "" (.getName curr-card))]
+    (cond
+      (nil? curr-card) (assoc acc card-id card)
+
+      (let [[_ curr-fmt] (str/split curr-card-name #"\." 2)]
+        (higher-quality? fmt curr-fmt))
+      (do
+        (println "Replacing" curr-card-name "," card-name "is higher image quality.")
+        (assoc acc card-id card))
+
+      :else
+      (do
+        (println "Not importing" card-name "," curr-card-name "is higher image quality.")
+        acc))))
+
+(defn- filter-dups
+  "Some cards are available in multiple image formats. Only use the highest quality one."
+  [cards]
+  (vals (reduce add-best-card {} cards)))
+
 (defn- add-alt-images
   "All all images in the specified alt directory"
   [db base-path lang resolution alt-dir]
   (let [alt (keyword (.getName alt-dir))
-        images (find-files alt-dir)]
+        images (filter-dups (find-files alt-dir))]
     (run! #(add-card-image db base-path lang resolution alt %) images)
     (println "Added" (count images) "images to" lang resolution alt)))
 
@@ -92,8 +133,7 @@
   "Add all images in the specified resolution directory"
   [db base-path lang res-dir]
   (let [resolution (keyword (.getName res-dir))
-        alts (find-dirs res-dir)
-        images (find-files res-dir)]
+        alts (find-dirs res-dir)]
     (run! #(add-alt-images db base-path lang resolution %) alts)))
 
 (defn- add-language-images
