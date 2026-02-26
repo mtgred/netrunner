@@ -2078,6 +2078,18 @@
     (run-empty-server state :hq)
     (is (= 1 (count (:discard (get-runner)))) "1 net damage done for successful run on HQ")))
 
+(deftest hype-machine-test
+  (do-game
+    (new-game {:corp {:hand ["Hype Machine" (qty "Hostile Takeover" 2)]}})
+    (play-from-hand state :corp "Hype Machine" "New remote")
+    (play-and-score state "Hostile Takeover")
+    (is (changed? [(:credit (get-corp)) 0]
+          (rez state :corp (get-content state :remote1 0))))
+    (play-from-hand state :corp "Hostile Takeover" "Server 1")
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (click-card state :corp (get-content state :remote1 1))
+    (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "1 adv")))
+
 (deftest increased-drop-rates
   ;; Increased Drop Rates
   (do-game

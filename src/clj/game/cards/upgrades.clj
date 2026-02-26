@@ -924,6 +924,19 @@
                    :event :successful-run
                    :req (req this-server))]})
 
+(defcard "Hype Machine"
+  {:rez-cost-bonus (req (if-not (and (no-event? state side :agenda-scored)
+                                     (no-event? state side :agenda-stolen))
+                          -6
+                          0))
+   :abilities [{:label "Place 1 advancement token on a card in this server"
+                :async true
+                :prompt "Choose a card in this server"
+                :choices {:req (req (in-same-server? card target))}
+                :msg (msg "place an advancement token on " (card-str state target))
+                :cost [(->c :trash-can)]
+                :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
+
 (defcard "Increased Drop Rates"
   {:flags {:rd-reveal (req true)}
    :poison true
