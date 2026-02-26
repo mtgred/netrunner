@@ -3751,6 +3751,23 @@
       (is (find-card "Enigma" (:hand (get-corp))))
       (is (zero? (count (:deck (get-corp))))))))
 
+(deftest perfect-recall-test
+  (do-game
+    (new-game {:corp {:hand ["Perfect Recall" "Merger" "Merger"] :credits 10}})
+    (play-from-hand state :corp "Perfect Recall" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Merger" "Server 1")
+    (core/gain state :corp :click 5)
+    (dotimes [_ 3]
+      (click-advance state :corp (get-content state :remote1 1)))
+    (score state :corp (get-content state :remote1 1))
+    (take-credits state :corp)
+    (run-on state :hq)
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (click-card state :corp (first (:hand (get-corp))))
+    (run-continue-until state :success)
+    (is (= ["No action"] (prompt-titles :runner)))))
+
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
   (do-game

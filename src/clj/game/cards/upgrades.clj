@@ -1623,6 +1623,43 @@
                                 :keep-menu-open :while-credits-left
                                 :req (req (and run (= (target-server run) :hq)))})]})
 
+(defcard "Perfect Recall"
+  (let [ab {:req (req run)
+            :choices {:req (req (and (corp? target)
+                                     (in-hand? target)))}
+            :label "Reveal a card and prevent it being trashed or stolen this run"
+            :msg (msg "reveal " (:title target) "from HQ and prevent the runner from stealing or trashing any copies of it this run")
+            :async true
+            :waiting-prompt true
+            :effect (req
+                      (wait-for
+                        (reveal state side target)
+                        (let [revealed-card target]
+                          (register-lingering-effect
+                            state side card
+                            {:type :cannot-steal
+                             :req (req (= (:title target) (:title revealed-card)))
+                             :value true
+                             :duration :end-of-run})
+                          (register-lingering-effect
+                            state side card
+                            {:type :cannot-be-trashed
+                             :req (req (and (= (:title target) (:title revealed-card))
+                                            (= :runner side)))
+                             :value true
+                             :duration :end-of-run}))
+                        (effect-completed state side eid)))}]
+    {:events (mapv
+               #(merge {:async true :effect (req (add-counter state side eid card :power 1))} %)
+               [{:event :agenda-stolen
+                 :req (req (= (:previous-zone (:card context)) (get-zone card)))}
+                {:event :agenda-scored
+                 :req (req (= (:previous-zone (:card context)) (get-zone card)))}])
+     :on-rez {:silent (req true)
+              :async true
+              :effect (req (add-counter state side eid card :power 1))}
+     :abilities [(assoc ab :cost [(->c :power 1)])]}))
+
 (defcard "Port Anson Grid"
   {:on-rez {:msg "prevent the Runner from jacking out unless they trash an installed program"}
    :static-abilities [{:type :jack-out-additional-cost
