@@ -3711,6 +3711,22 @@
       (is (no-prompt? state :runner) "No more prompts for runner")
       (is (not (:run @state)) "Run is ended")))
 
+(deftest methuselah-test
+  (do-game
+    (new-game {:corp {:deck [(qty "PAD Campaign" 20)] :hand ["IPO"]}
+               :runner {:hand ["Mantle" "Methuselah" "DZMZ Optimizer"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Mantle")
+    (play-from-hand state :runner "Methuselah")
+    (run-on state :rd)
+    (click-card state :runner "DZMZ Optimizer")
+    (run-continue-until state :success)
+    (click-prompts state :runner "Pay 4 [Credits] to trash")
+    (dotimes [_ 2]
+      (click-card state :runner "Methuselah"))
+    (is (no-prompt? state :runner) "Paid 2 with methuselah")))
+
 (deftest mind-s-eye-interaction-with-rdi-aeneas
     ;; Interaction with RDI + Aeneas
     (do-game

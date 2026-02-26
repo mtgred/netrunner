@@ -1612,6 +1612,20 @@
 (defcard "MemStrips"
   {:static-abilities [(virus-mu+ 3)]})
 
+(defcard "Methuselah"
+  {:interactions {:pay-credits {:req (req run)
+                                :type :credit}}
+   :events [{:event :run
+             :change-in-game-state {:req (req (seq (:hand runner))) :silent true}
+             :prompt "Trash a hardware from the Grip?"
+             :choices {:card (every-pred hardware? in-hand?)}
+             :async true
+             :waiting-prompt true
+             :msg (msg "trash " (:title target) " and place 2 [Credits] on itself")
+             :effect (req (wait-for (trash state side target {:unpreventable true})
+                                    (add-counter state side eid card :credit 2)))}]
+   :static-abilities [(mu+ 1)]})
+
 (defcard "Mind's Eye"
   {:implementation "Power counters added automatically"
    :static-abilities [(mu+ 1)]
