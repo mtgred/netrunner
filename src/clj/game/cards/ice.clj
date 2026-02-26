@@ -2089,6 +2089,14 @@
   {:on-rez take-bad-pub
    :subroutines [trash-program-sub]})
 
+(defcard "Grubber"
+  {:on-rez {:change-in-game-state {:silent true :req (req (protecting-a-central? card))}
+            :async true
+            :msg "take 1 bad publicity"
+            :effect (req (gain-bad-publicity state side eid 1))}
+   :subroutines [(end-the-run-unless-runner-pays (->c :credit 3))
+                 (end-the-run-unless-runner-pays (->c :credit 3))]})
+
 (defcard "Guard"
   {:static-abilities [{:type :bypass-ice
                        :req (req (same-card? card target))

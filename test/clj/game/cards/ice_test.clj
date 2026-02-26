@@ -3344,6 +3344,50 @@
             (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]"))
           "Get taxed 1c for breaking with Grappling Hook"))))
 
+(deftest grubber-subroutine-test
+  (doseq [sub [0 1]
+          option ["Pay 3 [Credits]" "End the run"]]
+    (do-game
+      (subroutine-test "Grubber" sub)
+      (click-prompt state :runner option)
+      (case option
+        "End the run" (is (not (:run @state)) "Run ended")
+        "Pay 3 [Credits]" (is (changed? [(:credit (get-runner)) -3]
+                                (click-prompt state :runner "Done")
+                                (is (:run @state) "still running")
+                                (is (no-prompt? state :runner) "No prompt"))
+                              "Paid 3 (not using bad pub)")))))
+
+(deftest grubber-subroutine-test
+  (doseq [sub [0 1]
+          option ["Pay 3 [Credits]" "End the run"]]
+    (do-game
+      (subroutine-test "Grubber" sub)
+      (click-prompt state :runner option)
+      (case option
+        "End the run" (is (not (:run @state)) "Run ended")
+        "Pay 3 [Credits]" (is (changed? [(:credit (get-runner)) -3]
+                                (click-prompt state :runner "Done")
+                                (is (:run @state) "still running")
+                                (is (no-prompt? state :runner) "No prompt"))
+                              "Paid 3 (not using bad pub)")))))
+
+(deftest grubber-bad-pub-on-centrals
+  (doseq [[server s-key] [["HQ" :hq] ["R&D" :rd] ["Archives" :archives]]]
+    (testing (str "bad publicity on " server)
+      (do-game
+        (new-game {:corp {:hand ["Grubber"] :credits 10}})
+        (play-from-hand state :corp "Grubber" server)
+        (rez state :corp (get-ice state s-key 0))
+        (is (= 1 (count-bad-pub state)) "Gained a bad pub")))))
+
+(deftest grubber-no-bad-pub-on-remotes
+  (do-game
+    (new-game {:corp {:hand ["Grubber"] :credits 10}})
+    (play-from-hand state :corp "Grubber" "New remote")
+    (rez state :corp (get-ice state :remote1 0))
+    (is (= 0 (count-bad-pub state)) "Gained no bad pub")))
+
 (deftest gyri-labyrinth
   ;; Gyri Labyrinth - reduce runner handsize by 2 until beginning of corp's next turn
   (do-game
