@@ -587,6 +587,39 @@
                                   (cbi-choice from '() (count from) from)))
                               card nil))}})]}))
 
+(defcard "Chain Reaction"
+  (let [corp-choice {:player :corp
+                     :prompt "Choose a Runner card to trash"
+                     :async true
+                     :req (req (seq (all-installed state :runner)))
+                     :choices {:card (every-pred runner? installed?)}
+                     :waiting-prompt true
+                     :display-side :corp
+                     :msg (msg "trash " (:title target))
+                     :effect (req (trash state :corp eid target))}
+        cards-to-trash (fn [state] (min 2 (count (all-installed state :corp))))
+        runner-choice {:prompt (msg "choose " (quantify (cards-to-trash state) "card") " to trash")
+                       :async true
+                       :choices {:card (every-pred corp? installed?)
+                                 :max (req (cards-to-trash state))
+                                 :all true}
+                       :waiting-prompt true
+                       :msg (msg "trash " (enumerate-str (map #(card-str state %) targets)))
+                       :effect (req (wait-for (trash-cards state side targets)
+                                              (continue-ability
+                                                state :corp
+                                                corp-choice
+                                                card nil)))}]
+    {:on-play {:async true
+               :change-in-game-state {:req (req (or (seq (all-installed state :corp))
+                                                    (seq (all-installed state :runner))))}
+               :req (req (and (some #{:hq} (:successful-run runner-reg))
+                              (some #{:rd} (:successful-run runner-reg))
+                              (some #{:archives} (:successful-run runner-reg))))
+               :effect (req (if (seq (all-installed state :corp))
+                              (continue-ability state side runner-choice card nil)
+                              (continue-ability state :corp corp-choice card nil)))}}))
+
 (defcard "Charm Offensive"
   (letfn [(trash-x-opt [t]
             {:option (str "Trash a rezzed copy of " t)

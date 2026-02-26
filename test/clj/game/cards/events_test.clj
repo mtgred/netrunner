@@ -1181,6 +1181,29 @@
     (is (= "Jackson Howard" (:title (second (rest (rest (:deck (get-corp))))))))
     (is (= "Global Food Initiative" (:title (second (rest (rest (rest (:deck (get-corp)))))))))))
 
+(deftest chain-reaction-test
+  (do-game
+    (new-game {:corp {:hand ["Vanilla" "Enigma" "PAD Campaign"]}
+               :runner {:hand ["Chain Reaction" "Chain Reaction" "Ika"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (play-from-hand state :corp "Vanilla" "Server 1")
+    (play-from-hand state :corp "Enigma" "Server 1")
+    (take-credits state :corp)
+    (core/gain state :runner :click 2)
+    (run-empty-server state :hq)
+    (run-empty-server state :rd)
+    (run-empty-server state :archives)
+    (play-from-hand state :runner "Chain Reaction")
+    (click-prompts state :runner "Vanilla" "Enigma")
+    (is (= 2 (count (:discard (get-corp)))) "Trashed 2")
+    (is (no-prompt? state :corp) "No prompt to trash nothing")
+    (play-from-hand state :runner "Ika")
+    (play-from-hand state :runner "Chain Reaction")
+    (click-card state :runner "PAD Campaign")
+    (is (= 3 (count (:discard (get-corp)))) "Trashed 1")
+    (click-card state :corp "Ika")
+    (is (= 3 (count (:discard (get-runner)))) "Trashed 1, runner prompt did not block")))
+
 (deftest charm-offensive
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
