@@ -7466,6 +7466,20 @@
             (click-prompt state :runner "End the run"))
           "Spent 1 credit to break"))))
 
+(deftest read-write-share
+  (do-game
+    (new-game {:runner {:hand ["Read-Write Share" "Rezeki" "Corroder"]
+                        :deck [(qty "Ika" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Read-Write Share")
+    (click-card state :runner "Rezeki")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (start-turn state :runner)
+    (click-card state :runner "Corroder")
+    (card-ability state :runner (get-program state 0) 0)
+    (is-deck? state :runner ["Corroder" "Rezeki"])))
+
 (deftest reaver
   ;; Reaver - Draw a card the first time you trash an installed card each turn
   (do-game

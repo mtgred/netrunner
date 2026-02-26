@@ -55,6 +55,7 @@
    [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? protecting-same-server?
                               remote->name target-server unknown->kw zone->name]]
+   [game.core.set-aside :refer [get-set-aside set-aside-for-me]]
    [game.core.shuffling :refer [shuffle! shuffle-my-deck!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
@@ -2854,6 +2855,47 @@
                                        {:type :used-mu
                                         :duration :while-active
                                         :value (req (get-counters card :power))}]}))
+
+(defcard "Read-Write Share"
+  (let [ab {:interactive (req true)
+            :prompt "Host a card from your grip to draw a card?"
+            :choices {:req (req (and (runner? target)
+                                     (in-hand? target)))}
+            :msg "host a card facedown from the Grip and draw a card"
+            :async true
+            :effect (req (host state side (get-card state card) target {:facedown true})
+                         (wait-for (draw state side 1)
+                                   (if (>= (count (:hosted (get-card state card))) 5)
+                                     (continue-ability
+                                       state side
+                                       {:msg "trash itself"
+                                        :async true
+                                        :effect (req (trash state side eid card))}
+                                       card nil)
+                                     (effect-completed state side eid))))}]
+    {:on-install ab
+     :events [(assoc ab :event :runner-turn-begins)]
+     :abilities [{:trash-icon true
+                  :label "Shuffle all hosted cards into the stack"
+                  :interactive (req true)
+                  :async true
+                  :effect (req (if (seq (:hosted (get-card state card)))
+                                 (let [set-aside-cards (set-aside-for-me state side eid (:hosted (get-card state card)))
+                                       set-aside-cards (get-set-aside state side eid)]
+                                   (continue-ability
+                                     state side
+                                     {:cost [(->c :trash-can)]
+                                      :msg (str "shuffle " (quantify (count set-aside-cards) "hosted card") " into the Stack")
+                                      :effect (req (doseq [c set-aside-cards]
+                                                     (move state side c :deck))
+                                                   (shuffle! state side :deck))}
+                                     (get-card state card) nil))
+                                 (continue-ability
+                                   state side
+                                   {:cost [(->c :trash-can)]
+                                    :msg "shuffle the Stack"
+                                    :effect (req (shuffle! state side :deck))}
+                                   card nil)))}]}))
 
 (defcard "Reaver"
   {:events [{:event :runner-trash
