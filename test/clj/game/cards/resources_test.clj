@@ -3112,6 +3112,48 @@
       (click-prompt state :runner "Trash Guru Davinder")
       (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trash")))
 
+(deftest hackerspace-test
+  (do-game
+    (new-game {:runner {:hand ["Hackerspace" "Kati Jones" "Underworld Contact" "Paladin Poemu"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hackerspace")
+    (play-from-hand state :runner "Kati Jones")
+    (click-prompt state :runner "Hackerspace")
+    (is (= 5 (core/hand-size state :runner)) "Runner should start with 5 max hand size")
+    (play-from-hand state :runner "Paladin Poemu")
+    (click-prompt state :runner "Hackerspace")
+    (is (= 7 (core/hand-size state :runner)) "Runner should start with 5 max hand size")))
+
+(deftest hackerspace-with-cost-discount-requirement
+  (do-game
+    (new-game {:runner {:hand ["Career Fair" "Hackerspace" "The Class Act"]
+                        :credits 2}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hackerspace")
+    (play-from-hand state :runner "Career Fair")
+    (click-card state :runner "The Class Act")
+    (click-prompt state :runner "Hackerspace")
+    (is (no-prompt? state :runner) "It worked")
+    (is (= "The Class Act" (-> (get-resource state 0) :hosted first :title)) "Installed for 0")))
+
+(deftest hackerspace-class-act-repl
+  (do-game
+    (new-game {:runner {:hand ["Hackerspace" "The Class Act"]
+                        :deck ["Sure Gamble" "Easy Mark" "The Class Act" "Euler" "Ika" "Dirty Laundry" "Corroder" "Carpe Diem"]
+                        :credits 15}
+               :corp {:hand ["IPO"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Hackerspace")
+    (play-from-hand state :runner "The Class Act")
+    (click-prompt state :runner "Hackerspace")
+    (take-credits state :runner)
+    (click-card state :runner (first (:set-aside (get-runner))))
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Class Act")
+    (click-prompt state :runner "Hackerspace")
+    (take-credits state :runner)
+    (is (not (no-prompt? state :runner)) "TCA Prompt")))
+
 (deftest hannah-wheels-pilintra-basic-test
   (do-game
     (new-game {:runner {:hand ["Hannah \"Wheels\" Pilintra"]}

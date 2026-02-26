@@ -13,7 +13,7 @@
                            event? facedown? get-agenda-points get-card get-counters
                            get-title get-zone hardware? has-subtype? has-any-subtype? ice? identity?
                            in-discard? in-hand? in-set-aside? in-scored? installed? is-type? program? resource? rezzed?
-                           runner? upgrade? virus-program?]]
+                           runner? unique? upgrade? virus-program?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [can-charge charge-ability]]
    [game.core.checkpoint :refer [fake-checkpoint]]
@@ -1688,6 +1688,16 @@
                                                                     (trash state :runner eid card {:cause :runner-ability :cause-card card})
                                                                     (pay state :runner eid card (->c :credit 4))))}
                                                     card nil)))}}]})
+
+(defcard "Hackerspace"
+  {:static-abilities [{:type :can-host
+                       :req (req (and (resource? target)
+                                      (has-any-subtype? target ["Connection" "Companion"])
+                                      (unique? target)))
+                       :cost-bonus -1}
+                      (runner-hand-size+ (req (if (and (some #(has-subtype? % "Connection") (:hosted card))
+                                                       (some #(has-subtype? % "Companion") (:hosted card)))
+                                                2 0)))]})
 
 (defcard "Hades Shard"
   (shard-constructor "Hades Shard" :archives "breach Archives"

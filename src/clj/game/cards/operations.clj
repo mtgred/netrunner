@@ -2506,6 +2506,18 @@
 (defcard "Restructure"
   {:on-play (gain-credits-ability 15)})
 
+(defcard "Retirement Plan"
+  {:on-play {:prompt "Install an Asset, Ice or Agenda from Archives"
+             :change-in-game-state {:req (req (some #(or (asset? %) (ice? %) (agenda? %) (not (:seen %))) (:discard corp)))}
+             :show-discard true
+             :not-distinct true
+             :choices {:card #(and (or (ice? %) (asset? %) (agenda? %))
+                                   (corp? %)
+                                   (in-discard? %))}
+             :async true
+             :effect (effect (corp-install eid target nil {:msg-keys {:install-source card
+                                                                      :display-origin true}}))}})
+
 (defcard "Retribution"
   {:on-play (trash-type "program of piece of hardware" #(or (program? %) (hardware? %))
                         :loud 1 nil {:req (req tagged)})})

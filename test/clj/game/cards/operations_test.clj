@@ -3998,6 +3998,14 @@
       (is (rezzed? (get-content state :remote1 0)) "Marilyn Campaign was rezzed")
       (is (= 2 (:credit (get-corp))) "Rezzed Marilyn Campaign 2 credit + 1 credit for Restore")))
 
+(deftest retirement-plan
+  (do-game
+    (new-game {:corp {:hand ["Retirement Plan"]
+                      :discard ["PAD Campaign"]}})
+    (play-from-hand state :corp "Retirement Plan")
+    (click-prompts state :corp "PAD Campaign" "New remote")
+    (is (= "PAD Campaign" (:title (get-content state :remote1 0))))))
+
 (deftest retribution
   ;; Retribution
   (do-game
