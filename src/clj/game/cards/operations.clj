@@ -2324,6 +2324,25 @@
       :msg (msg "do " (:stole-agenda runner-reg-last 0) " meat damage")
       :effect (effect (damage eid :meat (:stole-agenda runner-reg-last 0) {:card card}))}}}})
 
+(defcard "realloc()"
+  {:on-play {:change-in-game-state {:req (req (seq (filter (every-pred rezzed? ice?)
+                                                           (all-installed state :corp))))}
+             :waiting-prompt true
+             :prompt "Choose any number of ice to derez"
+             :choices {:req (req (and (rezzed? target)
+                                      (ice? target)
+                                      (installed? target)))
+                       :all true
+                       :max (req (min (count (filter (every-pred rezzed? ice?)
+                                                     (all-installed state :corp)))
+                                      2))}
+             :async true
+             :msg (msg "derez " (enumerate-cards targets) " and gain "
+                       (reduce + 0 (mapv :cost targets)) " [Credits]")
+             :effect (req (let [c (reduce + 0 (mapv :cost targets))]
+                            (wait-for (derez state side targets)
+                                      (gain-credits state side eid c))))}})
+
 (defcard "Reclamation Order"
   {:on-play
    {:prompt "Choose a card from Archives"

@@ -3881,6 +3881,16 @@
     (click-prompt state :runner "0")
     (is (empty? (:hand (get-runner))) "Runner took 3 meat damage")))
 
+(deftest realloc-test
+  (do-game
+    (new-game {:corp {:hand ["realloc()" "Ice Wall" "Enigma"] :credits 10}})
+    (play-cards state :corp ["Ice Wall" "HQ" :rezzed] ["Enigma" "R&D" :rezzed])
+    (core/gain state :corp :click 1)
+    (play-from-hand state :corp "realloc()")
+    (is (changed? [(:credit (get-corp)) 4]
+          (click-prompts state :corp "Ice Wall" "Enigma"))
+        "Gained 4 (1 + 3) from derezzing ice wall and enigma")))
+
 (deftest red-level-clearance
   ;; Red Level Clearance
   (do-game
