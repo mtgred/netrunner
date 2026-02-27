@@ -2574,6 +2574,19 @@
                                                (has-subtype? target "Icebreaker")))
                                 :type :recurring}}})
 
+(defcard "The Tungsten Tailor"
+  {:static-abilities [{:type :ice-strength
+                       :req (req (ice? target))
+                       :value -1}]
+   :events [{:event :subroutines-broken
+             :async true
+             :once-per-instance true
+             :req (req (letfn [(valid-ctx? [[ctx]] (:was-zero-or-less-strength? ctx))]
+                         (and (valid-ctx? targets)
+                              (first-event? state side :subroutines-broken valid-ctx?))))
+             :msg "gain 1 [Credits]"
+             :effect (req (gain-credits state side eid 1))}]})
+
 (defcard "The Wizard's Chest"
   (letfn [(install-choice [state side eid card rev-str first-card second-card]
             (continue-ability

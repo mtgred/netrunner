@@ -5631,6 +5631,23 @@
               (click-card state :runner tt))
             "Used 2 credits from The Toolbox"))))
 
+(deftest the-tungsten-tailor-test
+  (do-game
+    (new-game {:runner {:hand ["The Tungsten Tailor" "Corroder"]
+                        :credits 10}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :runner "The Tungsten Tailor")
+    (play-from-hand state :runner "Corroder")
+    (run-on state :hq)
+    (run-continue-until state :encounter-ice)
+    (is (= 0 (get-strength (get-ice state :hq 0))) "-1 str")
+    (is (changed? [(:credit (get-runner)) 0]
+          (card-ability state :runner (get-program state 0) 0)
+          (click-prompt state :runner "End the run")))))
+
 (deftest the-wizards-chest
   (do-game
     (new-game {:corp {:hand [] :deck []}
