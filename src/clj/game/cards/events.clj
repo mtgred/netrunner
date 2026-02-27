@@ -103,6 +103,34 @@
                :this-card-run true
                :ability (drain-credits :runner :corp 5 2 2)})]})
 
+(defcard "Aircheck"
+  {:makes-run true
+   :data {:counter {:credit 4}}
+   :interactions {:pay-credits {:req (req run) :type :credit}}
+   :static-abilities [{:type :cannot-spend-credits
+                       :req (req true)
+                       :value true}
+                      {:type :cannot-lose-credits
+                       :req (req true)
+                       :value true}]
+   :on-play (run-server-from-choices-ability
+              ["HQ" "R&D"]
+              {:events [{:event :run-ends
+                         :unregister-once-resolved true
+                         :req (req (and (:successful context)
+                                        this-card-run
+                                        (or (= [:hq] (:server context))
+                                            (= [:rd] (:server context)))))
+                         :prompt "Choose a remote server to run"
+                         :choices (req (cancellable
+                                         (->> runnable-servers
+                                              (map unknown->kw)
+                                              (filter is-remote?)
+                                              (map remote->name))))
+                         :msg (msg "make a run on " target)
+                         :async true
+                         :effect (effect (make-run eid target card))}]})})
+
 (defcard "Always Have a Backup Plan"
   {:makes-run true
    :on-play {:prompt "Choose a server"
@@ -3869,6 +3897,15 @@
              :req (req (and (= :hq (target-server context)) this-card-run))
              :effect (effect (register-events
                                card [(breach-access-bonus :hq 2 {:duration :end-of-run})]))}]})
+
+(defcard "Take a Dive"
+  {:on-play (run-server-from-choices-ability ["HQ" "R&D"] {:rfg-instead-of-trashing true})
+   :events [{:event :successful-run
+             :req (req (letfn [(valid-ctx? [[ctx]] (pos? (or (:subroutines-fired ctx) 0)))]
+                         (valid-ctx? [context])))
+             :msg "force the Corp to take 1 Bad Publicity"
+             :async true
+             :effect (req (gain-bad-publicity state :corp eid 1 {:card card}))}]})
 
 (defcard "Test Run"
   {:on-play

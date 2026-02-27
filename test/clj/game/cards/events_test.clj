@@ -58,6 +58,34 @@
       (is (= 10 (:credit (get-runner))) "Runner gained 10 credits")
       (is (= 3 (:credit (get-corp))) "Corp lost 5 credits")))
 
+(deftest aircheck-basic-test
+  (do-game
+    (new-game {:runner {:hand ["Aircheck"]}
+               :corp {:hand ["Adonis Campaign"]
+                      :deck ["Adonis Campaign"]}})
+    (play-from-hand state :corp "Adonis Campaign" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Aircheck")
+    (click-prompt state :runner "R&D")
+    (run-continue-until state :success)
+    (do-trash-prompt state 3)
+    (click-prompts state :runner "Aircheck" "Aircheck" "Aircheck" "Server 1")
+    (run-continue-until state :success)
+    (is (= ["No action"] (prompt-titles :runner)) "Cannot pay to trash")))
+
+(deftest aircheck-cannot-lose-credits
+  (do-game
+    (new-game {:runner {:hand ["Aircheck"]}
+               :corp {:hand ["Whitespace"]}})
+    (play-cards state :corp ["Whitespace" "HQ" :rezzed])
+    (take-credits state :corp)
+    (play-cards state :runner ["Aircheck" "HQ"])
+    (run-continue-until state :encounter-ice)
+    (is (changed? [(:credit (get-runner)) 0]
+          (fire-subs state (get-ice state :hq 0))
+          (is (not (:run @state)) "Run ended"))
+        "Run ended, but no credits were lost because they cannot be")))
+
 (deftest always-have-a-backup-plan-jacking-out-correctly-triggers-ahbp
     ;; Jacking out correctly triggers AHBP
     (do-game
@@ -7410,6 +7438,24 @@
       (dotimes [n 3]
         (click-prompt state :runner "No action"))
       (is (no-prompt? state :runner)))))
+
+(deftest take-a-dive-test
+  (doseq [fire? [true nil]]
+    (do-game
+      (new-game {:corp {:hand ["Rime"]}
+                 :runner {:hand ["Take a Dive"]}})
+      (play-from-hand state :corp "Rime" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Take a Dive")
+      (click-prompt state :runner "HQ")
+      (run-continue-until state :encounter-ice)
+      (when fire?
+        (card-subroutine state :corp (get-ice state :hq 0) 0))
+      (run-continue-until state :success)
+      (is (no-prompt? state :corp))
+      (is (= (if fire? 1 0) (count-bad-pub state)) "BP when fired")
+      (is (= "Take a Dive" (get-in @state [:runner :rfg 0 :title]))))))
 
 (deftest test-run-programs-hosted-after-install-get-returned-to-stack-issue-1081
     ;; Programs hosted after install get returned to Stack. Issue #1081
