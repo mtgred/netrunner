@@ -68,44 +68,34 @@ and open [http://localhost:1042/](http://localhost:1042/).
 
 ### Using Docker
 
-You'll need to install [Docker](https://docs.docker.com/get-docker/) and [Docker-Compose](https://docs.docker.com/compose/install/). After that, just run `$ docker-compose up --build` in the project directory (or do the GUI-equivalent of this). If this fails because it "couldn't fetch dependencies", try again, it was just a networking error.
+You'll need to install [Docker](https://docs.docker.com/get-docker/) and [Docker-Compose](https://docs.docker.com/compose/install/). After that, just run `bin/up` in the project directory (or do the GUI-equivalent of this). If this fails because it "couldn't fetch dependencies", try again, it was just a networking error.
 
 It can take a while. You'll see lots of messages, so just wait until you see something like `netrunner-server-1 | nREPL server started on port 44867`. After that, you can visit [http://localhost:1042/](http://localhost:1042/) and the server should be running.
 
-While coding clojure it's important to have a REPL connection going. The server's REPL is configured to always run on port `44867`, so you can connect using `$ lein repl :connect nrepl://localhost:44867` (or the program of your preference, like your code editor).
+While coding clojure it's important to have a REPL connection going. The server's REPL is configured to always run on port `44867`, so you can connect using `$ bin/repl` (or the program of your preference, like your code editor).
 
-Now, let's populate the database and create indexes. First, let's open a terminal inside the server container: `$ docker exec -it netrunner-server-1 /bin/bash`. Now, inside this new therminal, we'll run these two commands: *The `--no-card-images` is optional, and removing it causes the card images to be downloaded, which can be slower.*
+Now, let's populate the database and create indexes with `bin/database-seed`. This will download card images, which can be slow. When its done the server will be restarted. If you ever need to drop the database, run `bin/database-drop`. This will keep the card images you downloaded previously, but you'll need to do `bin/up` and `bin/database-seed` again.
 
-```
- $ lein fetch --no-card-images
-    1648 cards imported
+You can access the servers' bash and lein commands individually using `bin/bash` and `bin/lein`.
 
- $ lein create-indexes
-    Indexes successfully created.
-```
-
-After this, just restart the server by running `(restart)` in the REPL.
-
-To do testing, you run them inside the container: `$ docker exec -it netrunner-server-1 /bin/bash` and then `$ lein kaocha`.
 ### Tests
+
+To do testing, you run them inside the container with `bin/test` and `bin/test-focus`.
 
 To run all tests:
 
-    $ lein kaocha
-    Ran 2640 tests containing 44704 assertions.
-    0 failures, 0 errors.
+    $ bin/test
+    3602 tests, 118797 assertions, 0 failures.
 
 To run a single test file:
 
-    $ lein kaocha --focus game.cards.agendas-test
-    Ran 216 tests containing 3536 assertions.
-    0 failures, 0 errors.
+    $ bin/test-focus game.cards.agendas-test
+    285 tests, 9715 assertions, 0 failures.
 
 Or a single test:
 
-    $ lein kaocha --focus game.cards.agendas-test/fifteen-minutes
-    Ran 1 tests containing 29 assertions.
-    0 failures, 0 errors.
+    $ bin/test-focus game.cards.agendas-test/fifteen-minutes
+    1 tests, 47 assertions, 0 failures.
 
 For more information refer to the [development guide](https://github.com/mtgred/netrunner/wiki/Getting-Started-with-Development).
 

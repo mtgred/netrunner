@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+set -eux -o pipefail
+
+docker exec -it netrunner-server-1 /bin/bash lein fetch
+docker exec -it netrunner-server-1 /bin/bash lein create-indexes
+bin/restart-server
+
