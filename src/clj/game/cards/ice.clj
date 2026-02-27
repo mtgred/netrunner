@@ -3727,6 +3727,14 @@
   {:static-abilities [(ice-strength-bonus (req (count-tags state)))]
    :subroutines [(trace-ability 4 end-the-run)]})
 
+(defcard "Reverb"
+  {:rez-cost-bonus (req (- (count (filter #(and (ice? %)
+                                                (not (same-card? card %))
+                                                (not (rezzed? %)))
+                                          (all-installed state :corp)))))
+   :subroutines [end-the-run
+                 end-the-run]})
+
 (defcard "Rime"
   {:implementation "Can be rezzed anytime already"
    :on-rez {:effect (effect (update-all-ice))}

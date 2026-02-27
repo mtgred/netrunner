@@ -6645,6 +6645,18 @@
       (click-prompt state :runner "0")
       (is (not (:run @state)) "Run has been ended"))))
 
+(deftest reverb-discount
+  (do-game
+    (new-game {:corp {:hand ["Reverb" "Vanilla"]}})
+    (play-from-hand state :corp "Reverb" "HQ")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (is (changed? [(:credit (get-corp)) -3]
+          (rez state :corp (get-ice state :hq 0)))
+        "Only spent 3")))
+
+(deftest reverb-sub-0-etr (do-game (new-game (etr-sub "Reverb" 0))))
+(deftest reverb-sub-1-etr (do-game (new-game (etr-sub "Reverb" 1))))
+
 (deftest rime
   ;; Rime
   (do-game
