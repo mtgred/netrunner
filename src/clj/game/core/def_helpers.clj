@@ -263,13 +263,20 @@
    :effect (effect (make-run eid target card))})
 
 (defn run-server-from-choices-ability
-  [choices]
-  {:prompt "Choose a server"
-   :choices (req (filter #(can-run-server? state %) choices))
-   :change-in-game-state {:req (req (seq (filter (set choices) runnable-servers)))}
-   :async true
-   :msg (msg "make a run on " target)
-   :effect (effect (make-run eid target card))})
+  ([choices] (run-server-from-choices-ability choices nil))
+  ([choices {:keys [events] :as ab-base}]
+   (merge
+     {:prompt "Choose a server"
+      :choices (req (filter #(can-run-server? state %) choices))
+      :change-in-game-state {:req (req (seq (filter (set choices) runnable-servers)))}
+      :async true
+      :msg (msg "make a run on " target)
+      :effect (req (when (seq events)
+                     (register-events state side card events))
+                   (when (:action ab-base)
+                     (play-sfx state side "click-run"))
+                   (make-run state side eid target card))}
+     (dissoc ab-base :events))))
 
 (defn take-credits
   "Take n counters from a card and place them in your credit pool as if they were credits (if possible)"
