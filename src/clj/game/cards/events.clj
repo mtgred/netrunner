@@ -108,10 +108,10 @@
    :data {:counter {:credit 4}}
    :interactions {:pay-credits {:req (req run) :type :credit}}
    :static-abilities [{:type :cannot-pay-credits-from-pool
-                       :req (req true)
+                       :req (req (= :runner side))
                        :value true}
                       {:type :cannot-lose-credits
-                       :req (req true)
+                       :req (req (= :runner side))
                        :value true}]
    :on-play (run-server-from-choices-ability
               ["HQ" "R&D"]
