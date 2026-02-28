@@ -628,7 +628,7 @@
                 {:prompt (str (:title to-trash) " will be trashed, "
                               (:title to-add) " will be added to HQ"
                               (when (seq to-top)
-                                (str ", and the top of R&D will be (top->bottom): " (enumerate-cards to-top))))}
+                                (str ", and the top of R&D will be (top->bottom): " (enumerate-cards (reverse to-top)))))}
                 [{:option "OK"
                   :ability {:msg (msg "trash a card from among the top " (count cards) " cards of R&D"
                                       (if (seq to-top) ", " " and ")
@@ -640,7 +640,7 @@
                                          ;; note - card is trashed from R&D (relevant for nuvem)
                                          (wait-for
                                            (trash state side (get-in @state [:corp :deck 0]) {:suppress-checkpoint true})
-                                           (doseq [c (reverse to-top)]
+                                           (doseq [c to-top]
                                              (move state side c :deck {:front true}))
                                            (checkpoint state side eid)))}}
                  {:option "I want to start over"
@@ -656,7 +656,7 @@
                :async true
                :effect (req (continue-ability state side (interact cards (remove-card remaining target) to-trash target []) card nil))}
               ;; note - if there is one card remaining, we could just add it to the top, but I think that actually
-              ;; causes memory issues that clicking on the card does not, so I have chosen to do it this way
+              ;; causes (player) memory issues that clicking on the card does not, so I have chosen to do it this way
               ;;  -nbkelly, 2026.02
               :else
               {:prompt "Add a card to the top of R&D"

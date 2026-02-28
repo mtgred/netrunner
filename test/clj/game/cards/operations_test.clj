@@ -1051,7 +1051,7 @@
       (do-game
         (new-game {:corp {:hand ["Cultivate"]
                           :deck (concat ["IPO" "Vanilla"] to-deck)}})
-        (play-cards state :corp (concat ["Cultivate" "OK" "IPO" "Vanilla"] to-deck ["OK"]))
+        (play-cards state :corp (concat ["Cultivate" "OK" "IPO" "Vanilla"] (reverse to-deck) ["OK"]))
         (is-deck-stacked? state :corp to-deck)
         (is (no-prompt? state :corp))
         (is (no-prompt? state :runner))))))
