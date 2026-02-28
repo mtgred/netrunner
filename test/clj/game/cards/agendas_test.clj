@@ -2439,6 +2439,33 @@
       (is (waiting? state :corp))
       (click-prompt state :runner "No")))
 
+(deftest lotus-haze-basic-test
+  (do-game
+    (new-game {:corp {:hand ["Lotus Haze" "Crisium Grid"]}})
+    (play-and-score state "Lotus Haze")
+    (play-from-hand state :corp "Crisium Grid" "HQ")
+    (rez state :corp (get-content state :hq 0))
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (click-card state :corp "Crisium Grid")
+    (is (= (prompt-titles :corp) ["Archives" "R&D"]) "Cannot go to own serveR")
+    (click-prompt state :corp "R&D")
+    (is (= "Crisium Grid" (:title (get-content state :rd 0))) "Moved to HQ")
+    (is (no-prompt? state :runner))))
+
+(deftest lotus-haze-movement-rules-test
+  (do-game
+    (new-game {:corp {:hand ["Lotus Haze" "Crisium Grid" "ZATO City Grid"] :credits 15}})
+    (play-and-score state "Lotus Haze")
+    (play-cards state :corp ["Crisium Grid" "HQ" :rezzed])
+    (play-cards state :corp ["ZATO City Grid" "New remote" :rezzed])
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (click-card state :corp "Crisium Grid")
+    (is (= (prompt-titles :corp) ["Archives" "R&D"]) "Cannot go to ontop of ZATO City Grid (region clash)")
+    (click-prompt state :corp "R&D")
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (click-card state :corp "ZATO City Grid")
+    (is (= (prompt-titles :corp) ["OK"]) "Cannot go to onto central servers because of the restriction on ZATO City Grid")))
+
 (deftest luminal-transubstantiation
   ;; Luminal Transubstantiation
   (do-game

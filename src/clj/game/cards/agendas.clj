@@ -8,7 +8,7 @@
                               update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed all-installed-corp
-                            all-installed-runner-type get-remote-names installable-servers server->zone]]
+                            all-installed-runner-type get-remote-names installable-servers server->zone server-list]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? facedown? faceup? get-advancement-requirement get-agenda-points
                            get-card get-counters get-title get-zone has-subtype? ice? in-discard? in-hand?
@@ -22,8 +22,8 @@
    [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
-   [game.core.engine :refer [checkpoint pay queue-event register-events resolve-ability
-                             unregister-events]]
+   [game.core.engine :refer [checkpoint pay queue-event register-events register-default-events
+                             resolve-ability unregister-events]]
    [game.core.events :refer [first-event? first-run-event? no-event? run-events run-event-count turn-events]]
    [game.core.finding :refer [find-latest]]
    [game.core.flags :refer [in-runner-scored? is-scored? register-run-flag!
@@ -1384,6 +1384,50 @@
              :effect (req (shuffle-into-rd-effect state side eid card 3))}
     :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                            (shuffle-into-rd-effect state side eid card 3)))}})
+
+(defcard "Lotus Haze"
+  {:on-score (agenda-counters 3)
+   :abilities [{:cost [(->c :agenda 1)]
+                :prompt "Choose an upgrade to move"
+                :choices {:card (every-pred upgrade? rezzed?)}
+                :label "Move a rezzed upgrade to the root of another server."
+                :waiting-prompt true
+                :async true
+                ;; note:
+                ;; It's not legal to even attempt to stack regions
+                ;; It's not legal to even attempt to move cards to zones which they cannot legally occupy
+                ;; This looks messy, but it's accurate, and will be enough to stop people getting game losses
+                ;; TODO: extend this logic to swaps (ie daruma)
+                ;;   --nbkelly, 2026.02
+                :effect (req (let [to-move target
+                                   zone (second (get-zone to-move))
+                                   not-same-zone (fn [zones] (filter #(not= % (zone->name zone)) zones))
+                                   legal-zones-fn (if-let [f (-> to-move card-def :legal-zones)]
+                                                    (fn [zones] (f state side eid card zones))
+                                                    (fn [zones] (vec zones)))
+                                   region? #(has-subtype? % "Region")
+                                   region-restriction (fn [zones]
+                                                        (if (region? target)
+                                                          (filter #(let [z (last (server->zone state %))
+                                                                         content (get-in @state [:corp :servers z :content])]
+                                                                     (not (some region? content)))
+                                                                  zones)
+                                                          zones))
+                                   legal-moves (-> (server-list state) not-same-zone legal-zones-fn region-restriction)]
+                               (continue-ability
+                                 state side
+                                 (if (seq legal-moves)
+                                   {:prompt "Choose a server"
+                                    :choices (req legal-moves)
+                                    :msg (msg "move " (:title to-move) " to " target)
+                                    :effect (req (let [c (move state side to-move
+                                                               (conj (server->zone state target) :content))]
+                                                   (unregister-events state side to-move)
+                                                   (register-default-events state side c)))}
+                                   {:prompt (str "You have no legal moves for " (:title to-move))
+                                    :msg (msg "reveal that they have no legal moves for " (:title to-move))
+                                    :choices ["OK"]})
+                                 card nil)))}]})
 
 (defcard "Luminal Transubstantiation"
   {:on-score
