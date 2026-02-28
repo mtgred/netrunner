@@ -2189,6 +2189,27 @@
                 :trace {:base 2
                         :successful (give-tags 1)}}]})
 
+(defcard "Sacrifice Zone Expansion"
+  {:install-state :face-up
+   :events [{:event :advance
+             :condition :faceup
+             :req (req (and (same-card? card (:card context))
+                            (first-event? state side :advance #(same-card? card (:card (first %))))))
+             :msg (msg "gain 3 [Credits]")
+             :async true
+             :effect (effect (gain-credits eid 3))}
+            {:event :successful-run
+             :condition :faceup
+             :optional {:prompt "Do 1 meat damage?"
+                        :once :per-turn
+                        :req (req (and (installed? card)
+                                       (not= (target-server context) (second (get-zone card)))
+                                       (can-pay? state side eid card nil [(->c :advancement 1)])))
+                        :yes-ability {:cost [(->c :advancement 1)]
+                                      :msg "do 1 meat damage"
+                                      :effect (req (damage state side eid :meat 1))
+                                      :async true}}}]})
+
 (defcard "Salvo Testing"
   {:events [{:event :agenda-scored
              :interactive (req true)

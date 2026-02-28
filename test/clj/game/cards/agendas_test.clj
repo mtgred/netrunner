@@ -4114,6 +4114,22 @@
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner should gain a tag from Restructured Datapool ability"))))
 
+(deftest sacrifice-zone-expansion-test
+  (do-game
+    (new-game {:corp {:hand ["Sacrifice Zone Expansion"]}})
+    (play-from-hand state :corp "Sacrifice Zone Expansion" "New remote")
+    (is (changed? [(:credit (get-corp)) 2]
+          (click-advance state :corp (get-content state :remote1 0)))
+        "gained 3")
+    (is (changed? [(:credit (get-corp)) -1]
+          (click-advance state :corp (get-content state :remote1 0)))
+        "gained 0")
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (is (changed? [(count (:hand (get-runner))) -1]
+          (click-prompt state :corp "Yes"))
+        "1 meat")))
+
 (deftest salvo-testing
     (do-game
       (new-game {:corp {:hand ["Salvo Testing" "Project Vitruvius"]
