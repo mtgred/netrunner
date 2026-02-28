@@ -2875,7 +2875,7 @@
                                      (effect-completed state side eid))))}]
     {:on-install ab
      :events [(assoc ab :event :runner-turn-begins)]
-     :abilities [{:trash-icon true
+     :abilities [{:fake-cost [(->c :trash-can)]
                   :label "Shuffle all hosted cards into the stack"
                   :interactive (req true)
                   :async true
