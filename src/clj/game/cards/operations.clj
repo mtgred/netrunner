@@ -21,7 +21,7 @@
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
-   [game.core.engine :refer [do-nothing pay register-events resolve-ability should-trigger? unregister-events]]
+   [game.core.engine :refer [checkpoint do-nothing pay register-events resolve-ability should-trigger? unregister-events]]
    [game.core.events :refer [event-count first-event? last-turn? no-event? not-last-turn? turn-events ]]
    [game.core.flags :refer [can-score? clear-persistent-flag! in-corp-scored?
                             in-runner-scored? is-scored?
@@ -47,6 +47,7 @@
    [game.core.rezzing :refer [can-pay-to-rez? derez rez rez-multiple-cards]]
    [game.core.runs :refer [end-run make-run]]
    [game.core.say :refer [system-msg]]
+   [game.core.set-aside :refer [set-aside-for-me]]
    [game.core.servers :refer [is-remote? remote->name zone->name]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-my-deck!
                                 shuffle-into-rd-effect]]
@@ -616,6 +617,72 @@
              :req (req (same-card? target (:host card)))
              :msg "give the Runner 2 tags"
              :effect (effect (gain-tags :runner eid 2))}]})
+
+(defcard "Cultivate"
+  (letfn [(remove-card [remaining target]
+            (filterv #(not (same-card? % target)) remaining))
+          (interact [cards remaining to-trash to-add to-top]
+            (cond
+              (not (seq remaining))
+              (choose-one-helper
+                {:prompt (str (:title to-trash) " will be trashed, "
+                              (:title to-add) " will be added to HQ"
+                              (when (seq to-top)
+                                (str ", and the top of R&D will be (top->bottom): " (enumerate-cards to-top))))}
+                [{:option "OK"
+                  :ability {:msg (msg "trash a card from among the top " (count cards) " cards of R&D"
+                                      (if (seq to-top) ", " " and ")
+                                      "add another one of those cards to HQ"
+                                      (when (seq to-top) ", and re-arrange the remainder"))
+                            :async true
+                            :effect (req (move state side to-add :hand)
+                                         (move state side to-trash :deck {:front true})
+                                         ;; note - card is trashed from R&D (relevant for nuvem)
+                                         (wait-for
+                                           (trash state side (get-in @state [:corp :deck 0]) {:suppress-checkpoint true})
+                                           (doseq [c (reverse to-top)]
+                                             (move state side c :deck {:front true}))
+                                           (checkpoint state side eid)))}}
+                 {:option "I want to start over"
+                  :ability (interact cards cards nil nil [])}])
+              (not to-trash)
+              {:prompt "Choose a card to trash"
+               :choices remaining
+               :async true
+               :effect (req (continue-ability state side (interact cards (remove-card remaining target) target nil []) card nil))}
+              (not to-add)
+              {:prompt "Choose a card to add to HQ"
+               :choices remaining
+               :async true
+               :effect (req (continue-ability state side (interact cards (remove-card remaining target) to-trash target []) card nil))}
+              ;; note - if there is one card remaining, we could just add it to the top, but I think that actually
+              ;; causes memory issues that clicking on the card does not, so I have chosen to do it this way
+              ;;  -nbkelly, 2026.02
+              :else
+              {:prompt "Add a card to the top of R&D"
+               :choices remaining
+               :async true
+               :effect (req (continue-ability state side (interact cards (remove-card remaining target) to-trash to-add (conj to-top target)) card nil))}))]
+  {:on-play {:msg (msg (if (= 1 (count (:deck corp)))
+                         "trash the top card of R&D"
+                         (str "look at the top " (count (:deck corp)) " cards of R&D")))
+             :change-in-game-state {:req (req (seq (:deck corp)))}
+             :async true
+             :effect (req (if (= 1 (count (:deck corp)))
+                            (trash state side eid (first (:deck corp)))
+                            (let [set-aside-cards (set-aside-for-me state side eid (take 5 (:deck corp)))
+                                  set-aside-eid eid]
+                              (continue-ability
+                                state side
+                                {:prompt (str "The top cards of R&D are (top->bottom): " (enumerate-cards set-aside-cards))
+                                 :waiting-prompt true
+                                 :choices ["OK"]
+                                 :async true
+                                 :effect (req (continue-ability
+                                                state side
+                                                (interact set-aside-cards set-aside-cards nil nil [])
+                                                card nil))}
+                                card nil))))}}))
 
 (defcard "Celebrity Gift"
   {:on-play
@@ -2342,6 +2409,34 @@
              :effect (req (let [c (reduce + 0 (mapv :cost targets))]
                             (wait-for (derez state side targets)
                                       (gain-credits state side eid c))))}})
+
+(defcard "Reanimation Protocol"
+  {:on-play
+   {:prompt "Choose an Ice to install and rez (paying a total of 10 less)"
+    :show-discard true
+    :choices {:card (every-pred corp? ice? in-discard?)}
+    :async true
+    :waiting-prompt true
+    :effect (req (wait-for
+                   (corp-install state side target nil {:ignore-all-cost true
+                                                        :msg-keys {:install-source card
+                                                                   :display-origin true}
+                                                        :install-state :rezzed
+                                                        :combined-credit-discount 10})
+                   (if-let [installed-card async-result]
+                     (cond
+                       (and (rezzed? installed-card)
+                            (has-any-subtype? installed-card ["Liability" "Illicit"]))
+                       (effect-completed state side eid)
+                       (rezzed? installed-card)
+                       (continue-ability
+                         state side
+                         {:msg "take 1 bad publicity"
+                          :async true
+                          :effect (req (gain-bad-publicity state side eid 1))}
+                         card nil)
+                       :else (effect-completed state side eid))
+                     (effect-completed state side eid))))}})
 
 (defcard "Reclamation Order"
   {:on-play

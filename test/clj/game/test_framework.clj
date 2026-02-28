@@ -47,7 +47,7 @@
 (load-all-cards)
 
 (defn is-zone-impl
-  "Is the hand exactly equal to a given set of cards?"
+  "Is the zone exactly equal to a given set of cards?"
   [state side zone expected]
   (let [expected (seq (sort (flatten expected)))
         contents (seq (sort (map :title (get-in @state [side zone]))))]
@@ -59,12 +59,12 @@
   `(error-wrapper (is-zone-impl ~state ~side :hand ~expected-hand)))
 
 (defmacro is-deck?
-  "Is the hand exactly equal to a given set of cards?"
+  "Is the deck exactly equal to a given set of cards?"
   [state side expected-deck]
   `(error-wrapper (is-zone-impl ~state ~side :deck ~expected-deck)))
 
 (defmacro is-discard?
-  "Is the hand exactly equal to a given set of cards?"
+  "Is the discard pile exactly equal to a given set of cards?"
   [state side expected-discard]
   `(error-wrapper (is-zone-impl ~state ~side :discard ~expected-discard)))
 

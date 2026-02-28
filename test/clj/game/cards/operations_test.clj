@@ -1023,6 +1023,39 @@
     (is (= 5 (count (:hand (get-corp)))) "Corp should draw up to 5 cards")
     (is (= 1 (count (:discard (get-corp)))) "Corp should have 1 card in discard from playing")))
 
+(deftest cultivate-full-test
+  (testing "R&D is empty"
+    (do-game
+      (new-game {:corp {:hand ["Cultivate"]}})
+      (play-from-hand state :corp "Cultivate")
+      (is (no-prompt? state :corp) "No lingering prompts")))
+  (testing "R&D has only one card. It gets trashed."
+    (do-game
+      (new-game {:corp {:hand ["Cultivate"]
+                        :deck ["IPO"]}})
+      (play-cards state :corp ["Cultivate"])
+      (is (no-prompt? state :corp) "No lingering prompts.")
+      (is-discard? state :corp ["Cultivate" "IPO"])))
+  (testing "R&D has two cards in it. One gets trashed, one gets added to HQ"
+    (do-game
+      (new-game {:corp {:hand ["Cultivate"]
+                        :deck ["IPO" "Vanilla"]}})
+      (play-cards state :corp ["Cultivate" "OK" "IPO" "Vanilla" "OK"])
+      (is (no-prompt? state :corp) "No lingering prompts.")
+      (is-discard? state :corp ["Cultivate" "IPO"])
+      (is-hand? state :corp ["Vanilla"])))
+  (testing "R&D has 3-5 cards in it. One to trash, one to hand, rest stacked"
+    (doseq [to-deck [["Beanstalk Royalties"]
+                     ["Beanstalk Royalties" "Ice Wall"]
+                     ["Beanstalk Royalties" "Ice Wall" "Stavka"]]]
+      (do-game
+        (new-game {:corp {:hand ["Cultivate"]
+                          :deck (concat ["IPO" "Vanilla"] to-deck)}})
+        (play-cards state :corp (concat ["Cultivate" "OK" "IPO" "Vanilla"] to-deck ["OK"]))
+        (is-deck-stacked? state :corp to-deck)
+        (is (no-prompt? state :corp))
+        (is (no-prompt? state :runner))))))
+
 (deftest cyberdex-trial
   ;; Cyberdex Trial
   (do-game
@@ -3890,6 +3923,35 @@
     (is (changed? [(:credit (get-corp)) 4]
           (click-prompts state :corp "Ice Wall" "Enigma"))
         "Gained 4 (1 + 3) from derezzing ice wall and enigma")))
+
+(deftest animation-protocol-do-nothing
+  (doseq [opt [:nothing :rez-illicit :rez-other :no-rez]]
+    (do-game
+      (new-game {:corp {:discard ["Bulwark" "Chiyashi" "Archer"]
+                        :hand ["Reanimation Protocol"]
+                        :credits 7}})
+      (play-from-hand state :corp "Reanimation Protocol")
+      (case opt
+        :nothing     (is (changed? [(count-bad-pub state) 0]
+                           (click-prompt state :corp "Done"))
+                         "Took no bp")
+        :rez-illicit (is (changed? [(:credit (get-corp)) (- 10 10)
+                                    (count-bad-pub state) 1]
+                           (click-prompts state :corp "Bulwark" "HQ")
+                           (is (= "Bulwark" (:title (get-ice state :hq 0))) "Rezzed it"))
+                         "Installed and rezzed bulwark, only took 1 bad pub")
+        :no-rez      (is (changed? [(:credit (get-corp)) 0
+                                    (count-bad-pub state) 0]
+                           (click-prompts state :corp "Archer" "HQ")
+                           (is (not (rezzed? (get-ice state :hq 0))) "Unrezzed")
+                           (is (= "Archer" (:title (get-ice state :hq 0))) "Did not rez it"))
+                         "Installed Archer, took no bad pub")
+        :rez-other   (is (changed? [(:credit (get-corp)) (- 10 12)
+                                    (count-bad-pub state) 1]
+                           (click-prompts state :corp "Chiyashi" "HQ")
+                           (is (= "Chiyashi" (:title (get-ice state :hq 0))) "Installed chiyashi")
+                           (is (rezzed? (get-ice state :hq 0)) "rezzed it"))
+                         "Installed and rezzed Chiyashi, took 1 bad pub")))))
 
 (deftest red-level-clearance
   ;; Red Level Clearance
