@@ -502,11 +502,11 @@
     (click-prompt state :runner "Bacterial Programming")
     (click-prompt state :runner "Steal")
     (click-prompt state :corp "Yes")
+    (click-prompt state :corp "OK")
     (dotimes [_ 7]
       (let [card (first (prompt-titles :corp))]
         (click-prompt state :corp card)))
-    (click-prompt state :corp "Done") ; Finished with trashing
-    (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
+    (click-prompt state :corp "OK")
     (dotimes [_ 7]
       (click-prompt state :runner "Facedown card in Archives")
       (click-prompt state :runner "No action"))
@@ -520,32 +520,26 @@
       (new-game {:corp {:deck ["Bacterial Programming" "Hedge Fund"]}})
       (starting-hand state :corp ["Bacterial Programming"])
       (play-and-score state "Bacterial Programming")
-      (click-prompt state :corp "Yes")
-      (click-prompt state :corp "Done")
-      (click-prompt state :corp "Done")
-      (click-prompt state :corp (first (:deck (get-corp))))
-      (click-prompt state :corp "Done")
+      (click-prompts state :corp "Yes" "OK" "Done" "Done")
+      (click-prompt state :corp (first (:set-aside (get-corp))))
+      (click-prompt state :corp "OK")
       (is (no-prompt? state :corp) "Bacterial Programming prompts finished")
       (is (not (:run @state)) "No run is active")))
 
 (deftest bacterial-programming-removing-all-cards-from-r-d-should-not-freeze-for-runner-nor-give-an-extra-access
     ;; Removing all cards from R&D should not freeze for runner, nor give an extra access.
     (do-game
-      (new-game {:corp {:deck [(qty "Bacterial Programming" 8)]
-                        :hand ["Ice Wall"]}
+      (new-game {:corp {:hand ["Bacterial Programming"]
+                        :deck ["Bacterial Programming" (qty "Vanilla" 7)]}
                  :options {:start-as :runner}})
+      (stack-deck state :corp ["Bacterial Programming"])
       (run-empty-server state :rd)
       (click-prompt state :runner "Steal")
-      (click-prompt state :corp "Yes")
+      (click-prompts state :corp "Yes" "OK")
       ;; Move all 7 cards to trash
       (dotimes [_ 7]
-              ;; Get the first card listed in the prompt choice
-              ;; TODO make this function
-        (let [card (first (prompt-titles :corp))]
-          (click-prompt state :corp card)))
-      (click-prompt state :corp "Done") ; Finished with trashing
-      (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
-      ;; Run and prompts should be over now
+        (click-prompt state :corp "Vanilla"))
+      (click-prompt state :corp "OK")
       (is (no-prompt? state :corp) "Bacterial Programming prompts finished")
       (is (no-prompt? state :runner) "Bacterial Programming prompts finished")
       (is (not (:run @state)))))

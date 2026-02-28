@@ -617,18 +617,13 @@
     ;; Correct handling of multi accesses with shuffle in between accesses
     (testing "Shuffle from Bacterial Programming"
       (do-game
-        (new-game {:corp {:hand ["Advanced Assembly Lines" "Bacterial Programming" "Chiyashi"
+        (new-game {:corp {:deck ["Advanced Assembly Lines" "Bacterial Programming" "Chiyashi"
                                  "DNA Tracker" "Excalibur" "Fire Wall" "Gold Farmer"
                                  "Hostile Infrastructure"]
-                          :deck []}})
-        (core/move state :corp (find-card "Advanced Assembly Lines" (:hand (get-corp))) :deck)
-        (core/move state :corp (find-card "Bacterial Programming" (:hand (get-corp))) :deck)
-        (core/move state :corp (find-card "Chiyashi" (:hand (get-corp))) :deck)
-        (core/move state :corp (find-card "DNA Tracker" (:hand (get-corp))) :deck)
-        (core/move state :corp (find-card "Excalibur" (:hand (get-corp))) :deck)
-        (core/move state :corp (find-card "Fire Wall" (:hand (get-corp))) :deck)
-        (core/move state :corp (find-card "Gold Farmer" (:hand (get-corp))) :deck)
-        (core/move state :corp (find-card "Hostile Infrastructure" (:hand (get-corp))) :deck)
+                          :hand ["ZATO City Grid"]}})
+        (stack-deck state :corp ["Advanced Assembly Lines" "Bacterial Programming" "Chiyashi"
+                                 "DNA Tracker" "Excalibur" "Fire Wall" "Gold Farmer"
+                                 "Hostile Infrastructure"])
         ; Deck is now ABCDEFGH from top to bottom
         (take-credits state :corp)
         (run-on state :rd)
@@ -638,9 +633,7 @@
         (click-prompt state :runner "No action")
         (is (accessing state "Bacterial Programming") "Accessed B")
         (click-prompt state :runner "Steal")
-        (click-prompt state :corp "Yes")
-        (click-prompt state :corp "Done")
-        (click-prompt state :corp "Done")
+        (click-prompts state :corp "Yes" "OK" "Done" "Done")
         (click-prompt state :corp "Hostile Infrastructure")
         (click-prompt state :corp "Gold Farmer")
         (click-prompt state :corp "Fire Wall")
@@ -648,7 +641,7 @@
         (click-prompt state :corp "DNA Tracker")
         (click-prompt state :corp "Chiyashi")
         (click-prompt state :corp "Advanced Assembly Lines")
-        (click-prompt state :corp "Done")
+        (click-prompt state :corp "OK")
         (is (accessing state "Advanced Assembly Lines") "Accessed A again")
         (click-prompt state :runner "No action")
         (is (accessing state "Chiyashi") "Accessed C")

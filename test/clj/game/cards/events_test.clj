@@ -2122,9 +2122,7 @@
     (click-prompt state :runner "Steal")
     (is (not (:run @state)))
     ;; resolve bacterial
-    (click-prompt state :corp "Yes")
-    (click-prompt state :corp "Done")
-    (click-prompt state :corp "Done")
+    (click-prompts state :corp "Yes" "OK" "Done" "Done")
     (click-prompt state :corp "Hedge Fund")
     (click-prompt state :corp "Hedge Fund")
     (click-prompt state :corp "Hedge Fund")
@@ -2132,7 +2130,7 @@
     (click-prompt state :corp "Hedge Fund")
     (click-prompt state :corp "Hedge Fund")
     (click-prompt state :corp "Hedge Fund")
-    (click-prompt state :corp "Done")
+    (click-prompt state :corp "OK")
     (is (not (:run @state)))
     ;; should be able to continue to stealing jumon
     (click-prompt state :runner "Yes")

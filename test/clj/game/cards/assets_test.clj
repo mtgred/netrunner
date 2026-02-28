@@ -757,6 +757,7 @@
       (run-empty-server state :remote1)
       (click-prompt state :runner "Steal")
       (click-prompt state :corp "Yes")
+      (click-prompt state :corp "OK")
       (click-prompt state :corp "Chairman Hiro")
       (click-prompt state :corp "Done")
       (click-prompt state :corp "Done")
@@ -766,7 +767,7 @@
       (click-prompt state :corp "Excalibur")
       (click-prompt state :corp "Fire Wall")
       (click-prompt state :corp "Gemini")
-      (click-prompt state :corp "Done")
+      (click-prompt state :corp "OK")
       (is (= ["Bacterial Programming"] (mapv :title (get-scored state :runner))) "Runner shouldn't score Chairman Hiro")
       (is (= ["Chairman Hiro"] (mapv :title (:discard (get-corp)))) "Chairman Hiro should be in Archives")))
 
