@@ -336,7 +336,6 @@
                             {:name "Igpay Atinlay" :ref "la-pig"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
            [:div [tr-span [:settings_language-tip "Some languages are not fully translated yet. If you would like to help with translations, please contact us."]]]]
-           [:div [tr-span [:settings_language-tip "Some languages are not fully translated yet. If you would like to help with translations, please contact us."]]]]
 
           [:section
            [tr-element :h3 [:settings_card-language "Card language"]]
@@ -727,7 +726,7 @@
           [api-keys s]
 
           [:section
-           [:span.flash-message (:flash-message @s)]]])})))
+           [:span.flash-message (:flash-message @s)]]]])})))
 
 (defn account []
   (let [user (r/cursor app-state [:user])

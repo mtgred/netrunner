@@ -206,20 +206,6 @@
       (ws/broadcast-to! [uid] :admin/fetch-users {:success users}))
     (ws/broadcast-to! [uid] :admin/fetch-users {:error "Not allowed"})))
 
-(defn features-handler [{db :system/db}]
-  (let [config (mc/find-one-as-map db "config" nil)
-        features (:features config {})]
-    (response 200 {:message "ok" :features features})))
-
-(defn features-update-handler [{db :system/db
-                                {version :version} :body}]
-  (if-not (empty? version)
-    (do
-      (reset! frontend-version version)
-      (mc/update db "config" {} {$set {:version version}})
-      (response 200 {:message "ok" :version version}))
-    (response 400 {:message "Missing version item"})))
-
 (defmethod ws/-msg-handler :admin/block-game-creation
   admin--block-game-creation
   [{{user :user} :ring-req
