@@ -3138,7 +3138,7 @@
 
 (deftest hackerspace-class-act-repl
   (do-game
-    (new-game {:runner {:hand ["Hackerspace" "The Class Act"]
+    (new-game {:runner {:hand ["Hackerspace" "The Class Act" "The Class Act"]
                         :deck ["Sure Gamble" "Easy Mark" "The Class Act" "Euler" "Ika" "Dirty Laundry" "Corroder" "Carpe Diem"]
                         :credits 15}
                :corp {:hand ["IPO"]}})
@@ -3147,7 +3147,8 @@
     (play-from-hand state :runner "The Class Act")
     (click-prompt state :runner "Hackerspace")
     (take-credits state :runner)
-    (click-card state :runner (first (:set-aside (get-runner))))
+    (click-card state :runner (last (:set-aside (get-runner))))
+    (is (no-prompt? state :runner) "No prompt")
     (take-credits state :corp)
     (play-from-hand state :runner "The Class Act")
     (click-prompt state :runner "Hackerspace")
