@@ -215,6 +215,16 @@
   "NBN"
   ["Such an astounding amount of data they collect and process. I think the professor would quite enjoy a term paper on this. Lets get to research!"]
   "Weyland Consortium" ["300% uptick in their strike force mobilisations? Oops...Did I do that?"]}
+ "Hiram \"0mission\" Svensson: Shadow of the Past"
+ {"Default" ["Old Hiram still has a few tricks left."]
+  "Editorial Division: Ad Nihilum" ["Don't tell me you have forgotten me too?"]
+  "Haas-Bioroid"
+  ["Every version comes with changes, some are improvements, but there is something about that one version that was almost made for you."]
+  "Jinteki"
+  ["Any dynamic system will change in unexpected ways if you leave it alone for a time."]
+  "NBN" ["They might be surprised by the things left behind."]
+  "Weyland Consortium"
+  ["The taller the towers get, the more they overlook those around the foundations."]}
  "Hoshiko Shiro: Untold Protagonist"
  {"Default" ["Do i have to?"]
   "Haas-Bioroid"
@@ -590,6 +600,8 @@
   ["I'd love to expose all your dirty truths to the world. Unfortunately, I don't have a year to spare."]
   "Weyland Consortium: Builder of Nations"
   ["They eradicate culture to build their towers. The only nation they've ever built is a throne for the highest bidder to oppress the masses."]}
+ "Virtual Intelligence, P.I.: \"You Can Call Me Vic\""
+ {"Default" ["I'll take the case."]}
  "Whizzard: Master Gamer"
  {"Default"
   ["This game is played in four dimensions. Never interupt your opponent while they are making a mistake."]

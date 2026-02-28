@@ -117,6 +117,13 @@
   "Default" ["Thinking of going up without paying fare? Take em' down."]
   "Shaper"
   ["A crafty one getting this far, but they won't go so far once the gravity flips."]}
+ "Editorial Division: Ad Nihilum"
+ {"Anarch"
+  ["We will be cleaning up your mess soon enough. No one will even notice."]
+  "Criminal"
+  ["You will find no worthy prize here. But the consequences remain."]
+  "Default" ["This battle will not be remembered."]
+  "Shaper" ["Most people would rather not find out what we can do."]}
  "Epiphany Analytica: Nations Undivided"
  {"Anarch" ["It will be easy enough to spin the story once they make a mess."]
   "Criminal"
@@ -299,6 +306,10 @@
   ["You may appreciate what you find, but that will not let you master it."]}
  "LEO Construction: Labor Solutions"
  {"Default" ["Workers of the World, Delivered"]}
+ "Méliès U: Only the Brightest"
+ {"Default" ["Who are you to interrupt our exploration of new ideas?"
+             "This is just another problem in the project to be solved."
+             "There are some questions you just shouldn't ask."]}
  "MirrorMorph: Endless Iteration"
  {"Anarch"
   ["Our subroutines estimate an 92.2% chance of such a reckless runner flatlining themself before even catching a glimpse of our servers. Simulations upon simulations wind up the same."]
