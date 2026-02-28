@@ -17,7 +17,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [combine-abilities corp-recur defcard
-                                  do-brain-damage do-net-damage draw-abi give-tags make-icon offer-jack-out
+                                  do-brain-damage do-net-damage draw-abi give-tags make-icon move-card-to-top-or-bottom offer-jack-out
                                   reorder-choice get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw draw-up-to]]
    [game.core.effects :refer [any-effects get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-effect-by-uuid unregister-static-abilities update-disabled-cards]]
@@ -2825,6 +2825,29 @@
 
 (defcard "Lancelot"
   (grail-ice trash-program-sub))
+
+(defcard "Lethe"
+  {:events [(merge
+              (give-tags 1)
+              {:event :bypassed-ice
+               :req (req (same-card? card target))})
+            (merge
+              (give-tags 1)
+              {:event :subroutines-broken
+               :req (req (and (same-card? (:ice context) card)
+                              (:all-subs-broken context)))})]
+   :subroutines [{:change-in-game-state {:silent true :req (req (seq (:discard corp)))}
+                  :label "add card from Archives to R&D"
+                  :prompt "Choose a card to add to the top or bottom of R&D"
+                  :show-discard true
+                  :choices {:card #(and (corp? %)
+                                        (in-discard? %))}
+                  :async true
+                  :effect (req (continue-ability
+                                 state side
+                                 (move-card-to-top-or-bottom target)
+                                 card nil))}
+                 add-runner-card-to-grip]})
 
 (defcard "Little Engine"
   {:subroutines [end-the-run

@@ -1163,7 +1163,7 @@
 (defn run-and-encounter-ice-test
   ([card] (run-and-encounter-ice-test card nil))
   ([card players] (run-and-encounter-ice-test card players nil))
-  ([card players {:keys [counters disable rig server threat] :as args}]
+  ([card players {:keys [counters disable rig server threat run-event] :as args}]
    (let [;; sometimes the number of cards are the only important things - this lets us do :hand X
          ;; or :deck X on either side (so we can reduce noise when reading tests)
          players (update-zones players [[[:corp :hand] "IPO"]
@@ -1172,6 +1172,14 @@
                                         [[:runner :deck] "Inti"]])
          players (update-in players [:corp :hand] conj card)
          players (update-in players [:runner :hand] concat rig)
+         run-event-card (if run-event
+                          (if (string? run-event)
+                            run-event
+                            (first run-event))
+                          nil)
+         players (if run-event-card
+                   (update-in players [:runner :hand] conj run-event-card)
+                   players)
          state (new-game players)
          server (or server "HQ")
          server-key (cond
@@ -1212,7 +1220,9 @@
            (core/gain state :runner :click 1)
            (play-from-hand state :runner r)))
        ;; runner should have the default click/credit count (- 1 click for the run)
-       (run-on state server-key)
+       (if run-event
+         (play-cards state :runner run-event)
+         (run-on state server-key))
        (run-continue-until state :encounter-ice)
        state))))
 

@@ -5,6 +5,7 @@
     [game.core.board :refer [all-installed get-all-cards]]
     [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? in-hand? operation? runner? ]]
     [game.core.card-defs :as card-defs]
+    [game.core.choose-one :refer [choose-one-helper]]
     [game.core.damage :refer [damage]]
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [effect-completed make-eid]]
@@ -20,8 +21,10 @@
     [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
     [game.core.runs :refer [can-run-server? make-run jack-out]]
     [game.core.say :refer [play-sfx system-msg system-say]]
-    [game.core.servers :refer [zone->name]]
+    [game.core.servers :refer [zone->name name-zone]]
     [game.core.shuffling :refer [shuffle! fail-to-find!]]
+    [game.core.servers :refer [zone->name name-zone]]
+    [game.core.shuffling :refer [shuffle!]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.core.tags :refer [gain-tags]]
@@ -356,6 +359,31 @@
            :effect (req (spend-credits state side eid card :recurring 1))}]
       (update ability :abilities #(conj (into [] %) recurring-ability)))
     ability))
+
+(defn move-to-top
+  [target-card]
+  {:msg (msg "add " (card-str state target-card) " from "
+             (name-zone (:side target-card) (:zone target-card))
+             " to the top of " (if (runner? target-card) "the Stack" "R&D"))
+   :effect (req (move state side target-card :deck {:front true}))})
+
+(defn move-to-bottom
+  [target-card]
+  {:msg (msg "add " (card-str state target-card) " from "
+             (name-zone (:side target-card) (:zone target-card))
+             " to the bottom of " (if (runner? target-card) "the Stack" "R&D"))
+   :effect (req (move state side target-card :deck))})
+
+(defn move-card-to-top-or-bottom
+  "Ability to move a card to the top or bottom of the deck"
+  [target-card]
+  (let [zone (if (runner? target-card) "the Stack" "R&D")]
+    (choose-one-helper
+      {:prompt (str "Move " (:title target-card) " where?")}
+      [{:option (str "Top of " zone)
+        :ability (move-to-top target-card)}
+       {:option (str "Bottom of " zone)
+        :ability (move-to-bottom target-card)}])))
 
 (defn trash-or-rfg
   [state _ eid card]

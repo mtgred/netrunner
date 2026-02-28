@@ -4765,6 +4765,31 @@
     (score-agenda state :corp (get-content state :remote1 0))
     (is (= 1 (count (:discard (get-corp)))) "Trashed pickpocket")))
 
+(deftest lethe-sub-2-move-a-card-to-top-or-bottom-of-rd
+  (doseq [[p f] [["Top of R&D" first] ["Bottom of R&D" last]]]
+    (do-game
+      (subroutine-test "Lethe" 0 {:corp {:discard ["IPO"] :deck [(qty "Hedge Fund" 15)]}})
+      (click-card state :corp "IPO")
+      (click-prompt state :corp p)
+      (is (= "IPO" (:title (f (:deck (get-corp)))))))))
+
+(deftest lethe-sub-1-return-runner-card-to-grip
+  (do-game
+    (subroutine-test "Lethe" 1 nil {:rig ["Rezeki"]})
+    (click-card state :corp "Rezeki")
+    (is-hand? state :runner ["Rezeki"])))
+
+(deftest lethe-on-bypass-take-a-tag
+  (do-game
+    (run-and-encounter-ice-test "Lethe" nil {:run-event ["Inside Job" "HQ"]})
+    (is (= 1 (count-tags state)) "Tagged on bypassing Lethe")))
+
+(deftest lethe-give-tag-on-fully-breaking
+  (do-game
+    (run-and-encounter-ice-test "Lethe"  {:runner {:credits 15}} {:rig ["Carmen"]})
+    (auto-pump-and-break state (get-program state 0))
+    (is (= 1 (count-tags state)) "Tagged on fully breaking Lethe")))
+
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game
