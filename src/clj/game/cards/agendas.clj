@@ -1488,6 +1488,7 @@
 (defcard "Méliès City Luxury Line"
   {:steal-cost-bonus (req [(->c :click 1)])
    :on-score {:msg "gain [Click]"
+              :silent (req true)
               :effect (req (gain-clicks state :corp 1))}})
 
 (defcard "Megaprix Qualifier"

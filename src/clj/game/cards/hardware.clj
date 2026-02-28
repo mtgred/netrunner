@@ -1617,6 +1617,8 @@
                                 :type :credit}}
    :events [{:event :run
              :change-in-game-state {:req (req (seq (:hand runner))) :silent true}
+             :skippable true
+             :interactive (req true)
              :prompt "Trash a hardware from the Grip?"
              :choices {:card (every-pred hardware? in-hand?)}
              :async true
@@ -2581,6 +2583,7 @@
    :events [{:event :subroutines-broken
              :async true
              :once-per-instance true
+             :automatic :gain-credits
              :req (req (letfn [(valid-ctx? [[ctx]] (:was-zero-or-less-strength? ctx))]
                          (and (valid-ctx? targets)
                               (first-event? state side :subroutines-broken valid-ctx?))))
@@ -2704,6 +2707,7 @@
   {:events [{:event :play-event
              :req (req (first-event? state side :play-event))
              :async true
+             :silent (req true)
              :effect (req (add-counter state side eid card :credit 1))}]
    :interactions {:pay-credits {:req (req run)
                                 :type :credit}}})

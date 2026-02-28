@@ -312,6 +312,8 @@
                                                (run-any-server-ability {:events [{:event :run-ends
                                                                                   :unregister-once-resolved true
                                                                                   :duration :end-of-run
+                                                                                  :interactive (req true)
+                                                                                  :automatic :last
                                                                                   :change-in-game-state {:silent true
                                                                                                          :req (req (get-card state installed-card))}
                                                                                   :msg (msg "add " (:title installed-card) " to the top of the stack")

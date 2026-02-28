@@ -2861,6 +2861,7 @@
             :prompt "Host a card from your grip to draw a card?"
             :choices {:req (req (and (runner? target)
                                      (in-hand? target)))}
+            :skippable true
             :msg "host a card facedown from the Grip and draw a card"
             :async true
             :effect (req (host state side (get-card state card) target {:facedown true})
