@@ -138,7 +138,9 @@
 (defn total-available-credits
   [state side eid card]
   (if-not (any-effects state side :cannot-pay-credit)
-    (+ (get-in @state [side :credit])
+    (+ (if-not (any-effects state side :cannot-pay-credits-from-pool)
+         (get-in @state [side :credit])
+         0)
        (bad-publicity-available state side)
        (->> (concat (eligible-pay-credit-cards state side eid card)
                     (eligible-reduce-credit-cards state side eid card))
@@ -176,7 +178,7 @@
   [cost state side eid card]
   (and (<= 0 (- (total-available-stealth-credits state side eid card) (stealth-value cost)))
        (<= 0 (- (value cost) (stealth-value cost)))
-       (or (<= 0 (- (get-in @state [side :credit]) (value cost)))
+       (or (when-not (any-effects state side :cannot-pay-credits-from-pool) (<= 0 (- (get-in @state [side :credit]) (value cost))))
            (<= 0 (- (total-available-credits state side eid card) (value cost))))))
 (defmethod handler :credit
   [cost state side eid card]

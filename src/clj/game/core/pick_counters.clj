@@ -4,6 +4,7 @@
    [game.core.card :refer [get-card get-counters has-subtype? installed? runner?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.eid :refer [effect-completed make-eid complete-with-result]]
+   [game.core.effects :refer [any-effects]]
    [game.core.engine :refer [resolve-ability queue-event]]
    [game.core.gaining :refer [lose]]
    [game.core.props :refer [add-counter]]
@@ -155,12 +156,15 @@
          all-used-up? (fn [cid] (>= (get-in uses [cid :used] 0) (get-in uses [cid :max-uses] 99)))
          provider-cards (filter #(not (all-used-up? (:cid %))) provider-cards)
          provider-cards (filter #(not (get-in (card-def %) [:interactions :pay-credits :cost-reduction])) provider-cards)
+         can-use-bad-pub? (and (pos? bad-pub-available) (not= stealth-target target-count) true)
+         can-use-credits? (fn [state side]
+                            (not (any-effects state side :cannot-pay-credits-from-pool)))
          ;; note - this allows holding the shift key while clicking a card to keep picking that card while possible
          ;; ie: taking 5cr from miss bones with one click, instead of waiting for 5 server round-trips
-         can-use-bad-pub? (and (pos? bad-pub-available) (not= stealth-target target-count) true)
          should-auto-repeat? (fn [state side] (get-in @state [side :shift-key-select] nil))
          pay-rest (req
-                    (if (and (<= (- target-count counter-count) (get-in @state [side :credit]))
+                    (if (and (<= (- target-count counter-count)
+                                 (if (can-use-credits? state side) (get-in @state [side :credit]) 0))
                              (<= stealth-target stealth-count))
                       (let [remainder (max 0 (- target-count counter-count))
                             remainder-str (when (pos? remainder)

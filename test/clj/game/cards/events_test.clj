@@ -71,7 +71,8 @@
     (do-trash-prompt state 3)
     (click-prompts state :runner "Aircheck" "Aircheck" "Aircheck" "Server 1")
     (run-continue-until state :success)
-    (is (= ["No action"] (prompt-titles :runner)) "Cannot pay to trash")))
+    (is (= ["No action"] (prompt-titles :runner))
+        "Cannot pay to trash because paying from the credit pool is forbidden")))
 
 (deftest aircheck-cannot-lose-credits
   (do-game

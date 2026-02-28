@@ -107,7 +107,7 @@
   {:makes-run true
    :data {:counter {:credit 4}}
    :interactions {:pay-credits {:req (req run) :type :credit}}
-   :static-abilities [{:type :cannot-spend-credits
+   :static-abilities [{:type :cannot-pay-credits-from-pool
                        :req (req true)
                        :value true}
                       {:type :cannot-lose-credits
