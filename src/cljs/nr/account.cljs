@@ -258,6 +258,7 @@
    ["He/it" "heit"]
    ["He/they" "hethey"]
    ["He/She/they" "heshe"]
+   ["He/She" "heshe2"]
    ["It" "it"]
    ["Fae/faer" "faefaer"]
    ["Ne/nem" "ne"]
