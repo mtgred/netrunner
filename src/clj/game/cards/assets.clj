@@ -833,9 +833,9 @@
 
 (defcard "CPC Generator"
   {:events [{:event :runner-credit-gain
-             :req (req (first-event? state side :runner-credit-gain
-                                     (fn [[context]]
-                                       (= :runner-click-credit (:action context)))))
+             :req (req (let [valid-ctx? (fn [[ctx]] (= :runner-click-credit (:action context)))]
+                         (and (valid-ctx? targets)
+                              (first-event? state side :runner-credit-gain valid-ctx?))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
