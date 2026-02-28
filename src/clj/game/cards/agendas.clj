@@ -349,50 +349,95 @@
               :effect (effect (damage eid :meat 2 {:card card}))}})
 
 (defcard "Bacterial Programming"
-  (letfn [(hq-step [remaining to-trash to-hq]
-            {:async true
-             :prompt "Choose a card to move to HQ"
-             :choices (conj (vec remaining) "Done")
-             :effect (req (if (= "Done" target)
-                            (wait-for (trash-cards state :corp to-trash {:unpreventable true :cause-card card})
-                                      (doseq [h to-hq]
-                                        (move state :corp h :hand))
-                                      (do
-                                        (system-msg state :corp
-                                                    (str "uses " (:title card)
-                                                         " to trash " (quantify (count to-trash) "card")
-                                                         ", add " (quantify (count to-hq) "card")
-                                                         " to HQ, and arrange the top " (quantify (- 7 (count to-trash) (count to-hq)) "card") " of R&D"))
-                                        (if (seq remaining)
-                                          (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
-                                          (effect-completed state :corp eid))))
-                            (continue-ability state :corp (hq-step
-                                                            (set/difference (set remaining) (set [target]))
-                                                            to-trash
-                                                            (conj to-hq target)) card nil)))})
-          (trash-step [remaining to-trash]
-            {:async true
-             :prompt "Choose a card to discard"
-             :choices (conj (vec remaining) "Done")
-             :effect (req (if (= "Done" target)
-                            (continue-ability state :corp (hq-step remaining to-trash '()) card nil)
-                            (continue-ability state :corp (trash-step
-                                                            (set/difference (set remaining) (set [target]))
-                                                            (conj to-trash target)) card nil)))})]
+  (letfn [(remove-card [remaining target]
+            (filterv #(not (same-card? % target)) remaining))
+          (enumerate-text [phrases]
+            (let [phrases (filterv identity phrases)]
+              (cond
+                (zero? (count phrases))
+                ""
+                (= 1 (count phrases))
+                (first phrases)
+                (= 2 (count phrases))
+                (str (first phrases) " and " (second phrases))
+                :else
+                (str (first phrases) ", " (enumerate-text (rest phrases))))))
+          (interact [cards remaining to-trash to-add to-top stage]
+            (cond
+              (not (seq remaining))
+              (choose-one-helper
+                {:prompt (str (when (seq to-trash)
+                                (str (enumerate-cards to-trash) " will be trashed. "))
+                              (when (seq to-add)
+                                (str (enumerate-cards to-add) " will be added to HQ. "))
+                              (when (seq to-top)
+                                (str "the top of R&D will be (top->bottom): " (enumerate-cards (reverse to-top)))))}
+                [{:option "OK"
+                  :ability {:msg (msg (enumerate-text
+                                        [(when (seq to-trash)
+                                           (str "trash " (quantify (count to-trash) "card") " from R&D"))
+                                         (when (seq to-add)
+                                           (str "add " (quantify (count to-add) "card") " to HQ"))
+                                         (when (seq to-top)
+                                           (str "rearrange the top " (quantify (count to-top) "card") " of R&D"))]))
+                            :async true
+                            :effect (req (doseq [c to-add]
+                                           (move state side c :hand))
+                                         (doseq [c to-trash]
+                                           (move state side c :deck {:front true}))
+                                         (wait-for
+                                           (trash-cards state side (take (count to-trash) (get-in @state [:corp :deck])) {:suppress-checkpoint true})
+                                           (doseq [c to-top]
+                                             (move state side c :deck {:front true}))
+                                           (checkpoint state side eid)))}}
+                 {:option "I want to start over"
+                  :ability (interact cards cards [] [] [] :trash)}])
+              (= stage :trash)
+              {:prompt "Choose a card to trash"
+               :choices (conj remaining "Done")
+               :async true
+               :effect (req (continue-ability
+                              state side
+                              (if (= target "Done")
+                                (interact cards remaining to-trash to-add to-top :add)
+                                (interact cards (remove-card remaining target) (conj to-trash target) to-add to-top stage))
+                              card nil))}
+              (= stage :add)
+              {:prompt "Choose a card to add to HQ"
+               :choices (conj remaining "Done")
+               :async true
+               :effect (req (continue-ability
+                              state side
+                              (if (= target "Done")
+                                (interact cards remaining to-trash to-add to-top :order)
+                                (interact cards (remove-card remaining target) to-trash (conj to-add target) to-top stage))
+                              card nil))}
+              ;; note - if there is one card remaining, we could just add it to the top, but I think that actually
+              ;; causes (player) memory issues that clicking on the card does not, so I have chosen to do it this way
+              ;;  -nbkelly, 2026.02
+              :else
+              {:prompt "Add a card to the top of R&D"
+               :choices remaining
+               :async true
+               :effect (req (continue-ability state side (interact cards (remove-card remaining target) to-trash to-add (conj to-top target) stage) card nil))}))]
     (let [arrange-rd
           {:interactive (req true)
-           :optional
-           {:waiting-prompt true
-            :prompt "Look at the top 7 cards of R&D?"
-            :yes-ability
-            {:async true
-             :msg "look at the top 7 cards of R&D"
-             :effect (req (let [c (take 7 (:deck corp))]
-                            (when (and
-                                   (:access @state)
-                                   (:run @state))
-                              (swap! state assoc-in [:run :shuffled-during-access :rd] true))
-                            (continue-ability state :corp (trash-step c '()) card nil)))}}}]
+           :change-in-game-state {:silent true :req (req (seq (:deck corp)))}
+           :optional {:waiting-prompt true
+                      :prompt "Look at the top 7 cards of R&D?"
+                      :yes-ability {:async true
+                                    :msg "look at the top 7 cards of R&D"
+                                    :prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-cards (take 7 (:deck corp))))
+                                    :choices ["OK"]
+                                    :effect (req (let [set-aside-cards (set-aside-for-me state side eid (take 7 (:deck corp)))]
+                                                   (when (and
+                                                           (:access @state)
+                                                           (:run @state))
+                                                     (swap! state assoc-in [:run :shuffled-during-access :rd] true))
+                                                   (continue-ability
+                                                     state side
+                                                     (interact set-aside-cards set-aside-cards [] [] [] :trash)
+                                                     card nil)))}}}]
       {:on-score arrange-rd
        :stolen arrange-rd})))
 
