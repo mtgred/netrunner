@@ -790,10 +790,11 @@
                                (filter #(and (card-for-ability state %)
                                              (not (:disabled (card-for-ability state %))))
                                        handlers))
-                    non-silent (filter #(let [silent-fn (:silent (:ability %))
+                    non-silent (filter #(let [silent? (:silent (:ability %))
                                               card (card-for-ability state %)]
-                                          (not (and silent-fn
-                                                    (silent-fn state side (make-eid state) card event-targets))))
+                                          (not (and silent?
+                                                    (or (= silent? true)
+                                                        (silent? state side (make-eid state) card event-targets)))))
                                        handlers)
                     titles (map (fn [{:keys [card ability]}]
                                   ;; Showing ability name in prompt if card has multiple listeners to the same event, e.g. Privileged Access
@@ -850,7 +851,7 @@
                                  (let [auto-handlers (->> (filter (complement handler-skippable?) handlers)
                                                           (sort-by #(or (->> % :card :printed-title) ""))
                                                           (sort-by #(get automatic-priority (->> % :ability :automatic) 10)))
-                                       auto-handlers (map #(update-in % [:ability] merge {:silent (req true) :interactive nil}) auto-handlers)]
+                                       auto-handlers (map #(update-in % [:ability] merge {:silent true :interactive nil}) auto-handlers)]
                                    (if (seq auto-handlers)
                                      (continue-ability
                                        state side
@@ -991,12 +992,13 @@
                                      (not (apply trigger-suppress state (to-keyword (:side card))
                                                  (:event (:handler %)) card (:context %)))))
                              handlers))
-          non-silent (filter #(let [silent-fn (:silent (:ability (:handler %)))]
-                                (not (and silent-fn
-                                          (silent-fn state side
-                                                     (make-eid state eid)
-                                                     (card-for-ability state (:handler %))
-                                                     (:context %)))))
+          non-silent (filter #(let [silent? (:silent (:ability (:handler %)))]
+                                (not (and silent?
+                                          (or (= silent? true)
+                                              (silent? state side
+                                                       (make-eid state eid)
+                                                       (card-for-ability state (:handler %))
+                                                       (:context %))))))
                              handlers)
           cards-with-titles (filter #(card-for-ability state (:handler %)) non-silent)
           choices-map (map #(vector (or (:ability-name (:ability (:handler %)))
@@ -1048,7 +1050,7 @@
                                 (let [auto-handlers (->> (filter (complement handler-skippable?) handlers)
                                                          (sort-by #(or (->> % :handler :card :printed-title) ""))
                                                          (sort-by #(get automatic-priority (->> % :handler :ability :automatic) 10)))
-                                      auto-handlers (map #(update-in % [:handler :ability] merge {:silent (req true) :interactive nil}) auto-handlers)]
+                                      auto-handlers (map #(update-in % [:handler :ability] merge {:silent true :interactive nil}) auto-handlers)]
                                   (if (seq auto-handlers)
                                     (trigger-queued-event-player state side eid auto-handlers args)
                                     (effect-completed state side eid))))
