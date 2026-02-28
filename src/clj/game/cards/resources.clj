@@ -2488,6 +2488,13 @@
              :msg "trash itself"
              :effect (effect (trash eid card {:cause :runner-ability :cause-card card}))}]}))
 
+(defcard "Nurse Hạnh"
+  {:events [{:event :archives-flipped
+             :req (req (>= (:count context) 2))
+             :msg "draw 2 cards"
+             :async true
+             :effect (req (draw state side eid 2))}]})
+
 (defcard "No Free Lunch"
   {:abilities [{:label "Gain 3 [Credits]"
                 :msg "gain 3 [Credits]"

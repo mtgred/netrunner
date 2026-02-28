@@ -4918,6 +4918,18 @@
         (do (click-prompt state :runner "Pass priority")
             (is (<= 3 (count (:discard (get-runner)))) "Took 3 damage"))))))
 
+(deftest nurse-hanh-test
+  (do-game
+    (new-game {:runner {:hand ["Nurse Hạnh"]
+                        :deck [(qty "Nurse Hạnh" 15)]}
+               :corp {:discard [(qty "IPO" 6)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Nurse Hạnh")
+    (is (changed? [(count (:hand (get-runner))) 2]
+          (run-empty-server state :archives)))
+    (is (changed? [(count (:hand (get-runner))) 0]
+          (run-empty-server state :archives)))))
+
 (deftest off-campus-apartment-ability-shows-a-simultaneous-resolution-prompt-when-appropriate
     ;; ability shows a simultaneous resolution prompt when appropriate
     (do-game
