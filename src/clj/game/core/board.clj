@@ -175,7 +175,7 @@
                               (can-host state :corp (make-eid state) % [card])))
                       (all-installed state :corp))
         base-list (concat hosts (server-list state) (when-not at-remote-limit? ["New remote"]))]
-    (if-let [install-req (-> card card-def :install-req)]
+    (if-let [install-req (or (-> card card-def :install-req) (-> card card-def :legal-zones))]
       ;; Install req function overrides normal list of install locations
       (install-req state :corp card (make-eid state) base-list)
       ;; Standard list

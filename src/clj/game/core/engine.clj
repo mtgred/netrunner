@@ -148,6 +148,7 @@
 ;              some ability once between all of them, then the card should specify a manual :once-key that can
 ;              be any value, preferrably a unique keyword.
 ; :install-req -- a function which returns a list of servers a card may be installed into
+; :legal-zones -- like install-req, but also disallows movement into the given zones
 ; :makes-run -- boolean. indicates if the ability makes a run.
 
 ; COMPLEX ABILITY WRAPPERS

@@ -740,6 +740,7 @@
                          :value true}
                         prevent-random
                         prevent-installed]
+     :legal-zones (req (filter #{"R&D" "HQ"} targets))
      :on-trash {:req (req (and run (= :runner side)))
                 :effect (req
                           (let [c (:card context)]
@@ -1102,7 +1103,7 @@
                                           (in-same-server? card target)))}
                  :async true
                  :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]
-    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+    {:legal-zones (req (remove #{"HQ" "R&D" "Archives"} targets))
      :derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
@@ -1891,7 +1892,7 @@
      :events [(mobile-sysop-event :corp-turn-begins)]}))
 
 (defcard "The Red Room"
-  {:install-req (req (filter #{"R&D" "HQ" "Archives"} targets))
+  {:legal-zones (req (filter #{"R&D" "HQ" "Archives"} targets))
    :events [{:event :agenda-stolen
              :async true
              :effect (req (add-counter state side eid card :power 1))
@@ -1952,7 +1953,7 @@
                                   :effect (effect (gain-credits eid 1))}}}]})
 
 (defcard "Tranquility Home Grid"
-  {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+  {:legal-zones (req (remove #{"HQ" "R&D" "Archives"} targets))
    :events [{:event :corp-install
              :interactive (req true)
              :req (req (and (or (asset? (:card context))
@@ -1985,7 +1986,7 @@
                                                                  (system-msg state side (str "shuffles R&D"))
                                                                  (effect-completed state side eid)))
                                           :cancel shuffle-my-deck!}}}]
-    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+    {:legal-zones (req (remove #{"HQ" "R&D" "Archives"} targets))
      :events [(assoc ability
                      :event :agenda-stolen
                      :req (req (= (:previous-zone (:card context)) (get-zone card))))
@@ -2139,7 +2140,7 @@
                :effect (effect (gain-credits eid 2))}]}))
 
 (defcard "ZATO City Grid"
-  {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+  {:legal-zones (req (remove #{"HQ" "R&D" "Archives"} targets))
    :static-abilities [{:type :gain-encounter-ability
                        :req (req (and (protecting-same-server? card target)
                                       (not (:disabled target))))
