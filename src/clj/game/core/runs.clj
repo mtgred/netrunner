@@ -596,7 +596,7 @@
                       (is-remote? (target-server context))
                       ; else
                       true)))
-     :silent (req true)
+     :silent true
      :effect (req (add-run-effect state card ability props))}))
 
 (defn choose-replacement-ability

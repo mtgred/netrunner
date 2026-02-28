@@ -296,7 +296,7 @@
   [ice-type]
   (auto-icebreaker
     {:events [{:event :successful-run
-               :silent (req true)
+               :silent true
                :async true
                :effect (effect (system-msg (str "places 1 virus counter on " (:title card)))
                                (add-counter eid card :virus 1 nil))}]
@@ -593,7 +593,7 @@
                                                [{:event :can-run-be-ended?
                                                  :duration :end-of-encounter
                                                  :async true
-                                                 :silent (req true)
+                                                 :silent true
                                                  :req (req (= :subroutine (->> context :source-eid :source-type)))
                                                  :msg "prevent the run from ending"
                                                  :effect (req (prevent-end-run state side eid))}])))}]}))
@@ -784,7 +784,7 @@
                        :req (req (<= 3 (get-virus-counters state card)))
                        :value 1}]
    :events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :req (req (= :rd (target-server context)))
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}]})
@@ -1174,7 +1174,7 @@
 
 (defcard "Datasucker"
   {:events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :req (req (is-central? (target-server context)))
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}]
@@ -1188,7 +1188,7 @@
 
 (defcard "DaVinci"
   {:events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :async true
              :effect (effect (add-counter eid card :power 1 nil))}]
    :abilities [{:req (req (some #(and (or (hardware? %)
@@ -1221,7 +1221,7 @@
 
 (defcard "Deep Thought"
   {:events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))
              :req (req (= :rd (target-server context)))}
@@ -1704,7 +1704,7 @@
 
 (defcard "Hemorrhage"
   {:events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}]
    :abilities [{:action true
@@ -2111,7 +2111,7 @@
                                 (break-sub [(->c :power 1)] 1)
                                 (strength-pump 2 2)]
                     :events [{:event :runner-turn-ends
-                              :silent (req true)
+                              :silent true
                               :effect (effect (update! (assoc-in card [:counter :power] 0)))}]}))
 
 (defcard "Mantle"
@@ -2245,7 +2245,7 @@
 
 (defcard "Mongoose"
   (auto-icebreaker {:events [{:event :subroutines-broken
-                              :silent (req true)
+                              :silent true
                               :req (req (and (any-subs-broken-by-card? (:ice context) card)
                                              run))
                               :effect (req (let [broken-ice (:ice context)]
@@ -2708,7 +2708,7 @@
   {:x-fn (req (get-counters card :virus))
    :recurring (get-x-fn)
    :events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :req (req (= :hq (target-server context)))
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}]
@@ -3316,7 +3316,7 @@
                                   (make-run eid (:card-target card) card))}]
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-turn-ends
-               :silent (req true)
+               :silent true
                :effect (effect (update! (dissoc card :card-target)))}]}))
 
 (defcard "Tranquilizer"
