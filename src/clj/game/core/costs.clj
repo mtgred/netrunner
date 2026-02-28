@@ -1,6 +1,6 @@
 (ns game.core.costs
   (:require
-   [game.core.bad-publicity :refer [gain-bad-publicity bad-publicity-available]]
+   [game.core.bad-publicity :refer [gain-bad-publicity bad-publicity-available lose-bad-publicity]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type]]
    [game.core.card :refer [active? agenda? corp? facedown? get-card get-counters get-zone hardware? has-subtype? ice? in-hand? installed? program? resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
@@ -1400,3 +1400,20 @@
                                   " from on " title)
                    :paid/type :virus
                    :paid/value (value cost)})))))
+
+(defmethod value :host-bad-pub [cost] (:cost/amount cost))
+(defmethod label :host-bad-pub [cost] (str "host " (value cost) " bad publicity"))
+(defmethod payable? :host-bad-pub
+  [cost state side eid card]
+  (<= 0 (- (get-in @state [:corp :bad-publicity :base] 0) (value cost))))
+(defmethod handler :host-bad-pub
+  [cost state side eid card]
+  (wait-for
+    (lose-bad-publicity state side (value cost) nil)
+    (wait-for
+      (add-counter state side card :bad-publicity (value cost) {:suppress-checkpoint true})
+      (complete-with-result
+        state side eid
+        {:paid/msg (str "hosts " (value cost) " bad publicity on " (:title card))
+         :paid/type :host-bad-pub
+         :paid/value (value cost)}))))

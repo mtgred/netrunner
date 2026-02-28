@@ -1857,6 +1857,31 @@
                              :effect (req (access-bonus state :runner target -1))}
                             card targets))}]})
 
+(defcard "Luana Campos"
+  {:uninstall (req (continue-ability
+                     state side
+                     {:req (req (and (rezzed? (:old-card context))
+                                     (pos? (get-counters (:old-card context) :bad-publicity))))
+                      :msg (msg "take " (get-counters (:old-card context) :bad-publicity)
+                                " bad publicity")
+                      :async true
+                      :effect (req
+                                (gain-bad-publicity
+                                     state side eid
+                                     (get-counters (:old-card context) :bad-publicity)))}
+                     card targets))
+   :events [{:event :corp-turn-begins
+             :interactive (req true)
+             :change-in-game-state {:req (req (pos? (count-bad-pub state))) :silent true}
+             :optional {:interactive (req true)
+                        :prompt "Host a bad publicity counter to gain 3 [Credits] and draw a card?"
+                        :yes-ability {:msg (msg "gain 3 [Credits] and draw 1 card")
+                                      :cost [(->c :host-bad-pub 1)]
+                                      :async true
+                                      :effect (req (wait-for
+                                                     (gain-credits state side 3 {:suppress-checkpoint true})
+                                                     (draw state side eid 1)))}}}]})
+
 (defcard "Magistrate Revontulet"
   {:static-abilities [{:type :steal-additional-cost
                        :req (req (agenda? target))

@@ -3405,6 +3405,23 @@
     (is (no-prompt? state :runner) "No prompt")
     (is (not (:run @state)) "Access ended after 1 card seen - todachine did his work")))
 
+(deftest luana-test
+  (do-game
+    (new-game {:corp {:hand ["Luana Campos" "Extract"]
+                      :deck [(qty "IPO" 10)]
+                      :bad-pub 1}})
+    (play-cards state :corp ["Luana Campos" "New remote" :rezzed])
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (changed? [(:credit (get-corp)) 3
+                   (count-bad-pub state) -1
+                   (count (:hand (get-corp))) 2]
+          (click-prompt state :corp "Yes"))
+        "Took a BP to get value")
+    (is (changed? [(count-bad-pub state) 1]
+          (play-cards state :corp ["Extract" "Luana Campos"]))
+        "Took BP back")))
+
 (deftest magistrate-revontuler
   (do-game
     (new-game {:corp {:hand ["Magistrate Revontulet" "Greenmail" "Project Beale" "Project Atlas"]}
