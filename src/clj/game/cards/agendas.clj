@@ -100,7 +100,7 @@
     cdef]
    (assoc cdef
           :on-score
-          {:silent (req true)
+          {:silent true
            :async true
            :effect (req (add-counter
                           state side eid card type
@@ -116,7 +116,7 @@
   ([qty ctype]
    {:effect (req (add-counter state side eid card ctype qty nil))
     :async true
-    :silent (req true)}))
+    :silent true}))
 
 ;; Card definitions
 
@@ -426,7 +426,7 @@
                :msg "give the Runner a tag for playing a run event"
                :effect (effect (gain-tags :corp eid 1))}}}
             {:event :runner-install
-             :silent (req true)
+             :silent true
              :optional
              {:req (req (and (not (:facedown context))
                              (has-subtype? (:card context) "Icebreaker")
@@ -561,7 +561,7 @@
 (defcard "Clone Retirement"
   {:on-score {:msg "remove 1 bad publicity"
               :effect (effect (lose-bad-publicity 1))
-              :silent (req true)}
+              :silent true}
    :stolen {:msg "force the Corp to take 1 bad publicity"
             :effect (effect (gain-bad-publicity :corp 1))}})
 
@@ -982,7 +982,7 @@
               :effect (req (wait-for (add-counter state side target :agenda 1 nil)
                                      (update-all-agenda-points state)
                                      (effect-completed state side eid)))
-              :silent (req true)}})
+              :silent true}})
 
 (defcard "Geothermal Fracking"
   {:on-score (agenda-counters 2)
@@ -1086,7 +1086,7 @@
                                       (is-scored? state :corp card)))}
      :abilities [abi]
      :events [(assoc abi
-                     :change-in-game-state {:req (req (seq (:discard corp))) :silent (req true)})]}))
+                     :change-in-game-state {:req (req (seq (:discard corp))) :silent true})]}))
 
 (defcard "Helium-3 Deposit"
   {:on-score
@@ -1355,7 +1355,7 @@
 
 (defcard "Luminal Transubstantiation"
   {:on-score
-   {:silent (req true)
+   {:silent true
     :effect (req (gain-clicks state :corp 3)
                  (register-turn-flag!
                    state side card :can-score
@@ -1410,7 +1410,7 @@
                        :value -1}]})
 
 (defcard "Megaprix Qualifier"
-  {:on-score {:silent (req true)
+  {:on-score {:silent true
               :req (req (< 1 (count (filter #(= (:title %) "Megaprix Qualifier")
                                             (concat (:scored corp) (:scored runner))))))
               :async true
@@ -1692,7 +1692,7 @@
   (letfn [(trash-count-str [card]
             (quantify (- (get-counters card :advancement) 4) "installed card"))]
     {:on-score {:player :runner
-                :silent (req true)
+                :silent true
                 :req (req (and (< 4 (get-counters (:card context) :advancement))
                                (pos? (count (all-installed state :runner)))))
                 :waiting-prompt true
@@ -1866,7 +1866,7 @@
              :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Proprionegation"
-  {:on-score {:silent (req true)
+  {:on-score {:silent true
               :async true
               :effect (effect (add-counter eid card :agenda 1))}
    :abilities [{:req (req (:run @state))
