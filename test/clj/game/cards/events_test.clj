@@ -7252,6 +7252,17 @@
           (play-from-hand state :runner "Strike Fund"))
         "Gained 3 credits from playing Strike Fund")))
 
+(deftest sell-out-test
+  (do-game
+    (new-game {:runner {:hand ["Sell Out" "The Supplier"] :deck [(qty "Ika" 10)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "The Supplier")
+    (play-from-hand state :runner "Sell Out")
+    (is (changed? [(:credit (get-runner)) 4
+                   (count (:hand (get-runner))) 2]
+          (click-card state :runner "The Supplier"))
+        "Gained 4 and drew 2")))
+
 (deftest sure-gamble
   ;; Sure Gamble
   (do-game

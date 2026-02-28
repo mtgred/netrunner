@@ -3587,6 +3587,13 @@
                                          (:label (:ability context)))))
                       :value (->c :credit 1)}]})
 
+(defcard "Sell Out"
+  {:on-play {:additional-cost [(->c :resource 1)]
+             :async true
+             :msg "gain 4 [Credits] and draw 2 cards"
+             :effect (req (wait-for (gain-credits state side 4 {:suppress-checkpoint true})
+                                    (draw state side eid 2)))}})
+
 (defcard "Shred"
   {:on-play (run-any-server-ability)
    :makes-run true
