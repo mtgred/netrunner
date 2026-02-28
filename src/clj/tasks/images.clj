@@ -33,9 +33,13 @@
 (defn read-alt-sets
   "Read in the alt art set information"
   []
-  (-> alt-art-sets
-      (slurp)
-      (edn/read-string)))
+  (try
+    (-> alt-art-sets
+        (slurp)
+        (edn/read-string))
+    (catch Exception e
+      (println "Failed to load alt art set info: " (.getMessage e))
+      nil)))
 
 (defn remove-old-images
   "Remove images attached to cards in the db"
@@ -114,7 +118,7 @@
              card-dir (apply io/file img-directory)
              langs (remove #(= "overrides" (.getName %)) (find-dirs card-dir))
              overrides-dir (apply io/file overrides-img-directory)]
-         (replace-collection db alt-collection alt-sets)
+         (when alt-sets (replace-collection db alt-collection alt-sets))
          (remove-old-images db)
          (run! (partial add-language-images db "/img/cards") langs)
          (println "Adding override images...")
