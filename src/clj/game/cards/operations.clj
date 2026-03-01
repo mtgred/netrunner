@@ -618,6 +618,19 @@
              :msg "give the Runner 2 tags"
              :effect (effect (gain-tags :runner eid 2))}]})
 
+(defcard "Caveat Emptor"
+  {:on-play (choose-one-helper
+              [{:option "Gain 6 [Credits]. Runner has -1 [Click] next turn"
+                :ability {:msg "Gain 6 [Credits] and give the Runner -1 alotted [Click] next turn"
+                          :async true
+                          :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil dec 0))
+                                       (gain-credits state side eid 6))}}
+               {:option "Gain 10 [Credits]. Runner has +1 [Click] next turn"
+                :ability {:msg "Gain 10 [Credits] and give the Runner +1 alotted [Click] next turn"
+                          :async true
+                          :effect (req (swap! state update-in [:runner :extra-click-temp] (fnil inc 0))
+                                       (gain-credits state side eid 10))}}])})
+
 (defcard "Cultivate"
   (letfn [(remove-card [remaining target]
             (filterv #(not (same-card? % target)) remaining))

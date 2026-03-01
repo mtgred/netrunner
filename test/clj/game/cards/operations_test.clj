@@ -760,6 +760,20 @@
           (click-prompt state :runner "Steal")
           (is (= 2 (count-tags state)) "Runner took 2 tags from accessing agenda with Casting Call hosted on it"))))))
 
+(deftest caveat-emptor-test
+  (doseq [[opt gain cs] [["Gain 6 [Credits]. Runner has -1 [Click] next turn" 6 3]
+                         ["Gain 10 [Credits]. Runner has +1 [Click] next turn" 10 5]]]
+    (do-game
+      (new-game {:corp {:hand ["Caveat Emptor"] :credits 6}})
+      (play-from-hand state :corp "Caveat Emptor")
+      (is (changed? [(:credit (get-corp)) gain]
+            (click-prompt state :corp opt))
+          "Gained creds")
+      (take-credits state :corp)
+      (is (changed? [(:credit (get-runner)) cs]
+            (take-credits state :runner))
+          "Take-credits modified cred gain because the number of clicks was different"))))
+
 (deftest celebrity-gift
   ;; Ice Wall
   (do-game
