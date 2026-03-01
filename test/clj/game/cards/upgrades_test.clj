@@ -4092,6 +4092,37 @@
       (is (= 3 (-> (get-runner) :discard count)) "Runner should take 3 net damage from losing Self-destruct trace")
       (is (not (:run @state)) "Run has ended because the server disappeared"))))
 
+(deftest shackleton-grid-test-stealth-cred
+  (do-game
+    (new-game {:corp {:hand ["Shackleton Grid"] :bad-pub 1}
+               :runner {:hand ["Mantle" "Self-modifying Code" (qty "Easy Mark" 5)]}})
+    (play-from-hand state :corp "Shackleton Grid" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Mantle")
+    (play-from-hand state :runner "Self-modifying Code")
+    (run-on state :remote1)
+    (is (changed? [(count (:hand (get-runner))) -4]
+          (card-ability state :runner (get-program state 1) 0)
+          (click-prompts state :runner "Mantle" "Done")
+          (click-prompt state :corp "Yes"))
+        "Got slammed for 4 damage")))
+
+(deftest shackleton-grid-test-bad-publicity-cred
+  (do-game
+    (new-game {:corp {:hand ["Shackleton Grid"] :bad-pub 1}
+               :runner {:hand ["Self-modifying Code" (qty "Easy Mark" 5)]}})
+    (play-from-hand state :corp "Shackleton Grid" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Self-modifying Code")
+    (run-on state :remote1)
+    (is (changed? [(count (:hand (get-runner))) -4]
+          (card-ability state :runner (get-program state 0) 0)
+          (select-bad-pub state 0)
+          (click-prompt state :corp "Yes"))
+        "Got slammed for 4 damage")))
+
 (deftest shell-corporation
   (do-game
     (new-game {:corp {:hand ["Shell Corporation"]}})

@@ -21,7 +21,7 @@
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [dissoc-req pay register-default-events
-                             register-events resolve-ability unregister-events]]
+                             not-used-once? register-events resolve-ability unregister-events]]
    [game.core.events :refer [first-event? first-run-event? no-event? turn-events run-event-count run-events]]
    [game.core.finding :refer [find-cid find-latest]]
    [game.core.flags :refer [clear-persistent-flag! is-scored? register-persistent-flag!
@@ -1782,6 +1782,20 @@
                                               :msg "do 3 net damage"
                                               :effect (effect (damage eid :net 3 {:card card}))}}}
                                            card nil))))}]})
+
+(defcard "Shackleton Grid"
+  (let [ev {:optional
+            {:prompt "do 4 meat damage?"
+             :waiting-prompt true
+             :req (req (and run this-server (not-used-once? state {:once :per-turn} card)
+                            (or (not (:card target))
+                                (runner? (:card target)))))
+             :yes-ability {:once :per-run
+                           :async true
+                           :msg "do 4 meat damage"
+                           :effect (req (damage state side eid :meat 4))}}}]
+    {:events [(merge ev {:event :bad-publicity-spent})
+              (merge ev {:event :spent-credits-from-card})]}))
 
 (defcard "Shell Corporation"
   {:abilities
