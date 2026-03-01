@@ -1,7 +1,7 @@
 (ns game.core.runs
   (:require
     [game.core.access :refer [breach-server]]
-    [game.core.board :refer [get-zones server->zone]]
+    [game.core.board :refer [get-zones server->zone card->server]]
     [game.core.card :refer [get-card get-zone rezzed?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [jack-out-cost run-cost run-additional-cost-bonus]]
@@ -10,7 +10,7 @@
     [game.core.engine :refer [checkpoint end-of-phase-checkpoint register-pending-event pay queue-event resolve-ability trigger-event trigger-event-simult]]
     [game.core.flags :refer [can-run? clear-run-register!]]
     [game.core.gaining :refer [gain-credits]]
-    [game.core.ice :refer [active-ice? break-subs-event-context get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
+    [game.core.ice :refer [active-ice? all-subs-broken? break-subs-event-context get-current-ice get-run-ices update-ice-strength reset-all-ice reset-all-subs! set-current-ice]]
     [game.core.mark :refer [is-mark?]]
     [game.core.payment :refer [build-cost-string build-spend-msg can-pay? merge-costs ->c]]
     [game.core.prevention :refer [resolve-encounter-prevention resolve-end-run-prevention resolve-jack-out-prevention]]
@@ -443,7 +443,12 @@
     (swap! state assoc-in [:run :no-action] false)
     (when pass-ice?
       (system-msg state :runner (str "passes " (card-str state ice)))
-      (queue-event state :pass-ice {:ice (get-card state ice)}))
+      (let [nice (get-card state ice)]
+        (queue-event state :pass-ice
+                     {:ice nice
+                      :outermost (when-let [server-ice (:ices (card->server state nice))]
+                                   (same-card? nice (last server-ice)))
+                      :all-subs-broken (all-subs-broken? ice)})))
     (swap! state assoc-in [:run :position] new-position)
     (when passed-all-ice
       (queue-event state :pass-all-ice {:ice (get-card state ice)}))

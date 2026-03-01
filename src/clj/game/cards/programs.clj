@@ -3132,6 +3132,28 @@
 (defcard "Shiv"
   (break-and-enter "Sentry"))
 
+(defcard "Sipa"
+  {:events [{:event :pass-ice
+             :req (req (letfn [(valid-ctx? [ctx]
+                                 (and (:all-subs-broken ctx)
+                                      (:outermost ctx)
+                                      (:ice ctx)))]
+                         (and (valid-ctx? context)
+                              (first-event? state side :pass-ice #(some valid-ctx? %)))))
+             :interactive (req true)
+             :async true
+             :effect (effect
+                       (continue-ability
+                         (when-let [ice (get-card state (:ice context))]
+                           {:prompt (str "Swap " (:title ice) " with another ice?")
+                            :choices {:card #(and (installed? %)
+                                                  (ice? %)
+                                                  (not (same-card? % ice)))}
+                            :msg (msg "swap the positions of " (card-str state ice)
+                                      " and " (card-str state target))
+                            :effect (effect (swap-ice ice (get-card state target)))})
+                         card nil))}]})
+
 (defcard "Slap Vandal"
   trojan
   {:abilities [(break-sub 1 1 "All" {:req (req (same-card? current-ice (:host card)))

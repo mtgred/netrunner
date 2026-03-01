@@ -8069,6 +8069,31 @@
       (is (= 2 (get-link state)) "2 link")
       (is (= 2 (core/available-mu state)) "Shiv stops using MU when 2+ link"))))
 
+(deftest sipa-test
+  (do-game
+    (new-game {:corp {:hand ["Vanilla" "Ice Wall"]}
+               :runner {:hand ["Sipa" "Corroder"] :credits 15}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sipa")
+    (play-from-hand state :runner "Corroder")
+    (run-on state :hq)
+    (run-continue-until state :encounter-ice)
+    (auto-pump-and-break state (get-program state 1))
+    (run-continue state)
+    (click-card state :runner "Vanilla")
+    (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice wall outer")
+    (is (= "Vanilla" (:title (get-ice state :hq 1))) "Ice wall outer")
+    (run-continue-until state :success)
+    (run-on state :hq)
+    (run-continue-until state :encounter-ice)
+    (auto-pump-and-break state (get-program state 1))
+    (run-continue-until state :movement)
+    (is (no-prompt? state :runner))))
+
 (deftest slap-vandal
   (do-game
     (new-game {:runner {:hand ["Slap Vandal"]}
