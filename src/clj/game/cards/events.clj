@@ -381,7 +381,7 @@
                                    :effect (effect (update! (update-in (get-card state card) [:special :bravado-passed] (fnil conj #{}) (:cid (:ice context)))))}])
                                (make-run eid target (get-card state card)))}
      :events [{:event :run-ends
-               :silent (req true)
+               :silent true
                :msg (msg "gain "
                       (+ 6 (count (get-in card [:special :bravado-passed]))
                          (get-in card [:special :bravado-moved] 0))
@@ -391,7 +391,7 @@
                                          (get-in card [:special :bravado-moved] 0))]
                               (gain-credits state :runner eid qty)))}
               {:event :card-moved
-               :silent (req true)
+               :silent true
                :req (req (get (get-in card [:special :bravado-passed])
                               (:cid (:moved-card context))))
                :effect (req (let [card (update! state side (update-in card [:special :bravado-moved] (fnil inc 0)))]
@@ -663,13 +663,13 @@
      :on-play (run-server-ability :archives)
      :events [{:event :breach-server
                :req (req (= target :archives))
-               :silent (req true)
+               :silent true
                :effect (req (let [ts (distinct (map :title (:discard corp)))]
                               (update! state side
                                        (update-in card [:special :accessed] concat ts))))}
               {:event :access-card
                :req (req (in-discard? target))
-               :silent (req true)
+               :silent true
                :effect (req (update! state side
                                      (update-in card [:special :accessed] conj (:title target))))}
               {:event :run-ends
@@ -1009,7 +1009,7 @@
    :events [{:event :successful-run
              :req (req (and (= :rd (target-server context))
                             this-card-run))
-             :silent (req true)
+             :silent true
              :effect (effect (register-events
                               card [(breach-access-bonus :rd
                                                          (max 0 (min 4 (available-mu state)))
@@ -1496,7 +1496,7 @@
                    :async true
                    :effect (effect (trash eid (assoc target :seen true) {:accessed true :cause-card card}))}}
    :events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :req (req (and (= :hq (target-server context))
                             this-card-run))
              :async true
@@ -1579,7 +1579,7 @@
   {:makes-run true
    :on-play (run-server-ability :rd {:additional-cost [(->c :brain 1)]})
    :events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :req (req (and (= :rd (target-server context))
                             this-card-run))
              :effect (effect (register-events
@@ -2094,7 +2094,7 @@
     {:on-play {:msg "prevent the Corp from rezzing non-ice cards on the Runner's turn"
                :effect ab}
      :events [{:event :runner-turn-begins
-               :silent (req true)
+               :silent true
                :effect ab}]
      :leave-play (req (clear-all-flags-for-card! state side card))}))
 
@@ -2171,7 +2171,7 @@
    :on-play (run-server-from-choices-ability ["HQ" "R&D"])
    :events [{:event :successful-run
              :automatic :draw-cards
-             :silent (req true)
+             :silent true
              :async true
              :msg "draw 1 card"
              :req (req (and (#{:hq :rd} (target-server context))
@@ -2186,7 +2186,7 @@
              :effect (req (make-run state side eid :rd card))}
    :events [{:event :successful-run
              :automatic :draw-cards
-             :silent (req true)
+             :silent true
              :async true
              :req (req (and (= :rd (target-server context))
                             this-card-run))
@@ -2406,7 +2406,7 @@
   {:makes-run true
    :on-play (run-server-ability :hq)
    :events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :req (req (and (= :hq (target-server context))
                             this-card-run))
              :effect (effect (register-events
@@ -3404,7 +3404,7 @@
      :on-play (assoc (run-server-ability :hq) :rfg-instead-of-trashing true)
      :events [{:event :successful-run
                :automatic :draw-cards
-               :silent (req true)
+               :silent true
                :req (req (and (= :hq (target-server context))
                               this-card-run))
                :effect (effect (register-events card
@@ -3626,7 +3626,7 @@
    :events [{:event :successful-run
              :req (req (and (= :rd (target-server context))
                             this-card-run))
-             :silent (req true)
+             :silent true
              :msg "access cards from the bottom of R&D"
              :effect (req (swap! state assoc-in [:runner :rd-access-fn] reverse))}
             {:event :run-ends
@@ -3959,7 +3959,7 @@
   {:makes-run true
    :on-play (run-server-ability :rd)
    :events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :req (req (and (= :rd (target-server context))
                             this-card-run))
              :effect (effect (register-events
@@ -4135,7 +4135,7 @@
    :events [{:event :successful-run
              :automatic :gain-credits
              :unregister-once-resolved true
-             :silent (req true)
+             :silent true
              :req (req (and (= :rd (target-server context))
                             this-card-run
                             (= (get-in card [:special :run-eid :eid]) (get-in @state [:run :eid :eid]))))

@@ -689,7 +689,7 @@
                            :effect (req (prevent-damage state side eid 1))}}]})
 
 (defcard "Cacophony"
-  (let [ev {:silent (req true)
+  (let [ev {:silent true
             :async true
             :effect (req (add-counter state side eid card :power 1))}
         valid-ctx? (fn [evs] (some #(corp? (:card %)) evs))]
@@ -1035,7 +1035,7 @@
 
 (defcard "Crypt"
   {:events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :optional {:prompt (msg "Place 1 virus counter on " (:title card) "?")
                         :req (req (= :archives (target-server context)))
                         :autoresolve (get-autoresolve :auto-place-counter)
@@ -1061,7 +1061,7 @@
 (defcard "Cybertrooper Talut"
   {:static-abilities [(link+ 1)]
    :events [{:event :runner-install
-             :silent (req true)
+             :silent true
              :req (req (and (has-subtype? (:card context) "Icebreaker")
                             (not (has-subtype? (:card context) "AI"))))
              :effect (effect (pump (:card context) 2 :end-of-turn))}]})
@@ -1410,7 +1410,7 @@
 
 (defcard "Enhanced Vision"
   {:events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :async true
              :effect (req (let [target (first (shuffle (:hand corp)))]
                             (system-msg state :runner (str "uses " (:title card) " to force the Corp to reveal " (:title target) " from HQ"))
@@ -1902,7 +1902,7 @@
 (defcard "Jackpot!"
   {:implementation "Credit gain must be manually triggered"
    :events [{:event :runner-turn-begins
-             :silent (req true)
+             :silent true
              :async true
              :effect (effect (add-counter :runner eid card :credit 1))}
             ;; TODO (NoahTheDuke, Oct 2020):
@@ -2724,7 +2724,7 @@
                                                    (= (zone->name (:server context))
                                                       (:card-target card)))))))))
               {:event :runner-turn-ends
-               :silent (req true)
+               :silent true
                :effect (effect (update! (dissoc (get-card state card) :card-target)))}]}))
 
 (defcard "Paule's Café"
@@ -3171,7 +3171,7 @@
                                                    (= (zone->name (:server context))
                                                       (:card-target card)))))))))
               {:event :runner-turn-ends
-               :silent (req true)
+               :silent true
                :effect (effect (update! (dissoc card :card-target)))}]
      :abilities [ability]}))
 
@@ -3429,7 +3429,7 @@
 
 (defcard "Technical Writer"
   {:events [{:event :runner-install
-             :silent (req true)
+             :silent true
              :req (req (and (or (hardware? (:card context))
                                 (program? (:card context)))
                             (not (:facedown? context))))
@@ -3750,7 +3750,7 @@
                  :req (req (= (:cid target) (:supplier-installed (get-card state card))))}]
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-turn-ends
-               :silent (req true)
+               :silent true
                :req (req (:supplier-installed card))
                :effect (effect (update! (dissoc card :supplier-installed)))}]}))
 
@@ -3779,7 +3779,7 @@
                               (some #{:hq :rd} (:server context))))
                :async true
                :effect (req (add-counter state side eid card :power 1))
-               :silent (req true)}]
+               :silent true}]
      :abilities [(ttw-ab "R&D" :rd)
                  (ttw-ab "HQ" :hq)
                  (ttw-bounce "R&D" :rd)
@@ -3924,7 +3924,7 @@
                                :effect (req (update-current-encounter state :replace-subroutine sub)
                                             (effect-completed state side eid))}])))}
               {:event :runner-turn-ends
-               :silent (req true)
+               :silent true
                :effect (effect (update! (dissoc card :card-target)))}]
      :abilities [ability]}))
 

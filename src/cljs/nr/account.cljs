@@ -258,6 +258,7 @@
    ["He/it" "heit"]
    ["He/they" "hethey"]
    ["He/She/they" "heshe"]
+   ["He/She" "heshe2"]
    ["It" "it"]
    ["Fae/faer" "faefaer"]
    ["Ne/nem" "ne"]
@@ -335,7 +336,6 @@
                             {:name "Catalan" :ref "ca"}
                             {:name "Igpay Atinlay" :ref "la-pig"}]]
                 [:option {:value (:ref option) :key (:ref option)} (:name option)]))]
-           [:div [tr-span [:settings_language-tip "Some languages are not fully translated yet. If you would like to help with translations, please contact us."]]]]
            [:div [tr-span [:settings_language-tip "Some languages are not fully translated yet. If you would like to help with translations, please contact us."]]]]
 
           [:section
@@ -727,7 +727,7 @@
           [api-keys s]
 
           [:section
-           [:span.flash-message (:flash-message @s)]]])})))
+           [:span.flash-message (:flash-message @s)]]]])})))
 
 (defn account []
   (let [user (r/cursor app-state [:user])

@@ -247,18 +247,18 @@
    :runner-credits])
 
 (defn prompt-summary
-  [prompt same-side?]
+  [prompt state side same-side?]
   (when same-side?
     (-> prompt
         (update :eid #(when (:eid %) (select-keys % [:eid])))
-        (update :card #(not-empty (select-non-nil-keys % card-keys)))
+        (update :card #(not-empty (card-summary % state side)))
         (update :choices (fn [choices]
                            (if (sequential? choices)
                              (->> choices
                                   (mapv
                                    (fn [choice]
                                      (if (-> choice :value :cid)
-                                       (update choice :value select-non-nil-keys card-keys)
+                                       (update choice :value #(not-empty (card-summary % state side)))
                                        choice)))
                                   (not-empty))
                              choices)))
@@ -306,7 +306,7 @@
       (update :rfg cards-summary state side)
       (update :scored cards-summary state side)
       (update :set-aside cards-summary state side)
-      (update :prompt-state prompt-summary same-side?)
+      (update :prompt-state prompt-summary state side same-side?)
       (update :toast toast-summary same-side?)
       (select-non-nil-keys (into player-keys additional-keys))))
 

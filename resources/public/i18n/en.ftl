@@ -1360,6 +1360,7 @@ pronouns = {$pronoun ->
     [he] He/him
     [heit] He/it
     [heshe] He/She/they
+    [heshe2] He/She
     [hethey] He/they
     [it] It
     [myodb] Prefer not to say

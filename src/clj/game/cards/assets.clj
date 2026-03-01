@@ -833,9 +833,9 @@
 
 (defcard "CPC Generator"
   {:events [{:event :runner-credit-gain
-             :req (req (first-event? state side :runner-credit-gain
-                                     (fn [[context]]
-                                       (= :runner-click-credit (:action context)))))
+             :req (req (let [valid-ctx? (fn [[ctx]] (= :runner-click-credit (:action context)))]
+                         (and (valid-ctx? targets)
+                              (first-event? state side :runner-credit-gain valid-ctx?))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
@@ -961,7 +961,7 @@
                                         (not-triggered? state)))
                          :value (req (get-counters card :power))}]
      :events [{:event :runner-install
-               :silent (req true)
+               :silent true
                :req (req (and (pos? (get-counters card :power))
                               (not-triggered? state)))
                :msg (msg "increase the install cost of " (:title (:card context))
@@ -1320,7 +1320,7 @@
                          (when (zero? (remaining-draws state :runner))
                            (prevent-draw state :runner)))}
    :events [{:event :runner-turn-begins
-             :silent (req true)
+             :silent true
              :effect (effect (max-draw :runner 2))}]
    :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))})
 
@@ -1679,7 +1679,7 @@
                                 (resolve-ability state side eid ability card nil)
                                 (effect-completed state side eid))))}
               {:event :corp-turn-ends
-               :silent (req true)
+               :silent true
                :effect cleanup}]}))
 
 (defcard "Kala Ghoda Real TV"
@@ -1744,7 +1744,7 @@
 (defcard "Lakshmi Smartfabrics"
   {:events [{:event :rez
              :async true
-             :silent (req true)
+             :silent true
              :effect (req (add-counter state side eid card :power 1))}]
    :abilities [{:req (req (seq (filter #(and (agenda? %)
                                              (>= (get-counters card :power)
@@ -2099,7 +2099,7 @@
 (defcard "Mumbad Construction Co."
   {:derezzed-events [corp-rez-toast]
    :events [{:event :corp-turn-begins
-             :silent (req true)
+             :silent true
              :async true
              :effect (effect (add-prop eid card :advance-counter 1 {:placed true}))}]
    :abilities [{:cost [(->c :credit 2)]
@@ -2420,7 +2420,7 @@
                                 card nil))))}]})
 
 (defcard "Phật Gioan Baotixita"
-  (let [place {:silent (req true)
+  (let [place {:silent true
                :async true
                :effect (req (add-counter state side eid card :power 1 {:placed true}))}
         opt (fn [x]
@@ -2465,7 +2465,7 @@
              :prompt "Play a transaction from Archives?"
              :show-discard true
              :change-in-game-state
-             {:silent (req true)
+             {:silent true
               :req (req (some #(or (not (:seen %))
                                    (and (operation? %)
                                         (has-subtype? % "Transaction")
@@ -2959,7 +2959,7 @@
 (defcard "Shattered Remains"
   (advance-ambush 1 {:async true
                      :waiting-prompt true
-                     :req (req (pos? (get-counters (get-card state card) :advancement)))
+                     :change-in-game-state {:req (req (pos? (get-counters (get-card state card) :advancement)))}
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
                      :msg (msg "trash " (enumerate-cards targets))
                      :choices {:max (req (get-counters (get-card state card) :advancement))
@@ -3244,7 +3244,7 @@
 
 (defcard "The News Now Hour"
   {:events [{:event :runner-turn-begins
-             :silent (req true)
+             :silent true
              :effect (req (prevent-current state side))}]
    :on-rez {:effect (req (prevent-current state side))}
    :leave-play (req (swap! state assoc-in [:runner :register :cannot-play-current] false))})
@@ -3564,7 +3564,7 @@
 
 (defcard "Working Prototype"
   {:events [{:event :rez
-             :silent (req true)
+             :silent true
              :async true
              :effect (effect (add-counter eid card :power 1 nil))}]
    :abilities [{:action true

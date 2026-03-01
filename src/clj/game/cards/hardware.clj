@@ -205,7 +205,7 @@
 
 (defcard "Autoscripter"
   {:events [{:event :runner-install
-             :silent (req true)
+             :silent true
              :req (req (and (program? (:card context))
                             ;; only trigger on Runner's turn
                             (= (:active-player @state) :runner)
@@ -746,7 +746,7 @@
   {:static-abilities [(mu+ 1)]
    :events [{:event :successful-run
              :automatic :gain-credits
-             :silent (req true)
+             :silent true
              :async true
              :msg "gain 1 [Credits]"
              :effect (effect (gain-credits eid 1))}]})
@@ -885,7 +885,7 @@
    :events [{:event :runner-install
              :req (req (and (program? target)
                             (first-event? state :runner :runner-install #(program? (first %)))))
-             :silent (req true)
+             :silent true
              :msg (msg "reduce the install cost of " (:title target) " by 1 [Credits]")}]})
 
 (defcard "e3 Feedback Implants"
@@ -1443,7 +1443,7 @@
 
 (defcard "LLDS Processor"
   {:events [{:event :runner-install
-             :silent (req true)
+             :silent true
              :req (req (has-subtype? (:card context) "Icebreaker"))
              :effect (effect (pump (:card context) 1 :end-of-turn))}]})
 
@@ -1632,7 +1632,7 @@
   {:implementation "Power counters added automatically"
    :static-abilities [(mu+ 1)]
    :events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :req (req (= :rd (target-server context)))
              :async true
              :effect (effect (add-counter eid card :power 1))}]
@@ -1738,7 +1738,7 @@
             (count (filter #(= (:title %) "NetChip") (all-active-installed state :runner))))]
     {:enforce-conditions {:req (req (let [first-program (first (filter program? (:hosted card)))]
                                     (and first-program (> (expected-mu state first-program) (netchip-count state)))))
-                          :silent (req true)
+                          :silent true
                           :msg (msg "trash " (card-str state (first (filter program? (:hosted card)))) " for violating hosting restrictions")
                           :async true
                           :effect (req (let [first-program (first (filter program? (:hosted card)))]
@@ -1769,7 +1769,7 @@
   {:recurring 1
    :enforce-conditions {:req (req (let [first-program (first (filter program? (:hosted card)))]
                                     (and first-program (> (expected-mu state first-program) 1))))
-                        :silent (req true)
+                        :silent true
                         :msg (msg "trash " (card-str state (first (filter program? (:hosted card)))) " for violating hosting restrictions")
                         :async true
                         :effect (req (let [first-program (first (filter program? (:hosted card)))]
@@ -1941,7 +1941,7 @@
 (defcard "Pennyshaver"
   {:static-abilities [(mu+ 1)]
    :events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :async true
              :msg "place 1 [Credits]"
              :effect (req (add-counter state :runner eid card :credit 1))}]

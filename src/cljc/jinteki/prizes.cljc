@@ -7,7 +7,7 @@
            data (or (try
                       (and res (-> res slurp clojure.edn/read-string))
                       (catch Exception e
-                        (println "Exc: " e)))
+                        (println "Failed to read" (ex-message e))))
                     {})
            _ (println (str (count data) " card backs loaded"))]
        `(def ~sym (merge ~data ~base-card-backs)))))

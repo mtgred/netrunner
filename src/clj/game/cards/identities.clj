@@ -489,7 +489,7 @@
      :events [{:event :runner-install
                :req (req (and (az-type? (:card context))
                               (not-triggered? state)))
-               :silent (req true)
+               :silent true
                :msg (msg "reduce the install cost of " (:title (:card context)) " by 1 [Credits]")}]}))
 
 (defcard "Azmari EdTech: Shaping the Future"
@@ -902,7 +902,7 @@
 (defcard "Gabriel Santiago: Consummate Professional"
   {:events [{:event :successful-run
              :automatic :gain-credits
-             :silent (req true)
+             :silent true
              :req (req (and (= :hq (target-server context))
                             (first-successful-run-on-server? state :hq)))
              :msg "gain 2 [Credits]"
@@ -1623,12 +1623,12 @@
                                 (continue-ability state side mm-ability (get-card state card) nil)
                                 (effect-completed state side eid))))}
               {:event :runner-turn-begins
-               :silent (req true)
+               :silent true
                :effect (effect
                         (update! (assoc-in card [:special :mm-actions] []))
                         (update! (assoc-in (get-card state card) [:special :mm-click] false)))}
               {:event :corp-turn-ends
-               :silent (req true)
+               :silent true
                :effect (effect
                         (update! (assoc-in card [:special :mm-actions] []))
                         (update! (assoc-in (get-card state card) [:special :mm-click] false)))}]
@@ -2315,7 +2315,7 @@
                   :msg (msg "install a card in a remote server and place 1 advancement counter on it")
                   :effect (effect (continue-ability (install-card target) card nil))}]
      :events [{:event :corp-turn-begins
-               :silent (req true)
+               :silent true
                :effect (req (clear-persistent-flag! state side card :can-rez))}]}))
 
 (defcard "Sebastião Souza Pessoa: Activist Organizer"
@@ -2659,7 +2659,7 @@
                                      :idx (:ability-idx context)})]
     {:events [{:event :action-resolved
                :req (req (= :runner side))
-               :silent (req true)
+               :silent true
                :async true
                :effect (req (let [current-queue (get-in card [:special :previous-actions])
                                   filtered-context (relevant-keys context)]
@@ -2673,7 +2673,7 @@
                                 (do (update! state side (assoc-in card [:special :previous-actions] [filtered-context]))
                                     (effect-completed state side eid)))))}
               {:event :runner-turn-begins
-               :silent (req true)
+               :silent true
                :effect (req (update! state side (assoc-in card [:special :previous-actions] nil)))}]}))
 
 (defcard "The Foundry: Refining the Process"

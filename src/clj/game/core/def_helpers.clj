@@ -583,7 +583,7 @@
                                                            :req (req (let [sidefn (if (= :corp target-side) corp? runner?)]
                                                                        (and (sidefn (:moved-card context))
                                                                             (in-hand? (:moved-card context)))))
-                                                           :silent (req true)
+                                                           :silent true
                                                            :effect (req (conceal-hand state target-side))}])))]
                  (fn [] (unregister-event-by-uuid state side uuid)))
                (fn [] nil)))

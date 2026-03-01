@@ -8,8 +8,9 @@
 
 (deftest load-quotes-test
   (is (sut/load-quotes!))
-  (doseq [id (keys @sut/identity-quotes)]
-    (is (get @all-cards id)))
+  (doseq [id (keys @sut/identity-quotes)
+          :let [known-id? (get @all-cards id)]]
+    (is known-id? (format "%s is mispelled" (pr-str id))))
   (doseq [[id pairs] @sut/identity-quotes
           [pair-id pair-quotes] pairs
           :let [pair? (or (get @all-cards pair-id)

@@ -5291,7 +5291,7 @@
       (take-credits state :corp)
       (run-empty-server state :remote1)
       (click-prompt state :corp "Yes")
-      (is (no-prompt? state :corp) "Corp shouldn't get Shattered Remains ability prompt when no counters")
+      (is (no-prompt? state :corp) "NCIGS because no counters, but you paid a credit to do that")
       (click-prompt state :runner "No action")
       (run-empty-server state :remote2)
       (let [credits (:credit (get-corp))]
