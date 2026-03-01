@@ -4790,6 +4790,27 @@
     (auto-pump-and-break state (get-program state 0))
     (is (= 1 (count-tags state)) "Tagged on fully breaking Lethe")))
 
+(deftest lionsmane-other-subs
+  (testing "Do 2 net damage"
+    (do-game (does-damage-sub "Lionsmane" 0 2)))
+  (testing "Do 2 net damage unless the Runner pays 3 Credits"
+    (do-game
+      (subroutine-test "Lionsmane" 1 {:runner {:hand 5}})
+      (click-prompt state :runner "Pay 3 [Credits]"))
+    (do-game
+      (subroutine-test "Lionsmane" 1 {:runner {:hand 5}})
+      (click-prompt state :runner "Corp does 2 net damage")
+      (is (= 3 (count (:hand (get-runner)))))))
+  (testing "Do 2 net damage unless the runner jacks out"
+    (do-game
+      (subroutine-test "Lionsmane" 2 {:runner {:hand 5}})
+      (click-prompt state :runner "Jack out")
+      (is (= 5 (count (:hand (get-runner))))))
+    (do-game
+      (subroutine-test "Lionsmane" 2 {:runner {:hand 5}})
+      (click-prompt state :runner "Corp does 2 net damage")
+      (is (= 3 (count (:hand (get-runner))))))))
+
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
   (do-game

@@ -51,7 +51,7 @@
    [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [can-pay-to-rez? derez get-rez-cost rez]]
    [game.core.runs :refer [bypass-ice encounter-ends end-run
-                           force-ice-encounter get-current-encounter prevent-access
+                           force-ice-encounter get-current-encounter jack-out prevent-access
                            redirect-run set-next-phase]]
    [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name protecting-same-server?
@@ -2848,6 +2848,28 @@
                                  (move-card-to-top-or-bottom target)
                                  card nil))}
                  add-runner-card-to-grip]})
+
+(defcard "Lionsmane"
+  {:subroutines (let [two-net-option {:option "Corp does 2 net damage"
+                                      :ability {:msg "do 2 net damage"
+                                                :display-side :corp
+                                                :async true
+                                                :effect (req (damage state :corp eid :net 2))}}]
+                  [(do-net-damage 2)
+                   (choose-one-helper
+                     {:label "Do 2 net damage unless the Runner pays 3 [Credits]"
+                      :player :runner}
+                     [(cost-option [(->c :credit 3)] :runner)
+                      two-net-option])
+                   (choose-one-helper
+                     {:label "Do 2 net damage unless the Runner jacks out"
+                      :player :runner}
+                     [{:option "Jack out"
+                       :ability {:msg "jack out"
+                                 :display-side :runner
+                                 :async true
+                                 :effect (req (jack-out state :runner eid))}}
+                      two-net-option])])})
 
 (defcard "Little Engine"
   {:subroutines [end-the-run
