@@ -1589,6 +1589,57 @@
         (take-credits state :runner)
         (is (= (+ 3 total-corp-credits) (:credit (get-corp))) "Corp does not gain any extra c with agenda")))))
 
+(letfn [(setup-state []
+          (let [state (new-game {:runner {:hand ["Cupellation" "HQ Interface"]
+                                          :credits 10}
+                                 :corp {:hand ["Flagship" "Research Station" "Hedge Fund" "Hedge Fund"]
+                                        :credits 10}})]
+            (play-from-hand state :corp "Flagship" "HQ")
+            (play-from-hand state :corp "Research Station" "HQ")
+            (rez state :corp (get-content state :hq 0))
+            (rez state :corp (get-content state :hq 1))
+            (take-credits state :corp)
+            (play-from-hand state :runner "HQ Interface")
+            state))]
+  ;; access both upgrades, cannot access anything else
+  (deftest flagship-normal-case-two-upgrades
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompts state :runner "Research Station" "No action" "No action")
+      (is (no-prompt? state :runner)))
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompts state :runner "Flagship" "No action" "Research Station" "No action")
+      (is (no-prompt? state :runner))))
+  ;; upgrade and a card from hand
+  (deftest flagship-normal-case-one-upgrade
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompts state :runner "Card from hand" "No action" "No action")
+      (is (no-prompt? state :runner)))
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompts state :runner "Flagship" "No action" "Card from hand" "No action")
+      (is (no-prompt? state :runner))))
+  (deftest flagship-normal-case-trash-station
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompt state :runner "Flagship")
+      (do-trash-prompt state 4)
+      (click-prompts state :runner "Card from hand" "No action")
+      (is (no-prompt? state :runner)))
+    (do-game
+      (setup-state)
+      (run-empty-server state :hq)
+      (click-prompts state :runner "Card from hand" "No action")
+      (do-trash-prompt state 4)
+      (is (no-prompt? state :runner)))))
+
 (deftest forced-connection
   ;; Forced Connection - ambush, trace(3) give the runner 2 tags
   (do-game
@@ -1803,7 +1854,7 @@
 (deftest giordano-memorial-field
   ;; Giordano Memorial Field
   (do-game
-      (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
+      (new-game {:corp {:deck ["Giordano Memorial Field" "Greenmail"]}
                  :runner {:deck [(qty "Fan Site" 3)]}})
       (play-from-hand state :corp "Giordano Memorial Field" "New remote")
       (rez state :corp (get-content state :remote1 0))
@@ -1812,7 +1863,7 @@
       (play-from-hand state :runner "Fan Site")
       (play-from-hand state :runner "Fan Site")
       (take-credits state :runner)
-      (play-and-score state "Hostile Takeover")
+      (play-and-score state "Greenmail")
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (let [credits (:credit (get-runner))]
@@ -1827,8 +1878,9 @@
 (deftest giordano-memorial-field-payable-with-net-mercur
     ;; Payable with net mercur
     (do-game
-      (new-game {:corp {:deck ["Giordano Memorial Field" "Hostile Takeover"]}
-                 :runner {:deck [(qty "Fan Site" 3) "Net Mercur"]}})
+      (new-game {:corp {:deck ["Giordano Memorial Field" "Greenmail"]}
+                 :runner {:deck [(qty "Fan Site" 3) "Net Mercur"]
+                          :credits 6}})
       (play-from-hand state :corp "Giordano Memorial Field" "New remote")
       (rez state :corp (get-content state :remote1 0))
       (take-credits state :corp)
@@ -1837,7 +1889,7 @@
       (play-from-hand state :runner "Fan Site")
       (play-from-hand state :runner "Net Mercur")
       (take-credits state :runner)
-      (play-and-score state "Hostile Takeover")
+      (play-and-score state "Greenmail")
       (take-credits state :corp)
       (let [nm (get-resource state 0)]
         (core/command-counter state :runner '("c" "3"))
@@ -2026,6 +2078,18 @@
     (run-empty-server state :hq)
     (is (= 1 (count (:discard (get-runner)))) "1 net damage done for successful run on HQ")))
 
+(deftest hype-machine-test
+  (do-game
+    (new-game {:corp {:hand ["Hype Machine" (qty "Hostile Takeover" 2)]}})
+    (play-from-hand state :corp "Hype Machine" "New remote")
+    (play-and-score state "Hostile Takeover")
+    (is (changed? [(:credit (get-corp)) 0]
+          (rez state :corp (get-content state :remote1 0))))
+    (play-from-hand state :corp "Hostile Takeover" "Server 1")
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (click-card state :corp (get-content state :remote1 1))
+    (is (= 1 (get-counters (get-content state :remote1 0) :advancement)) "1 adv")))
+
 (deftest increased-drop-rates
   ;; Increased Drop Rates
   (do-game
@@ -2039,6 +2103,7 @@
     (click-prompt state :runner "Take 1 tag")
     (is (= 1 (count-tags state)) "Runner takes 1 tag to prevent Corp from removing 1 BP")
     (click-prompt state :runner "Pay 2 [Credits] to trash") ; trash
+    (select-bad-pub state 1)
     (run-empty-server state "Archives")
     (is (= 1 (count-bad-pub state)))
     (click-prompt state :runner "The Corp removes 1 bad publicity")
@@ -3686,6 +3751,23 @@
       (is (find-card "Enigma" (:hand (get-corp))))
       (is (zero? (count (:deck (get-corp))))))))
 
+(deftest perfect-recall-test
+  (do-game
+    (new-game {:corp {:hand ["Perfect Recall" "Merger" "Merger"] :credits 10}})
+    (play-from-hand state :corp "Perfect Recall" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (play-from-hand state :corp "Merger" "Server 1")
+    (core/gain state :corp :click 5)
+    (dotimes [_ 3]
+      (click-advance state :corp (get-content state :remote1 1)))
+    (score state :corp (get-content state :remote1 1))
+    (take-credits state :corp)
+    (run-on state :hq)
+    (card-ability state :corp (get-content state :remote1 0) 0)
+    (click-card state :corp (first (:hand (get-corp))))
+    (run-continue-until state :success)
+    (is (= ["No action"] (prompt-titles :runner)))))
+
 (deftest port-anson-grid
   ;; Port Anson Grid - Prevent the Runner from jacking out until they trash a program
   (do-game
@@ -4010,6 +4092,37 @@
       (is (= 3 (-> (get-runner) :discard count)) "Runner should take 3 net damage from losing Self-destruct trace")
       (is (not (:run @state)) "Run has ended because the server disappeared"))))
 
+(deftest shackleton-grid-test-stealth-cred
+  (do-game
+    (new-game {:corp {:hand ["Shackleton Grid"] :bad-pub 1}
+               :runner {:hand ["Mantle" "Self-modifying Code" (qty "Easy Mark" 5)]}})
+    (play-from-hand state :corp "Shackleton Grid" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Mantle")
+    (play-from-hand state :runner "Self-modifying Code")
+    (run-on state :remote1)
+    (is (changed? [(count (:hand (get-runner))) -4]
+          (card-ability state :runner (get-program state 1) 0)
+          (click-prompts state :runner "Mantle" "Done")
+          (click-prompt state :corp "Yes"))
+        "Got slammed for 4 damage")))
+
+(deftest shackleton-grid-test-bad-publicity-cred
+  (do-game
+    (new-game {:corp {:hand ["Shackleton Grid"] :bad-pub 1}
+               :runner {:hand ["Self-modifying Code" (qty "Easy Mark" 5)]}})
+    (play-from-hand state :corp "Shackleton Grid" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Self-modifying Code")
+    (run-on state :remote1)
+    (is (changed? [(count (:hand (get-runner))) -4]
+          (card-ability state :runner (get-program state 0) 0)
+          (select-bad-pub state 0)
+          (click-prompt state :corp "Yes"))
+        "Got slammed for 4 damage")))
+
 (deftest shell-corporation
   (do-game
     (new-game {:corp {:hand ["Shell Corporation"]}})
@@ -4226,6 +4339,18 @@
                       (card-ability state :corp (refresh thm) 0)
                       (click-card state :corp van))
             "Corp placed 2 advancement counters on Vanilla")))))
+
+(deftest the-red-room-test
+  (do-game
+    (new-game {:corp {:hand ["The Red Room" "Hostile Takeover"]}})
+    (play-from-hand state :corp "The Red Room" "R&D")
+    (rez state :corp (get-content state :rd 0))
+    (play-and-score state "Hostile Takeover")
+    (click-prompt state :corp "Hostile Takeover")
+    (take-credits state :corp)
+    (run-on state :hq)
+    (card-ability state :corp (get-content state :rd 0) 0)
+    (is (not (:run @state)) "Ended the run")))
 
 (deftest the-twins
   ;; The Twins

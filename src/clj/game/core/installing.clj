@@ -580,15 +580,46 @@
             (->c :credit cost))
           additional-costs]))]))
 
+(defn- some-hosting-effect
+  [state card]
+  "Gets the first (only) host effect of a card, if it exists and is not disabled"
+  (when (and card (not (is-disabled-reg? state card)))
+    (first (filter #(= (:type %) :can-host) (:static-abilities (card-def card))))))
+
+(defn runner-can-host
+  [state side eid card {:keys [host-card facedown] :as args}]
+  "Gets a list of all cards that the runner can host the install target on"
+  (when-not (or host-card facedown)
+    (let [all-hosts (filter #(some-hosting-effect state %) (all-installed state :runner))
+          relevant (filter #(let [ab (some-hosting-effect state %)]
+                              (or (nil? (:req ab))
+                                  ((:req ab) state side eid % [card])))
+                           all-hosts)]
+      (seq relevant))))
+
 (defn runner-can-pay-and-install?
   ([state side eid card] (runner-can-pay-and-install? state side eid card nil))
-  ([state side eid card {:keys [facedown] :as args}]
+  ([state side eid card {:keys [facedown host-card no-host?] :as args}]
    (let [eid (assoc eid :source-type :runner-install)
-         costs (runner-install-cost state side (assoc card :facedown facedown) args)]
-     (and (runner-can-install? state side eid card (assoc args :no-toast true))
-          (can-pay? state side eid card nil costs)
-          ;; explicitly return true
-          true))))
+         host-abi (some-hosting-effect state host-card)
+         old-cost-bonus (or (:cost-bonus args) 0)
+         new-cost-bonus (or (:cost-bonus host-abi) 0)
+         combined-cost-bonus (+ old-cost-bonus new-cost-bonus)
+         cost-bonus (if (zero? combined-cost-bonus) nil combined-cost-bonus)
+         costs (runner-install-cost state side
+                                    (assoc card :facedown facedown)
+                                    (assoc args :cost-bonus cost-bonus))]
+     (or (and (runner-can-install? state side eid card (assoc args :no-toast true))
+              (can-pay? state side eid card nil costs)
+              ;; explicitly return true
+              true)
+         ;; note: Some cards (hackerspace, dhegder) provide a discount to installing cards
+         ;; so long as they are installed hosted on themselves, so we need to check for that.
+         ;;  -nbkelly, 2026.02
+         (and (not host-card)
+              (not no-host?)
+              (some #(runner-can-pay-and-install? state side eid card (assoc args :host-card %))
+                    (runner-can-host state side eid card args)))))))
 
 (defn runner-install-pay
   [state side eid card {:keys [no-mu facedown host-card resolved-optional-trash] :as args}]
@@ -642,23 +673,6 @@
                                         :cid (:cid card)
                                         :previous-zone (:previous-zone card)))
                         (effect-completed state side eid)))))))))
-
-(defn- some-hosting-effect
-  [state card]
-  "Gets the first (only) host effect of a card, if it exists and is not disabled"
-  (when-not (is-disabled-reg? state card)
-    (first (filter #(= (:type %) :can-host) (:static-abilities (card-def card))))))
-
-(defn runner-can-host
-  [state side eid card {:keys [host-card facedown] :as args}]
-  "Gets a list of all cards that the runner can host the install target on"
-  (when-not (or host-card facedown)
-    (let [all-hosts (filter #(some-hosting-effect state %) (all-installed state :runner))
-          relevant (filter #(let [ab (some-hosting-effect state %)]
-                              (or (nil? (:req ab))
-                                  ((:req ab) state side eid % [card])))
-                           all-hosts)]
-      (seq relevant))))
 
 (defn runner-host-enforce-specific-memory
   [state side eid card potential-host args]

@@ -1780,7 +1780,7 @@
       [tr-span [:game_ok "OK"]]]]))
 
 (defn prompt-div
-  [me {:keys [card msg prompt-type choices] :as prompt-state}]
+  [me {:keys [card msg prompt-type choices offer-bad-pub?] :as prompt-state}]
   (let [id (atom 0)]
     [:div.panel.blue-shade
      (when (and card (not= "Basic Action" (:type card)))
@@ -1868,16 +1868,21 @@
 
        ;; otherwise choice of all present choices
        :else
-       (doall (for [{:keys [idx uuid value]} choices
-                    :when (not= value "Hide")]
-                [:button {:key idx
-                          :on-click #(do (send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice {:uuid uuid}})
-                                         (card-highlight-mouse-out % value button-channel))
-                          :on-mouse-over
-                          #(card-highlight-mouse-over % value button-channel)
-                          :on-mouse-out
-                          #(card-highlight-mouse-out % value button-channel)}
-                 (render-message (or (not-empty (get-title value)) value))])))]))
+       (concat [(when offer-bad-pub?
+                  ;; TODO - translate this
+                  [:button {:key "Bad Pub"
+                            :on-click #(send-command "bad-pub-choice" {:eid (prompt-eid (:side @game-state))})}
+                   (str "Bad Publicity (" offer-bad-pub? " available)")])]
+               (doall (for [{:keys [idx uuid value]} choices
+                            :when (not= value "Hide")]
+                        [:button {:key idx
+                                  :on-click #(do (send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice {:uuid uuid}})
+                                                 (card-highlight-mouse-out % value button-channel))
+                                  :on-mouse-over
+                                  #(card-highlight-mouse-over % value button-channel)
+                                  :on-mouse-out
+                                  #(card-highlight-mouse-out % value button-channel)}
+                         (render-message (or (not-empty (get-title value)) value))]))))]))
 
 (defn basic-actions [{:keys [side active-player end-turn runner-phase-12 corp-phase-12 me runner-post-discard corp-post-discard]}]
   (let [phase-12 (or @runner-phase-12 @corp-phase-12)
@@ -1974,7 +1979,9 @@
   (let [autocomp (r/track (fn [] (get-in @prompt-state [:choices :autocomplete])))
         show-discard? (r/track (fn [] (get-in @prompt-state [:show-discard])))
         prompt-type (r/track (fn [] (get-in @prompt-state [:prompt-type])))
-        opened-by-system (r/atom false)]
+        discard-opened-by-system (r/atom false)
+        show-opponent-discard? (r/track (fn [] (get-in @prompt-state [:show-opponent-discard])))
+        opponent-discard-opened-by-system (r/atom false)]
     (r/create-class
       {:display-name "button-pane"
 
@@ -1983,9 +1990,14 @@
          (when (pos? (count @autocomp))
            (-> "#card-title" js/$ (.autocomplete (clj->js {"source" @autocomp}))))
          (cond @show-discard? (do (-> ".me .discard-container .popup" js/$ .fadeIn)
-                                  (reset! opened-by-system true))
-               @opened-by-system (do (-> ".me .discard-container .popup" js/$ .fadeOut)
-                                     (reset! opened-by-system false)))
+                                  (reset! discard-opened-by-system true))
+               @discard-opened-by-system (do (-> ".me .discard-container .popup" js/$ .fadeOut)
+                                             (reset! discard-opened-by-system false)))
+         (cond @show-opponent-discard? (do (-> ".opponent .discard-container .popup" js/$ .fadeIn)
+                                           (reset! opponent-discard-opened-by-system true))
+               @opponent-discard-opened-by-system (do (-> ".opponent .discard-container .popup" js/$ .fadeOut)
+                                                      (reset! opponent-discard-opened-by-system false)))
+
          (if (= "select" @prompt-type)
            (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
            (set! (.-cursor (.-style (.-body js/document))) "default"))

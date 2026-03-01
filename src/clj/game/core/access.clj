@@ -509,7 +509,8 @@
   ([state server]
    (->> (get-in @state [:corp :servers server :content])
         get-all-content
-        (filter #(can-access? state :runner %))))
+        (filter #(can-access? state :runner %))
+        (filter #(not (any-effects state :runner :disable-access-candidacy true? % [%])))))
   ([state server already-accessed-fn]
    (remove already-accessed-fn (root-content state server))))
 
@@ -626,9 +627,8 @@
 
 (defn access-helper-rd
   [state {:keys [chosen random-access-limit] :as access-amount} already-accessed {:keys [no-root] :as args}]
-  (let [current-available (set (concat (map :cid (get-in @state [:corp :deck]))
+  (let [current-available (set (concat (if-not (any-effects state :runner :disable-random-accesses true? {:server :rd}) (map :cid (get-in @state [:corp :deck])) [])
                                        (map :cid (root-content state :rd))))
-        already-accessed (clj-set/intersection already-accessed current-available)
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
         deck (access-cards-from-rd state)
@@ -814,11 +814,11 @@
 (defn access-helper-hq
   [state {:keys [chosen random-access-limit] :as access-amount}
    already-accessed {:keys [no-root access-first] :as args}]
-  (let [hand (when (not (:prevent-hand-access (:run @state)))
+  (let [hand (when (not (or (:prevent-hand-access (:run @state))
+                            (any-effects state :runner :disable-random-accesses true? {:server :hq})))
                (get-in @state [:corp :hand]))
         current-available (set (concat (map :cid hand)
                                        (map :cid (root-content state :hq))))
-        already-accessed (clj-set/intersection already-accessed current-available)
 
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
@@ -1337,16 +1337,20 @@
      :chosen 0}))
 
 (defn turn-archives-faceup
-  [state side server]
+  [state side eid server]
   ;; note - in a paper game, players may freely re-order Archives
   ;; We don't have that functionality, so we have to pseudo-shuffle archives before cards are flipped
   ;; in order to stop information leaking that should not be leaking (ie order of cards trashed)
   ;;   --nbk, 2025
-  (when (= :archives (get-server-type (first server)))
+  (if (= :archives (get-server-type (first server)))
     (let [discard (get-in @state [:corp :discard])
-          known   (->> discard (filter :seen) (map #(dissoc % :new)))
-          unknown (->> discard (filter (complement :seen)) shuffle (map #(assoc % :seen true :new true)))]
-      (swap! state assoc-in [:corp :discard] (concat known unknown)))))
+          known   (->> discard (filter :seen) (mapv #(dissoc % :new)))
+          unknown (->> discard (filter (complement :seen)) shuffle (mapv #(assoc % :seen true :new true)))]
+      (swap! state assoc-in [:corp :discard] (concat known unknown))
+      (if (pos? (count unknown))
+        (trigger-event-simult state side eid :archives-flipped nil {:count (count unknown)})
+        (effect-completed state side eid)))
+    (effect-completed state side eid)))
 
 (defn clean-access-args
   [{:keys [access-first] :as args}]
@@ -1378,12 +1382,13 @@
              (swap! state assoc :breach {:breach-server (first server) :from-server (first server)})
              (let [args (clean-access-args args)
                    access-amount (num-cards-to-access state side (first server) nil)]
-               (turn-archives-faceup state side server)
-               (when (:run @state)
-                 (swap! state assoc-in [:run :did-access] true))
-               (wait-for (resolve-ability state side (choose-access access-amount server (assoc args :server server)) nil nil)
-                         (wait-for (trigger-event-sync state side :end-breach-server (:breach @state))
-                                   (swap! state assoc :breach nil)
-                                   (unregister-lingering-effects state side :end-of-access)
-                                   (unregister-floating-events state side :end-of-access)
-                                   (effect-completed state side eid)))))))
+               (wait-for
+                 (turn-archives-faceup state side server)
+                 (when (:run @state)
+                   (swap! state assoc-in [:run :did-access] true))
+                 (wait-for (resolve-ability state side (choose-access access-amount server (assoc args :server server)) nil nil)
+                           (wait-for (trigger-event-sync state side :end-breach-server (:breach @state))
+                                     (swap! state assoc :breach nil)
+                                     (unregister-lingering-effects state side :end-of-access)
+                                     (unregister-floating-events state side :end-of-access)
+                                     (effect-completed state side eid))))))))

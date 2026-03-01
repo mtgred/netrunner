@@ -502,11 +502,11 @@
     (click-prompt state :runner "Bacterial Programming")
     (click-prompt state :runner "Steal")
     (click-prompt state :corp "Yes")
+    (click-prompt state :corp "OK")
     (dotimes [_ 7]
       (let [card (first (prompt-titles :corp))]
         (click-prompt state :corp card)))
-    (click-prompt state :corp "Done") ; Finished with trashing
-    (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
+    (click-prompt state :corp "OK")
     (dotimes [_ 7]
       (click-prompt state :runner "Facedown card in Archives")
       (click-prompt state :runner "No action"))
@@ -520,32 +520,26 @@
       (new-game {:corp {:deck ["Bacterial Programming" "Hedge Fund"]}})
       (starting-hand state :corp ["Bacterial Programming"])
       (play-and-score state "Bacterial Programming")
-      (click-prompt state :corp "Yes")
-      (click-prompt state :corp "Done")
-      (click-prompt state :corp "Done")
-      (click-prompt state :corp (first (:deck (get-corp))))
-      (click-prompt state :corp "Done")
+      (click-prompts state :corp "Yes" "OK" "Done" "Done")
+      (click-prompt state :corp (first (:set-aside (get-corp))))
+      (click-prompt state :corp "OK")
       (is (no-prompt? state :corp) "Bacterial Programming prompts finished")
       (is (not (:run @state)) "No run is active")))
 
 (deftest bacterial-programming-removing-all-cards-from-r-d-should-not-freeze-for-runner-nor-give-an-extra-access
     ;; Removing all cards from R&D should not freeze for runner, nor give an extra access.
     (do-game
-      (new-game {:corp {:deck [(qty "Bacterial Programming" 8)]
-                        :hand ["Ice Wall"]}
+      (new-game {:corp {:hand ["Bacterial Programming"]
+                        :deck ["Bacterial Programming" (qty "Vanilla" 7)]}
                  :options {:start-as :runner}})
+      (stack-deck state :corp ["Bacterial Programming"])
       (run-empty-server state :rd)
       (click-prompt state :runner "Steal")
-      (click-prompt state :corp "Yes")
+      (click-prompts state :corp "Yes" "OK")
       ;; Move all 7 cards to trash
       (dotimes [_ 7]
-              ;; Get the first card listed in the prompt choice
-              ;; TODO make this function
-        (let [card (first (prompt-titles :corp))]
-          (click-prompt state :corp card)))
-      (click-prompt state :corp "Done") ; Finished with trashing
-      (click-prompt state :corp "Done") ; Finished with move-to-hq (no cards to move)
-      ;; Run and prompts should be over now
+        (click-prompt state :corp "Vanilla"))
+      (click-prompt state :corp "OK")
       (is (no-prompt? state :corp) "Bacterial Programming prompts finished")
       (is (no-prompt? state :runner) "Bacterial Programming prompts finished")
       (is (not (:run @state)))))
@@ -2272,6 +2266,35 @@
                     (click-prompt state :corp "Done"))
           (str "Corp drew " n " cards")))))
 
+(deftest let-them-dream
+  (doseq [[from agenda] [["HQ" "Project Atlas"] ["R&D" "Ikawah Project"] ["Archives" "Project Kusanagi"]]
+          to ["HQ" "Bottom of R&D"]]
+    (do-game
+      (new-game {:corp {:hand ["Let Them Dream" "Project Atlas"]
+                        :deck [(qty "IPO" 15) "Ikawah Project"]
+                        :discard ["Project Kusanagi"]}})
+      (play-and-score state "Let Them Dream")
+      (click-prompts state :corp from agenda to)
+      (case to
+        "HQ"            (some #(= (:title %) agenda) (:hand (get-corp)))
+        "Bottom of R&D" (is (= (:title (last (:deck (get-corp)))) agenda))))))
+
+(deftest let-them-dream-points
+  ;; Global Food Initiative
+  (do-game
+    (new-game {:corp {:deck [(qty "Let Them Dream" 2)]}})
+    (testing "Corp scores"
+      (is (zero? (:agenda-point (get-runner))) "Runner should start with 0 agenda points")
+      (is (zero? (:agenda-point (get-corp))) "Corp should start with 0 agenda points")
+      (play-and-score state "Let Them Dream")
+      (click-prompt state :corp "Done")
+      (is (= 2 (:agenda-point (get-corp))) "Corp should gain 2 agenda points"))
+    (testing "Runner steals"
+      (play-from-hand state :corp "Let Them Dream" "New remote")
+      (take-credits state :corp)
+      (run-empty-server state :remote2)
+      (click-prompt state :runner "Steal")
+      (is (= 1 (:agenda-point (get-runner))) "Runner should gain 1 agenda points, not 2"))))
 
 (deftest license-acquisition
   ;; License Acquisition
@@ -2409,6 +2432,33 @@
       (is (find-card "Prisec" (:deck (get-corp))))
       (is (waiting? state :corp))
       (click-prompt state :runner "No")))
+
+(deftest lotus-haze-basic-test
+  (do-game
+    (new-game {:corp {:hand ["Lotus Haze" "Crisium Grid"]}})
+    (play-and-score state "Lotus Haze")
+    (play-from-hand state :corp "Crisium Grid" "HQ")
+    (rez state :corp (get-content state :hq 0))
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (click-card state :corp "Crisium Grid")
+    (is (= (prompt-titles :corp) ["Archives" "R&D"]) "Cannot go to own serveR")
+    (click-prompt state :corp "R&D")
+    (is (= "Crisium Grid" (:title (get-content state :rd 0))) "Moved to HQ")
+    (is (no-prompt? state :runner))))
+
+(deftest lotus-haze-movement-rules-test
+  (do-game
+    (new-game {:corp {:hand ["Lotus Haze" "Crisium Grid" "ZATO City Grid"] :credits 15}})
+    (play-and-score state "Lotus Haze")
+    (play-cards state :corp ["Crisium Grid" "HQ" :rezzed])
+    (play-cards state :corp ["ZATO City Grid" "New remote" :rezzed])
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (click-card state :corp "Crisium Grid")
+    (is (= (prompt-titles :corp) ["Archives" "R&D"]) "Cannot go to ontop of ZATO City Grid (region clash)")
+    (click-prompt state :corp "R&D")
+    (card-ability state :corp (get-scored state :corp 0) 0)
+    (click-card state :corp "ZATO City Grid")
+    (is (= (prompt-titles :corp) ["OK"]) "Cannot go to onto central servers because of the restriction on ZATO City Grid")))
 
 (deftest luminal-transubstantiation
   ;; Luminal Transubstantiation
@@ -2591,6 +2641,16 @@
       (play-and-score state "Megaprix Qualifier") ;; 7 points
       (is (= 7 (:agenda-point (get-corp))) "Corp at 7 points")
       (is (= :corp (:winner @state)) "Corp has won")))
+
+(deftest melies-city-luxury-line
+  (do-game
+    (new-game {:corp {:hand [(qty "Méliès City Luxury Line" 2)]}})
+    ;; play and score spends 1 click
+    (is (changed? [(:click (get-corp)) 0]
+          (play-and-score state "Méliès City Luxury Line")))
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Pay to steal")))
 
 (deftest merger
   ;; Merger
@@ -4054,6 +4114,22 @@
       (click-prompt state :runner "0")
       (is (= 1 (count-tags state)) "Runner should gain a tag from Restructured Datapool ability"))))
 
+(deftest sacrifice-zone-expansion-test
+  (do-game
+    (new-game {:corp {:hand ["Sacrifice Zone Expansion"]}})
+    (play-from-hand state :corp "Sacrifice Zone Expansion" "New remote")
+    (is (changed? [(:credit (get-corp)) 2]
+          (click-advance state :corp (get-content state :remote1 0)))
+        "gained 3")
+    (is (changed? [(:credit (get-corp)) -1]
+          (click-advance state :corp (get-content state :remote1 0)))
+        "gained 0")
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (is (changed? [(count (:hand (get-runner))) -1]
+          (click-prompt state :corp "Yes"))
+        "1 meat")))
+
 (deftest salvo-testing
     (do-game
       (new-game {:corp {:hand ["Salvo Testing" "Project Vitruvius"]
@@ -5297,3 +5373,15 @@
       (play-from-hand state :runner "Hunting Grounds")
       (card-ability state :runner (get-resource state 0) 0)
       (is (= 3 (:credit (get-runner))) "Shouldn't lose any credits")))
+
+(deftest witch-hunt-correct-tags
+  (doseq [t [0 1 2 3 4 5 6]]
+    (do-game
+      (new-game {:corp {:hand ["Witch Hunt"]}})
+      (play-and-score state "Witch Hunt")
+      (take-credits state :corp)
+      (is (= 3 (count-tags state)))
+      (take-credits state :runner)
+      (is (changed? [(count-tags state) 0
+                     (count-bad-pub state) 0]
+            (take-credits state :corp))))))

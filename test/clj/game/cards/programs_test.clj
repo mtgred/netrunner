@@ -1003,6 +1003,54 @@
                     (card-ability state :runner (refresh baba) 2))
           "Spent 1c to boost baba yaga"))))
 
+(deftest baker-stealth-hq
+  (do-game
+    (new-game {:runner {:hand ["Baker" "Mantle"]}
+               :corp {:hand [(qty "Rashida Jaheem" 3)]
+                      :deck ["Hostile Takeover"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Baker")
+    (play-from-hand state :runner "Mantle")
+    (card-ability state :runner (get-program state 0) 0)
+    (run-continue-until state :success)
+    (click-prompt state :runner "Pay 1 [Credits]: Switch to HQ")
+    (click-card state :runner "Mantle")
+    (do-trash-prompt state 1)
+    (run-empty-server state :archives)
+    (is (no-prompt? state :runner))))
+
+(deftest baker-stealth-rd
+  (do-game
+    (new-game {:runner {:hand ["Baker" "Mantle"]}
+               :corp {:hand [(qty "Rashida Jaheem" 3)]
+                      :deck ["Hostile Takeover"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Baker")
+    (play-from-hand state :runner "Mantle")
+    (card-ability state :runner (get-program state 0) 0)
+    (run-continue-until state :success)
+    (click-prompt state :runner "Pay 1 [Credits]: Switch to R&D")
+    (click-card state :runner "Mantle")
+    (click-prompt state :runner "Steal")
+    (run-empty-server state :archives)
+    (is (no-prompt? state :runner))))
+
+(deftest baker-vs-skunkworks
+  (do-game
+    (new-game {:runner {:hand ["Baker" "Mantle"]}
+               :corp {:hand [(qty "Rashida Jaheem" 3) "Manegarm Skunkworks"]
+                      :deck ["Hostile Takeover"]}})
+    (play-cards state :corp ["Manegarm Skunkworks" "HQ" :rezzed])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Baker")
+    (play-from-hand state :runner "Mantle")
+    (card-ability state :runner (get-program state 0) 0)
+    (run-continue-until state :success)
+    (click-prompt state :runner "Pay 1 [Credits]: Switch to HQ")
+    (click-card state :runner "Mantle")
+    (click-prompt state :runner "End the run")
+    (is (not (:run @state)) "Skunkworks fired on HQ approach")))
+
 (deftest bankroll
   ;; Bankroll - Includes check for Issue #4334
   (do-game
@@ -7418,6 +7466,20 @@
             (click-prompt state :runner "End the run"))
           "Spent 1 credit to break"))))
 
+(deftest read-write-share
+  (do-game
+    (new-game {:runner {:hand ["Read-Write Share" "Rezeki" "Corroder"]
+                        :deck [(qty "Ika" 2)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Read-Write Share")
+    (click-card state :runner "Rezeki")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (start-turn state :runner)
+    (click-card state :runner "Corroder")
+    (card-ability state :runner (get-program state 0) 0)
+    (is-deck? state :runner ["Corroder" "Rezeki"])))
+
 (deftest reaver
   ;; Reaver - Draw a card the first time you trash an installed card each turn
   (do-game
@@ -8007,6 +8069,31 @@
       (is (= 2 (get-link state)) "2 link")
       (is (= 2 (core/available-mu state)) "Shiv stops using MU when 2+ link"))))
 
+(deftest sipa-test
+  (do-game
+    (new-game {:corp {:hand ["Vanilla" "Ice Wall"]}
+               :runner {:hand ["Sipa" "Corroder"] :credits 15}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (rez state :corp (get-ice state :hq 1))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Sipa")
+    (play-from-hand state :runner "Corroder")
+    (run-on state :hq)
+    (run-continue-until state :encounter-ice)
+    (auto-pump-and-break state (get-program state 1))
+    (run-continue state)
+    (click-card state :runner "Vanilla")
+    (is (= "Ice Wall" (:title (get-ice state :hq 0))) "Ice wall outer")
+    (is (= "Vanilla" (:title (get-ice state :hq 1))) "Ice wall outer")
+    (run-continue-until state :success)
+    (run-on state :hq)
+    (run-continue-until state :encounter-ice)
+    (auto-pump-and-break state (get-program state 1))
+    (run-continue-until state :movement)
+    (is (no-prompt? state :runner))))
+
 (deftest slap-vandal
   (do-game
     (new-game {:runner {:hand ["Slap Vandal"]}
@@ -8467,6 +8554,19 @@
        (is (-> (get-corp) :discard first :seen) "Troll is faceup")
        (is (= "Troll" (-> (get-corp) :discard first :title)) "Troll was trashed")
        (is (= "Herald" (-> (get-corp) :deck first :title)) "Herald now on top of R&D"))))
+
+(deftest stowaway-test
+  (do-game
+    (new-game {:runner {:hand ["Stowaway"]}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Stowaway")
+    (click-card state :runner "Ice Wall")
+    (run-on state :hq)
+    (is (changed? [(:credit (get-runner)) 2]
+          (run-continue-until state :success))
+        "Gained 2c for a successful run on stowaway server")))
 
 (deftest study-guide
   ;; Study Guide - 2c to add a power counter; +1 strength per counter

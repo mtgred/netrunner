@@ -47,7 +47,7 @@
 (load-all-cards)
 
 (defn is-zone-impl
-  "Is the hand exactly equal to a given set of cards?"
+  "Is the zone exactly equal to a given set of cards?"
   [state side zone expected]
   (let [expected (seq (sort (flatten expected)))
         contents (seq (sort (map :title (get-in @state [side zone]))))]
@@ -59,12 +59,12 @@
   `(error-wrapper (is-zone-impl ~state ~side :hand ~expected-hand)))
 
 (defmacro is-deck?
-  "Is the hand exactly equal to a given set of cards?"
+  "Is the deck exactly equal to a given set of cards?"
   [state side expected-deck]
   `(error-wrapper (is-zone-impl ~state ~side :deck ~expected-deck)))
 
 (defmacro is-discard?
-  "Is the hand exactly equal to a given set of cards?"
+  "Is the discard pile exactly equal to a given set of cards?"
   [state side expected-discard]
   `(error-wrapper (is-zone-impl ~state ~side :discard ~expected-discard)))
 
@@ -229,6 +229,10 @@
 (defn do-trash-prompt
   [state cost]
   (click-prompt state :runner (str "Pay " cost " [Credits] to trash")))
+
+(defn select-bad-pub
+  [state expected]
+  (core/process-action "bad-pub-choice" state :runner {:eid (:eid (get-prompt state :runner))}))
 
 ;; General utilities necessary for starting a new game
 (defn find-card
@@ -1159,7 +1163,7 @@
 (defn run-and-encounter-ice-test
   ([card] (run-and-encounter-ice-test card nil))
   ([card players] (run-and-encounter-ice-test card players nil))
-  ([card players {:keys [counters disable rig server threat] :as args}]
+  ([card players {:keys [counters disable rig server threat run-event] :as args}]
    (let [;; sometimes the number of cards are the only important things - this lets us do :hand X
          ;; or :deck X on either side (so we can reduce noise when reading tests)
          players (update-zones players [[[:corp :hand] "IPO"]
@@ -1168,6 +1172,14 @@
                                         [[:runner :deck] "Inti"]])
          players (update-in players [:corp :hand] conj card)
          players (update-in players [:runner :hand] concat rig)
+         run-event-card (if run-event
+                          (if (string? run-event)
+                            run-event
+                            (first run-event))
+                          nil)
+         players (if run-event-card
+                   (update-in players [:runner :hand] conj run-event-card)
+                   players)
          state (new-game players)
          server (or server "HQ")
          server-key (cond
@@ -1208,7 +1220,9 @@
            (core/gain state :runner :click 1)
            (play-from-hand state :runner r)))
        ;; runner should have the default click/credit count (- 1 click for the run)
-       (run-on state server-key)
+       (if run-event
+         (play-cards state :runner run-event)
+         (run-on state server-key))
        (run-continue-until state :encounter-ice)
        state))))
 

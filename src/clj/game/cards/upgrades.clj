@@ -21,8 +21,8 @@
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [dissoc-req pay register-default-events
-                             register-events resolve-ability unregister-events]]
-   [game.core.events :refer [first-event? first-run-event? no-event? turn-events]]
+                             not-used-once? register-events resolve-ability unregister-events]]
+   [game.core.events :refer [first-event? first-run-event? no-event? turn-events run-event-count run-events]]
    [game.core.finding :refer [find-cid find-latest]]
    [game.core.flags :refer [clear-persistent-flag! is-scored? register-persistent-flag!
                             register-run-flag!]]
@@ -725,6 +725,43 @@
                        :base 3
                        :successful (give-tags 2)}}})
 
+(defcard "Flagship"
+  (let [other-cards-accessed (fn [state card] (map :cid (filter #(not= (:cid %) (:cid card)) (apply concat (run-events state :runner :access)))))
+        prevent-random {:type :disable-random-accesses
+                        :value true
+                        :req (req (and run this-server (seq (other-cards-accessed state card))))}
+        prevent-installed {:type :disable-access-candidacy
+                           :value true
+                           :req (req (and run this-server
+                                          (not (same-card? card target))
+                                          (seq (other-cards-accessed state card))))}]
+    {:static-abilities [{:type :block-successful-run
+                         :req (req this-server)
+                         :value true}
+                        prevent-random
+                        prevent-installed]
+     :legal-zones (req (filter #{"R&D" "HQ"} targets))
+     :on-trash {:req (req (and run (= :runner side)))
+                :effect (req
+                          (let [c (:card context)]
+                            (register-lingering-effect
+                              state side (:card context)
+                              {:type :disable-random-accesses
+                               :value true
+                               :duration :end-of-run
+                               :req (req
+                                      (and run
+                                           (= (:server run) [(second (get-zone c))])
+                                           (seq (other-cards-accessed state c))))})
+                            (register-lingering-effect
+                              state side (:card context)
+                              {:type :disable-access-candidacy
+                               :value true
+                               :duration :end-of-run
+                               :req (req (and run
+                                              (= (:server run) [(second (get-zone c))])
+                                              (seq (other-cards-accessed state c))))})))}}))
+
 (defcard "Fractal Threat Matrix"
   {:events [{:event :subroutines-broken
              :req (req (and (:all-subs-broken context)
@@ -887,6 +924,19 @@
   {:events [(assoc (do-net-damage 1)
                    :event :successful-run
                    :req (req this-server))]})
+
+(defcard "Hype Machine"
+  {:rez-cost-bonus (req (if-not (and (no-event? state side :agenda-scored)
+                                     (no-event? state side :agenda-stolen))
+                          -6
+                          0))
+   :abilities [{:label "Place 1 advancement token on a card in this server"
+                :async true
+                :prompt "Choose a card in this server"
+                :choices {:req (req (in-same-server? card target))}
+                :msg (msg "place an advancement token on " (card-str state target))
+                :cost [(->c :trash-can)]
+                :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Increased Drop Rates"
   {:flags {:rd-reveal (req true)}
@@ -1053,7 +1103,7 @@
                                           (in-same-server? card target)))}
                  :async true
                  :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]
-    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+    {:legal-zones (req (remove #{"HQ" "R&D" "Archives"} targets))
      :derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
@@ -1574,6 +1624,43 @@
                                 :keep-menu-open :while-credits-left
                                 :req (req (and run (= (target-server run) :hq)))})]})
 
+(defcard "Perfect Recall"
+  (let [ab {:req (req run)
+            :choices {:req (req (and (corp? target)
+                                     (in-hand? target)))}
+            :label "Reveal a card and prevent it being trashed or stolen this run"
+            :msg (msg "reveal " (:title target) "from HQ and prevent the runner from stealing or trashing any copies of it this run")
+            :async true
+            :waiting-prompt true
+            :effect (req
+                      (wait-for
+                        (reveal state side target)
+                        (let [revealed-card target]
+                          (register-lingering-effect
+                            state side card
+                            {:type :cannot-steal
+                             :req (req (= (:title target) (:title revealed-card)))
+                             :value true
+                             :duration :end-of-run})
+                          (register-lingering-effect
+                            state side card
+                            {:type :cannot-be-trashed
+                             :req (req (and (= (:title target) (:title revealed-card))
+                                            (= :runner side)))
+                             :value true
+                             :duration :end-of-run}))
+                        (effect-completed state side eid)))}]
+    {:events (mapv
+               #(merge {:async true :effect (req (add-counter state side eid card :power 1))} %)
+               [{:event :agenda-stolen
+                 :req (req (= (:previous-zone (:card context)) (get-zone card)))}
+                {:event :agenda-scored
+                 :req (req (= (:previous-zone (:card context)) (get-zone card)))}])
+     :on-rez {:silent (req true)
+              :async true
+              :effect (req (add-counter state side eid card :power 1))}
+     :abilities [(assoc ab :cost [(->c :power 1)])]}))
+
 (defcard "Port Anson Grid"
   {:on-rez {:msg "prevent the Runner from jacking out unless they trash an installed program"}
    :static-abilities [{:type :jack-out-additional-cost
@@ -1696,6 +1783,20 @@
                                               :effect (effect (damage eid :net 3 {:card card}))}}}
                                            card nil))))}]})
 
+(defcard "Shackleton Grid"
+  (let [ev {:optional
+            {:prompt "do 4 meat damage?"
+             :waiting-prompt true
+             :req (req (and run this-server (not-used-once? state {:once :per-turn} card)
+                            (or (not (:card target))
+                                (runner? (:card target)))))
+             :yes-ability {:once :per-run
+                           :async true
+                           :msg "do 4 meat damage"
+                           :effect (req (damage state side eid :meat 4))}}}]
+    {:events [(merge ev {:event :bad-publicity-spent})
+              (merge ev {:event :spent-credits-from-card})]}))
+
 (defcard "Shell Corporation"
   {:abilities
    [{:action true
@@ -1804,6 +1905,24 @@
     {:abilities [abi]
      :events [(mobile-sysop-event :corp-turn-begins)]}))
 
+(defcard "The Red Room"
+  {:legal-zones (req (filter #{"R&D" "HQ" "Archives"} targets))
+   :events [{:event :agenda-stolen
+             :async true
+             :effect (req (add-counter state side eid card :power 1))
+             :req (req (and (first-event? state side :agenda-stolen)
+                            (no-event? state side :agenda-scored)))}
+            {:event :agenda-scored
+             :async true
+             :effect (req (add-counter state side eid card :power 1))
+             :req (req (and (first-event? state side :agenda-scored)
+                            (no-event? state side :agenda-stolen)))}]
+   :abilities [{:cost [(->c :power 1)]
+                :req (req (and run (not this-server)))
+                :async true
+                :effect (req (end-run state side eid card))
+                :msg "End the run"}]})
+
 (defcard "The Twins"
   {:events [{:event :pass-ice
              :optional
@@ -1848,7 +1967,7 @@
                                   :effect (effect (gain-credits eid 1))}}}]})
 
 (defcard "Tranquility Home Grid"
-  {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+  {:legal-zones (req (remove #{"HQ" "R&D" "Archives"} targets))
    :events [{:event :corp-install
              :interactive (req true)
              :req (req (and (or (asset? (:card context))
@@ -1881,7 +2000,7 @@
                                                                  (system-msg state side (str "shuffles R&D"))
                                                                  (effect-completed state side eid)))
                                           :cancel shuffle-my-deck!}}}]
-    {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+    {:legal-zones (req (remove #{"HQ" "R&D" "Archives"} targets))
      :events [(assoc ability
                      :event :agenda-stolen
                      :req (req (= (:previous-zone (:card context)) (get-zone card))))
@@ -2035,7 +2154,7 @@
                :effect (effect (gain-credits eid 2))}]}))
 
 (defcard "ZATO City Grid"
-  {:install-req (req (remove #{"HQ" "R&D" "Archives"} targets))
+  {:legal-zones (req (remove #{"HQ" "R&D" "Archives"} targets))
    :static-abilities [{:type :gain-encounter-ability
                        :req (req (and (protecting-same-server? card target)
                                       (not (:disabled target))))

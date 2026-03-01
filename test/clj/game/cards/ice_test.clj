@@ -608,6 +608,26 @@
       (is (waiting? state :runner)
           "Runner has prompt to wait for Corp to use Ganked!"))))
 
+(deftest ansel-2.0-subs-test
+  (testing "trash 1 installed card"
+    (do-game
+      (subroutine-test "Ansel 2.0" 0 nil {:rig ["Fermenter"]})
+      (click-card state :corp "Fermenter")
+      (is (= "Fermenter" (->> (get-runner) :discard first :title)) "Trashed fermenter")))
+  (testing "remove a card in the heap from the game"
+    (do-game
+      (subroutine-test "Ansel 2.0" 1 {:runner {:discard ["Fermenter" "Ika" "Rezeki"]}})
+      (click-card state :corp "Fermenter")
+      (is (= ["Ika" "Rezeki"] (->> (get-runner) :discard (mapv :title))) "Only ika/zeki in bin")))
+  (testing "install a card from HQ or Archives"
+    (doseq [zone [:hand :discard]]
+      (do-game
+        (subroutine-test "Ansel 2.0" 2 {:corp {zone ["PAD Campaign"]}})
+        (click-card state :corp "PAD Campaign")
+        (click-prompt state :corp "New remote"))))
+  (testing "end the run"
+    (do-game (etr-sub "Ansel 2.0" 3))))
+
 (deftest anvil
   (do-game
     (new-game {:corp {:hand ["Anvil" "Ice Wall"]}
@@ -2379,6 +2399,30 @@
     (is (= 1 (count (:subroutines (get-ice state :hq 0)))))
     (is (= 0 (:index (first (:subroutines (get-ice state :hq 0))))))))
 
+(deftest event-horizon-subs
+  (doseq [opt [:pay :resolve]]
+    (do-game
+      (subroutine-test "Event Horizon" 0 nil {:rig ["Rezeki"]})
+      (case opt
+        :resolve (do (click-prompt state :runner "The Corp trashes a Program")
+                     (click-card state :corp "Rezeki")
+                     (is (= 1 (count (:discard (get-runner))))))
+        :pay (click-prompt state :runner "Pay 3 [Credits]")))
+    (do-game
+      (subroutine-test "Event Horizon" 1)
+      (case opt
+        :resolve (do (click-prompt state :runner "End the run")
+                     (is (not (:run @state))))
+        :pay (click-prompt state :runner "Pay 3 [Credits]")))))
+
+(deftest event-horizon-ability-end-the-run
+  (do-game
+    (run-and-encounter-ice-test "Event Horizon")
+    (is (:run @state) "Running")
+    (card-ability state :corp (get-ice state :hq 0) 0)
+    (is (not (:run @state)) "Run ended")
+    (is (= "Event Horizon" (-> (get-corp) :discard first :title)) "Event Horizon trashed")))
+
 (deftest excalibur
   ;; Excalibur - Prevent Runner from making another run this turn
   (do-game
@@ -2406,6 +2450,39 @@
       (core/gain state :runner :click 1)
       (run-on state "HQ")
       (is (:run @state) "Run initiated ok"))))
+
+(deftest ezam-subroutines-test
+  (testing "Look at the top card of R&D. Place it on the bottom."
+    (do-game
+      (subroutine-test "ezaM" 0 {:corp {:deck ["PAD Campaign" "IPO"]}})
+      (let [d (map :title (:deck (get-corp)))]
+        (click-prompt state :corp "Place it on the bottom of R&D")
+        (is-deck? state :corp (reverse d)))))
+  (testing "Look at the top card of R&D. Leave it there."
+    (do-game
+      (subroutine-test "ezaM" 0 {:corp {:deck ["PAD Campaign" "IPO"]}})
+      (let [d (map :title (:deck (get-corp)))]
+        (click-prompt state :corp "Done")
+        (is-deck? state :corp d))))
+  (testing "Give ice +1 strength."
+    (do-game
+      (subroutine-test "ezaM" 1)
+      (is (= (get-strength (get-ice state :hq 0)) (+ 1 (:strength (get-ice state :hq 0))))
+          "Ice strength boosted")
+      (run-continue-until state :success)
+      (is (= (get-strength (get-ice state :hq 0)) (:strength (get-ice state :hq 0)))
+          "Ice strength reset"))))
+
+(deftest ezam-swaps-with-other-ice
+  (do-game
+    (new-game {:corp {:hand ["ezaM" "Vanilla"]}})
+    (play-from-hand state :corp "ezaM" "HQ")
+    (play-from-hand state :corp "Vanilla" "Archives")
+    (rez state :corp (get-ice state :hq 0))
+    (card-ability state :corp (get-ice state :hq 0) 0)
+    (click-card state :corp "Vanilla")
+    (is (= "Vanilla" (:title (get-ice state :hq 0))))
+    (is (= "ezaM" (:title (get-ice state :archives 0))))))
 
 (deftest f2p
   ;; F2P
@@ -2586,6 +2663,20 @@
     (is (= "Lamprey" (get-in @state [:runner :discard 0 :title])) "Trashed due to purge")))
 
 (deftest flyswatter-etr-sub (do-game (etr-sub "Flyswatter" 0)))
+
+(deftest flywheel-subs
+  (doseq [sub [0 1]
+          opt [:draw :no-draw]]
+    (do-game
+      (subroutine-test "Flywheel" sub {:corp {:deck [(qty "IPO" 10)]}})
+      (is (= 6 (:credit (get-corp))) "Gained 1 credit")
+      (case opt
+        :draw    (is (changed? [(count (:hand (get-corp))) 1]
+                       (click-prompt state :corp "Yes"))
+                     "Drew and gained a cred")
+        :no-draw (is (changed? [(count (:hand (get-corp))) 0]
+                       (click-prompt state :corp "No"))
+                     "Did not draw, just gained a cred")))))
 
 (deftest formicary-verifies-basic-functionality
   ;; Verifies basic functionality
@@ -3252,6 +3343,50 @@
             (card-ability state :runner gh 0)
             (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]"))
           "Get taxed 1c for breaking with Grappling Hook"))))
+
+(deftest grubber-subroutine-test
+  (doseq [sub [0 1]
+          option ["Pay 3 [Credits]" "End the run"]]
+    (do-game
+      (subroutine-test "Grubber" sub)
+      (click-prompt state :runner option)
+      (case option
+        "End the run" (is (not (:run @state)) "Run ended")
+        "Pay 3 [Credits]" (is (changed? [(:credit (get-runner)) -3]
+                                (click-prompt state :runner "Done")
+                                (is (:run @state) "still running")
+                                (is (no-prompt? state :runner) "No prompt"))
+                              "Paid 3 (not using bad pub)")))))
+
+(deftest grubber-subroutine-test
+  (doseq [sub [0 1]
+          option ["Pay 3 [Credits]" "End the run"]]
+    (do-game
+      (subroutine-test "Grubber" sub)
+      (click-prompt state :runner option)
+      (case option
+        "End the run" (is (not (:run @state)) "Run ended")
+        "Pay 3 [Credits]" (is (changed? [(:credit (get-runner)) -3]
+                                (click-prompt state :runner "Done")
+                                (is (:run @state) "still running")
+                                (is (no-prompt? state :runner) "No prompt"))
+                              "Paid 3 (not using bad pub)")))))
+
+(deftest grubber-bad-pub-on-centrals
+  (doseq [[server s-key] [["HQ" :hq] ["R&D" :rd] ["Archives" :archives]]]
+    (testing (str "bad publicity on " server)
+      (do-game
+        (new-game {:corp {:hand ["Grubber"] :credits 10}})
+        (play-from-hand state :corp "Grubber" server)
+        (rez state :corp (get-ice state s-key 0))
+        (is (= 1 (count-bad-pub state)) "Gained a bad pub")))))
+
+(deftest grubber-no-bad-pub-on-remotes
+  (do-game
+    (new-game {:corp {:hand ["Grubber"] :credits 10}})
+    (play-from-hand state :corp "Grubber" "New remote")
+    (rez state :corp (get-ice state :remote1 0))
+    (is (= 0 (count-bad-pub state)) "Gained no bad pub")))
 
 (deftest gyri-labyrinth
   ;; Gyri Labyrinth - reduce runner handsize by 2 until beginning of corp's next turn
@@ -4629,6 +4764,52 @@
     (play-from-hand state :corp "Project Atlas" "Server 1")
     (score-agenda state :corp (get-content state :remote1 0))
     (is (= 1 (count (:discard (get-corp)))) "Trashed pickpocket")))
+
+(deftest lethe-sub-2-move-a-card-to-top-or-bottom-of-rd
+  (doseq [[p f] [["Top of R&D" first] ["Bottom of R&D" last]]]
+    (do-game
+      (subroutine-test "Lethe" 0 {:corp {:discard ["IPO"] :deck [(qty "Hedge Fund" 15)]}})
+      (click-card state :corp "IPO")
+      (click-prompt state :corp p)
+      (is (= "IPO" (:title (f (:deck (get-corp)))))))))
+
+(deftest lethe-sub-1-return-runner-card-to-grip
+  (do-game
+    (subroutine-test "Lethe" 1 nil {:rig ["Rezeki"]})
+    (click-card state :corp "Rezeki")
+    (is-hand? state :runner ["Rezeki"])))
+
+(deftest lethe-on-bypass-take-a-tag
+  (do-game
+    (run-and-encounter-ice-test "Lethe" nil {:run-event ["Inside Job" "HQ"]})
+    (is (= 1 (count-tags state)) "Tagged on bypassing Lethe")))
+
+(deftest lethe-give-tag-on-fully-breaking
+  (do-game
+    (run-and-encounter-ice-test "Lethe"  {:runner {:credits 15}} {:rig ["Carmen"]})
+    (auto-pump-and-break state (get-program state 0))
+    (is (= 1 (count-tags state)) "Tagged on fully breaking Lethe")))
+
+(deftest lionsmane-other-subs
+  (testing "Do 2 net damage"
+    (do-game (does-damage-sub "Lionsmane" 0 2)))
+  (testing "Do 2 net damage unless the Runner pays 3 Credits"
+    (do-game
+      (subroutine-test "Lionsmane" 1 {:runner {:hand 5}})
+      (click-prompt state :runner "Pay 3 [Credits]"))
+    (do-game
+      (subroutine-test "Lionsmane" 1 {:runner {:hand 5}})
+      (click-prompt state :runner "Corp does 2 net damage")
+      (is (= 3 (count (:hand (get-runner)))))))
+  (testing "Do 2 net damage unless the runner jacks out"
+    (do-game
+      (subroutine-test "Lionsmane" 2 {:runner {:hand 5}})
+      (click-prompt state :runner "Jack out")
+      (is (= 5 (count (:hand (get-runner))))))
+    (do-game
+      (subroutine-test "Lionsmane" 2 {:runner {:hand 5}})
+      (click-prompt state :runner "Corp does 2 net damage")
+      (is (= 3 (count (:hand (get-runner))))))))
 
 (deftest lockdown
   ;; Lockdown - Prevent Runner from drawing cards for the rest of the turn
@@ -6230,6 +6411,15 @@
       (auto-pump-and-break state corroder)
       (is (nil? (get-ice state :hq 0)) "Paper Wall was trashed"))))
 
+(deftest paywall-test
+  (do-game
+    (run-and-encounter-ice-test "Paywall")
+    (is (= 4 (:credit (get-runner))) "lose 1 credit on encounter")
+    (fire-subs state (get-ice state :hq 0))
+    (click-prompt state :runner "Pay 1 [Credits]")
+    (is (:run @state) "run not ended")
+    (is (= 3 (:credit (get-runner))) "paid 1 to not etr")))
+
 (deftest peeping-tom
   ;;Peeping Tom - Counts # of chosen card type in Runner grip
   (do-game
@@ -6500,6 +6690,18 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "0")
       (is (not (:run @state)) "Run has been ended"))))
+
+(deftest reverb-discount
+  (do-game
+    (new-game {:corp {:hand ["Reverb" "Vanilla"]}})
+    (play-from-hand state :corp "Reverb" "HQ")
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (is (changed? [(:credit (get-corp)) -3]
+          (rez state :corp (get-ice state :hq 0)))
+        "Only spent 3")))
+
+(deftest reverb-sub-0-etr (do-game (new-game (etr-sub "Reverb" 0))))
+(deftest reverb-sub-1-etr (do-game (new-game (etr-sub "Reverb" 1))))
 
 (deftest rime
   ;; Rime
@@ -7223,6 +7425,22 @@
         (run-jack-out state)
         (is (= (+ credits 10) (:credit (get-corp))) "Corp should only gain money once")))))
 
+;; Tests for 'Jog Gate' (version 11.0)
+(deftest sleipnir-sub-0-maybe-draw-1-cards
+  (do-game
+    (subroutine-test "Sleipnir" 0 {:corp {:hand 0 :deck (inc 1)}})
+    (click-prompt state :corp "Yes")
+    (is (= 1 (count (:hand (get-corp)))) "Drew 1")))
+
+(deftest sleipnir-sub-1-shuffle-from-hq-or-archives
+  (doseq [zone [:hand :discard]]
+    (do-game
+      (subroutine-test "Sleipnir" 1 {:corp {:deck 0 zone ["IPO"]}})
+      (click-card state :corp "IPO")
+      (is-deck? state :corp ["IPO"]))))
+
+(deftest sleipnir-sub-2-etr (do-game (new-game (etr-sub "Sleipnir" 2))))
+
 (deftest slot-machine
   ;; Slot Machine
   (do-game
@@ -7942,6 +8160,7 @@
     (run-continue state)
     (card-ability state :runner (get-program state 0) 0)
     (click-prompt state :runner "End the run")
+    (select-bad-pub state 1)
     (run-continue state)
     (click-prompt state :corp "Yes")
     (click-card state :corp "Ice Wall")
@@ -8085,6 +8304,31 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "2")
       (is (not (rezzed? (refresh tmi)))))))
+
+(deftest tocsin-sub-0-lose-2-creds
+  (do-game
+    (subroutine-test "Tocsin" 0 {:runner {:credits 3}})
+    (is (= 1 (:credit (get-runner))) "lost 2 credits")))
+
+(deftest tocsin-sub-1-etr (do-game (new-game (etr-sub "Tocsin" 1))))
+(deftest tocsin-sub-2-etr (do-game (new-game (etr-sub "Tocsin" 2))))
+
+(deftest tocsin-expend-ability
+  (do-game
+    (new-game {:corp {:hand ["Tocsin"]
+                      :deck ["Guard" "Ice Wall"]}})
+    (expend state :corp (first (:hand (get-corp))))
+    (click-prompts state :corp "Ice Wall" "Guard" "OK")
+    (is-hand? state :corp ["Guard" "Ice Wall"])))
+
+(deftest tocsin-expend-ability-with-cancel
+  (do-game
+    (new-game {:corp {:hand ["Tocsin"]
+                      :deck ["Guard" "Ice Wall"]}})
+    (expend state :corp (first (:hand (get-corp))))
+    (click-prompts state :corp "Ice Wall" "Guard" "I want to start over" "Ice Wall" "Cancel" "OK")
+    (is-hand? state :corp ["Ice Wall"])))
+
 
 (deftest tour-guide-rez-before-other-assets
   ;; Rez before other assets
@@ -8649,6 +8893,35 @@
           "paid 1c to place a token on ngo front")
       (card-subroutine state :corp (refresh vas) 0)
       (is (= 1 (count-tags state)) "Runner took 1 tag"))))
+
+(deftest vertigo-sub-0-lose-click
+  (do-game
+    (subroutine-test "Vertigo" 0)
+    (is (= 2 (:click (get-runner))) "Lost a click")))
+
+(deftest vertigo-skill-issue
+  (doseq [target ["Rashida Jaheem" "Project Atlas"]]
+    (do-game
+      (new-game {:corp {:hand [target "Vertigo"]}})
+      (play-from-hand state :corp "Vertigo" "HQ")
+      (take-credits state :corp)
+      (rez state :corp (get-ice state :hq 0))
+      (core/lose state :runner :click 3)
+      (run-on state :hq)
+      (run-continue-until state :success)
+      (is (= ["No action"] (prompt-titles :runner)) "Cannot trash/steal due to Vertigo"))))
+
+(deftest vicsek-test-x-damage-and-x-tags
+  (dotimes [x 10]
+    (do-game (subroutine-test "Vicsek" 0 {:runner {:tags x :hand (inc x)}})
+             (is (= x (count (:discard (get-runner)))))
+             (is (= (* 2 x) (count-tags state))))))
+
+(deftest viksek-give-a-tag-and-trash-itself
+  (dotimes [x 10]
+    (do-game (subroutine-test "Vicsek" 1 {:runner {:tags x}})
+             (is (= (inc x) (count-tags state)))
+             (is (= "Vicsek" (:title (first (:discard (get-corp))))) "Trashed itself"))))
 
 (deftest virtual-service-agent
   (do-game

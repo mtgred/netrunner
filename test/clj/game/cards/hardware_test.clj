@@ -1044,6 +1044,18 @@
      (click-prompt state :runner "End the run")
      (is (:broken (first (:subroutines (refresh iw)))) "Ice Wall has been broken"))))
 
+(deftest borrowed-goods-test
+  (do-game
+    (new-game {:runner {:hand [(qty "Borrowed Goods" 4)]}})
+    (take-credits state :corp)
+    (is (changed? [(count-tags state) 1]
+          (play-from-hand state :runner "Borrowed Goods"))
+        "Took a tag")
+    (dotimes [_ 3]
+      (is (changed? [(count-tags state) 0]
+            (play-from-hand state :runner "Borrowed Goods"))
+          "Did not take a tag"))))
+
 (deftest box-e
   ;; Box-E - +2 MU, +2 max hand size
   (do-game
@@ -1314,6 +1326,7 @@
       (click-card state :corp "Hostile Takeover")
       (run-continue state)
       (card-ability state :runner (get-program state 0) 2)
+      (select-bad-pub state 1)
       (card-ability state :runner (get-program state 0) 2)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "Gain 2 [Credits]")
@@ -1932,7 +1945,7 @@
       (is (:run @state) "New run started")
       (run-continue state)
       (is (= [:rd] (:server (:run @state))) "Running on R&D")
-      (is (= 1 (:run-credit (get-runner))) "Runner has 1 BP credit")))
+      (is (= 1 (:bad-publicity-available (:run @state))) "Runner has 1 BP credit")))
 
 (deftest doppelganger-makers-eye-interaction
     ;; Makers eye interaction
@@ -3698,6 +3711,22 @@
       (is (no-prompt? state :runner) "No more prompts for runner")
       (is (not (:run @state)) "Run is ended")))
 
+(deftest methuselah-test
+  (do-game
+    (new-game {:corp {:deck [(qty "PAD Campaign" 20)] :hand ["IPO"]}
+               :runner {:hand ["Mantle" "Methuselah" "DZMZ Optimizer"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Mantle")
+    (play-from-hand state :runner "Methuselah")
+    (run-on state :rd)
+    (click-card state :runner "DZMZ Optimizer")
+    (run-continue-until state :success)
+    (click-prompts state :runner "Pay 4 [Credits] to trash")
+    (dotimes [_ 2]
+      (click-card state :runner "Methuselah"))
+    (is (no-prompt? state :runner) "Paid 2 with methuselah")))
+
 (deftest mind-s-eye-interaction-with-rdi-aeneas
     ;; Interaction with RDI + Aeneas
     (do-game
@@ -4853,6 +4882,20 @@
     (is (= 0 (count (:hand (get-runner)))))
     (is (= ["Easy Mark" "Ika"] (map :title (:discard (get-runner)))))))
 
+(deftest rotary-test
+  (do-game
+    (new-game {:runner {:hand ["Rotary"]}
+               :corp {:hand [(qty "IPO" 4)]
+                      :deck ["IPO" "IPO" "IPO"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rotary")
+    (run-empty-server state :rd)
+    (is (changed? [(count-tags state) 1]
+          (click-prompt state :runner "Yes"))
+        "Tag on")
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "No action")))
+
 (deftest rubicon-switch
   ;; Rubicon Switch
   (do-game
@@ -5588,6 +5631,23 @@
               (click-card state :runner tt))
             "Used 2 credits from The Toolbox"))))
 
+(deftest the-tungsten-tailor-test
+  (do-game
+    (new-game {:runner {:hand ["The Tungsten Tailor" "Corroder"]
+                        :credits 10}
+               :corp {:hand ["Ice Wall"]}})
+    (play-from-hand state :corp "Ice Wall" "HQ")
+    (take-credits state :corp)
+    (rez state :corp (get-ice state :hq 0))
+    (play-from-hand state :runner "The Tungsten Tailor")
+    (play-from-hand state :runner "Corroder")
+    (run-on state :hq)
+    (run-continue-until state :encounter-ice)
+    (is (= 0 (get-strength (get-ice state :hq 0))) "-1 str")
+    (is (changed? [(:credit (get-runner)) 0]
+          (card-ability state :runner (get-program state 0) 0)
+          (click-prompt state :runner "End the run")))))
+
 (deftest the-wizards-chest
   (do-game
     (new-game {:corp {:hand [] :deck []}
@@ -5809,6 +5869,20 @@
       (click-prompt state :runner "Steal")
       (is (= 3 (:agenda-point (get-runner))) "Runner got 3 points")
       (is (= 2 (count (:scored (get-runner)))) "Runner got 2 cards in score area")))
+
+(deftest touchstone-test
+  (do-game
+    (new-game {:runner {:hand ["Touchstone" "Clean Getaway"]}
+               :corp {:hand ["PAD Campaign"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Touchstone")
+    (play-from-hand state :runner "Clean Getaway")
+    (click-prompt state :runner "HQ")
+    (run-continue-until state :success)
+    (is (changed? [(:credit (get-runner)) -3]
+          (do-trash-prompt state 4)
+          (click-card state :runner "Touchstone"))
+        "3 + 1 for touchstone")))
 
 (deftest turntable
   ;; Turntable - Swap a stolen agenda for a scored agenda

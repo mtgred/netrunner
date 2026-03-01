@@ -4,6 +4,7 @@
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]
     [game.core.agendas :refer [update-advancement-requirement update-all-advancement-requirements update-all-agenda-points]]
+    [game.core.bad-publicity :refer [bad-publicity-available]]
     [game.core.board :refer [installable-servers]]
     [game.core.card :refer [get-advancement-requirement get-agenda-points get-card get-counters]]
     [game.core.card-defs :refer [card-def]]
@@ -238,6 +239,21 @@
   (if (= choices :credit)
     (pay state side eid card (->c :credit (min choice (get-in @state [side :credit]))))
     (effect-completed state side eid)))
+
+(defn resolve-bad-pub-choice
+  [state side {:keys [eid] :as args}]
+  (if (pos? (bad-publicity-available state side))
+    (let [prompt (or (first-prompt-by-eid state side eid)
+                     (first (get-in @state [side :prompt])))
+          card (:card prompt)
+          prompt-eid eid
+          effect (:effect prompt)]
+      (if (:offer-bad-pub? prompt)
+        (do (remove-from-prompt-queue state side prompt)
+            (when effect (effect :bad-publicity))
+            (finish-prompt state side prompt card))
+        (toast state side (str "You cannot choose Bad Publicity for this effect.") "warning")))
+    (toast state side (str "You cannot choose Bad Publicity for this effect.") "warning")))
 
 ;; TODO - resolve-prompt does some evil things with eids, maybe we can fix it later - nbk, 2025
 (defn resolve-prompt
@@ -733,19 +749,26 @@
         _ (update-all-agenda-points state)
         c (get-card state c)
         points (get-agenda-points c)]
-    (system-msg state :corp (str "scores " (:title c)
-                                 " and gains " (quantify points "agenda point")))
-    (implementation-msg state card)
-    (set-prop state :corp (get-card state c) :advance-counter 0)
-    (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-    (play-sfx state side "agenda-score")
-    (when-let [on-score (:on-score (card-def c))]
-      (register-pending-event state :agenda-scored c on-score))
-    (queue-event state :agenda-scored {:card c
-                                       :advancement-requirement advancement-requirement
-                                       :advancement-tokens advancement-tokens
-                                       :points points})
-    (checkpoint state nil eid {:duration :agenda-scored})))
+    (wait-for (trigger-event-simult state side :pre-agenda-scored nil
+                                    {:card c
+                                     :scored-card card
+                                     :advancement-requirement advancement-requirement
+                                     :advancement-tokens advancement-tokens
+                                     :points points})
+              (system-msg state :corp (str "scores " (:title c)
+                                           " and gains " (quantify points "agenda point")))
+              (implementation-msg state card)
+              (set-prop state :corp (get-card state c) :advance-counter 0)
+              (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+              (play-sfx state side "agenda-score")
+              (when-let [on-score (:on-score (card-def c))]
+                (register-pending-event state :agenda-scored c on-score))
+              (queue-event state :agenda-scored {:card c
+                                                 :scored-card card
+                                                 :advancement-requirement advancement-requirement
+                                                 :advancement-tokens advancement-tokens
+                                                 :points points})
+              (checkpoint state nil eid {:duration :agenda-scored}))))
 
 (defn score
   "Score an agenda."

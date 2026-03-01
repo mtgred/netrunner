@@ -757,6 +757,7 @@
       (run-empty-server state :remote1)
       (click-prompt state :runner "Steal")
       (click-prompt state :corp "Yes")
+      (click-prompt state :corp "OK")
       (click-prompt state :corp "Chairman Hiro")
       (click-prompt state :corp "Done")
       (click-prompt state :corp "Done")
@@ -766,7 +767,7 @@
       (click-prompt state :corp "Excalibur")
       (click-prompt state :corp "Fire Wall")
       (click-prompt state :corp "Gemini")
-      (click-prompt state :corp "Done")
+      (click-prompt state :corp "OK")
       (is (= ["Bacterial Programming"] (mapv :title (get-scored state :runner))) "Runner shouldn't score Chairman Hiro")
       (is (= ["Chairman Hiro"] (mapv :title (:discard (get-corp)))) "Chairman Hiro should be in Archives")))
 
@@ -1903,6 +1904,18 @@
       (run-empty-server state "Server 2")
       (is (= 3 (core/trash-cost state :runner (refresh ep2)))
           "Trash cost increased to 3 by one active Encryption Protocol"))))
+
+(deftest esca
+  (doseq [[tags damage] [[0 0] [1 1] [15 1]]]
+    (do-game
+      (new-game {:corp {:discard ["Esca"]}
+                 :runner {:hand ["Ika" "Ika"]
+                          :tags tags}})
+      (take-credits state :corp)
+      (is (changed? [(:credit (get-runner)) -1
+                     (count (:hand (get-runner))) (- damage)]
+            (run-empty-server state :archives))
+          "Tanked it"))))
 
 (deftest estelle-moon
   ;; Estelle Moon
@@ -3392,6 +3405,46 @@
     (is (no-prompt? state :runner) "No prompt")
     (is (not (:run @state)) "Access ended after 1 card seen - todachine did his work")))
 
+(deftest luana-test
+  (do-game
+    (new-game {:corp {:hand ["Luana Campos" "Extract"]
+                      :deck [(qty "IPO" 10)]
+                      :bad-pub 1}})
+    (play-cards state :corp ["Luana Campos" "New remote" :rezzed])
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (is (changed? [(:credit (get-corp)) 3
+                   (count-bad-pub state) -1
+                   (count (:hand (get-corp))) 2]
+          (click-prompt state :corp "Yes"))
+        "Took a BP to get value")
+    (is (changed? [(count-bad-pub state) 1]
+          (play-cards state :corp ["Extract" "Luana Campos"]))
+        "Took BP back")))
+
+(deftest magistrate-revontuler
+  (do-game
+    (new-game {:corp {:hand ["Magistrate Revontulet" "Greenmail" "Project Beale" "Project Atlas"]}
+	       :runner {:credits 20}})
+    (play-from-hand state :corp "Magistrate Revontulet" "New remote")
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (is (rezzed? (get-content state :remote1 0)))
+    (play-and-score state "Greenmail")
+    (is (changed? [(:credit (get-runner)) -3]
+          (click-prompt state :corp "Greenmail"))
+        "Taxed on score")
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (is (changed? [(:credit (get-runner)) -3]
+          (click-prompt state :runner "Pay to steal"))
+	"paid 3 to steal")
+    (is (no-prompt? state :runner))
+    (run-empty-server state :remote2)
+    (is (changed? [(:credit (get-runner)) -3]
+          (click-prompt state :runner "Pay to steal"))
+        "paid 3 to steal")))
+
 (deftest malia-icon-goes-away-with-cupellation
   (do-game
     (new-game {:corp {:hand ["Malia Z0L0K4"]}
@@ -4099,6 +4152,24 @@
         (is (changed? [(count (:hand (get-corp))) 2]
               (take-credits state :runner))
             "Drew 2 cards -> mandatory + nico trash effect"))))
+
+(deftest nihilo-agent
+  (do-game
+    (new-game {:corp {:hand ["Nihilo Agent"]}})
+    (play-from-hand state :corp "Nihilo Agent" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (dotimes [n 3]
+      (is (not (jinteki.utils/is-tagged? state)) "Not tagged")
+      (take-credits state :corp)
+      (start-turn state :runner)
+      (is (= 1 (count-bad-pub state)) "Took 1 bad pub")
+      (is (jinteki.utils/is-tagged? state) "tagged")
+      (take-credits state :runner)
+      (when-not (= n 2)
+        (is (= 0 (count-bad-pub state)) "lost 1 bad pub")
+	(is (not (jinteki.utils/is-tagged? state)) "untagged again")))
+    (is (= 1 (count-bad-pub state)) "Took 1 bad pub")
+    (is (jinteki.utils/is-tagged? state) "tagged")))
 
 (deftest open-forum
   ;; Open Forum

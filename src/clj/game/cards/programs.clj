@@ -55,6 +55,7 @@
    [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? protecting-same-server?
                               remote->name target-server unknown->kw zone->name]]
+   [game.core.set-aside :refer [get-set-aside set-aside-for-me]]
    [game.core.shuffling :refer [shuffle! shuffle-my-deck!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
@@ -558,6 +559,27 @@
                                         (not (has-subtype? target "AI"))))}]
      :hosted-gained gain-abis
      :hosted-lost gain-abis}))
+
+(defcard "Baker"
+  (letfn [(switch-server [key serv]
+            {:option (str "Switch to " serv)
+             :cost [(->c :credit 1 {:stealth :all-stealth})]
+             :ability {:msg (str "change the attacked server to " serv)
+                       :effect (req (swap! state assoc-in [:run :server] [key]))}})]
+    {:abilities [(run-server-ability
+                   :archives
+                   {:action true
+                    :cost [(->c :click 1)]
+                    :once :per-turn
+                    :events [(choose-one-helper
+                               {:event :pre-approach-server
+                                :req (req (= :archives (-> run :server first)))
+                                :duration :end-of-run
+                                :unregister-once-resolved true
+                                :interactive (req true)
+                                :optional true}
+                               [(switch-server :hq "HQ")
+                                (switch-server :rd "R&D")])]})]}))
 
 (defcard "Bankroll"
   {:special {:auto-place-credit :always}
@@ -2834,6 +2856,48 @@
                                         :duration :while-active
                                         :value (req (get-counters card :power))}]}))
 
+(defcard "Read-Write Share"
+  (let [ab {:interactive (req true)
+            :prompt "Host a card from your grip to draw a card?"
+            :choices {:req (req (and (runner? target)
+                                     (in-hand? target)))}
+            :skippable true
+            :msg "host a card facedown from the Grip and draw a card"
+            :async true
+            :effect (req (host state side (get-card state card) target {:facedown true})
+                         (wait-for (draw state side 1)
+                                   (if (>= (count (:hosted (get-card state card))) 5)
+                                     (continue-ability
+                                       state side
+                                       {:msg "trash itself"
+                                        :async true
+                                        :effect (req (trash state side eid card))}
+                                       card nil)
+                                     (effect-completed state side eid))))}]
+    {:on-install ab
+     :events [(assoc ab :event :runner-turn-begins)]
+     :abilities [{:fake-cost [(->c :trash-can)]
+                  :label "Shuffle all hosted cards into the stack"
+                  :interactive (req true)
+                  :async true
+                  :effect (req (if (seq (:hosted (get-card state card)))
+                                 (let [set-aside-cards (set-aside-for-me state side eid (:hosted (get-card state card)))
+                                       set-aside-cards (get-set-aside state side eid)]
+                                   (continue-ability
+                                     state side
+                                     {:cost [(->c :trash-can)]
+                                      :msg (str "shuffle " (quantify (count set-aside-cards) "hosted card") " into the Stack")
+                                      :effect (req (doseq [c set-aside-cards]
+                                                     (move state side c :deck))
+                                                   (shuffle! state side :deck))}
+                                     (get-card state card) nil))
+                                 (continue-ability
+                                   state side
+                                   {:cost [(->c :trash-can)]
+                                    :msg "shuffle the Stack"
+                                    :effect (req (shuffle! state side :deck))}
+                                   card nil)))}]}))
+
 (defcard "Reaver"
   {:events [{:event :runner-trash
              :async true
@@ -3068,6 +3132,28 @@
 (defcard "Shiv"
   (break-and-enter "Sentry"))
 
+(defcard "Sipa"
+  {:events [{:event :pass-ice
+             :req (req (letfn [(valid-ctx? [ctx]
+                                 (and (:all-subs-broken ctx)
+                                      (:outermost ctx)
+                                      (:ice ctx)))]
+                         (and (valid-ctx? context)
+                              (first-event? state side :pass-ice #(some valid-ctx? %)))))
+             :interactive (req true)
+             :async true
+             :effect (effect
+                       (continue-ability
+                         (when-let [ice (get-card state (:ice context))]
+                           {:prompt (str "Swap " (:title ice) " with another ice?")
+                            :choices {:card #(and (installed? %)
+                                                  (ice? %)
+                                                  (not (same-card? % ice)))}
+                            :msg (msg "swap the positions of " (card-str state ice)
+                                      " and " (card-str state target))
+                            :effect (effect (swap-ice ice (get-card state target)))})
+                         card nil))}]})
+
 (defcard "Slap Vandal"
   trojan
   {:abilities [(break-sub 1 1 "All" {:req (req (same-card? current-ice (:host card)))
@@ -3188,6 +3274,16 @@
                                           :cost [(->c :click 1)]
                                           :once :per-turn
                                           :events [ability]})]}))
+
+(defcard "Stowaway"
+  trojan
+  {:events [{:event :successful-run
+             :req (req (= (second (get-zone (get-card state (:host card))))
+                          (target-server context)))
+             :async true
+             :msg "gain 2 [Credits]"
+             :automatic :gain-credits
+             :effect (req (gain-credits state side eid 2))}]})
 
 (defcard "Study Guide"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")

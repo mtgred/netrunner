@@ -85,6 +85,7 @@
    click-per-turn
    credit
    run-credit
+   bad-pub-credit
    link
    tag
    properties

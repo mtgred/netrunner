@@ -54,7 +54,7 @@
    [game.core.set-aside :refer [swap-set-aside-cards]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-my-deck!
                                 shuffle-into-rd-effect]]
-   [game.core.tags :refer [gain-tags]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.threat :refer [threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -1071,6 +1071,20 @@
                        :req (req (installed? target))
                        :value 1}]})
 
+(defcard "Esca"
+  {:flags {:rd-reveal (req true)}
+   :poison true
+   :on-access {:msg "force the Runner to lose 1 [Credits]"
+               :async true
+               :effect (req (wait-for (lose-credits state :runner 1)
+                                      (continue-ability
+                                        state side
+                                        {:req (req tagged)
+                                         :msg "do 1 net damage"
+                                         :async true
+                                         :effect (req (damage state side eid :net 1))}
+                                        card nil)))}})
+
 (defcard "Estelle Moon"
   {:events [{:event :corp-install
              :req (req (and (or (asset? (:card context))
@@ -1843,6 +1857,41 @@
                              :effect (req (access-bonus state :runner target -1))}
                             card targets))}]})
 
+(defcard "Luana Campos"
+  {:uninstall (req (continue-ability
+                     state side
+                     {:req (req (and (rezzed? (:old-card context))
+                                     (pos? (get-counters (:old-card context) :bad-publicity))))
+                      :msg (msg "take " (get-counters (:old-card context) :bad-publicity)
+                                " bad publicity")
+                      :async true
+                      :effect (req
+                                (gain-bad-publicity
+                                     state side eid
+                                     (get-counters (:old-card context) :bad-publicity)))}
+                     card targets))
+   :events [{:event :corp-turn-begins
+             :interactive (req true)
+             :change-in-game-state {:req (req (pos? (count-bad-pub state))) :silent true}
+             :optional {:interactive (req true)
+                        :prompt "Host a bad publicity counter to gain 3 [Credits] and draw a card?"
+                        :yes-ability {:msg (msg "gain 3 [Credits] and draw 1 card")
+                                      :cost [(->c :host-bad-pub 1)]
+                                      :async true
+                                      :effect (req (wait-for
+                                                     (gain-credits state side 3 {:suppress-checkpoint true})
+                                                     (draw state side eid 1)))}}}]})
+
+(defcard "Magistrate Revontulet"
+  {:static-abilities [{:type :steal-additional-cost
+                       :req (req (agenda? target))
+                       :value (req [(->c :credit 3)])}]
+   :events [{:event :agenda-scored
+             :async true
+             :interactive (req true)
+             :msg "force the Runner to lose 3 [Credits]"
+             :effect (req (lose-credits state :runner eid 3))}]})
+
 (defcard "Malia Z0L0K4"
   (let [unmark
         (req (when-let [malia-target (get-in card [:special :malia-target])]
@@ -2239,6 +2288,25 @@
                                   (damage state :corp eid :brain 1 {:card card}))
                               (do (as-agenda state :runner card -1)
                                   (effect-completed state side eid))))}})
+
+(defcard "Nihilo Agent"
+  {:data {:counter {:power 3}}
+   :events [(trash-on-empty :power)
+            {:event :corp-turn-ends
+             :msg "take 1 bad publicity and give the Runner 1 tag"
+             :async true
+             :effect (req (wait-for
+                            (gain-bad-publicity state :corp 1 {:suppress-checkpoint true})
+                            (wait-for
+                              (add-counter state side card :power -1 {:suppress-checkpoint true})
+                              (gain-tags state side eid 1))))}
+            {:event :corp-turn-begins
+             :change-in-game-state {:silent true
+                                    :req (req (or tagged (pos? (count-bad-pub state))))}
+             :msg "remove 1 bad publicity and 1 tag"
+             :async true
+             :effect (req (wait-for (lose-bad-publicity state :corp 1 {:suppress-checkpoint true})
+                                    (lose-tags state side eid 1)))}]})
 
 (defcard "Open Forum"
   {:events [{:event :corp-mandatory-draw

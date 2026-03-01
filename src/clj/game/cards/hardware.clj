@@ -52,7 +52,7 @@
                            get-current-encounter jack-out make-run
                            successful-run-replace-breach total-cards-accessed]]
    [game.core.say :refer [play-sfx system-msg]]
-   [game.core.servers :refer [target-server is-central?]]
+   [game.core.servers :refer [target-server is-central? zone->name]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.threat :refer [threat-level]]
@@ -443,6 +443,14 @@
                                                                    (:discard runner))
                                                              :deck)
                                                        (shuffle! :deck))}}}])))}]}))
+
+(defcard "Borrowed Goods"
+  {:on-install {:change-in-game-state {:req (req (not tagged)) :silent true}
+                :msg "take 1 tag"
+                :interactive (req true)
+                :async true
+                :effect (req (gain-tags state side eid 1))}
+   :static-abilities [(mu+ 1)]})
 
 (defcard "Box-E"
   {:static-abilities [(mu+ 2)
@@ -1604,6 +1612,22 @@
 (defcard "MemStrips"
   {:static-abilities [(virus-mu+ 3)]})
 
+(defcard "Methuselah"
+  {:interactions {:pay-credits {:req (req run)
+                                :type :credit}}
+   :events [{:event :run
+             :change-in-game-state {:req (req (seq (:hand runner))) :silent true}
+             :skippable true
+             :interactive (req true)
+             :prompt "Trash a hardware from the Grip?"
+             :choices {:card (every-pred hardware? in-hand?)}
+             :async true
+             :waiting-prompt true
+             :msg (msg "trash " (:title target) " and place 2 [Credits] on itself")
+             :effect (req (wait-for (trash state side target {:unpreventable true})
+                                    (add-counter state side eid card :credit 2)))}]
+   :static-abilities [(mu+ 1)]})
+
 (defcard "Mind's Eye"
   {:implementation "Power counters added automatically"
    :static-abilities [(mu+ 1)]
@@ -2207,6 +2231,23 @@
                :effect (effect (continue-ability ability card nil))}]
      :abilities [ability]}))
 
+(defcard "Rotary"
+  {:static-abilities [(mu+ 1)]
+   :events [{:event :breach-server
+             :automatic :pre-breach
+             :optional {:req (req (or (= target :rd) (= target :hq)))
+                        :prompt "Tag 1 tag to see an additional card?"
+                        :yes-ability {:cost [(->c :gain-tag 1)]
+                                      :msg (msg "access 1 additional card from " (zone->name target))
+                                      :effect (effect (access-bonus target 1))}}}]
+   :corp-abilities [{:action true
+                     :label "Trash Rotary"
+                     :async true
+                     :cost [(->c :click 1) (->c :credit 2)]
+                     :req (req (and tagged (= :corp side)))
+                     :effect (effect (system-msg :corp "spends [Click] and 2 [Credits] to trash Rotary")
+                                     (trash :corp eid card {:cause-card card}))}]})
+
 (defcard "Rubicon Switch"
   {:abilities [{:action true
                 :cost [(->c :click 1)(->c :x-credits)]
@@ -2535,6 +2576,20 @@
                                                (has-subtype? target "Icebreaker")))
                                 :type :recurring}}})
 
+(defcard "The Tungsten Tailor"
+  {:static-abilities [{:type :ice-strength
+                       :req (req (ice? target))
+                       :value -1}]
+   :events [{:event :subroutines-broken
+             :async true
+             :once-per-instance true
+             :automatic :gain-credits
+             :req (req (letfn [(valid-ctx? [[ctx]] (:was-zero-or-less-strength? ctx))]
+                         (and (valid-ctx? targets)
+                              (first-event? state side :subroutines-broken valid-ctx?))))
+             :msg "gain 1 [Credits]"
+             :effect (req (gain-credits state side eid 1))}]})
+
 (defcard "The Wizard's Chest"
   (letfn [(install-choice [state side eid card rev-str first-card second-card]
             (continue-ability
@@ -2647,6 +2702,15 @@
                          :effect (req (if (get-only-card-to-access state)
                                         (effect-completed state nil eid)
                                         (access-card state side eid (nth (:deck corp) (dec (str->int target))) "an unseen card")))}})]})
+
+(defcard "Touchstone"
+  {:events [{:event :play-event
+             :req (req (first-event? state side :play-event))
+             :async true
+             :silent (req true)
+             :effect (req (add-counter state side eid card :credit 1))}]
+   :interactions {:pay-credits {:req (req run)
+                                :type :credit}}})
 
 (defcard "Turntable"
   {:static-abilities [(mu+ 1)]

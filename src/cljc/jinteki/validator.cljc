@@ -292,14 +292,14 @@
        :reason (str "Illegal identity: " id)})))
 
 (defn startup-agenda-restriction
-  "As of 25.04, startup decks may only have 4 agendas worth 3 or more points"
+  "As of 25.04, startup decks may only have 3 agendas worth 3 or more points"
   [fmt {:keys [cards] :as deck}]
   (if (= :startup fmt)
     (let [relevant-agenda (fn [c] (and (= (:type (:card c)) "Agenda")
                                        (>= (:agendapoints (:card c)) 3)))
           relevant-agendas (filter relevant-agenda cards)
           ct (reduce + 0 (map :qty relevant-agendas))]
-      (if (> ct 4)
+      (if (> ct 3)
         {:reason "Too many agendas worth 3 or more points (startup restriction)"}
         {:legal true}))
     {:legal true}))

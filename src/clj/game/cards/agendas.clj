@@ -8,7 +8,7 @@
                               update-all-agenda-points]]
    [game.core.bad-publicity :refer [gain-bad-publicity lose-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed all-installed-corp
-                            all-installed-runner-type get-remote-names installable-servers server->zone]]
+                            all-installed-runner-type get-remote-names installable-servers server->zone server-list]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? facedown? faceup? get-advancement-requirement get-agenda-points
                            get-card get-counters get-title get-zone has-subtype? ice? in-discard? in-hand?
@@ -22,8 +22,8 @@
    [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
-   [game.core.engine :refer [checkpoint pay queue-event register-events resolve-ability
-                             unregister-events]]
+   [game.core.engine :refer [checkpoint pay queue-event register-events register-default-events
+                             resolve-ability unregister-events]]
    [game.core.events :refer [first-event? first-run-event? no-event? run-events run-event-count turn-events]]
    [game.core.finding :refer [find-latest]]
    [game.core.flags :refer [in-runner-scored? is-scored? register-run-flag!
@@ -43,7 +43,7 @@
    [game.core.prompts :refer [cancellable clear-wait-prompt show-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.purging :refer [purge]]
-   [game.core.revealing :refer [reveal]]
+   [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [derez rez rez-multiple-cards]]
    [game.core.runs :refer [clear-encounter end-run get-current-encounter force-ice-encounter redirect-run start-next-phase]]
    [game.core.say :refer [play-sfx system-msg]]
@@ -51,7 +51,7 @@
    [game.core.set-aside :refer [set-aside-for-me]]
    [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-my-deck!
                                 shuffle-into-rd-effect]]
-   [game.core.tags :refer [gain-tags]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
@@ -349,50 +349,95 @@
               :effect (effect (damage eid :meat 2 {:card card}))}})
 
 (defcard "Bacterial Programming"
-  (letfn [(hq-step [remaining to-trash to-hq]
-            {:async true
-             :prompt "Choose a card to move to HQ"
-             :choices (conj (vec remaining) "Done")
-             :effect (req (if (= "Done" target)
-                            (wait-for (trash-cards state :corp to-trash {:unpreventable true :cause-card card})
-                                      (doseq [h to-hq]
-                                        (move state :corp h :hand))
-                                      (do
-                                        (system-msg state :corp
-                                                    (str "uses " (:title card)
-                                                         " to trash " (quantify (count to-trash) "card")
-                                                         ", add " (quantify (count to-hq) "card")
-                                                         " to HQ, and arrange the top " (quantify (- 7 (count to-trash) (count to-hq)) "card") " of R&D"))
-                                        (if (seq remaining)
-                                          (continue-ability state :corp (reorder-choice :corp (vec remaining)) card nil)
-                                          (effect-completed state :corp eid))))
-                            (continue-ability state :corp (hq-step
-                                                            (set/difference (set remaining) (set [target]))
-                                                            to-trash
-                                                            (conj to-hq target)) card nil)))})
-          (trash-step [remaining to-trash]
-            {:async true
-             :prompt "Choose a card to discard"
-             :choices (conj (vec remaining) "Done")
-             :effect (req (if (= "Done" target)
-                            (continue-ability state :corp (hq-step remaining to-trash '()) card nil)
-                            (continue-ability state :corp (trash-step
-                                                            (set/difference (set remaining) (set [target]))
-                                                            (conj to-trash target)) card nil)))})]
+  (letfn [(remove-card [remaining target]
+            (filterv #(not (same-card? % target)) remaining))
+          (enumerate-text [phrases]
+            (let [phrases (filterv identity phrases)]
+              (cond
+                (zero? (count phrases))
+                ""
+                (= 1 (count phrases))
+                (first phrases)
+                (= 2 (count phrases))
+                (str (first phrases) " and " (second phrases))
+                :else
+                (str (first phrases) ", " (enumerate-text (rest phrases))))))
+          (interact [cards remaining to-trash to-add to-top stage]
+            (cond
+              (not (seq remaining))
+              (choose-one-helper
+                {:prompt (str (when (seq to-trash)
+                                (str (enumerate-cards to-trash) " will be trashed. "))
+                              (when (seq to-add)
+                                (str (enumerate-cards to-add) " will be added to HQ. "))
+                              (when (seq to-top)
+                                (str "the top of R&D will be (top->bottom): " (enumerate-cards (reverse to-top)))))}
+                [{:option "OK"
+                  :ability {:msg (msg (enumerate-text
+                                        [(when (seq to-trash)
+                                           (str "trash " (quantify (count to-trash) "card") " from R&D"))
+                                         (when (seq to-add)
+                                           (str "add " (quantify (count to-add) "card") " to HQ"))
+                                         (when (seq to-top)
+                                           (str "rearrange the top " (quantify (count to-top) "card") " of R&D"))]))
+                            :async true
+                            :effect (req (doseq [c to-add]
+                                           (move state side c :hand))
+                                         (doseq [c to-trash]
+                                           (move state side c :deck {:front true}))
+                                         (wait-for
+                                           (trash-cards state side (take (count to-trash) (get-in @state [:corp :deck])) {:suppress-checkpoint true})
+                                           (doseq [c to-top]
+                                             (move state side c :deck {:front true}))
+                                           (checkpoint state side eid)))}}
+                 {:option "I want to start over"
+                  :ability (interact cards cards [] [] [] :trash)}])
+              (= stage :trash)
+              {:prompt "Choose a card to trash"
+               :choices (conj remaining "Done")
+               :async true
+               :effect (req (continue-ability
+                              state side
+                              (if (= target "Done")
+                                (interact cards remaining to-trash to-add to-top :add)
+                                (interact cards (remove-card remaining target) (conj to-trash target) to-add to-top stage))
+                              card nil))}
+              (= stage :add)
+              {:prompt "Choose a card to add to HQ"
+               :choices (conj remaining "Done")
+               :async true
+               :effect (req (continue-ability
+                              state side
+                              (if (= target "Done")
+                                (interact cards remaining to-trash to-add to-top :order)
+                                (interact cards (remove-card remaining target) to-trash (conj to-add target) to-top stage))
+                              card nil))}
+              ;; note - if there is one card remaining, we could just add it to the top, but I think that actually
+              ;; causes (player) memory issues that clicking on the card does not, so I have chosen to do it this way
+              ;;  -nbkelly, 2026.02
+              :else
+              {:prompt "Add a card to the top of R&D"
+               :choices remaining
+               :async true
+               :effect (req (continue-ability state side (interact cards (remove-card remaining target) to-trash to-add (conj to-top target) stage) card nil))}))]
     (let [arrange-rd
           {:interactive (req true)
-           :optional
-           {:waiting-prompt true
-            :prompt "Look at the top 7 cards of R&D?"
-            :yes-ability
-            {:async true
-             :msg "look at the top 7 cards of R&D"
-             :effect (req (let [c (take 7 (:deck corp))]
-                            (when (and
-                                   (:access @state)
-                                   (:run @state))
-                              (swap! state assoc-in [:run :shuffled-during-access :rd] true))
-                            (continue-ability state :corp (trash-step c '()) card nil)))}}}]
+           :change-in-game-state {:silent true :req (req (seq (:deck corp)))}
+           :optional {:waiting-prompt true
+                      :prompt "Look at the top 7 cards of R&D?"
+                      :yes-ability {:async true
+                                    :msg "look at the top 7 cards of R&D"
+                                    :prompt (msg "The top cards of R&D are (top->bottom): " (enumerate-cards (take 7 (:deck corp))))
+                                    :choices ["OK"]
+                                    :effect (req (let [set-aside-cards (set-aside-for-me state side eid (take 7 (:deck corp)))]
+                                                   (when (and
+                                                           (:access @state)
+                                                           (:run @state))
+                                                     (swap! state assoc-in [:run :shuffled-during-access :rd] true))
+                                                   (continue-ability
+                                                     state side
+                                                     (interact set-aside-cards set-aside-cards [] [] [] :trash)
+                                                     card nil)))}}}]
       {:on-score arrange-rd
        :stolen arrange-rd})))
 
@@ -1281,6 +1326,38 @@
                                                      :duration :end-of-run})
                                                   (effect-completed state side eid)))}}]})
 
+(defcard "Let Them Dream"
+  (letfn [(move-to [c from]
+            (choose-one-helper
+              (let [and-then (fn [s] (str (if (= from :rd) ", shuffle R&D, and then " " and ") s))]
+                {:prompt (str "Move " (:title c) " where?")}
+                [{:option "HQ"
+                  :ability {:async true
+                            :effect (req (when (= from :rd) (shuffle! state side :deck))
+                                         (move state side c :hand)
+                                         (reveal-loud state side eid card {:and-then (and-then "add it to HQ")} c))}}
+                 {:option "Bottom of R&D"
+                  :ability {:async true
+                            :effect (req (when (= from :rd) (shuffle! state side :deck))
+                                         (move state side c :deck)
+                                         (reveal-loud state side eid card {:and-then (and-then "add it to the bottom of R&D")} c))}}])))
+          (find-ab [zone]
+            {:prompt "Choose an agenda"
+             :show-discard (= zone :archives)
+             :choices (if (= zone :rd)
+                        (req (cancellable (filter agenda? (:deck corp)) :sorted))
+                        {:card #(and (agenda? %) (if (= zone :hq) (in-hand? %) (in-discard? %)))})
+             :effect (req (continue-ability state side (move-to target zone) card nil))
+             :async true
+             :cancel-effect shuffle-my-deck!})]
+    {:on-score (choose-one-helper
+                 {:optional true
+                  :prompt "Search for an Agenda from where?"}
+                 [{:option "HQ" :ability (find-ab :hq)}
+                  {:option "R&D" :ability (find-ab :rd)}
+                  {:option "Archives" :ability (find-ab :archives)}])
+     :agendapoints-runner (req 1)}))
+
 (defcard "License Acquisition"
   {:on-score {:interactive (req true)
               :prompt "Choose an asset or upgrade to install from Archives or HQ"
@@ -1353,6 +1430,50 @@
     :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                            (shuffle-into-rd-effect state side eid card 3)))}})
 
+(defcard "Lotus Haze"
+  {:on-score (agenda-counters 3)
+   :abilities [{:cost [(->c :agenda 1)]
+                :prompt "Choose an upgrade to move"
+                :choices {:card (every-pred upgrade? rezzed?)}
+                :label "Move a rezzed upgrade to the root of another server."
+                :waiting-prompt true
+                :async true
+                ;; note:
+                ;; It's not legal to even attempt to stack regions
+                ;; It's not legal to even attempt to move cards to zones which they cannot legally occupy
+                ;; This looks messy, but it's accurate, and will be enough to stop people getting game losses
+                ;; TODO: extend this logic to swaps (ie daruma)
+                ;;   --nbkelly, 2026.02
+                :effect (req (let [to-move target
+                                   zone (second (get-zone to-move))
+                                   not-same-zone (fn [zones] (filter #(not= % (zone->name zone)) zones))
+                                   legal-zones-fn (if-let [f (-> to-move card-def :legal-zones)]
+                                                    (fn [zones] (f state side eid card zones))
+                                                    (fn [zones] (vec zones)))
+                                   region? #(has-subtype? % "Region")
+                                   region-restriction (fn [zones]
+                                                        (if (region? target)
+                                                          (filter #(let [z (last (server->zone state %))
+                                                                         content (get-in @state [:corp :servers z :content])]
+                                                                     (not (some region? content)))
+                                                                  zones)
+                                                          zones))
+                                   legal-moves (-> (server-list state) not-same-zone legal-zones-fn region-restriction)]
+                               (continue-ability
+                                 state side
+                                 (if (seq legal-moves)
+                                   {:prompt "Choose a server"
+                                    :choices (req legal-moves)
+                                    :msg (msg "move " (:title to-move) " to " target)
+                                    :effect (req (let [c (move state side to-move
+                                                               (conj (server->zone state target) :content))]
+                                                   (unregister-events state side to-move)
+                                                   (register-default-events state side c)))}
+                                   {:prompt (str "You have no legal moves for " (:title to-move))
+                                    :msg (msg "reveal that they have no legal moves for " (:title to-move))
+                                    :choices ["OK"]})
+                                 card nil)))}]})
+
 (defcard "Luminal Transubstantiation"
   {:on-score
    {:silent true
@@ -1408,6 +1529,12 @@
    :static-abilities [{:type :advancement-requirement
                        :req (req (= (:title target) "Medical Breakthrough"))
                        :value -1}]})
+
+(defcard "Méliès City Luxury Line"
+  {:steal-cost-bonus (req [(->c :click 1)])
+   :on-score {:msg "gain [Click]"
+              :silent (req true)
+              :effect (req (gain-clicks state :corp 1))}})
 
 (defcard "Megaprix Qualifier"
   {:on-score {:silent true
@@ -2062,6 +2189,27 @@
                 :trace {:base 2
                         :successful (give-tags 1)}}]})
 
+(defcard "Sacrifice Zone Expansion"
+  {:install-state :face-up
+   :events [{:event :advance
+             :condition :faceup
+             :req (req (and (same-card? card (:card context))
+                            (first-event? state side :advance #(same-card? card (:card (first %))))))
+             :msg (msg "gain 3 [Credits]")
+             :async true
+             :effect (effect (gain-credits eid 3))}
+            {:event :successful-run
+             :condition :faceup
+             :optional {:prompt "Do 1 meat damage?"
+                        :once :per-turn
+                        :req (req (and (installed? card)
+                                       (not= (target-server context) (second (get-zone card)))
+                                       (can-pay? state side eid card nil [(->c :advancement 1)])))
+                        :yes-ability {:cost [(->c :advancement 1)]
+                                      :msg "do 1 meat damage"
+                                      :effect (req (damage state side eid :meat 1))
+                                      :async true}}}]})
+
 (defcard "Salvo Testing"
   {:events [{:event :agenda-scored
              :interactive (req true)
@@ -2545,3 +2693,22 @@
                                       (not (has-subtype? target "Virtual"))
                                       (not (:facedown (second targets)))))
                        :value 1}]})
+
+(defcard "Witch Hunt"
+  (let [bp {:msg "take 1 bad publicity"
+            :async true
+            :effect (effect (gain-bad-publicity :corp eid 1))}]
+    {:stolen bp
+     :on-score bp
+     :events [{:unregister-once-resolved true
+               :event :corp-action-phase-ends
+               :duration :end-of-turn
+               :req (effect (first-event? :agenda-scored #(same-card? card (:card (first %)))))
+               :msg (msg (if tagged
+                           "Remove all tags, and then give the Runner 3 tags"
+                           "give the Runner 3 tags"))
+               :async true
+               :effect (req (if tagged
+                              (wait-for (lose-tags state side :all {:suppress-checkpoint true})
+                                        (gain-tags state side eid 3))
+                              (gain-tags state side eid 3)))}]}))
