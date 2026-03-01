@@ -4020,6 +4020,21 @@
                                 :msg "make the Runner breach R&D"
                                 :effect (effect (breach-server :runner eid [:rd] {:no-root true}))}}}]})
 
+(defcard "Sleipnir"
+  {:subroutines [(maybe-draw-sub 1)
+                 {:prompt "Shuffle up 1 card from HQ or Archives into R&D?"
+                  :label "You may shuffle 1 card from HQ or Archives into R&D"
+                  :show-discard true
+                  :choices {:card #(and (corp? %)
+                                        (or (in-hand? %)
+                                            (in-discard? %)))}
+                  :async true
+                  :msg (msg "shuffle " (card-str state target) " into R&D")
+                  :effect (req (move state :corp target :deck)
+                               (shuffle! state :corp :deck)
+                               (effect-completed state :corp eid))}
+                 end-the-run]})
+
 (defcard "Slot Machine"
   (letfn [(top-3 [state] (take 3 (get-in @state [:runner :deck])))
           (top-3-names [cards] (map #(str (:title %) " (" (:type %) ")") cards))

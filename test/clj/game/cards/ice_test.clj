@@ -7404,6 +7404,22 @@
         (run-jack-out state)
         (is (= (+ credits 10) (:credit (get-corp))) "Corp should only gain money once")))))
 
+;; Tests for 'Jog Gate' (version 11.0)
+(deftest sleipnir-sub-0-maybe-draw-1-cards
+  (do-game
+    (subroutine-test "Sleipnir" 0 {:corp {:hand 0 :deck (inc 1)}})
+    (click-prompt state :corp "Yes")
+    (is (= 1 (count (:hand (get-corp)))) "Drew 1")))
+
+(deftest sleipnir-sub-1-shuffle-from-hq-or-archives
+  (doseq [zone [:hand :discard]]
+    (do-game
+      (subroutine-test "Sleipnir" 1 {:corp {:deck 0 zone ["IPO"]}})
+      (click-card state :corp "IPO")
+      (is-deck? state :corp ["IPO"]))))
+
+(deftest sleipnir-sub-2-etr (do-game (new-game (etr-sub "Sleipnir" 2))))
+
 (deftest slot-machine
   ;; Slot Machine
   (do-game
