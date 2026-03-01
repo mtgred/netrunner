@@ -2768,6 +2768,27 @@
                      (reveal state side cards)
                      (trash-cards state side eid cards {:unpreventable true :cause-card card}))))}})
 
+(defcard "Scapegoat"
+  {:on-play (choose-one-helper
+              {:player :runner}
+              [{:option "Corp removes 2 bad publicity"
+                :ability {:async true
+                          :display-side :corp
+                          :msg "remove 2 bad publicity"
+                          :effect (req (lose-bad-publicity state :corp eid 2))}}
+               {:option "Corp shuffles 1 Runner card into the Stack"
+                :ability {:change-in-game-state {:req (req (seq (all-installed state :runner)))}
+                          :player :corp
+                          :prompt "Shuffle an installed Runner card into the stack"
+                          :choices {:max 1
+                                    :card (every-pred runner? installed?)
+                                    :all true}
+                          :display-side :corp
+                          :msg (msg "shuffle " (enumerate-str (map :title targets)) " into the Stack")
+                          :effect (req (doseq [t targets]
+                                         (move state :runner t :deck))
+                                       (shuffle! state :runner :deck))}}])})
+
 (defcard "Scapenet"
   {:on-play
    {:trace

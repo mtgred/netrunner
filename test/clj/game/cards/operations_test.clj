@@ -4335,6 +4335,28 @@
     (click-prompt state :corp "Plascrete Carapace")
     (is (= 2 (count (:hand (get-runner)))))))
 
+(deftest scapegoat-remove-bad-pub
+  (do-game
+    (new-game {:corp {:hand ["Scapegoat"] :bad-pub 1}})
+    (is (changed? [(count-bad-pub state) -1]
+          (play-from-hand state :corp "Scapegoat")
+          (click-prompt state :runner "Corp removes 2 bad publicity"))
+        "Lost a bad pub")))
+
+(deftest scapegoat-shuffle-a-card
+  (do-game
+    (new-game {:corp {:hand ["Scapegoat"] :bad-pub 1}
+               :runner {:hand ["Rezeki" "Ika"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Rezeki")
+    (play-from-hand state :runner "Ika")
+    (take-credits state :runner)
+    (play-from-hand state :corp "Scapegoat")
+    (click-prompt state :runner "Corp shuffles 1 Runner card into the Stack")
+    (click-prompts state :corp "Rezeki")
+    (is (no-prompt? state :corp))
+    (is (= 1 (count (:deck (get-runner)))))))
+
 (deftest scapenet
   (doseq [[title func] [["Misdirection" get-program]
                           ["Clone Chip" get-hardware]
