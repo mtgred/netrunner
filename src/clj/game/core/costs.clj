@@ -24,6 +24,8 @@
    [game.macros :refer [continue-ability req wait-for]]
    [game.utils :refer [enumerate-cards enumerate-str quantify same-card?]]))
 
+(defn- can-forfeit? [card] (not (get-in card [:flags :cannot-forfeit])))
+
 ;; Click
 (defmethod value :click [cost] (:cost/amount cost))
 (defmethod label :click [cost]
@@ -327,7 +329,7 @@
 (defmethod label :forfeit [cost] (str "forfeit " (quantify (value cost) "Agenda")))
 (defmethod payable? :forfeit
   [cost state side _eid _card]
-  (<= 0 (- (count (get-in @state [side :scored])) (value cost))))
+  (<= 0 (- (count (filter can-forfeit? (get-in @state [side :scored]))) (value cost))))
 (defmethod handler :forfeit
   [cost state side eid card]
   (continue-ability
@@ -336,7 +338,8 @@
      :async true
      :choices {:max (value cost)
                :all true
-               :card #(is-scored? state side %)}
+               :req (req (and (is-scored? state side target)
+                              (can-forfeit? target)))}
      :effect (req (doseq [agenda targets]
                     ;; We don't have to await this because we're suppressing the
                     ;; checkpoint and forfeit makes all of the trashing unpreventable,
@@ -376,7 +379,7 @@
 (defmethod payable? :forfeit-or-trash-x-from-hand
   [cost state side eid card]
   (or (<= 0 (- (count (get-in @state [side :hand])) (value cost)))
-      (pos? (count (get-in @state [side :scored])))))
+      (pos? (count (filter can-forfeit? (get-in @state [side :scored]))))))
 (defmethod handler :forfeit-or-trash-x-from-hand
   [cost state side eid card]
   (let [hand (if (= :corp side) "HQ" "the grip")
@@ -403,7 +406,8 @@
                                    :async true
                                    :choices {:max 1
                                              :all true
-                                             :card #(is-scored? state side %)}
+                                             :req (req (and (is-scored? state side target)
+                                                            (can-forfeit? target)))}
                                    :effect (req (doseq [agenda targets]
                                                   (forfeit state side (make-eid state eid) agenda {:msg false
                                                                                                    :suppress-checkpoint true}))

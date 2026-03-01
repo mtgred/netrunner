@@ -749,20 +749,26 @@
         _ (update-all-agenda-points state)
         c (get-card state c)
         points (get-agenda-points c)]
-    (system-msg state :corp (str "scores " (:title c)
-                                 " and gains " (quantify points "agenda point")))
-    (implementation-msg state card)
-    (set-prop state :corp (get-card state c) :advance-counter 0)
-    (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
-    (play-sfx state side "agenda-score")
-    (when-let [on-score (:on-score (card-def c))]
-      (register-pending-event state :agenda-scored c on-score))
-    (queue-event state :agenda-scored {:card c
-                                       :scored-card card
-                                       :advancement-requirement advancement-requirement
-                                       :advancement-tokens advancement-tokens
-                                       :points points})
-    (checkpoint state nil eid {:duration :agenda-scored})))
+    (wait-for (trigger-event-simult state side :pre-agenda-scored nil
+                                    {:card c
+                                     :scored-card card
+                                     :advancement-requirement advancement-requirement
+                                     :advancement-tokens advancement-tokens
+                                     :points points})
+              (system-msg state :corp (str "scores " (:title c)
+                                           " and gains " (quantify points "agenda point")))
+              (implementation-msg state card)
+              (set-prop state :corp (get-card state c) :advance-counter 0)
+              (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
+              (play-sfx state side "agenda-score")
+              (when-let [on-score (:on-score (card-def c))]
+                (register-pending-event state :agenda-scored c on-score))
+              (queue-event state :agenda-scored {:card c
+                                                 :scored-card card
+                                                 :advancement-requirement advancement-requirement
+                                                 :advancement-tokens advancement-tokens
+                                                 :points points})
+              (checkpoint state nil eid {:duration :agenda-scored}))))
 
 (defn score
   "Score an agenda."
