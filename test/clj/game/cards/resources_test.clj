@@ -4362,6 +4362,45 @@
       (is (= 2 (count (:hand (get-runner)))) "Darwin never got played, Chameleon returned to hand")
       (is (= 2 (count (:discard (get-runner)))) "Femme Fatale and Study Guide trashed"))))
 
+(deftest man-in-the-middle-negative-points-mode
+  (do-game
+    (new-game {:corp {:hand ["Hostile Takeover" (qty "Archer" 2)]
+                      :credits 30}
+               :runner {:hand ["Word on the Street"]}})
+    (play-from-hand state :corp "Archer" "Archives")
+    (play-from-hand state :corp "Archer" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Word on the Street")
+    (take-credits state :runner)
+    (is (changed? [(count (:scored (get-corp))) 2
+                   (:credit (get-runner)) 0]
+          (play-and-score state "Hostile Takeover"))
+        "2 agendas sitting there")
+    (is (= 0 (:agenda-point (get-corp))) "Scored Bellona for 3 points")
+    (rez state :corp (get-ice state :archives 0) {:expect-rez false})
+    (is (= "Word on the Street" (:printed-title (get-scored state :corp 1))))
+    (click-card state :corp (get-scored state :corp 1))
+    (is (not (no-prompt? state :corp)) "Cannot do man in the middle")
+    (click-card state :corp (get-scored state :corp 0))
+    (is (rezzed? (get-ice state :archives 0)) "Archer now rezzed")
+    (rez state :corp (get-ice state :archives 1) {:expect-rez false})
+    (is (no-prompt? state :corp) "No prompt to rez")))
+
+(deftest man-in-the-middle-regular-points-mode
+  (do-game
+    (new-game {:corp {:hand ["Hostile Takeover"]}
+               :runner {:hand ["Word on the Street"]}})
+    (play-from-hand state :corp "Hostile Takeover" "New remote")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Word on the Street")
+    (take-credits state :runner)
+    (is (changed? [(count (:scored (get-corp))) 1
+                   (count (:discard (get-runner))) 1
+                   (:credit (get-runner)) 4]
+          (score-agenda state :corp (get-content state :remote1 0)))
+        "Other thing happened")
+    (is (no-prompt? state :corp))))
+
 (deftest manuel-lattes-de-moura
   (do-game
     (new-game {:corp {:hand [(qty "Hedge Fund" 5)]

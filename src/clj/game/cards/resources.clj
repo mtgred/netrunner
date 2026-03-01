@@ -4132,6 +4132,22 @@
     {:events [(assoc ability :event :runner-turn-begins)]
      :abilities [ability]}))
 
+(defcard "Word on the Street"
+  {:events [{:event :pre-agenda-scored
+             :req (req (= :this-turn (:installed (:scored-card context))))
+             :msg "add itself to the score area as an agenda worth -1 agenda points"
+             :display-side :corp
+             :effect (req (let [fake-gendie (as-agenda state :corp card -1)]
+                            (update! state :corp (assoc-in fake-gendie [:flags :cannot-forfeit] true))))}
+            {:event :agenda-scored
+             :msg "trash itself, gain 4 [Credits] and draw a card"
+             :effect (req (wait-for
+                            (trash state side card {:suppress-checkpoint true})
+                            (wait-for
+                              (gain-credits state side 4 {:suppress-checkpoint true})
+                              (draw state side eid 1))))
+             :async true}]})
+
 (defcard "Wyldside"
   (let [ab {:msg "draw 2 cards and lose [Click]"
             :once :per-turn
