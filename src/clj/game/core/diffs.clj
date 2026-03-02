@@ -258,7 +258,7 @@
                                   (mapv
                                    (fn [choice]
                                      (if (-> choice :value :cid)
-                                       (update choice :value #(not-empty (card-summary % state side)))
+                                       (update choice :value #(not-empty (select-keys % [:cid :title :printed-title])))
                                        choice)))
                                   (not-empty))
                              choices)))
