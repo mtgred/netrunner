@@ -2858,6 +2858,7 @@
 
 (defcard "Read-Write Share"
   (let [ab {:interactive (req true)
+            :req (req (< (count (:hosted card)) 4))
             :prompt "Host a card from your grip to draw a card?"
             :choices {:req (req (and (runner? target)
                                      (in-hand? target)))}
@@ -2865,15 +2866,7 @@
             :msg "host a card facedown from the Grip and draw a card"
             :async true
             :effect (req (host state side (get-card state card) target {:facedown true})
-                         (wait-for (draw state side 1)
-                                   (if (>= (count (:hosted (get-card state card))) 5)
-                                     (continue-ability
-                                       state side
-                                       {:msg "trash itself"
-                                        :async true
-                                        :effect (req (trash state side eid card))}
-                                       card nil)
-                                     (effect-completed state side eid))))}]
+                         (draw state side eid 1))}]
     {:on-install ab
      :events [(assoc ab :event :runner-turn-begins)]
      :abilities [{:fake-cost [(->c :trash-can)]

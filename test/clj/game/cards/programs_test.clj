@@ -7480,6 +7480,29 @@
     (card-ability state :runner (get-program state 0) 0)
     (is-deck? state :runner ["Corroder" "Rezeki"])))
 
+(deftest read-write-share-limit-4-hosted
+  ;; Should not allow hosting a 5th card (limit 4 hosted cards)
+  (do-game
+    (new-game {:runner {:hand ["Read-Write Share" "Sure Gamble" "Sure Gamble" "Sure Gamble" "Sure Gamble"]
+                        :deck [(qty "Sure Gamble" 10)]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Read-Write Share")
+    ;; host 1st card on install
+    (click-card state :runner (first (:hand (get-runner))))
+    (is (= 1 (count (:hosted (get-program state 0)))) "1 hosted card")
+    ;; host 2nd-4th cards on turn begins
+    (dotimes [i 3]
+      (take-credits state :runner)
+      (take-credits state :corp)
+      (start-turn state :runner)
+      (click-card state :runner (first (:hand (get-runner))))
+      (is (= (+ 2 i) (count (:hosted (get-program state 0)))) (str (+ 2 i) " hosted cards")))
+    ;; should not prompt to host a 5th card
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (start-turn state :runner)
+    (is (no-prompt? state :runner) "No prompt to host a 5th card")))
+
 (deftest reaver
   ;; Reaver - Draw a card the first time you trash an installed card each turn
   (do-game
