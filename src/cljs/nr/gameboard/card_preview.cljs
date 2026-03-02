@@ -17,7 +17,7 @@
 
 (defn put-game-card-in-channel
   [card channel]
-  (if-let [server-card (get-in @app-state [:all-cards-and-flips (:title card)])]
+  (if-let [server-card (get-in @app-state [:all-cards-and-flips (or (:title card) (:printed-title card))])]
     (put! channel (merge server-card card))
     (put! channel card))
   nil)
