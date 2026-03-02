@@ -678,7 +678,7 @@
                :effect (req (continue-ability state side (interact cards (remove-card remaining target) to-trash to-add (conj to-top target)) card nil))}))]
   {:on-play {:msg (msg (if (= 1 (count (:deck corp)))
                          "trash the top card of R&D"
-                         (str "look at the top " (count (:deck corp)) " cards of R&D")))
+                         (str "look at the top " (min 5 (count (:deck corp))) " cards of R&D")))
              :change-in-game-state {:req (req (seq (:deck corp)))}
              :async true
              :effect (req (if (= 1 (count (:deck corp)))
