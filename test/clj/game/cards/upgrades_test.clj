@@ -2123,7 +2123,7 @@
     (click-prompt state :runner "Take 1 tag")
     (is (= 1 (count-tags state)) "Runner takes 1 tag to prevent Corp from removing 1 BP")
     (click-prompt state :runner "Pay 2 [Credits] to trash") ; trash
-    (select-bad-pub state 1)
+    (select-bad-pub state nil)
     (run-empty-server state "Archives")
     (is (= 1 (count-bad-pub state)))
     (click-prompt state :runner "The Corp removes 1 bad publicity")
@@ -4139,7 +4139,7 @@
     (run-on state :remote1)
     (is (changed? [(count (:hand (get-runner))) -4]
           (card-ability state :runner (get-program state 0) 0)
-          (select-bad-pub state 0)
+          (select-bad-pub state nil)
           (click-prompt state :corp "Yes"))
         "Got slammed for 4 damage")))
 

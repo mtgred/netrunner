@@ -1871,7 +1871,8 @@
        (concat [(when offer-bad-pub?
                   ;; TODO - translate this
                   [:button {:key "Bad Pub"
-                            :on-click #(send-command "bad-pub-choice" {:eid (prompt-eid (:side @game-state))})}
+                            :on-click #(send-command "bad-pub-choice" {:eid (prompt-eid (:side @game-state))
+                                                                       :shift-key-held (.-shiftKey %)})}
                    (str "Bad Publicity (" offer-bad-pub? " available)")])]
                (doall (for [{:keys [idx uuid value]} choices
                             :when (not= value "Hide")]
