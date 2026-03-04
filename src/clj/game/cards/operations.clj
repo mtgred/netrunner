@@ -2408,7 +2408,9 @@
   {:on-play {:change-in-game-state {:req (req (seq (filter (every-pred rezzed? ice?)
                                                            (all-installed state :corp))))}
              :waiting-prompt true
-             :prompt "Choose any number of ice to derez"
+             :prompt (msg "choose " (quantify (min (count (filter (every-pred rezzed? ice?)
+                                                                  (all-installed state :corp)))
+                                                   2) "piece") " of ice to derez")
              :choices {:req (req (and (rezzed? target)
                                       (ice? target)
                                       (installed? target)))
