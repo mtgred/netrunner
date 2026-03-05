@@ -241,13 +241,14 @@
     (effect-completed state side eid)))
 
 (defn resolve-bad-pub-choice
-  [state side {:keys [eid] :as args}]
+  [state side {:keys [eid shift-key-held] :as args}]
   (if (pos? (bad-publicity-available state side))
     (let [prompt (or (first-prompt-by-eid state side eid)
                      (first (get-in @state [side :prompt])))
           card (:card prompt)
           prompt-eid eid
           effect (:effect prompt)]
+      (swap! state assoc-in [side :shift-key-select] shift-key-held)
       (if (:offer-bad-pub? prompt)
         (do (remove-from-prompt-queue state side prompt)
             (when effect (effect :bad-publicity))

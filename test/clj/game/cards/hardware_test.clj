@@ -1326,7 +1326,7 @@
       (click-card state :corp "Hostile Takeover")
       (run-continue state)
       (card-ability state :runner (get-program state 0) 2)
-      (select-bad-pub state 1)
+      (select-bad-pub state nil)
       (card-ability state :runner (get-program state 0) 2)
       (card-ability state :runner (get-program state 0) 0)
       (click-prompt state :runner "Gain 2 [Credits]")

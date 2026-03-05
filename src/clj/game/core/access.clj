@@ -627,15 +627,14 @@
 
 (defn access-helper-rd
   [state {:keys [chosen random-access-limit] :as access-amount} already-accessed {:keys [no-root] :as args}]
-  (let [current-available (set (concat (if-not (any-effects state :runner :disable-random-accesses true? {:server :rd}) (map :cid (get-in @state [:corp :deck])) [])
-                                       (map :cid (root-content state :rd))))
-        already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
+  (let [already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
         deck (access-cards-from-rd state)
         card-to-access (first (drop-while already-accessed-fn deck))
 
         card-from "Card from deck"
         card-from-button (when (and (pos? random-access-limit)
+                                    (not (any-effects state :runner :disable-random-accesses true?))
                                     card-to-access)
                            [card-from])
         root (root-content state :rd already-accessed-fn)
@@ -815,10 +814,8 @@
   [state {:keys [chosen random-access-limit] :as access-amount}
    already-accessed {:keys [no-root access-first] :as args}]
   (let [hand (when (not (or (:prevent-hand-access (:run @state))
-                            (any-effects state :runner :disable-random-accesses true? {:server :hq})))
+                            (any-effects state :runner :disable-random-accesses true?)))
                (get-in @state [:corp :hand]))
-        current-available (set (concat (map :cid hand)
-                                       (map :cid (root-content state :hq))))
 
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 

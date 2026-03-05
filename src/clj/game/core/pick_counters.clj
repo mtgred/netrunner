@@ -202,25 +202,36 @@
                   (not can-use-bad-pub?)))
        {:async true
         :effect pay-rest}
-       (if (and pre-chosen (in-coll? (map :cid provider-cards) (:cid pre-chosen)))
+       (if (and pre-chosen (or (in-coll? (map :cid provider-cards) (:cid pre-chosen))
+                               (= pre-chosen :bad-publicity)))
          {:async true
-          :effect (req (let [target pre-chosen
-                             pay-credits-type (-> target card-def :interactions :pay-credits :type)
-                             pay-function (if (= :custom pay-credits-type)
-                                            (-> target card-def :interactions :pay-credits :custom)
-                                            (take-counters-of-type pay-credits-type))
-                             custom-ability ^:ignore-async-check {:async true
-                                                                  :effect pay-function}
-                             neweid (make-eid state outereid)
-                             providing-card target]
-                         (wait-for (resolve-ability state side neweid custom-ability providing-card [card])
-                                   (continue-ability state side
-                                                     (pick-credit-providing-cards
-                                                       provider-func eid target-count stealth-target
-                                                       (update selected-cards (:cid providing-card)
-                                                               #(assoc % :card providing-card :number (+ (:number % 0) async-result)))
-                                                       target)
-                                                     card targets))))}
+          :effect (req
+                    (if (= target :bad-publicity)
+                      (continue-ability
+                        state side
+                        (pick-credit-providing-cards
+                          provider-func eid target-count stealth-target selected-cards (when (and (should-auto-repeat? state side)
+                                                                                                  (> bad-pub-available 1))
+                                                                                         target)
+                          uses (dec bad-pub-available) (inc bad-pub-spent))
+                        card targets)
+                      (let [target pre-chosen
+                            pay-credits-type (-> target card-def :interactions :pay-credits :type)
+                            pay-function (if (= :custom pay-credits-type)
+                                           (-> target card-def :interactions :pay-credits :custom)
+                                           (take-counters-of-type pay-credits-type))
+                            custom-ability ^:ignore-async-check {:async true
+                                                                 :effect pay-function}
+                            neweid (make-eid state outereid)
+                            providing-card target]
+                        (wait-for (resolve-ability state side neweid custom-ability providing-card [card])
+                                  (continue-ability state side
+                                                    (pick-credit-providing-cards
+                                                      provider-func eid target-count stealth-target
+                                                      (update selected-cards (:cid providing-card)
+                                                              #(assoc % :card providing-card :number (+ (:number % 0) async-result)))
+                                                       target uses bad-pub-available bad-pub-spent)
+                                                     card targets)))))}
          {:async true
           :prompt (str "Choose a credit providing card ("
                        counter-count (when (and target-count (pos? target-count))

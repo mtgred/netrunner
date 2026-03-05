@@ -678,7 +678,7 @@
                :effect (req (continue-ability state side (interact cards (remove-card remaining target) to-trash to-add (conj to-top target)) card nil))}))]
   {:on-play {:msg (msg (if (= 1 (count (:deck corp)))
                          "trash the top card of R&D"
-                         (str "look at the top " (count (:deck corp)) " cards of R&D")))
+                         (str "look at the top " (min 5 (count (:deck corp))) " cards of R&D")))
              :change-in-game-state {:req (req (seq (:deck corp)))}
              :async true
              :effect (req (if (= 1 (count (:deck corp)))
@@ -2408,7 +2408,9 @@
   {:on-play {:change-in-game-state {:req (req (seq (filter (every-pred rezzed? ice?)
                                                            (all-installed state :corp))))}
              :waiting-prompt true
-             :prompt "Choose any number of ice to derez"
+             :prompt (msg "choose " (quantify (min (count (filter (every-pred rezzed? ice?)
+                                                                  (all-installed state :corp)))
+                                                   2) "piece") " of ice to derez")
              :choices {:req (req (and (rezzed? target)
                                       (ice? target)
                                       (installed? target)))

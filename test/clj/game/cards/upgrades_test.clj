@@ -1640,6 +1640,26 @@
       (do-trash-prompt state 4)
       (is (no-prompt? state :runner)))))
 
+(deftest flagship-vs-twinning
+  (doseq [act [:trash :no-action]]
+    (do-game
+      (new-game {:corp {:hand ["Flagship"]
+                        :deck ["Beanstalk Royalties" "Project Atlas"]
+                        :stack-deck true}
+                 :runner {:hand ["The Twinning" "Overclock" "Prepaid VoicePAD"]}})
+      (play-cards state :corp ["Flagship" "R&D" :rezzed])
+      (stack-deck state :corp ["Beanstalk Royalties" "Project Atlas"])
+      (take-credits state :corp)
+      (play-cards state :runner
+                  "The Twinning"
+                  "Prepaid VoicePAD"
+                  ["Overclock" "Prepaid VoicePAD" "R&D"])
+      (run-continue-until state :success)
+      (click-prompt state :runner "1")
+      (click-prompts state :runner "Card from deck" "No action")
+      (click-prompt state :runner "No action")
+      (is (no-prompt? state :runner) "Denied extra access"))))
+
 (deftest forced-connection
   ;; Forced Connection - ambush, trace(3) give the runner 2 tags
   (do-game
@@ -2103,7 +2123,7 @@
     (click-prompt state :runner "Take 1 tag")
     (is (= 1 (count-tags state)) "Runner takes 1 tag to prevent Corp from removing 1 BP")
     (click-prompt state :runner "Pay 2 [Credits] to trash") ; trash
-    (select-bad-pub state 1)
+    (select-bad-pub state nil)
     (run-empty-server state "Archives")
     (is (= 1 (count-bad-pub state)))
     (click-prompt state :runner "The Corp removes 1 bad publicity")
@@ -4119,7 +4139,7 @@
     (run-on state :remote1)
     (is (changed? [(count (:hand (get-runner))) -4]
           (card-ability state :runner (get-program state 0) 0)
-          (select-bad-pub state 0)
+          (select-bad-pub state nil)
           (click-prompt state :corp "Yes"))
         "Got slammed for 4 damage")))
 

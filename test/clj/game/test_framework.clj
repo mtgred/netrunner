@@ -231,8 +231,9 @@
   (click-prompt state :runner (str "Pay " cost " [Credits] to trash")))
 
 (defn select-bad-pub
-  [state expected]
-  (core/process-action "bad-pub-choice" state :runner {:eid (:eid (get-prompt state :runner))}))
+  [state shift-held?]
+  (core/process-action "bad-pub-choice" state :runner {:eid (:eid (get-prompt state :runner))
+                                                       :shift-key-held shift-held?}))
 
 ;; General utilities necessary for starting a new game
 (defn find-card

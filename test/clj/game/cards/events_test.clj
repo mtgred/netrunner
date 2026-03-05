@@ -50,7 +50,7 @@
       (is (changed? [(:credit (get-runner)) -1]
             (click-prompt state :runner "New Angeles City Hall")
             (click-prompt state :runner "Yes")
-            (select-bad-pub state 1))
+            (select-bad-pub state nil))
           "Spent 1 + 1 from bad pub")
       (is (= 2 (:credit (get-runner))) "Runner has 2 credits left")
       (click-prompt state :runner "Yes")
@@ -6653,11 +6653,11 @@
       ;; Trashable execs
       (run-empty-server state :remote2)
       (click-prompt state :runner "Pay 6 [Credits] to trash")
-      (select-bad-pub state 1)
+      (select-bad-pub state nil)
       (is (empty? (:scored (get-runner))) "Chairman Hiro not added to runner's score area")
       (run-empty-server state "R&D")
       (click-prompt state :runner "Pay 5 [Credits] to trash")
-      (select-bad-pub state 1)
+      (select-bad-pub state nil)
       (is (empty? (:scored (get-runner))) "Director Haas not added to runner's score area")
       (take-credits state :runner)
       ;; Trash RM, make sure everything works again

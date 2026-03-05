@@ -453,6 +453,7 @@
             {:prompt (str "Choose a card (" n " remaining)")
              :choices chosen-cards
              :async true
+             :waiting-prompt true
              :effect (req (let [target-card target]
                             (continue-ability
                               state side
