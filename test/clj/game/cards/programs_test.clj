@@ -1051,6 +1051,24 @@
     (click-prompt state :runner "End the run")
     (is (not (:run @state)) "Skunkworks fired on HQ approach")))
 
+(deftest baker-trashed-mid-run-8569
+  (do-game
+    (new-game {:runner {:hand ["Baker" "\"Knickknack\" O'Brian" "Mantle"]
+                        :credits 10}
+               :corp {:hand [(qty "Rashida Jaheem" 3)]
+                      :deck ["Hostile Takeover"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Baker")
+    (play-from-hand state :runner "\"Knickknack\" O'Brian")
+    (play-from-hand state :runner "Mantle")
+    (card-ability state :runner (get-program state 0) 0)
+    (click-card state :runner (get-program state 0))
+    (is (is-discard? state :runner ["Baker"]))
+    (run-continue-until state :success)
+    (click-prompt state :runner "Pay 1 [Credits]: Switch to HQ")
+    (click-card state :runner "Mantle")
+    (do-trash-prompt state 1)))
+
 (deftest bankroll
   ;; Bankroll - Includes check for Issue #4334
   (do-game
