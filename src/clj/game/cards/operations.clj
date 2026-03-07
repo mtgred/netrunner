@@ -2433,8 +2433,7 @@
     :async true
     :waiting-prompt true
     :effect (req (wait-for
-                   (corp-install state side target nil {:ignore-all-cost true
-                                                        :msg-keys {:install-source card
+                   (corp-install state side target nil {:msg-keys {:install-source card
                                                                    :display-origin true}
                                                         :install-state :rezzed
                                                         :combined-credit-discount 10})
