@@ -230,7 +230,7 @@
                                                     break-ability
                                                     no-unbreakable-subs
                                                     (pos? unbroken-subs)
-                                                    (can-pay? state side eid card total-cost))
+                                                    (can-pay? state side eid card nil total-cost))
                                            [{:dynamic :auto-pump-and-break
                                              :cost total-cost
                                              :cost-label (build-cost-label total-cost)

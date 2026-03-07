@@ -816,7 +816,7 @@
                                                     no-unbreakable-subs
                                                     can-auto-break
                                                     (pos? unbroken-subs)
-                                                    (can-pay? state side eid card total-cost))
+                                                    (can-pay? state side eid card nil total-cost))
                                            [{:dynamic :auto-pump-and-break
                                              :cost total-cost
                                              :cost-label (build-cost-label total-cost)
@@ -826,7 +826,7 @@
                                                          (:title current-ice))}])
                                          (when (and pump-ability
                                                     (pos? times-pump)
-                                                    (can-pay? state side eid card total-pump-cost))
+                                                    (can-pay? state side eid card nil total-pump-cost))
                                            [{:dynamic :auto-pump
                                              :cost total-pump-cost
                                              :cost-label (build-cost-label total-pump-cost)
