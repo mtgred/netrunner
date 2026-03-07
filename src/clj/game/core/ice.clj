@@ -607,19 +607,20 @@
                                              event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
                                          (when (same-card? ice (get-current-ice state))
                                            (set-current-ice state ice))
-                                         (wait-for
-                                           (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice broken-subs breaker))
-                                           (let [ice (get-card state ice)
-                                                 card (get-card state card)]
-                                             (if (and ice
-                                                      card
-                                                      (not early-exit)
-                                                      (:repeatable args)
-                                                      (seq broken-subs)
-                                                      (pos? (count (unbroken-subroutines-choice ice)))
-                                                      (can-pay? state side eid (get-card state card) nil cost))
-                                               (continue-ability state side (break-subroutines ice breaker cost n args) card nil)
-                                               (effect-completed state side eid))))))
+                                         (if (seq broken-subs)
+                                           (wait-for
+                                             (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice broken-subs breaker))
+                                             (let [ice (get-card state ice)
+                                                   card (get-card state card)]
+                                               (if (and ice
+                                                        card
+                                                        (not early-exit)
+                                                        (:repeatable args)
+                                                        (pos? (count (unbroken-subroutines-choice ice)))
+                                                        (can-pay? state side eid (get-card state card) nil cost))
+                                                 (continue-ability state side (break-subroutines ice breaker cost n args) card nil)
+                                                 (effect-completed state side eid))))
+                                           (effect-completed state side eid))))
                                    (effect-completed state side eid))))))})))
 
 (defn add-stealth-to-label [cost]
