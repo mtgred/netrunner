@@ -185,6 +185,17 @@
           (click-prompt state :corp "Server 2"))
         "Ignored install costs")))
 
+(deftest a-teia-central-only-issue-8579
+  (do-game
+    (new-game {:corp {:id "A Teia: IP Recovery"
+                      :hand ["PAD Campaign" "The Red Room" "Spin Doctor"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (click-card state :corp "The Red Room")
+    (click-card state :corp "Spin Doctor")
+    (click-prompt state :corp "New remote")
+    (is (find-card "The Red Room" (:hand (get-corp)))
+        "The Red Room is still in hand")))
+
 (deftest a-teia-tatu-bola
   (do-game
     (new-game {:corp {:id "A Teia: IP Recovery"
