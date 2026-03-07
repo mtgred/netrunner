@@ -3967,6 +3967,16 @@
                            (is (rezzed? (get-ice state :hq 0)) "rezzed it"))
                          "Installed and rezzed Chiyashi, took 1 bad pub")))))
 
+(deftest reanimation-protocol-factors-install-cost
+  (do-game
+    (new-game {:corp {:discard ["Chiyashi"]
+                      :hand ["Vanilla" "Reanimation Protocol"]}})
+    (play-from-hand state :corp "Vanilla" "HQ")
+    (play-from-hand state :corp "Reanimation Protocol")
+    (is (changed? [(:credit (get-corp)) -3]
+          (click-prompts state :corp "Chiyashi" "HQ"))
+        "paid 13-10 to install and rez chiyashi")))
+
 (deftest red-level-clearance
   ;; Red Level Clearance
   (do-game
