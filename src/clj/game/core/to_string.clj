@@ -11,6 +11,7 @@
          (let [installed-ice (and (ice? card) (installed? card))]
            ; Corp card messages
            (str (if (or (rezzed? card)
+                        (:seen card)
                         visible)
                   (get-title card)
                   (if installed-ice "ice" "a card"))
