@@ -1402,7 +1402,9 @@
   ;; but another access is forced or credits are paid twice with something like
   ;; ganked into shiro or ganked into kitsune -nbkelly, 2022
   (let [mwanza-gain-creds
-        {:silent (req true)
+        {:event :end-breach-server
+         :duration :end-of-run
+         :silent (req true)
          :async true
          :unregister-once-resolved true
          :effect (req (if-let [accessed-cards (reduce + (vals (:cards-accessed target)))]
@@ -1412,38 +1414,34 @@
                             (gain-credits state :corp eid (* 2 accessed-cards)))
                         (effect-completed state side eid)))}
         unboost-access (fn [bonus-server]
-                         {:req (req (= (:from-server target) bonus-server))
+                         {:event :end-breach-server
+                          :duration :end-of-run
+                          :req (req (= (:from-server target) bonus-server))
                           :unregister-once-resolved true
                           :effect (req (access-bonus state :runner bonus-server -3))})
         boost-access-when-trashed (fn [bonus-server]
-                                    {:req (req (= target bonus-server))
+                                    {:event :breach-server
+                                     :duration :end-of-run
+                                     :req (req (= (:server context) bonus-server))
                                      :msg "force the runner to access 3 additional cards"
                                      :effect (req (access-bonus state :runner bonus-server 3)
                                                   (register-events
                                                    state side
                                                    card
-                                                   [(assoc mwanza-gain-creds
-                                                           :event :end-breach-server
-                                                           :duration :end-of-run)
-                                                    (assoc (unboost-access bonus-server)
-                                                           :event :end-breach-server
-                                                           :duration :end-of-run)]))})
-        boost-access-by-3 {:req (req (= target (second (get-zone card))))
+                                                   [mwanza-gain-creds
+                                                    (unboost-access bonus-server)]))})
+        boost-access-by-3 {:event :breach-server
+                           :req (req (= (:server context) (second (get-zone card))))
                            :msg "force the Runner to access 3 additional cards"
                            :effect (req (let [bonus-server (-> card :zone second)]
-
                                           (access-bonus state :runner bonus-server 3)
                                           (register-events
                                            state side
                                            card
-                                           [(assoc mwanza-gain-creds
-                                                           :event :end-breach-server
-                                                           :duration :end-of-run)
-                                            (assoc (unboost-access bonus-server)
-                                                   :event :end-breach-server
-                                                   :duration :end-of-run)])))}]
+                                           [mwanza-gain-creds
+                                            (unboost-access bonus-server)])))}]
     {:install-req (req (filter #{"HQ" "R&D"} targets))
-     :events [(assoc boost-access-by-3 :event :breach-server)]
+     :events [boost-access-by-3]
      ;; if there is a run, mark mwanza effects to remain active until the run
      :on-trash  {:req (req (and (= :runner side)
                                 (:run @state)))
@@ -1452,9 +1450,7 @@
                             (register-events
                              state side
                              card
-                             [(assoc (boost-access-when-trashed bonus-server)
-                                     :event :breach-server
-                                     :duration :end-of-run)])))}}))
+                             [(boost-access-when-trashed bonus-server)])))}}))
 
 (defcard "Nanisivik Grid"
   {:events [{:event :approach-server

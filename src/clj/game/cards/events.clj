@@ -663,7 +663,7 @@
     {:makes-run true
      :on-play (run-server-ability :archives)
      :events [{:event :breach-server
-               :req (req (= target :archives))
+               :req (req (= :archives (:server context)))
                :silent true
                :effect (req (let [ts (distinct (map :title (:discard corp)))]
                               (update! state side
@@ -1891,7 +1891,7 @@
    :events [{:event :breach-server
              :automatic :pre-breach
              :async true
-             :req (req (and (= target :archives)
+             :req (req (and (= :archives (:server context))
                             ;; don't prompt unless there's at least 1 rezzed piece of ice matching one in Archives
                             (not-empty (set/intersection
                                          (into #{} (map :title (filter ice? (:discard corp))))

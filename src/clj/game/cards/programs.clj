@@ -1076,7 +1076,7 @@
             {:event :breach-server
              :automatic :pre-breach
              :async true
-             :optional {:req (req (and (= :hq target)
+             :optional {:req (req (and (= :hq (:server context))
                                        (seq (filter corp? (:hosted card)))))
                         :prompt "1 [Credits]: Trash this program to access 2 additional cards from HQ?"
                         :yes-ability {:async true
@@ -1271,7 +1271,7 @@
              :skippable true
              :optional
              {:req (req (and (pos? (get-counters card :power))
-                             (= target :rd)))
+                             (= :rd (:server context))))
               :waiting-prompt true
               :prompt "Spend 1 hosted power counter to access 1 additional card?"
               :autoresolve (get-autoresolve :auto-fire)
@@ -1661,7 +1661,7 @@
              :automatic :pre-breach
              :async true
              :interactive (req true)
-             :req (req (and (= target :archives)
+             :req (req (and (= :archives (:server context))
                             (not-empty (:discard corp))))
              :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                           (update! state side (assoc-in card [:special :host-available] true))
@@ -2233,7 +2233,7 @@
             {:event :breach-server
              :automatic :pre-breach
              :async true
-             :req (req (= target :rd))
+             :req (req (= :rd (:server context)))
              :effect (effect (continue-ability
                                {:req (req (< 1 (get-virus-counters state card)))
                                 :prompt "How many additional cards from R&D do you want to access?"
@@ -2390,7 +2390,7 @@
             {:event :breach-server
              :automatic :pre-breach
              :async true
-             :req (req (= target :hq))
+             :req (req (= :hq (:server context)))
              :effect (effect (continue-ability
                                {:req (req (< 1 (get-virus-counters state card)))
                                 :prompt "How many additional cards from HQ do you want to access?"
@@ -2457,7 +2457,7 @@
              :skippable true
              :optional
              {:req (req (and (pos? (get-counters card :power))
-                             (= target :rd)))
+                             (= :rd (:server context))))
               :waiting-prompt true
               :prompt "Spend 1 hosted power counter to access 1 additional card?"
               :autoresolve (get-autoresolve :auto-fire)

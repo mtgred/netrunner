@@ -1851,10 +1851,10 @@
                             state side
                             {:req (req
                                     (and tagged
-                                         (> (:random-access-limit (num-cards-to-access state :runner target nil)) 1)
+                                         (> (:random-access-limit (num-cards-to-access state :runner (:server context) nil)) 1)
                                          (not (get-only-card-to-access state))))
                              :msg (msg "make the runner access 1 card fewer")
-                             :effect (req (access-bonus state :runner target -1))}
+                             :effect (req (access-bonus state :runner (:server context) -1))}
                             card targets))}]})
 
 (defcard "Luana Campos"

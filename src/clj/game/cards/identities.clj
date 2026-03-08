@@ -315,7 +315,7 @@
   {:events [{:event :breach-server
              :automatic :pre-breach
              :interactive (req true)
-             :psi {:req (req (= target :rd))
+             :psi {:req (req (= :rd (:server context)))
                    :equal {:msg "access 1 additional card"
                            :async true
                            :effect (effect (access-bonus :rd 1)
@@ -1571,9 +1571,9 @@
              :automatic :pre-breach
              :req (req (and run
                             (empty? (run-events state side :subroutines-broken))
-                            (#{:hq :rd} target)))
+                            (#{:hq :rd} (:server context))))
              :async true
-             :effect (req (let [breached-server target]
+             :effect (req (let [breached-server (:server context)]
                             (continue-ability
                               state side
                               {:optional
