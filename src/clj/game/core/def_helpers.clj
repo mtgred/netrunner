@@ -125,7 +125,7 @@
     :duration duration
     :req (if (:req args)
            (:req args)
-           (req (= server target)))
+           (req (= server (:server context))))
     :msg msg
     :effect (effect (access-bonus :runner server bonus))}))
 
