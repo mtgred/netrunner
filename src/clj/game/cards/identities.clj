@@ -4,7 +4,7 @@
    [game.core.access :refer [access-bonus access-cost-bonus access-non-agenda]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed card->server
-                            get-all-cards get-remote-names get-remotes server->zone]]
+                            get-all-cards get-remote-names get-remotes installable-servers server->zone]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            condition-counter? corp-installable-type? corp? event? faceup? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
@@ -149,7 +149,8 @@
                                :waiting-prompt true
                                :choices {:card #(and (corp? %)
                                                      (corp-installable-type? %)
-                                                     (in-hand? %))}
+                                                     (in-hand? %)
+                                                     (not-every? #{"HQ" "R&D" "Archives"} (installable-servers state %)))}
                                :async true
                                :effect (req (let [chosen-card target]
                                               (continue-ability
