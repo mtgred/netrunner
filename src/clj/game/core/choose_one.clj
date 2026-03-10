@@ -26,7 +26,7 @@
            apply-optional (and optional (not next-optional))
            xs (if-not apply-optional xs (conj xs {:option "Done"}))
            base-map (select-keys args [:action :player :once :unregister-once-resolved :event
-                                       :label :change-in-game-state :location :additional-cost])
+                                       :label :change-in-game-state :location :additional-cost :duration])
            ;; is a choice payable
            payable? (fn [x state side eid card targets]
                       (when (or (not (:cost x))

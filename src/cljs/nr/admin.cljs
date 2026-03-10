@@ -178,7 +178,6 @@
                 :on-change #(update-pause-game-creation (.. % -target -checked))}]
        " Pause new game creation (allows draining games before maintenance)"]]]))
 
-
 (defn admin []
   (r/with-let [user (r/cursor app-state [:user])]
     [:div.page-container

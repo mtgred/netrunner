@@ -107,17 +107,20 @@
   ;; note - if the user is behind a proxy, their IP will be the first on in x-forwarded-for
   ;; otherwise it will just be the remote-addr key for the request.
   ;; I'm hoping the nginx reverese proxy plays nice with this...
-  (let [client-ip (if-let [ips (get-in headers ["x-forwarded-for"])]
-                    (-> ips (str/split #",") first)
-                    remote-address)
+  (let [client-ip (or (some-> headers (get "x-forwarded-for") (str/split #",") first)
+                      (some-> headers (get "x-real-ip"))
+                      remote-address)
         user (mc/find-one-as-map db "users" {:username username})]
     (cond
-      (and user (:banned user)) (response 403 {:error (or @banned-msg "Account Locked")})
+      (and user (password/check password (:password user)) (:banned user))
+      (response 403 {:error (or @banned-msg "Account Locked")})
+      (and user (password/check password (:password user)) (mc/find-one-as-map db "ip-bans" {:ip-address client-ip}))
+      (response 403 {:error (or @banned-msg "Account Locked")})
       (and user (password/check password (:password user)))
       (do (mc/update db "users"
                      {:username username}
-                     {"$set" {:lastConnection (inst/now)
-                              :lastIpAddress (str client-ip)}})
+                     {"$set" {:last-connection (inst/now)
+                              :last-ip-address (str client-ip)}})
           (assoc (response 200 {:message "ok"})
                  :cookies {"session" (merge {:value (create-token auth user)}
                                             (:cookie auth))}))

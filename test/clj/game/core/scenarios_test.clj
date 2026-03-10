@@ -5,6 +5,20 @@
    [game.core.card :refer :all]
    [game.test-framework :refer :all]))
 
+(deftest bad-publicity-works-with-shift-key
+  (do-game
+    (new-game {:corp {:hand ["Scatter Field"] :bad-pub 3}
+               :runner {:hand ["Unity"] :credits 10}})
+    (play-cards state :corp ["Scatter Field" "HQ" :rezzed])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Unity")
+    (run-on state :hq)
+    (run-continue-until state :encounter-ice)
+    (auto-pump-and-break state (get-program state 0))
+    (is (changed? [(:credit (get-runner)) -2]
+          (select-bad-pub state true))
+        "3 pub + 2cr")))
+
 (deftest tread-lightly-vovo-combine-well
   (do-game
     (new-game {:corp {:hand ["Tithe" "Vovô Ozetti"]}

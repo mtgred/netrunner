@@ -1360,6 +1360,7 @@ pronouns = {$pronoun ->
     [he] He/him
     [heit] He/it
     [heshe] He/She/they
+    [heshe2] He/She
     [hethey] He/they
     [it] It
     [myodb] Prefer not to say
@@ -1501,6 +1502,9 @@ set_name = {$name ->
     [the-tag-mill-alt-arts] The Tag Mill Alt Arts
     [valenetrunner-alt-arts] ValeNetrunner Alt Arts
     [igor-lebedev-alt-arts] Igor Lebedev Alt Arts
+    [utati-alt-arts] Utati Alt Arts
+    [zuf-alt-arts] zuf Alt Arts
+    [tim-goschnick-alt-arts] Tim Goschnick Alt Arts
     [gnk-2013] 2013 FFG GNK
     [gnk-2014] 2014 FFG GNK
     [gnk-2015] 2015 FFG GNK

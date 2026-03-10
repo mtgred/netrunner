@@ -190,11 +190,13 @@
   ([card allow-all-users]
    (let [lang (get-in @app-state [:options :card-language] "en")
          res (get-in @app-state [:options :card-resolution] "default")
-         art (if (show-alt-art? allow-all-users)
-               (get-in @app-state [:options :alt-arts (keyword (:code card))] "stock")
-               "stock")
+         alt-art (if (show-alt-art? allow-all-users)
+                   (get-in @app-state [:options :alt-arts (keyword (:code card))] "stock")
+                   "stock")
+         art (if (sequential? alt-art) (first alt-art) alt-art)
+         art-index (if (sequential? alt-art) (second alt-art) 0)
          images (image-or-face card)]
-     (get-image-path images (keyword lang) (keyword res) (keyword art)))))
+     (nth (get-image-path images (keyword lang) (keyword res) (keyword art)) art-index))))
 
 (defn- base-image-url
   "The default card image. Displays an alternate image if the card is specified as one."
@@ -284,18 +286,32 @@
         selected-art (get selected-alts (keyword (:code card)))]
     (nil? selected-art)))
 
+(defn- card-image-properties [card]
+  (let [base-card-art (:art card)
+        card-art (if (= "" base-card-art) :stock base-card-art)
+        art-index (:art-index card)]
+    [card-art art-index]))
+
+(defn- desired-card-image-properties [code]
+  (let [selected-alts (:alt-arts (:options @app-state))
+        selected-alt (get selected-alts code [:stock 0])]
+    (if (sequential? selected-alt)
+      [(keyword (first selected-alt)) (second selected-alt)]
+      [(keyword selected-alt) 0])))
+
+;; Alts can be defined in a few different ways
+;; Either as a string for legacy cards
+;; Or as [alt-set index] for more recent alts
 (defn- selected-alt-art [card]
   (cond (contains? card :future-version) (future-selected-alt-art card)
         (contains? card :previous-versions) (previous-selected-alt-art card)
         :else
-        (let [code (keyword (:code card))
-              selected-alts (:alt-arts (:options @app-state))
-              selected-art (keyword (get selected-alts code))
-              card-art (:art card)]
-          (or (and card-art (nil? selected-art) (= "" card-art))
-              (and selected-art (= card-art selected-art))))))
+        (let [curr-card-properties (card-image-properties card)
+              code (keyword (:code card))
+              desired-card-properties (desired-card-image-properties code)]
+          (= curr-card-properties desired-card-properties))))
 
-;; Alts can only be set on th most recent version of a card
+;; Alts can only be set on the most recent version of a card
 ;; So if the card has a :future-version key, we apply the alt to
 ;; that card, setting the alt to the code of the old card.
 (defn- select-alt-art [card]

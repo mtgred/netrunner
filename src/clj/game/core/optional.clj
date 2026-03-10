@@ -32,7 +32,10 @@
      (let [autoresolve-fn (:autoresolve ability)
            autoresolve-answer (when autoresolve-fn
                                 (autoresolve-fn state side eid card targets))
-           choices [(when (can-pay? state side eid card (:title card) (:cost (:yes-ability ability)))
+           choices [(when (and (can-pay? state side eid card (:title card) (:cost (:yes-ability ability)))
+                               (if-let [yesreq (-> ability :yes-ability :req)]
+                                 (yesreq state side eid card targets)
+                                 true))
                       "Yes")
                     "No"]]
        (case autoresolve-answer

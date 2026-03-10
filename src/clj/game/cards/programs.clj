@@ -55,7 +55,8 @@
    [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? protecting-same-server?
                               remote->name target-server unknown->kw zone->name]]
-   [game.core.shuffling :refer [shuffle!]]
+   [game.core.set-aside :refer [get-set-aside set-aside-for-me]]
+   [game.core.shuffling :refer [shuffle! shuffle-my-deck!]]
    [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.threat :refer [threat threat-level]]
@@ -296,7 +297,7 @@
   [ice-type]
   (auto-icebreaker
     {:events [{:event :successful-run
-               :silent (req true)
+               :silent true
                :async true
                :effect (effect (system-msg (str "places 1 virus counter on " (:title card)))
                                (add-counter eid card :virus 1 nil))}]
@@ -390,8 +391,7 @@
                                                  :msg (msg "trash " (:title target) " to draw 1 card")
                                                  :effect (req (wait-for (trash state side target {:unpreventable true
                                                                                                   :cause-card card})
-                                                                        (draw state :runner eid 1)))
-                                                 :cancel-effect (effect (effect-completed eid))}
+                                                                        (draw state :runner eid 1)))}
                                                 card nil))}]}))
 
 (defcard "Abagnale"
@@ -560,6 +560,27 @@
      :hosted-gained gain-abis
      :hosted-lost gain-abis}))
 
+(defcard "Baker"
+  (letfn [(switch-server [key serv]
+            {:option (str "Switch to " serv)
+             :cost [(->c :credit 1 {:stealth :all-stealth})]
+             :ability {:msg (str "change the attacked server to " serv)
+                       :effect (req (swap! state assoc-in [:run :server] [key]))}})]
+    {:abilities [(run-server-ability
+                   :archives
+                   {:action true
+                    :cost [(->c :click 1)]
+                    :once :per-turn
+                    :events [(choose-one-helper
+                               {:event :pre-approach-server
+                                :req (req (= :archives (-> run :server first)))
+                                :duration :end-of-run
+                                :unregister-once-resolved true
+                                :interactive (req true)
+                                :optional true}
+                               [(switch-server :hq "HQ")
+                                (switch-server :rd "R&D")])]})]}))
+
 (defcard "Bankroll"
   {:special {:auto-place-credit :always}
    :events [{:event :successful-run
@@ -593,7 +614,7 @@
                                                [{:event :can-run-be-ended?
                                                  :duration :end-of-encounter
                                                  :async true
-                                                 :silent (req true)
+                                                 :silent true
                                                  :req (req (= :subroutine (->> context :source-eid :source-type)))
                                                  :msg "prevent the run from ending"
                                                  :effect (req (prevent-end-run state side eid))}])))}]}))
@@ -784,7 +805,7 @@
                        :req (req (<= 3 (get-virus-counters state card)))
                        :value 1}]
    :events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :req (req (= :rd (target-server context)))
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}]})
@@ -1055,7 +1076,7 @@
             {:event :breach-server
              :automatic :pre-breach
              :async true
-             :optional {:req (req (and (= :hq target)
+             :optional {:req (req (and (= :hq (:server context))
                                        (seq (filter corp? (:hosted card)))))
                         :prompt "1 [Credits]: Trash this program to access 2 additional cards from HQ?"
                         :yes-ability {:async true
@@ -1097,8 +1118,7 @@
 (defcard "Customized Secretary"
   (letfn [(custsec-host [cards]
             (if (empty? (filter program? cards))
-              {:msg "shuffle the stack"
-               :effect (effect (shuffle! :deck))}
+              shuffle-my-deck!
               {:prompt "Choose a program to host"
                :choices (concat (filterv program? cards) ["Done"])
                :async true
@@ -1174,7 +1194,7 @@
 
 (defcard "Datasucker"
   {:events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :req (req (is-central? (target-server context)))
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}]
@@ -1188,7 +1208,7 @@
 
 (defcard "DaVinci"
   {:events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :async true
              :effect (effect (add-counter eid card :power 1 nil))}]
    :abilities [{:req (req (some #(and (or (hardware? %)
@@ -1221,7 +1241,7 @@
 
 (defcard "Deep Thought"
   {:events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))
              :req (req (= :rd (target-server context)))}
@@ -1251,7 +1271,7 @@
              :skippable true
              :optional
              {:req (req (and (pos? (get-counters card :power))
-                             (= target :rd)))
+                             (= :rd (:server context))))
               :waiting-prompt true
               :prompt "Spend 1 hosted power counter to access 1 additional card?"
               :autoresolve (get-autoresolve :auto-fire)
@@ -1641,7 +1661,7 @@
              :automatic :pre-breach
              :async true
              :interactive (req true)
-             :req (req (and (= target :archives)
+             :req (req (and (= :archives (:server context))
                             (not-empty (:discard corp))))
              :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
                           (update! state side (assoc-in card [:special :host-available] true))
@@ -1704,7 +1724,7 @@
 
 (defcard "Hemorrhage"
   {:events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}]
    :abilities [{:action true
@@ -2111,7 +2131,7 @@
                                 (break-sub [(->c :power 1)] 1)
                                 (strength-pump 2 2)]
                     :events [{:event :runner-turn-ends
-                              :silent (req true)
+                              :silent true
                               :effect (effect (update! (assoc-in card [:counter :power] 0)))}]}))
 
 (defcard "Mantle"
@@ -2213,7 +2233,7 @@
             {:event :breach-server
              :automatic :pre-breach
              :async true
-             :req (req (= target :rd))
+             :req (req (= :rd (:server context)))
              :effect (effect (continue-ability
                                {:req (req (< 1 (get-virus-counters state card)))
                                 :prompt "How many additional cards from R&D do you want to access?"
@@ -2245,7 +2265,7 @@
 
 (defcard "Mongoose"
   (auto-icebreaker {:events [{:event :subroutines-broken
-                              :silent (req true)
+                              :silent true
                               :req (req (and (any-subs-broken-by-card? (:ice context) card)
                                              run))
                               :effect (req (let [broken-ice (:ice context)]
@@ -2370,7 +2390,7 @@
             {:event :breach-server
              :automatic :pre-breach
              :async true
-             :req (req (= target :hq))
+             :req (req (= :hq (:server context)))
              :effect (effect (continue-ability
                                {:req (req (< 1 (get-virus-counters state card)))
                                 :prompt "How many additional cards from HQ do you want to access?"
@@ -2437,7 +2457,7 @@
              :skippable true
              :optional
              {:req (req (and (pos? (get-counters card :power))
-                             (= target :rd)))
+                             (= :rd (:server context))))
               :waiting-prompt true
               :prompt "Spend 1 hosted power counter to access 1 additional card?"
               :autoresolve (get-autoresolve :auto-fire)
@@ -2627,9 +2647,10 @@
                                                 (runner-install state side eid target {:ignore-all-cost true
                                                                                        :msg-keys {:display-origin true
                                                                                                   :install-source card}})))
-                                 :cancel-effect (req (system-msg state side (str "uses Pawn to trash itself"))
-                                                     (trash state side eid card {:cause-card card
-                                                                                 :unpreventable true}))}
+                                 :cancel {:msg "trash itself"
+                                          :async true
+                                          :effect (req (trash state side eid card {:cause-card card
+                                                                                   :unpreventable true}))}}
                                 card nil)))}]
    :abilities [{:action true
                 :label "Host on the outermost piece of ice of a central server"
@@ -2708,7 +2729,7 @@
   {:x-fn (req (get-counters card :virus))
    :recurring (get-x-fn)
    :events [{:event :successful-run
-             :silent (req true)
+             :silent true
              :req (req (= :hq (target-server context)))
              :async true
              :effect (effect (add-counter eid card :virus 1 nil))}]
@@ -2834,6 +2855,41 @@
                                        {:type :used-mu
                                         :duration :while-active
                                         :value (req (get-counters card :power))}]}))
+
+(defcard "Read-Write Share"
+  (let [ab {:interactive (req true)
+            :req (req (< (count (:hosted card)) 4))
+            :prompt "Host a card from your grip to draw a card?"
+            :choices {:req (req (and (runner? target)
+                                     (in-hand? target)))}
+            :skippable true
+            :msg "host a card facedown from the Grip and draw a card"
+            :async true
+            :effect (req (host state side (get-card state card) target {:facedown true})
+                         (draw state side eid 1))}]
+    {:on-install ab
+     :events [(assoc ab :event :runner-turn-begins)]
+     :abilities [{:fake-cost [(->c :trash-can)]
+                  :label "Shuffle all hosted cards into the stack"
+                  :interactive (req true)
+                  :async true
+                  :effect (req (if (seq (:hosted (get-card state card)))
+                                 (let [set-aside-cards (set-aside-for-me state side eid (:hosted (get-card state card)))
+                                       set-aside-cards (get-set-aside state side eid)]
+                                   (continue-ability
+                                     state side
+                                     {:cost [(->c :trash-can)]
+                                      :msg (str "shuffle " (quantify (count set-aside-cards) "hosted card") " into the Stack")
+                                      :effect (req (doseq [c set-aside-cards]
+                                                     (move state side c :deck))
+                                                   (shuffle! state side :deck))}
+                                     (get-card state card) nil))
+                                 (continue-ability
+                                   state side
+                                   {:cost [(->c :trash-can)]
+                                    :msg "shuffle the Stack"
+                                    :effect (req (shuffle! state side :deck))}
+                                   card nil)))}]}))
 
 (defcard "Reaver"
   {:events [{:event :runner-trash
@@ -3069,6 +3125,28 @@
 (defcard "Shiv"
   (break-and-enter "Sentry"))
 
+(defcard "Sipa"
+  {:events [{:event :pass-ice
+             :req (req (letfn [(valid-ctx? [ctx]
+                                 (and (:all-subs-broken ctx)
+                                      (:outermost ctx)
+                                      (:ice ctx)))]
+                         (and (valid-ctx? context)
+                              (first-event? state side :pass-ice #(some valid-ctx? %)))))
+             :interactive (req true)
+             :async true
+             :effect (effect
+                       (continue-ability
+                         (when-let [ice (get-card state (:ice context))]
+                           {:prompt (str "Swap " (:title ice) " with another ice?")
+                            :choices {:card #(and (installed? %)
+                                                  (ice? %)
+                                                  (not (same-card? % ice)))}
+                            :msg (msg "swap the positions of " (card-str state ice)
+                                      " and " (card-str state target))
+                            :effect (effect (swap-ice ice (get-card state target)))})
+                         card nil))}]})
+
 (defcard "Slap Vandal"
   trojan
   {:abilities [(break-sub 1 1 "All" {:req (req (same-card? current-ice (:host card)))
@@ -3189,6 +3267,16 @@
                                           :cost [(->c :click 1)]
                                           :once :per-turn
                                           :events [ability]})]}))
+
+(defcard "Stowaway"
+  trojan
+  {:events [{:event :successful-run
+             :req (req (= (second (get-zone (get-card state (:host card))))
+                          (target-server context)))
+             :async true
+             :msg "gain 2 [Credits]"
+             :automatic :gain-credits
+             :effect (req (gain-credits state side eid 2))}]})
 
 (defcard "Study Guide"
   (auto-icebreaker {:abilities [(break-sub 1 1 "Code Gate")
@@ -3316,7 +3404,7 @@
                                   (make-run eid (:card-target card) card))}]
      :events [(assoc ability :event :runner-turn-begins)
               {:event :runner-turn-ends
-               :silent (req true)
+               :silent true
                :effect (effect (update! (dissoc card :card-target)))}]}))
 
 (defcard "Tranquilizer"
@@ -3574,8 +3662,6 @@
                          :req (req (and (runner? target)
                                         (installed? target)))}
                :msg (msg "trash " (:title target))
-               :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                      (effect-completed eid))
                :effect
                (req (let [facedown-target (facedown? target)]
                       (wait-for (trash state side target {:unpreventable true :cause-card card})

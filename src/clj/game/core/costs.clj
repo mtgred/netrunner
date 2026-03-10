@@ -1,6 +1,6 @@
 (ns game.core.costs
   (:require
-   [game.core.bad-publicity :refer [gain-bad-publicity]]
+   [game.core.bad-publicity :refer [gain-bad-publicity bad-publicity-available lose-bad-publicity]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type]]
    [game.core.card :refer [active? agenda? corp? facedown? get-card get-counters get-zone hardware? has-subtype? ice? in-hand? installed? program? resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
@@ -23,6 +23,8 @@
    [game.core.virus :refer [number-of-virus-counters]]
    [game.macros :refer [continue-ability req wait-for]]
    [game.utils :refer [enumerate-cards enumerate-str quantify same-card?]]))
+
+(defn- can-forfeit? [card] (not (get-in card [:flags :cannot-forfeit])))
 
 ;; Click
 (defmethod value :click [cost] (:cost/amount cost))
@@ -138,7 +140,10 @@
 (defn total-available-credits
   [state side eid card]
   (if-not (any-effects state side :cannot-pay-credit)
-    (+ (get-in @state [side :credit])
+    (+ (if-not (any-effects state side :cannot-pay-credits-from-pool)
+         (get-in @state [side :credit])
+         0)
+       (bad-publicity-available state side)
        (->> (concat (eligible-pay-credit-cards state side eid card)
                     (eligible-reduce-credit-cards state side eid card))
             (map #(+ (get-counters % :recurring)
@@ -175,7 +180,7 @@
   [cost state side eid card]
   (and (<= 0 (- (total-available-stealth-credits state side eid card) (stealth-value cost)))
        (<= 0 (- (value cost) (stealth-value cost)))
-       (or (<= 0 (- (get-in @state [side :credit]) (value cost)))
+       (or (when-not (any-effects state side :cannot-pay-credits-from-pool) (<= 0 (- (get-in @state [side :credit]) (value cost))))
            (<= 0 (- (total-available-credits state side eid card) (value cost))))))
 (defmethod handler :credit
   [cost state side eid card]
@@ -186,8 +191,9 @@
       (let [updated-cost (max 0 (- (value cost) (or (:reduction async-result) 0)))]
         (cond
           (and (pos? updated-cost)
-               (pos? (count (provider-func))))
-          (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid updated-cost (stealth-value cost)) card nil)
+               (or (pos? (count (provider-func)))
+                   (pos? (bad-publicity-available state side))))
+          (wait-for (resolve-ability state side (pick-credit-providing-cards provider-func eid updated-cost (stealth-value cost) (hash-map) nil {} (bad-publicity-available state side)) card nil)
                    (let [pay-async-result async-result]
                      (queue-event state (if (= side :corp) :corp-spent-credits :runner-spent-credits) {:value updated-cost})
                      (swap! state update-in [:stats side :spent :credit] (fnil + 0) updated-cost)
@@ -323,7 +329,7 @@
 (defmethod label :forfeit [cost] (str "forfeit " (quantify (value cost) "Agenda")))
 (defmethod payable? :forfeit
   [cost state side _eid _card]
-  (<= 0 (- (count (get-in @state [side :scored])) (value cost))))
+  (<= 0 (- (count (filter can-forfeit? (get-in @state [side :scored]))) (value cost))))
 (defmethod handler :forfeit
   [cost state side eid card]
   (continue-ability
@@ -332,7 +338,8 @@
      :async true
      :choices {:max (value cost)
                :all true
-               :card #(is-scored? state side %)}
+               :req (req (and (is-scored? state side target)
+                              (can-forfeit? target)))}
      :effect (req (doseq [agenda targets]
                     ;; We don't have to await this because we're suppressing the
                     ;; checkpoint and forfeit makes all of the trashing unpreventable,
@@ -372,7 +379,7 @@
 (defmethod payable? :forfeit-or-trash-x-from-hand
   [cost state side eid card]
   (or (<= 0 (- (count (get-in @state [side :hand])) (value cost)))
-      (pos? (count (get-in @state [side :scored])))))
+      (pos? (count (filter can-forfeit? (get-in @state [side :scored]))))))
 (defmethod handler :forfeit-or-trash-x-from-hand
   [cost state side eid card]
   (let [hand (if (= :corp side) "HQ" "the grip")
@@ -399,7 +406,8 @@
                                    :async true
                                    :choices {:max 1
                                              :all true
-                                             :card #(is-scored? state side %)}
+                                             :req (req (and (is-scored? state side target)
+                                                            (can-forfeit? target)))}
                                    :effect (req (doseq [agenda targets]
                                                   (forfeit state side (make-eid state eid) agenda {:msg false
                                                                                                    :suppress-checkpoint true}))
@@ -1396,3 +1404,20 @@
                                   " from on " title)
                    :paid/type :virus
                    :paid/value (value cost)})))))
+
+(defmethod value :host-bad-pub [cost] (:cost/amount cost))
+(defmethod label :host-bad-pub [cost] (str "host " (value cost) " bad publicity"))
+(defmethod payable? :host-bad-pub
+  [cost state side eid card]
+  (<= 0 (- (get-in @state [:corp :bad-publicity :base] 0) (value cost))))
+(defmethod handler :host-bad-pub
+  [cost state side eid card]
+  (wait-for
+    (lose-bad-publicity state side (value cost) nil)
+    (wait-for
+      (add-counter state side card :bad-publicity (value cost) {:suppress-checkpoint true})
+      (complete-with-result
+        state side eid
+        {:paid/msg (str "hosts " (value cost) " bad publicity on " (:title card))
+         :paid/type :host-bad-pub
+         :paid/value (value cost)}))))

@@ -27,7 +27,7 @@
 
 (def mark-changed-event
   {:event :mark-changed
-   :silent (req true)
+   :silent true
    :interactive (req false)
    :effect (req (update! state :runner (assoc card :card-target (central->name (:mark @state))))
                 (register-events

@@ -7,7 +7,6 @@
    [nr.cardbrowser :refer [card-browser]]
    [nr.chat :refer [chat-page]]
    [nr.deckbuilder :refer [deck-builder]]
-   [nr.features :refer [features]]
    [nr.gameboard.board :refer [gameboard]]
    [nr.help :refer [help]]
    [nr.landing :refer [landing]]
@@ -64,8 +63,6 @@
                 :view admin}]
      ["/users" {:name :nav/users
                 :view users}]
-     ["/features" {:name :nav/features
-                   :view features}]
      ["/landing" {:name :nav/landing
                    :view landing}]]))
 

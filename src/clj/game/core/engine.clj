@@ -123,9 +123,9 @@
 ; :not-distinct -- boolean
 ;   By default, duplicate entries of the same string will be combined into a single button.
 ;   If set to true, duplicate entries of the same string will be shown as multiple buttons.
-; :cancel-effect -- 5-fn
+; :cancel -- ability-map
 ;   If a prompt with the choice "Cancel" is clicked, the prompt exits without doing anything else
-;   and this function will be called.
+;   and this ability map will get resolved
 
 ; SIMULTANEOUS EFFECT RESOLUTION KEYS
 ; :interactive -- 5-fn. when simultaneous effect resolution has been enabled for a specific event, the user receives
@@ -148,6 +148,7 @@
 ;              some ability once between all of them, then the card should specify a manual :once-key that can
 ;              be any value, preferrably a unique keyword.
 ; :install-req -- a function which returns a list of servers a card may be installed into
+; :legal-zones -- like install-req, but also disallows movement into the given zones
 ; :makes-run -- boolean. indicates if the ability makes a run.
 
 ; COMPLEX ABILITY WRAPPERS
@@ -413,7 +414,7 @@
   (let [s (or player side)
         ab (dissoc ability :choices :waiting-prompt)
         args (-> ability
-                 (select-keys [:cancel-effect :prompt-type :show-discard :end-effect :waiting-prompt])
+                 (select-keys [:async :cancel :prompt-type :show-discard :end-effect :waiting-prompt])
                  (assoc :targets targets))]
     (if-not (change-in-game-state? state side ability card targets)
       (if (get-in ability [:change-in-game-state :pay-cost] nil)
@@ -462,8 +463,8 @@
   ([state side card message choices ability args]
    (let [f #(resolve-ability state side ability card [%])]
      (show-prompt state side (:eid ability) card message choices f
-                  (if-let [cancel-f (:cancel-effect args)]
-                    (assoc args :cancel-effect #(cancel-f state side (:eid ability) card [%]))
+                  (if-let [cancel (:cancel args)]
+                    (assoc args :cancel #(resolve-ability state side (:eid ability) cancel card [%]))
                     args)))))
 
 ;; EVENTS
@@ -790,10 +791,11 @@
                                (filter #(and (card-for-ability state %)
                                              (not (:disabled (card-for-ability state %))))
                                        handlers))
-                    non-silent (filter #(let [silent-fn (:silent (:ability %))
+                    non-silent (filter #(let [silent? (:silent (:ability %))
                                               card (card-for-ability state %)]
-                                          (not (and silent-fn
-                                                    (silent-fn state side (make-eid state) card event-targets))))
+                                          (not (and silent?
+                                                    (or (= silent? true)
+                                                        (silent? state side (make-eid state) card event-targets)))))
                                        handlers)
                     titles (map (fn [{:keys [card ability]}]
                                   ;; Showing ability name in prompt if card has multiple listeners to the same event, e.g. Privileged Access
@@ -850,7 +852,7 @@
                                  (let [auto-handlers (->> (filter (complement handler-skippable?) handlers)
                                                           (sort-by #(or (->> % :card :printed-title) ""))
                                                           (sort-by #(get automatic-priority (->> % :ability :automatic) 10)))
-                                       auto-handlers (map #(update-in % [:ability] merge {:silent (req true) :interactive nil}) auto-handlers)]
+                                       auto-handlers (map #(update-in % [:ability] merge {:silent true :interactive nil}) auto-handlers)]
                                    (if (seq auto-handlers)
                                      (continue-ability
                                        state side
@@ -991,12 +993,13 @@
                                      (not (apply trigger-suppress state (to-keyword (:side card))
                                                  (:event (:handler %)) card (:context %)))))
                              handlers))
-          non-silent (filter #(let [silent-fn (:silent (:ability (:handler %)))]
-                                (not (and silent-fn
-                                          (silent-fn state side
-                                                     (make-eid state eid)
-                                                     (card-for-ability state (:handler %))
-                                                     (:context %)))))
+          non-silent (filter #(let [silent? (:silent (:ability (:handler %)))]
+                                (not (and silent?
+                                          (or (= silent? true)
+                                              (silent? state side
+                                                       (make-eid state eid)
+                                                       (card-for-ability state (:handler %))
+                                                       (:context %))))))
                              handlers)
           cards-with-titles (filter #(card-for-ability state (:handler %)) non-silent)
           choices-map (map #(vector (or (:ability-name (:ability (:handler %)))
@@ -1048,7 +1051,7 @@
                                 (let [auto-handlers (->> (filter (complement handler-skippable?) handlers)
                                                          (sort-by #(or (->> % :handler :card :printed-title) ""))
                                                          (sort-by #(get automatic-priority (->> % :handler :ability :automatic) 10)))
-                                      auto-handlers (map #(update-in % [:handler :ability] merge {:silent (req true) :interactive nil}) auto-handlers)]
+                                      auto-handlers (map #(update-in % [:handler :ability] merge {:silent true :interactive nil}) auto-handlers)]
                                   (if (seq auto-handlers)
                                     (trigger-queued-event-player state side eid auto-handlers args)
                                     (effect-completed state side eid))))

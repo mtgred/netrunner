@@ -204,6 +204,7 @@
                 :highlight-in-discard (:highlight-in-discard cdef)
                 :printed-title (:title card))
          (dissoc :setname :text :_id :influence :number :influencelimit
+                 :images :previous-versions :rotated
                  :image_url :factioncost :format :quantity)
          (map->Card)))))
 

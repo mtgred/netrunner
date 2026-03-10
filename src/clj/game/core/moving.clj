@@ -40,10 +40,10 @@
 
 (defn uninstall
   "Triggers :uninstall effects"
-  ([state side {:keys [disabled] :as card}]
+  ([state side {:keys [disabled] :as card} old-card]
   (when-let [uninstall-effect (:uninstall (card-def card))]
     (when (not disabled)
-      (uninstall-effect state side (make-eid state) card nil)))
+      (uninstall-effect state side (make-eid state) card [{:old-card old-card}])))
   card))
 
 (defn- should-moved-card-be-known?
@@ -125,7 +125,7 @@
             c)
         c (if (and from-installed
                    (not (facedown? c)))
-            (uninstall state side c)
+            (uninstall state side c card)
             c)
         c (if to-installed
             (assoc c :installed :this-turn)

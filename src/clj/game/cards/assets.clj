@@ -52,9 +52,9 @@
    [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [is-remote? target-server zone->name]]
    [game.core.set-aside :refer [swap-set-aside-cards]]
-   [game.core.shuffling :refer [shuffle! shuffle-into-deck
+   [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-my-deck!
                                 shuffle-into-rd-effect]]
-   [game.core.tags :refer [gain-tags]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.threat :refer [threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
@@ -833,9 +833,9 @@
 
 (defcard "CPC Generator"
   {:events [{:event :runner-credit-gain
-             :req (req (first-event? state side :runner-credit-gain
-                                     (fn [[context]]
-                                       (= :runner-click-credit (:action context)))))
+             :req (req (let [valid-ctx? (fn [[ctx]] (= :runner-click-credit (:action context)))]
+                         (and (valid-ctx? targets)
+                              (first-event? state side :runner-credit-gain valid-ctx?))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
@@ -961,7 +961,7 @@
                                         (not-triggered? state)))
                          :value (req (get-counters card :power))}]
      :events [{:event :runner-install
-               :silent (req true)
+               :silent true
                :req (req (and (pos? (get-counters card :power))
                               (not-triggered? state)))
                :msg (msg "increase the install cost of " (:title (:card context))
@@ -1071,6 +1071,20 @@
                        :req (req (installed? target))
                        :value 1}]})
 
+(defcard "Esca"
+  {:flags {:rd-reveal (req true)}
+   :poison true
+   :on-access {:msg "force the Runner to lose 1 [Credits]"
+               :async true
+               :effect (req (wait-for (lose-credits state :runner 1)
+                                      (continue-ability
+                                        state side
+                                        {:req (req tagged)
+                                         :msg "do 1 net damage"
+                                         :async true
+                                         :effect (req (damage state side eid :net 1))}
+                                        card nil)))}})
+
 (defcard "Estelle Moon"
   {:events [{:event :corp-install
              :req (req (and (or (asset? (:card context))
@@ -1114,6 +1128,7 @@
                                                    (:deck corp))
                                            :sorted))
                 :cost [(->c :credit 1) (->c :trash-can)]
+                :cancel (assoc shuffle-my-deck! :cost [(->c :credit 1) (->c :trash-can)])
                 :label "Search R&D for an asset"
                 :async true
                 :effect (req (wait-for
@@ -1130,6 +1145,7 @@
                                                    (:deck corp))
                                            :sorted))
                 :cost [(->c :click 1)]
+                :cancel (assoc shuffle-my-deck! :cost [(->c :click 1)] :action true)
                 :keep-menu-open :while-clicks-left
                 :label "Search R&D for an Executive, Sysop, or Character"
                 :effect (effect (move target :hand)
@@ -1178,9 +1194,7 @@
            {:optional
             {:prompt "Look at the top 3 cards of R&D?"
              :waiting-prompt true
-             :no-ability
-             {:async true
-              :effect (effect (continue-ability draw-ab card nil))}
+             :no-ability draw-ab
              :yes-ability
              {:msg "rearrange the top 3 cards of R&D"
               :async true
@@ -1306,7 +1320,7 @@
                          (when (zero? (remaining-draws state :runner))
                            (prevent-draw state :runner)))}
    :events [{:event :runner-turn-begins
-             :silent (req true)
+             :silent true
              :effect (effect (max-draw :runner 2))}]
    :leave-play (req (swap! state update-in [:runner :register] dissoc :max-draw :cannot-draw))})
 
@@ -1369,9 +1383,9 @@
                                                   (wait-for
                                                     (add-prop state :corp from-ice :advance-counter -1)
                                                     (continue-ability state :corp political card nil))))
-                                :cancel-effect (effect (continue-ability political card nil))})
+                                :cancel political})
                              card nil))
-                 :cancel-effect (effect (continue-ability political card nil))}]
+                 :cancel political}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (req true)}
      :events [(assoc ability :event :corp-turn-begins)]
@@ -1665,7 +1679,7 @@
                                 (resolve-ability state side eid ability card nil)
                                 (effect-completed state side eid))))}
               {:event :corp-turn-ends
-               :silent (req true)
+               :silent true
                :effect cleanup}]}))
 
 (defcard "Kala Ghoda Real TV"
@@ -1730,7 +1744,7 @@
 (defcard "Lakshmi Smartfabrics"
   {:events [{:event :rez
              :async true
-             :silent (req true)
+             :silent true
              :effect (req (add-counter state side eid card :power 1))}]
    :abilities [{:req (req (seq (filter #(and (agenda? %)
                                              (>= (get-counters card :power)
@@ -1771,6 +1785,7 @@
                 :choices (req (cancellable (filter ice? (:deck corp)) :sorted))
                 :label "Search R&D for a piece of ice"
                 :cost [(->c :click 1) (->c :credit 1)]
+                :cancel (assoc shuffle-my-deck! :cost [(->c :credit 1) (->c :click 1)] :action true)
                 :keep-menu-open :while-clicks-left
                 :effect (effect (move target :hand)
                                 (shuffle! :deck))}]})
@@ -1836,11 +1851,46 @@
                             state side
                             {:req (req
                                     (and tagged
-                                         (> (:random-access-limit (num-cards-to-access state :runner target nil)) 1)
+                                         (> (:random-access-limit (num-cards-to-access state :runner (:server context) nil)) 1)
                                          (not (get-only-card-to-access state))))
                              :msg (msg "make the runner access 1 card fewer")
-                             :effect (req (access-bonus state :runner target -1))}
+                             :effect (req (access-bonus state :runner (:server context) -1))}
                             card targets))}]})
+
+(defcard "Luana Campos"
+  {:uninstall (req (continue-ability
+                     state side
+                     {:req (req (and (rezzed? (:old-card context))
+                                     (pos? (get-counters (:old-card context) :bad-publicity))))
+                      :msg (msg "take " (get-counters (:old-card context) :bad-publicity)
+                                " bad publicity")
+                      :async true
+                      :effect (req
+                                (gain-bad-publicity
+                                     state side eid
+                                     (get-counters (:old-card context) :bad-publicity)))}
+                     card targets))
+   :events [{:event :corp-turn-begins
+             :interactive (req true)
+             :change-in-game-state {:req (req (pos? (count-bad-pub state))) :silent true}
+             :optional {:interactive (req true)
+                        :prompt "Host a bad publicity counter to gain 3 [Credits] and draw a card?"
+                        :yes-ability {:msg (msg "gain 3 [Credits] and draw 1 card")
+                                      :cost [(->c :host-bad-pub 1)]
+                                      :async true
+                                      :effect (req (wait-for
+                                                     (gain-credits state side 3 {:suppress-checkpoint true})
+                                                     (draw state side eid 1)))}}}]})
+
+(defcard "Magistrate Revontulet"
+  {:static-abilities [{:type :steal-additional-cost
+                       :req (req (agenda? target))
+                       :value (req [(->c :credit 3)])}]
+   :events [{:event :agenda-scored
+             :async true
+             :interactive (req true)
+             :msg "force the Runner to lose 3 [Credits]"
+             :effect (req (lose-credits state :runner eid 3))}]})
 
 (defcard "Malia Z0L0K4"
   (let [unmark
@@ -1964,8 +2014,7 @@
                                         (moon-pool-place-advancements (dec x))
                                         card nil)
                                       (effect-completed state side eid))))
-             :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to place advancement counters"))
-                                   (effect-completed eid))})]
+             :cancel {:msg "decline to place advancement counters"}})]
     (let [moon-pool-reveal-ability
           {:prompt "Choose up to 2 facedown cards from Archives to shuffle into R&D"
            :async true
@@ -1986,8 +2035,7 @@
                                         (moon-pool-place-advancements agenda-count)
                                         source-card nil)
                                       (effect-completed state side eid)))))
-           :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to reveal any cards in Archives"))
-                                  (effect-completed eid))}
+           :cancel shuffle-my-deck!}
           moon-pool-discard-ability
           {:prompt "Choose up to 2 cards from HQ to trash"
            :choices {:card #(and (corp? %)
@@ -2000,8 +2048,9 @@
                                     state side
                                     moon-pool-reveal-ability
                                     card nil)))
-           :cancel-effect (effect (system-msg (str "declines to use " (:title card) " to trash any cards from HQ"))
-                                  (continue-ability moon-pool-reveal-ability card nil))}]
+           :cancel {:msg "decline to trash any cards from HQ"
+                    :async true
+                    :effect (req (continue-ability state side moon-pool-reveal-ability card nil))}}]
       {:abilities [{:label "Trash up to 2 cards from HQ. Shuffle up to 2 cards from Archives into R&D"
                     :cost [(->c :remove-from-game)]
                     :async true
@@ -2032,6 +2081,7 @@
                                                            true))
                                                    (:deck corp))
                                            :sorted))
+                :cancel (assoc shuffle-my-deck! :action true :cost [(->c :click 1)])
                 :msg (msg "reveal " (:title target)
                           " from R&D and "
                           (if (= (:type target) "Operation") "play" "install")
@@ -2049,7 +2099,7 @@
 (defcard "Mumbad Construction Co."
   {:derezzed-events [corp-rez-toast]
    :events [{:event :corp-turn-begins
-             :silent (req true)
+             :silent true
              :async true
              :effect (effect (add-prop eid card :advance-counter 1 {:placed true}))}]
    :abilities [{:cost [(->c :credit 2)]
@@ -2239,6 +2289,25 @@
                               (do (as-agenda state :runner card -1)
                                   (effect-completed state side eid))))}})
 
+(defcard "Nihilo Agent"
+  {:data {:counter {:power 3}}
+   :events [(trash-on-empty :power)
+            {:event :corp-turn-ends
+             :msg "take 1 bad publicity and give the Runner 1 tag"
+             :async true
+             :effect (req (wait-for
+                            (gain-bad-publicity state :corp 1 {:suppress-checkpoint true})
+                            (wait-for
+                              (add-counter state side card :power -1 {:suppress-checkpoint true})
+                              (gain-tags state side eid 1))))}
+            {:event :corp-turn-begins
+             :change-in-game-state {:silent true
+                                    :req (req (or tagged (pos? (count-bad-pub state))))}
+             :msg "remove 1 bad publicity and 1 tag"
+             :async true
+             :effect (req (wait-for (lose-bad-publicity state :corp 1 {:suppress-checkpoint true})
+                                    (lose-tags state side eid 1)))}]})
+
 (defcard "Open Forum"
   {:events [{:event :corp-mandatory-draw
              :interactive (req true)
@@ -2351,7 +2420,7 @@
                                 card nil))))}]})
 
 (defcard "Phật Gioan Baotixita"
-  (let [place {:silent (req true)
+  (let [place {:silent true
                :async true
                :effect (req (add-counter state side eid card :power 1 {:placed true}))}
         opt (fn [x]
@@ -2396,7 +2465,7 @@
              :prompt "Play a transaction from Archives?"
              :show-discard true
              :change-in-game-state
-             {:silent (req true)
+             {:silent true
               :req (req (some #(or (not (:seen %))
                                    (and (operation? %)
                                         (has-subtype? % "Transaction")
@@ -2859,6 +2928,7 @@
                 :cost [(->c :click 1)]
                 :keep-menu-open :while-clicks-left
                 :msg "draw 1 card from the bottom of R&D"
+                ;; TODO - this does not interact with DBS or other draw effects, and it should
                 :effect (effect (play-sfx "click-card")
                                 (move (last (:deck corp)) :hand))}
                {:label "Search R&D for an agenda"
@@ -2866,6 +2936,7 @@
                 :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
                 :choices (req (cancellable (filter agenda? (:deck corp)) :sorted))
                 :cost [(->c :trash-can)]
+                :cancel (assoc shuffle-my-deck! :cost [(->c :trash-can)])
                 :async true
                 :effect (req (wait-for
                                (reveal state side target)
@@ -2876,6 +2947,8 @@
                 :prompt "Choose an agenda to add to the bottom of R&D"
                 :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
                 :choices (req (cancellable (filter agenda? (:discard corp)) :sorted))
+                :cancel {:msg "do nothing"
+                         :cost [(->c :trash-can)]}
                 :cost [(->c :trash-can)]
                 :async true
                 :effect (req (wait-for
@@ -2886,7 +2959,7 @@
 (defcard "Shattered Remains"
   (advance-ambush 1 {:async true
                      :waiting-prompt true
-                     :req (req (pos? (get-counters (get-card state card) :advancement)))
+                     :change-in-game-state {:req (req (pos? (get-counters (get-card state card) :advancement)))}
                      :prompt (msg "Choose " (quantify (get-counters (get-card state card) :advancement) "piece") " of hardware to trash")
                      :msg (msg "trash " (enumerate-cards targets))
                      :choices {:max (req (get-counters (get-card state card) :advancement))
@@ -3054,8 +3127,6 @@
                            :req (req (and (corp? target)
                                           (installed? target)))}
                  :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
-                 :cancel-effect (effect (system-msg (str "declines to use " (:title card)))
-                                        (effect-completed eid))
                  :effect (req (wait-for (trash state side target {:unpreventable true
                                                                   :cause-card card})
                                         (gain-credits state side eid 3)))}]
@@ -3173,7 +3244,7 @@
 
 (defcard "The News Now Hour"
   {:events [{:event :runner-turn-begins
-             :silent (req true)
+             :silent true
              :effect (req (prevent-current state side))}]
    :on-rez {:effect (req (prevent-current state side))}
    :leave-play (req (swap! state assoc-in [:runner :register :cannot-play-current] false))})
@@ -3392,7 +3463,6 @@
               :async true
               :choices {:card #(and (ice? %)
                                     (installed? %))}
-              :cancel-effect (effect (effect-completed eid))
               :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}
              {:label "add this asset to HQ"
               :msg "add itself to HQ"
@@ -3494,7 +3564,7 @@
 
 (defcard "Working Prototype"
   {:events [{:event :rez
-             :silent (req true)
+             :silent true
              :async true
              :effect (effect (add-counter eid card :power 1 nil))}]
    :abilities [{:action true

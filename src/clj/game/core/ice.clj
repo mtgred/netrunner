@@ -566,6 +566,7 @@
    :during-run (some? (:run @state))
    :on-attacked-server (= (get-in @state [:run :server]) [(second (:zone ice))])
    :all-subs-broken (all-subs-broken? ice)
+   :was-zero-or-less-strength? (<= (get-strength ice) 0)
    :broken-subs broken-subs
    ;; enough info to backtrack and find breakers without bloating the gamestate
    ;; could just be the card itself if we don't care too much though
@@ -606,19 +607,20 @@
                                              event-args (when on-break-subs {:card-abilities (ability-as-handler ice on-break-subs)})]
                                          (when (same-card? ice (get-current-ice state))
                                            (set-current-ice state ice))
-                                         (wait-for
-                                           (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice broken-subs breaker))
-                                           (let [ice (get-card state ice)
-                                                 card (get-card state card)]
-                                             (if (and ice
-                                                      card
-                                                      (not early-exit)
-                                                      (:repeatable args)
-                                                      (seq broken-subs)
-                                                      (pos? (count (unbroken-subroutines-choice ice)))
-                                                      (can-pay? state side eid (get-card state card) nil cost))
-                                               (continue-ability state side (break-subroutines ice breaker cost n args) card nil)
-                                               (effect-completed state side eid))))))
+                                         (if (seq broken-subs)
+                                           (wait-for
+                                             (trigger-event-simult state side :subroutines-broken event-args (break-subs-event-context state ice broken-subs breaker))
+                                             (let [ice (get-card state ice)
+                                                   card (get-card state card)]
+                                               (if (and ice
+                                                        card
+                                                        (not early-exit)
+                                                        (:repeatable args)
+                                                        (pos? (count (unbroken-subroutines-choice ice)))
+                                                        (can-pay? state side eid (get-card state card) nil cost))
+                                                 (continue-ability state side (break-subroutines ice breaker cost n args) card nil)
+                                                 (effect-completed state side eid))))
+                                           (effect-completed state side eid))))
                                    (effect-completed state side eid))))))})))
 
 (defn add-stealth-to-label [cost]
@@ -747,7 +749,7 @@
   "Updates an icebreaker's abilities with a pseudo-ability to trigger the
   auto-pump routine in core, IF we are encountering a rezzed ice with a subtype
   we can break."
-  {:silent (req true)
+  {:silent true
    :effect
    (req (let [abs (remove #(or (= (:dynamic %) :auto-pump)
                                (= (:dynamic %) :auto-pump-and-break))

@@ -70,9 +70,10 @@
 (defmethod stats-area "Runner" [runner]
   (let [ctrl (stat-controls-for-side :runner)]
     (fn []
-      (let [{:keys [click credit run-credit memory link tag brain-damage]} @runner
+      (let [{:keys [click credit run-credit bad-pub-credit memory link tag brain-damage]} @runner
             base-credit (- credit run-credit)
-            plus-run-credit (when (pos? run-credit) (str "+" run-credit))
+            plus-run-credit (when (or (pos? run-credit) (pos? bad-pub-credit))
+                              (str "+" (+ bad-pub-credit run-credit)))
             icons? (get-in @app-state [:options :player-stats-icons] true)]
         [:div.stats-area
          (if icons?
