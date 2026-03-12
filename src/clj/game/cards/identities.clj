@@ -538,9 +538,7 @@
 	        :choices {:req (req (and (agenda? target)
                                          (installed? target)))}
 		:msg (msg "turn " (card-str state target {:visible true}) " faceup")
-                :effect (req (update! state side (assoc target
-                                                        :seen true
-                                                        :rezzed true)))}]
+                :effect (req (update! state side (assoc target :seen true)))}]
    :events [{:event :access
              :req (req ((every-pred faceup? installed? agenda? :was-seen) target))
              :interactive (req true)
@@ -573,7 +571,7 @@
                                  {:prompt (str "Turn " (:title tcard) " faceup?")
                                   :waiting-prompt true
                                   :yes-ability {:msg (str "turn " (card-str state tcard {:visible true}) " faceup")
-                                                :effect (req (update! state side (assoc tcard :seen true :rezzed true)))}}}
+                                                :effect (req (update! state side (assoc tcard :seen true)))}}}
                                 {:prompt "Nothing to see here"
                                  :waiting-prompt true
                                  :choices ["OK"]})

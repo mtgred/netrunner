@@ -1100,7 +1100,7 @@
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (click-prompt state :corp "Yes")
     (is (:seen (get-content state :remote1 0)) "HT is seen")
-    (is (:rezzed (get-content state :remote1 0)) "HT is considered rezzed")
+    (is (not (:rezzed (get-content state :remote1 0))) "HT is not considered rezzed")
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (is (= 1 (count-tags state)) "Tagged")
