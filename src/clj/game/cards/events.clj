@@ -3059,7 +3059,7 @@
                               (system-msg state :corp (str (if correct-guess " " " in")
                                                            "correctly guesses " (decapitalize target)))
                               (wait-for
-                                (trigger-event-simult state side :reveal-spent-credits nil nil spent)
+                                (trigger-event-simult state side :reveal-spent-credits nil {:runner-credits spent})
                                 (if correct-guess
                                   (effect-completed state side eid)
                                   (do (system-msg state :runner (str "gains " (* 2 spent) " [Credits]"))
@@ -3326,7 +3326,7 @@
                             (lose-credits state :runner (make-eid state eid) spent)
                             (system-msg state :runner (str "spends " spent " [Credit]"))
                             (system-msg state :corp (str " guesses " target " [Credit]"))
-                            (wait-for (trigger-event-simult state side :reveal-spent-credits nil nil spent)
+                            (wait-for (trigger-event-simult state side :reveal-spent-credits nil {:runner-credits spent})
                                       (if (not= spent (str->int target))
                                         (continue-ability state :runner (choose-ice) card nil)
                                         (effect-completed state side eid)))))})

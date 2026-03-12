@@ -1903,8 +1903,8 @@
 
 (defcard "Nisei Division: The Next Generation"
   {:events [{:event :reveal-spent-credits
-             :req (req (and (some? (first targets))
-                            (some? (second targets))))
+             :req (req (and (some? (:corp-credits context))
+                            (some? (:runner-credits context))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
