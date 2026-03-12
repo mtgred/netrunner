@@ -1258,9 +1258,10 @@
 (defcard "Fumiko Yamamori"
   {:events [{:event :reveal-spent-credits
              :async true
-             :req (req (and (some? (first targets))
-                            (some? (second targets))
-                            (not= (first targets) (second targets))))
+             :req (req (let [{:keys [corp-credits runner-credits]} context]
+                         (and (some? corp-credits)
+                              (some? runner-credits)
+                              (not= corp-credits runner-credits))))
              :msg "do 1 meat damage"
              :effect (effect (damage eid :meat 1 {:card card}))}]})
 
@@ -1450,11 +1451,11 @@
 
 (defcard "Hyoubu Research Facility"
   {:events [{:event :reveal-spent-credits
-             :req (req (and (some? (first targets))
+             :req (req (and (some? (:corp-credits context))
                             (first-event? state side :reveal-spent-credits)))
-             :msg (msg "gain " target " [Credits]")
+             :msg (msg "gain " (:corp-credits context) " [Credits]")
              :async true
-             :effect (effect (gain-credits :corp eid target))}]})
+             :effect (effect (gain-credits :corp eid (:corp-credits context)))}]})
 
 (defcard "Ibrahim Salem"
   (let [trash-ability (fn [card-type]
