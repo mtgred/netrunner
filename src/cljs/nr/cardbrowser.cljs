@@ -196,7 +196,9 @@
          art (if (sequential? alt-art) (first alt-art) alt-art)
          art-index (if (sequential? alt-art) (second alt-art) 0)
          images (image-or-face card)]
-     (nth (get-image-path images (keyword lang) (keyword res) (keyword art)) art-index))))
+     (let [art-urls (get-image-path images (keyword lang) (keyword res) (keyword art))
+           safe-index (min art-index (dec (count art-urls)))]
+       (nth art-urls safe-index)))))
 
 (defn- base-image-url
   "The default card image. Displays an alternate image if the card is specified as one."

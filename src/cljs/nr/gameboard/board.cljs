@@ -69,7 +69,8 @@
          images (image-or-face card)]
      (if (sequential? art)
        (let [art-urls (get-image-path images (keyword lang) (keyword res) (keyword (first art)))
-             chosen-art (nth art-urls (second art))]
+             safe-index (min (second art) (dec (count art-urls)))
+             chosen-art (nth art-urls safe-index)]
          [chosen-art])
        (first (get-image-path images (keyword lang) (keyword res) (keyword art)))))))
 
