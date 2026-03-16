@@ -1943,7 +1943,7 @@
     (is (= 3 (get-counters (get-content state :remote1 0) :advancement)))
     (score state :corp (get-content state :remote1 0))
     (is (= 6 (agenda-points-required-to-win state :corp)) "Corp Agenda point requirement reduced by 1")
-    (is (= 1 (get-counters (refresh issuaq) :power)) "Issuaq Adaptics has 1 power counter")))
+    (is (= 1 (get-counters (get-in @state [:corp :identity]) :power)) "Issuaq Adaptics has 1 power counter")))
 
 (deftest focus-group-regular-scenario-can-afford
     ;; Regular scenario - can afford
