@@ -2638,7 +2638,7 @@
              :label "Place 1 advancement token on a card if the Runner did not make a successful run last turn"
              :choices {:card installed?}
              :event :corp-turn-begins
-             :req (req (and (not-last-turn? state :runner :successful-run)))
+             :req (req (not-last-turn? state :runner :successful-run))
              :waiting-prompt true
              :once :per-turn
              :async true

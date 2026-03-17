@@ -1000,8 +1000,8 @@
                             :cost [(->c :trash-can)]
                             :effect (req (swap! state assoc-in [:trace :force-base] 0))}}}]
    :abilities [{:label "Jack out"
-                :change-in-game-state {:req (req (and (or run
-                                                          (get-current-encounter state))))}
+                :change-in-game-state {:req (req (or run
+                                                        (get-current-encounter state)))}
                 :req (req (= :runner (:active-player @state)))
                 :msg "jack out"
                 :cost [(->c :trash-can)]
