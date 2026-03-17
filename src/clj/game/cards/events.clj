@@ -3911,8 +3911,8 @@
 (defcard "Take a Dive"
   {:on-play (run-server-from-choices-ability ["HQ" "R&D"] {:rfg-instead-of-trashing true})
    :events [{:event :successful-run
-             :req (req (letfn [(valid-ctx? [[ctx]] (pos? (or (:subroutines-fired ctx) 0)))]
-                         (valid-ctx? [context])))
+             :req (req (and (#{:hq :rd} (target-server context))
+                            (pos? (or (:subroutines-fired context) 0))))
              :msg "force the Corp to take 1 Bad Publicity"
              :async true
              :effect (req (gain-bad-publicity state :corp eid 1 {:card card}))}]})
