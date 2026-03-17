@@ -85,8 +85,9 @@
 
 (defonce lobby-pool (cp/threadpool 1 {:name "lobbies-thread"}))
 (defmacro lobby-thread [& expr] `(cp/future lobby-pool ~@expr))
-(defmacro game-thread [lobby & expr]
+(defmacro game-thread
   "Note: if the lobby isn't actually real, or has been nulled somehow, executing on the lobby thread is safe"
+  [lobby & expr]
   `(cp/future (get-in ~lobby [:pool :pool] lobby-pool) ~@expr))
 
 (defmulti assign-tournament-properties identity)
