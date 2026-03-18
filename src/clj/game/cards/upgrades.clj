@@ -2009,9 +2009,9 @@
      {:req (req (and run (= :runner side)))
       :effect (effect (register-events
                         card
-                        [(assoc-in (assoc ability :event :agenda-stolen :duration :end-of-run)
-                                   [:optional :req]
-                                   (req (= (:previous-zone card) (:previous-zone (:card context)))))]))}}))
+                        [(-> ability
+                             (assoc :event :agenda-stolen :duration :end-of-run)
+                             (assoc-in [:optional :req] (req (= (:previous-zone card) (:previous-zone (:card context))))))]))}}))
 
 (defcard "Tyr's Hand"
   {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ice from being broken"
