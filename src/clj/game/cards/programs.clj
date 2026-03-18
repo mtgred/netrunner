@@ -230,7 +230,7 @@
                                                     break-ability
                                                     no-unbreakable-subs
                                                     (pos? unbroken-subs)
-                                                    (can-pay? state side eid card total-cost))
+                                                    (can-pay? state side eid card nil total-cost))
                                            [{:dynamic :auto-pump-and-break
                                              :cost total-cost
                                              :cost-label (build-cost-label total-cost)
@@ -1951,12 +1951,11 @@
    {:access-ability
     {:async true
      :trash? true
-     :once :per-turn
      :label "Trash card"
      :req (req (and (not (:disabled card))
                     (not (agenda? target))
                     (not (in-discard? target))
-                    (can-pay? state side eid card [(->c :power 1) (->c :credit (:cost target 0) {:stealth :all-stealth})])))
+                    (can-pay? state side eid card nil [(->c :power 1) (->c :credit (:cost target 0) {:stealth :all-stealth})])))
      :waiting-prompt true
      :effect (req (let [accessed-card target
                         play-or-rez (:cost target)]
