@@ -73,6 +73,7 @@
    "run-unsuccessful"
    "shuffle"
    "time-out"
+   "vic"
    "virus-purge"])
 
 (defn random-sound

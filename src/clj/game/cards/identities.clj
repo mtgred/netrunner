@@ -49,7 +49,7 @@
    [game.core.runs :refer [end-run get-current-encounter make-run redirect-run
                            set-next-phase start-next-phase total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [system-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? name-zone
                               target-server zone->name]]
    [game.core.shuffling :refer [fail-to-find! shuffle! shuffle-into-deck shuffle-cards-into-deck! shuffle-my-deck!]]
@@ -2838,9 +2838,11 @@
                 :async true
                 :change-in-game-state {:req (req (or tagged (seq (:deck runner))))}
                 :effect (req (if tagged
-                               (wait-for (draw state side 1 {:suppress-checkpoint true})
-                                         (lose-tags state side eid 1))
-                               (draw state side eid 1)))}]})
+                               (do (play-sfx state side "vic")
+                                   (wait-for (draw state side 1 {:suppress-checkpoint true})
+                                             (lose-tags state side eid 1)))
+                               (do (play-sfx state side "click-card")
+                                   (draw state side eid 1))))}]})
 
 (defcard "Weyland Consortium: Because We Built It"
   {:recurring 1
