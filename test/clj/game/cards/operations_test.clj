@@ -5,6 +5,7 @@
    [game.core.card :refer :all]
    [game.core.eid :refer [make-eid]]
    [game.test-framework :refer :all]
+   [game.core.winning :refer [agenda-points-required-to-win]]
    [game.utils :as utils]))
 
 (deftest twenty-four-seven-news-cycle-breaking-news-interaction
@@ -1920,6 +1921,29 @@
     (play-from-hand state :corp "Flood the Market")
     (click-card state :corp (get-content state :remote1 0))
     (is (= 2 (get-counters (get-content state :remote1 0) :advancement)))))
+
+(deftest flood-the-market-vs-issuaq-test
+  (do-game
+    (new-game {:corp {:id "Issuaq Adaptics: Sustaining Diversity"
+                      :hand [(qty "Ice Wall" 3)
+                             (qty "Project Atlas" 3)
+                             "Flood the Market"]}})
+    (core/gain state :corp :click 10)
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Ice Wall" "New remote")
+    (play-from-hand state :corp "Project Atlas" "Server 1")
+    (play-from-hand state :corp "Project Atlas" "Server 2")
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (click-advance state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (take-credits state :runner)
+    (play-from-hand state :corp "Flood the Market")
+    (click-card state :corp (get-content state :remote1 0))
+    (is (= 3 (get-counters (get-content state :remote1 0) :advancement)))
+    (score state :corp (get-content state :remote1 0))
+    (is (= 6 (agenda-points-required-to-win state :corp)) "Corp Agenda point requirement reduced by 1")
+    (is (= 1 (get-counters (get-in @state [:corp :identity]) :power)) "Issuaq Adaptics has 1 power counter")))
 
 (deftest focus-group-regular-scenario-can-afford
     ;; Regular scenario - can afford

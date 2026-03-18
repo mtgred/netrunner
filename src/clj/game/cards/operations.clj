@@ -1178,7 +1178,7 @@
                :choices {:req (req (and (installed? target)
                                         (can-be-advanced? state target)))}
                :msg (msg "place " (quantify (full-servers state) "advancement counter") " on " (card-str state target))
-               :effect (req (add-counter state state eid target :advancement (full-servers state)))}}))
+               :effect (req (add-prop state state eid target :advance-counter (full-servers state) {:placed true}))}}))
 
 (defcard "Focus Group"
   {:on-play
