@@ -1556,7 +1556,7 @@
                                 {:optional
                                  {:prompt (msg "The top card of R&D is " (:title (first (:deck corp))) ". Trash it?")
                                   :waiting-prompt true
-                                  :req (req (seq (:hand runner)))
+                                  :req (req (seq (:deck corp)))
                                   :yes-ability {:cost [(->c :trash-from-deck 1)]
                                                 :once :per-turn
                                                 :msg "add 1 card from Archives to HQ"
