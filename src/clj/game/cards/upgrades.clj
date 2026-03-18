@@ -1981,36 +1981,33 @@
                             (draw state side eid 1)))}]})
 
 (defcard "Tucana"
-  (let [ability {:optional {:prompt "Search R&D for an ice?"
-                            :waiting-prompt true
-                            :yes-ability {:async true
-                                          :prompt "Choose a piece of ice to install and rez"
-                                          :waiting-prompt true
-                                          :interactive (req true)
-                                          :choices (req (cancellable (filter ice? (:deck corp)) true))
-                                          :msg (msg "install and rez " (card-str state target) ", paying a total of 3 [Credits] less")
-                                          :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3
-                                                                                                                           :msg-keys {:install-source card
-                                                                                                                                      :display-origin true}})
-                                                                 (shuffle! state :corp :deck)
-                                                                 (system-msg state side (str "shuffles R&D"))
-                                                                 (effect-completed state side eid)))
-                                          :cancel shuffle-my-deck!}}}]
+  (let [ability {:optional
+                 {:prompt "Search R&D for an ice?"
+                  :waiting-prompt true
+                  :req (req (= (:previous-zone (:card context)) (get-zone card)))
+                  :yes-ability {:async true
+                                :prompt "Choose a piece of ice to install and rez"
+                                :waiting-prompt true
+                                :interactive (req true)
+                                :choices (req (cancellable (filter ice? (:deck corp)) true))
+                                :msg (msg "install and rez " (card-str state target) ", paying a total of 3 [Credits] less")
+                                :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3
+                                                                                                                 :msg-keys {:install-source card
+                                                                                                                            :display-origin true}})
+                                                       (shuffle! state :corp :deck)
+                                                       (system-msg state side (str "shuffles R&D"))
+                                                       (effect-completed state side eid)))
+                                :cancel shuffle-my-deck!}}}]
     {:legal-zones (req (remove #{"HQ" "R&D" "Archives"} targets))
-     :events [(assoc ability
-                     :event :agenda-stolen
-                     :req (req (= (:previous-zone (:card context)) (get-zone card))))
-              (assoc ability
-                     :event :agenda-scored
-                     :req (req (= (:previous-zone (:card context)) (get-zone card))))]
+     :events [(assoc ability :event :agenda-stolen)
+              (assoc ability :event :agenda-scored)]
      :on-trash
      {:req (req (and run (= :runner side)))
       :effect (effect (register-events
                         card
-                        [(assoc ability
-                                :event :agenda-stolen
-                                :req (req (= (:previous-zone card) (:previous-zone (:card context))))
-                                :duration :end-of-run)]))}}))
+                        [(-> ability
+                             (assoc :event :agenda-stolen :duration :end-of-run)
+                             (assoc-in [:optional :req] (req (= (:previous-zone card) (:previous-zone (:card context))))))]))}}))
 
 (defcard "Tyr's Hand"
   {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ice from being broken"

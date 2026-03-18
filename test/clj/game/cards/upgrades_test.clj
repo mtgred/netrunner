@@ -4682,6 +4682,16 @@
           "Central servers are not listed in the install prompt")
     (click-prompt state :corp "New remote")))
 
+(deftest tucana-zone-respected
+  (do-game
+    (new-game {:corp {:hand ["Tucana" "Project Atlas"]
+                      :deck ["Afshar"]}})
+    (play-cards state :corp ["Tucana" "New remote" :rezzed])
+    (take-credits state :corp)
+    (run-empty-server state :hq)
+    (click-prompt state :runner "Steal")
+    (is (no-prompt? state :corp) "Tucana plays nice")))
+
 (deftest underway-grid
   ;; Underway Grid - prevent expose of cards in server
   (do-game
