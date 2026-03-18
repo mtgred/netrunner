@@ -1506,7 +1506,17 @@
      :abilities [ability]}))
 
 (defcard "Méliès U: Only the Brightest"
-  {:events [;; At game start, you're on the front face
+  {:abilities [{:label "Check chosen flip identity"
+                :effect (req (case (:melies-target card)
+                               "HQ"
+                               (toast state :corp "Tenure Floors (HQ)" "info")
+                               "R&D"
+                               (toast state :corp "Subsurface Labs (R&D)" "info")
+                               "Archives"
+                               (toast state :corp "Disposal Grounds (Archives)" "info")
+                               ;; default case
+                               (toast state :corp "No flip identity specified" "info")))}]
+   :events [;; At game start, you're on the front face
             {:event :pre-first-turn
              :req (req (= side :corp))
              :effect (effect (update!
