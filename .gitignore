@@ -75,3 +75,4 @@ data/cards-zh-hant.edn
 
 # Coding agents
 .claude/
+.playwright-cli/
