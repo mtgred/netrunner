@@ -44,12 +44,19 @@
         (str/replace #"\[corp-pronoun\]" corp-pronoun)
         (str/replace #"\[runner-pronoun\]" runner-pronoun))))
 
+(defn- log-public
+  [state message]
+  (swap! state update :log #(-> %
+                                (update :public conj message)
+                                (update :corp conj message)
+                                (update :runner conj message))))
+
 (defn say
   "Prints a message to the log as coming from the given user."
   [state side {:keys [user text]}]
   (let [author (or user (get-in @state [side :user]))
         message (make-message {:user author :text (insert-pronouns state side text)})]
-    (swap! state update :log conj message)
+    (log-public state message)
     (swap! state assoc :typing false)))
 
 (defn system-say
@@ -62,7 +69,7 @@
   "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
   [state text]
   (let [message (make-system-message text)]
-    (swap! state update :log conj message)))
+    (log-public state message)))
 
 (defn system-msg
   "Prints a message to the log without a username."
@@ -110,13 +117,14 @@
 
 (defn n-last-logs
   "Gets the n last log messages not sent by a user (ie game logs only)"
-  [state n]
-  (if @state
-    ;; this should filter out user-typed messages, so we don't accidentally
-    ;; spy on private conversations
-    (->> @state :log
-         (filter #(= (:user %) "__system__"))
-         (map :text)
-         (take-last n)
-         (str/join "\n\t"))
-    "unable to fetch log from state"))
+  ([state n] (n-last-logs state n :public))
+  ([state n side]
+   (if @state
+     ;; this should filter out user-typed messages, so we don't accidentally
+     ;; spy on private conversations
+     (->> @state :log side
+          (filter #(= (:user %) "__system__"))
+          (map :text)
+          (take-last n)
+          (str/join "\n\t"))
+     "unable to fetch log from state")))

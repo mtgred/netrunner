@@ -62,7 +62,7 @@
   [gameid room fmt now options corp runner]
   (map->State
     {:gameid gameid
-     :log []
+     :log {:public [] :corp [] :runner []}
      :active-player :runner
      :end-turn true
      :format (keyword fmt)

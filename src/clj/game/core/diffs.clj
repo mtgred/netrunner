@@ -540,10 +540,11 @@
   Otherwise when computing diffs, only the relevant states are needed, and we can skip computing the other ones."
   ([state] (public-states state true true true))
   ([state spectators? corp-spectators? runner-spectators?]
+   (prn (:log @state))
    (let [stripped-state (strip-state state)
-         corp-state (state-summary stripped-state state :corp)
-         runner-state (state-summary stripped-state state :runner)
-         replay-state (strip-for-replay stripped-state corp-state runner-state)]
+         corp-state (-> (state-summary stripped-state state :corp) (update :log :corp))
+         runner-state (-> (state-summary stripped-state state :runner) (update :log :runner))
+         replay-state (-> (strip-for-replay stripped-state corp-state runner-state) (update :log :public))]
      ;; corp, runner, spectator, history
      {:corp-state corp-state
       :runner-state runner-state
@@ -560,9 +561,9 @@
       [{:log (mapcat (fn [change] [:+ change]) changes)} {}]
       [{} {}])))
 
-(defn- get-message-diff [old-state new-state]
-  (let [old-messages (select-keys old-state [:log])
-        new-messages (select-keys @new-state [:log])]
+(defn- get-message-diff [old-state new-state side]
+  (let [old-messages (-> (select-keys old-state [:log]) (update :log side))
+        new-messages (-> (select-keys @new-state [:log]) (update :log side))]
     (fake-log-diff old-messages new-messages)))
 
 (defn- diff-and-patch-log [old-state new-state message-diff]
@@ -580,21 +581,25 @@
          new-spect :spect-state new-hist :hist-state
          new-corp-spect :corp-spect-state
          new-runner-spect :runner-spect-state} (public-states new-state spectators? corp-spectators? runner-spectators?)
-        message-diff (get-message-diff old-state new-state)]
-    {:runner-diff (diff-and-patch-log old-runner new-runner message-diff)
-     :corp-diff (diff-and-patch-log old-corp new-corp message-diff)
-     :spect-diff (when spectators? (diff-and-patch-log old-spect new-spect message-diff))
+        runner-message-diff (get-message-diff old-state new-state :runner)
+        corp-message-diff (get-message-diff old-state new-state :corp)
+        public-message-diff (get-message-diff old-state new-state :public)]
+    {:runner-diff (diff-and-patch-log old-runner new-runner runner-message-diff)
+     :corp-diff (diff-and-patch-log old-corp new-corp corp-message-diff)
+     :spect-diff (when spectators? (diff-and-patch-log old-spect new-spect public-message-diff))
      :runner-spect-diff (when runner-spectators?
-                          (diff-and-patch-log old-runner-spect new-runner-spect message-diff))
+                          (diff-and-patch-log old-runner-spect new-runner-spect runner-message-diff))
      :corp-spect-diff (when corp-spectators?
-                        (diff-and-patch-log old-corp-spect new-corp-spect message-diff))
-     :hist-diff (diff-and-patch-log old-hist new-hist message-diff)}))
+                        (diff-and-patch-log old-corp-spect new-corp-spect corp-message-diff))
+     :hist-diff (diff-and-patch-log old-hist new-hist public-message-diff)}))
 
 (defn message-diffs [old-state new-state]
-  (let [message-diff (get-message-diff old-state new-state)]
-    {:runner-diff message-diff
-     :corp-diff message-diff
-     :spect-diff message-diff
-     :runner-spect-diff message-diff
-     :corp-spect-diff message-diff
-     :hist-diff message-diff}))
+  (let [runner-diff (get-message-diff old-state new-state :runner)
+        corp-diff (get-message-diff old-state new-state :corp)
+        public-diff (get-message-diff old-state new-state :public)]
+    {:runner-diff runner-diff
+     :corp-diff corp-diff
+     :spect-diff public-diff
+     :runner-spect-diff runner-diff
+     :corp-spect-diff corp-diff
+     :hist-diff public-diff}))
