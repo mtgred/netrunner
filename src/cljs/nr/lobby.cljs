@@ -76,8 +76,9 @@
                200
                (let [replay (js->clj json :keywordize-keys true)
                      history (:history replay)
+                     replay-shared (:replay-shared replay)
                      init-state (first history)
-                     init-state (assoc init-state :gameid gameid)
+                     init-state (assoc init-state :gameid gameid :replay-shared replay-shared)
                      init-state (assoc-in init-state [:options :spectatorhands] true)
                      diffs (rest history)
                      init-state (assoc init-state :replay-diffs diffs)]
@@ -281,7 +282,7 @@
       (.replaceState (.-history js/window) {} "" "/play")
       (if bug-report?
         (start-shared-replay s replay-id {:bug (or b 0)})
-        (if (and n d)
+        (if (and (some? n) (some? d))
           (start-shared-replay s replay-id {:n n :d d})
           (start-shared-replay s replay-id nil)))
       (resume-sound)
