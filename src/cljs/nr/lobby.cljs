@@ -282,7 +282,7 @@
       (.replaceState (.-history js/window) {} "" "/play")
       (if bug-report?
         (start-shared-replay s replay-id {:bug (or b 0)})
-        (if (and (some? n) (some? d))
+        (if (and n d)
           (start-shared-replay s replay-id {:n n :d d})
           (start-shared-replay s replay-id nil)))
       (resume-sound)
