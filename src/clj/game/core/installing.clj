@@ -348,9 +348,9 @@
         (pay state side (make-eid state (assoc eid :action action)) card costs)
         (if-let [payment-str (:msg async-result)]
           (if (= server "New remote")
-            (wait-for (trigger-event-simult state side :server-created nil card)
-                      (make-rid state)
-                      (corp-install-continue state side eid card server args slot payment-str))
+            (do (queue-event state :server-created nil)
+                (make-rid state)
+                (corp-install-continue state side eid card server args slot payment-str))
             (corp-install-continue state side eid card server args slot payment-str))
           (effect-completed state side eid)))
       ;; NOTE - Diwan and Network Exchange both alter the cost of installs
