@@ -950,7 +950,7 @@
                :effect (req (register-lingering-effect
                               state side card
                               {:type :cannot-pay-credit
-                               :req (req true)
+                               :req (req (= :runner side))
                                :value true
                                :duration :subroutine-currently-resolving}))}]
      :subroutines [sub
