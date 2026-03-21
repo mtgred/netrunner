@@ -1832,7 +1832,8 @@
                 :choices {:req (req (and (ice? target)
                                          (installed? target)
                                          (not (same-card? card target))))}
-                :msg (msg "swap itself with " (card-str state target))
+                :msg {:public (msg "swap itself with " (card-str state target))
+                      :corp (msg "swap itself with " (card-str state target {:maybe-visible true}))}
                 :effect (req (swap-ice state side card target))}]})
 
 (defcard "F2P"
@@ -2845,7 +2846,7 @@
                   :async true
                   :effect (req (continue-ability
                                  state side
-                                 (move-card-to-top-or-bottom target)
+                                 (move-card-to-top-or-bottom target :corp)
                                  card nil))}
                  add-runner-card-to-grip]})
 
@@ -4051,7 +4052,9 @@
                                         (or (in-hand? %)
                                             (in-discard? %)))}
                   :async true
-                  :msg (msg "shuffle " (card-str state target) " into R&D")
+                  :msg {:public (msg "shuffle " (card-str state target) " into R&D")
+                        :corp (msg "shuffle " (card-str state target {:maybe-visible true})
+                                   " into R&D")}
                   :effect (req (move state :corp target :deck)
                                (shuffle! state :corp :deck)
                                (effect-completed state :corp eid))}
