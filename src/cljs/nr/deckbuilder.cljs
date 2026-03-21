@@ -147,7 +147,7 @@
 (defn- parse-meta-line
   "Parse a ;; key: value metadata line. Returns [keyword value] or nil."
   [line]
-  (when-let [[_ k v] (re-matches #";;\s*(identity|title|notes)\s*:\s*(.+)" (str/trim line))]
+  (when-let [[_ k v] (re-matches #";;\s*(identity|identity-code|title|notes)\s*:\s*(.+)" (str/trim line))]
     [(keyword k) (str/trim v)]))
 
 (defn- line-reducer
@@ -1118,6 +1118,12 @@
          {:value (identity-option-string card)}
          (:display-name card)]))]])
 
+(defn- lookup-identity-by-code
+  "Look up an identity card by card code. Returns nil if not found or not an identity."
+  [code]
+  (first (filter #(and (= (:code %) code) (= (:type %) "Identity"))
+                 (vals @all-cards))))
+
 (defn- lookup-identity-by-title
   "Look up an identity card by title for the given side.
    Supports partial/substring matching like card lookup. Returns nil if no unique match."
@@ -1142,8 +1148,10 @@
   [side deck-string]
   (let [{:keys [cards meta]} (deck-string->list deck-string)
         parsed-cards (lookup-deck side cards)
-        found-identity (when-let [t (:identity meta)]
-                         (lookup-identity-by-title side t))]
+        found-identity (or (when-let [c (:identity-code meta)]
+                             (lookup-identity-by-code c))
+                           (when-let [t (:identity meta)]
+                             (lookup-identity-by-title side t)))]
     {:cards parsed-cards
      :identity found-identity
      :title (:title meta)
