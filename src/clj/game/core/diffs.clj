@@ -540,7 +540,6 @@
   Otherwise when computing diffs, only the relevant states are needed, and we can skip computing the other ones."
   ([state] (public-states state true true true))
   ([state spectators? corp-spectators? runner-spectators?]
-   (prn (:log @state))
    (let [stripped-state (strip-state state)
          corp-state (-> (state-summary stripped-state state :corp) (update :log :corp))
          runner-state (-> (state-summary stripped-state state :runner) (update :log :runner))
