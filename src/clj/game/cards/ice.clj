@@ -944,7 +944,8 @@
                                            (str "force the runner to " (decapitalize target))))}
                               card nil)))}]
     {:events [{:event :pre-resolve-subroutine
-               :req (req (threat-level 3 state))
+               :req (req (and (threat-level 3 state)
+                              (same-card? (:ice context) card)))
                :silent true
                :effect (req (register-lingering-effect
                               state side card
