@@ -13,9 +13,9 @@
     [nr.deck-status :refer [deck-status-span]]
     [nr.translations :refer [tr tr-span tr-element tr-faction tr-format tr-side tr-type tr-data]]
     [nr.utils :refer [alliance-dots banned-span cond-button
-                      deck-points-card-span dots-html format->slug format-date-time
+                      deck-points-card-span dots-html buildable-format->slug format-date-time
                       influence-dot influence-dots mdy-formatter non-game-toast
-                      restricted-span rotated-span set-scroll-top slug->format store-scroll-top render-message safe-divide]]
+                      restricted-span rotated-span set-scroll-top slug->buildable-format store-scroll-top render-message safe-divide]]
     [nr.ws :as ws]
     [reagent-modals.modals :as reagent-modals]
     [reagent.core :as r]))
@@ -755,7 +755,7 @@
 (defn- filter-format [fmt-filter decks]
   (if (= all-formats-filter @fmt-filter)
     decks
-    (let [fmt-slug (format->slug @fmt-filter)]
+    (let [fmt-slug (buildable-format->slug @fmt-filter)]
       (filter #(= (:format %) fmt-slug) decks))))
 
 (defn- filter-selected [side-filter faction-filter fmt-filter]
@@ -1081,7 +1081,7 @@
    [:select.format {:value (get-in @s [:deck :format] "standard")
                     :on-change #(change-format s (.. % -target -value))}
     (doall
-      (for [[k v] slug->format]
+      (for [[k v] slug->buildable-format]
         ^{:key k}
         [:option {:value k} (tr-format v)]))]])
 
@@ -1222,7 +1222,7 @@
 
 (defn- filter-builder
   [state decks-loaded scroll-top]
-  (let [formats (-> format->slug keys butlast)]
+  (let [formats (-> buildable-format->slug keys butlast)]
     [:div.deckfilter
      (doall
        (for [[state-key options callback translator]
