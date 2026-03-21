@@ -301,20 +301,31 @@
     (do-ability state side ability card targets)
     (effect-completed state side eid)))
 
+(defn print-side-msg
+  [state side msg-side {:keys [eid] :as ability} card targets payment-str]
+    (when-let [message (:msg ability)]
+      (let [desc (if (or (= :cost message) (string? message))
+                   message
+                   (message state side eid card targets))
+            cost-spend-msg (build-spend-msg payment-str "use")
+            disp-side (or (:display-side ability) (to-keyword (:side card)))]
+        (cond
+          (= :cost desc)
+          (system-msg state disp-side (str payment-str " to satisfy " (get-title card)) {:log-side msg-side})
+          desc
+          (system-msg state disp-side (str cost-spend-msg (get-title card) (str " to " desc)) {:log-side msg-side})))))
+
 (defn print-msg
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets payment-str]
-  (when-let [message (:msg ability)]
-    (let [desc (if (or (= :cost message) (string? message))
-                 message
-                 (message state side eid card targets))
-          cost-spend-msg (build-spend-msg payment-str "use")
-          disp-side (or (:display-side ability) (to-keyword (:side card)))]
-      (cond
-        (= :cost desc)
-        (system-msg state disp-side (str payment-str " to satisfy " (get-title card)))
-        desc
-        (system-msg state disp-side (str cost-spend-msg (get-title card) (str " to " desc)))))))
+  (if (map? (:msg ability))
+    (do (when-let [msg (-> ability :msg :corp)]
+          (print-side-msg state side :corp (assoc ability :msg msg) card targets payment-str))
+        (when-let [msg (-> ability :msg :runner)]
+          (print-side-msg state side :runner (assoc ability :msg msg) card targets payment-str))
+        (when-let [msg (-> ability :msg :public)]
+        (print-side-msg state side :public (assoc ability :msg msg) card targets payment-str)))
+    (print-side-msg state side :all ability card targets payment-str)))
 
 (defn register-once
   "Register ability as having happened if :once specified"

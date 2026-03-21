@@ -51,19 +51,27 @@
                                 (update :corp conj message)
                                 (update :runner conj message))))
 
+(defn- log-for-side
+  [state message side]
+  (swap! state update-in [:log side] conj message))
+
 (defn say
   "Prints a message to the log as coming from the given user."
-  [state side {:keys [user text]}]
-  (let [author (or user (get-in @state [side :user]))
-        message (make-message {:user author :text (insert-pronouns state side text)})]
-    (log-public state message)
-    (swap! state assoc :typing false)))
+  ([state side args] (say state side args :all))
+  ([state side {:keys [user text]} log-side]
+   (let [author (or user (get-in @state [side :user]))
+         message (make-message {:user author :text (insert-pronouns state side text)})]
+     (doseq [ls (flatten [log-side])]
+       (if (= ls :all)
+         (log-public state message)
+         (log-for-side state message ls)))
+     (swap! state assoc :typing false))))
 
 (defn system-say
   "Prints a system message to log (`say` from user __system__)"
   ([state side text] (system-say state side text nil))
-  ([state side text {:keys [hr]}]
-   (say state side (make-system-message (str text (when hr "[hr]"))))))
+  ([state side text {:keys [hr log-side]}]
+   (say state side (make-system-message (str text (when hr "[hr]"))) (or log-side :all))))
 
 (defn unsafe-say
   "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
