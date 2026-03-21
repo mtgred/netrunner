@@ -1057,7 +1057,7 @@
               (auto-pump-and-break state cor))
             "Gained 2c from the runner breaking")
         (is (last-n-log-contains? state 2 "Corp uses Bailiff to gain 1 [Credits]"))
-        (is (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 [Credits]"))))))
+        (is (true? (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 [Credits]")))))))
 
 (deftest ballista
   ;; Ballista
@@ -3241,11 +3241,11 @@
       (rez state :corp gf)
       (run-continue state)
       (is (changed? [(:credit (get-runner)) -4]
-            (auto-pump-and-break state cor)
-            (is (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs")
-                "Correct messages")
-            (is (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs")))
-          "Paid 2c + 2c for breaking"))))
+            (auto-pump-and-break state cor))
+          "Paid 2c + 2c for breaking")
+      (is (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs")
+          "Correct messages")
+      (is (true? (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs")) "Also correct messages"))))
 
 (deftest gold-farmer-interaction-with-paperclip
   ;; Interaction with Paperclip

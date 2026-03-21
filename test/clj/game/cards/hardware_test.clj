@@ -2226,7 +2226,7 @@
       (let [flip (get-hardware state 0)]
         (run-on state "HQ")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (= "Runner jacks out." (-> @state :log last :text)))
+        (is (= "Runner jacks out." (-> @state :log :public last :text)))
         (is (nil? (refresh flip)) "Flip Switch has been trashed")
         (is (find-card "Flip Switch" (:discard (get-runner)))))))
 
@@ -2577,7 +2577,7 @@
       (click-card state :runner hbdown)
       (click-prompt state :runner "Pass priority")
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card")
-      (is (last-n-log-contains? state 1 "Runner trashes 1 installed card \\(a facedown card\\) to use Heartbeat to prevent 1 net damage\\.")))))
+      (is (true? (last-n-log-contains? state 1 "Runner trashes 1 installed card \\(a facedown card\\) to use Heartbeat to prevent 1 net damage\\."))))))
 
 (deftest hermes
     (do-game
