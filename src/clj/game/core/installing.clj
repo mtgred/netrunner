@@ -347,11 +347,10 @@
       (wait-for
         (pay state side (make-eid state (assoc eid :action action)) card costs)
         (if-let [payment-str (:msg async-result)]
-          (if (= server "New remote")
-            (do (queue-event state :server-created nil)
-                (make-rid state)
-                (corp-install-continue state side eid card server args slot payment-str))
-            (corp-install-continue state side eid card server args slot payment-str))
+          (do (when (= server "New remote")
+                (queue-event state :server-created nil)
+                (make-rid state))
+              (corp-install-continue state side eid card server args slot payment-str))
           (effect-completed state side eid)))
       ;; NOTE - Diwan and Network Exchange both alter the cost of installs
       ;; if it's not ice AND we can't afford it, there's nothing we can do
