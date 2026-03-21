@@ -179,8 +179,10 @@
   "Takes a list of {:qty n :card title} and looks up each title and replaces it with the corresponding cardmap"
   [side card-list]
   (let [card-list (collate-deck card-list)]
-    ;; lookup each card and replace title with cardmap
-    (map #(assoc % :card (lookup side (assoc % :title (:card %)))) card-list)))
+    ;; lookup each card and replace title with cardmap, excluding identities
+    (->> card-list
+         (map #(assoc % :card (lookup side (assoc % :title (:card %)))))
+         (remove #(= (:type (:card %)) "Identity")))))
 
 (defn process-cards-in-deck
   "Process the raw deck from the database into a more useful format"
