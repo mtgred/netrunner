@@ -585,6 +585,8 @@
              :effect (req (if (= target "Done")
                             (do (doseq [c (reverse chosen)]
                                   (move state :corp c :deck {:front true}))
+                                (system-msg state side (str "The top cards of R&D are "
+                                                            " are " (enumerate-cards chosen)) {:log-side :corp})
                                 (effect-completed state side eid))
                             (continue-ability state side (cbi-choice original '() (count original) original)
                                               card nil)))})
