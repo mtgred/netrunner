@@ -107,6 +107,10 @@
                (= target "Done")
                (do (swap! state update-in [reorder-side :deck]
                           #(vec (concat chosen (drop (count chosen) %))))
+                   (system-msg state side (str "The top cards of "
+                                               (if (= reorder-side :corp) "R&D" "the stack")
+                                               " are " (enumerate-cards chosen))
+                               {:log-side side})
                    (when (and (= :corp reorder-side)
                               (:run @state)
                               (:access @state))
@@ -361,29 +365,35 @@
     ability))
 
 (defn move-to-top
-  [target-card]
-  {:msg (msg "add " (card-str state target-card) " from "
-             (name-zone (:side target-card) (:zone target-card))
-             " to the top of " (if (runner? target-card) "the Stack" "R&D"))
+  [target-card acting-side]
+  {:msg {:public (msg "add " (card-str state target-card) " from "
+                      (name-zone (:side target-card) (:zone target-card))
+                      " to the top of " (if (runner? target-card) "the Stack" "R&D"))
+         acting-side (msg "add " (card-str state target-card {:maybe-visible true}) " from "
+                          (name-zone (:side target-card) (:zone target-card))
+                          " to the top of " (if (runner? target-card) "the Stack" "R&D"))}
    :effect (req (move state side target-card :deck {:front true}))})
 
 (defn move-to-bottom
-  [target-card]
-  {:msg (msg "add " (card-str state target-card) " from "
-             (name-zone (:side target-card) (:zone target-card))
-             " to the bottom of " (if (runner? target-card) "the Stack" "R&D"))
+  [target-card acting-side]
+  {:msg {:public (msg "add " (card-str state target-card) " from "
+                      (name-zone (:side target-card) (:zone target-card))
+                      " to the bottom of " (if (runner? target-card) "the Stack" "R&D"))
+         acting-side (msg "add " (card-str state target-card {:maybe-visible true}) " from "
+                          (name-zone (:side target-card) (:zone target-card))
+                          " to the bottom of " (if (runner? target-card) "the Stack" "R&D"))}
    :effect (req (move state side target-card :deck))})
 
 (defn move-card-to-top-or-bottom
   "Ability to move a card to the top or bottom of the deck"
-  [target-card]
+  [target-card acting-side]
   (let [zone (if (runner? target-card) "the Stack" "R&D")]
     (choose-one-helper
       {:prompt (str "Move " (:title target-card) " where?")}
       [{:option (str "Top of " zone)
-        :ability (move-to-top target-card)}
+        :ability (move-to-top target-card acting-side)}
        {:option (str "Bottom of " zone)
-        :ability (move-to-bottom target-card)}])))
+        :ability (move-to-bottom target-card acting-side)}])))
 
 (defn trash-or-rfg
   [state _ eid card]
@@ -506,7 +516,8 @@
     :choices {:card #(and (corp? %)
                        (in-discard? %)
                        (pred %))}
-    :msg (msg "add " (card-str state target {:visible (faceup? target)}) " to HQ")
+    :msg {:public (msg "add " (card-str state target {:visible (faceup? target)}) " to HQ")
+          :corp (msg "add " (card-str state target {:maybe-visible true}) " to HQ")}
     :effect (effect (move :corp target :hand))}))
 
 (defn tutor-abi
