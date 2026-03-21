@@ -1121,9 +1121,9 @@
          (:display-name card)]))]])
 
 (defn- lookup-identity-by-code
-  "Look up an identity card by card code. Returns nil if not found or not an identity."
-  [code]
-  (first (filter #(and (= (:code %) code) (= (:type %) "Identity"))
+  "Look up an identity card by card code and side. Returns nil if not found or not an identity."
+  [side code]
+  (first (filter #(and (= (:code %) code) (= (:type %) "Identity") (= (:side %) side))
                  (vals @all-cards))))
 
 (defn- lookup-identity-by-title
@@ -1151,7 +1151,7 @@
   (let [{:keys [cards meta]} (deck-string->list deck-string)
         parsed-cards (lookup-deck side cards)
         found-identity (or (when-let [c (:identity-code meta)]
-                             (lookup-identity-by-code c))
+                             (lookup-identity-by-code side c))
                            (when-let [t (:identity meta)]
                              (lookup-identity-by-title side t)))]
     {:cards parsed-cards
