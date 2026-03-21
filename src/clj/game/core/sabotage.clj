@@ -5,9 +5,9 @@
     [game.core.eid :refer [effect-completed]]
     [game.core.engine :refer [resolve-ability]]
     [game.core.moving :refer [trash-cards]]
-    [game.core.say :refer [system-msg]]
+    [game.core.say :refer [multi-msg]]
     [game.macros :refer [req msg continue-ability]]
-    [game.utils :refer [enumerate-str pluralize quantify]]))
+    [game.utils :refer [enumerate-str enumerate-cards pluralize quantify]]))
 
 (defn choosing-prompt-req
   [n]
@@ -20,6 +20,17 @@
            " up to " n " " (pluralize "card" n)
            " to trash from HQ. Remainder will be trashed from top of R&D."))))
 
+(defn- cards-str
+  [known unknown from public]
+  (let [unknown-str (str (quantify (count unknown) (if (seq known) "unknown card" "card"))
+                         (when public (str " (" (enumerate-cards unknown)")")))]
+    (if (seq known)
+      (str " " (enumerate-str (concat (map :title known)
+                                      (when (seq unknown)
+                                        [unknown-str])))
+           " from " from)
+      (str unknown-str " from " from))))
+
 (defn trash-selected-req
   [n]
   (req
@@ -27,30 +38,22 @@
           selected-hq (count targets)
           selected-rd (min (count (:deck corp))
                            (- n selected-hq))
-          to-trash (concat targets (take selected-rd (:deck corp)))
+          rnd-to-trash (take selected-rd (:deck corp))
+          to-trash (concat targets rnd-to-trash)
           known-hq-cards (filter #(contains? (set (get-in @state [:breach :known-cids :hand] [])) (:cid %)) to-trash)
           known-rd-cards (filter #(contains? (set (get-in @state [:breach :known-cids :deck] [])) (:cid %)) to-trash)
-          unknown-hq-cards (- selected-hq (count known-hq-cards))
-          unknown-rd-cards (- selected-rd (count known-rd-cards))]
-      (system-msg state side
-                  (str
-                    "trashes"
-                    (when (pos? selected-hq)
-                      (if (seq known-hq-cards)
-                        (str " " (enumerate-str (concat (map :title known-hq-cards)
-                                                        (when (pos? unknown-hq-cards)
-                                                          [(quantify unknown-hq-cards "unknown card")])))
-                             " from HQ")
-                        (str " " (quantify selected-hq "card") " from HQ")))
-                    (when (and (pos? selected-hq) (pos? selected-rd))
-                      " and")
-                    (when (pos? selected-rd)
-                      (if (seq known-rd-cards)
-                        (str " " (enumerate-str (concat (map :title known-rd-cards)
-                                                        (when (pos? unknown-rd-cards)
-                                                          [(quantify unknown-rd-cards "unknown card")])))
-                             " from R&D")
-                        (str " " (quantify selected-rd "card") " from the top of R&D")))))
+          unknown-hq-cards (filter #(not (contains? (set (get-in @state [:breach :known-cids :hand] [])) (:cid %))) targets)
+          unknown-rd-cards (filter #(not (contains? (set (get-in @state [:breach :known-cids :deck] [])) (:cid %))) rnd-to-trash)
+          public-msg (str "trashes"
+                          (when (pos? selected-hq) (cards-str known-hq-cards unknown-hq-cards "HQ" nil))
+                          (when (and (pos? selected-hq) (pos? selected-rd)) " and ")
+                          (when (pos? selected-rd) (cards-str known-rd-cards unknown-rd-cards "the top of R&D" nil)))
+          private-msg (str "trashes"
+                           (when (pos? selected-hq) (cards-str known-hq-cards unknown-hq-cards "hq" true))
+                           (when (and (pos? selected-hq) (pos? selected-rd)) " and ")
+                           (when (pos? selected-rd) (cards-str known-rd-cards unknown-rd-cards "the top of R&D" true)))]
+      (multi-msg state side {:corp private-msg
+                             :public public-msg})
       (trash-cards state side eid to-trash {:unpreventable true}))))
 
 (defn sabotage-ability
