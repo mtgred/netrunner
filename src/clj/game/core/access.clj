@@ -319,13 +319,14 @@
   [state side eid {:keys [zone] :as card} title {:keys [cost-msg no-msg]}]
   (let [cost-str (join-cost-strs cost-msg)]
     (when-not no-msg
-      (system-msg state side
-                  (str (if (seq cost-msg)
-                         (str cost-str " to access ")
-                         "accesses ")
-                       title
-                       (when card
-                         (str " from " (name-zone :corp zone)))))))
+      (let [public-msg (str (if (seq cost-msg) (str cost-str " to access ") "accesses ")
+                            title (when card (str " from " (name-zone :corp zone))))
+            runner-msg (str (if (seq cost-msg) (str cost-str " to access ") "accesses ")
+                            (:title card) (when card (str " from " (name-zone :corp zone))))]
+        (if (= title "an unseen card")
+          (do (system-msg state side public-msg {:log-side [:public :corp]})
+              (system-msg state side runner-msg {:log-side :runner}))
+          (system-msg state side public-msg)))))
   (if (reveal-access? state side card)
     (do (system-msg state side (str "must reveal they accessed " (:title card)))
         (reveal state :runner eid card))
