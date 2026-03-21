@@ -319,12 +319,14 @@
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets payment-str]
   (if (map? (:msg ability))
-    (do (when-let [msg (-> ability :msg :corp)]
+    (do (when-let [msg (or (-> ability :msg :corp)
+                           (-> ability :msg :public))]
           (print-side-msg state side :corp (assoc ability :msg msg) card targets payment-str))
-        (when-let [msg (-> ability :msg :runner)]
+        (when-let [msg (or (-> ability :msg :runner)
+                           (-> ability :msg :public))]
           (print-side-msg state side :runner (assoc ability :msg msg) card targets payment-str))
         (when-let [msg (-> ability :msg :public)]
-        (print-side-msg state side :public (assoc ability :msg msg) card targets payment-str)))
+          (print-side-msg state side :public (assoc ability :msg msg) card targets payment-str)))
     (print-side-msg state side :all ability card targets payment-str)))
 
 (defn register-once
