@@ -643,10 +643,14 @@
                               (when (seq to-top)
                                 (str ", and the top of R&D will be (top->bottom): " (enumerate-cards (reverse to-top)))))}
                 [{:option "OK"
-                  :ability {:msg (msg "trash a card from among the top " (count cards) " cards of R&D"
-                                      (if (seq to-top) ", " " and ")
-                                      "add another one of those cards to HQ"
-                                      (when (seq to-top) ", and re-arrange the remainder"))
+                  :ability {:msg {:public (msg "trash a card from among the top " (count cards) " cards of R&D"
+                                               (if (seq to-top) ", " " and ")
+                                               "add another one of those cards to HQ"
+                                               (when (seq to-top) ", and re-arrange the remainder"))
+                                  :corp (msg "trash " (:title to-trash) " from among the top " (count cards) " cards of R&D"
+                                             (if (seq to-top) ", " " and ")
+                                             (str "add " (:title to-add) " to HQ")
+                                             (when (seq to-top) (str ", and re-arrange the remainder (top->bottom): " (enumerate-cards (reverse to-top)))))}
                             :async true
                             :effect (req (move state side to-add :hand)
                                          (move state side to-trash :deck {:front true})
@@ -1177,7 +1181,9 @@
                :prompt (msg "Choose a card and place " (quantify (full-servers state) "advancement counter") " on it")
                :choices {:req (req (and (installed? target)
                                         (can-be-advanced? state target)))}
-               :msg (msg "place " (quantify (full-servers state) "advancement counter") " on " (card-str state target))
+               :cancel {:msg "do nothing"}
+               :msg {:corp (msg "place " (quantify (full-servers state) "advancement counter") " on " (card-str state target {:maybe-visible true}))
+                     :public (msg "place " (quantify (full-servers state) "advancement counter") " on " (card-str state target))}
                :effect (req (add-counter state state eid target :advancement (full-servers state)))}}))
 
 (defcard "Focus Group"
