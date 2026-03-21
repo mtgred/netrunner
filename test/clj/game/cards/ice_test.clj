@@ -868,6 +868,33 @@
             (is (no-prompt? state :runner) "Not prompted :)"))
           "Runner took 3 damage and couldn't prevent any of them by spending credits"))))
 
+(deftest attini-threat-doesnt-spill
+  (do-game
+    (new-game {:corp {:hand ["Attini" "Lionsmane" "Mycoweb"]
+                      :credits 20
+                      :score-area ["Vanity Project"]}
+               :runner {:hand [(qty "Ika" 5)]}})
+    (play-cards state :corp
+                ["Attini" "HQ" :rezzed]
+                ["Lionsmane" "Archives"]
+                ["Mycoweb" "R&D" :rezzed])
+    (take-credits state :corp)
+    (run-on state :rd)
+    (run-continue-until state :encounter-ice)
+    (card-subroutine state :corp (get-ice state :rd 0) 1)
+    (click-card state :corp "Lionsmane")
+    (is (rezzed? (get-ice state :archives 0)) "Lionsmane was rezzed despite attini")
+    (card-subroutine state :corp (get-ice state :rd 0) 2)
+    (click-prompts state :corp "Lionsmane" "Do 2 net damage unless the Runner pays 3 [Credits]")
+    (is (changed? [(:credit (get-runner)) -3]
+          (click-prompt state :runner "Pay 3 [Credits]")
+          (is (no-prompt? state :runner) "Paid 3"))
+        "Paid 3")
+    (card-subroutine state :corp (get-ice state :rd 0) 3)
+    (is (changed? [(count (:hand (get-runner))) -1]
+          (click-prompts state :corp "Attini" "Do 1 net damage unless the Runner pays 2 [Credits]"))
+        "No option to pay for attini")))
+
 (deftest authenticator-encounter-decline-to-take-tag
   (do-game
     (new-game{:corp {:hand ["Authenticator"]}})
