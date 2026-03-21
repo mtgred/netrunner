@@ -635,7 +635,8 @@
                                  :max (req (cards-to-trash state))
                                  :all true}
                        :waiting-prompt true
-                       :msg (msg "trash " (enumerate-str (map #(card-str state %) targets)))
+                       :msg {:public (msg "trash " (enumerate-str (map #(card-str state %) targets)))
+                             :corp (msg "trash " (enumerate-str (map #(card-str state % {:maybe-visible true}) targets)))}
                        :effect (req (wait-for (trash-cards state side targets)
                                               (continue-ability
                                                 state :corp
