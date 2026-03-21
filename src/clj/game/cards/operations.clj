@@ -1676,7 +1676,8 @@
                                                    (installed? target)
                                                    (can-be-advanced? state target)))}
                           ;; note - this is sokka's champ card (one of three), so I'm throwing this tiny easter egg in - nbk, 2025
-                          :msg (msg "place 1 " (when (= (get-in @state [side :user :username]) "Sokka234") "solid gold ") "advancement counter on " (card-str state target))
+                          :msg {:public (msg "place 1 " (when (= (get-in @state [side :user :username]) "Sokka234") "solid gold ") "advancement counter on " (card-str state target))
+                                :corp (msg "place 1 " (when (= (get-in @state [side :user :username]) "Sokka234") "solid gold ") "advancement counter on " (card-str state target {:maybe-visible true}))}
                           :async true
                           :effect (req (add-prop state side eid target :advance-counter 1 {:placed true}))}}
                {:option "Draw 1 card. Shuffle 1 card from HQ into R&D"
@@ -1690,7 +1691,8 @@
                                                     :req (req (seq (:hand corp)))
                                                     :choices {:card (every-pred corp? in-hand?)
                                                               :all true}
-                                                    :msg "shuffle 1 card from HQ into R&D"
+                                                    :msg {:public "shuffle 1 card from HQ into R&D"
+                                                          :corp (msg "shuffle " (:title target) " from HQ into R&D")}
                                                     :effect (req (move state side target :deck)
                                                                  (shuffle! state :corp :deck))}
                                                    card nil)))}}])})
@@ -3439,7 +3441,8 @@
     {:on-play {:async true
                :change-in-game-state {:req (req (some #(or (not (rezzed? %)) (can-be-advanced? state %)) (all-installed state :corp)))}
                :choices {:req (req (can-be-advanced? state target))}
-               :msg (msg "place 2 advancement counters on " (card-str state target))
+               :msg {:public (msg "place 2 advancement counters on " (card-str state target))
+                     :corp (msg "place 2 advancement counters on " (card-str state target {:maybe-visible true}))}
                :effect (req (wait-for (add-prop state side target :advance-counter 2 {:placed true})
                                       (continue-ability state side name-abi card nil)))}}))
 

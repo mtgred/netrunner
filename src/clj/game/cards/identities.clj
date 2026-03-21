@@ -1686,7 +1686,8 @@
 (defcard "MuslihaT: Multifarious Marketeer"
   {:events [{:event :runner-turn-begins
              :req (req (seq (:deck runner)))
-             :msg (msg "look at the top card of the stack")
+             :msg {:public "look at the top card of the stack"
+                   :runner (msg "look at " (:title (first (:deck runner))) " on the top of the stack")}
              :async true
              :effect (req (let [top-card (first (:deck runner))]
                             (continue-ability
@@ -2213,7 +2214,8 @@
                                       (can-be-advanced? state target)))}
              :cost [(->c :credit 1)]
              :async true
-             :msg (msg "place 1 advancement counter on " (card-str state target))
+             :msg {:public (msg "place 1 advancement counter on " (card-str state target))
+                   :corp (msg "place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
              :effect (req (add-prop state side eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "Quetzal: Free Spirit"

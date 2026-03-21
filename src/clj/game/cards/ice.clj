@@ -237,7 +237,8 @@
    :choices {:req (req (and (corp? target)
                             (installed? target)
                             (or (not advanceable-only) (can-be-advanced? state target))))}
-   :msg (msg "place 1 advancement counter on " (card-str state target))
+   :msg {:public (msg "place 1 advancement counter on " (card-str state target))
+         :corp (msg "place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
    :async true
    :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))})
 
@@ -1635,7 +1636,8 @@
                                            state side
                                            {:req (req (pos? (count (:hand corp))))
                                             :prompt "Place a card in HQ on the top of R&D?"
-                                            :msg "add 1 card in HQ to the top of R&D"
+                                            :msg {:public "add 1 card in HQ to the top of R&D"
+                                                  :corp (msg "add facedown " target " in HQ to the top of R&D")}
                                             :choices {:card #(and (in-hand? %)
                                                                   (corp? %))}
                                             :async true

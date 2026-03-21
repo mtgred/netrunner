@@ -1635,8 +1635,9 @@
                                   :waiting-prompt true
                                   :choices {:max (req (count (:hand corp)))
                                             :card (every-pred corp? in-hand?)}
-                                  :msg (msg "shuffle " (quantify (count targets) "card")
-                                            " from HQ into R&D")
+                                  :msg {:public (msg "shuffle " (quantify (count targets) "card")
+                                                     " from HQ into R&D")
+                                        :corp (msg "shuffle " (enumerate-cards targets :sorted) " from HQ into R&D")}
                                   :cancel shuffle-my-deck!
                                   :effect (req (doseq [t targets]
                                                  (move state side t :deck))
@@ -2310,7 +2311,8 @@
              :player :corp
              :cost [(->c :agenda 1)]
              :choices {:card (every-pred corp? installed?)}
-             :msg (msg "place 2 advancement counters on " (card-str state target))
+             :msg {:public (msg "place 2 advancement counters on " (card-str state target))
+                   :corp (msg "place 2 advancement counters on " (card-str state target {:maybe-visible true}))}
              :async true
              :effect (req (add-prop state :corp eid target :advance-counter 2 {:placed true}))}]})
 
