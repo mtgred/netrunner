@@ -86,6 +86,15 @@
    (let [username (get-in @state [side :user :username])]
      (system-say state side (str username " " text ".") args))))
 
+(defn multi-msg
+  [state side message-map]
+  (when-let [public (:public message-map)]
+    (system-msg state side public {:log-side :public}))
+  (when-let [corp (or (:corp message-map) (:public message-map))]
+    (system-msg state side corp {:log-side :corp}))
+  (when-let [runner (or (:runner message-map) (:public message-map))]
+    (system-msg state side runner {:log-side :runner})))
+
 (defn enforce-msg
   "Prints a message related to a rules enforcement on a given card.
   Example: 'Architect cannot be trashed while installed.'"
