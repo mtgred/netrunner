@@ -3580,12 +3580,12 @@
               {:event :pre-runner-draw
                :req (req (and (first-event? state :runner :pre-runner-draw)
                               (< 1 (count (:deck runner)))
-                              (pos? target)))
+                              (pos? (:count context))))
                :once :per-turn
                :once-key :the-class-act-put-bottom
                :async true
                :effect
-               (req (let [cards (set-aside-for-me state :runner eid (take (inc target) (:deck runner)))]
+               (req (let [cards (set-aside-for-me state :runner eid (take (inc (:count context)) (:deck runner)))]
                       (continue-ability
                         state side
                         {:waiting-prompt true
