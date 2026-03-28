@@ -1781,13 +1781,13 @@
 
 (defcard "Shackleton Grid"
   (let [ev {:optional
-            {:prompt "do 4 meat damage?"
+            {:prompt "Do 4 meat damage?"
              :waiting-prompt true
-             :req (req (and run this-server (not-used-once? state {:once :per-turn} card)
+             :once :per-turn
+             :req (req (and run this-server
                             (or (not (:card target))
                                 (runner? (:card target)))))
-             :yes-ability {:once :per-run
-                           :async true
+             :yes-ability {:async true
                            :msg "do 4 meat damage"
                            :effect (req (damage state side eid :meat 4))}}}]
     {:events [(merge ev {:event :bad-publicity-spent})

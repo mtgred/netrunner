@@ -4143,6 +4143,46 @@
           (click-prompt state :corp "Yes"))
         "Got slammed for 4 damage")))
 
+(deftest shackleton-grid-test-once-per-turn
+  ;; Shackleton Grid should not re-prompt the corp after the once-per-turn ability has been used
+  (do-game
+    (new-game {:corp {:hand ["Shackleton Grid"]}
+               :runner {:hand ["Ghost Runner" (qty "Easy Mark" 5)]}})
+    (play-from-hand state :corp "Shackleton Grid" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ghost Runner")
+    (run-on state :remote1)
+    (is (changed? [(count (:hand (get-runner))) -4]
+          (card-ability state :runner (get-resource state 0) 0)
+          (click-prompt state :corp "Yes"))
+        "Corp uses Shackleton Grid, dealing 4 meat damage")
+    (run-jack-out state)
+    (run-on state :remote1)
+    (card-ability state :runner (get-resource state 0) 0)
+    (is (no-prompt? state :corp) "Corp is not re-prompted for Shackleton Grid")
+    (run-jack-out state)))
+
+(deftest shackleton-grid-test-no-then-yes
+  ;; Shackleton Grid should still prompt on the second run if corp declined on the first
+  (do-game
+    (new-game {:corp {:hand ["Shackleton Grid"]}
+               :runner {:hand ["Ghost Runner" (qty "Easy Mark" 5)]}})
+    (play-from-hand state :corp "Shackleton Grid" "New remote")
+    (rez state :corp (get-content state :remote1 0))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Ghost Runner")
+    (run-on state :remote1)
+    (card-ability state :runner (get-resource state 0) 0)
+    (click-prompt state :corp "No")
+    (run-jack-out state)
+    (run-on state :remote1)
+    (is (changed? [(count (:hand (get-runner))) -4]
+          (card-ability state :runner (get-resource state 0) 0)
+          (click-prompt state :corp "Yes"))
+        "Corp can still use Shackleton Grid after declining on first run")
+    (run-jack-out state)))
+
 (deftest shell-corporation
   (do-game
     (new-game {:corp {:hand ["Shell Corporation"]}})
