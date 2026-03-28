@@ -2002,7 +2002,8 @@
             {:async true
              :prompt (msg "Choose an installed card to place advancement counters on (" x " remaining)")
              :choices {:card #(installed? %)}
-             :msg (msg "place 1 advancement counter on " (card-str state target))
+             :msg {:public (msg "place 1 advancement counter on " (card-str state target))
+                   :corp (msg "place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
              :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
                                     (if (> x 1)
                                       (continue-ability
@@ -2019,7 +2020,9 @@
                                  (in-discard? %)
                                  (not (faceup? %)))
                      :max 2}
-           :msg (msg "reveal " (enumerate-cards targets :sorted) " from Archives and shuffle them into R&D")
+           :msg (msg "reveal " (enumerate-cards targets :sorted) " from Archives and shuffle "
+                     (if (= 1 (count targets)) "it" "them")
+                     " into R&D")
            :effect (req (wait-for (reveal state side targets)
                                   (doseq [c targets]
                                     (move state side c :deck))
@@ -2038,7 +2041,8 @@
                                  (in-hand? %))
                      :max 2}
            :async true
-           :msg (msg "trash " (quantify (count targets) "card") " from HQ")
+           :msg {:public (msg "trash " (quantify (count targets) "card") " from HQ")
+                 :corp (msg "trash facedown " (enumerate-cards targets) " from HQ")}
            :effect (req (wait-for (trash-cards state :corp targets {:cause-card card})
                                   (continue-ability
                                     state side
@@ -3122,7 +3126,8 @@
                  :choices {:not-self true
                            :req (req (and (corp? target)
                                           (installed? target)))}
-                 :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
+                 :msg {:public (msg "trash " (card-str state target) " and gain 3 [Credits]")
+                       :corp (msg "trash " (card-str state target {:maybe-visible true}) " and gain 3 [Credits]")}
                  :effect (req (wait-for (trash state side target {:unpreventable true
                                                                   :cause-card card})
                                         (gain-credits state side eid 3)))}]

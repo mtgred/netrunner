@@ -2195,7 +2195,8 @@
              :waiting-prompt true
              :prompt "Choose a card that can be advanced to place 1 advancement counter on"
              :choices {:req (req (and (installed? target) (can-be-advanced? state target)))}
-             :msg (msg "place 1 advancement counter on " (card-str state target))
+             :msg {:public (msg "place 1 advancement counter on " (card-str state target))
+                   :corp (msg "place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
              :effect (effect (add-prop :corp eid target :advance-counter 1 {:placed true}))}]})
 
 (defcard "PT Untaian: Life's Building Blocks"

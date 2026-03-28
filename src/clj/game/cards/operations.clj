@@ -1094,7 +1094,8 @@
                                                     (corp? %))}
                               :async true
                               :waiting-prompt true
-                              :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
+                              :msg {:public (msg "trash " (card-str state target) " and gain 3 [Credits]")
+                                    :corp (msg "trash " (card-str state target {:maybe-visible true}) " and gain 3 [Credits]")}
                               :effect (req (wait-for (trash state side target {:cause-card card})
                                                      (gain-credits state side eid 3)))}
                              card nil)))}})
@@ -2934,7 +2935,8 @@
              :waiting-prompt true
              :choices {:card #(and (corp? %)
                                    (installed? %))}
-             :msg (msg "place 1 advancement counter on " (card-str state target))
+             :msg {:public (msg "place 1 advancement counter on " (card-str state target))
+                   :corp (msg "place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
              :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
                                     (if (> x 1)
                                       (continue-ability state side (ability (dec x)) card nil)
@@ -2968,7 +2970,8 @@
               :card #(and (corp? %)
                           (in-hand? %))}
     :async true
-    :msg (msg "trash " (quantify (count targets) "card") " from HQ")
+    :msg {:corp (msg "trash " (quantify (count targets) "facedown card") " from HQ (" (enumerate-cards targets) ")")
+          :public (msg "trash " (quantify (count targets) "card") " from HQ")}
     :effect (req (let [n (count targets)
                        t targets]
                    (wait-for (resolve-ability state side
