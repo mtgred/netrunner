@@ -1422,7 +1422,8 @@
     :choices {:max (req (count (:hand corp)))
               :card #(and (corp? %)
                           (in-hand? %))}
-    :msg (msg "trash " (quantify (count targets) "card") " from HQ")
+    :msg {:public (msg "trash " (quantify (count targets) "card") " from HQ")
+          :corp (msg "trash " (quantify (count targets) "card") " from HQ (" (enumerate-cards targets :sorted) ")")}
     :async true
     :cancel {:msg "decline trashing any cards from HQ"
              :async true

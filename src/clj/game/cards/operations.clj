@@ -17,7 +17,7 @@
    [game.core.cost-fns :refer [play-cost trash-cost]]
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [combine-abilities corp-install-up-to-n-cards corp-recur defcard do-meat-damage draw-abi drain-credits gain-credits-ability give-tags do-brain-damage reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand tutor-abi]]
+   [game.core.def-helpers :refer [combine-abilities corp-install-up-to-n-cards corp-recur defcard do-meat-damage draw-abi drain-credits gain-credits-ability give-tags do-brain-damage place-advancement-counter reorder-choice something-can-be-advanced? get-x-fn with-revealed-hand tutor-abi]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid make-result]]
@@ -1396,21 +1396,21 @@
 (defcard "Hansei Review"
   {:on-play
    {:async true
-    :effect (req (if (pos? (count (:hand corp)))
-                   (continue-ability
-                     state :corp
+    :effect (req (continue-ability
+                   state :corp
+                   (if (seq (:hand corp))
                      {:prompt "Choose a card in HQ to trash"
                       :choices {:max 1
                                 :all true
-                                :card #(and (corp? %)
-                                            (in-hand? %))}
-                      :msg "trash a card from HQ and gain 10 [Credits]"
+                                :card #(and (corp? %) (in-hand? %))}
+                      :msg {:public "trash a card from HQ and gain 10 [Credits]"
+                            :corp (msg "trash " (card-str state target {:maybe-visible true})
+                                       " from HQ and gain 10 [Credits]")}
                       :async true
                       :effect (req (wait-for (trash-cards state side targets {:cause-card card})
-                                             (gain-credits state side eid 10)))} card nil)
-                   (do
-                     (system-msg state side (str "uses " (:title card) " to gain 10 [Credits]"))
-                     (gain-credits state side eid 10))))}})
+                                             (gain-credits state side eid 10)))}
+                     (gain-credits-ability 10))
+                   card nil))}})
 
 (defcard "Hard-Hitting News"
   {:on-play
@@ -2832,18 +2832,11 @@
      :successful (give-tags 1)}}})
 
 (defcard "Seamless Launch"
-  {:on-play
-   {:prompt "Choose an installed card"
-    :change-in-game-state {:req (req (some #(and (corp? %)
-                                                 (installed? %)
-                                                 (not= :this-turn (installed? %)))
-                                           (all-installed state :corp)))}
-    :choices {:card #(and (corp? %)
-                          (installed? %)
-                          (not= :this-turn (installed? %)))}
-    :msg (msg "place 2 advancement counters on " (card-str state target))
-    :async true
-    :effect (effect (add-prop eid target :advance-counter 2 {:placed true}))}})
+  {:on-play (assoc (place-advancement-counter nil 2 "an installed card" #(not= :this-turn (installed? %)))
+                   :change-in-game-state {:req (req (some #(and (corp? %)
+                                                                (installed? %)
+                                                                (not= :this-turn (installed? %)))
+                                                          (all-installed state :corp)))})})
 
 (defcard "Secure and Protect"
   {:on-play
@@ -3042,7 +3035,8 @@
                                 :all true
                                 :card #(and (corp? %)
                                             (in-hand? %))}
-                      :msg (msg "shuffle " (quantify (count targets) "card") " from HQ into R&D")
+                      :msg {:public (msg "shuffle " (quantify (count targets) "card") " from HQ into R&D")
+                            :corp (msg "shuffle " (quantify (count targets) "facedown card") " from HQ into R&D (" (enumerate-cards targets :sorted) ")")}
                       :effect (req (doseq [c targets]
                                      (move state side c :deck))
                                    (shuffle! state side :deck))}
