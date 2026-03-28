@@ -1897,8 +1897,10 @@
          :label "Place advancement counters on a card in or protecting this server"
          :once :per-turn
          :choices {:req (req (same-server? card target))}
-         :msg (msg "place " (if (is-boosted-fn? state side) 3 2) " advancement counters on "
-                   (card-str state target))
+         :msg {:public (msg "place " (if (is-boosted-fn? state side) 3 2) " advancement counters on "
+                            (card-str state target))
+               :corp (msg "place " (if (is-boosted-fn? state side) 3 2) " advancement counters on "
+                          (card-str state target {:maybe-visible true}))}
          :async true
          :effect
          (req (let [n (if (is-boosted-fn? state side) 3 2)]

@@ -17,7 +17,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [combine-abilities corp-recur defcard
-                                  do-brain-damage do-net-damage draw-abi give-tags make-icon move-card-to-top-or-bottom offer-jack-out
+                                  do-brain-damage do-net-damage draw-abi give-tags make-icon move-card-to-top-or-bottom offer-jack-out place-advancement-counter
                                   reorder-choice get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw draw-up-to]]
    [game.core.effects :refer [any-effects get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-effect-by-uuid unregister-static-abilities update-disabled-cards]]
@@ -225,22 +225,6 @@
                                (not (rezzed? target))
                                (can-pay-to-rez? state side eid target args)))}
       :effect (req (rez state side eid target args))})))
-
-(defn place-advancement-counter
-  [advanceable-only]
-  {:label (if advanceable-only
-            "Place 1 advancement counter on a card that can be advanced"
-            "Place 1 advancement counter on a card")
-   :prompt (if advanceable-only
-            "Place 1 advancement counter on a card that can be advanced"
-            "Place 1 advancement counter on a card")
-   :choices {:req (req (and (corp? target)
-                            (installed? target)
-                            (or (not advanceable-only) (can-be-advanced? state target))))}
-   :msg {:public (msg "place 1 advancement counter on " (card-str state target))
-         :corp (msg "place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
-   :async true
-   :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))})
 
 (defn trace-ability
   "Run a trace with specified base strength.
@@ -4490,13 +4474,7 @@
                   :effect (req (wait-for (gain-credits state side 1)
                                          (end-run state side eid card)))}]
    :advanceable :always
-   :expend {:req (req (some ice? (all-installed state :corp)))
-            :cost [(->c :credit 1)]
-            :choices {:req (req (and (ice? target)
-                                     (installed? target)))}
-            :msg (msg "place 3 advancement counters on " (card-str state target))
-            :async true
-            :effect (effect (add-counter eid target :advancement 3 {:placed true}))}})
+   :expend (assoc (place-advancement-counter nil 3 "an ice" ice?) :cost [(->c :credit 1)])})
 
 (defcard "Tribunal"
   {:subroutines [runner-trash-installed-sub

@@ -18,7 +18,7 @@
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [corp-recur defcard do-net-damage draw-abi gain-credits-ability give-tags
-                                  offer-jack-out reorder-choice take-credits get-x-fn]]
+                                  offer-jack-out place-advancement-counter reorder-choice take-credits get-x-fn]]
    [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -2304,17 +2304,11 @@
 
 (defcard "Sericulture Expansion"
   (project-agenda {:mode :computed})
-  {:events [{:event :corp-turn-ends
-             :req (req (and (seq (all-installed state :corp))
-                            (can-pay? state side eid card nil [(->c :agenda 1)])))
-             :prompt "Choose a card to place 2 advancement counters on"
-             :player :corp
-             :cost [(->c :agenda 1)]
-             :choices {:card (every-pred corp? installed?)}
-             :msg {:public (msg "place 2 advancement counters on " (card-str state target))
-                   :corp (msg "place 2 advancement counters on " (card-str state target {:maybe-visible true}))}
-             :async true
-             :effect (req (add-prop state :corp eid target :advance-counter 2 {:placed true}))}]})
+  {:events [(assoc (place-advancement-counter nil 2)
+                   :event :corp-turn-ends
+                   :req (req (and (seq (all-installed state :corp))
+                                  (can-pay? state side eid card nil [(->c :agenda 1)])))
+                   :cost [(->c :agenda 1)])]})
 
 (defcard "Show of Force"
   {:on-score {:async true
@@ -2356,13 +2350,8 @@
                               card targets)))}]}))
 
 (defcard "Slash and Burn Agriculture"
-  {:expend {:req (req (some #(can-be-advanced? state %) (all-installed state :corp)))
-            :cost [(->c :credit 1)]
-            :choices {:req (req (can-be-advanced? state target))}
-            :msg (msg "place 2 advancement counters on " (card-str state target))
-            :async true
-            :effect (req
-                      (add-prop state :corp eid target :advance-counter 2 {:placed true}))}})
+  {:expend (assoc (place-advancement-counter true 2)
+                  :cost [(->c :credit 1)])})
 
 (defcard "SSL Endorsement"
   {:flags {:has-events-when-stolen true}
@@ -2469,14 +2458,8 @@
                             (gain-credits state side (make-eid state eid) cred-gain)
                             (continue-ability
                               state side
-                              {:req (req (seq (all-installed-corp state)))
-                               :choices {:card #(installed? %)}
-                               :waiting-prompt true
-                               :msg (msg "place 1 advancement counter on "
-                                         (card-str state target))
-                               :async true
-                               :effect (effect (add-prop :corp eid target :advance-counter 1
-                                                         {:placed true}))}
+                              (assoc (place-advancement-counter nil 1)
+                                     :req (req (seq (all-installed-corp state))))
                               card nil)))})]
     {:on-score (score-abi 3)
      :derezzed-events [{:event :corp-install

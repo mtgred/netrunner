@@ -1866,7 +1866,8 @@
                                             {:req (req (pos? (count (:hand corp))))
                                              :prompt "Choose 1 card to add to the top of R&D"
                                              :waiting-prompt true
-                                             :msg "add 1 card from HQ to the top of R&D"
+                                             :msg {:public "add 1 card from HQ to the top of R&D"
+                                                   :corp (msg "add facedown " (:title target) " from HQ to the top of R&D")}
                                              :choices {:card #(and (in-hand? %)
                                                                    (corp? %))
                                                        ;; just incase everything gets jinja'd out of hand

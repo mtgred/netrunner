@@ -3,7 +3,7 @@
     [clojure.string :as str]
     [game.core.access :refer [access-bonus]]
     [game.core.board :refer [all-installed get-all-cards]]
-    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? in-hand? operation? runner? ]]
+    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? in-hand? installed? operation? runner? ]]
     [game.core.card-defs :as card-defs]
     [game.core.choose-one :refer [choose-one-helper]]
     [game.core.damage :refer [damage]]
@@ -17,7 +17,7 @@
     [game.core.payment :refer [build-cost-string can-pay?]]
     [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [cancellable clear-wait-prompt]]
-    [game.core.props :refer [add-counter]]
+    [game.core.props :refer [add-counter add-prop]]
     [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
     [game.core.runs :refer [can-run-server? make-run jack-out]]
     [game.core.say :refer [play-sfx system-msg system-say]]
@@ -565,16 +565,19 @@
   "Looks at the top QUANT cards of target-side's deck. Completes an eid."
   [state side eid card target-side quant]
   (let [target-cards (take quant (get-in @state [target-side :deck]))
-        zone-name (if (= :corp target-side) "R&D" "the stack")]
+        zone-name (if (= :corp target-side) "R&D" "the stack")
+        scry-side side
+        scry-fn (if (= 1 (count target-cards))
+                  (msg "the top card of " zone-name " is " (:title (first target-cards)))
+                  (msg "the top " (quantify quant "card") " of " zone-name " are (top->bottom): " (enumerate-cards target-cards)))]
     (resolve-ability
       state side eid
       {:player side
        :waiting-prompt true
        :req (req (seq target-cards))
        :choices ["OK"]
-       :prompt (if (= 1 (count target-cards))
-                 (msg "the top card of " zone-name " is " (:title (first target-cards)))
-                 (msg "the top " (quantify quant "card") " of " zone-name " are (top->bottom): " (enumerate-cards target-cards)))}
+       :msg {scry-side scry-fn}
+       :prompt scry-fn}
       card nil)))
 
 (defn with-revealed-hand
@@ -613,6 +616,24 @@
                                  (when-not was-open? (conceal-hand state target-side))
                                  (unregister-ev-callback)
                                  (effect-completed state side eid)))))})))
+
+
+(defn place-advancement-counter
+  ([advanceable-only] (place-advancement-counter advanceable-only 1))
+  ([advanceable-only qty] (place-advancement-counter advanceable-only qty "a card" nil))
+  ([advanceable-only qty card-line pred]
+   (let [label (str "Place " (quantify qty "advancement counter") " on " card-line (if advanceable-only " that can be advanced"))]
+     {:label label
+      :prompt label
+      :choices {:req (req (and (corp? target)
+                               (installed? target)
+                               (or (not pred)
+                                   (pred target))
+                               (or (not advanceable-only) (can-be-advanced? state target))))}
+      :msg {:public (msg "place " (quantify qty "advancement counter") " on " (card-str state target))
+            :corp (msg "place " (quantify qty "advancement counter") " on " (card-str state target {:maybe-visible true}))}
+      :async true
+      :effect (effect (add-prop eid target :advance-counter qty {:placed true}))})))
 
 (defn make-icon
   [text card]
