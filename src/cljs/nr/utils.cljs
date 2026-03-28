@@ -314,6 +314,41 @@
   [input]
   (render-input input icon-patterns))
 
+(defn- apply-single-tag
+  "Split text on <tag-name>content</tag-name> pairs. Returns a vector of
+  surrounding text and [tag-kw (render-fn content)] elements."
+  [tag-name tag-kw render-fn text]
+  (let [pattern (re-pattern (str "(?s)<" tag-name ">(.*?)</" tag-name ">"))
+        parts (vec (.split text pattern))]
+    (loop [result [] parts parts is-content false]
+      (if (empty? parts)
+        result
+        (let [part (first parts)]
+          (recur
+            (cond
+              is-content  (conj result [tag-kw (render-fn part)])
+              (seq part)  (conj result part)
+              :else       result)
+            (rest parts)
+            (not is-content)))))))
+
+(defn- expand-tag
+  "Expand a single html tag and render the content"
+  [tag-name tag-kw segs]
+  (mapcat #(if (string? %) (apply-single-tag tag-name tag-kw render-icons %) [%]) segs))
+
+(defn render-safe-html
+  "Convert a safe subset of HTML tags found in card text to Reagent elements,
+  applying icon rendering to all text segments. Only handles the four tags
+  present in NetrunnerDB card data: <strong>, <em>, <ul>, <li>."
+  [text]
+  (when (string? text)
+    (->> (apply-single-tag "ul" :ul #(into [:ul] (apply-single-tag "li" :li render-icons %)) text)
+         (expand-tag "strong" :strong)
+         (expand-tag "em" :em)
+         (map #(if (string? %) (render-icons %) %))
+         (into [:<>]))))
+
 (defn render-cards
   "Render all cards in a given text or HTML fragment input"
   [input]
