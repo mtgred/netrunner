@@ -24,7 +24,7 @@
     (.setSeed rand seed-bytes)
     rand))
 
-(defn- shuffle-coll
+(defn shuffle-coll
   ;; Ref: https://github.com/clojure/clojure/blob/ce55092f2b2f5481d25cff6205470c1335760ef6/src/clj/clojure/core.clj#L7342
   ;; we're just substituting in a good rng source (1024 bits of entropy) rather than the default used by java (40 bits of entropy)
   ;; this should theoretically be invisible, since any random slice of the possible sets of deck orderings is also random,
