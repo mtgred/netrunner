@@ -13,10 +13,10 @@
    [nr.local-storage :as ls]
    [nr.translations :refer [clean-input tr tr-data tr-faction tr-format tr-set
                             tr-side tr-type]]
-   [nr.utils :refer [banned-span deck-points-card-span faction-icon
-                     format->slug get-image-path image-or-face influence-dots
+   [nr.utils :refer [banned-span buildable-format->slug deck-points-card-span faction-icon
+                     get-image-path image-or-face influence-dots
                      non-game-toast render-icons restricted-span rotated-span
-                     set-scroll-top slug->format store-scroll-top
+                     set-scroll-top slug->buildable-format store-scroll-top
                      tr-non-game-toast]]
    [reagent.core :as r]))
 
@@ -386,7 +386,7 @@
       (when show-extra-info
         [:<>
          [:div.formats
-          (doall (for [[k name] (-> slug->format butlast)]
+          (doall (for [[k name] (-> slug->buildable-format butlast)]
                    (let [status (get-in card [:format (keyword k)] "unknown")
                          c (text-class-for-status status)]
                      ^{:key k}
@@ -452,7 +452,7 @@
 (defn filter-format [fmt cards]
   (if (= "All" fmt)
     cards
-    (let [fmt (keyword (get format->slug fmt))]
+    (let [fmt (keyword (get buildable-format->slug fmt))]
       (filter #(get-in % [:format fmt :legal]) cards))))
 
 (defn filter-title [query cards]
@@ -605,7 +605,7 @@
         sets-to-display (if (show-alt-art? true)
                           (concat set-names @alt-art-sets)
                           set-names)
-        formats (-> format->slug keys butlast)]
+        formats (-> buildable-format->slug keys butlast)]
     [:div
      [simple-filter-builder (tr [:card-browser-form_format "Format"])
       state :format-filter formats tr-format]
