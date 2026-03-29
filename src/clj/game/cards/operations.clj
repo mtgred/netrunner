@@ -1174,7 +1174,7 @@
                :cancel {:msg "do nothing"}
                :msg {:corp (msg "place " (quantify (full-servers state) "advancement counter") " on " (card-str state target {:maybe-visible true}))
                      :public (msg "place " (quantify (full-servers state) "advancement counter") " on " (card-str state target))}
-               :effect (req (add-counter state state eid target :advancement (full-servers state)))}}))
+               :effect (req (add-prop state state eid target :advance-counter (full-servers state) {:placed true}))}}))
 
 (defcard "Focus Group"
   {:on-play
@@ -2433,8 +2433,7 @@
     :async true
     :waiting-prompt true
     :effect (req (wait-for
-                   (corp-install state side target nil {:ignore-all-cost true
-                                                        :msg-keys {:install-source card
+                   (corp-install state side target nil {:msg-keys {:install-source card
                                                                    :display-origin true}
                                                         :install-state :rezzed
                                                         :combined-credit-discount 10})

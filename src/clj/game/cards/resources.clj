@@ -855,10 +855,10 @@
                                      [{:event :breach-server
                                        :automatic :pre-breach
                                        :duration :until-runner-turn-ends
-                                       :req (req (#{:hq :rd} target))
+                                       :req (req (#{:hq :rd} (:server context)))
                                        :once :per-turn
                                        :msg (msg "access 2 additional cards from " (zone->name target))
-                                       :effect (effect (access-bonus :runner target 2))}]))}})]
+                                       :effect (effect (access-bonus :runner (:server context) 2))}]))}})]
     {:events [{:event :runner-turn-begins
                :async true
                :interactive (req true)
@@ -1446,7 +1446,7 @@
   {:events [{:event :breach-server
              :automatic :pre-breach
              :req (req (and (threat-level 3 state)
-                            (= :rd target)
+                            (= :rd (:server context))
                             (= :archives (first (:server run)))))
              :msg "access 1 additional card"
              :effect (effect (access-bonus :rd 1))}]
@@ -2262,9 +2262,9 @@
    :events [{:event :breach-server
              :automatic :pre-breach
              :req (req (and tagged
-                            (or (= target :rd) (= target :hq))))
-             :msg (msg "access 1 additional card from " (zone->name target))
-             :effect (effect (access-bonus target 1))}]})
+                            (#{:hq :rd} (:server context))))
+             :msg (msg "access 1 additional card from " (zone->name (:server context)))
+             :effect (effect (access-bonus (:server context) 1))}]})
 
 (defcard "\"Pretty\" Mary da Silva"
   {:implementation "only works after other abilities increasing the number of accesses have resolved"
@@ -2272,7 +2272,7 @@
              :automatic :last
              :async true
              :interactive (req true)
-             :req (req (and (= :rd target)
+             :req (req (and (= :rd (:server context))
                             (not (get-only-card-to-access state))))
              :effect (req
                        (let [num-access (:random-access-limit (num-cards-to-access state side :rd nil))]
@@ -2442,7 +2442,7 @@
 (defcard "Neutralize All Threats"
   {:events [(breach-access-bonus :hq 1)
             {:event :breach-server
-             :req (req (and (= target :archives)
+             :req (req (and (= :archives (:server context))
                             (seq (filter :trash (:discard corp)))))
              :effect (req (swap! state assoc-in [:per-turn (:cid card)] true))}
             {:event :pre-trash
@@ -3579,12 +3579,12 @@
               {:event :pre-runner-draw
                :req (req (and (first-event? state :runner :pre-runner-draw)
                               (< 1 (count (:deck runner)))
-                              (pos? target)))
+                              (pos? (:count context))))
                :once :per-turn
                :once-key :the-class-act-put-bottom
                :async true
                :effect
-               (req (let [cards (set-aside-for-me state :runner eid (take (inc target) (:deck runner)))]
+               (req (let [cards (set-aside-for-me state :runner eid (take (inc (:count context)) (:deck runner)))]
                       (continue-ability
                         state side
                         {:waiting-prompt true
@@ -3796,10 +3796,10 @@
              :automatic :pre-breach
              :async true
              :interactive (req true)
-             :req (req (#{:rd :hq} target))
+             :req (req (#{:rd :hq} (:server context)))
              :change-in-game-state {:silent true :req (req (pos? (get-counters card :power)))}
              :effect (req
-                       (let [target-server target]
+                       (let [target-server (:server context)]
                          (continue-ability
                            state side
                            {:prompt (msg "How many additional " (zone->name target-server) " accesses do you want to make?")

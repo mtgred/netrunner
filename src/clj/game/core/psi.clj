@@ -32,7 +32,7 @@
           (pay state side (make-eid state eid) card (->c :credit bet))
           (system-msg state side (:msg async-result))
           (clear-wait-prompt state opponent)
-          (wait-for (trigger-event-simult state side (make-eid state eid) :reveal-spent-credits nil (get-in @state [:psi :corp]) (get-in @state [:psi :runner]))
+          (wait-for (trigger-event-simult state side (make-eid state eid) :reveal-spent-credits nil {:corp-credits (get-in @state [:psi :corp]) :runner-credits (get-in @state [:psi :runner])})
                     (let [card-side (if (corp? card) :corp :runner)]
                       (if-let [ability (if (= bet opponent-bet) (:equal psi) (:not-equal psi))]
                         (do (swap! state update-in [:stats card-side :psi-game :wins] (fnil + 0) 1)

@@ -7467,6 +7467,28 @@
       (is (= (if fire? 1 0) (count-bad-pub state)) "BP when fired")
       (is (= "Take a Dive" (get-in @state [:runner :rfg 0 :title]))))))
 
+(deftest take-a-dive-vs-redirect
+  ;; CR says that the precondition for the run (HQ/Archives) needs to be there
+  ;; when the run becomes successful.
+  (doseq [fire? [true nil]]
+    (do-game
+      (new-game {:corp {:hand ["Rime" "Proprionegation"]}
+                 :runner {:hand ["Take a Dive"]}})
+      (play-and-score state "Proprionegation")
+      (play-from-hand state :corp "Rime" "HQ")
+      (rez state :corp (get-ice state :hq 0))
+      (take-credits state :corp)
+      (play-from-hand state :runner "Take a Dive")
+      (click-prompt state :runner "HQ")
+      (run-continue-until state :encounter-ice)
+      (when fire?
+        (card-subroutine state :corp (get-ice state :hq 0) 0))
+      (card-ability state :corp (get-scored state :corp 0) 0)
+      (run-continue-until state :success)
+      (is (no-prompt? state :corp))
+      (is (= 0 (count-bad-pub state)) "BP when fired")
+      (is (= "Take a Dive" (get-in @state [:runner :rfg 0 :title]))))))
+
 (deftest test-run-programs-hosted-after-install-get-returned-to-stack-issue-1081
     ;; Programs hosted after install get returned to Stack. Issue #1081
     (do-game

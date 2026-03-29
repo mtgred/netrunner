@@ -251,7 +251,7 @@
   (when same-side?
     (-> prompt
         (update :eid #(when (:eid %) (select-keys % [:eid])))
-        (update :card #(not-empty (card-summary % state side)))
+        (update :card #(not-empty (select-keys % [:cid :title :printed-title :code :side])))
         (update :choices (fn [choices]
                            (if (sequential? choices)
                              (->> choices
@@ -351,7 +351,8 @@
 (defn corp-summary
   [corp state side]
   (let [corp-player? (= side :corp)
-        install-list (:install-list corp)]
+        install-list (:install-list corp)
+        melies-target (get-in corp [:identity :melies-target])]
     (-> (player-summary corp state side corp-player? corp-keys)
         (assoc :agenda-point-req (agenda-points-required-to-win state :corp))
         (update :deck deck-summary corp-player? corp)
@@ -361,7 +362,9 @@
           :deck-count (count (:deck corp))
           :hand-count (count (:hand corp))
           :servers (servers-summary state side))
-        (cond-> (and corp-player? install-list) (assoc :install-list install-list)))))
+        (cond-> (and corp-player? install-list) (assoc :install-list install-list))
+        (cond-> (and corp-player? melies-target)
+                (assoc-in [:identity :melies-target] melies-target)))))
 
 (def runner-keys
   [:rig

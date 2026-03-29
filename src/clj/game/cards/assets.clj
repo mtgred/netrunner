@@ -1258,9 +1258,10 @@
 (defcard "Fumiko Yamamori"
   {:events [{:event :reveal-spent-credits
              :async true
-             :req (req (and (some? (first targets))
-                            (some? (second targets))
-                            (not= (first targets) (second targets))))
+             :req (req (let [{:keys [corp-credits runner-credits]} context]
+                         (and (some? corp-credits)
+                              (some? runner-credits)
+                              (not= corp-credits runner-credits))))
              :msg "do 1 meat damage"
              :effect (effect (damage eid :meat 1 {:card card}))}]})
 
@@ -1446,11 +1447,11 @@
 
 (defcard "Hyoubu Research Facility"
   {:events [{:event :reveal-spent-credits
-             :req (req (and (some? (first targets))
+             :req (req (and (some? (:corp-credits context))
                             (first-event? state side :reveal-spent-credits)))
-             :msg (msg "gain " target " [Credits]")
+             :msg (msg "gain " (:corp-credits context) " [Credits]")
              :async true
-             :effect (effect (gain-credits :corp eid target))}]})
+             :effect (effect (gain-credits :corp eid (:corp-credits context)))}]})
 
 (defcard "Ibrahim Salem"
   (let [trash-ability (fn [card-type]
@@ -1847,10 +1848,10 @@
                             state side
                             {:req (req
                                     (and tagged
-                                         (> (:random-access-limit (num-cards-to-access state :runner target nil)) 1)
+                                         (> (:random-access-limit (num-cards-to-access state :runner (:server context) nil)) 1)
                                          (not (get-only-card-to-access state))))
                              :msg (msg "make the runner access 1 card fewer")
-                             :effect (req (access-bonus state :runner target -1))}
+                             :effect (req (access-bonus state :runner (:server context) -1))}
                             card targets))}]})
 
 (defcard "Luana Campos"
@@ -2032,7 +2033,7 @@
                                       (continue-ability
                                         state side
                                         (moon-pool-place-advancements agenda-count)
-                                        source-card nil)
+                                        card nil)
                                       (effect-completed state side eid)))))
            :cancel shuffle-my-deck!}
           moon-pool-discard-ability
@@ -3050,7 +3051,7 @@
    :abilities [{:label "Shuffle up to 2 cards from Archives into R&D"
                 :cost [(->c :remove-from-game)]
                 :async true
-                :effect (effect (shuffle-into-rd-effect eid source-card 2))}]})
+                :effect (effect (shuffle-into-rd-effect eid card 2))}]})
 
 (defcard "Storgotic Resonator"
   {:abilities [{:action true
