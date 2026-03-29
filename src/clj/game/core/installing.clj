@@ -249,6 +249,7 @@
                 (if-not (agenda? moved-card)
                   (rez state side (assoc eid :source-type :rez :source (-> args :msg-keys :install-source))
                        moved-card {:ignore-cost :all-costs
+                                   :no-warning (:no-warning args)
                                    :no-msg no-msg})
                   (reveal-if-unrezzed state side eid moved-card)))
               ;; Ignore rez cost only
@@ -257,6 +258,7 @@
                 (checkpoint state nil (make-eid state eid))
                 (wait-for (rez state side (make-eid state (assoc eid :source-type :rez))
                                moved-card {:ignore-cost :rez-costs
+                                           :no-warning (:no-warning args)
                                            :no-msg no-msg})
                           (reveal-if-unrezzed state side eid moved-card)))
               ;; Pay costs
@@ -269,7 +271,8 @@
                   (wait-for
                     (checkpoint state nil (make-eid state eid))
                     (wait-for
-                      (rez state side moved-card {:no-msg no-msg})
+                      (rez state side moved-card {:no-msg no-msg
+                                                  :no-warning (:no-warning args)})
                       (reveal-if-unrezzed state side eid moved-card)))
                   :else
                   (wait-for
