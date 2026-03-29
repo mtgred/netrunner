@@ -635,6 +635,23 @@
       :async true
       :effect (effect (add-prop eid target :advance-counter qty {:placed true}))})))
 
+(defn look-at-the-top
+  [looking-side deck-side qty]
+  (let [zone (if (= looking-side :corp) "R&D" "the stack")
+        seen (fn [state] (min qty (count (get-in @state [deck-side :deck]))))]
+    {:msg {:public (msg "look at the top " (quantify (seen state) "card") " of " zone)
+           looking-side (msg "look at the top " (quantify (seen state) "card") " of " zone " (top->bottom): " (enumerate-cards (take qty (get-in @state [deck-side :deck]))))}
+     :async true
+     :waiting-prompt true
+     :change-in-game-state {:silent true
+                            :req (req (seq (get-in @state [deck-side :deck])))}
+     :effect (req (resolve-ability
+                    state side eid
+                    {:prompt (msg "The top cards of " zone " are (top->bottom): "
+                                 (enumerate-cards (take qty (get-in @state [deck-side :deck]))))
+                     :choices ["OK"]}
+                    card nil))}))
+
 (defn make-icon
   [text card]
   [text (:cid card) (faction-label card)])

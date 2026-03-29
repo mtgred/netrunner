@@ -802,7 +802,8 @@
     {:advanceable :always
      :subroutines [{:label "Gain 1 [Credit]. Place 1 advancement counter"
                     :breakable breakable-fn
-                    :msg (msg "gain 1 [Credit] and place 1 advancement counter on " (card-str state target))
+                    :msg {:public (msg "gain 1 [Credit] and place 1 advancement counter on " (card-str state target))
+                          :corp (msg "gain 1 [Credit] and place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
                     :prompt "Choose an installed card"
                     :choices {:card installed?}
                     :async true

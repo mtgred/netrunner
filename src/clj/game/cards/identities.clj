@@ -1524,8 +1524,7 @@
                :interactive (req true)
                :waiting-prompt true
                :choices ["HQ" "R&D" "Archives"]
-               :msg {:runner (msg "secretly choose a server")
-                     :public (msg "secretly choose a server")
+               :msg {:public "secretly choose a server"
                      :corp (msg "secretly choose " (server->face target)
                                 " (" target ")")}
                :effect (req (update! state side (assoc card :melies-target target)))}

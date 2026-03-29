@@ -91,17 +91,6 @@
   {:msg (str "gain " (apply str (repeat n "[Click]")))
    :effect (req (gain-clicks state side n))})
 
-(defn- place-n-advancement-counters
-  ([n] (place-n-advancement-counters n nil))
-  ([n must-be-advanceable?]
-   {:msg (msg "place " (quantify n " advancement counter") " on "
-              (card-str state target))
-    :choices {:req (req (and (installed? target)
-                             (or (not must-be-advanceable?)
-                                 (can-be-advanced? state target))))}
-    :async true
-    :effect (effect (add-prop eid target :advance-counter n {:placed true}))}))
-
 (defn- trash-type
   "Trash an installed card of the given type"
   ([type f loud?] (trash-type type f loud? 1 nil))
@@ -1210,7 +1199,7 @@
                                                        (system-msg state :corp payment-str))
                                                      (continue-ability
                                                        state :corp
-                                                       (place-n-advancement-counters c)
+                                                       (place-advancement-counter nil c)
                                                        card nil))
                                            (effect-completed state side eid))))}))
                        card nil)))}})
@@ -1645,7 +1634,8 @@
       :choices {:max (req (count (:hand corp)))
                 :card #(and (corp? %)
                             (in-hand? %))}
-      :msg (msg "trash " (quantify (count targets) "card") " in HQ and turn Archives face-down")
+      :msg {:public (msg "trash " (quantify (count targets) "card") " in HQ and turn Archives face-down")
+            :corp (msg "trash " (quantify (count targets) "card") " in HQ (" (enumerate-cards targets :sorted) ") and turn Archives face-down")}
       :async true
       :effect (req (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                              (doseq [c (:discard (:corp @state))]
@@ -2914,12 +2904,11 @@
     :effect (req (let [c (str->int target)]
                    (continue-ability
                      state side
-                     (place-n-advancement-counters c :can-be-advanced)
+                     (place-advancement-counter true c)
                      card nil)))}})
 
 (defcard "Shipment from Tennin"
-  {:on-play (assoc (place-n-advancement-counters 2)
-                   :req (req (not-last-turn? state :runner :successful-run)))})
+  {:on-play (assoc (place-advancement-counter nil 2) :req (req (not-last-turn? state :runner :successful-run)))})
 
 (defcard "Shipment from Vladisibirsk"
   (letfn [(ability [x]
