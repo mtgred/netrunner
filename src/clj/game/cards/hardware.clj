@@ -1548,13 +1548,15 @@
   {:static-abilities [(mu+ 1)]
    :events [{:event :run
              :interactive (req true)
+             :change-in-game-state {:silent true
+                                    :req (req (seq (:hand runner)))}
              :optional
-             {:req (req (some #(and (hardware? %)
-                                    (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus 1}))
-                              (all-cards-in-hand* state :runner)))
-              :prompt "Pay 1 [Credit] to install a piece of hardware?"
+             {:prompt "Pay 1 [Credit] to install a piece of hardware?"
               :yes-ability {:async true
                             :prompt "Choose a piece of hardware"
+                            :req (req (some #(and (hardware? %)
+                                                  (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus 1}))
+                                            (all-cards-in-hand* state :runner)))
                             :choices {:req (req (and (in-hand*? state target)
                                                      (hardware? target)
                                                      (runner-can-pay-and-install? state side (assoc eid :source card) target {:cost-bonus 1})))}
