@@ -213,7 +213,7 @@
                               :source-type :subroutine})]
      (resolve-subroutine! state side eid ice sub)))
   ([state side eid ice sub]
-   (wait-for (trigger-event-simult state side (make-eid state eid) :pre-resolve-subroutine nil sub ice)
+   (wait-for (trigger-event-simult state side (make-eid state eid) :pre-resolve-subroutine nil {:sub sub :ice ice})
              ;; this is for cards like marcus batty
              (when-not (:external-trigger sub)
                (update! state :corp (resolve-subroutine ice sub)))
