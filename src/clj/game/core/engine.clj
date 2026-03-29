@@ -267,26 +267,27 @@
 
 (defn- resolve-ability-eid
   [state side {:keys [eid choices] :as ability} card targets]
-  (cond
-    ;; Only has the eid, in effect a nil ability
-    (and eid (= 1 (count ability)))
-    (effect-completed state side eid)
-    ;; This was called directly without an eid present
-    (and ability (not eid))
-    (resolve-ability state side ability card targets)
-    ;; Both ability and eid are present, so we're good to go
-    (and ability eid)
-    (let [ability (assoc-in ability [:eid :source] card)
-          ab (select-ability-kw ability)
-          ability-fn (get @ability-types ab)]
-      (cond
-        ab (ability-fn state side ability card targets)
-        choices (check-choices state side ability card targets)
-        :else (check-ability state side ability card targets)))
-    ;; Something has gone terribly wrong, error out
-    :else
-    (timbre/error (Exception. (str "Ability is nil????" ability card targets))
-                  (n-last-logs state 5))))
+  (let [card (or card (:source eid))]
+    (cond
+      ;; Only has the eid, in effect a nil ability
+      (and eid (= 1 (count ability)))
+      (effect-completed state side eid)
+      ;; This was called directly without an eid present
+      (and ability (not eid))
+      (resolve-ability state side ability card targets)
+      ;; Both ability and eid are present, so we're good to go
+      (and ability eid)
+      (let [ability (assoc-in ability [:eid :source] card)
+            ab (select-ability-kw ability)
+            ability-fn (get @ability-types ab)]
+        (cond
+          ab (ability-fn state side ability card targets)
+          choices (check-choices state side ability card targets)
+          :else (check-ability state side ability card targets)))
+      ;; Something has gone terribly wrong, error out
+      :else
+      (timbre/error (Exception. (str "Ability is nil????" ability card targets))
+                    (n-last-logs state 5)))))
 
 ;;; Checking functions for resolve-ability
 (defn- check-choices

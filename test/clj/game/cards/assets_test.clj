@@ -3736,6 +3736,7 @@
     (card-ability state :corp (get-content state :remote1 0) 0)
     (click-card state :corp "PAD Campaign")
     (click-card state :corp "Project Atlas")
+    (is (last-log-contains? state "Moon Pool") "Moon pool mentioned - source carried through")
     (is (= 2 (count (:discard (get-corp)))) "Two cards trashed")
     (click-card state :corp "PAD Campaign")
     (click-prompt state :corp "Done")

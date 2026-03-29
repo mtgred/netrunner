@@ -2034,7 +2034,7 @@
                                       (continue-ability
                                         state side
                                         (moon-pool-place-advancements agenda-count)
-                                        source-card nil)
+                                        card nil)
                                       (effect-completed state side eid)))))
            :cancel shuffle-my-deck!}
           moon-pool-discard-ability
@@ -3051,7 +3051,7 @@
    :abilities [{:label "Shuffle up to 2 cards from Archives into R&D"
                 :cost [(->c :remove-from-game)]
                 :async true
-                :effect (effect (shuffle-into-rd-effect eid source-card 2))}]})
+                :effect (effect (shuffle-into-rd-effect eid card 2))}]})
 
 (defcard "Storgotic Resonator"
   {:abilities [{:action true
