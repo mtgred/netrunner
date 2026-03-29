@@ -62,7 +62,7 @@
   [state side eid dmg-type n {:keys [card cause suppress-checkpoint]}]
   (swap! state dissoc-in [:damage :chosen-damage])
   (damage-choice-priority state)
-  (wait-for (trigger-event-simult state side :pre-resolve-damage nil dmg-type side n)
+  (wait-for (trigger-event-simult state side :pre-resolve-damage nil {:damage-type dmg-type :amount n})
             (if (not (pos? n))
               (do ;; shouldn't be possible, should be handled before getting here
                 (timbre/error (str "attempted to resolve 0 damage: \n" (n-last-logs state 5) "\n"))

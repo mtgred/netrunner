@@ -2672,11 +2672,10 @@
    :leave-play (req (swap! state update :damage dissoc :damage-choose-runner))
    :events [{:event :pre-resolve-damage
              :async true
-             :req (req (and (pos? (last targets))
+             :req (req (and (pos? (:amount context))
                             (runner-can-choose-damage? state)
                             (not (get-in @state [:damage :damage-replace]))))
-             :effect (req (let [dtype target
-                                dmg (last targets)
+             :effect (req (let [{dtype :damage-type dmg :amount} context
                                 hand (:hand runner)]
                             (continue-ability
                               state :runner

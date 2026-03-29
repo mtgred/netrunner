@@ -643,10 +643,10 @@
              :effect (effect (enable-corp-damage-choice))}
             {:event :pre-resolve-damage
              :optional
-             {:req (req (and (= target :net)
+             {:req (req (and (= :net (:damage-type context))
                              (corp-can-choose-damage? state)
-                             (pos? (last targets))
-                             (empty? (filter #(= :net (:damage-type (first %))) (turn-events state :runner :damage)))
+                             (pos? (:amount context))
+                             (no-event? state :runner :damage #(= :net (:damage-type (first %))))
                              (pos? (count (:hand runner)))))
               :waiting-prompt true
               :prompt "Choose the first card to trash?"
