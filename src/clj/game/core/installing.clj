@@ -9,7 +9,7 @@
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.costs :refer [total-available-credits]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-    [game.core.engine :refer [checkpoint register-pending-event pay queue-event register-events trigger-event-simult unregister-events]]
+    [game.core.engine :refer [checkpoint register-pending-event pay queue-event register-events unregister-events]]
     [game.core.effects :refer [is-disabled-reg? register-static-abilities unregister-static-abilities update-disabled-cards]]
     [game.core.flags :refer [turn-flag? zone-locked?]]
     [game.core.hosting :refer [has-ancestor? host]]
@@ -347,11 +347,10 @@
       (wait-for
         (pay state side (make-eid state (assoc eid :action action)) card costs)
         (if-let [payment-str (:msg async-result)]
-          (if (= server "New remote")
-            (wait-for (trigger-event-simult state side :server-created nil card)
-                      (make-rid state)
-                      (corp-install-continue state side eid card server args slot payment-str))
-            (corp-install-continue state side eid card server args slot payment-str))
+          (do (when (= server "New remote")
+                (queue-event state :server-created nil)
+                (make-rid state))
+              (corp-install-continue state side eid card server args slot payment-str))
           (effect-completed state side eid)))
       ;; NOTE - Diwan and Network Exchange both alter the cost of installs
       ;; if it's not ice AND we can't afford it, there's nothing we can do
