@@ -431,6 +431,7 @@
     ?reply-fn :?reply-fn
     id :id
     timestamp :timestamp}]
+  (app-state/deregister-user! uid)
   (lobby/lobby-thread
     (let [{:keys [started state] :as lobby} (app-state/uid->lobby uid)]
       (when (and started state)
@@ -438,9 +439,7 @@
         (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
           (handle-message-and-send-diffs!
             lobby? nil nil (str (:username user) " has left the game.")))))
-    (lobby/send-lobby-list uid)
     (lobby/broadcast-lobby-list)
-    (app-state/deregister-user! uid)
     (when ?reply-fn (?reply-fn true))
     (lobby/log-delay! timestamp id)))
 
