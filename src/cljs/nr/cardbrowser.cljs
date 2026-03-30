@@ -13,9 +13,9 @@
    [nr.local-storage :as ls]
    [nr.translations :refer [clean-input tr tr-data tr-faction tr-format tr-set
                             tr-side tr-type]]
-   [nr.utils :refer [banned-span buildable-format->slug deck-points-card-span faction-icon
-                     get-image-path image-or-face influence-dots
-                     non-game-toast render-icons restricted-span rotated-span
+   [nr.utils :refer [banned-span deck-points-card-span faction-icon
+                     buildable-format->slug get-image-path image-or-face influence-dots
+                     non-game-toast render-safe-html restricted-span rotated-span
                      set-scroll-top slug->buildable-format store-scroll-top
                      tr-non-game-toast]]
    [reagent.core :as r]))
@@ -381,7 +381,7 @@
      [:div.text.card-body
       [:p [:span.type (tr-type (:type card))]
        (if-not subtypes "" (str ": " subtypes))]
-      [:pre (render-icons (tr-data :text (get @all-cards (:title card))))]
+      [:pre (render-safe-html (tr-data :text (get @all-cards (:title card))))]
 
       (when show-extra-info
         [:<>
