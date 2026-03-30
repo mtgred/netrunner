@@ -13,7 +13,7 @@
    [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
    [game.core.quick-draft :refer [check-quick-draft]]
    [game.core.say :refer [system-msg system-say implementation-msg]]
-   [game.core.shuffling :refer [shuffle-into-deck]]
+   [game.core.shuffling :refer [shuffle-into-deck shuffle-coll]]
    [game.core.state :refer [new-state]]
    [game.macros :refer [wait-for]]
    [game.quotes :as quotes]
@@ -28,8 +28,9 @@
   "Creates a shuffled draw deck (R&D/Stack) from the given list of cards.
   Loads card data from the server-card map if available."
   [deck]
-  (shuffle (mapcat #(map build-card (repeat (:qty %) (assoc (:card %) :art (:art %))))
-                   (shuffle (vec (:cards deck))))))
+  (->> deck :cards vec
+       (mapcat #(map build-card (repeat (:qty %) (assoc (:card %) :art (:art %)))))
+       shuffle-coll vec))
 
 ;;; Functions for the creation of games and the progression of turns.
 (defn mulligan
