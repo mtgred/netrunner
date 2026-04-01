@@ -23,11 +23,24 @@
   [user]
   (let [key (get-in user [:options :pronouns])]
     (case key
+      "they" "their"
       "she" "her"
-      "he" "his"
-      "it" "its"
-      "heit" "its"
       "sheit" "its"
+      "shethey" "their"
+      "he" "his"
+      "heit" "its"
+      "hethey" "their"
+      "heshe" "their"
+      "heshe2" "her"
+      "it" "its"
+      "faefaer" "faer"
+      "ne" "nir"
+      "ve" "vis"
+      "ey" "eir"
+      "zehir" "hir"
+      "zezir" "zir"
+      "xe" "xyr"
+      "xi" "xir"
       "their")))
 
 (defn- insert-pronouns
