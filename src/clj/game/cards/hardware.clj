@@ -186,7 +186,7 @@
      :automatic :pre-breach
      :async true
      :interactive (req true)
-     :req (req (and (= target :archives)
+     :req (req (and (= :archives (:server context))
                     (not= (:max-access run) 0)
                     (not-empty (:discard corp))))
      :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
@@ -824,8 +824,8 @@
 (defcard "Docklands Pass"
   {:events [(breach-access-bonus
              :hq 1
-             {:req (req (and (= :hq target)
-                             (first-event? state side :breach-server #(= :hq (first %)))))
+             {:req (req (and (= :hq (:server context))
+                             (first-event? state side :breach-server #(= :hq (:server (first %))))))
               :msg "access 1 additional card from HQ"})]})
 
 (defcard "Doppelgänger"
@@ -2232,11 +2232,11 @@
   {:static-abilities [(mu+ 1)]
    :events [{:event :breach-server
              :automatic :pre-breach
-             :optional {:req (req (or (= target :rd) (= target :hq)))
+             :optional {:req (req (#{:hq :rd} (:server context)))
                         :prompt "Tag 1 tag to see an additional card?"
                         :yes-ability {:cost [(->c :gain-tag 1)]
-                                      :msg (msg "access 1 additional card from " (zone->name target))
-                                      :effect (effect (access-bonus target 1))}}}]
+                                      :msg (msg "access 1 additional card from " (zone->name (:server context)))
+                                      :effect (effect (access-bonus (:server context) 1))}}}]
    :corp-abilities [{:action true
                      :label "Trash Rotary"
                      :async true
@@ -2546,7 +2546,7 @@
   {:static-abilities [(mu+ 2)]
    :events [{:event :breach-server
              :automatic :pre-breach
-             :req (req (= :hq target))
+             :req (req (= :hq (:server context)))
              :effect (req (let [evs (run-events state side :subroutines-broken)
                                 relevant (filter #(let [context (first %)
                                                         t (get-card state (:ice context))]
@@ -2814,14 +2814,14 @@
             {:event :breach-server
              :automatic :pre-breach
              :async true
-             :req (req (and (= :rd target)
+             :req (req (and (= :rd (:server context))
                             (pos? (get-counters card :power))))
              :effect (req (continue-ability
                             state side
                             {:prompt "How many additional R&D accesses do you want to make?"
                              :choices {:number (req (min 3 (get-counters card :power)))
                                        :default (req (min 3 (get-counters card :power)))}
-                             :msg (msg "access " (quantify target "additional card") " from R&D")
+                             :msg (msg "access " (quantify (:server context) "additional card") " from R&D")
                              :waiting-prompt true
                              :async true
                              :effect (req (access-bonus state :runner :rd (max 0 target))

@@ -22,7 +22,6 @@ pom.xml
 *.swp
 
 data/**
-!data/promos.edn
 !data/quotes-corp.edn
 !data/quotes-runner.edn
 

@@ -4884,6 +4884,35 @@
       (play-from-hand state :runner "Respirocytes")
       (is (= 1 (count (:hand (get-runner)))) "Only 1 damage dealt to Runner from Cybernetics")))
 
+(deftest the-cleaners-not-active-when-turned-faceup-by-bangun
+  ;; The Cleaners should not boost meat damage when turned faceup by BANGUN but not scored
+  (do-game
+    (new-game {:corp {:id "BANGUN: When Disaster Strikes"
+                      :hand ["The Cleaners" "Scorched Earth"]
+                      :deck [(qty "Hedge Fund" 5)]}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "The Cleaners" "New remote")
+    (click-prompt state :corp "Yes")
+    (is (:seen (get-content state :remote1 0)) "The Cleaners is turned faceup by BANGUN")
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Scorched Earth")
+    (is (= 1 (count (:hand (get-runner)))) "Only 4 damage dealt - The Cleaners is not active while unscored")))
+
+(deftest the-cleaners-active-when-scored-after-being-turned-faceup-by-bangun
+  ;; The Cleaners should boost meat damage after being scored, even if previously turned faceup by BANGUN
+  (do-game
+    (new-game {:corp {:id "BANGUN: When Disaster Strikes"
+                      :hand ["The Cleaners" "Scorched Earth"]
+                      :deck [(qty "Hedge Fund" 5)]}
+               :runner {:hand [(qty "Sure Gamble" 5)]}})
+    (play-from-hand state :corp "The Cleaners" "New remote")
+    (click-prompt state :corp "Yes")
+    (is (:seen (get-content state :remote1 0)) "The Cleaners is turned faceup by BANGUN")
+    (score-agenda state :corp (get-content state :remote1 0))
+    (gain-tags state :runner 1)
+    (play-from-hand state :corp "Scorched Earth")
+    (is (zero? (count (:hand (get-runner)))) "5 damage dealt - The Cleaners is active after being scored")))
+
 (deftest the-future-is-now-with-at-least-one-card-in-deck
     ;; With at least one card in deck
     (do-game

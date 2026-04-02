@@ -185,6 +185,17 @@
           (click-prompt state :corp "Server 2"))
         "Ignored install costs")))
 
+(deftest a-teia-central-only-issue-8579
+  (do-game
+    (new-game {:corp {:id "A Teia: IP Recovery"
+                      :hand ["PAD Campaign" "The Red Room" "Spin Doctor"]}})
+    (play-from-hand state :corp "PAD Campaign" "New remote")
+    (click-card state :corp "The Red Room")
+    (click-card state :corp "Spin Doctor")
+    (click-prompt state :corp "New remote")
+    (is (find-card "The Red Room" (:hand (get-corp)))
+        "The Red Room is still in hand")))
+
 (deftest a-teia-tatu-bola
   (do-game
     (new-game {:corp {:id "A Teia: IP Recovery"
@@ -1089,7 +1100,7 @@
     (play-from-hand state :corp "Hostile Takeover" "New remote")
     (click-prompt state :corp "Yes")
     (is (:seen (get-content state :remote1 0)) "HT is seen")
-    (is (:rezzed (get-content state :remote1 0)) "HT is considered rezzed")
+    (is (not (:rezzed (get-content state :remote1 0))) "HT is not considered rezzed")
     (take-credits state :corp)
     (run-empty-server state :remote1)
     (is (= 1 (count-tags state)) "Tagged")
@@ -3535,6 +3546,21 @@
                         :discard ["Beanstalk Royalties"]}})
       (take-credits state :corp)
       (click-prompt state :corp "R&D")
+      (run-empty-server state :rd)
+      (click-prompts state :corp "Yes" "IPO" "Snare!")
+      (is (is-hand? state :corp ["IPO" "Snare!"])))))
+
+(deftest meiles-u-vs-empty-grip
+  (doseq [[s sn] [[:hq "HQ"] [:rd "R&D"] ["Archives" :archives]]]
+    (do-game
+      (new-game {:corp {:id "Méliès U: Only the Brightest"
+                        :hand ["IPO"]
+                        :deck ["Snare!"]
+                        :discard ["Beanstalk Royalties"]}
+                 :runner {:deck ["Ika"]}})
+      (take-credits state :corp)
+      (click-prompt state :corp "R&D")
+      (play-from-hand state :runner "Ika")
       (run-empty-server state :rd)
       (click-prompts state :corp "Yes" "IPO" "Snare!")
       (is (is-hand? state :corp ["IPO" "Snare!"])))))

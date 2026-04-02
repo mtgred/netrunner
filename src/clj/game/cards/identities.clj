@@ -4,7 +4,7 @@
    [game.core.access :refer [access-bonus access-cost-bonus access-non-agenda]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed card->server
-                            get-all-cards get-remote-names get-remotes server->zone]]
+                            get-all-cards get-remote-names get-remotes installable-servers server->zone]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            condition-counter? corp-installable-type? corp? event? faceup? get-advancement-requirement
                            get-agenda-points get-card get-counters get-title get-zone hardware? has-subtype?
@@ -49,7 +49,7 @@
    [game.core.runs :refer [end-run get-current-encounter make-run redirect-run
                            set-next-phase start-next-phase total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [system-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? name-zone
                               target-server zone->name]]
    [game.core.shuffling :refer [fail-to-find! shuffle! shuffle-into-deck shuffle-cards-into-deck! shuffle-my-deck!]]
@@ -149,7 +149,8 @@
                                :waiting-prompt true
                                :choices {:card #(and (corp? %)
                                                      (corp-installable-type? %)
-                                                     (in-hand? %))}
+                                                     (in-hand? %)
+                                                     (not-every? #{"HQ" "R&D" "Archives"} (installable-servers state %)))}
                                :async true
                                :effect (req (let [chosen-card target]
                                               (continue-ability
@@ -315,7 +316,7 @@
   {:events [{:event :breach-server
              :automatic :pre-breach
              :interactive (req true)
-             :psi {:req (req (= target :rd))
+             :psi {:req (req (= :rd (:server context)))
                    :equal {:msg "access 1 additional card"
                            :async true
                            :effect (effect (access-bonus :rd 1)
@@ -537,9 +538,7 @@
 	        :choices {:req (req (and (agenda? target)
                                          (installed? target)))}
 		:msg (msg "turn " (card-str state target {:visible true}) " faceup")
-                :effect (req (update! state side (assoc target
-                                                        :seen true
-                                                        :rezzed true)))}]
+                :effect (req (update! state side (assoc target :seen true)))}]
    :events [{:event :access
              :req (req ((every-pred faceup? installed? agenda? :was-seen) target))
              :interactive (req true)
@@ -572,7 +571,7 @@
                                  {:prompt (str "Turn " (:title tcard) " faceup?")
                                   :waiting-prompt true
                                   :yes-ability {:msg (str "turn " (card-str state tcard {:visible true}) " faceup")
-                                                :effect (req (update! state side (assoc tcard :seen true :rezzed true)))}}}
+                                                :effect (req (update! state side (assoc tcard :seen true)))}}}
                                 {:prompt "Nothing to see here"
                                  :waiting-prompt true
                                  :choices ["OK"]})
@@ -1510,7 +1509,17 @@
               "R&D" "Subsurface Labs: Méliès U"
               "Archives" "Disposal Grounds: Méliès U"
               "this shouldn't occur"))]
-    {:events [;; At game start, you're on the front face
+    {:abilities [{:label "Check chosen flip identity"
+                :effect (req (case (:melies-target card)
+                               "HQ"
+                               (toast state :corp "Tenure Floors (HQ)" "info")
+                               "R&D"
+                               (toast state :corp "Subsurface Labs (R&D)" "info")
+                               "Archives"
+                               (toast state :corp "Disposal Grounds (Archives)" "info")
+                               ;; default case
+                               (toast state :corp "No flip identity specified" "info")))}]
+     :events [;; At game start, you're on the front face
               {:event :pre-first-turn
                :req (req (= side :corp))
                :effect (effect (update!
@@ -1557,7 +1566,8 @@
                                   {:optional
                                    {:prompt (msg "The top card of R&D is " (:title (first (:deck corp))) ". Trash it?")
                                     :waiting-prompt true
-                                    :req (req (seq (:hand runner)))
+                                    :change-in-game-state {:silent true
+														   :req (req (seq (:deck corp)))}
                                     :yes-ability {:cost [(->c :trash-from-deck 1)]
                                                   :once :per-turn
                                                   :msg "add 1 card from Archives to HQ"
@@ -1571,9 +1581,9 @@
              :automatic :pre-breach
              :req (req (and run
                             (empty? (run-events state side :subroutines-broken))
-                            (#{:hq :rd} target)))
+                            (#{:hq :rd} (:server context))))
              :async true
-             :effect (req (let [breached-server target]
+             :effect (req (let [breached-server (:server context)]
                             (continue-ability
                               state side
                               {:optional
@@ -1794,26 +1804,7 @@
              :req (req (first-event? state :corp :server-created))
              :async true
              :msg "draw 1 card"
-             :effect (req
-                      (if-not (some #(= % :deck) (:zone target))
-                        (draw state :corp eid 1)
-                        (do
-                          ;; Register the draw to go off when the card is finished installing -
-                          ;;  this is after the checkpoint when it should go off, but is needed to
-                          ;;  fix the interaction between architect (and any future install from R&D
-                          ;;  cards) and NEH, where the card would get drawn before the install,
-                          ;;  fizzling it in a confusing manner. Because we only do it in this
-                          ;;  special case, there should be no gameplay implications. -nbkelly, 2022
-                          (register-events
-                           state side
-                           card
-                           [{:event :corp-install
-                             :interactive (req true)
-                             :duration (req true)
-                             :unregister-once-resolved true
-                             :async true
-                             :effect (effect (draw :corp eid 1))}])
-                          (effect-completed state side eid))))}]})
+             :effect (effect (draw :corp eid 1))}]})
 
 (defcard "Nebula Talent Management: Making Stars"
   (let [flip-effect
@@ -1905,8 +1896,8 @@
 
 (defcard "Nisei Division: The Next Generation"
   {:events [{:event :reveal-spent-credits
-             :req (req (and (some? (first targets))
-                            (some? (second targets))))
+             :req (req (and (some? (:corp-credits context))
+                            (some? (:runner-credits context))))
              :msg "gain 1 [Credits]"
              :async true
              :effect (effect (gain-credits :corp eid 1))}]})
@@ -2842,9 +2833,11 @@
                 :async true
                 :change-in-game-state {:req (req (or tagged (seq (:deck runner))))}
                 :effect (req (if tagged
-                               (wait-for (draw state side 1 {:suppress-checkpoint true})
-                                         (lose-tags state side eid 1))
-                               (draw state side eid 1)))}]})
+                               (do (play-sfx state side "vic")
+                                   (wait-for (draw state side 1 {:suppress-checkpoint true})
+                                             (lose-tags state side eid 1)))
+                               (do (play-sfx state side "click-card")
+                                   (draw state side eid 1))))}]})
 
 (defcard "Weyland Consortium: Because We Built It"
   {:recurring 1

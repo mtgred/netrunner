@@ -143,6 +143,9 @@
    "eternal" "Eternal"
    "casual" "Casual"))
 
+(def slug->buildable-format
+  (dissoc slug->format "preconstructed" "chimera"))
+
 (def format->slug
   (ordered-map
    "Standard" "standard"
@@ -155,6 +158,9 @@
    "Chimera" "chimera"
    "Eternal" "eternal"
    "Casual" "casual"))
+
+(def buildable-format->slug
+  (dissoc format->slug "Preconstructed" "Chimera"))
 
 (defn regex-escape
   "Escape characters in a string which have special meanings in regexes"

@@ -1403,7 +1403,9 @@
   ;; but another access is forced or credits are paid twice with something like
   ;; ganked into shiro or ganked into kitsune -nbkelly, 2022
   (let [mwanza-gain-creds
-        {:silent (req true)
+        {:event :end-breach-server
+         :duration :end-of-run
+         :silent (req true)
          :async true
          :unregister-once-resolved true
          :effect (req (if-let [accessed-cards (reduce + (vals (:cards-accessed target)))]
@@ -1413,38 +1415,34 @@
                             (gain-credits state :corp eid (* 2 accessed-cards)))
                         (effect-completed state side eid)))}
         unboost-access (fn [bonus-server]
-                         {:req (req (= (:from-server target) bonus-server))
+                         {:event :end-breach-server
+                          :duration :end-of-run
+                          :req (req (= (:from-server target) bonus-server))
                           :unregister-once-resolved true
                           :effect (req (access-bonus state :runner bonus-server -3))})
         boost-access-when-trashed (fn [bonus-server]
-                                    {:req (req (= target bonus-server))
+                                    {:event :breach-server
+                                     :duration :end-of-run
+                                     :req (req (= (:server context) bonus-server))
                                      :msg "force the runner to access 3 additional cards"
                                      :effect (req (access-bonus state :runner bonus-server 3)
                                                   (register-events
                                                    state side
                                                    card
-                                                   [(assoc mwanza-gain-creds
-                                                           :event :end-breach-server
-                                                           :duration :end-of-run)
-                                                    (assoc (unboost-access bonus-server)
-                                                           :event :end-breach-server
-                                                           :duration :end-of-run)]))})
-        boost-access-by-3 {:req (req (= target (second (get-zone card))))
+                                                   [mwanza-gain-creds
+                                                    (unboost-access bonus-server)]))})
+        boost-access-by-3 {:event :breach-server
+                           :req (req (= (:server context) (second (get-zone card))))
                            :msg "force the Runner to access 3 additional cards"
                            :effect (req (let [bonus-server (-> card :zone second)]
-
                                           (access-bonus state :runner bonus-server 3)
                                           (register-events
                                            state side
                                            card
-                                           [(assoc mwanza-gain-creds
-                                                           :event :end-breach-server
-                                                           :duration :end-of-run)
-                                            (assoc (unboost-access bonus-server)
-                                                   :event :end-breach-server
-                                                   :duration :end-of-run)])))}]
+                                           [mwanza-gain-creds
+                                            (unboost-access bonus-server)])))}]
     {:install-req (req (filter #{"HQ" "R&D"} targets))
-     :events [(assoc boost-access-by-3 :event :breach-server)]
+     :events [boost-access-by-3]
      ;; if there is a run, mark mwanza effects to remain active until the run
      :on-trash  {:req (req (and (= :runner side)
                                 (:run @state)))
@@ -1453,9 +1451,7 @@
                             (register-events
                              state side
                              card
-                             [(assoc (boost-access-when-trashed bonus-server)
-                                     :event :breach-server
-                                     :duration :end-of-run)])))}}))
+                             [(boost-access-when-trashed bonus-server)])))}}))
 
 (defcard "Nanisivik Grid"
   {:events [{:event :approach-server
@@ -1786,13 +1782,13 @@
 
 (defcard "Shackleton Grid"
   (let [ev {:optional
-            {:prompt "do 4 meat damage?"
+            {:prompt "Do 4 meat damage?"
              :waiting-prompt true
-             :req (req (and run this-server (not-used-once? state {:once :per-turn} card)
+             :once :per-turn
+             :req (req (and run this-server
                             (or (not (:card target))
                                 (runner? (:card target)))))
-             :yes-ability {:once :per-run
-                           :async true
+             :yes-ability {:async true
                            :msg "do 4 meat damage"
                            :effect (req (damage state side eid :meat 4))}}}]
     {:events [(merge ev {:event :bad-publicity-spent})
@@ -1988,36 +1984,33 @@
                             (draw state side eid 1)))}]})
 
 (defcard "Tucana"
-  (let [ability {:optional {:prompt "Search R&D for an ice?"
-                            :waiting-prompt true
-                            :yes-ability {:async true
-                                          :prompt "Choose a piece of ice to install and rez"
-                                          :waiting-prompt true
-                                          :interactive (req true)
-                                          :choices (req (cancellable (filter ice? (:deck corp)) true))
-                                          :msg (msg "install and rez " (card-str state target) ", paying a total of 3 [Credits] less")
-                                          :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3
-                                                                                                                           :msg-keys {:install-source card
-                                                                                                                                      :display-origin true}})
-                                                                 (shuffle! state :corp :deck)
-                                                                 (system-msg state side (str "shuffles R&D"))
-                                                                 (effect-completed state side eid)))
-                                          :cancel shuffle-my-deck!}}}]
+  (let [ability {:optional
+                 {:prompt "Search R&D for an ice?"
+                  :waiting-prompt true
+                  :req (req (= (:previous-zone (:card context)) (get-zone card)))
+                  :yes-ability {:async true
+                                :prompt "Choose a piece of ice to install and rez"
+                                :waiting-prompt true
+                                :interactive (req true)
+                                :choices (req (cancellable (filter ice? (:deck corp)) true))
+                                :msg (msg "install and rez " (card-str state target) ", paying a total of 3 [Credits] less")
+                                :effect (req (wait-for (corp-install state side (make-eid state eid) target nil {:install-state :rezzed :combined-credit-discount 3
+                                                                                                                 :msg-keys {:install-source card
+                                                                                                                            :display-origin true}})
+                                                       (shuffle! state :corp :deck)
+                                                       (system-msg state side (str "shuffles R&D"))
+                                                       (effect-completed state side eid)))
+                                :cancel shuffle-my-deck!}}}]
     {:legal-zones (req (remove #{"HQ" "R&D" "Archives"} targets))
-     :events [(assoc ability
-                     :event :agenda-stolen
-                     :req (req (= (:previous-zone (:card context)) (get-zone card))))
-              (assoc ability
-                     :event :agenda-scored
-                     :req (req (= (:previous-zone (:card context)) (get-zone card))))]
+     :events [(assoc ability :event :agenda-stolen)
+              (assoc ability :event :agenda-scored)]
      :on-trash
      {:req (req (and run (= :runner side)))
       :effect (effect (register-events
                         card
-                        [(assoc ability
-                                :event :agenda-stolen
-                                :req (req (= (:previous-zone card) (:previous-zone (:card context))))
-                                :duration :end-of-run)]))}}))
+                        [(-> ability
+                             (assoc :event :agenda-stolen :duration :end-of-run)
+                             (assoc-in [:optional :req] (req (= (:previous-zone card) (:previous-zone (:card context))))))]))}}))
 
 (defcard "Tyr's Hand"
   {:abilities [{:label "Prevent a subroutine on a piece of Bioroid ice from being broken"

@@ -69,7 +69,8 @@
          images (image-or-face card)]
      (if (sequential? art)
        (let [art-urls (get-image-path images (keyword lang) (keyword res) (keyword (first art)))
-             chosen-art (nth art-urls (second art))]
+             safe-index (min (second art) (dec (count art-urls)))
+             chosen-art (nth art-urls safe-index)]
          [chosen-art])
        (first (get-image-path images (keyword lang) (keyword res) (keyword art)))))))
 
@@ -959,6 +960,10 @@
   (-> ((keyword (str ref "-menu")) @board-dom) js/$ .fadeOut)
   (send-command "view-deck"))
 
+(defn- melies-marker [identity server-name]
+  (when (= (:melies-target @identity) server-name)
+    [:div.melies-marker "M"]))
+
 (defn identity-view [render-side identity hand-count]
   (let [is-runner (= :runner render-side)
         hand-count-str (str " (" hand-count ")")
@@ -967,6 +972,7 @@
                 [:game_hq-count (str "HQ" hand-count-str)])]
     [:div.blue-shade.identity
      [card-view @identity]
+     [melies-marker identity "HQ"]
      [:div.header {:class "darkbg server-label"}
       ;; TODO - can the tr take in hand count?
       [tr-span title {:cnt hand-count}]]]))
@@ -992,6 +998,7 @@
                                                (close-popup % (content-ref @board-dom) "stops looking at their deck" false true))))}
         (when (pos? deck-count-number)
           [facedown-card (:side @identity) ["bg"] nil])
+        [melies-marker identity "R&D"]
         ;; todo - again, can we pass the server count into the tr?
         [:div.header {:class "darkbg server-label"}
          [tr-span tr-vec {:cnt deck-count-number}]]]
@@ -1036,9 +1043,9 @@
             ^{:key (:cid card)}
             [card-view card]))]])))
 
-(defn discard-view-corp [player-side discard]
+(defn discard-view-corp [player-side identity discard]
   (let [s (r/atom {})]
-    (fn [player-side discard]
+    (fn [player-side identity discard]
       (let [draw-card #(if (faceup? %1)
                          [card-view %1 nil %2]
                          (if (or (= player-side :corp)
@@ -1049,6 +1056,7 @@
          [:div.blue-shade.discard {:on-click #(-> (:popup @s) js/$ .fadeToggle)}
           (when-not (empty? @discard)
             [:<> {:key "discard"} (draw-card (last @discard) true)])
+          [melies-marker identity "Archives"]
           [:div.header {:class (str "server-label "
                                     (if (some (if (or (= player-side :corp) (spectator-view-hidden?))
                                                 graveyard-highlight-card?
@@ -1292,7 +1300,7 @@
                     :run (when (= server-type "rd") @run)}]
       [server-view {:key "archives"
                     :server (:archives @servers)
-                    :central-view [discard-view-corp player-side discard]
+                    :central-view [discard-view-corp player-side identity discard]
                     :run (when (= server-type "archives") @run)}]]]))
 
 (defn- ghost-card

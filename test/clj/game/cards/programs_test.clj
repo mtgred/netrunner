@@ -5257,6 +5257,26 @@
       (is (= 1 (count (:discard (get-corp)))))
       (is (= 0 (count (:discard (get-runner)))) "0 in discard"))))
 
+(deftest lampades-not-once-per-turn
+  (do-game
+    (new-game {:corp {:hand ["Tiered Subscription" "Tiered Subscription"]}
+               :runner {:hand ["Lampades" "Jailbreak"]}})
+    (take-credits state :corp)
+    (play-cards state :runner "Lampades" ["Jailbreak" "HQ"])
+    (run-continue-until state :success)
+    (click-prompts state :runner "[Lampades] Trash card" "[Lampades] Trash card")
+    (is (= 2 (count (:discard (get-corp)))) "Trashed both")))
+
+(deftest lampades-cost-actually-checks
+  (do-game
+    (new-game {:corp {:hand ["PAD Campaign" "PAD Campaign"]}
+               :runner {:hand ["Lampades" "Jailbreak"]}})
+    (take-credits state :corp)
+    (play-cards state :runner "Lampades" ["Jailbreak" "HQ"])
+    (run-continue-until state :success)
+    (is (= ["Pay 4 [Credits] to trash" "No action"] (prompt-titles :runner))
+        "Can't pay without sufficient stealth credits")))
+
 (deftest lamprey
   ;; Lamprey - Corp loses 1 credit for each successful HQ run; trashed on purge
   (do-game
