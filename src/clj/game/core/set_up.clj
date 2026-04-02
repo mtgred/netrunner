@@ -154,11 +154,10 @@
   (let [state (init-game-state game)
         corp-identity (get-in @state [:corp :identity])
         runner-identity (get-in @state [:runner :identity])]
-    (when-let [messages (seq (:messages game))]
-      (swap! state assoc :log {:public (into [] messages)
-                               :corp (into [] messages)
-                               :runner (into [] messages)})
-      (system-say state nil "[hr]"))
+    (if-let [messages (seq (:messages game))]
+      (do (swap! state assoc :log (mapv (fn [m] {:public m}) messages))
+          (system-say state nil "[hr]"))
+      (swap! state assoc :log []))
     (when (:open-decklists game)
       (set-deck-lists state))
     (card-init state :corp corp-identity)

@@ -303,7 +303,7 @@
           (let [last-logs (if @state
                             ;; this should filter out user-typed messages, so we don't accidentally
                             ;; spy on private conversations
-                            (->> @state :log :public
+                            (->> @state :log (keep :public)
                                  (filter #(= (:user %) "__system__"))
                                  (map :text)
                                  (take-last 5)
