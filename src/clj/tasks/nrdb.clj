@@ -9,6 +9,7 @@
     [throttler.core :refer [throttle-fn]]
     [clojure.java.io :as io]
     [clojure.edn :as edn]
+    [clojure.string :as str]
     ;; internal
     [tasks.utils :refer [replace-collection]]
     [tasks.images :refer [add-images]]
@@ -76,8 +77,83 @@
   (let [c (filter #(contains? % :previous-versions) cards)]
     (reduce expand-card `() c)))
 
-;; these are cards with multiple faces, so we can't download them directly
-(def ^:const cards-to-skip #{"08012" "09001" "26066" "26120" "35023" "35057" "36036"})
+;; Manual face-name -> NRDB-index mappings for cards where auto-derivation
+;; from :named-faces + :faces data fails. Keys are card codes.
+(def face-download-overrides
+  {"09001" {"back" 0}      ; SYNC — no named-faces or card-id in data
+   "26120" {"back" 0}})    ; Earth Station — no named-faces in data
+
+(defn- multi-faced-card?
+  "True if card has multiple faces (named-faces data or a manual override)."
+  [card]
+  (or (:named-faces card)
+      (get face-download-overrides (:code card))))
+
+(defn- derive-face-name-to-index
+  "Returns {\"face-name\" nrdb-index} for a multi-faced card.
+   Auto-derives by matching each :named-faces key as a substring of :card-id
+   in the :faces vector. Falls back to face-download-overrides."
+  [card]
+  (if-let [override (get face-download-overrides (:code card))]
+    override
+    (let [named-faces (:named-faces card)
+          faces (filter :card-id (:faces card))
+          result (into {}
+                       (for [face-name (keys named-faces)
+                             :let [matching-face (first (filter #(str/includes? (:card-id %) face-name) faces))]
+                             :when matching-face]
+                         [face-name (:index matching-face)]))]
+      (when (and (seq named-faces) (empty? result))
+        (println "Warning: card" (:code card) "has named-faces but no face index could be derived"))
+      result)))
+
+(defn- face-download-plan
+  "Returns a seq of {:url :file} maps for all faces of a multi-faced card."
+  [card]
+  (let [code (:code card)
+        face-map (derive-face-name-to-index card)]
+    (into [{:url (str jnet-image-url-v2 code ".jpg")
+            :file (card-image-file (str code "-front"))}]
+          (for [[face-name idx] face-map]
+            {:url (str jnet-image-url-v2 code "-" idx ".jpg")
+             :file (card-image-file (str code "-" face-name))}))))
+
+(defn- download-face-image
+  "Download a single face image from NRDB"
+  [{:keys [url file]}]
+  (binding [org.httpkit.client/*default-client* sni-client/default-client]
+    (println "Downloading face:" url)
+    (http/get url {:as :byte-array :timeout 120000}
+              (fn [{:keys [status body error]}]
+                (case status
+                  404 (println "No image at" url)
+                  200 (let [input-stream (ByteArrayInputStream. body)
+                            image (ImageIO/read input-stream)
+                            path (.getPath file)]
+                        (io/make-parents path)
+                        (ImageIO/write image "png" (File. path)))
+                  (println "Error downloading" url error))))))
+
+(def download-face-image-throttled
+  (throttle-fn download-face-image 5 :second))
+
+(defn- download-face-images
+  "Download face images for all multi-faced cards"
+  [cards]
+  (let [multi-faced (filter multi-faced-card? cards)
+        plans (mapcat face-download-plan multi-faced)
+        missing (remove #(.exists (:file %)) plans)
+        total (count plans)
+        missing-count (count missing)]
+    (if (pos? missing-count)
+      (do
+        (println "Have" (- total missing-count) "/" total "face images. Downloading" missing-count "missing...")
+        (let [futures (doall (map download-face-image-throttled missing))]
+          (doseq [resp futures]
+            ; wait for all the GETs to complete
+            @resp))
+        (println "Finished downloading face images"))
+      (println "All" total "face images exist, skipping download"))))
 
 (defn download-card-images
   "Download card images (if necessary) from NRDB"
@@ -86,7 +162,7 @@
     (io/make-parents img-dir)
     (let [previous-cards (generate-previous-card-stubs cards)
           total-cards (concat cards previous-cards)
-          total-cards (remove #(get cards-to-skip (:code %)) total-cards)
+          total-cards (remove multi-faced-card? total-cards)
           missing-cards (remove #(.exists (card-image-file (:code %))) total-cards)
           total (count total-cards)
           missing (count missing-cards)]
@@ -125,7 +201,8 @@
             (println (str "Imported " col " into database")))
           (update-config db)
           (when card-images
-            (download-card-images (:cards edn)))
+            (download-card-images (:cards edn))
+            (download-face-images (:cards edn)))
           (add-images db)
           (create-indexes db)
           (finally (disconnect system)))))
