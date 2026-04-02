@@ -1069,7 +1069,8 @@
                    {:base base}))
 
 (defn log-str [state]
-  (->> (:public :log @state)
+  (->> (:log @state)
+       (keep :public)
        (map :text)
        (str/join " ")))
 
@@ -1123,17 +1124,21 @@
 (defn escape-log-string [s]
   (str/escape s {\[ "\\[" \] "\\]"}))
 
+(defn- side-log
+  [side log]
+  (into [] (keep #(or (side %) (:public %)) log)))
+
 (defn last-log-contains?
   ([state content] (last-log-contains? state content :public))
   ([state content side]
-   (->> (-> @state :log side last :text)
+   (->> (->> @state :log (side-log side) last :text)
         (re-find (re-pattern (escape-log-string content)))
         some?)))
 
 (defn second-last-log-contains?
   ([state content] (second-last-log-contains? state content :public))
   ([state content side]
-   (->> (-> @state :log side butlast last :text)
+   (->> (->> @state :log (side-log side) butlast last :text)
         (re-find (re-pattern (escape-log-string content)))
         some?)))
 
@@ -1141,7 +1146,7 @@
   ([state n content]
    (last-n-log-contains? state n content :public))
   ([state n content side]
-   (let [log (->> @state :log side (mapv :text))
+   (let [log (->> @state :log (side-log side) (mapv :text))
          index (- (count log) 1 n)
          log-entry (nth log index "")
          res (re-find (re-pattern (escape-log-string content)) log-entry)]

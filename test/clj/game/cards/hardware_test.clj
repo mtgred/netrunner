@@ -2226,7 +2226,7 @@
       (let [flip (get-hardware state 0)]
         (run-on state "HQ")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (= "Runner jacks out." (-> @state :log :public last :text)))
+        (is (= "Runner jacks out." (-> @state :log last :public :text)))
         (is (nil? (refresh flip)) "Flip Switch has been trashed")
         (is (find-card "Flip Switch" (:discard (get-runner)))))))
 
