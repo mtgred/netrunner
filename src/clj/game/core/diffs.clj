@@ -533,6 +533,10 @@
   [stripped-state corp-state runner-state]
   (assoc stripped-state :corp (:corp runner-state) :runner (:runner runner-state)))
 
+(defn- pick-side-log
+  [log side]
+  (into [] (keep #(or (side %) (:public %)) log)))
+
 (defn public-states
   "Generates privatized states for the Corp, Runner, any spectators, and the history from the base state.
   If `:spectatorhands` is on, all information is passed on to spectators as well.
@@ -541,9 +545,9 @@
   ([state] (public-states state true true true))
   ([state spectators? corp-spectators? runner-spectators?]
    (let [stripped-state (strip-state state)
-         corp-state (-> (state-summary stripped-state state :corp) (update :log :corp))
-         runner-state (-> (state-summary stripped-state state :runner) (update :log :runner))
-         replay-state (-> (strip-for-replay stripped-state corp-state runner-state) (update :log :public))]
+         corp-state (-> (state-summary stripped-state state :corp) (update :log #(pick-side-log % :corp)))
+         runner-state (-> (state-summary stripped-state state :runner) (update :log #(pick-side-log % :runner)))
+         replay-state (-> (strip-for-replay stripped-state corp-state runner-state) (update :log #(pick-side-log % :public)))]
      ;; corp, runner, spectator, history
      {:corp-state corp-state
       :runner-state runner-state
@@ -561,8 +565,8 @@
       [{} {}])))
 
 (defn- get-message-diff [old-state new-state side]
-  (let [old-messages (-> (select-keys old-state [:log]) (update :log side))
-        new-messages (-> (select-keys @new-state [:log]) (update :log side))]
+  (let [old-messages {:log (into [] (keep #(or (side %) (:public %)) (:log old-state)))}
+        new-messages {:log (into [] (keep #(or (side %) (:public %)) (:log @new-state)))}]
     (fake-log-diff old-messages new-messages)))
 
 (defn- diff-and-patch-log [old-state new-state message-diff]
