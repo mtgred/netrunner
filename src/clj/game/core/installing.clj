@@ -583,8 +583,8 @@
           additional-costs]))]))
 
 (defn- some-hosting-effect
-  [state card]
   "Gets the first (only) host effect of a card, if it exists and is not disabled"
+  [state card]
   (when (and card (not (is-disabled-reg? state card)))
     (first (filter #(= (:type %) :can-host) (:static-abilities (card-def card))))))
 
@@ -677,8 +677,8 @@
                         (effect-completed state side eid)))))))))
 
 (defn runner-host-enforce-specific-memory
-  [state side eid card potential-host args]
   "enforces limits on the total MU a host can support during install"
+  [state side eid card potential-host args]
   (if-let [max-mu (when (program? card) (:max-mu (some-hosting-effect state potential-host)))]
     (let [max-mu (if (fn? max-mu)
                    (max-mu state side eid potential-host nil)
@@ -711,8 +711,8 @@
     (runner-install-pay state side eid card (assoc args :host-card potential-host))))
 
 (defn runner-host-enforce-card-limits
-  [state side eid card potential-host args]
   "Enforces limits on the number of hosted cards a host can have during install"
+  [state side eid card potential-host args]
   (if-let [max-cards (:max-cards (some-hosting-effect state potential-host))]
     (let [max-cards (if (int? max-cards)
                       max-cards
@@ -737,8 +737,8 @@
     (runner-host-enforce-specific-memory state side eid card potential-host args)))
 
 (defn runner-host-choice
-  [state side eid card potential-hosts args]
   "Have the runner choose where they are hosting the given card"
+  [state side eid card potential-hosts args]
   (continue-ability
     state side
     {:choices (conj potential-hosts "The Rig")

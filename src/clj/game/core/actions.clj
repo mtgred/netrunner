@@ -320,8 +320,9 @@
       :else
       (prompt-error "in an unknown prompt type" prompt args))))
 
-(defn- update-first [selection target eid c]
+(defn- update-first
   "This ensures that updating the selected set of cards doesn't mix up prompts (usually when the user does something silly, or the front-end/back-end are out of sync"
+  [selection target eid c]
   (mapv (fn [s]
           (if (= (-> s :ability :eid :eid) (:eid eid))
             (update s :cards

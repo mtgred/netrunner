@@ -267,7 +267,7 @@
 (defn can-advance?
   "Checks if the corp can advance cards"
   [state side card]
-  (and (check-flag-types? state side card :can-advance [:current-turn :persistent])))
+  (check-flag-types? state side card :can-advance [:current-turn :persistent]))
 
 (defn can-score?
   "Checks if the corp can score a given card"

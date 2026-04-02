@@ -61,8 +61,9 @@
                                   :card card
                                   :n (:remaining async-result)}))))
 
-(defn gain-tags-ability [n]
+(defn gain-tags-ability
   "Take n tags"
+  [n]
   {:msg (str "take " (quantify n "tag"))
    :async true
    :effect (req (gain-tags state side eid n))})

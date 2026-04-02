@@ -2434,10 +2434,10 @@
                   {}
                   {:cost [(->c :power (dec x))]})))
         abi (choose-one-helper
-              {:req (req (and (or (and (first-event? state :corp :agenda-scored)
-                                       (no-event? state :runner :agenda-stolen))
-                                  (and (first-event? state :runner :agenda-stolen)
-                                       (no-event? state :corp :agenda-scored)))))
+              {:req (req (or (and (first-event? state :corp :agenda-scored)
+                                  (no-event? state :runner :agenda-stolen))
+                             (and (first-event? state :runner :agenda-stolen)
+                                  (no-event? state :corp :agenda-scored))))
                :player :corp
                :side :corp
                :interactive (req true)}

@@ -64,13 +64,15 @@
   "Validates bespoke-sounds is a map with keyword keys and boolean values"
   (validate-map-of keyword? boolean?))
 
-(defn- validate-card-sleeve [value]
+(defn- validate-card-sleeve
   "Validates card sleeve value - accepts base sleeves and any string (for prize sleeves)"
+  [value]
   (or (contains? valid-card-sleeves value)
       (string? value)))
 
-(defn- validate-prizes [value]
+(defn- validate-prizes
   "Validates prizes structure - nil or map with :card-backs containing keyword->boolean map"
+  [value]
   (or (nil? value)
       (and (map? value)
            (or (nil? (:card-backs value))
