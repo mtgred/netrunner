@@ -144,17 +144,25 @@
         (add-params result card-params))
       nil)))
 
+(defn- parse-meta-line
+  "Parse a ;; key: value metadata line. Returns [keyword value] or nil."
+  [line]
+  (when-let [[_ k v] (re-matches #";;\s*(identity|identity-code|title|notes)\s*:\s*(.+)" (str/trim line))]
+    [(keyword k) (str/trim v)]))
+
 (defn- line-reducer
   "Reducer function to parse lines in a deck string"
   [acc line]
   (if-let [card (parse-line line)]
-    (conj acc card)
-    acc))
+    (update acc :cards conj card)
+    (if-let [[k v] (parse-meta-line line)]
+      (assoc-in acc [:meta k] v)
+      acc)))
 
 (defn deck-string->list
-  "Turn a raw deck string into a list of {:qty :title}"
+  "Turn a raw deck string into a map of {:cards [...] :meta {...}}"
   [deck-string]
-  (reduce line-reducer [] (split-lines deck-string)))
+  (reduce line-reducer {:cards [] :meta {}} (split-lines deck-string)))
 
 (defn collate-deck
   "Takes a list of {:qty n :card title} and returns list of unique titles and summed n for same title"
@@ -171,8 +179,10 @@
   "Takes a list of {:qty n :card title} and looks up each title and replaces it with the corresponding cardmap"
   [side card-list]
   (let [card-list (collate-deck card-list)]
-    ;; lookup each card and replace title with cardmap
-    (map #(assoc % :card (lookup side (assoc % :title (:card %)))) card-list)))
+    ;; lookup each card and replace title with cardmap, excluding identities
+    (->> card-list
+         (map #(assoc % :card (lookup side (assoc % :title (:card %)))))
+         (remove #(= (:type (:card %)) "Identity")))))
 
 (defn process-cards-in-deck
   "Process the raw deck from the database into a more useful format"
@@ -1110,18 +1120,58 @@
          {:value (identity-option-string card)}
          (:display-name card)]))]])
 
+(defn- lookup-identity-by-code
+  "Look up an identity card by card code and side. Returns nil if not found or not an identity."
+  [side code]
+  (first (filter #(and (= (:code %) code) (= (:type %) "Identity") (= (:side %) side))
+                 (vals @all-cards))))
+
+(defn- lookup-identity-by-title
+  "Look up an identity card by title for the given side.
+   Supports partial/substring matching like card lookup. Returns nil if no unique match."
+  [side title]
+  (let [idents (filter #(and (= (:side %) side) (= (:type %) "Identity"))
+                       (vals @all-cards))
+        q (lower-case title)
+        exact (filter-exact-title q idents)]
+    (if (not-empty exact)
+      (take-best-card exact)
+      (loop [i 2
+             matches idents]
+        (let [subquery (subs q 0 (min i (count q)))]
+          (cond
+            (zero? (count matches)) nil
+            (or (= (count matches) 1) (identical-cards? matches)) (take-best-card matches)
+            (<= i (count title)) (recur (inc i) (filter-title subquery matches))
+            :else nil))))))
+
 (defn parse-deck-string
-  "Parses a string containing the decklist and returns a list of lines {:qty :card}"
+  "Parses a deck string. Returns {:cards [...] :identity <card-or-nil> :title <str-or-nil> :notes <str-or-nil>}"
   [side deck-string]
-  (let [raw-deck-list (deck-string->list deck-string)]
-    (lookup-deck side raw-deck-list)))
+  (let [{:keys [cards meta]} (deck-string->list deck-string)
+        parsed-cards (lookup-deck side cards)
+        found-identity (or (when-let [c (:identity-code meta)]
+                             (lookup-identity-by-code side c))
+                           (when-let [t (:identity meta)]
+                             (lookup-identity-by-title side t)))]
+    {:cards parsed-cards
+     :identity found-identity
+     :title (:title meta)
+     :notes (:notes meta)}))
 
 (defn handle-edit [s]
   (let [text (.-value (:deckedit @db-dom))
         side (get-in @s [:deck :identity :side])
-        cards (parse-deck-string side text)]
+        {:keys [cards identity title notes]} (parse-deck-string side text)]
     (swap! s assoc :deck-edit text)
-    (swap! s assoc-in [:deck :cards] cards)))
+    (swap! s assoc-in [:deck :cards] cards)
+    (when identity
+      (let [display-name (build-identity-name (tr-data :title identity) (:setname identity))]
+        (swap! s assoc-in [:deck :identity] (assoc identity :display-name display-name))))
+    (when title
+      (swap! s assoc-in [:deck :name] title))
+    (when notes
+      (swap! s assoc-in [:deck :notes] notes))))
 
 (defn edit-textbox
   [s]
