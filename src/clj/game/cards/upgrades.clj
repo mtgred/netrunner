@@ -1348,7 +1348,8 @@
                                                         :choices {:card #(and (ice? %)
                                                                               (or (in-hand? %)
                                                                                   (in-discard? %)))}
-                                                        :msg (msg "swap " (card-str state (get-current-ice state)) " with " (card-str state target))
+                                                        :msg {:public (msg "swap " (card-str state (get-current-ice state)) " with " (card-str state target))
+                                                              :corp (msg "swap " (card-str state (get-current-ice state) {:maybe-visible true}) " with " (card-str state target {:maybe-visible true}))}
                                                         :effect (req
                                                                   (let [approached-ice (get-current-ice state)]
                                                                     (swap-cards-async state side eid approached-ice target)))}
@@ -1892,8 +1893,10 @@
          :label "Place advancement counters on a card in or protecting this server"
          :once :per-turn
          :choices {:req (req (same-server? card target))}
-         :msg (msg "place " (if (is-boosted-fn? state side) 3 2) " advancement counters on "
-                   (card-str state target))
+         :msg {:public (msg "place " (if (is-boosted-fn? state side) 3 2) " advancement counters on "
+                            (card-str state target))
+               :corp (msg "place " (if (is-boosted-fn? state side) 3 2) " advancement counters on "
+                          (card-str state target {:maybe-visible true}))}
          :async true
          :effect
          (req (let [n (if (is-boosted-fn? state side) 3 2)]
@@ -2041,7 +2044,8 @@
                 :once :per-turn
                 :prompt (msg "Choose an advanceable card in " (zone->name (second (get-zone card))))
                 :label "Place 2 advancement counters (once per turn)"
-                :msg (msg "place 2 advancement counters on " (card-str state target))
+                :msg {:public (msg "place 2 advancement counters on " (card-str state target))
+                      :corp (msg "place 2 advancement counters on " (card-str state target {:maybe-visible true}))}
                 :choices {:not-self true
                           :req (req (and (installed? target)
                                          (can-be-advanced? state target)

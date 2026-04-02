@@ -57,25 +57,37 @@
         (str/replace #"\[corp-pronoun\]" corp-pronoun)
         (str/replace #"\[runner-pronoun\]" runner-pronoun))))
 
+(defn- log
+  [state message]
+  (swap! state update :log conj message))
+
 (defn say
   "Prints a message to the log as coming from the given user."
-  [state side {:keys [user text]}]
-  (let [author (or user (get-in @state [side :user]))
-        message (make-message {:user author :text (insert-pronouns state side text)})]
-    (swap! state update :log conj message)
-    (swap! state assoc :typing false)))
+  ([state side args] (say state side args :public))
+  ([state side {:keys [user text]} log-side]
+   (let [author (or user (get-in @state [side :user]))
+         message (make-message {:user author :text (insert-pronouns state side text)})]
+     (let [log-sides (flatten [log-side])]
+       (log state (zipmap log-sides (repeat message)))))))
+
+(defn- multi-say
+  [state side message-map]
+  (let [author (get-in @state [side :user])
+        message (update-vals message-map #(make-message {:user author
+                                                         :text (insert-pronouns state side %)}))]
+    (log state message)))
 
 (defn system-say
   "Prints a system message to log (`say` from user __system__)"
   ([state side text] (system-say state side text nil))
-  ([state side text {:keys [hr]}]
-   (say state side (make-system-message (str text (when hr "[hr]"))))))
+  ([state side text {:keys [hr log-side]}]
+   (say state side (make-system-message (str text (when hr "[hr]"))) (or log-side :public))))
 
 (defn unsafe-say
   "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
   [state text]
   (let [message (make-system-message text)]
-    (swap! state update :log conj message)))
+    (log state {:public message})))
 
 (defn system-msg
   "Prints a message to the log without a username."
@@ -83,6 +95,12 @@
   ([state side text args]
    (let [username (get-in @state [side :user :username])]
      (system-say state side (str username " " text ".") args))))
+
+(defn multi-msg
+  [state side message-map]
+  (let [username (get-in @state [side :user :username])
+        message-map (update-vals message-map #(str username " " % "."))]
+    (multi-say state side message-map)))
 
 (defn enforce-msg
   "Prints a message related to a rules enforcement on a given card.
@@ -123,13 +141,14 @@
 
 (defn n-last-logs
   "Gets the n last log messages not sent by a user (ie game logs only)"
-  [state n]
-  (if @state
-    ;; this should filter out user-typed messages, so we don't accidentally
-    ;; spy on private conversations
-    (->> @state :log
-         (filter #(= (:user %) "__system__"))
-         (map :text)
-         (take-last n)
-         (str/join "\n\t"))
-    "unable to fetch log from state"))
+  ([state n] (n-last-logs state n :public))
+  ([state n side]
+   (if @state
+     ;; this should filter out user-typed messages, so we don't accidentally
+     ;; spy on private conversations
+     (->> @state :log (keep side)
+          (filter #(= (:user %) "__system__"))
+          (map :text)
+          (take-last n)
+          (str/join "\n\t"))
+     "unable to fetch log from state")))

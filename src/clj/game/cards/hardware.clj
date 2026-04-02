@@ -14,7 +14,7 @@
    [game.core.cost-fns :refer [install-cost rez-additional-cost-bonus rez-cost trash-cost]]
    [game.core.damage :refer [chosen-damage damage
                              enable-runner-damage-choice runner-can-choose-damage?]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-abi offer-jack-out play-tiered-sfx
+   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*? breach-access-bonus defcard draw-abi look-at-the-top offer-jack-out play-tiered-sfx
                                   reorder-choice run-any-server-ability spend-credits take-credits trash-on-empty get-x-fn make-icon]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [any-effects register-lingering-effect
@@ -2015,15 +2015,12 @@
   {:events [{:event :run
              :interactive (get-autoresolve :auto-fire (complement never?))
              :silent (get-autoresolve :auto-fire never?)
-             :optional {:req (req (and (first-event? state side :run)
-                                       (pos? (count (:deck runner)))))
+             :optional {:req (req (first-event? state side :run))
+                        :change-in-game-state {:silent true
+                                               :req (req (seq (:deck runner)))}
                         :autoresolve (get-autoresolve :auto-fire)
                         :prompt "Look at top 2 cards of the stack?"
-                        :yes-ability
-                        {:msg "look at the top 2 cards of the stack"
-                         :choices ["OK"]
-                         :prompt (msg "The top 2 cards of the stack are "
-                                      (enumerate-cards (take 2 (:deck runner))))}}}]
+                        :yes-ability (look-at-the-top :runner :runner 2)}}]
    :abilities [(set-autoresolve :auto-fire "Prognostic Q-Loop")
                {:label "Reveal and install top card of the stack"
                 :once :per-turn

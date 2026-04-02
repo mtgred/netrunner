@@ -1,6 +1,5 @@
 (ns game.cards.resources
   (:require
-   [clojure.pprint :as pprint]
    [clojure.string :as str]
    [game.core.access :refer [access-bonus access-n-cards breach-server get-only-card-to-access steal
                              num-cards-to-access steal-cost-bonus]]
@@ -12,7 +11,7 @@
    [game.core.card :refer [agenda? asset? assoc-host-zones card-index corp? condition-counter?
                            event? facedown? get-agenda-points get-card get-counters
                            get-title get-zone hardware? has-subtype? has-any-subtype? ice? identity?
-                           in-discard? in-hand? in-set-aside? in-scored? installed? is-type? program? resource? rezzed?
+                           in-discard? in-hand? in-set-aside? in-scored? installed? verbal-card-index is-type? program? resource? rezzed?
                            runner? unique? upgrade? virus-program?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.charge :refer [can-charge charge-ability]]
@@ -3592,16 +3591,12 @@
                          :prompt "Choose 1 card to add to the bottom of the stack"
                          :choices {:card #(some (fn [c] (same-card? c %)) cards)
                                    :all true}
-                         :effect
-                         (req (system-msg state side
-                                          (str "uses " (:title card) " to add the "
-                                               (pprint/cl-format nil "~:R"
-                                                                 (inc (first (keep-indexed #(when (same-card? target %2) %1) cards))))
-                                               " card on the top of the stack to the bottom"))
-                                          (doseq [c (reverse cards)]
-                                            (move state :runner
-                                                  c :deck
-                                                  (if (same-card? c target) nil {:front true}))))}
+                         :msg {:public (msg "add the " (verbal-card-index state target) " card on the top of the stack to the bottom")
+                               :runner (msg "add the " (verbal-card-index state target) " card on the top of the stack (" (:title target) ") to the bottom")}
+                         :effect (req (doseq [c (reverse cards)]
+                                        (move state :runner
+                                              c :deck
+                                              (if (same-card? c target) nil {:front true}))))}
                         card nil)))}]}))
 
 (defcard "The Helpful AI"

@@ -2399,9 +2399,13 @@
     (is (no-prompt? state :runner))
     (take-credits state :corp)
     (play-from-hand state :runner "Sports Hopper")
-    (click-prompt state :runner "Noted")
+    (is (last-log-contains? state "IPO" :runner) "IPO WAS seen (install)")
+    (is (not (last-log-contains? state "IPO" :corp)) "Corp doesn't know")
+    (is (not (last-log-contains? state "IPO" :public)) "Chat doesn't know")
     (card-ability state :runner (get-hardware state 0) 0)
-    (click-prompt state :runner "Noted")))
+    (is (second-last-log-contains? state "IPO" :runner) "IPO WAS seen (trash)")
+    (is (not (second-last-log-contains? state "IPO" :corp)) "Corp doesn't know")
+    (is (not (second-last-log-contains? state "IPO" :public)) "Chat doesn't know")))
 
 (deftest hoshiko-shiro-untold-protagonist-id-ability
     ;; ID ability

@@ -107,14 +107,24 @@
                 :card #(and (corp? %)
                             (in-discard? %))
                 :all all?}
-      :msg (msg "shuffle "
-                (let [seen (filter :seen targets)
-                      m (count (filter #(not (:seen %)) targets))]
-                  (str (enumerate-cards seen :sorted)
-                       (when (pos? m)
-                         (str (when-not (empty? seen) " and ")
-                              (quantify m "unseen card")))))
-                " into R&D")
+      :msg {:public (msg "shuffle "
+                         (let [seen (filter :seen targets)
+                               m (count (filter #(not (:seen %)) targets))]
+                           (str (enumerate-cards seen :sorted)
+                                (when (pos? m)
+                                  (str (when-not (empty? seen) " and ")
+                                       (quantify m "unseen card")))))
+                         " into R&D")
+            :corp (msg "shuffle "
+                       (let [seen (filter :seen targets)
+                             unseen (filter #(not (:seen %)) targets)
+                             m (count unseen)]
+                         (str (enumerate-cards seen :sorted)
+                              (when (pos? m)
+                                (str (when-not (empty? seen) " and ")
+                                     (quantify m "unseen card")
+                                     " (" (enumerate-cards unseen :sorted) ")"))))
+                       " into R&D")}
       :waiting-prompt true
       :effect (req (doseq [c targets]
                      (move state side c :deck))

@@ -21,7 +21,7 @@
    [game.core.cost-fns :refer [play-cost]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [corp-install-up-to-n-cards corp-recur corp-rez-toast defcard do-meat-damage do-net-damage draw-abi gain-credits-ability give-tags
-                                  make-icon reorder-choice spend-credits take-credits take-n-credits-ability trash-on-empty get-x-fn with-revealed-hand]]
+                                  make-icon place-advancement-counter reorder-choice spend-credits take-credits take-n-credits-ability trash-on-empty get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw first-time-draw-bonus max-draw
                               remaining-draws]]
    [game.core.effects :refer [is-disabled-reg? register-lingering-effect update-disabled-cards]]
@@ -1351,13 +1351,8 @@
                 :effect (effect (gain-clicks 2))}]})
 
 (defcard "Hearts and Minds"
-  (let [political {:req (req unprotected)
-                   :prompt "Choose a card you can advance to place 1 advancement counter on"
-                   :choices {:req (req (and (can-be-advanced? state target)
-                                            (installed? target)))}
-                   :msg (msg "place 1 advancement counter on " (card-str state target))
-                   :async true
-                   :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}
+  (let [political (assoc (place-advancement-counter true 1)
+                         :req (req unprotected))
         ability {:req (req (:corp-phase-12 @state))
                  :label "Move 1 hosted advancement counter to another card you can advance (start of turn)"
                  :skippable true
@@ -1374,10 +1369,11 @@
                                 :choices {:req (req (and (installed? target)
                                                          (can-be-advanced? state target)
                                                          (not (same-card? from-ice target))))}
-                                :msg (msg "move 1 hosted advancement counter from "
-                                          (card-str state from-ice)
-                                          " to "
-                                          (card-str state target))
+
+                                :msg {:public (msg "move 1 hosted advancement counter from " (card-str state from-ice)
+                                                   " to " (card-str state target))
+                                      :corp (msg "move 1 hosted advancement counter from " (card-str state from-ice {:maybe-visible true})
+                                                   " to " (card-str state target {:maybe-visible true}))}
                                 :async true
                                 :effect (req (wait-for
                                                   (add-prop state :corp target :advance-counter 1 {:placed true})
@@ -2007,7 +2003,8 @@
             {:async true
              :prompt (msg "Choose an installed card to place advancement counters on (" x " remaining)")
              :choices {:card #(installed? %)}
-             :msg (msg "place 1 advancement counter on " (card-str state target))
+             :msg {:public (msg "place 1 advancement counter on " (card-str state target))
+                   :corp (msg "place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
              :effect (req (wait-for (add-prop state side target :advance-counter 1 {:placed true})
                                     (if (> x 1)
                                       (continue-ability
@@ -2024,7 +2021,9 @@
                                  (in-discard? %)
                                  (not (faceup? %)))
                      :max 2}
-           :msg (msg "reveal " (enumerate-cards targets :sorted) " from Archives and shuffle them into R&D")
+           :msg (msg "reveal " (enumerate-cards targets :sorted) " from Archives and shuffle "
+                     (if (= 1 (count targets)) "it" "them")
+                     " into R&D")
            :effect (req (wait-for (reveal state side targets)
                                   (doseq [c targets]
                                     (move state side c :deck))
@@ -2043,7 +2042,8 @@
                                  (in-hand? %))
                      :max 2}
            :async true
-           :msg (msg "trash " (quantify (count targets) "card") " from HQ")
+           :msg {:public (msg "trash " (quantify (count targets) "card") " from HQ")
+                 :corp (msg "trash facedown " (enumerate-cards targets) " from HQ")}
            :effect (req (wait-for (trash-cards state :corp targets {:cause-card card})
                                   (continue-ability
                                     state side
@@ -3127,7 +3127,8 @@
                  :choices {:not-self true
                            :req (req (and (corp? target)
                                           (installed? target)))}
-                 :msg (msg "trash " (card-str state target) " and gain 3 [Credits]")
+                 :msg {:public (msg "trash " (card-str state target) " and gain 3 [Credits]")
+                       :corp (msg "trash " (card-str state target {:maybe-visible true}) " and gain 3 [Credits]")}
                  :effect (req (wait-for (trash state side target {:unpreventable true
                                                                   :cause-card card})
                                         (gain-credits state side eid 3)))}]
@@ -3459,7 +3460,8 @@
               :async true
               :effect (effect (draw eid 1))}
              {:label "place 1 advancement counter on a piece of ice"
-              :msg (msg "place 1 advancement counter on " (card-str state target))
+              :msg {:public (msg "place 1 advancement counter on " (card-str state target))
+                    :corp (msg "place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
               :prompt "Choose a piece of ice to place 1 advancement counter on"
               :async true
               :choices {:card #(and (ice? %)

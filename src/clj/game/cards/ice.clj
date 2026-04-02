@@ -17,7 +17,7 @@
    [game.core.costs :refer [total-available-credits]]
    [game.core.damage :refer [damage]]
    [game.core.def-helpers :refer [combine-abilities corp-recur defcard
-                                  do-brain-damage do-net-damage draw-abi give-tags make-icon move-card-to-top-or-bottom offer-jack-out
+                                  do-brain-damage do-net-damage draw-abi give-tags make-icon move-card-to-top-or-bottom offer-jack-out place-advancement-counter
                                   reorder-choice get-x-fn with-revealed-hand]]
    [game.core.drawing :refer [draw maybe-draw draw-up-to]]
    [game.core.effects :refer [any-effects get-effects is-disabled? is-disabled-reg? register-lingering-effect unregister-effects-for-card unregister-effect-by-uuid unregister-static-abilities update-disabled-cards]]
@@ -225,21 +225,6 @@
                                (not (rezzed? target))
                                (can-pay-to-rez? state side eid target args)))}
       :effect (req (rez state side eid target args))})))
-
-(defn place-advancement-counter
-  [advanceable-only]
-  {:label (if advanceable-only
-            "Place 1 advancement counter on a card that can be advanced"
-            "Place 1 advancement counter on a card")
-   :prompt (if advanceable-only
-            "Place 1 advancement counter on a card that can be advanced"
-            "Place 1 advancement counter on a card")
-   :choices {:req (req (and (corp? target)
-                            (installed? target)
-                            (or (not advanceable-only) (can-be-advanced? state target))))}
-   :msg (msg "place 1 advancement counter on " (card-str state target))
-   :async true
-   :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))})
 
 (defn trace-ability
   "Run a trace with specified base strength.
@@ -817,7 +802,8 @@
     {:advanceable :always
      :subroutines [{:label "Gain 1 [Credit]. Place 1 advancement counter"
                     :breakable breakable-fn
-                    :msg (msg "gain 1 [Credit] and place 1 advancement counter on " (card-str state target))
+                    :msg {:public (msg "gain 1 [Credit] and place 1 advancement counter on " (card-str state target))
+                          :corp (msg "gain 1 [Credit] and place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
                     :prompt "Choose an installed card"
                     :choices {:card installed?}
                     :async true
@@ -1636,7 +1622,8 @@
                                            state side
                                            {:req (req (pos? (count (:hand corp))))
                                             :prompt "Place a card in HQ on the top of R&D?"
-                                            :msg "add 1 card in HQ to the top of R&D"
+                                            :msg {:public "add 1 card in HQ to the top of R&D"
+                                                  :corp (msg "add facedown " target " in HQ to the top of R&D")}
                                             :choices {:card #(and (in-hand? %)
                                                                   (corp? %))}
                                             :async true
@@ -1833,7 +1820,8 @@
                 :choices {:req (req (and (ice? target)
                                          (installed? target)
                                          (not (same-card? card target))))}
-                :msg (msg "swap itself with " (card-str state target))
+                :msg {:public (msg "swap itself with " (card-str state target))
+                      :corp (msg "swap itself with " (card-str state target {:maybe-visible true}))}
                 :effect (req (swap-ice state side card target))}]})
 
 (defcard "F2P"
@@ -2846,7 +2834,7 @@
                   :async true
                   :effect (req (continue-ability
                                  state side
-                                 (move-card-to-top-or-bottom target)
+                                 (move-card-to-top-or-bottom target :corp)
                                  card nil))}
                  add-runner-card-to-grip]})
 
@@ -4052,7 +4040,9 @@
                                         (or (in-hand? %)
                                             (in-discard? %)))}
                   :async true
-                  :msg (msg "shuffle " (card-str state target) " into R&D")
+                  :msg {:public (msg "shuffle " (card-str state target) " into R&D")
+                        :corp (msg "shuffle " (card-str state target {:maybe-visible true})
+                                   " into R&D")}
                   :effect (req (move state :corp target :deck)
                                (shuffle! state :corp :deck)
                                (effect-completed state :corp eid))}
@@ -4486,13 +4476,7 @@
                   :effect (req (wait-for (gain-credits state side 1)
                                          (end-run state side eid card)))}]
    :advanceable :always
-   :expend {:req (req (some ice? (all-installed state :corp)))
-            :cost [(->c :credit 1)]
-            :choices {:req (req (and (ice? target)
-                                     (installed? target)))}
-            :msg (msg "place 3 advancement counters on " (card-str state target))
-            :async true
-            :effect (effect (add-counter eid target :advancement 3 {:placed true}))}})
+   :expend (assoc (place-advancement-counter nil 3 "an ice" ice?) :cost [(->c :credit 1)])})
 
 (defcard "Tribunal"
   {:subroutines [runner-trash-installed-sub

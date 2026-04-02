@@ -21,7 +21,7 @@
     [game.core.props :refer [add-prop]]
     [game.core.revealing :refer [reveal]]
     [game.core.rezzing :refer [rez]]
-    [game.core.say :refer [play-sfx system-msg implementation-msg]]
+    [game.core.say :refer [multi-msg play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone remote-num->name]]
     [game.core.state :refer [make-rid]]
     [game.core.to-string :refer [card-str]]
@@ -155,6 +155,14 @@
                             (rezzed? card))
                       (:title card)
                       (if (ice? card) "ice" "a card"))
+          corp-card-name (if (or (#{:rezzed :rezzed-no-cost :face-up} install-state)
+                            ;; note that cards which the corp is instructed to rez, but cannot
+                            ;; (or chooses not to rez) are revealed, so they're safe to name here
+                            known
+                            (:seen card)
+                            (rezzed? card))
+                           (:title card)
+                           (str "facedown " (:title card)))
           server-name (if (= server "New remote")
                         (str (remote-num->name (dec (:rid @state))) " (new remote)")
                         server)
@@ -172,10 +180,15 @@
                                 (str cost-str ",")))
           lhs (if install-source
                 (str (build-spend-msg modified-cost-str "use") (:title install-source) " to install ")
-                (build-spend-msg modified-cost-str "install"))]
-      (system-msg state side (str lhs card-name origin
-                                  (if (ice? card) " protecting " " in the root of ") server-name
-                                  (format-counters-msg counters)))
+                (build-spend-msg modified-cost-str "install"))
+          corp-msg (str lhs corp-card-name origin
+                        (if (ice? card) " protecting " " in the root of ") server-name
+                        (format-counters-msg counters))
+          public-msg (str lhs card-name origin
+                          (if (ice? card) " protecting " " in the root of ") server-name
+                          (format-counters-msg counters))]
+      (multi-msg state side {:corp corp-msg
+                             :public public-msg})
       (when (and (= :face-up install-state)
                  (agenda? card))
         (implementation-msg state card)))))

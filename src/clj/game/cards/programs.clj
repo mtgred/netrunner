@@ -2862,7 +2862,8 @@
             :choices {:req (req (and (runner? target)
                                      (in-hand? target)))}
             :skippable true
-            :msg "host a card facedown from the Grip and draw a card"
+            :msg {:public "host a card facedown from the Grip to draw a card"
+                  :runner (msg "host " (:title target) " facedown from the Grip to draw a card")}
             :async true
             :effect (req (host state side (get-card state card) target {:facedown true})
                          (draw state side eid 1))}]

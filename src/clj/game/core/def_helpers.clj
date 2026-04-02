@@ -3,7 +3,7 @@
     [clojure.string :as str]
     [game.core.access :refer [access-bonus]]
     [game.core.board :refer [all-installed get-all-cards]]
-    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? in-hand? operation? runner? ]]
+    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? in-hand? installed? operation? runner? ]]
     [game.core.card-defs :as card-defs]
     [game.core.choose-one :refer [choose-one-helper]]
     [game.core.damage :refer [damage]]
@@ -17,7 +17,7 @@
     [game.core.payment :refer [build-cost-string can-pay?]]
     [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [cancellable clear-wait-prompt]]
-    [game.core.props :refer [add-counter]]
+    [game.core.props :refer [add-counter add-prop]]
     [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
     [game.core.runs :refer [can-run-server? make-run jack-out]]
     [game.core.say :refer [play-sfx system-msg system-say]]
@@ -107,6 +107,10 @@
                (= target "Done")
                (do (swap! state update-in [reorder-side :deck]
                           #(vec (concat chosen (drop (count chosen) %))))
+                   (system-msg state side (str "The top cards of "
+                                               (if (= reorder-side :corp) "R&D" "the stack")
+                                               " are " (enumerate-cards chosen))
+                               {:log-side side})
                    (when (and (= :corp reorder-side)
                               (:run @state)
                               (:access @state))
@@ -361,29 +365,35 @@
     ability))
 
 (defn move-to-top
-  [target-card]
-  {:msg (msg "add " (card-str state target-card) " from "
-             (name-zone (:side target-card) (:zone target-card))
-             " to the top of " (if (runner? target-card) "the Stack" "R&D"))
+  [target-card acting-side]
+  {:msg {:public (msg "add " (card-str state target-card) " from "
+                      (name-zone (:side target-card) (:zone target-card))
+                      " to the top of " (if (runner? target-card) "the Stack" "R&D"))
+         acting-side (msg "add " (card-str state target-card {:maybe-visible true}) " from "
+                          (name-zone (:side target-card) (:zone target-card))
+                          " to the top of " (if (runner? target-card) "the Stack" "R&D"))}
    :effect (req (move state side target-card :deck {:front true}))})
 
 (defn move-to-bottom
-  [target-card]
-  {:msg (msg "add " (card-str state target-card) " from "
-             (name-zone (:side target-card) (:zone target-card))
-             " to the bottom of " (if (runner? target-card) "the Stack" "R&D"))
+  [target-card acting-side]
+  {:msg {:public (msg "add " (card-str state target-card) " from "
+                      (name-zone (:side target-card) (:zone target-card))
+                      " to the bottom of " (if (runner? target-card) "the Stack" "R&D"))
+         acting-side (msg "add " (card-str state target-card {:maybe-visible true}) " from "
+                          (name-zone (:side target-card) (:zone target-card))
+                          " to the bottom of " (if (runner? target-card) "the Stack" "R&D"))}
    :effect (req (move state side target-card :deck))})
 
 (defn move-card-to-top-or-bottom
   "Ability to move a card to the top or bottom of the deck"
-  [target-card]
+  [target-card acting-side]
   (let [zone (if (runner? target-card) "the Stack" "R&D")]
     (choose-one-helper
       {:prompt (str "Move " (:title target-card) " where?")}
       [{:option (str "Top of " zone)
-        :ability (move-to-top target-card)}
+        :ability (move-to-top target-card acting-side)}
        {:option (str "Bottom of " zone)
-        :ability (move-to-bottom target-card)}])))
+        :ability (move-to-bottom target-card acting-side)}])))
 
 (defn trash-or-rfg
   [state _ eid card]
@@ -506,7 +516,8 @@
     :choices {:card #(and (corp? %)
                        (in-discard? %)
                        (pred %))}
-    :msg (msg "add " (card-str state target {:visible (faceup? target)}) " to HQ")
+    :msg {:public (msg "add " (card-str state target {:visible (faceup? target)}) " to HQ")
+          :corp (msg "add " (card-str state target {:maybe-visible true}) " to HQ")}
     :effect (effect (move :corp target :hand))}))
 
 (defn tutor-abi
@@ -554,16 +565,19 @@
   "Looks at the top QUANT cards of target-side's deck. Completes an eid."
   [state side eid card target-side quant]
   (let [target-cards (take quant (get-in @state [target-side :deck]))
-        zone-name (if (= :corp target-side) "R&D" "the stack")]
+        zone-name (if (= :corp target-side) "R&D" "the stack")
+        scry-side side
+        scry-fn (if (= 1 (count target-cards))
+                  (msg "the top card of " zone-name " is " (:title (first target-cards)))
+                  (msg "the top " (quantify quant "card") " of " zone-name " are (top->bottom): " (enumerate-cards target-cards)))]
     (resolve-ability
       state side eid
       {:player side
        :waiting-prompt true
        :req (req (seq target-cards))
        :choices ["OK"]
-       :prompt (if (= 1 (count target-cards))
-                 (msg "the top card of " zone-name " is " (:title (first target-cards)))
-                 (msg "the top " (quantify quant "card") " of " zone-name " are (top->bottom): " (enumerate-cards target-cards)))}
+       :msg {scry-side scry-fn}
+       :prompt scry-fn}
       card nil)))
 
 (defn with-revealed-hand
@@ -602,6 +616,41 @@
                                  (when-not was-open? (conceal-hand state target-side))
                                  (unregister-ev-callback)
                                  (effect-completed state side eid)))))})))
+
+
+(defn place-advancement-counter
+  ([advanceable-only] (place-advancement-counter advanceable-only 1))
+  ([advanceable-only qty] (place-advancement-counter advanceable-only qty "a card" nil))
+  ([advanceable-only qty card-line pred]
+   (let [label (str "Place " (quantify qty "advancement counter") " on " card-line (if advanceable-only " that can be advanced"))]
+     {:label label
+      :prompt label
+      :choices {:req (req (and (corp? target)
+                               (installed? target)
+                               (or (not pred)
+                                   (pred target))
+                               (or (not advanceable-only) (can-be-advanced? state target))))}
+      :msg {:public (msg "place " (quantify qty "advancement counter") " on " (card-str state target))
+            :corp (msg "place " (quantify qty "advancement counter") " on " (card-str state target {:maybe-visible true}))}
+      :async true
+      :effect (effect (add-prop eid target :advance-counter qty {:placed true}))})))
+
+(defn look-at-the-top
+  [looking-side deck-side qty]
+  (let [zone (if (= looking-side :corp) "R&D" "the stack")
+        seen (fn [state] (min qty (count (get-in @state [deck-side :deck]))))]
+    {:msg {:public (msg "look at the top " (quantify (seen state) "card") " of " zone)
+           looking-side (msg "look at the top " (quantify (seen state) "card") " of " zone " (top->bottom): " (enumerate-cards (take qty (get-in @state [deck-side :deck]))))}
+     :async true
+     :waiting-prompt true
+     :change-in-game-state {:silent true
+                            :req (req (seq (get-in @state [deck-side :deck])))}
+     :effect (req (resolve-ability
+                    state side eid
+                    {:prompt (msg "The top cards of " zone " are (top->bottom): "
+                                 (enumerate-cards (take qty (get-in @state [deck-side :deck]))))
+                     :choices ["OK"]}
+                    card nil))}))
 
 (defn make-icon
   [text card]

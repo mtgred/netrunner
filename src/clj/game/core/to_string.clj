@@ -6,26 +6,25 @@
   "Gets a string description of an installed card, reflecting whether it is rezzed,
   in/protecting a server, facedown, or hosted."
   ([state card] (card-str state card nil))
-  ([state {:keys [zone host facedown] :as card} {:keys [visible]}]
+  ([state {:keys [zone host facedown] :as card} {:keys [visible maybe-visible]}]
   (str (if (corp? card)
          (let [installed-ice (and (ice? card) (installed? card))]
-           ; Corp card messages
-           (str (if (or (rezzed? card)
-                        (:seen card)
-                        visible)
-                  (get-title card)
-                  (if installed-ice "ice" "a card"))
-                ; Hosted cards do not need "in server 1" messages, host has them
+           ;; Corp card messages
+           (str (cond
+                  (or (rezzed? card) (:seen card) visible) (get-title card)
+                  maybe-visible (str "facedown " (get-title card))
+                  :else (if installed-ice "ice" "a card"))
+                ;; Hosted cards do not need "in server 1" messages, host has them
                 (when-not host
                   (str (cond
                          installed-ice " protecting "
                          (is-root? zone) " in the root of "
                          :else " in ")
-                       ;TODO add naming of scoring area of corp/runner
+                       ;; TODO add naming of scoring area of corp/runner
                        (zone->name (or (second zone) zone)) ;; handles [:hand] as well as [:servers :hq]
                        (when installed-ice
                          (str " at position " (card-index state card)))))))
-         ; Runner card messages
+         ;; Runner card messages
          (if (or facedown visible)
            "a facedown card"
            (get-title card)))

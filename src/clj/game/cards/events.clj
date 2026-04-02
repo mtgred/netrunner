@@ -19,8 +19,7 @@
    [game.core.def-helpers :refer [all-cards-in-hand* in-hand*?
                                   breach-access-bonus defcard draw-abi drain-credits gain-credits-ability  offer-jack-out
                                   reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability scry tutor-abi with-revealed-hand
-                                  make-icon
-                                  reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability scry tutor-abi with-revealed-hand]]
+                                  make-icon]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid
@@ -585,6 +584,8 @@
              :effect (req (if (= target "Done")
                             (do (doseq [c (reverse chosen)]
                                   (move state :corp c :deck {:front true}))
+                                (system-msg state side (str "The top cards of R&D are "
+                                                            " are " (enumerate-cards chosen)) {:log-side :corp})
                                 (effect-completed state side eid))
                             (continue-ability state side (cbi-choice original '() (count original) original)
                                               card nil)))})
@@ -635,7 +636,8 @@
                                  :max (req (cards-to-trash state))
                                  :all true}
                        :waiting-prompt true
-                       :msg (msg "trash " (enumerate-str (map #(card-str state %) targets)))
+                       :msg {:public (msg "trash " (enumerate-str (map #(card-str state %) targets)))
+                             :corp (msg "trash " (enumerate-str (map #(card-str state % {:maybe-visible true}) targets)))}
                        :effect (req (wait-for (trash-cards state side targets)
                                               (continue-ability
                                                 state :corp

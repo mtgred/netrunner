@@ -14,7 +14,7 @@
     [game.core.payment :refer [build-spend-msg can-pay? handler]]
     [game.core.prompt-state :refer [add-to-prompt-queue]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
-    [game.core.say :refer [system-msg system-say n-last-logs]]
+    [game.core.say :refer [system-msg multi-msg system-say n-last-logs]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [continue-ability req wait-for]]
@@ -302,20 +302,26 @@
     (do-ability state side ability card targets)
     (effect-completed state side eid)))
 
-(defn print-msg
-  "Prints the ability message"
+(defn- get-side-message
   [state side {:keys [eid] :as ability} card targets payment-str]
   (when-let [message (:msg ability)]
     (let [desc (if (or (= :cost message) (string? message))
                  message
                  (message state side eid card targets))
-          cost-spend-msg (build-spend-msg payment-str "use")
-          disp-side (or (:display-side ability) (to-keyword (:side card)))]
+          cost-spend-msg (build-spend-msg payment-str "use")]
       (cond
-        (= :cost desc)
-        (system-msg state disp-side (str payment-str " to satisfy " (get-title card)))
-        desc
-        (system-msg state disp-side (str cost-spend-msg (get-title card) (str " to " desc)))))))
+        (= :cost desc) (str payment-str " to satisfy " (get-title card))
+        desc (str cost-spend-msg (get-title card) " to " desc)))))
+
+(defn print-msg
+  "Prints the ability message"
+  [state side {:keys [eid] :as ability} card targets payment-str]
+  (let [display-side (or (:display-side ability) (to-keyword (:side card)) side)]
+    (if (map? (:msg ability))
+      (let [msg-map (update-vals (:msg ability) #(get-side-message state side (assoc ability :msg %) card targets payment-str))]
+        (multi-msg state display-side msg-map))
+      (when-let [message (get-side-message state side ability card targets payment-str)]
+        (system-msg state display-side message)))))
 
 (defn register-once
   "Register ability as having happened if :once specified"

@@ -17,8 +17,8 @@
    [game.core.cost-fns :refer [rez-cost install-cost]]
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [corp-recur defcard do-net-damage draw-abi gain-credits-ability give-tags
-                                  offer-jack-out reorder-choice take-credits get-x-fn]]
+   [game.core.def-helpers :refer [combine-abilities corp-recur defcard do-net-damage draw-abi gain-credits-ability give-tags
+                                  look-at-the-top offer-jack-out place-advancement-counter reorder-choice take-credits get-x-fn]]
    [game.core.drawing :refer [draw draw-up-to]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [effect-completed make-eid]]
@@ -251,34 +251,21 @@
              :effect (effect (gain-tags eid 1))}]})
 
 (defcard "Architect Deployment Test"
-  {:on-score
-   {:interactive (req true)
-    :async true
-    :msg "look at the top 5 cards of R&D"
-    :waiting-prompt true
-    ;; this is explicitly so the prompt shows up before we look at the menu
-    :effect (req (continue-ability
-                   state side
-                   {:prompt (msg "The top cards of R&D are (top->bottom): "
-                                 (enumerate-cards (take 5 (:deck corp))))
-                    :choices ["OK"]
-                    :async true
-                    :req (req (not-empty (:deck corp)))
-                    :effect (effect (continue-ability
-                                      {:prompt "Choose a card to install"
-                                       :choices (cancellable (filter corp-installable-type?
-                                                                     (take 5 (:deck corp))))
-                                       :async true
-                                       :effect (req (let [target-position (first (positions #{target} (take 5 (:deck corp))))]
-                                                      (corp-install state side
-                                                        eid target nil
-                                                        {:ignore-all-cost true
-                                                         :msg-keys {:install-source card
-                                                                    :origin-index target-position
-                                                                    :display-origin true}
-                                                         :install-state :rezzed-no-cost})))}
-                                      card nil))}
-                   card nil))}})
+  {:on-score (combine-abilities
+               (look-at-the-top :corp :corp 5)
+               {:prompt "Choose a card to install"
+                :choices (req (cancellable (filter corp-installable-type? (take 5 (:deck corp)))))
+                :async true
+                :change-in-game-state {:silent true
+                                       :req (req (seq (:deck corp)))}
+                :effect (req (let [target-position (first (positions #{target} (take 5 (:deck corp))))]
+                               (corp-install state side
+                                             eid target nil
+                                             {:ignore-all-cost true
+                                              :msg-keys {:install-source card
+                                                         :origin-index target-position
+                                                         :display-origin true}
+                                              :install-state :rezzed-no-cost})))})})
 
 (defcard "Armed Intimidation"
   {:on-score
@@ -318,13 +305,8 @@
     :effect (effect (lose-credits :runner eid 7))}})
 
 (defcard "AstroScript Pilot Program"
-  {:on-score (agenda-counters 1)
-   :abilities [{:cost [(->c :agenda 1)]
-                :label "place 1 advancement counter"
-                :msg (msg "place 1 advancement counter on " (card-str state target))
-                :choices {:req (req (can-be-advanced? state target))}
-                :async true
-                :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
+    {:on-score (agenda-counters 1)
+     :abilities [(assoc (place-advancement-counter true 1) :cost [(->c :agenda 1)])]})
 
 (defcard "Award Bait"
   {:flags {:rd-reveal (req true)}
@@ -1000,7 +982,8 @@
                                    state side
                                    {:req (req (pos? (count (:hand corp))))
                                     :prompt "Choose a card in HQ to move to the top of R&D"
-                                    :msg "add 1 card in HQ to the top of R&D"
+                                    :msg {:public "add 1 card in HQ to the top of R&D"
+                                          :corp (msg "add facedown " (:title target) " to the top of R&D")}
                                     :choices {:card #(and (in-hand? %)
                                                           (corp? %))}
                                     :effect (effect (move target :deck {:front true}))}
@@ -1422,7 +1405,8 @@
     :choices {:max (req (count (:hand corp)))
               :card #(and (corp? %)
                           (in-hand? %))}
-    :msg (msg "trash " (quantify (count targets) "card") " from HQ")
+    :msg {:public (msg "trash " (quantify (count targets) "card") " from HQ")
+          :corp (msg "trash " (quantify (count targets) "card") " from HQ (" (enumerate-cards targets :sorted) ")")}
     :async true
     :cancel {:msg "decline trashing any cards from HQ"
              :async true
@@ -1635,8 +1619,9 @@
                                   :waiting-prompt true
                                   :choices {:max (req (count (:hand corp)))
                                             :card (every-pred corp? in-hand?)}
-                                  :msg (msg "shuffle " (quantify (count targets) "card")
-                                            " from HQ into R&D")
+                                  :msg {:public (msg "shuffle " (quantify (count targets) "card")
+                                                     " from HQ into R&D")
+                                        :corp (msg "shuffle " (enumerate-cards targets :sorted) " from HQ into R&D")}
                                   :cancel shuffle-my-deck!
                                   :effect (req (doseq [t targets]
                                                  (move state side t :deck))
@@ -1964,7 +1949,8 @@
                                      (or (agenda? %)
                                          (asset? %)
                                          (upgrade? %))))}
-             :msg (msg "swap " (card-str state to-swap) " with a card from HQ")
+             :msg {:public (msg "swap " (card-str state to-swap) " with a card from HQ")
+                   :corp (msg "swap " (card-str state to-swap {:maybe-visible true}) " with a card from HQ (" (:title target) ")")}
              :effect (req (wait-for (swap-cards-async state side to-swap target)
                                     (continue-ability state :runner (offer-jack-out) card nil)))})
           (choose-card [run-server]
@@ -2118,13 +2104,7 @@
 
 (defcard "Remastered Edition"
   {:on-score (agenda-counters 1)
-   :abilities [{:cost [(->c :agenda 1)]
-                :msg (msg "place 1 advancement counter on " (card-str state target))
-                :label "place 1 advancement counter"
-                :keep-menu-open :while-agenda-tokens-left
-                :choices {:card installed?}
-                :async true
-                :effect (effect (add-prop eid target :advance-counter 1 {:placed true}))}]})
+   :abilities [(assoc (place-advancement-counter nil 1) :cost [(->c :agenda 1)])]})
 
 (defcard "Remote Data Farm"
   {:move-zone (req (when (and (in-scored? card)
@@ -2303,16 +2283,11 @@
 
 (defcard "Sericulture Expansion"
   (project-agenda {:mode :computed})
-  {:events [{:event :corp-turn-ends
-             :req (req (and (seq (all-installed state :corp))
-                            (can-pay? state side eid card nil [(->c :agenda 1)])))
-             :prompt "Choose a card to place 2 advancement counters on"
-             :player :corp
-             :cost [(->c :agenda 1)]
-             :choices {:card (every-pred corp? installed?)}
-             :msg (msg "place 2 advancement counters on " (card-str state target))
-             :async true
-             :effect (req (add-prop state :corp eid target :advance-counter 2 {:placed true}))}]})
+  {:events [(assoc (place-advancement-counter nil 2)
+                   :event :corp-turn-ends
+                   :req (req (and (seq (all-installed state :corp))
+                                  (can-pay? state side eid card nil [(->c :agenda 1)])))
+                   :cost [(->c :agenda 1)])]})
 
 (defcard "Show of Force"
   {:on-score {:async true
@@ -2354,13 +2329,8 @@
                               card targets)))}]}))
 
 (defcard "Slash and Burn Agriculture"
-  {:expend {:req (req (some #(can-be-advanced? state %) (all-installed state :corp)))
-            :cost [(->c :credit 1)]
-            :choices {:req (req (can-be-advanced? state target))}
-            :msg (msg "place 2 advancement counters on " (card-str state target))
-            :async true
-            :effect (req
-                      (add-prop state :corp eid target :advance-counter 2 {:placed true}))}})
+  {:expend (assoc (place-advancement-counter true 2)
+                  :cost [(->c :credit 1)])})
 
 (defcard "SSL Endorsement"
   {:flags {:has-events-when-stolen true}
@@ -2467,14 +2437,8 @@
                             (gain-credits state side (make-eid state eid) cred-gain)
                             (continue-ability
                               state side
-                              {:req (req (seq (all-installed-corp state)))
-                               :choices {:card #(installed? %)}
-                               :waiting-prompt true
-                               :msg (msg "place 1 advancement counter on "
-                                         (card-str state target))
-                               :async true
-                               :effect (effect (add-prop :corp eid target :advance-counter 1
-                                                         {:placed true}))}
+                              (assoc (place-advancement-counter nil 1)
+                                     :req (req (seq (all-installed-corp state))))
                               card nil)))})]
     {:on-score (score-abi 3)
      :derezzed-events [{:event :corp-install

@@ -1,5 +1,6 @@
 (ns game.core.card
   (:require
+   [clojure.pprint :as pprint]
    [clojure.string :refer [lower-case]]
    [medley.core :refer [find-first]]))
 
@@ -470,6 +471,12 @@
   [state card]
   (or (:index card)
       (first (keep-indexed #(when (same-card? %2 card) %1) (get-in @state (cons :corp (get-zone card)))))))
+
+(defn verbal-card-index
+  "Get the verbal index of the given card in it's server's list of content"
+  [state card]
+  (when-let [idx (card-index state card)]
+    (pprint/cl-format nil "~:R" (inc idx))))
 
 (defn is-public?
   "Returns if a given card should be visible to the opponent"
