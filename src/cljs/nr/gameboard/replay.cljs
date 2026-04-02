@@ -343,7 +343,8 @@
                          :title "Forward to next log entry (→)"} "⏩︎"]
          [:button.small {:on-click #(replay-step-forward) :type "button"
                          :title "Forward one click (Ctrl + → )"} "⏭︎"]]
-        (when-not (= "local-replay" (:gameid @game-state)) ; when saved replay
+        (when (and (not= "local-replay" (:gameid @game-state))
+                   (:replay-shared @game-state))
           [:div.sharing
            [:input {:style (if @show-replay-link {:display "inline"} {:display "none"})
                     :type "text" :read-only true
