@@ -163,9 +163,11 @@
         runner-id (get @all-cards (:identity runner))
         turn-count (if turn turn 0)
         user (:user @app-state)
-        user-win (if (= (str winner) "corp") 
+        user-win (if (= (str winner) "corp")
                 (if (= (:username user) (get-in corp [:player :username])) " (You)" "")
-                (if (= (:username user) (get-in runner [:player :username])) " (You)" ""))]
+                (if (= (:username user) (get-in runner [:player :username])) " (You)" ""))
+        user-is-corp (= (:username user) (get-in corp [:player :username]))
+        user-deck-name (if user-is-corp (:deck-name corp) (:deck-name runner))]
     [:div.gameline {:style {:min-height "auto"
                             :border-color (when winner (if (= user-win " (You)") "#6AB56A" "#Ea7d7f"))}}
      [:button.float-right
@@ -186,13 +188,19 @@
       [:span.player
        [avatar (:player corp) {:opts {:size 24}}]
        (get-in corp [:player :username]) " - "
-       (faction-icon-memo (:faction corp-id) (:title corp-id)) " " (:title corp-id)]]
+       [:span.identity-deck
+        [:span (faction-icon-memo (:faction corp-id) (:title corp-id)) " " (:title corp-id)]
+        (when (and user-is-corp user-deck-name)
+          [:span.deck-name user-deck-name])]]]
 
      [:div
       [:span.player
        [avatar (:player runner) {:opts {:size 24}}]
        (get-in runner [:player :username]) " - "
-       (faction-icon-memo (:faction runner-id) (:title runner-id)) " " (:title runner-id)]]
+       [:span.identity-deck
+        [:span (faction-icon-memo (:faction runner-id) (:title runner-id)) " " (:title runner-id)]
+        (when (and (not user-is-corp) user-deck-name)
+          [:span.deck-name user-deck-name])]]]
 
      (when winner
        [:h4 (tr [:stats_winner "Winner"] {:winner (tr-side winner)}) (str user-win)])]))

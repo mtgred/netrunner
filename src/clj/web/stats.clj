@@ -212,10 +212,16 @@
         (catch Exception e
           (timbre/error e (str "Caught exception saving game stats: " (:stats @state))))))))
 
+(defn strip-opponent-deck-name
+  [game username]
+  (if (= username (get-in game [:corp :player :username]))
+    (update game :runner dissoc :deck-name)
+    (update game :corp dissoc :deck-name)))
+
 (defn history
   [{db :system/db
     {username :username :as user} :user
-    {:keys [skip]} :params}] 
+    {:keys [skip]} :params}]
   (let [skip (or (some-> skip Integer/parseInt) 0)]
     (if (active-user? user)
       (let [games (->> (mq/with-collection db game-log-coll
@@ -229,7 +235,7 @@
             games (map #(update % :creation-date mongo-time-to-utc-string) games)
             games (map #(update % :start-date mongo-time-to-utc-string) games)
             games (map #(update % :end-date mongo-time-to-utc-string) games)
-            ]
+            games (map #(strip-opponent-deck-name % username) games)]
         (response 200 games))
       (response 401 {:message "Unauthorized"}))))
 
