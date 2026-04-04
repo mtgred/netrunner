@@ -60,7 +60,7 @@
            target (update target :hosted #(map (fn [h] (assoc h :host target)) %))
            cdef (card-def card)
            tdef (card-def target)]
-       (update! state side (update card :hosted conj target))
+       (update! state side (update card :hosted concat [target]))
        (if (and installed
                   (or (runner? target)
                       (and (corp? target)
