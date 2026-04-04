@@ -73,8 +73,7 @@
 (defn- multi-say
   [state side message-map]
   (let [author (get-in @state [side :user])
-        message (update-vals message-map #(make-message {:user author
-                                                         :text (insert-pronouns state side %)}))]
+        message (update-vals message-map #(make-system-message  (insert-pronouns state side %)))]
     (log state message)))
 
 (defn system-say
