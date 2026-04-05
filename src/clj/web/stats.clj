@@ -358,6 +358,23 @@
         (response 500 {:message "Server error"})))
     (response 401 {:message "Unauthorized"})))
 
+(defn unshare-replay
+  [{db :system/db
+    {username :username} :user
+    {:keys [gameid]} :path-params}]
+  (if username
+    (try
+      (mc/update db :game-logs
+                 {$and [{:gameid (str gameid)}
+                        {$or [{:corp.player.username username}
+                              {:runner.player.username username}]}]}
+                 {$set {:replay-shared false}})
+      (response 200 {:message "Unshared"})
+      (catch Exception e
+        (timbre/error e "Caught exception unsharing game")
+        (response 500 {:message "Server error"})))
+    (response 401 {:message "Unauthorized"})))
+
 (defn- get-winner-card
   [winner corp runner host]
   (let [default-img (str host "/img/icons/jinteki_167.png")]
