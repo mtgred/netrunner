@@ -767,8 +767,7 @@
                                    l (or (:loses s) 0)]
                                (safe-divide w (+ w l))) > decks)
     "games-played" (sort-by #(let [s (:stats %)]
-                                (+ (or (:games-started s) 0)
-                                   (or (:games s) 0))) > decks)
+                               (or (:games-started s) -1)) > decks)
     (sort-by (juxt :date :_id) > decks)))
 
 (defn- filter-side [side-filter decks]
