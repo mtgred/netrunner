@@ -14,13 +14,14 @@
                                       card-preview-mouse-over]]
    [nr.news :refer [news]]
    [nr.translations :refer [tr tr-element tr-pronouns tr-span]]
-   [nr.utils :refer [non-game-toast render-message set-scroll-top
-                     store-scroll-top format-date-time day-word-with-time-formatter
-                     tr-non-game-toast]]
+   [nr.utils :refer [non-game-toast render-message format-date-time
+                     day-word-with-time-formatter tr-non-game-toast]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 
 (defonce chat-state (atom {}))
+(defonce saved-scroll-positions (atom {}))
+(defonce saved-channel (atom :general))
 
 (def chat-channel (chan))
 (def delete-msg-channel (chan))
@@ -149,6 +150,7 @@
 (defn channel-view [{:keys [channel active-channel]} s]
   [:div.block-link {:class (if (= active-channel channel) "active" "")
                     :on-click #(do (swap! s assoc :scrolling false)
+                                   (swap! s assoc :new-msg-count 0)
                                    (swap! s assoc :channel
                                           (keyword (s/replace (-> % .-target .-innerHTML) #"#" ""))))}
    (str "#" (name channel))])
@@ -220,13 +222,47 @@
 
 (fetch-all-messages)
 
-(defn message-panel [s old scroll-top]
+(defn message-panel [s old]
   (r/with-let [cards-loaded (r/cursor app-state [:cards-loaded])
                !node-ref (r/atom nil)]
     (r/create-class
       {:display-name "message-panel"
-       :component-did-mount (fn [_] (set-scroll-top @!node-ref @scroll-top))
-       :component-will-unmount (fn [_] (store-scroll-top @!node-ref scroll-top))
+       :component-did-mount
+       (fn [_]
+         (let [channel (:channel @s)
+               saved (get @saved-scroll-positions channel)
+               saved-pos (:pos saved)
+               curr-count (count (get-in @app-state [:channels channel]))]
+           (if saved-pos
+             (do (when-let [node @!node-ref]
+                   (set! (.-scrollTop node) saved-pos))
+                 ;; mark as scrolled so new messages don't yank to bottom
+                 (swap! s assoc :scrolling true)
+                 ;; restore new-message count: unread when leaving + any that arrived while away
+                 (let [new-since-left (max 0 (- curr-count (:msg-count saved 0)))
+                       total-new (+ (:new-msg-count saved 0) new-since-left)]
+                   (when (pos? total-new)
+                     (swap! s assoc :new-msg-count total-new)))
+                 ;; sync old so component-did-update doesn't override the restored position
+                 (swap! old assoc
+                        :prev-page (:active-page @app-state)
+                        :prev-channel channel
+                        :prev-msg-count curr-count))
+             (when-let [msg-list (:message-list @chat-state)]
+               (set! (.-scrollTop msg-list) (.-scrollHeight msg-list))))))
+       :component-will-unmount
+       (fn [_]
+         (let [channel (:channel @s)]
+           (when-let [node @!node-ref]
+             (if (:scrolling @s)
+               ;; scrolled up — save position, unread count, and total count for restore on return
+               (swap! saved-scroll-positions assoc channel
+                      {:pos (.-scrollTop node)
+                       :new-msg-count (:new-msg-count @s 0)
+                       :msg-count (count (get-in @app-state [:channels channel]))})
+               ;; at the bottom — clear any saved position so we scroll to bottom on return
+               (swap! saved-scroll-positions dissoc channel)))
+           (reset! saved-channel channel)))
        :component-did-update
        (fn []
          (when-let [msg-list (:message-list @chat-state)]
@@ -237,6 +273,13 @@
                  curr-page (:active-page @app-state)
                  prev-page (:prev-page @old)
                  is-scrolled (:scrolling @s)]
+             (when (and (not= curr-msg-count prev-msg-count)
+                        is-scrolled
+                        (> curr-msg-count prev-msg-count))
+               (swap! s update :new-msg-count + (- curr-msg-count prev-msg-count))
+               (swap! old assoc :prev-msg-count curr-msg-count))
+             (when (not= curr-channel prev-channel)
+               (swap! s assoc :new-msg-count 0))
              (when (or (and (zero? (.-scrollTop msg-list))
                             (not is-scrolled))
                        (not= curr-page prev-page)
@@ -250,7 +293,7 @@
                (swap! old assoc :prev-msg-count curr-msg-count)))))
 
        :reagent-render
-       (fn [s _old _scroll-top]
+       (fn [s _old]
          [:div.blue-shade.panel.message-list {:ref #(do (reset! !node-ref %)
                                                                                         (swap! chat-state assoc :message-list %))
                                               :on-scroll #(let [currElt (.-currentTarget %)
@@ -258,6 +301,8 @@
                                                                 scroll-height (.-scrollHeight currElt)
                                                                 client-height (.-clientHeight currElt)
                                                                 scrolling (< (+ scroll-top client-height) scroll-height)]
+                                                            (when (not scrolling)
+                                                              (swap! s assoc :new-msg-count 0))
                                                             (swap! s assoc :scrolling scrolling))}
           (if (not @cards-loaded)
             [:h4 "Loading cards..."]
@@ -270,7 +315,7 @@
 
 (defn chat []
   (let [user (r/cursor app-state [:user])]
-    (fn [s curr-msg old scroll-top]
+    (fn [s curr-msg old]
       [:div#chat.chat-app
        [:div.blue-shade.panel.channel-list
         [tr-element :h4 [:chat_channels "Channels"]]
@@ -285,18 +330,24 @@
          (when-let [card (:zoom @s)]
            [card-zoom (r/atom card)])]
         [:div.chat-box
-         [message-panel s old scroll-top]
+         [message-panel s old]
+         (when (pos? (:new-msg-count @s))
+           [:button.new-messages-indicator
+            {:on-click #(do (when-let [msg-list (:message-list @chat-state)]
+                              (set! (.-scrollTop msg-list) (.-scrollHeight msg-list)))
+                            (swap! s assoc :new-msg-count 0))}
+            (str "↓ " (:new-msg-count @s) " new message" (when (> (:new-msg-count @s) 1) "s"))])
          (when @user
            [:div
             [msg-input-view (:channel @s) curr-msg]])]]])))
 
 (defn chat-page []
-  (r/with-let [s (r/atom {:channel :general
+  (r/with-let [s (r/atom {:channel @saved-channel
                           :zoom false
                           :zoom-ch (chan)
-                          :scrolling false})
+                          :scrolling false
+                          :new-msg-count 0})
                curr-msg (r/atom {})
-               scroll-top (atom 0)
                old (atom {:prev-msg-count 0})] ; old is not a r/atom so we don't render when this is updated
 
     (go (while true
@@ -308,5 +359,5 @@
        [:div.home-bg]
        [tr-element :h1 [:chat_title "Play Netrunner in your browser"]]
        [news]
-       [chat s curr-msg old scroll-top]
+       [chat s curr-msg old]
        [:div#version [:span (str "Version " (or (get @app-state :app-version) "Unknown"))]]])))
