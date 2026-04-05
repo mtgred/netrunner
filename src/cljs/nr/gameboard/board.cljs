@@ -818,7 +818,8 @@
 
      (when (pos? (count hosted))
        [:div.hosted
-        (if (and (not (ice? card))
+        (if (and (not (or (ice? card)
+                          (= "ices" (last (:zone card)))))
                  @as-stacked-cards)
         ; stacked mode
           (let [distinct-hosted (vals (group-by get-title hosted))]
