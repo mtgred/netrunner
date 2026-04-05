@@ -26,7 +26,7 @@ about_game-engine = 游戏引擎：
 
 about_high-res-images = FFG 卡牌的高清扫描图。
 
-about_founder-attribution = 项目维护者，首席开发者。
+about_maintainer-attribution = 项目维护者，首席开发者。
 
 about_open-source = 代码已开源，可在[link]获取。
 
