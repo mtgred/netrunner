@@ -26,6 +26,7 @@
                            :loser (other-side side)
                            :winning-user (get-in state [side :user :username])
                            :losing-user (get-in state [(other-side side) :user :username])
+                           :losing-score (get-in state [(other-side side) :agenda-point])
                            :reason reason
                            :end-time now
                            :winning-deck-id (get-in state [side :deck-id])
