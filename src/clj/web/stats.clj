@@ -338,7 +338,9 @@
                 (= username (get-in runner [:player :username]))))
       (if (empty? replay)
         (response 404 {:message "Replay not found"})
-        (json-response 200 replay))
+        (json-response 200 (json/generate-string
+                             (assoc (json/parse-string replay true)
+                                    :replay-shared replay-shared))))
       (response 401 {:message "Unauthorized"}))))
 
 (defn share-replay
@@ -372,7 +374,7 @@
 (defn replay-handler
   [{db :system/db
     {:keys [gameid bugid]}        :path-params
-    {:keys [n d b]}               :query-params
+    {:strs [n d b]}               :query-params
     scheme                        :scheme
     headers                       :headers
     :as req}]
