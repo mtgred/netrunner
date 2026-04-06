@@ -1677,12 +1677,13 @@
                                                       (host card target))}}}
                             card nil))}
             {:event :pre-access-card
-             :req (req (and
-                         (get-in card [:special :host-available])
-                         (in-discard? target)
-                         (or (agenda? target)
-                             (not (:seen target))
-                             (:poison target))))
+             :req (req (let [target (:accessed-card context)]
+                         (and
+                           (get-in card [:special :host-available])
+                           (in-discard? target)
+                           (or (agenda? target)
+                               (not (:seen target))
+                               (:poison target)))))
              :async true
              ;; note that it's possible for cards to get added to archives mid-access (even by this card)
              ;; because of this, we can't just treat this like archives interface
@@ -2932,13 +2933,13 @@
   {:events [{:event :pre-access-card
              :req (req (get-in card [:special :rng-guess]))
              :async true
-             :msg (msg "reveal " (:title target) " from " (zone->name (get-zone target)))
+             :msg (msg "reveal " (:title (:accessed-card context)) " from " (zone->name (get-zone (:accessed-card context))))
              :effect (req (wait-for
-                            (reveal state side target)
+                            (reveal state side (:accessed-card context))
                             (continue-ability
                               state side
                               (let [guess (get-in card [:special :rng-guess])]
-                                (when (#{(:cost target) (get-advancement-requirement target)} guess)
+                                (when (#{(:cost (:accessed-card context)) (get-advancement-requirement (:accessed-card context))} guess)
                                   {:prompt "Choose one"
                                    :waiting-prompt true
                                    :choices ["Gain 3 [Credits]" "Draw 2 cards"]

@@ -499,13 +499,13 @@
         card
         [{:event :access
           :duration :end-of-turn
-          :req (req (and (can-trash? state :runner target)
-                         (not (in-discard? target))))
+          :req (req (and (can-trash? state :runner (:accessed-card context))
+                         (not (in-discard? (:accessed-card context)))))
           :interactive (req true)
           :async true
-          :msg (msg "trash " (:title target) " at no cost and suffer 1 meat damage")
-          :effect (req (wait-for (trash state side (assoc target :seen true) {:cause-card card
-                                                                              :accessed true})
+          :msg (msg "trash " (:title (:accessed-card context)) " at no cost and suffer 1 meat damage")
+          :effect (req (wait-for (trash state side (assoc (:accessed-card context) :seen true)
+                                        {:cause-card card :accessed true})
                                  (swap! state assoc-in [:runner :register :trashed-card] true)
                                  (swap! state assoc-in [:runner :register :trashed-accessed-card] true)
                                  (damage state :runner eid :meat 1 {:unboostable true})))}]))}})
@@ -671,10 +671,10 @@
                               (update! state side
                                        (update-in card [:special :accessed] concat ts))))}
               {:event :access-card
-               :req (req (in-discard? target))
+               :req (req (in-discard? (:accessed-card context)))
                :silent true
                :effect (req (update! state side
-                                     (update-in card [:special :accessed] conj (:title target))))}
+                                     (update-in card [:special :accessed] conj (:title (:accessed-card context)))))}
               {:event :run-ends
                :req (req (seq (get-in card [:special :accessed])))
                :async true
@@ -882,8 +882,8 @@
    :events [{:event :pre-access-card
              :once :per-run
              :async true
-             :req (req (not (agenda? target)))
-             :effect (req (let [c target
+             :req (req (not (agenda? (:accessed-card context))))
+             :effect (req (let [c (:accessed-card context)
                                 cost (or (and (or (asset? c)
                                                   (upgrade? c)
                                                   (ice? c))
@@ -2929,8 +2929,8 @@
 
 (defcard "Power to the People"
   {:events [{:event :access
-             :req (req (and (agenda? target)
-                            (first-event? state side :access #(agenda? (first %)))))
+             :req (req (and (agenda? (:accessed-card context))
+                            (first-event? state side :access #(agenda? (:accessed-card (first %))))))
              :duration :end-of-turn
              :unregister-once-resolved true
              :msg "gain 7 [Credits]"
@@ -4231,18 +4231,18 @@
   (letfn [(rfg-card-event [burned-card]
             [{:event :pre-access-card
               :duration :end-of-game
-              :req (req (same-card? :title burned-card target))
+              :req (req (same-card? :title burned-card (:accessed-card context)))
               :msg (msg (str "remove " (:title burned-card) " from the game"))
-              :effect (effect (move :corp target :rfg))}])]
+              :effect (effect (move :corp (:accessed-card context) :rfg))}])]
     {:makes-run true
      :on-play run-remote-server-ability
      :events [{:event :pre-access-card
-               :req (req (and (not (agenda? target))
+               :req (req (and (not (agenda? (:accessed-card context)))
                               (:successful run)))
                :once :per-run
-               :msg (msg "remove " (:title target) " from the game, and watch for other copies of " (:title target) " to burn")
-               :effect (effect (move :corp target :rfg)
-                         (register-events card (rfg-card-event target)))}]}))
+               :msg (msg "remove " (:title (:accessed-card context)) " from the game, and watch for other copies of " (:title (:accessed-card context)) " to burn")
+               :effect (effect (move :corp (:accessed-card context) :rfg)
+                         (register-events card (rfg-card-event (:accessed-card context))))}]}))
 
 (defcard "White Hat"
   {:on-play

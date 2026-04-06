@@ -234,12 +234,12 @@
   {:events [{:event :post-access-card
              :optional
              {:autoresolve (get-autoresolve :auto-fire)
-              :req (req (and (:trash (second targets))
-                             (not (in-discard? target))))
+              :req (req (and (:trash (:accessed-card-snapshot context))
+                             (not (in-discard? (:accessed-card context)))))
               :prompt "Gain 1 [Credits] and reveal accessed card?"
               :yes-ability {:msg (msg (str "gain 1 [Credits]"
-                                           (when-not (installed? target)
-                                             (str " and reveal " (:title target)))))
+                                           (when-not (installed? (:accessed-card context))
+                                             (str " and reveal " (:title (:accessed-card context))))))
                             :async true
                             :effect (effect (gain-credits eid 1))}}}]
    :abilities [(set-autoresolve :auto-fire "Aeneas Informant")]})
@@ -1520,10 +1520,10 @@
                                       :msg (msg "host " (:title agenda) " instead of accessing it")}}})]
     {:events [{:event :access
                :req (req (and (empty? (filter agenda? (:hosted card)))
-                              (agenda? target)))
+                              (agenda? (:accessed-card context))))
                :interactive (req true)
                :async true
-               :effect (effect (continue-ability (host-agenda? target) card nil))}]
+               :effect (effect (continue-ability (host-agenda? (:accessed-card context)) card nil))}]
      :abilities [{:action true
                   :cost [(->c :click 2)]
                   :label "Add hosted agenda to your score area"
@@ -2448,7 +2448,7 @@
             {:event :pre-trash
              :req (req (let [cards (map first (rest (turn-events state side :pre-trash)))]
                          (and (empty? (filter :trash cards))
-                              (number? (:trash target)))))
+                              (number? (:trash (:accessed-card context))))))
              :once :per-turn
              :msg (msg "reveal " (card-str state target {:visible true}))
              :async true
@@ -4090,8 +4090,8 @@
                                      :duration :end-of-run
                                      :unregister-once-resolved true
                                      :async true
-                                     :req (req (= (:title target) named-agenda))
-                                     :effect (effect (steal eid target))}]))
+                                     :req (req (= (:title (:accessed-card context)) named-agenda))
+                                     :effect (effect (steal eid (:accessed-card context)))}]))
                                (trash eid card {:unpreventable true :cause-card card}))}}}]
    :abilities [(set-autoresolve :auto-fire "Whistleblower")]})
 

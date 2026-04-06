@@ -1587,7 +1587,7 @@
                             (not (in-scored? target))))
              :once :per-turn
              :effect (req (let [card-to-trash (first (shuffle (:hand corp)))
-                                card-seen? (same-card? target card-to-trash)
+                                card-seen? (same-card? (:accessed-card context) card-to-trash)
                                 card-to-trash (if card-seen? (assoc card-to-trash :seen true)
                                                   card-to-trash)]
                             (continue-ability
@@ -1602,14 +1602,14 @@
   {:static-abilities [(mu+ 2)]
    :events [{:event :post-access-card
              :optional
-             {:req (req (in-deck? (second targets)))
+             {:req (req (in-deck? (:accessed-card-snapshot context)))
               :once :per-turn
-              :prompt (msg "Move " (:title target) " to the bottom of R&D?")
+              :prompt (msg "Move " (:title (:accessed-card context)) " to the bottom of R&D?")
               :yes-ability
               {:msg "move the card just accessed to the bottom of R&D"
                :async true
-               :effect (req (move state :corp target :deck)
-                            (gain-tags state :runner eid 1))}}}]})
+               :effect (effect (move :corp (:accessed-card context) :deck)
+                               (gain-tags :runner eid 1))}}}]})
 
 (defcard "MemStrips"
   {:static-abilities [(virus-mu+ 3)]})

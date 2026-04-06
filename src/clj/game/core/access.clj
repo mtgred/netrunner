@@ -32,12 +32,12 @@
   [state side kw]
   (sum-effects state side :access-bonus kw))
 
-(defn access-end
+(defn- access-end
   "Trigger events involving the end of the access phase, including :no-trash and :post-access-card"
   ([state side eid c] (access-end state side eid c nil))
   ([state side eid c {:keys [trashed stolen]}]
    ;; Do not trigger :no-trash if card has already been trashed
-   (wait-for (trigger-event-sync state side (when-not trashed :no-trash) c)
+   (wait-for (trigger-event-sync state side (when-not trashed :no-trash) {:accessed-card c})
              (when (and (not trashed)
                         (not stolen)
                         ;; Don't increment :no-trash-or-steal if accessing a card in Archives
@@ -45,7 +45,7 @@
                (no-trash-or-steal state))
              (let [accessed-card (:access @state)]
                (swap! state dissoc :access)
-               (trigger-event-sync state side eid :post-access-card c accessed-card)))))
+               (trigger-event-sync state side eid :post-access-card {:accessed-card c :accessed-card-snapshot accessed-card})))))
 
 ;;; Accessing rules
 (defn interactions
@@ -68,7 +68,7 @@
   "Access a non-agenda. Show a prompt to trash for trashable cards."
   [state side eid c & {:keys [skip-trigger-event]}]
   (wait-for
-    (trigger-event-sync state side (when-not skip-trigger-event :pre-trash) c)
+    (trigger-event-sync state side (when-not skip-trigger-event :pre-trash) {:accessed-card c})
     (swap! state update-in [:stats :runner :access :cards] (fnil inc 0))
     ;; Don't show the access prompt if:
     (if (or ;; 1) accessing seen cards in Archives
@@ -371,7 +371,7 @@
                            ; or access has been stopped
                            :cancel-fn (fn [state] (or (not (get-card state c))
                                                       (not (:access @state))))}
-                          c)
+                          {:accessed-card c})
                         ; make sure the card has not been moved by a handler
                         ; and we're still accessing the card
                         (if (and (get-card state c)
@@ -472,7 +472,7 @@
                        (second (get-zone card)))]
           (swap! state update-in [:run :cards-accessed zone] (fnil inc 0))))
       ;; First trigger pre-access-card, then move to determining if we can trash or steal.
-      (wait-for (trigger-event-sync state side :pre-access-card card)
+      (wait-for (trigger-event-sync state side :pre-access-card {:accessed-card card})
                 (access-pay state side eid card title args))))
 
 (defn access-card
