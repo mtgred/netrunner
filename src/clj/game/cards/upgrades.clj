@@ -542,14 +542,14 @@
     {:static-abilities [steal-cost]
      :events [{:event :pre-access-card
                :req (req (and (rezzed? card)
-                              (same-card? target card)))
+                              (same-card? (:accessed-card context) card)))
                ;; It would be lovely to instead use :trash-cost-bonus [(->c :add-random-from-hand-to-bottom-of-deck 2)]
                :effect
                (req (register-run-flag!
                       state side
                       card :can-trash
                       (fn [state _ card]
-                        (or (not (same-card? target card))
+                        (or (not (same-card? (:accessed-card context) card))
                             (can-pay? state :runner eid
                                       card nil [(->c :add-random-from-hand-to-bottom-of-deck 2)])))))}
               steal-cost]
@@ -726,7 +726,7 @@
                        :successful (give-tags 2)}}})
 
 (defcard "Flagship"
-  (let [other-cards-accessed (fn [state card] (map :cid (filter #(not= (:cid %) (:cid card)) (apply concat (run-events state :runner :access)))))
+  (let [other-cards-accessed (fn [state card] (map :cid (filter #(not= (:cid (:accessed-card %)) (:cid card)) (apply concat (run-events state :runner :access)))))
         prevent-random {:type :disable-random-accesses
                         :value true
                         :req (req (and run this-server (seq (other-cards-accessed state card))))}

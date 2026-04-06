@@ -540,7 +540,7 @@
 		:msg (msg "turn " (card-str state target {:visible true}) " faceup")
                 :effect (req (update! state side (assoc target :seen true)))}]
    :events [{:event :access
-             :req (req ((every-pred faceup? installed? agenda? :was-seen) target))
+             :req (req ((every-pred faceup? installed? agenda? :was-seen) (:accessed-card context)))
              :interactive (req true)
              :msg (msg "do 2 meat damage and give the Runner a tag")
              :async true
@@ -770,19 +770,19 @@
 
 (defcard "Edward Kim: Humanity's Hammer"
   {:events [{:event :access
-             :req (req (and (operation? target)
-                            (first-event? state side :access #(operation? (first %)))))
+             :req (req (and (operation? (:accessed-card context))
+                            (first-event? state side :access #(operation? (:accessed-card (first %))))))
              :async true
-             :effect (req (if (in-discard? target)
+             :effect (req (if (in-discard? (:accessed-card context))
                             (effect-completed state side eid)
                             (continue-ability
                               state side
-                              (let [c target]
+                              (let [c (:accessed-card context)]
                                 {:prompt (str "You accessed" (:title c))
                                  :choices ["[Edward Kim] Trash"]
                                  :async true
                                  :msg (msg "trash " (:title c))
-                                 :effect (req (trash state side eid c nil))})
+                                 :effect (effect (trash eid c nil))})
                               card nil)))}]})
 
 (defcard "Ele \"Smoke\" Scovak: Cynosure of the Net"
@@ -910,7 +910,7 @@
 
 (defcard "Gagarin Deep Space: Expanding the Horizon"
   {:events [{:event :pre-access-card
-             :req (req (is-remote? (second (get-zone target))))
+             :req (req (is-remote? (second (get-zone (:accessed-card context)))))
              :effect (effect (access-cost-bonus [(->c :credit 1)]))
              :msg "make the Runner spend 1 [Credits] to access"}]})
 
@@ -943,7 +943,7 @@
   {:static-abilities [{:type :cannot-steal
                        :value (req (pos? (event-count state side :agenda-stolen)))}]
    :events [{:event :access
-             :req (req (and (agenda? target)
+             :req (req (and (agenda? (:accessed-card context))
                             (pos? (event-count state side :agenda-stolen))))
              :effect (effect (toast :runner "Cannot steal due to Haarpsichord Studios." "warning"))}]})
 

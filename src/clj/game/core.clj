@@ -82,7 +82,6 @@
    access-card
    access-cost
    access-cost-bonus
-   access-end
    access-helper-archives
    access-helper-hq
    access-helper-rd

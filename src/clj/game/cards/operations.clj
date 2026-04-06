@@ -603,7 +603,7 @@
    :events [{:event :access
              :condition :hosted
              :async true
-             :req (req (same-card? target (:host card)))
+             :req (req (same-card? (:accessed-card context) (:host card)))
              :msg "give the Runner 2 tags"
              :effect (effect (gain-tags :runner eid 2))}]})
 
@@ -1689,16 +1689,16 @@
                                                    card nil)))}}])})
 
 (defcard "Kill Switch"
-  (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title (or (:card context) target)))
+  (let [trace-for-brain-damage {:msg (msg "reveal that they accessed " (:title (or (:card context) (:accessed-card context))))
                                 :trace {:base 3
                                         :req (req (or (agenda? (:card context))
-                                                      (agenda? target)))
+                                                      (agenda? (:accessed-card context))))
                                         :successful {:msg "do 1 core damage"
                                                      :async true
                                                      :effect (effect (damage :runner eid :brain 1 {:card card}))}}}]
     {:events [(assoc trace-for-brain-damage
                      :event :access
-                     :interactive (req (agenda? target)))
+                     :interactive (req (agenda? (:accessed-card context))))
               (assoc trace-for-brain-damage :event :agenda-scored)]}))
 
 (defcard "Lag Time"

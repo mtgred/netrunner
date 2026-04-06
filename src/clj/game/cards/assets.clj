@@ -1213,7 +1213,7 @@
 
 (defcard "Franchise City"
   {:events [{:event :access
-             :req (req (agenda? target))
+             :req (req (agenda? (:accessed-card context)))
              :msg "add itself to [their] score area as an agenda worth 1 agenda point"
              :effect (req (as-agenda state :corp card 1))}]})
 
