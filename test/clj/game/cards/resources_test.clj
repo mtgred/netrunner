@@ -5001,7 +5001,7 @@
         (click-prompt state :runner "Street Peddler")
         (let [ped1 (first (:hosted (refresh oca)))]
           (card-ability state :runner ped1 0)
-          (click-prompt state :runner (last (prompt-buttons :runner))) ; choose Street Peddler
+          (click-prompt state :runner (first (prompt-buttons :runner))) ; choose Street Peddler
           (click-prompt state :runner (:title oca))
           (click-prompt state :runner (:title oca))
           (let [ped2 (first (:hosted (refresh oca)))]
