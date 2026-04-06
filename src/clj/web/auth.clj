@@ -13,6 +13,7 @@
    [monger.result :refer [acknowledged?]]
    [postal.core :as mail]
    [ring.util.response :refer [redirect]]
+   [web.analytics :refer [update-analytics]]
    [web.app-state :as app-state]
    [web.mongodb :refer [->object-id find-one-as-map-case-insensitive]]
    [web.user :refer [active-user? create-user user-keys valid-username?]]
@@ -92,6 +93,7 @@
                                               (dissoc :_id)
                                               (assoc :username username))
                                          demo-decks)))
+      (update-analytics :engagement {:new-user 1})
       (response 200 {:message "ok"}))))
 
 (defn find-non-banned-user
