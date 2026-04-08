@@ -20,6 +20,22 @@
     display-flex()
     flex-direction(column)
     min-height: 1px
+    position: relative
+
+.new-messages-indicator
+    position: absolute
+    bottom: 42px
+    left: 50%
+    transform: translateX(-50%)
+    z-index: 10
+    white-space: nowrap
+    padding: 4px 12px
+    border-radius: 12px
+    font-size: .8rem
+    cursor: pointer
+    opacity: 0.9
+    &:hover
+        opacity: 1
 
 .chat-container
     flex(2)
