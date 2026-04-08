@@ -10,6 +10,7 @@
    [monger.query :as mq]
    [monger.result :refer [acknowledged?]]
    [ring.util.request :refer [request-url]]
+   [web.analytics :refer [update-analytics]]
    ;;[web.angel-arena.stats :as angel-arena-stats]
    [web.mongodb :refer [->object-id]]
    [web.pages :as pages]
@@ -71,6 +72,32 @@
                         {:stats.loses 1}))]
     record))
 
+(defn- smogon
+  "gets a smogon map for the game"
+  [state player]
+  (let [deck (get-in player [:deck])]
+    (when (= "standard" (:format deck))
+      ;; get all cards by name
+      (let [ident (-> deck :identity :title)
+            cards (->> deck :cards (mapv (fn [{:keys [qty card]}] [(:title card) qty card])))
+            cards (concat cards [[ident 3 (-> deck :identity)]])
+            point-mult (if (= (:_id deck) (:winning-deck-id @state))
+                         3.5
+                         (- (or (:losing-score @state) 0) 3.5))
+            ;; the winner has 3.5 points
+            ;; the loser has however many points they had, -3.5
+            ;; relevant data: in faction, id {used*qty used?}, score
+            card-data (fn [qty card]
+                        [(if (= (:faction card) (-> deck :identity :faction)) qty 0)
+                         {ident [qty 1]}
+                         (* qty point-mult)])
+            mapped (map (fn [[title qty card]]
+                          [title (card-data qty card)])
+                        cards)
+            adjusted-data {:data (into {} mapped)
+                           :players 1}]
+        (update-analytics :smogon adjusted-data)))))
+
 (defn update-deck-stats
   "Update stats for player decks on game ending"
   [db {:keys [original-players ending-players state precon]}]
@@ -81,6 +108,7 @@
         (when (and enable-deckstats deck-id)
           (inc-deck-stats db deck-id {:stats.games-started 1}))))
     (doseq [player ending-players]
+      (smogon state player)
       (inc-deck-stats db (get-in player [:deck :_id]) (deck-record-end state player)))))
 
 (defn inc-game-stats
@@ -117,7 +145,8 @@
       (timbre/error (str "NULL start player side in stats for gameid " gameid))))
   (doseq [player ending-players]
     (if (:side player)
-      (inc-game-stats db (get-in player [:user :_id]) (game-record-end state player))
+      (do (update-analytics :engagement {:games-played 0.5 :users #{(get-in player [:user :username])}})
+          (inc-game-stats db (get-in player [:user :_id]) (game-record-end state player)))
       (timbre/error (str "NULL end player side in stats for gameid " gameid)))))
 
 (defn push-stats-update
