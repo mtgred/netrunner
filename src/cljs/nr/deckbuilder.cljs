@@ -11,7 +11,7 @@
     [nr.auth :refer [authenticated] :as auth]
     [nr.cardbrowser :refer [cards-channel factions filter-title image-url] :as cb]
     [nr.deck-status :refer [deck-status-span]]
-    [nr.translations :refer [tr tr-span tr-element tr-faction tr-format tr-side tr-type tr-data]]
+    [nr.translations :refer [tr tr-span tr-element tr-faction tr-format tr-side tr-sort-order tr-type tr-data]]
     [nr.utils :refer [alliance-dots banned-span cond-button
                       deck-points-card-span dots-html buildable-format->slug format-date-time
                       influence-dot influence-dots mdy-formatter non-game-toast
@@ -193,9 +193,8 @@
       (assoc deck :cards cards :parsed? true))))
 
 (defn load-decks [decks]
-  (let [decks (sort-by :date > decks)]
-    (swap! app-state assoc :decks decks)
-    (swap! app-state assoc :decks-loaded true)))
+  (swap! app-state assoc :decks decks)
+  (swap! app-state assoc :decks-loaded true))
 
 (defn- add-deck-name
   [all-titles card]
@@ -751,6 +750,25 @@
 (def all-sides-filter "Any Side")
 (def all-factions-filter "Any Faction")
 (def all-formats-filter "Any Format")
+(def default-sort-order "date-newest")
+
+(def all-sort-orders
+  [default-sort-order "date-oldest" "name-az" "name-za"
+   "win-rate" "games-played"])
+
+(defn- sort-decks [sort-order decks]
+  (case sort-order
+    "date-newest"  (sort-by (juxt :date :_id) > decks)
+    "date-oldest"  (sort-by (juxt :date :_id) < decks)
+    "name-az"      (sort-by #(lower-case (or (:name %) "")) decks)
+    "name-za"      (sort-by #(lower-case (or (:name %) "")) > decks)
+    "win-rate"     (sort-by #(let [s (:stats %)
+                                   w (or (:wins s) 0)
+                                   l (or (:loses s) 0)]
+                               (safe-divide w (+ w l))) > decks)
+    "games-played" (sort-by #(let [s (:stats %)]
+                               (or (:games-started s) -1)) > decks)
+    (sort-by (juxt :date :_id) > decks)))
 
 (defn- filter-side [side-filter decks]
   (if (= all-sides-filter @side-filter)
@@ -791,7 +809,7 @@
        :reagent-render
        (fn [filtered-decks s _]
          (into [:div.deck-collection {:ref #(reset! !node-ref %)}]
-               (for [deck (sort-by (juxt :date :_id) > filtered-decks)]
+               (for [deck (sort-decks (get @s :sort-order default-sort-order) filtered-decks)]
                  ^{:key (:_id deck)}
                  [deck-entry s deck])))})))
 
@@ -1003,7 +1021,8 @@
   (swap! state assoc
          :side-filter all-sides-filter
          :faction-filter all-factions-filter
-         :format-filter all-formats-filter))
+         :format-filter all-formats-filter
+         :sort-order default-sort-order))
 
 (defn view-buttons
   [s deck]
@@ -1274,17 +1293,20 @@
   [state decks-loaded scroll-top]
   (let [formats (-> buildable-format->slug keys butlast)]
     [:div.deckfilter
-     (doall
-       (for [[state-key options callback translator]
-             [[:side-filter [all-sides-filter "Corp" "Runner"] handle-side-changed tr-side]
-              [:faction-filter (cons all-factions-filter (factions (:side-filter @state))) nil tr-faction]
-              [:format-filter (cons all-formats-filter formats) nil tr-format]]]
-         ^{:key state-key}
-         [simple-filter-builder state state-key options decks-loaded callback scroll-top translator]))
-
-     [:button {:class (if-not @decks-loaded "disabled" "")
-               :on-click #(reset-deck-filters state)}
-      [tr-span [:deck-builder_reset "Reset"]]]]))
+     [:div.deckfilter-row
+      (doall
+        (for [[state-key options callback translator]
+              [[:side-filter [all-sides-filter "Corp" "Runner"] handle-side-changed tr-side]
+               [:faction-filter (cons all-factions-filter (factions (:side-filter @state))) nil tr-faction]
+               [:format-filter (cons all-formats-filter formats) nil tr-format]]]
+          ^{:key state-key}
+          [simple-filter-builder state state-key options decks-loaded callback scroll-top translator]))
+      [:button {:class (if-not @decks-loaded "disabled" "")
+                :on-click #(reset-deck-filters state)}
+       [tr-span [:deck-builder_reset "Reset"]]]]
+     [:div.deckfilter-row
+      [:span.deckfilter-label [tr-span [:deck-builder_sort "Sort:"]]]
+      [simple-filter-builder state :sort-order all-sort-orders decks-loaded nil scroll-top tr-sort-order]]]))
 
 (defn- zoom-card-view [card]
   (when-let [url (image-url card)]
@@ -1328,6 +1350,7 @@
                    :side-filter all-sides-filter
                    :faction-filter all-factions-filter
                    :format-filter all-formats-filter
+                   :sort-order default-sort-order
                    :show-credit-cost false
                    :show-mu-cost false
                    :cleanup-mode false
