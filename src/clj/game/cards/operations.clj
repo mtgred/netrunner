@@ -1389,7 +1389,7 @@
     :effect (req (wait-for (gain-credits state :corp 10)
                            (continue-ability
                              state :corp
-                             (if (seq (:hand corp))
+                             (when (seq (:hand corp))
                                {:prompt "Choose a card in HQ to trash"
                                 :choices {:max 1
                                           :all true
@@ -1397,9 +1397,8 @@
                                 :msg {:public "trash a card from HQ"
                                       :corp (msg "trash " (card-str state target {:maybe-visible true}) " from HQ")}
                                 :async true
-                                :effect (trash-cards state side targets {:cause-card card})}
-                               (effect-completed state side eid))
-                              card nil)))}})
+                                :effect (req (trash-cards state side eid targets {:cause-card card}))})
+                             card nil)))}})
 
 (defcard "Hard-Hitting News"
   {:on-play
