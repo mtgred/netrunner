@@ -1385,21 +1385,21 @@
 (defcard "Hansei Review"
   {:on-play
    {:async true
-    :effect (req (continue-ability
-                   state :corp
-                   (if (seq (:hand corp))
-                     {:prompt "Choose a card in HQ to trash"
-                      :choices {:max 1
-                                :all true
-                                :card #(and (corp? %) (in-hand? %))}
-                      :msg {:public "trash a card from HQ and gain 10 [Credits]"
-                            :corp (msg "trash " (card-str state target {:maybe-visible true})
-                                       " from HQ and gain 10 [Credits]")}
-                      :async true
-                      :effect (req (wait-for (trash-cards state side targets {:cause-card card})
-                                             (gain-credits state side eid 10)))}
-                     (gain-credits-ability 10))
-                   card nil))}})
+    :msg "gain 10 [Credits]"
+    :effect (req (wait-for (gain-credits state :corp 10)
+                           (continue-ability
+                             state :corp
+                             (if (seq (:hand corp))
+                               {:prompt "Choose a card in HQ to trash"
+                                :choices {:max 1
+                                          :all true
+                                          :card #(and (corp? %) (in-hand? %))}
+                                :msg {:public "trash a card from HQ"
+                                      :corp (msg "trash " (card-str state target {:maybe-visible true}) " from HQ")}
+                                :async true
+                                :effect (trash-cards state side targets {:cause-card card})}
+                               (effect-completed state side eid))
+                              card nil)))}})
 
 (defcard "Hard-Hitting News"
   {:on-play
