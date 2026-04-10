@@ -1,11 +1,9 @@
-version: '3.7'
-
 services:
   server:
     entrypoint: lein repl :headless :host 0.0.0.0 :port 44867
     ports:
-      - 1042:1042
-      - 44867:44867
+      - 127.0.0.1:1042:1042
+      - 127.0.0.1:44867:44867
     volumes:
       - "./data:/usr/src/app/data"
       - "./dev:/usr/src/app/dev"
@@ -32,7 +30,7 @@ services:
     container_name: mongodb
     restart: unless-stopped
     ports:
-      - 27017-27019:27017-27019
+      - 127.0.0.1:27017-27019:27017-27019
     volumes:
       - ./data:/data/db
 
@@ -46,8 +44,8 @@ services:
       - "./test:/usr/src/app/test"
       - "./shadow-cljs.edn:/usr/src/app/shadow-cljs.edn"
     ports:
-      - 9630:9630
-      - 39039:39039
+      - 127.0.0.1:9630:9630
+      - 127.0.0.1:39039:39039
     build:
       dockerfile: docker/Dockerfile
       context: .
