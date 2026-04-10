@@ -29,11 +29,14 @@
 (defn clear-deckstats-handler
   "Clear any statistics for a given deck-id contained in a request"
   [{db :system/db
+    {username :username} :user
     {id :id} :path-params}]
-  (if id
-    (if (acknowledged? (mc/update db :decks {:_id (->object-id id)} {$unset {:stats ""}}))
-      (response 200 {:message "Deleted"})
-      (response 403 {:message "Forbidden"}))
+  (if (and id username)
+    (if (mc/find-one-as-map db :decks {:_id (->object-id id) :username username})
+      (if (acknowledged? (mc/update db :decks {:_id (->object-id id)} {$unset {:stats ""}}))
+        (response 200 {:message "Deleted"})
+        (response 403 {:message "Forbidden"}))
+      (response 401 {:message "Unauthorized"}))
     (response 401 {:message "Unauthorized"})))
 
 (defn stats-for-deck
