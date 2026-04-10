@@ -154,6 +154,14 @@
 
 (def game-log-coll "game-logs")
 
+(defn- filter-log-for-side [log side]
+  (when (sequential? log)
+    (into [] (keep (fn [entry]
+                     (if (:user entry)
+                       entry                                  ;; old format: message object directly
+                       (or (side entry) (:public entry))))    ;; new format: side-keyed map
+                   log))))
+
 (defn delete-old-replay
   [db {:keys [username]}]
   (let [games (mq/with-collection db game-log-coll
@@ -247,10 +255,12 @@
     {username :username} :user
     {:keys [gameid]} :path-params}]
   (if username
-    (let [{:keys [corp runner log]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "log"])]
+    (let [{:keys [corp runner log]} (mc/find-one-as-map db game-log-coll {:gameid gameid} ["corp" "runner" "log"])]
       (if (or (= username (get-in corp [:player :username]))
               (= username (get-in runner [:player :username])))
-        (response 200 (or log {}))
+        (let [side (if (= username (get-in corp [:player :username])) :corp :runner)
+              filtered-log (filter-log-for-side log side)]
+          (response 200 (or filtered-log [])))
         (response 401 {:message "Unauthorized"})))
     (response 401 {:message "Unauthorized"})))
 

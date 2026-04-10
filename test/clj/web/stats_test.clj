@@ -47,6 +47,23 @@
    :runner {:player {:username "bob"}}
    :log    [{:text "some log entry"}]})
 
+(def public-msg {:user "__system__" :text "public message"})
+(def corp-msg {:user "__system__" :text "corp only"})
+(def runner-msg {:user "__system__" :text "runner only"})
+
+(def game-with-new-format-log
+  {:corp   {:player {:username "alice"}}
+   :runner {:player {:username "bob"}}
+   :log    [{:public public-msg}
+            {:corp corp-msg}
+            {:runner runner-msg}]})
+
+(def game-with-old-format-log
+  {:corp   {:player {:username "alice"}}
+   :runner {:player {:username "bob"}}
+   :log    [{:user "__system__" :text "Game started"}
+            {:user {:username "alice" :emailhash "abc"} :text "Hello"}]})
+
 (deftest fetch-log-ownership-test
   (testing "non-player cannot fetch a game log"
     (with-redefs [mc/find-one-as-map (fn [& _] game-with-alice-and-bob)]
@@ -70,3 +87,51 @@
                      :path-params {:gameid "some-game-id"}}
             result  (fetch-log request)]
         (is (= 200 (:status result)))))))
+
+(deftest fetch-log-new-format-test
+  (testing "corp player receives public and corp-only messages, not runner-only"
+    (with-redefs [mc/find-one-as-map (fn [& _] game-with-new-format-log)]
+      (let [request {:system/db   :mock-db
+                     :user        {:username "alice"}
+                     :path-params {:gameid "g1"}}
+            result  (fetch-log request)
+            log     (:body result)]
+        (is (= 200 (:status result)))
+        (is (= 2 (count log)))
+        (is (some #(= "public message" (:text %)) log))
+        (is (some #(= "corp only" (:text %)) log))
+        (is (not (some #(= "runner only" (:text %)) log))))))
+  (testing "runner player receives public and runner-only messages, not corp-only"
+    (with-redefs [mc/find-one-as-map (fn [& _] game-with-new-format-log)]
+      (let [request {:system/db   :mock-db
+                     :user        {:username "bob"}
+                     :path-params {:gameid "g1"}}
+            result  (fetch-log request)
+            log     (:body result)]
+        (is (= 200 (:status result)))
+        (is (= 2 (count log)))
+        (is (some #(= "public message" (:text %)) log))
+        (is (some #(= "runner only" (:text %)) log))
+        (is (not (some #(= "corp only" (:text %)) log)))))))
+
+(deftest fetch-log-old-format-test
+  (testing "old-format logs are returned unchanged for corp player"
+    (with-redefs [mc/find-one-as-map (fn [& _] game-with-old-format-log)]
+      (let [request {:system/db   :mock-db
+                     :user        {:username "alice"}
+                     :path-params {:gameid "g2"}}
+            result  (fetch-log request)
+            log     (:body result)]
+        (is (= 200 (:status result)))
+        (is (= 2 (count log)))
+        (is (= "Game started" (:text (first log)))))))
+  (testing "old-format logs are returned unchanged for runner player"
+    (with-redefs [mc/find-one-as-map (fn [& _] game-with-old-format-log)]
+      (let [request {:system/db   :mock-db
+                     :user        {:username "bob"}
+                     :path-params {:gameid "g2"}}
+            result  (fetch-log request)
+            log     (:body result)]
+        (is (= 200 (:status result)))
+        (is (= 2 (count log)))
+        (is (= "Game started" (:text (first log))))))))
