@@ -41,3 +41,32 @@
                      :path-params {:id "alices-deck-id"}}
             result  (clear-deckstats-handler request)]
         (is (= 200 (:status result)))))))
+
+(def game-with-alice-and-bob
+  {:corp   {:player {:username "alice"}}
+   :runner {:player {:username "bob"}}
+   :log    [{:text "some log entry"}]})
+
+(deftest fetch-log-ownership-test
+  (testing "non-player cannot fetch a game log"
+    (with-redefs [mc/find-one-as-map (fn [& _] game-with-alice-and-bob)]
+      (let [request {:system/db   :mock-db
+                     :user        {:username "eve" :_id "eve-id"}
+                     :path-params {:gameid "some-game-id"}}
+            result  (fetch-log request)]
+        (is (= 401 (:status result))
+            "handler must reject non-players from viewing game logs"))))
+  (testing "corp player can fetch their game log"
+    (with-redefs [mc/find-one-as-map (fn [& _] game-with-alice-and-bob)]
+      (let [request {:system/db   :mock-db
+                     :user        {:username "alice" :_id "alice-id"}
+                     :path-params {:gameid "some-game-id"}}
+            result  (fetch-log request)]
+        (is (= 200 (:status result))))))
+  (testing "runner player can fetch their game log"
+    (with-redefs [mc/find-one-as-map (fn [& _] game-with-alice-and-bob)]
+      (let [request {:system/db   :mock-db
+                     :user        {:username "bob" :_id "bob-id"}
+                     :path-params {:gameid "some-game-id"}}
+            result  (fetch-log request)]
+        (is (= 200 (:status result)))))))

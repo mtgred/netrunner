@@ -244,11 +244,14 @@
 
 (defn fetch-log
   [{db :system/db
-    user :user
+    {username :username} :user
     {:keys [gameid]} :path-params}]
-  (if (active-user? user)
-    (let [{:keys [log]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["log"])]
-      (response 200 (or log {})))
+  (if username
+    (let [{:keys [corp runner log]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["corp" "runner" "log"])]
+      (if (or (= username (get-in corp [:player :username]))
+              (= username (get-in runner [:player :username])))
+        (response 200 (or log {}))
+        (response 401 {:message "Unauthorized"})))
     (response 401 {:message "Unauthorized"})))
 
 (defn fetch-annotations
