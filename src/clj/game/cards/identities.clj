@@ -2360,17 +2360,13 @@
                  :effect (req (update! state side (assoc-in card [:special :resolution-mode] x))
                               (toast state :corp (str "Set Skorpios resolution to " x " mode"))
                               (update! state side (assoc (get-card state card) :card-target x)))})
-        grip-or-stack-trash?
-        (fn [ctx]
-          (some #(and (runner? (:card %))
-                      (or (in-hand? (:card %))
-                          (in-deck? (:card %))))
-                ctx))
+        in-grip-or-stack? #(and (runner? %) (or (in-hand? %) (in-deck? %)))
+        grip-or-stack-trash? #(some in-grip-or-stack? (map :card %))
         relevant-cards-general #{"Labor Rights" "The Price"}
         relevant-cards-trashed #{"I've Had Worse" "Strike Fund" "Steelskin Scarring" "Crowdfunding"}
         trigger-ability-req (req (let [res-type (get-in (get-card state card) [:special :resolution-mode])
-                                       valid-cards (mapv #(get-card state %) (filter runner? context))]
-                                   (and (some runner? context)
+                                       trashed-cards (:trashed-cards context)]
+                                   (and (some runner? trashed-cards)
                                         (cond
                                           ;; manual: do nothing
                                           (= res-type "Automatic") true
@@ -2381,14 +2377,14 @@
                                             (contains? relevant-cards-general (->> runner :play-area first :title))
                                             ;; 2) a buffer drive that may resolve
                                             (and (some #(= (:title %) "Buffer Drive") (all-installed state :runner))
-                                                 (grip-or-stack-trash? (map (fn [x] {:card x}) context))
-                                                 (zero? (+ (event-count state nil :runner-trash grip-or-stack-trash?)
-                                                           (event-count state nil :corp-trash   grip-or-stack-trash?)
-                                                           (event-count state nil :game-trash   grip-or-stack-trash?))))
+                                                 (some in-grip-or-stack? trashed-cards)
+                                                 (no-event? state nil :runner-trash grip-or-stack-trash?)
+                                                 (no-event? state nil :corp-trash grip-or-stack-trash?)
+                                                 (no-event? state nil :game-trash grip-or-stack-trash?))
                                             ;; 3) a program among the trashed cards
-                                            (some #(->> % program?) context)
+                                            (some program? trashed-cards)
                                             ;; 4) a relevant card is trashed (Steelskin, Strike fund, I've Had Worse)
-                                            (some #(contains? relevant-cards-trashed %) (map #(->> % :title) context)))
+                                            (some #(contains? relevant-cards-trashed %) (map :title trashed-cards)))
                                           :else nil))))
         triggered-ability {:once :per-turn
                            :player :corp
@@ -2396,7 +2392,7 @@
                            :waiting-prompt true
                            :req trigger-ability-req
                            :prompt "Remove a card from the game?"
-                           :choices (req (cancellable context))
+                           :choices (req (cancellable (:trashed-cards context)))
                            :msg (msg "remove " (:title target) " from the game")
                            :async true
                            :effect (req (move state :runner target :rfg)
