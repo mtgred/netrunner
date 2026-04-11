@@ -531,7 +531,7 @@
                                              (:subroutines ice))
                          idx (:idx (first targets))
                          sub (if (number? idx)
-                               (nth subroutines idx)
+                               (nth subroutines idx nil)
                                (first (filter #(= target (make-label (:sub-effect %))) subroutines)))
                          ice (break-subroutine ice sub)
                          broken-subs (cons sub broken-subs)

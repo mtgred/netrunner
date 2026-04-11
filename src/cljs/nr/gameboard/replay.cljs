@@ -372,14 +372,16 @@
                               "error" {:time-out 3 :close-button true})))))
 
 (defn load-remote-annotations [pos]
-  (let [anno (nth (:remote-annotations @replay-status) pos)]
-    (swap! replay-status assoc :annotations anno)))
+  (when (< pos (count (:remote-annotations @replay-status)))
+    (let [anno (nth (:remote-annotations @replay-status) pos)]
+      (swap! replay-status assoc :annotations anno))))
 
 (defn delete-remote-annotations [pos]
-  (let [anno (nth (:remote-annotations @replay-status) pos)]
-    (go (let [{:keys [status json]} (<! (DELETE (str "/profile/history/annotations/delete/" (:gameid @game-state) "?date=" (:date anno))))]
-          (if (= 200 status)
-            (get-remote-annotations (:gameid @game-state)))))))
+  (when (< pos (count (:remote-annotations @replay-status)))
+    (let [anno (nth (:remote-annotations @replay-status) pos)]
+      (go (let [{:keys [status json]} (<! (DELETE (str "/profile/history/annotations/delete/" (:gameid @game-state) "?date=" (:date anno))))]
+            (if (= 200 status)
+              (get-remote-annotations (:gameid @game-state))))))))
 
 (defn publish-annotations []
   (go (let [{:keys [status json]} (<! (PUT (str "/profile/history/annotations/publish/" (:gameid @game-state))

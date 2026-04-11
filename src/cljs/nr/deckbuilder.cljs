@@ -595,7 +595,8 @@
       (9 13) (when-not (= (:query @s) (:title (first matches)))
                (.preventDefault event)
                (-> ".deckedit .qty" js/$ .select)
-               (swap! s assoc :query (:title (nth matches selected))))
+               (when-let [m (nth matches selected nil)]
+                 (swap! s assoc :query (:title m))))
       (swap! s assoc :selected 0))))
 
 (defn update-decklist-cards
