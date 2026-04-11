@@ -2447,7 +2447,6 @@
                          :req (req (and
                                      (not= [:hand] (:previous-zone card))
                                      (same-card? (:card target) card)))
-                         :waiting-prompt true
                          :yes-ability
                          {:msg (msg "reveal itself from " (zone->name (:previous-zone card)))
                           :async true
