@@ -206,8 +206,10 @@
    (let [lang (get-in @app-state [:options :card-language] "en")
          res (get-in @app-state [:options :card-resolution] "default")
          art (if (keyword? (:art card)) (:art card) :stock)
-         art-index (get card :art-index 0)]
-     [(nth (get-image-path (:images card) (keyword lang) (keyword res) art) art-index)]))
+         art-index (get card :art-index 0)
+         art-urls (get-image-path (:images card) (keyword lang) (keyword res) art)
+         safe-index (min art-index (dec (count art-urls)))]
+     [(nth art-urls safe-index)]))
 
 (defn- alt-version-from-string
   "Given a string name, get the keyword version or nil"
