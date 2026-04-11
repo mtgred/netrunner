@@ -368,9 +368,10 @@
      (effect-completed state side eid)
      (wait-for (resolve-trash-prevention state side cards args)
                (let [trashlist (:remaining async-result)
-                     _ (update-current-ice-to-trash state (map :card trashlist))]
+                     trashed-cards (map :card trashlist)
+                     _ (update-current-ice-to-trash state trashed-cards)]
                  (wait-for
-                   (trigger-event-sync state side :pre-trash-interrupt (map :card trashlist))
+                   (trigger-event-sync state side :pre-trash-interrupt {:trashed-cards trashed-cards})
                    (let [trash-event (get-trash-event side game-trash)
                          ;; No card should end up in the opponent's discard pile, so instead
                          ;; of using `side`, we use the card's `:side`.
@@ -408,16 +409,16 @@
                        (trigger-event state side :corp-shuffle-deck))
                      ;; TODO - used exclusively for hellion beta test
                      (when (and (:access @state)
-                                (some #(same-card? (:access @state) %) (map :card trashlist))
+                                (some #(same-card? (:access @state) %) trashed-cards)
                                 (= :runner side))
                        (swap! state assoc-in [:runner :register :trashed-accessed-card] true))
                      ;; TODO - used exclusively for aumakua
                      (when (and (:breach @state)
-                                (some #(same-card? (:access @state) %) (map :card trashlist))
+                                (some #(same-card? (:access @state) %) trashed-cards)
                                 (= :runner side))
                        (swap! state assoc-in [:breach :did-trash] true))
                      (swap! state update-in [:trash :trash-list :card] dissoc eid)
-                     (when (and side (seq (remove #{side} (map #(to-keyword (:side %)) (map :card trashlist)))))
+                     (when (and side (seq (remove #{side} (map #(to-keyword (:side %)) trashed-cards))))
                        (swap! state assoc-in [side :register :trashed-card] true)
                        (when accessed
                          (swap! state assoc-in [side :register :trashed-accessed-card] true)))
