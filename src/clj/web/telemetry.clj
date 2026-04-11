@@ -15,9 +15,12 @@
 
 (defn percentile [vector percentile]
   ;; see: https://scicloj.github.io/stats-with-clojure/stats_with_clojure.basic_statistics.html
-  (let [sorted-vector (sort vector)
-        idx (int (* percentile (/ (count sorted-vector) 100)))]
-    (str (nth sorted-vector idx) "ms")))
+  (let [sorted-vector (sort vector)]
+    (if (empty? sorted-vector)
+      "0ms"
+      (let [idx (min (int (* percentile (/ (count sorted-vector) 100)))
+                     (dec (count sorted-vector)))]
+        (str (nth sorted-vector idx) "ms")))))
 
 (defn- format-percentiles [data percentiles]
   (apply str (interpose "/" (map #(percentile (vec data) %) percentiles))))
