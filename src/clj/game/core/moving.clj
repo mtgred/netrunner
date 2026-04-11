@@ -368,7 +368,7 @@
      (effect-completed state side eid)
      (wait-for (resolve-trash-prevention state side cards args)
                (let [trashlist (:remaining async-result)
-                     trashed-cards (map :card trashlist)
+                     trashed-cards (not-empty (mapv :card trashlist))
                      _ (update-current-ice-to-trash state trashed-cards)]
                  (wait-for
                    (trigger-event-sync state side :pre-trash-interrupt {:trashed-cards trashed-cards})
