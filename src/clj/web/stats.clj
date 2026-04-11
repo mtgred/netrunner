@@ -29,11 +29,14 @@
 (defn clear-deckstats-handler
   "Clear any statistics for a given deck-id contained in a request"
   [{db :system/db
+    {username :username} :user
     {id :id} :path-params}]
-  (if id
-    (if (acknowledged? (mc/update db :decks {:_id (->object-id id)} {$unset {:stats ""}}))
-      (response 200 {:message "Deleted"})
-      (response 403 {:message "Forbidden"}))
+  (if (and id username)
+    (if (mc/find-one-as-map db :decks {:_id (->object-id id) :username username})
+      (if (acknowledged? (mc/update db :decks {:_id (->object-id id)} {$unset {:stats ""}}))
+        (response 200 {:message "Deleted"})
+        (response 403 {:message "Forbidden"}))
+      (response 401 {:message "Unauthorized"}))
     (response 401 {:message "Unauthorized"})))
 
 (defn stats-for-deck
@@ -151,6 +154,14 @@
 
 (def game-log-coll "game-logs")
 
+(defn- filter-log-for-side [log side]
+  (when (sequential? log)
+    (into [] (keep (fn [entry]
+                     (if (:user entry)
+                       entry                                  ;; old format: message object directly
+                       (or (side entry) (:public entry))))    ;; new format: side-keyed map
+                   log))))
+
 (defn delete-old-replay
   [db {:keys [username]}]
   (let [games (mq/with-collection db game-log-coll
@@ -241,11 +252,16 @@
 
 (defn fetch-log
   [{db :system/db
-    user :user
+    {username :username} :user
     {:keys [gameid]} :path-params}]
-  (if (active-user? user)
-    (let [{:keys [log]} (mc/find-one-as-map db :game-logs {:gameid gameid} ["log"])]
-      (response 200 (or log {})))
+  (if username
+    (let [{:keys [corp runner log]} (mc/find-one-as-map db game-log-coll {:gameid gameid} ["corp" "runner" "log"])]
+      (if (or (= username (get-in corp [:player :username]))
+              (= username (get-in runner [:player :username])))
+        (let [side (if (= username (get-in corp [:player :username])) :corp :runner)
+              filtered-log (filter-log-for-side log side)]
+          (response 200 (or filtered-log [])))
+        (response 401 {:message "Unauthorized"})))
     (response 401 {:message "Unauthorized"})))
 
 (defn fetch-annotations
