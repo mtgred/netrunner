@@ -2,7 +2,7 @@
   (:require
    [clojure.set :as set]
    [game.core.access :refer [access-bonus access-card access-n-cards breach-server
-                             get-only-card-to-access]]
+                             get-only-card-to-access turn-archives-faceup]]
    [game.core.actions :refer [play-ability]]
    [game.core.board :refer [all-active all-active-installed all-installed]]
    [game.core.card :refer [agenda? corp? event? facedown? get-card get-counters get-title
@@ -189,15 +189,16 @@
      :req (req (and (= :archives (:server context))
                     (not= (:max-access run) 0)
                     (not-empty (:discard corp))))
-     :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                  (continue-ability
-                    state side
-                    {:optional
-                     {:prompt "Remove a card from the game instead of accessing it?"
-                      :yes-ability {:prompt "Choose a card in Archives"
-                                    :choices (req (:discard corp))
-                                    :msg (msg "remove " (:title target) " from the game")
-                                    :effect (effect (move :corp target :rfg))}}} card nil))}]})
+     :effect (req (wait-for
+                    (turn-archives-faceup state side [:archives])
+                    (continue-ability
+                      state side
+                      {:optional
+                       {:prompt "Remove a card from the game instead of accessing it?"
+                        :yes-ability {:prompt "Choose a card in Archives"
+                                      :choices (req (:discard corp))
+                                      :msg (msg "remove " (:title target) " from the game")
+                                      :effect (effect (move :corp target :rfg))}}} card nil)))}]})
 
 (defcard "Astrolabe"
   {:static-abilities [(mu+ 1)]

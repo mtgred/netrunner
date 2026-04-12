@@ -1,6 +1,6 @@
 (ns game.cards.programs
   (:require
-   [game.core.access :refer [access-bonus max-access]]
+   [game.core.access :refer [access-bonus max-access turn-archives-faceup]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type
                             card->server server->zone]]
    [game.core.card :refer [active? agenda? asset? card-index corp? event? facedown? faceup?
@@ -1663,19 +1663,20 @@
              :interactive (req true)
              :req (req (and (= :archives (:server context))
                             (not-empty (:discard corp))))
-             :effect (req (swap! state update-in [:corp :discard] #(map (fn [c] (assoc c :seen true)) %))
-                          (update! state side (assoc-in card [:special :host-available] true))
-                          (continue-ability
-                            state side
-                            {:optional
-                             {:prompt "Host a card on this program instead of accessing it?"
-                              :yes-ability {:prompt "Choose a card in Archives"
-                                            :choices (req (cancellable (:discard corp) :sorted))
-                                            :msg (msg "host " (:title target) " on itself instead of accessing it")
-                                            :effect (effect
-                                                      (update! (assoc-in card [:special :host-available] false))
-                                                      (host card target))}}}
-                            card nil))}
+             :effect (req (wait-for
+                            (turn-archives-faceup state side [:archives])
+                            (update! state side (assoc-in card [:special :host-available] true))
+                            (continue-ability
+                              state side
+                              {:optional
+                               {:prompt "Host a card on this program instead of accessing it?"
+                                :yes-ability {:prompt "Choose a card in Archives"
+                                              :choices (req (cancellable (:discard corp) :sorted))
+                                              :msg (msg "host " (:title target) " on itself instead of accessing it")
+                                              :effect (effect
+                                                        (update! (assoc-in card [:special :host-available] false))
+                                                        (host card target))}}}
+                              card nil)))}
             {:event :pre-access-card
              :req (req (let [target (:accessed-card context)]
                          (and
