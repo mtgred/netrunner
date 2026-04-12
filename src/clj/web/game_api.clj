@@ -1,5 +1,6 @@
 (ns web.game-api
-  (:require [monger.collection :as mc]
+  (:require [game.core.diffs :as diffs]
+            [monger.collection :as mc]
             [web.app-state :as app-state]
             [web.decks :as decks]
             [web.mongodb :refer [->object-id]]
@@ -74,7 +75,10 @@
   (api-handler ctx
                (fn [username game ctx]
                  (if-let [side (get-side username (:state game))]
-                   (let [stack (sort (map :code (get-in @(:state game) [side area])))]
+                   (let [state-key (if (= side :corp) :corp-state :runner-state)
+                         public-state (get (diffs/public-states (:state game)) state-key)
+                         cards (get-in public-state [side area])
+                         stack (sort (map :code cards))]
                      (response 200 {:cards stack}))
                    (response 204 {:message "No deck selected"})))))
 
@@ -90,5 +94,8 @@
 (defn log-handler [ctx]
   (api-handler ctx
                (fn [username game ctx]
-                 (response 200 {:messages (:log @(:state game))}))))
+                 (if-let [side (get-side username (:state game))]
+                   (let [log (into [] (keep #(or (side %) (:public %)) (:log @(:state game))))]
+                     (response 200 {:messages log}))
+                   (response 204 {:message "Not a player in this game"})))))
 
