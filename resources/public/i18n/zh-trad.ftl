@@ -1449,9 +1449,9 @@ settings_always = 皆保留
 
 settings_api-keys = API Keys
 
-settings_api-keys-not-updated = 更新API keys
+settings_api-keys-not-updated = Failed to update API keys
 
-settings_api-keys-updated = Fauled to update API keys
+settings_api-keys-updated = 更新API keys
 
 settings_avatar = 頭像
 
