@@ -1623,7 +1623,7 @@
                                            {:req (req (pos? (count (:hand corp))))
                                             :prompt "Place a card in HQ on the top of R&D?"
                                             :msg {:public "add 1 card in HQ to the top of R&D"
-                                                  :corp (msg "add facedown " target " in HQ to the top of R&D")}
+                                                  :corp (msg "add facedown " (:title target) " in HQ to the top of R&D")}
                                             :choices {:card #(and (in-hand? %)
                                                                   (corp? %))}
                                             :async true
