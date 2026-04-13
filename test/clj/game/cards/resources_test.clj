@@ -4969,6 +4969,19 @@
     (is (changed? [(count (:hand (get-runner))) 0]
           (run-empty-server state :archives)))))
 
+(deftest nurse-hanh-vs-archives-flip-cards-test
+  (doseq [c ["Heliamphora" "Archives Interface"]]
+    (testing (str c " vs nurse hanh")
+      (do-game
+        (new-game {:runner {:hand ["Nurse Hạnh" c]
+                            :credits 10
+                            :deck [(qty "Nurse Hạnh" 15)]}
+                   :corp {:discard [(qty "IPO" 6)]}})
+        (take-credits state :corp)
+        (play-cards state :runner "Nurse Hạnh" c)
+        (is (changed? [(count (:hand (get-runner))) 2]
+              (run-empty-server state :archives)))))))
+
 (deftest off-campus-apartment-ability-shows-a-simultaneous-resolution-prompt-when-appropriate
     ;; ability shows a simultaneous resolution prompt when appropriate
     (do-game
