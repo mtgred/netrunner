@@ -20,7 +20,7 @@
    [game.core.drawing :refer [draw maybe-draw]]
    [game.core.effects :refer [register-lingering-effect is-disabled?]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
-   [game.core.engine :refer [not-used-once? pay register-events register-once resolve-ability trigger-event unregister-event-by-uuid]]
+   [game.core.engine :refer [checkpoint not-used-once? pay register-events register-once resolve-ability trigger-event unregister-event-by-uuid]]
    [game.core.events :refer [event-count first-event? first-trash?
                              first-successful-run-on-server? no-event? not-last-turn? run-events run-event-count turn-events]]
    [game.core.expose :refer [expose]]
@@ -44,7 +44,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
-   [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
+   [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud reveal-and-queue-event]]
    [game.core.rezzing :refer [can-pay-to-rez? rez]]
    [game.core.runs :refer [end-run get-current-encounter make-run redirect-run
                            set-next-phase start-next-phase total-cards-accessed]]
@@ -765,8 +765,11 @@
                                       :msg (msg "add " (:title target) " to HQ from R&D") ;; TODO - once the illicit->liability change is through, we can adjust this (or just leave it)
                                       :choices (req (cancellable (filter #(has-any-subtype? % ["Illicit" "Black Ops" "Gray Ops" "Liability"]) (filter (complement agenda?) (:deck corp))) :sorted))
                                       :cancel shuffle-my-deck!
-                                      :effect (effect (shuffle! :deck)
-                                                      (move target :hand))}}}]})
+                                      :async true
+                                      :effect (req (reveal-and-queue-event state side target)
+                                                   (shuffle! state side :deck)
+                                                   (move state side target :hand)
+                                                   (checkpoint state side eid))}}}]})
 
 (defcard "Edward Kim: Humanity's Hammer"
   {:events [{:event :access
