@@ -328,6 +328,8 @@
   {:additional-cost [(->c :trash-other-installed 1)]
    :on-score {:async true
               :msg "do 2 meat damage"
+              :automatic :damage
+              :interactive (req true)
               :effect (effect (damage eid :meat 2 {:card card}))}})
 
 (defcard "Bacterial Programming"
