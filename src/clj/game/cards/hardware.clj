@@ -2701,9 +2701,10 @@
                          :effect (req (if (get-only-card-to-access state)
                                         (effect-completed state nil eid)
                                         (let [deck (:deck corp)
-                                              idx (dec (str->int target))]
-                                          (if (< idx (count deck))
-                                            (access-card state side eid (nth deck idx) "an unseen card")
+                                              idx (dec (str->int target))
+                                              selected_card (nth deck idx nil)]
+                                          (if selected_card
+                                            (access-card state side eid selected_card "an unseen card")
                                             (effect-completed state side eid)))))}})]})
 
 (defcard "Touchstone"
