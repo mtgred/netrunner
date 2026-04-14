@@ -98,9 +98,10 @@
   ([state side eid {:keys [card] ability-idx :ability :as args}]
    (let [card (get-card state card)
          args (assoc args :card card)
-         ability (nth (:abilities card) ability-idx)
+         ability (nth (:abilities card) ability-idx nil)
          blocking-prompt? (not (no-blocking-prompt? state side))
-         cannot-play (or (:disabled card)
+         cannot-play (or (nil? ability)
+                         (:disabled card)
                          ;; cannot play actions during runs
                          (and (:action ability) (:run @state))
                          ;; while resolving another ability or promppt

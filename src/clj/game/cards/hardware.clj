@@ -2700,7 +2700,12 @@
                          :async true
                          :effect (req (if (get-only-card-to-access state)
                                         (effect-completed state nil eid)
-                                        (access-card state side eid (nth (:deck corp) (dec (str->int target))) "an unseen card")))}})]})
+                                        (let [deck (:deck corp)
+                                              idx (dec (str->int target))
+                                              selected_card (nth deck idx nil)]
+                                          (if selected_card
+                                            (access-card state side eid selected_card "an unseen card")
+                                            (effect-completed state side eid)))))}})]})
 
 (defcard "Touchstone"
   {:events [{:event :play-event
