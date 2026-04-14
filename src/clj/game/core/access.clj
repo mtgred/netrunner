@@ -94,10 +94,12 @@
             ; Is the runner is forced to trash this card with only credits? (NAT)
             must-trash-with-credits? (and can-pay
                                           (get-in @state [:runner :register :must-trash-with-credits]))
+
             ; Access abilities
             access-ab-cards (when-not must-trash-with-credits?
-                              (seq (filter #(and (can-trigger? state :runner eid (access-ab %) % [card])
-                                                 (can-pay? state :runner eid % nil (card-ability-cost state side (access-ab %) % [card])))
+                              (seq (filter #(let [eid (assoc eid :source % :source-type :ability)]
+                                              (and (can-trigger? state :runner eid (access-ab %) % [card])
+                                                   (can-pay? state :runner eid % nil (card-ability-cost state side (access-ab %) % [card]))))
                                            (all-active state :runner))))
             ; Remove any non-trash abilities, as they can't be used if we're forced to trash
             {trash-ab-cards true
