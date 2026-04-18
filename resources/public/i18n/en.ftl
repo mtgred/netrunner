@@ -1521,9 +1521,9 @@ settings_always = Always
 
 settings_api-keys = API Keys
 
-settings_api-keys-not-updated = Updated API keys
+settings_api-keys-not-updated = Failed to update API keys
 
-settings_api-keys-updated = Fauled to update API keys
+settings_api-keys-updated = Updated API keys
 
 settings_avatar = Avatar
 

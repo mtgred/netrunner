@@ -1542,9 +1542,9 @@ settings_always = 总是
 
 settings_api-keys = API密钥
 
-settings_api-keys-not-updated = 更新API密钥
+settings_api-keys-not-updated = 更新API密钥失败
 
-settings_api-keys-updated = 更新API密钥失败
+settings_api-keys-updated = 更新API密钥
 
 settings_avatar = 头像
 
