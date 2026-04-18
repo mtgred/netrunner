@@ -115,6 +115,7 @@
         ["/publish/:gameid" {:get #'stats/publish-annotations}]
         ["/delete/:gameid" {:delete #'stats/delete-annotations}]]
        ["/share/:gameid" {:get #'stats/share-replay}]
+       ["/unshare/:gameid" {:get #'stats/unshare-replay}]
        ["/full/:gameid" {:get #'stats/fetch-replay}]]]
      ["/tournament-auth/:username" {:middleware [::auth ::tournament-auth ::forgery]
                                     :get #'tournament/auth}]
