@@ -85,6 +85,7 @@
 (defn tr-side [s] (tr [:side_name s] {:side (clean-input s)}))
 (defn tr-faction [s] (tr [:faction_name s] {:faction (clean-input s)}))
 (defn tr-format [s] (tr [:format_name s] {:format (clean-input s)}))
+(defn tr-sort-order [s] (tr [:sort_order_name s] {:sort (clean-input s)}))
 (defn tr-room-type [s] (tr [:lobby_type s] {:type (clean-input s)}))
 (defn tr-pronouns [s] (tr [:pronouns s] {:pronoun (clean-input s)}))
 (defn tr-set [s]
