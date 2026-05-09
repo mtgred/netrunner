@@ -13,7 +13,7 @@
     [game.core.moving :refer [move trash]]
     [game.core.payment :refer [add-cost-label-to-ability build-cost-string can-pay? merge-costs ->c]]
     [game.core.revealing :refer [reveal]]
-    [game.core.say :refer [play-sfx system-msg]]
+    [game.core.say :refer [play-sfx system-msg multi-msg]]
     [game.core.servers :refer [get-server-type name-zone zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
@@ -326,8 +326,8 @@
             runner-msg (str (if (seq cost-msg) (str cost-str " to access ") "accesses ")
                             (:title card) (when card (str " from " (name-zone :corp zone))))]
         (if (= title "an unseen card")
-          (do (system-msg state side public-msg {:log-side [:public :corp]})
-              (system-msg state side runner-msg {:log-side :runner}))
+          (multi-msg state side {:public public-msg
+                                 :runner runner-msg})
           (system-msg state side public-msg)))))
   (if (reveal-access? state side card)
     (do (system-msg state side (str "must reveal they accessed " (:title card)))
