@@ -2731,6 +2731,27 @@
       (is (no-prompt? state :corp) "No lingering prompts")
       (is (no-prompt? state :runner) "No lingering prompts"))))
 
+(deftest key-performance-indicators-issue-8729
+  ;; When choosing to install ice, the selected ice should not leak to the runner. Issue #8729
+  ;; The bug is reproduced when Corp has enabled the "trash like cards" setting.
+  (do-game
+   (new-game {:corp {:hand ["Key Performance Indicators" "Ice Wall" "Enigma" "NGO Front" "Hedge Fund"]
+                     :deck ["IPO"]}})
+   (play-from-hand state :corp "Ice Wall" "HQ") ; install an ice that we will be prompted to trash
+   (play-from-hand state :corp "Key Performance Indicators")
+   (click-prompt state :corp "Gain 2 [Credit]")
+
+   (swap! state assoc-in [:corp :properties :trash-like-cards] true)
+   (click-prompt state :corp "Install 1 piece of ice from HQ, ignoring all costs")
+   (click-card state :corp "Enigma")
+   (click-prompt state :corp "HQ")
+   (let [card-runner-sees (-> (prompt-map :runner) :card :title)]
+     (is (not= card-runner-sees "Enigma") "Runner should not see the selected ice"))
+
+   (click-prompt state :corp "Done")
+   (is (no-prompt? state :corp) "No lingering prompts")
+   (is (no-prompt? state :runner) "No lingering prompts")))
+
 (deftest kill-switch
   ;; Kill Switch
   (do-game
