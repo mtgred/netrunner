@@ -128,7 +128,6 @@
   [qty]
   {:async true
    :label (str "You may draw " (quantify qty "card"))
-   :waiting-prompt true
    :effect (effect (maybe-draw state side eid card qty))})
 
 (defn draw-up-to-sub
