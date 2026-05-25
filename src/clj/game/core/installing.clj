@@ -245,8 +245,7 @@
         (corp-install-asset-agenda state side moved-card dest-zone server)
         (wait-for
           (corp-install-place-counters state side moved-card args)
-          (let [moved-card (get-card state moved-card)
-                eid (assoc eid :source moved-card)]
+          (let [moved-card (get-card state moved-card)]
             (queue-event state :corp-install {:card (get-card state moved-card)
                                               :install-state install-state})
             (when-let [dre (:derezzed-events cdef)]
@@ -285,6 +284,7 @@
                     (checkpoint state nil (make-eid state eid))
                     (wait-for
                       (rez state side moved-card {:no-msg no-msg
+                                                  :msg-keys (-> args :msg-keys :install-source)
                                                   :no-warning (:no-warning args)})
                       (reveal-if-unrezzed state side eid moved-card)))
                   :else
@@ -419,7 +419,8 @@
   :index - which position for an installed piece of ice"
   ([state side eid card server] (corp-install state side eid card server nil))
   ([state side eid card server {:keys [host-card] :as args}]
-   (let [eid (assoc eid :source-type :corp-install)]
+   (let [eid (assoc eid :source-type :corp-install)
+         source (:source eid)]
      (cond
        ;; No server selected; show prompt to select an install site (Interns, Lateral Growth, etc.)
        (not server)
@@ -427,7 +428,7 @@
                          {:prompt (str "Choose a location to install " (:title card))
                           :choices (installable-servers state card)
                           :async true
-                          :effect (effect (corp-install state side eid card target args))}
+                          :effect (effect (corp-install state side (assoc eid :source source) card target args))}
                          card nil)
        ;; A card was selected as the server; recurse, with the :host-card parameter set.
        (and (map? server)
