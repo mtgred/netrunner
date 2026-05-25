@@ -128,6 +128,7 @@
   [qty]
   {:async true
    :label (str "You may draw " (quantify qty "card"))
+   :waiting-prompt true
    :effect (effect (maybe-draw state side eid card qty))})
 
 (defn draw-up-to-sub
@@ -4035,6 +4036,7 @@
                  {:prompt "Shuffle up 1 card from HQ or Archives into R&D?"
                   :label "You may shuffle 1 card from HQ or Archives into R&D"
                   :show-discard true
+                  :waiting-prompt true
                   :choices {:card #(and (corp? %)
                                         (or (in-hand? %)
                                             (in-discard? %)))}
