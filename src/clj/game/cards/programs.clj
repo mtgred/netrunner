@@ -2742,16 +2742,16 @@
              :optional {:prompt (msg "Pay " (count (:subroutines (get-card state current-ice)))
                                      " [Credits] to bypass encountered ice?")
                         :req (req (not (has-subtype? current-ice "Barrier"))
-                                       (same-card? current-ice (:host card))
-                                       (can-pay? state :runner (assoc eid :source-type :ability) (:ice context) nil [(->c :credit (count (:subroutines (get-card state current-ice))))]))
+                                  (same-card? current-ice (:host card))
+                                  (can-pay? state :runner (assoc eid :source-type :ability) (:ice context) nil [(->c :credit (count (:subroutines (get-card state current-ice))))]))
                         :yes-ability {:async true
                                       :effect (effect (wait-for
-                                                     (pay state side (make-eid state eid) card [(->c :credit (count (:subroutines (get-card state current-ice))))])
-                                                     (let [payment-str (:msg async-result)
-                                                           msg-ab {:msg (str "bypass " (card-str state (:ice context)))}]
-                                                       (print-msg state side msg-ab card nil payment-str))
-                                                     (bypass-ice state)
-                                                     (effect-completed state side eid)))}}}]})
+                                                        (pay state side (make-eid state eid) card [(->c :credit (count (:subroutines (get-card state current-ice))))])
+                                                        (let [payment-str (:msg async-result)
+                                                              msg-ab {:msg (str "bypass " (card-str state (:ice context)))}]
+                                                          (print-msg state side msg-ab card nil payment-str))
+                                                        (bypass-ice state)
+                                                        (effect-completed state side eid)))}}}]})
 
 (defcard "Pichação"
   ;; TODO - there's not really a way to tell if an event happened during a run?
