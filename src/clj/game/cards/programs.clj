@@ -410,7 +410,7 @@
                :interactive (effect true)
                :optional
                {:req (req (has-subtype? (:ice context) "Sentry")
-                               (can-pay? state side (assoc eid :source-type :ability) card nil [(->c :credit 2 {:stealth :all-stealth})]))
+                          (can-pay? state side (assoc eid :source-type :ability) card nil [(->c :credit 2 {:stealth :all-stealth})]))
                 :once :per-turn
                 :prompt (msg "Pay 2 [Credits] to bypass " (:title (:ice context)) "?")
                 :yes-ability {:cost [(->c :credit 2 {:stealth :all-stealth})]
@@ -2743,7 +2743,7 @@
                                      " [Credits] to bypass encountered ice?")
                         :req (req (not (has-subtype? current-ice "Barrier"))
                                        (same-card? current-ice (:host card))
-                                       (can-pay? state :runner eid (:ice context) nil [(->c :credit (count (:subroutines (get-card state current-ice))))]))
+                                       (can-pay? state :runner (assoc eid :source-type :ability) (:ice context) nil [(->c :credit (count (:subroutines (get-card state current-ice))))]))
                         :yes-ability {:async true
                                       :effect (effect (wait-for
                                                      (pay state side (make-eid state eid) card [(->c :credit (count (:subroutines (get-card state current-ice))))])

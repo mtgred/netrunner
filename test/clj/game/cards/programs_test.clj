@@ -7318,6 +7318,19 @@
         "Physarum Entangler cost was paid")
     (is (= :movement (:phase (get-run))) "Runner has bypassed Ravana")))
 
+(deftest physarum-entangler-vs-mantle
+  (do-game
+    (new-game {:runner {:hand ["Physarum Entangler" "Mantle"] :credits 3}
+               :corp {:hand ["Vanilla" "Whitespace"]}})
+    (play-from-hand state :corp "Whitespace" "Archives")
+    (take-credits state :corp)
+    (play-cards state :runner "Mantle" ["Physarum Entangler" "Whitespace"])
+    (run-on state :archives)
+    (rez state :corp "Whitespace")
+    (run-continue-until state :encounter-ice)
+    (click-prompts state :runner "Yes" "Mantle")
+    (is (= :movement (:phase (get-run))) "Runner has bypassed Whitespace")))
+
 (deftest pichacao
   ;; Pichação
   (do-game
