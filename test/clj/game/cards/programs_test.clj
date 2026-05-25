@@ -7320,7 +7320,7 @@
 
 (deftest physarum-entangler-vs-mantle
   (do-game
-    (new-game {:runner {:hand ["Physarum Entangler" "Mantle"] :credits 3}
+    (new-game {:runner {:hand ["Physarum Entangler" "Mantle"] :credits 2}
                :corp {:hand ["Vanilla" "Whitespace"]}})
     (play-from-hand state :corp "Whitespace" "Archives")
     (take-credits state :corp)
