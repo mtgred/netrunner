@@ -8164,6 +8164,23 @@
       (is (no-prompt? state :runner) "No Bloop prompt to derez an Harmonic ice")
       (is (rezzed? (refresh bloop))))))
 
+(deftest window-of-opportunity-vs-tungsten-tailor
+  (do-game
+    (new-game {:corp {:hand ["Echo" "Bloop"]
+                      :credits 20}
+               :runner {:hand ["Window of Opportunity" "The Tungsten Tailor"]}})
+    (play-from-hand state :corp "Echo" "HQ")
+    (rez state :corp echo)
+    (take-credits state :corp)
+    (play-from-hand state :runner "Window of Opportunity")
+    (click-prompt state :runner "HQ")
+    (is (changed? [(:credit (get-runner)) -3]
+          (click-card state :runner "The Tungsten Tailor"))
+        "Runner paid install cost")
+    (is (not (no-prompt? state :runner)) "Window of Opportunity prompt to select ice to derez")
+    (click-card state :runner "Echo")
+    (is (not (rezzed? (get-ice state :hq 0))) "Echo derezzed")))
+
 (deftest window-of-opportunity-no-derez
   (do-game
     (new-game {:corp {:hand ["Vanilla"]}
