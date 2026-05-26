@@ -8170,7 +8170,7 @@
                       :credits 20}
                :runner {:hand ["Window of Opportunity" "The Tungsten Tailor"]}})
     (play-from-hand state :corp "Echo" "HQ")
-    (rez state :corp echo)
+    (rez state :corp "Echo")
     (take-credits state :corp)
     (play-from-hand state :runner "Window of Opportunity")
     (click-prompt state :runner "HQ")
