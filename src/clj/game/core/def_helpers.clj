@@ -196,7 +196,10 @@
   ([x] (draw-abi x nil))
   ([x draw-args] (draw-abi x draw-args nil))
   ([x draw-args ab-base]
-   (merge {:msg (msg "draw " (quantify x "card"))
+   (merge {:msg (msg (let [name-side (str/capitalize (name side))]
+                       (when-not (= (:side card) name-side)
+                         (str "force the " name-side " to ")))
+                     "draw " (quantify x "card"))
            :label (str "Draw " (quantify x "card"))
            :async true
            :effect (effect (when (:action ab-base) (play-tiered-sfx state side "click-card" 3 x))
