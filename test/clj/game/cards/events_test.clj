@@ -546,6 +546,22 @@
     (click-prompt state :runner "No action")
     (is-deck? state :runner ["Orca"])))
 
+(deftest beta-build-vs-ice-swap
+  (do-game
+    (new-game {:runner {:hand ["Beta Build" "Rising Tide" "Sipa"] :credits 10 :deck ["Kyuban"]}
+               :corp {:hand ["Vanilla" "Ice Wall"]}})
+    (play-cards state :corp ["Vanilla" "HQ" :rezzed] ["Ice Wall" "R&D"])
+    (take-credits state :corp)
+    (play-cards state :runner "Rising Tide" "Sipa" ["Beta Build" "Kyuban" "Vanilla" "HQ"])
+    (run-continue-until state :encounter-ice)
+    (card-ability state :runner (get-program state 0) 0)
+    (click-prompt state :runner "End the run")
+    (run-continue state)
+    (click-prompts state :runner "Kyuban" "Sipa" "Ice Wall")
+    (run-continue-until state :success)
+    (is (no-prompt? state :runner) "No lingering prompt")
+    (is-deck? state :runner ["Kyuban"])))
+
 #_(deftest ^:kaocha/pending beta-build-cannot-run
     ;; note that peace in our time needs to be updated currently, it forbids
     ;; run events when it should not
