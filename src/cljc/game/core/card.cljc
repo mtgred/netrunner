@@ -438,6 +438,13 @@
 
      (declare get-card-hosted)
 
+     (defn get-corp-installed-card
+       "returns the most recent copy of an installed card where the zone might not exactly match"
+       [state {:keys [cid zone side type] :as card}]
+       (when (and zone (#{:ices :content} (last zone)))
+         (let [relevant (mapcat (last zone) (-> @state :corp :servers vals))]
+           (some #(when (= (:cid %) cid) %) relevant))))
+
      (defn get-card
        "Returns the most recent copy of the card from the current state, as identified
        by the argument's :zone and :cid."
@@ -458,7 +465,13 @@
      (defn get-card-hosted
        "Finds the current version of the given card by finding its host."
        [state card]
-       (let [root-host (get-card state (get-nested-host card))
+       (let [root-host (get-nested-host card)
+             ;; Note: the reference passed to us might have a host with a now-obsolete zone
+             ;; if it has been swapped. Since get-card looks up by zones, get-card on the host would
+             ;; present us with nil, and get-card on the hosted card would return nil.
+             ;; The get-corp-installed lookup is expensive, but should only occur rarely.
+             root-host (or (get-card state root-host)
+                           (get-corp-installed-card state root-host))
              helper (fn search [card target]
                       (when-not (nil? card)
                         (if-let [c (some #(when (same-card? % target) %) (:hosted card))]
