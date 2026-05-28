@@ -9,6 +9,5 @@
   (cond
     title (or (defcard-impl title) {})
     printed-title (or (defcard-impl printed-title) {})
-    :else (throw (ex-info "Tried to select card def for non-existent card"
-                          {:msg "Tried to select card-def for non existent card"
-                           :card card}))))
+    :else (let [msg "Tried to select card-def for non-existent card."]
+            (throw (ex-info msg {:msg msg :card card})))))
