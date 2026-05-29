@@ -3,7 +3,7 @@
    [cheshire.core :as json]
    [cljc.java-time.instant :as inst]
    [clojure.string :as str]
-   [cond-plus.core :refer [cond+]]
+   [com.noahbogart.cond-plus :refer [cond+]]
    [game.core.commands :as commands :refer [parse-command]]
    [game.core.diffs :as diffs]
    [game.core.finding :refer [find-latest]]

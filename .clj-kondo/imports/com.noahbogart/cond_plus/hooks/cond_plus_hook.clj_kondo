@@ -1,3 +1,7 @@
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 (ns hooks.cond-plus-hook
   (:require [clj-kondo.hooks-api :as api]))
 
@@ -7,14 +11,16 @@
       ;; non-sequence clause
       (if (not (or (api/list-node? clause)
                    (api/vector-node? clause)))
-        (let [{:keys [row col]} (meta clause)]
+        (let [{:keys [row end-row col end-col]} (meta clause)]
           (api/reg-finding!
             {:message "must be sequence"
              :type :cond-plus/sequence
              :row row
-             :col col})
+             :end-row end-row
+             :col col
+             :end-col end-col})
           found-else?)
-        (let [[sym arrow fn-expr] (api/sexpr clause)]
+        (let [[sym arrow & fn-expr] (api/sexpr clause)]
           (cond
             ;; non-final else
             found-else?
@@ -27,33 +33,43 @@
             ;; check fn-exprs
             (and (or (= :> arrow)
                      (= '=> arrow))
-                 (nil? fn-expr))
-            (let [{:keys [row col]} (meta clause)]
+                 (not= 1 (count fn-expr)))
+            (let [{:keys [row end-row col end-col]} (meta clause)]
               (api/reg-finding!
-                {:message "fn-expr must have third position symbol"
-                 :type :cond-plus/missing-fn
-                 :row row
-                 :col col})
+               (merge
+                {:row row
+                 :end-row end-row
+                 :col col
+                 :end-col end-col}
+                (if (zero? (count fn-expr))
+                  {:message "fn-expr must have third position symbol"
+                   :type :cond-plus/missing-fn}
+                  {:message "too many args given to fn-expr"
+                   :type :cond-plus/bad-fn})))
               found-else?)
             ;; else handling
             (or (= :else sym)
                 (= 'else sym))
             (if found-else?
-              (let [{:keys [row col]} (meta clause)]
+              (let [{:keys [row end-row col end-col]} (meta clause)]
                 (api/reg-finding!
                   {:message "only one :else clause allowed"
                    :type :cond-plus/empty-else
                    :row row
-                   :col col})
+                   :end-row end-row
+                   :col col
+                   :end-col end-col})
                 ;; early exit cuz not worth analyzing the rest
                 (reduced nil))
               (do (when-not arrow
-                    (let [{:keys [row col]} (meta clause)]
+                    (let [{:keys [row end-row col end-col]} (meta clause)]
                       (api/reg-finding!
                         {:message ":else must have a body"
                          :type :cond-plus/empty-else
                          :row row
-                         :col col})))
+                         :end-row end-row
+                         :col col
+                         :end-col end-col})))
                   ;; Store row and col from existing else as we don't throw until
                   ;; we've seen a following clause
                   (select-keys (meta clause) [:row :col])))))))
@@ -62,4 +78,6 @@
 
 (defn cond+ [{:keys [node]}]
   (analyze-clauses (rest (:children node)))
-  node)
+  (let [new-node (api/list-node
+                  (list* (api/token-node 'do) (rest (:children node))))]
+    {:node (with-meta new-node (meta node))}))

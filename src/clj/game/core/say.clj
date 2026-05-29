@@ -2,10 +2,14 @@
   (:require
    [cljc.java-time.instant :as inst]
    [clojure.java.io :as io]
+   [clojure.pprint :as pprint]
+   [clojure.set :as set]
    [clojure.string :as str]
    [game.core.card :refer [get-title]]
+   [game.core.schemas :as schemas]
    [game.core.toasts :refer [toast]]
    [jinteki.cards :refer [all-cards]]
+   [malli.core :as m]
    [noahtheduke.fluent :as fluent]))
 
 (defn make-message
@@ -56,10 +60,11 @@
                        (= side :corp) corp-pronoun
                        (= side :runner) runner-pronoun
                        :else "their")]
-    (-> text
-        (str/replace #"(\[pronoun\])|(\[their\])" user-pronoun)
-        (str/replace #"\[corp-pronoun\]" corp-pronoun)
-        (str/replace #"\[runner-pronoun\]" runner-pronoun))))
+    (when text
+      (-> text
+          (str/replace #"(\[pronoun\])|(\[their\])" user-pronoun)
+          (str/replace #"\[corp-pronoun\]" corp-pronoun)
+          (str/replace #"\[runner-pronoun\]" runner-pronoun)))))
 
 (defn- log
   [state message]
@@ -67,29 +72,187 @@
 
 (defn say
   "Prints a message to the log as coming from the given user."
-  ([state side args] (say state side args :public))
-  ([state side {:keys [user text]} log-side]
+  ([state side {:keys [user text log-side]
+                :or {log-side :public}}]
    (let [author (or user (get-in @state [side :user]))
-         message (make-message {:user author :text (insert-pronouns state side text)})]
-     (let [log-sides (flatten [log-side])]
-       (log state (zipmap log-sides (repeat message)))))))
+         message (make-message {:user author
+                                :text (if (string? text)
+                                        (insert-pronouns state side text)
+                                        (update text :raw-text #(insert-pronouns state side %)))})
+         log-sides (flatten [log-side])]
+     (log state (zipmap log-sides (repeat message))))))
 
 (defn- multi-say
   [state side message-map]
-  (let [message (update-vals message-map #(make-system-message  (insert-pronouns state side %)))]
+  (let [message (update-vals message-map #(make-system-message (insert-pronouns state side %)))]
     (log state message)))
 
 (defn system-say
   "Prints a system message to log (`say` from user __system__)"
   ([state side text] (system-say state side text nil))
   ([state side text {:keys [hr log-side]}]
-   (say state side (make-system-message (str text (when hr "[hr]"))) (or log-side :public))))
+   (say state side (make-system-message (merge {:username nil}
+                                               (when log-side
+                                                 {:log-side log-side})
+                                               (if (string? text) {:raw-text text} text))))
+   (when hr (say state side (make-system-message {:raw-text "[hr]"})))))
 
 (defn unsafe-say
   "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
   [state text]
   (let [message (make-system-message text)]
     (log state {:public message})))
+
+
+;; message map -> string
+
+(defonce dictionary (atom {}))
+
+(doseq [lang ["en" "fr"]
+        :let [content (io/resource (str (io/file "public" "i18n" "messages" (str lang ".ftl"))))]]
+  (swap! dictionary assoc lang (fluent/build lang (slurp content))))
+
+(def target-language "fr")
+
+(defn translate
+  "cljc"
+  ([id] (translate id nil))
+  ([id args]
+   (let [bundle (get @dictionary target-language)]
+     (try (fluent/format bundle id args)
+          (catch clojure.lang.ExceptionInfo ex
+            (if (str/starts-with? (ex-message ex) "Missing message for id")
+              (fluent/format (get @dictionary "en") id args)
+              (throw ex)))))))
+
+(defn join-with-and
+  "cljc"
+  [ms]
+  (str/join (translate :join-with-and) ms))
+
+(defn format-fragments
+  "cljc"
+  [m]
+  (translate (:fragment/type m) (set/rename-keys m {:fragment/value :value})))
+
+(defn build-ability-msg
+  [ms]
+  (when-let [ms (seq ms)]
+    (->> ms
+         (map format-fragments)
+         (join-with-and))))
+
+(defn format-payment-msg
+  "cljc"
+  [m]
+  (translate (:payment/type m) (set/rename-keys m {:payment/title :title
+                                                   :payment/value :value})))
+
+(defn build-pay-msg
+  "cljc"
+  [ms]
+  (when-let [ms (seq ms)]
+    (->> ms
+         (map format-payment-msg)
+         (join-with-and))))
+
+(defn build-base-msg
+  "cljc"
+  [m]
+  (let [do-ability (build-ability-msg (:msg/fragments m))
+        pay-msg (build-pay-msg (:msg/payments m))]
+    (cond-> (assoc m :do-ability do-ability)
+      pay-msg (assoc :payment pay-msg))))
+
+(defn format-ability-msg
+  "cljc"
+  [m]
+  (translate (:msg/type m) m))
+
+(defn build-msg
+  "cljc"
+  [m]
+  (format-ability-msg (build-base-msg m)))
+
+;; input data -> message map
+
+(def Fragment
+  (m/schema
+   [:map
+    [:fragment/type :keyword]
+    [:fragment/value :int]
+    [:title {:optional true} :string]]))
+
+(defn ->fragment
+  ([type value] (->fragment type value nil))
+  ([type value args]
+   (doto (merge {:fragment/type type
+                 :fragment/value value} args)
+     (schemas/assert Fragment))))
+
+(defn process-fragments
+  [fragments]
+  (cond (vector? fragments) (not-empty fragments)
+        (map? fragments) [fragments]
+        (sequential? fragments) (not-empty (vec fragments))))
+
+(defn payment->msg
+  [{:paid/keys [type value targets] :as payment}]
+  (schemas/assert payment schemas/Payment)
+  (if-let [picks (and (= :credit type)
+                      (seq (filter #(contains? % :pick-counters/type) targets)))]
+    (vec (for [pick picks]
+           (case (:pick-counters/type pick)
+             :card {:payment/type "payment-hosted-credit"
+                    :payment/value (:value pick)
+                    :payment/title (:title pick)}
+             :bad-publicity {:payment/type "payment-bad-publicity"
+                             :payment/value (:value pick)}
+             :credit-pool {:payment/type "payment-credit-pool"
+                           :payment/value (:value pick)})))
+    [{:payment/type (str "payment-" (name type))
+      :payment/value value}]))
+
+(defn process-payments
+  [payments]
+  (when-let [ps (seq payments)]
+    (into [] (mapcat payment->msg) ps)))
+
+(defn ->base-msg
+  [{:msg/keys [fragments payments] :as base-msg}]
+  (let [fragments (process-fragments fragments)
+        payments (process-payments payments)
+        args (dissoc base-msg :msg/fragments :msg/payments)]
+    (cond-> {:msg/fragments fragments}
+      payments (assoc :msg/payments payments)
+      (not-empty args) (merge args))))
+
+(defn ->use-card-msg
+  ([card fragments] (->use-card-msg card fragments nil nil))
+  ([card fragments payments] (->use-card-msg card fragments payments nil))
+  ([card fragments payments args]
+   (cond-> (->base-msg {:msg/fragments fragments
+                        :msg/payments payments
+                        :msg/type (if (seq payments) :pay-use-card :use-card)
+                        :title (get-title card)})
+     (map? args) (merge args))))
+
+(defn simple-map->fragment [m]
+  (when m
+    (if (keyword? m)
+      {:fragment/type m}
+      (set/rename-keys m {:type :fragment/type
+                          :value :fragment/value}))))
+
+(defmacro simple-msg
+  "wraps `game.macros/effect`, calls `->use-card-msg` with each opts as fragment map.
+
+  can also be given a keyword, which is wrapped as `{:type opt}`.
+
+  converts `:type` to `:fragment/type` and `:value` to `:fragment/value`."
+  [& opts]
+  `(game.macros/effect
+    (->use-card-msg ~'card (keep simple-map->fragment [~@opts]) (vals (:cost-paid ~'eid)))))
 
 (defonce store (atom #{}))
 
@@ -113,71 +276,6 @@
        (#(str "(" % ")"))
        (re-pattern)))
 
-(def en-msgs
-  (let [content (io/resource (str (io/file "public" "i18n" "messages" "en.ftl")))]
-    (fluent/build "en" (slurp content))))
-
-(defn en-format
-  ([id] (fluent/format en-msgs id))
-  ([id args] (fluent/format en-msgs id args)))
-
-(defn join-with-and [ms]
-  (str/join (en-format :join-with-and) ms))
-
-(defn format-msg [m]
-  (en-format (:msg/type m) m))
-
-(defn format-paid [{:paid/keys [type value targets]}]
-  (if (some #(contains? % :pick-counters/type) targets)
-    (->> (for [pick (filter #(contains? % :pick-counters/type) targets)]
-           (case (:pick-counters/type pick)
-             :card {:paid-type "paid-hosted-credit"
-                    :paid-value (:value pick)
-                    :title (:title pick)}
-             :bad-publicity {:paid-type "paid-bad-publicity"
-                             :paid-value (:value pick)}
-             :credit-pool {:paid-type "paid-credit-pool"
-                           :paid-value (:value pick)}))
-         (mapv #(en-format (:paid-type %) %)))
-    (let [m {:paid-type (str "paid-" (name type))
-             :paid-value value}]
-      [(en-format (:paid-type m) m)])))
-
-(defn build-pay-msg [ms]
-  (when-let [ms (seq ms)]
-    (->> ms
-         (mapcat format-paid)
-         (join-with-and))))
-
-(defn build-base-msg [m]
-  (let [do-ability (join-with-and
-                     (mapv format-msg (:msg/fragments m)))
-        pay-msg (not-empty (build-pay-msg (:msg/payments m)))]
-    (cond-> (assoc m :do-ability do-ability)
-      pay-msg (assoc :payment pay-msg))))
-
-(defn build-msg [m]
-  (format-msg (build-base-msg m)))
-
-(defn ->use-card-msg
-  ([state side card fragments] (->use-card-msg state side card nil fragments))
-  ([state side card payments fragments]
-   (let [fragments (cond (vector? fragments) fragments
-                         (nil? fragments) (throw (IllegalArgumentException. "Requires a fragment or vector of fragments"))
-                         :else [fragments])]
-     (cond-> {:msg/type :use-card
-              :username (get-in @state [side :user :username])
-              :title (get-title card)
-              :msg/fragments fragments}
-       (seq payments) (assoc :msg/payments payments)))))
-
-(defn ->fragment
-  ([type value]
-   {:msg/type type
-    :value value})
-  ([type value args]
-   (merge (->fragment type value) args)))
-
 (comment
   (->> @store
        (filter #(str/includes? % "and draw")))
@@ -197,9 +295,8 @@
                  (str/replace #"[Cc]orp  ?" "{\\$side} ")
                  (str/replace #"[Rr]unner  ?" "{\\$side} ")
                  (str/replace card-names "{\\$card}")
-                 (str/replace type-names "{\\$types}")
-                 (str/replace #"\{\$type\}s" "{\\$types}")
-                 ; (str/replace subtype-names "{\\$subtype}")
+                 (str/replace type-names "{\\$type}")
+                 (str/replace #"\{\$type\}s" "{\\$type}")
                  (str/replace #"(the )?[Gg]rip" "the grip")
                  (str/replace #"(the )?[Ss]tack" "the stack")
                  (str/replace #"(the )?[Hh]eap" "the heap")
@@ -302,19 +399,21 @@
        (sort)
        (distinct)
        (vec)
-       (clojure.pprint/pprint)))
+       (pprint/pprint)))
 
 (defn system-msg
   "Prints a message to the log without a username."
   ([state side text] (system-msg state side text nil))
   ([state side text args]
-   (if (map? text)
-     (system-say state side (build-msg text) args)
-     (let [username (get-in @state [side :user :username])
-           msg (str username " " text ".")]
-       (when-not (:log-side args)
-         (swap! store conj msg))
-       (system-say state side msg args)))))
+   (let [username (get-in @state [side :user :username])
+         msg (merge {:username username
+                     :side side}
+                    (if (string? text)
+                      {:raw-text (str username " " text ".")}
+                      text))]
+     (when-not (:log-side args)
+       (swap! store conj msg))
+     (system-say state side msg args))))
 
 (defn multi-msg
   [state side message-map]

@@ -1,36 +1,42 @@
 (ns game.core.turns
   (:require
-    [game.core.agendas :refer [update-all-advancement-requirements]]
-    [game.core.board :refer [all-active all-active-installed all-installed all-installed-and-scored]]
-    [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
-    [game.core.drawing :refer [draw]]
-    [game.core.effects :refer [unregister-lingering-effects update-lingering-effect-durations any-effects]]
-    [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [checkpoint queue-event trigger-event trigger-event-simult unregister-floating-events update-floating-event-durations resolve-durations]]
-    [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
-    [game.core.gaining :refer [gain lose]]
-    [game.core.hand-size :refer [hand-size]]
-    [game.core.ice :refer [update-all-ice update-breaker-strength]]
-    [game.core.moving :refer [move]]
-    [game.core.say :refer [system-msg]]
-    [game.core.set-aside :refer [clean-set-aside!]]
-    [game.core.toasts :refer [toast]]
-    [game.core.update :refer [update!]]
-    [game.core.winning :refer [flatline]]
-    [game.macros :refer [continue-ability effect wait-for]]
-    [game.utils :refer [dissoc-in enumerate-str quantify]]
-    [jinteki.utils :refer [other-side]]
-    [clojure.string :as string]))
+   [game.core.agendas :refer [update-all-advancement-requirements]]
+   [game.core.board :refer [all-active all-active-installed all-installed
+                            all-installed-and-scored]]
+   [game.core.card :refer [facedown? get-card has-subtype? in-hand? installed?]]
+   [game.core.drawing :refer [draw]]
+   [game.core.effects :refer [any-effects update-lingering-effect-durations]]
+   [game.core.eid :refer [effect-completed make-eid]]
+   [game.core.engine :refer [checkpoint queue-event resolve-durations
+                             trigger-event trigger-event-simult
+                             update-floating-event-durations]]
+   [game.core.flags :refer [card-flag-fn? clear-turn-register!]]
+   [game.core.gaining :refer [gain lose]]
+   [game.core.hand-size :refer [hand-size]]
+   [game.core.ice :refer [update-all-ice update-breaker-strength]]
+   [game.core.moving :refer [move]]
+   [game.core.say :refer [system-msg]]
+   [game.core.set-aside :refer [clean-set-aside!]]
+   [game.core.toasts :refer [toast]]
+   [game.core.update :refer [update!]]
+   [game.core.winning :refer [flatline]]
+   [game.macros :refer [continue-ability effect wait-for]]
+   [game.utils :refer [dissoc-in enumerate-str quantify]]
+   [jinteki.utils :refer [other-side]]))
 
 (defn- turn-message
   "Prints a message for the start or end of a turn, summarizing credits and cards in hand."
   [state side start-of-turn]
-  (let [pre (if start-of-turn "started" "is ending")
-        hand (if (= side :runner) "[their] Grip" "HQ")
-        cards (count (get-in @state [side :hand]))
-        credits (get-in @state [side :credit])
-        text (str pre " [their] turn " (:turn @state) " with " credits " [Credit] and " (quantify cards "card") " in " hand)]
-    (system-msg state side text {:hr (not start-of-turn)})))
+  (let [msg-type (case [(= :corp side) (boolean start-of-turn)]
+                   [true true] :corp-start-of-turn
+                   [true false] :corp-end-of-turn
+                   [false true] :runner-start-of-turn
+                   [false false] :runner-end-of-turn)
+        m {:msg/type msg-type
+           :turn (:turn @state)
+           :cards (count (get-in @state [side :hand]))
+           :credits (get-in @state [side :credit])}]
+    (system-msg state side m {:hr (not start-of-turn)})))
 
 (defn end-phase-12
   "End phase 1.2 and trigger appropriate events for the player."
@@ -46,7 +52,7 @@
                  (do (update-lingering-effect-durations state side :until-next-runner-turn-begins :until-runner-turn-begins)
                      (update-floating-event-durations state side :until-next-runner-turn-begins :until-runner-turn-begins)))
                (if (= side :corp)
-                 (do (system-msg state side "makes [their] mandatory start of turn draw")
+                 (do (system-msg state side {:msg/type :mandatory-start-of-turn-draw})
                      (wait-for (draw state side 1 nil)
                                (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
                  (effect-completed state nil eid))
@@ -65,14 +71,14 @@
          (if (and (get-in @state [:corp-phase-12 :corp])
                   (get-in @state [:corp-phase-12 :runner]))
            (end-phase-12 state :corp eid _)
-           (do (system-msg state side "has no further action")
+           (do (system-msg state side {:msg/type :no-further-actions})
                (effect-completed state side eid))))
      (:runner-phase-12 @state)
      (do (swap! state assoc-in [:runner-phase-12 side] true)
          (if (and (get-in @state [:runner-phase-12 :corp])
                   (get-in @state [:runner-phase-12 :runner]))
            (end-phase-12 state :runner eid _)
-           (do (system-msg state side "has no further action")
+           (do (system-msg state side {:msg/type :no-further-actions})
                (effect-completed state side eid))))
      :else nil)))
 
@@ -144,7 +150,7 @@
               (effect-completed state side eid))
           (any-effects state side :skip-discard)
           (do
-            (system-msg state side (str "skips [their] discard step this turn"))
+            (system-msg state side {:msg/type :skip-discard-step})
             (effect-completed state side eid))
           (> cur-hand-size max-hand-size)
           (continue-ability
@@ -155,17 +161,17 @@
                        :all true}
              :waiting-prompt true
              :async true
-             :effect (effect (system-msg state side
-                                      (str "discards "
-                                           (if (= :runner side)
-                                             (enumerate-str (map :title targets))
-                                             (quantify (count targets) "card"))
-                                           " from " (if (= :runner side) "[their] Grip" "HQ")
-                                           " at end of turn"))
-                          (let [discard (seq (map #(move state side % :discard) targets))
-                                ev (if (= side :runner) :runner-discard-to-hand-size :corp-discard-to-hand-size)]
-                            (queue-event state ev {:cards discard})
-                            (checkpoint state nil eid {:durations [ev]})))}
+             :effect (effect
+                      (let [m (if (= :corp side)
+                                {:msg/type :corp-discard-cards-from-hand-eot
+                                 :cards (count targets)}
+                                {:msg/type :runner-discard-cards-from-hand-eot
+                                 :cards (enumerate-str (map :title targets))})]
+                        (system-msg state side m))
+                      (let [discard (mapv #(move state side % :discard) targets)
+                            ev (if (= :corp side) :corp-discard-to-hand-size :runner-discard-to-hand-size)]
+                        (queue-event state ev {:cards discard})
+                        (checkpoint state nil eid {:durations [ev]})))}
             nil nil)
           :else
           (effect-completed state side eid))))
@@ -212,7 +218,8 @@
                  (when (pos? extra-turns)
                    (start-turn state side nil)
                    (swap! state update-in [side :extra-turns] dec)
-                   (system-msg state side (string/join ["will have " (quantify extra-turns "extra turn") " remaining"]))))
+                   (system-msg state side {:msg/type :extra-turns-remaining
+                                           :turns extra-turns})))
                (effect-completed state side eid)))))
 
 (defn post-discard-pass-priority
@@ -224,14 +231,14 @@
          (if (and (get-in @state [:corp-post-discard :corp])
                   (get-in @state [:corp-post-discard :runner]))
            (end-turn-continue state :corp eid _)
-           (do (system-msg state side "has no further action")
+           (do (system-msg state side {:msg/type :no-further-actions})
                (effect-completed state side eid))))
      (:runner-post-discard @state)
      (do (swap! state assoc-in [:runner-post-discard side] true)
          (if (and (get-in @state [:runner-post-discard :corp])
                   (get-in @state [:runner-post-discard :runner]))
            (end-turn-continue state :runner eid _)
-           (do (system-msg state side "has no further action")
+           (do (system-msg state side {:msg/type :no-further-actions})
                (effect-completed state side eid))))
      :else nil)))
 
