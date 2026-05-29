@@ -51,7 +51,7 @@
    [game.core.runs :refer [bypass-ice end-run
                            get-current-encounter jack-out make-run
                            successful-run-replace-breach total-cards-accessed]]
-   [game.core.say :refer [play-sfx system-msg ->use-card-msg ->fragment]]
+   [game.core.say :refer [play-sfx system-msg simple-msg]]
    [game.core.servers :refer [target-server is-central? zone->name]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags]]
@@ -173,8 +173,7 @@
                                           (some #(event? (:card %)) targets))]
                                   (first-trash? state event-targets?)))
                  :change-in-game-state {:silent true :req (req (seq (:deck runner)))}
-                 :msg (effect (->use-card-msg state :runner card
-                                              (->fragment :draw-cards 1)))
+                 :msg (simple-msg {:type :draw-cards :value 1})
                  :effect (effect (draw state :runner eid 1))}]
     {:static-abilities [(mu+ 1)]
      :events [(assoc ability :event :corp-trash)

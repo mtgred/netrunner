@@ -1,7 +1,7 @@
 (ns game.cards.upgrades
   (:require
    [clojure.string :as str]
-   [cond-plus.core :refer [cond+]]
+   [com.noahbogart.cond-plus :refer [cond+]]
    [game.core.access :refer [access-bonus set-only-card-to-access
                              installed-access-trigger
                              steal-cost-bonus]]

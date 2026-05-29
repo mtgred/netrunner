@@ -61,7 +61,7 @@
                            make-run prevent-access successful-run-replace-breach
                            total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [system-msg ->use-card-msg ->fragment]]
+   [game.core.say :refer [system-msg ->use-card-msg ->fragment simple-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? remote->name
                               target-server unknown->kw zone->name
                               zones->sorted-names]]
@@ -176,20 +176,24 @@
                      :unsuccessful
                      {:async true
                       :effect (effect (gain-credits state :runner eid (+ (:agenda-point runner) (:agenda-point corp))))
-                      :msg (effect
-                            (->use-card-msg state :runner card (:cost-paid eid)
-                                       (->fragment :gain-credits (+ (:agenda-point runner) (:agenda-point corp)))))}}}]})
+                      :msg (simple-msg
+                            {:type :gain-credits
+                             :value (+ (:agenda-point runner) (:agenda-point corp))})}}}]})
 
 (defcard "Apocalypse"
   (let [corp-trash {:async true
-                    :effect (effect (let [ai (all-installed state :corp)
-                                       onhost (filter #(= '(:onhost) (:zone %)) ai)
-                                       unhosted (->> ai
-                                                     (remove #(= '(:onhost) (:zone %)))
-                                                     (sort-by #(vec (:zone %)))
-                                                     (reverse))
-                                       allcorp (concat onhost unhosted)]
-                                   (trash-cards state :runner eid allcorp {:cause-card card})))}
+                    :effect (effect
+                             (let [ai (all-installed state :corp)
+                                   onhost (filter #(= [:onhost] (:zone %)) ai)
+                                   ;; trash cards from right to left
+                                   ;; otherwise, auto-killing servers would move the cards to the next server
+                                   ;; so they could no longer be trashed in the same loop
+                                   unhosted (->> ai
+                                                 (remove #(= [:onhost] (:zone %)))
+                                                 (sort-by #(vec (:zone %)))
+                                                 (reverse))
+                                   allcorp (concat onhost unhosted)]
+                               (trash-cards state :runner eid allcorp {:cause-card card})))}
         runner-facedown {:effect (effect (let [installedcards (all-active-installed state :runner)
                                             ishosted (fn [c] (= '(:onhost) (get c :zone)))
                                             hostedcards (filter ishosted installedcards)
@@ -205,19 +209,19 @@
                               (some #{:rd} (:successful-run runner-reg))
                               (some #{:archives} (:successful-run runner-reg)))
                :async true
-               ;; trash cards from right to left
-               ;; otherwise, auto-killing servers would move the cards to the next server
-               ;; so they could no longer be trashed in the same loop
-               :msg "trash all installed Corp cards and turn all installed Runner cards facedown"
+               :msg (simple-msg
+                     {:type :trash-all-installed-corp}
+                     {:type :turn-all-installed-runner-facedown})
                :effect (effect (wait-for
                               (resolve-ability state side corp-trash card nil)
                               (continue-ability state side runner-facedown card nil)))}}))
 
 (defcard "Ashen Epilogue"
   {:on-play
-   {:msg (msg (if (not (zone-locked? state :runner :discard))
-                "shuffle the grip and heap into the stack"
-                "shuffle the grip into the stack"))
+   {:msg (simple-msg
+          (if (zone-locked? state :runner :discard)
+            :shuffle-grip-into-stack
+            :shuffle-grip-and-heap-into-stack))
     :rfg-instead-of-trashing true
     :async true
     :effect (effect (shuffle-into-deck state :runner :hand :discard)
@@ -1838,7 +1842,11 @@
    :events [{:event :successful-run
              :automatic :gain-credits
              :async true
-             :msg "gain 9 [Credits] and take 1 tag"
+             :msg (simple-msg
+                   {:type :gain-credits
+                    :value 9}
+                   {:type :take-tags
+                    :value 1})
              :req (req (= :hq (target-server context))
                             this-card-run)
              :effect (effect (wait-for (gain-tags state :runner 1 {:suppress-checkpoint true})
@@ -1852,7 +1860,9 @@
               :interactive (effect true)
               :async true
               :req (req (#{:meat :net} (:cause context)))
-              :msg "draw 3 cards"
+              :msg (simple-msg
+                    {:type :draw-cards
+                     :value 3})
               :effect (effect (draw state :runner eid 3))}})
 
 (defcard "Illumination"
@@ -1898,13 +1908,16 @@
              :prompt "Choose a piece of ice in Archives"
              :choices (effect (filter ice? (:discard corp)))
              :effect (effect (continue-ability
-                               state side (let [ice target]
+                               state side
+                               (let [ice target]
                                  {:async true
                                   :prompt (msg "Choose a rezzed copy of " (:title ice) " to trash")
                                   :choices {:card #(and (ice? %)
                                                         (rezzed? %)
                                                         (same-card? :title % ice))}
-                                  :msg (msg "trash " (card-str state target))
+                                  :msg (simple-msg
+                                        {:type :trash-card
+                                         :title (card-str state target)})
                                   :effect (effect (trash state side eid target {:cause-card card}))})
                                card nil))}]})
 
@@ -2447,9 +2460,10 @@
 
 (defcard "Levy AR Lab Access"
   {:on-play
-   {:msg (msg (if (not (zone-locked? state :runner :discard))
-                "shuffle the grip and heap into the stack and draw 5 cards"
-                "shuffle the grip into the stack and draw 5 cards"))
+   {:msg (simple-msg
+          (if (zone-locked? state :runner :discard)
+            :shuffle-grip-into-stack
+            :shuffle-grip-and-heap-into-stack))
     :rfg-instead-of-trashing true
     :async true
     :effect (effect (shuffle-into-deck state side :hand :discard)

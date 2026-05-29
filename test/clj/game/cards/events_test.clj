@@ -278,7 +278,8 @@
     (click-prompt state :corp "0")
     (click-prompt state :runner "1")
     ;; 4 credits after trace, gain 6
-    (is (= 10 (:credit (get-runner))) "Runner gained 6 credits")))
+    (is (= 10 (:credit (get-runner))) "Runner gained 6 credits")
+    (print-log state)))
 
 (deftest apocalypse-ensure-mu-is-correct-and-no-duplicate-cards-in-heap
     ;; Ensure MU is correct and no duplicate cards in heap
@@ -338,7 +339,8 @@
         (play-from-hand state :runner "Apocalypse")
         (is (zero? (count (core/all-installed state :corp))) "All installed Corp cards trashed")
         (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
-        (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap"))))
+        (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap")
+        (print-log state))))
 
 (deftest apocalypse-with-hostile-infrastructure-should-take-damage-equal-to-2x-cards-on-the-table
     ;; with Hostile Infrastructure - should take damage equal to 2x cards on the table
@@ -2911,6 +2913,7 @@
       (is (= 2 (count (:rfg (get-runner)))) "2 Encores removed from game")
       (take-credits state :runner)
       (take-credits state :runner)
+      (print-log state)
       ;; Two extra turns
       (take-credits state :runner)
       (is (= 13 (:credit (get-runner))))))

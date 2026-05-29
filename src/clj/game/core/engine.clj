@@ -3,7 +3,7 @@
     [clj-uuid :as uuid]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]
-    [cond-plus.core :refer [cond+]]
+    [com.noahbogart.cond-plus :refer [cond+]]
     [game.core.board :refer [clear-empty-remotes get-all-cards all-installed all-installed-runner
                              all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title ice? in-discard? in-hand? in-rfg? in-set-aside? installed? rezzed? program? console? unique?]]
@@ -307,12 +307,12 @@
   (when-let [message (:msg ability)]
     (let [desc (if (or (= :cost message) (string? message))
                  message
-                 (message state side eid card targets))
-          cost-spend-msg (build-spend-msg payment-str "use")]
+                 (message state side eid card targets))]
       (cond
         (map? desc) desc
         (= :cost desc) (str payment-str " to satisfy " (get-title card))
-        desc (str cost-spend-msg (get-title card) " to " desc)))))
+        desc (str (build-spend-msg payment-str "use")
+                  (get-title card) " to " desc)))))
 
 (defn print-msg
   "Prints the ability message"
