@@ -15,7 +15,7 @@
     (let [started (get-in @state [:stats :time :started])
           now (inst/now)
           duration (duration/to-minutes (duration/between started now))]
-      (system-msg state side "wins the game")
+      (system-msg state side {:msg/type :win})
       (play-sfx state side "game-end")
       (swap! state (fn [state]
                      (-> state
@@ -40,7 +40,7 @@
     (let [started (get-in @state [:stats :time :started])
           now (inst/now)
           duration (duration/to-minutes (duration/between started now))]
-      (system-say state nil "The game is a tie!")
+      (system-say state nil {:msg/type :tie})
       (play-sfx state nil "game-end")
       (swap! state (fn [state]
                      (-> state
@@ -53,7 +53,7 @@
 (defn win-decked
   "Records a win via decking the corp."
   [state]
-  (system-msg state :corp "is decked")
+  (system-msg state :corp {:msg/type :win-decked})
   (win state :runner "Decked"))
 
 (defn flatline
@@ -61,14 +61,14 @@
   [state]
   (when-not (:winner state)
     (swap! state assoc :winner-declared true)
-    (system-msg state :runner "is flatlined")
+    (system-msg state :runner {:msg/type :flatlined})
     (win state :corp "Flatline")))
 
 (defn concede
   "Trigger game concede by specified side. Takes a third argument for use with user commands."
   ([state side _] (concede state side))
   ([state side]
-   (system-msg state side "concedes")
+   (system-msg state side {:msg/type :concede})
    (win state (if (= side :corp) :runner :corp) "Concede")))
 
 (defn clear-win
@@ -76,7 +76,7 @@
   [state side]
   (swap! state assoc-in [side :clear-win] true)
   (when (and (-> @state :runner :clear-win) (-> @state :corp :clear-win))
-    (system-msg state side "cleared the win condition")
+    (system-msg state side {:msg/type :clear-win})
     (swap! state dissoc-in [:runner :clear-win])
     (swap! state dissoc-in [:corp :clear-win])
     (swap! state dissoc :winner :loser :winning-user :losing-user :reason :winning-deck-id :losing-deck-id :end-time :winner-declared)))
