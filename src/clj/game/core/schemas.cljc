@@ -24,4 +24,4 @@
     [:paid/type :keyword]
     [:paid/msg {:optional true} :string]
     [:paid/value :some]
-    [:paid/targets {:optional true} [:sequential :some]]]))
+    [:paid/targets {:optional true} [:maybe [:sequential :some]]]]))

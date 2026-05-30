@@ -19,6 +19,11 @@
 -heap = the heap
 -stack = the stack
 
+-credit = [Credit]
+-click = [Click]
+-bad-publicity = bad publicity
+-tag = tag
+
 ## Logical templates
 
 use-card = {$username} uses {$title} to {$do-ability}.
@@ -29,17 +34,31 @@ pay-use-card = {$username} {$payment} to use {$title} to {$do-ability}.
 # like this: "$player uses $card to do x[join-with-and]do y[join-with-and]do z."
 
 join-with-and = {" "}and{" "}
+join-list = ,{" "}
 
 ## Ability fragments
 
 trash-card = trash {$title}
 
-trash-cards = trash {$value ->
+trash-n-cards = trash {$value ->
     [one] 1 card
     *[other] {$value} cards
 }
 
-gain-credits = gain {$value} [Credit]
+trash-cards = trash {$count ->
+    [one] 1 card ({$value})
+    *[other] {$count} cards ({$value})
+}
+
+trash-all-cards-in-grip = trash all cards in {-grip}
+
+shuffle-cards-into-stack = shuffle {$count ->
+    [zero] 0 cards into {-stack}
+    [one] 1 card ({$value}) into {-stack}
+    *[other] {$count} cards ({$value}) into {-stack}
+}
+
+gain-credits = gain {$value} {-credit}
 
 draw-cards = draw {$value ->
     [one] 1 card
@@ -58,6 +77,34 @@ take-tags = take {$value ->
 
 shuffle-grip-into-stack = shuffle { -grip } into { -stack }
 shuffle-grip-and-heap-into-stack = shuffle { -grip } and { -heap } into { -stack }
+
+forfeit = forfeits {$title}
+add-self-to-score-area = add itself to [their] score area as an agenda worth {$value ->
+    [one] 1 agenda point
+    *[other] {$value} agenda points
+}
+
+give-bad-publicity = give { -corp(case: "acusative") } {$value} { -bad-publicity }
+
+move-seen-unseen-into-grip = move {$value} and {$unseen ->
+    [one] 1 unseen card into {-grip}
+    *[other] {$unseen} unseen cards into {-grip}
+}
+move-seen-into-grip = move {$value} into {-grip}
+move-unseen-into-grip = move {$value ->
+    [one] 1 unseen card into {-grip}
+    *[other] {$value} unseen cards into {-grip}
+}
+
+move-seen-unseen-into-hq = move {$value} and {$unseen ->
+    [one] 1 unseen card into {-hq}
+    *[other] {$unseen} unseen cards into {-hq}
+}
+move-seen-into-hq = move {$value} into {-hq}
+move-unseen-into-hq = move {$value ->
+    [one] 1 unseen card into {-hq}
+    *[other] {$value} unseen cards into {-hq}
+}
 
 ## Specific card abilities
 
@@ -81,7 +128,7 @@ corp-start-of-turn = {$username} started [their] turn {$turn} with {$credits} [C
 corp-end-of-turn = {$username} is ending [their] turn {$turn} with {$credits} [Credit] and {$cards ->
     [one] 1 card in { -hq }.
     *[other] {$cards} cards in { -hq }.
-}.
+}
 
 runner-start-of-turn = {$username} started [their] turn {$turn} with {$credits} [Credit] and {$cards ->
     [one] 1 card in { -grip }.
@@ -122,6 +169,10 @@ clear-win = {$username} cleared the win condition.
 
 mulligan-take = {$username} takes a mulligan.
 mulligan-keep = {$username} keeps [their] hand.
+
+## Moving
+
+forfeit-agenda = {$username} forfeits {$title}.
 
 ## Payments 
 

@@ -112,7 +112,7 @@
         :let [content (io/resource (str (io/file "public" "i18n" "messages" (str lang ".ftl"))))]]
   (swap! dictionary assoc lang (fluent/build lang (slurp content))))
 
-(def target-language "fr")
+(def target-language "en")
 
 (defn translate
   "cljc"
@@ -130,16 +130,26 @@
   [ms]
   (str/join (translate :join-with-and) ms))
 
+(defn join-list
+  "cljc"
+  [ms]
+  (->> ms
+       (mapv #(if (:cid %) (get-title %) %))
+       (str/join (translate :join-list))))
+
 (defn format-fragments
   "cljc"
   [m]
-  (translate (:fragment/type m) (set/rename-keys m {:fragment/value :value})))
+  (let [m (cond-> m
+            (sequential? (:fragment/value m)) (update :fragment/value join-list)
+            true (set/rename-keys {:fragment/value :value}))]
+    (translate (:fragment/type m) m)))
 
 (defn build-ability-msg
   [ms]
   (when-let [ms (seq ms)]
     (->> ms
-         (map format-fragments)
+         (mapv format-fragments)
          (join-with-and))))
 
 (defn format-payment-msg
@@ -153,7 +163,7 @@
   [ms]
   (when-let [ms (seq ms)]
     (->> ms
-         (map format-payment-msg)
+         (mapv format-payment-msg)
          (join-with-and))))
 
 (defn build-base-msg
@@ -180,21 +190,14 @@
   (m/schema
    [:map
     [:fragment/type :keyword]
-    [:fragment/value :int]
+    [:fragment/value {:optional true} [:or :int [:sequential :some]]]
     [:title {:optional true} :string]]))
-
-(defn ->fragment
-  ([type value] (->fragment type value nil))
-  ([type value args]
-   (doto (merge {:fragment/type type
-                 :fragment/value value} args)
-     (schemas/assert Fragment))))
 
 (defn process-fragments
   [fragments]
-  (cond (vector? fragments) (not-empty fragments)
-        (map? fragments) [fragments]
-        (sequential? fragments) (not-empty (vec fragments))))
+  (let [fs (cond (sequential? fragments) (vec fragments)
+                 (map? fragments) [fragments])]
+    (not-empty (mapv #(schemas/assert % Fragment) fs))))
 
 (defn payment->msg
   [{:paid/keys [type value targets] :as payment}]
@@ -237,7 +240,7 @@
                         :title (get-title card)})
      (map? args) (merge args))))
 
-(defn simple-map->fragment [m]
+(defn simple-msg->fragment [m]
   (when m
     (if (keyword? m)
       {:fragment/type m}
@@ -252,7 +255,7 @@
   converts `:type` to `:fragment/type` and `:value` to `:fragment/value`."
   [& opts]
   `(game.macros/effect
-    (->use-card-msg ~'card (keep simple-map->fragment [~@opts]) (vals (:cost-paid ~'eid)))))
+    (->use-card-msg ~'card (keep simple-msg->fragment [~@opts]) (vals (:cost-paid ~'eid)))))
 
 (defonce store (atom #{}))
 

@@ -61,7 +61,7 @@
                            make-run prevent-access successful-run-replace-breach
                            total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [system-msg ->use-card-msg ->fragment simple-msg]]
+   [game.core.say :refer [system-msg simple-msg]]
    [game.core.servers :refer [central->name is-central? is-remote? remote->name
                               target-server unknown->kw zone->name
                               zones->sorted-names]]
@@ -1630,7 +1630,11 @@
    {:prompt "Choose an agenda to forfeit"
     :change-in-game-state {:req (req (:scored runner))}
     :choices (effect (:scored runner))
-    :msg (msg "forfeit " (get-title card) " and give the Corp 1 bad publicity")
+    :msg (simple-msg
+          {:type :forfeit
+           :title (get-title target)}
+          {:type :give-bad-publicity
+           :value 1})
     :async true
     :effect (effect (wait-for (forfeit state side (make-eid state eid) target {:msg false})
                            (gain-bad-publicity state :corp eid 1)))}})
@@ -1682,7 +1686,9 @@
 
 (defcard "\"Freedom Through Equality\""
   {:events [{:event :agenda-stolen
-             :msg (msg "add itself to [their] score area as an agenda worth 1 agenda point")
+             :msg (simple-msg
+                   {:type :add-self-to-score-area
+                    :value 1})
              :effect (effect (as-agenda state :runner card 1))}]})
 
 (defcard "Freelance Coding Contract"
@@ -1691,15 +1697,21 @@
               :card #(and (program? %)
                           (in-hand? %))}
     :change-in-game-state {:req (req (seq (:hand runner)))}
-    :msg (msg "trash " (enumerate-cards targets :sorted) " and gain "
-              (* 2 (count targets)) " [Credits]")
+    :msg (simple-msg
+          {:type :trash-cards
+           :count (count targets)
+           :value targets}
+          {:type :gain-credits
+           :value (* 2 (count targets))})
     :async true
     :effect (effect (wait-for (trash-cards state side targets {:unpreventable true :cause-card card})
                            (gain-credits state side eid (* 2 (count targets)))))}})
 
 (defcard "Game Day"
   {:on-play
-   {:msg (msg "draw " (quantify (- (hand-size state :runner) (count (:hand runner))) "card"))
+   {:msg (simple-msg
+          {:type :draw-cards
+           :value (- (hand-size state :runner) (count (:hand runner)))})
     :change-in-game-state {:req (req (pos? (- (hand-size state :runner) (count (:hand runner)))))}
     :async true
     :effect (effect (draw state side eid (- (hand-size state :runner) (count (:hand runner)))))}})
@@ -1722,14 +1734,22 @@
                           :all true
                           :card #(and (corp? %)
                                       (in-discard? %))}
-                :msg (msg "move "
-                          (let [seen (filter :seen targets)
-                                m (count  (remove :seen targets))]
-                            (str (enumerate-cards seen)
-                                 (when (pos? m)
-                                   (str (when-not (empty? seen) " and ")
-                                        (quantify m "unseen card")))
-                                 " into HQ, then trash 5 cards")))
+                :msg (simple-msg
+                      (let [seen (seq (filter :seen targets))
+                            unseen (count (remove :seen targets))]
+                        (cond
+                          (and seen (pos? unseen))
+                          {:type :move-seen-unseen-into-hq
+                           :value seen
+                           :unseen unseen}
+                          seen
+                          {:type :move-seen-into-hq
+                           :value seen}
+                          (pos? unseen)
+                          {:type :move-unseen-into-hq
+                           :value unseen}))
+                      {:type :trash-n-cards
+                       :value 5})
                 :effect (effect (doseq [c targets]
                                (move state side c :hand))
                              (trash-cards state :corp eid (take 5 (shuffle (:hand (:corp @state)))) {:cause-card card}))}})]})
@@ -1739,7 +1759,10 @@
 
 (defcard "Guinea Pig"
   {:on-play
-   {:msg "trash all cards in the grip and gain 10 [Credits]"
+   {:msg (simple-msg
+          {:type :trash-all-cards-in-grip}
+          {:type :gain-credits
+           :value 10})
     :async true
     :effect (effect (wait-for (trash-cards state side (:hand runner) {:unpreventable true
                                                                    :cause-card card})
@@ -1753,7 +1776,11 @@
 (defcard "Harmony AR Therapy"
   (letfn [(choose-end [to-shuffle]
             (let [to-shuffle (sort to-shuffle)]
-              {:msg (msg "shuffle " (quantify (count to-shuffle) "card") " back into the stack: " (enumerate-str to-shuffle))
+              {:msg1 (msg "shuffle " (quantify (count to-shuffle) "card") " back into the stack: " (enumerate-str to-shuffle))
+               :msg (simple-msg
+                     {:type :shuffle-cards-into-stack
+                      :count (count to-shuffle)
+                      :value to-shuffle})
                :effect (effect (doseq [c-title to-shuffle]
                               (let [c (some #(when (= (:title %) c-title) %) (:discard runner))]
                                 (move state side c :deck)))

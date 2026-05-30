@@ -3330,7 +3330,8 @@
     (let [bp (count-bad-pub state)]
       (click-prompt state :runner "Hostile Takeover")
       (is (= (inc bp) (count-bad-pub state)) "Corp gains 1 bp")
-      (is (not (get-scored state :runner 0)) "Hostile Takeover is forfeit"))))
+      (is (not (get-scored state :runner 0)) "Hostile Takeover is forfeit")
+      (print-log state))))
 
 (deftest frantic-coding
   ;; Frantic Coding - Install 1 program, other 9 cards are trashed
