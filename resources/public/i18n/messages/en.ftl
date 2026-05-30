@@ -67,7 +67,7 @@ trash-all-installed-corp = trash all installed { -corp(case: "nominative") } car
 # Apocalypse
 turn-all-installed-runner-facedown = turn all installed { -runner(case: "nominative") } cards facedown
 
-## Standalone messages
+## Traces
 
 increase-trace-strength = {$username} {$payment} to increase trace strength to {$value}.
 
@@ -92,7 +92,6 @@ runner-end-of-turn = {$username} is ending [their] turn {$turn} with {$credits} 
     *[other] {$cards} cards in { -grip }.
 }
 
-
 mandatory-start-of-turn-draw = {$username} makes [their] mandatory start of turn draw.
 
 no-further-actions = {$username} has no further actions.
@@ -109,6 +108,20 @@ extra-turns-remaining = {$username} will have {$turns ->
     [one] 1 extra turn remaining.
     *[other] {$turns} extra turns remaning.
 }
+
+## Winning
+
+win = {$username} wins the game.
+tie = The game has ended in a tie.
+concede = {$username} concedes.
+
+# win via decking the corp
+win-decked = {$username} is decked.
+
+# win via flatlining the runner
+win-flatline = {$username} is flatlined.
+
+clear-win = {$username} cleared the win condition.
 
 ## Payments 
 
