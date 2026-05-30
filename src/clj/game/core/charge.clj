@@ -3,7 +3,6 @@
    [game.core.board :refer [all-installed]]
    [game.core.card :refer :all]
    [game.core.eid :refer [effect-completed]]
-   [game.core.say :refer [system-msg]]
    [game.macros :refer [effect msg]]
    [game.core.props :refer [add-counter]]))
 
@@ -12,7 +11,7 @@
   ([state side]
    (let [cards (all-installed state side)]
      (some #(can-charge state side %) cards)))
-  ([state side card]
+  ([state _ card]
    (pos? (get-counters (get-card state card) :power))))
 
 (defn charge-card
