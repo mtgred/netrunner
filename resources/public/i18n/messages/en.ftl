@@ -109,19 +109,19 @@ extra-turns-remaining = {$username} will have {$turns ->
     *[other] {$turns} extra turns remaning.
 }
 
-## Winning
+## Game End
 
-win = {$username} wins the game.
 tie = The game has ended in a tie.
+win = {$username} wins the game.
 concede = {$username} concedes.
-
-# win via decking the corp
 win-decked = {$username} is decked.
-
-# win via flatlining the runner
 win-flatline = {$username} is flatlined.
-
 clear-win = {$username} cleared the win condition.
+
+## Mulligan
+
+mulligan-take = {$username} takes a mulligan.
+mulligan-keep = {$username} keeps [their] hand.
 
 ## Payments 
 
