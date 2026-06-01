@@ -2467,8 +2467,8 @@
               :yes-ability {:async true
                             :cost [(->c :credit 2)]
                             :msg (simple-msg
-                                  {:type :avoid-tags
-                                   :value 1})
+                                  {:effect/type :avoid-tags
+                                   :effect/count 1})
                             :effect (effect (wait-for (prevent-tag state :runner 1)
                                                    (continue-ability
                                                      state side
@@ -2481,8 +2481,8 @@
                  :ability {:async true
                            :cost [(->c :credit 2)]
                            :msg (simple-msg
-                                  {:type :avoid-tags
-                                   :value 1})
+                                  {:effect/type :avoid-tags
+                                   :effect/count 1})
                            :req (req (preventable? context))
                            :effect (effect (wait-for (prevent-tag state :runner 1)
                                                   (continue-ability state side (prevent-another-tag) card nil)))}}]

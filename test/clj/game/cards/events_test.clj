@@ -52,7 +52,6 @@
             (click-prompt state :runner "Yes")
             (select-bad-pub state nil))
           "Spent 1 + 1 from bad pub")
-      (print-log state)
       (is (= 2 (:credit (get-runner))) "Runner has 2 credits left")
       (click-prompt state :runner "Yes")
       (is (zero? (count-tags state)) "Runner did not take any tags")
@@ -278,8 +277,7 @@
     (click-prompt state :corp "0")
     (click-prompt state :runner "1")
     ;; 4 credits after trace, gain 6
-    (is (= 10 (:credit (get-runner))) "Runner gained 6 credits")
-    (print-log state)))
+    (is (= 10 (:credit (get-runner))) "Runner gained 6 credits")))
 
 (deftest apocalypse-ensure-mu-is-correct-and-no-duplicate-cards-in-heap
     ;; Ensure MU is correct and no duplicate cards in heap
@@ -339,8 +337,7 @@
         (play-from-hand state :runner "Apocalypse")
         (is (zero? (count (core/all-installed state :corp))) "All installed Corp cards trashed")
         (is (= 3 (count (:discard (get-corp)))) "3 Corp cards in Archives")
-        (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap")
-        (print-log state))))
+        (is (= 1 (count (:discard (get-runner)))) "Only Apocalypse is in the heap"))))
 
 (deftest apocalypse-with-hostile-infrastructure-should-take-damage-equal-to-2x-cards-on-the-table
     ;; with Hostile Infrastructure - should take damage equal to 2x cards on the table
@@ -2913,7 +2910,6 @@
       (is (= 2 (count (:rfg (get-runner)))) "2 Encores removed from game")
       (take-credits state :runner)
       (take-credits state :runner)
-      (print-log state)
       ;; Two extra turns
       (take-credits state :runner)
       (is (= 13 (:credit (get-runner))))))
@@ -2985,8 +2981,8 @@
                :runner {:hand ["Executive Wiretaps"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Executive Wiretaps")
-    (is (last-log-contains? state (str "Runner uses Executive Wiretaps to reveal "
-                                       "Cayambe Grid, Hedge Fund, Hostile Takeover, Ice Wall, and PAD Campaign from HQ.")))))
+    (is (last-log-contains? state (str "Runner uses Executive Wiretaps to reveal 5 cards"
+                                       " \\(Cayambe Grid, Hedge Fund, Hostile Takeover, Ice Wall, PAD Campaign\\) from HQ.")))))
 
 (deftest exploit
   ;; Exploit
@@ -3330,8 +3326,7 @@
     (let [bp (count-bad-pub state)]
       (click-prompt state :runner "Hostile Takeover")
       (is (= (inc bp) (count-bad-pub state)) "Corp gains 1 bp")
-      (is (not (get-scored state :runner 0)) "Hostile Takeover is forfeit")
-      (print-log state))))
+      (is (not (get-scored state :runner 0)) "Hostile Takeover is forfeit"))))
 
 (deftest frantic-coding
   ;; Frantic Coding - Install 1 program, other 9 cards are trashed

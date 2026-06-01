@@ -1154,7 +1154,8 @@
        (str/join " ")))
 
 (defn print-log [state]
-  (prn (log-str state)))
+  (prn (log-str state))
+  (newline))
 
 (defn- make-zone
   [zone replacement]
