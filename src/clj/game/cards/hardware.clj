@@ -173,7 +173,8 @@
                                           (some #(event? (:card %)) targets))]
                                   (first-trash? state event-targets?)))
                  :change-in-game-state {:silent true :req (req (seq (:deck runner)))}
-                 :msg (simple-msg {:type :draw-cards :value 1})
+                 :msg (simple-msg {:effect/type :draw-cards
+                                   :effect/count 1})
                  :effect (effect (draw state :runner eid 1))}]
     {:static-abilities [(mu+ 1)]
      :events [(assoc ability :event :corp-trash)

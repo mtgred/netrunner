@@ -27,7 +27,7 @@
 
 (defn- complete-payment [state side eid result]
   (schemas/assert result schemas/Payment)
-  (complete-with-result state side eid result))
+  (complete-with-result state side eid (assoc result :payment/side side)))
 
 (defn- can-forfeit? [card] (not (get-in card [:flags :cannot-forfeit])))
 
@@ -404,18 +404,20 @@
                                  :card select-fn}
                        :async true
                        :effect (effect (wait-for
-                                      (reveal state side targets)
-                                      (wait-for
-                                        (trash-cards state side (map #(assoc % :seen true) targets)
-                                                     {:unpreventable true :cause :ability-cost :suppress-checkpoint true})
-                                        (complete-payment
-                                          state side eid
-                                          {:paid/msg (str "reveals and trashes " (quantify (count async-result) "card")
-                                                          " (" (enumerate-cards targets :sorted) ")"
-                                                          " from " hand)
-                                           :paid/type :trash-from-hand
-                                           :paid/value (count async-result)
-                                           :paid/targets async-result}))))}
+                                         (reveal state side targets)
+                                         (wait-for
+                                           [trashed-cards (trash-cards state side (mapv #(assoc % :seen true) targets)
+                                                                       {:unpreventable true
+                                                                        :cause :ability-cost
+                                                                        :suppress-checkpoint true})]
+                                           (complete-payment
+                                            state side eid
+                                            {:paid/msg (str "reveals and trashes " (quantify (count trashed-cards) "card")
+                                                            " (" (enumerate-cards targets :sorted) ")"
+                                                            " from " hand)
+                                             :paid/type :trash-from-hand
+                                             :paid/value (count trashed-cards)
+                                             :paid/targets trashed-cards}))))}
                 forfeit-an-agenda {:prompt "Choose an Agenda to forfeit"
                                    :async true
                                    :choices {:max 1

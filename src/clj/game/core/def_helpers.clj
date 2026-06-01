@@ -20,7 +20,7 @@
     [game.core.props :refer [add-counter add-prop]]
     [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
     [game.core.runs :refer [can-run-server? make-run jack-out]]
-    [game.core.say :refer [play-sfx system-msg system-say]]
+    [game.core.say :refer [play-sfx system-msg system-say payless-msg simple-msg]]
     [game.core.servers :refer [zone->name name-zone]]
     [game.core.shuffling :refer [shuffle! fail-to-find!]]
     [game.core.servers :refer [zone->name name-zone]]
@@ -228,7 +228,9 @@
    (merge {:async true
            :change-in-game-state {:req (req (can-run-server? state server))}
            :label (str "run " (zone->name server))
-           :msg (str "make a run on " (zone->name server))
+           :msg (payless-msg
+                 {:effect/type :make-a-run-on
+                  :effect/server server})
            :makes-run true
            :effect (effect (when (seq events)
                           (register-events state side card events))
