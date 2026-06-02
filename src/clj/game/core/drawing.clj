@@ -119,6 +119,7 @@
      (continue-ability
        state side
        {:optional {:prompt (str "Draw " (quantify n "card") "?")
+                   :waiting-prompt true
                    :yes-ability {:async true
                                  :msg (msg "draw " (quantify n " card"))
                                  :effect (effect (draw state side eid n))}

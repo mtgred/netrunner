@@ -4035,6 +4035,7 @@
                  {:prompt "Shuffle up 1 card from HQ or Archives into R&D?"
                   :label "You may shuffle 1 card from HQ or Archives into R&D"
                   :show-discard true
+                  :waiting-prompt true
                   :choices {:card #(and (corp? %)
                                         (or (in-hand? %)
                                             (in-discard? %)))}
