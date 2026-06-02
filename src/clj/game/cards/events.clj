@@ -307,17 +307,17 @@
                            :effect (effect (runner-install state side eid target {:ignore-all-cost :true :msg-keys {:display-origin true :source-card card}}))}
                           card nil)]
                        (continue-ability state side
-                         (run-any-server-ability
-                           {:events [{:event :run-ends
-                                      :unregister-once-resolved true
-                                      :duration :end-of-run
-                                      :interactive (effect true)
-                                      :automatic :last
-                                      :change-in-game-state {:silent true
-                                                             :req (req (get-card state installed-card))}
-                                      :msg (msg "add " (:title installed-card) " to the top of the stack")
-                                      :effect (effect (move state side installed-card :deck {:front true}))}]})
-                         card nil)))}})
+                                         (run-any-server-ability
+                                           {:events [{:event :run-ends
+                                                      :unregister-once-resolved true
+                                                      :duration :end-of-run
+                                                      :interactive (effect true)
+                                                      :automatic :last
+                                                      :change-in-game-state {:silent true
+                                                                             :req (req (get-card state installed-card))}
+                                                      :msg (msg "add " (:title installed-card) " to the top of the stack")
+                                                      :effect (effect (move state side (get-card state installed-card) :deck {:front true}))}]})
+                                         card nil)))}})
 
 (defcard "Black Hat"
   {:on-play
