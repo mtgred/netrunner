@@ -4,7 +4,7 @@
    [clojure.repl :as repl]
    [game.core :as core]
    [game.core.card :refer :all]
-   [game.core.commands :refer [parse-command]]
+   [game.core.commands]
    [game.core.mark :refer :all]
    [game.core.say :as sut]
    [game.test-framework :refer :all]
@@ -209,22 +209,22 @@
           (is (= 1000 (get-link state)) "runner has 1000 link")))))
 
   (testing "/memory"
-      (let [user {:username "Runner"}]
-        (do-game
-          (new-game)
-          (core/command-parser state :runner {:user user :text "/memory 3"})
-          (is (= 3 (:used (:memory (get-runner)))) "runner has 3 memory")
-          (core/command-parser state :runner {:user user :text "/memory -5"})
-          (is (= -5 (:used (:memory (get-runner)))) "runner has -5 memory")
-          (core/command-parser state :runner {:user user :text "/memory 99999999999999999999999999999999999999999999"})
-          (is (= 1000 (:used (:memory (get-runner)))) "runner has 1000 memory"))))
+    (let [user {:username "Runner"}]
+      (do-game
+        (new-game)
+        (core/command-parser state :runner {:user user :text "/memory 3"})
+        (is (= 3 (:used (:memory (get-runner)))) "runner has 3 memory")
+        (core/command-parser state :runner {:user user :text "/memory -5"})
+        (is (= -5 (:used (:memory (get-runner)))) "runner has -5 memory")
+        (core/command-parser state :runner {:user user :text "/memory 99999999999999999999999999999999999999999999"})
+        (is (= 1000 (:used (:memory (get-runner)))) "runner has 1000 memory"))))
 
   (testing "/mark"
-      (let [user {:username "Runner"}]
-        (do-game
-          (new-game)
-          (core/command-parser state :runner {:user user :text "/mark"})
-          (is (some? (:mark @state)) "Mark identified"))))
+    (let [user {:username "Runner"}]
+      (do-game
+        (new-game)
+        (core/command-parser state :runner {:user user :text "/mark"})
+        (is (some? (:mark @state)) "Mark identified"))))
 
   (testing "/roll"
     (let [user {:username "Corp"}]
@@ -352,7 +352,7 @@
     (let [r {:username "Runner"}]
       (do-game
         (new-game {:corp {:hand ["Hedge Fund"]}})
-        (dotimes [n 3]
+        (dotimes [_ 3]
           (click-credit state :corp))
         (end-turn state :corp)
         (start-turn state :runner)
@@ -373,7 +373,7 @@
           c {:username "Corp"}]
       (do-game
         (new-game {:corp {:hand ["Hedge Fund"]}})
-        (dotimes [n 3]
+        (dotimes [_ 3]
           (click-credit state :corp))
         (end-turn state :corp)
         (start-turn state :runner)
@@ -414,28 +414,28 @@
            {:msg/type :use-card
             :username "CoolRunner"
             :title "\"Knickknack\" O'Brian"
-            :msg/fragments [{:fragment/type :trash-card
-                             :title "Daily Casts"}
-                            {:fragment/type :gain-credits
-                             :fragment/value 3}
-                            {:fragment/type :draw-cards
-                             :fragment/value 1}]}))))
+            :msg/effect-msgs [{:effect/type :trash-card
+                               :effect/title "Daily Casts"}
+                              {:effect/type :gain-credits
+                               :effect/value 3}
+                              {:effect/type :draw-cards
+                               :effect/value 1}]}))))
   (is (= "BadRunner spends 1 [Click] and pays 0 [Credit] to use \"Knickknack\" O'Brian to trash Daily Casts and gain 3 [Credit] and draw 1 card."
          (sut/build-msg
           (sut/->use-card-msg
            {:title "\"Knickknack\" O'Brian"}
-           [{:fragment/type :trash-card
-             :title "Daily Casts"}
-            {:fragment/type :gain-credits
-             :fragment/value 3}
-            {:fragment/type :draw-cards
-             :fragment/value 1}]
+           [{:effect/type :trash-card
+             :effect/title "Daily Casts"}
+            {:effect/type :gain-credits
+             :effect/value 3}
+            {:effect/type :draw-cards
+             :effect/value 1}]
            [{:paid/type :click
              :paid/value 1}
             {:paid/type :credit
              :paid/value 0}]
            {:username "BadRunner" :side :runner}))))
-  (is (= "SillyCorp pays 6 [Credit] from credit pool and pays 3 [Credit] from Primary Transmission Dish to increase trace strength to 12."
+  (is (= "SillyCorp pays 6 [Credit] from [their] credit pool and pays 3 [Credit] from Primary Transmission Dish to increase trace strength to 12."
          (sut/build-msg
           (sut/->base-msg
            {:msg/type :increase-trace-strength
@@ -450,19 +450,17 @@
                              {:pick-counters/type :card
                               :title "Primary Transmission Dish"
                               :value 3}]}]}))))
-  (is (= "AngryRunner pays 1 [Credit] from credit pool and pays 1 [Credit] from bad publicity to use New Angeles City Hall to avoid 1 tag."
+  (is (= "AngryRunner pays 1 [Credit] from [their] credit pool and pays 1 [Credit] from bad publicity to use New Angeles City Hall to avoid 1 tag."
          (sut/build-msg
           (sut/->base-msg
            {:msg/type :pay-use-card
             :username "AngryRunner"
             :title "New Angeles City Hall"
-            :msg/fragments [{:fragment/type :avoid-tags
-                             :fragment/value 1}]
+            :msg/effect-msgs [{:effect/type :avoid-tags
+                               :effect/count 1}]
             :msg/payments [{:paid/type :credit
                             :paid/value 2
                             :paid/targets [{:pick-counters/type :credit-pool
                                             :value 1}
                                            {:pick-counters/type :bad-publicity
-                                            :value 1}]}]}))))
-
-  )
+                                            :value 1}]}]})))))
