@@ -401,7 +401,7 @@
           (is (last-log-contains? state "[!]Runner uses a command: /unique") "Correct message")
           (click-card state :runner wnp1)
           (is (not (unique? (refresh wnp1))) "WNP is not unique anymore")
-          (is (last-log-contains? state "Runner uses /unique command to make Wireless Net Pavilion not unique\\.") "Correct message")
+          (is (last-log-contains? state "Runner uses /unique command to make Wireless Net Pavilion not unique.") "Correct message")
           (play-from-hand state :runner "Wireless Net Pavilion")
           (is (zero? (count (:hand (get-runner)))) "Both cards have been installed")
           (is (= 2 (count (get-resource state))))

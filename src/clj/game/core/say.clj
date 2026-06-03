@@ -71,14 +71,14 @@
 
 (defn say
   "Prints a message to the log as coming from the given user."
-  ([state side {:keys [user text log-side]
-                :or {log-side :public}}]
+  ([state side {:keys [user text]} {:keys [log-side]
+                                    :or {log-side :public}}]
    (let [author (or user (get-in @state [side :user]))
          message (make-message {:user author
                                 :text (if (string? text)
                                         (insert-pronouns state side text)
                                         (update text :raw-text #(insert-pronouns state side %)))})
-         log-sides (flatten [log-side])]
+         log-sides (if (vector? log-side) log-side [log-side])]
      (log state (zipmap log-sides (repeat message))))))
 
 (defn- multi-say
@@ -89,12 +89,11 @@
 (defn system-say
   "Prints a system message to log (`say` from user __system__)"
   ([state side text] (system-say state side text nil))
-  ([state side text {:keys [hr log-side]}]
+  ([state side text {:keys [hr log-side] :as args}]
    (say state side (make-system-message (merge {:username nil}
-                                               (when log-side
-                                                 {:log-side log-side})
-                                               (if (string? text) {:raw-text text} text))))
-   (when hr (say state side (make-system-message {:raw-text "[hr]"})))))
+                                               (if (string? text) {:raw-text text} text)))
+        args)
+   (when hr (say state side (make-system-message {:raw-text "[hr]"}) args))))
 
 (defn unsafe-say
   "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
@@ -450,8 +449,7 @@
                     (if (string? text)
                       {:raw-text (str username " " text ".")}
                       text))]
-     (when-not (:log-side args)
-       (swap! store conj msg))
+     (swap! store conj msg)
      (system-say state side msg args))))
 
 (defn multi-msg

@@ -2982,7 +2982,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Executive Wiretaps")
     (is (last-log-contains? state (str "Runner uses Executive Wiretaps to reveal 5 cards"
-                                       " \\(Cayambe Grid, Hedge Fund, Hostile Takeover, Ice Wall, PAD Campaign\\) from HQ.")))))
+                                       " (Cayambe Grid, Hedge Fund, Hostile Takeover, Ice Wall, PAD Campaign) from HQ.")))))
 
 (deftest exploit
   ;; Exploit

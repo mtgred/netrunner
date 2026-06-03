@@ -717,8 +717,7 @@
                   (:credit (get-corp)) 10]
           (card-ability state :corp (get-content state :hq 0) 0)
           (click-prompt state :corp "Ultraviolet Clearance"))
-        "Gained 10c in one click (ignoring the req and extra 2 clicks)")
-    (print-log state)))
+        "Gained 10c in one click (ignoring the req and extra 2 clicks)")))
 
 (deftest calibration-testing
   ;; Calibration Testing - advanceable / non-advanceable

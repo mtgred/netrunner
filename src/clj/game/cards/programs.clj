@@ -3172,6 +3172,7 @@
                                      (map unknown->kw)
                                      (filter is-remote?)
                                      (map remote->name))))
+                :label "make a run on a remote server"
                 :msg (msg "make a run on " target)
                 :makes-run true
                 :async true
@@ -3196,6 +3197,7 @@
                                      (map unknown->kw)
                                      (filter is-central?)
                                      (map central->name))))
+                :label "make a run on a central server"
                 :msg (msg "make a run on " target)
                 :makes-run true
                 :async true
