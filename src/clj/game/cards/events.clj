@@ -9,66 +9,79 @@
    [game.core.board :refer [all-active-installed all-installed server->zone]]
    [game.core.card :refer [agenda? asset? card-index condition-counter? corp?
                            event? facedown? faceup? get-card get-counters
-                           get-nested-host get-title get-zone hardware? has-subtype? ice? in-discard? in-hand?
-                           installed? is-type? operation? program? resource? rezzed? runner? upgrade?]]
+                           get-nested-host get-title get-zone hardware?
+                           has-subtype? ice? in-discard? in-hand? installed?
+                           is-type? operation? program? resource? rezzed?
+                           runner? upgrade?]]
    [game.core.charge :refer [can-charge charge-ability charge-card]]
    [game.core.checkpoint :refer [fake-checkpoint]]
    [game.core.choose-one :refer [choose-one-helper cost-option]]
-   [game.core.cost-fns :refer [install-cost play-cost rez-cost]]
+   [game.core.cost-fns :refer [play-cost rez-cost]]
    [game.core.damage :refer [damage]]
-   [game.core.def-helpers :refer [all-cards-in-hand* in-hand*?
-                                  breach-access-bonus defcard draw-abi drain-credits gain-credits-ability  offer-jack-out
-                                  reorder-choice run-any-server-ability run-central-server-ability run-remote-server-ability run-server-ability run-server-from-choices-ability scry tutor-abi with-revealed-hand
-                                  make-icon]]
+   [game.core.def-helpers :refer [all-cards-in-hand* breach-access-bonus
+                                  defcard drain-credits draw-abi
+                                  gain-credits-ability in-hand*? make-icon
+                                  offer-jack-out reorder-choice
+                                  run-any-server-ability
+                                  run-central-server-ability
+                                  run-remote-server-ability run-server-ability
+                                  run-server-from-choices-ability scry
+                                  tutor-abi with-revealed-hand]]
    [game.core.drawing :refer [draw]]
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid
                           make-result]]
-   [game.core.engine :refer [do-nothing not-used-once? pay register-events register-pending-event
-                             resolve-ability trigger-event trigger-event-simult
-                             unregister-events unregister-floating-events]]
-   [game.core.events :refer [first-event? first-run-event? run-events
-                             turn-events run-event-count]]
+   [game.core.engine :refer [not-used-once? pay register-events
+                             register-pending-event resolve-ability
+                             trigger-event trigger-event-simult
+                             unregister-events]]
+   [game.core.events :refer [first-event? first-run-event? run-event-count
+                             run-events turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid find-latest]]
    [game.core.flags :refer [any-flag-fn? can-rez? can-trash?
-                            clear-all-flags-for-card! clear-run-flag! clear-turn-flag!
-                            in-corp-scored? register-run-flag! register-turn-flag! zone-locked?]]
+                            clear-all-flags-for-card! clear-run-flag!
+                            clear-turn-flag! in-corp-scored?
+                            register-run-flag! register-turn-flag!
+                            zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size]]
    [game.core.hosting :refer [host]]
-   [game.core.ice :refer [all-subs-broken? get-strength pump pump-all-icebreakers
+   [game.core.l10n :refer [simple-msg]]
+   [game.core.ice :refer [get-strength pump pump-all-icebreakers
                           update-all-ice update-breaker-strength]]
-   [game.core.identities :refer [disable-card disable-identity enable-card
-                                 enable-identity]]
+   [game.core.identities :refer [disable-identity]]
    [game.core.initializing :refer [card-init make-card]]
    [game.core.installing :refer [install-as-condition-counter install-locked?
-                                 runner-can-install? runner-can-pay-and-install? runner-install]]
+                                 runner-can-install?
+                                 runner-can-pay-and-install? runner-install]]
    [game.core.link :refer [get-link]]
    [game.core.mark :refer [identify-mark-ability mark-changed-event]]
    [game.core.memory :refer [available-mu]]
    [game.core.moving :refer [as-agenda flip-facedown forfeit mill move
                              swap-ice trash trash-cards]]
-   [game.core.payment :refer [can-pay? ->c cost-value x-cost-value]]
+   [game.core.payment :refer [->c can-pay? cost-value x-cost-value]]
    [game.core.play-instants :refer [play-instant]]
-   [game.core.prevention :refer [damage-name prevent-damage preventable? prevent-end-run prevent-up-to-n-tags prevent-up-to-n-damage]]
+   [game.core.prevention :refer [damage-name prevent-damage prevent-end-run
+                                 prevent-up-to-n-damage prevent-up-to-n-tags
+                                 preventable?]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.revealing :refer [reveal reveal-loud]]
    [game.core.rezzing :refer [derez get-rez-cost rez]]
-   [game.core.runs :refer [bypass-ice can-run-server? gain-next-run-credits get-runnable-zones
-                           make-run prevent-access successful-run-replace-breach
-                           total-cards-accessed]]
+   [game.core.runs :refer [bypass-ice gain-next-run-credits get-runnable-zones
+                           make-run prevent-access
+                           successful-run-replace-breach total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [system-msg simple-msg payless-msg]]
-   [game.core.servers :refer [central->name is-central? is-remote? remote->name
+   [game.core.say :refer [system-msg]]
+   [game.core.servers :refer [central->name is-remote? remote->name
                               target-server unknown->kw zone->name
                               zones->sorted-names]]
    [game.core.set-aside :refer [get-set-aside set-aside]]
-   [game.core.shuffling :refer [shuffle! shuffle-into-deck shuffle-my-deck! fail-to-find!]]
+   [game.core.shuffling :refer [fail-to-find! shuffle! shuffle-into-deck]]
    [game.core.tags :refer [gain-tags gain-tags-ability lose-tags]]
-   [game.core.threat :refer [threat threat-level]]
+   [game.core.threat :refer [threat-level]]
    [game.core.to-string :refer [card-str]]
    [game.core.toasts :refer [toast]]
    [game.core.update :refer [update!]]
@@ -1141,24 +1154,24 @@
   (let [all [{:effect (effect (gain-credits state side eid 3))
               :async true
               :label "Gain 3 [Credits]"
-              :msg (payless-msg
+              :msg (simple-msg
                     {:effect/type :gain-credits
                      :effect/value 3})}
              {:async true
               :effect (effect (draw state side eid 2))
               :label "Draw 2 cards"
-              :msg (payless-msg
+              :msg (simple-msg
                     {:effect/type :draw-cards
                      :effect/value 2})}
              {:async true
               :effect (effect (lose-tags state side eid 1))
               :label "Remove 1 tag"
-              :msg (payless-msg
+              :msg (simple-msg
                     {:effect/type :remove-tags
                      :effect/value 1})}
              {:prompt "Choose 1 piece of ice to expose"
               :label "Expose 1 ice and make a run"
-              :msg (payless-msg
+              :msg (simple-msg
                     {:effect/type :expose-card
                      :effect/title (get-title target)}
                     :make-a-run)
@@ -1485,7 +1498,7 @@
 
 (defcard "Executive Wiretaps"
   {:on-play
-   {:msg (payless-msg
+   {:msg (simple-msg
           {:effect/type :reveal-cards-in-hq
            :effect/titles (sort (mapv get-title (:hand corp)))
            :effect/count (count (mapv get-title (:hand corp)))})
@@ -1525,7 +1538,7 @@
                                  state side
                                  {:choices {:card #(and (pos? (get-counters % :advancement))
                                                         (= (first (:server run)) (second (get-zone %))))}
-                                  :msg (payless-msg
+                                  :msg (simple-msg
                                         {:effect/type :remove-advancement-counters
                                          :effect/title (get-title target)
                                          :effect/count c})
@@ -1539,7 +1552,7 @@
    {:prompt "Choose a card to add to the grip"
     :change-in-game-state {:req (req (seq (:deck runner)))}
     :choices (effect (take 4 (:deck runner)))
-    :msg (payless-msg
+    :msg (simple-msg
           {:effect/type :look-at-top-cards-add-to-grip
            :effect/top-count 4
            :effect/add-count 1})
@@ -1553,7 +1566,7 @@
                   {:label "Trash card"
                    :trash? true
                    :cost [(->c :trash-from-hand 1)]
-                   :msg (payless-msg
+                   :msg (simple-msg
                          {:effect/type :trash-accessed-card
                           :effect/title (get-title target)})
                    :async true
@@ -1563,7 +1576,7 @@
              :req (req (= :hq (target-server context))
                             this-card-run)
              :async true
-             :msg (payless-msg
+             :msg (simple-msg
                    {:effect/type :take-tags
                     :effect/value 1}
                    {:effect/type :access-additional-in-hq
@@ -1579,7 +1592,7 @@
   {:on-play
    {:prompt "Choose one"
     :choices ["Agenda" "Asset" "Upgrade"]
-    :msg (payless-msg
+    :msg (simple-msg
           {:effect/type :guess
            :effect/choice target})
     :async true
@@ -1597,7 +1610,7 @@
                                        state :runner
                                        (when (and exposed
                                                   (= chosen-type (:type target)))
-                                         {:msg (payless-msg
+                                         {:msg (simple-msg
                                                 {:effect/type :gain-credits
                                                  :effect/value 5})
                                           :async true
@@ -1614,7 +1627,7 @@
                :mandatory true
                :ability
                {:async true
-                :msg (payless-msg
+                :msg (simple-msg
                       {:effect/type :force-corp-trash-top-of-rd
                        :effect/count 1})
                 :effect (effect (wait-for
@@ -1627,7 +1640,7 @@
                                     :choices {:card #(and (in-hand? %)
                                                           (same-card? :title card %))
                                               :max n}
-                                    :msg (payless-msg
+                                    :msg (simple-msg
                                           {:effect/type :reveal-copies-of-self
                                            :effect/count (count targets)}
                                           {:effect/type :force-corp-trash-additional-top-of-rd
@@ -1643,7 +1656,7 @@
    :events [{:event :encounter-ice
              :automatic :bypass
              :req (req (< (get-in card [:special :bypass-count] 0) 2))
-             :msg (payless-msg
+             :msg (simple-msg
                    {:effect/type :bypass-ice
                     :effect/title (get-title (:ice context))})
              :effect (effect (bypass-ice state)
@@ -1663,7 +1676,7 @@
 
 (defcard "Fisk Investment Seminar"
   {:on-play
-   {:msg (payless-msg
+   {:msg (simple-msg
           {:effect/type :each-player-draws-cards
            :effect/count 3})
     :change-in-game-state {:req (req (or (seq (:deck runner))
@@ -1688,7 +1701,7 @@
                                   (str "Rez " (card-str state ice)))
                                 (str "Trash " (card-str state ice))]
                       :async true
-                      :msg (payless-msg
+                      :msg (simple-msg
                             (if (str/starts-with? target "Rez")
                               {:effect/type :force-corp-rez
                                :effect/title (get-title ice)}
@@ -1776,7 +1789,7 @@
               :card #(and (program? %)
                           (in-hand? %))}
     :change-in-game-state {:req (req (seq (:hand runner)))}
-    :msg (payless-msg
+    :msg (simple-msg
           {:effect/type :trash-cards
            :effect/count (count targets)
            :effect/titles targets}
@@ -1788,7 +1801,7 @@
 
 (defcard "Game Day"
   {:on-play
-   {:msg (payless-msg
+   {:msg (simple-msg
           {:effect/type :draw-cards
            :effect/value (- (hand-size state :runner) (count (:hand runner)))})
     :change-in-game-state {:req (req (pos? (- (hand-size state :runner) (count (:hand runner)))))}
@@ -1813,7 +1826,7 @@
                           :all true
                           :card #(and (corp? %)
                                       (in-discard? %))}
-                :msg (payless-msg
+                :msg (simple-msg
                       (let [seen (seq (filter :seen targets))
                             unseen (count (remove :seen targets))]
                         (cond
@@ -1839,7 +1852,7 @@
 
 (defcard "Guinea Pig"
   {:on-play
-   {:msg (payless-msg
+   {:msg (simple-msg
           {:effect/type :trash-all-cards-in-grip}
           {:effect/type :gain-credits
            :effect/value 10})
@@ -1856,7 +1869,7 @@
 (defcard "Harmony AR Therapy"
   (letfn [(choose-end [to-shuffle]
             (let [to-shuffle (sort to-shuffle)]
-              {:msg (payless-msg
+              {:msg (simple-msg
                      {:effect/type :shuffle-cards-into-stack
                       :effect/count (count to-shuffle)
                       :effect/titles (mapv get-title to-shuffle)})
@@ -1927,7 +1940,7 @@
    {:prompt "Choose a Connection"
     :change-in-game-state {:req (req (seq (:deck runner)))}
     :choices (effect (cancellable (filter #(has-subtype? % "Connection") (:deck runner)) :sorted))
-    :msg (payless-msg
+    :msg (simple-msg
           {:effect/type :add-card-from-stack-to-grip
            :effect/title (get-title target)}
           :shuffle-stack)
@@ -1953,7 +1966,7 @@
    :events [{:event :successful-run
              :automatic :gain-credits
              :async true
-             :msg (payless-msg
+             :msg (simple-msg
                    {:effect/type :gain-credits
                     :effect/count 9}
                    {:effect/type :take-tags
@@ -1971,7 +1984,7 @@
               :interactive (effect true)
               :async true
               :req (req (#{:meat :net} (:cause context)))
-              :msg (payless-msg
+              :msg (simple-msg
                     {:effect/type :draw-cards
                      :effect/count 3})
               :effect (effect (draw state :runner eid 3))}})
@@ -2026,7 +2039,7 @@
                                   :choices {:card #(and (ice? %)
                                                         (rezzed? %)
                                                         (same-card? :title % ice))}
-                                  :msg (payless-msg
+                                  :msg (simple-msg
                                         {:effect/type :trash-card
                                          :effect/title (card-str state target)})
                                   :effect (effect (trash state side eid target {:cause-card card}))})
@@ -2043,7 +2056,7 @@
              :prompt "Choose one"
              :waiting-prompt true
              :choices ["Draw 1 card" "Gain 1 [Credits]"]
-             :msg (payless-msg
+             :msg (simple-msg
                    (if (= target "Draw 1 card")
                      {:effect/type :draw-cards
                       :effect/value 1}

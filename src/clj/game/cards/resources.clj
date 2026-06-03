@@ -43,6 +43,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size runner-hand-size+]]
    [game.core.hosting :refer [host]]
+   [game.core.l10n :refer [msg-with-cost]]
    [game.core.ice :refer [break-sub break-subroutine! get-strength ice-strength pump pump-ice
                           unbroken-subroutines-choice update-all-ice
                           update-all-icebreakers update-breaker-strength]]
@@ -70,7 +71,7 @@
                            make-run set-next-phase
                            successful-run-replace-breach total-cards-accessed]]
    [game.core.sabotage :refer [sabotage-ability]]
-   [game.core.say :refer [play-sfx system-msg simple-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [central->name is-central? is-remote?
                               protecting-same-server? remote->name target-server unknown->kw
                               zone->name zones->sorted-names]]
@@ -2466,7 +2467,7 @@
               :prompt (msg "Pay 2 [Credits] to avoid another tag? (" (get-in @state [:prevent :tag :remaining]) " remaining)")
               :yes-ability {:async true
                             :cost [(->c :credit 2)]
-                            :msg (simple-msg
+                            :msg (msg-with-cost
                                   {:effect/type :avoid-tags
                                    :effect/count 1})
                             :effect (effect (wait-for (prevent-tag state :runner 1)
@@ -2480,7 +2481,7 @@
                  :prompt "Pay 2 [Credits] to avoid a tag?"
                  :ability {:async true
                            :cost [(->c :credit 2)]
-                           :msg (simple-msg
+                           :msg (msg-with-cost
                                   {:effect/type :avoid-tags
                                    :effect/count 1})
                            :req (req (preventable? context))
