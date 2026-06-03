@@ -978,7 +978,7 @@
                                                                 (make-run state side eid serv card))}}
                          :no-ability {:async true
                                       :msg (simple-msg
-                                            {:effec/type :run-on-with-no-rezzed-ice
+                                            {:effect/type :run-on-with-no-rezzed-ice
                                              :effect/server serv})
                                       :effect (effect (register-run-flag!
                                                         state side card

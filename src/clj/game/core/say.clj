@@ -225,7 +225,7 @@
   (schemas/assert payment schemas/Payment)
   (cond
     (= :credit type)
-    (let [picks (seq (filter #(contains? % :pick-counters/type) targets))]
+    (if-let [picks (seq (filter #(contains? % :pick-counters/type) targets))]
        (vec (for [pick picks]
               (case (:pick-counters/type pick)
                 :card {:payment/type "payment-hosted-credit"
@@ -234,7 +234,9 @@
                 :bad-publicity {:payment/type "payment-bad-publicity"
                                 :payment/value (:value pick)}
                 :credit-pool {:payment/type "payment-credit-pool"
-                              :payment/value (:value pick)}))))
+                              :payment/value (:value pick)})))
+      [{:payment/type "payment-credit"
+        :payment/value value}])
     (= :trash-from-hand type)
     [{:payment/type (if (= :corp side)
                       "payment-trash-from-hq"
