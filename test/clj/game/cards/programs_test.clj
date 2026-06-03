@@ -5925,14 +5925,14 @@
         (run-on state "HQ")
         (run-continue state)
         (auto-pump-and-break state (refresh maven))
-        (is (second-last-log-contains? state "Runner pays 4 [Credits] to use Maven to break all 2 subroutines on Border Control.") "Correct log with autopump ability")
+        (is (second-last-log-contains? state "Runner pays 4 [Credits] to use Maven to break all 2 subroutines on Border Control") "Correct log with autopump ability")
         (core/continue state :corp nil)
         (run-jack-out state)
         (run-on state "HQ")
         (run-continue state)
         (card-ability state :runner (refresh maven) 0)
         (click-prompt state :runner "End the run")
-        (is (last-log-contains? state "Runner pays 2 [Credits] to use Maven to break 1 subroutine on Border Control.") "Correct log with single sub break"))))
+        (is (last-log-contains? state "Runner pays 2 [Credits] to use Maven to break 1 subroutine on Border Control") "Correct log with single sub break"))))
 
 (deftest mayfly
   ;; Mayfly

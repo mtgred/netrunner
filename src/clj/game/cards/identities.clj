@@ -1,6 +1,5 @@
 (ns game.cards.identities
   (:require
-   [clojure.pprint :as pprint]
    [game.core.access :refer [access-bonus access-cost-bonus access-non-agenda]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed card->server

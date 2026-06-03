@@ -2071,7 +2071,6 @@
       (starting-hand state :corp ["Ikawah Project"])
       (run-empty-server state "R&D")
       (click-prompt state :runner "No action")
-      (print-log state)
       (is (not (last-log-contains? state "Ikawah Project")) "Ikawah Project should not be mentioned")
       (run-empty-server state "HQ")
       (click-prompt state :runner "No action")

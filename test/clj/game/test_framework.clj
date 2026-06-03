@@ -19,7 +19,9 @@
    [game.utils :as utils]
    [game.utils-test :refer [error-wrapper is']]
    [jinteki.cards :refer [all-cards]]
-   [jinteki.utils :as jutils]))
+   [jinteki.utils :as jutils])
+  (:import
+   (java.util.regex Pattern)))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -1113,13 +1115,14 @@
   (let [bundles (for [block testing-blocks] `(let [~@let-bindings] ~block))]
     `(do ~@bundles)))
 
-(defn get-msg-text [m]
+(defn get-msg-text
+  [m]
   (if (string? m) m (or (:raw-text m) (build-msg m))))
 
 (defn escape-log-string [s]
-  (str/escape s {\[ "\\[" \] "\\]"}))
+  (if (string? s) (Pattern/quote s) s))
 
-(defn- side-log
+(defn side-log
   [side log]
   (into [] (keep #(or (side %) (:public %)) log)))
 
@@ -1127,25 +1130,20 @@
   ([state content] (last-log-contains? state content :public))
   ([state content side]
    (->> (->> @state :log (side-log side) last :text get-msg-text)
-        (re-find (re-pattern (escape-log-string content)))
-        some?)))
+        (re-find (re-pattern (escape-log-string content))))))
 
 (defn second-last-log-contains?
   ([state content] (second-last-log-contains? state content :public))
   ([state content side]
    (->> (->> @state :log (side-log side) butlast last :text get-msg-text)
-        (re-find (re-pattern (escape-log-string content)))
-        some?)))
+        (re-find (re-pattern (escape-log-string content))))))
 
 (defn last-n-log-contains?
   ([state n content]
    (last-n-log-contains? state n content :public))
   ([state n content side]
-   (let [log (->> @state :log (side-log side) (mapv (comp get-msg-text :text)))
-         index (- (count log) 1 n)
-         log-entry (nth log index "")
-         res (re-find (re-pattern (escape-log-string content)) log-entry)]
-     (some? res))))
+   (->> (-> @state :log reverse (->> (side-log side)) (nth n) :text get-msg-text)
+        (re-find (re-pattern (escape-log-string content))))))
 
 (defn log-str [state]
   (->> (:log @state)
