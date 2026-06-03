@@ -1,7 +1,9 @@
 {:config-paths ["../resources/clj-kondo.exports/netrunner"]
  :linters
  {:unused-binding {:exclude-defmulti-args true
-                   :exclude-destructured-as true}
+                   :exclude-destructured-as true
+                   :exclude-destructured-keys-in-fn-args true}
+  :clojure-lsp/unused-public-var {:level :off}
   :unresolved-symbol
   {:exclude [(game.test-framework/do-game [state get-corp get-runner get-run refresh
                                            hand-size prompt-map prompt-button
@@ -23,7 +25,7 @@
            monger.operators/defoperator clojure.core/def
            monger.query/with-collection clojure.core/->
            }
- :hooks {:analyze-call {game.core.say/payless-msg hooks.netrunner/effect
-                        game.core.say/simple-msg hooks.netrunner/effect}}
+ :hooks {:analyze-call {game.core.i18n/simple-msg hooks.netrunner/effect
+                        game.core.i18n/msg-with-cost hooks.netrunner/effect}}
  :output {:langs true}
  }

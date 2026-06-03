@@ -33,6 +33,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [hand-size runner-hand-size+]]
    [game.core.hosting :refer [host]]
+   [game.core.l10n :refer [msg-with-cost]]
    [game.core.ice :refer [all-subs-broken? any-subs-broken? auto-icebreaker break-sub pump
                           reset-all-ice update-all-ice update-all-icebreakers
                           update-breaker-strength]]
@@ -51,7 +52,7 @@
    [game.core.runs :refer [bypass-ice end-run
                            get-current-encounter jack-out make-run
                            successful-run-replace-breach total-cards-accessed]]
-   [game.core.say :refer [play-sfx system-msg simple-msg]]
+   [game.core.say :refer [play-sfx system-msg]]
    [game.core.servers :refer [target-server is-central? zone->name]]
    [game.core.shuffling :refer [shuffle!]]
    [game.core.tags :refer [gain-tags lose-tags]]
@@ -173,7 +174,7 @@
                                           (some #(event? (:card %)) targets))]
                                   (first-trash? state event-targets?)))
                  :change-in-game-state {:silent true :req (req (seq (:deck runner)))}
-                 :msg (simple-msg {:effect/type :draw-cards
+                 :msg (msg-with-cost {:effect/type :draw-cards
                                    :effect/count 1})
                  :effect (effect (draw state :runner eid 1))}]
     {:static-abilities [(mu+ 1)]

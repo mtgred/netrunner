@@ -3,28 +3,26 @@
     [clojure.string :as str]
     [game.core.access :refer [access-bonus]]
     [game.core.board :refer [all-installed get-all-cards]]
-    [game.core.card :refer [active? can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? in-hand? installed? operation? runner? ]]
+    [game.core.card :refer [can-be-advanced? corp? faceup? get-card get-counters has-subtype? in-discard? in-hand? installed? operation? runner? ]]
     [game.core.card-defs :as card-defs]
     [game.core.choose-one :refer [choose-one-helper]]
     [game.core.damage :refer [damage]]
     [game.core.drawing :refer [draw]]
     [game.core.eid :refer [effect-completed make-eid]]
-    [game.core.engine :refer [queue-event register-events resolve-ability trigger-event trigger-event-sync unregister-event-by-uuid]]
+    [game.core.engine :refer [queue-event register-events resolve-ability trigger-event unregister-event-by-uuid]]
     [game.core.effects :refer [any-effects is-disabled-reg?]]
     [game.core.gaining :refer [gain-credits lose-credits]]
+    [game.core.l10n :refer [simple-msg]]
     [game.core.installing :refer [corp-install]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [build-cost-string can-pay?]]
     [game.core.play-instants :refer [async-rfg]]
     [game.core.prompts :refer [cancellable clear-wait-prompt]]
     [game.core.props :refer [add-counter add-prop]]
     [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud]]
     [game.core.runs :refer [can-run-server? make-run jack-out]]
-    [game.core.say :refer [play-sfx system-msg system-say payless-msg simple-msg]]
+    [game.core.say :refer [play-sfx system-msg system-say]]
     [game.core.servers :refer [zone->name name-zone]]
     [game.core.shuffling :refer [shuffle! fail-to-find!]]
-    [game.core.servers :refer [zone->name name-zone]]
-    [game.core.shuffling :refer [shuffle!]]
     [game.core.to-string :refer [card-str]]
     [game.core.toasts :refer [toast]]
     [game.core.tags :refer [gain-tags]]
@@ -228,7 +226,7 @@
    (merge {:async true
            :change-in-game-state {:req (req (can-run-server? state server))}
            :label (str "run " (zone->name server))
-           :msg (payless-msg
+           :msg (simple-msg
                  {:effect/type :make-a-run-on
                   :effect/server server})
            :makes-run true
@@ -445,9 +443,9 @@
                                               context-card (:card %)]
                                           (or (= event event-keyword)
                                               (and (#{:play-event :play-operation} event)
-                                                   (and (not (same-card? card context-card))
-                                                        (has-subtype? context-card "Current")
-                                                        true))))
+                                                   (not (same-card? card context-card))
+                                                   (has-subtype? context-card "Current")
+                                                   true)))
                                        targets))
                        :value trash-or-rfg}]
         (update ability :static-abilities #(conj (into [] %) static-ab)))
@@ -527,7 +525,7 @@
 
 (defn tutor-abi
   "Tutor a card. Optionally, pass a restriction, which is a 1-fn the cards must pass"
-  ([reveal?] (tutor-abi reveal nil))
+  ([reveal?] (tutor-abi reveal? nil))
   ([reveal? restriction]
    {:change-in-game-state {:req (req (seq (get-in @state [side :deck])))}
     :prompt "Choose a card"
@@ -607,10 +605,10 @@
                  (fn [] (unregister-event-by-uuid state side uuid)))
                (fn [] nil)))
            (maybe-reveal
-             [state side eid card target-side {:keys [event-side forced skip-reveal] :as args}]
+             [state side eid card target-side {:keys [event-side forced skip-reveal] :as inner-args}]
              (if skip-reveal
                (effect-completed state side eid)
-               (reveal-loud state (or event-side side) eid card args (get-in @state [target-side :hand]))))]
+               (reveal-loud state (or event-side side) eid card inner-args (get-in @state [target-side :hand]))))]
      {:async true
       :effect (effect (wait-for
                      (maybe-reveal state side card target-side args)
@@ -627,7 +625,8 @@
   ([advanceable-only] (place-advancement-counter advanceable-only 1))
   ([advanceable-only qty] (place-advancement-counter advanceable-only qty "a card" nil))
   ([advanceable-only qty card-line pred]
-   (let [label (str "Place " (quantify qty "advancement counter") " on " card-line (if advanceable-only " that can be advanced"))]
+   (let [label (str "Place " (quantify qty "advancement counter") " on " card-line
+                    (when advanceable-only " that can be advanced"))]
      {:label label
       :prompt label
       :choices {:req (req (corp? target)
