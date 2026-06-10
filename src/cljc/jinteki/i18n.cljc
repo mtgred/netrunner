@@ -24,11 +24,16 @@
            ;; Try loading each language directly as a resource (works in both jar and filesystem)
            langs (->> languages
                       (keep (fn [lang]
-                              (let [res-path (str dir "/" lang ".ftl")
+                              (let [ui-res-path (str dir "/" lang ".ftl")
+                                    msg-res-path (str dir "/messages/" lang ".ftl")
                                     ;; Try to load from classpath (including jar)
-                                    res (io/resource res-path)]
+                                    ui-res (io/resource ui-res-path)
+                                    msg-res (io/resource msg-res-path)
+                                    ui-content (some-> ui-res slurp not-empty)
+                                    msg-content (some-> msg-res slurp not-empty)
+                                    content (str ui-content "\n" msg-content)]
                                 ;; Skip empty placeholder files
-                                (when-let [content (some-> res slurp not-empty)]
+                                (when-not (str/blank? content)
                                   [lang content])))))
            errors (volatile! [])]
        (doseq [[lang content] langs]

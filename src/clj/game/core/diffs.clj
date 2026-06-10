@@ -569,8 +569,8 @@
       [{} {}])))
 
 (defn- get-message-diff [old-state new-state side]
-  (let [old-messages {:log (into [] (keep #(or (side %) (:public %)) (:log old-state)))}
-        new-messages {:log (into [] (keep #(or (side %) (:public %)) (:log @new-state)))}]
+  (let [old-messages {:log (into [] (keep #(or (side %) (:public %))) (:log old-state))}
+        new-messages {:log (into [] (keep #(or (side %) (:public %))) (:log @new-state))}]
     (fake-log-diff old-messages new-messages)))
 
 (defn- diff-and-patch-log [old-state new-state message-diff]

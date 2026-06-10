@@ -927,16 +927,21 @@
                    :yes-ability
                    {:cost [(->c :credit (rez-cost state :corp (:card context))) (->c :trash-self)]
                     :async true
-                    :effect (effect (wait-for
-                                   (derez state :runner (:card context) {:msg-keys {:source-card card :and-then " and prevent the Corp from rezzing it for the remainder of this turn."}})
-                                   (register-turn-flag!
-                                     state side card :can-rez
-                                     (fn [state _ card]
-                                       (if (same-card? card (:card context))
-                                         ((constantly false)
-                                          (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
-                                         true)))
-                                   (effect-completed state side eid)))}}}
+                    :effect (effect
+                              (wait-for (derez state :runner (:card context)
+                                          {:msg-keys
+                                           {:source-card card
+                                            #_#_:and-then
+                                            {:effect/type :prevent-corp-rezzing-remainder-of-run
+                                             :effect/card-str (:card context)}}})
+                                (register-turn-flag!
+                                  state side card :can-rez
+                                  (fn [state _ card]
+                                    (if (same-card? card (:card context))
+                                      ((constantly false)
+                                        (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
+                                      true)))
+                                (effect-completed state side eid)))}}}
                  card targets))}]})
 
 (defcard "Counter Surveillance"

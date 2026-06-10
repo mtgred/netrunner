@@ -25,7 +25,7 @@
            monger.operators/defoperator clojure.core/def
            monger.query/with-collection clojure.core/->
            }
- :hooks {:analyze-call {game.core.i18n/simple-msg hooks.netrunner/effect
-                        game.core.i18n/msg-with-cost hooks.netrunner/effect}}
+ :hooks {:analyze-call {game.core.l10n/simple-msg hooks.netrunner/effect
+                        game.core.l10n/msg-with-cost hooks.netrunner/effect}}
  :output {:langs true}
  }

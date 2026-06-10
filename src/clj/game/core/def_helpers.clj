@@ -246,7 +246,9 @@
            :req (req (seq runnable-servers))
            :label "Run a server"
            :makes-run true
-           :msg (msg "make a run on " target)
+           :msg (simple-msg
+                 {:effect/type :make-a-run-on
+                  :effect/server target})
            :effect (effect (when (seq events)
                           (register-events state side card events))
                         (when (:action ab-base)

@@ -42,7 +42,7 @@
    [game.core.memory :refer [available-mu expected-mu update-mu]]
    [game.core.moving :refer [flip-facedown mill move swap-cards swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve never?]]
-   [game.core.payment :refer [build-cost-label can-pay? cost-target cost-value ->c value]]
+   [game.core.payment :refer [build-cost-label can-pay? cost-target x-cost-value ->c value]]
    [game.core.prevention :refer [preventable? prevent-damage prevent-end-run prevent-up-to-n-damage prevent-trash-installed-by-type]]
    [game.core.prompts :refer [cancellable]]
    [game.core.props :refer [add-counter]]
@@ -501,9 +501,9 @@
 (defcard "Atman"
   (auto-icebreaker
     {:on-install {:cost [(->c :x-credits)]
-                  :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on itself")
+                  :msg (msg "place " (quantify (x-cost-value eid) "power counter") " on itself")
                   :async true
-                  :effect (effect (add-counter state side eid card :power (cost-value eid :x-credits) nil))}
+                  :effect (effect (add-counter state side eid card :power (x-cost-value eid) nil))}
      :abilities [(break-sub 1 1 "All" {:req (req (= (get-strength current-ice) (get-strength card)))})]
      :static-abilities [(breaker-strength-bonus (effect (get-counters card :power)))]}))
 
@@ -1445,8 +1445,8 @@
                {:label "+X strength for the remainder of the run (using at least 1 stealth [Credits])"
                 :cost [(->c :x-credits 0 {:stealth 1})]
                 :prompt "How many credits do you want to spend?"
-                :effect (effect (pump state side card (cost-value eid :x-credits) :end-of-run))
-                :msg (msg "increase strength by " (cost-value eid :x-credits)
+                :effect (effect (pump state side card (x-cost-value eid) :end-of-run))
+                :msg (msg "increase strength by " (x-cost-value eid)
                           " for the remainder of the run")}]})
 
 (defcard "Femme Fatale"
@@ -2050,13 +2050,13 @@
                                                       (has-subtype? current-ice "Barrier")))
                                  :req (req (active-encounter? state)
                                              (<= (get-strength current-ice) (get-strength card)))
-                                 :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
+                                 :msg (msg "break " (quantify (x-cost-value eid) "subroutine")
                                            " on " (card-str state current-ice))
                                  :async true
                                  :effect (effect
                                              (continue-ability
-                                               state side (when (pos? (cost-value eid :x-credits))
-                                                 (break-sub nil (cost-value eid :x-credits) "Barrier"))
+                                               state side (when (pos? (x-cost-value eid))
+                                                 (break-sub nil (x-cost-value eid) "Barrier"))
                                                card nil))}
                                 (strength-pump 1 2)]
                     :events [{:event :subroutines-broken
@@ -2125,8 +2125,8 @@
                                  :cost [(->c :x-credits)]
                                  :req (req (:runner-phase-12 @state))
                                  :async true
-                                 :effect (effect (add-counter state side eid card :power (cost-value eid :x-credits) nil))
-                                 :msg (msg "place " (quantify (cost-value eid :x-credits) "power counter") " on itself")}
+                                 :effect (effect (add-counter state side eid card :power (x-cost-value eid) nil))
+                                 :msg (msg "place " (quantify (x-cost-value eid) "power counter") " on itself")}
                                 (break-sub [(->c :power 1)] 1)
                                 (strength-pump 2 2)]
                     :events [{:event :runner-turn-ends
@@ -2173,12 +2173,12 @@
                    :break-req (effect (active-encounter? state))
                    :req (req (active-encounter? state)
                                (<= (get-strength current-ice) (get-strength card)))
-                   :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
+                   :msg (msg "break " (quantify (x-cost-value eid) "subroutine")
                              " on " (card-str state current-ice))
                    :effect (effect
                              (continue-ability
-                               state side (when (pos? (cost-value eid :x-credits))
-                                 (break-sub nil (cost-value eid :x-credits) "All" {:repeatable false}))
+                               state side (when (pos? (x-cost-value eid))
+                                 (break-sub nil (x-cost-value eid) "All" {:repeatable false}))
                                card nil))}
         host-abi {:action true
                   :label "Host 1 copy of Matryoshka"
@@ -2249,8 +2249,8 @@
                 :cost [(->c :click 2) (->c :x-credits)]
                 :label "remove X tags"
                 :async true
-                :msg (msg "remove " (quantify (cost-value eid :x-credits) "tag"))
-                :effect (effect (lose-tags state :runner eid (cost-value eid :x-credits)))}]})
+                :msg (msg "remove " (quantify (x-cost-value eid) "tag"))
+                :effect (effect (lose-tags state :runner eid (x-cost-value eid)))}]})
 
 (defcard "MKUltra"
   (let [events (for [event [:run :approach-ice :encounter-ice :pass-ice :run-ends
@@ -2564,12 +2564,12 @@
                     :break-req (effect (and (active-encounter? state)
                                          (has-subtype? current-ice "Barrier")))
                     :async true
-                    :effect (effect (pump state side card (cost-value eid :x-credits))
+                    :effect (effect (pump state side card (x-cost-value eid))
                                     (continue-ability
-                                      state side (break-sub nil (cost-value eid :x-credits) "Barrier" {:repeatable false})
+                                      state side (break-sub nil (x-cost-value eid) "Barrier" {:repeatable false})
                                       (get-card state card) nil))
                     :msg (msg "increase its strength from " (get-strength card)
-                              " to " (+ (cost-value eid :x-credits) (get-strength card)))}]]
+                              " to " (+ (x-cost-value eid) (get-strength card)))}]]
     (assoc cdef
            :events (apply conj events (:events cdef))
            :abilities abilities)))
@@ -3581,12 +3581,12 @@
                                    :break-req (effect (and (active-encounter? state)
                                                         (not-used-once? state {:once :per-run} card)
                                                         (has-subtype? current-ice "Code Gate")))
-                                   :msg (msg "break " (quantify (cost-value eid :x-credits) "subroutine")
+                                   :msg (msg "break " (quantify (x-cost-value eid) "subroutine")
                                              " on " (card-str state current-ice))
                                    :effect (effect
                                              (continue-ability
-                                               state side (when (pos? (cost-value eid :x-credits))
-                                                 (break-sub nil (cost-value eid :x-credits) "Code Gate"))
+                                               state side (when (pos? (x-cost-value eid))
+                                                 (break-sub nil (x-cost-value eid) "Code Gate"))
                                                card nil))}
                                   (break-sub 1 1 "Code Gate" {:label "Break 1 Code Gate subroutine (Virtual restriction)"
                                                               ;; this should be prioritized when available

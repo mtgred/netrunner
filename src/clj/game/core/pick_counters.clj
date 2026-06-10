@@ -81,7 +81,9 @@
                                                                      title (:title card)]
                                                                  (str (quantify number "virus counter") " from " title))
                                                               (vals selected-cards)))]
-                              (complete-with-result state side eid {:number counter-count :msg message}))))}}))
+                              (complete-with-result state side eid {:number counter-count
+                                                                    :msg message
+                                                                    :targets (vals selected-cards)}))))}}))
 
 (defn- queue-spend-from-cards
   [state cards]

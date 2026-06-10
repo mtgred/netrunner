@@ -14,7 +14,7 @@
            log# (->> (:log @state#)
                      (game.test-framework/side-log side#)
                      last :text
-                     (game.test-framework/get-msg-text))
+                     (game.test-framework/get-msg-text state#))
            found# ~form]
        (t/do-report
         {:type (if found# :pass :fail)
@@ -32,7 +32,7 @@
            log# (->> (:log @state#)
                      (game.test-framework/side-log side#)
                      butlast last :text
-                     (game.test-framework/get-msg-text))
+                     (game.test-framework/get-msg-text state#))
            found# ~form]
        (t/do-report
         {:type (if found# :pass :fail)
@@ -51,7 +51,7 @@
            log# (-> @state# :log reverse
                     (->> (game.test-framework/side-log side#))
                     (nth n#) :text
-                    (game.test-framework/get-msg-text))
+                    (->> (game.test-framework/get-msg-text state#)))
            found# ~form]
        (t/do-report
         {:type (if found# :pass :fail)

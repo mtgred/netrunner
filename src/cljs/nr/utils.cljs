@@ -5,6 +5,7 @@
    [cljc.java-time.zoned-date-time :as zdt]
    [cljc.java-time.zone-id :as zone]
    [clojure.string :refer [join] :as s]
+   [game.core.l10n :refer [build-msg]]
    [goog.object :as gobject]
    [goog.string :as gstring]
    [goog.string.format]
@@ -304,8 +305,14 @@
 (defn render-input
   "Sanitize inputs into fragments before processing them with render-fragment"
   [input patterns]
-  (if (not (or (string? input) (vector? input)))
+  (cond
+    (map? input)
+    (if-let [raw (:raw-string input)]
+      [:<> raw]
+      (render-fragment [:<> (build-msg input)] patterns))
+    (not (or (string? input) (vector? input)))
     [:<>]
+    :else
     (let [fragment (if (string? input) [:<> input] input)]
       (render-fragment fragment patterns))))
 

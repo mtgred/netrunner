@@ -81,11 +81,6 @@
          log-sides (if (vector? log-side) log-side [log-side])]
      (log state (zipmap log-sides (repeat message))))))
 
-(defn- multi-say
-  [state side message-map]
-  (let [message (update-vals message-map #(make-system-message (insert-pronouns state side %)))]
-    (log state message)))
-
 (defn system-say
   "Prints a system message to log (`say` from user __system__)"
   ([state side text] (system-say state side text nil))
@@ -248,24 +243,27 @@
        (vec)
        (pprint/pprint)))
 
+(defn ^:private prep-msg
+  [state side text]
+  (let [username (get-in @state [side :user :username])]
+    (merge {:username username
+            :side side}
+      (if (string? text)
+        {:raw-text (str username " " text ".")}
+        text))))
+
 (defn system-msg
   "Prints a message to the log without a username."
   ([state side text] (system-msg state side text nil))
   ([state side text args]
-   (let [username (get-in @state [side :user :username])
-         msg (merge {:username username
-                     :side side}
-                    (if (string? text)
-                      {:raw-text (str username " " text ".")}
-                      text))]
-     (swap! store conj msg)
+   (let [msg (prep-msg state side text)]
      (system-say state side msg args))))
 
 (defn multi-msg
   [state side message-map]
-  (let [username (get-in @state [side :user :username])
-        message-map (update-vals message-map #(str username " " % "."))]
-    (multi-say state side message-map)))
+  (doseq [[log-side text] message-map
+          :let [message (prep-msg state side text)]]
+    (system-say state side message {:log-side log-side})))
 
 (defn enforce-msg
   "Prints a message related to a rules enforcement on a given card.

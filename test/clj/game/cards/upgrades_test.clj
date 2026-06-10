@@ -637,16 +637,16 @@
       (rez state :corp van1)
       (click-prompt state :corp "Yes")
       (is (changed? [(get-strength (refresh van1)) 3]
-                    (click-card state :corp van2))
-          "Vanilla protecting Server 1 got +3 strength")
+            (click-card state :corp van2))
+        "Vanilla protecting Server 1 got +3 strength")
+      (is (last-log-contains? state #"derez Vanilla protecting HQ.*give \+3 strength to Vanilla protecting Server 1"))
       (is (not (rezzed? (refresh van2))) "Vanilla on HQ was derezzed")
       (run-continue state)
       (rez state :corp van2)
       (is (no-prompt? state :corp) "No prompt when rezzing ice protecting other servers")
       (run-continue state)
       (rez state :corp rime)
-      (is (no-prompt? state :corp) "Brasília Government Grid ability is once per turn")
-  )))
+      (is (no-prompt? state :corp) "Brasília Government Grid ability is once per turn"))))
 
 (deftest buneaker-bay-grid
   ;; Breaker Bay Grid - Reduce rez cost of other cards in this server by 5 credits
@@ -2380,7 +2380,8 @@
 (deftest la-costa-grid-the-corp-may-advance-hosted-cards-in-la-costa-grid-s-server
     ;; The Corp may advance hosted cards in La Costa Grid's server
     (do-game
-      (new-game {:corp {:hand ["La Costa Grid", "Full Immersion RecStudio", "Project Beale"]}})
+      (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                        :hand ["La Costa Grid" "Full Immersion RecStudio" "Project Beale"]}})
       (play-from-hand state :corp "La Costa Grid" "New remote")
       (play-from-hand state :corp "Full Immersion RecStudio" "Server 1")
       (let [[la-costa recstudio] (get-content state :remote1)]
@@ -2393,6 +2394,7 @@
           (take-credits state :runner)
           (end-phase-12 state :corp)
           (click-card state :corp beale)
+          (is (second-last-log-contains? state "place 1 advancement counter on hosted card in Server 1"))
           (is (= 1 (get-counters (refresh beale) :advancement)) "Clicking on a hosted card in the La Costa Grid server advances it")))))
 
 (deftest la-costa-grid-properly-async-5049

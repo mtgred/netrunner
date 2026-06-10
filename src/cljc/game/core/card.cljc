@@ -65,6 +65,10 @@
    uniqueness
    zone])
 
+(defn card?
+  [obj]
+  (contains? obj :cid))
+
 (defn get-cid
   "Gets the cid of a given card when wrapped in an effect-handler map"
   [card]

@@ -1,24 +1,29 @@
 (ns game.core.rezzing
   (:require
-    [clojure.string :as string]
-    [game.core.card :refer [asset? condition-counter? get-card ice? rezzed? upgrade?]]
-    [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
-    [game.core.effects :refer [is-disabled? unregister-static-abilities update-disabled-cards]]
-    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-    [game.core.engine :refer [register-pending-event queue-event checkpoint pay register-events resolve-ability trigger-event unregister-events]]
-    [game.core.flags :refer [can-host? can-rez?]]
-    [game.core.ice :refer [update-ice-strength]]
-    [game.core.initializing :refer [card-init deactivate]]
-    [game.core.moving :refer [trash-cards]]
-    [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c]]
-    [game.core.runs :refer [continue]]
-    [game.core.say :refer [play-sfx system-msg implementation-msg]]
-    [game.core.toasts :refer [toast]]
-    [game.core.to-string :refer [card-str]]
-    [game.core.update :refer [update!]]
-    [game.macros :refer [continue-ability effect wait-for]]
-    [game.utils :refer [enumerate-str to-keyword]]))
+   [clojure.string :as string]
+   [game.core.card :refer [asset? condition-counter? get-card ice? rezzed?
+                           upgrade?]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.cost-fns :refer [rez-additional-cost-bonus rez-cost]]
+   [game.core.effects :refer [is-disabled? unregister-static-abilities
+                              update-disabled-cards]]
+   [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+   [game.core.engine :refer [checkpoint pay queue-event register-events
+                             register-pending-event resolve-ability
+                             unregister-events]]
+   [game.core.flags :refer [can-host? can-rez?]]
+   [game.core.ice :refer [update-ice-strength]]
+   [game.core.initializing :refer [card-init deactivate]]
+   [game.core.l10n :refer [->use-card-msg]]
+   [game.core.moving :refer [trash-cards]]
+   [game.core.payment :refer [->c build-spend-msg can-pay? merge-costs]]
+   [game.core.runs :refer [continue]]
+   [game.core.say :refer [implementation-msg play-sfx system-msg]]
+   [game.core.to-string :refer [card-str]]
+   [game.core.toasts :refer [toast]]
+   [game.core.update :refer [update!]]
+   [game.macros :refer [continue-ability effect wait-for]]
+   [game.utils :refer [enumerate-str to-keyword]]))
 
 (defn get-rez-cost
   [state side card {:keys [ignore-cost alternative-cost cost-bonus]}]
@@ -197,23 +202,29 @@
   ;;              I suggest only using this if the rhs thing is part of the same instruction.
   ;;  include-cost-from-eid [eid] - include the last payment str from the eid as if it was for this
   [state side eid cards {:keys [and-then] :as msg-keys}]
-  (let [card-strs (enumerate-str (map #(card-str state % {:visible true}) cards))
-        prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
+  (let [prepend-cost-str (get-in msg-keys [:include-cost-from-eid :latest-payment-str])
         source-card (:source eid)
-        title (or (:title source-card) (:printed-title source-card))]
+        cards (mapv #(assoc % :visible true) cards)]
     (system-msg
       state side
       (cond
-        (not source-card) (str "derezzes " card-strs and-then)
-        prepend-cost-str (str prepend-cost-str " to use " title " to derez " card-strs and-then)
-        :else (str "uses " title " to derez " card-strs and-then)))))
+        source-card (->use-card-msg
+                      source-card
+                      (cond-> [{:effect/type :derez-cards
+                                :effect/card-strs cards}]
+                        (map? and-then) (conj and-then))
+                      (when prepend-cost-str (seq (vals (:cost-paid eid)))))
+        (= 1 (count cards)) {:msg/type :msg-derez-card
+                             :msg/card-str (first cards)}
+        :else {:msg/type :msg-derez-cards
+               :msg/card-strs cards}))))
 
 (defn derez
   "Derez a number of corp cards."
   ([state side eid cards] (derez state side eid cards nil))
   ([state side eid cards {:keys [suppress-checkpoint no-event no-msg msg-keys] :as args}]
-   (let [cards (vec (keep #(let [c (get-card state %)]
-                             (and (rezzed? c) c))
+   (let [cards (vec (keep #(when-let [c (get-card state %)]
+                             (when (rezzed? c) c))
                           (if (sequential? cards)
                             (flatten cards)
                             [cards])))]

@@ -61,7 +61,7 @@
   [state]
   (when-not (:winner state)
     (swap! state assoc :winner-declared true)
-    (system-msg state :runner {:msg/type :flatlined})
+    (system-msg state :runner {:msg/type :win-flatline})
     (win state :corp "Flatline")))
 
 (defn concede

@@ -209,7 +209,7 @@
      {:on-mouse-leave #(swap! state dissoc :completion-highlight)}
      [:ul.command-matches
       (doall (map-indexed
-               (fn [i {:keys [completion-text display-text]} completion]
+               (fn [i {:keys [completion-text display-text]}]
                  [:li.command-match
                   {:key completion-text
                    :class (when (= i (:completion-highlight @state)) "highlight")}
@@ -247,6 +247,7 @@
          [completions !input-ref state]]))))
 
 (defn format-system-timestamp [timestamp text corp runner]
+  (prn :format-system-timestamp text)
   (if (get-in @app-state [:options :log-timestamps])
     (render-message (render-player-highlight text corp runner (str "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]")))
     (render-message (render-player-highlight text corp runner))
