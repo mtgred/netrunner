@@ -8353,7 +8353,6 @@
     (click-prompts state :corp "Ice Wall" "Guard" "I want to start over" "Ice Wall" "Cancel" "OK")
     (is-hand? state :corp ["Ice Wall"])))
 
-
 (deftest tollbooth
   (do-game
     (new-game {:corp {:deck [(qty "Hedge Fund" 5)]

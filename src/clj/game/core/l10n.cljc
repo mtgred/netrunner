@@ -1,11 +1,13 @@
-(ns game.core.l10n 
+(ns game.core.l10n
   (:require
    #?(:clj [clojure.java.io :as io])
    [clojure.string :as str]
    [game.core.card :refer [get-title]]
-   [game.core.schemas :as schemas]
-   [malli.core :as m]
+   [game.core.schemas :as schemas :refer [EffectMsg]]
+   [game.core.to-string :refer [card-str-edn]]
    [noahtheduke.fluent :as fluent]))
+
+;; formatting/display
 
 (defonce dictionary (atom {}))
 
@@ -19,11 +21,12 @@
   "cljc"
   ([id] (translate id nil))
   ([id args]
-   (let [bundle (get @dictionary target-language)]
+   (let [d @dictionary
+         bundle (d target-language)]
      (try (fluent/format bundle id args)
           (catch #?(:clj clojure.lang.ExceptionInfo :cljs :default) ex
             (if (str/starts-with? (ex-message ex) "Missing message for id")
-              (fluent/format (get @dictionary "en") id args)
+              (fluent/format (d "en") id args)
               (throw ex)))))))
 
 (defn join-with-and
@@ -31,14 +34,19 @@
   [ms]
   (str/join (translate :join-with-and) ms))
 
+(defn get-card-title
+  [m]
+  (if (:cid m) (get-title m) m))
+
 (defn join-list
   "cljc"
   [ms]
   (->> ms
-       (mapv #(if (:cid %) (get-title %) %))
+       (mapv get-card-title)
        (str/join (translate :join-list))))
 
 (defonce server-names (atom {}))
+(reset! server-names {})
 
 (defn format-server-name
   [server-name]
@@ -51,31 +59,15 @@
                  (let [s (str server-name)]
                    (cond
                      (str/starts-with? s "Server") (subs s 7)
-                     (str/starts-with? s ":remote") (str (inc (parse-long (subs s 7)))))))
+                     (str/starts-with? s ":remote") (str (parse-long (subs s 7))))))
             tr (translate :server-name {:server sn})]
         (-> (swap! server-names assoc-in [target-language server-name] tr)
             (get-in [target-language server-name])))))
 
-(defn format-effect-msgs
-  "cljc"
-  [{effect-type :effect/type :as m}]
-  (let [m (reduce-kv
-           (fn [m k v]
-             (assoc! m (name k)
-                     (cond
-                       (= :effect/server k) (format-server-name v)
-                       (sequential? v) (join-list v)
-                       :else v)))
-           (transient {})
-           m)]
-    (translate effect-type (persistent! m))))
-
-(defn build-ability-msg
-  [ms]
-  (when-let [ms (seq ms)]
-    (->> ms
-         (mapv format-effect-msgs)
-         (join-with-and))))
+(defn format-card-str
+  [state card]
+  (let [m (card-str-edn state card)]
+    (translate (:card/str m) m)))
 
 (defn format-payment-msg
   "cljc"
@@ -90,31 +82,54 @@
          (mapv format-payment-msg)
          (join-with-and))))
 
-(defn build-base-msg
-  "cljc"
-  [m]
-  (let [do-ability (build-ability-msg (:msg/effect-msgs m))
-        pay-msg (build-pay-msg (:msg/payments m))]
-    (cond-> (assoc m :do-ability do-ability)
-      pay-msg (assoc :payment pay-msg))))
 
-(defn format-ability-msg
+(defn format-msg-args
+  [state m]
+  (let [new-m (reduce-kv
+               (fn [m k v]
+                 (assoc! m (name k)
+                         (cond
+                           (#{:msg/payments
+                              :effect/card-str :effect/card-strs
+                              :msg/card-str :msg/card-strs} k) nil
+                           (= :effect/server k) (format-server-name v)
+                           (= :effect/title k) (get-card-title v)
+                           (sequential? v) (join-list v)
+                           :else v)))
+               (transient {}) m)
+        card-str (or (:effect/card-str m)
+                     (:msg/card-str m))
+        card-strs (or (:effect/card-strs m)
+                      (:msg/card-strs m))]
+    (cond-> new-m
+      (:msg/payments m) (assoc! "payment" (build-pay-msg (:msg/payments m)))
+      card-str (assoc! "card-str" (format-card-str state card-str))
+      card-strs (assoc! "card-strs" (->> card-strs
+                                         (mapv #(format-card-str state %))
+                                         (str/join (translate :join-list))))
+      true (persistent!))))
+
+(defn format-effect-msgs
   "cljc"
-  [m]
-  (translate (:msg/type m) m))
+  [state {effect-type :effect/type :as m}]
+  (translate effect-type (format-msg-args state m)))
+
+(defn build-ability-msg
+  [state ms]
+  (when-let [ms (seq ms)]
+    (->> ms
+         (mapv #(format-effect-msgs state %))
+         (join-with-and))))
 
 (defn build-msg
   "cljc"
-  [m]
-  (format-ability-msg (build-base-msg m)))
+  [state {msg-type :msg/type :as m}]
+  (let [m (if (:msg/effect-msgs m)
+            (assoc m :do-ability (build-ability-msg state (:msg/effect-msgs m)))
+            m)]
+    (translate msg-type (format-msg-args state m))))
 
 ;; input data -> message map
-
-(def EffectMsg
-  (m/schema
-   [:map-of
-    [:qualified-keyword {:namespace :effect}]
-    :any]))
 
 (defn process-effect-msgs
   [effect-msgs]
@@ -125,8 +140,8 @@
 (defn payment->msg
   [{:paid/keys [type value targets side] :as payment}]
   (schemas/assert payment schemas/Payment)
-  (cond
-    (= :credit type)
+  (case type
+    :credit
     (if-let [picks (seq (filter #(contains? % :pick-counters/type) targets))]
        (vec (for [pick picks]
               (case (:pick-counters/type pick)
@@ -139,22 +154,27 @@
                               :payment/value (:value pick)})))
       [{:payment/type "payment-credit"
         :payment/value value}])
-    (= :trash-from-hand type)
+    :x-credits
+    [{:payment/type "payment-x-credit"
+      :payment/value (:x-value payment)}]
+    :trash-from-hand
     [{:payment/type (if (= :corp side)
                       "payment-trash-from-hq"
                       "payment-trash-from-grip")
       :payment/count (count targets)
       :payment/titles (mapv get-title targets)}]
-    :else
+    #_ :else
     [{:payment/type (str "payment-" (name type))
-      :payment/value value}]))
+      :payment/value value
+      :payment/title (get-title (first targets))
+      :payment/titles (when-let [t (not-empty targets)] (mapv get-title t))}]))
 
 (defn process-payments
   [payments]
   (when-let [ps (seq payments)]
     (into [] (mapcat payment->msg) ps)))
 
-(defn ->base-msg
+(defn ->effect-msg
   [{:msg/keys [effect-msgs payments] :as base-msg}]
   (let [effect-msgs (process-effect-msgs effect-msgs)
         payments (process-payments payments)
@@ -163,21 +183,21 @@
       payments (assoc :msg/payments payments)
       (not-empty args) (merge args))))
 
-(defn ->use-card-msg
-  ([card effect-msgs] (->use-card-msg card effect-msgs nil nil))
-  ([card effect-msgs payments] (->use-card-msg card effect-msgs payments nil))
-  ([card effect-msgs payments args]
-   (cond-> (->base-msg {:msg/effect-msgs effect-msgs
-                        :msg/payments payments
-                        :msg/type (if (seq payments) :pay-use-card :use-card)
-                        :title (get-title card)})
-     (map? args) (merge args))))
-
 (defn msg-map->effect-msg [m]
   (when m
     (if (keyword? m)
       {:effect/type m}
       (schemas/assert m EffectMsg))))
+
+(defn ->use-card-msg
+  ([card effect-msgs] (->use-card-msg card effect-msgs nil nil))
+  ([card effect-msgs payments] (->use-card-msg card effect-msgs payments nil))
+  ([card effect-msgs payments args]
+   (cond-> (->effect-msg {:msg/type (if (seq payments) :pay-use-card :use-card)
+                          :msg/effect-msgs (vec (keep msg-map->effect-msg effect-msgs))
+                          :msg/payments payments
+                          :title (get-title card)})
+     (map? args) (merge args))))
 
 (defmacro simple-msg
   "wraps `game.macros/effect`, calls `->use-card-msg` with each opts as effect-msg map.
@@ -185,7 +205,7 @@
   can also be given a keyword, which is wrapped as `{:effect/type opt}`."
   [& opts]
   `(game.macros/effect
-    (->use-card-msg ~'card (keep msg-map->effect-msg [~@opts]))))
+    (->use-card-msg ~'card [~@opts])))
 
 (defmacro msg-with-cost
   "wraps `game.macros/effect`, calls `->use-card-msg` with each opts as effect-msg map.
@@ -193,4 +213,4 @@
   can also be given a keyword, which is wrapped as `{:effect/type opt}`."
   [& opts]
   `(game.macros/effect
-    (->use-card-msg ~'card (keep msg-map->effect-msg [~@opts]) (vals (:cost-paid ~'eid)))))
+    (->use-card-msg ~'card [~@opts] (vals (:cost-paid ~'eid)))))

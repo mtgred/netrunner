@@ -42,7 +42,7 @@
    [game.core.memory :refer [caissa-mu+ expected-mu mu+ update-mu virus-mu+]]
    [game.core.moving :refer [as-agenda mill move swap-agendas trash trash-cards]]
    [game.core.optional :refer [get-autoresolve never? set-autoresolve]]
-   [game.core.payment :refer [build-cost-string can-pay? cost-value ->c]]
+   [game.core.payment :refer [build-cost-string can-pay? cost-value ->c x-cost-value]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prevention :refer [damage-name damage-type preventable? prevent-damage prevent-encounter prevent-end-run prevent-tag prevent-up-to-n-damage]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
@@ -175,7 +175,7 @@
                                   (first-trash? state event-targets?)))
                  :change-in-game-state {:silent true :req (req (seq (:deck runner)))}
                  :msg (msg-with-cost {:effect/type :draw-cards
-                                   :effect/count 1})
+                                      :effect/count 1})
                  :effect (effect (draw state :runner eid 1))}]
     {:static-abilities [(mu+ 1)]
      :events [(assoc ability :event :corp-trash)
@@ -2132,9 +2132,9 @@
                            :effect (effect (continue-ability
                                           state side
                                           {:cost [(->c :trash-can) (->c :x-credits 0 {:maximum (:remaining context)})]
-                                           :msg (msg "prevent " (cost-value eid :x-credits) " " (damage-type state) " damage")
+                                           :msg (msg "prevent " (x-cost-value eid) " " (damage-type state) " damage")
                                            :async true
-                                           :effect (effect (prevent-damage state side eid (cost-value eid :x-credits)))}
+                                           :effect (effect (prevent-damage state side eid (x-cost-value eid)))}
                                           card nil))}}]})
 
 (defcard "Record Reconstructor"
@@ -2254,7 +2254,7 @@
                 :once :per-turn
                 :async true
                 :effect (effect (let [payment-eid eid
-                                   spent-credits (cost-value eid :x-credits)]
+                                   spent-credits (x-cost-value eid)]
                                (continue-ability
                                  state side
                                  {:choices {:req (req (ice? target)

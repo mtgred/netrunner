@@ -1071,6 +1071,46 @@
                    (make-card {:title "/trace command" :side "Corp"})
                    {:base base}))
 
+(defn get-msg-text
+  [state m]
+  (if (string? m) m (or (:raw-text m) (build-msg state m))))
+
+(defn escape-log-string [s]
+  (if (string? s) (Pattern/quote s) s))
+
+(defn side-log
+  [side log]
+  (into [] (keep #(or (side %) (:public %)) log)))
+
+(defn last-log-contains?
+  ([state content] (last-log-contains? state content :public))
+  ([state content side]
+   (->> (->> @state :log (side-log side) last :text (#(get-msg-text state %)))
+        (re-find (re-pattern (escape-log-string content))))))
+
+(defn second-last-log-contains?
+  ([state content] (second-last-log-contains? state content :public))
+  ([state content side]
+   (->> (->> @state :log (side-log side) butlast last :text (#(get-msg-text state %)))
+        (re-find (re-pattern (escape-log-string content))))))
+
+(defn last-n-log-contains?
+  ([state n content]
+   (last-n-log-contains? state n content :public))
+  ([state n content side]
+   (->> (-> @state :log reverse (->> (side-log side)) (nth n) :text (#(get-msg-text state %)))
+        (re-find (re-pattern (escape-log-string content))))))
+
+(defn log-str [state]
+  (->> (:log @state)
+       (keep :public)
+       (map (comp #(get-msg-text state %) :text))
+       (str/join " ")))
+
+(defn print-log [state]
+  (prn (log-str state))
+  (newline))
+
 (defmacro do-game [s & body]
   `(let [~'state ~s
          ~'get-corp (fn [] (:corp @~'state))
@@ -1107,53 +1147,15 @@
          ~'print-prompts (fn []
                            (print (~'prompt-fmt :corp))
                            (println (~'prompt-fmt :runner)))]
-     ~@body))
+     (let [ret# (do ~@body)]
+       (log-str ~'state)
+       ret#)))
 
 (defmacro before-each
   [let-bindings & testing-blocks]
   (assert (every? #(= 'testing (first %)) testing-blocks))
   (let [bundles (for [block testing-blocks] `(let [~@let-bindings] ~block))]
     `(do ~@bundles)))
-
-(defn get-msg-text
-  [m]
-  (if (string? m) m (or (:raw-text m) (build-msg m))))
-
-(defn escape-log-string [s]
-  (if (string? s) (Pattern/quote s) s))
-
-(defn side-log
-  [side log]
-  (into [] (keep #(or (side %) (:public %)) log)))
-
-(defn last-log-contains?
-  ([state content] (last-log-contains? state content :public))
-  ([state content side]
-   (->> (->> @state :log (side-log side) last :text get-msg-text)
-        (re-find (re-pattern (escape-log-string content))))))
-
-(defn second-last-log-contains?
-  ([state content] (second-last-log-contains? state content :public))
-  ([state content side]
-   (->> (->> @state :log (side-log side) butlast last :text get-msg-text)
-        (re-find (re-pattern (escape-log-string content))))))
-
-(defn last-n-log-contains?
-  ([state n content]
-   (last-n-log-contains? state n content :public))
-  ([state n content side]
-   (->> (-> @state :log reverse (->> (side-log side)) (nth n) :text get-msg-text)
-        (re-find (re-pattern (escape-log-string content))))))
-
-(defn log-str [state]
-  (->> (:log @state)
-       (keep :public)
-       (map (comp get-msg-text :text))
-       (str/join " ")))
-
-(defn print-log [state]
-  (prn (log-str state))
-  (newline))
 
 (defn- make-zone
   [zone replacement]

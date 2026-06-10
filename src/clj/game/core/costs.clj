@@ -1,29 +1,30 @@
 (ns game.core.costs
   {:clj-kondo/ignore [:unused-binding]}
   (:require
-   [game.core.bad-publicity :refer [gain-bad-publicity bad-publicity-available lose-bad-publicity]]
+   [clojure.string :as str]
+   [game.core.bad-publicity :refer [bad-publicity-available gain-bad-publicity lose-bad-publicity]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type]]
    [game.core.card :refer [active? agenda? corp? facedown? get-card get-counters get-zone hardware? has-subtype? ice? in-hand? installed? program? resource? rezzed? runner?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.damage :refer [damage]]
+   [game.core.effects :refer [any-effects is-disabled-reg?]]
    [game.core.eid :refer [complete-with-result make-eid]]
    [game.core.engine :refer [queue-event resolve-ability]]
-   [game.core.effects :refer [any-effects is-disabled-reg?]]
    [game.core.flags :refer [is-scored?]]
    [game.core.gaining :refer [deduct lose]]
    [game.core.moving :refer [discard-from-hand flip-facedown forfeit mill move trash trash-cards]]
-   [game.core.payment :refer [handler label payable? value stealth-value]]
+   [game.core.payment :refer [handler label payable? stealth-value value]]
    [game.core.pick-counters :refer [pick-credit-providing-cards pick-credit-reducers pick-virus-counters-to-spend]]
    [game.core.props :refer [add-counter add-prop]]
    [game.core.revealing :refer [reveal reveal-and-queue-event]]
    [game.core.rezzing :refer [derez]]
+   [game.core.schemas :as schemas]
    [game.core.shuffling :refer [shuffle!]]
-   [game.core.tags :refer [lose-tags gain-tags]]
+   [game.core.tags :refer [gain-tags lose-tags]]
    [game.core.to-string :refer [card-str]]
    [game.core.virus :refer [number-of-virus-counters]]
    [game.macros :refer [continue-ability effect req wait-for]]
-   [game.utils :refer [enumerate-cards enumerate-str quantify same-card?]]
-   [game.core.schemas :as schemas]))
+   [game.utils :refer [enumerate-cards enumerate-str quantify same-card?]]))
 
 (defn- complete-payment [state side eid result]
   (schemas/assert result schemas/Payment)
@@ -415,7 +416,7 @@
                                             {:paid/msg (str "reveals and trashes " (quantify (count trashed-cards) "card")
                                                             " (" (enumerate-cards targets :sorted) ")"
                                                             " from " hand)
-                                             :paid/type :trash-from-hand
+                                             :paid/type (if (= :corp side) :reveal-trash-from-hq :reveal-trash-from-grip)
                                              :paid/value (count trashed-cards)
                                              :paid/targets trashed-cards}))))}
                 forfeit-an-agenda {:prompt "Choose an Agenda to forfeit"
@@ -492,7 +493,7 @@
     (complete-payment
       state side eid
       {:paid/msg "removes 0 tags"
-       :paid/type :x-tags
+       :paid/type :tag
        :paid/value 0})
     (continue-ability
       state side
@@ -504,13 +505,13 @@
                         (complete-payment
                           state side eid
                           {:paid/msg "removes 0 tags"
-                           :paid/type :x-tags
+                           :paid/type :tag
                            :paid/value 0})
                         (wait-for (lose-tags state side eid target {:suppress-checkpoint true})
                                   (complete-payment
                                     state side eid
                                     {:paid/msg (str "removes " (quantify cost "tag"))
-                                     :paid/type :x-tags
+                                     :paid/type :tag
                                      :paid/value cost})))))}
       card nil)))
 
@@ -526,7 +527,7 @@
     (wait-for (gain-bad-publicity state side (make-eid state eid) (value cost) {:suppress-checkpoint true})
               (complete-payment state side eid
                                 {:paid/msg (str "gains " (value cost) " bad publicity")
-                                 :paid/type :tag-or-bad-pub
+                                 :paid/type :gain-bad-publicity
                                  :paid/value (value cost)}))
     (continue-ability
       state side
@@ -534,16 +535,16 @@
        :choices [(str "Remove " (quantify (value cost) "tag"))
                  (str "Gain " (value cost) " bad publicity")]
        :async true
-       :effect (effect (if (= target (str "Gain " (value cost) " bad publicity"))
+       :effect (effect (if (str/includes? target "bad publicity")
                       (wait-for (gain-bad-publicity state side (make-eid state eid) (value cost) {:suppress-checkpoint true})
                                 (complete-payment state side eid
                                                   {:paid/msg (str "gains " (value cost) " bad publicity")
-                                                   :paid/type :tag-or-bad-pub
+                                                   :paid/type :bad-publicity
                                                    :paid/value (value cost)}))
                       (wait-for (lose-tags state side (value cost) {:suppress-checkpoint true})
                                 (complete-payment state side eid
                                                   {:paid/msg (str "removes " (quantify (value cost) "tag"))
-                                                   :paid/type :tag-or-bad-pub
+                                                   :paid/type :tag
                                                    :paid/value (value cost)}))))}
       card nil)))
 
@@ -560,7 +561,7 @@
     state side eid
     {:paid/msg (str "returns " (:title card)
                    " to " (if (= :corp side) "HQ" "[their] grip"))
-     :paid/type :return-to-hand
+     :paid/type (if (= :corp side) :return-to-hq :return-to-grip)
      :paid/value 1
      :paid/targets [card]}))
 
@@ -637,7 +638,7 @@
                               state side eid
                               {:paid/msg (str "trashes " (quantify (count async-result) "installed card")
                                              " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :trash-other-installed
+                               :paid/type :trash-installed
                                :paid/value (count async-result)
                                :paid/targets targets})))}
     card nil))
@@ -697,42 +698,9 @@
                               {:paid/msg (str "trashes " (quantify (count async-result) "installed piece")
                                              " of hardware"
                                              " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :hardware
+                               :paid/type :trash-hardware
                                :paid/value (count async-result)
                                :paid/targets targets})))}
-    card nil))
-
-;; DerezOtherHarmonic - this may NOT target the source card (itself)
-(defmethod value :derez-other-harmonic [cost] (:cost/amount cost))
-(defmethod label :derez-other-harmonic [cost]
-  (str "derez " (value cost) " Harmonic ice"))
-(defmethod payable? :derez-other-harmonic
-  [cost state side eid card]
-  (<= 0 (- (count (filter #(and (rezzed? %)
-                                (has-subtype? % "Harmonic")
-                                (not (same-card? card %)))
-                          (all-active-installed state :corp))) (value cost))))
-(defmethod handler :derez-other-harmonic
-  [cost state side eid card]
-  (continue-ability
-    state side
-    {:prompt (str "Choose " (value cost) " Harmonic ice to derez")
-     :choices {:all true
-               :max (value cost)
-               :card #(and (rezzed? %)
-                           (not (same-card? % card))
-                           (has-subtype? % "Harmonic"))}
-     :async true
-     ;; TODO - once derez is async, fix this
-     :effect (effect (wait-for
-                    (derez state side targets {:suppress-checkpoint true :no-msg true})
-                    (complete-payment
-                      state side eid
-                      {:paid/msg (str "derezzes " (count targets)
-                                      " Harmonic ice (" (enumerate-str (map #(card-str state %) targets)) ")")
-                       :paid/type :derez
-                       :paid/value (count targets)
-                       :paid/targets targets})))}
     card nil))
 
 ;; TrashInstalledProgram
@@ -758,7 +726,7 @@
                               state side eid
                               {:paid/msg (str "trashes " (quantify (count async-result) "installed program")
                                              " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :program
+                               :paid/type :trash-program
                                :paid/value (count async-result)
                                :paid/targets targets})))}
     card nil))
@@ -786,7 +754,7 @@
                               state side eid
                               {:paid/msg (str "trashes " (quantify (count async-result) "installed resource")
                                              " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :resource
+                               :paid/type :trash-resource
                                :paid/value (count async-result)
                                :paid/targets targets})))}
     card nil))
@@ -817,7 +785,7 @@
                               state side eid
                               {:paid/msg (str "trashes " (quantify (count async-result) "installed connection resource")
                                              " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :connection
+                               :paid/type :trash-connection
                                :paid/value (count async-result)
                                :paid/targets targets})))}
     card nil))
@@ -845,7 +813,7 @@
                               state side eid
                               {:paid/msg (str "trashes " (quantify (count async-result) "installed rezzed ice" "")
                                              " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :ice
+                               :paid/type :trash-ice
                                :paid/value (count async-result)
                                :paid/targets targets})))}
     card nil))
@@ -878,7 +846,7 @@
                               state side eid
                               {:paid/msg (str "trashes " (quantify (count async-result) " rezzed Bioroid" "")
                                               " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                               :paid/type :bioroid-run-server
+                               :paid/type :trash-bioroid
                                :paid/value (count async-result)
                                :paid/targets targets})))}
     card nil))
@@ -898,7 +866,7 @@
               {:paid/msg (str "trashes " (quantify (count async-result) "card")
                              " from the top of "
                              (if (= :corp side) "R&D" "the stack"))
-               :paid/type :trash-from-deck
+               :paid/type (if (= :corp side) :trash-from-rd :trash-from-stack)
                :paid/value (count async-result)
                :paid/targets async-result})))
 
@@ -929,7 +897,7 @@
                                                           (pos? (count async-result)))
                                                  (str " (" (enumerate-str (map #(card-str state %) targets)) ")"))
                                                " from " hand)
-                                 :paid/type :trash-from-hand
+                                 :paid/type (if (= :corp side) :trash-from-hq :trash-from-grip)
                                  :paid/value (count async-result)
                                  :paid/targets async-result})))}
       nil nil)))
@@ -951,7 +919,7 @@
                                 (str " (" (enumerate-cards async-result :sorted) ")"))
                              " randomly from "
                              (if (= :corp side) "HQ" "the grip"))
-               :paid/type :randomly-trash-from-hand
+               :paid/type (if (= :corp side) :randomly-trash-from-hq :randomly-trash-from-grip)
                :paid/value (count async-result)
                :paid/targets async-result})))
 
@@ -974,7 +942,7 @@
                           {:paid/msg (str "reveals and trashes " (quantify (count async-result) "card")
                                           " (" (enumerate-cards to-trash :sorted) ")"
                                           " from " hand)
-                           :paid/type :reveal-and-randomly-trash-from-hand
+                           :paid/type (if (= :corp side) :random-reveal-trash-from-hq :random-reveal-trash-from-grip)
                            :paid/value (count async-result)
                            :paid/targets async-result})))))
 
@@ -994,7 +962,7 @@
                                (when (and (= :runner side)
                                           (pos? (count async-result)))
                                  (str " (" (enumerate-cards async-result :sorted) ")")))
-                 :paid/type :trash-entire-hand
+                 :paid/type (if (= :corp side) :trash-all-cards-in-hq :trash-all-cards-in-grip)
                  :paid/value (count async-result)
                  :paid/targets async-result}))))
 
@@ -1021,7 +989,7 @@
                                              " of hardware"
                                              " (" (enumerate-cards targets :sorted) ")"
                                              " from [their] grip")
-                               :paid/type :trash-hardware-from-hand
+                               :paid/type :trash-hardware-in-grip
                                :paid/value (count async-result)
                                :paid/targets async-result})))}
     nil nil))
@@ -1048,7 +1016,7 @@
                               {:paid/msg (str "trashes " (quantify (count async-result) "program")
                                              " (" (enumerate-cards targets :sorted) ")"
                                              " from the grip")
-                               :paid/type :trash-program-from-hand
+                               :paid/type :trash-program-in-grip
                                :paid/value (count async-result)
                                :paid/targets async-result})))}
     nil nil))
@@ -1075,7 +1043,7 @@
                               {:paid/msg (str "trashes " (quantify (count async-result) "resource")
                                              " (" (enumerate-cards targets :sorted) ")"
                                              " from the grip")
-                               :paid/type :trash-resource-from-hand
+                               :paid/type :trash-resource-in-hq
                                :paid/value (count async-result)
                                :paid/targets async-result})))}
     nil nil))
@@ -1124,7 +1092,7 @@
             (complete-payment
               state side eid
               {:paid/msg (str "suffers " (count async-result) " core damage")
-               :paid/type :brain
+               :paid/type :core
                :paid/value (count async-result)
                :paid/targets async-result})))
 
@@ -1150,9 +1118,10 @@
                     (complete-payment
                       state side eid
                       {:paid/msg (str "shuffles " (quantify (count cards) "card")
-                                     " (" (enumerate-cards cards :sorted) ")"
+                                     (when (= :runner side)
+                                       (str " (" (enumerate-cards cards :sorted) ")"))
                                      " into " (if (= :corp side) "R&D" "the stack"))
-                       :paid/type :shuffle-installed-to-stack
+                       :paid/type (if (= :corp side) :shuffle-installed-to-rd :shuffle-installed-to-stack)
                        :paid/value (count cards)
                        :paid/targets cards})))}
     nil nil))
@@ -1175,15 +1144,16 @@
                  :all true
                  :card (every-pred installed? (if (= :corp side) corp? runner?))}
        :async true
-       :effect (effect (let [cards (keep #(move state side % :deck) targets)]
-                      (complete-payment
-                        state side eid
-                        {:paid/msg (str "adds " (quantify (count cards) "installed card")
-                                       " to the bottom of " deck
-                                       " (" (enumerate-str (map #(card-str state %) targets)) ")")
-                         :paid/type :add-installed-to-bottom-of-deck
-                         :paid/value (count cards)
-                         :paid/targets cards})))}
+       :effect (effect
+                 (let [cards (vec (keep #(move state side % :deck) targets))]
+                   (complete-payment
+                     state side eid
+                     {:paid/msg (str "adds " (quantify (count cards) "installed card")
+                                  " to the bottom of " deck
+                                  " (" (enumerate-str (map #(card-str state %) targets)) ")")
+                      :paid/type (if (= :corp side) :add-installed-to-bottom-of-rd :add-installed-to-bottom-of-stack)
+                      :paid/value (count cards)
+                      :paid/targets cards})))}
       nil nil)))
 
 ;; TurnHostedMatryoshkaFacedown
@@ -1227,7 +1197,7 @@
       state side eid
       {:paid/msg (str "adds " (quantify (value cost) "random card")
                      " to the bottom of " deck)
-       :paid/type :add-random-from-hand-to-bottom-of-deck
+       :paid/type (if (= :corp side) :add-random-from-hand-to-bottom-of-rd :add-random-from-hand-to-bottom-of-stack)
        :paid/value (value cost)
        :paid/targets chosen})))
 
@@ -1281,7 +1251,7 @@
                               {:paid/msg (str "spends "
                                               (quantify (value cost) "hosted agenda counter")
                                               " from on " (:title target))
-                               :paid/type :any-agenda-counter
+                               :paid/type :agenda-counter
                                :paid/value (value cost)
                                :paid/targets [target]})))}
     nil nil))
@@ -1295,13 +1265,13 @@
   (<= 0 (- (number-of-virus-counters state) (value cost))))
 (defmethod handler :any-virus-counter
   [cost state side eid card]
-  (wait-for (resolve-ability state side (pick-virus-counters-to-spend (value cost)) card nil)
-            (complete-payment
-              state side eid
-              {:paid/msg (str "spends " (:msg async-result))
-               :paid/type :any-virus-counter
-               :paid/value (:number async-result)
-               :paid/targets (:targets async-result)})))
+  (wait-for [{:keys [msg number targets]} (resolve-ability state side (pick-virus-counters-to-spend (value cost)) card nil)]
+    (complete-payment
+      state side eid
+      {:paid/msg (str "spends " msg)
+       :paid/type :virus-counter
+       :paid/value number
+       :paid/targets targets})))
 
 ;; AdvancementCounter
 (defmethod value :advancement [cost] (:cost/amount cost))
@@ -1320,8 +1290,9 @@
               {:paid/msg (str "spends "
                               (quantify (value cost) "hosted advancement counter")
                               " from on " (:title card))
-               :paid/type :advancement
-               :paid/value (value cost)})))
+               :paid/type :advancement-counter
+               :paid/value (value cost)
+               :paid/targets [card]})))
 
 ;; AgendaCounter
 (defmethod value :agenda [cost] (:cost/amount cost))
@@ -1341,8 +1312,9 @@
               {:paid/msg (str "spends "
                               (quantify (value cost) "hosted agenda counter")
                               " from on " (:title card))
-               :paid/type :agenda
-               :paid/value (value cost)})))
+               :paid/type :agenda-couner
+               :paid/value (value cost)
+               :paid/targets [card]})))
 
 ;; PowerCounter
 (defmethod value :power [cost] (:cost/amount cost))
@@ -1361,16 +1333,17 @@
               {:paid/msg (str "spends "
                               (quantify (value cost) "hosted power counter")
                               " from on " (:title card))
-               :paid/type :power
-               :paid/value (value cost)})))
+               :paid/type :power-counter
+               :paid/value (value cost)
+               :paid/targets [card]})))
 
 ;; XPowerCounter
-(defmethod value :x-power [_] 0)
-(defmethod label :x-power [_] "X hosted power counters")
-(defmethod payable? :x-power
+(defmethod value :x-power-counter [_] 0)
+(defmethod label :x-power-counter [_] "X hosted power counters")
+(defmethod payable? :x-power-counter
   [cost state side eid card]
   (pos? (get-counters card :power)))
-(defmethod handler :x-power
+(defmethod handler :x-power-counter
   [cost state side eid card]
   (continue-ability
     state side
@@ -1385,8 +1358,9 @@
                         {:paid/msg (str "spends "
                                        (quantify cost "hosted power counter")
                                        " from on " (:title card))
-                         :paid/type :x-power
-                         :paid/value cost}))))}
+                         :paid/type :power-counter
+                         :paid/value cost
+                         :paid/targets [card]}))))}
     card nil))
 
 ;; VirusCounter
@@ -1409,13 +1383,13 @@
                  (filter #(= "Hivemind" (:title %)))
                  (keep #(get-counters % :virus))
                  (reduce +)))
-    (wait-for (resolve-ability state side (pick-virus-counters-to-spend card (value cost)) card nil)
-              (complete-payment
-                state side eid
-                {:paid/msg (str "spends " (:msg async-result))
-                 :paid/type :virus
-                 :paid/value (:number async-result)
-                 :paid/targets (:targets async-result)}))
+    (wait-for [{:keys [msg number targets]} (resolve-ability state side (pick-virus-counters-to-spend card (value cost)) card nil)]
+      (complete-payment
+        state side eid
+        {:paid/msg (str "spends " msg)
+         :paid/type :virus-counter
+         :paid/value number
+         :paid/targets targets}))
     (let [title (:title card)]
       (wait-for (add-counter state side card :virus (- (value cost)) {:suppress-checkpoint true})
                 (complete-payment
@@ -1423,22 +1397,39 @@
                   {:paid/msg (str "spends "
                                   (quantify (value cost) "hosted virus counter")
                                   " from on " title)
-                   :paid/type :virus
-                   :paid/value (value cost)})))))
+                   :paid/type :virus-counter
+                   :paid/value (value cost)
+                   :paid/targets [card]})))))
 
-(defmethod value :host-bad-pub [cost] (:cost/amount cost))
-(defmethod label :host-bad-pub [cost] (str "host " (value cost) " bad publicity"))
-(defmethod payable? :host-bad-pub
+;; DerezOtherHarmonic - this may NOT target the source card (itself)
+(defmethod value :derez-other-harmonic [cost] (:cost/amount cost))
+(defmethod label :derez-other-harmonic [cost]
+  (str "derez " (value cost) " Harmonic ice"))
+(defmethod payable? :derez-other-harmonic
   [cost state side eid card]
-  (<= 0 (- (get-in @state [:corp :bad-publicity :base] 0) (value cost))))
-(defmethod handler :host-bad-pub
+  (<= 0 (- (count (filter #(and (rezzed? %)
+                                (has-subtype? % "Harmonic")
+                                (not (same-card? card %)))
+                          (all-active-installed state :corp))) (value cost))))
+(defmethod handler :derez-other-harmonic
   [cost state side eid card]
-  (wait-for
-    (lose-bad-publicity state side (value cost) nil)
-    (wait-for
-      (add-counter state side card :bad-publicity (value cost) {:suppress-checkpoint true})
-      (complete-payment
-        state side eid
-        {:paid/msg (str "hosts " (value cost) " bad publicity on " (:title card))
-         :paid/type :host-bad-pub
-         :paid/value (value cost)}))))
+  (continue-ability
+    state side
+    {:prompt (str "Choose " (value cost) " Harmonic ice to derez")
+     :choices {:all true
+               :max (value cost)
+               :card #(and (rezzed? %)
+                           (not (same-card? % card))
+                           (has-subtype? % "Harmonic"))}
+     :async true
+     ;; TODO - once derez is async, fix this
+     :effect (effect (wait-for
+                    (derez state side targets {:suppress-checkpoint true :no-msg true})
+                    (complete-payment
+                      state side eid
+                      {:paid/msg (str "derezzes " (count targets)
+                                      " Harmonic ice (" (enumerate-str (map #(card-str state %) targets)) ")")
+                       :paid/type :derez-harmonic
+                       :paid/value (count targets)
+                       :paid/targets targets})))}
+    card nil))

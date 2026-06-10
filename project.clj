@@ -68,7 +68,7 @@
                  [metosin/malli "0.20.1"]
                  [metosin/reitit "0.10.1"]
                  [org.flatland/ordered "1.15.12"]
-                 [io.github.noahtheduke/fluent-clj "0.1.0"]]
+                 [io.github.noahtheduke/fluent-clj "0.2.0"]]
 
   :test-selectors {:default (fn [m] (not (:kaocha/pending m)))}
 

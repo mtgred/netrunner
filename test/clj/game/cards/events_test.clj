@@ -945,11 +945,11 @@
     (is (last-log-contains? state "reveal Hedge Fund, Hedge Fund, and Hedge Fund from HQ"))
     (is (changed? [(count (:deck (get-corp))) 2
                    (count (:hand (get-corp))) -2]
-                  (click-prompt state :runner "Hedge Fund")
-                  (click-prompt state :runner "Top of R&D")
-                  (click-prompt state :runner "Hedge Fund")
-                  (click-prompt state :runner "Bottom of R&D"))
-        "2 cards added to R&D")))
+          (click-prompt state :runner "Hedge Fund")
+          (click-prompt state :runner "Top of R&D")
+          (click-prompt state :runner "Hedge Fund")
+          (click-prompt state :runner "Bottom of R&D"))
+      "2 cards added to R&D")))
 
 (deftest by-any-means-full-test
     ;; Full test
