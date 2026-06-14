@@ -359,7 +359,9 @@
       (when-let [url (image-url card)]
         [:div
          [:span.cardname (get-title card)]
-         [:img.card.bg {:src url :alt (get-title card) :onError #(-> % .-target js/$ .hide)}]])]]))
+         [:img.card.bg {:src url :alt (get-title card)
+                        :onLoad #(-> % .-target js/$ .show)
+                        :onError #(-> % .-target js/$ .hide)}]])]]))
 
 (defn card-implementation [zoom-card]
   (r/with-let [log-width (r/cursor app-state [:options :log-width])]
@@ -763,7 +765,9 @@
           [facedown-card side ["bg"] alt-str])
         (when-let [url (image-url card)]
           [:div
-           [:img.card.bg {:src url :alt title :onError #(-> % .-target js/$ .hide)}]]))
+           [:img.card.bg {:src url :alt title
+                          :onLoad #(-> % .-target js/$ .show)
+                          :onError #(-> % .-target js/$ .hide)}]]))
       [:span.cardname (tr-data :title (get @all-cards (:title card)))]
       [:div.counters
        (when counter
@@ -1496,7 +1500,9 @@
                                (when-let [url (image-url card)]
                                  [:div {:on-mouse-enter #(put-game-card-in-channel card zoom-channel)
                                         :on-mouse-leave #(put! zoom-channel false)}
-                                  [:img.start-card {:src url :alt title :onError #(-> % .-target js/$ .hide)}]])]]
+                                  [:img.start-card {:src url :alt title
+                                                    :onLoad #(-> % .-target js/$ .show)
+                                                    :onError #(-> % .-target js/$ .hide)}]])]]
                              (when-let [elem (.querySelector js/document (str "#startcard" i))]
                                (js/setTimeout #(.add (.-classList elem) "flip") (+ 1000 (* i 300))))])
                           @my-hand))]])
