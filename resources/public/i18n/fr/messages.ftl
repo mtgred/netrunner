@@ -34,26 +34,26 @@ join-with-and = {" "}et{" "}
 
 trash-card = efface {$title}
 
-trash-cards = efface {$value ->
+trash-cards = efface {$count ->
     [one] 1 carte
-    *[other] {$value} cartes
+    *[other] {$count} cartes
 }
 
-gain-credits = gagner {$value} [Credit]
+gain-credits = gagner {$count} [Credit]
 
-draw-cards = piocher {$value ->
+draw-cards = piocher {$count ->
     [one] 1 carte
-    *[other] {$value} cartes
+    *[other] {$count} cartes
 }
 
-avoid-tags = éviter {$value ->
+avoid-tags = éviter {$count ->
     [one] 1 tag
-    *[other] {$value} tags
+    *[other] {$count} tags
 }
 
-take-tags = prend {$value ->
+take-tags = prend {$count ->
     [one] 1 tag
-    *[other] {$value} tags
+    *[other] {$count} tags
 }
 
 shuffle-grip-into-stack = mélange { -grip } dans { -stack }
