@@ -310,6 +310,8 @@ game_game-start = Começar partida: {$timestamp}
 
 game_grip = Mão
 
+game_grip-count = Mão ({$cnt})
+
 game_heap = Heap ({$cnt})
 
 game_hq = QG
@@ -384,6 +386,8 @@ game_spec-view = Visão de Espectador
 game_special-mu-count = {$unused} de {$available} {$mu-type} MU não utilizada
 
 game_stack = Pilha
+
+game_stack-count = Pilha ({$cnt})
 
 game_start = Começar Partida
 

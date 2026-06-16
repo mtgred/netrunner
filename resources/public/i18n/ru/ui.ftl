@@ -643,7 +643,7 @@ game_game-start = Начало игры: {$timestamp}
 
 game_grip = Рука
 
-game_grip-count = Grip ({$cnt})
+game_grip-count = Рука ({$cnt})
 
 game_heap = Куча ({$cnt})
 

@@ -79,9 +79,12 @@
 (defn get-translation
   [bundle id params]
   (when bundle
-    (when-let [ret (fluent/format bundle id params)]
-      (when-not (identical? "undefined" ret)
-        ret))))
+    #?(:clj (fluent/format bundle id params)
+       :cljs (try (fluent/format bundle id params)
+                  (catch js/ReferenceError ex
+                    (js/console.log "get-translation id: " id ", params: " params)
+                    (js/console.log ex)
+                    nil)))))
 
 (defn format
   ([lang-cursor resource] (format lang-cursor resource nil))
@@ -211,15 +214,15 @@
   [server-name]
   (let [lang @language-cursor]
     (or (get-in @server-names [lang server-name])
-        (let [sn (case server-name
-                   ("HQ" :hq) "hq"
-                   ("R&D" :rd) "rd"
-                   ("Archives" :archives) "archives"
+        (let [s (name server-name)
+              sn (case s
+                   ("HQ" "hq") "hq"
+                   ("R&D" "rd") "rd"
+                   ("Archives" "archives") "archives"
                    #_:else
-                   (let [s (str server-name)]
-                     (cond
-                       (str/starts-with? s "Server") (subs s 7)
-                       (str/starts-with? s ":remote") (str (parse-long (subs s 7))))))
+                   (cond
+                     (str/starts-with? s "Server") (subs s 7)
+                     (str/starts-with? s "remote") (str (parse-long (subs s 6)))))
               tr (tr :server-name {:server sn})]
           (-> (swap! server-names assoc-in [lang server-name] tr)
               (get-in [lang server-name]))))))

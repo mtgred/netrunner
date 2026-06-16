@@ -364,6 +364,7 @@
           (reduce (fn [acc cur]
                     (let [existing (get acc (:paid/type cur))
                           cost-obj {:paid/type (:paid/type cur)
+                                    :paid/side (:paid/side cur)
                                     :paid/value (+ (:paid/value existing 0) (:paid/value cur 0))
                                     :paid/x-value (+ (:paid/x-value existing 0) (:paid/x-value cur 0))
                                     :paid/targets (seq (concat (:paid/targets existing) (:paid/targets cur)))}]

@@ -24,6 +24,7 @@
   (m/schema
    [:map
     [:paid/type :keyword]
+    [:paid/side [:enum :corp :runner]]
     [:paid/msg {:optional true} :string]
     [:paid/value :some]
     [:paid/targets {:optional true} [:maybe [:sequential :some]]]]))
@@ -131,6 +132,7 @@
 (register-effect :expose-card $title)
 (register-effect :reveal-n-cards-in-hq $count)
 (register-effect :reveal-cards-in-hq $count $titles)
+(register-effect :reveal-top-of-stack $title)
 
 (register-effect :disable-corp-id)
 (register-effect :disable-runner-id)
@@ -140,12 +142,14 @@
 (register-effect :take-additional-turn)
 
 (register-effect :rearrange-installed-ice)
+(register-effect :rearrange-top-n-cards-rd $count)
 
 (register-effect :place-n-advancement-counters $count $card-str)
 (register-effect :remove-advancement-counters $count $card-str)
 (register-effect :place-virus-counters $count $title)
 
-(register-effect :place-credits-on-self-for-trash-costs $count)
+(register-effect :place-credits-on-self $credits)
+(register-effect :place-credits-on-self-for-trash-costs $credits)
 
 (register-effect :look-at-top-cards-add-to-grip $top-count $add-count)
 

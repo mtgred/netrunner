@@ -274,6 +274,8 @@ game_game-start = 게임 시작: {$timestamp}
 
 game_grip = 그립
 
+game_grip-count = 그립({$cnt})
+
 game_heap = 힙({$cnt})
 
 game_hq = 본부(HQ)
@@ -341,6 +343,8 @@ game_spec-view = 관전자 보기
 game_special-mu-count = {$available} 메모리 유닛 중 {$unused} {$mu-type} 미사용
 
 game_stack = 스택
+
+game_stack-count = 스택({$cnt})
 
 game_start = 게임 시작
 

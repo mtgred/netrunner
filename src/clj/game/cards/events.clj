@@ -298,7 +298,7 @@
              {:label "place 4 [Credits] for paying trash costs"
               :msg (simple-msg
                      {:effect/type :place-credits-on-self-for-trash-costs
-                      :effect/count 4})
+                      :effect/credits 4})
               :async true
               :effect (effect (add-counter state side eid (get-card state card) :credit 4 nil))}]
         choice (fn choice [abis rem]
@@ -919,8 +919,13 @@
   (letfn [(reveal-and-load-credits [stack]
             (when-let [topcard (first stack)]
               {:async true
-               :msg (msg "reveal " (get-title topcard) " from the top of the stack, "
-                         "move it to the grip and place " (:cost topcard) " [Credits] on itself")
+               :msg (simple-msg
+                     {:effect/type :reveal-top-of-stack
+                      :effect/title topcard}
+                     {:effect/type :move-seen-into-grip
+                      :effect/seen [topcard]}
+                     {:effect/type :place-credits-on-self
+                      :effect/credits (:cost topcard)})
                :effect (effect (wait-for
                               (reveal state side topcard)
                               (wait-for
@@ -2184,7 +2189,9 @@
               {:target-server :rd
                :this-card-run true
                :ability
-               {:msg "rearrange the top 5 cards of R&D"
+               {:msg (simple-msg
+                      {:effect/type :rearrange-top-n-cards-rd
+                       :effect/count 5})
                 :waiting-prompt true
                 :async true
                 :effect (effect

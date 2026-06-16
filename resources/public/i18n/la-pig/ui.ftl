@@ -319,6 +319,8 @@ game_game-start = Amegay Artstay: {$timestamp}
 
 game_grip = Ipgray
 
+game_grip-count = Ipgray ({$cnt})
+
 game_heap = Eaphay ({$cnt})
 
 game_hq = HQYAY
@@ -405,6 +407,8 @@ game_spec-view = Ectatorspay Iewvay
 game_special-mu-count = (fn [[unused available mu-type]] (str unused " ofyay " available " " mu-type " UMYAY unusedyay"))
 
 game_stack = Ackstay
+
+game_stack-count = Ackstay ({$cnt})
 
 game_start = Artstay Amegay
 

@@ -286,6 +286,8 @@ game_game-start = Rozpoczęcie gry: {$timestamp}
 
 game_grip = Garść
 
+game_grip-count = Garść ({$cnt})
+
 game_heap = Sterta ({$cnt})
 
 game_hq = KG
@@ -357,6 +359,8 @@ game_spec-view = Perspektywa widowni
 game_special-mu-count = Wolne: {$unused} z {$available} {$mu-type} JP
 
 game_stack = Stos
+
+game_stack-count = Stos ({$cnt})
 
 game_start = Rozpoczęcie gry
 

@@ -27,8 +27,9 @@
    [game.utils :refer [enumerate-cards enumerate-str quantify same-card?]]))
 
 (defn- complete-payment [state side eid result]
-  (schemas/assert result schemas/Payment)
-  (complete-with-result state side eid (assoc result :payment/side side)))
+  (let [payment (assoc result :paid/side side)]
+    (schemas/assert payment schemas/Payment)
+    (complete-with-result state side eid payment)))
 
 (defn- can-forfeit? [card] (not (get-in card [:flags :cannot-forfeit])))
 

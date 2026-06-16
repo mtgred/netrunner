@@ -316,7 +316,9 @@ game_gain-credit = Gagner un crédit
 
 game_game-start = Démarrer la partie: {$timestamp}
 
-game_grip = Main ({$cnt})
+game_grip = Main
+
+game_grip-count = Main ({$cnt})
 
 game_heap = Tas ({$cnt})
 
@@ -369,7 +371,7 @@ game_rez = Activer
 
 game_rfg = Retiré du jeu
 
-game_rnd = R&D
+game_rnd = R&D ({$cnt})
 
 game_run = Lancer un piratage
 
@@ -392,7 +394,9 @@ game_spec-count = {$cnt ->
 
 game_spec-view = Vue Spectateur
 
-game_stack = Pile ({$cnt})
+game_stack = Pile
+
+game_stack-count = Pile ({$cnt})
 
 game_start = Démarrer la partie
 

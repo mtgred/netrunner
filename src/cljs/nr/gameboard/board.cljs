@@ -990,7 +990,7 @@
           tr-vec (if is-runner
                    [:game_stack-count (str "Stack (" deck-count-number ")")]
                    [:game_rnd-count (str "R&D (" deck-count-number ")")])
-          title (tr (if is-runner [:game_stack "Stack"] [:game_rnd "R&D"]))
+          title (tr (if is-runner [:game_stack "Stack"] [:game_rnd "R&D"]) {:cnt deck-count-number})
           ref (if is-runner "stack" "rd")
           menu-ref (keyword (str ref "-menu"))
           content-ref (keyword (str ref "-content"))]

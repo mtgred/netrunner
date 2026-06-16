@@ -8,10 +8,10 @@
    [game.core.board :refer [server-list]]
    [game.core.card :refer [active? get-card get-counters get-title installed?
                            rezzed?]]
+   [game.core.change-vals :as change-vals]
    [game.core.diffs :refer [icon-summary]]
    [game.core.eid :as eid]
    [game.core.events :refer [turn-events]]
-   [jinteki.i18n :refer [build-msg load-dictionary!]]
    [game.core.ice :refer [active-ice?]]
    [game.core.initializing :refer [make-card]]
    [game.core.threat :refer [threat-level]]
@@ -19,6 +19,7 @@
    [game.utils :as utils]
    [game.utils-test :refer [error-wrapper is']]
    [jinteki.cards :refer [all-cards]]
+   [jinteki.i18n :refer [build-msg load-dictionary!]]
    [jinteki.utils :as jutils])
   (:import
    (java.util.regex Pattern)))
@@ -227,7 +228,7 @@
   "click an arbitrary number of prompts, one after the other.
   You can tag a prompt like {:side :runner :choice ...}, feed in raw cards,
   or feed in cards like {:choice ...}"
-  ([state side] true)
+  ([_state _side] true)
   ([state side & prompts]
    `(error-wrapper (click-prompts-impl ~state ~side ~(vec prompts)))))
 
@@ -645,11 +646,11 @@
     (ensure-no-prompts state)
     (is' (some? card) (str title "is in hand"))
     (if-not (some? card)
-      (do (let [other-side (if (= side :runner) :corp :runner)]
-            (when (some? (find-card title (get-in @state [other-side :hand])))
-              (println title " was instead found in the opposing hand - was the wrong side used?")))
-          true)
-      (when-let [played (core/process-action "play" state side {:card card})]
+      (let [other-side (if (= side :runner) :corp :runner)]
+        (when (some? (find-card title (get-in @state [other-side :hand])))
+          (println title " was instead found in the opposing hand - was the wrong side used?"))
+        true)
+      (when (core/process-action "play" state side {:card card})
         (let [choice-sets (split-on-keywords choices)]
           (doseq [cs choice-sets]
             (cond
@@ -680,7 +681,7 @@
        (play-from-hand-with-prompts-impl state side (first play) (rest play))))))
 
 (defmacro play-cards
-  ([state side] `nil)
+  ([_state _side] nil)
   ([state side & plays]
    `(error-wrapper (play-cards-impl ~state ~side ~(vec plays)))))
 
@@ -1208,7 +1209,7 @@
                       (= server "Archives") :archives)]
      ;; adjust the threat level for threat: ... subs
      (when threat
-       (game.core.change-vals/change
+       (change-vals/change
          ;; theoretically, either side is fine!
          state (first (shuffle [:corp :runner])) {:key :agenda-point :delta threat})
        (is (threat-level threat state) "Threat set")
