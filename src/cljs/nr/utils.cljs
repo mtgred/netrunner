@@ -5,12 +5,11 @@
    [cljc.java-time.zoned-date-time :as zdt]
    [cljc.java-time.zone-id :as zone]
    [clojure.string :refer [join] :as s]
-   [game.core.l10n :refer [build-msg]]
+   [jinteki.i18n :refer [build-msg tr tr-span tr-data]]
    [goog.object :as gobject]
    [goog.string :as gstring]
    [goog.string.format]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr tr-span tr-data]]
    [flatland.ordered.map :refer [ordered-map]]
    [reagent.dom :as rd]
    [reagent.dom.server :as rdom-server]))
@@ -307,7 +306,7 @@
   [input patterns]
   (cond
     (map? input)
-    (if-let [raw (:raw-string input)]
+    (if-let [raw (:raw-text input)]
       [:<> raw]
       (render-fragment [:<> (build-msg input)] patterns))
     (not (or (string? input) (vector? input)))

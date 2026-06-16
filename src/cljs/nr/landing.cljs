@@ -1,6 +1,6 @@
 (ns nr.landing
   (:require
-   [nr.translations :refer [tr-element tr-element-with-embedded-content tr-span]]))
+   [jinteki.i18n :refer [tr-element tr-element-with-embedded-content tr-span]]))
 
 (def landing-content
   [:div.landing.panel.content-page.blue-shade

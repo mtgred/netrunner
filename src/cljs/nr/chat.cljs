@@ -13,7 +13,7 @@
    [nr.gameboard.card-preview :refer [card-preview-mouse-out
                                       card-preview-mouse-over]]
    [nr.news :refer [news]]
-   [nr.translations :refer [tr tr-element tr-pronouns tr-span]]
+   [jinteki.i18n :refer [tr tr-element tr-pronouns tr-span]]
    [nr.utils :refer [non-game-toast render-message format-date-time
                      day-word-with-time-formatter tr-non-game-toast]]
    [nr.ws :as ws]

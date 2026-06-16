@@ -131,9 +131,6 @@
 (defmethod ig/init-key :web/i18n [_ _opts]
   (i18n/load-dictionary! "public/i18n"))
 
-(defmethod ig/init-key :web/l10n [_ _opts]
-  (i18n/load-dictionary! "public/i18n"))
-
 (defmethod ig/halt-key! :web/i18n [_ _opts]
   (reset! i18n/fluent-dictionary nil))
 

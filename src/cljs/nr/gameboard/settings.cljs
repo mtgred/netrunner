@@ -2,7 +2,7 @@
   (:require
    [nr.account :refer [post-options]]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr-element tr-span]]))
+   [jinteki.i18n :refer [tr-element tr-span]]))
 
 (defn settings-pane []
   (fn []

@@ -33,7 +33,7 @@
                               lose-credits]]
    [game.core.hand-size :refer [hand-size runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [game.core.l10n :refer [msg-with-cost]]
+   [jinteki.i18n :refer [msg-with-cost]]
    [game.core.ice :refer [all-subs-broken? any-subs-broken? auto-icebreaker break-sub pump
                           reset-all-ice update-all-ice update-all-icebreakers
                           update-breaker-strength]]

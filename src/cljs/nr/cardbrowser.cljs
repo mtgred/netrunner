@@ -11,8 +11,8 @@
    [nr.ajax :refer [GET]]
    [nr.appstate :refer [app-state]]
    [nr.local-storage :as ls]
-   [nr.translations :refer [clean-input tr tr-data tr-faction tr-format tr-set
-                            tr-side tr-type]]
+   [jinteki.i18n :refer [clean-input tr tr-data tr-faction tr-format tr-set
+                         tr-side tr-type]]
    [nr.utils :refer [banned-span deck-points-card-span faction-icon
                      buildable-format->slug get-image-path image-or-face influence-dots
                      non-game-toast render-safe-html restricted-span rotated-span

@@ -10,7 +10,7 @@
    [nr.gameboard.card-preview :refer [card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
    [nr.gameboard.state :refer [game-state not-spectator?]]
-   [nr.translations :refer [tr tr-span]]
+   [jinteki.i18n :refer [tr tr-span]]
    [nr.utils :refer [influence-dot player-highlight-option-class
                      render-message render-player-highlight]]
    [nr.ws :as ws]

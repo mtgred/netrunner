@@ -1,13 +1,8 @@
 (ns nr.appstate
   (:require
-   [cljs.core.async :refer [<!] :refer-macros [go]]
-   [jinteki.i18n :as i18n]
-   [jinteki.settings :as settings]
-   [jinteki.utils :refer [str->int]]
-   [nr.ajax :refer [GET]]
-   [nr.local-storage :as ls]
-   [clojure.string :as str]
    [clojure.set :as set]
+   [jinteki.settings :as settings]
+   [nr.local-storage :as ls]
    [reagent.core :as r]))
 
 (defn- migrate-legacy-localStorage-keys!
@@ -17,7 +12,6 @@
                      "sounds_volume" "sounds-volume"
                      "lobby_sounds" "lobby-sounds"
                      "volume" "sounds-volume"}))
-
 
 ;; These "new-formats" will automatically be added into the visible-formats for a player exactly once
 (def new-formats #{"quick-draft" "chimera"})
@@ -77,11 +71,6 @@
              :games []
              :current-game nil
              :block-game-creation false})))
-
-(go (let [lang (get-in @app-state [:options :language] "en")
-          response (<! (GET (str "/data/language/" lang)))]
-      (when (= 200 (:status response))
-        (i18n/insert-lang! lang (:json response)))))
 
 (defn current-gameid [app-state]
   (get-in @app-state [:current-game :gameid]))

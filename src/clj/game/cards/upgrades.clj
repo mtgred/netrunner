@@ -31,7 +31,7 @@
    [game.core.ice :refer [all-subs-broken? get-current-ice get-run-ices pump-ice resolve-subroutine!
                           unbroken-subroutines-choice update-all-ice update-all-icebreakers]]
    [game.core.installing :refer [corp-install swap-cards-async]]
-   [game.core.l10n :refer [msg-with-cost]]
+   [jinteki.i18n :refer [msg-with-cost]]
    [game.core.moving :refer [mill move remove-from-currently-drawing
                              swap-cards swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]

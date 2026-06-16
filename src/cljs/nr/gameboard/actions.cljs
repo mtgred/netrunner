@@ -2,16 +2,17 @@
   (:require
    [differ.core :as differ]
    [goog.functions :as gfn]
+   [jinteki.i18n :refer [tr-span]]
    [nr.angel-arena.lobby :as angel-arena]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.gameboard.replay :refer [init-replay]]
    [nr.gameboard.state :refer [check-lock? game-state get-side last-state
                                parse-state]]
-   [nr.translations :refer [tr-span]]
-   [nr.utils :refer [toastr-options]]
    [nr.sounds :refer [play-sfx]]
+   [nr.utils :refer [toastr-options]]
    [nr.ws :as ws]
    [reagent.core :as r]
+   [reagent.dom.server :as rdom-server]
    [reagent.ratom :as ratom]))
 
 (defn reset-game! [state]
@@ -64,7 +65,7 @@
 (declare toast)
 (defn handle-timeout [gameid]
   (when (= gameid (current-gameid app-state))
-    (toast [:game_inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true}
+    (toast [:game_inactivity "Game closed due to inactivity"] "error" {:time-out 0 :close-button true})
     (leave-game!)))
 
 (defn handle-timeout-soon [gameid]
@@ -123,7 +124,7 @@
             (js/escape (str "Please describe the circumstances of your error here.\n\n\nStack Trace:\n```clojure\n"
                          error
                          "\n```")))]
-    (reagent.dom.server/render-to-string
+    (rdom-server/render-to-string
       [:div msg [:br]
        [:a.button
         {:type "button"
@@ -143,7 +144,7 @@
   (let [msg (if (vector? msg) [tr-span msg] msg)]
     (when-let [f (aget js/toastr (if (= "exception" toast-type) "error" toast-type))]
       (f (if (= "exception" toast-type) (build-exception-msg msg (:last-error @game-state))
-             (if (vector? msg) (reagent.dom.server/render-to-string msg) msg))))))
+             (if (vector? msg) (rdom-server/render-to-string msg) msg))))))
 
 (defonce side (r/cursor game-state [:side]))
 (defonce me-toasts (ratom/reaction (get-in @game-state [@side :toast])))

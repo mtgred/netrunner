@@ -38,7 +38,7 @@
    [game.core.ice :refer [update-all-ice update-ice-strength]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
-   [game.core.l10n :refer [simple-msg]]
+   [jinteki.i18n :refer [simple-msg]]
    [game.core.moving :refer [as-agenda mill move remove-from-currently-drawing
                              swap-agendas swap-cards swap-installed trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]

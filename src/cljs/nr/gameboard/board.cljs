@@ -25,7 +25,7 @@
    [nr.gameboard.right-pane :refer [content-pane]]
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
-   [nr.translations :refer [tr tr-data tr-game-prompt tr-side tr-element tr-span]]
+   [jinteki.i18n :refer [tr tr-data tr-game-prompt tr-side tr-element tr-span]]
    [nr.utils :refer [banned-span card-colors-class card-colors-custom-style
                      checkbox-button cond-button get-image-path
                      image-or-face map-longest render-icons render-message]]

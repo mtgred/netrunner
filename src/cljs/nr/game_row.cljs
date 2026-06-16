@@ -10,7 +10,7 @@
    [nr.auth :refer [authenticated] :as auth]
    [nr.player-view :refer [player-view]]
    [nr.sounds :refer [resume-sound]]
-   [nr.translations :refer [tr tr-format tr-span]]
+   [jinteki.i18n :refer [tr tr-format tr-span]]
    [nr.utils :refer [slug->format]]
    [nr.ws :as ws]
    [reagent.core :as r]))

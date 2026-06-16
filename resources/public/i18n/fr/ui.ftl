@@ -316,7 +316,7 @@ game_gain-credit = Gagner un crédit
 
 game_game-start = Démarrer la partie: {$timestamp}
 
-game_grip = Main
+game_grip = Main ({$cnt})
 
 game_heap = Tas ({$cnt})
 
@@ -392,7 +392,7 @@ game_spec-count = {$cnt ->
 
 game_spec-view = Vue Spectateur
 
-game_stack = Pile
+game_stack = Pile ({$cnt})
 
 game_start = Démarrer la partie
 

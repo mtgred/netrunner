@@ -50,7 +50,12 @@
     (step coll #{})))
 
 (defn string->num [s]
-  (parse-long s))
+  #?(:clj (try
+            (let [num (bigdec s)]
+              (if (and (> num Integer/MIN_VALUE) (< num Integer/MAX_VALUE)) (int num) num))
+            (catch Exception _ nil))
+     :cljs (cond (number? s) s
+                 (string? s) (parse-long s))))
 
 (def safe-split (fnil str/split ""))
 

@@ -11,7 +11,7 @@
    [game.core.diffs :refer [icon-summary]]
    [game.core.eid :as eid]
    [game.core.events :refer [turn-events]]
-   [game.core.l10n :refer [build-msg]]
+   [jinteki.i18n :refer [build-msg load-dictionary!]]
    [game.core.ice :refer [active-ice?]]
    [game.core.initializing :refer [make-card]]
    [game.core.threat :refer [threat-level]]
@@ -48,6 +48,8 @@
              '[game.cards.resources]
              '[game.cards.upgrades])))
 (load-all-cards)
+
+(load-dictionary! "public/i18n")
 
 (defn is-zone-impl
   "Is the zone exactly equal to a given set of cards?"
@@ -801,8 +803,8 @@
               (not= :success (:phase (:run @state))))
     (run-continue-impl state))
   (when (and (= :success phase)
-             (and (= :movement (:phase (:run @state)))
-                  (zero? (:position (:run @state)))))
+             (= :movement (:phase (:run @state)))
+             (zero? (:position (:run @state))))
     (run-continue-impl state))
   (when ice
     (is' (utils/same-card? ice (core/get-current-ice state))) "Current ice reached"))
@@ -1072,8 +1074,8 @@
                    {:base base}))
 
 (defn get-msg-text
-  [state m]
-  (if (string? m) m (or (:raw-text m) (build-msg state m))))
+  [m]
+  (if (string? m) m (or (:raw-text m) (build-msg m))))
 
 (defn escape-log-string [s]
   (if (string? s) (Pattern/quote s) s))
@@ -1085,26 +1087,26 @@
 (defn last-log-contains?
   ([state content] (last-log-contains? state content :public))
   ([state content side]
-   (->> (->> @state :log (side-log side) last :text (#(get-msg-text state %)))
+   (->> (->> @state :log (side-log side) last :text get-msg-text)
         (re-find (re-pattern (escape-log-string content))))))
 
 (defn second-last-log-contains?
   ([state content] (second-last-log-contains? state content :public))
   ([state content side]
-   (->> (->> @state :log (side-log side) butlast last :text (#(get-msg-text state %)))
+   (->> (->> @state :log (side-log side) butlast last :text get-msg-text)
         (re-find (re-pattern (escape-log-string content))))))
 
 (defn last-n-log-contains?
   ([state n content]
    (last-n-log-contains? state n content :public))
   ([state n content side]
-   (->> (-> @state :log reverse (->> (side-log side)) (nth n) :text (#(get-msg-text state %)))
+   (->> (-> @state :log reverse (->> (side-log side)) (nth n) :text get-msg-text)
         (re-find (re-pattern (escape-log-string content))))))
 
 (defn log-str [state]
   (->> (:log @state)
        (keep :public)
-       (map (comp #(get-msg-text state %) :text))
+       (map (comp get-msg-text :text))
        (str/join " ")))
 
 (defn print-log [state]

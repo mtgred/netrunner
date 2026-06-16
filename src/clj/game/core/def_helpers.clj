@@ -12,7 +12,7 @@
     [game.core.engine :refer [queue-event register-events resolve-ability trigger-event unregister-event-by-uuid]]
     [game.core.effects :refer [any-effects is-disabled-reg?]]
     [game.core.gaining :refer [gain-credits lose-credits]]
-    [game.core.l10n :refer [simple-msg]]
+    [jinteki.i18n :refer [simple-msg]]
     [game.core.installing :refer [corp-install]]
     [game.core.moving :refer [move trash]]
     [game.core.play-instants :refer [async-rfg]]

@@ -55,7 +55,7 @@
    [game.core.installing :refer [install-as-condition-counter install-locked?
                                  runner-can-install?
                                  runner-can-pay-and-install? runner-install]]
-   [game.core.l10n :refer [msg-with-cost simple-msg]]
+   [jinteki.i18n :refer [msg-with-cost simple-msg]]
    [game.core.link :refer [get-link]]
    [game.core.mark :refer [identify-mark-ability mark-changed-event]]
    [game.core.memory :refer [available-mu]]
@@ -4083,7 +4083,9 @@
 
 (defcard "Sure Gamble"
   {:on-play
-   {:msg "gain 9 [Credits]"
+   {:msg (simple-msg
+          {:effect/type :gain-credits
+           :effect/count 9})
     :async true
     :effect (effect (gain-credits state side eid 9))}})
 

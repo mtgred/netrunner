@@ -1,7 +1,9 @@
 (ns game.core.to-string
   (:require
    [clojure.string :as str]
-   [game.core.card :refer [card-index corp? #?(:clj get-card) get-title ice? installed? rezzed?]]
+   [game.core.card :refer [#?(:clj card-index)
+                           #?(:clj get-card) corp? get-title
+                           ice? installed? rezzed?]]
    [game.core.servers :refer [is-root? zone->name]]))
 
 #?(:clj (defn card-str
