@@ -49,23 +49,20 @@
                                             (get-in (trusted-deck-status (assoc deck :format fmt))
                                                     [(keyword fmt) :legal]
                                                     false))))
-          appropriate-decks (->> @decks
-                                 (filter same-side?)
-                                 (filter singleton-fn?)
-                                 (filter #(legal? % fmt))
-                                 (sort-by :date)
-                                 (reverse))]
+          matches-format? (fn [deck] (= (:format deck) fmt))
+          by-date-desc (fn [decks] (reverse (sort-by :date decks)))
+          legal-decks (->> @decks
+                           (filter same-side?)
+                           (filter singleton-fn?)
+                           (filter #(legal? % fmt)))
+          appropriate-decks (concat (by-date-desc (filter matches-format? legal-decks))
+                                     (by-date-desc (remove matches-format? legal-decks)))]
       (if (seq appropriate-decks)
         [:div
          [tr-element :h3 [:lobby_select-title "Select your deck"]]
          [:div.deck-collection.lobby-deck-selector
           (doall
-            (for [deck (->> @decks
-                            (filter same-side?)
-                            (filter singleton-fn?)
-                            (filter #(legal? % fmt))
-                            (sort-by :date)
-                            (reverse))]
+            (for [deck appropriate-decks]
               [:div.deckline {:key (:_id deck)
                               :on-click #(select-deck deck)}
                [:img {:src (image-url (:identity deck))
