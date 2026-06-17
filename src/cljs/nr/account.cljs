@@ -317,7 +317,7 @@
            [:div [tr-span [:settings_pronouns-request "If your personal pronouns are not represented, you can request them"]] " "
             [:a {:href "https://github.com/mtgred/netrunner/issues"} [tr-span [:settings_pronouns-here "here"]]]]]
           [:section
-           [tr :h3 [:settings_language "Language"]]
+           [tr-element :h3 [:settings_language "Language"]]
            [:select {:value (:language @s "en")
                      :on-change #(swap! s assoc :language (.. % -target -value))}
             (doall
