@@ -489,6 +489,7 @@
    :runner
    :runner-phase-12
    :runner-post-discard
+   :sequence
    :sfx
    :sfx-current-id
    :start-date
@@ -579,6 +580,7 @@
       base-diff)))
 
 (defn public-diffs [old-state new-state spectators? corp-spectators? runner-spectators?]
+  (swap! new-state update :sequence inc)
   (let [{old-corp :corp-state old-runner :runner-state
          old-spect :spect-state old-hist :hist-state
          old-corp-spect :corp-spect-state
