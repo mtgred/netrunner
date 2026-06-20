@@ -541,6 +541,7 @@
     {:static-abilities [steal-cost]
      :additional-trash-cost {:value [(->c :add-random-from-hand-to-bottom-of-deck 2)]
                              :req (req (rezzed? card)
+                                       (= :runner side)
                                        (not (is-disabled-reg? state card)))}
      :on-trash {:async true
                 :interactive (effect true)
