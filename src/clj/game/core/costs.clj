@@ -1011,14 +1011,14 @@
                                          (str " (" (enumerate-cards async-result :sorted) ")")))
                    :paid/type :trash-entire-hand
                    :paid/value (count async-result)
-                   :paid/targets async-result})
+                   :paid/targets async-result}
                   {:paid/msg (str "trashes all (" (count async-result) ") cards in [their] grip"
                                   (if (= :runner side) "[their] grip" "HQ")
                                   (when (seq async-result)
                                     (str " (" (enumerate-cards async-result :sorted) ")")))
                    :paid/type :trash-entire-hand
                    :paid/value (count async-result)
-                   :paid/targets async-result}))))
+                   :paid/targets async-result})))))
 
 ;; TrashHardwareFromHand
 (defmethod value :trash-hardware-from-hand [cost] (:cost/amount cost))
