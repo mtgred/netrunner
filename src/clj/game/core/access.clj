@@ -11,9 +11,9 @@
     [game.core.finding :refer [find-cid]]
     [game.core.flags :refer [can-access? can-access-loud can-steal? can-trash? card-flag-fn? card-flag?]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [add-cost-label-to-ability build-cost-string can-pay? merge-costs ->c cost->string]]
+    [game.core.payment :refer [add-cost-label-to-ability build-cost-string can-pay? merge-costs ->c]]
     [game.core.revealing :refer [reveal]]
-    [game.core.say :refer [play-sfx system-msg multi-msg]]
+    [game.core.say :refer [play-sfx system-msg]]
     [game.core.servers :refer [get-server-type name-zone zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
@@ -84,21 +84,14 @@
       (let [card (assoc c :seen true)
             ; Trash costs
             trash-cost (when-not (in-discard? c) (trash-cost state side card))
-            trash-additional-cost (when-not (in-discard? c)
-                                    (when-let [tac (:additional-trash-cost (card-def c))]
-                                      (when (or (not (:req tac)) ((:req tac) state side eid c nil))
-                                        (:value tac))))
-            full-trash-cost [(->c :credit trash-cost) trash-additional-cost]
+            full-trash-cost [(->c :credit trash-cost)]
             trash-eid (assoc eid :source card :source-type :runner-trash-corp-cards)
             ; Runner cannot trash (eg Trebuchet)
             can-trash (can-trash? state side c)
             can-pay (when trash-cost
                       (can-pay? state :runner trash-eid card nil full-trash-cost))
             trash-cost-str (when can-pay
-                             [(str "Pay " trash-cost " [Credits]"
-                                   (when trash-additional-cost
-                                     (str " and " (cost->string trash-additional-cost)))
-                                   " to trash")])
+                             [(str "Pay " trash-cost " [Credits] to trash")])
             ; Is the runner is forced to trash this card with only credits? (NAT)
             must-trash-with-credits? (and can-pay
                                           (get-in @state [:runner :register :must-trash-with-credits]))
@@ -157,10 +150,7 @@
                                              (swap! state assoc-in [:run :did-access] true)))
                                          (swap! state assoc-in [:runner :register :trashed-card] true)
                                          (swap! state assoc-in [:runner :register :trashed-accessed-card] true)
-                                         (let [rhs (str " to trash " (:title card) " from " (name-zone :corp (get-zone card)))]
-                                           (multi-msg state side {:runner (str (:runner-msg async-result) rhs)
-                                                                  :corp   (str (:corp-msg async-result)   rhs)
-                                                                  :public (str (:msg async-result)        rhs)}))
+                                         (system-msg state side (str (:msg async-result) " to trash " (:title card) " from " (name-zone :corp (get-zone card))))
                                          (wait-for (trash state side card {:accessed true})
                                                    (access-end state side eid (first async-result) {:trashed true}))))
 
