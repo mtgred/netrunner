@@ -1,6 +1,7 @@
 (ns nr.gameboard.actions
   (:require
    [differ.core :as differ]
+   [goog.functions :as gfn]
    [nr.angel-arena.lobby :as angel-arena]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.gameboard.replay :refer [init-replay]]
@@ -42,13 +43,23 @@
   (-> "#gameboard" js/$ .fadeOut)
   (-> "#gamelobby" js/$ .fadeIn))
 
+(defn- sequence-resync []
+  (prn "resynchronising game state due to out of order data")
+  (ws/resync))
+
 (defn handle-diff! [{:keys [gameid diff]}]
   (when (= gameid (str (current-gameid app-state)))
-    (let [patch (differ/patch @last-state diff)]
-      (reset! game-state patch))
-    (check-lock?)
-    (let [gs @game-state]
-      (reset! last-state gs))))
+    (let [old-sequence (:sequence @game-state)
+          patch (differ/patch @last-state diff)]
+      (reset! game-state patch)
+      (check-lock?)
+      (let [gs @game-state]
+        (reset! last-state gs))
+      ;; Note: Although websockets gaurantee in-order delivery, they do not gaurantee
+      ;; delivery of every message. If we miss a message, we need to trigger a re-sync.
+      (let [new-sequence (:sequence @game-state)]
+        (when (not= new-sequence (inc old-sequence))
+          (gfn/throttle sequence-resync 1500))))))
 
 (declare toast)
 (defn handle-timeout [gameid]

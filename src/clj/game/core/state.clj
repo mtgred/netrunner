@@ -75,5 +75,6 @@
      :start-date now
      :options options
      :encounters []
+     :sequence 0
      :corp corp
      :runner runner}))
