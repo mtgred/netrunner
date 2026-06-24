@@ -1,7 +1,7 @@
 (ns game.cards.upgrades
   (:require
    [clojure.string :as str]
-   [cond-plus.core :refer [cond+]]
+   [com.noahbogart.cond-plus :refer [cond+]]
    [game.core.access :refer [access-bonus set-only-card-to-access
                              installed-access-trigger
                              steal-cost-bonus]]
@@ -31,10 +31,11 @@
    [game.core.ice :refer [all-subs-broken? get-current-ice get-run-ices pump-ice resolve-subroutine!
                           unbroken-subroutines-choice update-all-ice update-all-icebreakers]]
    [game.core.installing :refer [corp-install swap-cards-async]]
+   [game.core.l10n :refer [msg-with-cost]]
    [game.core.moving :refer [mill move remove-from-currently-drawing
                              swap-cards swap-ice trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
-   [game.core.payment :refer [can-pay? cost-value ->c]]
+   [game.core.payment :refer [can-pay? cost-value ->c x-cost-value]]
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-prop set-prop]]
@@ -348,10 +349,15 @@
                                                                  (rezzed? %)
                                                                  (not (same-card? % rezzed-card)))}
                                            :async true
-                                           :effect (effect (wait-for (derez state side (get-card state target)
-                                                                         {:msg-keys {:and-then (str " to give " (card-str state rezzed-card) " +3 strength for the remainder of the run")}})
-                                                                  (pump-ice state side rezzed-card 3 :end-of-run)
-                                                                  (effect-completed state side eid)))}}}
+                                           :effect (effect (wait-for (derez state side
+                                                                       (get-card state target)
+                                                                       {:msg-keys
+                                                                        {:and-then
+                                                                         {:effect/type :give-strength-to-icebreaker-remainder-of-run
+                                                                          :effect/card-str rezzed-card 
+                                                                          :effect/bonus 3}}})
+                                                             (pump-ice state side rezzed-card 3 :end-of-run)
+                                                             (effect-completed state side eid)))}}}
                            card nil)))}]})
 
 (defcard "Breaker Bay Grid"
@@ -502,9 +508,9 @@
                           :req (req (ice? target)
                                          (rezzed? target)
                                          (protecting-same-server? card target))}
-                :msg (msg "add " (cost-value eid :x-credits)
+                :msg (msg "add " (x-cost-value eid)
                           " strength to " (:title target))
-                :effect (effect (pump-ice state side target (cost-value eid :x-credits) :end-of-turn))}]})
+                :effect (effect (pump-ice state side target (x-cost-value eid) :end-of-turn))}]})
 
 (defcard "Crisium Grid"
   {:static-abilities [{:type :block-successful-run
@@ -930,11 +936,11 @@
                                      (no-event? state side :agenda-stolen))
                           -6
                           0))
-   :abilities [{:label "Place 1 advancement token on a card in this server"
+   :abilities [{:label "Place 1 advancement counter on a card in this server"
                 :async true
                 :prompt "Choose a card in this server"
                 :choices {:req (req (in-same-server? card target))}
-                :msg (msg "place an advancement token on " (card-str state target))
+                :msg (msg "place an advancement counter on " (card-str state target))
                 :cost [(->c :trash-can)]
                 :effect (effect (add-prop state side eid target :advance-counter 1 {:placed true}))}]})
 
@@ -1098,9 +1104,12 @@
 (defcard "La Costa Grid"
   (let [ability {:prompt (msg "Choose a card in " (zone->name (second (get-zone card))))
                  :label "Place 1 advancement counter (start of turn)"
-                 :msg (msg "place 1 advancement counter on " (card-str state target))
+                 :msg (msg-with-cost
+                        {:effect/type :place-n-advancement-counters
+                         :effect/count 1
+                         :effect/card-str target})
                  :choices {:req (req (installed? target)
-                                          (in-same-server? card target))}
+                                  (in-same-server? card target))}
                  :async true
                  :effect (effect (add-prop state side eid target :advance-counter 1 {:placed true}))}]
     {:legal-zones (effect (remove #{"HQ" "R&D" "Archives"} targets))
@@ -1528,7 +1537,7 @@
                                 state side (when-let [rdc target]
                                   {:prompt "Choose a card in HQ"
                                    :choices {:card in-hand?}
-                                   :msg "swap a card from the top 5 of R&D with a card in HQ"
+                                   :msg "swap a card from the top 5 cards of R&D with a card in HQ"
                                    :effect (effect (move state side rdc :hand)
                                                 (move state side target :deck {:index (:index rdc)}))})
                                 card nil))}

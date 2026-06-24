@@ -1,6 +1,6 @@
 (ns game.core.installing
   (:require
-    [cond-plus.core :refer [cond+]]
+    [com.noahbogart.cond-plus :refer [cond+]]
     [clojure.string :as string]
     [game.core.agendas :refer [update-advancement-requirement]]
     [game.core.board :refer [all-installed get-remotes installable-servers server->zone all-installed-runner-type]]

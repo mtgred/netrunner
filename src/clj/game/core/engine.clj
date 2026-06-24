@@ -3,7 +3,7 @@
     [clj-uuid :as uuid]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]
-    [cond-plus.core :refer [cond+]]
+    [com.noahbogart.cond-plus :refer [cond+]]
     [game.core.board :refer [clear-empty-remotes get-all-cards all-installed all-installed-runner
                              all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title ice? in-discard? in-hand? in-rfg? in-set-aside? installed? rezzed? program? console? unique?]]
@@ -307,11 +307,12 @@
   (when-let [message (:msg ability)]
     (let [desc (if (or (= :cost message) (string? message))
                  message
-                 (message state side eid card targets))
-          cost-spend-msg (build-spend-msg payment-str "use")]
+                 (message state side eid card targets))]
       (cond
+        (map? desc) desc
         (= :cost desc) (str payment-str " to satisfy " (get-title card))
-        desc (str cost-spend-msg (get-title card) " to " desc)))))
+        desc (str (build-spend-msg payment-str "use")
+                  (get-title card) " to " desc)))))
 
 (defn print-msg
   "Prints the ability message"
@@ -359,15 +360,16 @@
   ([cost-paid] cost-paid)
   ([cost-paid1 cost-paid2]
    (let [costs-paid (concat (vals cost-paid1) (vals cost-paid2))]
-     (reduce (fn [acc cur]
-               (let [existing (get acc (:paid/type cur))
-                     cost-obj {:paid/type (:paid/type cur)
-                               :paid/value (+ (:paid/value existing 0) (:paid/value cur 0))
-                               :paid/x-value (+ (:paid/x-value existing 0) (:paid/x-value cur 0))
-                               :paid/targets (seq (concat (:paid/targets existing) (:paid/targets cur)))}]
-                 (assoc acc (:paid/type cur) cost-obj)))
-             {}
-             costs-paid)))
+     (->> costs-paid
+          (reduce (fn [acc cur]
+                    (let [existing (get acc (:paid/type cur))
+                          cost-obj {:paid/type (:paid/type cur)
+                                    :paid/value (+ (:paid/value existing 0) (:paid/value cur 0))
+                                    :paid/x-value (+ (:paid/x-value existing 0) (:paid/x-value cur 0))
+                                    :paid/targets (seq (concat (:paid/targets existing) (:paid/targets cur)))}]
+                      (assoc! acc (:paid/type cur) cost-obj)))
+                  (transient {}))
+          (persistent!))))
   ([cost-paid1 cost-paid2 & costs-paid]
    (reduce merge-costs-paid (merge-costs-paid cost-paid1 cost-paid2) costs-paid)))
 

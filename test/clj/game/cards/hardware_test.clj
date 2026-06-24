@@ -1428,7 +1428,9 @@
 (deftest buffer-drive-vs-annicam
     ;; The player may move one card trashed from the Grip by the Runner to the bottom of the Stack
     (do-game
-      (new-game {:runner {:hand ["Buffer Drive" "Aniccam" "Strike Fund"]
+      (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                        :hand ["Hedge Fund"]}
+                 :runner {:hand ["Buffer Drive" "Aniccam" "Strike Fund"]
                           :credits 19}})
       (take-credits state :corp)
       (play-from-hand state :runner "Buffer Drive")
@@ -2228,7 +2230,7 @@
       (let [flip (get-hardware state 0)]
         (run-on state "HQ")
         (card-ability state :runner (get-hardware state 0) 0)
-        (is (= "Runner jacks out." (-> @state :log last :public :text)))
+        (is (last-log-contains? state "Runner jacks out."))
         (is (nil? (refresh flip)) "Flip Switch has been trashed")
         (is (find-card "Flip Switch" (:discard (get-runner)))))))
 
@@ -2573,13 +2575,13 @@
       (click-card state :runner cache)
       (is (= 1 (count (:discard (get-runner)))) "Prevented 1 net damage")
       (is (= 2 (count (:hand (get-runner)))))
-      (is (last-log-contains? state "Runner trashes 1 installed card \\(Cache\\) to use Heartbeat to prevent 1 net damage\\."))
+      (is (last-log-contains? state "Runner trashes 1 installed card (Cache) to use Heartbeat to prevent 1 net damage."))
       (damage state :corp :net 3)
       (click-prompt state :runner "Heartbeat")
       (click-card state :runner hbdown)
       (click-prompt state :runner "Pass priority")
       (is (= 4 (count (:discard (get-runner)))) "Prevented 1 of 3 net damage; used facedown card")
-      (is (true? (last-n-log-contains? state 1 "Runner trashes 1 installed card \\(a facedown card\\) to use Heartbeat to prevent 1 net damage\\."))))))
+      (is (last-n-log-contains? state 1 "Runner trashes 1 installed card (a facedown card) to use Heartbeat to prevent 1 net damage.")))))
 
 (deftest hermes
     (do-game

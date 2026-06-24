@@ -632,7 +632,8 @@
                    forfeit-ev (if (= :corp side) :corp-forfeit-agenda :runner-forfeit-agenda)
                    moved-card (move state (to-keyword (:side card)) card :rfg)]
                (when msg
-                 (system-msg state side (str "forfeits " (get-title card))))
+                 (system-msg state side {:msg/type :msg-forfeit-agenda
+                                         :title (get-title card)}))
                (update-all-agenda-points state side)
                (check-win-by-agenda state side)
                (queue-event state forfeit-ev {:card card})

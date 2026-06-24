@@ -11,6 +11,7 @@
    [game.core.diffs :refer [icon-summary]]
    [game.core.eid :as eid]
    [game.core.events :refer [turn-events]]
+   [game.core.l10n :refer [build-msg]]
    [game.core.ice :refer [active-ice?]]
    [game.core.initializing :refer [make-card]]
    [game.core.threat :refer [threat-level]]
@@ -18,7 +19,9 @@
    [game.utils :as utils]
    [game.utils-test :refer [error-wrapper is']]
    [jinteki.cards :refer [all-cards]]
-   [jinteki.utils :as jutils]))
+   [jinteki.utils :as jutils])
+  (:import
+   (java.util.regex Pattern)))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -1068,14 +1071,45 @@
                    (make-card {:title "/trace command" :side "Corp"})
                    {:base base}))
 
+(defn get-msg-text
+  [state m]
+  (if (string? m) m (or (:raw-text m) (build-msg state m))))
+
+(defn escape-log-string [s]
+  (if (string? s) (Pattern/quote s) s))
+
+(defn side-log
+  [side log]
+  (into [] (keep #(or (side %) (:public %)) log)))
+
+(defn last-log-contains?
+  ([state content] (last-log-contains? state content :public))
+  ([state content side]
+   (->> (->> @state :log (side-log side) last :text (#(get-msg-text state %)))
+        (re-find (re-pattern (escape-log-string content))))))
+
+(defn second-last-log-contains?
+  ([state content] (second-last-log-contains? state content :public))
+  ([state content side]
+   (->> (->> @state :log (side-log side) butlast last :text (#(get-msg-text state %)))
+        (re-find (re-pattern (escape-log-string content))))))
+
+(defn last-n-log-contains?
+  ([state n content]
+   (last-n-log-contains? state n content :public))
+  ([state n content side]
+   (->> (-> @state :log reverse (->> (side-log side)) (nth n) :text (#(get-msg-text state %)))
+        (re-find (re-pattern (escape-log-string content))))))
+
 (defn log-str [state]
   (->> (:log @state)
        (keep :public)
-       (map :text)
+       (map (comp #(get-msg-text state %) :text))
        (str/join " ")))
 
 (defn print-log [state]
-  (prn (log-str state)))
+  (prn (log-str state))
+  (newline))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s
@@ -1113,44 +1147,15 @@
          ~'print-prompts (fn []
                            (print (~'prompt-fmt :corp))
                            (println (~'prompt-fmt :runner)))]
-     ~@body))
+     (let [ret# (do ~@body)]
+       (log-str ~'state)
+       ret#)))
 
 (defmacro before-each
   [let-bindings & testing-blocks]
   (assert (every? #(= 'testing (first %)) testing-blocks))
   (let [bundles (for [block testing-blocks] `(let [~@let-bindings] ~block))]
     `(do ~@bundles)))
-
-(defn escape-log-string [s]
-  (str/escape s {\[ "\\[" \] "\\]"}))
-
-(defn- side-log
-  [side log]
-  (into [] (keep #(or (side %) (:public %)) log)))
-
-(defn last-log-contains?
-  ([state content] (last-log-contains? state content :public))
-  ([state content side]
-   (->> (->> @state :log (side-log side) last :text)
-        (re-find (re-pattern (escape-log-string content)))
-        some?)))
-
-(defn second-last-log-contains?
-  ([state content] (second-last-log-contains? state content :public))
-  ([state content side]
-   (->> (->> @state :log (side-log side) butlast last :text)
-        (re-find (re-pattern (escape-log-string content)))
-        some?)))
-
-(defn last-n-log-contains?
-  ([state n content]
-   (last-n-log-contains? state n content :public))
-  ([state n content side]
-   (let [log (->> @state :log (side-log side) (mapv :text))
-         index (- (count log) 1 n)
-         log-entry (nth log index "")
-         res (re-find (re-pattern (escape-log-string content)) log-entry)]
-     (some? res))))
 
 (defn- make-zone
   [zone replacement]

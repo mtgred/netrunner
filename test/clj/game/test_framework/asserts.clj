@@ -7,43 +7,58 @@
 
 (defmethod t/assert-expr 'last-log-contains?
   [msg form]
-  `(let [state# ~(nth form 1)
-         content# ~(nth form 2)
-         log# (-> @state# :log last :text)
-         found# ~form]
-     (t/do-report
-       {:type (if found# :pass :fail)
-        :actual log#
-        :expected content#
-        :message ~msg})
-     found#))
+  (let [[_last-log-contains? state content side] form]
+    `(let [state# ~state
+           content# ~content
+           side# ~(or side :public)
+           log# (->> (:log @state#)
+                     (game.test-framework/side-log side#)
+                     last :text
+                     (game.test-framework/get-msg-text state#))
+           found# ~form]
+       (t/do-report
+        {:type (if found# :pass :fail)
+         :actual log#
+         :expected content#
+         :message ~msg})
+       found#)))
 
 (defmethod t/assert-expr 'second-last-log-contains?
   [msg form]
-  `(let [state# ~(nth form 1)
-         content# ~(nth form 2)
-         log# (-> @state# :log butlast last :text)
-         found# ~form]
-     (t/do-report
-       {:type (if found# :pass :fail)
-        :actual log#
-        :expected content#
-        :message ~msg})
-     found#))
+  (let [[_second-last-log-contains? state content side] form]
+    `(let [state# ~state
+           content# ~content
+           side# ~(or side :public)
+           log# (->> (:log @state#)
+                     (game.test-framework/side-log side#)
+                     butlast last :text
+                     (game.test-framework/get-msg-text state#))
+           found# ~form]
+       (t/do-report
+        {:type (if found# :pass :fail)
+         :actual log#
+         :expected content#
+         :message ~msg})
+       found#)))
 
 (defmethod t/assert-expr 'last-n-log-contains?
   [msg form]
-  `(let [state# ~(nth form 1)
-         n# ~(nth form 2)
-         content# ~(nth form 3)
-         log# (:text (nth (-> @state# :log reverse) n#))
-         found# ~form]
-     (t/do-report
-       {:type (if found# :pass :fail)
-        :actual log#
-        :expected content#
-        :message ~msg})
-     found#))
+  (let [[_last-n-log-contains? state n content side] form]
+    `(let [state# ~state
+           n# ~n
+           content# ~content
+           side# ~(or side :public)
+           log# (-> @state# :log reverse
+                    (->> (game.test-framework/side-log side#))
+                    (nth n#) :text
+                    (->> (game.test-framework/get-msg-text state#)))
+           found# ~form]
+       (t/do-report
+        {:type (if found# :pass :fail)
+         :actual log#
+         :expected content#
+         :message ~msg})
+       found#)))
 
 (defmethod t/assert-expr 'prompt-is-type?
   [msg form]

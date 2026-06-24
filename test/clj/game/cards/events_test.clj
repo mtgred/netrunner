@@ -945,11 +945,11 @@
     (is (last-log-contains? state "reveal Hedge Fund, Hedge Fund, and Hedge Fund from HQ"))
     (is (changed? [(count (:deck (get-corp))) 2
                    (count (:hand (get-corp))) -2]
-                  (click-prompt state :runner "Hedge Fund")
-                  (click-prompt state :runner "Top of R&D")
-                  (click-prompt state :runner "Hedge Fund")
-                  (click-prompt state :runner "Bottom of R&D"))
-        "2 cards added to R&D")))
+          (click-prompt state :runner "Hedge Fund")
+          (click-prompt state :runner "Top of R&D")
+          (click-prompt state :runner "Hedge Fund")
+          (click-prompt state :runner "Bottom of R&D"))
+      "2 cards added to R&D")))
 
 (deftest by-any-means-full-test
     ;; Full test
@@ -2981,8 +2981,8 @@
                :runner {:hand ["Executive Wiretaps"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Executive Wiretaps")
-    (is (last-log-contains? state (str "Runner uses Executive Wiretaps to reveal "
-                                       "Cayambe Grid, Hedge Fund, Hostile Takeover, Ice Wall, and PAD Campaign from HQ.")))))
+    (is (last-log-contains? state (str "Runner uses Executive Wiretaps to reveal 5 cards"
+                                       " (Cayambe Grid, Hedge Fund, Hostile Takeover, Ice Wall, PAD Campaign) from HQ.")))))
 
 (deftest exploit
   ;; Exploit

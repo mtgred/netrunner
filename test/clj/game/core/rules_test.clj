@@ -76,7 +76,7 @@
       (is (= "Kati Jones" (:title (get-resource state 1))))
       (is (not (find-card "Kati Jones" (:hosted (get-resource state 0)))))
       (is (= "Kati Jones" (:title (get-discarded state :runner))))
-      (is (last-log-contains? state "Kati Jones hosted on .* is trashed."))))
+      (is (last-log-contains? state #"Kati Jones hosted on .* is trashed."))))
   (testing "Should trash the loaded kati on OCA"
     (do-game
       (new-game {:runner {:hand [(qty "Kati Jones" 2) "Off-Campus Apartment"]
@@ -89,7 +89,7 @@
       (is (= 0 (get-counters (first (:hosted (get-resource state 0))) :credit)) "Correct kati trash")
       (is (find-card "Kati Jones" (:hosted (get-resource state 0))))
       (is (= "Kati Jones" (:title (get-discarded state :runner))))
-      (is (last-log-contains? state "Kati Jones hosted on .* is trashed.")))))
+      (is (last-log-contains? state #"Kati Jones hosted on .* is trashed.")))))
 
 (deftest installing-second-hivemind-trashes-hosted-hivemind-test
   (do-game

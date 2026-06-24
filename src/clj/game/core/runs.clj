@@ -128,46 +128,44 @@
            (when click-run
              (swap! state assoc-in [:runner :register :made-click-run] true)
              (play-sfx state side "click-run"))
-           (wait-for
-             (pay state :runner (make-eid state eid) nil costs)
-             (let [payment-str (:msg async-result)]
-               (if-not payment-str
-                 (effect-completed state side eid)
-                 (let [s [(if (keyword? server) server (last (server->zone state server)))]
-                       ices (get-in @state (concat [:corp :servers] s [:ices]))
-                       n (count ices)]
-                   (when (not-empty payment-str)
-                     (system-msg state :runner (str (build-spend-msg payment-str "make a run on" "makes a run on")
-                                                    (zone->name (unknown->kw server))
-                                                    (when ignore-costs ", ignoring all costs"))))
-                   ;; s is a keyword for the server, like :hq or :remote1
-                   (let [run-id (make-eid state)]
-                     (swap! state assoc
-                            :per-run nil
-                            :run {:run-id run-id
-                                  :server s
-                                  :position n
-                                  :corp-auto-no-action false
-                                  :phase :initiation
-                                  :eid eid
-                                  :current-ice nil
-                                  :events nil
-                                  :source-card (select-keys card [:code :cid :zone :title :side :type :art :implementation])})
-                     (when card
-                       (update! state side (assoc-in card [:special :run-id] run-id))))
-                   (show-run-prompts state (str "running on " (zone->name (unknown->kw server))) card)
-                   (wait-for
-                     (gain-run-credits state side
-                                       (make-eid state eid)
-                                       (get-in @state [:runner :next-run-credit] 0))
-                     (swap! state assoc-in [:run :bad-publicity-available] (count-bad-pub state))
-                     (swap! state assoc-in [:runner :next-run-credit] 0)
-                     (swap! state update-in [:runner :register :made-run] conj (first s))
-                     (swap! state update-in [:stats side :runs :started] (fnil inc 0))
-                     (queue-event state :run {:server s
-                                              :position n
-                                              :cost-args cost-args})
-                     (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-initiation)))))))))))
+           (wait-for [{payment-str :msg cost-paid :cost-paid} (pay state :runner (make-eid state eid) nil costs)]
+             (if-not payment-str
+               (effect-completed state side eid)
+               (let [s [(if (keyword? server) server (last (server->zone state server)))]
+                     ices (get-in @state (concat [:corp :servers] s [:ices]))
+                     n (count ices)]
+                 (when (not-empty payment-str)
+                   (system-msg state :runner (str (build-spend-msg payment-str "make a run on" "makes a run on")
+                                                  (zone->name (unknown->kw server))
+                                                  (when ignore-costs ", ignoring all costs"))))
+                 ;; s is a keyword for the server, like :hq or :remote1
+                 (let [run-id (make-eid state)]
+                   (swap! state assoc
+                          :per-run nil
+                          :run {:run-id run-id
+                                :server s
+                                :position n
+                                :corp-auto-no-action false
+                                :phase :initiation
+                                :eid eid
+                                :current-ice nil
+                                :events nil
+                                :source-card (select-keys card [:code :cid :zone :title :side :type :art :implementation])})
+                   (when card
+                     (update! state side (assoc-in card [:special :run-id] run-id))))
+                 (show-run-prompts state (str "running on " (zone->name (unknown->kw server))) card)
+                 (wait-for
+                   (gain-run-credits state side
+                     (make-eid state eid)
+                     (get-in @state [:runner :next-run-credit] 0))
+                   (swap! state assoc-in [:run :bad-publicity-available] (count-bad-pub state))
+                   (swap! state assoc-in [:runner :next-run-credit] 0)
+                   (swap! state update-in [:runner :register :made-run] conj (first s))
+                   (swap! state update-in [:stats side :runs :started] (fnil inc 0))
+                   (queue-event state :run {:server s
+                                            :position n
+                                            :cost-args cost-args})
+                   (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-initiation))))))))))
 
 (defmethod continue :initiation
   [state side _]
@@ -670,7 +668,7 @@
             {:prompt (str "You are prevented from breaching " (zone->name server) " this run.")
              :choices ["OK"]
              :async true
-             :effect (effect (system-msg state :runner (str "is prevented from breaching " (zone->name server) " this run."))
+             :effect (effect (system-msg state :runner (str "is prevented from breaching " (zone->name server) " this run"))
                              (handle-end-run state side eid))}
             nil nil)
 

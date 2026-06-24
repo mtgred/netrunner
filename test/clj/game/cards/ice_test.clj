@@ -1084,7 +1084,7 @@
               (auto-pump-and-break state cor))
             "Gained 2c from the runner breaking")
         (is (last-n-log-contains? state 2 "Corp uses Bailiff to gain 1 [Credits]"))
-        (is (true? (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 [Credits]")))))))
+        (is (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 [Credits]"))))))
 
 (deftest ballista
   ;; Ballista
@@ -3105,8 +3105,7 @@
         (take-credits state :corp)
         (let [hand    (:hand (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to reveal.+"
-                           " from HQ, and shuffle them into R&D")]
+              log-str #"Corp uses Gatekeeper to reveal.+ from HQ, and shuffle them into R&D"]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -3127,8 +3126,7 @@
         (take-credits state :corp)
         (let [discard    (:discard (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to reveal.+"
-                           " from Archives, and shuffle them into R&D")]
+              log-str #"Corp uses Gatekeeper to reveal.+ from Archives, and shuffle them into R&D"]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -3152,8 +3150,7 @@
         (let [hand    (:hand (get-corp))
               discard (:discard (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to reveal.+ from HQ "
-                           "and .+ from Archives, and shuffle them into R&D")]
+              log-str #"Corp uses Gatekeeper to reveal.+ from HQ and .+ from Archives, and shuffle them into R&D"]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -3272,7 +3269,7 @@
           "Paid 2c + 2c for breaking")
       (is (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs")
           "Correct messages")
-      (is (true? (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs")) "Also correct messages"))))
+      (is (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs") "Also correct messages"))))
 
 (deftest gold-farmer-interaction-with-paperclip
   ;; Interaction with Paperclip
@@ -7506,7 +7503,7 @@
     (let [sm (get-ice state :hq 0)]
       (rez state :corp sm))
     (run-continue state)
-    (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), and Sure Gamble \\(Event\\) from the top of the stack.") "3 top cards revelaed")))
+    (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal Sure Gamble (Event), Sure Gamble (Event), and Sure Gamble (Event) from the top of the stack.") "3 top cards revelaed")))
 
 (deftest slot-machine-subroutines
   ;; Subroutines
@@ -8356,6 +8353,16 @@
     (click-prompts state :corp "Ice Wall" "Guard" "I want to start over" "Ice Wall" "Cancel" "OK")
     (is-hand? state :corp ["Ice Wall"])))
 
+(deftest tollbooth
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Tollbooth"]
+                      :credits 20}})
+    (play-from-hand state :corp "Tollbooth" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (run-continue state :encounter-ice)))
 
 (deftest tour-guide-rez-before-other-assets
   ;; Rez before other assets
