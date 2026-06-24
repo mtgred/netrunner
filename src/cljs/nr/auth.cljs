@@ -61,9 +61,9 @@
   [:ul
    [:li
     [:a {:href "" :data-target "#register-form" :data-toggle "modal"
-         :on-click (fn [] (.focus (js/$ "input[name='email']")))} "Sign up"]]
+         :on-click (fn [] (.focus (js/$ "input[name='email']")))} (tr [:menu_signup "Sign up"])]]
    [:li
-    [:a {:href "" :data-target "#login-form" :data-toggle "modal"} "Login"]]])
+    [:a {:href "" :data-target "#login-form" :data-toggle "modal"} (tr [:menu_login "Login"])]]])
 
 (defn check-username [value s]
   (go (let [response (<! (GET (str "/check-username/" value)))]

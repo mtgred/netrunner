@@ -1146,11 +1146,15 @@ menu_admin = {nav_admin}
 
 menu_donor = Donor
 
+menu_login = Login
+
 menu_logout = Jack out
 
 menu_moderator = Moderator
 
 menu_settings = {nav_settings}
+
+menu_signup = Sign up
 
 nav_about = About
 
