@@ -9,6 +9,6 @@
 # populating a local database with 'lein fetch'. See also Dockerfile.initdb for
 # how the local database is used as a template to seed a production database.
 
-FROM nginx:alpine
+FROM nginx:1.31.2-alpine
 
 COPY ./public/img/cards /usr/share/nginx/html/img/cards
