@@ -1,5 +1,5 @@
 # Dockerfile for local development
-FROM clojure:latest
+FROM clojure:temurin-25-lein-2.13.0-bookworm
 
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
