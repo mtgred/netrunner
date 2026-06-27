@@ -108,7 +108,7 @@ card-browser_clear = Сбросить
 
 card-browser_cost = Цена: {$cost}
 
-card-browser_implementation-note = Implementation Note: {$impl}
+card-browser_implementation-note = Заметка о реализации: {$impl}
 
 card-browser_inf-limit = Предел влияния: {$inf-limit}
 
@@ -1432,6 +1432,34 @@ preconstructed_worlds-2023-b-tag = cableCarnage (К) против Уильяма
 preconstructed_worlds-2023-b-ul = ЧМ 2023: tableCarnage против You *do* always come back!
 
 preconstructed_worlds-2023-info = Во втором Чемпионате мира по Netrunner под крылом Null Signal Games приняли участие 254 игрока. Турнир проходил в Барселоне, Испания, и состоял из 9 раундов по швейцарской системе, переходящих в топ кат на 16 участников. Последний легальный набор: The Automata Initiative.
+
+preconstructed_worlds-2024-a = ЧМ 2024: Алекс Бойд (К) против Ди Руттенберг (Б)
+
+preconstructed_worlds-2024-a-tag = Алекс Бойд (К) против Ди Руттенберг (Б)
+
+preconstructed_worlds-2024-a-ul = ЧМ 2024: Forced Errors против In My Lat Era
+
+preconstructed_worlds-2024-b = ЧМ 2024: Ди Руттенберг (К) против Алекса Бойда (Б)
+
+preconstructed_worlds-2024-b-tag = Ди Руттенберг (К) против Алекса Бойда (Б)
+
+preconstructed_worlds-2024-b-ul = ЧМ 2024: 	LouDeeRer против Netrunner is a game we play with our bodies
+
+preconstructed_worlds-2024-info = В третьем Чемпионате мира по Netrunner, организованном Null Signal Games, сразились 204 игрока. В этом турнире Алекс Бойд aka aruzan (Arissana, Reality Plus) выиграл титул чемпиона мира по Netrunner в финальной игре против Ди Руттенберг aka DeeR (Lat, PE), не потерпев ни единого поражения в топ кате. Турнир проходил в отеле Embarcadero Waterfront в Сан-Франциско 19-20 октября и состоял из 14 раундов по односторонней швейцарской системе, переходящей в топ 16 кат. Последний легальный набор: Rebellion Without Rehearsal.
+
+preconstructed_worlds-2025-a = ЧМ 2025: davz131 (К) против ZomZraft (Б)
+
+preconstructed_worlds-2025-a-tag = davz131 (К) против ZomZraft (Б)
+
+preconstructed_worlds-2025-a-ul = ЧМ 2025: Complexity+ против Vampire
+
+preconstructed_worlds-2025-b = ЧМ 2025: ZomZraft (К) против davz131 (Б)
+
+preconstructed_worlds-2025-b-tag = ZomZraft (К) против davz131 (Б)
+
+preconstructed_worlds-2025-b-ul = ЧМ 2025: Constrictor против Midnight Insurrection
+
+preconstructed_worlds-2025-info = В четвёртом Чемпионате мира по Netrunner под началом Null Signal Games принял участие 361 игрок. В этом турнире ZomZraft (Epiphany, Hoshiko) выиграл титул чемпиона мира по Netrunner в финальной игре против davz131 (Au Co, Esa). Турнир проходил в Dovecot Studios в Эдинбурге 18-19 октября и состоял из 14 раундов по односторонней швейцарской системе, переходящей в топ 16 кат. Последний легальный набор: Elevation.
 
 pronouns = {$pronoun ->
     [any] Любые
