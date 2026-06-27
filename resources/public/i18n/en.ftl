@@ -1558,6 +1558,8 @@ settings_api-keys-not-updated = Failed to update API keys
 
 settings_api-keys-updated = Updated API keys
 
+settings_auto-select-default-deck = Auto-select default deck in casual games
+
 settings_avatar = Avatar
 
 settings_background = Game board background
@@ -1687,6 +1689,8 @@ settings_language-tip = Some languages are not fully translated yet. If you woul
 settings_layout-device = Device Layout
 
 settings_layout-options = Layout options
+
+settings_game-settings = Game Settings
 
 settings_log-player-highlight = Log player highlight
 

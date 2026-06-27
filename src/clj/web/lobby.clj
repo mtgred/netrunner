@@ -25,6 +25,8 @@
 
 (read-write/print-time-literals-clj!)
 
+(declare auto-select-decks)
+
 (defonce telemetry-buckets (agent {}))
 (defn log-delay!
   [timestamp id]
@@ -345,8 +347,9 @@
   (update lobby :messages conj message))
 
 (defn try-create-lobby
-  [uid user ?data]
+  [db uid user ?data]
   (let [lobby (-> (create-new-lobby {:uid uid :user user :options ?data})
+                  (->> (auto-select-decks db))
                   (send-message
                     (core/make-system-message (str (:username user) " has created the game."))))
         new-app-state (swap! app-state/app-state update :lobbies
@@ -359,7 +362,7 @@
 
 (defmethod ws/-msg-handler :lobby/create
   lobby--create
-  [{{user :user} :ring-req
+  [{{db :system/db user :user} :ring-req
     uid :uid
     ?data :?data
     id :id
@@ -368,7 +371,7 @@
     (if (:block-game-creation @app-state/app-state)
       (ws/chsk-send! uid [:lobby/toast {:message :lobby_creation-paused
                                         :type "error"}])
-      (try-create-lobby uid user ?data))
+      (try-create-lobby db uid user ?data))
     (log-delay! timestamp id)))
 
 (defn clear-lobby-state [uid]
@@ -526,6 +529,27 @@
                   p))
         players))
 
+(defn auto-select-deck-id
+  [{:keys [auto-select-default-deck default-decks]} format side]
+  (when (and auto-select-default-deck side (not= "Any Side" side))
+    (get-in default-decks [(keyword side) (keyword format)])))
+
+(defn maybe-auto-select-deck
+  [db lobby player]
+  (let [options (:options (app-state/get-user (:uid player)))
+        deck (when-let [deck-id (auto-select-deck-id options (:format lobby) (:side player))]
+               (process-deck (find-deck-for-user db deck-id (:user player))))]
+    (if (and deck (valid-deck-for-lobby? lobby deck))
+      (assoc player :deck deck)
+      player)))
+
+(defn auto-select-decks
+  [db lobby]
+  (if (or (:started lobby) (not= "casual" (:room lobby)))
+    lobby
+    (update lobby :players
+            (partial mapv #(if (:deck %) % (maybe-auto-select-deck db lobby %))))))
+
 (defn handle-select-deck [lobbies uid deck]
   (let [lobby (app-state/uid-player->lobby lobbies uid)
         gameid (:gameid lobby)]
@@ -625,21 +649,22 @@
                           :side user-side}]
       (assoc lobby :players [existing-player user-as-player]))))
 
-(defn handle-join-lobby [lobbies ?data uid user correct-password? join-message]
+(defn handle-join-lobby [db lobbies ?data uid user correct-password? join-message]
   (let [{:keys [gameid request-side]} ?data
         lobby (get lobbies gameid)]
     (if (and user lobby (allowed-in-lobby user lobby) correct-password?)
       (-> lobby
           (insert-user-as-player uid user request-side)
+          (->> (auto-select-decks db))
           (send-message join-message)
           (->> (assoc lobbies gameid)))
       lobbies)))
 
-(defn join-lobby! [user uid ?data ?reply-fn lobby]
+(defn join-lobby! [db user uid ?data ?reply-fn lobby]
   (let [correct-password? (check-password lobby user (:password ?data))
         join-message (core/make-system-message (str (:username user) " joined the game."))
         new-app-state (swap! app-state/app-state update :lobbies
-                             #(handle-join-lobby % ?data uid user correct-password? join-message))
+                             #(handle-join-lobby db % ?data uid user correct-password? join-message))
         lobby? (get-in new-app-state [:lobbies (:gameid ?data)])]
     (cond
       (and lobby? correct-password?)
@@ -659,7 +684,7 @@
 
 (defmethod ws/-msg-handler :lobby/join
   lobby--join
-  [{{user :user} :ring-req
+  [{{db :system/db user :user} :ring-req
     uid :uid
     {gameid :gameid :as ?data} :?data
     ?reply-fn :?reply-fn
@@ -667,7 +692,7 @@
     timestamp :timestamp}]
   (lobby-thread
     (when-let [lobby (app-state/get-lobby gameid)]
-      (join-lobby! user uid ?data ?reply-fn lobby))
+      (join-lobby! db user uid ?data ?reply-fn lobby))
     (log-delay! timestamp id)))
 
 (defn swap-side
@@ -691,10 +716,11 @@
       (some? side) (update lobby :players (fn [x] (mapv #(change-side % side) x)))
       :else (update lobby :players #(mapv swap-side %)))))
 
-(defn handle-swap-sides [lobbies gameid uid side swap-message]
+(defn handle-swap-sides [db lobbies gameid uid side swap-message]
   (if-let [lobby (get lobbies gameid)]
     (-> lobby
         (update-sides uid side)
+        (->> (auto-select-decks db))
         (send-message swap-message)
         (->> (assoc lobbies gameid)))
     lobbies))
@@ -717,7 +743,7 @@
 
 (defmethod ws/-msg-handler :lobby/swap
   lobby--swap
-  [{{user :user} :ring-req
+  [{{db :system/db user :user} :ring-req
     uid :uid
     {:keys [gameid side]} :?data
     id :id
@@ -729,8 +755,7 @@
                                                :text (swap-text (:players lobby) side)})
               new-app-state (swap! app-state/app-state
                                    update :lobbies
-                                   #(-> %
-                                        (handle-swap-sides gameid uid side swap-message)
+                                   #(-> (handle-swap-sides db % gameid uid side swap-message)
                                         (handle-set-last-update gameid uid)))
               lobby? (get-in new-app-state [:lobbies gameid])]
           (send-lobby-state lobby?)

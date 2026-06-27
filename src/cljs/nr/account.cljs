@@ -378,14 +378,22 @@
                  [tr-span [:settings_bespoke-sounds group-name] {:sound group-name}]]]))]
 
           [:section
-           [tr-element :h3 [:lobby_default-game-format "Default game format"]]
-           [:select.format
-            {:value (or (:default-format @s) "standard")
-             :on-change #(swap! s assoc :default-format (.. % -target -value))}
-            (doall
-             (for [[k v] slug->format]
-               ^{:key k}
-               [:option {:value k :data-i18n-key k} (tr-format v)]))]]
+           [tr-element :h3 [:settings_game-settings "Game Settings"]]
+           [:div
+            [tr-element :h4 [:lobby_default-game-format "Default game format"]]
+            [:select.format
+             {:value (or (:default-format @s) "standard")
+              :on-change #(swap! s assoc :default-format (.. % -target -value))}
+             (doall
+              (for [[k v] slug->format]
+                ^{:key k}
+                [:option {:value k :data-i18n-key k} (tr-format v)]))]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:auto-select-default-deck @s)
+                             :on-change #(swap! s assoc :auto-select-default-deck (.. % -target -checked))}]
+             [tr-span [:settings_auto-select-default-deck "Auto-select default deck in casual games"]]]]]
 
           [:section
            [tr-element :h3 [:settings_gameplay-settings "Gameplay Settings"]]
@@ -737,6 +745,7 @@
                    (select-keys [:pronouns :bespoke-sounds :language :card-language :sounds :default-format
                                  :lobby-sounds :sounds-volume :background :custom-bg-url :card-zoom
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
+                                 :auto-select-default-deck
                                  :player-stats-icons :stacked-cards :ghost-trojans
                                  :corp-card-sleeve :runner-card-sleeve :prizes
                                  :display-encounter-info :sides-overlap :log-timestamps

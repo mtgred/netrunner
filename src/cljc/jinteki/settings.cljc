@@ -99,6 +99,11 @@
     :sync? true
     :validate-fn validate-alt-arts
     :doc "User's selected alternate art set when :show-alt-art is true"}
+   {:key :auto-select-default-deck
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Auto-select your default deck on casual lobbies"}
    {:key :archives-sorted
     :default false
     :sync? true
