@@ -5,7 +5,7 @@
     [nr.appstate :refer [app-state current-gameid]]
     [nr.cardbrowser :refer [image-url] :as cb]
     [nr.deck-status :refer [deck-format-status-span]]
-    [nr.deckbuilder :refer [deck-name]]
+    [nr.deckbuilder :refer [deck-name default-deck?]]
     [nr.lobby-chat :refer [lobby-chat]]
     [nr.player-view :refer [player-view]]
     [nr.translations :refer [tr tr-element tr-element-with-embedded-content tr-span tr-side]]
@@ -35,26 +35,25 @@
                   (tr-non-game-toast [:lobby_select-error "Cannot select that deck"] "error")))
   (reagent-modals/close-modal!))
 
+(defn deck-valid-for-lobby?
+  [deck {:keys [format singleton]} side]
+  (and (= side (get-in deck [:identity :side]))
+       (or (not singleton) (singleton-deck? deck))
+       (or (= "casual" format)
+           (get-in deck [:status (keyword format) :legal]
+                   (get-in (trusted-deck-status (assoc deck :format format))
+                           [(keyword format) :legal]
+                           false)))))
+
 (defn select-deck-modal [user current-game]
   (r/with-let [decks (r/cursor app-state [:decks])]
-    (let [fmt (:format @current-game)
-          players (:players @current-game)
-          singleton? (:singleton @current-game)
-          singleton-fn? (fn [deck] (or (not singleton?) (singleton-deck? deck)))
-          ;;(or (not singleton?) (singleton-id? (get-in deck [:identity])))) -- this one restricts to the ids only
+    (let [game @current-game
+          fmt (:format game)
+          players (:players game)
           side (:side (some #(when (= (-> % :user :_id) (:_id @user)) %) players))
-          same-side? (fn [deck] (= side (get-in deck [:identity :side])))
-          legal? (fn [deck fmt] (or (= "casual" fmt)
-                                    (get-in deck [:status (keyword fmt) :legal]
-                                            (get-in (trusted-deck-status (assoc deck :format fmt))
-                                                    [(keyword fmt) :legal]
-                                                    false))))
           matches-format? (fn [deck] (= (:format deck) fmt))
           by-date-desc (fn [decks] (reverse (sort-by :date decks)))
-          legal-decks (->> @decks
-                           (filter same-side?)
-                           (filter singleton-fn?)
-                           (filter #(legal? % fmt)))
+          legal-decks (filter #(deck-valid-for-lobby? % game side) @decks)
           appropriate-decks (concat (by-date-desc (filter matches-format? legal-decks))
                                      (by-date-desc (remove matches-format? legal-decks)))]
       (if (seq appropriate-decks)
@@ -68,7 +67,9 @@
                [:img {:src (image-url (:identity deck))
                       :alt (get-in deck [:identity :title] "")}]
                [:div.float-right [deck-format-status-span deck fmt true]]
-               [:h4 (:name deck)]
+               [:h4 (when (default-deck? deck)
+                      [:span.deck-default-star {:title (tr [:deck-builder_default "Default deck"])} "★ "])
+                (:name deck)]
                [:div.float-right
                 (format-date-time mdy-formatter (:date deck))]
                [:p (get-in deck [:identity :title])]]))]]
@@ -143,9 +144,22 @@
    [leave-button gameid]
    [swap-sides-button user gameid players]])
 
+(defn default-deck-for-lobby
+  "The local user's default deck for the given side and the lobby's format, when it is in
+   their collection and valid for this lobby. nil otherwise."
+  [current-game side]
+  (let [deck-id (get-in @app-state [:options :default-decks (keyword side) (keyword (:format @current-game))])
+        deck (some #(when (= (:_id %) deck-id) %) (:decks @app-state))]
+    (when (and deck (deck-valid-for-lobby? deck @current-game side))
+      deck)))
+
 (defn player-item [user current-game player]
   (let [player-id (get-in player [:user :_id])
-        this-player (= player-id (:_id @user))]
+        this-player (= player-id (:_id @user))
+        side (:side player)
+        can-select? (and (is-constructed? current-game)
+                         this-player
+                         (not (= side (tr-side "Any Side"))))]
     [:div {:key player-id}
      [player-view player (dissoc @current-game :password)]
      (when-let [{:keys [status]} (:deck player)]
@@ -156,12 +170,15 @@
            [tr-span [:lobby_deck-selected "Deck selected"]])]])
      (when-let [deck (:deck player)]
        [:div.float-right [deck-format-status-span deck (:format @current-game "standard") true]])
-     (when (and (is-constructed? current-game)
-                this-player
-                (not (= (:side player) (tr-side "Any Side"))))
+     (when can-select?
        [:span.fake-link.deck-load
         {:on-click #(reagent-modals/modal! [select-deck-modal user current-game])}
-        [tr-span [:lobby_select-deck "Select Deck"]]])]))
+        [tr-span [:lobby_select-deck "Select Deck"]]])
+     (when (and can-select? (not (:deck player)))
+       (when-let [default (default-deck-for-lobby current-game side)]
+         [:span.fake-link.deck-load
+          {:on-click #(select-deck default)}
+          [tr-span [:lobby_select-default-deck "Select Default Deck"]]]))]))
 
 (defn player-list [user current-game players]
   [:<>

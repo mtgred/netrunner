@@ -236,6 +236,8 @@ deck-builder_decklist = Decklist
 
 deck-builder_decklist-inst = (Type or paste a decklist, it will be parsed)
 
+deck-builder_default = Default deck
+
 deck-builder_delete = Delete
 
 deck-builder_delete-selected = Delete Selected
@@ -301,11 +303,15 @@ deck-builder_save = Save
 
 deck-builder_select-all = Select All
 
+deck-builder_set-default = Set Default
+
 deck-builder_show-credit-cost = Show Credit Cost
 
 deck-builder_show-memory-cost = Show Memory Cost
 
 deck-builder_unselect-all = Unselect All
+
+deck-builder_unset-default = Unset Default
 
 deck-builder_view-options = View Options
 
@@ -1064,6 +1070,8 @@ lobby_save-replay-details = This will save a replay file of this match with open
 lobby_save-replay-unshared = Only your latest 15 unshared games will be kept, so make sure to either download or share the match afterwards.
 
 lobby_select-deck = Select Deck
+
+lobby_select-default-deck = Select Default Deck
 
 lobby_select-error = Cannot select that deck
 

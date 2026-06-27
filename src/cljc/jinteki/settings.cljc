@@ -82,6 +82,10 @@
   "Validates visible-formats is a set of valid format strings"
   (validate-coll-of #(contains? valid-formats %) set?))
 
+(def validate-default-decks
+  "Validates default-decks is a map of side -> {format -> deck-id-string}"
+  (validate-map-of keyword? (validate-map-of keyword? string?)))
+
 (def all-settings
   "Vector of all application settings with their metadata.
    Each setting has:
@@ -150,6 +154,11 @@
     :sync? true
     :validate-fn #(contains? valid-stats-options %)
     :doc "When to show deck statistics (always/competitive/none)"}
+   {:key :default-decks
+    :default {}
+    :sync? true
+    :validate-fn validate-default-decks
+    :doc "Default deck _id per side+format, auto-selected in the lobby"}
    {:key :default-format
     :default "standard"
     :sync? true
