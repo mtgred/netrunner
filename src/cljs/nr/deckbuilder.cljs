@@ -724,6 +724,23 @@
          " - " [tr-span [:deck-builder_won "Won"] {:won wins :percent (safe-divide wins (+ wins losses))}]
          " - " [tr-span [:deck-builder_lost "Lost"] {:lost losses}]]))))
 
+(defn default-deck?
+  [deck]
+  (let [side (keyword (get-in deck [:identity :side]))
+        fmt (keyword (:format deck))]
+    (= (:_id deck) (get-in @app-state [:options :default-decks side fmt]))))
+
+(defn toggle-default-deck
+  [deck]
+  (authenticated
+    (fn [_]
+      (let [side (keyword (get-in deck [:identity :side]))
+            fmt (keyword (:format deck))]
+        (if (default-deck? deck)
+          (swap! app-state update-in [:options :default-decks side] dissoc fmt)
+          (swap! app-state assoc-in [:options :default-decks side fmt] (:_id deck)))
+        (go (<! (PUT "/profile" (:options @app-state) :json)))))))
+
 (defn deck-entry [s deck]
   (r/with-let [state-deck (r/cursor s [:deck])
                cleanup-mode (r/cursor s [:cleanup-mode])
@@ -744,7 +761,9 @@
        [:span.float-right
         [deck-status-span deck]
         [:p (deck-date deck)]]
-       [:h4 (deck-name deck)]
+       [:h4 (when (default-deck? deck)
+              [:span.deck-default-star {:title (tr [:deck-builder_default "Default deck"])} "★ "])
+        (deck-name deck)]
        [:span (tr-data :title (:identity deck))]
        [deck-stats-line deck]])))
 
@@ -1037,6 +1056,12 @@
               (not= "none" (get-in @app-state [:options :deckstats])))
      [:button {:on-click #(clear-deck-stats s)}
       [tr-span [:deck-builder_clear-stats "Clear Stats"]]])
+   [cond-button
+    (if (default-deck? deck)
+      [tr-span [:deck-builder_unset-default "Unset Default"]]
+      [tr-span [:deck-builder_set-default "Set Default"]])
+    (boolean (:_id deck))
+    #(toggle-default-deck deck)]
    ;; (let [disabled (or (:editing-game @app-state false)
    ;;                    (:gameid @app-state false)
    ;;                    (and (not= (:format deck) "casual")
