@@ -133,14 +133,14 @@
 (def slug->format
   (ordered-map
    "standard" "Standard"
-   "throwback" "Throwback"
    "startup" "Startup"
-   "quick-draft" "Quick Draft"
+   "eternal" "Eternal"
    "system-gateway" "System Gateway"
    "core" "Core"
-   "preconstructed" "Preconstructed"
+   "quick-draft" "Quick Draft"
+   "throwback" "Throwback"
    "chimera" "Chimera"
-   "eternal" "Eternal"
+   "preconstructed" "Preconstructed"
    "casual" "Casual"))
 
 (def slug->buildable-format
@@ -149,14 +149,14 @@
 (def format->slug
   (ordered-map
    "Standard" "standard"
-   "Throwback" "throwback"
    "Startup" "startup"
-   "Quick Draft" "quick-draft"
+   "Eternal" "eternal"
    "System Gateway" "system-gateway"
    "Core" "core"
-   "Preconstructed" "preconstructed"
+   "Quick Draft" "quick-draft"
+   "Throwback" "throwback"
    "Chimera" "chimera"
-   "Eternal" "eternal"
+   "Preconstructed" "preconstructed"
    "Casual" "casual"))
 
 (def buildable-format->slug
