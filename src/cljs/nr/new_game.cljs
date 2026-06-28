@@ -1,6 +1,6 @@
 (ns nr.new-game
   (:require
-    [jinteki.utils :refer [str->int]]
+    [jinteki.utils :refer [str->int descriptions]]
     [jinteki.preconstructed :refer [all-matchups matchup-by-key]]
     [nr.appstate :refer [app-state]]
     [nr.auth :refer [authenticated] :as auth]
@@ -27,13 +27,6 @@
    :replay-timestamp
    :timer
    :title])
-
-(def descriptions
-  {:new-game_default "No special conditions"
-   :new-game_meta-deck "Play against meta decks"
-   :new-game_casual "Casual play"
-   :new-game_competitive "Play competitive games"
-   :new-game_new-player "Learning the game"})
 
 (defn create-game [state lobby-state options]
   (authenticated
@@ -264,18 +257,23 @@
    [api-access options user]])
 
 (defn create-new-game [lobby-state user]
-  (r/with-let [state (r/atom {:flash-message ""
+  (r/with-let [casual? (= "casual" (:room @lobby-state))
+               state (r/atom {:flash-message ""
                               :format (or (get-in @app-state [:options :default-format]) "standard")
                               :room (:room @lobby-state)
                               :side "Any Side"
                               :gateway-type "Beginner"
                               :precon "worlds-2012-a"
+                              :description (when casual?
+                                             (get-in @app-state [:options :default-game-description]))
                               :title (str (:username @user) "'s game")})
                options (r/atom {:allow-spectator true
                                 :api-access false
                                 :password ""
                                 :protected false
-                                :save-replay (not= "casual" (:room @lobby-state))
+                                :save-replay (if casual?
+                                               (get-in @app-state [:options :default-save-replay])
+                                               true)
                                 :singleton false
                                 :spectatorhands false
                                 :open-decklists false

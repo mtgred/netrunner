@@ -6,6 +6,7 @@
    [goog.dom :as gdom]
    [jinteki.cards :refer [all-cards]]
    [jinteki.settings :as settings]
+   [jinteki.utils :refer [descriptions]]
    [medley.core :as m]
    [nr.ajax :refer [DELETE GET POST PUT]]
    [nr.appstate :refer [app-state]]
@@ -389,6 +390,21 @@
                 ^{:key k}
                 [:option {:value k :data-i18n-key k} (tr-format v)]))]]
            [:div
+            [tr-element :h4 [:settings_default-game-description "Default game description in casual games"]]
+            [:select.description
+             {:value (or (:default-game-description @s) "new-game_default")
+              :on-change #(swap! s assoc :default-game-description (.. % -target -value))}
+             (doall
+              (for [[k v] descriptions]
+                ^{:key k}
+                [:option {:value k :data-i18n-key k} (tr [k v])]))]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:default-save-replay @s)
+                             :on-change #(swap! s assoc :default-save-replay (.. % -target -checked))}]
+             [tr-span [:settings_default-save-replay "Save replays by default in casual games"]]]]
+           [:div
             [:label [:input {:type "checkbox"
                              :value true
                              :checked (:auto-select-default-deck @s)
@@ -745,7 +761,7 @@
                    (select-keys [:pronouns :bespoke-sounds :language :card-language :sounds :default-format
                                  :lobby-sounds :sounds-volume :background :custom-bg-url :card-zoom
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
-                                 :auto-select-default-deck
+                                 :auto-select-default-deck :default-game-description :default-save-replay
                                  :player-stats-icons :stacked-cards :ghost-trojans
                                  :corp-card-sleeve :runner-card-sleeve :prizes
                                  :display-encounter-info :sides-overlap :log-timestamps

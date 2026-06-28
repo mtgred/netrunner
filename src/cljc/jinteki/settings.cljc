@@ -8,7 +8,9 @@
 
    All settings are validated before being stored in app state. Invalid values are
    filtered out at each source level, ensuring app state always contains valid settings."
-  (:require [clojure.string :as str]))
+  (:require
+   [clojure.string :as str]
+   [jinteki.utils :as utils]))
 
 ;; Validation constants
 (def valid-background-slugs
@@ -33,6 +35,7 @@
 (def valid-card-sleeves #{"ffg-card-back" "nsg-card-back" "ffg" "nsg"})
 (def valid-formats #{"standard" "throwback" "startup" "system-gateway"
                      "core" "preconstructed" "eternal" "casual"})
+(def valid-game-descriptions (set (map name (keys utils/descriptions))))
 
 ;; Validation combinators
 (defn- validate-coll-of
@@ -169,6 +172,16 @@
     :sync? true
     :validate-fn #(contains? valid-formats %)
     :doc "Default game format when creating new games"}
+   {:key :default-game-description
+    :default "new-game_default"
+    :sync? true
+    :validate-fn #(contains? valid-game-descriptions %)
+    :doc "Default game description in casual games"}
+   {:key :default-save-replay
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Save replays by default in casual games"}
    {:key :disable-websockets
     :default false
     :sync? false  ; device-specific

@@ -1636,6 +1636,10 @@ settings_current-email = Current email
 
 settings_deck-stats = Deck statistics
 
+settings_default-game-description = Default game description in casual games
+
+settings_default-save-replay = Save replays by default in casual games
+
 settings_delete-api-key = Delete
 
 settings_desired-email = Desired email
