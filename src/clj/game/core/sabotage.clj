@@ -25,9 +25,9 @@
   (let [unknown-str (str (quantify (count unknown) (if (seq known) "unknown card" "card"))
                          (when public (str " (" (enumerate-cards unknown)")")))]
     (if (seq known)
-      (str " " (enumerate-str (concat (map :title known)
-                                      (when (seq unknown)
-                                        [unknown-str])))
+      (str (enumerate-str (concat (map :title known)
+                                  (when (seq unknown)
+                                    [unknown-str])))
            " from " from)
       (str unknown-str " from " from))))
 
@@ -44,11 +44,11 @@
           known-rd-cards (filter #(contains? (set (get-in @state [:breach :known-cids :deck] [])) (:cid %)) to-trash)
           unknown-hq-cards (filter #(not (contains? (set (get-in @state [:breach :known-cids :hand] [])) (:cid %))) targets)
           unknown-rd-cards (filter #(not (contains? (set (get-in @state [:breach :known-cids :deck] [])) (:cid %))) rnd-to-trash)
-          public-msg (str "trashes"
+          public-msg (str "trashes "
                           (when (pos? selected-hq) (cards-str known-hq-cards unknown-hq-cards "HQ" nil))
                           (when (and (pos? selected-hq) (pos? selected-rd)) " and ")
                           (when (pos? selected-rd) (cards-str known-rd-cards unknown-rd-cards "the top of R&D" nil)))
-          private-msg (str "trashes"
+          private-msg (str "trashes "
                            (when (pos? selected-hq) (cards-str known-hq-cards unknown-hq-cards "hq" true))
                            (when (and (pos? selected-hq) (pos? selected-rd)) " and ")
                            (when (pos? selected-rd) (cards-str known-rd-cards unknown-rd-cards "the top of R&D" true)))]
