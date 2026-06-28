@@ -1790,6 +1790,8 @@ settings_user-name = User name
 
 settings_volume = Volume
 
+settings_zoom-last-played-or-rezzed = Zoom the most recently rezzed or played card
+
 side_name = {$side ->
     [all] All
     [any-side] Any Side

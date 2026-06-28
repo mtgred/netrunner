@@ -651,7 +651,14 @@
                              :name "pin-zoom"
                              :checked (:pin-zoom @s)
                              :on-change #(swap! s assoc :pin-zoom (.. % -target -checked))}]
-             [tr-span [:settings_pin-zoom "Keep zoomed cards on screen"]]]]]
+             [tr-span [:settings_pin-zoom "Keep zoomed cards on screen"]]]]
+           [:br]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :name "zoom-last-played-or-rezzed"
+                             :checked (:zoom-last-played-or-rezzed @s)
+                             :on-change #(swap! s assoc :zoom-last-played-or-rezzed (.. % -target -checked))}]
+             [tr-span [:settings_zoom-last-played-or-rezzed "Zoom the most recently rezzed or played card"]]]]]
 
           [:section
            [tr-element :h3 [:settings_game-stats " Game Win/Lose statistics "]]
@@ -832,7 +839,7 @@
                                  :blocked-users :alt-arts :gamestats :deckstats :disable-websockets
                                  :archives-sorted :heap-sorted :card-back-display
                                  :card-colors :card-custom-colors
-                                 :labeled-cards :labeled-unrezzed-cards])
+                                 :labeled-cards :labeled-unrezzed-cards :zoom-last-played-or-rezzed])
                    (assoc :flash-message ""
                           :all-art-select "wc2015")))]
 

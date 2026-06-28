@@ -1,11 +1,12 @@
 (ns game.core.revealing
   (:require
    [clojure.string :as string]
+   [game.core.card :refer [is-public?]]
    [game.core.eid :refer [effect-completed]]
    [game.core.engine :refer [queue-event checkpoint]]
    [game.core.say :refer [system-msg]]
    [game.core.servers :refer [name-zone]]
-   [game.utils :refer [enumerate-str enumerate-cards]]
+   [game.utils :refer [enumerate-str enumerate-cards to-keyword]]
    [jinteki.utils :refer [other-side]]))
 
 (defn reveal-hand
@@ -17,6 +18,16 @@
   "Conceals a side's revealed hand from opponent and spectators."
   [state side]
   (swap! state update side dissoc :openhand))
+
+(defn set-last-played-or-rezzed
+  "Tracks the most recently played, rezzed, or turned-faceup public card so
+  clients can zoom it when the :zoom-last-played-or-rezzed setting is on.
+  Includes current eid so playing the same card twice is distinguishable."
+  [state card]
+  (when (and card (is-public? card (other-side (to-keyword (:side card)))))
+    (swap! state assoc :last-played-or-rezzed
+           {:card (select-keys card [:title :printed-title :code :side])
+            :eid (:eid @state)})))
 
 ;; TODO - find a way to condense these into one fn
 (defn reveal-and-queue-event

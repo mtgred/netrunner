@@ -44,7 +44,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
-   [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud reveal-and-queue-event]]
+   [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud reveal-and-queue-event set-last-played-or-rezzed]]
    [game.core.rezzing :refer [can-pay-to-rez? rez]]
    [game.core.runs :refer [end-run get-current-encounter make-run redirect-run
                            set-next-phase start-next-phase total-cards-accessed]]
@@ -538,7 +538,8 @@
 	        :choices {:req (req (agenda? target)
                                          (installed? target))}
 		:msg (msg "turn " (card-str state target {:visible true}) " faceup")
-                :effect (effect (update! state side (assoc target :seen true)))}]
+                :effect (req (->> (update! state side (assoc target :seen true))
+                                  (set-last-played-or-rezzed state)))}]
    :events [{:event :access
              :req (req ((every-pred faceup? installed? agenda? :was-seen) (:accessed-card context)))
              :interactive (effect true)
@@ -571,7 +572,8 @@
                                  {:prompt (str "Turn " (:title tcard) " faceup?")
                                   :waiting-prompt true
                                   :yes-ability {:msg (str "turn " (card-str state tcard {:visible true}) " faceup")
-                                                :effect (effect (update! state side (assoc tcard :seen true)))}}}
+                                                :effect (req (->> (update! state side (assoc tcard :seen true))
+                                                                  (set-last-played-or-rezzed state)))}}}
                                 {:prompt "Nothing to see here"
                                  :waiting-prompt true
                                  :choices ["OK"]})

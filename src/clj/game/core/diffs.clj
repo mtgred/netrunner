@@ -478,6 +478,7 @@
    :end-turn
    :forced-encounter
    :gameid
+   :last-played-or-rezzed
    :last-revealed
    :log
    :mark

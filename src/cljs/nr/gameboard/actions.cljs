@@ -4,6 +4,7 @@
    [goog.functions :as gfn]
    [nr.angel-arena.lobby :as angel-arena]
    [nr.appstate :refer [app-state current-gameid]]
+   [nr.gameboard.card-preview :refer [put-game-card-in-channel zoom-channel]]
    [nr.gameboard.replay :refer [init-replay]]
    [nr.gameboard.state :refer [check-lock? game-state get-side last-state
                                parse-state]]
@@ -50,8 +51,14 @@
 (defn handle-diff! [{:keys [gameid diff]}]
   (when (= gameid (str (current-gameid app-state)))
     (let [old-sequence (:sequence @game-state)
+          old-last-played-or-rezzed (:last-played-or-rezzed @game-state)
           patch (differ/patch @last-state diff)]
       (reset! game-state patch)
+      (let [new-last-played-or-rezzed (:last-played-or-rezzed @game-state)]
+        (when (and new-last-played-or-rezzed
+                   (not= old-last-played-or-rezzed new-last-played-or-rezzed)
+                   (get-in @app-state [:options :zoom-last-played-or-rezzed]))
+          (put-game-card-in-channel (:card new-last-played-or-rezzed) zoom-channel)))
       (check-lock?)
       (let [gs @game-state]
         (reset! last-state gs))

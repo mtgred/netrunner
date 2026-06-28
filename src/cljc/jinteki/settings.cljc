@@ -356,7 +356,12 @@
     :default nil
     :sync? false  ; handled separately in account.cljs
     :validate-fn validate-visible-formats
-    :doc "Set of game formats to show in lobby (device-specific)"}])
+    :doc "Set of game formats to show in lobby (device-specific)"}
+   {:key :zoom-last-played-or-rezzed
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Zoom the most recently rezzed or played card"}])
 
 (defn setting-keys
   "Returns a vector of all setting keys"

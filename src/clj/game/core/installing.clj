@@ -19,7 +19,7 @@
     [game.core.moving :refer [move trash trash-cards swap-cards swap-installed]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c value]]
     [game.core.props :refer [add-prop]]
-    [game.core.revealing :refer [reveal]]
+    [game.core.revealing :refer [reveal set-last-played-or-rezzed]]
     [game.core.rezzing :refer [rez]]
     [game.core.say :refer [multi-msg play-sfx system-msg implementation-msg]]
     [game.core.servers :refer [name-zone remote-num->name]]
@@ -303,6 +303,8 @@
                                  (card-init state side moved-card {:resolve-effect false
                                                                    :init-data true})
                                  (update! state side moved-card))]
+                (when-not no-msg
+                  (set-last-played-or-rezzed state moved-card))
                 (wait-for (checkpoint state nil (make-eid state eid))
                           (complete-with-result state side eid (get-card state moved-card))))
               ;; All other cards
@@ -538,7 +540,8 @@
         (system-msg state side
                     (str pre-lhs lhs from-host? card-name origin discount-str
                          (when host-card (str " on " (card-str state host-card)))
-                         (when no-cost " at no cost")))))))
+                         (when no-cost " at no cost"))))
+      (set-last-played-or-rezzed state card))))
 
 (defn runner-install-continue
   [state side eid card
