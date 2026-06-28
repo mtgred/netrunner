@@ -5,7 +5,7 @@
     [nr.appstate :refer [app-state]]
     [nr.auth :refer [authenticated] :as auth]
     [nr.translations :refer [tr tr-format tr-side tr-element tr-span]]
-    [nr.utils :refer [cond-button slug->format]]
+    [nr.utils :refer [cond-button focus-on-mount slug->format]]
     [nr.ws :as ws]
     [reagent.core :as r]))
 
@@ -186,6 +186,7 @@
    (when (:protected @options)
      [:p
       [:input.game-title {:on-change #(swap! options assoc :password (.. % -target -value))
+                          :ref focus-on-mount
                           :value (:password @options)
                           :data-i18n-key :lobby_password
                           :placeholder (tr [:lobby_password "Password"])
