@@ -4651,9 +4651,7 @@
         (is (= (reverse top-4) (mapv :title (take 4 (:deck (get-corp)))))
             "Top 4 cards of R&D are reordered"))))
   (testing "End the run"
-    (do-game
-      (subroutine-test "Knowledge Seeker" 2)
-      (is (not (:run @state)) "Run has ended"))))
+    (do-game (etr-sub "Knowledge Seeker" 2))))
 
 (deftest knowledge-seeker-purges-at-3-virus-counters
   ;; Each encounter places a virus counter, and at 3 it purges
