@@ -81,3 +81,26 @@
                    :players [(player "Corp")]}
             result (lobby/auto-select-decks nil lobby)]
         (is (nil? (get-in result [:players 0 :deck])))))))
+
+(deftest auto-select-decks-skips-non-constructed-test
+  (with-redefs [lobby/find-deck-for-user (fn [_db deck-id _user] {:_id deck-id})
+                lobby/process-deck (fn [raw] (assoc raw :identity {:title "id"}))
+                lobby/valid-deck-for-lobby? (fn [_lobby _deck] true)
+                app-state/get-user (fn [_uid]
+                                     {:options {:auto-select-default-deck true
+                                                :default-decks {:Corp {:system-gateway "sg-deck"
+                                                                       :quick-draft "qd-deck"
+                                                                       :chimera "ch-deck"}}}})]
+    (testing "preconstructed games (precon set) are not auto-selected"
+      (let [lobby {:room "casual" :format "system-gateway" :precon :beginner
+                   :players [(player "Corp")]}]
+        (is (nil? (get-in (lobby/auto-select-decks nil lobby) [:players 0 :deck])))))
+    (testing "quick-draft games are not auto-selected"
+      (let [lobby {:room "casual" :format "quick-draft" :players [(player "Corp")]}]
+        (is (nil? (get-in (lobby/auto-select-decks nil lobby) [:players 0 :deck])))))
+    (testing "chimera games are not auto-selected"
+      (let [lobby {:room "casual" :format "chimera" :players [(player "Corp")]}]
+        (is (nil? (get-in (lobby/auto-select-decks nil lobby) [:players 0 :deck])))))
+    (testing "a normal constructed casual game still auto-selects"
+      (let [lobby {:room "casual" :format "system-gateway" :players [(player "Corp")]}]
+        (is (= "sg-deck" (get-in (lobby/auto-select-decks nil lobby) [:players 0 :deck :_id])))))))

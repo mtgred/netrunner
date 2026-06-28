@@ -2,6 +2,7 @@
   (:require
     [jinteki.validator :refer [singleton-deck? trusted-deck-status]]
     [jinteki.preconstructed :refer [matchup-by-key]]
+    [jinteki.utils :refer [constructed-game?]]
     [nr.appstate :refer [app-state current-gameid]]
     [nr.cardbrowser :refer [image-url] :as cb]
     [nr.deck-status :refer [deck-format-status-span]]
@@ -19,9 +20,7 @@
 (defn is-constructed?
   "Games using the starter decks are not constructed"
   [current-game]
-  (and (not (:precon @current-game))
-       (not= "quick-draft" (:format @current-game))
-       (not= "chimera" (:format @current-game))))
+  (constructed-game? @current-game))
 
 (defn is-preconstructed?
   [current-game]

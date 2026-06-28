@@ -10,7 +10,7 @@
     [crypto.password.bcrypt :as bcrypt]
     [game.core :as core]
     [game.utils :refer [server-card]]
-    [jinteki.utils :refer [select-non-nil-keys side-from-str superuser? to?]]
+    [jinteki.utils :refer [constructed-game? select-non-nil-keys side-from-str superuser? to?]]
     [jinteki.preconstructed :refer [all-matchups]]
     [jinteki.validator :as validator]
     [medley.core :refer [find-first]]
@@ -545,7 +545,7 @@
 
 (defn auto-select-decks
   [db lobby]
-  (if (or (:started lobby) (not= "casual" (:room lobby)))
+  (if (or (:started lobby) (not= "casual" (:room lobby)) (not (constructed-game? lobby)))
     lobby
     (update lobby :players
             (partial mapv #(if (:deck %) % (maybe-auto-select-deck db lobby %))))))

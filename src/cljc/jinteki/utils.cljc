@@ -50,6 +50,14 @@
   (or (get-in @state [:runner :tag :is-tagged])
       (pos? (count-tags state))))
 
+(defn constructed-format?
+  [format]
+  (not (#{"quick-draft" "chimera"} format)))
+
+(defn constructed-game?
+  [{:keys [precon format]}]
+  (and (not precon) (constructed-format? format)))
+
 (defn slugify
   "As defined here: https://you.tools/slugify/"
   ([string] (slugify string "-"))

@@ -4,7 +4,7 @@
     [cljs.core.async :refer [<! >! chan put! timeout go-loop] :as async]
     [clojure.string :refer [join lower-case split split-lines] :as str]
     [jinteki.cards :refer [all-cards] :as cards]
-    [jinteki.utils :refer [INFINITY str->int] :as utils]
+    [jinteki.utils :refer [INFINITY constructed-format? str->int] :as utils]
     [jinteki.validator :as validator]
     [nr.ajax :refer [DELETE GET POST PUT]]
     [nr.appstate :refer [app-state]]
@@ -1056,12 +1056,13 @@
               (not= "none" (get-in @app-state [:options :deckstats])))
      [:button {:on-click #(clear-deck-stats s)}
       [tr-span [:deck-builder_clear-stats "Clear Stats"]]])
-   [cond-button
-    (if (default-deck? deck)
-      [tr-span [:deck-builder_unset-default "Unset Default"]]
-      [tr-span [:deck-builder_set-default "Set Default"]])
-    (boolean (:_id deck))
-    #(toggle-default-deck deck)]
+   (when (constructed-format? (:format deck))
+     [cond-button
+      (if (default-deck? deck)
+        [tr-span [:deck-builder_unset-default "Unset Default"]]
+        [tr-span [:deck-builder_set-default "Set Default"]])
+      (boolean (:_id deck))
+      #(toggle-default-deck deck)])
    ;; (let [disabled (or (:editing-game @app-state false)
    ;;                    (:gameid @app-state false)
    ;;                    (and (not= (:format deck) "casual")
