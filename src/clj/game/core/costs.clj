@@ -25,6 +25,17 @@
    [game.utils :refer [enumerate-cards enumerate-str quantify same-card?]]))
 
 (defn- can-forfeit? [card] (not (get-in card [:flags :cannot-forfeit])))
+(defn- side-paid-msg [side] (keyword (str "paid/" (name side) "-msg")))
+(defn- side-zone [side zone]
+  (case side
+    :runner (case zone
+              :hand  "the grip"
+              :deck  "the stack"
+              :trash "the heap")
+    :corp   (case zone
+              :hand  "HQ"
+              :deck  "R&D"
+              :trash "Archives")))
 
 ;; Click
 (defmethod value :click [cost] (:cost/amount cost))
@@ -872,14 +883,24 @@
 (defmethod handler :trash-from-deck
   [cost state side eid card]
   (wait-for (mill state side side (value cost) {:suppress-checkpoint true})
-            (complete-with-result
-              state side eid
-              {:paid/msg (str "trashes " (quantify (count async-result) "card")
-                             " from the top of "
-                             (if (= :corp side) "R&D" "the stack"))
-               :paid/type :trash-from-deck
-               :paid/value (count async-result)
-               :paid/targets async-result})))
+            (if (= :corp side)
+              (complete-with-result
+                state side eid
+                {:paid/msg (str "trashes " (quantify (count async-result) "card")
+                                " from the top of R&D")
+                 :paid/corp-msg (str "trashes " (quantify (count async-result) "facedown card")
+                                     " (" (enumerate-cards async-result) ") from the top of R&D")
+                 :paid/type :trash-from-deck
+                 :paid/value (count async-result)
+                 :paid/targets async-result})
+              (complete-with-result
+                state side eid
+                {:paid/msg (str "trashes " (quantify (count async-result) "card")
+                                " (" (enumerate-cards async-result) ") from the top of the Stack")
+                 :paid/type :trash-from-deck
+                 :paid/value (count async-result)
+                 :paid/targets async-result}))))
+
 
 ;; TrashFromHand
 (defmethod value :trash-from-hand [cost] (:cost/amount cost))
@@ -900,17 +921,24 @@
                  :max (value cost)
                  :card select-fn}
        :async true
-       :effect (effect (wait-for (trash-cards state side targets {:unpreventable true :seen false :cause :ability-cost :suppress-checkpoint true})
-                              (complete-with-result
-                                state side eid
-                                {:paid/msg (str "trashes " (quantify (count async-result) "card")
-                                               (when (and (= :runner side)
-                                                          (pos? (count async-result)))
-                                                 (str " (" (enumerate-str (map #(card-str state %) targets)) ")"))
-                                               " from " hand)
-                                 :paid/type :trash-from-hand
-                                 :paid/value (count async-result)
-                                 :paid/targets async-result})))}
+       :effect (effect (wait-for
+                         (trash-cards state side targets {:unpreventable true :seen false :cause :ability-cost :suppress-checkpoint true})
+                         (if (= :corp side)
+                           (complete-with-result
+                             state side eid
+                             {:paid/msg (str "trashes " (quantify (count targets) "card") " from HQ")
+                              :paid/corp-msg (str "trashes " (quantify (count targets) "facedown card")
+                                                  " (" (enumerate-cards targets :sorted) ") from HQ")
+                              :paid/type :trash-from-hand
+                              :paid/value (count async-result)
+                              :paid/targets async-result})
+                           (complete-with-result
+                             state side eid
+                             {:paid/msg (str "trashes " (quantify (count targets) "card")
+                                             " (" (enumerate-cards targets :sorted) ") from the grip")
+                              :paid/type :trash-from-hand
+                              :paid/value (count async-result)
+                              :paid/targets async-result}))))}
       nil nil)))
 
 ;; RandomlyTrashFromHand
@@ -925,14 +953,22 @@
   (wait-for (discard-from-hand state side side (value cost) {:suppress-checkpoint true})
             (complete-with-result
               state side eid
-              {:paid/msg (str "trashes " (quantify (count async-result) "card")
-                              (when (= side :runner)
-                                (str " (" (enumerate-cards async-result :sorted) ")"))
-                             " randomly from "
-                             (if (= :corp side) "HQ" "the grip"))
-               :paid/type :randomly-trash-from-hand
-               :paid/value (count async-result)
-               :paid/targets async-result})))
+              (if (= :corp side)
+                (complete-with-result
+                  state side eid
+                  {:paid/msg (str "trashes " (quantify (count async-result) "card") " randomly from HQ")
+                   :paid/corp-msg (str "trashes " (quantify (count async-result) "facedown card")
+                                       " (" (enumerate-cards async-result :sorted) ") randomly from HQ")
+                   :paid/type :randomly-trash-from-hand
+                   :paid/value (count async-result)
+                   :paid/targets async-result})
+                (complete-with-result
+                  state side eid
+                  {:paid/msg (str "trashes " (quantify (count async-result) "card")
+                                  " (" (enumerate-cards async-result :sorted) ") randomly from the grip")
+                   :paid/type :randomly-trash-from-hand
+                   :paid/value (count async-result)
+                   :paid/targets async-result})))))
 
 ;; RevealAndRandomlyTrashFromHand
 (defmethod value :reveal-and-randomly-trash-from-hand [cost] (:cost/amount cost))
@@ -968,14 +1004,21 @@
     (wait-for (trash-cards state side cards {:unpreventable true :suppress-checkpoint true :cause :ability-cost})
               (complete-with-result
                 state side eid
-                {:paid/msg (str "trashes all (" (count async-result) ") cards in "
-                               (if (= :runner side) "[their] grip" "HQ")
-                               (when (and (= :runner side)
-                                          (pos? (count async-result)))
-                                 (str " (" (enumerate-cards async-result :sorted) ")")))
-                 :paid/type :trash-entire-hand
-                 :paid/value (count async-result)
-                 :paid/targets async-result}))))
+                (if (= :corp side)
+                  {:paid/msg (str "trashes all (" (count async-result) ") cards in HQ")
+                   :paid/corp-msg (str "trash all (" (count async-result) ") cards in HQ"
+                                       (when (seq async-result)
+                                         (str " (" (enumerate-cards async-result :sorted) ")")))
+                   :paid/type :trash-entire-hand
+                   :paid/value (count async-result)
+                   :paid/targets async-result}
+                  {:paid/msg (str "trashes all (" (count async-result) ") cards in [their] grip"
+                                  (if (= :runner side) "[their] grip" "HQ")
+                                  (when (seq async-result)
+                                    (str " (" (enumerate-cards async-result :sorted) ")")))
+                   :paid/type :trash-entire-hand
+                   :paid/value (count async-result)
+                   :paid/targets async-result})))))
 
 ;; TrashHardwareFromHand
 (defmethod value :trash-hardware-from-hand [cost] (:cost/amount cost))
@@ -1191,21 +1234,22 @@
 ;; AddRandomToBottom
 (defmethod value :add-random-from-hand-to-bottom-of-deck [cost] (:cost/amount cost))
 (defmethod label :add-random-from-hand-to-bottom-of-deck [cost]
-  (str "add " (quantify (value cost) "random card") " to the bottom of your deck"))
+  (str "add " (quantify (value cost) "random card") " from your hand to the bottom of your deck"))
 (defmethod payable? :add-random-from-hand-to-bottom-of-deck
   [cost state side eid card]
   (<= (value cost) (count (get-in @state [side :hand]))))
 (defmethod handler :add-random-from-hand-to-bottom-of-deck
   [cost state side eid card]
-  (let [deck (if (= :corp side) "R&D" "the stack")
-        hand (get-in @state [side :hand])
+  (let [hand (get-in @state [side :hand])
         chosen (take (value cost) (shuffle hand))]
     (doseq [c chosen]
       (move state side c :deck))
     (complete-with-result
       state side eid
       {:paid/msg (str "adds " (quantify (value cost) "random card")
-                     " to the bottom of " deck)
+                      " from " (side-zone side :hand) " to the bottom of " (side-zone side :deck))
+       (side-paid-msg side) (str "adds " (quantify (value cost) "random facedown card")
+                                 " (" (enumerate-cards chosen) ") from " (side-zone side :hand) " to the bottom of " (side-zone side :deck))
        :paid/type :add-random-from-hand-to-bottom-of-deck
        :paid/value (value cost)
        :paid/targets chosen})))
