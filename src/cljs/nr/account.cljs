@@ -401,6 +401,18 @@
            [:div
             [:label [:input {:type "checkbox"
                              :value true
+                             :checked (:default-password-protect-casual @s)
+                             :on-change #(swap! s assoc :default-password-protect-casual (.. % -target -checked))}]
+             [tr-span [:settings_default-password-protect-casual "Password protect by default in casual games"]]]]
+           [:div
+            [tr-element :h4 [:settings_default-password "Default game password"]]
+            [:input {:type "text"
+                     :maxLength "30"
+                     :on-change #(swap! s assoc :default-password (.. % -target -value))
+                     :value (:default-password @s "")}]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
                              :checked (:default-save-replay @s)
                              :on-change #(swap! s assoc :default-save-replay (.. % -target -checked))}]
              [tr-span [:settings_default-save-replay "Save replays by default in casual games"]]]]
@@ -769,6 +781,7 @@
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
                                  :auto-select-default-deck-casual :auto-select-default-deck-tournament
                                  :default-game-description :default-save-replay
+                                 :default-password :default-password-protect-casual
                                  :player-stats-icons :stacked-cards :ghost-trojans
                                  :corp-card-sleeve :runner-card-sleeve :prizes
                                  :display-encounter-info :sides-overlap :log-timestamps

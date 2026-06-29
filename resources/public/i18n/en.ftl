@@ -1640,6 +1640,10 @@ settings_deck-stats = Deck statistics
 
 settings_default-game-description = Default game description in casual games
 
+settings_default-password = Default game password
+
+settings_default-password-protect-casual = Password protect by default in casual games
+
 settings_default-save-replay = Save replays by default in casual games
 
 settings_delete-api-key = Delete

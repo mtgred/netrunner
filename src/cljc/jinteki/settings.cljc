@@ -182,6 +182,16 @@
     :sync? true
     :validate-fn #(contains? valid-game-descriptions %)
     :doc "Default game description in casual games"}
+   {:key :default-password
+    :default ""
+    :sync? true
+    :validate-fn string?
+    :doc "Default game password"}
+   {:key :default-password-protect-casual
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Password protect by default in casual games"}
    {:key :default-save-replay
     :default false
     :sync? true

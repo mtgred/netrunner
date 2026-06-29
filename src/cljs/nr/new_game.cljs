@@ -177,11 +177,11 @@
   [:<>
    [:p
     [:label
-     [:input {:type "checkbox" :checked (:private @options)
+     [:input {:type "checkbox" :checked (:protected @options)
               :on-change #(let [checked (.. % -target -checked)]
                             (swap! options assoc :protected checked)
                             (when (not checked)
-                              (swap! options assoc :password "")))}]
+                              (swap! options assoc :password (:password @options))))}]
      [tr-span [:lobby_password-protected "Password protected"]]]]
    (when (:protected @options)
      [:p
@@ -259,6 +259,8 @@
 
 (defn create-new-game [lobby-state user]
   (r/with-let [casual? (= "casual" (:room @lobby-state))
+               default-password (get-in @app-state [:options :default-password] "")
+               protected? (and casual? (get-in @app-state [:options :default-password-protect-casual]))
                state (r/atom {:flash-message ""
                               :format (or (get-in @app-state [:options :default-format]) "standard")
                               :room (:room @lobby-state)
@@ -270,8 +272,8 @@
                               :title (str (:username @user) "'s game")})
                options (r/atom {:allow-spectator true
                                 :api-access false
-                                :password ""
-                                :protected false
+                                :password default-password
+                                :protected protected?
                                 :save-replay (if casual?
                                                (get-in @app-state [:options :default-save-replay])
                                                true)
