@@ -301,6 +301,7 @@
                           state side
                           {:prompt "Install a non-virus program"
                            :choices (effect (cancellable (filter #(and (program? %)
+                                                                       (not (has-subtype? % "Virus"))
                                                                        (runner-can-install? state side eid % {:no-toast true}))
                                                                  (:deck runner))))
                            :async true

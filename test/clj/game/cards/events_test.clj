@@ -546,6 +546,15 @@
     (click-prompt state :runner "No action")
     (is-deck? state :runner ["Orca"])))
 
+(deftest beta-build-non-virus-only
+  ;; Beta Build should only install non-virus programs #8746
+  (do-game
+    (new-game {:runner {:hand ["Beta Build"] :deck ["Orca" "Datasucker"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Beta Build")
+    (is (some #{"Orca"} (prompt-titles :runner)) "Non-virus program is offered")
+    (is (not (some #{"Datasucker"} (prompt-titles :runner))) "Virus program is not offered")))
+
 (deftest beta-build-vs-ice-swap
   (do-game
     (new-game {:runner {:hand ["Beta Build" "Rising Tide" "Sipa"] :credits 10 :deck ["Kyuban"]}
