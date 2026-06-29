@@ -1558,7 +1558,9 @@ settings_api-keys-not-updated = Failed to update API keys
 
 settings_api-keys-updated = Updated API keys
 
-settings_auto-select-default-deck = Auto-select default deck in casual games
+settings_auto-select-default-deck-casual = Auto-select default deck in casual games
+
+settings_auto-select-default-deck-tournament = Auto-select default deck in tournament games
 
 settings_avatar = Avatar
 

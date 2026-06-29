@@ -172,8 +172,7 @@
         {:on-click #(reagent-modals/modal! [select-deck-modal user current-game])}
         [tr-span [:lobby_select-deck "Select Deck"]]])
      (when (and can-select?
-                (not (:deck player))
-                (= "casual" (:room @current-game)))
+                (not (:deck player)))
        (when-let [default (default-deck-for-lobby current-game side)]
          [:span.fake-link.deck-load
           {:on-click #(select-deck default)}

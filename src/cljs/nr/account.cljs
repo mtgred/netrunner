@@ -407,9 +407,15 @@
            [:div
             [:label [:input {:type "checkbox"
                              :value true
-                             :checked (:auto-select-default-deck @s)
-                             :on-change #(swap! s assoc :auto-select-default-deck (.. % -target -checked))}]
-             [tr-span [:settings_auto-select-default-deck "Auto-select default deck in casual games"]]]]]
+                             :checked (:auto-select-default-deck-casual @s)
+                             :on-change #(swap! s assoc :auto-select-default-deck-casual (.. % -target -checked))}]
+             [tr-span [:settings_auto-select-default-deck-casual "Auto-select default deck in casual games"]]]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:auto-select-default-deck-tournament @s)
+                             :on-change #(swap! s assoc :auto-select-default-deck-tournament (.. % -target -checked))}]
+             [tr-span [:settings_auto-select-default-deck-tournament "Auto-select default deck in tournament games"]]]]]
 
           [:section
            [tr-element :h3 [:settings_gameplay-settings "Gameplay Settings"]]
@@ -761,7 +767,8 @@
                    (select-keys [:pronouns :bespoke-sounds :language :card-language :sounds :default-format
                                  :lobby-sounds :sounds-volume :background :custom-bg-url :card-zoom
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
-                                 :auto-select-default-deck :default-game-description :default-save-replay
+                                 :auto-select-default-deck-casual :auto-select-default-deck-tournament
+                                 :default-game-description :default-save-replay
                                  :player-stats-icons :stacked-cards :ghost-trojans
                                  :corp-card-sleeve :runner-card-sleeve :prizes
                                  :display-encounter-info :sides-overlap :log-timestamps

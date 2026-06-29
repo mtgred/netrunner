@@ -529,15 +529,22 @@
                   p))
         players))
 
+(defn auto-select-enabled?
+  [{:keys [auto-select-default-deck-casual auto-select-default-deck-tournament]} room]
+  (case room
+    "casual" auto-select-default-deck-casual
+    "competitive" auto-select-default-deck-tournament
+    false))
+
 (defn auto-select-deck-id
-  [{:keys [auto-select-default-deck default-decks]} format side]
-  (when (and auto-select-default-deck side (not= "Any Side" side))
-    (get-in default-decks [(keyword side) (keyword format)])))
+  [options room format side]
+  (when (and (auto-select-enabled? options room) side (not= "Any Side" side))
+    (get-in options [:default-decks (keyword side) (keyword format)])))
 
 (defn maybe-auto-select-deck
   [db lobby player]
   (let [options (:options (app-state/get-user (:uid player)))
-        deck (when-let [deck-id (auto-select-deck-id options (:format lobby) (:side player))]
+        deck (when-let [deck-id (auto-select-deck-id options (:room lobby) (:format lobby) (:side player))]
                (process-deck (find-deck-for-user db deck-id (:user player))))]
     (if (and deck (valid-deck-for-lobby? lobby deck))
       (assoc player :deck deck)
@@ -545,7 +552,7 @@
 
 (defn auto-select-decks
   [db lobby]
-  (if (or (:started lobby) (not= "casual" (:room lobby)) (not (constructed-game? lobby)))
+  (if (or (:started lobby) (not (constructed-game? lobby)))
     lobby
     (update lobby :players
             (partial mapv #(if (:deck %) % (maybe-auto-select-deck db lobby %))))))
