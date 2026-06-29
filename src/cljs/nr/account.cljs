@@ -6,6 +6,7 @@
    [goog.dom :as gdom]
    [jinteki.cards :refer [all-cards]]
    [jinteki.settings :as settings]
+   [jinteki.utils :refer [descriptions]]
    [medley.core :as m]
    [nr.ajax :refer [DELETE GET POST PUT]]
    [nr.appstate :refer [app-state]]
@@ -378,14 +379,55 @@
                  [tr-span [:settings_bespoke-sounds group-name] {:sound group-name}]]]))]
 
           [:section
-           [tr-element :h3 [:lobby_default-game-format "Default game format"]]
-           [:select.format
-            {:value (or (:default-format @s) "standard")
-             :on-change #(swap! s assoc :default-format (.. % -target -value))}
-            (doall
-             (for [[k v] slug->format]
-               ^{:key k}
-               [:option {:value k :data-i18n-key k} (tr-format v)]))]]
+           [tr-element :h3 [:settings_game-settings "Game Settings"]]
+           [:div
+            [tr-element :h4 [:lobby_default-game-format "Default game format"]]
+            [:select.format
+             {:value (or (:default-format @s) "standard")
+              :on-change #(swap! s assoc :default-format (.. % -target -value))}
+             (doall
+              (for [[k v] slug->format]
+                ^{:key k}
+                [:option {:value k :data-i18n-key k} (tr-format v)]))]]
+           [:div
+            [tr-element :h4 [:settings_default-game-description "Default game description in casual games"]]
+            [:select.description
+             {:value (or (:default-game-description @s) "new-game_default")
+              :on-change #(swap! s assoc :default-game-description (.. % -target -value))}
+             (doall
+              (for [[k v] descriptions]
+                ^{:key k}
+                [:option {:value k :data-i18n-key k} (tr [k v])]))]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:default-password-protect-casual @s)
+                             :on-change #(swap! s assoc :default-password-protect-casual (.. % -target -checked))}]
+             [tr-span [:settings_default-password-protect-casual "Password protect by default in casual games"]]]]
+           [:div
+            [tr-element :h4 [:settings_default-password "Default game password"]]
+            [:input {:type "text"
+                     :maxLength "30"
+                     :on-change #(swap! s assoc :default-password (.. % -target -value))
+                     :value (:default-password @s "")}]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:default-save-replay @s)
+                             :on-change #(swap! s assoc :default-save-replay (.. % -target -checked))}]
+             [tr-span [:settings_default-save-replay "Save replays by default in casual games"]]]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:auto-select-default-deck-casual @s)
+                             :on-change #(swap! s assoc :auto-select-default-deck-casual (.. % -target -checked))}]
+             [tr-span [:settings_auto-select-default-deck-casual "Auto-select default deck in casual games"]]]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:auto-select-default-deck-tournament @s)
+                             :on-change #(swap! s assoc :auto-select-default-deck-tournament (.. % -target -checked))}]
+             [tr-span [:settings_auto-select-default-deck-tournament "Auto-select default deck in tournament games"]]]]]
 
           [:section
            [tr-element :h3 [:settings_gameplay-settings "Gameplay Settings"]]
@@ -737,6 +779,9 @@
                    (select-keys [:pronouns :bespoke-sounds :language :card-language :sounds :default-format
                                  :lobby-sounds :sounds-volume :background :custom-bg-url :card-zoom
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
+                                 :auto-select-default-deck-casual :auto-select-default-deck-tournament
+                                 :default-game-description :default-save-replay
+                                 :default-password :default-password-protect-casual
                                  :player-stats-icons :stacked-cards :ghost-trojans
                                  :corp-card-sleeve :runner-card-sleeve :prizes
                                  :display-encounter-info :sides-overlap :log-timestamps

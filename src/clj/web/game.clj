@@ -249,7 +249,7 @@
 
 (defmethod ws/-msg-handler :game/rejoin
   game--rejoin
-  [{{user :user} :ring-req
+  [{{db :system/db user :user} :ring-req
     uid :uid
     ?data :?data
     id :id
@@ -261,7 +261,7 @@
                 original-player
                 (< (count (remove #(= uid (:uid %)) players)) 2))
        (let [?data (assoc ?data :request-side "Any Side")
-             lobby? (lobby/join-lobby! user uid ?data nil lobby)]
+             lobby? (lobby/join-lobby! db user uid ?data nil lobby)]
          (when lobby?
            (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
            (update-and-send-diffs! main/handle-rejoin lobby? user)))))

@@ -236,6 +236,8 @@ deck-builder_decklist = Decklist
 
 deck-builder_decklist-inst = (Type or paste a decklist, it will be parsed)
 
+deck-builder_default = Default deck
+
 deck-builder_delete = Delete
 
 deck-builder_delete-selected = Delete Selected
@@ -301,11 +303,15 @@ deck-builder_save = Save
 
 deck-builder_select-all = Select All
 
+deck-builder_set-default = Set Default
+
 deck-builder_show-credit-cost = Show Credit Cost
 
 deck-builder_show-memory-cost = Show Memory Cost
 
 deck-builder_unselect-all = Unselect All
+
+deck-builder_unset-default = Unset Default
 
 deck-builder_view-options = View Options
 
@@ -1065,6 +1071,8 @@ lobby_save-replay-unshared = Only your latest 15 unshared games will be kept, so
 
 lobby_select-deck = Select Deck
 
+lobby_select-default-deck = Select Default Deck
+
 lobby_select-error = Cannot select that deck
 
 lobby_select-title = Select your deck
@@ -1550,6 +1558,10 @@ settings_api-keys-not-updated = Failed to update API keys
 
 settings_api-keys-updated = Updated API keys
 
+settings_auto-select-default-deck-casual = Auto-select default deck in casual games
+
+settings_auto-select-default-deck-tournament = Auto-select default deck in tournament games
+
 settings_avatar = Avatar
 
 settings_background = Game board background
@@ -1626,6 +1638,14 @@ settings_current-email = Current email
 
 settings_deck-stats = Deck statistics
 
+settings_default-game-description = Default game description in casual games
+
+settings_default-password = Default game password
+
+settings_default-password-protect-casual = Password protect by default in casual games
+
+settings_default-save-replay = Save replays by default in casual games
+
 settings_delete-api-key = Delete
 
 settings_desired-email = Desired email
@@ -1679,6 +1699,8 @@ settings_language-tip = Some languages are not fully translated yet. If you woul
 settings_layout-device = Device Layout
 
 settings_layout-options = Layout options
+
+settings_game-settings = Game Settings
 
 settings_log-player-highlight = Log player highlight
 
