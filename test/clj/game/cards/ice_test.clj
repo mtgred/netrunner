@@ -4634,6 +4634,54 @@
             (card-ability state :runner (refresh nfl) 0))
           "No Free Lunch unblanked"))))
 
+(deftest knowledge-seeker-subroutines
+  (testing "Place 1 virus counter on this ice"
+    (do-game
+      (subroutine-test "Knowledge Seeker" 0)
+      (is (= 1 (get-counters (get-ice state :hq 0) :virus))
+          "Subroutine places 1 virus counter on Knowledge Seeker")))
+  (testing "Look at the top 4 cards of R&D and arrange them in any order"
+    (do-game
+      (subroutine-test "Knowledge Seeker" 1
+                       {:corp {:deck ["IPO" "Hedge Fund" "NGO Front" "PAD Campaign" "Vanilla" "Enigma"]}})
+      (let [top-4 (mapv :title (take 4 (:deck (get-corp))))]
+        (doseq [t top-4]
+          (click-prompt state :corp (find-card t (:deck (get-corp)))))
+        (click-prompt state :corp "Done")
+        (is (= (reverse top-4) (mapv :title (take 4 (:deck (get-corp)))))
+            "Top 4 cards of R&D are reordered"))))
+  (testing "End the run"
+    (do-game (etr-sub "Knowledge Seeker" 2))))
+
+(deftest knowledge-seeker-purges-at-3-virus-counters
+  ;; Each encounter places a virus counter, and at 3 it purges
+  (do-game
+    (new-game {:corp {:hand ["Knowledge Seeker"] :deck [(qty "Hedge Fund" 10)]}
+               :runner {:hand ["Datasucker"] :credits 10}})
+    (play-from-hand state :corp "Knowledge Seeker" "Archives")
+    (take-credits state :corp)
+    (play-from-hand state :runner "Datasucker")
+    (let [ks (get-ice state :archives 0)
+          ds (get-program state 0)]
+      (core/add-counter state :runner (core/make-eid state) ds :virus 2)
+      (rez state :corp ks)
+      (dotimes [n 3]
+        (run-on state "Archives")
+        (run-continue state)
+        (card-subroutine state :corp ks 0)
+        (run-continue state)
+        (if (< n 2)
+          (do
+            (is (rezzed? (refresh ks)) (str "Still rezzed after encounter " (inc n)))
+            (is (= (inc n) (get-counters (refresh ks) :virus))
+                (str (inc n) " virus counter(s) after encounter " (inc n)))
+            (is (= 2 (get-counters (refresh ds) :virus)) "Datasucker's counters not yet purged"))
+          (do
+            (is (not (rezzed? (refresh ks))) "Knowledge Seeker derezzed itself on the third encounter")
+            (is (zero? (get-counters (refresh ks) :virus)) "Knowledge Seeker's virus counters were purged")
+            (is (zero? (get-counters (refresh ds) :virus)) "Datasucker's virus counters were purged")))
+        (run-jack-out state)))))
+
 (deftest komainu-subroutine-gain-loss-ability
   ;; Subroutine gain/loss ability
   (do-game
