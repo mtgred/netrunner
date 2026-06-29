@@ -3422,6 +3422,26 @@
           (play-cards state :corp ["Extract" "Luana Campos"]))
         "Took BP back")))
 
+(deftest luana-cupellation
+  ;; Hosting Luana on Cupellation uninstalls it and should return the hosted bad publicity #8752
+  (do-game
+    (new-game {:corp {:hand ["Luana Campos"]
+                      :deck [(qty "IPO" 10)]
+                      :bad-pub 1}
+               :runner {:hand ["Cupellation"]
+                        :credits 10}})
+    (play-cards state :corp ["Luana Campos" "New remote" :rezzed])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Cupellation")
+    (take-credits state :runner)
+    (click-prompt state :corp "Yes")
+    (is (= 0 (count-bad-pub state)) "Bad publicity is hosted on Luana")
+    (take-credits state :corp)
+    (run-empty-server state :remote1)
+    (is (changed? [(count-bad-pub state) 1]
+          (click-prompt state :runner "[Cupellation] 1 [Credits]: Host card"))
+        "Hosting Luana on Cupellation returns the bad publicity")))
+
 (deftest magistrate-revontuler
   (do-game
     (new-game {:corp {:hand ["Magistrate Revontulet" "Greenmail" "Project Beale" "Project Atlas"]}
