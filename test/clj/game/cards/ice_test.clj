@@ -5926,12 +5926,14 @@
 (deftest mycoweb-code-gate-test
   (do-game
     (subroutine-test "Mycoweb" 0 {:corp {:discard ["Enigma"]}})
+    (is (= "Choose an ice to install from Archives" (:msg (prompt-map :corp))))
     (click-card state :corp "Enigma")
     (click-prompt state :corp "HQ")
     (card-subroutine state :corp (get-ice state :hq 0) 1)
     (click-card state :corp "Enigma")
     (is (rezzed? (get-ice state :hq 1)) "Enigma rezzed")
     (card-subroutine state :corp (get-ice state :hq 0) 3)
+    (is (= "Resolve subroutine on another rezzed Code Gate" (:msg (prompt-map :corp))))
     (click-card state :corp "Enigma")
     (click-prompt state :corp "End the run")
     (is (not (:run @state)) "Run ended by enigma")))
@@ -5945,6 +5947,7 @@
     (click-card state :corp "Guard")
     (is (rezzed? (get-ice state :hq 1)) "Guard rezzed")
     (card-subroutine state :corp (get-ice state :hq 0) 2)
+    (is (= "Resolve subroutine on a rezzed Sentry" (:msg (prompt-map :corp))))
     (click-card state :corp "Guard")
     (click-prompt state :corp "End the run")
     (is (not (:run @state)) "Run ended by Guard")))
