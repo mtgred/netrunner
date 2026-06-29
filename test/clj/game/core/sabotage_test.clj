@@ -28,7 +28,8 @@
             "3 cards from HQ trashed"))
       (is (no-prompt? state :corp) "No Corp prompt open")
       (is (no-prompt? state :runner) "No Runner prompt open")
-      (is (= 3 (count (:discard (get-corp)))) "Archives has 3 cards")))
+      (is (= 3 (count (:discard (get-corp)))) "Archives has 3 cards")
+      (is (last-log-contains? state "trashes 3 cards from HQ") "Has a space before the card count")))
   (testing "Choosing only from R&D"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 15)]}})
@@ -68,7 +69,9 @@
             "2 cards from HQ trashed"))
       (is (no-prompt? state :corp) "No Corp prompt open")
       (is (no-prompt? state :runner) "No Runner prompt open")
-      (is (= 3 (count (:discard (get-corp)))) "Archives has 3 cards")))
+      (is (= 3 (count (:discard (get-corp)))) "Archives has 3 cards")
+      (is (last-log-contains? state "trashes 2 cards from HQ and 1 card from the top of R&D")
+          "Has spaces before the HQ and R&D segments")))
   (testing "Forced to trash some cards from HQ"
     (do-game
       (new-game {:corp {:deck [(qty "Hedge Fund" 7)]}})
