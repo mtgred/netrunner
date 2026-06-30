@@ -562,6 +562,8 @@ game_close = Close
 
 game_close-shuffle = Close & Shuffle
 
+game_command-menu = Commands
+
 game_concede = Concede
 
 game_continue = Continue

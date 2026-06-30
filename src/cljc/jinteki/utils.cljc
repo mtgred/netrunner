@@ -145,6 +145,7 @@
     :usage "/bp n"
     :help "Set your bad publicity to n"}
    {:name "/bug"
+    :common? true
     :usage "/bug"
     :help "Report a bug on GitHub"}
    {:name "/card-info"
@@ -164,9 +165,11 @@
     :usage "/click n"
     :help "Set your clicks to n"}
    {:name "/close-prompt"
+    :common? true
     :usage "/close-prompt"
     :help "close an active prompt and show the next waiting prompt, or the core click actions"}
    {:name "/counter"
+    :common? true
     :has-args :required
     :usage "/counter n"
     :help "set counters on a card to n (player's own cards only). Attempts to infer the type of counter to place. If the inference fails, you must use the next command to specify the counter type."}
@@ -222,6 +225,7 @@
     :usage "/host"
     :help "Manually host a card on another card"}
    {:name "/install"
+    :common? true
     :usage "/install"
     :help "Install an arbitrary card from hand or your discard pile"}
    {:name "/install-ice"
@@ -231,6 +235,7 @@
     :usage "/install-free"
     :help "Install an arbitrary card from hand or your discard pile, ignoring all costs"}
    {:name "/jack-out"
+    :common? true
     :usage "/jack-out"
     :help "Jack out (Runner only)"}
    {:name "/link"
@@ -288,6 +293,7 @@
     :usage "/sabotage n"
     :help "Sabotage n cards"}
    {:name "/save-replay"
+    :common? true
     :usage "/save-replay"
     :help "Save a replay of the game"}
    {:name "/score"
@@ -337,12 +343,15 @@
     :usage "/trash"
     :help "Trash an installed card"}
    {:name "/undo-paid-ability"
+    :common? true
     :usage "/undo-paid-ability"
     :help "Resets the game back to start of the last paid ability.  One paid ability only retained."}
    {:name "/undo-click"
+    :common? true
     :usage "/undo-click"
     :help "Resets the game back to start of the click.  One click only retained. Only allowed for active player"}
    {:name "/undo-turn"
+    :common? true
     :usage "/undo-turn"
     :help "Resets the game back to end of the last turn. Requires both players to request it"}
    {:name "/unique"

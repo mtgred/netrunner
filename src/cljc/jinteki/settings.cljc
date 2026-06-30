@@ -104,11 +104,10 @@
   "Validates default-decks is a map of side -> {format -> deck-id-string}"
   (validate-map-of keyword? (validate-map-of keyword? string?)))
 
-;; Bounds sit on the 1 +/- n*zoom-step lattice so stepping from either bound always
-;; passes through exactly 1, where nr.zoom restores the pristine unzoomed layout.
-(def zoom-min 0.55)
-(def zoom-max 1.9)
+(def zoom-default 1)
 (def zoom-step 0.15)
+(def zoom-max (+ zoom-default (* zoom-step 6)))
+(def zoom-min (- zoom-default (* zoom-step 3)))
 
 (def all-settings
   "Vector of all application settings with their metadata.
@@ -364,8 +363,8 @@
     :validate-fn validate-visible-formats
     :doc "Set of game formats to show in lobby (device-specific)"}
    {:key :zoom
-    :default 1
-    :sync? false  ; device-specific, like :log-width / :sounds-volume
+    :default zoom-default
+    :sync? false  ; device-specific
     :validate-fn #(and (number? %) (<= zoom-min % zoom-max))
     :doc "UI zoom factor for this device (emulates browser zoom via CSS zoom on <html>)"}])
 

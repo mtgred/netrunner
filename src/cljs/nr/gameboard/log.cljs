@@ -22,6 +22,9 @@
                            (map (fn [info] [(:name info) (select-keys info [:has-args :usage :help])]))
                            (into {})))
 
+(def common-commands
+  (->> command-info (filter :common?) (map :name) distinct sort))
+
 (defn scrolled-to-end?
   [el tolerance]
   (> tolerance (- (.-scrollHeight el) (.-scrollTop el) (.-clientHeight el))))
@@ -158,9 +161,12 @@
         nil))))
 
 (defn complete-command [state input]
-  (swap! state assoc :completions
-         (->> (find-matches commands input)
-              (mapv (fn [match] {:completion-text match :display-text (get-in command-info-map [match :usage])})))))
+  (let [matches (if (= input "/")
+                  common-commands
+                  (find-matches commands input))]
+    (swap! state assoc :completions
+           (mapv (fn [match] {:completion-text match :display-text (get-in command-info-map [match :usage])})
+                 matches))))
 
 (defn filter-side [[card-name card-info]]
   (case (:side @game-state)
@@ -216,9 +222,23 @@
                   [:span {:on-mouse-over #(swap! state assoc :completion-highlight i)
                           :on-click #(do
                             (fill-completion state completion-text)
-                            (.focus @!input-ref))}
+                            (if (autosend? completion-text)
+                              (send-msg state)
+                              (.focus @!input-ref)))}
                          display-text]])
                (:completions @state)))]]))
+
+(defn command-menu-button
+  [state]
+  (when (not-spectator?)
+    [:button.command-menu-button
+     {:on-click #(do (.preventDefault %)
+                     (if (show-completions? @state)
+                       (reset-completions state)
+                       (complete-command state "/")))
+      :key "Command menu"
+      :title (tr [:game_command-menu "Commands"])}
+     "/"]))
 
 (defn log-input []
   (let [current-game (r/cursor app-state [:current-game])
@@ -242,7 +262,9 @@
              ;;:on-blur #(send-typing (atom nil))
              :on-key-down #(completions-key-down-handler state %)
              :on-change #(log-input-change-handler state %)}]]]
-         [indicate-action]
+         [:div.log-actions
+          [command-menu-button state]
+          [indicate-action]]
          [show-decklists]
          [completions !input-ref state]]))))
 
