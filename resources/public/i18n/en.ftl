@@ -1598,6 +1598,26 @@ settings_card-backs-their-choice = Their Choice
 
 settings_card-backs-tip = You can earn more card backs by placing well in select online tournaments. If you're an artist with art that you think would make for a good card back, please feel free to contact us
 
+settings_card-colors = Card state colors
+
+settings_card-colors-colorblind = Colorblind-safe (Okabe-Ito palette)
+
+settings_card-colors-custom = Custom
+
+settings_card-colors-default = Default
+
+settings_card-colors-encountered = Encountered ice
+
+settings_card-colors-help = Recolor the glow around cards to tell states apart more easily. Pick a colorblind-friendly preset or set your own colors.
+
+settings_card-colors-hovered = Hovered
+
+settings_card-colors-poison = Poison / agenda in Archives
+
+settings_card-colors-selectable = Selectable / playable
+
+settings_card-colors-selected = Selected
+
 settings_card-iamge = Card Image
 
 settings_card-images = Card images

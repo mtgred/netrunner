@@ -1,5 +1,14 @@
 @require "opacity"
 @require "palette"
+
+// unquote needed to use color-mix and hsl in stylus
+glow(prop, pct)
+    unquote('color-mix(in srgb, var(' + prop + ') ' + pct + '%, transparent)')
+glow-wash(prop, pct)
+    unquote('color-mix(in srgb, color-mix(in srgb, var(' + prop + ') 20%, white) ' + pct + '%, transparent)')
+glow-spin(prop, pct)
+    unquote('hsl(from var(' + prop + ') calc(h - 15) s l / ' + pct + '%)')
+
 // Gameboard
 .gameview
     height: 100%
@@ -39,8 +48,8 @@
         border-radius: 4px
 
     .graveyard-highlight-bg
-        background: alpha(purple-core, o-60)
-        text-shadow 1px 1px 2px purple-core
+        background: glow('--card-poison', 60)
+        text-shadow 1px 1px 2px var(--card-poison)
         border-radius: 4px
 
     .server-label
@@ -74,19 +83,19 @@
 
     @keyframes new-card {
         0% {
-            box-shadow: 0 0 1px 2px gold-base, 20px 20px 15px 10px lighten(alpha(gold-base, 30%), 80%), -20px -20px 15px 10px lighten(alpha(gold-base, 30%), 80%), 0 0 30px 15px spin(alpha(gold-base, 70%), -15deg)
+            box-shadow: 0 0 1px 2px var(--card-selectable), 20px 20px 15px 10px glow-wash('--card-selectable', 30), -20px -20px 15px 10px glow-wash('--card-selectable', 30), 0 0 30px 15px glow-spin('--card-selectable', 70)
         }
         100% {
-            box-shadow: 0 0 1px 2px gold-base, 0px 0px 0px 0px lighten(alpha(gold-base, 30%), 80%), 0px 0px 0px 0px lighten(alpha(gold-base, 30%), 80%), 0 0 0px 0px spin(alpha(gold-base, 70%), -15deg)
+            box-shadow: 0 0 1px 2px var(--card-selectable), 0px 0px 0px 0px glow-wash('--card-selectable', 30), 0px 0px 0px 0px glow-wash('--card-selectable', 30), 0 0 0px 0px glow-spin('--card-selectable', 70)
         }
     }
 
     @keyframes graveyard-card {
         0% {
-            box-shadow: 0 0 1px 2px purple-core, 20px 20px 15px 10px lighten(alpha(purple-core, 30%), 80%), -20px -20px 15px 10px lighten(alpha(purple-core, 30%), 80%), 0 0 30px 15px spin(alpha(purple-core, 70%), -15deg)
+            box-shadow: 0 0 1px 2px var(--card-poison), 20px 20px 15px 10px glow-wash('--card-poison', 30), -20px -20px 15px 10px glow-wash('--card-poison', 30), 0 0 30px 15px glow-spin('--card-poison', 70)
         }
         100% {
-            box-shadow: 0 0 1px 2px purple-core, 0px 0px 0px 0px lighten(alpha(purple-core, 30%), 80%), 0px 0px 0px 0px lighten(alpha(purple-core, 30%), 80%), 0 0 0px 0px spin(alpha(purple-core, 70%), -15deg)
+            box-shadow: 0 0 1px 2px var(--card-poison), 0px 0px 0px 0px glow-wash('--card-poison', 30), 0px 0px 0px 0px glow-wash('--card-poison', 30), 0 0 0px 0px glow-spin('--card-poison', 70)
         }
     }
 
@@ -97,50 +106,50 @@
         animation: new-card 1s cubic-bezier(0.5,1,0.5,1) forwards
 
     .card.selected
-        box-shadow(0 0 1px 2px green-bright)
+        box-shadow: 0 0 1px 2px var(--card-selected)
         animation: none
 
     .card.icon-hovered
-        box-shadow(0 0 1px 2px red-light)
+        box-shadow: 0 0 1px 2px var(--card-encountered)
 
     @keyframes encountered-card {
         0% {
-            box-shadow: 0 0 10px 4px red-light, 0px 0px 12px 12px lighten(alpha(red-light, 30%), 80%)
+            box-shadow: 0 0 10px 4px var(--card-encountered), 0px 0px 12px 12px glow-wash('--card-encountered', 30)
         }
         100% {
-            box-shadow: 0 0 1px 2px red-light, 0px 0px 0px 0px lighten(alpha(red-light, 30%), 80%)
+            box-shadow: 0 0 1px 2px var(--card-encountered), 0px 0px 0px 0px glow-wash('--card-encountered', 30)
         }
     }
 
     .card.encountered
         animation: encountered-card 1s cubic-bezier(0.25,1,0.5,1) forwards
-        border-color: red-light
+        border-color: var(--card-encountered)
 
     @keyframes hovered-card {
         0% {
-            box-shadow: 0 0 10px 4px blue-light, 0px 0px 12px 12px lighten(alpha(blue-light, 30%), 80%)
+            box-shadow: 0 0 10px 4px var(--card-hovered), 0px 0px 12px 12px glow-wash('--card-hovered', 30)
         }
         100% {
-            box-shadow: 0 0 1px 2px blue-light, 0px 0px 0px 0px lighten(alpha(blue-light, 30%), 80%)
+            box-shadow: 0 0 1px 2px var(--card-hovered), 0px 0px 0px 0px glow-wash('--card-hovered', 30)
         }
     }
 
     .card.playable
-        box-shadow(0 0 1px 2px gold-base)
+        box-shadow: 0 0 1px 2px var(--card-selectable)
         animation: none
 
     .card.selectable
-        box-shadow(0 0 1px 2px gold-base)
+        box-shadow: 0 0 1px 2px var(--card-selectable)
         animation: none
 
     .card.ghost
         filter: opacity(0.65) grayscale(80%);
-        box-shadow(0 0 1px 2px blue-light)
+        box-shadow: 0 0 1px 2px var(--card-hovered)
         animation: none
 
     .card.hovered
         animation: hovered-card 1s cubic-bezier(0.25,1,0.5,1) forwards
-        border-color: blue-light
+        border-color: var(--card-hovered)
 
     .card.flashback
         filter: grayscale(80%);
@@ -164,7 +173,7 @@
     .card
         &:not(.selected)
             &:focus
-                box-shadow(0 0 1px 2px blue-light)
+                box-shadow: 0 0 1px 2px var(--card-hovered)
                 animation: none
 
     .counters
