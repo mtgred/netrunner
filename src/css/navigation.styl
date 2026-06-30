@@ -113,3 +113,24 @@ nav ul
 
     .mute-button, .stack-cards-button, .runner-board-order-button, .replay-button, .reconnect-button
         margin-left: 12px
+
+// zero the container's own spacing and pad the links instead, so the whitespace
+// around the single-glyph - and + becomes tappable area
+#status #zoom-controls
+    margin-left: 0
+    padding-right: 0
+
+    a
+        display: inline-block
+
+        &:first-child
+            padding-left: 10px
+            padding-right: 10px
+
+        &:last-child
+            padding-left: 10px
+            padding-right: 12px
+
+        // keep the disabled minus/plus greyed (the base `a:hover` would otherwise gold it)
+        &.disabled:hover
+            color: white-solid

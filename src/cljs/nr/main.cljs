@@ -6,6 +6,7 @@
    [nr.routes :as routes]
    [nr.status-bar :refer [status]]
    [nr.ws :refer [start-router! lobby-updates-pause! lobby-updates-continue!]]
+   [nr.zoom :as zoom]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]
    [reagent.dom :as rdom]
@@ -65,4 +66,5 @@
 (defn init! []
   (routes/init-routes!)
   (start-router!)
-  (mount))
+  (mount)
+  (zoom/apply-zoom! (get-in @app-state [:options :zoom])))

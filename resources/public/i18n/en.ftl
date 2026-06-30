@@ -1197,6 +1197,12 @@ nav_users = Users
 
 nav_welcome = Welcome
 
+nav_zoom-in = Zoom in
+
+nav_zoom-out = Zoom out
+
+nav_zoom-reset = Reset zoom
+
 new-game_default = No special conditions
 
 new-game_meta-deck = Play against meta decks

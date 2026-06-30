@@ -12,6 +12,7 @@
     [nr.translations :refer [tr tr-span tr-element]]
     [nr.utils :refer [tr-non-game-toast render-message]]
     [nr.ws :as ws]
+    [nr.zoom :as zoom]
     [reagent.core :as r]))
 
 (defonce replay-timeline (atom []))
@@ -70,9 +71,10 @@
           mid (+ (.-left (.getBoundingClientRect timeline))
                  (/ (.-width (.getBoundingClientRect timeline)) 2))
           diff (- mid new-step-left)]
+      ;; getBoundingClientRect is in zoomed page px, scrollLeft in local px
       (set! (.-scrollLeft timeline)
             (- (.-scrollLeft timeline)
-               diff)))))
+               (/ diff (zoom/current-zoom)))))))
 
 (defn toggle-play-pause []
   (swap! replay-status assoc :autoplay (not (:autoplay @replay-status))))

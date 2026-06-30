@@ -8,6 +8,10 @@
     padding-top: 31px
     margin-top: -31px
 
+    // grow vh by 1/zoom while zoomed (CSS zoom doesn't scale vh); see nr.zoom
+    html.app-zoomed &
+        height: unquote("calc(100vh / var(--app-zoom, 1))")
+
     .heading, .type
         font-weight: bold
 
