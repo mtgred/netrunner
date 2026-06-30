@@ -9,7 +9,6 @@
             [nr.gameboard.state :refer [game-state]]
             [nr.gameboard.settings :refer [settings-pane]]
             [nr.translations :refer [tr-span]]
-            [nr.zoom :as zoom]
             [reagent.core :as r]))
 
 (defonce loaded-tabs (r/atom {}))
@@ -61,22 +60,10 @@
       (.css "width" width))))
 
 (defn- pane-resize
-  "Resize the card zoom to fit the available space.
-   jQuery UI measures drags and clamps its 10px minimum sizes in page px; when the
-   app is zoomed the pane is laid out in smaller local px, so rescale the deltas by
-   1/zoom and re-apply the minimums in local px (width >= 10, top leaving >= 10 of
-   pane height), or the rescaled values can overshoot at zoom < 1."
-  [event ^js ui]
-  (let [zoom-factor (zoom/current-zoom)
-        original-width (.. ui -originalSize -width)
-        original-height (.. ui -originalSize -height)
-        original-top (.. ui -originalPosition -top)
-        width (-> (+ original-width (/ (- (.. ui -size -width) original-width) zoom-factor))
-                  (js/Math.round)
-                  (max 10))
-        top (-> (+ original-top (/ (- (.. ui -position -top) original-top) zoom-factor))
-                (js/Math.round)
-                (min (+ original-top original-height -10)))]
+  "Resize the card zoom to fit the available space"
+  [event ui]
+  (let [width (.. ui -size -width)
+        top (.. ui -position -top)]
     (swap! app-state assoc-in [:options :log-width] width) ;;XXX: rename
     (swap! app-state assoc-in [:options :log-top] top)
     (ls/save! "log-width" width)
