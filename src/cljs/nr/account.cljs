@@ -14,7 +14,8 @@
    [nr.local-storage :as ls]
    [nr.sounds :refer [bespoke-sounds play-sfx random-sound select-random-from-grouping]]
    [nr.translations :refer [tr tr-span tr-element tr-format]]
-   [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
+   [nr.utils :refer [card-colors-class card-colors-custom-style format-date-time
+                     get-image-path image-or-face ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top tr-non-game-toast]]
    [jinteki.i18n :as i18n]
    [jinteki.card-backs :as card-backs]
@@ -282,6 +283,11 @@
    ["Worlds 2020" "worlds2020"]
    ["Custom BG (input URL below)" "custom-bg"]])
 
+(defn- example-card-url
+  [title]
+  (when-let [card (get @all-cards title)]
+    (first (get-image-path (image-or-face card) :en :default :stock))))
+
 (defn account-content [_ _ scroll-top]
   (r/with-let [!node-ref (r/atom nil)]
     (r/create-class
@@ -490,6 +496,43 @@
                             :hidden (not custom-bg-selected)
                             :on-change #(swap! s assoc :custom-bg-url (.. % -target -value))
                             :value @custom-bg-url}]]])
+
+          (let [card-colors (:card-colors @s "default")
+                card-color-examples [[:hovered "hovered" "Sure Gamble" [:settings_card-colors-hovered "Hovered"]]
+                                     [:selectable "selectable" "Hedge Fund" [:settings_card-colors-selectable "Selectable / playable"]]
+                                     [:selected "selected" "Spin Doctor" [:settings_card-colors-selected "Selected"]]
+                                     [:poison "graveyard-highlight" "Mavirus" [:settings_card-colors-poison "Poison / agenda in Archives"]]
+                                     [:encountered "encountered" "Pharos" [:settings_card-colors-encountered "Encountered ice"]]]]
+            [:section
+             [tr-element :h3 [:settings_card-colors "Card state colors"]]
+             [:div [tr-span [:settings_card-colors-help "Recolor the glow around cards to tell states apart more easily. Pick a colorblind-friendly preset or set your own colors."]]]
+             (doall
+               (for [[ref label] [["default" [:settings_card-colors-default "Default"]]
+                                  ["colorblind" [:settings_card-colors-colorblind "Colorblind-safe (Okabe-Ito palette)"]]
+                                  ["custom" [:settings_card-colors-custom "Custom"]]]]
+                 [:div.radio {:key ref}
+                  [:label [:input {:type "radio"
+                                   :name "card-colors"
+                                   :value ref
+                                   :on-change #(swap! s assoc :card-colors (.. % -target -value))
+                                   :checked (= card-colors ref)}]
+                   [tr-span label]]]))
+
+             [:div.card-colors-preview
+              [:div.gameboard {:class (card-colors-class card-colors)
+                               :style (card-colors-custom-style @s)}
+               (doall
+                 (for [[state cls title label] card-color-examples]
+                   [:div.example {:key (name state)}
+                    [:div.card {:class cls
+                                :style (when-let [url (example-card-url title)]
+                                         {:background-image (str "url(\"" url "\")")})}
+                     (when (= "custom" card-colors)
+                       [:input {:type "color"
+                                :title (tr label)
+                                :value (get-in @s [:card-custom-colors state] "#000000")
+                                :on-change #(swap! s assoc-in [:card-custom-colors state] (.. % -target -value))}])]
+                    [:label [tr-span label]]]))]]])
 
           [:section
            [tr-element :h3 [:settings_corp-card-sleeve "Corp card backs"]]
@@ -743,6 +786,7 @@
                                  :runner-board-order :log-width :log-top :log-player-highlight
                                  :blocked-users :alt-arts :gamestats :deckstats :disable-websockets
                                  :archives-sorted :heap-sorted :card-back-display
+                                 :card-colors :card-custom-colors
                                  :labeled-cards :labeled-unrezzed-cards])
                    (assoc :flash-message ""
                           :all-art-select "wc2015")))]

@@ -40,3 +40,54 @@
 
   .reset-all
       margin-top: 10px
+
+.card-colors-preview
+    margin-top: 12px
+
+    .gameboard
+        display: grid
+        grid-template-columns: repeat(auto-fit, 92px)
+        justify-content: start
+        gap: 16px
+        width: auto
+        flex-grow: 0
+        overflow: visible
+        padding: 12px 0
+
+    .example
+        display: flex
+        flex-direction: column
+        align-items: center
+        gap: 6px
+        font-size: .75rem
+        text-align: center
+
+    .card
+        background: alpha(black-solid, o-30)
+        background-size: cover
+        background-position: center
+
+        input[type="color"]
+            position: absolute
+            top: 50%
+            left: 50%
+            transform: translate(-50%, -50%)
+            margin: 0
+            padding: 0
+            width: 38px
+            height: 38px
+            border: 2px solid white-solid
+            border-radius: 4px
+            background: none
+            cursor: pointer
+
+            &::-webkit-color-swatch-wrapper
+                padding: 0
+
+            &::-webkit-color-swatch
+                border: none
+                border-radius: 2px
+
+            &::-moz-color-swatch
+                border: none
+                border-radius: 2px
