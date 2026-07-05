@@ -761,9 +761,9 @@
        [:span.float-right
         [deck-status-span deck]
         [:p (deck-date deck)]]
-       [:h4 (when (default-deck? deck)
-              [:span.deck-default-star {:title (tr [:deck-builder_default "Default deck"])} "★ "])
-        (deck-name deck)]
+       (when (default-deck? deck)
+         [:span.float-right.deck-default-star {:title (tr [:deck-builder_default "Default deck"])} "★ "])
+       [:h4 (deck-name deck)]
        [:span (tr-data :title (:identity deck))]
        [deck-stats-line deck]])))
 

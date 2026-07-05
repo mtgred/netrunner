@@ -66,9 +66,9 @@
                [:img {:src (image-url (:identity deck))
                       :alt (get-in deck [:identity :title] "")}]
                [:div.float-right [deck-format-status-span deck fmt true]]
-               [:h4 (when (default-deck? deck)
-                      [:span.deck-default-star {:title (tr [:deck-builder_default "Default deck"])} "★ "])
-                (:name deck)]
+(when (default-deck? deck)
+                 [:span.float-right.deck-default-star {:title (tr [:deck-builder_default "Default deck"])} "★ "])
+               [:h4 (:name deck)]
                [:div.float-right
                 (format-date-time mdy-formatter (:date deck))]
                [:p (get-in deck [:identity :title])]]))]]
