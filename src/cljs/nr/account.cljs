@@ -471,7 +471,22 @@
                               :value "none"
                               :checked (= "none" (:log-player-highlight @s))
                               :on-change #(swap! s assoc :log-player-highlight (.. % -target -value))}]
-              [tr-span [:settings_log-player-highlight-none "None"]]]]]]
+              [tr-span [:settings_log-player-highlight-none "None"]]]]]
+           [:br]
+           [tr-element :h4 [:settings_tactile-cards "Tactile cards"]]
+           [:div
+            [:div
+              [:label [:input {:type "checkbox"
+                               :value true
+                               :checked (:card-unplayable-fade-out @s)
+                               :on-change #(swap! s assoc :card-unplayable-fade-out (.. % -target -checked))}]
+              [tr-span [:settings_card-unplayable-fade-out "Fade out unplayable cards"]]]]
+            [:div
+              [:label [:input {:type "checkbox"
+                               :value true
+                               :checked (:card-hover-movement @s)
+                               :on-change #(swap! s assoc :card-hover-movement (.. % -target -checked))}]
+              [tr-span [:settings_card-hover-movement "Responsive cards in hand"]]]]]]
 
           (let [custom-bg-selected (= (:background @s) "custom-bg" )
                 custom-bg-url (r/cursor s [:custom-bg-url])]
@@ -735,6 +750,7 @@
         state (r/atom
                (-> (:options @app-state)
                    (select-keys [:pronouns :bespoke-sounds :language :card-language :sounds :default-format
+                                 :card-unplayable-fade-out :card-hover-movement
                                  :lobby-sounds :sounds-volume :background :custom-bg-url :card-zoom
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
                                  :player-stats-icons :stacked-cards :ghost-trojans

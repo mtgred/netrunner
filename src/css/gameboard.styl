@@ -1184,3 +1184,32 @@
                             li.command-match.highlight span
                                 color: gold-base
                                 cursor: pointer
+
+.gameboard.card-unplayable-fade-out
+
+    .hand-container .card
+        transition: all 0.15s
+
+    .hand-container .card:not(.playable, .selectable, .bg)
+        filter: contrast(0.8)
+
+    .hand-container .card:not(.playable, .selectable, .bg, :hover)
+        filter: contrast(0.7)
+
+.gameboard.card-hover-movement
+
+    .hand-container .card
+        transition: all 0.15s
+
+    .hand-container .card.selected
+        transform: translateY(-5px)
+
+    .hand-container .card.selected:hover
+        transform: translateY(-10px)
+
+    .hand-container .card.playable:hover:not(:has(+ .active-menu)),
+    .hand-container .card.selectable:hover:not(:has(+ .active-menu))
+        transform: translateY(-7.5px)
+
+    .hand-container .card:has(+ .active-menu)
+        transform: translateY(0) scale(1.05)

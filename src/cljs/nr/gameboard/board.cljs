@@ -906,7 +906,7 @@
        (fn [i card]
          [:div {:key (or (:cid card) i)
                 :class (str wrapper-class)
-                :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
+                :style {:left (when (< 1 size) (* (/ 320 (dec size)) i)) :z-index i}}
           (cond
             (spectator-view-hidden?)
             [card-view (dissoc card :new :selected)]
@@ -1216,7 +1216,7 @@
     [label full-server-names (assoc opts
                                         :classes "server-label"
                                         :name (str "Servers " (join ", " numbers))
-                                        :tr-vec [:game_server "Server"] 
+                                        :tr-vec [:game_server "Server"]
                                         :tr-params {:num (join ", " numbers)}
                                         :hide-cursor true)]))
 
@@ -2294,7 +2294,10 @@
         background (r/cursor app-state [:options :background])
         custom-bg-url (r/cursor app-state [:options :custom-bg-url])
         labeled-unrezzed-cards (r/cursor app-state [:options :labeled-unrezzed-cards])
-        labeled-cards (r/cursor app-state [:options :labeled-cards])]
+        labeled-cards (r/cursor app-state [:options :labeled-cards])
+        labeled-cards (r/cursor app-state [:options :labeled-cards])
+        card-unplayable-fade-out (r/cursor app-state [:options :card-unplayable-fade-out])
+        card-hover-movement (r/cursor app-state [:options :card-hover-movement])]
 
     (go (while true
           (let [zoom (<! zoom-channel)]
@@ -2383,6 +2386,8 @@
                  sfx (r/cursor game-state [:sfx])]
              [:div.gameview
               [:div {:class [:gameboard
+                             (when (and (not= @side :spectator) @card-unplayable-fade-out) :card-unplayable-fade-out)
+                             (when (and (not= @side :spectator) @card-hover-movement) :card-hover-movement)
                              (when @labeled-unrezzed-cards :show-unrezzed-card-labels)
                              (when @labeled-cards :show-card-labels)]}
                (let [me-keep (r/cursor game-state [me-side :keep])

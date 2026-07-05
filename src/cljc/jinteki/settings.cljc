@@ -135,6 +135,16 @@
     :sync? true
     :validate-fn #(contains? valid-card-zoom-options %)
     :doc "How to display zoomed cards (image/text)"}
+   {:key :card-unplayable-fade-out
+    :default true
+    :sync? false  ; device-specific
+    :validate-fn boolean?
+    :doc "Whether to fade out unplayable cards in hand"}
+   {:key :card-hover-movement
+    :default true
+    :sync? false  ; device-specific
+    :validate-fn boolean?
+    :doc "Whether cards in hand should be responsive to mouse movement"}
    {:key :corp-card-sleeve
     :default "nsg-card-back"
     :sync? true
