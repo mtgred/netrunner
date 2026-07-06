@@ -2295,7 +2295,6 @@
         custom-bg-url (r/cursor app-state [:options :custom-bg-url])
         labeled-unrezzed-cards (r/cursor app-state [:options :labeled-unrezzed-cards])
         labeled-cards (r/cursor app-state [:options :labeled-cards])
-        labeled-cards (r/cursor app-state [:options :labeled-cards])
         card-unplayable-fade-out (r/cursor app-state [:options :card-unplayable-fade-out])
         card-hover-movement (r/cursor app-state [:options :card-hover-movement])]
 
