@@ -1202,14 +1202,23 @@
         transition: all 0.15s
 
     .hand-container .card.selected
-        transform: translateY(-5px)
+        transform: translateY(-5px) scale(1.02)
+
+    .hand-container .card-wrapper:has(.active-menu)
+        z-index: 99999 !important
 
     .hand-container .card.selected:hover
-        transform: translateY(-10px)
+        transform: translateY(-10px) scale(1.02)
 
     .hand-container .card.playable:hover:not(:has(+ .active-menu)),
     .hand-container .card.selectable:hover:not(:has(+ .active-menu))
-        transform: translateY(-7.5px)
+        transform: translateY(-7.5px) scale(1.02)
 
     .hand-container .card:has(+ .active-menu)
-        transform: translateY(0) scale(1.05)
+        transform: translateY(-5px) scale(1.1)
+
+    .hand-container .card:has(+ .active-menu):hover
+        transform: translateY(-5.2px) scale(1.11)
+
+    .hand-container .active-menu
+        transform: translateY(-10px)
