@@ -13,7 +13,7 @@
 # $ lein create-indexes
 # $ mongodump --uri="$MONGO_CONNECTION_URI" --archive=jnet-tmpl.archive -d jnet-tmpl
 
-FROM amazonlinux:2023
+FROM amazonlinux:2023.12.20260611.0
 
 # Set up the working directory
 WORKDIR /app

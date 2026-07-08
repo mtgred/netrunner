@@ -8,7 +8,9 @@
 
    All settings are validated before being stored in app state. Invalid values are
    filtered out at each source level, ensuring app state always contains valid settings."
-  (:require [clojure.string :as str]))
+  (:require
+   [clojure.string :as str]
+   [jinteki.utils :as utils]))
 
 ;; Validation constants
 (def valid-background-slugs
@@ -39,6 +41,7 @@
   {:hovered "#00aeff" :selectable "#ffa600" :selected "#32cd32"
    :poison "#8352ad" :encountered "#d43425"})
 (def card-color-states (-> default-card-custom-colors keys set))
+(def valid-game-descriptions (set (map name (keys utils/descriptions))))
 
 ;; Validation combinators
 (defn- validate-coll-of
@@ -97,6 +100,10 @@
   "Validates card-custom-colors is a map of card-color-states to hex color strings"
   (validate-map-of #(contains? card-color-states %) valid-hex-color?))
 
+(def validate-default-decks
+  "Validates default-decks is a map of side -> {format -> deck-id-string}"
+  (validate-map-of keyword? (validate-map-of keyword? string?)))
+
 (def all-settings
   "Vector of all application settings with their metadata.
    Each setting has:
@@ -110,6 +117,16 @@
     :sync? true
     :validate-fn validate-alt-arts
     :doc "User's selected alternate art set when :show-alt-art is true"}
+   {:key :auto-select-default-deck-casual
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Auto-select default deck in casual games"}
+   {:key :auto-select-default-deck-tournament
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Auto-select default deck in tournament games"}
    {:key :archives-sorted
     :default false
     :sync? true
@@ -175,11 +192,36 @@
     :sync? true
     :validate-fn #(contains? valid-stats-options %)
     :doc "When to show deck statistics (always/competitive/none)"}
+   {:key :default-decks
+    :default {}
+    :sync? true
+    :validate-fn validate-default-decks
+    :doc "Default deck _id per side+format, auto-selected in the lobby"}
    {:key :default-format
     :default "standard"
     :sync? true
     :validate-fn #(contains? valid-formats %)
     :doc "Default game format when creating new games"}
+   {:key :default-game-description
+    :default "new-game_default"
+    :sync? true
+    :validate-fn #(contains? valid-game-descriptions %)
+    :doc "Default game description in casual games"}
+   {:key :default-password
+    :default ""
+    :sync? true
+    :validate-fn string?
+    :doc "Default game password"}
+   {:key :default-password-protect-casual
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Password protect by default in casual games"}
+   {:key :default-save-replay
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Save replays by default in casual games"}
    {:key :disable-websockets
     :default false
     :sync? false  ; device-specific

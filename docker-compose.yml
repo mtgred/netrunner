@@ -26,7 +26,7 @@ services:
       context: .
 
   database:
-    image: mongo
+    image: mongo:8.2.11
     container_name: mongodb
     restart: unless-stopped
     ports:

@@ -1126,7 +1126,7 @@
                   :waiting-prompt true
                   :effect (effect (set-aside state side eid (take 6 (:deck runner)))
                                (let [set-aside-cards (sort-by :title (get-set-aside state side eid))]
-                                 (system-msg state side (str (:latest-payment-str eid) "to use " (get-title card)
+                                 (system-msg state side (str (:latest-payment-str eid) " to use " (get-title card)
                                                              " to set aside "
                                                              (enumerate-cards set-aside-cards)
                                                              " from the top of the stack"))

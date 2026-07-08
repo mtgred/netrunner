@@ -654,7 +654,7 @@
       (effect
         (continue-ability
           state side {:async true
-           :prompt "Choose the ice"
+           :prompt label
            :choices {:req (req (pred card target))
                      :all true}
            :effect (effect
@@ -2254,7 +2254,7 @@
                    :async true
                    :show-discard true
                    :effect (effect (wait-for
-                                  (reveal-loud state side card {:and-then "shuffle [them] into R&D"}
+                                  (reveal-loud state side card {:and-then " and shuffle [them] into R&D"}
                                                targets)
                                   (doseq [c targets]
                                     (move state :corp c :deck))
@@ -3384,6 +3384,7 @@
 
 (defcard "Mycoweb"
   {:subroutines [{:label "Install an ice from Archives, ignoring all costs"
+                  :prompt "Choose an ice to install from Archives"
                   :show-discard true
                   :choices {:req (req (ice? target)
                                            (in-discard? target))}

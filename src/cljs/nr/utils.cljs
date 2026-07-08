@@ -133,14 +133,14 @@
 (def slug->format
   (ordered-map
    "standard" "Standard"
-   "throwback" "Throwback"
    "startup" "Startup"
-   "quick-draft" "Quick Draft"
+   "eternal" "Eternal"
    "system-gateway" "System Gateway"
    "core" "Core"
-   "preconstructed" "Preconstructed"
+   "quick-draft" "Quick Draft"
+   "throwback" "Throwback"
    "chimera" "Chimera"
-   "eternal" "Eternal"
+   "preconstructed" "Preconstructed"
    "casual" "Casual"))
 
 (def slug->buildable-format
@@ -149,14 +149,14 @@
 (def format->slug
   (ordered-map
    "Standard" "standard"
-   "Throwback" "throwback"
    "Startup" "startup"
-   "Quick Draft" "quick-draft"
+   "Eternal" "eternal"
    "System Gateway" "system-gateway"
    "Core" "core"
-   "Preconstructed" "preconstructed"
+   "Quick Draft" "quick-draft"
+   "Throwback" "throwback"
    "Chimera" "chimera"
-   "Eternal" "eternal"
+   "Preconstructed" "preconstructed"
    "Casual" "casual"))
 
 (def buildable-format->slug
@@ -414,6 +414,12 @@
   (if on-cond
     [:button.on {:on-click f :key on-text} on-text]
     [:button.off {:on-click f :key off-text} off-text]))
+
+(defn focus-on-mount
+  "Reagent :ref callback that focuses the element once it mounts. Pass it as a stable
+   var, never as an inline fn, so React only invokes it once on mount instead of every render."
+  [el]
+  (when el (.focus el)))
 
 (defn tristate-button [on-text off-text on-cond disable-cond f]
   (let [text (if on-cond on-text off-text)]
