@@ -39,10 +39,9 @@
   (and (= side (get-in deck [:identity :side]))
        (or (not singleton) (singleton-deck? deck))
        (or (= "casual" format)
-           (get-in deck [:status (keyword format) :legal]
-                   (get-in (trusted-deck-status (assoc deck :format format))
-                           [(keyword format) :legal]
-                           false)))))
+           (get-in deck [:status (keyword format) :legal])
+           (get-in (trusted-deck-status (assoc deck :format format)) [(keyword format) :legal])
+           false)))
 
 (defn select-deck-modal [user current-game]
   (r/with-let [decks (r/cursor app-state [:decks])]
