@@ -50,6 +50,14 @@
   (or (get-in @state [:runner :tag :is-tagged])
       (pos? (count-tags state))))
 
+(defn constructed-format?
+  [format]
+  (not (#{"quick-draft" "chimera"} format)))
+
+(defn constructed-game?
+  [{:keys [precon format]}]
+  (and (not precon) (constructed-format? format)))
+
 (defn slugify
   "As defined here: https://you.tools/slugify/"
   ([string] (slugify string "-"))
@@ -118,6 +126,14 @@
             ret)
           (next keyseq)))
       (with-meta (persistent! ret) (meta m)))))
+
+(def descriptions
+  "Game description options when creating a lobby."
+  {:new-game_default "No special conditions"
+   :new-game_meta-deck "Play against meta decks"
+   :new-game_casual "Casual play"
+   :new-game_competitive "Play competitive games"
+   :new-game_new-player "Learning the game"})
 
 (def command-info
   [{:name "/adv-counter"

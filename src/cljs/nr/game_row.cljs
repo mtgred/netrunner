@@ -214,7 +214,7 @@
    :pending-game_new-player "Looking To: Learn the game"})
 
 (defn description-span [description]
-  (when (and description (not= description :new-game_default))
+  (when (and description (not= description "new-game_default"))
     (let [k (keyword (str "pending-game_" (last (s/split (name description) #"_"))))]
       [:span.format-precon-deck-names {:class "game-description"}
        [tr-span [k (k descriptions)]]])))
