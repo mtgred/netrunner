@@ -675,10 +675,12 @@ glow-spin(prop, pct)
         display-flex()
         flex-direction(column)
         justify-content(space-between)
+        max-height: 100%
 
         .inner-leftpane
             flex(1)
             display-flex()
+            min-height: 0
 
             .left-inner-leftpane
                 width: 201px
@@ -737,25 +739,33 @@ glow-spin(prop, pct)
                             color: orange-dark
 
                 .button-pane
+                    min-height: 0
+
                     .panel
                         padding: 8px
                         z-index: 20
+
+                        // scroll oversized prompts (e.g. long install choice lists)
+                        &.prompt
+                            overflow-y: auto
 
                         .prompt-card-preview
                             text-align: center
 
                             div.card
                                 width: 168px
-                                height: 234.833px
+                                max-width: 100%
+                                height: auto
+                                aspect-ratio: unquote("168 / 234.833")
 
                                 >div:first-child
                                     display:inline
-                                    width: 168px !important
-                                    height: 234.833px
+                                    width: 100% !important
+                                    height: 100%
 
                                     >img.card
-                                        width: 168px
-                                        height: 234.833px
+                                        width: 100%
+                                        height: 100%
 
                     .run-button
                         position: relative

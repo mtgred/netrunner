@@ -1798,7 +1798,7 @@
 (defn prompt-div
   [me {:keys [card msg prompt-type choices offer-bad-pub?] :as prompt-state}]
   (let [id (atom 0)]
-    [:div.panel.blue-shade
+    [:div.panel.blue-shade.prompt
      (when (and card (not= "Basic Action" (:type card)))
        [:<>
         (let [get-nested-host (fn [card] (if (:host card)
