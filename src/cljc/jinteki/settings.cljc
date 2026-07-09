@@ -35,6 +35,12 @@
 (def valid-card-sleeves #{"ffg-card-back" "nsg-card-back" "ffg" "nsg"})
 (def valid-formats #{"standard" "throwback" "startup" "system-gateway"
                      "core" "preconstructed" "eternal" "casual"})
+(def valid-card-colors #{"default" "colorblind" "custom"})
+;; Keep in sync with the :root defaults in src/css/palette.styl
+(def default-card-custom-colors
+  {:hovered "#00aeff" :selectable "#ffa600" :selected "#32cd32"
+   :poison "#8352ad" :encountered "#d43425"})
+(def card-color-states (-> default-card-custom-colors keys set))
 (def valid-game-descriptions (set (map name (keys utils/descriptions))))
 
 ;; Validation combinators
@@ -84,6 +90,15 @@
 (def validate-visible-formats
   "Validates visible-formats is a set of valid format strings"
   (validate-coll-of #(contains? valid-formats %) set?))
+
+(defn- valid-hex-color?
+  [value]
+  (and (string? value)
+       (some? (re-matches #"#[0-9a-fA-F]{6}" value))))
+
+(def validate-card-custom-colors
+  "Validates card-custom-colors is a map of card-color-states to hex color strings"
+  (validate-map-of #(contains? card-color-states %) valid-hex-color?))
 
 (def validate-default-decks
   "Validates default-decks is a map of side -> {format -> deck-id-string}"
@@ -137,6 +152,16 @@
     :sync? true
     :validate-fn #(contains? valid-card-back-display %)
     :doc "Which card backs to display (them/me/ffg/nsg)"}
+   {:key :card-colors
+    :default "default"
+    :sync? true
+    :validate-fn #(contains? valid-card-colors %)
+    :doc "Card-state glow palette: 'default', 'colorblind', or 'custom'"}
+   {:key :card-custom-colors
+    :default default-card-custom-colors
+    :sync? true
+    :validate-fn validate-card-custom-colors
+    :doc "Per-state hex colors used when :card-colors is 'custom'"}
    {:key :card-language
     :default "en"
     :sync? true

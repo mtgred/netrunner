@@ -1,42 +1,50 @@
-#account
-    display: block
-    height: 100%
-    overflow: auto
-    margin-top: -31px
+.card-colors-preview
+    margin-top: 12px
 
-    section
-        margin-bottom: 20px
+    .gameboard
+        display: grid
+        grid-template-columns: repeat(auto-fit, 92px)
+        justify-content: start
+        gap: 16px
+        width: auto
+        flex-grow: 0
+        overflow: visible
+        padding: 12px 0
 
-    .flash-message
-        color: green-bright
-        margin-left: 16px
+    .example
+        display: flex
+        flex-direction: column
+        align-items: center
+        gap: 6px
+        font-size: .75rem
+        text-align: center
 
-    input, select
-        margin-right: 8px
+    .card
+        background: alpha(black-solid, o-30)
+        background-size: cover
+        background-position: center
 
-    input[type="range"]
-        position: relative
-        top: 9px
-        left: 16px
+        input[type="color"]
+            position: absolute
+            top: 50%
+            left: 50%
+            transform: translate(-50%, -50%)
+            margin: 0
+            padding: 0
+            width: 38px
+            height: 38px
+            border: 2px solid white-solid
+            border-radius: 4px
+            background: none
+            cursor: pointer
 
-    #alt-art
+            &::-webkit-color-swatch-wrapper
+                padding: 0
 
-    div#my-alt-art
-        margin-top: 10px
+            &::-webkit-color-swatch
+                border: none
+                border-radius: 2px
 
-        div.alt-art-group
-            clear: both
-            margin: 5px 0
-
-            > div
-                float: left
-                margin: 5px
-
-                > div
-                    text-align: center
-
-    #set-all
-        clear: both
-
-  .reset-all
-      margin-top: 10px
+            &::-moz-color-swatch
+                border: none
+                border-radius: 2px

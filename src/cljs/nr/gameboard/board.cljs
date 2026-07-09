@@ -26,7 +26,8 @@
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
    [nr.translations :refer [tr tr-data tr-game-prompt tr-side tr-element tr-span]]
-   [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
+   [nr.utils :refer [banned-span card-colors-class card-colors-custom-style
+                     checkbox-button cond-button get-image-path
                      image-or-face map-longest render-icons render-message]]
    [nr.ws :as ws]
    [jinteki.card-backs :as card-backs]
@@ -2293,6 +2294,8 @@
         zoom-card (r/cursor app-state [:zoom])
         background (r/cursor app-state [:options :background])
         custom-bg-url (r/cursor app-state [:options :custom-bg-url])
+        card-colors (r/cursor app-state [:options :card-colors])
+        card-custom-colors (r/cursor app-state [:options :card-custom-colors])
         labeled-unrezzed-cards (r/cursor app-state [:options :labeled-unrezzed-cards])
         labeled-cards (r/cursor app-state [:options :labeled-cards])]
 
@@ -2383,8 +2386,11 @@
                  sfx (r/cursor game-state [:sfx])]
              [:div.gameview
               [:div {:class [:gameboard
+                             (card-colors-class @card-colors)
                              (when @labeled-unrezzed-cards :show-unrezzed-card-labels)
-                             (when @labeled-cards :show-card-labels)]}
+                             (when @labeled-cards :show-card-labels)]
+                     :style (card-colors-custom-style {:card-colors @card-colors
+                                                       :card-custom-colors @card-custom-colors})}
                (let [me-keep (r/cursor game-state [me-side :keep])
                      op-keep (r/cursor game-state [op-side :keep])
                      me-quote (r/cursor game-state [me-side :quote])

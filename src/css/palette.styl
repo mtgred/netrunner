@@ -47,3 +47,20 @@ blue-light = hsl(199, 100%, 50%)
 //Purples
 purple-dark = hsl(279, 100%, 20%)
 purple-core = hsl(272, 36%, 50%) // NSG Haas-Bioroid
+
+// Card-state glow colors, overridable per-user, see :card-colors setting.
+:root
+    --card-hovered: blue-light    // light blue   #00aeff
+    --card-selectable: gold-base  // gold         #ffa600
+    --card-selected: green-bright // bright green #32cd32
+    --card-poison: purple-core    // purple       #8352ad
+    --card-encountered: red-light // red          #d43425
+
+// Colorblind-safe card-state palette, see :card-colors setting.
+// Values are from the Okabe-Ito "Color Universal Design" palette.
+.card-colors-colorblind
+    --card-hovered: #56b4e9     // Okabe-Ito sky blue
+    --card-selectable: #e69f00  // Okabe-Ito orange
+    --card-selected: #0072b2    // Okabe-Ito blue
+    --card-poison: #cc79a7      // Okabe-Ito reddish purple
+    --card-encountered: #d55e00 // Okabe-Ito vermillion
