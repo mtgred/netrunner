@@ -180,8 +180,10 @@
      [:input {:type "checkbox" :checked (:protected @options)
               :on-change #(let [checked (.. % -target -checked)]
                             (swap! options assoc :protected checked)
-                            (when (not checked)
-                              (swap! options assoc :password (:password @options))))}]
+                            (swap! options assoc :password
+                                   (if checked
+                                     (get-in @app-state [:options :default-password] "")
+                                     "")))}]
      [tr-span [:lobby_password-protected "Password protected"]]]]
    (when (:protected @options)
      [:p
@@ -272,7 +274,7 @@
                               :title (str (:username @user) "'s game")})
                options (r/atom {:allow-spectator true
                                 :api-access false
-                                :password default-password
+                                :password (when protected? default-password)
                                 :protected protected?
                                 :save-replay (if casual?
                                                (get-in @app-state [:options :default-save-replay])
