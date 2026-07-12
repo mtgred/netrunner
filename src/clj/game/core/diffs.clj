@@ -251,7 +251,7 @@
   (when same-side?
     (-> prompt
         (update :eid #(when (:eid %) (select-keys % [:eid])))
-        (update :card #(not-empty (select-keys % [:cid :title :printed-title :code :side])))
+        (update :card #(not-empty (select-keys % [:cid :title :printed-title :code :side :type])))
         (update :choices (fn [choices]
                            (if (sequential? choices)
                              (->> choices
