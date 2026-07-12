@@ -1656,6 +1656,10 @@ settings_create-api-key = Create API Key
 
 settings_current-email = Current email
 
+settings_custom-messages = Custom chat messages
+
+settings_custom-messages-note = These messages are sent in-game with the buttons above the chat input.
+
 settings_deck-stats = Deck statistics
 
 settings_default-game-description = Default game description in casual games

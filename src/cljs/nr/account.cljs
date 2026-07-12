@@ -445,6 +445,18 @@
              [tr-span [:settings_pass-on-rez "Pass priority when rezzing ice"]]]]]
 
           [:section
+           [tr-element :h3 [:settings_custom-messages "Custom chat messages"]]
+           [tr-element :p [:settings_custom-messages-note "These messages are sent in-game with the buttons above the chat input."]]
+           (doall
+             (for [i (range (count settings/default-custom-messages))]
+               ^{:key i}
+               [:div
+                [:input {:type "text"
+                         :maxLength "100"
+                         :value (get-in @s [:custom-messages i] "")
+                         :on-change #(swap! s assoc-in [:custom-messages i] (.. % -target -value))}]]))]
+
+          [:section
            [tr-element :h3 [:settings_layout-options "Layout options"]]
            [:div
             [:label [:input {:type "checkbox"
@@ -832,7 +844,8 @@
                                  :blocked-users :alt-arts :gamestats :deckstats :disable-websockets
                                  :archives-sorted :heap-sorted :card-back-display
                                  :card-colors :card-custom-colors
-                                 :labeled-cards :labeled-unrezzed-cards])
+                                 :labeled-cards :labeled-unrezzed-cards
+                                 :custom-messages])
                    (assoc :flash-message ""
                           :all-art-select "wc2015")))]
 

@@ -43,6 +43,9 @@
 (def card-color-states (-> default-card-custom-colors keys set))
 (def valid-game-descriptions (set (map name (keys utils/descriptions))))
 
+(def default-custom-messages
+  ["Good luck & have fun!" "Thinking..." "Good game!" "Thank you for the game!"])
+
 ;; Validation combinators
 (defn- validate-coll-of
   "Returns a validator that checks if value is a collection of items matching pred"
@@ -103,6 +106,13 @@
 (def validate-default-decks
   "Validates default-decks is a map of side -> {format -> deck-id-string}"
   (validate-map-of keyword? (validate-map-of keyword? string?)))
+
+(defn- validate-custom-messages
+  "Validates custom-messages is a vector of 4 strings"
+  [value]
+  (and (vector? value)
+       (= (count default-custom-messages) (count value))
+       (every? string? value)))
 
 (def all-settings
   "Vector of all application settings with their metadata.
@@ -187,6 +197,11 @@
     :sync? true
     :validate-fn string?
     :doc "URL for custom game board background image"}
+   {:key :custom-messages
+    :default default-custom-messages
+    :sync? true
+    :validate-fn validate-custom-messages
+    :doc "Preset chat messages sent from buttons in the game log"}
    {:key :deckstats
     :default "always"
     :sync? true

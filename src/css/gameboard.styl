@@ -1185,6 +1185,21 @@ glow-spin(prop, pct)
                     .log-input form input, .indicate-action, .show-decklists
                         width: 100%
 
+                    .custom-messages
+                        display-flex()
+
+                        .custom-message
+                            flex(1)
+                            min-width: 0
+                            overflow: hidden
+                            text-overflow: ellipsis
+                            white-space: nowrap
+                            padding: 4px 6px
+                            margin: 0 4px 0 0
+
+                            &:last-child
+                                margin-right: 0
+
                     .command-matches-container
                         position: absolute !important
                         bottom: 24px

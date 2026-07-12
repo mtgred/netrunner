@@ -37,13 +37,18 @@
                  ^{:key i}
                  [:span " " influence-dot " "]))]])))
 
+(defn send-text [text]
+  (when (and (not (:replay @game-state))
+             (seq text))
+    (reset! should-scroll {:update false :send-msg true})
+    (ws/ws-send! [:game/say {:gameid (current-gameid app-state)
+                             :msg text}])))
+
 (defn send-msg [s]
   (let [text (:msg @s)]
     (when (and (not (:replay @game-state))
                (seq text))
-      (reset! should-scroll {:update false :send-msg true})
-      (ws/ws-send! [:game/say {:gameid (current-gameid app-state)
-                               :msg text}])
+      (send-text text)
       (swap! s assoc :msg ""))))
 
 (defn send-typing
@@ -58,6 +63,20 @@
                  (not-spectator?))
         (ws/ws-send! [:game/typing {:gameid (current-gameid app-state)
                                     :typing typing?}])))))
+
+(defn custom-messages []
+  (when (not-spectator?)
+    [:div.custom-messages
+     (doall
+       (map-indexed
+         (fn [i msg]
+           (when-not (string/blank? msg)
+             [:button.custom-message {:on-click #(do (.preventDefault %)
+                                                     (send-text msg))
+                                      :title msg
+                                      :key i}
+              msg]))
+         (get-in @app-state [:options :custom-messages])))]))
 
 (defn indicate-action []
   (when (not-spectator?)
@@ -242,6 +261,7 @@
              ;;:on-blur #(send-typing (atom nil))
              :on-key-down #(completions-key-down-handler state %)
              :on-change #(log-input-change-handler state %)}]]]
+         [custom-messages]
          [indicate-action]
          [show-decklists]
          [completions !input-ref state]]))))
