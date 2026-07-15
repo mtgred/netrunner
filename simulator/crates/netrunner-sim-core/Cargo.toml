@@ -1,0 +1,20 @@
+[package]
+name = "netrunner-sim-core"
+description = "Serialization-free contracts and state primitives for the standalone Netrunner simulator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "state_layout"
+harness = false
+
+[lints]
+workspace = true

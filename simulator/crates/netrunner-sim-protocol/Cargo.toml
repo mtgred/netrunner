@@ -1,0 +1,16 @@
+[package]
+name = "netrunner-sim-protocol"
+description = "Versioned JSONL trace protocol for the standalone Netrunner simulator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+netrunner-sim-core = { path = "../netrunner-sim-core" }
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

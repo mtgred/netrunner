@@ -96,6 +96,7 @@
              :debugger {:jvm-opts ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5010"]}}
 
   :aliases {"fetch" ^{:doc "Fetch card data and images from github"} ["run" "-m" "tasks.fetch/command"]
+            "simulator-gateway" ^{:doc "Export the standalone simulator System Gateway manifest"} ["run" "-m" "tasks.simulator-gateway/command"]
             "kaocha" ^{:doc "Run tests with kaocha"} ["run" "-m" "kaocha.runner"]
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
             "load-generator" ^{:doc "Performance test lobbies"} ["run" "-m" "tasks.load-generator/command"]

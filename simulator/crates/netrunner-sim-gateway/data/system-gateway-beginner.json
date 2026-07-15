@@ -1,0 +1,321 @@
+{
+  "schema_version" : 1,
+  "agenda_point_target" : 6,
+  "corp" : {
+    "name" : "System Gateway Starter Corp",
+    "side" : "Corp",
+    "identity" : {
+      "card_def_id" : 30077,
+      "title" : "The Syndicate: Profit over Principle"
+    },
+    "cards" : [ {
+      "quantity" : 3,
+      "card_def_id" : 30067,
+      "title" : "Offworld Office"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30069,
+      "title" : "Send a Message"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30070,
+      "title" : "Superconducting Hub"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30037,
+      "title" : "Nico Campaign"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30071,
+      "title" : "Regolith Mining License"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30045,
+      "title" : "Urtica Cipher"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30064,
+      "title" : "Government Subsidy"
+    }, {
+      "quantity" : 3,
+      "card_def_id" : 30075,
+      "title" : "Hedge Fund"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30040,
+      "title" : "Seamless Launch"
+    }, {
+      "quantity" : 1,
+      "card_def_id" : 30042,
+      "title" : "Manegarm Skunkworks"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30039,
+      "title" : "Brân 1.0"
+    }, {
+      "quantity" : 3,
+      "card_def_id" : 30072,
+      "title" : "Palisade"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30046,
+      "title" : "Diviner"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30074,
+      "title" : "Whitespace"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30047,
+      "title" : "Karunā"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30073,
+      "title" : "Tithe"
+    } ]
+  },
+  "runner" : {
+    "name" : "System Gateway Starter Runner",
+    "side" : "Runner",
+    "identity" : {
+      "card_def_id" : 30076,
+      "title" : "The Catalyst: Convention Breaker"
+    },
+    "cards" : [ {
+      "quantity" : 2,
+      "card_def_id" : 30020,
+      "title" : "Creative Commission"
+    }, {
+      "quantity" : 3,
+      "card_def_id" : 30028,
+      "title" : "Jailbreak"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30029,
+      "title" : "Overclock"
+    }, {
+      "quantity" : 3,
+      "card_def_id" : 30030,
+      "title" : "Sure Gamble"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30012,
+      "title" : "Tread Lightly"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30021,
+      "title" : "VRcation"
+    }, {
+      "quantity" : 1,
+      "card_def_id" : 30013,
+      "title" : "Docklands Pass"
+    }, {
+      "quantity" : 1,
+      "card_def_id" : 30014,
+      "title" : "Pennyshaver"
+    }, {
+      "quantity" : 1,
+      "card_def_id" : 30018,
+      "title" : "Red Team"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30033,
+      "title" : "Smartware Distributor"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30027,
+      "title" : "Telework Contract"
+    }, {
+      "quantity" : 1,
+      "card_def_id" : 30034,
+      "title" : "Verbal Plasticity"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30015,
+      "title" : "Carmen"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30006,
+      "title" : "Cleaver"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30032,
+      "title" : "Mayfly"
+    }, {
+      "quantity" : 2,
+      "card_def_id" : 30026,
+      "title" : "Unity"
+    } ]
+  },
+  "cards" : [ {
+    "card_def_id" : 30006,
+    "title" : "Cleaver",
+    "side" : "Runner",
+    "card_type" : "Program"
+  }, {
+    "card_def_id" : 30012,
+    "title" : "Tread Lightly",
+    "side" : "Runner",
+    "card_type" : "Event"
+  }, {
+    "card_def_id" : 30013,
+    "title" : "Docklands Pass",
+    "side" : "Runner",
+    "card_type" : "Hardware"
+  }, {
+    "card_def_id" : 30014,
+    "title" : "Pennyshaver",
+    "side" : "Runner",
+    "card_type" : "Hardware"
+  }, {
+    "card_def_id" : 30015,
+    "title" : "Carmen",
+    "side" : "Runner",
+    "card_type" : "Program"
+  }, {
+    "card_def_id" : 30018,
+    "title" : "Red Team",
+    "side" : "Runner",
+    "card_type" : "Resource"
+  }, {
+    "card_def_id" : 30020,
+    "title" : "Creative Commission",
+    "side" : "Runner",
+    "card_type" : "Event"
+  }, {
+    "card_def_id" : 30021,
+    "title" : "VRcation",
+    "side" : "Runner",
+    "card_type" : "Event"
+  }, {
+    "card_def_id" : 30026,
+    "title" : "Unity",
+    "side" : "Runner",
+    "card_type" : "Program"
+  }, {
+    "card_def_id" : 30027,
+    "title" : "Telework Contract",
+    "side" : "Runner",
+    "card_type" : "Resource"
+  }, {
+    "card_def_id" : 30028,
+    "title" : "Jailbreak",
+    "side" : "Runner",
+    "card_type" : "Event"
+  }, {
+    "card_def_id" : 30029,
+    "title" : "Overclock",
+    "side" : "Runner",
+    "card_type" : "Event"
+  }, {
+    "card_def_id" : 30030,
+    "title" : "Sure Gamble",
+    "side" : "Runner",
+    "card_type" : "Event"
+  }, {
+    "card_def_id" : 30032,
+    "title" : "Mayfly",
+    "side" : "Runner",
+    "card_type" : "Program"
+  }, {
+    "card_def_id" : 30033,
+    "title" : "Smartware Distributor",
+    "side" : "Runner",
+    "card_type" : "Resource"
+  }, {
+    "card_def_id" : 30034,
+    "title" : "Verbal Plasticity",
+    "side" : "Runner",
+    "card_type" : "Resource"
+  }, {
+    "card_def_id" : 30037,
+    "title" : "Nico Campaign",
+    "side" : "Corp",
+    "card_type" : "Asset"
+  }, {
+    "card_def_id" : 30039,
+    "title" : "Brân 1.0",
+    "side" : "Corp",
+    "card_type" : "ICE"
+  }, {
+    "card_def_id" : 30040,
+    "title" : "Seamless Launch",
+    "side" : "Corp",
+    "card_type" : "Operation"
+  }, {
+    "card_def_id" : 30042,
+    "title" : "Manegarm Skunkworks",
+    "side" : "Corp",
+    "card_type" : "Upgrade"
+  }, {
+    "card_def_id" : 30045,
+    "title" : "Urtica Cipher",
+    "side" : "Corp",
+    "card_type" : "Asset"
+  }, {
+    "card_def_id" : 30046,
+    "title" : "Diviner",
+    "side" : "Corp",
+    "card_type" : "ICE"
+  }, {
+    "card_def_id" : 30047,
+    "title" : "Karunā",
+    "side" : "Corp",
+    "card_type" : "ICE"
+  }, {
+    "card_def_id" : 30064,
+    "title" : "Government Subsidy",
+    "side" : "Corp",
+    "card_type" : "Operation"
+  }, {
+    "card_def_id" : 30067,
+    "title" : "Offworld Office",
+    "side" : "Corp",
+    "card_type" : "Agenda"
+  }, {
+    "card_def_id" : 30069,
+    "title" : "Send a Message",
+    "side" : "Corp",
+    "card_type" : "Agenda"
+  }, {
+    "card_def_id" : 30070,
+    "title" : "Superconducting Hub",
+    "side" : "Corp",
+    "card_type" : "Agenda"
+  }, {
+    "card_def_id" : 30071,
+    "title" : "Regolith Mining License",
+    "side" : "Corp",
+    "card_type" : "Asset"
+  }, {
+    "card_def_id" : 30072,
+    "title" : "Palisade",
+    "side" : "Corp",
+    "card_type" : "ICE"
+  }, {
+    "card_def_id" : 30073,
+    "title" : "Tithe",
+    "side" : "Corp",
+    "card_type" : "ICE"
+  }, {
+    "card_def_id" : 30074,
+    "title" : "Whitespace",
+    "side" : "Corp",
+    "card_type" : "ICE"
+  }, {
+    "card_def_id" : 30075,
+    "title" : "Hedge Fund",
+    "side" : "Corp",
+    "card_type" : "Operation"
+  }, {
+    "card_def_id" : 30076,
+    "title" : "The Catalyst: Convention Breaker",
+    "side" : "Runner",
+    "card_type" : "Identity"
+  }, {
+    "card_def_id" : 30077,
+    "title" : "The Syndicate: Profit over Principle",
+    "side" : "Corp",
+    "card_type" : "Identity"
+  } ]
+}

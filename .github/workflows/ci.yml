@@ -7,6 +7,31 @@ on:
     branches: ["master"]
 
 jobs:
+  rust-simulator:
+    name: 'Check Rust simulator'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install pinned Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: 1.85.0
+          components: rustfmt, clippy
+          cache-workspaces: simulator -> target
+
+      - name: Check formatting
+        working-directory: simulator
+        run: cargo fmt --all --check
+
+      - name: Run clippy
+        working-directory: simulator
+        run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+
+      - name: Run tests
+        working-directory: simulator
+        run: cargo test --locked --workspace
+
   stylus:
     name: 'Check Stylus css'
     runs-on: ubuntu-latest
