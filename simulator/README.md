@@ -16,7 +16,9 @@ it must never approximate an unsupported card or mechanic.
   primitives used by inner search. It owns compact IDs, semantic actions, timing/pass
   state, perspective-safe card references, exact chance weights, and boundaries.
 - `netrunner-sim-protocol`: versioned serde/JSONL adapters and semantic cross-engine
-  traces. Serialization stays outside the expansion loop.
+  traces. Serialization stays outside the expansion loop. Tagged action variants use a
+  neutral `data` payload field so future non-ability payloads do not inherit a misleading
+  wire label.
 - `netrunner-sim-gateway`: checked-in System Gateway data needed by the initial matchup.
   Its runtime does not require Clojure or a JVM.
 - `netrunner-sim-server`: a compiling process-boundary placeholder. JSON-RPC is not part

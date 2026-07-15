@@ -235,7 +235,7 @@ mod tests {
             id: ActionId(11),
             actor: Side::Runner,
             timing_window_id: TimingWindowId(4),
-            action: SemanticAction::InitiateRun,
+            action: SemanticAction::UseAbility(netrunner_sim_core::AbilityId(17)),
             target: None,
             amount: None,
         };

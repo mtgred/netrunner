@@ -103,7 +103,7 @@ impl From<ActionTarget> for WireActionTarget {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(tag = "kind", content = "ability_id", rename_all = "snake_case")]
+#[serde(tag = "kind", content = "data", rename_all = "snake_case")]
 pub enum WireSemanticAction {
     PassPriority,
     EndPhase,
@@ -329,5 +329,19 @@ impl From<&UnsupportedBoundary> for WireUnsupported {
             card: value.error.card.map(Into::into),
             detail: value.error.detail.clone(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn semantic_action_payload_uses_neutral_data_field() {
+        let action = WireSemanticAction::UseAbility(17);
+        assert_eq!(
+            serde_json::to_value(action).unwrap(),
+            serde_json::json!({"kind": "use_ability", "data": 17})
+        );
     }
 }
