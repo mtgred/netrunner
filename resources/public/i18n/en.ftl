@@ -553,6 +553,8 @@ game_card-count = {$cnt ->
     *[other] {$cnt} cards
 }
 
+game_chat-messages = Messages
+
 game_click-count = {$click ->
     [one] {$click} click
     *[other] {$click} clicks
@@ -1651,6 +1653,10 @@ settings_card-text = Card Text
 settings_change-avatar = Change on gravatar.com
 
 settings_change-email = Change email
+
+settings_chat-messages = Chat messages
+
+settings_chat-messages-note = These messages are sent in-game from the Messages menu below the chat input.
 
 settings_comp-only = Competitive Lobby Only
 
