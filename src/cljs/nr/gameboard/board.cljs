@@ -1076,7 +1076,7 @@
               {:faceup face-up
                :facedown (- total face-up)}])]]
          [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
-                                       :class (if (= (:side @game-state) :runner) "opponent" "me")}
+                                       :class (if (= player-side :corp) "me" "opponent")}
           [:div
            [:a {:on-click #(close-popup % (:popup @s) nil false false)}
             [tr-span [:game_close "Close"]]]
