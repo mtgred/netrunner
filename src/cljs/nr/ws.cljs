@@ -1,11 +1,18 @@
 (ns nr.ws
   (:require
+   [jinteki.msgpack-ext]
    [nr.ajax :refer [?csrf-token]]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.translations :refer [tr]]
    [nr.utils :refer [non-game-toast]]
    [reagent.core :as r]
-   [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
+   [taoensso.sente  :as sente :refer [start-client-chsk-router!]]
+   [taoensso.sente.packers.msgpack :as msgpack]
+   [taoensso.trove :as trove]
+   [taoensso.trove.console :as trove-console]))
+
+;; Sente logs via trove.
+(trove/set-log-fn! (trove-console/get-log-fn {:min-level :warn}))
 
 (defonce lock (atom false))
 
@@ -17,6 +24,7 @@
           ?csrf-token
           {:type (if (get-in @app-state [:options :disable-websockets]) :ajax :auto)
            :ws-kalive-ms 2500 ;; note - supposedly this will help SEA/LATAM connections
+           :packer (msgpack/get-packer)
            :wrap-recv-evs? false})]
     (def chsk chsk)
     (def ch-chsk ch-recv)

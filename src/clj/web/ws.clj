@@ -2,11 +2,15 @@
   (:require
    [cljc.java-time.instant :as inst]
    [clojure.core.async :refer [<! >! chan go timeout]]
+   [jinteki.msgpack-ext]
    [web.app-state :refer [register-user! deregister-user!]]
    [web.user :refer [active-user?]]
    [taoensso.sente :as sente]
+   [taoensso.sente.packers.msgpack :as msgpack]
    [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
-   [taoensso.timbre :as timbre]))
+   [taoensso.timbre :as timbre]
+   [taoensso.trove :as trove]
+   [taoensso.trove.timbre :as trove-timbre]))
 
 (defn redact-uid-middleware
   "Timbre middelware to remove UIDs from Sente log lines"
@@ -17,9 +21,13 @@
     (assoc data :vargs (map filter-uid-from-log-arg (:vargs data )))))
 (timbre/merge-config! {:middleware [redact-uid-middleware]})
 
+;; Sente logs via trove, set it to use timbre.
+(trove/set-log-fn! (trove-timbre/get-log-fn))
+
 (let [chsk-server (sente/make-channel-socket-server!
                     (get-sch-adapter)
                     {:ws-kalive-ms 2500
+                     :packer (msgpack/get-packer)
                      :user-id-fn (fn [ring-req]
                                    (or (-> ring-req :session :uid)
                                        (:client-id ring-req)))})

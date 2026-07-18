@@ -43,6 +43,7 @@ services:
       - "./src:/usr/src/app/src"
       - "./test:/usr/src/app/test"
       - "./shadow-cljs.edn:/usr/src/app/shadow-cljs.edn"
+      - "./project.clj:/usr/src/app/project.clj"
     ports:
       - 127.0.0.1:9630:9630
       - 127.0.0.1:39039:39039
