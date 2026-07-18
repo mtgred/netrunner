@@ -18,7 +18,7 @@
    [game.core.def-helpers :refer [do-net-damage corp-rez-toast defcard draw-abi give-tags offer-jack-out
                                   reorder-choice take-credits take-all-credits-ability get-x-fn]]
    [game.core.drawing :refer [draw]]
-   [game.core.effects :refer [register-lingering-effect]]
+   [game.core.effects :refer [register-lingering-effect is-disabled-reg?]]
    [game.core.eid :refer [effect-completed get-ability-targets is-basic-advance-action? make-eid]]
    [game.core.engine :refer [dissoc-req pay register-default-events
                              not-used-once? register-events resolve-ability unregister-events]]
@@ -539,37 +539,23 @@
                                   (from-same-server? card target)))
                     :value (effect (->c :add-random-from-hand-to-bottom-of-deck 2))}]
     {:static-abilities [steal-cost]
-     :events [{:event :pre-access-card
-               :req (req (rezzed? card)
-                              (same-card? (:accessed-card context) card))
-               ;; It would be lovely to instead use :trash-cost-bonus [(->c :add-random-from-hand-to-bottom-of-deck 2)]
-               :effect
-               (effect (register-run-flag!
-                      state side
-                      card :can-trash
-                      (fn [state _ card]
-                        (or (not (same-card? (:accessed-card context) card))
-                            (can-pay? state :runner eid
-                                      card nil [(->c :add-random-from-hand-to-bottom-of-deck 2)])))))}
-              steal-cost]
+     :additional-trash-cost {:value [(->c :add-random-from-hand-to-bottom-of-deck 2)]
+                             :req (req (rezzed? card)
+                                       (= :runner side)
+                                       (not (is-disabled-reg? state card)))}
      :on-trash {:async true
                 :interactive (effect true)
                 :req (req run (= :runner side))
-                :msg "force the Runner to add 2 random cards from the grip to the bottom of the stack as additional cost to trash it"
-                :effect
-                (effect (wait-for (pay state :runner (make-eid state eid) card [(->c :add-random-from-hand-to-bottom-of-deck 2)])
-                               (system-msg state :runner (:msg async-result))
-                               (register-lingering-effect
-                                 state side card
-                                 (assoc steal-cost
-                                        :req
-                                        (effect (or (= (:previous-zone card)
-                                                    (:zone target))
-                                                 ;; special central-servers case
-                                                 (= (central->zone (:zone target))
-                                                    (butlast (:previous-zone card)))))
-                                        :duration :end-of-run))
-                               (effect-completed state side eid)))}}))
+                :effect (effect (register-lingering-effect
+                                  state side card
+                                  (assoc steal-cost
+                                         :req (req (or (= (:previous-zone card)
+                                                          (:zone target))
+                                                       ;; special central-servers case
+                                                       (= (central->zone (:zone target))
+                                                          (butlast (:previous-zone card)))))
+                                         :duration :end-of-run))
+                                (effect-completed state side eid))}}))
 
 (defcard "Daruma"
   (let [choose-swap

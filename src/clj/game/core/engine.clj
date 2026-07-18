@@ -19,7 +19,7 @@
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [continue-ability effect wait-for]]
     [game.utils :refer [dissoc-in distinct-by enumerate-str in-coll? remove-once same-card? server-cards side-str to-keyword]]
-    [jinteki.utils :refer [other-side]]
+    [jinteki.utils :refer [other-side select-non-nil-keys]]
     [game.core.memory :refer [update-mu]]
     [game.core.to-string :refer [card-str]]
     [taoensso.timbre :as timbre]))
@@ -313,15 +313,26 @@
         (= :cost desc) (str payment-str " to satisfy " (get-title card))
         desc (str cost-spend-msg (get-title card) " to " desc)))))
 
+(defn- filter-message-map
+  [messages]
+  (not-empty (select-non-nil-keys messages [:corp :runner :public])))
+
 (defn print-msg
   "Prints the ability message"
   [state side {:keys [eid] :as ability} card targets payment-str]
   (let [display-side (or (:display-side ability) (to-keyword (:side card)) side)]
     (if (map? (:msg ability))
-      (let [msg-map (update-vals (:msg ability) #(get-side-message state side (assoc ability :msg %) card targets payment-str))]
+      (let [{:keys [corp runner public]} (:msg ability)
+            msg-map (filter-message-map
+                      {:public (when public (get-side-message state display-side (assoc ability :msg public) card targets (:public payment-str)))
+                       :corp   (when (or corp public)   (get-side-message state display-side (assoc ability :msg (or corp public)) card targets (or (:corp payment-str) (:public payment-str))))
+                       :runner (when (or runner public) (get-side-message state display-side (assoc ability :msg (or runner public)) card targets (or (:runner payment-str) (:public payment-str))))})]
         (multi-msg state display-side msg-map))
-      (when-let [message (get-side-message state side ability card targets payment-str)]
-        (system-msg state display-side message)))))
+      (when-let [message (filter-message-map
+                           {:public (get-side-message state side ability card targets (:public payment-str))
+                            :corp   (get-side-message state side ability card targets (or (:corp payment-str) (:public payment-str)))
+                            :runner (get-side-message state side ability card targets (or (:runner payment-str) (:public payment-str)))})]
+        (multi-msg state display-side message)))))
 
 (defn register-once
   "Register ability as having happened if :once specified"
@@ -332,9 +343,9 @@
 (defn do-nothing
   "Does nothing (loudly)"
   ([state side eid ability card] (do-nothing state side eid ability card nil))
-  ([state side eid ability card payment-str]
+  ([state side eid ability card payment-strs]
    (when-not (get-in ability [:change-in-game-state :silent])
-     (print-msg state side (assoc ability :msg "do nothing") card [] payment-str))
+     (print-msg state side (assoc ability :msg "do nothing") card [] payment-strs))
    (effect-completed state side eid)))
 
 (defn- change-in-game-state?
@@ -346,13 +357,13 @@
 
 (defn- do-effect
   "Trigger the effect"
-  [state side {:keys [eid] :as ability} card payment-str targets]
+  [state side {:keys [eid] :as ability} card payment-strs targets]
   (if (change-in-game-state? state side ability card targets)
-      (do (print-msg state side ability card targets payment-str)
+      (do (print-msg state side ability card targets payment-strs)
           (if-let [ability-effect (:effect ability)]
             (ability-effect state side eid card targets)
             (effect-completed state side eid)))
-      (do (do-nothing state side eid ability card payment-str)
+      (do (do-nothing state side eid ability card payment-strs)
           (effect-completed state side eid))))
 
 (defn merge-costs-paid
@@ -371,7 +382,7 @@
   ([cost-paid1 cost-paid2 & costs-paid]
    (reduce merge-costs-paid (merge-costs-paid cost-paid1 cost-paid2) costs-paid)))
 
-(defn- do-paid-ability [state side {:keys [eid] :as ability} card targets {:keys [msg cost-paid]}]
+(defn- do-paid-ability [state side {:keys [eid] :as ability} card targets {:keys [msg corp-msg runner-msg cost-paid]}]
   (let [cost-paid (merge-costs-paid (:cost-paid eid) cost-paid)
         ability (assoc-in ability [:eid :cost-paid] cost-paid)
         ;; this lets nested abilities access payment strs from outside the nesting
@@ -384,7 +395,7 @@
         card (or (get-card state card) card)]
     ;; Trigger the effect
     (register-once state side ability card)
-    (do-effect state side ability card msg targets)
+    (do-effect state side ability card {:public msg :corp corp-msg :runner runner-msg} targets)
     ;; If the ability isn't async, complete it
     (when-not (:async ability)
       (effect-completed state side eid))))
@@ -1316,6 +1327,8 @@
                               {:msg (->> payment-result
                                          (keep :paid/msg)
                                          (enumerate-str))
+                               :runner-msg (->> payment-result (keep #(or (:paid/runner-msg %) (:paid/msg %))) (enumerate-str))
+                               :corp-msg (->> payment-result (keep #(or (:paid/corp-msg %) (:paid/msg %))) (enumerate-str))
                                :cost-paid (->> payment-result
                                                (keep #(not-empty (dissoc % :paid/msg)))
                                                (reduce

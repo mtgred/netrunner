@@ -1314,7 +1314,7 @@
       (run-empty-server state "Server 1")
       (click-card state :runner (get-content state :remote1 1))
       (is (changed? [(count (:hand (get-runner))) -2]
-            (click-prompt state :runner "Pay 2 [Credits] to trash"))
+            (click-prompts state :runner "Pay 2 [Credits] to trash" "Pay to trash"))
           "2 random cards left the grip")
       (is (= 3 (count (:deck (get-runner)))) "3 cards in the stack")
       (is (changed? [(count (:hand (get-runner))) -2]
@@ -1341,7 +1341,7 @@
       (run-empty-server state "HQ")
       (click-prompt state :runner "Daniela Jorge Inácio")
       (is (changed? [(count (:hand (get-runner))) -2]
-            (click-prompt state :runner "Pay 2 [Credits] to trash"))
+            (click-prompts state :runner "Pay 2 [Credits] to trash" "Pay to trash"))
           "2 random cards left the grip")
       (click-prompt state :runner "No action" "Can't steal agendas")))
 
