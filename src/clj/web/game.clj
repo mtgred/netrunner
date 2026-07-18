@@ -189,7 +189,7 @@
                 (lobby/handle-set-last-update gameid "ERROR DURING REPLAY RESTORATION")))
           (let [message (make-message {:user {:username "ERROR STARTING A GAME" :uid "ERROR STARTING A GAME"}
                                            :text (str (.getMessage e))})]
-            (timbre/info (str "Error starting a game: " (.getMessage e) "\n" (str/join "\n" (map str (.getStackTrace e)))))
+            (timbre/info e "Error starting a game")
             (-> lobbies
                 (lobby/handle-send-message gameid message)
                 (lobby/handle-set-last-update gameid "ERROR STARTING A GAME"))))))
