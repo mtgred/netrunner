@@ -4118,7 +4118,7 @@
                                      (wait-for
                                        (checkpoint state :runner)
                                        (gain-credits state :runner eid (* cc 2)))))
-                                 (gain-tags state :runner 1))))}]})
+                                 (gain-tags state :runner eid 1))))}]})
 
 (defcard "Tread Lightly"
   {:on-play (run-any-server-ability)
