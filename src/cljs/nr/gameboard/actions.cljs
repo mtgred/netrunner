@@ -58,10 +58,12 @@
       (check-lock?)
       (let [gs @game-state]
         (reset! last-state gs))
-      ;; Note: Although websockets gaurantee in-order delivery, they do not gaurantee
+      ;; Note: Although websockets guarantee in-order delivery, they do not guarantee
       ;; delivery of every message. If we miss a message, we need to trigger a re-sync.
+      ;; Chat messages don't increase the sequence, so they will always look like the
+      ;; previous state.
       (let [new-sequence (:sequence @game-state)]
-        (when (not= new-sequence (inc old-sequence))
+        (when (> new-sequence (inc old-sequence))
           (throttled-sequence-resync))))))
 
 (declare toast)
