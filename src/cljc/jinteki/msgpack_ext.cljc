@@ -5,6 +5,8 @@
    #?@(:cljs [[java.time :refer [LocalDateTime]]]))
   #?(:clj (:import (java.time LocalDateTime))))
 
+#?(:clj (set! *warn-on-reflection* true))
+
 (msgpack/extend-packable 100 LocalDateTime
   (pack [x]
     #?(:clj (.getBytes (str x) "UTF-8")

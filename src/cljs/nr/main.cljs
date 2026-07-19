@@ -20,21 +20,21 @@
       (.getAttribute (str "data-" tag))))
 
 (defn pages []
-  (r/create-class
-    {:display-name "main-pages"
-     :component-did-mount
-     (fn []
-       (let [ver (get-server-data "version")
-             rid (get-server-data "replay-id")]
-         (swap! app-state assoc :app-version ver)
-         (swap! app-state assoc :replay-id rid)
-         (when rid
-           (navigate "/play"))))
-     :reagent-render
-     (fn []
-       [:div#main
-        [:div.item
-         [(-> @routes/current-view :data :view)]]])}))
+  (r/with-let [view (r/cursor routes/current-view [:data :view])]
+    (r/create-class
+     {:display-name "main-pages"
+      :component-did-mount
+      (fn []
+        (let [ver (get-server-data "version")
+              rid (get-server-data "replay-id")]
+          (swap! app-state assoc :app-version ver :replay-id rid)
+          (when rid
+            (navigate "/play"))))
+      :reagent-render
+      (fn []
+        [:div#main
+         [:div.item
+          [@view]]])})))
 
 (defn main-window []
   [:<>
