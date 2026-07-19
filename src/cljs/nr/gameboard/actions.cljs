@@ -47,6 +47,9 @@
   (prn "resynchronising game state due to out of order data")
   (ws/resync))
 
+(def ^:private throttled-sequence-resync
+  (gfn/throttle sequence-resync 1500))
+
 (defn handle-diff! [{:keys [gameid diff]}]
   (when (= gameid (str (current-gameid app-state)))
     (let [old-sequence (:sequence @game-state)
@@ -59,7 +62,7 @@
       ;; delivery of every message. If we miss a message, we need to trigger a re-sync.
       (let [new-sequence (:sequence @game-state)]
         (when (not= new-sequence (inc old-sequence))
-          (gfn/throttle sequence-resync 1500))))))
+          (throttled-sequence-resync))))))
 
 (declare toast)
 (defn handle-timeout [gameid]
