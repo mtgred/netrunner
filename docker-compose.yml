@@ -1,6 +1,11 @@
 services:
   server:
     entrypoint: lein repl :headless :host 0.0.0.0 :port 44867
+    # let the profiler use perf events (bin/stress-test --profile)
+    security_opt:
+      - seccomp=unconfined
+    cap_add:
+      - PERFMON
     ports:
       - 127.0.0.1:1042:1042
       - 127.0.0.1:44867:44867

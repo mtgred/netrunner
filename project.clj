@@ -71,8 +71,11 @@
   :test-selectors {:default (fn [m] (not (:kaocha/pending m)))}
 
   :profiles {:dev {:dependencies [[binaryage/devtools "1.0.7"]
+                                  ;; JVM websocket client for the stress harness
+                                  ;; (optional dep of sente since 1.20)
+                                  [org.java-websocket/Java-WebSocket "1.5.3"]
                                   [cider/piggieback "0.5.3"]
-                                  [com.clojure-goes-fast/clj-async-profiler "0.5.1"]
+                                  [com.clojure-goes-fast/clj-async-profiler "1.6.2"]
                                   [rewrite-clj "1.1.45"]
                                   [criterium "0.4.6"]
                                   [instaparse "1.5.0"]
@@ -99,6 +102,7 @@
             "kaocha" ^{:doc "Run tests with kaocha"} ["run" "-m" "kaocha.runner"]
             "dumbrepl" ["trampoline" "run" "-m" "clojure.main/main"]
             "load-generator" ^{:doc "Performance test lobbies"} ["run" "-m" "tasks.load-generator/command"]
+            "stress-test" ^{:doc "Run concurrent bot games against a running server and sample resource usage"} ["run" "-m" "tasks.stress.run/command"]
             "delete-duplicate-users" ["run" "-m" "tasks.db/delete-duplicate-users"]
             "update-all-decks" ["run" "-m" "tasks.db/update-all-decks"]
             "update-prizes" ^{:doc "Update prize information (card-backs, etc)"} ["run" "-m" "tasks.update-prizes/command"]
