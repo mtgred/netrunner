@@ -12,6 +12,7 @@
     [nr.game-row :refer [game-row]]
     [nr.local-storage :as ls]
     [nr.gameboard.actions :refer [leave-game!]]
+    [nr.gameboard.state :refer [game-state]]
     [nr.new-game :refer [create-new-game]]
     [nr.password-game :refer [password-game]]
     [nr.pending-game :refer [pending-game]]
@@ -29,7 +30,7 @@
 (defmethod ws/event-msg-handler :lobby/state [{data :?data}]
   (when-not (= "local-replay" (:gameid @app-state))
     (swap! app-state assoc :current-game data)
-    (when (:started data)
+    (when (and (:started data) (not= (str (:gameid data)) (str (:gameid @game-state))))
       (ws/ws-send! [:game/resync {:gameid (:gameid data)}]))))
 
 (defmethod ws/event-msg-handler :lobby/notification [{data :?data}]
