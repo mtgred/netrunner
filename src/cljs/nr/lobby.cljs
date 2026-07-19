@@ -224,14 +224,21 @@
       [load-replay-button s games current-game user]])])
 
 (defn games-list-panel [state games current-game user visible-formats]
-  (r/create-class
-    {:display-name "games-list"
-     :component-did-mount
-     (fn []
-       (ws/lobby-updates-continue!))
-     :component-will-unmount
-     (fn []
-       (ws/lobby-updates-pause!))
+  (let [visibilitychange-fn
+        (fn []
+          (if (identical? (.-visibilityState js/document) "visible")
+            (ws/lobby-updates-continue!)
+            (ws/lobby-updates-pause!)))]
+    (r/create-class
+      {:display-name "games-list"
+       :component-did-mount
+       (fn []
+         (.addEventListener js/document "visibilitychange" visibilitychange-fn)
+         (ws/lobby-updates-continue!))
+       :component-will-unmount
+       (fn []
+         (.removeEventListener js/document "visibilitychange" visibilitychange-fn)
+         (ws/lobby-updates-pause!))
 
      :reagent-render
      (fn []
@@ -244,7 +251,7 @@
             [game-list state user games current-game])
           [:div
            "Lobby updates halted." ; this should never be visible
-           [:button {:on-click #(ws/lobby-updates-continue!)} "Reenable lobby updates"]])])}))
+           [:button {:on-click #(ws/lobby-updates-continue!)} "Reenable lobby updates"]])])})))
 
 (defn right-panel
   [state decks current-game user]
