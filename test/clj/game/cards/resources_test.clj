@@ -270,7 +270,7 @@
     (card-ability state :runner (get-resource state 0) 0)
     (click-prompt state :runner "Chatterjee University")
     (click-card state :runner "Vanity Project")
-    (is (last-log-contains? state "forfeits 1 agenda .* to use Artist Colony to install Chatterjee University"))
+    (is (last-log-contains? state #"forfeits 1 agenda .* to use Artist Colony to install Chatterjee University"))
     (is (= "Chatterjee University" (:title (get-resource state 1))))
     (is (empty? (:scored (get-runner))))))
 
@@ -1523,7 +1523,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Dadiana Chacon")
       (play-from-hand state :runner "Corroder")
-      (is (true? (last-n-log-contains? state 3 "Runner spends [Click] and pays 0 [Credits] to install Dadiana Chacon.")))
+      (is (last-n-log-contains? state 3 "Runner spends [Click] and pays 0 [Credits] to install Dadiana Chacon."))
       (is (last-n-log-contains? state 2 "Runner uses Dadiana Chacon to suffer 3 meat damage."))
       (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, and Corroder due to meat damage."))
       (is (last-log-contains? state "Runner spends [Click] and pays 2 [Credits] to install Corroder."))))
@@ -4591,7 +4591,7 @@
         (take-credits state :runner)
         (is (changed? [(count (:hand (get-runner))) -1]
               (click-prompt state :runner "Trash a random card from the grip")
-              (is (last-log-contains? state "Runner trashes 1 card \\(Sure Gamble\\) randomly from the grip to satisfy Mystic Maemi.")))
+              (is (last-log-contains? state "Runner trashes 1 card (Sure Gamble) randomly from the grip to satisfy Mystic Maemi.")))
             "Trashed one card from grip")
         (take-credits state :corp)
         (play-from-hand state :runner "Sure Gamble")
@@ -5397,7 +5397,7 @@
           (is (changed? [(:credit (get-runner)) -4]
                 (click-card state :runner mo))
               "Pay 4 for MOpus install (1+5-2)")
-          (is (last-log-contains? state "Runner pays 1 [Credits], and then pays 3 [Credits], to use Paule's Café to install hosted Magnum Opus.") "Correct message for Mopus install")
+          (is (last-log-contains? state "Runner pays 1 [Credits], and then pays 3 [Credits], to use Paule's Café to install hosted Magnum Opus") "Correct message for Mopus install")
           (card-ability state :runner pau 1)
           (is (changed? [(:credit (get-runner)) -4]
                 (click-card state :runner des))

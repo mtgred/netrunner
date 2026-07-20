@@ -1,7 +1,7 @@
 (ns nr.lobby-chat
   (:require
    [nr.avatar :refer [avatar]]
-   [nr.translations :refer [tr tr-element]]
+   [jinteki.i18n :refer [tr tr-element]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [reagent.dom :as rdom]))

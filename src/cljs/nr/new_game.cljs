@@ -4,7 +4,7 @@
     [jinteki.preconstructed :refer [all-matchups matchup-by-key]]
     [nr.appstate :refer [app-state]]
     [nr.auth :refer [authenticated] :as auth]
-    [nr.translations :refer [tr tr-format tr-side tr-element tr-span]]
+    [jinteki.i18n :refer [tr tr-format tr-side tr-element tr-span]]
     [nr.utils :refer [cond-button focus-on-mount slug->format]]
     [nr.ws :as ws]
     [reagent.core :as r]))

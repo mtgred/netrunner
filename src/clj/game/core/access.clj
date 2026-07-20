@@ -1,28 +1,28 @@
 (ns game.core.access
   (:require
+    [clojure.set :as clj-set]
+    [clojure.string :as string]
     [game.core.agendas :refer [update-all-advancement-requirements update-all-agenda-points]]
     [game.core.board :refer [all-active]]
-    [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-zone in-archives-root? in-deck? in-discard? in-hand? in-hq-root? in-remote-root? in-rd-root? in-scored? operation? rezzed?]]
+    [game.core.card :refer [agenda? condition-counter? corp? get-agenda-points get-card get-title get-zone in-archives-root? in-deck? in-discard? in-hand? in-hq-root? in-rd-root? in-remote-root? in-scored? operation? rezzed?]]
     [game.core.card-defs :refer [card-def]]
-    [game.core.cost-fns :refer [card-ability-cost trash-cost steal-cost]]
-    [game.core.effects :refer [any-effects register-static-abilities register-lingering-effect sum-effects unregister-lingering-effects]]
+    [game.core.cost-fns :refer [card-ability-cost steal-cost trash-cost]]
+    [game.core.effects :refer [any-effects register-lingering-effect register-static-abilities sum-effects unregister-lingering-effects]]
     [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-    [game.core.engine :refer [ability-as-handler can-trigger? checkpoint register-pending-event pay queue-event register-default-events resolve-ability should-trigger? trigger-event trigger-event-simult trigger-event-sync unregister-floating-events]]
+    [game.core.engine :refer [ability-as-handler can-trigger? checkpoint pay queue-event register-default-events register-pending-event resolve-ability should-trigger? trigger-event-simult trigger-event-sync unregister-floating-events]]
     [game.core.finding :refer [find-cid]]
-    [game.core.flags :refer [can-access? can-access-loud can-steal? can-trash? card-flag-fn? card-flag?]]
+    [game.core.flags :refer [can-access-loud can-access? can-steal? can-trash? card-flag-fn? card-flag?]]
     [game.core.moving :refer [move trash]]
-    [game.core.payment :refer [add-cost-label-to-ability build-cost-string can-pay? merge-costs ->c]]
+    [game.core.payment :refer [->c add-cost-label-to-ability build-cost-string can-pay? merge-costs]]
     [game.core.revealing :refer [reveal]]
     [game.core.say :refer [play-sfx system-msg multi-msg]]
     [game.core.servers :refer [get-server-type name-zone zone->name]]
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
-    [game.utils :refer [quantify same-card?]]
     [game.macros :refer [continue-ability effect req wait-for]]
+    [game.utils :refer [quantify same-card?]]
     [jinteki.utils :refer [add-cost-to-label]]
-    [clojure.set :as clj-set]
-    [medley.core :refer [find-first]]
-    [clojure.string :as string]))
+    [medley.core :refer [find-first]]))
 
 (defn no-trash-or-steal
   [state]
@@ -255,7 +255,7 @@
                       ;; Can't steal or pay, or won't pay additional costs to steal
                       (= target "No action")
                       (do (when-not (find-cid (:cid card) (:deck corp))
-                            (system-msg state side (str "decides to not pay to steal " (:title card))))
+                            (system-msg state side (str "declines to pay to steal " (:title card))))
                           (access-end state side eid card))
 
                       ;; Steal normally

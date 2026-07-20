@@ -8,6 +8,7 @@
    [game.core.board :refer [server-list]]
    [game.core.card :refer [active? get-card get-counters get-title installed?
                            rezzed?]]
+   [game.core.change-vals :as change-vals]
    [game.core.diffs :refer [icon-summary]]
    [game.core.eid :as eid]
    [game.core.events :refer [turn-events]]
@@ -18,7 +19,10 @@
    [game.utils :as utils]
    [game.utils-test :refer [error-wrapper is']]
    [jinteki.cards :refer [all-cards]]
-   [jinteki.utils :as jutils]))
+   [jinteki.i18n :refer [build-msg load-dictionary!]]
+   [jinteki.utils :as jutils])
+  (:import
+   (java.util.regex Pattern)))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -45,6 +49,8 @@
              '[game.cards.resources]
              '[game.cards.upgrades])))
 (load-all-cards)
+
+(load-dictionary! "public/i18n")
 
 (defn is-zone-impl
   "Is the zone exactly equal to a given set of cards?"
@@ -222,7 +228,7 @@
   "click an arbitrary number of prompts, one after the other.
   You can tag a prompt like {:side :runner :choice ...}, feed in raw cards,
   or feed in cards like {:choice ...}"
-  ([state side] true)
+  ([_state _side] true)
   ([state side & prompts]
    `(error-wrapper (click-prompts-impl ~state ~side ~(vec prompts)))))
 
@@ -640,11 +646,11 @@
     (ensure-no-prompts state)
     (is' (some? card) (str title "is in hand"))
     (if-not (some? card)
-      (do (let [other-side (if (= side :runner) :corp :runner)]
-            (when (some? (find-card title (get-in @state [other-side :hand])))
-              (println title " was instead found in the opposing hand - was the wrong side used?")))
-          true)
-      (when-let [played (core/process-action "play" state side {:card card})]
+      (let [other-side (if (= side :runner) :corp :runner)]
+        (when (some? (find-card title (get-in @state [other-side :hand])))
+          (println title " was instead found in the opposing hand - was the wrong side used?"))
+        true)
+      (when (core/process-action "play" state side {:card card})
         (let [choice-sets (split-on-keywords choices)]
           (doseq [cs choice-sets]
             (cond
@@ -675,7 +681,7 @@
        (play-from-hand-with-prompts-impl state side (first play) (rest play))))))
 
 (defmacro play-cards
-  ([state side] `nil)
+  ([_state _side] nil)
   ([state side & plays]
    `(error-wrapper (play-cards-impl ~state ~side ~(vec plays)))))
 
@@ -798,8 +804,8 @@
               (not= :success (:phase (:run @state))))
     (run-continue-impl state))
   (when (and (= :success phase)
-             (and (= :movement (:phase (:run @state)))
-                  (zero? (:position (:run @state)))))
+             (= :movement (:phase (:run @state)))
+             (zero? (:position (:run @state))))
     (run-continue-impl state))
   (when ice
     (is' (utils/same-card? ice (core/get-current-ice state))) "Current ice reached"))
@@ -1068,14 +1074,45 @@
                    (make-card {:title "/trace command" :side "Corp"})
                    {:base base}))
 
+(defn get-msg-text
+  [m]
+  (if (string? m) m (or (:raw-text m) (build-msg m))))
+
+(defn escape-log-string [s]
+  (if (string? s) (Pattern/quote s) s))
+
+(defn side-log
+  [side log]
+  (into [] (keep #(or (side %) (:public %)) log)))
+
+(defn last-log-contains?
+  ([state content] (last-log-contains? state content :public))
+  ([state content side]
+   (->> (->> @state :log (side-log side) last :text get-msg-text)
+        (re-find (re-pattern (escape-log-string content))))))
+
+(defn second-last-log-contains?
+  ([state content] (second-last-log-contains? state content :public))
+  ([state content side]
+   (->> (->> @state :log (side-log side) butlast last :text get-msg-text)
+        (re-find (re-pattern (escape-log-string content))))))
+
+(defn last-n-log-contains?
+  ([state n content]
+   (last-n-log-contains? state n content :public))
+  ([state n content side]
+   (->> (-> @state :log reverse (->> (side-log side)) (nth n) :text get-msg-text)
+        (re-find (re-pattern (escape-log-string content))))))
+
 (defn log-str [state]
   (->> (:log @state)
        (keep :public)
-       (map :text)
+       (map (comp get-msg-text :text))
        (str/join " ")))
 
 (defn print-log [state]
-  (prn (log-str state)))
+  (prn (log-str state))
+  (newline))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s
@@ -1113,44 +1150,15 @@
          ~'print-prompts (fn []
                            (print (~'prompt-fmt :corp))
                            (println (~'prompt-fmt :runner)))]
-     ~@body))
+     (let [ret# (do ~@body)]
+       (log-str ~'state)
+       ret#)))
 
 (defmacro before-each
   [let-bindings & testing-blocks]
   (assert (every? #(= 'testing (first %)) testing-blocks))
   (let [bundles (for [block testing-blocks] `(let [~@let-bindings] ~block))]
     `(do ~@bundles)))
-
-(defn escape-log-string [s]
-  (str/escape s {\[ "\\[" \] "\\]"}))
-
-(defn- side-log
-  [side log]
-  (into [] (keep #(or (side %) (:public %)) log)))
-
-(defn last-log-contains?
-  ([state content] (last-log-contains? state content :public))
-  ([state content side]
-   (->> (->> @state :log (side-log side) last :text)
-        (re-find (re-pattern (escape-log-string content)))
-        some?)))
-
-(defn second-last-log-contains?
-  ([state content] (second-last-log-contains? state content :public))
-  ([state content side]
-   (->> (->> @state :log (side-log side) butlast last :text)
-        (re-find (re-pattern (escape-log-string content)))
-        some?)))
-
-(defn last-n-log-contains?
-  ([state n content]
-   (last-n-log-contains? state n content :public))
-  ([state n content side]
-   (let [log (->> @state :log (side-log side) (mapv :text))
-         index (- (count log) 1 n)
-         log-entry (nth log index "")
-         res (re-find (re-pattern (escape-log-string content)) log-entry)]
-     (some? res))))
 
 (defn- make-zone
   [zone replacement]
@@ -1201,7 +1209,7 @@
                       (= server "Archives") :archives)]
      ;; adjust the threat level for threat: ... subs
      (when threat
-       (game.core.change-vals/change
+       (change-vals/change
          ;; theoretically, either side is fine!
          state (first (shuffle [:corp :runner])) {:key :agenda-point :delta threat})
        (is (threat-level threat state) "Threat set")

@@ -25,7 +25,7 @@
    [nr.gameboard.right-pane :refer [content-pane]]
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
-   [nr.translations :refer [tr tr-data tr-game-prompt tr-side tr-element tr-span]]
+   [jinteki.i18n :refer [tr tr-data tr-game-prompt tr-side tr-element tr-span]]
    [nr.utils :refer [banned-span card-colors-class card-colors-custom-style
                      checkbox-button cond-button get-image-path
                      image-or-face map-longest render-icons render-message]]
@@ -990,7 +990,7 @@
           tr-vec (if is-runner
                    [:game_stack-count (str "Stack (" deck-count-number ")")]
                    [:game_rnd-count (str "R&D (" deck-count-number ")")])
-          title (tr (if is-runner [:game_stack "Stack"] [:game_rnd "R&D"]))
+          title (tr (if is-runner [:game_stack "Stack"] [:game_rnd "R&D"]) {:cnt deck-count-number})
           ref (if is-runner "stack" "rd")
           menu-ref (keyword (str ref "-menu"))
           content-ref (keyword (str ref "-content"))]

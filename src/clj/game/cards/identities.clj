@@ -1,6 +1,5 @@
 (ns game.cards.identities
   (:require
-   [clojure.pprint :as pprint]
    [game.core.access :refer [access-bonus access-cost-bonus access-non-agenda]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed card->server
@@ -2627,8 +2626,8 @@
               (assoc swap-ability :event :agenda-stolen)]}))
 
 (defcard "Tennin Institute: The Secrets Within"
-  {:events [{:msg (msg "place 1 advancement token on " (card-str state target))
-             :label "Place 1 advancement token on a card if the Runner did not make a successful run last turn"
+  {:events [{:msg (msg "place 1 advancement counter on " (card-str state target))
+             :label "Place 1 advancement counter on a card if the Runner did not make a successful run last turn"
              :choices {:card installed?}
              :event :corp-turn-begins
              :req (req (not-last-turn? state :runner :successful-run))

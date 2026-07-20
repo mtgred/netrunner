@@ -1,7 +1,7 @@
 (ns nr.gameboard.diagrams
   (:require
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr tr-span tr-element]]
+   [jinteki.i18n :refer [tr tr-span tr-element]]
    [nr.utils :refer [render-icons]]))
 
 (defn- bullet

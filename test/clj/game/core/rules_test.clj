@@ -76,7 +76,7 @@
       (is (= "Kati Jones" (:title (get-resource state 1))))
       (is (not (find-card "Kati Jones" (:hosted (get-resource state 0)))))
       (is (= "Kati Jones" (:title (get-discarded state :runner))))
-      (is (last-log-contains? state "Kati Jones hosted on .* is trashed."))))
+      (is (last-log-contains? state #"Kati Jones hosted on .* is trashed."))))
   (testing "Should trash the loaded kati on OCA"
     (do-game
       (new-game {:runner {:hand [(qty "Kati Jones" 2) "Off-Campus Apartment"]
@@ -89,7 +89,7 @@
       (is (= 0 (get-counters (first (:hosted (get-resource state 0))) :credit)) "Correct kati trash")
       (is (find-card "Kati Jones" (:hosted (get-resource state 0))))
       (is (= "Kati Jones" (:title (get-discarded state :runner))))
-      (is (last-log-contains? state "Kati Jones hosted on .* is trashed.")))))
+      (is (last-log-contains? state #"Kati Jones hosted on .* is trashed.")))))
 
 (deftest installing-second-hivemind-trashes-hosted-hivemind-test
   (do-game
@@ -334,18 +334,16 @@
         (click-card state :runner "Corroder")
         (play-from-hand state :runner "Leprechaun")
         (click-prompt state :runner (:title od))
-        (let [od (refresh od)
-              le (first (:hosted od))]
-          (play-from-hand state :runner "Mimic")
-          (click-prompt state :runner "Leprechaun")
-          (let [all-installed (core/all-installed state :runner)]
-            (is (= 5 (count all-installed)) "Number of installed runner cards is correct")
-            (is (not-empty (filter #(= (:title %) "Leprechaun") all-installed)) "Leprechaun is in all-installed")
-            (is (not-empty (filter #(= (:title %) "Personal Workshop") all-installed)) "Personal Workshop is in all-installed")
-            (is (not-empty (filter #(= (:title %) "Mimic") all-installed)) "Mimic is in all-installed")
-            (is (not-empty (filter #(= (:title %) "Omni-drive") all-installed)) "Omni-drive is in all-installed")
-            (is (not-empty (filter #(= (:title %) "Knight") all-installed)) "Knight is in all-installed")
-            (is (empty? (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed")))))))
+        (play-from-hand state :runner "Mimic")
+        (click-prompt state :runner "Leprechaun")
+        (let [all-installed (core/all-installed state :runner)]
+          (is (= 5 (count all-installed)) "Number of installed runner cards is correct")
+          (is (not-empty (filter #(= (:title %) "Leprechaun") all-installed)) "Leprechaun is in all-installed")
+          (is (not-empty (filter #(= (:title %) "Personal Workshop") all-installed)) "Personal Workshop is in all-installed")
+          (is (not-empty (filter #(= (:title %) "Mimic") all-installed)) "Mimic is in all-installed")
+          (is (not-empty (filter #(= (:title %) "Omni-drive") all-installed)) "Omni-drive is in all-installed")
+          (is (not-empty (filter #(= (:title %) "Knight") all-installed)) "Knight is in all-installed")
+          (is (empty? (filter #(= (:title %) "Corroder") all-installed)) "Corroder is not in all-installed"))))))
 
 (deftest log-accessed-names
   ;; Check that accessed card names are logged - except those on R&D, and no logs on archives
@@ -433,7 +431,8 @@
 (deftest purge-corp
   ;; Purge virus counters on Corp cards
   (do-game
-    (new-game {:corp {:deck ["Cyberdex Trial" "Ice Wall"]}})
+    (new-game {:corp {:deck [(qty "Hedge Fund" 10)]
+                      :hand ["Cyberdex Trial" "Ice Wall"]}})
     (play-from-hand state :corp "Ice Wall" "HQ")
     (let [iw (get-ice state :hq 0)]
       (core/command-counter state :corp ["virus" 2])

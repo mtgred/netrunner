@@ -8,7 +8,7 @@
    [nr.auth :refer [authenticated] :as auth]
    [nr.avatar :refer [avatar]]
    [nr.end-of-game-stats :refer [build-game-stats]]
-   [nr.translations :refer [tr tr-format tr-room-type tr-side]]
+   [jinteki.i18n :refer [tr tr-format tr-room-type tr-side]]
    [nr.utils :refer [day-word-with-time-formatter faction-icon format-date-time
                      notnum->zero safe-divide player-highlight-option-class
                      render-message render-player-highlight set-scroll-top store-scroll-top]]

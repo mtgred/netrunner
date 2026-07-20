@@ -10,7 +10,7 @@
    [nr.gameboard.card-preview :refer [card-preview-mouse-out
                                       card-preview-mouse-over zoom-channel]]
    [nr.gameboard.state :refer [game-state not-spectator?]]
-   [nr.translations :refer [tr tr-span]]
+   [jinteki.i18n :refer [tr tr-span]]
    [nr.utils :refer [influence-dot player-highlight-option-class
                      render-message render-player-highlight]]
    [nr.ws :as ws]
@@ -209,7 +209,7 @@
      {:on-mouse-leave #(swap! state dissoc :completion-highlight)}
      [:ul.command-matches
       (doall (map-indexed
-               (fn [i {:keys [completion-text display-text]} completion]
+               (fn [i {:keys [completion-text display-text]}]
                  [:li.command-match
                   {:key completion-text
                    :class (when (= i (:completion-highlight @state)) "highlight")}
@@ -249,19 +249,14 @@
 (defn format-system-timestamp [timestamp text corp runner]
   (if (get-in @app-state [:options :log-timestamps])
     (render-message (render-player-highlight text corp runner (str "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]")))
-    (render-message (render-player-highlight text corp runner))
-    )
-  )
+    (render-message (render-player-highlight text corp runner))))
 
 (defn format-user-timestamp [timestamp user]
   (if (get-in @app-state [:options :log-timestamps])
     [:div.timestamp-wrapper
      [:div.username (:username user)]
-     [:div.timestamp "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]"]
-     ]
-    [:div.username (:username user)]
-    )
-  )
+     [:div.timestamp "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]"]]
+    [:div.username (:username user)]))
 
 (defn log-messages []
   (let [log (r/cursor game-state [:log])

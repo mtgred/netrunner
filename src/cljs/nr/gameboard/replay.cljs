@@ -9,7 +9,7 @@
     [nr.gameboard.state :refer [game-state last-state replay-side]]
     [nr.local-storage :as ls]
     [nr.new-game :refer [create-game]]
-    [nr.translations :refer [tr tr-span tr-element]]
+    [jinteki.i18n :refer [tr tr-span tr-element]]
     [nr.utils :refer [tr-non-game-toast render-message]]
     [nr.ws :as ws]
     [reagent.core :as r]))

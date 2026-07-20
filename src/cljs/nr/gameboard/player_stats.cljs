@@ -5,7 +5,7 @@
    [nr.avatar :refer [avatar]]
    [nr.gameboard.actions :refer [send-command]]
    [nr.gameboard.state :refer [game-state not-spectator?]]
-   [nr.translations :refer [tr tr-span tr-element tr-pronouns]]
+   [jinteki.i18n :refer [tr tr-span tr-element tr-pronouns]]
    [reagent.core :as r]))
 
 (defn stat-controls

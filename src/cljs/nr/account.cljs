@@ -14,11 +14,10 @@
    [nr.avatar :refer [avatar]]
    [nr.local-storage :as ls]
    [nr.sounds :refer [bespoke-sounds play-sfx random-sound select-random-from-grouping]]
-   [nr.translations :refer [tr tr-span tr-element tr-format]]
+   [jinteki.i18n :as i18n :refer [tr tr-span tr-element tr-format]]
    [nr.utils :refer [card-colors-class card-colors-custom-style format-date-time
                      get-image-path image-or-face ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top tr-non-game-toast]]
-   [jinteki.i18n :as i18n]
    [jinteki.card-backs :as card-backs]
    [reagent-modals.modals :as reagent-modals]
    [reagent.core :as r]))

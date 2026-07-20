@@ -1,6 +1,6 @@
 (ns game.core.diffs
   (:require
-   [cond-plus.core :refer [cond+]]
+   [com.noahbogart.cond-plus :refer [cond+]]
    [differ.core :as differ]
    [game.core.board :refer [installable-servers]]
    [game.core.card :refer :all]
@@ -569,8 +569,8 @@
       [{} {}])))
 
 (defn- get-message-diff [old-state new-state side]
-  (let [old-messages {:log (into [] (keep #(or (side %) (:public %)) (:log old-state)))}
-        new-messages {:log (into [] (keep #(or (side %) (:public %)) (:log @new-state)))}]
+  (let [old-messages {:log (into [] (keep #(or (side %) (:public %))) (:log old-state))}
+        new-messages {:log (into [] (keep #(or (side %) (:public %))) (:log @new-state))}]
     (fake-log-diff old-messages new-messages)))
 
 (defn- diff-and-patch-log [old-state new-state message-diff]

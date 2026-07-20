@@ -9,7 +9,7 @@
     [nr.deckbuilder :refer [deck-name default-deck?]]
     [nr.lobby-chat :refer [lobby-chat]]
     [nr.player-view :refer [player-view]]
-    [nr.translations :refer [tr tr-element tr-element-with-embedded-content tr-span tr-side]]
+    [jinteki.i18n :refer [tr tr-element tr-element-with-embedded-content tr-span tr-side]]
     [nr.utils :refer [cond-button format-date-time mdy-formatter
                       tr-non-game-toast non-game-toast]]
     [nr.ws :as ws]
