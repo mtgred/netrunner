@@ -899,8 +899,15 @@
     (= (get-in @game-state [@replay-side :user :_id]) (:_id user))
     (= (:_id user) (-> @app-state :user :_id))))
 
+(defn replay-opponent-hand?
+  "Returns true when a hand belongs to the opponent in a player-side replay view."
+  [replay? view-side hand-side]
+  (and replay?
+       (contains? #{:corp :runner} view-side)
+       (not= view-side hand-side)))
+
 (defn build-hand-card-view
-  [hand size wrapper-class]
+  [hand size wrapper-class hide-cards?]
   [:div
    (doall
      (map-indexed
@@ -909,6 +916,8 @@
                 :class (str wrapper-class)
                 :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
           (cond
+            hide-cards?
+            [facedown-card (:side card)]
             (spectator-view-hidden?)
             [card-view (dissoc card :new :selected)]
             (:cid card)
@@ -936,7 +945,8 @@
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area (if (= :corp side) "HQ" "the Grip") {:class (when (> size 6) "squeeze")})
-           [build-hand-card-view filled-hand size "card-wrapper"]
+           [build-hand-card-view filled-hand size "card-wrapper"
+            (replay-opponent-hand? (:replay @game-state) @replay-side side)]
            [label filled-hand {:name (if (= :corp side)
                                        [tr-span [:game_hq "HQ"]]
                                        [tr-span [:game_grip "Grip"]])
@@ -959,7 +969,8 @@
              [tr-element :label [:game_card-count] {:cnt size}]
              (let [{:keys [total]} @hand-size]
                (stat-controls :hand-size [tr-element :div.hand-size [:game_max-hand "Max hand size"] {:total total}]))
-             [build-hand-card-view filled-hand size "card-popup-wrapper"]]])]))))
+             [build-hand-card-view filled-hand size "card-popup-wrapper"
+              (replay-opponent-hand? (:replay @game-state) @replay-side side)]]])]))))
 
 (defn show-deck [event ref]
   (-> ((keyword (str ref "-content")) @board-dom) js/$ .fadeIn)
