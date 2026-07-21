@@ -1185,6 +1185,19 @@ glow-spin(prop, pct)
                     .log-input form input, .indicate-action, .show-decklists
                         width: 100%
 
+                    .log-actions
+                        display: flex
+                        gap: 4px
+
+                        button
+                            margin: 0
+
+                        .command-menu-button, .message-menu-button
+                            flex: 0 0 auto
+
+                        .indicate-action
+                            flex: 1
+
                     .command-matches-container
                         position: absolute !important
                         bottom: 24px

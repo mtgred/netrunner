@@ -16,12 +16,13 @@
     [game.core.memory :refer [init-mu-cost]]
     [game.core.prevention :refer [resolve-trash-prevention]]
     [game.core.prompts :refer [clear-wait-prompt show-prompt show-wait-prompt]]
-    [game.core.say :refer [enforce-msg system-msg]]
+    [game.core.say :refer [enforce-msg system-msg multi-msg]]
     [game.core.servers :refer [is-remote? same-server? target-server type->rig-zone]]
+    [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.core.winning :refer [check-win-by-agenda]]
     [game.macros :refer [wait-for when-let*]]
-    [game.utils :refer [dissoc-in make-cid make-timestamp remove-once same-card? same-side? to-keyword]]
+    [game.utils :refer [dissoc-in make-cid make-timestamp remove-once same-card? same-side? to-keyword quantify enumerate-cards enumerate-str]]
     [medley.core :refer [insert-nth]]))
 
 (defn- trim-cause-card
@@ -58,6 +59,30 @@
                              (second (get-zone card)))]
            (contains? (set (get-in @state [:breach :known-cids from-zone] [])) cid)))))
 
+(defn- log-hosted-cards-trashed
+  [state host cards]
+  (when (seq cards)
+    (let [verb (if (= 1 (count cards)) "is" "are")
+          runner-cards (filter runner? cards)
+          runner-facedown-cards
+          (when-let [cs (seq (filter :facedown runner-cards))]
+            (str (quantify (count cs) "facedown Runner card") " (" (enumerate-str (sort (map :title cs))) ")"))
+          runner-faceup-cards (when-let [cs (seq (filter (complement :facedown) runner-cards))]
+                                (enumerate-cards cs true))
+          corp-cards (filter corp? cards)
+          corp-faceup-cards (when-let [cs (seq (filter #(or (:rezzed %) (:faceup %) (:seen %)) corp-cards))]
+                              (enumerate-cards cs true))
+          corp-facedown-cards (when-let [cs (seq (filter #(not (or (:rezzed %) (:faceup %) (:seen %))) corp-cards))]
+                                (let [pre (quantify (count cs) "facedown Corp card")]
+                                  {:corp (str pre " (" (enumerate-cards cs true) ")")
+                                   :public pre}))
+          pre {:corp (str (card-str state host {:maybe-visible true}) " has left play: ")
+               :public (str (card-str state host) " has left play: ")}
+          public-msg (str (:public pre) (enumerate-str (filterv identity [runner-faceup-cards runner-facedown-cards corp-faceup-cards (:public corp-facedown-cards)])) " " verb " trashed")
+          corp-msg (str (:corp pre) (enumerate-str (filterv identity [runner-faceup-cards runner-facedown-cards corp-faceup-cards (:corp corp-facedown-cards)])) " " verb " trashed")]
+      (multi-msg state nil {:corp corp-msg
+                            :public public-msg}))))
+
 (defn- get-moved-card
   "Get the moved cards with correct abilities and keys hooked up / removed etc."
   [state side {:keys [zone host installed] :as card} to]
@@ -93,70 +118,72 @@
                             (when (program? newh)
                               (init-mu-cost state newh)))
                           [newh]))
-        hosted (seq (mapcat (if same-zone? update-hosted trash-hosted) (:hosted card)))
-        ;; Set :seen correctly
-        c (if (= :corp side)
-            (cond
-              ;; Moving rezzed card or condition counter to discard, explicitly mark as seen
-              (and (= :discard (first dest))
-                   (or (rezzed? card)
-                       (condition-counter? card)))
-              (assoc card :seen true)
-              ;; Moving card to HQ or R&D, explicitly mark as not seen
-              (#{:hand :deck} (first dest))
-              (dissoc card :seen)
-              ;; card is known from a rules POV, and should be faceup
-              (should-moved-card-be-known? state side card (first dest))
-              (assoc card :seen true)
-              ;; Else return card
-              :else
+        hosted-trashed? (when-not same-zone? (:hosted card))]
+    (log-hosted-cards-trashed state card hosted-trashed?)
+    (let [hosted (seq (mapcat (if same-zone? update-hosted trash-hosted) (:hosted card)))
+          ;; Set :seen correctly
+          c (if (= :corp side)
+              (cond
+                ;; Moving rezzed card or condition counter to discard, explicitly mark as seen
+                (and (= :discard (first dest))
+                     (or (rezzed? card)
+                         (condition-counter? card)))
+                (assoc card :seen true)
+                ;; Moving card to HQ or R&D, explicitly mark as not seen
+                (#{:hand :deck} (first dest))
+                (dissoc card :seen)
+                ;; card is known from a rules POV, and should be faceup
+                (should-moved-card-be-known? state side card (first dest))
+                (assoc card :seen true)
+                ;; Else return card
+                :else
+                card)
               card)
-            card)
-        c (if (and (not (and (= (get-scoring-owner state card) :runner)
-                             (#{:scored} src-zone)
-                             (#{:hand :deck :discard :rfg} target-zone)))
-                   (or installed
-                       host
-                       (#{:servers :scored :current :play-area} src-zone))
-                   (or (#{:hand :deck :discard :rfg} target-zone)
-                       to-facedown)
-                   (not (facedown? c)))
-            (deactivate state side c to-facedown)
-            c)
-        c (if (and from-installed
-                   (not (facedown? c)))
-            (uninstall state side c card)
-            c)
-        c (if to-installed
-            (assoc c :installed :this-turn)
-            (dissoc c :installed))
-        c (if to-facedown
-            (assoc c :facedown true)
-            (dissoc c :facedown))
-        c (if (= :scored (first dest))
-            (assoc c :scored-side side)
-            c)
-        cid (if (and (not (contains? #{:deck :hand :discard} src-zone))
-                     (contains? #{:deck :hand :discard} target-zone))
-              (make-cid)
-              (:cid c))
-        timestamp (if (or (and (not (contains? #{:deck :hand :discard} src-zone))
-                               (contains? #{:deck :hand :discard} target-zone))
-                          (and (not installed) to-installed))
-                    (make-timestamp)
-                    (:timestamp c))
-        moved-card (assoc c :zone dest
+          c (if (and (not (and (= (get-scoring-owner state card) :runner)
+                               (#{:scored} src-zone)
+                               (#{:hand :deck :discard :rfg} target-zone)))
+                     (or installed
+                         host
+                         (#{:servers :scored :current :play-area} src-zone))
+                     (or (#{:hand :deck :discard :rfg} target-zone)
+                         to-facedown)
+                     (not (facedown? c)))
+              (deactivate state side c to-facedown)
+              c)
+          c (if (and from-installed
+                     (not (facedown? c)))
+              (uninstall state side c card)
+              c)
+          c (if to-installed
+              (assoc c :installed :this-turn)
+              (dissoc c :installed))
+          c (if to-facedown
+              (assoc c :facedown true)
+              (dissoc c :facedown))
+          c (if (= :scored (first dest))
+              (assoc c :scored-side side)
+              c)
+          cid (if (and (not (contains? #{:deck :hand :discard} src-zone))
+                       (contains? #{:deck :hand :discard} target-zone))
+                (make-cid)
+                (:cid c))
+          timestamp (if (or (and (not (contains? #{:deck :hand :discard} src-zone))
+                                 (contains? #{:deck :hand :discard} target-zone))
+                            (and (not installed) to-installed))
+                      (make-timestamp)
+                      (:timestamp c))
+          moved-card (assoc c :zone dest
                             :host nil
                             :hosted hosted
                             :cid cid
                             :timestamp timestamp
                             :previous-zone (:zone c))
-        ;; Set up abilities for stolen agendas
-        moved-card (if (and (= :scored (first dest))
-                            (card-flag? moved-card :has-abilities-when-stolen true))
-                     (merge moved-card {:abilities (:abilities (card-def moved-card))})
-                     moved-card)]
-    moved-card))
+          ;; Set up abilities for stolen agendas
+          moved-card (if (and (= :scored (first dest))
+                              (card-flag? moved-card :has-abilities-when-stolen true))
+                       (merge moved-card {:abilities (:abilities (card-def moved-card))})
+                       moved-card)]
+      moved-card)))
 
 (defn- update-effects
   "If a card moves within a zone (ice changes positions, card moves between servers),

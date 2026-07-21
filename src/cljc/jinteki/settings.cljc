@@ -43,6 +43,9 @@
 (def card-color-states (-> default-card-custom-colors keys set))
 (def valid-game-descriptions (set (map name (keys utils/descriptions))))
 
+(def default-chat-messages
+  ["Good luck & have fun!" "Thinking..." "Good game!" "Thank you for the game!" "Yes" "No"])
+
 ;; Validation combinators
 (defn- validate-coll-of
   "Returns a validator that checks if value is a collection of items matching pred"
@@ -103,6 +106,14 @@
 (def validate-default-decks
   "Validates default-decks is a map of side -> {format -> deck-id-string}"
   (validate-map-of keyword? (validate-map-of keyword? string?)))
+
+(def validate-chat-messages
+  (validate-coll-of string? vector?))
+
+(def zoom-default 1)
+(def zoom-step 0.15)
+(def zoom-max (+ zoom-default (* zoom-step 6)))
+(def zoom-min (- zoom-default (* zoom-step 3)))
 
 (def all-settings
   "Vector of all application settings with their metadata.
@@ -187,6 +198,11 @@
     :sync? true
     :validate-fn string?
     :doc "URL for custom game board background image"}
+   {:key :chat-messages
+    :default default-chat-messages
+    :sync? true
+    :validate-fn validate-chat-messages
+    :doc "Preset chat messages sent from buttons in the game log"}
    {:key :deckstats
     :default "always"
     :sync? true
@@ -356,7 +372,12 @@
     :default nil
     :sync? false  ; handled separately in account.cljs
     :validate-fn validate-visible-formats
-    :doc "Set of game formats to show in lobby (device-specific)"}])
+    :doc "Set of game formats to show in lobby (device-specific)"}
+   {:key :zoom
+    :default zoom-default
+    :sync? false  ; device-specific
+    :validate-fn #(and (number? %) (<= zoom-min % zoom-max))
+    :doc "UI zoom factor for this device (emulates browser zoom via CSS zoom on <html>)"}])
 
 (defn setting-keys
   "Returns a vector of all setting keys"
