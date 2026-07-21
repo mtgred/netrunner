@@ -560,6 +560,17 @@
       :runner-spect-state (when runner-spectators? (strip-for-runner-spect replay-state corp-state runner-state))
       :hist-state replay-state})))
 
+(defn- update-spect-states
+  [{:keys [corp-state runner-state hist-state spect-state corp-spect-state runner-spect-state] :as states}
+   spectators? corp-spectators? runner-spectators?]
+  (assoc states
+         :spect-state (when spectators?
+                        (or spect-state (strip-for-spectators hist-state corp-state runner-state)))
+         :corp-spect-state (when corp-spectators?
+                             (or corp-spect-state (strip-for-corp-spect hist-state corp-state runner-state)))
+         :runner-spect-state (when runner-spectators?
+                               (or runner-spect-state (strip-for-runner-spect hist-state corp-state runner-state)))))
+
 (defn- fake-log-diff [old new]
   (let [old (:log old)
         new (:log new)
@@ -584,11 +595,17 @@
   (let [{old-corp :corp-state old-runner :runner-state
          old-spect :spect-state old-hist :hist-state
          old-corp-spect :corp-spect-state
-         old-runner-spect :runner-spect-state} (when old-state (public-states (atom old-state) spectators? corp-spectators? runner-spectators?))
+         old-runner-spect :runner-spect-state}
+        (when old-state
+          (if-let [old-public-states (:public-states old-state)]
+            ;; reuse cache if available, computing public-states is expensive
+            (update-spect-states old-public-states spectators? corp-spectators? runner-spectators?)
+            (public-states (atom old-state) spectators? corp-spectators? runner-spectators?)))
         {new-corp :corp-state new-runner :runner-state
          new-spect :spect-state new-hist :hist-state
          new-corp-spect :corp-spect-state
-         new-runner-spect :runner-spect-state} (public-states new-state spectators? corp-spectators? runner-spectators?)
+         new-runner-spect :runner-spect-state
+         :as new-public-states} (public-states new-state spectators? corp-spectators? runner-spectators?)
         runner-message-diff (get-message-diff old-state new-state :runner)
         corp-message-diff (get-message-diff old-state new-state :corp)
         public-message-diff (get-message-diff old-state new-state :public)]
@@ -599,7 +616,8 @@
                           (diff-and-patch-log old-runner-spect new-runner-spect runner-message-diff))
      :corp-spect-diff (when corp-spectators?
                         (diff-and-patch-log old-corp-spect new-corp-spect corp-message-diff))
-     :hist-diff (diff-and-patch-log old-hist new-hist public-message-diff)}))
+     :hist-diff (diff-and-patch-log old-hist new-hist public-message-diff)
+     :public-states new-public-states}))
 
 (defn message-diffs [old-state new-state]
   (let [runner-diff (get-message-diff old-state new-state :runner)

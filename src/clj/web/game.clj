@@ -56,6 +56,7 @@
           corp-spectators? (seq (:corp-spectators lobby))
           runner-spectators? (seq (:runner-spectators lobby))
           diffs (diffs/public-diffs old-state state spectators? corp-spectators? runner-spectators?)]
+      (swap! state assoc :public-states (:public-states diffs))
       (swap! state update :history conj (:hist-diff diffs))
       (send-state-diffs lobby diffs))))
 
