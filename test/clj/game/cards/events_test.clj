@@ -7754,6 +7754,27 @@
         "Siphoned bigly")
     (click-prompt state :runner "No action")))
 
+(deftest transfer-of-wealth-vs-r+
+  (do-game
+    (new-game {:runner {:hand ["Transfer of Wealth"]}
+               :corp {:id "NBN: Reality Plus" :credits 1
+                      :hand [(qty "PAD Campaign" 4)]}})
+    (dotimes [_ 3]
+      (play-cards state :corp ["PAD Campaign" "New remote"]))
+    (take-credits state :corp)
+    (play-from-hand state :runner "Transfer of Wealth")
+    (run-continue state)
+    (is (changed? [(:credit (get-corp)) -1
+                   (:credit (get-runner)) 0
+                   (count-tags state) +1]
+          (run-continue state))
+        "Siphoned small")
+    (is (changed? [(:credit (get-corp)) +2
+                   (:credit (get-runner)) +2]
+          (click-prompt state :corp "Gain 2 [Credits]"))
+        "R+ Triggers after the credit loss")
+    (click-prompt state :runner "No action")))
+
 (deftest transfer-of-wealth-vs-redirect
   (do-game
     (new-game {:runner {:hand ["Transfer of Wealth"]}
