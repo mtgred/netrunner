@@ -93,7 +93,7 @@
     (doseq [s [:runner :corp]] (swap! state dissoc-in [s :undo-turn]))
     (swap! state assoc :click-states [])
     (swap! state dissoc :paid-ability-state)
-    (swap! state assoc :turn-state (dissoc @state :log :history :turn-state))
+    (swap! state assoc :turn-state (dissoc @state :log :history :turn-state :public-states))
 
     (when (= side :corp)
       (swap! state update-in [:turn] inc))

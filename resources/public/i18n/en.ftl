@@ -553,6 +553,8 @@ game_card-count = {$cnt ->
     *[other] {$cnt} cards
 }
 
+game_chat-messages = Messages
+
 game_click-count = {$click ->
     [one] {$click} click
     *[other] {$click} clicks
@@ -561,6 +563,8 @@ game_click-count = {$click ->
 game_close = Close
 
 game_close-shuffle = Close & Shuffle
+
+game_command-menu = Commands
 
 game_concede = Concede
 
@@ -1197,6 +1201,12 @@ nav_users = Users
 
 nav_welcome = Welcome
 
+nav_zoom-in = Zoom in
+
+nav_zoom-out = Zoom out
+
+nav_zoom-reset = Reset zoom
+
 new-game_default = No special conditions
 
 new-game_meta-deck = Play against meta decks
@@ -1643,6 +1653,10 @@ settings_card-text = Card Text
 settings_change-avatar = Change on gravatar.com
 
 settings_change-email = Change email
+
+settings_chat-messages = Chat messages
+
+settings_chat-messages-note = These messages are sent in-game from the Messages menu below the chat input.
 
 settings_comp-only = Competitive Lobby Only
 

@@ -48,6 +48,9 @@
   (prn "resynchronising game state due to out of order data")
   (ws/resync))
 
+(def ^:private throttled-sequence-resync
+  (gfn/throttle sequence-resync 1500))
+
 (defn handle-diff! [{:keys [gameid diff]}]
   (when (= gameid (str (current-gameid app-state)))
     (let [old-sequence (:sequence @game-state)
@@ -62,11 +65,13 @@
       (check-lock?)
       (let [gs @game-state]
         (reset! last-state gs))
-      ;; Note: Although websockets gaurantee in-order delivery, they do not gaurantee
+      ;; Note: Although websockets guarantee in-order delivery, they do not guarantee
       ;; delivery of every message. If we miss a message, we need to trigger a re-sync.
+      ;; Chat messages don't increase the sequence, so they will always look like the
+      ;; previous state.
       (let [new-sequence (:sequence @game-state)]
-        (when (not= new-sequence (inc old-sequence))
-          (gfn/throttle sequence-resync 1500))))))
+        (when (> new-sequence (inc old-sequence))
+          (throttled-sequence-resync))))))
 
 (declare toast)
 (defn handle-timeout [gameid]

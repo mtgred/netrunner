@@ -7,6 +7,7 @@
    [nr.player-view :refer [player-view]]
    [nr.translations :refer [tr tr-span]]
    [nr.ws :as ws]
+   [nr.zoom :as zoom]
    [reagent.core :as r]))
 
 (defn current-game-count [user games connected?]
@@ -70,6 +71,7 @@
                current-game (r/cursor app-state [:current-game])
                connected? (r/cursor app-state [:connected])]
     [:div
+     [zoom/zoom-controls]
      [current-game-count user games connected?]
      [in-game-buttons user current-game gameid]
      [replay-and-spectator-buttons gameid]

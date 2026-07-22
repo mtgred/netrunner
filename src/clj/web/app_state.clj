@@ -17,9 +17,7 @@
 
 (defn register-user
   [app-state uid user]
-  (-> app-state
-      (assoc-in [:users uid] (assoc user :uid uid))
-      (assoc-in [:lobby-updates uid] (inst/now))))
+  (assoc-in app-state [:users uid] (assoc user :uid uid)))
 
 (defn uid->lobby
   ([uid] (uid->lobby (:lobbies @app-state) uid))
