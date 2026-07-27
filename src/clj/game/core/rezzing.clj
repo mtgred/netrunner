@@ -12,6 +12,7 @@
     [game.core.initializing :refer [card-init deactivate]]
     [game.core.moving :refer [trash-cards]]
     [game.core.payment :refer [build-spend-msg can-pay? merge-costs ->c]]
+    [game.core.revealing :refer [set-last-played-or-rezzed]]
     [game.core.runs :refer [continue]]
     [game.core.say :refer [play-sfx system-msg implementation-msg]]
     [game.core.toasts :refer [toast]]
@@ -67,7 +68,8 @@
         final-msg (if source-card
                     (str (build-spend-msg modified-cost-str "use" "uses") source-card " to rez " title-card rhs)
                     (str (build-spend-msg modified-cost-str "rez" "rezzes") title-card rhs))]
-    (system-msg state side final-msg)))
+    (system-msg state side final-msg)
+    (set-last-played-or-rezzed state card)))
 
 (defn- complete-rez
   [state side eid

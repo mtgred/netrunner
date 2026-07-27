@@ -377,7 +377,12 @@
     :default zoom-default
     :sync? false  ; device-specific
     :validate-fn #(and (number? %) (<= zoom-min % zoom-max))
-    :doc "UI zoom factor for this device (emulates browser zoom via CSS zoom on <html>)"}])
+    :doc "UI zoom factor for this device (emulates browser zoom via CSS zoom on <html>)"}
+   {:key :zoom-last-played-or-rezzed
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Zoom the most recently rezzed or played card"}])
 
 (defn setting-keys
   "Returns a vector of all setting keys"
