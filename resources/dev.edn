@@ -28,16 +28,18 @@
              :from "support@jinteki.net"
              :reset-subject "Jinteki Password Reset"
              :confirm-reset-subject "Your password has been changed"}
+ :web/ws {:packer :edn}
  :web/app {:server-mode #ig/ref :server/mode
            :mongodb/connection #ig/ref :mongodb/connection
            :web/auth #ig/ref :web/auth
            :web/chat #ig/ref :web/chat
-           :web/email #ig/ref :web/email}
+           :web/email #ig/ref :web/email
+           :web/ws #ig/ref :web/ws}
  :web/banned-msg {:initial "Account Banned"
                   :mongo #ig/ref :mongodb/connection}
  :web/i18n nil
  :frontend/version {:initial "1"
                     :mongo #ig/ref :mongodb/connection}
- :sente/router nil
+ :sente/router {:ws #ig/ref :web/ws}
  :game/quotes nil
  :jinteki/cards {:mongo #ig/ref :mongodb/connection}}
