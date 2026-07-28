@@ -39,9 +39,15 @@
 (defn save!
   "Save a value to localStorage with proper serialization"
   [k v]
-  (if (nil? v)
-    (.removeItem js/localStorage k)
-    (.setItem js/localStorage k (serialize-value v))))
+  (try
+    (if (nil? v)
+      (.removeItem js/localStorage k)
+      (.setItem js/localStorage k (serialize-value v)))
+    (catch :default e
+      (js/console.warn "Failed to save" k "to localStorage:" e)
+      (try
+        (.removeItem js/localStorage k)
+        (catch :default _)))))
 
 (defn load
   "Load a value from localStorage with proper deserialization"
@@ -57,9 +63,12 @@
   "Migrate old key names to new ones"
   [migrations]
   (doseq [[old-key new-key] migrations]
-    (when-let [value (.getItem js/localStorage old-key)]
-      (.setItem js/localStorage new-key value)
-      (.removeItem js/localStorage old-key))))
+    (try
+      (when-let [value (.getItem js/localStorage old-key)]
+        (.setItem js/localStorage new-key value)
+        (.removeItem js/localStorage old-key))
+      (catch :default e
+        (js/console.warn "Failed to migrate" old-key "in localStorage:" e)))))
 
 (defn update-local-storage-settings!
   "Update localStorage settings based on sync preferences.
