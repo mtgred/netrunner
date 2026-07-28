@@ -46,6 +46,8 @@
 (def default-chat-messages
   ["Good luck & have fun!" "Thinking..." "Good game!" "Thank you for the game!" "Yes" "No"])
 
+(def chat-message-max-length 100)
+
 ;; Validation combinators
 (defn- validate-coll-of
   "Returns a validator that checks if value is a collection of items matching pred"
@@ -107,8 +109,12 @@
   "Validates default-decks is a map of side -> {format -> deck-id-string}"
   (validate-map-of keyword? (validate-map-of keyword? string?)))
 
-(def validate-chat-messages
-  (validate-coll-of string? vector?))
+(defn validate-chat-messages
+  [value]
+  (and (vector? value)
+       (<= (count value) (count default-chat-messages))
+       (every? string? value)
+       (every? #(<= (count %) chat-message-max-length) value)))
 
 (def zoom-default 1)
 (def zoom-step 0.15)
