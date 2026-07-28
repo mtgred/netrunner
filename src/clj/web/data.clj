@@ -18,9 +18,6 @@
 (defn- cards-version [db]
   (:cards-version (mc/find-one-as-map db "config" nil)))
 
-(defn cards-version-handler [{db :system/db}]
-  (response 200 {:version (int (cards-version db))}))
-
 (defn- enriched-cards [db]
   (let [cards (mc/find-maps db "cards")]
     (mapv #(-> % (assoc :implementation (card-implemented %)) (dissoc :_id)) cards)))
