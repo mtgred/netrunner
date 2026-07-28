@@ -91,3 +91,28 @@
                                    [:players 0 :deck :_id]))]
       (is (nil? (deck {:room "casual" :format "system-gateway" :precon :beginner})))
       (is (= "sg-deck" (deck {:room "casual" :format "system-gateway"}))))))
+
+(deftest lobby-summary-deck-test
+  (let [identity {:title "Az McCaffrey: Mechanical Prodigy" :faction "Criminal"}
+        lobby {:gameid "g1"
+               :room "casual"
+               :format "standard"
+               :title "game"
+               :started true
+               :allow-spectator true
+               :players [(player "Corp" {:_id "deck-id" :name "My Deck" :identity identity})]}
+        list-deck (fn [lobby] (get-in (lobby/lobby-summary lobby)
+                                      [:players 0 :deck]))]
+    (testing "public started games show decks in the lobby list"
+      (let [deck (list-deck lobby)]
+        (is (= "My Deck" (:name deck)))
+        (is (= identity (:identity deck)))))
+    (testing "password games hide decks from the lobby list"
+      (is (nil? (list-deck (assoc lobby :password "password")))))
+    (testing "games without spectators hide decks from the lobby list"
+      (is (nil? (list-deck (assoc lobby :allow-spectator false)))))
+    (testing "those in the game still see decks"
+      (let [deck (get-in (lobby/lobby-summary (assoc lobby :password "password") true)
+                         [:players 0 :deck])]
+        (is (= "My Deck" (:name deck)))
+        (is (= identity (:identity deck)))))))

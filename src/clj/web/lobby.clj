@@ -165,33 +165,44 @@
         (select-keys [:_id :username :emailhash])
         (assoc :stats stats))))
 
-(defn strip-deck [player lobby]
-  (if-let [{:keys [_id] :as deck} (:deck player)]
-    (let [fmt (:format lobby)
-          fmt-kw (keyword fmt)
-          legal (get-in deck [:status fmt-kw :legal])
-          status {:format fmt
-                  fmt-kw {:legal legal}}
-          deck (-> deck
-                   (select-keys
-                     (if (:started lobby)
-                       [:name :date :identity]
-                       [:name :date]))
-                   (assoc :_id (str _id) :status status))]
-      (assoc player :deck deck))
-    player))
+(defn visible-decks?
+  "Deck info in password games and games without spectators is hidden from the
+  lobby list, so only send it to those in the game."
+  [lobby participating?]
+  (boolean
+    (or participating?
+        (and (not (:password lobby))
+             (:allow-spectator lobby)))))
+
+(defn strip-deck [player lobby participating?]
+  (if-not (visible-decks? lobby participating?)
+    (dissoc player :deck)
+    (if-let [{:keys [_id] :as deck} (:deck player)]
+      (let [fmt (:format lobby)
+            fmt-kw (keyword fmt)
+            legal (get-in deck [:status fmt-kw :legal])
+            status {:format fmt
+                    fmt-kw {:legal legal}}
+            deck (-> deck
+                     (select-keys
+                       (if (:started lobby)
+                         [:name :date :identity]
+                         [:name :date]))
+                     (assoc :_id (str _id) :status status))]
+        (assoc player :deck deck))
+      player)))
 
 (defn user-public-view
   "Strips private server information from a player map."
-  [lobby player]
+  [lobby participating? player]
   (-> player
       (dissoc :uid)
       (update :user filter-lobby-user)
-      (strip-deck lobby)))
+      (strip-deck lobby participating?)))
 
-(defn prepare-players [lobby players]
+(defn prepare-players [lobby participating? players]
   (->> players
-       (mapv #(user-public-view lobby %))
+       (mapv #(user-public-view lobby participating? %))
        (not-empty)))
 
 (defn prepare-original-players [players]
@@ -245,10 +256,10 @@
    (-> lobby
        (assoc :old (> (count (or (:messages lobby) [])) 10))
        (update :password boolean)
-       (update :players #(prepare-players lobby %))
-       (update :spectators #(prepare-players lobby %))
-       (update :corp-spectators #(prepare-players lobby %))
-       (update :runner-spectators #(prepare-players lobby %))
+       (update :players #(prepare-players lobby participating? %))
+       (update :spectators #(prepare-players lobby participating? %))
+       (update :corp-spectators #(prepare-players lobby participating? %))
+       (update :runner-spectators #(prepare-players lobby participating? %))
        (update :original-players prepare-original-players)
        (update :messages #(when participating? %))
        ;; if there's a current tournament, insert the end time for the round
