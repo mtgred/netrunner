@@ -452,7 +452,7 @@
                ^{:key i}
                [:div
                 [:input {:type "text"
-                         :maxLength "100"
+                         :maxLength settings/chat-message-max-length
                          :style {:width "50%"}
                          :value (get-in @s [:chat-messages i] "")
                          :on-change #(swap! s assoc-in [:chat-messages i] (.. % -target -value))}]]))]
