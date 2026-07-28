@@ -25,6 +25,22 @@
 (defn html-response [status-code msg]
   (resp/status (resp/content-type (resp/response msg) "text/html") status-code))
 
+(defn cached-response
+  "Let the browser cache a response in its HTTP cache, keyed on etag.
+  Cache-Control no-cache means the browser must revalidate with If-None-Match
+  before using the cached copy, and a 304 response does not need to send a body.
+  See https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#up-to-date_contents_always
+  and https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/If-None-Match"
+  [request etag body-fn]
+  (let [etag (str "\"" etag "\"")
+        req-etag (get-in request [:headers "if-none-match"])
+        headers {"ETag" etag
+                 "Cache-Control" "no-cache"}
+        resp (if (= etag req-etag)
+               (response 304 nil)
+               (response 200 (body-fn)))]
+    (update resp :headers merge headers)))
+
 (defn json-response [status-code msg]
   (resp/status (resp/content-type (resp/response msg) "application/json") status-code))
 

@@ -1,5 +1,6 @@
 (ns web.data
-  (:require [web.utils :refer [response mongo-time-to-utc-string]]
+  (:require [web.utils :refer [response cached-response mongo-time-to-utc-string]]
+            [web.versions :refer [frontend-version]]
             [monger.collection :as mc]
             [jinteki.i18n :as i18n]
             [monger.query :as mq]
@@ -24,21 +25,25 @@
   (let [cards (mc/find-maps db "cards")]
     (mapv #(-> % (assoc :implementation (card-implemented %)) (dissoc :_id)) cards)))
 
-(defn cards-handler [{db :system/db}]
-  (response 200 (enriched-cards db)))
+(defn cards-handler [{db :system/db :as request}]
+  (cached-response request
+                   (str @frontend-version "-" (cards-version db))
+                   #(enriched-cards db)))
 
 (defn- validate-lang
   [lang]
   (contains? #{"de" "es" "fr" "it" "ja" "ko" "pl" "zh-simp" "zh-trad"} lang))
 
-(defn card-lang-handler [{db :system/db {lang :lang} :path-params}]
+(defn card-lang-handler [{db :system/db {lang :lang} :path-params :as request}]
   (if (validate-lang lang)
-    (let [lang (case lang
-                 "zh-simp" "cards-zh-hans" 
+    (let [coll (case lang
+                 "zh-simp" "cards-zh-hans"
                  "zh-trad" "cards-zh-hant"
                  ; else
                  (str "cards-" lang))]
-      (response 200 (mapv #(dissoc % :_id) (mc/find-maps db lang))))
+      (cached-response request
+                       (str @frontend-version "-" (cards-version db) "-" lang)
+                       #(mapv (fn [card] (dissoc card :_id)) (mc/find-maps db coll))))
     (response 200 {})))
 
 (defn lang-handler [{{lang :lang} :path-params}]
