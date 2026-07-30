@@ -29,6 +29,10 @@
   [el tolerance]
   (> tolerance (- (.-scrollHeight el) (.-scrollTop el) (.-clientHeight el))))
 
+(defn update-scroll-state!
+  [scrolled-away-from-end? el]
+  (reset! scrolled-away-from-end? (not (scrolled-to-end? el 15))))
+
 (def should-scroll (r/atom {:update true :send-msg false}))
 
 (defn log-typing []
@@ -335,7 +339,8 @@
   (let [log (r/cursor game-state [:log])
         corp (r/cursor game-state [:corp :user :username])
         runner (r/cursor game-state [:runner :user :username])
-        !node-ref (r/atom nil)]
+        !node-ref (r/atom nil)
+        scrolled-away-from-end? (r/atom false)]
     (r/create-class
       {:display-name "log-messages"
 
@@ -356,29 +361,39 @@
        (fn [_]
          (when (:update @should-scroll)
            (when-let [n @!node-ref]
-             (set! (.-scrollTop n) (.-scrollHeight n)))))
+             (set! (.-scrollTop n) (.-scrollHeight n))
+             (when @scrolled-away-from-end?
+               (reset! scrolled-away-from-end? false)))))
 
        :reagent-render
        (fn []
-         (into [:div.messages {:class [(when (:replay @game-state)
-                                         "panel-bottom")
-                                       (player-highlight-option-class)]
-                               :ref #(reset! !node-ref %)
-                               :on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                               :on-mouse-out #(card-preview-mouse-out % zoom-channel)
-                               :aria-live "polite"}]
-               (map
-                 (fn [{:keys [user text timestamp]}]
-                   ^{:key timestamp}
-                   (if (= user "__system__")
-                      [:div.system
-                        [format-system-timestamp timestamp text @corp @runner]]
-                      [:div.message
-                       [avatar user {:opts {:size 38}}]
-                       [:div.content
-                        [format-user-timestamp timestamp user]
-                        [:div (render-message text)]]]))
-                 @log)))})))
+         [:<>
+          (into [:div.messages {:class [(when (:replay @game-state)
+                                          "panel-bottom")
+                                        (player-highlight-option-class)]
+                                :ref #(reset! !node-ref %)
+                                :on-scroll #(update-scroll-state! scrolled-away-from-end? (.-currentTarget %))
+                                :on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                                :on-mouse-out #(card-preview-mouse-out % zoom-channel)
+                                :aria-live "polite"}]
+                (map
+                  (fn [{:keys [user text timestamp]}]
+                    ^{:key timestamp}
+                    (if (= user "__system__")
+                       [:div.system
+                         [format-system-timestamp timestamp text @corp @runner]]
+                       [:div.message
+                        [avatar user {:opts {:size 38}}]
+                        [:div.content
+                         [format-user-timestamp timestamp user]
+                         [:div (render-message text)]]]))
+                  @log))
+          (when @scrolled-away-from-end?
+            [:button.log-scroll-to-bottom
+             {:on-click #(when-let [n @!node-ref]
+                           (set! (.-scrollTop n) (.-scrollHeight n))
+                           (reset! scrolled-away-from-end? false))}
+             "↓ Scroll to bottom"])])})))
 
 (defn log-pane []
   (fn []
