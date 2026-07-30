@@ -1620,6 +1620,10 @@ settings_card-backs-their-choice = Their Choice
 
 settings_card-backs-tip = You can earn more card backs by placing well in select online tournaments. If you're an artist with art that you think would make for a good card back, please feel free to contact us
 
+settings_card-unplayable-fade-out = Fade out unplayable cards
+
+settings_card-hover-movement = Responsive cards in hand
+
 settings_card-colors = Card state colors
 
 settings_card-colors-colorblind = Colorblind-safe (Okabe-Ito palette)
@@ -1715,6 +1719,8 @@ settings_get-log-top = Get current log top
 settings_get-log-width = Get current log width
 
 settings_ghost-trojans = Display ghosts for hosted programs
+
+settings_tactile-cards = Tactile cards
 
 settings_high-res = Enable high-resolution card images
 

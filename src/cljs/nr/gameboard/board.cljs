@@ -914,7 +914,7 @@
        (fn [i card]
          [:div {:key (or (:cid card) i)
                 :class (str wrapper-class)
-                :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
+                :style {:left (when (< 1 size) (* (/ 320 (dec size)) i)) :z-index i}}
           (cond
             hide-cards?
             [facedown-card (:side card)]
@@ -1228,7 +1228,7 @@
     [label full-server-names (assoc opts
                                         :classes "server-label"
                                         :name (str "Servers " (join ", " numbers))
-                                        :tr-vec [:game_server "Server"] 
+                                        :tr-vec [:game_server "Server"]
                                         :tr-params {:num (join ", " numbers)}
                                         :hide-cursor true)]))
 
@@ -2308,7 +2308,9 @@
         card-colors (r/cursor app-state [:options :card-colors])
         card-custom-colors (r/cursor app-state [:options :card-custom-colors])
         labeled-unrezzed-cards (r/cursor app-state [:options :labeled-unrezzed-cards])
-        labeled-cards (r/cursor app-state [:options :labeled-cards])]
+        labeled-cards (r/cursor app-state [:options :labeled-cards])
+        card-unplayable-fade-out (r/cursor app-state [:options :card-unplayable-fade-out])
+        card-hover-movement (r/cursor app-state [:options :card-hover-movement])]
 
     (go (while true
           (let [zoom (<! zoom-channel)]
@@ -2398,6 +2400,8 @@
              [:div.gameview
               [:div {:class [:gameboard
                              (card-colors-class @card-colors)
+                             (when (and (not= @side :spectator) @card-unplayable-fade-out) :card-unplayable-fade-out)
+                             (when (and (not= @side :spectator) @card-hover-movement) :card-hover-movement)
                              (when @labeled-unrezzed-cards :show-unrezzed-card-labels)
                              (when @labeled-cards :show-card-labels)]
                      :style (card-colors-custom-style {:card-colors @card-colors
