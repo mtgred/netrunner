@@ -2,6 +2,7 @@
   (:require
    [nr.auth :refer [authenticated]]
    [nr.translations :refer [tr tr-span tr-element tr-room-type]]
+   [nr.utils :refer [focus-on-mount]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [taoensso.sente :as sente]))
@@ -37,6 +38,7 @@
                  " " (:title @game))]
        [:p
         [:input.game-title {:on-change #(swap! state assoc :password (.. % -target -value))
+                            :ref focus-on-mount
                             :value (:password @state)
                             :placeholder (tr [:lobby_password "Password"])
                             :data-i18n-key :lobby_password

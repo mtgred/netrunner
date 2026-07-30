@@ -56,6 +56,7 @@
           corp-spectators? (seq (:corp-spectators lobby))
           runner-spectators? (seq (:runner-spectators lobby))
           diffs (diffs/public-diffs old-state state spectators? corp-spectators? runner-spectators?)]
+      (swap! state assoc :public-states (:public-states diffs))
       (swap! state update :history conj (:hist-diff diffs))
       (send-state-diffs lobby diffs))))
 
@@ -187,7 +188,12 @@
             (-> lobbies
                 (lobby/handle-send-message gameid message)
                 (lobby/handle-set-last-update gameid "ERROR DURING REPLAY RESTORATION")))
-          (throw e))))
+          (let [message (make-message {:user {:username "ERROR STARTING A GAME" :uid "ERROR STARTING A GAME"}
+                                           :text (str (.getMessage e))})]
+            (timbre/info e "Error starting a game")
+            (-> lobbies
+                (lobby/handle-send-message gameid message)
+                (lobby/handle-set-last-update gameid "ERROR STARTING A GAME"))))))
     lobbies))
 
 (defn try-start-game
@@ -249,7 +255,7 @@
 
 (defmethod ws/-msg-handler :game/rejoin
   game--rejoin
-  [{{user :user} :ring-req
+  [{{db :system/db user :user} :ring-req
     uid :uid
     ?data :?data
     id :id
@@ -261,7 +267,7 @@
                 original-player
                 (< (count (remove #(= uid (:uid %)) players)) 2))
        (let [?data (assoc ?data :request-side "Any Side")
-             lobby? (lobby/join-lobby! user uid ?data nil lobby)]
+             lobby? (lobby/join-lobby! db user uid ?data nil lobby)]
          (when lobby?
            (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
            (update-and-send-diffs! main/handle-rejoin lobby? user)))))

@@ -6,6 +6,7 @@
    [goog.dom :as gdom]
    [jinteki.cards :refer [all-cards]]
    [jinteki.settings :as settings]
+   [jinteki.utils :refer [descriptions]]
    [medley.core :as m]
    [nr.ajax :refer [DELETE GET POST PUT]]
    [nr.appstate :refer [app-state]]
@@ -14,7 +15,8 @@
    [nr.local-storage :as ls]
    [nr.sounds :refer [bespoke-sounds play-sfx random-sound select-random-from-grouping]]
    [nr.translations :refer [tr tr-span tr-element tr-format]]
-   [nr.utils :refer [format-date-time ISO-ish-formatter non-game-toast
+   [nr.utils :refer [card-colors-class card-colors-custom-style format-date-time
+                     get-image-path image-or-face ISO-ish-formatter non-game-toast
                      set-scroll-top slug->format store-scroll-top tr-non-game-toast]]
    [jinteki.i18n :as i18n]
    [jinteki.card-backs :as card-backs]
@@ -282,6 +284,11 @@
    ["Worlds 2020" "worlds2020"]
    ["Custom BG (input URL below)" "custom-bg"]])
 
+(defn- example-card-url
+  [title]
+  (when-let [card (get @all-cards title)]
+    (first (get-image-path (image-or-face card) :en :default :stock))))
+
 (defn account-content [_ _ scroll-top]
   (r/with-let [!node-ref (r/atom nil)]
     (r/create-class
@@ -378,14 +385,55 @@
                  [tr-span [:settings_bespoke-sounds group-name] {:sound group-name}]]]))]
 
           [:section
-           [tr-element :h3 [:lobby_default-game-format "Default game format"]]
-           [:select.format
-            {:value (or (:default-format @s) "standard")
-             :on-change #(swap! s assoc :default-format (.. % -target -value))}
-            (doall
-             (for [[k v] slug->format]
-               ^{:key k}
-               [:option {:value k :data-i18n-key k} (tr-format v)]))]]
+           [tr-element :h3 [:settings_game-settings "Game Settings"]]
+           [:div
+            [tr-element :h4 [:lobby_default-game-format "Default game format"]]
+            [:select.format
+             {:value (or (:default-format @s) "standard")
+              :on-change #(swap! s assoc :default-format (.. % -target -value))}
+             (doall
+              (for [[k v] slug->format]
+                ^{:key k}
+                [:option {:value k :data-i18n-key k} (tr-format v)]))]]
+           [:div
+            [tr-element :h4 [:settings_default-game-description "Default game description in casual games"]]
+            [:select.description
+             {:value (or (:default-game-description @s) "new-game_default")
+              :on-change #(swap! s assoc :default-game-description (.. % -target -value))}
+             (doall
+              (for [[k v] descriptions]
+                ^{:key k}
+                [:option {:value k :data-i18n-key k} (tr [k v])]))]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:default-password-protect-casual @s)
+                             :on-change #(swap! s assoc :default-password-protect-casual (.. % -target -checked))}]
+             [tr-span [:settings_default-password-protect-casual "Password protect by default in casual games"]]]]
+           [:div
+            [tr-element :h4 [:settings_default-password "Default game password"]]
+            [:input {:type "text"
+                     :maxLength "30"
+                     :on-change #(swap! s assoc :default-password (.. % -target -value))
+                     :value (:default-password @s "")}]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:default-save-replay @s)
+                             :on-change #(swap! s assoc :default-save-replay (.. % -target -checked))}]
+             [tr-span [:settings_default-save-replay "Save replays by default in casual games"]]]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:auto-select-default-deck-casual @s)
+                             :on-change #(swap! s assoc :auto-select-default-deck-casual (.. % -target -checked))}]
+             [tr-span [:settings_auto-select-default-deck-casual "Auto-select default deck in casual games"]]]]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :value true
+                             :checked (:auto-select-default-deck-tournament @s)
+                             :on-change #(swap! s assoc :auto-select-default-deck-tournament (.. % -target -checked))}]
+             [tr-span [:settings_auto-select-default-deck-tournament "Auto-select default deck in tournament games"]]]]]
 
           [:section
            [tr-element :h3 [:settings_gameplay-settings "Gameplay Settings"]]
@@ -395,6 +443,19 @@
                              :checked (:pass-on-rez @s)
                              :on-change #(swap! s assoc :pass-on-rez (.. % -target -checked))}]
              [tr-span [:settings_pass-on-rez "Pass priority when rezzing ice"]]]]]
+
+          [:section
+           [tr-element :h3 [:settings_chat-messages "Chat messages"]]
+           [tr-element :p [:settings_chat-messages-note "These messages are sent in-game from the Messages menu below the chat input."]]
+           (doall
+             (for [i (range (count settings/default-chat-messages))]
+               ^{:key i}
+               [:div
+                [:input {:type "text"
+                         :maxLength settings/chat-message-max-length
+                         :style {:width "50%"}
+                         :value (get-in @s [:chat-messages i] "")
+                         :on-change #(swap! s assoc-in [:chat-messages i] (.. % -target -value))}]]))]
 
           [:section
            [tr-element :h3 [:settings_layout-options "Layout options"]]
@@ -506,6 +567,43 @@
                             :on-change #(swap! s assoc :custom-bg-url (.. % -target -value))
                             :value @custom-bg-url}]]])
 
+          (let [card-colors (:card-colors @s "default")
+                card-color-examples [[:hovered "hovered" "Sure Gamble" [:settings_card-colors-hovered "Hovered"]]
+                                     [:selectable "selectable" "Hedge Fund" [:settings_card-colors-selectable "Selectable / playable"]]
+                                     [:selected "selected" "Spin Doctor" [:settings_card-colors-selected "Selected"]]
+                                     [:poison "graveyard-highlight" "Mavirus" [:settings_card-colors-poison "Poison / agenda in Archives"]]
+                                     [:encountered "encountered" "Pharos" [:settings_card-colors-encountered "Encountered ice"]]]]
+            [:section
+             [tr-element :h3 [:settings_card-colors "Card state colors"]]
+             [:div [tr-span [:settings_card-colors-help "Recolor the glow around cards to tell states apart more easily. Pick a colorblind-friendly preset or set your own colors."]]]
+             (doall
+               (for [[ref label] [["default" [:settings_card-colors-default "Default"]]
+                                  ["colorblind" [:settings_card-colors-colorblind "Colorblind-safe (Okabe-Ito palette)"]]
+                                  ["custom" [:settings_card-colors-custom "Custom"]]]]
+                 [:div.radio {:key ref}
+                  [:label [:input {:type "radio"
+                                   :name "card-colors"
+                                   :value ref
+                                   :on-change #(swap! s assoc :card-colors (.. % -target -value))
+                                   :checked (= card-colors ref)}]
+                   [tr-span label]]]))
+
+             [:div.card-colors-preview
+              [:div.gameboard {:class (card-colors-class card-colors)
+                               :style (card-colors-custom-style @s)}
+               (doall
+                 (for [[state cls title label] card-color-examples]
+                   [:div.example {:key (name state)}
+                    [:div.card {:class cls
+                                :style (when-let [url (example-card-url title)]
+                                         {:background-image (str "url(\"" url "\")")})}
+                     (when (= "custom" card-colors)
+                       [:input {:type "color"
+                                :title (tr label)
+                                :value (get-in @s [:card-custom-colors state] "#000000")
+                                :on-change #(swap! s assoc-in [:card-custom-colors state] (.. % -target -value))}])]
+                    [:label [tr-span label]]]))]]])
+
           [:section
            [tr-element :h3 [:settings_corp-card-sleeve "Corp card backs"]]
            [:select {:value (:corp-card-sleeve @s "nsg-card-back")
@@ -581,7 +679,14 @@
                              :name "pin-zoom"
                              :checked (:pin-zoom @s)
                              :on-change #(swap! s assoc :pin-zoom (.. % -target -checked))}]
-             [tr-span [:settings_pin-zoom "Keep zoomed cards on screen"]]]]]
+             [tr-span [:settings_pin-zoom "Keep zoomed cards on screen"]]]]
+           [:br]
+           [:div
+            [:label [:input {:type "checkbox"
+                             :name "zoom-last-played-or-rezzed"
+                             :checked (:zoom-last-played-or-rezzed @s)
+                             :on-change #(swap! s assoc :zoom-last-played-or-rezzed (.. % -target -checked))}]
+             [tr-span [:settings_zoom-last-played-or-rezzed "Zoom the most recently rezzed or played card"]]]]]
 
           [:section
            [tr-element :h3 [:settings_game-stats " Game Win/Lose statistics "]]
@@ -753,13 +858,17 @@
                                  :card-unplayable-fade-out :card-hover-movement
                                  :lobby-sounds :sounds-volume :background :custom-bg-url :card-zoom
                                  :pin-zoom :show-alt-art :card-resolution :pass-on-rez
+                                 :auto-select-default-deck-casual :auto-select-default-deck-tournament
+                                 :default-game-description :default-save-replay
+                                 :default-password :default-password-protect-casual
                                  :player-stats-icons :stacked-cards :ghost-trojans
                                  :corp-card-sleeve :runner-card-sleeve :prizes
                                  :display-encounter-info :sides-overlap :log-timestamps
                                  :runner-board-order :log-width :log-top :log-player-highlight
                                  :blocked-users :alt-arts :gamestats :deckstats :disable-websockets
                                  :archives-sorted :heap-sorted :card-back-display
-                                 :labeled-cards :labeled-unrezzed-cards])
+                                 :card-colors :card-custom-colors :labeled-cards :labeled-unrezzed-cards
+                                 :chat-messages :zoom-last-played-or-rezzed])
                    (assoc :flash-message ""
                           :all-art-select "wc2015")))]
 

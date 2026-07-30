@@ -181,7 +181,9 @@
   [{db :system/db
     {username :username :as user} :user
     body :body}]
-  (let [options (select-non-nil-keys body (settings/sync-keys))
+  (let [options (-> body
+                    (select-non-nil-keys (settings/sync-keys))
+                    settings/filter-valid-settings)
         lang (:lang body)]
     (if (active-user? user)
       (if (acknowledged? (mc/update db "users"

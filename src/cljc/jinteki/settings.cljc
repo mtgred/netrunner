@@ -8,7 +8,9 @@
 
    All settings are validated before being stored in app state. Invalid values are
    filtered out at each source level, ensuring app state always contains valid settings."
-  (:require [clojure.string :as str]))
+  (:require
+   [clojure.string :as str]
+   [jinteki.utils :as utils]))
 
 ;; Validation constants
 (def valid-background-slugs
@@ -33,6 +35,18 @@
 (def valid-card-sleeves #{"ffg-card-back" "nsg-card-back" "ffg" "nsg"})
 (def valid-formats #{"standard" "throwback" "startup" "system-gateway"
                      "core" "preconstructed" "eternal" "casual"})
+(def valid-card-colors #{"default" "colorblind" "custom"})
+;; Keep in sync with the :root defaults in src/css/palette.styl
+(def default-card-custom-colors
+  {:hovered "#00aeff" :selectable "#ffa600" :selected "#32cd32"
+   :poison "#8352ad" :encountered "#d43425"})
+(def card-color-states (-> default-card-custom-colors keys set))
+(def valid-game-descriptions (set (map name (keys utils/descriptions))))
+
+(def default-chat-messages
+  ["Good luck & have fun!" "Thinking..." "Good game!" "Thank you for the game!" "Yes" "No"])
+
+(def chat-message-max-length 100)
 
 ;; Validation combinators
 (defn- validate-coll-of
@@ -82,6 +96,31 @@
   "Validates visible-formats is a set of valid format strings"
   (validate-coll-of #(contains? valid-formats %) set?))
 
+(defn- valid-hex-color?
+  [value]
+  (and (string? value)
+       (some? (re-matches #"#[0-9a-fA-F]{6}" value))))
+
+(def validate-card-custom-colors
+  "Validates card-custom-colors is a map of card-color-states to hex color strings"
+  (validate-map-of #(contains? card-color-states %) valid-hex-color?))
+
+(def validate-default-decks
+  "Validates default-decks is a map of side -> {format -> deck-id-string}"
+  (validate-map-of keyword? (validate-map-of keyword? string?)))
+
+(defn validate-chat-messages
+  [value]
+  (and (vector? value)
+       (<= (count value) (count default-chat-messages))
+       (every? string? value)
+       (every? #(<= (count %) chat-message-max-length) value)))
+
+(def zoom-default 1)
+(def zoom-step 0.15)
+(def zoom-max (+ zoom-default (* zoom-step 6)))
+(def zoom-min (- zoom-default (* zoom-step 3)))
+
 (def all-settings
   "Vector of all application settings with their metadata.
    Each setting has:
@@ -95,6 +134,16 @@
     :sync? true
     :validate-fn validate-alt-arts
     :doc "User's selected alternate art set when :show-alt-art is true"}
+   {:key :auto-select-default-deck-casual
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Auto-select default deck in casual games"}
+   {:key :auto-select-default-deck-tournament
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Auto-select default deck in tournament games"}
    {:key :archives-sorted
     :default false
     :sync? true
@@ -120,6 +169,16 @@
     :sync? true
     :validate-fn #(contains? valid-card-back-display %)
     :doc "Which card backs to display (them/me/ffg/nsg)"}
+   {:key :card-colors
+    :default "default"
+    :sync? true
+    :validate-fn #(contains? valid-card-colors %)
+    :doc "Card-state glow palette: 'default', 'colorblind', or 'custom'"}
+   {:key :card-custom-colors
+    :default default-card-custom-colors
+    :sync? true
+    :validate-fn validate-card-custom-colors
+    :doc "Per-state hex colors used when :card-colors is 'custom'"}
    {:key :card-language
     :default "en"
     :sync? true
@@ -155,16 +214,46 @@
     :sync? true
     :validate-fn string?
     :doc "URL for custom game board background image"}
+   {:key :chat-messages
+    :default default-chat-messages
+    :sync? true
+    :validate-fn validate-chat-messages
+    :doc "Preset chat messages sent from buttons in the game log"}
    {:key :deckstats
     :default "always"
     :sync? true
     :validate-fn #(contains? valid-stats-options %)
     :doc "When to show deck statistics (always/competitive/none)"}
+   {:key :default-decks
+    :default {}
+    :sync? true
+    :validate-fn validate-default-decks
+    :doc "Default deck _id per side+format, auto-selected in the lobby"}
    {:key :default-format
     :default "standard"
     :sync? true
     :validate-fn #(contains? valid-formats %)
     :doc "Default game format when creating new games"}
+   {:key :default-game-description
+    :default "new-game_default"
+    :sync? true
+    :validate-fn #(contains? valid-game-descriptions %)
+    :doc "Default game description in casual games"}
+   {:key :default-password
+    :default ""
+    :sync? true
+    :validate-fn string?
+    :doc "Default game password"}
+   {:key :default-password-protect-casual
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Password protect by default in casual games"}
+   {:key :default-save-replay
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Save replays by default in casual games"}
    {:key :disable-websockets
     :default false
     :sync? false  ; device-specific
@@ -299,7 +388,17 @@
     :default nil
     :sync? false  ; handled separately in account.cljs
     :validate-fn validate-visible-formats
-    :doc "Set of game formats to show in lobby (device-specific)"}])
+    :doc "Set of game formats to show in lobby (device-specific)"}
+   {:key :zoom
+    :default zoom-default
+    :sync? false  ; device-specific
+    :validate-fn #(and (number? %) (<= zoom-min % zoom-max))
+    :doc "UI zoom factor for this device (emulates browser zoom via CSS zoom on <html>)"}
+   {:key :zoom-last-played-or-rezzed
+    :default false
+    :sync? true
+    :validate-fn boolean?
+    :doc "Zoom the most recently rezzed or played card"}])
 
 (defn setting-keys
   "Returns a vector of all setting keys"

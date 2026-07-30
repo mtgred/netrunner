@@ -60,7 +60,6 @@
      ["/data" {:middleware [::forgery]}
       ["/cards"
        ["" {:get #'data/cards-handler}]
-       ["/version" {:get #'data/cards-version-handler}]
        ["/altarts" {:get #'data/alt-arts-handler}]
        ["/lang/:lang" {:get #'data/card-lang-handler}]]
       ["/news" {:get #'data/news-handler}]

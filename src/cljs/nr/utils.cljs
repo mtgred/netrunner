@@ -389,6 +389,17 @@
   (when (= "blue-red" (get-in @app-state [:options :log-player-highlight]))
     "log-player-highlight-red-blue"))
 
+(defn card-colors-class
+  [palette]
+  (when (= "colorblind" palette)
+    "card-colors-colorblind"))
+
+(defn card-colors-custom-style
+  "Inline style map of card-state CSS custom properties when using the custom palette."
+  [{:keys [card-colors card-custom-colors]}]
+  (when (= "custom" card-colors)
+    (into {} (map (fn [[k v]] [(str "--card-" (name k)) v])) card-custom-colors)))
+
 (defn cond-button
   "Conditional button component. Renders enabled/disabled button based on condition.
   Accepts optional attributes map to merge into button element."
@@ -403,6 +414,12 @@
   (if on-cond
     [:button.on {:on-click f :key on-text} on-text]
     [:button.off {:on-click f :key off-text} off-text]))
+
+(defn focus-on-mount
+  "Reagent :ref callback that focuses the element once it mounts. Pass it as a stable
+   var, never as an inline fn, so React only invokes it once on mount instead of every render."
+  [el]
+  (when el (.focus el)))
 
 (defn tristate-button [on-text off-text on-cond disable-cond f]
   (let [text (if on-cond on-text off-text)]

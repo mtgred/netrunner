@@ -236,6 +236,8 @@ deck-builder_decklist = Decklist
 
 deck-builder_decklist-inst = (Type or paste a decklist, it will be parsed)
 
+deck-builder_default = Default deck
+
 deck-builder_delete = Delete
 
 deck-builder_delete-selected = Delete Selected
@@ -301,11 +303,15 @@ deck-builder_save = Save
 
 deck-builder_select-all = Select All
 
+deck-builder_set-default = Set Default
+
 deck-builder_show-credit-cost = Show Credit Cost
 
 deck-builder_show-memory-cost = Show Memory Cost
 
 deck-builder_unselect-all = Unselect All
+
+deck-builder_unset-default = Unset Default
 
 deck-builder_view-options = View Options
 
@@ -547,6 +553,8 @@ game_card-count = {$cnt ->
     *[other] {$cnt} cards
 }
 
+game_chat-messages = Messages
+
 game_click-count = {$click ->
     [one] {$click} click
     *[other] {$click} clicks
@@ -555,6 +563,8 @@ game_click-count = {$click ->
 game_close = Close
 
 game_close-shuffle = Close & Shuffle
+
+game_command-menu = Commands
 
 game_concede = Concede
 
@@ -1065,6 +1075,8 @@ lobby_save-replay-unshared = Only your latest 15 unshared games will be kept, so
 
 lobby_select-deck = Select Deck
 
+lobby_select-default-deck = Select Default Deck
+
 lobby_select-error = Cannot select that deck
 
 lobby_select-title = Select your deck
@@ -1188,6 +1200,12 @@ nav_tournaments = Tournaments
 nav_users = Users
 
 nav_welcome = Welcome
+
+nav_zoom-in = Zoom in
+
+nav_zoom-out = Zoom out
+
+nav_zoom-reset = Reset zoom
 
 new-game_default = No special conditions
 
@@ -1550,6 +1568,10 @@ settings_api-keys-not-updated = Failed to update API keys
 
 settings_api-keys-updated = Updated API keys
 
+settings_auto-select-default-deck-casual = Auto-select default deck in casual games
+
+settings_auto-select-default-deck-tournament = Auto-select default deck in tournament games
+
 settings_avatar = Avatar
 
 settings_background = Game board background
@@ -1602,6 +1624,26 @@ settings_card-unplayable-fade-out = Fade out unplayable cards
 
 settings_card-hover-movement = Responsive cards in hand
 
+settings_card-colors = Card state colors
+
+settings_card-colors-colorblind = Colorblind-safe (Okabe-Ito palette)
+
+settings_card-colors-custom = Custom
+
+settings_card-colors-default = Default
+
+settings_card-colors-encountered = Encountered ice
+
+settings_card-colors-help = Recolor the glow around cards to tell states apart more easily. Pick a colorblind-friendly preset or set your own colors.
+
+settings_card-colors-hovered = Hovered
+
+settings_card-colors-poison = Poison / agenda in Archives
+
+settings_card-colors-selectable = Selectable / playable
+
+settings_card-colors-selected = Selected
+
 settings_card-iamge = Card Image
 
 settings_card-images = Card images
@@ -1616,6 +1658,10 @@ settings_change-avatar = Change on gravatar.com
 
 settings_change-email = Change email
 
+settings_chat-messages = Chat messages
+
+settings_chat-messages-note = These messages are sent in-game from the Messages menu below the chat input.
+
 settings_comp-only = Competitive Lobby Only
 
 settings_connection = Connection
@@ -1629,6 +1675,14 @@ settings_create-api-key = Create API Key
 settings_current-email = Current email
 
 settings_deck-stats = Deck statistics
+
+settings_default-game-description = Default game description in casual games
+
+settings_default-password = Default game password
+
+settings_default-password-protect-casual = Password protect by default in casual games
+
+settings_default-save-replay = Save replays by default in casual games
 
 settings_delete-api-key = Delete
 
@@ -1685,6 +1739,8 @@ settings_language-tip = Some languages are not fully translated yet. If you woul
 settings_layout-device = Device Layout
 
 settings_layout-options = Layout options
+
+settings_game-settings = Game Settings
 
 settings_log-player-highlight = Log player highlight
 
@@ -1753,6 +1809,8 @@ settings_updating = Updating profile...
 settings_user-name = User name
 
 settings_volume = Volume
+
+settings_zoom-last-played-or-rezzed = Zoom the most recently rezzed or played card
 
 side_name = {$side ->
     [all] All

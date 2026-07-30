@@ -84,16 +84,20 @@
       (let [ident (-> deck :identity :title)
             cards (->> deck :cards (mapv (fn [{:keys [qty card]}] [(:title card) qty card])))
             cards (concat cards [[ident 3 (-> deck :identity)]])
-            point-mult (if (= (:_id deck) (:winning-deck-id @state))
+            winner? (= (:_id deck) (:winning-deck-id @state))
+            win-points (if winner? 1 0)
+            point-mult (if winner?
                          3.5
                          (- (or (:losing-score @state) 0) 3.5))
             ;; the winner has 3.5 points
             ;; the loser has however many points they had, -3.5
-            ;; relevant data: in faction, id {used*qty used?}, score
+            ;; relevant data: in faction, id {used*qty used?}, score, wins, losses
             card-data (fn [qty card]
                         [(if (= (:faction card) (-> deck :identity :faction)) qty 0)
-                         {ident [qty 1]}
-                         (* qty point-mult)])
+                         {ident {qty [1 win-points (- 1 win-points)]}}
+                         (* qty point-mult)
+                         win-points
+                         (- 1 win-points)])
             mapped (map (fn [[title qty card]]
                           [title (card-data qty card)])
                         cards)

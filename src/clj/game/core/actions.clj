@@ -35,7 +35,7 @@
 (defn- without-history
   "Returns the given atom without history keys"
   [state]
-  (dissoc state :log :history :click-states :turn-state :paid-ability-state))
+  (dissoc state :log :history :click-states :turn-state :paid-ability-state :public-states))
 
 (defn- update-click-state
   "Update :click-states to hold latest 4 moments before performing actions."

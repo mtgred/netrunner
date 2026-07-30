@@ -24,7 +24,7 @@
    [game.core.effects :refer [register-lingering-effect]]
    [game.core.eid :refer [complete-with-result effect-completed make-eid
                           make-result]]
-   [game.core.engine :refer [do-nothing not-used-once? pay register-events register-pending-event
+   [game.core.engine :refer [checkpoint do-nothing not-used-once? pay register-events register-pending-event
                              resolve-ability trigger-event trigger-event-simult
                              unregister-events unregister-floating-events]]
    [game.core.events :refer [first-event? first-run-event? run-events
@@ -2229,7 +2229,6 @@
                                                       (str x " [Credit]: "
                                                            (quantify (get current-values x 0) "card"))))
                                  :effect (effect
-                                          (prn target)
                                           (complete-with-result
                                             state side eid
                                             [(str->int (first (str/split target #" ")))
@@ -4103,15 +4102,24 @@
    :events [{:event :successful-run
              :interactive (effect true)
              :automatic :drain-credits
-             :req (req this-card-run
-                            (= :hq (target-server context)))
-             :msg "take 1 tag"
+             :req (req this-card-run (= :hq (target-server context)))
+             :msg (msg
+                    "take 1 tag"
+                    (let [cc (min (:credit corp) 3)]
+                      (when (pos? cc)
+                        (str "and force the Corp to lose " cc " [Credits], and then gain "
+                             (* 2 cc) " [Credits]"))))
              :async true
-             :effect (effect (wait-for (gain-tags state :runner 1)
-                                    (continue-ability
-                                      state side
-                                      (drain-credits :runner :corp 3 2)
-                                      card nil)))}]})
+             :effect (effect (let [cc (min (:credit corp) 3)]
+                               (if (pos? cc)
+                                 (wait-for
+                                   (gain-tags state :runner 1 {:suppress-checkpoint true})
+                                   (wait-for
+                                     (lose-credits state :corp cc)
+                                     (wait-for
+                                       (checkpoint state :runner)
+                                       (gain-credits state :runner eid (* cc 2)))))
+                                 (gain-tags state :runner eid 1))))}]})
 
 (defcard "Tread Lightly"
   {:on-play (run-any-server-ability)

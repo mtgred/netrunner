@@ -26,7 +26,8 @@
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
    [nr.translations :refer [tr tr-data tr-game-prompt tr-side tr-element tr-span]]
-   [nr.utils :refer [banned-span checkbox-button cond-button get-image-path
+   [nr.utils :refer [banned-span card-colors-class card-colors-custom-style
+                     checkbox-button cond-button get-image-path
                      image-or-face map-longest render-icons render-message]]
    [nr.ws :as ws]
    [jinteki.card-backs :as card-backs]
@@ -898,8 +899,15 @@
     (= (get-in @game-state [@replay-side :user :_id]) (:_id user))
     (= (:_id user) (-> @app-state :user :_id))))
 
+(defn replay-opponent-hand?
+  "Returns true when a hand belongs to the opponent in a player-side replay view."
+  [replay? view-side hand-side]
+  (and replay?
+       (contains? #{:corp :runner} view-side)
+       (not= view-side hand-side)))
+
 (defn build-hand-card-view
-  [hand size wrapper-class]
+  [hand size wrapper-class hide-cards?]
   [:div
    (doall
      (map-indexed
@@ -908,6 +916,8 @@
                 :class (str wrapper-class)
                 :style {:left (when (< 1 size) (* (/ 320 (dec size)) i)) :z-index i}}
           (cond
+            hide-cards?
+            [facedown-card (:side card)]
             (spectator-view-hidden?)
             [card-view (dissoc card :new :selected)]
             (:cid card)
@@ -935,7 +945,8 @@
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area (if (= :corp side) "HQ" "the Grip") {:class (when (> size 6) "squeeze")})
-           [build-hand-card-view filled-hand size "card-wrapper"]
+           [build-hand-card-view filled-hand size "card-wrapper"
+            (replay-opponent-hand? (:replay @game-state) @replay-side side)]
            [label filled-hand {:name (if (= :corp side)
                                        [tr-span [:game_hq "HQ"]]
                                        [tr-span [:game_grip "Grip"]])
@@ -958,7 +969,8 @@
              [tr-element :label [:game_card-count] {:cnt size}]
              (let [{:keys [total]} @hand-size]
                (stat-controls :hand-size [tr-element :div.hand-size [:game_max-hand "Max hand size"] {:total total}]))
-             [build-hand-card-view filled-hand size "card-popup-wrapper"]]])]))))
+             [build-hand-card-view filled-hand size "card-popup-wrapper"
+              (replay-opponent-hand? (:replay @game-state) @replay-side side)]]])]))))
 
 (defn show-deck [event ref]
   (-> ((keyword (str ref "-content")) @board-dom) js/$ .fadeIn)
@@ -1075,7 +1087,7 @@
               {:faceup face-up
                :facedown (- total face-up)}])]]
          [:div.panel.blue-shade.popup {:ref #(swap! s assoc :popup %)
-                                       :class (if (= (:side @game-state) :runner) "opponent" "me")}
+                                       :class (if (= player-side :corp) "me" "opponent")}
           [:div
            [:a {:on-click #(close-popup % (:popup @s) nil false false)}
             [tr-span [:game_close "Close"]]]
@@ -1797,7 +1809,7 @@
 (defn prompt-div
   [me {:keys [card msg prompt-type choices offer-bad-pub?] :as prompt-state}]
   (let [id (atom 0)]
-    [:div.panel.blue-shade
+    [:div.panel.blue-shade.prompt
      (when (and card (not= "Basic Action" (:type card)))
        [:<>
         (let [get-nested-host (fn [card] (if (:host card)
@@ -2293,6 +2305,8 @@
         zoom-card (r/cursor app-state [:zoom])
         background (r/cursor app-state [:options :background])
         custom-bg-url (r/cursor app-state [:options :custom-bg-url])
+        card-colors (r/cursor app-state [:options :card-colors])
+        card-custom-colors (r/cursor app-state [:options :card-custom-colors])
         labeled-unrezzed-cards (r/cursor app-state [:options :labeled-unrezzed-cards])
         labeled-cards (r/cursor app-state [:options :labeled-cards])
         card-unplayable-fade-out (r/cursor app-state [:options :card-unplayable-fade-out])
@@ -2385,10 +2399,13 @@
                  sfx (r/cursor game-state [:sfx])]
              [:div.gameview
               [:div {:class [:gameboard
+                             (card-colors-class @card-colors)
                              (when (and (not= @side :spectator) @card-unplayable-fade-out) :card-unplayable-fade-out)
                              (when (and (not= @side :spectator) @card-hover-movement) :card-hover-movement)
                              (when @labeled-unrezzed-cards :show-unrezzed-card-labels)
-                             (when @labeled-cards :show-card-labels)]}
+                             (when @labeled-cards :show-card-labels)]
+                     :style (card-colors-custom-style {:card-colors @card-colors
+                                                       :card-custom-colors @card-custom-colors})}
                (let [me-keep (r/cursor game-state [me-side :keep])
                      op-keep (r/cursor game-state [op-side :keep])
                      me-quote (r/cursor game-state [me-side :quote])

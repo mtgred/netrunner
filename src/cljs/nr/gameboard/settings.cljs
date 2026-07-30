@@ -111,7 +111,13 @@
                         :name "pin-zoom"
                         :checked (get-in @app-state [:options :pin-zoom])
                         :on-change #(swap! app-state assoc-in [:options :pin-zoom] (.. % -target -checked))}]
-        [tr-span [:settings_pin-zoom "Keep zoomed cards on screen"]]]]]
+        [tr-span [:settings_pin-zoom "Keep zoomed cards on screen"]]]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :name "zoom-last-played-or-rezzed"
+                        :checked (get-in @app-state [:options :zoom-last-played-or-rezzed])
+                        :on-change #(swap! app-state assoc-in [:options :zoom-last-played-or-rezzed] (.. % -target -checked))}]
+        [tr-span [:settings_zoom-last-played-or-rezzed "Zoom the most recently rezzed or played card"]]]]]
 
 
      [:section

@@ -22,9 +22,16 @@
                            (map (fn [info] [(:name info) (select-keys info [:has-args :usage :help])]))
                            (into {})))
 
+(def common-commands
+  (->> command-info (filter :common?) (map :name) distinct sort))
+
 (defn scrolled-to-end?
   [el tolerance]
   (> tolerance (- (.-scrollHeight el) (.-scrollTop el) (.-clientHeight el))))
+
+(defn update-scroll-state!
+  [scrolled-away-from-end? el]
+  (reset! scrolled-away-from-end? (not (scrolled-to-end? el 15))))
 
 (def should-scroll (r/atom {:update true :send-msg false}))
 
@@ -37,13 +44,17 @@
                  ^{:key i}
                  [:span " " influence-dot " "]))]])))
 
+(defn send-text [text]
+  (when (and (not (:replay @game-state))
+             (seq text))
+    (reset! should-scroll {:update false :send-msg true})
+    (ws/ws-send! [:game/say {:gameid (current-gameid app-state)
+                             :msg text}])))
+
 (defn send-msg [s]
   (let [text (:msg @s)]
-    (when (and (not (:replay @game-state))
-               (seq text))
-      (reset! should-scroll {:update false :send-msg true})
-      (ws/ws-send! [:game/say {:gameid (current-gameid app-state)
-                               :msg text}])
+    (when (seq text)
+      (send-text text)
       (swap! s assoc :msg ""))))
 
 (defn send-typing
@@ -111,8 +122,17 @@
 (defn reset-completions
   "Resets the command menu state."
   [state]
-  (swap! state assoc :completions nil)
-  (swap! state assoc :completion-highlight nil))
+  (swap! state assoc
+         :completions nil
+         :completion-highlight nil
+         :completion-source nil))
+
+(defn- set-completions!
+  [state source completions]
+  (swap! state assoc
+         :completion-highlight nil
+         :completion-source source
+         :completions completions))
 
 (defn fill-completion [state completion-text]
   (swap! state assoc :msg (str completion-text " "))
@@ -148,19 +168,36 @@
         ("Enter" " " "ArrowRight" "Tab")
         (when (or (= 1 completions-count) (:completion-highlight @state))
           (let [use-index (if (= 1 completions-count) 0 (:completion-highlight @state))
-                completion (:completion-text (nth completions use-index))]
+                {:keys [completion-text on-select]} (nth completions use-index)]
             (.preventDefault e)
-            (fill-completion state completion)
-            ;; auto send when no args needed
-            (when (and (= key "Enter") (autosend? completion))
-              (send-msg state))))
+            (if on-select
+              ;; chat messages
+              (when (= key "Enter")
+                (on-select))
+              ;; commands
+              (do (fill-completion state completion-text)
+                  ;; auto send when no args needed
+                  (when (and (= key "Enter") (autosend? completion-text))
+                    (send-msg state))))))
         ;; else
         nil))))
 
 (defn complete-command [state input]
-  (swap! state assoc :completions
-         (->> (find-matches commands input)
-              (mapv (fn [match] {:completion-text match :display-text (get-in command-info-map [match :usage])})))))
+  (let [matches (if (= input "/")
+                  common-commands
+                  (find-matches commands input))]
+    (set-completions! state :commands
+                      (mapv (fn [match] {:completion-text match
+                                         :display-text (get-in command-info-map [match :usage])})
+                            matches))))
+
+(defn complete-chat-messages
+  [state]
+  (set-completions! state :chat-messages
+                    (mapv (fn [msg] {:display-text msg
+                                     :on-select #(do (reset-completions state)
+                                                     (send-text msg))})
+                          (remove string/blank? (get-in @app-state [:options :chat-messages])))))
 
 (defn filter-side [[card-name card-info]]
   (case (:side @game-state)
@@ -209,16 +246,48 @@
      {:on-mouse-leave #(swap! state dissoc :completion-highlight)}
      [:ul.command-matches
       (doall (map-indexed
-               (fn [i {:keys [completion-text display-text]} completion]
+               (fn [i {:keys [completion-text display-text on-select]}]
                  [:li.command-match
-                  {:key completion-text
+                  {:key (or completion-text display-text)
                    :class (when (= i (:completion-highlight @state)) "highlight")}
                   [:span {:on-mouse-over #(swap! state assoc :completion-highlight i)
-                          :on-click #(do
-                            (fill-completion state completion-text)
-                            (.focus @!input-ref))}
+                          :on-click #(if on-select
+                                       ;; chat messages
+                                       (on-select)
+                                       ;; commands
+                                       (do
+                                         (fill-completion state completion-text)
+                                         (if (autosend? completion-text)
+                                           (send-msg state)
+                                           (.focus @!input-ref))))}
                          display-text]])
                (:completions @state)))]]))
+
+(defn- toggle-completions
+  "Opens the completion menu with open-fn, or closes it if source is already shown."
+  [state source open-fn]
+  (if (= source (:completion-source @state))
+    (reset-completions state)
+    (open-fn)))
+
+(defn command-menu-button
+  [state]
+  (when (not-spectator?)
+    [:button.command-menu-button
+     {:on-click #(do (.preventDefault %)
+                     (toggle-completions state :commands (fn [] (complete-command state "/"))))
+      :key "Command menu"
+      :title (tr [:game_command-menu "Commands"])}
+     "/"]))
+
+(defn message-menu-button
+  [state]
+  (when (not-spectator?)
+    [:button.message-menu-button
+     {:on-click #(do (.preventDefault %)
+                     (toggle-completions state :chat-messages (fn [] (complete-chat-messages state))))
+      :key "Messages"}
+     (tr [:game_chat-messages "Messages"])]))
 
 (defn log-input []
   (let [current-game (r/cursor app-state [:current-game])
@@ -242,7 +311,10 @@
              ;;:on-blur #(send-typing (atom nil))
              :on-key-down #(completions-key-down-handler state %)
              :on-change #(log-input-change-handler state %)}]]]
-         [indicate-action]
+         [:div.log-actions
+          [command-menu-button state]
+          [message-menu-button state]
+          [indicate-action]]
          [show-decklists]
          [completions !input-ref state]]))))
 
@@ -267,7 +339,8 @@
   (let [log (r/cursor game-state [:log])
         corp (r/cursor game-state [:corp :user :username])
         runner (r/cursor game-state [:runner :user :username])
-        !node-ref (r/atom nil)]
+        !node-ref (r/atom nil)
+        scrolled-away-from-end? (r/atom false)]
     (r/create-class
       {:display-name "log-messages"
 
@@ -288,29 +361,39 @@
        (fn [_]
          (when (:update @should-scroll)
            (when-let [n @!node-ref]
-             (set! (.-scrollTop n) (.-scrollHeight n)))))
+             (set! (.-scrollTop n) (.-scrollHeight n))
+             (when @scrolled-away-from-end?
+               (reset! scrolled-away-from-end? false)))))
 
        :reagent-render
        (fn []
-         (into [:div.messages {:class [(when (:replay @game-state)
-                                         "panel-bottom")
-                                       (player-highlight-option-class)]
-                               :ref #(reset! !node-ref %)
-                               :on-mouse-over #(card-preview-mouse-over % zoom-channel)
-                               :on-mouse-out #(card-preview-mouse-out % zoom-channel)
-                               :aria-live "polite"}]
-               (map
-                 (fn [{:keys [user text timestamp]}]
-                   ^{:key timestamp}
-                   (if (= user "__system__")
-                      [:div.system
-                        [format-system-timestamp timestamp text @corp @runner]]
-                      [:div.message
-                       [avatar user {:opts {:size 38}}]
-                       [:div.content
-                        [format-user-timestamp timestamp user]
-                        [:div (render-message text)]]]))
-                 @log)))})))
+         [:<>
+          (into [:div.messages {:class [(when (:replay @game-state)
+                                          "panel-bottom")
+                                        (player-highlight-option-class)]
+                                :ref #(reset! !node-ref %)
+                                :on-scroll #(update-scroll-state! scrolled-away-from-end? (.-currentTarget %))
+                                :on-mouse-over #(card-preview-mouse-over % zoom-channel)
+                                :on-mouse-out #(card-preview-mouse-out % zoom-channel)
+                                :aria-live "polite"}]
+                (map
+                  (fn [{:keys [user text timestamp]}]
+                    ^{:key timestamp}
+                    (if (= user "__system__")
+                       [:div.system
+                         [format-system-timestamp timestamp text @corp @runner]]
+                       [:div.message
+                        [avatar user {:opts {:size 38}}]
+                        [:div.content
+                         [format-user-timestamp timestamp user]
+                         [:div (render-message text)]]]))
+                  @log))
+          (when @scrolled-away-from-end?
+            [:button.log-scroll-to-bottom
+             {:on-click #(when-let [n @!node-ref]
+                           (set! (.-scrollTop n) (.-scrollHeight n))
+                           (reset! scrolled-away-from-end? false))}
+             "↓ Scroll to bottom"])])})))
 
 (defn log-pane []
   (fn []

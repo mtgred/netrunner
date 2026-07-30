@@ -113,3 +113,22 @@ nav ul
 
     .mute-button, .stack-cards-button, .runner-board-order-button, .replay-button, .reconnect-button
         margin-left: 12px
+
+#status #zoom-controls
+    // use the margin/padding as extra clickable area instead
+    margin-left: 0
+    padding-right: 0
+
+    a
+        display: inline-block
+
+        &:first-child
+            padding-left: 10px
+            padding-right: 10px
+
+        &:last-child
+            padding-left: 10px
+            padding-right: 12px
+
+        &.disabled:hover
+            color: white-solid
