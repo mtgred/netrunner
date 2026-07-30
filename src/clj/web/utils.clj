@@ -1,5 +1,6 @@
 (ns web.utils
   (:require [ring.util.response :as resp]
+            [clojure.string :as str]
             [cljc.java-time.local-date-time :as ldt]
             [cljc.java-time.zone-offset :as zone])
   (:import java.security.MessageDigest))
@@ -30,10 +31,14 @@
   Cache-Control no-cache means the browser must revalidate with If-None-Match
   before using the cached copy, and a 304 response does not need to send a body.
   See https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control#up-to-date_contents_always
-  and https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/If-None-Match"
+  and https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/If-None-Match
+  Proxies that compress responses (nginx, cloudflare) downgrade the ETag to weak
+  by adding a W/ prefix, which makes it unsuitable for byte range requests but fine
+  for plain caching, so strip it before comparing."
   [request etag body-fn]
   (let [etag (str "\"" etag "\"")
-        req-etag (get-in request [:headers "if-none-match"])
+        req-etag (some-> (get-in request [:headers "if-none-match"])
+                         (str/replace #"^W/" ""))
         headers {"ETag" etag
                  "Cache-Control" "no-cache"}
         resp (if (= etag req-etag)
