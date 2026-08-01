@@ -707,6 +707,12 @@ glow-spin(prop, pct)
                 flex-direction(column)
                 row-gap: 5px
 
+                // scroll instead of letting other panels crowd out the prompt,
+                // but only while a prompt is up, so the rfg popups and the run
+                // servers menu can still overlay the board the rest of the time
+                &:has(.prompt)
+                    overflow-y: auto
+
                 > div
                     width: 100%
                     display-flex()
@@ -741,15 +747,9 @@ glow-spin(prop, pct)
                             color: orange-dark
 
                 .button-pane
-                    min-height: 0
-
                     .panel
                         padding: 8px
                         z-index: 20
-
-                        // scroll oversized prompts (e.g. long install choice lists)
-                        &.prompt
-                            overflow-y: auto
 
                         .prompt-card-preview
                             text-align: center
