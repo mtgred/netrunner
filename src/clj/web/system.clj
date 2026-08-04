@@ -32,7 +32,7 @@
    [web.telemetry]
    [web.utils :refer [tick]]
    [web.versions :refer [banned-msg frontend-version]]
-   [web.ws :refer [ch-chsk event-msg-handler]]))
+   [web.ws :as ws]))
 
 (read-write/print-time-literals-clj!)
 
@@ -116,10 +116,17 @@
                                           :cards-version 0}))
         (reset! frontend-version initial))))
 
+(defmethod ig/init-key :web/ws [_ opts]
+  (ws/start-server! opts)
+  opts)
+
+(defmethod ig/halt-key! :web/ws [_ _]
+  (ws/stop-server!))
+
 (defmethod ig/init-key :sente/router [_ _opts]
   (sente/start-server-chsk-router!
-    ch-chsk
-    event-msg-handler))
+    (ws/ch-chsk)
+    ws/event-msg-handler))
 
 (defmethod ig/halt-key! :sente/router [_ stop-fn]
   (when (fn? stop-fn)

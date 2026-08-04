@@ -16,6 +16,9 @@
 
 (defonce lock (atom false))
 
+(def ws-config
+  (js->clj (or (.-ws_config js/window) #js {}) :keywordize-keys true))
+
 (if-not ?csrf-token
   (println "CSRF token NOT detected in HTML, default Sente config will reject requests")
   (let [{:keys [chsk ch-recv send-fn state]}
@@ -24,7 +27,9 @@
           ?csrf-token
           {:type (if (get-in @app-state [:options :disable-websockets]) :ajax :auto)
            :ws-kalive-ms 2500 ;; note - supposedly this will help SEA/LATAM connections
-           :packer (msgpack/get-packer)
+           :packer (if (= (:packer ws-config) "edn")
+                     :edn
+                     (msgpack/get-packer))
            :wrap-recv-evs? false})]
     (def chsk chsk)
     (def ch-chsk ch-recv)

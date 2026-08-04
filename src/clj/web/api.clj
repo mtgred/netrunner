@@ -180,6 +180,7 @@
                    (assoc :system/auth (:web/auth system))
                    (assoc :system/chat (:web/chat system))
                    (assoc :system/email (:web/email system))
+                   (assoc :system/ws-config (:web/ws system))
                    (handler))))}))
 
 (defn make-middleware [system]

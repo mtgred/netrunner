@@ -66,18 +66,21 @@
       (println (str "Error in " locale-str " adding resource: " (ex-message err)))
       (throw err))))
 
-(let [langs (->> (io/file "resources/public/i18n")
-                 (file-seq)
-                 (filter #(.isFile ^java.io.File %))
-                 (filter #(str/ends-with? (str %) ".ftl"))
-                 (map (fn [^java.io.File f]
-                        (let [n (str/replace (.getName f) ".ftl" "")
-                              content (slurp f)]
-                          [n content]))))]
-  (reset! fluent-dictionary {})
-  (doseq [[lang content] langs]
-    (swap! fluent-dictionary assoc lang (build lang content)))
-  (println "Loaded"))
+(defn load-dictionary!
+  []
+  (let [langs (->> (io/file "resources/public/i18n")
+                   (file-seq)
+                   (filter #(.isFile ^java.io.File %))
+                   (filter #(str/ends-with? (str %) ".ftl"))
+                   (keep (fn [^java.io.File f]
+                           (let [n (str/replace (.getName f) ".ftl" "")
+                                 content (slurp f)]
+                             ;; Skip empty placeholder files
+                             (when (not-empty content)
+                               [n content])))))]
+    (reset! fluent-dictionary {})
+    (doseq [[lang content] langs]
+      (swap! fluent-dictionary assoc lang (build lang content)))))
 
 (defn get-messages [lang]
   (->> (get @fluent-dictionary lang)
@@ -89,6 +92,7 @@
   Print when the other language is missing entries, and also print when the other
   language has defined entries not in :en."
   [& args]
+  (load-dictionary!)
   (let [en-keys (keys (get-messages "en"))]
     (doseq [lang (or (seq (map name args))
                      (keys (dissoc @fluent-dictionary "en")))
@@ -128,6 +132,7 @@
 
 (defn undefined-translations
   [& _args]
+  (load-dictionary!)
   (let [en-map (get-messages "en")
         files (->> (concat (file-seq (io/file "src/cljs"))
                            (file-seq (io/file "src/cljc")))
@@ -180,6 +185,7 @@
 
 (defn unused-translations
   [& _args]
+  (load-dictionary!)
   (let [regexen (->> (get-messages "en")
                      (keys)
                      (remove (fn [k]
@@ -415,6 +421,7 @@
 
 (defn format-i18n-files
   [& args]
+  (load-dictionary!)
   (let [langs (or (seq (map name args))
                   (keys @fluent-dictionary))]
     (doseq [lang langs
