@@ -185,3 +185,69 @@ already an index for `{ channel: 1 }`, you can replace it with `{ channel: 1,
 date: -1 }`, as the latter can also be used for all queries the former can
 support. See [Compound
 Indexes](https://docs.mongodb.com/manual/core/index-compound/) for details.
+
+
+## Stress Testing
+
+`bin/stress-test` reproduces server load from many simultaneous games so that
+resource usage can be measured and compared across runs. It connects headless
+bot players to a running server over real websockets (the same HTTP login,
+lobby events, game actions, and state diffs a browser goes through), plays
+full games using the built-in preconstructed Worlds decks, and samples the
+server's CPU and memory over time.
+
+Start the server stack first (`bin/up`), then:
+
+    $ bin/stress-test
+
+The defaults are sized for a local dev run (10 concurrent games for 3
+minutes at a 1s think time). To reproduce tournament-scale load:
+
+    $ bin/stress-test --concurrent-games 45 --duration-seconds 300
+
+Inputs: `-n`/`--concurrent-games`, `-d`/`--duration-seconds`, `--delay`
+per-bot think time in ms (lower = more load), `--matchups` to pick specific
+preconstructed matchups, `--spectators` per game, `--save-replays` to make
+games save replays at the end like tournament games do, `--chat-chance` to
+have bots chat in-game, and `--max-blocks` to give players block lists naming
+players of other games (exercising the lobby list filtering). See `--help`
+for all options.
+
+Outputs land in `stress-runs/<timestamp>/` (or `--out`): `samples.csv` with
+per-second server CPU/memory, action throughput, and action-to-diff latency
+percentiles; `summary.edn` with aggregates; `config.edn` with the run
+configuration.
+
+With `--profile`, the run also captures CPU profiles of the server JVM via
+its nREPL (port 44867 in the docker setup, `--nrepl-port` to change) using
+the clj-async-profiler already in the dev profile. Two phases are profiled
+separately, since their signatures differ completely: `profile-ramp.*`
+covers logins, lobby creation, and game starts, and `profile-steady.*`
+covers the loaded steady state once all games are up (profiling stops before
+teardown). Each phase produces three files in the output directory:
+
+- `<phase>.html`: interactive flamegraph, best for humans (self-contained,
+  regenerate any time from the collapsed file).
+- `<phase>-collapsed.txt`: raw collapsed stacks, one `frame;frame;... count`
+  line per unique stack. Greppable, diffable, loads into
+  [speedscope](https://www.speedscope.app), and the best input for agents.
+- `<phase>-summary.txt`: top frames by self and total time, for a quick look.
+
+If the run ends before all games came up (short duration, or the server
+buckling under the load), only the ramp profile exists and it covers the run
+up to that point.
+
+Inside docker, perf events are unavailable and the profiler falls back to
+itimer sampling automatically; the event used is printed and recorded in the
+summary file. To evaluate a change, run the same configuration on both
+versions of the server and compare the summaries; bot decisions are seeded
+per game slot, but engine randomness (shuffles, accesses) still varies, so
+prefer several runs or longer durations over single short runs.
+
+The bots decide from the same client-visible state a browser sees and follow
+the same action locking, so they exercise the full production path per action:
+engine execution, per-perspective state projections and diffs, JSON encoding,
+and websocket sends, plus lobby churn as games finish and restart. Games write
+normal rows to `game-logs`, so stress runs against a database you care about
+will leave records.
+
