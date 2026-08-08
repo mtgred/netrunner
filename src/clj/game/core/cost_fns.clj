@@ -38,7 +38,7 @@
         ;;   minus the applicable discount. The number of power counters placed on Bug Out Bag
         ;;   is equal to the initial value chosen for X, not the discounted total paid.
         ;; This means that the X-cost needs to track it's modifiers,
-        ;; rather than have them as a seperate cost.
+        ;; rather than have them as a separate cost.
         (cond
           (some #(= :x-credits (:cost/type %)) special-cost)
           (mapv #(if (= :x-credits (:cost/type %))
