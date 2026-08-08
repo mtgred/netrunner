@@ -35,7 +35,7 @@
    (count (filter pred (turn-events state side ev)))))
 
 (defn first-event?
-  "Returns true if the given event has only occured once this turn.
+  "Returns true if the given event has only occurred once this turn.
   Includes itself if this is checked in the requirement for an event ability.
   Filters on events satisfying (pred targets) if given pred."
   ([state side ev] (first-event? state side ev (constantly true)))
@@ -111,7 +111,7 @@
    (count (filter pred (run-events state side ev)))))
 
 (defn first-run-event?
-  "Returns true if the given run event has only occured once this run.
+  "Returns true if the given run event has only occurred once this run.
   Includes itself if this is checked in the requirement for a run event ability.
   Filters on run events satisfying (pred targets) if given pred."
   ([state side ev] (first-run-event? state side ev (constantly true)))
