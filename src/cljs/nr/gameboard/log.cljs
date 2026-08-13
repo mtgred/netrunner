@@ -29,16 +29,12 @@
   [el tolerance]
   (> tolerance (- (.-scrollHeight el) (.-scrollTop el) (.-clientHeight el))))
 
-(defn update-scroll-state!
-  [scrolled-away-from-end? el]
-  (reset! scrolled-away-from-end? (not (scrolled-to-end? el 15))))
-
-(def should-scroll (r/atom {:update true :send-msg false}))
+(def pinned-to-bottom? (r/atom true))
 
 (defn send-text [text]
   (when (and (not (:replay @game-state))
              (seq text))
-    (reset! should-scroll {:update false :send-msg true})
+    (reset! pinned-to-bottom? true)
     (ws/ws-send! [:game/say {:gameid (current-gameid app-state)
                              :msg text}])))
 
@@ -316,28 +312,23 @@
         corp (r/cursor game-state [:corp :user :username])
         runner (r/cursor game-state [:runner :user :username])
         !node-ref (r/atom nil)
-        scrolled-away-from-end? (r/atom false)]
+        !msg-count (atom 0)]
     (r/create-class
       {:display-name "log-messages"
 
        :component-did-mount
        (fn [_]
-         (when (:update @should-scroll)
-           (scroll-to-bottom! @!node-ref)))
-
-       :component-will-update
-       (fn [_]
-         (when-let [n @!node-ref]
-           (reset! should-scroll {:update (or (:send-msg @should-scroll)
-                                              (scrolled-to-end? n 15))
-                                  :send-msg false})))
+         (reset! pinned-to-bottom? true)
+         (reset! !msg-count (count @log))
+         (scroll-to-bottom! @!node-ref))
 
        :component-did-update
        (fn [_]
-         (when (:update @should-scroll)
-           (scroll-to-bottom! @!node-ref)
-           (when @scrolled-away-from-end?
-             (reset! scrolled-away-from-end? false))))
+         (let [msg-count (count @log)]
+           (when (and @pinned-to-bottom?
+                      (not= msg-count @!msg-count))
+             (scroll-to-bottom! @!node-ref))
+           (reset! !msg-count msg-count)))
 
        :reagent-render
        (fn []
@@ -346,7 +337,7 @@
                                           "panel-bottom")
                                         (player-highlight-option-class)]
                                 :ref #(reset! !node-ref %)
-                                :on-scroll #(update-scroll-state! scrolled-away-from-end? (.-currentTarget %))
+                                :on-scroll #(reset! pinned-to-bottom? (scrolled-to-end? (.-currentTarget %) 15))
                                 :on-mouse-over #(card-preview-mouse-over % zoom-channel)
                                 :on-mouse-out #(card-preview-mouse-out % zoom-channel)
                                 :aria-live "polite"}]
@@ -362,10 +353,10 @@
                          [format-user-timestamp timestamp user]
                          [:div (render-message text)]]]))
                   @log))
-          (when @scrolled-away-from-end?
+          (when-not @pinned-to-bottom?
             [:button.log-scroll-to-bottom
              {:on-click #(do (scroll-to-bottom! @!node-ref)
-                             (reset! scrolled-away-from-end? false))
+                             (reset! pinned-to-bottom? true))
               :title "Scroll to bottom"
               :aria-label "Scroll to bottom"}
              "↓"])])})))
