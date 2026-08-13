@@ -341,7 +341,7 @@
 
        :reagent-render
        (fn []
-         [:<>
+         [:div.log-scroll-to-bottom-wrapper
           (into [:div.messages {:class [(when (:replay @game-state)
                                           "panel-bottom")
                                         (player-highlight-option-class)]
@@ -365,8 +365,10 @@
           (when @scrolled-away-from-end?
             [:button.log-scroll-to-bottom
              {:on-click #(do (scroll-to-bottom! @!node-ref)
-                             (reset! scrolled-away-from-end? false))}
-             "↓ Scroll to bottom"])])})))
+                             (reset! scrolled-away-from-end? false))
+              :title "Scroll to bottom"
+              :aria-label "Scroll to bottom"}
+             "↓"])])})))
 
 (defn log-pane []
   (fn []
