@@ -11,8 +11,8 @@
                                       card-preview-mouse-over zoom-channel]]
    [nr.gameboard.state :refer [game-state not-spectator?]]
    [nr.translations :refer [tr tr-span]]
-   [nr.utils :refer [player-highlight-option-class
-                     render-message render-player-highlight]]
+   [nr.utils :refer [player-highlight-option-class render-message
+                     render-player-highlight scroll-to-bottom!]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [reagent.dom :as rdom]))
@@ -323,8 +323,7 @@
        :component-did-mount
        (fn [_]
          (when (:update @should-scroll)
-           (when-let [n @!node-ref]
-             (set! (.-scrollTop n) (.-scrollHeight n)))))
+           (scroll-to-bottom! @!node-ref)))
 
        :component-will-update
        (fn [_]
@@ -336,10 +335,9 @@
        :component-did-update
        (fn [_]
          (when (:update @should-scroll)
-           (when-let [n @!node-ref]
-             (set! (.-scrollTop n) (.-scrollHeight n))
-             (when @scrolled-away-from-end?
-               (reset! scrolled-away-from-end? false)))))
+           (scroll-to-bottom! @!node-ref)
+           (when @scrolled-away-from-end?
+             (reset! scrolled-away-from-end? false))))
 
        :reagent-render
        (fn []
@@ -366,9 +364,8 @@
                   @log))
           (when @scrolled-away-from-end?
             [:button.log-scroll-to-bottom
-             {:on-click #(when-let [n @!node-ref]
-                           (set! (.-scrollTop n) (.-scrollHeight n))
-                           (reset! scrolled-away-from-end? false))}
+             {:on-click #(do (scroll-to-bottom! @!node-ref)
+                             (reset! scrolled-away-from-end? false))}
              "↓ Scroll to bottom"])])})))
 
 (defn log-pane []

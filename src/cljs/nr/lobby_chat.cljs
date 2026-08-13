@@ -2,6 +2,7 @@
   (:require
    [nr.avatar :refer [avatar]]
    [nr.translations :refer [tr tr-element]]
+   [nr.utils :refer [scroll-to-bottom!]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [reagent.dom :as rdom]))
@@ -29,15 +30,14 @@
       {:display-name "lobby-chat"
        :component-did-mount
        (fn []
-         (when-let [el @message-list]
-           (set! (.-scrollTop el) (.-scrollHeight el))))
+         (scroll-to-bottom! @message-list))
        :component-did-update
        (fn []
          (when-let [el @message-list]
            (when (or @should-scroll
                      (scrolled-to-end? el 15))
              (swap! state assoc :should-scroll false)
-             (set! (.-scrollTop el) (.-scrollHeight el)))))
+             (scroll-to-bottom! el))))
        :reagent-render
        (fn [current-game messages]
          [:div.chat-box

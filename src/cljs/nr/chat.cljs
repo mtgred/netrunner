@@ -15,7 +15,8 @@
    [nr.news :refer [news]]
    [nr.translations :refer [tr tr-element tr-pronouns tr-span]]
    [nr.utils :refer [non-game-toast render-message format-date-time
-                     day-word-with-time-formatter tr-non-game-toast]]
+                     day-word-with-time-formatter tr-non-game-toast
+                     scroll-to-bottom!]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 
@@ -119,8 +120,7 @@
                                    :msg       text
                                    :username  (:username user)
                                    :emailhash (:emailhash user)}])
-          (let [msg-list (:message-list @chat-state)]
-            (set! (.-scrollTop msg-list) (+ (.-scrollHeight msg-list) 500)))
+          (scroll-to-bottom! (:message-list @chat-state))
           (swap! s assoc :msg "")
           (.focus input))))))
 
@@ -248,8 +248,7 @@
                         :prev-page (:active-page @app-state)
                         :prev-channel channel
                         :prev-msg-count curr-count))
-             (when-let [msg-list (:message-list @chat-state)]
-               (set! (.-scrollTop msg-list) (.-scrollHeight msg-list))))))
+             (scroll-to-bottom! (:message-list @chat-state)))))
        :component-will-unmount
        (fn [_]
          (let [channel (:channel @s)]
@@ -286,7 +285,7 @@
                        (not= curr-channel prev-channel)
                        (and (not= curr-msg-count prev-msg-count)
                             (not is-scrolled)))
-               (set! (.-scrollTop msg-list) (.-scrollHeight msg-list))
+               (scroll-to-bottom! msg-list)
                ; use an atom instead of prev-props as r/current-component is only valid in component functions
                (swap! old assoc :prev-page curr-page)
                (swap! old assoc :prev-channel curr-channel)
@@ -333,8 +332,7 @@
          [message-panel s old]
          (when (pos? (:new-msg-count @s))
            [:button.new-messages-indicator
-            {:on-click #(do (when-let [msg-list (:message-list @chat-state)]
-                              (set! (.-scrollTop msg-list) (.-scrollHeight msg-list)))
+            {:on-click #(do (scroll-to-bottom! (:message-list @chat-state))
                             (swap! s assoc :new-msg-count 0))}
             (str "↓ " (:new-msg-count @s) " new message" (when (> (:new-msg-count @s) 1) "s"))])
          (when @user
