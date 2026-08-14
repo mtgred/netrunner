@@ -395,7 +395,7 @@
     :validate-fn #(and (number? %) (<= zoom-min % zoom-max))
     :doc "UI zoom factor for this device (emulates browser zoom via CSS zoom on <html>)"}
    {:key :zoom-last-played-or-rezzed
-    :default false
+    :default true
     :sync? true
     :validate-fn boolean?
     :doc "Zoom the most recently rezzed or played card"}])
