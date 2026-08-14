@@ -6,15 +6,20 @@
    [game.test-framework :refer :all]))
 
 (deftest corp-rez-unique
-  ;; Rezzing a second copy of a unique Corp card
+  ;; Rezzing a second copy of a unique Corp card trashes the first
   (do-game
     (new-game {:corp {:deck [(qty "Caprice Nisei" 2)]}})
     (play-from-hand state :corp "Caprice Nisei" "HQ")
     (play-from-hand state :corp "Caprice Nisei" "R&D")
     (rez state :corp (get-content state :hq 0))
     (is (:rezzed (get-content state :hq 0)) "First Caprice rezzed")
-    (rez state :corp (get-content state :rd 0) {:expect-rez false})
-    (is (not (:rezzed (get-content state :rd 0))) "Second Caprice could not be rezzed")))
+    (rez state :corp (get-content state :rd 0))
+    (is (= "The Caprice Nisei in the root of HQ will now be trashed." (:msg (prompt-map :corp)))
+        "Prompt to trash old copy")
+    (click-prompt state :corp "OK")
+    (is (:rezzed (get-content state :rd 0)) "Second Caprice stays rezzed")
+    (is (nil? (get-content state :hq 0)) "First Caprice trashed")
+    (is (last-log-contains? state "Caprice Nisei in the root of HQ is trashed."))))
 
 (deftest runner-install-program
   ;; runner-install - Program; ensure costs are paid
