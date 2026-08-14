@@ -122,6 +122,12 @@
          msg (rdom-server/render-to-string (tr-span tr-vec tr-params))]
      (f msg))))
 
+(defn scroll-to-bottom!
+  "Scrolls an element to the bottom of its content. Does nothing when el is nil."
+  [el]
+  (when el
+    (set! (.-scrollTop el) (.-scrollHeight el))))
+
 (defn map-longest
   [f default & colls]
   (lazy-seq
