@@ -311,6 +311,7 @@
     (click-prompt state :runner "Fermenter")
     (click-prompt state :runner "Unregistered S&W '35")
     (play-from-hand state :runner "Asmund Pudlat")
+    (click-prompt state :runner "OK")
     (is (is-discard? state :runner ["Fermenter" "Unregistered S&W '35" "Asmund Pudlat"])
         "Didn't duplicate asmund")))
 
@@ -376,6 +377,7 @@
       (play-from-hand state :runner "Assimilator")
       (card-ability state :runner (get-resource state 1) 0)
       (click-card state :runner (get-runner-facedown state 0))
+      (click-prompt state :runner "OK")
       (is (= 2 (count (:discard (get-runner)))) "trashed the already installed kati")
       (is (= "Kati Jones" (:title (get-resource state 1))) "New kati installed")
       (is (not (refresh kat1)) "old kati trashed")
@@ -3152,6 +3154,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "The Class Act")
     (click-prompt state :runner "Hackerspace")
+    (click-prompt state :runner "OK")
     (take-credits state :runner)
     (is (not (no-prompt? state :runner)) "TCA Prompt")))
 
