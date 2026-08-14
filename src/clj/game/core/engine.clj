@@ -1176,6 +1176,17 @@
            seq
            (apply concat)))
 
+(defn- notify-unique-trashes
+  [state _ eid cards-by-side]
+  (if-let [[side cards] (first cards-by-side)]
+    (wait-for (resolve-ability
+                state side (make-eid state eid)
+                {:prompt (str "The " (enumerate-str (map #(card-str state %) cards)) " will now be trashed.")
+                 :choices ["OK"]}
+                nil nil)
+              (notify-unique-trashes state nil eid (rest cards-by-side)))
+    (effect-completed state nil eid)))
+
 (defn check-unique-and-consoles
   "d. If 2 or more unique (◆) cards with the same name are active, for each such name,
   all of those cards except the one that became active most recently are trashed. If 2
@@ -1193,14 +1204,16 @@
                            distinct
                            seq)]
     (if cards-to-trash
-      (wait-for (move* state nil (make-eid state eid)
-                       :trash-cards cards-to-trash
-                       {:game-trash true
-                        :unpreventable true})
-                (doseq [card cards-to-trash]
-                  (system-say state (to-keyword (:side card))
-                              (str (card-str state card) " is trashed.")))
-                (effect-completed state nil eid))
+      (wait-for (notify-unique-trashes state nil (make-eid state eid)
+                                       (group-by #(to-keyword (:side %)) cards-to-trash))
+                (wait-for (move* state nil (make-eid state eid)
+                                 :trash-cards cards-to-trash
+                                 {:game-trash true
+                                  :unpreventable true})
+                          (doseq [card cards-to-trash]
+                            (system-say state (to-keyword (:side card))
+                                        (str (card-str state card) " is trashed.")))
+                          (effect-completed state nil eid)))
       (effect-completed state nil eid))))
 
 (defn- enforce-conditions-impl

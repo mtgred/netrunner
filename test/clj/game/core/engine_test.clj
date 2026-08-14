@@ -230,6 +230,7 @@
     (card-ability state :runner (get-resource state 0) 0)
     (is (= "Choose a facedown installed card" (:msg (prompt-map :runner))))
     (click-card state :runner (get-runner-facedown state 0))
+    (click-prompt state :runner "OK")
     (is (last-log-contains? state "Mirror is trashed."))
     (is (find-card "Mirror" (:discard (get-runner))))))
 
@@ -242,5 +243,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Mirror")
     (play-from-hand state :runner "Box-E")
+    (click-prompt state :runner "OK")
     (is (= "Box-E" (:title (get-hardware state 0))))
     (is (last-log-contains? state "Mirror is trashed."))))

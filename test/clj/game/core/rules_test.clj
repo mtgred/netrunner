@@ -6,15 +6,20 @@
    [game.test-framework :refer :all]))
 
 (deftest corp-rez-unique
-  ;; Rezzing a second copy of a unique Corp card
+  ;; Rezzing a second copy of a unique Corp card trashes the first
   (do-game
     (new-game {:corp {:deck [(qty "Caprice Nisei" 2)]}})
     (play-from-hand state :corp "Caprice Nisei" "HQ")
     (play-from-hand state :corp "Caprice Nisei" "R&D")
     (rez state :corp (get-content state :hq 0))
     (is (:rezzed (get-content state :hq 0)) "First Caprice rezzed")
-    (rez state :corp (get-content state :rd 0) {:expect-rez false})
-    (is (not (:rezzed (get-content state :rd 0))) "Second Caprice could not be rezzed")))
+    (rez state :corp (get-content state :rd 0))
+    (is (= "The Caprice Nisei in the root of HQ will now be trashed." (:msg (prompt-map :corp)))
+        "Prompt to trash old copy")
+    (click-prompt state :corp "OK")
+    (is (:rezzed (get-content state :rd 0)) "Second Caprice stays rezzed")
+    (is (nil? (get-content state :hq 0)) "First Caprice trashed")
+    (is (last-log-contains? state "Caprice Nisei in the root of HQ is trashed."))))
 
 (deftest runner-install-program
   ;; runner-install - Program; ensure costs are paid
@@ -53,6 +58,9 @@
     (card-ability state :runner (get-resource state 0) 0)
     (is (= 3 (get-counters (get-resource state 0) :credit)) "Placed 3")
     (play-from-hand state :runner "Kati Jones")
+    (is (= "The Kati Jones will now be trashed." (:msg (prompt-map :runner)))
+        "Prompt to trash old copy")
+    (click-prompt state :runner "OK")
     (is (= 0 (get-counters (get-resource state 0) :credit)) "Correct kati was trashed")
     (is (find-card "Kati Jones" (get-resource state)))
     (is (last-log-contains? state "Kati Jones is trashed."))))
@@ -63,7 +71,7 @@
       (new-game {:runner {:hand [(qty "Kati Jones" 2) "Off-Campus Apartment"]
                           :credits 100}})
       (take-credits state :corp)
-      (play-cards state :runner "Off-Campus Apartment" ["Kati Jones" "The Rig"] ["Kati Jones" "Off-Campus Apartment"])
+      (play-cards state :runner "Off-Campus Apartment" ["Kati Jones" "The Rig"] ["Kati Jones" "Off-Campus Apartment" "OK"])
       (is (find-card "Kati Jones" (:hosted (get-resource state 0))))
       (is (= "Kati Jones" (:title (get-discarded state :runner))))
       (is (last-log-contains? state "Kati Jones is trashed."))))
@@ -72,7 +80,7 @@
       (new-game {:runner {:hand [(qty "Kati Jones" 2) "Off-Campus Apartment"]
                           :credits 100}})
       (take-credits state :corp)
-      (play-cards state :runner "Off-Campus Apartment" ["Kati Jones" "Off-Campus Apartment"] ["Kati Jones" "The Rig"])
+      (play-cards state :runner "Off-Campus Apartment" ["Kati Jones" "Off-Campus Apartment"] ["Kati Jones" "The Rig" "OK"])
       (is (= "Kati Jones" (:title (get-resource state 1))))
       (is (not (find-card "Kati Jones" (:hosted (get-resource state 0)))))
       (is (= "Kati Jones" (:title (get-discarded state :runner))))
@@ -85,7 +93,7 @@
       (play-cards state :runner "Off-Campus Apartment" ["Kati Jones" "Off-Campus Apartment"])
       (card-ability state :runner (first (:hosted (get-resource state 0))) 0)
       (is (= 3 (get-counters (first (:hosted (get-resource state 0))) :credit)) "Placed 3")
-      (play-cards state :runner ["Kati Jones" "Off-Campus Apartment"])
+      (play-cards state :runner ["Kati Jones" "Off-Campus Apartment" "OK"])
       (is (= 0 (get-counters (first (:hosted (get-resource state 0))) :credit)) "Correct kati trash")
       (is (find-card "Kati Jones" (:hosted (get-resource state 0))))
       (is (= "Kati Jones" (:title (get-discarded state :runner))))
@@ -103,6 +111,7 @@
       (is (find-card "Hivemind" (:hosted (refresh scheh))) "Hivemind hosted on Scheherazade")
       (play-from-hand state :runner "Hivemind")
       (click-prompt state :runner "The Rig")
+      (click-prompt state :runner "OK")
       (is (= "Hivemind" (:title (get-discarded state :runner))))
       (is (last-log-contains? state "Hivemind hosted on Scheherazade is trashed."))
       (is (empty? (:hosted (refresh scheh))) "Hivemind hosted on Scheherazade"))))

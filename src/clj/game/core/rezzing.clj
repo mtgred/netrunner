@@ -19,7 +19,7 @@
     [game.core.to-string :refer [card-str]]
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect wait-for]]
-    [game.utils :refer [enumerate-str to-keyword]]))
+    [game.utils :refer [enumerate-str make-timestamp to-keyword]]))
 
 (defn get-rez-cost
   [state side card {:keys [ignore-cost alternative-cost cost-bonus]}]
@@ -83,9 +83,10 @@
                   (effect-completed state side eid)
                   (let [_ (when (:derezzed-events cdef)
                             (unregister-events state side card))
+                        card (assoc card :rezzed :this-turn :timestamp (make-timestamp))
                         card (if disabled
-                               (update! state side (assoc card :rezzed :this-turn))
-                               (card-init state side (assoc card :rezzed :this-turn) {:resolve-effect false :init-data true}))]
+                               (update! state side card)
+                               (card-init state side card {:resolve-effect false :init-data true}))]
                     (doseq [h (:hosted card)]
                       (update! state side (-> h
                                               (update-in [:zone] #(map to-keyword %))
