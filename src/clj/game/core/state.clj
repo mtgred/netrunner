@@ -46,7 +46,6 @@
    turn
    turn-events
    turn-state
-   typing
    winner
    winning-deck-id
    winning-user])

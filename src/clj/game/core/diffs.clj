@@ -497,7 +497,6 @@
    :stats
    :trace
    :turn
-   :typing
    :winning-user
    :winner])
 
