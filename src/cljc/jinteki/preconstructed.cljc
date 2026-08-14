@@ -21,7 +21,7 @@
 ;; System Gateway preconstructed decks
 (def gateway-beginner-corp
   {:format "system-gateway"
-   :identity {:title "The Syndicate: Profit over Principle" :side "Corp" :code 30077}
+   :identity {:title "The Syndicate: Profit over Principle" :side "Corp" :code "30077"}
    :name "System Gateway Starter Corp"
    :cards [{:qty 3 :card "Offworld Office"}
            {:qty 2 :card "Send a Message"}
@@ -42,7 +42,7 @@
 
 (def gateway-intermediate-corp
   {:format "system-gateway"
-   :identity {:title "The Syndicate: Profit over Principle" :side "Corp" :code 30077}
+   :identity {:title "The Syndicate: Profit over Principle" :side "Corp" :code "30077"}
    :name "System Gateway Starter Corp"
    :cards [{:qty 3 :card "Offworld Office"}
            {:qty 2 :card "Send a Message"}
@@ -69,7 +69,7 @@
 
 (def gateway-beginner-runner
   {:format "system-gateway"
-   :identity {:title "The Catalyst: Convention Breaker" :side "Runner" :code 30076}
+   :identity {:title "The Catalyst: Convention Breaker" :side "Runner" :code "30076"}
    :name "System Gateway Starter Runner"
    :cards [{:qty 2 :card "Creative Commission"}
            {:qty 3 :card "Jailbreak"}
@@ -90,7 +90,7 @@
 
 (def gateway-intermediate-runner
   {:format "system-gateway"
-   :identity {:title "The Catalyst: Convention Breaker" :side "Runner" :code 30076}
+   :identity {:title "The Catalyst: Convention Breaker" :side "Runner" :code "30076"}
    :name "System Gateway Starter Runner"
    :cards [{:qty 2 :card "Creative Commission"}
            {:qty 3 :card "Jailbreak"}
@@ -142,7 +142,7 @@
     [:preconstructed.worlds-2012-info "Worlds 2012 was played with (up to 3 copies of) the Core Set as the only legal product. Jeremy Zwirn (Building a Better World, Gabriel Santiago) took first place against Ben Marsh (Engineering the Future, Gabriel Santiago) in the first ever Netrunner World Championship."]
     [:preconstructed.worlds-2012-a-ul "Worlds 2012: Weyland vs. Criminal"]
     (precon "Ben Marsh - 2012: ETF"
-            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
+            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code "01054"}
             [{:qty 3 :card "Enigma"}
              {:qty 2 :card "Heimdall 1.0"}
              {:qty 2 :card "Tollbooth"}
@@ -164,7 +164,7 @@
              {:qty 3 :card "Accelerated Beta Test"}
              {:qty 3 :card "Priority Requisition"}])
     (precon "Jeremy Z - 2012: Criminal"
-            {:title "Gabriel Santiago: Consummate Professional" :side "Runner" :code 1017}
+            {:title "Gabriel Santiago: Consummate Professional" :side "Runner" :code "01017"}
             [{:qty 2 :card "Corroder"}
              {:qty 1 :card "Yog.0"}
              {:qty 1 :card "Ninja"}
@@ -192,7 +192,7 @@
     [:preconstructed.worlds-2012-info "Worlds 2012 was played with (up to 3 copies of) the Core Set as the only legal product. Jeremy Zwirn (Building a Better World, Gabriel Santiago) took first place against Ben Marsh (Engineering the Future, Gabriel Santiago) in the first ever Netrunner World Championship."]
     [:preconstructed.worlds-2012-b-ul "Worlds 2012: Haas-Bioroid vs. Criminal"]
     (precon "Jeremy Z - 2012: Weyland"
-            {:title "Weyland Consortium: Building a Better World" :side "Corp" :code 1093}
+            {:title "Weyland Consortium: Building a Better World" :side "Corp" :code "01093"}
             [{:qty 3 :card "Priority Requisition"}
              {:qty 3 :card "Private Security Force"}
              {:qty 3 :card "Hostile Takeover"}
@@ -212,7 +212,7 @@
              {:qty 3 :card "Hedge Fund"}
              {:qty 3 :card "Scorched Earth"}])
     (precon "Ben Marsh - 2012: Gabe"
-            {:title "Gabriel Santiago: Consummate Professional" :side "Runner" :code 1017}
+            {:title "Gabriel Santiago: Consummate Professional" :side "Runner" :code "01017"}
             [{:qty 3 :card "Sneakdoor Beta"}
              {:qty 1 :card "Gordian Blade"}
              {:qty 2 :card "Corroder"}
@@ -243,7 +243,7 @@
     [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves. Jens Erickson (Andromeda, ETR) took first place against Andrew Veen (Kate, NBN: Making News)"]
     [:preconstructed.worlds-2013-a-ul "Worlds 2013: HB FastAdv vs. Shaper Katman"]
     (precon "Jens Erickson - 2013: Engineering the Future"
-            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
+            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code "01054"}
             [{:qty 3 :card "Accelerated Beta Test"}
              {:qty 3 :card "Project Vitruvius"}
              {:qty 3 :card "Efficiency Committee"}
@@ -269,7 +269,7 @@
              {:qty 1 :card "Ichi 1.0"}
              {:qty 1 :card "Grim"}])
     (precon "Andrew Veen - 2013: Kate McCaffrey"
-            {:title "Kate \"Mac\" McCaffrey: Digital Tinker" :side "Runner" :code 01033}
+            {:title "Kate \"Mac\" McCaffrey: Digital Tinker" :side "Runner" :code "01033"}
             [{:qty 3 :card "Modded"}
              {:qty 3 :card "Test Run"}
              {:qty 3 :card "Sure Gamble"}
@@ -295,7 +295,7 @@
     [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves. Jens Erickson (Andromeda, ETR) took first place against Andrew Veen (Kate, NBN: Making News)"]
     [:preconstructed.worlds-2013-b-ul "Worlds 2013: NBN Fast Adv vs. Andy Sucker"]
     (precon "Andrew Veen - 2013: Making News"
-            {:title "NBN: Making News" :side "Corp" :code 25104}
+            {:title "NBN: Making News" :side "Corp" :code "25104"}
             [{:qty 3 :card "AstroScript Pilot Program"}
              {:qty 3 :card "Project Beale"}
              {:qty 3 :card "Breaking News"}
@@ -317,7 +317,7 @@
              {:qty 1 :card "Rototurret"}
              {:qty 3 :card "Caduceus"}])
     (precon "Jens Erickson - 2013: Andromeda"
-            {:title "Andromeda: Dispossessed Ristie" :side "Runner" :code 2083}
+            {:title "Andromeda: Dispossessed Ristie" :side "Runner" :code "02083"}
             [{:qty 3 :card "Account Siphon"}
              {:qty 3 :card "Inside Job"}
              {:qty 3 :card "Special Order"}
@@ -349,7 +349,7 @@
     [:preconstructed.worlds-2014-info "238 players attended worlds in 2014. The tournament was held in Minneapolis, MN, USA, and consisted of 7 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Up and Over."]
     [:preconstructed.worlds-2014-a-ul "Worlds 2014: Honor and Perfection vs. Andromedium"]
     (precon "Dan D'Argenio - 2014: Honor and Perfection"
-            {:title "Jinteki: Replicating Perfection" :side "Corp" :code 2031}
+            {:title "Jinteki: Replicating Perfection" :side "Corp" :code "02031"}
             [{:qty 3 :card "NAPD Contract"}
              {:qty 3 :card "Nisei MK II"}
              {:qty 3 :card "The Future Perfect"}
@@ -373,7 +373,7 @@
              {:qty 3 :card "Pup"}
              {:qty 3 :card "Tsurugi"}])
     (precon "Minh Tran - 2014: Andromedium"
-            {:title "Andromeda: Dispossessed Ristie" :side "Runner" :code 2083}
+            {:title "Andromeda: Dispossessed Ristie" :side "Runner" :code "02083"}
             [{:qty 3 :card "Account Siphon"}
              {:qty 2 :card "Inside Job"}
              {:qty 2 :card "Special Order"}
@@ -407,7 +407,7 @@
     [:preconstructed.worlds-2014-info "238 players attended worlds in 2014. The tournament was held in Minneapolis, MN, USA, and consisted of 7 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Up and Over."]
     [:preconstructed.worlds-2014-b-ul "Worlds 2014: Personal Evolution vs. Daily QT Andy"]
     (precon "Minh Tran - 2014: Personal Evolution"
-            {:title "Jinteki: Personal Evolution" :side "Corp" :code 1067}
+            {:title "Jinteki: Personal Evolution" :side "Corp" :code "01067"}
             [{:qty 3 :card "Fetal AI"}
              {:qty 3 :card "Gila Hands Arcology"}
              {:qty 3 :card "House of Knives"}
@@ -431,7 +431,7 @@
              {:qty 3 :card "Mushin No Shin"}
              {:qty 3 :card "Sweeps Week"}])
     (precon "Dan D'Argenio - 2014: Daily QT Andy"
-            {:title "Andromeda: Dispossessed Ristie" :side "Runner" :code 2083}
+            {:title "Andromeda: Dispossessed Ristie" :side "Runner" :code "02083"}
             [{:qty 3 :card "Account Siphon"}
              {:qty 1 :card "Inside Job"}
              {:qty 3 :card "Special Order"}
@@ -465,7 +465,7 @@
     [:preconstructed.worlds-2015-info "269 players attended worlds in 2015. The tournament was held in Minneapolis, MN, USA, and consisted of 8 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Data and Destiny."]
     [:preconstructed.worlds-2015-a-ul "Worlds 2015: Foodcoatshop vs. The Morning After"]
     (precon "Dan D'Argenio - 2015: Foodcoatshop"
-            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code 1054}
+            {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code "01054"}
             [{:qty 3 :card "Accelerated Beta Test"}
              {:qty 1 :card "Project Vitruvius"}
              {:qty 3 :card "NAPD Contract"}
@@ -487,7 +487,7 @@
              {:qty 1 :card "Cyberdex Virus Suite"}
              {:qty 3 :card "Breaker Bay Grid"}])
     (precon "Timmy Wong - 2015: The Morning After"
-            {:title "Whizzard: Master Gamer" :side "Runner" :code 2001}
+            {:title "Whizzard: Master Gamer" :side "Runner" :code "02001"}
             [{:qty 2 :card "Stimhack"}
              {:qty 3 :card "Sure Gamble"}
              {:qty 1 :card "Test Run"}
@@ -518,7 +518,7 @@
     [:preconstructed.worlds-2015-info "269 players attended worlds in 2015. The tournament was held in Minneapolis, MN, USA, and consisted of 8 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Data and Destiny."]
     [:preconstructed.worlds-2015-b-ul "Worlds 2015: Yellow Shell vs. Radisson Cheese Plate"]
     (precon "Timmy Wong - 2015: Yellow Shell"
-            {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code 6005}
+            {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code "06005"}
             [{:qty 3 :card "AstroScript Pilot Program"}
              {:qty 3 :card "Breaking News"}
              {:qty 2 :card "Project Beale"}
@@ -546,7 +546,7 @@
              {:qty 1 :card "Cyberdex Virus Suite"}
              {:qty 3 :card "Product Placement"}])
     (precon "Dan D'Argenio - 2015: Radisson Cheese Plate"
-            {:title "Valencia Estevez: The Angel of Cayambe" :side "Runner" :code 7030}
+            {:title "Valencia Estevez: The Angel of Cayambe" :side "Runner" :code "07030"}
             [{:qty 2 :card "Account Siphon"}
              {:qty 3 :card "Blackmail"}
              {:qty 2 :card "Queen's Gambit"}
@@ -575,7 +575,7 @@
     [:preconstructed.worlds-2016-info "278 players attended worlds in 2016. The tournament was held in Minneapolis, MN, USA, and consisted of 9 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Escalation."]
     [:preconstructed.worlds-2016-a-ul "Worlds 2016: Snekbite vs. Minh MaxX++"]
     (precon "Chris Dyer - 2016: Snekbite"
-            {:title "NBN: Controlling the Message" :side "Corp" :code 11017}
+            {:title "NBN: Controlling the Message" :side "Corp" :code "11017"}
             [{:qty 1 :card "AstroScript Pilot Program"}
              {:qty 3 :card "Breaking News"}
              {:qty 3 :card "Project Beale"}
@@ -600,7 +600,7 @@
              {:qty 2 :card "SanSan City Grid"}
              {:qty 2 :card "Mumbad Virtual Tour"}])
     (precon "Benjamin Ni - 2016: Minh MaxX++"
-            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code 7029}
+            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code "07029"}
             [{:qty 3 :card "Déjà Vu"}
              {:qty 2 :card "Account Siphon"}
              {:qty 3 :card "Sure Gamble"}
@@ -630,7 +630,7 @@
     [:preconstructed.worlds-2016-info "278 players attended worlds in 2016. The tournament was held in Minneapolis, MN, USA, and consisted of 9 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Escalation."]
     [:preconstructed.worlds-2016-b-ul "Worlds 2016: Fiery Info vs. Papa Smurf"]
     (precon "Benjamin Ni - 2016: Fiery Info"
-            {:title "SYNC: Everything, Everywhere" :side "Corp" :code 9001}
+            {:title "SYNC: Everything, Everywhere" :side "Corp" :code "09001"}
             [{:qty 3 :card "Breaking News"}
              {:qty 1 :card "NAPD Contract"}
              {:qty 1 :card "15 Minutes"}
@@ -653,7 +653,7 @@
              {:qty 2 :card "Observe and Destroy"}
              {:qty 2 :card "BOOM!"}])
     (precon "Chris Dyer - 2016: Papa Smurf"
-            {:title "Whizzard: Master Gamer" :side "Runner" :code 2001}
+            {:title "Whizzard: Master Gamer" :side "Runner" :code "02001"}
             [{:qty 1 :card "Déjà Vu"}
              {:qty 3 :card "Sure Gamble"}
              {:qty 3 :card "Dirty Laundry"}
@@ -686,7 +686,7 @@
     [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
     [:preconstructed.worlds-2017-a-ul "Worlds 2017: Stinson Reversed CI vs. Aesops Hayley"]
     (precon "ChaosJuggler - 2017: Sinson Reversed CI"
-            {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code 3001}
+            {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code "03001"}
             [{:qty 1 :card "Corporate Sales Team"}
              {:qty 3 :card "Efficiency Committee"}
              {:qty 2 :card "Elective Upgrade"}
@@ -711,7 +711,7 @@
              {:qty 2 :card "Architect"}
              {:qty 1 :card "Ichi 1.0"}])
     (precon "Grey Tongue - 2017: Aesops Hayley"
-            {:title "Hayley Kaplan: Universal Scholar" :side "Runner" :code 8025}
+            {:title "Hayley Kaplan: Universal Scholar" :side "Runner" :code "08025"}
             [{:qty 2 :card "Stimhack"}
              {:qty 3 :card "Sure Gamble"}
              {:qty 2 :card "Astrolabe"}
@@ -745,7 +745,7 @@
     [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
     [:preconstructed.worlds-2017-b-ul "Worlds 2017: No-Show Rewiring CI vs. Laguna Lock Hayley"]
     (precon "Grey Tongue - 2017: No-Show Rewiring CI"
-            {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code 3001}
+            {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code "03001"}
             [{:qty 2 :card "Brain Rewiring"}
              {:qty 3 :card "Efficiency Committee"}
              {:qty 2 :card "Global Food Initiative"}
@@ -770,7 +770,7 @@
              {:qty 1 :card "Loki"}
              {:qty 2 :card "Mother Goddess"}])
     (precon "ChaosJuggler - 2017: Laguna Lock Hayley"
-            {:title "Hayley Kaplan: Universal Scholar" :side "Runner" :code 8025}
+            {:title "Hayley Kaplan: Universal Scholar" :side "Runner" :code "08025"}
             [{:qty 3 :card "Indexing"}
              {:qty 1 :card "Information Sifting"}
              {:qty 1 :card "Levy AR Lab Access"}
@@ -808,7 +808,7 @@
     [:preconstructed.worlds-2018-info "403(!) players attended worlds in 2018. This is the final worlds championship to be run by FFG. The tournament was held in Minneapolis, MN, USA, and consisted of 9(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Reign and Reverie"]
     [:preconstructed.worlds-2018-a-ul "Worlds 2018: AMERICA CtM vs. Gooseberry MaxX"]
     (precon "Joe Schupp - 2018: AMERICA CtM"
-            {:title "NBN: Controlling the Message" :side "Corp" :code 11017}
+            {:title "NBN: Controlling the Message" :side "Corp" :code "11017"}
             [{:qty 1 :card "15 Minutes"}
              {:qty 3 :card "AR-Enhanced Security"}
              {:qty 3 :card "Global Food Initiative"}
@@ -832,7 +832,7 @@
              {:qty 1 :card "Tollbooth"}
              {:qty 1 :card "Turnpike"}])
     (precon "Chris Dyer - 2018: Gooseberry MaxX"
-            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code 7029}
+            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code "07029"}
             [{:qty 3 :card "Dirty Laundry"}
              {:qty 3 :card "Hacktivist Meeting"}
              {:qty 1 :card "Indexing"}
@@ -862,7 +862,7 @@
     [:preconstructed.worlds-2018-info "403(!) players attended worlds in 2018. This is the final worlds championship to be run by FFG. The tournament was held in Minneapolis, MN, USA, and consisted of 9(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Reign and Reverie"]
     [:preconstructed.worlds-2018-b-ul "Worlds 2018: Trust the Process vs. Dan D'Argenio KoS Val"]
     (precon "Chris Dyer - 2018: Trust the Process"
-            {:title "NBN: Controlling the Message" :side "Corp" :code 11017}
+            {:title "NBN: Controlling the Message" :side "Corp" :code "11017"}
             [{:qty 1 :card "15 Minutes"}
              {:qty 3 :card "AR-Enhanced Security"}
              {:qty 3 :card "Global Food Initiative"}
@@ -888,7 +888,7 @@
              {:qty 1 :card "Tollbooth"}
              {:qty 1 :card "Turnpike"}])
     (precon "Joe Schupp - 2018: Dan D'Argenio KoS Val"
-            {:title "Valencia Estevez: The Angel of Cayambe" :side "Runner" :code 7030}
+            {:title "Valencia Estevez: The Angel of Cayambe" :side "Runner" :code "07030"}
             [{:qty 3 :card "Dirty Laundry"}
              {:qty 3 :card "Employee Strike"}
              {:qty 3 :card "I've Had Worse"}
@@ -919,7 +919,7 @@
     [:preconstructed.worlds-2019-info "256 players played in the first even Project NISEI Netrunner World Championship in 2019. This tournament was held in Rotterdam, NL, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Uprising Booster Pack"]
     [:preconstructed.worlds-2019-a-ul "Worlds 2019: Fully dedicated to efficiency vs. Trash Panda"]
     (precon "Pinsel - 2019: Fully dedicated to efficiency"
-            {:title "Asa Group: Security Through Vigilance" :side "Corp" :code 21009}
+            {:title "Asa Group: Security Through Vigilance" :side "Corp" :code "21009"}
             [{:qty 3 :card "Efficiency Committee"}
              {:qty 3 :card "Global Food Initiative"}
              {:qty 3 :card "Project Vitruvius"}
@@ -941,7 +941,7 @@
              {:qty 3 :card "Gatekeeper"}
              {:qty 3 :card "Architect"}])
     (precon "Testrunning - 2019: Trash Panda"
-            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code 21081}
+            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code "21081"}
             [{:qty 3 :card "Dirty Laundry"}
              {:qty 3 :card "I've Had Worse"}
              {:qty 3 :card "Inject"}
@@ -971,7 +971,7 @@
     [:preconstructed.worlds-2019-info "256 players played in the first even Project NISEI Netrunner World Championship in 2019. This tournament was held in Rotterdam, NL, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Uprising Booster Pack"]
     [:preconstructed.worlds-2019-b-ul "Worlds 2019: 2 Grid for 2 Place vs. Trash Panda"]
     (precon "Testrunning - 2019: 2 Grid for 2 Place"
-            {:title "Pālanā Foods: Sustainable Growth" :side "Corp" :code 10030}
+            {:title "Pālanā Foods: Sustainable Growth" :side "Corp" :code "10030"}
             [{:qty 3 :card "Nisei MK II"}
              {:qty 3 :card "Obokata Protocol"}
              {:qty 1 :card "Philotic Entanglement"}
@@ -993,7 +993,7 @@
              {:qty 2 :card "Excalibur"}
              {:qty 3 :card "Anansi"}])
     (precon "Pinsel - 2019: Trash Panda"
-            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code 21081}
+            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code "21081"}
             [{:qty 3 :card "Dirty Laundry"}
              {:qty 3 :card "I've Had Worse"}
              {:qty 3 :card "Inject"}
@@ -1024,7 +1024,7 @@
     [:preconstructed.worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to Uprising."]
     [:preconstructed.worlds-2020-a-ul "Worlds 2020: I don't like this deck vs. Engolo Freedom"]
     (precon "Limes - 2020: I don't like this deck"
-            {:title "Sportsmetal: Go Big or Go Home" :side "Corp" :code 22026}
+            {:title "Sportsmetal: Go Big or Go Home" :side "Corp" :code "22026"}
             [{:qty 2 :card "False Lead"}
              {:qty 3 :card "Hyperloop Extension"}
              {:qty 3 :card "Megaprix Qualifier"}
@@ -1045,7 +1045,7 @@
              {:qty 3 :card "Stock Buy-Back"}
              {:qty 3 :card "Meridian"}])
     (precon "tf34 - 2020: Engolo Freedom"
-            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code 21081}
+            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code "21081"}
             [{:qty 3 :card "Dirty Laundry"}
              {:qty 3 :card "I've Had Worse"}
              {:qty 1 :card "Rebirth"}
@@ -1074,7 +1074,7 @@
     [:preconstructed.worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to Uprising."]
     [:preconstructed.worlds-2020-b-ul "Worlds 2020: Malia CTM vs. Imp-pressive Hoshiko"]
     (precon "tf34 - 2020: Malia CTM"
-            {:title "NBN: Controlling the Message" :side "Corp" :code 11017}
+            {:title "NBN: Controlling the Message" :side "Corp" :code "11017"}
             [{:qty 3 :card "Bellona"}
              {:qty 1 :card "Degree Mill"}
              {:qty 3 :card "Project Beale"}
@@ -1098,7 +1098,7 @@
              {:qty 1 :card "Tollbooth"}
              {:qty 1 :card "F2P"}])
     (precon "Limes - 2020: Imp-pressive Hoshiko"
-            {:title "Hoshiko Shiro: Untold Protagonist" :side "Runner" :code 26066}
+            {:title "Hoshiko Shiro: Untold Protagonist" :side "Runner" :code "26066"}
             [{:qty 3 :card "Dirty Laundry"}
              {:qty 2 :card "I've Had Worse"}
              {:qty 2 :card "Labor Rights"}
@@ -1127,7 +1127,7 @@
     [:preconstructed.worlds-2021-info "201 players played in the second online world championship for Netrunner, run by Project NISEI in 2021. Due to the ongoing disruption caused by the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
     [:preconstructed.worlds-2021-a-ul "Worlds 2021: 44 Card PD vs. Watch Me Drip, Watch Me Maemi"]
     (precon "Patrick Gower - 2021: 44 card PD"
-            {:title "Haas-Bioroid: Precision Design" :side "Corp" :code 30035}
+            {:title "Haas-Bioroid: Precision Design" :side "Corp" :code "30035"}
             [{:qty 3 :card "Cyberdex Sandbox"}
              {:qty 2 :card "Global Food Initiative"}
              {:qty 1 :card "Luminal Transubstantiation"}
@@ -1150,7 +1150,7 @@
              {:qty 2 :card "Ansel 1.0"}
              {:qty 3 :card "Drafter"}])
     (precon "Jonas - 2021: Watch Me Drip, Watch Me Maemi"
-            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code 7029}
+            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code "07029"}
             [{:qty 3 :card "Deuces Wild"}
              {:qty 3 :card "Dirty Laundry"}
              {:qty 1 :card "Falsified Credentials"}
@@ -1188,7 +1188,7 @@
     [:preconstructed.worlds-2021-info "201 players played in the second online world championship for Netrunner, run by Project NISEI in 2021. Due to the ongoing disruption caused by the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
     [:preconstructed.worlds-2021-b-ul "Worlds 2021: Is Gagarin Good? vs. Medium to Large Maxx"]
     (precon "Jonas - 2021: Is Gagarin Good?"
-            {:title "Gagarin Deep Space: Expanding the Horizon" :side "Corp" :code 7002}
+            {:title "Gagarin Deep Space: Expanding the Horizon" :side "Corp" :code "07002"}
             [{:qty 1 :card "Above the Law"}
              {:qty 2 :card "Global Food Initiative"}
              {:qty 2 :card "Hostile Takeover"}
@@ -1212,7 +1212,7 @@
              {:qty 1 :card "Mausolus"}
              {:qty 1 :card "Rototurret"}])
     (precon "Patrick Gower - 2021: Medium to Large MaxX"
-            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code 7029}
+            {:title "MaxX: Maximum Punk Rock" :side "Runner" :code "07029"}
             [{:qty 3 :card "Deuces Wild"}
              {:qty 3 :card "Dirty Laundry"}
              {:qty 3 :card "I've Had Worse"}
@@ -1247,7 +1247,7 @@
     [:preconstructed.worlds-2022-info "158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 8(?) rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun."]
     [:preconstructed.worlds-2022-a-ul "Worlds 2022: SNACS vs. Liberté, Égalité, Humidité"]
     (precon "William Huang - 2022: SNACS"
-            {:title "Sportsmetal: Go Big or Go Home" :side "Corp" :code 22026}
+            {:title "Sportsmetal: Go Big or Go Home" :side "Corp" :code "22026"}
             [{:qty 1 :card "Élivágar Bifurcation"}
              {:qty 2 :card "Global Food Initiative"}
              {:qty 1 :card "Luminal Transubstantiation"}
@@ -1271,7 +1271,7 @@
              {:qty 2 :card "Ansel 1.0"}
              {:qty 1 :card "Drafter"}])
     (precon "skry - 2022: Liberté, Égalité, Humidité"
-            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code 21081}
+            {:title "Freedom Khumalo: Crypto-Anarchist" :side "Runner" :code "21081"}
             [{:qty 3 :card "Deuces Wild"}
              {:qty 2 :card "Dirty Laundry"}
              {:qty 1 :card "Mad Dash"}
@@ -1303,7 +1303,7 @@
     [:preconstructed.worlds-2022-info "158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 8(?) rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun."]
     [:preconstructed.worlds-2022-b-ul "Worlds 2022: Dies to Doom Blade vs. ApocoLat"]
     (precon "skry - 2022: Dies to Doomblade"
-            {:title "AgInfusion: New Miracles for a New World" :side "Corp" :code 12052}
+            {:title "AgInfusion: New Miracles for a New World" :side "Corp" :code "12052"}
             [{:qty 1 :card "Longevity Serum"}
              {:qty 3 :card "Obokata Protocol"}
              {:qty 3 :card "Send a Message"}
@@ -1326,7 +1326,7 @@
              {:qty 3 :card "Anemone"}
              {:qty 3 :card "Mlinzi"}])
     (precon "William Huang - 2022: ApocoLat"
-            {:title "Lat: Ethical Freelancer" :side "Runner" :code 26019}
+            {:title "Lat: Ethical Freelancer" :side "Runner" :code "26019"}
             [{:qty 3 :card "Apocalypse"}
              {:qty 3 :card "Creative Commission"}
              {:qty 1 :card "Deuces Wild"}
@@ -1358,7 +1358,7 @@
     [:preconstructed.worlds-2023-info "254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 8 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative."]
     [:preconstructed.worlds-2023-a-ul "Worlds 2023: The Worlds Grid vs. sableCarnage"]
     (precon "William Huang - 2023: The Worlds Grind"
-            {:title "Weyland Consortium: Built to Last" :side "Corp" :code 30059}
+            {:title "Weyland Consortium: Built to Last" :side "Corp" :code "30059"}
             [{:qty 1 :card "Above the Law"}
              {:qty 3 :card "SDS Drone Deployment"}
              {:qty 3 :card "Send a Message"}
@@ -1382,7 +1382,7 @@
              {:qty 1 :card "Sadaka"}
              {:qty 3 :card "Winchester"}])
     (precon "cableCarnage - 2023: sableCarnage"
-            {:title "Nyusha \"Sable\" Sintashta: Symphonic Prodigy" :side "Runner" :code 33011}
+            {:title "Nyusha \"Sable\" Sintashta: Symphonic Prodigy" :side "Runner" :code "33011"}
             [{:qty 1 :card "Bahia Bands"}
              {:qty 3 :card "Bravado"}
              {:qty 3 :card "Dirty Laundry"}
@@ -1417,7 +1417,7 @@
     [:preconstructed.worlds-2023-info "254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 8 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative."]
     [:preconstructed.worlds-2023-b-ul "Worlds 2023: tableCarnage vs. You *do* always come back!"]
     (precon "cableCarnage - 2023: tableCarnage"
-            {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code 6005}
+            {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code "06005"}
             [{:qty 3 :card "Bellona"}
              {:qty 2 :card "Degree Mill"}
              {:qty 3 :card "False Lead"}
@@ -1443,7 +1443,7 @@
              {:qty 1 :card "Virtual Service Agent"}
              {:qty 1 :card "Unsmiling Tsarevna"}])
     (precon "William Huang - 2023: You *do* always come back!"
-            {:title "Hoshiko Shiro: Untold Protagonist" :side "Runner" :code 26066}
+            {:title "Hoshiko Shiro: Untold Protagonist" :side "Runner" :code "26066"}
             [{:qty 2 :card "Diesel"}
              {:qty 3 :card "Dirty Laundry"}
              {:qty 3 :card "Moshing"}
@@ -1473,7 +1473,7 @@
       [:preconstructed.worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Alex Boyd AKA Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against Dee Ruttenberg AKA DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
       [:preconstructed.worlds-2024-a-ul "Worlds 2024: Kill R+ vs. Good Stuff Lat"]
       (precon "Aruzan - 2024: Kill R+"
-            {:title "NBN: Reality Plus" :side "Corp" :code 30051}
+            {:title "NBN: Reality Plus" :side "Corp" :code "30051"}
             [{:qty 2 :card "Degree Mill"}
              {:qty 1 :card "Oracle Thinktank"}
              {:qty 3 :card "Project Beale"}
@@ -1499,7 +1499,7 @@
              {:qty 2 :card "AMAZE Amusements"}
              {:qty 2 :card "The Holo Man"}])
       (precon "DeeR - 2024: Deep Dive Lat"
-              {:title "Lat: Ethical Freelancer" :side "Runner" :code 26019}
+              {:title "Lat: Ethical Freelancer" :side "Runner" :code "26019"}
               [{:qty 3 :card "Creative Commission"}
                {:qty 2 :card "Deep Dive"}
                {:qty 2 :card "Diesel"}
@@ -1533,7 +1533,7 @@
     [:preconstructed.worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Alex Boyd AKA Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against Dee Ruttenberg AKA DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
     [:preconstructed.worlds-2024-b-ul "Worlds 2024: Loud PE vs. Deep Dive Arissana"]
     (precon "DeeR - 2024: Loud PE"
-            {:title "Jinteki: Personal Evolution" :side "Corp" :code 1067}
+            {:title "Jinteki: Personal Evolution" :side "Corp" :code "01067"}
             [{:qty 1 :card "Blood in the Water"}
              {:qty 3 :card "Fujii Asset Retrieval"}
              {:qty 2 :card "House of Knives"}
@@ -1559,7 +1559,7 @@
              {:qty 1 :card "The Holo Man"}
              {:qty 1 :card "Crisium Grid"}])
     (precon "Aruzan - 2024: Spree Arissana"
-            {:title "Arissana Rocha Nahu: Street Artist" :side "Runner" :code 34020}
+            {:title "Arissana Rocha Nahu: Street Artist" :side "Runner" :code "34020"}
             [{:qty 2 :card "Burner"}
              {:qty 3 :card "Creative Commission"}
              {:qty 3 :card "Deep Dive"}
@@ -1595,7 +1595,7 @@
     [:preconstructed.worlds-2025-info "361 players played in the fourth Netrunner world championship run by Null Signal Games. In this tournament, ZomZraft (Epiphany, Hoshiko) won the title of Netrunner World Champion in a final game Against davz131 (Au Co, Esa). The tournament was held at Dovecot Studios in Edenburg on the 18th and 19th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Elevation."]
     [:preconstructed.worlds-2025-a-ul "Worlds 2025: SBT Bytes vs. Vampire"]
     (precon "davz131 - 2025: SBT Bytes"
-            {:title "AU Co.: The Gold Standard in Clones" :side "Corp" :code 35046}
+            {:title "AU Co.: The Gold Standard in Clones" :side "Corp" :code "35046"}
             [{:qty 3 :card "Fujii Asset Retrieval"}
              {:qty 1 :card "Longevity Serum"}
              {:qty 3 :card "See How They Run"}
@@ -1618,7 +1618,7 @@
              {:qty 2 :card "Oppo Research"}
              {:qty 2 :card "End of the Line"}])
     (precon "ZomZraft - 2025: Vampire"
-            {:title "Hoshiko Shiro: Untold Protagonist" :side "Runner" :code 26066}
+            {:title "Hoshiko Shiro: Untold Protagonist" :side "Runner" :code "26066"}
             [{:qty 3 :card "Steelskin Scarring"}
              {:qty 3 :card "Strike Fund"}
              {:qty 3 :card "The Price"}
@@ -1649,7 +1649,7 @@
     [:preconstructed.worlds-2025-info "361 players played in the fourth Netrunner world championship run by Null Signal Games. In this tournament, ZomZraft (Epiphany, Hoshiko) won the title of Netrunner World Champion in a final game Against davz131 (Au Co, Esa). The tournament was held at Dovecot Studios in Edenburg on the 18th and 19th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Elevation."]
     [:preconstructed.worlds-2025-b-ul "Worlds 2025: Constrictor vs. Esâ me, I'm back"]
     (precon "ZomZraft - 2025: Constrictor"
-            {:title "Epiphany Analytica: Nations Undivided" :side "Corp" :code 34048}
+            {:title "Epiphany Analytica: Nations Undivided" :side "Corp" :code "34048"}
             [{:qty 3 :card "Artificial Cryptocrash"}
              {:qty 2 :card "Freedom of Information"}
              {:qty 3 :card "Stoke the Embers"}
@@ -1676,7 +1676,7 @@
              {:qty 1 :card "Retribution"}
              {:qty 2 :card "The Holo Man"}])
     (precon "davz131 - 2025: Esâ me, I'm back"
-            {:title "Esâ Afontov: Eco-Insurrectionist" :side "Runner" :code 33001}
+            {:title "Esâ Afontov: Eco-Insurrectionist" :side "Runner" :code "33001"}
             [{:qty 2 :card "Chastushka"}
              {:qty 2 :card "Finality"}
              {:qty 1 :card "Katorga Breakout"}
