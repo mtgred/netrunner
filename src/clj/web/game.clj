@@ -431,20 +431,6 @@
        (handle-message-and-send-diffs! lobby? side user msg)
        (lobby/log-delay! timestamp id)))))
 
-(defmethod ws/-msg-handler :game/typing
-  game--typing
-  [{uid :uid
-    {:keys [gameid typing]} :?data
-    id :id
-    timestamp :timestamp}]
-  (let [{:keys [state players] :as lobby} (app-state/get-lobby gameid)]
-    (lobby/game-thread
-     lobby
-     (when (and state (lobby/player? uid lobby))
-       (doseq [{:keys [uid]} (remove #(= uid (:uid %)) players)]
-         (ws/chsk-send! uid [:game/typing typing])))
-     (lobby/log-delay! timestamp id))))
-
 (defmethod ws/-msg-handler :chsk/uidport-close
   chsk--uidport-close
   [{{db :system/db

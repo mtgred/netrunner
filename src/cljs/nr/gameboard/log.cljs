@@ -11,7 +11,7 @@
                                       card-preview-mouse-over zoom-channel]]
    [nr.gameboard.state :refer [game-state not-spectator?]]
    [nr.translations :refer [tr tr-span]]
-   [nr.utils :refer [influence-dot player-highlight-option-class
+   [nr.utils :refer [player-highlight-option-class
                      render-message render-player-highlight]]
    [nr.ws :as ws]
    [reagent.core :as r]
@@ -35,15 +35,6 @@
 
 (def should-scroll (r/atom {:update true :send-msg false}))
 
-(defn log-typing []
-  (r/with-let [typing (r/cursor game-state [:typing])]
-    (when @typing
-      [:div [:p.typing
-             (doall
-               (for [i (range 10)]
-                 ^{:key i}
-                 [:span " " influence-dot " "]))]])))
-
 (defn send-text [text]
   (when (and (not (:replay @game-state))
              (seq text))
@@ -56,19 +47,6 @@
     (when (seq text)
       (send-text text)
       (swap! s assoc :msg ""))))
-
-(defn send-typing
-  "Send a typing event to server for this user if it is not already set in game state AND user is not a spectator"
-  [s]
-  (r/with-let [typing (r/cursor game-state [:typing])]
-    (let [typing? (boolean (seq (:msg @s)))]
-      (when (and (not (:replay @game-state))
-                 ;; only send if the typing state is different
-                 (or (and (not @typing) typing?)
-                     (and (not typing?) @typing))
-                 (not-spectator?))
-        (ws/ws-send! [:game/typing {:gameid (current-gameid app-state)
-                                    :typing typing?}])))))
 
 (defn indicate-action []
   (when (not-spectator?)
@@ -238,7 +216,6 @@
       (= "/" (first input)) (complete-command state input))
      
     (swap! state assoc :msg input)))
-  ;;(send-typing state)
 
 (defn completions [!input-ref state]
   (when (show-completions? @state)
@@ -308,7 +285,6 @@
              :autoComplete "off"
              :ref #(reset! !input-ref %)
              :value (:msg @state)
-             ;;:on-blur #(send-typing (atom nil))
              :on-key-down #(completions-key-down-handler state %)
              :on-change #(log-input-change-handler state %)}]]]
          [:div.log-actions
@@ -400,5 +376,4 @@
     [:div.log
      ;; [angel-arena-log/inactivity-pane]
      [log-messages]
-     [log-typing]
      [log-input]]))

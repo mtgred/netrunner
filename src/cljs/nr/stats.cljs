@@ -2,6 +2,7 @@
   (:require-macros [cljs.core.async.macros :refer [go]])
   (:require
    [cljs.core.async :refer [<!] :as async]
+   [game.replay :refer [typing-log?]]
    [jinteki.cards :refer [all-cards]]
    [nr.ajax :refer [DELETE GET]]
    [nr.appstate :refer [app-state]]
@@ -154,7 +155,7 @@
            (if (seq (:log game))
              (doall (map-indexed
                       (fn [i msg]
-                        (when-not (and (= (:user msg) "__system__") (= (:text msg) "typing"))
+                        (when-not (typing-log? msg)
                           (if (= (:user msg) "__system__")
                             [:div.system {:key i} (render-message (render-player-highlight (:text msg) corp runner))]
                             [:div.message {:key i}

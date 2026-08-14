@@ -96,9 +96,9 @@
       nil)))
 
 (defn ignore-diff? []
-  (let [log (-> @game-state :log last :text)]
-    (or (= log "typing")
-        (s/includes? log "joined the game"))))
+  (let [log (-> @game-state :log last)]
+    (or (replay/typing-log? log)
+        (s/includes? (:text log) "joined the game"))))
 
 (defn start-replay-game []
   (let [lobby-state (atom {:room "casual"})
