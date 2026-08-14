@@ -11,7 +11,7 @@
     [nr.player-view :refer [player-view]]
     [nr.translations :refer [tr tr-element tr-element-with-embedded-content tr-span tr-side]]
     [nr.utils :refer [cond-button format-date-time mdy-formatter
-                      tr-non-game-toast non-game-toast]]
+                      precon-decklist-links tr-non-game-toast non-game-toast]]
     [nr.ws :as ws]
     [reagent-modals.modals :as reagent-modals]
     [reagent.core :as r]
@@ -102,8 +102,10 @@
 
 (defn precon-info-box [current-game]
   (when-let [precon (:precon @current-game)]
-    [:div.infobox.blue-shade
-     [tr-element :p (:tr-desc (matchup-by-key precon))]]))
+    (let [matchup (matchup-by-key precon)]
+      [:div.infobox.blue-shade
+       [tr-element :p (:tr-desc matchup)]
+       [precon-decklist-links matchup]])))
 
 (defn chimera-info-box [current-game]
   (when (= "chimera" (:format @current-game))

@@ -410,6 +410,15 @@
      [:button (merge {:on-click f :key text} attrs) text]
      [:button.disabled (merge {:key text} attrs) text])))
 
+(defn precon-decklist-links
+  "Links to the published decklists of a precon matchup, when it has them"
+  [{:keys [corp runner]}]
+  (when (and (:decklist corp) (:decklist runner))
+    [:p
+     [:a {:href (:decklist corp) :target "_blank"} (:name corp)]
+     " vs. "
+     [:a {:href (:decklist runner) :target "_blank"} (:name runner)]]))
+
 (defn checkbox-button [on-text off-text on-cond f]
   (if on-cond
     [:button.on {:on-click f :key on-text} on-text]

@@ -11,6 +11,7 @@
                            get-counters get-title has-subtype? ice? program? rezzed?
                            same-card? operation? condition-counter?]]
    [jinteki.cards :refer [all-cards]]
+   [jinteki.preconstructed :refer [matchup-by-key]]
    [jinteki.utils :refer [add-cost-to-label is-tagged? select-non-nil-keys
                           str->int] :as utils]
    [nr.appstate :refer [app-state current-gameid]]
@@ -28,7 +29,8 @@
    [nr.translations :refer [tr tr-data tr-game-prompt tr-side tr-element tr-span]]
    [nr.utils :refer [banned-span card-colors-class card-colors-custom-style
                      checkbox-button cond-button get-image-path
-                     image-or-face map-longest render-icons render-message]]
+                     image-or-face map-longest precon-decklist-links
+                     render-icons render-message]]
    [nr.ws :as ws]
    [jinteki.card-backs :as card-backs]
    [reagent.core :as r]))
@@ -1452,9 +1454,12 @@
       (when (and @show-decklists
                  (get-in @game-state [:decklists]))
         (let [corp-list (or (get-in @game-state [:decklists :corp]) {:- 1})
-              runner-list (or (get-in @game-state [:decklists :runner]) {:- 1})]
+              runner-list (or (get-in @game-state [:decklists :runner]) {:- 1})
+              precon (get-in @app-state [:current-game :precon])]
           [:div.decklists.blue-shade
            [:br]
+           (when precon
+             [precon-decklist-links (matchup-by-key precon)])
            [build-in-game-decklists corp-list runner-list]])))))
 
 (defn build-start-box
