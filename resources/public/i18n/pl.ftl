@@ -622,10 +622,6 @@ settings_ffg = FFG
 
 settings_game-stats = Statystyki wygranych/przegranych
 
-settings_get-log-top = Pobierz aktualną wysokość dziennika
-
-settings_get-log-width = Pobierz aktualną szerokość dziennika
-
 settings_high-res = Użyj obrazów kart o wysokiej rozdzielczości
 
 settings_invalid-email = Brak konta z tym adresem e-mail

@@ -808,10 +808,6 @@ settings_ffg = FFGYAY
 
 settings_game-stats = Amegay Inway/Oselay atisticsstay
 
-settings_get-log-top = Etgay urrentcay oglay optay
-
-settings_get-log-width = Etgay urrentcay oglay idthway
-
 settings_high-res = Enabley ighhay-esolutionray ardcay imagesyay
 
 settings_invalid-email = Onay accountyay ithway atthay emailyay addressyay existsyay

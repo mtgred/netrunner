@@ -137,34 +137,6 @@
     (doseq [card (vals @all-cards)]
       (update-card-art card art lang res s))))
 
-(defn log-width-option [s]
-  (let [log-width (r/atom (:log-width @s))]
-    (fn []
-      [:div
-       [:input {:type "number"
-                :min 100 :max 2000
-                :on-change #(do (swap! s assoc :log-width (.. % -target -value))
-                                (reset! log-width (.. % -target -value)))
-                :value @log-width}]
-       [:button.update-log-width {:type "button"
-                                  :on-click #(do (swap! s assoc :log-width (get-in @app-state [:options :log-width]))
-                                                 (reset! log-width (get-in @app-state [:options :log-width])))}
-        [tr-span [:settings_get-log-width "Get current log width"]]]])))
-
-(defn log-top-option [s]
-  (let [log-top (r/atom (:log-top @s))]
-    (fn []
-      [:div
-       [:input {:type "number"
-                :min 100 :max 2000
-                :on-change #(do (swap! s assoc :log-top (.. % -target -value))
-                                (reset! log-top (.. % -target -value)))
-                :value @log-top}]
-       [:button.update-log-width {:type "button"
-                                  :on-click #(do (swap! s assoc :log-top (get-in @app-state [:options :log-top]))
-                                                 (reset! log-top (get-in @app-state [:options :log-top])))}
-        [tr-span [:settings_get-log-top "Get current log top"]]]])))
-
 (defn change-email [_]
   (let [email-state (r/atom {:flash-message ""
                              :email ""})]
@@ -822,11 +794,6 @@
                             :checked (:labeled-unrezzed-cards @s)
                             :on-change #(swap! s assoc :labeled-unrezzed-cards (.. % -target -checked))}]
             [tr-span [:settings_label-unrezzed-cards "Label unrezzed cards"]]]]
-
-          [tr-element :h4 [:settings_log-size "Log size"]]
-          [:div
-           [log-width-option s]
-           [log-top-option s]]
 
           [tr-element :h4 [:settings_card-images "Card images"]]
           [:div

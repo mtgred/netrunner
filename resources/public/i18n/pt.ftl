@@ -669,10 +669,6 @@ settings_ffg = FFG
 
 settings_game-stats = Estatísticas de Vitória/Derrota em Jogo
 
-settings_get-log-top = Puxando topo do log atual
-
-settings_get-log-width = Puxando largura atual do log
-
 settings_high-res = Habilitar imagem das cartas em alta resolução
 
 settings_invalid-email = Nenhuma conta com esse email existe

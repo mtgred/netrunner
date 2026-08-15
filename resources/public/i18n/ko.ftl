@@ -576,10 +576,6 @@ settings_ffg = FFG
 
 settings_game-stats = 게임 승/패 기록
 
-settings_get-log-top = 현재 로그 높이 입력
-
-settings_get-log-width = 현재 로그 너비 입력
-
 settings_high-res = 고해상도 카드 이미지 활성화
 
 settings_invalid-email = 이 이메일 주소로 등록된 계정이 없습니다
