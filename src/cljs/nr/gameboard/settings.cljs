@@ -2,12 +2,15 @@
   (:require
    [nr.account :refer [post-options]]
    [nr.appstate :refer [app-state]]
+   [nr.gameboard.pane-size :refer [reset-pane-size!]]
    [nr.translations :refer [tr-element tr-span]]))
 
 (defn settings-pane []
   (fn []
     [:div.settings
-     [:section [:button {:on-click #(post-options (constantly nil))} [tr-span [:ingame-settings_save "Save"]]]]
+     [:section
+      [:button {:on-click #(post-options (constantly nil))} [tr-span [:ingame-settings_save "Save"]]]
+      [:button {:on-click #(reset-pane-size!)} [tr-span [:ingame-settings_reset-log-size "Reset log size"]]]]
      [:section
       [tr-element :h4 [:ingame-settings_card-stacking "Card settings"]]
       [:div

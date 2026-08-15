@@ -844,6 +844,8 @@ ingame-settings_runner-classic = Classic
 
 ingame-settings_runner-reverse = Reversed
 
+ingame-settings_reset-log-size = Reset log size
+
 ingame-settings_save = Save
 
 ingame-settings_show-alt = Show alternate card arts

@@ -8,6 +8,11 @@
   #?(:clj (java.lang.Integer/parseInt (re-find #"^\d+" string))
      :cljs (js/parseInt string 10)))
 
+(defn clamp
+  "Limit n to the range [lo hi]."
+  [n lo hi]
+  (max lo (min hi n)))
+
 (defn side-from-str [side-str]
   (keyword (str/lower-case side-str)))
 
