@@ -297,6 +297,7 @@ deck-builder_new-runner = New Runner deck
 deck-builder_notes = Notes
 
 deck-builder_reset = Reset
+
 deck-builder_sort = Sort:
 
 deck-builder_save = Save
@@ -1644,7 +1645,7 @@ settings_card-colors-selectable = Selectable / playable
 
 settings_card-colors-selected = Selected
 
-settings_card-iamge = Card Image
+settings_card-image = Card Image
 
 settings_card-images = Card images
 
@@ -1757,6 +1758,8 @@ settings_none = None
 settings_nsg = NSG
 
 settings_pass-on-rez = Pass priority when rezzing ice
+
+settings_pin-base-art = Zoomed cards always use base art
 
 settings_pin-zoom = Keep zoomed cards on screen
 
