@@ -1579,8 +1579,8 @@
              ;; todo - no-trash-or-steal to an actual event.
              :req (req (= 1 (get-in @state [:runner :register :no-trash-or-steal]))
                             (pos? (count (:hand corp)))
-                            (not (in-discard? target))
-                            (not (in-scored? target)))
+                            (not (in-discard? (:accessed-card context)))
+                            (not (in-scored? (:accessed-card context))))
              :once :per-turn
              :effect (effect (let [card-to-trash (first (shuffle (:hand corp)))
                                 card-seen? (same-card? (:accessed-card context) card-to-trash)

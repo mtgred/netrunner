@@ -2450,10 +2450,10 @@
                          (and (empty? (filter :trash cards))
                               (number? (:trash (:accessed-card context))))))
              :once :per-turn
-             :msg (msg "reveal " (card-str state target {:visible true}))
+             :msg (msg "reveal " (card-str state (:accessed-card context) {:visible true}))
              :async true
              :effect (effect (swap! state assoc-in [:runner :register :must-trash-with-credits] true)
-                          (reveal state side eid target))}
+                          (reveal state side eid (:accessed-card context)))}
             {:event :post-access-card
              :req (req (get-in @state [:runner :register :must-trash-with-credits]))
              :effect (effect (swap! state assoc-in [:runner :register :must-trash-with-credits] false))}]})
