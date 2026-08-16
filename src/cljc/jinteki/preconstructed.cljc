@@ -233,7 +233,7 @@
              {:qty 2 :card "Desperado"}
              {:qty 2 :card "Lemuria Codecracker"}
              {:qty 2 :card "Decoy"}
-             {:qty 1 :card "Crashspace"}
+             {:qty 1 :card "Crash Space"}
              {:qty 3 :card "Armitage Codebusting"}
              {:qty 2 :card "Bank Job"}])))
 
