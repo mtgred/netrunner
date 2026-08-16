@@ -1458,8 +1458,8 @@
               precon (get-in @app-state [:current-game :precon])]
           [:div.decklists.blue-shade
            [:br]
-           (when precon
-             [precon-decklist-links (matchup-by-key precon)])
+           (when-let [links (when precon (precon-decklist-links (matchup-by-key precon)))]
+             [:p links])
            [build-in-game-decklists corp-list runner-list]])))))
 
 (defn build-start-box

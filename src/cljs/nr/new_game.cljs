@@ -5,7 +5,7 @@
     [nr.appstate :refer [app-state]]
     [nr.auth :refer [authenticated] :as auth]
     [nr.translations :refer [tr tr-format tr-side tr-element tr-span]]
-    [nr.utils :refer [cond-button focus-on-mount slug->format]]
+    [nr.utils :refer [cond-button focus-on-mount precon-decklist-links slug->format]]
     [nr.ws :as ws]
     [reagent.core :as r]))
 
@@ -109,7 +109,9 @@
 (defn precon-choice [fmt-state precon]
   [:div
    {:style {:display (if (= @fmt-state "preconstructed") "block" "none")}}
-   [:span (str "Decks:     " (tr (:tr-underline (matchup-by-key (keyword @precon)))))]
+   (let [matchup (matchup-by-key (keyword @precon))]
+     [:span "Decks:     " (or (precon-decklist-links matchup)
+                              (tr (:tr-underline matchup)))])
    [:div
     [:label "Match:    "]
     [:select.precon

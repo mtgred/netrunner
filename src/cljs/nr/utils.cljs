@@ -414,7 +414,7 @@
   "Links to the published decklists of a precon matchup, when it has them"
   [{:keys [corp runner]}]
   (when (and (:decklist corp) (:decklist runner))
-    [:p
+    [:span
      [:a {:href (:decklist corp) :target "_blank"} (:name corp)]
      " vs. "
      [:a {:href (:decklist runner) :target "_blank"} (:name runner)]]))

@@ -105,7 +105,8 @@
     (let [matchup (matchup-by-key precon)]
       [:div.infobox.blue-shade
        [tr-element :p (:tr-desc matchup)]
-       [precon-decklist-links matchup]])))
+       (when-let [links (precon-decklist-links matchup)]
+         [:p links])])))
 
 (defn chimera-info-box [current-game]
   (when (= "chimera" (:format @current-game))
