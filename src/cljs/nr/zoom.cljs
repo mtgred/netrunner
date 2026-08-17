@@ -1,6 +1,7 @@
 (ns nr.zoom
   (:require
    [jinteki.settings :refer [zoom-default zoom-step zoom-min zoom-max]]
+   [jinteki.utils :refer [clamp]]
    [nr.appstate :refer [app-state]]
    [nr.local-storage :as ls]
    [nr.translations :refer [tr]]
@@ -9,7 +10,6 @@
 (def zoom-cursor (r/cursor app-state [:options :zoom]))
 
 (defn- round2 [n] (/ (js/Math.round (* n 100)) 100))
-(defn- clamp [n lo hi] (max lo (min hi n)))
 
 (defn apply-zoom!
   "Emulate browser zoom by setting CSS `zoom` on <html>, plus an `--app-zoom` custom

@@ -1559,10 +1559,6 @@ settings_game-stats = 遊戲勝負統計數據
 
 settings_gameplay-settings = 遊戲中設定
 
-settings_get-log-top = 使用目前行動紀錄高度
-
-settings_get-log-width = 使用目前行動紀錄寬度
-
 settings_ghost-trojans = 顯示附載程序的副本
 
 settings_high-res = 允許高解析度卡牌圖面
@@ -1588,8 +1584,6 @@ settings_log-player-highlight = 行動紀錄凸顯使用者名稱
 settings_log-player-highlight-none = 無
 
 settings_log-player-highlight-red-blue = 公司: 藍色 / 潛襲者: 紅色
-
-settings_log-size = 行動紀錄大小
 
 settings_log-timestamps = 行動紀錄標記時間
 

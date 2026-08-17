@@ -20,6 +20,7 @@
    [nr.gameboard.card-preview :refer [card-highlight-mouse-out
                                       card-highlight-mouse-over card-preview-mouse-out
                                       card-preview-mouse-over put-game-card-in-channel zoom-channel]]
+   [nr.gameboard.log :as game-log :refer [find-matches reset-completions]]
    [nr.gameboard.player-stats :refer [stat-controls stats-view]]
    [nr.gameboard.replay :refer [replay-panel]]
    [nr.gameboard.right-pane :refer [content-pane]]
@@ -1806,6 +1807,64 @@
      [:button#trace-submit {:on-click #(send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice (-> "#credit" js/$ .val str->int)})}
       [tr-span [:game_ok "OK"]]]]))
 
+(defn- card-title-prompt
+  [choices]
+  (let [state (r/atom {:value ""})
+        !input-ref (atom nil)
+        fill! (fn [match]
+                (swap! state assoc :value match)
+                (reset-completions state)
+                (when-let [input @!input-ref] (.focus input)))
+        submit! (fn []
+                  (send-command "choice" {:eid (prompt-eid (:side @game-state))
+                                          :choice (:value @state)}))]
+    (fn [choices]
+      (let [{:keys [value completions completion-highlight]} @state]
+        [:div
+         [:div.card-title-select
+          [:input#card-title
+           {:placeholder "Enter a card title"
+            :autoComplete "off"
+            :auto-focus true
+            :value value
+            :ref #(reset! !input-ref %)
+            :on-change #(let [input-value (.. % -target -value)
+                              matches (if (s/blank? input-value)
+                                        []
+                                        (find-matches (:autocomplete choices) input-value))]
+                          (swap! state assoc
+                                 :value input-value
+                                 :completion-highlight nil
+                                 :completions (mapv (fn [match]
+                                                      {:display-text match
+                                                       :on-select (fn [] (fill! match))})
+                                                    matches)))
+            :on-key-down
+            (fn [e]
+              (let [n (count completions)
+                    chosen (cond
+                             completion-highlight (nth completions completion-highlight)
+                             (= 1 n) (first completions))]
+                (case (.-key e)
+                  "ArrowDown" (when (pos? n)
+                                (.preventDefault e)
+                                (swap! state update :completion-highlight #(if % (mod (inc %) n) 0)))
+                  "ArrowUp" (when (pos? n)
+                              (.preventDefault e)
+                              (swap! state update :completion-highlight #(if % (mod (dec %) n) (dec n))))
+                  ("Tab" "ArrowRight") (when chosen
+                                         (.preventDefault e)
+                                         ((:on-select chosen)))
+                  "Enter" (do (.preventDefault e)
+                              (.stopPropagation e)
+                              (when chosen ((:on-select chosen)))
+                              (when-not completion-highlight (submit!)))
+                  "Escape" (reset-completions state)
+                  nil)))}]
+          [game-log/completions !input-ref state]]
+         [:button#card-submit {:on-click #(submit!)}
+          [tr-span [:game_ok "OK"]]]]))))
+
 (defn prompt-div
   [me {:keys [card msg prompt-type choices offer-bad-pub?] :as prompt-state}]
   (let [id (atom 0)]
@@ -1868,14 +1927,7 @@
 
        ;; auto-complete text box
        (:card-title choices)
-       [:div
-        [:div.credit-select
-         [:input#card-title {:placeholder "Enter a card title"
-                             :onKeyUp #(when (= "Enter" (.-key %))
-                                         (-> "#card-submit" js/$ .click)
-                                         (.stopPropagation %))}]]
-        [:button#card-submit {:on-click #(send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice (-> "#card-title" js/$ .val)})}
-         [tr-span [:game_ok "OK"]]]]
+       [card-title-prompt choices]
 
        ;; choice of specified counters on card
        (:counter choices)
@@ -2004,8 +2056,7 @@
       #(send-command "credit")]]))
 
 (defn button-pane [{:keys [side prompt-state]}]
-  (let [autocomp (r/track (fn [] (get-in @prompt-state [:choices :autocomplete])))
-        show-discard? (r/track (fn [] (get-in @prompt-state [:show-discard])))
+  (let [show-discard? (r/track (fn [] (get-in @prompt-state [:show-discard])))
         prompt-type (r/track (fn [] (get-in @prompt-state [:prompt-type])))
         discard-opened-by-system (r/atom false)
         show-opponent-discard? (r/track (fn [] (get-in @prompt-state [:show-opponent-discard])))
@@ -2015,8 +2066,6 @@
 
        :component-did-update
        (fn []
-         (when (pos? (count @autocomp))
-           (-> "#card-title" js/$ (.autocomplete (clj->js {"source" @autocomp}))))
          (cond @show-discard? (do (-> ".me .discard-container .popup" js/$ .fadeIn)
                                   (reset! discard-opened-by-system true))
                @discard-opened-by-system (do (-> ".me .discard-container .popup" js/$ .fadeOut)
@@ -2028,9 +2077,7 @@
 
          (if (= "select" @prompt-type)
            (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
-           (set! (.-cursor (.-style (.-body js/document))) "default"))
-         (when (= "card-title" @prompt-type)
-           (-> "#card-title" js/$ .focus)))
+           (set! (.-cursor (.-style (.-body js/document))) "default")))
 
        :reagent-render
        (fn [{:keys [side run encounters prompt-state me] :as button-pane-args}]

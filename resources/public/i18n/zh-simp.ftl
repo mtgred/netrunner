@@ -1736,10 +1736,6 @@ settings_game-stats = 对战胜负统计
 
 settings_gameplay-settings = 游戏设置
 
-settings_get-log-top = 获取当前日志框顶部坐标
-
-settings_get-log-width = 获取当前日志框宽度
-
 settings_ghost-trojans = 对于被负载的程序显示鬼影
 
 settings_tactile-cards = 触摸卡牌
@@ -1769,8 +1765,6 @@ settings_log-player-highlight = 日志玩家高亮
 settings_log-player-highlight-none = 无
 
 settings_log-player-highlight-red-blue = 公司：蓝色 / 潜袭者：红色
-
-settings_log-size = 日志栏尺寸
 
 settings_log-timestamps = 日志时间戳
 

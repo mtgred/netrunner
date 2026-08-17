@@ -681,10 +681,6 @@ settings_ffg = FFG
 
 settings_game-stats = Statistiques des parties gagnées/perdues
 
-settings_get-log-top = Obtenir le top du journal actuel
-
-settings_get-log-width = Obtenir la largeur actuelle du journal
-
 settings_high-res = Activer les images des cartes en haute résolution
 
 settings_invalid-email = Aucun compte avec cette adresse e-mail

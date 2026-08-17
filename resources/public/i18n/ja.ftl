@@ -799,8 +799,6 @@ settings_language = 言語
 
 settings_layout-options = レイアウト設定
 
-settings_log-size = ゲームログサイズ
-
 settings_pass-on-rez = アイスのレゾ時に優先権をパス
 
 settings_pin-base-art = 拡大したカードの基本アートを使用

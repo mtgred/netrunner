@@ -845,6 +845,8 @@ ingame-settings_runner-classic = Classic
 
 ingame-settings_runner-reverse = Reversed
 
+ingame-settings_reset-log-size = Reset log size
+
 ingame-settings_save = Save
 
 ingame-settings_show-alt = Show alternate card arts
@@ -1715,10 +1717,6 @@ settings_game-stats = Game Win/Lose statistics
 
 settings_gameplay-settings = Gameplay Settings
 
-settings_get-log-top = Get current log top
-
-settings_get-log-width = Get current log width
-
 settings_ghost-trojans = Display ghosts for hosted programs
 
 settings_tactile-cards = Tactile cards
@@ -1748,8 +1746,6 @@ settings_log-player-highlight = Log player highlight
 settings_log-player-highlight-none = None
 
 settings_log-player-highlight-red-blue = Corp: Blue / Runner: Red
-
-settings_log-size = Log size
 
 settings_log-timestamps = Log timestamps
 

@@ -1,10 +1,11 @@
 (ns nr.gameboard.right-pane
   (:require [cljs.core.async :refer [put!]]
+            [jinteki.utils :refer [clamp]]
             [nr.appstate :refer [app-state]]
-            [nr.local-storage :as ls]
             [nr.gameboard.card-preview :refer [zoom-channel]]
             [nr.gameboard.diagrams :refer [run-timing-pane turn-timing-pane]]
             [nr.gameboard.log :refer [log-pane]]
+            [nr.gameboard.pane-size :refer [resize-card-zoom reset-pane-size! set-pane-size!]]
             [nr.gameboard.replay :refer [notes-pane notes-shared-pane]]
             [nr.gameboard.state :refer [game-state]]
             [nr.gameboard.settings :refer [settings-pane]]
@@ -37,47 +38,52 @@
    {:hiccup [settings-pane]
     :label [:log_settings "Settings"]}})
 
-(defn- resize-card-zoom
-  "Resizes the card zoom based on the values in the app-state"
-  []
-  (let [width (get-in @app-state [:options :log-width])
-        top (get-in @app-state [:options :log-top])
-        max-card-width (- width 5)
-        max-card-height (- top 10)
-        card-ratio (/ 418 300)]
-    (if (> (/ max-card-height max-card-width) card-ratio)
-      (-> ".card-zoom" js/$
-        (.css "width" max-card-width)
-        (.css "height" (int (* max-card-width card-ratio))))
-      (-> ".card-zoom" js/$
-        (.css "width" (int (/ max-card-height card-ratio)))
-        (.css "height" max-card-height)))
-    (-> ".right-pane" js/$ (.css "width" width))
-    (-> ".content-pane" js/$
-      (.css "left" 0)
-      (.css "top" top)
-      (.css "height" "auto")
-      (.css "width" width))))
+(defonce ^:private resize-state (atom nil))
 
-(defn- pane-resize
-  "Resize the card zoom to fit the available space"
-  [event ui]
-  (let [width (.. ui -size -width)
-        top (.. ui -position -top)]
-    (swap! app-state assoc-in [:options :log-width] width) ;;XXX: rename
-    (swap! app-state assoc-in [:options :log-top] top)
-    (ls/save! "log-width" width)
-    (ls/save! "log-top" top)
-    (resize-card-zoom)))
+(defonce ^:private last-resize-down (atom 0))
 
-(defn- pane-start-resize [event ui]
+(defn- pane-start-resize
   "Display a zoomed card when resizing so the user can visualize how the
-  resulting zoom will look."
-  (when-let [card (get-in @game-state [:runner :identity])]
-    (put! zoom-channel card)))
+  resulting zoom will look. A double press resets the pane to its default size."
+  [dir e]
+  (.preventDefault e)
+  (let [now (.-timeStamp e)
+        double-press? (< (- now @last-resize-down) 350)]
+    (reset! last-resize-down now)
+    (if double-press?
+      (reset-pane-size!)
+      (do (.setPointerCapture (.-currentTarget e) (.-pointerId e))
+          (reset! resize-state {:dir dir
+                                :start-x (.-clientX e)
+                                :start-y (.-clientY e)
+                                :start-width (get-in @app-state [:options :log-width])
+                                :start-top (get-in @app-state [:options :log-top])})
+          (when-let [card (get-in @game-state [:runner :identity])]
+            (put! zoom-channel card))))))
 
-(defn- pane-stop-resize [event ui]
-  (put! zoom-channel false))
+(defn- pane-resize [e]
+  (when-let [{:keys [dir start-x start-y start-width start-top]} @resize-state]
+    (let [width (if (#{:w :nw} dir)
+                  (clamp (- start-width (- (.-clientX e) start-x))
+                         100 (- (.-innerWidth js/window) 300))
+                  start-width)
+          top (if (#{:n :nw} dir)
+                (clamp (+ start-top (- (.-clientY e) start-y))
+                       0 (- (.-innerHeight js/window) 100))
+                start-top)]
+      (set-pane-size! width top))))
+
+(defn- pane-stop-resize [_e]
+  (when @resize-state
+    (reset! resize-state nil)
+    (put! zoom-channel false)))
+
+(defn- resize-handle [dir]
+  [:div {:class ["resize-handle" (str "resize-handle-" (name dir))]
+         :on-pointer-down #(pane-start-resize dir %)
+         :on-pointer-move pane-resize
+         :on-pointer-up pane-stop-resize
+         :on-pointer-cancel pane-stop-resize}])
 
 (defn- tab-selector [selected-tab]
   [:div.panel.panel-top.blue-shade.selector
@@ -109,16 +115,15 @@
       {:display-name "content-pane"
 
        :component-did-mount
-       (fn [this]
-         (-> ".content-pane" js/$ (.resizable #js {:handles "w, n, nw"
-                                                   :resize pane-resize
-                                                   :start pane-start-resize
-                                                   :stop pane-stop-resize}))
+       (fn [_this]
          (resize-card-zoom))
 
        :reagent-render
        (fn []
          [:div.content-pane
+          [resize-handle :w]
+          [resize-handle :n]
+          [resize-handle :nw]
           [tab-selector selected-tab]
           [:div.panel.blue-shade.panel-bottom.content
            (get-in @loaded-tabs [@selected-tab :hiccup] "nothing here")]])})))
