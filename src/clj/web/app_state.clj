@@ -27,6 +27,9 @@
 (defn set-last-update [gameid]
   (ConcurrentHashMap/.put last-updates gameid (inst/now)))
 
+(defn remove-last-update [gameid]
+  (ConcurrentHashMap/.remove last-updates gameid))
+
 (defonce lobby-subs-timeout-hours 1)
 
 (defn register-user
