@@ -2,7 +2,7 @@
   (:require
    [cljc.java-time.duration :as duration]
    [cljc.java-time.instant :as inst]
-   [cond-plus.core :refer [cond+]]
+   [com.noahbogart.cond-plus :refer [cond+]]
    [game.core.effects :refer [any-effects sum-effects]]
    [game.core.say :refer [play-sfx system-msg system-say]]
    [game.utils :refer [dissoc-in]]
