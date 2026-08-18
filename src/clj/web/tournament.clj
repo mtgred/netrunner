@@ -59,7 +59,7 @@
 (defn cancel-tasks-for-lobby!
   "Cancel tasks for a given lobby"
   [{:keys [gameid] :as lobby}]
-  (doseq [k (keys (get tasks gameid []))]
+  (doseq [k (keys (get @tasks gameid []))]
     (cancel-task! [gameid k])))
 
 (defn cancel-all-tasks!
