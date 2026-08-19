@@ -80,9 +80,7 @@
   (println "Loaded"))
 
 (defn get-messages [lang]
-  (->> (get @fluent-dictionary lang)
-       (remove #(str/starts-with? "angel-arena" (first %)))
-       (into {})))
+  (into {} (get @fluent-dictionary lang)))
 
 (defn missing-translations
   "Treat :en as the single source of truth. Compare each other language against it.
@@ -133,7 +131,6 @@
                            (file-seq (io/file "src/cljc")))
                    (filter #(.isFile ^File %))
                    (filter #(str/includes? (str %) ".clj"))
-                   (remove #(str/includes? (str %) "angel_arena"))
                    (map (juxt str slurp)))
         finds
         (for [[file-name contents] files
@@ -192,7 +189,6 @@
                            (file-seq (io/file "src/cljc")))
                    (filter #(.isFile ^File %))
                    (filter #(str/includes? (str %) ".clj"))
-                   (remove #(str/includes? (str %) "angel_arena"))
                    (map (juxt str slurp)))]
     (doseq [[path regex] (sort regexen)
             :when (->> files

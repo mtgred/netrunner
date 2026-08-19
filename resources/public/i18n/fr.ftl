@@ -549,7 +549,6 @@ lobby_title-error = Veuillez saisir un nom de partie.
 lobby_too-little-data = Trop peu de données
 
 lobby_type = {$type ->
-    [angel-arena] Angel Arena
     [casual] Amical
     [competitive] Compétition
     [tournament] Tournois

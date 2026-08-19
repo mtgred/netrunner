@@ -469,7 +469,6 @@
 
 (def state-keys
   [:active-player
-   ;; :angel-arena-info
    :corp
    :corp-phase-12
    :corp-post-discard

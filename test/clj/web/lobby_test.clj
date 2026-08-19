@@ -26,9 +26,6 @@
            (lobby/auto-select-deck-id (assoc auto-opts :auto-select-default-deck-tournament true)
                                       "competitive" "standard" "Corp"))))
 
-  (testing "nil in rooms that never auto-select"
-    (is (nil? (lobby/auto-select-deck-id auto-opts "angel-arena" "standard" "Corp"))))
-
   (testing "nil for Any Side"
     (is (nil? (lobby/auto-select-deck-id auto-opts "casual" "standard" "Any Side"))))
 

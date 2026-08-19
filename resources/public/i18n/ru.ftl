@@ -1170,7 +1170,6 @@ lobby_too-little-data = Слишком мало данных
 lobby_tournament = Турнирные игры
 
 lobby_type = {$type ->
-    [angel-arena] Арена Ангелов
     [casual] Обычные
     [competitive] Соревновательные
     [join] Подключиться

@@ -1129,7 +1129,6 @@ lobby_too-little-data = Too little data
 lobby_tournament = Tournament
 
 lobby_type = {$type ->
-    [angel-arena] Angel Arena
     [casual] Casual
     [competitive] Competitive
     [join] Join

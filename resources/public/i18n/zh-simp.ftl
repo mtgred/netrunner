@@ -1148,7 +1148,6 @@ lobby_too-little-data = 数据不足
 lobby_tournament = 锦标赛
 
 lobby_type = {$type ->
-    [angel-arena] 天使竞技场
     [casual] 休闲
     [competitive] 竞技
     [join] 加入

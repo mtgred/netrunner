@@ -64,7 +64,6 @@
     (make-dev-app opts)))
 
 (defmethod ig/init-key :web/app-state [_ _]
-  ;; (reset! angel-arena/arena-queue [])
   (reset! app-state/app-state
           {:lobbies {}
            :lobby-updates {}
@@ -83,8 +82,7 @@
 
 (defmethod ig/init-key :web/lobby [_ {:keys [interval mongo time-inactive]}]
   (let [db (:db mongo)]
-    [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)
-     #_(tick #(angel-arena/check-for-inactivity db) interval)]))
+    [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)]))
 
 (defmethod ig/halt-key! :web/lobby [_ futures]
   (run! future-cancel futures))
