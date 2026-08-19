@@ -249,7 +249,7 @@
                           :log (:log @state)}})
         (when (and should-save-replay (not should-share-replay))
           (delete-old-replay db (get-in @state [:corp :user]))
-          (delete-old-replay db (get-in @state [:corp :runner])))
+          (delete-old-replay db (get-in @state [:runner :user])))
         ;; (when (and (= "angel-arena" room)
         ;;            (:winner @state))
         ;;   (angel-arena-stats/game-finished db game))
