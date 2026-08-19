@@ -19,8 +19,7 @@
    [web.lobby :as lobby]
    [web.replay-restore :as replay-restore]
    [web.stats :as stats]
-   [web.ws :as ws]
-   [game.core :refer [make-message]]))
+   [web.ws :as ws]))
 
 (defn game-diff-json
   "Converts the appropriate diff to json"
@@ -411,8 +410,7 @@
     {:keys [gameid msg]} :?data
     id :id
     timestamp :timestamp}]
-  (let [new-app-state (app-state/get-lobby gameid)
-        {:keys [state mute-spectators] :as lobby?} (get-in new-app-state [:lobbies gameid])
+  (let [{:keys [state mute-spectators] :as lobby?} (app-state/get-lobby gameid)
         side (cond+
               [(lobby/player? uid lobby?) :> #(side-from-str (:side %))]
               [(and (not mute-spectators) (lobby/spectator? uid lobby?)) :spectator])]
@@ -452,13 +450,12 @@
 
 (defn handle-swap-sides-in-prog [lobbies gameid]
   (if-let [lobby (get lobbies gameid)]
-    (do
-      (-> lobby
-          ;; note - original-players needs to be updated so that you rejoin the game
-          ;; on the correct side if you leave/rejoin
-          (update :original-players #(mapv switch-side %))
-          (update :players #(mapv switch-side %))
-          (->> (assoc lobbies gameid))))
+    (-> lobby
+        ;; note - original-players needs to be updated so that you rejoin the game
+        ;; on the correct side if you leave/rejoin
+        (update :original-players #(mapv switch-side %))
+        (update :players #(mapv switch-side %))
+        (->> (assoc lobbies gameid)))
     lobbies))
 
 (defn switch-side-for-lobby
