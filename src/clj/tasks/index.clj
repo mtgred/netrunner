@@ -15,6 +15,12 @@
      ["game-logs" (array-map :gameid 1)]
      ["game-logs" (array-map "corp.player.username" 1 :start-date -1)]
      ["game-logs" (array-map "runner.player.username" 1 :start-date -1)]
+     ["game-logs" (array-map "corp.player.username" 1 :start-date -1)
+      {:name "corp_username_unshared_replay"
+       :partialFilterExpression {:has-replay true :replay-shared false}}]
+     ["game-logs" (array-map "runner.player.username" 1 :start-date -1)
+      {:name "runner_username_unshared_replay"
+       :partialFilterExpression {:has-replay true :replay-shared false}}]
      ["messages" (array-map :channel 1 :date -1)]
      ["messages" (array-map :username 1 :date -1)]
      ["news" (array-map :date -1)]
