@@ -32,8 +32,7 @@
 
 (defmethod ws/event-msg-handler :stats/update [{{:keys [userstats deck-id deckstats]} :?data}]
   (swap! app-state assoc :stats userstats)
-  (update-deck-stats deck-id deckstats)
-  (fetch-game-history))
+  (update-deck-stats deck-id deckstats))
 
 (defn- set-replay-shared [state gameid shared?]
   (swap! state (fn [s]
