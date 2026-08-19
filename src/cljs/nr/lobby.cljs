@@ -6,7 +6,6 @@
     [clojure.string :as str]
     [game.replay :as game-replay]
     [nr.ajax :refer [GET]]
-    [nr.angel-arena.lobby :as angel-arena]
     [nr.appstate :refer [app-state current-gameid]]
     [nr.auth :refer [authenticated] :as auth]
     [nr.game-row :refer [game-row]]
@@ -218,11 +217,10 @@
                [format-toggle k (contains? visible-formats k)]))]]
     [room-tab user s games "casual" "casual"]
     [room-tab user s games "competitive" "tournament"]]
-   (when-not (= "angel-arena" (:room @s))
-     [:div.lobby-buttons
-      [new-game-button s games current-game user]
-      [reload-lobby-button]
-      [load-replay-button s games current-game user]])])
+   [:div.lobby-buttons
+    [new-game-button s games current-game user]
+    [reload-lobby-button]
+    [load-replay-button s games current-game user]]])
 
 (defn games-list-panel [state games current-game user visible-formats]
   (let [visibilitychange-fn
@@ -246,28 +244,23 @@
        [:div.games
         [button-bar state games current-game user visible-formats]
         (if @ws/lobby-updates-state
-          (if (= "angel-arena" (:room @state))
-            [angel-arena/game-list state {:games games
-                                          :current-game current-game}]
-            [game-list state user games current-game])
+          [game-list state user games current-game]
           [:div
            "Lobby updates halted." ; this should never be visible
            [:button {:on-click #(ws/lobby-updates-continue!)} "Reenable lobby updates"]])])})))
 
 (defn right-panel
-  [state decks current-game user]
-  (if (= "angel-arena" (:room @state))
-    [angel-arena/game-panel decks]
-    [:div.game-panel
-     (cond
-       (:replay @state)
-       [start-replay-div state]
-       (:editing @state)
-       [create-new-game state user]
-       (:password-game @state)
-       [password-game state]
-       (and @current-game (not (:started @current-game)))
-       [pending-game current-game user])]))
+  [state current-game user]
+  [:div.game-panel
+   (cond
+     (:replay @state)
+     [start-replay-div state]
+     (:editing @state)
+     [create-new-game state user]
+     (:password-game @state)
+     [password-game state]
+     (and @current-game (not (:started @current-game)))
+     [pending-game current-game user])])
 
 (defn load-replay-from-params [s params]
   (swap! app-state dissoc :replay-id)
@@ -293,7 +286,6 @@
 
 (defn game-lobby []
   (r/with-let [state (r/atom {:room "casual"})
-               decks (r/cursor app-state [:decks])
                games (r/cursor app-state [:games])
                current-game (r/cursor app-state [:current-game])
                user (r/cursor app-state [:user])
@@ -310,4 +302,4 @@
        (load-replay-from-params state params)
        [:div.lobby.panel.blue-shade
         [games-list-panel state games current-game user visible-formats]
-        [right-panel state decks current-game user]])]))
+        [right-panel state current-game user]])]))

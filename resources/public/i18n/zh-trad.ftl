@@ -1032,7 +1032,6 @@ lobby_too-little-data = 資料不夠
 lobby_tournament = 比賽區
 
 lobby_type = {$type ->
-    [angel-arena] 天使競技場
     [casual] 休閒
     [competitive] 競技
     [join] 加入

@@ -3,7 +3,6 @@
    [clojure.string :as string]
    [jinteki.utils :refer [command-info]]
    [jinteki.cards :refer [all-cards]]
-   [nr.angel-arena.log :as angel-arena-log]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.avatar :refer [avatar]]
    [nr.gameboard.actions :refer [send-command]]
@@ -364,6 +363,5 @@
 (defn log-pane []
   (fn []
     [:div.log
-     ;; [angel-arena-log/inactivity-pane]
      [log-messages]
      [log-input]]))

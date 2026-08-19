@@ -535,7 +535,6 @@ lobby_title-error = Por favor insira o titulo do jogo.
 lobby_too-little-data = Falta de dados
 
 lobby_type = {$type ->
-    [angel-arena] undefined
     [casual] Casual
     [competitive] Competitivo
     [tournament] Torneio

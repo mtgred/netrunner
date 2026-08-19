@@ -11,7 +11,6 @@
    [monger.result :refer [acknowledged?]]
    [ring.util.request :refer [request-url]]
    [web.analytics :refer [update-analytics]]
-   ;;[web.angel-arena.stats :as angel-arena-stats]
    [web.mongodb :refer [->object-id]]
    [web.pages :as pages]
    [web.user :refer [active-user?]]
@@ -250,9 +249,6 @@
         (when (and should-save-replay (not should-share-replay))
           (delete-old-replay db (get-in @state [:corp :user]))
           (delete-old-replay db (get-in @state [:runner :user])))
-        ;; (when (and (= "angel-arena" room)
-        ;;            (:winner @state))
-        ;;   (angel-arena-stats/game-finished db game))
         (catch Exception e
           (timbre/error e (str "Caught exception saving game stats: " (:stats @state))))))))
 

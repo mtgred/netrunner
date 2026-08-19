@@ -555,7 +555,6 @@ lobby_title-error = Easeplay illfay ayay amegay itletay.
 lobby_too-little-data = Ootay ittlelay ataday
 
 lobby_type = {$type ->
-    [angel-arena] Angelyay Arenayay
     [casual] Asualcay
     [competitive] Ompetitivecay
     [tournament] Ournamenttay

@@ -669,7 +669,6 @@ lobby_title = ルーム名
 lobby_title-error = ルーム名を修正してください。
 
 lobby_type = {$type ->
-    [angel-arena] Angel Arena
     [casual] Casual
     [competitive] Competitive
     [tournament] Tournament
