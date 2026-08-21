@@ -8176,6 +8176,17 @@
      (is (= "Leela Patel: Trained Pragmatist" (:title (:card (prompt-map :runner))))
          "Leela triggers, as Whistleblower does not eat steal trigger")))
 
+(deftest whistleblower-v-pinhole-threading
+  (do-game
+    (new-game {:corp {:hand ["Project Atlas"]}
+               :runner {:hand ["Whistleblower" "Pinhole Threading"]}})
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (take-credits state :corp)
+    (play-cards state :runner "Whistleblower" ["Pinhole Threading" "HQ"])
+    (run-continue-until state :success)
+    (click-prompts state :runner "Yes" "Project Atlas" "Project Atlas" "No action")
+    (is (= "Project Atlas" (:title (get-content state :remote1 0))) "couldn't steal")))
+
 (deftest xanadu
   ;; Xanadu - Increase all ice rez cost by 1 credit
   (do-game
