@@ -4,6 +4,16 @@
                       :name "netrunner"
                       ; Monger requires a db name in the URI string, be sure to specify
                       :connection-string #or [#env MONGO_CONNECTION_URI nil]}
+ :logging/timbre {:appenders
+                  ;; set appender args:
+                  ;; `:enabled?` sets whether an appender should run
+                  ;; `:log-path` defaults to `~/logs/jinteki-*.log`
+                  ;;
+                  ;; the `:println` appender should be disabled in prod
+                  {:println {:enabled? false}
+                   :default nil
+                   :mod-action nil
+                   :telemetry nil}}
  :web/app-state nil
  :web/server {:port 1042
               :app #ig/ref :web/app}

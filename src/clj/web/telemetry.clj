@@ -1,6 +1,6 @@
 (ns web.telemetry
   (:require
-   [clojure.core.async :refer [<! go timeout]]
+   [clojure.core.async :refer [<! go-loop timeout]]
    [cljc.java-time.temporal.chrono-unit :as chrono]
    [cljc.java-time.duration :as duration]
    [cljc.java-time.instant :as inst]
@@ -116,53 +116,56 @@
       (timbre/info "Warning: Open FD count not supported on this JVM"))))
 
 (defonce log-stats
-  (go (while true
-    (<! (timeout log-stat-frequency))
-    (let [lobbies (:lobbies @app-state)
-          lobbies-count (count lobbies)
-          players (reduce + 0 (map #(count (:players %)) (vals lobbies)))
-          spectators (reduce + 0 (map #(count (:spectators %)) (vals lobbies)))
-          card-freqs (active-card-frequencies lobbies)
-          cmd-freqs (recent-command-frequencies lobbies)
-          user-cache-count (count (:users @app-state))
-          lobby-sub-count (count (filter identity (vals (:lobby-updates @app-state))))
-          lobby-update-uids (count (lobby-update-uids))
-          [average-sub-time oldest-sub-time] (subscriber-time-metrics (filter identity (vals (:lobby-updates @app-state))))
-          latencies (format-delay!)
-          ajax-uid-count (count (:ajax (ws/connected-sockets)))
-          ajax-conn-counts (seq (map count (:ajax (ws/connections))))
-          ajax-conn-total (reduce + ajax-conn-counts)
-          ws-uid-count (count (:ws (ws/connected-sockets)))
-          ws-conn-counts (seq (map count (:ws (ws/connections))))
-          ws-conn-total (reduce + ws-conn-counts)]
-      (timbre/info (str
-                     "stats -"
-                     " lobbies: " lobbies-count
-                     " players: " players
-                     " spectators: " spectators
-                     " cached-users: " user-cache-count
-                     " lobby-subs: " lobby-sub-count
-                     " lobby-update-uids: " lobby-update-uids
-                     " average-lobby-subs-lifetime: " average-sub-time "m"
-                     " oldest-lobby-sub: " oldest-sub-time "m"
-                     " | "
-                     "websockets -"
-                     " :ajax { "
-                     " uid: " ajax-uid-count
-                     " conn: " ajax-conn-total
-                     " } :ws { "
-                     " uid: " ws-uid-count
-                     " conn: " ws-conn-total
-                     " }"))
-      (timbre/info (str "pool occupants: " (seq (map count (pool-occupants-info)))))
-      (timbre/info latencies)
-      ;; note: the two below (active cards and recent commands) are not relevant for our current situation I think
-      ;; if we ever get locking issues or something in the future, it can be useful to diagnose them though
-      ;;(timbre/info (str "Active Cards (across all lobbies): " card-freqs))
-      ;;(timbre/info (str "Recent Commands (across all lobbies): " cmd-freqs))
-      (timbre/info (str "thread states: " (thread-stats)))
-      (timbre/info (ws-chan-backlog))
-      (log-gc)
-      (log-open-file-descriptors)
-      (timbre/info (str "System Load (average): " (system-load-average)
-                        " - heap: " (heap-usage) "\n"))))))
+  (go-loop []
+    (timbre/with-context+
+      {:type :telemetry}
+      (<! (timeout log-stat-frequency))
+      (let [lobbies (:lobbies @app-state)
+            lobbies-count (count lobbies)
+            players (reduce + 0 (map #(count (:players %)) (vals lobbies)))
+            spectators (reduce + 0 (map #(count (:spectators %)) (vals lobbies)))
+            card-freqs (active-card-frequencies lobbies)
+            cmd-freqs (recent-command-frequencies lobbies)
+            user-cache-count (count (:users @app-state))
+            lobby-sub-count (count (filter identity (vals (:lobby-updates @app-state))))
+            lobby-update-uids (count (lobby-update-uids))
+            [average-sub-time oldest-sub-time] (subscriber-time-metrics (filter identity (vals (:lobby-updates @app-state))))
+            latencies (format-delay!)
+            ajax-uid-count (count (:ajax (ws/connected-sockets)))
+            ajax-conn-counts (seq (map count (:ajax (ws/connections))))
+            ajax-conn-total (reduce + ajax-conn-counts)
+            ws-uid-count (count (:ws (ws/connected-sockets)))
+            ws-conn-counts (seq (map count (:ws (ws/connections))))
+            ws-conn-total (reduce + ws-conn-counts)]
+        (timbre/info (str
+                       "stats -"
+                       " lobbies: " lobbies-count
+                       " players: " players
+                       " spectators: " spectators
+                       " cached-users: " user-cache-count
+                       " lobby-subs: " lobby-sub-count
+                       " lobby-update-uids: " lobby-update-uids
+                       " average-lobby-subs-lifetime: " average-sub-time "m"
+                       " oldest-lobby-sub: " oldest-sub-time "m"
+                       " | "
+                       "websockets -"
+                       " :ajax { "
+                       " uid: " ajax-uid-count
+                       " conn: " ajax-conn-total
+                       " } :ws { "
+                       " uid: " ws-uid-count
+                       " conn: " ws-conn-total
+                       " }"))
+        (timbre/info (str "pool occupants: " (seq (map count (pool-occupants-info)))))
+        (timbre/info latencies)
+        ;; note: the two below (active cards and recent commands) are not relevant for our current situation I think
+        ;; if we ever get locking issues or something in the future, it can be useful to diagnose them though
+        ;;(timbre/info (str "Active Cards (across all lobbies): " card-freqs))
+        ;;(timbre/info (str "Recent Commands (across all lobbies): " cmd-freqs))
+        (timbre/info (str "thread states: " (thread-stats)))
+        (timbre/info (ws-chan-backlog))
+        (log-gc)
+        (log-open-file-descriptors)
+        (timbre/info (str "System Load (average): " (system-load-average)
+                       " - heap: " (heap-usage) "\n"))))
+    (recur)))

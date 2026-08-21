@@ -32,13 +32,13 @@
   [timestamp id]
   (let [now (inst/now)
         start timestamp
-        key (or id :unknown)
+        k (or id :unknown)
         diff (duration/between start now)
         total-ms (quot (duration/get diff chrono/nanos) 1000000)
         create-or-update (fn [map]
-                           (if (contains? map key)
-                             (assoc map key (conj (key map) total-ms))
-                             (assoc map key (seq [total-ms]))))]
+                           (if (contains? map k)
+                             (assoc map k (conj (get map k) total-ms))
+                             (assoc map k (seq [total-ms]))))]
     (send telemetry-buckets create-or-update)))
 (defn fetch-delay-log!
   []
@@ -82,7 +82,7 @@
                 (swap! cleaned! + (count stale))
                 (swap! (:occupants pool) set/difference stale))))
           (if (pos? @cleaned!)
-            (timbre/info (str "cleaned up" @cleaned! "stale pool occupants!"))
+            (timbre/info "cleaned up" @cleaned! "stale pool occupants!")
             (timbre/info "all pools are tidy!"))))))
 
 (defonce lobby-pool (cp/threadpool 1 {:name "lobbies-thread"}))
@@ -120,6 +120,7 @@
      :date now
      :last-update now
      :players [player]
+     :original-players [player]
      :spectators []
      :corp-spectators []
      :runner-spectators []
@@ -206,10 +207,10 @@
        (not-empty)))
 
 (defn prepare-original-players [players]
-  (map (fn [p] (-> p
-                   (update :user select-keys [:username :emailhash])
-                   (select-keys [:user])))
-       players))
+  (mapv (fn [p] (-> p
+                    (update :user select-keys [:username :emailhash])
+                    (select-keys [:user])))
+        players))
 
 (def lobby-keys
   [:allow-spectator
@@ -815,16 +816,22 @@
       (when (superuser? user)
         (let [player-name (-> lobby :original-players first :user :username)
               bad-name (:title lobby)
-              new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :title] (str player-name "'s game"))]
-          (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
-          (broadcast-lobby-list)
-          (broadcast-lobby-list [id])
-          (mc/insert db "moderator_actions"
-                     {:moderator (:username user)
-                      :action :rename-game
-                      :game-name bad-name
-                      :first-player player-name
-                      :date (inst/now)}))))
+              new-name (str player-name "'s game")]
+          (when (not= bad-name new-name)
+            (let [new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :title] new-name)]
+              (timbre/info {:type :mod-action
+                            :player-name player-name
+                            :lobby-name bad-name}
+                           (:username user) "renamed lobby:" bad-name "->" new-name)
+              (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
+              (broadcast-lobby-list)
+              (broadcast-lobby-list [id])
+              (mc/insert db "moderator_actions"
+                         {:moderator (:username user)
+                          :action :rename-game
+                          :game-name bad-name
+                          :first-player player-name
+                          :date (inst/now)}))))))
     (log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :lobby/delete-game

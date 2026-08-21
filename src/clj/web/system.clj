@@ -29,10 +29,13 @@
    [web.app-state :as app-state]
    [web.game]
    [web.lobby :as lobby]
+   [web.logs :refer [timbre-init!]]
    [web.telemetry]
    [web.utils :refer [tick]]
    [web.versions :refer [banned-msg frontend-version]]
-   [web.ws :as ws]))
+   [web.ws :as ws]) 
+  (:import
+   [clojure.lang ExceptionInfo]))
 
 (read-write/print-time-literals-clj!)
 
@@ -58,16 +61,19 @@
 (defmethod ig/halt-key! :mongodb/connection [_ {:keys [conn]}]
   (mg/disconnect conn))
 
+(defmethod ig/init-key :logging/timbre [_ config]
+  (timbre-init! config))
+
 (defmethod ig/init-key :web/app [_ opts]
   (if (:server-mode opts)
     (make-app opts)
     (make-dev-app opts)))
 
 (defmethod ig/init-key :web/app-state [_ _]
-  (reset! app-state/app-state
-          {:lobbies {}
-           :lobby-updates {}
-           :users {}}))
+  (reset! app-state/app-state app-state/base-app-state))
+
+(defmethod ig/halt-key! :web/app-state [_ _]
+  (reset! app-state/app-state app-state/base-app-state))
 
 (defmethod ig/init-key :web/server [_ {:keys [app port]}]
   (run-server app {:port port
@@ -179,19 +185,21 @@
   (reset! cards/cycles nil)
   (reset! cards/mwl nil))
 
-(defn start
-  [& [{:keys [only]}]]
-  (let [config (server-config)]
-    (if only
-      (ig/init config only)
-      (ig/init config))))
-
-(defn stop [system & [{:keys [only]}]]
+(defn stop [system & {:keys [only]}]
   (when system
     (if only
       (ig/halt! system only)
       (ig/halt! system)))
   nil)
+
+(defn start
+  [& {:keys [only]}]
+  (let [config (server-config)]
+    (try (if only
+           (ig/init config only)
+           (ig/init config))
+         (catch ExceptionInfo ex
+           (stop (:system (ex-data ex)))))))
 
 (comment
   (def system (start))
