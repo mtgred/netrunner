@@ -197,10 +197,14 @@
 (defn delete-old-replay
   [db {:keys [username]}]
   (let [games (mq/with-collection db game-log-coll
-                (mq/find {$and [{$or [{:corp.player.username username}
-                                      {:runner.player.username username}]}
-                                {:replay {$exists true}}
-                                {:replay-shared false}]})
+                ;; :has-replay and :replay-shared are repeated in each $or branch
+                ;; so both branches match the partial indexes on game-logs
+                (mq/find {$or [{:corp.player.username username
+                                :has-replay true
+                                :replay-shared false}
+                               {:runner.player.username username
+                                :has-replay true
+                                :replay-shared false}]})
                 (mq/fields [:gameid])
                 (mq/sort (array-map :start-date -1))
                 (mq/skip 15))]
