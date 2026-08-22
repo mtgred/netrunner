@@ -78,7 +78,7 @@
           [tr-element :h4 [:about_tech-stack "Tech Stack"]]
           [:ul.list.compact
            [:li [tr-element :b [:about_game-engine "Game engine:"]] " Clojure. Card data from " [:a {:href "https://netrunnerdb.com/" :target "_blank"} "NetrunnerDB"] " API."]
-           [:li [tr-element :b [:about_server "Server:"]] " Clojure. Ring and Compojure running on http-kit. Sente for websocket communications."]
+           [:li [tr-element :b [:about_server "Server:"]] " Clojure. Ring and Reitit running on http-kit. Sente for websocket communications."]
            [:li [tr-element :b [:about_front-end-client "Front-end client:"]] " ClojureScript. Reagent (React). "]]
 
           (let [link [:a {:href "https://github.com/mtgred/netrunner/issues" :target "_blank"} [tr-span [:about_url-github "Github"]]]]

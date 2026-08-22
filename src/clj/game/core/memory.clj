@@ -1,6 +1,6 @@
 (ns game.core.memory
   (:require
-   [cond-plus.core :refer [cond+]]
+   [com.noahbogart.cond-plus :refer [cond+]]
    [game.core.card :refer [has-subtype? virus-program? program?]]
    [game.core.card-defs :refer [card-def]]
    [game.core.eid :refer [make-eid]]

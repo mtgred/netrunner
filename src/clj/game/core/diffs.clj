@@ -1,6 +1,6 @@
 (ns game.core.diffs
   (:require
-   [cond-plus.core :refer [cond+]]
+   [com.noahbogart.cond-plus :refer [cond+]]
    [differ.core :as differ]
    [game.core.board :refer [installable-servers]]
    [game.core.card :refer :all]

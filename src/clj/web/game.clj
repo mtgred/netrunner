@@ -3,7 +3,7 @@
    [cheshire.core :as json]
    [cljc.java-time.instant :as inst]
    [clojure.string :as str]
-   [cond-plus.core :refer [cond+]]
+   [com.noahbogart.cond-plus :refer [cond+]]
    [game.core.commands :as commands :refer [parse-command]]
    [game.core.diffs :as diffs]
    [game.core.finding :refer [find-latest]]
@@ -19,8 +19,7 @@
    [web.lobby :as lobby]
    [web.replay-restore :as replay-restore]
    [web.stats :as stats]
-   [web.ws :as ws]
-   [game.core :refer [make-message]]))
+   [web.ws :as ws]))
 
 (defn game-diff-json
   "Converts the appropriate diff to json"
@@ -172,7 +171,6 @@
                   :original-players players
                   :ending-players players
                   :start-date now
-                  :last-update now
                   :state (init-game g)})
         (if (not (empty? replay-record))
           (replay-restore/handle-replay-state g replay-record replay-timestamp)
@@ -181,19 +179,13 @@
         (update g :players #(mapv strip-deck %))
         (assoc lobbies gameid g))
       (catch Exception e
-        (if (not (empty? replay-record))
-          (let [message (make-message {:user {:username "ERROR DURING REPLAY RESTORATION" :uid "ERROR DURING REPLAY RESTORATION"}
-                                       :text (str (.getMessage e))})]
-            (timbre/info (str "Error during replay restoration: " (.getMessage e) "\n" (str/join "\n" (map str (.getStackTrace e)))))
-            (-> lobbies
-                (lobby/handle-send-message gameid message)
-                (lobby/handle-set-last-update gameid "ERROR DURING REPLAY RESTORATION")))
-          (let [message (make-message {:user {:username "ERROR STARTING A GAME" :uid "ERROR STARTING A GAME"}
-                                           :text (str (.getMessage e))})]
+        (if (empty? replay-record)
+          (let [message (make-system-message (str "ERROR STARTING A GAME: " (ex-message e)))]
             (timbre/info e "Error starting a game")
-            (-> lobbies
-                (lobby/handle-send-message gameid message)
-                (lobby/handle-set-last-update gameid "ERROR STARTING A GAME"))))))
+            (lobby/handle-send-message lobbies gameid message))
+          (let [message (make-system-message (str "ERROR DURING REPLAY RESTORATION:" (ex-message e)))]
+            (timbre/info e "Error during replay restoration")
+            (lobby/handle-send-message lobbies gameid message)))))
     lobbies))
 
 (defn try-start-game
@@ -208,6 +200,7 @@
                    update :lobbies handle-start-game gameid players now replay-record replay-timestamp)
             lobby? (get-in new-app-state [:lobbies gameid])]
         (when lobby?
+          (app-state/set-last-update gameid)
           (stats/game-started db lobby?)
           (lobby/send-lobby-state lobby?)
           (lobby/broadcast-lobby-list)
@@ -305,8 +298,7 @@
            (let [old-state @state
                  side (side-from-str (:side player))]
              (try
-               (swap! app-state/app-state
-                      update :lobbies lobby/handle-set-last-update gameid uid)
+               (app-state/set-last-update gameid)
                (update-and-send-diffs! main/handle-action lobby side command args)
                (catch Exception e
                  (reset! state old-state)
@@ -373,13 +365,12 @@
              watch-message (make-system-message watch-str)
              new-app-state (swap! app-state/app-state
                                   update :lobbies
-                                  #(-> %
-                                       (lobby/handle-watch-lobby gameid uid user correct-password? watch-message request-side)
-                                       (lobby/handle-set-last-update gameid uid)))
+                                  lobby/handle-watch-lobby gameid uid user correct-password? watch-message request-side)
              lobby? (get-in new-app-state [:lobbies gameid])]
          (cond
            (and lobby? (lobby/spectator? uid lobby?) (lobby/allowed-in-lobby user lobby?))
            (do
+             (app-state/set-last-update gameid)
              (lobby/send-lobby-state lobby?)
              (lobby/send-lobby-ting lobby?)
              (lobby/broadcast-lobby-list)
@@ -399,13 +390,12 @@
     {gameid :gameid} :?data
     id :id
     timestamp :timestamp}]
-  (let [new-app-state (swap! app-state/app-state update :lobbies #(-> %
-                                                                      (lobby/handle-toggle-spectator-mute gameid uid)
-                                                                      (lobby/handle-set-last-update gameid uid)))
+  (let [new-app-state (swap! app-state/app-state update :lobbies lobby/handle-toggle-spectator-mute gameid uid)
         {:keys [state mute-spectators] :as lobby?} (get-in new-app-state [:lobbies gameid])
         message (if mute-spectators "muted" "unmuted")]
     ;; assert thread pool works like I think
     (when (and lobby? state (lobby/player? uid lobby?))
+      (app-state/set-last-update gameid)
       (lobby/game-thread
        lobby?
        (handle-message-and-send-diffs! lobby? nil nil (str (:username user) " " message " spectators."))
@@ -420,12 +410,12 @@
     {:keys [gameid msg]} :?data
     id :id
     timestamp :timestamp}]
-  (let [new-app-state (swap! app-state/app-state update :lobbies lobby/handle-set-last-update gameid uid)
-        {:keys [state mute-spectators] :as lobby?} (get-in new-app-state [:lobbies gameid])
+  (let [{:keys [state mute-spectators] :as lobby?} (app-state/get-lobby gameid)
         side (cond+
               [(lobby/player? uid lobby?) :> #(side-from-str (:side %))]
               [(and (not mute-spectators) (lobby/spectator? uid lobby?)) :spectator])]
     (when (and lobby? state side)
+      (app-state/set-last-update gameid)
       (lobby/game-thread
        lobby?
        (handle-message-and-send-diffs! lobby? side user msg)
@@ -460,13 +450,12 @@
 
 (defn handle-swap-sides-in-prog [lobbies gameid]
   (if-let [lobby (get lobbies gameid)]
-    (do
-      (-> lobby
-          ;; note - original-players needs to be updated so that you rejoin the game
-          ;; on the correct side if you leave/rejoin
-          (update :original-players #(mapv switch-side %))
-          (update :players #(mapv switch-side %))
-          (->> (assoc lobbies gameid))))
+    (-> lobby
+        ;; note - original-players needs to be updated so that you rejoin the game
+        ;; on the correct side if you leave/rejoin
+        (update :original-players #(mapv switch-side %))
+        (update :players #(mapv switch-side %))
+        (->> (assoc lobbies gameid)))
     lobbies))
 
 (defn switch-side-for-lobby
@@ -479,10 +468,7 @@
     (swap! state assoc-in [:corp :user] old-runner)
     (swap! state assoc-in [:corp :options] old-runner-options)
     (lobby/lobby-thread
-     (let [new-app-state (swap! app-state/app-state
-                                update :lobbies
-                                #(-> %
-                                     (handle-swap-sides-in-prog gameid)))
+     (let [new-app-state (swap! app-state/app-state update :lobbies handle-swap-sides-in-prog gameid)
            lobby? (get-in new-app-state [:lobbies gameid])]
        (lobby/send-lobby-state lobby?)
        (lobby/broadcast-lobby-list)))))

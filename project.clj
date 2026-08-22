@@ -18,7 +18,7 @@
                  :init-ns web.dev
                  :init (go)}
 
-  :dependencies [[org.clojure/clojure "1.12.4"]
+  :dependencies [[org.clojure/clojure "1.12.5"]
                  [org.clojure/clojurescript "1.11.132"
                   :exclusions [org.clojure/google-closure-library
                                org.clojure/data.json
@@ -29,13 +29,13 @@
                  [org.clojure/core.async "1.7.701"]
                  [com.taoensso/sente "1.22.0"]
                  [com.taoensso/timbre "6.8.0"]
-                 [ring/ring-core "1.9.4"]
-                 [ring/ring-devel "1.9.4" :exclusions [org.clojure/java.classpath]]
-                 [ring/ring-anti-forgery "1.3.0"]
+                 [com.taoensso/tufte "3.1.0"]
+                 [ring/ring-core "1.15.5"]
+                 [ring/ring-devel "1.15.5"]
+                 [ring/ring-anti-forgery "1.4.0"]
                  [ring/ring-json "0.5.1"]
                  [ring-cors "0.1.13"]
-                 [compojure "1.6.2"]
-                 [hiccup "1.0.5"]
+                 [hiccup "2.0.0"]
                  [aero "1.1.6"]
                  [cheshire/cheshire "5.10.1"]
                  [stylefruits/gniazdo "1.2.0"]
@@ -49,7 +49,6 @@
                  [http-kit "2.7.0"]
                  [com.draines/postal "2.0.5"]
                  [throttler "1.0.1"]
-                 [clj-http "3.12.3"]
                  [reagent "1.3.0"]
                  [org.clojure/tools.analyzer "1.1.0"]
                  [org.clojure/tools.analyzer.jvm "1.2.1"]
@@ -57,7 +56,7 @@
                  [org.clojure/tools.cli "1.0.206"]
                  [danlentz/clj-uuid "0.1.9"]
                  [potemkin "0.4.5"]
-                 [cond-plus "1.1.1"]
+                 [com.noahbogart/cond-plus "1.4.0"]
                  [org.clojure/data.csv "1.0.0"]
                  [dev.weavejester/medley "1.8.0"]
                  [org.clj-commons/claypoole "1.2.2"]

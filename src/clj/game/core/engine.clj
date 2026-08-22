@@ -1,9 +1,8 @@
 (ns game.core.engine
   (:require
     [clj-uuid :as uuid]
-    [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]
-    [cond-plus.core :refer [cond+]]
+    [com.noahbogart.cond-plus :refer [cond+]]
     [game.core.board :refer [clear-empty-remotes get-all-cards all-installed all-installed-runner
                              all-installed-runner-type all-active-installed]]
     [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title ice? in-discard? in-hand? in-rfg? in-set-aside? installed? rezzed? program? console? unique?]]
