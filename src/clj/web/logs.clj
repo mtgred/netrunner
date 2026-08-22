@@ -1,10 +1,24 @@
 (ns web.logs
   (:require
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [taoensso.timbre :as timbre]
-   [taoensso.timbre.appenders.core :as tac]))
+   [taoensso.timbre.appenders.core :as tac]
+   [taoensso.trove :as trove]
+   [taoensso.trove.timbre :as trove-timbre]))
 
 (set! *warn-on-reflection* true)
+
+(defn- redact-uid-middleware
+  "Timbre middelware to remove UIDs from Sente log lines"
+  [{:as data :keys [vargs]}]
+  (let [filter-uid (fn [arg] (if (string? arg)
+                               (str/replace arg #"u_.*/c_" "u_[REDACTED]/c_")
+                               arg))]
+    (assoc data :vargs (mapv filter-uid vargs))))
+
+;; Sente logs via trove, set it to use timbre.
+(trove/set-log-fn! (trove-timbre/get-log-fn))
 
 (defn- extract-opts-middleware [{:as data :keys [vargs]}]
   (if (map? (first vargs))
@@ -30,7 +44,7 @@
     ;; that would actually be sick as hell
     (timbre/merge-config!
       (-> config
-        (assoc :middleware [#'extract-opts-middleware])
+        (assoc :middleware [#'redact-uid-middleware #'extract-opts-middleware])
         (assoc :appenders
           {:println (merge (tac/println-appender) println-args)
            :default (filtered-spit-appender default-args #(not (#{:mod-action :telemetry} (:type (:context %)))))
