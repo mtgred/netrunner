@@ -11,7 +11,7 @@
 
 (defn index-page
   ([request] (index-page request nil nil))
-  ([{user :user server-mode :system/server-mode} og replay-id]
+  ([{user :user server-mode :system/server-mode ws-config :system/ws-config} og replay-id]
    (html-response
      200
      (hiccup/html5
@@ -47,7 +47,8 @@
         (hiccup/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js")
         (hiccup/include-js "/lib/js/toastr.min.js")
         [:script {:type "text/javascript"}
-         (str "var user=" (json/generate-string user) ";")]
+         (str "var user=" (json/generate-string user) ";"
+              "var ws_config=" (json/generate-string (or ws-config {})) ";")]
         (if (= "dev" server-mode)
           (list (hiccup/include-js "/js/cljs-runtime/goog.base.js")
                 (hiccup/include-js "/js/main.js"))

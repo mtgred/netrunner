@@ -7,7 +7,7 @@
    [game.core.board :refer [all-active]]
    [web.app-state :refer [app-state]]
    [web.lobby :refer [lobby-update-uids pool-occupants-info fetch-delay-log!]]
-   [web.ws :as ws :refer [connected-sockets connections_]]
+   [web.ws :as ws]
    [taoensso.encore :as enc]
    [taoensso.timbre :as timbre]))
 
@@ -82,7 +82,8 @@
     (frequencies (map #(keyword (.name (.getState %))) (keys threads)))))
 
 (defn ws-chan-backlog []
-  (str "websocket-buffer: " (count (.buf ws/websocket-buffer)) " / " ws/buffer-size))
+  (let [{:keys [pending size]} (ws/buffer-stats)]
+    (str "websocket-buffer: " pending " / " size)))
 
 (def last-gc-stats (atom {}))
 (defn log-gc []
@@ -128,11 +129,11 @@
           lobby-update-uids (count (lobby-update-uids))
           [average-sub-time oldest-sub-time] (subscriber-time-metrics (filter identity (vals (:lobby-updates @app-state))))
           latencies (format-delay!)
-          ajax-uid-count (count (:ajax @connected-sockets))
-          ajax-conn-counts (seq (map count (:ajax @connections_)))
+          ajax-uid-count (count (:ajax (ws/connected-sockets)))
+          ajax-conn-counts (seq (map count (:ajax (ws/connections))))
           ajax-conn-total (reduce + ajax-conn-counts)
-          ws-uid-count (count (:ws @connected-sockets))
-          ws-conn-counts (seq (map count (:ws @connections_)))
+          ws-uid-count (count (:ws (ws/connected-sockets)))
+          ws-conn-counts (seq (map count (:ws (ws/connections))))
           ws-conn-total (reduce + ws-conn-counts)]
       (timbre/info (str
                      "stats -"

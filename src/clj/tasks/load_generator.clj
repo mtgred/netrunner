@@ -8,7 +8,7 @@
     [monger.collection :as mc]
     [monger.operators :refer [$in]]
     [org.httpkit.client :as http]
-    [web.lobby :refer [all-games]]
+    [web.app-state :as app-state]
     [web.system :refer [start stop]]
     [web.ws :as game-ws-handler])
   (:import
@@ -105,7 +105,7 @@
                                            :side "Corp"
                                            :options {}}})
 
-    (let [game-id (first (first @all-games))]
+    (let [game-id (:gameid (first (app-state/get-lobbies)))]
       ;;  Runner join
       (game-ws-handler/-msg-handler {:id :lobby/join
                                      :ring-req {:system/db db
