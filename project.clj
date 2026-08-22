@@ -15,8 +15,7 @@
   :main web.core
 
   :repl-options {:timeout 180000
-                 :init-ns web.dev
-                 :init (go)}
+                 :init-ns web.dev}
 
   :dependencies [[org.clojure/clojure "1.12.4"]
                  [org.clojure/clojurescript "1.11.132"

@@ -8,21 +8,7 @@
    [taoensso.sente :as sente]
    [taoensso.sente.packers.msgpack :as msgpack]
    [taoensso.sente.server-adapters.http-kit :refer [get-sch-adapter]]
-   [taoensso.timbre :as timbre]
-   [taoensso.trove :as trove]
-   [taoensso.trove.timbre :as trove-timbre]))
-
-(defn redact-uid-middleware
-  "Timbre middelware to remove UIDs from Sente log lines"
-  [data]
-  (letfn [(filter-uid-from-log-arg [arg] (if (string? arg)
-                                          (clojure.string/replace arg #"u_.*/c_" "u_[REDACTED]/c_")
-                                          arg))]
-    (assoc data :vargs (map filter-uid-from-log-arg (:vargs data )))))
-(timbre/merge-config! {:middleware [redact-uid-middleware]})
-
-;; Sente logs via trove, set it to use timbre.
-(trove/set-log-fn! (trove-timbre/get-log-fn))
+   [taoensso.timbre :as timbre]))
 
 ;; Maximum throughput is 25,000 client updates a second
 ;; or 1024 pending broadcast-to!'s (asyncs limit for pending takes).

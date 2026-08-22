@@ -1,17 +1,24 @@
 (ns web.app-state
   (:require
-   [clojure.core.async :refer [<! go timeout]]
-   [cljc.java-time.temporal.chrono-unit :as chrono]
    [cljc.java-time.instant :as inst]
+   [cljc.java-time.temporal.chrono-unit :as chrono]
+   [clojure.core.async :refer [<! go timeout]]
    [taoensso.encore :as enc]
-   [medley.core :refer [dissoc-in find-first]]))
+   [medley.core :refer [dissoc-in find-first]])
+  (:import
+   [java.time Instant]))
+
+(set! *warn-on-reflection* true)
+
+(def base-app-state
+  {:lobbies {}
+   :lobby-updates {}
+   :tournament nil
+   :block-game-creation false
+   :users {}})
 
 (defonce app-state
-  (atom {:lobbies {}
-         :lobby-updates {}
-         :tournament nil
-         :block-game-creation false
-         :users {}}))
+  (atom base-app-state))
 
 (defonce lobby-subs-timeout-hours 1)
 
@@ -73,7 +80,7 @@
   "checks if a user receives lobby updates, and updates the state if they've timed out to amortize subsequent checks. Mutates"
   [uid]
   (if-let [last-ping (get-in @app-state [:lobby-updates uid])]
-    (if (.isBefore (inst/now) (inst/plus last-ping lobby-subs-timeout-hours chrono/hours))
+    (if (Instant/.isBefore (inst/now) (inst/plus last-ping lobby-subs-timeout-hours chrono/hours))
       true
       (do (pause-lobby-updates uid) nil))
     (do (pause-lobby-updates uid) nil)))

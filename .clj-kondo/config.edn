@@ -9,6 +9,7 @@
                                            prompt-fmt])]}
   :unused-namespace {:exclude ["game.core.*"]}
   :refer-all {:level :off}
+  :clojure-lsp/unused-public-var {:level :off}
   }
  :lint-as {game.test-framework/before-each clojure.core/let
            reagent.core/with-let clojure.core/let
