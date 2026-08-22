@@ -36,7 +36,7 @@
                              first-successful-run-on-server? get-turn-damage no-event? no-run-event?  second-event? turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid]]
-   [game.core.flags :refer [card-flag? clear-persistent-flag!
+   [game.core.flags :refer [card-flag? clear-persistent-flag! can-steal?
                             has-flag? in-corp-scored?
                             register-persistent-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
@@ -4089,7 +4089,9 @@
                                      :duration :end-of-run
                                      :unregister-once-resolved true
                                      :async true
-                                     :req (req (= (:title (:accessed-card context)) named-agenda))
+                                     :req (req (and
+                                                 (= (:title (:accessed-card context)) named-agenda)
+                                                 (can-steal? state side (:accessed-card context))))
                                      :effect (effect (steal state side eid (:accessed-card context)))}]))
                                (trash state side eid card {:unpreventable true :cause-card card}))}}}]
    :abilities [(set-autoresolve :auto-fire "Whistleblower")]})
