@@ -1679,8 +1679,6 @@ settings_change-avatar = 在gravatar.com上更换
 
 settings_change-email = 更换电子邮箱
 
-settings_comp-only = 仅竞技厅
-
 settings_chat-messages-note = 这些消息是从聊天输入下方的“消息”菜单在游戏中发送的。
 
 settings_comp-only = 仅限竞技大厅

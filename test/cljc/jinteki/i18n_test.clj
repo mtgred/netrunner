@@ -4,4 +4,4 @@
    [jinteki.i18n :as sut]))
 
 (deftest check-translations-test
-  (is (empty? (sut/load-dictionary! "resources/public/i18n"))))
+  (is (empty? (sut/load-dictionary! "public/i18n"))))
