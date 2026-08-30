@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# not via the lein alias: lein would swallow -h/--help instead of passing it through
+cd "$(dirname "$0")/.." && exec lein run -m tasks.stress.run/command "$@"

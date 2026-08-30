@@ -78,3 +78,6 @@ data/cards-zh-hant.edn
 .claude/
 .playwright-cli/
 .playwright/
+
+# Stress test output
+/stress-runs/
