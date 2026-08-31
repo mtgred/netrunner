@@ -11,7 +11,7 @@
 	},
 	"devDependencies": {
 		"shadow-cljs": "^2.28.21",
-		"stylus": "^0.55.0"
+		"stylus": "^0.64.0"
 	},
 	"dependencies": {
 		"@fluent/bundle": "^0.18.0",
