@@ -88,48 +88,39 @@
 (defn in-server?
   "Checks if the specified card is installed in -- and not PROTECTING -- a server"
   [card]
-  (= (last (get-zone card)) #?(:clj :content
-                               :cljs "content")))
+  (= (last (get-zone card)) :content))
 
 (defn in-hand?
   "Checks if the specified card is in the hand."
   [card]
-  (= (get-zone card) #?(:clj [:hand]
-                        :cljs ["hand"])))
+  (= (get-zone card) [:hand]))
 
 (defn in-discard?
   "Checks if the specified card is in the discard pile."
   [card]
-  (= (get-zone card) #?(:clj [:discard]
-                        :cljs ["discard"])))
+  (= (get-zone card) [:discard]))
 
 (defn in-deck?
   "Checks if the specified card is in the draw deck."
   [card]
-  (= (get-zone card) #?(:clj [:deck]
-                        :cljs ["deck"])))
+  (= (get-zone card) [:deck]))
 
 (defn in-archives-root?
   [card]
-  (= (get-zone card) #?(:clj [:servers :archives :content]
-                        :cljs ["servers" "archives" "content"])))
+  (= (get-zone card) [:servers :archives :content]))
 
 (defn in-hq-root?
   [card]
-  (= (get-zone card) #?(:clj [:servers :hq :content]
-                        :cljs ["servers" "hq" "content"])))
+  (= (get-zone card) [:servers :hq :content]))
 
 (defn in-rd-root?
   [card]
-  (= (get-zone card) #?(:clj [:servers :rd :content]
-                        :cljs ["servers" "rd" "content"])))
+  (= (get-zone card) [:servers :rd :content]))
 
 (defn in-remote-root?
   [card remote]
-  (let [remote #?(:clj remote
-                  :cljs (if (keyword? remote) (name remote) remote))]
-    (= (get-zone card) #?(:clj [:servers remote :content]
-                          :cljs ["servers" remote "content"]))))
+  (let [remote remote]
+    (= (get-zone card) [:servers remote :content])))
 
 (defn in-root?
   [card]
@@ -139,18 +130,15 @@
 
 (defn protecting-archives?
   [card]
-  (= (get-zone card) #?(:clj [:servers :archives :ices]
-                        :cljs ["servers" "archives" "ices"])))
+  (= (get-zone card) [:servers :archives :ices]))
 
 (defn protecting-hq?
   [card]
-  (= (get-zone card) #?(:clj [:servers :hq :ices]
-                        :cljs ["servers" "hq" "ices"])))
+  (= (get-zone card) [:servers :hq :ices]))
 
 (defn protecting-rd?
   [card]
-  (= (get-zone card) #?(:clj [:servers :rd :ices]
-                        :cljs ["servers" "rd" "ices"])))
+  (= (get-zone card) [:servers :rd :ices]))
 
 (defn protecting-a-central?
   [card]
@@ -161,20 +149,17 @@
 (defn in-play-area?
   "Checks if the specified card is in the play area."
   [card]
-  (= (get-zone card) #?(:clj [:play-area]
-                        :cljs ["play-area"])))
+  (= (get-zone card) [:play-area]))
 
 (defn in-destroyed?
   "Checks if the specific card is in a set-aside area."
   [card]
-  (= (get-zone card) #?(:clj [:destroyed]
-                        :cljs ["destroyed"])))
+  (= (get-zone card) [:destroyed]))
 
 (defn in-set-aside?
   "Checks if the specific card is in a set-aside area."
   [card]
-  (= (get-zone card) #?(:clj [:set-aside]
-                        :cljs ["set-aside"])))
+  (= (get-zone card) [:set-aside]))
 
 (defn set-aside-visible?
   "Checks if the specific card is in set aside and visible to this side"
@@ -187,20 +172,17 @@
 (defn in-current?
   "Checks if the specified card is in the 'current' zone."
   [card]
-  (= (get-zone card) #?(:clj [:current]
-                        :cljs ["current"])))
+  (= (get-zone card) [:current]))
 
 (defn in-scored?
   "Checks if the specified card is in _a_ score area (don't know which one)."
   [card]
-  (= (get-zone card) #?(:clj [:scored]
-                        :cljs ["scored"])))
+  (= (get-zone card) [:scored]))
 
 (defn in-rfg?
   "Checks if the specified card is in the 'remove from game' zone"
   [card]
-  (= (get-zone card) #?(:clj [:rfg]
-                        :cljs ["rfg"])))
+  (= (get-zone card) [:rfg]))
 
 (defn- card-is?
   "Checks the property of the card to see if it is equal to the given value,
@@ -339,15 +321,13 @@
 (defn installed?
   [card]
   (or (:installed card)
-      (= (first (get-zone card)) #?(:clj :servers
-                                    :cljs "servers"))))
+      (= (first (get-zone card)) :servers)))
 
 (defn facedown?
   "Checks if the specified card is facedown."
   [card]
   (or (when-not (condition-counter? card)
-        (= (get-zone card) #?(:clj [:rig :facedown]
-                              :cljs ["rig" "facedown"])))
+        (= (get-zone card) [:rig :facedown]))
       (:facedown card)))
 
 (defn active?
@@ -386,17 +366,14 @@
 (defn can-be-advanced?
   "Returns true if the card can be advanced"
   ([card]
-   (or (card-is? card :advanceable #?(:clj :always
-                                      :cljs "always"))
+   (or (card-is? card :advanceable :always)
        ;; e.g. Tyrant, Woodcutter
-       (and (card-is? card :advanceable #?(:clj :while-rezzed
-                                           :cljs "while-rezzed"))
+       (and (card-is? card :advanceable :while-rezzed)
             (rezzed? card))
        ;; e.g. Haas Arcology AI
-       (and (card-is? card :advanceable #?(:clj :while-unrezzed
-                                           :cljs "while-unrezzed"))
+       (and (card-is? card :advanceable :while-unrezzed)
             (not (rezzed? card)))
-       (and (is-type? card "Agenda")
+       (and (agenda? card)
             (installed? card))))
   ([state card]
    (and (can-be-advanced? card)

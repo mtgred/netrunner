@@ -5,8 +5,7 @@
    [nr.appstate :refer [app-state current-gameid]]
    [nr.gameboard.card-preview :refer [put-game-card-in-channel zoom-channel]]
    [nr.gameboard.replay :refer [init-replay]]
-   [nr.gameboard.state :refer [check-lock? game-state get-side last-state
-                               parse-state]]
+   [nr.gameboard.state :refer [check-lock? game-state get-side last-state]]
    [nr.translations :refer [tr-span]]
    [nr.utils :refer [toastr-options]]
    [nr.sounds :refer [play-sfx]]
@@ -51,7 +50,7 @@
   (gfn/throttle sequence-resync 1500))
 
 (defn handle-diff! [{:keys [gameid diff]}]
-  (when (= gameid (str (current-gameid app-state)))
+  (when (= gameid (current-gameid app-state))
     (let [old-sequence (:sequence @game-state)
           old-last-played-or-rezzed (:last-played-or-rezzed @game-state)
           patch (differ/patch @last-state diff)]
@@ -93,13 +92,12 @@
           :close-button true})
   (reset! ws/lock false))
 
-(defmethod ws/event-msg-handler :game/start [{data :?data}]
-  (launch-game! (parse-state data)))
-(defmethod ws/event-msg-handler :game/resync [{data :?data}] (reset-game! (parse-state data)))
-(defmethod ws/event-msg-handler :game/diff [{data :?data}] (handle-diff! (parse-state data)))
+(defmethod ws/event-msg-handler :game/start [{data :?data}] (launch-game! data))
+(defmethod ws/event-msg-handler :game/resync [{data :?data}] (reset-game! data))
+(defmethod ws/event-msg-handler :game/diff [{data :?data}] (handle-diff! data))
 (defmethod ws/event-msg-handler :game/timeout [{data :?data}] (handle-timeout data))
 (defmethod ws/event-msg-handler :game/timeout-soon [{data :?data}] (handle-timeout-soon data))
-(defmethod ws/event-msg-handler :game/error [_] (handle-error))
+(defmethod ws/event-msg-handler :game/error [_ev] (handle-error))
 
 (defn send-command
   ([command] (send-command command nil))

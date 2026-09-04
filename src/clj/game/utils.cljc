@@ -3,11 +3,10 @@
    [game.core.card :refer [get-title]]
    [jinteki.cards :refer [all-cards]]
    [clojure.string :as str]
-   [clj-uuid :as uuid]
    [cljc.java-time.instant :as inst]))
 
 (defn make-cid []
-  (uuid/to-string (uuid/v4)))
+  (str (random-uuid)))
 
 (defn make-timestamp []
   (inst/now))
@@ -20,7 +19,7 @@
        (and title card) card
        (or (= title "Corp Basic Action Card") (= title "Runner Basic Action Card")) {}
        :else (when strict?
-               (throw (Exception. (str "Tried to select server-card for " title))))))))
+               (throw (ex-info (str "Tried to select server-card for " title) {:title title})))))))
 
 (defn server-cards
   []
@@ -51,10 +50,17 @@
     (step coll #{})))
 
 (defn string->num [s]
-  (try
-    (let [num (bigdec s)]
-      (if (and (> num Integer/MIN_VALUE) (< num Integer/MAX_VALUE)) (int num) num))
-  (catch Exception _ nil)))
+  #?(:clj (try
+            (let [num (bigdec s)]
+              (if (and (> num Integer/MIN_VALUE)
+                       (< num Integer/MAX_VALUE))
+                (int num)
+                num))
+            (catch Exception _ nil))
+     :cljs (try (cond
+                  (number? s) s
+                  (string? s) (parse-long s))
+                (catch js/Error _ nil))))
 
 (def safe-split (fnil str/split ""))
 
@@ -126,7 +132,7 @@
   ([strings sep]
    (if (<= (count strings) 2)
      (str/join (str " " sep " ") strings)
-     (str (str/join ", " (butlast strings)) ", " sep " " (last strings)))))
+    (str (apply str (interpose ", " (butlast strings))) (str ", " sep " ") (last strings)))))
 
 (defn enumerate-cards
   "Enumerates a collection of cards, optionally in sorted order"

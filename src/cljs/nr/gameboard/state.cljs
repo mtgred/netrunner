@@ -1,6 +1,5 @@
 (ns nr.gameboard.state
   (:require
-   [clojure.walk :as walk]
    [nr.appstate :refer [app-state]]
    [nr.ws :as ws]
    [reagent.core :as r]))
@@ -9,18 +8,6 @@
 (defonce last-state (atom {}))
 
 (defonce replay-side (r/atom :spectator))
-
-(defn parse-state [state]
-  (let [state (js->clj (.parse js/JSON state) :keywordize-keys true)]
-    (if-let [diff (:diff state)]
-      (assoc state :diff (walk/postwalk
-                          (fn [obj]
-                            (if (or (list? obj)
-                                    (vector? obj))
-                              (mapv #(if (= "+" %) :+ %) obj)
-                              obj))
-                          diff))
-      state)))
 
 (defn get-side [state]
   (let [user-id (get-in @app-state [:user :_id])]
