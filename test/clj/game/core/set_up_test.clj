@@ -16,11 +16,11 @@
         (let [corp-hand (:hand (get-corp))]
           (click-prompt state :corp "Keep")
           (is (= corp-hand (:hand (get-corp))))
-          (is (last-log-contains? state "Corp keeps their hand")))
+          (is (last-log-contains? state "Corp keeps [their] hand")))
         (let [runner-hand (:hand (get-runner))]
           (click-prompt state :runner "Keep")
           (is (= runner-hand (:hand (get-runner))))
-          (is (last-log-contains? state "Runner keeps their hand")))))
+          (is (last-log-contains? state "Runner keeps [their] hand")))))
     (testing "mulligan"
       (do-game
         (new-game setup)

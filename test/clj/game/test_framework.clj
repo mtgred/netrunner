@@ -19,8 +19,11 @@
    [game.utils :as utils]
    [game.utils-test :refer [error-wrapper is']]
    [jinteki.cards :refer [all-cards]]
+   [jinteki.i18n :refer [build-msg load-dictionary!]]
    [jinteki.utils :as jutils]
-   [web.game :refer [handle-message-and-send-diffs! update-and-send-diffs!]]))
+   [web.game :refer [handle-message-and-send-diffs! update-and-send-diffs!]])
+  (:import
+   (java.util.regex Pattern)))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -30,6 +33,7 @@
        merge))
 
 (defn load-all-cards []
+  (load-dictionary! "public/i18n")
   (when (empty? @all-cards)
     (->> (load-cards)
          (map (juxt :title identity))
@@ -73,14 +77,14 @@
      (test-var #'game.core.scenarios-test/masterwork-overinstall-boomerang-complex-case-full-game)))
   #_(prof/profile (clojure.test/run-all-tests))
   (prof/serve-ui 8080))
-
 ;;; action-wrapper to better mimic real-world usage
+
 
 (defn do-action
   [command state side args]
   (update-and-send-diffs! main/handle-action {:state state} side command args))
-
 ;; generic test helpers
+
 
 (defn is-zone-impl
   "Is the zone exactly equal to a given set of cards?"
@@ -675,10 +679,10 @@
     (ensure-no-prompts state)
     (is' (some? card) (str title "is in hand"))
     (if-not (some? card)
-      (do (let [other-side (if (= side :runner) :corp :runner)]
-            (when (some? (find-card title (get-in @state [other-side :hand])))
-              (println title " was instead found in the opposing hand - was the wrong side used?")))
-          true)
+      (let [other-side (if (= side :runner) :corp :runner)]
+        (when (some? (find-card title (get-in @state [other-side :hand])))
+          (println title " was instead found in the opposing hand - was the wrong side used?"))
+        true)
       (when (do-action "play" state side {:card card})
         (let [choice-sets (split-on-keywords choices)]
           (doseq [cs choice-sets]
@@ -1096,15 +1100,45 @@
   [state base]
   (handle-message-and-send-diffs! {:state state} :corp {} (str "/trace " base)))
 
+(defn get-msg-text
+  [m]
+  (if (string? m) m (or (:raw-text m) (build-msg m))))
+
+(defn escape-log-string [s]
+  (if (string? s) (Pattern/quote s) s))
+
+(defn side-log
+  [side log]
+  (into [] (keep #(or (side %) (:public %)) log)))
+
+(defn last-log-contains?
+  ([state content] (last-log-contains? state content :public))
+  ([state content side]
+   (->> (->> @state :log (side-log side) last :text get-msg-text)
+        (re-find (re-pattern (escape-log-string content))))))
+
+(defn second-last-log-contains?
+  ([state content] (second-last-log-contains? state content :public))
+  ([state content side]
+   (->> (->> @state :log (side-log side) butlast last :text get-msg-text)
+        (re-find (re-pattern (escape-log-string content))))))
+
+(defn last-n-log-contains?
+  ([state n content]
+   (last-n-log-contains? state n content :public))
+  ([state n content side]
+   (->> (-> @state :log reverse (->> (side-log side)) (nth n) :text get-msg-text)
+        (re-find (re-pattern (escape-log-string content))))))
+
 (defn log-str [state]
   (->> (:log @state)
        (keep :public)
-       (map :text)
+       (map (comp get-msg-text :text))
        (str/join " ")))
 
-#_{:clojure-lsp/ignore [:clojure-lsp/unused-public-var]}
 (defn print-logs [state]
-  (prn (log-str state)))
+  (prn (log-str state))
+  (newline))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s
@@ -1142,44 +1176,15 @@
          ~'print-prompts (fn []
                            (print (~'prompt-fmt :corp))
                            (println (~'prompt-fmt :runner)))]
-     ~@body))
+     (let [ret# (do ~@body)]
+       (log-str ~'state)
+       ret#)))
 
 (defmacro before-each
   [let-bindings & testing-blocks]
   (assert (every? #(= 'testing (first %)) testing-blocks))
   (let [bundles (for [block testing-blocks] `(let [~@let-bindings] ~block))]
     `(do ~@bundles)))
-
-(defn escape-log-string [s]
-  (str/escape s {\[ "\\[" \] "\\]"}))
-
-(defn- side-log
-  [side log]
-  (into [] (keep #(or (side %) (:public %)) log)))
-
-(defn last-log-contains?
-  ([state content] (last-log-contains? state content :public))
-  ([state content side]
-   (->> (->> @state :log (side-log side) last :text)
-        (re-find (re-pattern (escape-log-string content)))
-        some?)))
-
-(defn second-last-log-contains?
-  ([state content] (second-last-log-contains? state content :public))
-  ([state content side]
-   (->> (->> @state :log (side-log side) butlast last :text)
-        (re-find (re-pattern (escape-log-string content)))
-        some?)))
-
-(defn last-n-log-contains?
-  ([state n content]
-   (last-n-log-contains? state n content :public))
-  ([state n content side]
-   (let [log (->> @state :log (side-log side) (mapv :text))
-         index (- (count log) 1 n)
-         log-entry (nth log index "")
-         res (re-find (re-pattern (escape-log-string content)) log-entry)]
-     (some? res))))
 
 (defn- make-zone
   [zone replacement]

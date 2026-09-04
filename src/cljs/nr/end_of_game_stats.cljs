@@ -1,5 +1,5 @@
 (ns nr.end-of-game-stats
-  (:require [nr.translations :refer [tr tr-side tr-element]]
+  (:require [jinteki.i18n :refer [tr tr-side tr-element]]
             [nr.utils :refer [map-longest]]))
 
 (defn computed-stat

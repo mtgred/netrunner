@@ -4,8 +4,9 @@
    [clojure.repl :as repl]
    [game.core :as core]
    [game.core.card :refer :all]
-   [game.core.commands :refer [parse-command]]
+   [game.core.commands]
    [game.core.mark :refer :all]
+   [game.core.say :as sut]
    [game.test-framework :refer :all]
    [jinteki.utils :refer [command-info]]))
 
@@ -208,22 +209,22 @@
           (is (= 1000 (get-link state)) "runner has 1000 link")))))
 
   (testing "/memory"
-      (let [user {:username "Runner"}]
-        (do-game
-          (new-game)
-          (core/command-parser state :runner {:user user :text "/memory 3"})
-          (is (= 3 (:used (:memory (get-runner)))) "runner has 3 memory")
-          (core/command-parser state :runner {:user user :text "/memory -5"})
-          (is (= -5 (:used (:memory (get-runner)))) "runner has -5 memory")
-          (core/command-parser state :runner {:user user :text "/memory 99999999999999999999999999999999999999999999"})
-          (is (= 1000 (:used (:memory (get-runner)))) "runner has 1000 memory"))))
+    (let [user {:username "Runner"}]
+      (do-game
+        (new-game)
+        (core/command-parser state :runner {:user user :text "/memory 3"})
+        (is (= 3 (:used (:memory (get-runner)))) "runner has 3 memory")
+        (core/command-parser state :runner {:user user :text "/memory -5"})
+        (is (= -5 (:used (:memory (get-runner)))) "runner has -5 memory")
+        (core/command-parser state :runner {:user user :text "/memory 99999999999999999999999999999999999999999999"})
+        (is (= 1000 (:used (:memory (get-runner)))) "runner has 1000 memory"))))
 
   (testing "/mark"
-      (let [user {:username "Runner"}]
-        (do-game
-          (new-game)
-          (core/command-parser state :runner {:user user :text "/mark"})
-          (is (some? (:mark @state)) "Mark identified"))))
+    (let [user {:username "Runner"}]
+      (do-game
+        (new-game)
+        (core/command-parser state :runner {:user user :text "/mark"})
+        (is (some? (:mark @state)) "Mark identified"))))
 
   (testing "/roll"
     (let [user {:username "Corp"}]
@@ -351,7 +352,7 @@
     (let [r {:username "Runner"}]
       (do-game
         (new-game {:corp {:hand ["Hedge Fund"]}})
-        (dotimes [n 3]
+        (dotimes [_ 3]
           (click-credit state :corp))
         (end-turn state :corp)
         (start-turn state :runner)
@@ -372,7 +373,7 @@
           c {:username "Corp"}]
       (do-game
         (new-game {:corp {:hand ["Hedge Fund"]}})
-        (dotimes [n 3]
+        (dotimes [_ 3]
           (click-credit state :corp))
         (end-turn state :corp)
         (start-turn state :runner)
@@ -400,7 +401,7 @@
           (is (last-log-contains? state "[!]Runner uses a command: /unique") "Correct message")
           (click-card state :runner wnp1)
           (is (not (unique? (refresh wnp1))) "WNP is not unique anymore")
-          (is (last-log-contains? state "Runner uses /unique command to make Wireless Net Pavilion not unique\\.") "Correct message")
+          (is (last-log-contains? state "Runner uses /unique command to make Wireless Net Pavilion not unique.") "Correct message")
           (play-from-hand state :runner "Wireless Net Pavilion")
           (is (zero? (count (:hand (get-runner)))) "Both cards have been installed")
           (is (= 2 (count (get-resource state))))

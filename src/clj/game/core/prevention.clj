@@ -350,10 +350,8 @@
   [state]
   (case (damage-type state)
     :meat "meat"
-    :brain "core"
-    :core "core"
-    :net "net"
-    "neat"))
+    (:brain :core) "core"
+    :net "net"))
 
 (defn prevent-damage
   [state side eid n]

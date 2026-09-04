@@ -2,7 +2,7 @@
   (:require
     [nr.auth :refer [authenticated]]
     [nr.ws :as ws]
-    [nr.translations :refer [tr-span]]
+    [jinteki.i18n :refer [tr-span]]
     [reagent.core :as r]))
 
 (defn on-load [onload-ev]

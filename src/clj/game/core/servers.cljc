@@ -14,6 +14,15 @@
   [num]
   (str "Server " num))
 
+(defn central->name
+  "Converts a central zone keyword to a string."
+  [zone]
+  (case (if (keyword? zone) zone (last zone))
+    (:hand :hq) "HQ"
+    (:deck :rd) "R&D"
+    (:discard :archives) "Archives"
+    #_:else nil))
+
 (defn remote->name
   "Converts a remote zone to a string"
   [zone]
@@ -23,20 +32,22 @@
       (let [num (last (string/split s #":remote"))]
         (remote-num->name num)))))
 
-(defn central->name
-  "Converts a central zone keyword to a string."
+(defn auxiliary->name
+  "converts one of the 'auxilary' zones keyword to a string."
   [zone]
-  (case (if (keyword? zone) zone (last zone))
-    (:hand :hq) "HQ"
-    (:deck :rd) "R&D"
-    (:discard :archives) "Archives"
-    nil))
+  (case (if (keyword? zone) zone (first zone))
+    :scored "score area"
+    :rfg "removed from game"
+    :play-area "play area"
+    :destroyed "destroyed"
+    #_:else nil))
 
 (defn zone->name
   "Converts a zone to a string."
   [zone]
   (or (central->name zone)
-      (remote->name zone)))
+    (remote->name zone)
+    (auxiliary->name zone)))
 
 (defn name-zone
   "Gets a string representation for the given zone."
@@ -85,6 +96,10 @@
   [zone]
   (and (is-central? (second zone))
        (= :content (last zone))))
+
+(defn is-auxiliary?
+  [zone]
+  (some? (auxiliary->name zone)))
 
 (defn central->zone
   "Converts a central server keyword like :discard into a corresponding zone vector"

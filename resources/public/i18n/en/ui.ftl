@@ -1048,6 +1048,8 @@ lobby_players = Players
 
 lobby_private = PRIVATE
 
+lobby_quick-draft = Quickly draft a deck to play against your opponent, using a smaller deck size and lower than normal agenda-point total.
+
 lobby_rejoin = Rejoin
 
 lobby_reload = Reload list
@@ -1914,6 +1916,8 @@ stats_started = Started: {$started}
 stats_tags-gained = Tags Gained
 
 stats_unavailable = Replay unavailable
+
+stats_unshare = Unshare replay
 
 stats_unique-accesses = Unique Cards Accessed
 

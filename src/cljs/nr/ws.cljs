@@ -3,7 +3,7 @@
    [jinteki.msgpack-ext]
    [nr.ajax :refer [?csrf-token]]
    [nr.appstate :refer [app-state current-gameid]]
-   [nr.translations :refer [tr]]
+   [jinteki.i18n :refer [tr]]
    [nr.utils :refer [non-game-toast]]
    [reagent.core :as r]
    [taoensso.sente  :as sente :refer [start-client-chsk-router!]]

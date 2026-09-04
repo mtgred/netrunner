@@ -65,6 +65,10 @@
    uniqueness
    zone])
 
+(defn card?
+  [obj]
+  (contains? obj :cid))
+
 (defn get-cid
   "Gets the cid of a given card when wrapped in an effect-handler map"
   [card]
@@ -318,6 +322,10 @@
 (defn unique?
   [card]
   (:uniqueness card))
+
+(defn same-faction?
+  [card other-card]
+  (= (:faction card) (:faction other-card)))
 
 (defn corp-installable-type?
   "Is the card of an acceptable type to be installed in a server"

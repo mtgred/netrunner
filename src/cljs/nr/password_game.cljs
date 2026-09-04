@@ -1,7 +1,7 @@
 (ns nr.password-game
   (:require
    [nr.auth :refer [authenticated]]
-   [nr.translations :refer [tr tr-span tr-element tr-room-type]]
+   [jinteki.i18n :refer [tr tr-span tr-element tr-room-type]]
    [nr.utils :refer [focus-on-mount]]
    [nr.ws :as ws]
    [reagent.core :as r]

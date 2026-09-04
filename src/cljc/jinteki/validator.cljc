@@ -220,7 +220,8 @@
   ([status card]
    (legal? :standard status card))
   ([fmt status card]
-   (contains? (get-in card [:format fmt]) status)))
+   (or (contains? (get-in card [:format fmt]) status)
+       (#{:casual :quick-draft :preconstructed} fmt))))
 
 (defn legal-line?
   ([status line]

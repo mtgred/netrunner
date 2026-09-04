@@ -7,7 +7,7 @@
    [nr.appstate :refer [app-state]]
    [nr.avatar :refer [avatar]]
    [nr.local-storage :as ls]
-   [nr.translations :refer [tr tr-span]]
+   [jinteki.i18n :refer [tr tr-span]]
    [reagent.core :as r]))
 
 (defn authenticated [f]

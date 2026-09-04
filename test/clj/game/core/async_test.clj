@@ -105,7 +105,7 @@
 
 (def safe-fns
   "functions which probably contain an eid, but do not complete it"
-  #{"can-pay?" "cost-value" "recurring-fn"})
+  #{"can-pay?" "cost-value" "x-cost-value" "recurring-fn"})
 
 (defn- contains-eid?
   [chunk depth]

@@ -954,11 +954,11 @@
     (is (last-log-contains? state "reveal Hedge Fund, Hedge Fund, and Hedge Fund from HQ"))
     (is (changed? [(count (:deck (get-corp))) 2
                    (count (:hand (get-corp))) -2]
-                  (click-prompt state :runner "Hedge Fund")
-                  (click-prompt state :runner "Top of R&D")
-                  (click-prompt state :runner "Hedge Fund")
-                  (click-prompt state :runner "Bottom of R&D"))
-        "2 cards added to R&D")))
+          (click-prompt state :runner "Hedge Fund")
+          (click-prompt state :runner "Top of R&D")
+          (click-prompt state :runner "Hedge Fund")
+          (click-prompt state :runner "Bottom of R&D"))
+      "2 cards added to R&D")))
 
 (deftest by-any-means-full-test
     ;; Full test
@@ -1671,7 +1671,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Concerto")
       (let [concerto (-> (get-runner) :play-area first)]
-        (is (last-log-contains? state "reveal Sure Gamble"))
+        (is (last-log-contains? state #"reveal.*Sure Gamble"))
         (is (find-card "Sure Gamble" (:hand (get-runner))))
         (is (= 5 (get-counters (refresh concerto) :credit))))
       (click-prompt state :runner "HQ")
@@ -2990,8 +2990,8 @@
                :runner {:hand ["Executive Wiretaps"]}})
     (take-credits state :corp)
     (play-from-hand state :runner "Executive Wiretaps")
-    (is (last-log-contains? state (str "Runner uses Executive Wiretaps to reveal "
-                                       "Cayambe Grid, Hedge Fund, Hostile Takeover, Ice Wall, and PAD Campaign from HQ.")))))
+    (is (last-log-contains? state (str "Runner uses Executive Wiretaps to reveal 5 cards"
+                                       " (Cayambe Grid, Hedge Fund, Hostile Takeover, Ice Wall, PAD Campaign) from HQ.")))))
 
 (deftest exploit
   ;; Exploit
@@ -5040,11 +5040,10 @@
     (click-prompt state :runner "Virtual")
     (click-prompt state :runner "Yes")
     (click-prompt state :runner "Cookbook")
-    (is (changed? [(:credit (get-runner)) 2]
+    (is (changed? [(:credit (get-runner)) 1]
           (click-card state :runner "Cookbook")
-          (click-card state :runner "Always Be Running")
           (click-prompt state :runner "Done"))
-        "Runner gained 2 credits")
+        "Runner gained 1 credits")
     (is (no-prompt? state :runner))
     ;; Choosing connection
     (play-from-hand state :runner "Meeting of Minds")
@@ -5083,101 +5082,101 @@
         "Corp took 1 BP without getting a prompt")))
 
 (deftest mobius-second-run-triggered
-    ;; Second run triggered
-    (do-game
-      (new-game {:runner {:deck [(qty "Möbius" 3)]}})
-      (starting-hand state :corp ["Hedge Fund"])
-      (take-credits state :corp)
-      (play-from-hand state :runner "Möbius")
-      (run-continue-until state :success)
-      (click-prompt state :runner "No action")
-      (click-prompt state :runner "Yes")
-      (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
-      (run-continue state)
-      (run-continue state)
-      (click-prompt state :runner "No action")
-      (is (not (:run @state)) "Run is over")
-      (is (no-prompt? state :runner) "No prompt to run a third time")))
+  ;; Second run triggered
+  (do-game
+    (new-game {:runner {:deck [(qty "Möbius" 3)]}})
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Möbius")
+    (run-continue-until state :success)
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Yes")
+    (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (is (not (:run @state)) "Run is over")
+    (is (no-prompt? state :runner) "No prompt to run a third time")))
 
 (deftest mobius-gain-4-credits-after-succesful-second-run
-    ;; Gain 4 credits after succesful second run
-    (do-game
-      (new-game {:runner {:deck [(qty "Möbius" 3)]}})
-      (starting-hand state :corp ["Hedge Fund"])
-      (take-credits state :corp)
-      (is (= 5 (:credit (get-runner))))
-      (play-from-hand state :runner "Möbius")
-      (run-continue-until state :success)
-      (is (= 5 (:credit (get-runner))))
-      (click-prompt state :runner "No action")
-      (click-prompt state :runner "Yes")
-      (run-continue state)
-      (run-continue state)
-      (click-prompt state :runner "No action")
-      (is (= 9 (:credit (get-runner))))))
+  ;; Gain 4 credits after succesful second run
+  (do-game
+    (new-game {:runner {:deck [(qty "Möbius" 3)]}})
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))))
+    (play-from-hand state :runner "Möbius")
+    (run-continue-until state :success)
+    (is (= 5 (:credit (get-runner))))
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Yes")
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (is (= 9 (:credit (get-runner))))))
 
 (deftest mobius-no-second-run-if-first-is-unsuccesful
-    ;; No second run if first is unsuccesful
-    (do-game
-      (new-game {:runner {:deck [(qty "Möbius" 3)]}})
-      (starting-hand state :corp ["Hedge Fund"])
-      (take-credits state :corp)
-      (play-from-hand state :runner "Möbius")
-      (run-continue state)
-      (run-jack-out state)
-      (is (no-prompt? state :runner) "No option to run again on unsuccessful run")))
+  ;; No second run if first is unsuccesful
+  (do-game
+    (new-game {:runner {:deck [(qty "Möbius" 3)]}})
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Möbius")
+    (run-continue state)
+    (run-jack-out state)
+    (is (no-prompt? state :runner) "No option to run again on unsuccessful run")))
 
 (deftest mobius-normal-rnd-run-does-not-gain-cred
-    ;; Normal rnd run does not gain cred
-    (do-game
-      (new-game {:runner {:deck [(qty "Möbius" 3)]}})
-      (starting-hand state :corp ["Hedge Fund"])
-      (take-credits state :corp)
-      (play-from-hand state :runner "Möbius")
-      (run-continue-until state :success)
-      (click-prompt state :runner "No action")
-      (click-prompt state :runner "Yes")
-      (run-continue state)
-      (run-continue state)
-      (click-prompt state :runner "No action")
-      (is (changed? [(:credit (get-runner)) 0]
-            (run-empty-server state :rd)
-            (click-prompt state :runner "No action"))
-          "Normal run on R&D didn't give any credits")))
+  ;; Normal rnd run does not gain cred
+  (do-game
+    (new-game {:runner {:deck [(qty "Möbius" 3)]}})
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (play-from-hand state :runner "Möbius")
+    (run-continue-until state :success)
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Yes")
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (is (changed? [(:credit (get-runner)) 0]
+          (run-empty-server state :rd)
+          (click-prompt state :runner "No action"))
+      "Normal run on R&D didn't give any credits")))
 
 (deftest mobius-recurred-use
-    ;; Recurred use
-    (do-game
-      (new-game {:runner {:deck ["Möbius" "Déjà Vu"]}})
-      (starting-hand state :corp ["Hedge Fund"])
-      (take-credits state :corp)
-      (is (= 5 (:credit (get-runner))))
-      (play-from-hand state :runner "Möbius")
-      (run-continue state)
-      (run-continue state)
-      (is (= 5 (:credit (get-runner))))
-      (click-prompt state :runner "No action")
-      (click-prompt state :runner "Yes")
-      (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
-      (run-continue state)
-      (run-continue state)
-      (click-prompt state :runner "No action")
-      (is (= 9 (:credit (get-runner))))
-      (play-from-hand state :runner "Déjà Vu")
-      (click-prompt state :runner (find-card "Möbius" (:discard (get-runner))))
-      (is (no-prompt? state :runner) "Recurring a non-virus card stops Déjà Vu prompting further")
-      (is (= 1 (count (:hand (get-runner)))))
-      (play-from-hand state :runner "Möbius")
-      (run-continue state)
-      (run-continue state)
-      (is (= 7 (:credit (get-runner))))
-      (click-prompt state :runner "No action")
-      (click-prompt state :runner "Yes")
-      (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
-      (run-continue state)
-      (run-continue state)
-      (click-prompt state :runner "No action")
-      (is (= 11 (:credit (get-runner))))))
+  ;; Recurred use
+  (do-game
+    (new-game {:runner {:deck ["Möbius" "Déjà Vu"]}})
+    (starting-hand state :corp ["Hedge Fund"])
+    (take-credits state :corp)
+    (is (= 5 (:credit (get-runner))))
+    (play-from-hand state :runner "Möbius")
+    (run-continue state)
+    (run-continue state)
+    (is (= 5 (:credit (get-runner))))
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Yes")
+    (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (is (= 9 (:credit (get-runner))))
+    (play-from-hand state :runner "Déjà Vu")
+    (click-prompt state :runner (find-card "Möbius" (:discard (get-runner))))
+    (is (no-prompt? state :runner) "Recurring a non-virus card stops Déjà Vu prompting further")
+    (is (= 1 (count (:hand (get-runner)))))
+    (play-from-hand state :runner "Möbius")
+    (run-continue state)
+    (run-continue state)
+    (is (= 7 (:credit (get-runner))))
+    (click-prompt state :runner "No action")
+    (click-prompt state :runner "Yes")
+    (is (= [:rd] (get-in @state [:run :server])) "Second run on R&D triggered")
+    (run-continue state)
+    (run-continue state)
+    (click-prompt state :runner "No action")
+    (is (= 11 (:credit (get-runner))))))
 
 (deftest modded
   ;; Modded - Install a program or piece of hardware at a 3 credit discount
@@ -5200,18 +5199,18 @@
 
 (deftest moshing
   (do-game
-      (new-game {:runner {:deck [(qty "Sure Gamble" 5)]
-                          :hand ["Moshing" (qty "Lamprey" 3)]}})
-      (take-credits state :corp)
-      (is (= 0 (count (:discard (get-runner)))) "Runner has no cards in heap")
-      (is (= 4 (count (:hand (get-runner)))) "Runner starts with 4 cards")
-      (is (not (find-card "Sure Gamble" (:hand (get-runner)))) "Runner does not have Sure Gamble in grip")
-      (play-from-hand state :runner "Moshing")
-      (is (= 0 (count (:discard (get-runner)))) "Moshing is still in play")
-      (dotimes [card 3] (click-card state :runner (nth (:hand (get-runner)) card)))
-      (is (= 4 (count (:discard (get-runner)))) "Runner trashed 3 cards and discarded Moshing")
-      (is (= 3 (count (:hand (get-runner)))) "Runner draws 3 cards")
-      (is (find-card "Sure Gamble" (:hand (get-runner))) "Runner drew Sure Gamble")))
+    (new-game {:runner {:deck [(qty "Sure Gamble" 5)]
+                        :hand ["Moshing" (qty "Lamprey" 3)]}})
+    (take-credits state :corp)
+    (is (= 0 (count (:discard (get-runner)))) "Runner has no cards in heap")
+    (is (= 4 (count (:hand (get-runner)))) "Runner starts with 4 cards")
+    (is (not (find-card "Sure Gamble" (:hand (get-runner)))) "Runner does not have Sure Gamble in grip")
+    (play-from-hand state :runner "Moshing")
+    (is (= 0 (count (:discard (get-runner)))) "Moshing is still in play")
+    (dotimes [card 3] (click-card state :runner (nth (:hand (get-runner)) card)))
+    (is (= 4 (count (:discard (get-runner)))) "Runner trashed 3 cards and discarded Moshing")
+    (is (= 3 (count (:hand (get-runner)))) "Runner draws 3 cards")
+    (is (find-card "Sure Gamble" (:hand (get-runner))) "Runner drew Sure Gamble")))
 
 (deftest mutual-favor
   ;; Mutual Favor
@@ -5353,7 +5352,7 @@
               (let [grip (-> (get-runner) :hand count)]
                 (click-prompt state :runner "Draw 4 cards")
                 (is (= (+ 4 grip) (-> (get-runner) :hand count)) "Runner should draw 4 cards"))))]
-    (doall (map office-supplies-test (range 5)))))
+    (run! office-supplies-test (range 5))))
 
 (deftest on-the-lam-vs-tags
     ;; vs tags
@@ -5550,8 +5549,9 @@
                :runner {:hand ["Paper Tripping"]}})
     (take-credits state :corp)
     (gain-tags state :runner 100)
-    (play-from-hand state :runner "Paper Tripping")
-    (is (zero? (count-tags state)) "Runner should lose all tags")))
+    (is (changed? [(count-tags state) -100]
+          (play-from-hand state :runner "Paper Tripping"))
+      "Runner should lose all tags")))
 
 (deftest peace-in-our-time-no-runs-allowed
     ;; no runs allowed
@@ -5675,17 +5675,12 @@
                :runner {:hand [(qty "Power Nap" 3)]}})
     (take-credits state :corp)
     (core/gain state :runner :click 2)
-    (let [credits (:credit (get-runner))]
-      (play-from-hand state :runner "Power Nap")
-      (is (= (+ credits 2) (:credit (get-runner))) "Runner should gain 2"))
-    (let [credits (:credit (get-runner))]
-      (play-from-hand state :runner "Power Nap")
-      (is (= (+ credits 3) (:credit (get-runner)))
-          "Runner should gain 3 for 1 double in heap"))
-    (let [credits (:credit (get-runner))]
-      (play-from-hand state :runner "Power Nap")
-      (is (= (+ credits 4) (:credit (get-runner)))
-          "Runner should gain 4 for 2 doubles in heap"))))
+    (is (changed? [(:credit (get-runner)) 2]
+          (play-from-hand state :runner "Power Nap")))
+    (is (changed? [(:credit (get-runner)) 3]
+          (play-from-hand state :runner "Power Nap")))
+    (is (changed? [(:credit (get-runner)) 4]
+          (play-from-hand state :runner "Power Nap")))))
 
 (deftest power-to-the-people
   ;; Power to the People - Gain 7c the first time you access an agenda
@@ -5995,12 +5990,12 @@
       (is (core/can-access? state :runner other-pad)) "Not prevented from accessing other cards")
     (take-credits state :runner)
     (take-credits state :corp)
-    (let [pad (get-content state :remote1 0)
-          runner-creds (:credit (get-runner))]
-      (run-empty-server state "Server 1")
-      (is (core/can-access? state :runner (refresh pad)) "Can access PAD Campgain next turn")
-      (click-prompt state :runner "Pay 4 [Credits] to trash")
-      (is (= (- runner-creds 4) (:credit (get-runner))) "Paid 4 credits to trash PAD Campaign"))))
+    (is (changed? [(:credit (get-runner)) -4]
+          (run-empty-server state "Server 1")
+          (is (core/can-access? state :runner (get-content state :remote1 0))
+              "Can access PAD Campgain next turn")
+          (click-prompt state :runner "Pay 4 [Credits] to trash"))
+        "Paid 4 credits to trash PAD Campaign")))
 
 (deftest quest-completed
   ;; Quest Completed
@@ -6036,7 +6031,7 @@
       (is (zero? (count (:hand (get-runner)))) "hand wiped by komainu")
       (run-continue state)
       (is (changed? [(:credit (get-runner)) +3
-             (count (:hand (get-runner))) +5]
+                     (count (:hand (get-runner))) +5]
             (run-continue state))
           "gained 3 credits from raindrop"))))
 
@@ -6441,7 +6436,8 @@
     (click-card state :runner (get-ice state :hq 1))
     (is (no-prompt? state :runner))
     (is (= "Vanilla" (:title (get-ice state :rd 0))) "Vanilla swapped to R&D")
-    (is (= "Paper Wall" (:title (get-ice state :hq 1))) "Paper Wall swapped to HQ outer position")))
+    (is (= "Paper Wall" (:title (get-ice state :hq 1))) "Paper Wall swapped to HQ outer position")
+    (is (last-log-contains? state #"uses Reshape to swap the positions of ICE protecting R&D at position 0 and ICE protecting HQ at position 1"))))
 
 (deftest retrieval-run-happy-path
     ;; Happy Path
@@ -6550,7 +6546,8 @@
       (is (= "Easy Mark" (-> (get-runner) :hand first :title)))
       (is (no-prompt? state :corp) "Corp should have no more prompts")
       (is (no-prompt? state :runner) "Runner should have no more prompts")
-      (is (nil? (get-run)) "Run is ended")))
+      (is (nil? (get-run)) "Run is ended")
+      (is (second-last-log-contains? state #"uses Rip Deal to add Easy Mark from the heap to the grip"))))
 
 (deftest rip-deal-with-gauntlet-2942
     ;; with Gauntlet #2942
@@ -6862,6 +6859,7 @@
       (let [credits (:credit (get-runner))]
         (click-card state :runner "Corroder")
         (click-card state :runner "Mass-Driver")
+        (is (second-last-log-contains? state #"uses Scavenge to trash an installed Corroder and install Mass-Driver"))
         (is (= "Mass-Driver" (:title (get-program state 0))) "Mass-Driver is now installed")
         (is (= (+ credits 2 -8) (:credit (get-runner))) "Scavenge should give discount"))))
 
@@ -6893,6 +6891,7 @@
     (play-from-hand state :runner "Scrounge")
     (click-card state :runner "Ika")
     (click-card state :runner "Mayfly")
+    (is (last-log-contains? state #"uses Scrounge to add Mayfly in the heap to the bottom of the stack"))
     (is-deck? state :runner ["Rezeki" "Mayfly"])))
 
 (deftest scrubbed
@@ -6987,11 +6986,12 @@
       (run-continue state :encounter-ice)
       (card-subroutine state :corp (get-ice state :remote1 0) 0)
       (click-prompt state :corp opt)
-      (if (= opt "The run does not end")
-        (do (is (no-prompt? state :runner) "no prompt")
+      (if (= opt "The run does not end") (do (is (no-prompt? state :runner) "no prompt")
             (is (no-prompt? state :corp) "no prompt")
+            (is (last-log-contains? state #"uses Shred to prevent the run from ending"))
             (is (:run @state) "still run"))
-        (is (not (:run @state)) "not run")))))
+        (do (is (last-log-contains? state #"reveals and trashes 3 random cards .* from HQ to satisfy Shred"))
+            (is (not (:run @state)) "not run"))))))
 
 (deftest singularity
   ;; Singularity - Run a remote; if successful, trash all contents at no cost
@@ -7074,7 +7074,11 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Spear Phishing")
     (click-prompt state :runner "HQ")
-    (is (:run @state) "A run has been initiated")))
+    (run-continue state :approach-ice)
+    (run-continue state :movement)
+    (is (last-n-log-contains? state 3 #"encounters Ice Wall protecting HQ at position 0"))
+    (is (last-n-log-contains? state 2 #"uses Spear Phishing to bypass Ice Wall protecting HQ at position 0"))
+    (is (last-n-log-contains? state 1 #"bypasses Ice Wall"))))
 
 (deftest spec-work
   ;; Spec Work
@@ -7239,7 +7243,6 @@
     (damage state :corp :meat 2)
     (is (waiting? state :corp) "Corp is waiting for the runner to pick a steelskin")))
 
-
 (deftest stimhack
   ;; Stimhack - Gain 9 temporary credits and take 1 brain damage after the run
   (do-game
@@ -7305,6 +7308,7 @@
         (is (= 2 (get-counters imp :virus)) "Imp has 2 counters after install")
         (play-from-hand state :runner "Surge")
         (click-card state :runner imp)
+        (is (last-log-contains? state "uses Surge to place 2 virus counters on Imp"))
         (is (= 4 (get-counters (refresh imp) :virus)) "Imp has 4 counters after surge"))))
 
 (deftest surge-don-t-fire-surge-if-target-is-not-a-virus
@@ -7368,6 +7372,7 @@
         (click-prompt state :corp "Discard 2 cards from HQ")
         (click-card state :corp (first (:hand (get-corp))))
         (click-card state :corp (second (:hand (get-corp))))
+        (is (last-log-contains? state "uses SYN Attack to force the Corp to discard 2 cards from HQ"))
         (is (= (+ hand -2) (count (:hand (get-corp)))) "Corp should discard 2 cards"))))
 
 (deftest system-outage
@@ -7582,7 +7587,6 @@
       (is (= "Install a program from the stack?" (:msg (prompt-map :runner))) "Stack is only option")
       (is (= 1 (-> (prompt-map :runner) :choices count)) "Runner has 1 choice")
       (is (= ["Stack"] (prompt-buttons :runner)) "Runner's only choice is Stack")))
-
 
 (deftest the-maker-s-eye
   (do-game
@@ -7983,6 +7987,7 @@
     (play-run-event state "Vamp" :hq)
     (click-prompt state :runner "Vamp")
     (click-prompt state :runner "8")
+    (is (second-last-log-contains? state "uses Vamp to force the Corp to lose 8 [Credit]"))
     (is (= 1 (count-tags state)) "Took 1 tag")
     (is (= 5 (:credit (get-runner))) "Paid 8 credits")
     (is (zero? (:credit (get-corp))) "Corp lost all 8 credits")))

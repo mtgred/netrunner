@@ -4,7 +4,7 @@
    [jinteki.utils :refer [clamp]]
    [nr.appstate :refer [app-state]]
    [nr.local-storage :as ls]
-   [nr.translations :refer [tr]]
+   [jinteki.i18n :refer [tr]]
    [reagent.core :as r]))
 
 (def zoom-cursor (r/cursor app-state [:options :zoom]))

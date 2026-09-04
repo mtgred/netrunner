@@ -56,7 +56,7 @@
 (defn draw
   "Draw n cards from :deck to :hand."
   ([state side eid n] (draw state side eid n nil))
-  ([state side eid n {:keys [suppress-event no-update-draw-stats]}]
+  ([state side eid n {:keys [suppress-event no-update-draw-stats loud]}]
    (if (zero? n)
      (effect-completed state side eid)
      (wait-for (trigger-event-simult state side (make-eid state eid) (if (= side :corp) :pre-corp-draw :pre-runner-draw) nil {:count n})
@@ -81,35 +81,41 @@
                  (not (pos? deck-count)))
            (effect-completed state side eid)
            (let [to-draw (take draws-after-prevent (get-in @state [side :deck]))
-                 set-aside-eid eid]
-             (let [drawn (set-aside-for-me state side set-aside-eid to-draw)
-                   drawn-count (count drawn)]
-               (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % drawn-count) 0))
-               (if (not no-update-draw-stats)
-                 (swap! state update-in [:stats side :gain :card] (fnil + 0) n))
-               (if suppress-event
-                 (do
+                 set-aside-eid eid
+                 drawn (set-aside-for-me state side set-aside-eid to-draw)
+                 drawn-count (count drawn)]
+             (swap! state update-in [side :register :drawn-this-turn] (fnil #(+ % drawn-count) 0))
+             (when (not no-update-draw-stats)
+               (swap! state update-in [:stats side :gain :card] (fnil + 0) n))
+             (if suppress-event
+               (do
+                 (doseq [c (get-set-aside state side set-aside-eid)]
+                   (move state side c :hand))
+                 (when loud
+                   (system-msg state side {:msg/type :msg-draw-cards
+                                           :count drawn-count}))
+                 (effect-completed state side eid))
+               (let [draw-event (if (= side :corp) :corp-draw :runner-draw)]
+                 (swap! state update-in [side :register :currently-drawing] conj drawn)
+                 (doseq [c drawn]
+                   (when-let [on-draw (:on-draw (card-def c))]
+                     (register-pending-event
+                      state draw-event c (assoc on-draw :location :set-aside))))
+                 (queue-event state draw-event {:cards drawn
+                                                :count drawn-count})
+                 (wait-for
+                   (checkpoint state nil (make-eid state eid) nil)
                    (doseq [c (get-set-aside state side set-aside-eid)]
                      (move state side c :hand))
-                   (effect-completed state side eid))
-                 (let [draw-event (if (= side :corp) :corp-draw :runner-draw)]
-                   (swap! state update-in [side :register :currently-drawing] conj drawn)
-                   (doseq [c drawn]
-                     (when-let [on-draw (:on-draw (card-def c))]
-                       (register-pending-event
-                         state draw-event c (assoc on-draw :location :set-aside))))
-                   (queue-event state draw-event {:cards drawn
-                                                  :count drawn-count})
-                   (wait-for
-                     (checkpoint state nil (make-eid state eid) nil)
-                     (doseq [c (get-set-aside state side set-aside-eid)]
-                       (move state side c :hand))
-                     (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :post-corp-draw :post-runner-draw) {:count drawn-count})
-                               (let [eid (make-result eid (-> @state side :register :currently-drawing (peek)))]
-                                 (swap! state update-in [side :register :currently-drawing] pop)
-                                 (effect-completed state side eid))))))
-               (when (safe-zero? (remaining-draws state side))
-                 (prevent-draw state side))))))))))
+                   (when loud
+                     (system-msg state side {:msg/type :msg-draw-cards
+                                             :count drawn-count}))
+                   (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :post-corp-draw :post-runner-draw) {:count drawn-count})
+                     (let [eid (make-result eid (-> @state side :register :currently-drawing (peek)))]
+                       (swap! state update-in [side :register :currently-drawing] pop)
+                       (effect-completed state side eid))))))
+             (when (safe-zero? (remaining-draws state side))
+               (prevent-draw state side)))))))))
 
 (defn maybe-draw
   ([state side eid card n] (maybe-draw state side eid card n nil))

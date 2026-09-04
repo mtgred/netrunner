@@ -4,7 +4,7 @@
    [cljs.core.async :refer [<!]]
    [nr.ajax :refer [GET]]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr tr-element tr-element-with-embedded-content tr-span]]
+   [jinteki.i18n :refer [tr tr-element tr-element-with-embedded-content tr-span]]
    [nr.utils :refer [set-scroll-top store-scroll-top]]
    [reagent.core :as r]))
 

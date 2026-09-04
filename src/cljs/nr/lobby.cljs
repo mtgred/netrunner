@@ -17,7 +17,7 @@
     [nr.pending-game :refer [pending-game]]
     [nr.replay-game :refer [start-replay-div]]
     [nr.sounds :refer [play-sound resume-sound]]
-    [nr.translations :refer [tr tr-span tr-element tr-format]]
+    [jinteki.i18n :refer [tr tr-span tr-element tr-format]]
     [nr.utils :refer [cond-button non-game-toast tr-non-game-toast slug->format]]
     [nr.ws :as ws]
     [reagent.core :as r]

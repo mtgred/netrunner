@@ -15,6 +15,7 @@
   :main web.core
 
   :repl-options {:timeout 180000
+                 :nrepl-middleware [org.corfield.rephrase.nrepl/wrap-rephrase]
                  :init-ns web.dev}
 
   :dependencies [[org.clojure/clojure "1.12.5"]
@@ -65,7 +66,7 @@
                  [time-literals "0.1.5"]
                  [metosin/reitit "0.7.2"]
                  [org.flatland/ordered "1.15.12"]
-                 [io.github.noahtheduke/fluent-clj "0.0.2"]]
+                 [io.github.noahtheduke/fluent-clj "0.3.0"]]
 
   :test-selectors {:default (fn [m] (not (:kaocha/pending m)))}
 
@@ -77,6 +78,7 @@
                                   [instaparse "1.5.0"]
                                   [integrant/repl "0.3.2"]
                                   [lambdaisland/kaocha "1.68.1059"]
+                                  [org.corfield/rephrase "1.0.2"]
                                   [thheller/shadow-cljs "2.28.21"]]
                    :plugins [[lein-eftest "0.6.0"]
                              [jonase/eastwood "1.4.3"]
