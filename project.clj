@@ -65,7 +65,8 @@
                  [time-literals "0.1.5"]
                  [metosin/reitit "0.7.2"]
                  [org.flatland/ordered "1.15.12"]
-                 [io.github.noahtheduke/fluent-clj "0.0.2"]]
+                 [com.taoensso/carmine "3.5.0"]
+                 [io.github.noahtheduke/fluent-clj "0.3.0"]]
 
   :test-selectors {:default (fn [m] (not (:kaocha/pending m)))}
 

@@ -3,7 +3,7 @@
   (:require
    [noahtheduke.fluent :as fluent]
    #?@(:clj [[clojure.java.io :as io]
-             [clojure.string :as str]])
+             [integrant.core :as ig]])
    #?(:cljs
      [reagent.core :as r])))
 
@@ -46,6 +46,14 @@
 #?(:clj
    (comment
      (load-dictionary! "public/i18n")))
+
+#?(:clj
+    (defmethod ig/init-key :web/i18n [_ _opts]
+      (load-dictionary! "public/i18n")))
+
+#?(:clj
+    (defmethod ig/halt-key! :web/i18n [_ _opts]
+      (reset! fluent-dictionary nil)))
 
 (defn get-content
   [lang]

@@ -13,7 +13,7 @@
    :ffg {:file "ffg"}
    :nsg {:file "nsg"}})
 
-#?(:cljs (load-card-backs base-card-backs card-backs)
+#?(:cljs (load-card-backs base-card-backs :card-backs)
    :clj (def card-backs base-card-backs))
 
 (defn just-prizes []

@@ -25,7 +25,7 @@
 (defn- blocked-by-user
   [db username]
     (let [blocks
-          (mc/find-one-as-map db :users
+          (mc/find-one-as-map db "users"
                               {:username username}
                               ["username" "options.blocked-users"])]
       [username blocks]))
@@ -36,7 +36,8 @@
     {:keys [channel]} :path-params :as args}]
   (if user
     (let [messages (->> (q/with-collection
-                          db msg-collection
+                          ;; the str call is to appease clj-kondo
+                          db (str msg-collection)
                           (q/find {:channel channel})
                           (q/sort (array-map :date -1))
                           (q/limit 100))
@@ -67,6 +68,7 @@
 (defmethod ws/-msg-handler :chat/say
   chat--say
   [{{db :system/db
+     ws :system/ws
      chat-settings :system/chat
      user :user} :ring-req
     uid :uid
@@ -88,17 +90,17 @@
               inserted (update inserted :_id str)
               inserted (update inserted :date #(.toString %))
               connected-users (app-state/get-users)]
-          (doseq [uid (ws/connected-uids)
+          (doseq [uid (ws/connected-uids ws)
                   :when (or (= (:username user) uid)
                             (visible-to-user user {:username uid} connected-users))]
-            (ws/broadcast-to! [uid] :chat/message inserted)))
+            (ws/broadcast-to! ws [uid] :chat/message inserted)))
         (when uid
-          (ws/broadcast-to! [uid] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)})))))
+          (ws/broadcast-to! ws [uid] :chat/blocked {:reason (if len-valid :rate-exceeded :length-exceeded)})))))
   (lobby/log-delay! timestamp id))
 
 (defmethod ws/-msg-handler :chat/delete-msg
   chat--delete-msg
-  [{{db :system/db
+  [{{:system/keys [db ws]
      {:keys [username] :as user} :user} :ring-req
     {:keys [msg]} :?data
     id :id
@@ -112,13 +114,13 @@
                   :action :delete-message
                   :date (inst/now)
                   :msg msg})
-      (doseq [uid (ws/connected-uids)]
-        (ws/broadcast-to! [uid] :chat/delete-msg msg))))
+      (doseq [uid (ws/connected-uids ws)]
+        (ws/broadcast-to! ws [uid] :chat/delete-msg msg))))
   (lobby/log-delay! timestamp id))
 
 (defmethod ws/-msg-handler :chat/delete-all
   chat--delete-all
-  [{{db :system/db
+  [{{:system/keys [db ws]
      {:keys [username]} :user :as user} :ring-req
     {:keys [sender]} :?data
     id :id
@@ -131,6 +133,6 @@
                 :action :delete-all-messages
                 :date (inst/now)
                 :sender sender})
-    (doseq [uid (ws/connected-uids)]
-      (ws/broadcast-to! [uid] :chat/delete-all {:username sender})))
+    (doseq [uid (ws/connected-uids ws)]
+      (ws/broadcast-to! ws [uid] :chat/delete-all {:username sender})))
   (lobby/log-delay! timestamp id))

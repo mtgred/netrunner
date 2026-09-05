@@ -67,7 +67,6 @@
         (apply require nses)
         nses))
     (require-dirs nil))
-  (prn :hello)
   (prof/profile
    (dotimes [_ 10]
      (test-var #'game.core.scenarios-test/masterwork-overinstall-boomerang-complex-case-full-game)))
@@ -78,7 +77,7 @@
 
 (defn do-action
   [command state side args]
-  (update-and-send-diffs! main/handle-action {:state state} side command args))
+  (update-and-send-diffs! nil main/handle-action {:state state} side command args))
 
 ;; generic test helpers
 
@@ -211,8 +210,10 @@
                            (= choice (get-in % [:value :title]))
                            (utils/same-card? choice (:value %)))
             idx (or (:idx (first args)) 0)
-            chosen (nth (filter choice-fn choices) idx nil)]
-        (when-not (and chosen (do-action "choice" state side {:choice {:uuid (:uuid chosen)} :eid (:eid (get-prompt state side))}))
+            chosen (nth (filter choice-fn choices) idx nil)
+            done (when chosen
+                   (do-action "choice" state side {:choice {:uuid (:uuid chosen)} :eid (:eid (get-prompt state side))}))]
+        (when-not done
           (is' (= choice (mapv :value choices))
                (str (utils/side-str side) " expected to click [ "
                     (pr-str (if (string? choice) choice (:title choice "")))
@@ -406,56 +407,60 @@
       (is (= ordered-names top-n-titles)
           (str "Deck is (from top to bottom): " (str/join ", " ordered-names))))))
 
-(defn new-game
+(defmacro new-game
   "Init a new game using given corp and runner. Keep starting hands (no mulligan) and start Corp's turn."
-  ([] (new-game nil))
+  ([] `(new-game nil))
   ([players]
-   (let [{:keys [corp runner mulligan start-as dont-start-turn dont-start-game format]} (make-decks players)
-         state (core/init-game
-                 {:gameid 1
-                  :format format
-                  :players [{:side "Corp"
-                             :user {:username "Test Corp"}
-                             :deck {:identity (:identity corp)
-                                    :cards (:deck corp)}}
-                            {:side "Runner"
-                             :user {:username "Test Runner"}
-                             :deck {:identity (:identity runner)
-                                    :cards (:deck runner)}}]})]
-     (when-not dont-start-game
-       (if (#{:both :corp} mulligan)
-         (click-prompt state :corp "Mulligan")
-         (click-prompt state :corp "Keep"))
-       (if (#{:both :runner} mulligan)
-         (click-prompt state :runner "Mulligan")
-         (click-prompt state :runner "Keep"))
-       (when-not dont-start-turn (core/start-turn state :corp nil)))
-     ;; Gotta move cards where they need to go
-     (starting-score-areas state (:score-area corp) (:score-area runner))
-     (doseq [side [:corp :runner]]
-       (let [side-map (if (= :corp side) corp runner)]
-         (when-let [hand (:hand side-map)]
-           (starting-hand state side hand))
-         (when (seq (:discard side-map))
-           (doseq [ctitle (:discard side-map)]
-             (core/move state side
-                        (or (find-card ctitle (get-in @state [side :deck]))
-                            ;; This is necessary as a :discard card will only end up in
-                            ;; the hand when we're not already using (starting-hand)
-                            (when (empty? (:hand side-map))
-                              (find-card ctitle (get-in @state [side :hand]))))
-                        :discard)))
-         (when (:credits side-map)
-           (swap! state assoc-in [side :credit] (:credits side-map))))
-       (core/clear-win state side))
-     ;; These are side independent so they happen ouside the loop
-     (when-let [bad-pub (:bad-pub corp)]
-       (swap! state assoc-in [:corp :bad-publicity :base] bad-pub))
-     (when-let [tags (:tags runner)]
-       (swap! state assoc-in [:runner :tag :base] tags))
-     (when (= start-as :runner) (take-credits state :corp))
-     (core/fake-checkpoint state)
-     state)))
+   `(error-wrapper
+    (let [{corp# :corp runner# :runner
+           mulligan# :mulligan start-as# :start-as
+           dont-start-turn# :dont-start-turn dont-start-game# :dont-start-game
+           format# :format} (make-decks ~players)
+          state# (core/init-game
+                  {:gameid 1
+                   :format format#
+                   :players [{:side "Corp"
+                              :user {:username "Test Corp"}
+                              :deck {:identity (:identity corp#)
+                                     :cards (:deck corp#)}}
+                             {:side "Runner"
+                              :user {:username "Test Runner"}
+                              :deck {:identity (:identity runner#)
+                                     :cards (:deck runner#)}}]})]
+      (when-not dont-start-game#
+        (if (#{:both :corp} mulligan#)
+          (click-prompt-impl state# :corp "Mulligan")
+          (click-prompt-impl state# :corp "Keep"))
+        (if (#{:both :runner} mulligan#)
+          (click-prompt-impl state# :runner "Mulligan")
+          (click-prompt-impl state# :runner "Keep"))
+        (when-not dont-start-turn# (core/start-turn state# :corp nil)))
+      ;; Gotta move cards where they need to go
+      (starting-score-areas state# (:score-area corp#) (:score-area runner#))
+      (doseq [side# [:corp :runner]]
+        (let [side-map# (if (= :corp side#) corp# runner#)]
+          (when-let [hand# (:hand side-map#)]
+            (starting-hand state# side# hand#))
+          (when (seq (:discard side-map#))
+            (doseq [ctitle# (:discard side-map#)]
+              (core/move state# side#
+                         (or (find-card ctitle# (get-in @state# [side# :deck]))
+                             ;; This is necessary as a :discard card will only end up in
+                             ;; the hand when we're not already using (starting-hand)
+                             (when (empty? (:hand side-map#))
+                               (find-card ctitle# (get-in @state# [side# :hand]))))
+                         :discard)))
+          (when (:credits side-map#)
+            (swap! state# assoc-in [side# :credit] (:credits side-map#))))
+        (core/clear-win state# side#))
+      ;; These are side independent so they happen ouside the loop
+      (when-let [bad-pub# (:bad-pub corp#)]
+        (swap! state# assoc-in [:corp :bad-publicity :base] bad-pub#))
+      (when-let [tags# (:tags runner#)]
+        (swap! state# assoc-in [:runner :tag :base] tags#))
+      (when (= start-as# :runner) (take-credits state# :corp))
+      (core/fake-checkpoint state#)
+      state#))))
 
 (defn maybe-card
   "Query a card by name if possible, for the use of card abilities"
@@ -1094,7 +1099,7 @@
 
 (defn trace
   [state base]
-  (handle-message-and-send-diffs! {:state state} :corp {} (str "/trace " base)))
+  (handle-message-and-send-diffs! nil {:state state} :corp {} (str "/trace " base)))
 
 (defn log-str [state]
   (->> (:log @state)

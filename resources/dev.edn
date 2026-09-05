@@ -4,7 +4,10 @@
                       :name "netrunner"
                       ; Monger requires a db name in the URI string, be sure to specify
                       :connection-string #or [#env MONGO_CONNECTION_URI nil]}
- :logging/timbre {:appenders
+ :redis/connection {:pool {}
+                    :spec {}}
+ :logging/timbre {:min-level :info
+                  :appenders
                   ;; set appender args:
                   ;; `:enabled?` sets whether an appender should run
                   ;; `:log-path` defaults to `~/logs/jinteki-*.log`
@@ -23,9 +26,16 @@
                      :same-site :lax
                      ; 60 days
                      :max-age 5184000}}
- :web/lobby {:interval 1000
+ :web/ws {:packer :edn
+          :buffer-size 500
+          :buffer-clear-timer-ms 40}
+ :web/lobby {:time-inactive 600
+             ;; :interval and :clear-out-frequency are passed to enc/ms
+             :interval {:secs 1}
+             :clear-out-frequency {:mins 5}
              :mongo #ig/ref :mongodb/connection
-             :time-inactive 600}
+             :ws #ig/ref :web/ws
+             :redis #ig/ref :redis/connection}
  :web/chat {:max-length 144
             ;; sliding window size in seconds
             :rate-window 60
@@ -38,9 +48,13 @@
              :from "support@jinteki.net"
              :reset-subject "Jinteki Password Reset"
              :confirm-reset-subject "Your password has been changed"}
- :web/ws {:packer :edn}
+ :web/telemetry {:web/ws #ig/ref :web/ws
+                 :web/redis #ig/ref :redis/connection
+                 ;; :frequency is passed to enc/ms
+                 :frequency {:secs 30}}
  :web/app {:server-mode #ig/ref :server/mode
            :mongodb/connection #ig/ref :mongodb/connection
+           :redis/connection #ig/ref :redis/connection
            :web/auth #ig/ref :web/auth
            :web/chat #ig/ref :web/chat
            :web/email #ig/ref :web/email
@@ -49,9 +63,11 @@
                   :mongo #ig/ref :mongodb/connection}
  :web/i18n nil
  :frontend/version {:initial "1"
+                    :redis #ig/ref :redis/connection
                     :mongo #ig/ref :mongodb/connection}
- :sente/router {:ws #ig/ref :web/ws}
  :game/quotes nil
  :jinteki/cards-version {:initial "1"
+                         :redis #ig/ref :redis/connection
                          :mongo #ig/ref :mongodb/connection}
- :jinteki/cards {:mongo #ig/ref :mongodb/connection}}
+ :jinteki/cards {:redis #ig/ref :redis/connection
+                 :mongo #ig/ref :mongodb/connection}}

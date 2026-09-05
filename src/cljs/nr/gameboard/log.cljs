@@ -13,8 +13,7 @@
    [nr.utils :refer [player-highlight-option-class render-message
                      render-player-highlight scroll-to-bottom!]]
    [nr.ws :as ws]
-   [reagent.core :as r]
-   [reagent.dom :as rdom]))
+   [reagent.core :as r]))
 
 (def commands (distinct (map :name command-info)))
 (def command-info-map (->> command-info

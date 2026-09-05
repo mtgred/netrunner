@@ -1,23 +1,21 @@
 (ns web.decks
   (:require
    [cljc.java-time.instant :as inst]
-   [clojure.string :as str]
-   [crypto.password.pbkdf2 :as pbkdf2]
    [jinteki.cards :refer [all-cards]]
    [jinteki.utils :refer [slugify]]
    [jinteki.validator :refer [calculate-deck-status]]
    [monger.collection :as mc]
-   [monger.operators :refer [$in $ne]]
+   [monger.operators :refer [$in]]
    [monger.result :refer [acknowledged?]]
+   [taoensso.timbre :as timbre]
    [web.lobby :as lobby]
-   [web.mongodb :refer [->object-id ->object-id]]
+   [web.mongodb :refer [->object-id]]
    [web.nrdb :as nrdb]
-   [web.utils :refer [response mongo-time-to-utc-string]]
-   [web.ws :as ws]
-   [taoensso.timbre :as timbre]))
+   [web.utils :refer [mongo-time-to-utc-string response]]
+   [web.ws :as ws]))
 
 (defn decks-handler
-  [{db :system/db
+  [{:system/keys [db]
     {:keys [username]} :user}]
   (let [uname (or username "__demo__")
         decks (mc/find-maps db "decks" {:username uname})
@@ -53,7 +51,7 @@
     (if (empty? salt) (byte-array (map byte "default-salt")) salt)))
 
 (defn decks-create-handler
-  [{db :system/db
+  [{:system/keys [db]
     {username :username} :user
     deck                 :body}]
   (if (and username deck)
@@ -64,7 +62,7 @@
     (response 401 {:message "Unauthorized"})))
 
 (defn decks-save-handler
-  [{db :system/db
+  [{:system/keys [db]
     {username :username} :user
     deck                 :body}]
   (if (and username deck)
@@ -84,7 +82,7 @@
     (response 401 {:message "Unauthorized"})))
 
 (defn decks-delete-handler
-  [{db :system/db
+  [{:system/keys [db]
     {username :username} :user
     {id :id}             :path-params}]
   (try
@@ -102,7 +100,7 @@
 
 (defmethod ws/-msg-handler :decks/import
   decks--import
-  [{{db :system/db
+  [{{:system/keys [db ws]
      {username :username} :user} :ring-req
     uid :uid
     {:keys [input]} :?data
@@ -119,16 +117,16 @@
               status (calculate-deck-status updated-deck)
               deck (prepare-deck-for-db db-deck username status)]
           (mc/insert db "decks" deck)
-          (ws/broadcast-to! [uid] :decks/import-success "Imported"))
-        (ws/broadcast-to! [uid] :decks/import-failure "Failed to parse imported deck.")))
+          (ws/broadcast-to! ws [uid] :decks/import-success "Imported"))
+        (ws/broadcast-to! ws [uid] :decks/import-failure "Failed to parse imported deck.")))
     (catch Exception e
       (timbre/info e "failed to import decklist")
-      (ws/broadcast-to! [uid] :decks/import-failure "Failed to import deck.")))
+      (ws/broadcast-to! ws [uid] :decks/import-failure "Failed to import deck.")))
   (lobby/log-delay! timestamp id))
 
 (defn decks-bulk-delete-handler
   "Handles bulk deletion of multiple decks with detailed per-deck status reporting."
-  [{db :system/db
+  [{:system/keys [db]
     {username :username} :user
     {:keys [deck-ids]} :body}]
   (try
