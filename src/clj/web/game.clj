@@ -7,7 +7,7 @@
    [game.core.commands :as commands :refer [parse-command]]
    [game.core.diffs :as diffs]
    [game.core.finding :refer [find-latest]]
-   [game.core.say :refer [make-system-message]]
+   [game.core.say :refer [make-system-message make-system-message-parts]]
    [game.core.set-up :refer [init-game]]
    [game.main :as main]
    [jinteki.chimera :as chimera]
@@ -65,7 +65,10 @@
   Otherwise, adds the message to the log and only diffs the `:log`."
   [{state :state :as lobby} side user message]
   (when (and state @state)
-    (let [message (if (= (str/trim message) "null") " null" message)]
+    (let [message (if (and (string? message)
+                          (= (str/trim message) "null"))
+                    " null"
+                    message)]
       (if (and side user (parse-command state message))
         (update-and-send-diffs! main/handle-say lobby side user message)
         ;; if side is nil, then it's a notification
@@ -236,7 +239,8 @@
        ;; The game will not exist if this is the last player to leave.
        (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
          (handle-message-and-send-diffs!
-          lobby? nil nil (str (:username user) " has left the game.")))
+          lobby? nil nil
+          [(lobby/lobby-username-part lobby uid user) " has left the game."]))
        (lobby/send-lobby-list uid)
        (lobby/broadcast-lobby-list)
        (when ?reply-fn (?reply-fn true))))
@@ -363,8 +367,10 @@
    (let [lobby (app-state/get-lobby gameid)]
      (when (and lobby (lobby/allowed-in-lobby user lobby))
        (let [correct-password? (lobby/check-password lobby user password)
-             watch-str (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) ".")
-             watch-message (make-system-message watch-str)
+             watch-parts [{:username (:username user) :spectator true}
+                          (str " joined the game as a spectator"
+                               (when request-side (str " (" request-side " perspective)")) ".")]
+             watch-message (make-system-message-parts watch-parts)
              new-app-state (swap! app-state/app-state
                                   update :lobbies
                                   lobby/handle-watch-lobby gameid uid user correct-password? watch-message request-side)
@@ -376,7 +382,7 @@
              (lobby/send-lobby-state lobby?)
              (lobby/send-lobby-ting lobby?)
              (lobby/broadcast-lobby-list)
-             (main/handle-notification (:state lobby?) watch-str)
+             (main/handle-notification (:state lobby?) watch-parts)
              (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
              (when ?reply-fn (?reply-fn 200)))
            (false? correct-password?)
@@ -400,7 +406,9 @@
       (app-state/set-last-update gameid)
       (lobby/game-thread
        lobby?
-       (handle-message-and-send-diffs! lobby? nil nil (str (:username user) " " message " spectators."))
+       (handle-message-and-send-diffs!
+         lobby? nil nil
+         [{:username (:username user)} (str " " message " spectators.")])
        ;; needed to update the status bar
        (lobby/send-lobby-state lobby?)
        (lobby/log-delay! timestamp id)))))
@@ -438,7 +446,8 @@
        ;; The game will not exist if this is the last player to leave.
        (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
          (handle-message-and-send-diffs!
-          lobby? nil nil (str (:username user) " has left the game.")))))
+          lobby? nil nil
+          [(lobby/lobby-username-part lobby uid user) " has left the game."]))))
    (lobby/broadcast-lobby-list)
    (when ?reply-fn (?reply-fn true))
    (lobby/log-delay! timestamp id)))

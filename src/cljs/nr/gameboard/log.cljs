@@ -11,7 +11,7 @@
    [nr.gameboard.state :refer [game-state not-spectator?]]
    [nr.translations :refer [tr tr-span]]
    [nr.utils :refer [player-highlight-option-class render-message
-                     render-player-highlight scroll-to-bottom!]]
+                     render-system-message scroll-to-bottom!]]
    [nr.ws :as ws]
    [reagent.core :as r]
    [reagent.dom :as rdom]))
@@ -289,12 +289,13 @@
          [show-decklists]
          [completions !input-ref state]]))))
 
-(defn format-system-timestamp [timestamp text corp runner]
-  (if (get-in @app-state [:options :log-timestamps])
-    (render-message (render-player-highlight text corp runner (str "[" (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "") "]")))
-    (render-message (render-player-highlight text corp runner))
-    )
-  )
+(defn format-system-timestamp [timestamp message corp runner]
+  (render-system-message
+    message corp runner
+    (when (get-in @app-state [:options :log-timestamps])
+      (str "["
+           (string/replace (.toLocaleTimeString (js/Date. timestamp)) #"\s\w*" "")
+           "]"))))
 
 (defn format-user-timestamp [timestamp user]
   (if (get-in @app-state [:options :log-timestamps])
@@ -341,11 +342,11 @@
                                 :on-mouse-out #(card-preview-mouse-out % zoom-channel)
                                 :aria-live "polite"}]
                 (map
-                  (fn [{:keys [user text timestamp]}]
+                  (fn [{:keys [user text timestamp] :as message}]
                     ^{:key timestamp}
                     (if (= user "__system__")
                        [:div.system
-                         [format-system-timestamp timestamp text @corp @runner]]
+                         [format-system-timestamp timestamp message @corp @runner]]
                        [:div.message
                         [avatar user {:opts {:size 38}}]
                         [:div.content

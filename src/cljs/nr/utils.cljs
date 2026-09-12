@@ -391,6 +391,42 @@
   ([message corp runner timestamp]
   (render-input message (player-highlight-patterns corp runner timestamp))))
 
+(defn- render-username [username corp runner]
+  [:span
+   {:class (cond
+             (= username corp) "corp-username"
+             (= username runner) "runner-username"
+             :else "username")}
+   username])
+
+(defn render-message-parts [parts corp runner timestamp]
+  (let [timestamp-index
+        (first
+          (keep-indexed
+            (fn [i part]
+              (when (map? part) i))
+            parts))]
+    (into
+      [:<>]
+      (map-indexed
+        (fn [i part]
+          (set-react-key
+            i
+            (cond
+              (string? part) (render-message part)
+              (:spectator part) [:span (:username part)]
+              :else
+              (wrap-timestamp
+                (render-username (:username part) corp runner)
+                (when (= i timestamp-index) timestamp)))))
+        parts))))
+
+(defn render-system-message [message corp runner timestamp]
+  (if-let [parts (:parts message)]
+    (render-message-parts parts corp runner timestamp)
+    (render-message
+      (render-player-highlight (:text message) corp runner timestamp))))
+
 (defn player-highlight-option-class []
   (when (= "blue-red" (get-in @app-state [:options :log-player-highlight]))
     "log-player-highlight-red-blue"))

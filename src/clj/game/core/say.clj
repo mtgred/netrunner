@@ -17,6 +17,20 @@
   [text]
   (make-message {:user "__system__" :text text}))
 
+(defn make-system-message-parts
+  "Creates a system message whose username parts are kept separate from
+  renderable text. The complete text is retained for backwards compatibility."
+  [parts]
+  (assoc
+    (make-system-message
+      (apply str (map #(if (string? %) % (:username %)) parts)))
+    :parts parts))
+
+(defn- username-message-parts [username text]
+  (if username
+    [{:username username} (str " " text)]
+    [text]))
+
 (defn- select-pronoun
   "Selects an appropriate plurular pronoun
   'their' is neuter, so it's appropriate to everyone as a fallback"
@@ -57,6 +71,12 @@
         (str/replace #"\[corp-pronoun\]" corp-pronoun)
         (str/replace #"\[runner-pronoun\]" runner-pronoun))))
 
+(defn- insert-pronouns-in-parts [state side parts]
+  (mapv #(if (string? %)
+           (insert-pronouns state side %)
+           %)
+        parts))
+
 (defn- log
   [state message]
   (swap! state update :log conj message))
@@ -70,16 +90,21 @@
      (let [log-sides (flatten [log-side])]
        (log state (zipmap log-sides (repeat message)))))))
 
-(defn- multi-say
-  [state side message-map]
-  (let [message (update-vals message-map #(make-system-message  (insert-pronouns state side %)))]
-    (log state message)))
-
 (defn system-say
   "Prints a system message to log (`say` from user __system__)"
   ([state side text] (system-say state side text nil))
   ([state side text {:keys [hr log-side]}]
    (say state side (make-system-message (str text (when hr "[hr]"))) (or log-side :public))))
+
+(defn system-say-parts
+  "Prints a structured system message to the log."
+  ([state side parts] (system-say-parts state side parts nil))
+  ([state side parts {:keys [hr log-side]}]
+   (let [parts (cond-> (insert-pronouns-in-parts state side parts)
+                 hr (conj "[hr]"))
+         message (make-system-message-parts parts)
+         log-sides (flatten [(or log-side :public)])]
+     (log state (zipmap log-sides (repeat message))))))
 
 (defn unsafe-say
   "Prints a reagent hiccup directly to the log. Do not use for any user-generated content!"
@@ -92,13 +117,21 @@
   ([state side text] (system-msg state side text nil))
   ([state side text args]
    (let [username (get-in @state [side :user :username])]
-     (system-say state side (str username " " text ".") args))))
+     (system-say-parts
+       state side
+       (username-message-parts username (str text "."))
+       args))))
 
 (defn multi-msg
   [state side message-map]
   (let [username (get-in @state [side :user :username])
-        message-map (update-vals message-map #(str username " " % "."))]
-    (multi-say state side message-map)))
+        messages (update-vals
+                   message-map
+                   #(make-system-message-parts
+                      (insert-pronouns-in-parts
+                        state side
+                        (username-message-parts username (str % ".")))))]
+    (log state messages)))
 
 (defn enforce-msg
   "Prints a message related to a rules enforcement on a given card.

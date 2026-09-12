@@ -714,11 +714,13 @@
    indicate-action
    make-message
    make-system-message
+   make-system-message-parts
    play-sfx
    say
    system-msg
    implementation-msg
-   system-say])
+   system-say
+   system-say-parts])
 
 (expose-vars
   [game.core.servers

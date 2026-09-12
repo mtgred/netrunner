@@ -2,7 +2,7 @@
   (:require
    [cheshire.generate :refer [add-encoder encode-str]]
    [game.core.process-actions :refer [command-parser process-action]]
-   [game.core.say :refer [system-say]]
+   [game.core.say :refer [system-say system-say-parts]]
    [game.core.toasts :refer [toast]]
    [game.core.winning :refer [concede]]))
 
@@ -36,7 +36,9 @@
 (defn handle-notification
   ([state text]
    (when state
-     (system-say state nil text)))
+     (if (vector? text)
+       (system-say-parts state nil text)
+       (system-say state nil text))))
   ([state _ text] (handle-notification state text))
   ([state _ _ text] (handle-notification state text)))
 
@@ -53,4 +55,6 @@
                     (= _id (get-in @state [:runner :user :_id])) :runner
                     :else nil)]
     (swap! state assoc-in [side :user] user)
-    (handle-notification state (str username " rejoined the game."))))
+    (handle-notification
+      state
+      [{:username username} " rejoined the game."])))

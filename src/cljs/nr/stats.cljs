@@ -12,7 +12,7 @@
    [nr.translations :refer [tr tr-format tr-room-type tr-side]]
    [nr.utils :refer [day-word-with-time-formatter faction-icon format-date-time
                      notnum->zero safe-divide player-highlight-option-class
-                     render-message render-player-highlight set-scroll-top store-scroll-top]]
+                     render-message render-system-message set-scroll-top store-scroll-top]]
    [nr.ws :as ws]
    [reagent.core :as r]))
 
@@ -156,7 +156,8 @@
                       (fn [i msg]
                         (when-not (typing-log? msg)
                           (if (= (:user msg) "__system__")
-                            [:div.system {:key i} (render-message (render-player-highlight (:text msg) corp runner))]
+                            [:div.system {:key i}
+                             (render-system-message msg corp runner nil)]
                             [:div.message {:key i}
                              [avatar (:user msg) {:opts {:size 38}}]
                              [:div.content
