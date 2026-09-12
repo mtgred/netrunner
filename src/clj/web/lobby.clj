@@ -362,7 +362,8 @@
   (let [lobby (-> (create-new-lobby {:uid uid :user user :options ?data})
                   (->> (auto-select-decks db))
                   (send-message
-                    (core/make-system-message (str (:username user) " has created the game."))))
+                    (core/make-system-message-parts
+                      [{:username (:username user)} " has created the game."])))
         new-app-state (swap! app-state/app-state update :lobbies
                              register-lobby lobby uid)
         lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
@@ -473,8 +474,15 @@
    (when (and (not skip-on-close) on-close)
      (on-close lobby))))
 
+(defn lobby-username-part
+  "Captures the user's role from the lobby before departure."
+  [lobby uid user]
+  (cond-> {:username (:username user)}
+    (spectator? uid lobby) (assoc :spectator true)))
+
 (defn leave-lobby! [db user uid ?reply-fn lobby]
-  (let [leave-message (core/make-system-message (str (:username user) " left the game."))
+  (let [leave-message (core/make-system-message-parts
+                        [(lobby-username-part lobby uid user) " left the game."])
         new-app-state (swap! app-state/app-state update :lobbies
                              #(handle-leave-lobby % uid leave-message))
         lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
@@ -676,7 +684,8 @@
 
 (defn join-lobby! [db user uid ?data ?reply-fn lobby]
   (let [correct-password? (check-password lobby user (:password ?data))
-        join-message (core/make-system-message (str (:username user) " joined the game."))
+        join-message (core/make-system-message-parts
+                       [{:username (:username user)} " joined the game."])
         new-app-state (swap! app-state/app-state update :lobbies
                              #(handle-join-lobby db % ?data uid user correct-password? join-message))
         lobby? (get-in new-app-state [:lobbies (:gameid ?data)])]
@@ -739,8 +748,8 @@
         (->> (assoc lobbies gameid)))
     lobbies))
 
-(defn swap-text
-  "Returns an appropriate message indicating that the players have swapped sides, 
+(defn swap-parts
+  "Returns structured message parts indicating that the players have swapped sides,
   where `player1-side` is the side that host is switching to"
   [players player1-side]
   (let [[player1 player2] (if (> (count players) 1)
@@ -748,12 +757,16 @@
                             (list (change-side (first players) player1-side)))
         player1-username (-> player1 :user :username)
         player2-username (-> player2 :user :username)]
-    (str player1-username " has swapped sides. "
-         (if (= player1-side "Any Side")
-           "Waiting for opponent."
-           (str player1-username " is now " (:side player1) ". "))
-         (when player2
-           (str player2-username " is now " (:side player2) ".")))))
+    (vec
+      (concat
+        [{:username player1-username} " has swapped sides. "]
+        (if (= player1-side "Any Side")
+          ["Waiting for opponent."]
+          [{:username player1-username}
+           (str " is now " (:side player1) ". ")])
+        (when player2
+          [{:username player2-username}
+           (str " is now " (:side player2) ".")])))))
 
 (defmethod ws/-msg-handler :lobby/swap
   lobby--swap
@@ -765,8 +778,8 @@
   (lobby-thread
     (let [lobby (app-state/get-lobby gameid)]
       (when (and lobby (first-player? uid lobby))
-        (let [swap-message (core/make-message {:user user
-                                               :text (swap-text (:players lobby) side)})
+        (let [swap-message (core/make-system-message-parts
+                             (swap-parts (:players lobby) side))
               new-app-state (swap! app-state/app-state
                                    update :lobbies
                                    #(handle-swap-sides db % gameid uid side swap-message))
@@ -911,7 +924,10 @@
     (let [lobby (app-state/get-lobby gameid)]
       (when (and lobby (allowed-in-lobby user lobby))
         (let [correct-password? (check-password lobby user password)
-              watch-message (core/make-system-message (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) "."))
+              watch-message (core/make-system-message-parts
+                              [{:username (:username user) :spectator true}
+                               (str " joined the game as a spectator"
+                                    (when request-side (str " (" request-side " perspective)")) ".")])
               new-app-state (swap! app-state/app-state
                                    update :lobbies handle-watch-lobby gameid uid user correct-password? watch-message request-side)
               lobby? (get-in new-app-state [:lobbies gameid])]

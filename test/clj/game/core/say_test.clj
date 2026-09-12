@@ -1,13 +1,69 @@
 (ns game.core.say-test
   (:require
-   [clojure.test :refer :all]
+   [cheshire.core :as json]
    [clojure.repl :as repl]
+   [clojure.test :refer :all]
    [game.core :as core]
    [game.core.card :refer :all]
    [game.core.commands :refer [parse-command]]
    [game.core.mark :refer :all]
+   [game.core.say :as say]
+   [game.main :as main]
    [game.test-framework :refer :all]
    [jinteki.utils :refer [command-info]]))
+
+(deftest structured-system-message-test
+  (testing "retains flattened text for backwards compatibility"
+    (let [parts [{:username "MirrorCubeSquare"} " uses Mirror."]
+          message (core/make-system-message-parts parts)]
+      (is (= "__system__" (:user message)))
+      (is (= "MirrorCubeSquare uses Mirror." (:text message)))
+      (is (= parts (:parts message)))))
+
+  (testing "system-msg keeps the acting username separate"
+    (do-game
+      (new-game)
+      (swap! state assoc-in [:corp :user :username] "MirrorCubeSquare")
+      (core/system-msg state :corp "uses Mirror")
+      (let [message (-> @state :log last :public)]
+        (is (= "__system__" (:user message)))
+        (is (= "MirrorCubeSquare uses Mirror." (:text message)))
+        (is (= [{:username "MirrorCubeSquare"} " uses Mirror."]
+               (:parts message)))))))
+
+(deftest structured-message-routing-test
+  (let [state (atom {:corp {:user {:username "Mirror[pronoun]"
+                                  :options {:pronouns "she"}}}
+                     :log []})]
+    (say/system-msg state :corp "uses [pronoun] Mirror"
+                    {:hr true :log-side [:corp :runner]})
+    (let [entry (last (:log @state))
+          message (:corp entry)]
+      (is (= #{:corp :runner} (set (keys entry))))
+      (is (= message (:runner entry)))
+      (is (= "Mirror[pronoun] uses her Mirror.[hr]" (:text message)))
+      (is (= [{:username "Mirror[pronoun]"} " uses her Mirror." "[hr]"]
+             (:parts message)))
+      (is (= (:parts message)
+             (:parts (json/parse-string (json/generate-string message) true)))))
+    (say/multi-msg state :corp {:public "uses a card" :corp "uses Mirror"})
+    (let [entry (last (:log @state))]
+      (is (= "Mirror[pronoun] uses a card." (get-in entry [:public :text])))
+      (is (= "Mirror[pronoun] uses Mirror." (get-in entry [:corp :text])))
+      (is (= [{:username "Mirror[pronoun]"} " uses a card."]
+             (get-in entry [:public :parts])))
+      (is (nil? (:runner entry))))))
+
+(deftest notification-parts-test
+  (let [state (atom {:log []})
+        parts [{:username "Mirror"} " has left the game."]]
+    (main/handle-notification state parts)
+    (main/handle-notification state nil parts)
+    (main/handle-notification state nil nil parts)
+    (is (= (repeat 3 parts) (map #(get-in % [:public :parts]) (:log @state))))
+    (main/handle-notification state "Server notification.")
+    (is (= "Server notification." (get-in @state [:log 3 :public :text])))
+    (is (nil? (get-in @state [:log 3 :public :parts])))))
 
 (deftest trash-button-logs-in-chat
   (do-game
