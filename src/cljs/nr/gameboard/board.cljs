@@ -207,7 +207,7 @@
         (send-command "select" {:card (card-for-click card) :eid (prompt-eid side) :shift-key-held shift-key-held})
 
         ;; A selectable card is clicked outside of a select prompt (ie it's a button on a choices prompt)
-        (contains? (into #{} (get-in @game-state [side :prompt-state :selectable])) (:cid card))
+        (contains? (into #{} (map :cid (get-in @game-state [side :prompt-state :selectable]))) (:cid card))
         (send-command "choice" {:eid (prompt-eid side) :choice {:uuid (prompt-button-from-card? card (get-in @game-state [side :prompt-state]))}})
 
         ;; Card is an identity of player's side
@@ -727,7 +727,7 @@
        [:div.blue-shade.card {:class (str (cond
                                             (= cid @icon-hovered) "icon-hovered"
                                             selected "selected"
-                                            (contains? (into #{} (get-in @gs-prompt-state [:selectable])) cid) "selectable"
+                                            (contains? (into #{} (map :cid (get-in @gs-prompt-state [:selectable]))) cid) "selectable"
                                             (same-card? card @as-button) "hovered"
                                             (same-card? card @gs-encounter-ice) "encountered"
                                             (and (not (any-prompt-open? side)) (playable? card)) "playable"
@@ -1796,7 +1796,7 @@
       [tr-span [:game_ok "OK"]]]]))
 
 (defn prompt-div
-  [me {:keys [card msg prompt-type choices offer-bad-pub?] :as prompt-state}]
+  [me {:keys [card msg prompt-type choices offer-bad-pub? selectable] :as prompt-state}]
   (let [id (atom 0)]
     [:div.panel.blue-shade.prompt
      (when (and card (not= "Basic Action" (:type card)))
@@ -1884,7 +1884,16 @@
 
        ;; otherwise choice of all present choices
        :else
-       (concat [(when offer-bad-pub?
+       (concat [(when (and msg (s/starts-with? msg "Choose a credit providing card"))
+                  (doall (for [{:keys [cid title zone side]} selectable]
+                           [:button {:on-click #(send-command "select"
+                                                              {:card {:cid cid :zone zone :side side}
+                                                               :eid (prompt-eid (:side @game-state))
+                                                               :shift-key-held (.-shiftKey %)})
+                                     :key cid}
+                            (render-message title)])))
+
+                (when offer-bad-pub?
                   ;; TODO - translate this
                   [:button {:key "Bad Pub"
                             :on-click #(send-command "bad-pub-choice" {:eid (prompt-eid (:side @game-state))
