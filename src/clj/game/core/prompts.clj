@@ -159,7 +159,7 @@
   (let [valid (filter #(not= (:zone %) [:deck]) (get-all-cards state))
         valid (filter #(or (= nil card-fn) (card-fn %)) valid)
         valid (if (nil? req-fn) valid (filter #(req-fn state side (make-eid state) card [%]) valid))]
-    (map #(select-keys % [:cid :title :zone :side]) valid)))
+    (map :cid valid)))
 
 (defn show-select
   "A select prompt uses a targeting cursor so the user can click their desired target of the ability.
