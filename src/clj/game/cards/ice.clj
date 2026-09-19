@@ -1776,10 +1776,10 @@
   {:subroutines [(choose-one-helper
                    {:label "Trash 1 program unless runner pays 3 [Credits]"
                     :player :runner}
-                   [(cost-option [(->c :credit 3)] :runner)
-                    {:option "The Corp trashes a Program"
+                   [{:option "The Corp trashes a Program"
                      :ability {:async true
-                               :effect (effect (continue-ability state :corp trash-program-sub card nil))}}])
+                               :effect (effect (continue-ability state :corp trash-program-sub card nil))}}
+                    (cost-option [(->c :credit 3)] :runner)])
                  (end-the-run-unless-runner-pays (->c :credit 3))]
    :abilities [{:label "End the run"
                 :msg "end the run"
