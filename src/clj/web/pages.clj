@@ -6,53 +6,54 @@
    [monger.collection :as mc]
    [monger.operators :refer :all]
    [ring.middleware.anti-forgery :as anti-forgery]
-   [web.utils :refer [response html-response]]
-   [web.versions :refer [frontend-version]]))
+   [taoensso.carmine :as car :refer [wcar]]
+   [web.utils :refer [html-response response]]))
 
 (defn index-page
   ([request] (index-page request nil nil))
-  ([{user :user server-mode :system/server-mode ws-config :system/ws-config} og replay-id]
-   (html-response
-     200
-     (hiccup/html5
-       [:head
-        [:meta {:charset "utf-8"}]
-        [:meta {:name "viewport" :content "width=device-width, initial-scale=0.6, minimal-ui"}]
-        [:meta {:name "apple-mobile-web-app-capable" :content "yes"}]
-        [:meta {:property "og:type" :content (:type og "website")}]
-        [:meta {:property "og:url" :content (:url og "https://jinteki.net")}]
-        [:meta {:property "og:image" :content (:image og "https://www.jinteki.net/img/icons/jinteki_167.png")}]
-        [:meta {:property "og:title" :content (:title og "Play Netrunner in your browser")}]
-        [:meta {:property "og:site_name" :content (:site_name og "jinteki.net")}]
-        [:meta {:property "og:description" :content (:description og "Build Netrunner decks and test them online against other players.")}]
-        [:link {:rel "apple-touch-icon" :href "/img/icons/jinteki_167.png"}]
-        [:title "Jinteki"]
-        (hiccup/include-css "/lib/css/toastr.min.css")
-        (if (= "dev" server-mode)
-          (hiccup/include-css "/css/netrunner.css")
-          (hiccup/include-css (str "/css/netrunner.css?v=" @frontend-version)))]
-       [:body
-        [:div#sente-csrf-token
-         {:style {:display "hidden"}
-          :data-csrf-token (force anti-forgery/*anti-forgery-token*)}]
-        [:div {:style {:display "hidden"}
-               :id "server-originated-data"
-               :data-version @frontend-version
-               :data-replay-id replay-id}]
-        [:div#main-content]
-        [:audio#ting
-         [:source {:src "/sound/ting.mp3" :type "audio/mp3"}]
-         [:source {:src "/sound/ting.ogg" :type "audio/ogg"}]]
-        (hiccup/include-js "https://code.jquery.com/jquery-2.1.1.min.js")
-        (hiccup/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js")
-        (hiccup/include-js "/lib/js/toastr.min.js")
-        [:script {:type "text/javascript"}
-         (str "var user=" (json/generate-string user) ";"
-              "var ws_config=" (json/generate-string (or ws-config {})) ";")]
-        (if (= "dev" server-mode)
-          (list (hiccup/include-js "/js/cljs-runtime/goog.base.js")
-                (hiccup/include-js "/js/main.js"))
-          (list (hiccup/include-js (str "/js/main.js?v=" @frontend-version))))]))))
+  ([{user :user :system/keys [server-mode ws redis]} og replay-id]
+   (let [frontend-version (wcar redis (car/get :frontend-version))]
+     (html-response
+       200
+       (hiccup/html5
+         [:head
+          [:meta {:charset "utf-8"}]
+          [:meta {:name "viewport" :content "width=device-width, initial-scale=0.6, minimal-ui"}]
+          [:meta {:name "apple-mobile-web-app-capable" :content "yes"}]
+          [:meta {:property "og:type" :content (:type og "website")}]
+          [:meta {:property "og:url" :content (:url og "https://jinteki.net")}]
+          [:meta {:property "og:image" :content (:image og "https://www.jinteki.net/img/icons/jinteki_167.png")}]
+          [:meta {:property "og:title" :content (:title og "Play Netrunner in your browser")}]
+          [:meta {:property "og:site_name" :content (:site_name og "jinteki.net")}]
+          [:meta {:property "og:description" :content (:description og "Build Netrunner decks and test them online against other players.")}]
+          [:link {:rel "apple-touch-icon" :href "/img/icons/jinteki_167.png"}]
+          [:title "Jinteki"]
+          (hiccup/include-css "/lib/css/toastr.min.css")
+          (if (= "dev" server-mode)
+            (hiccup/include-css "/css/netrunner.css")
+            (hiccup/include-css (str "/css/netrunner.css?v=" frontend-version)))]
+         [:body
+          [:div#sente-csrf-token
+           {:style {:display "hidden"}
+            :data-csrf-token (force anti-forgery/*anti-forgery-token*)}]
+          [:div {:style {:display "hidden"}
+                 :id "server-originated-data"
+                 :data-version frontend-version
+                 :data-replay-id replay-id}]
+          [:div#main-content]
+          [:audio#ting
+           [:source {:src "/sound/ting.mp3" :type "audio/mp3"}]
+           [:source {:src "/sound/ting.ogg" :type "audio/ogg"}]]
+          (hiccup/include-js "https://code.jquery.com/jquery-2.1.1.min.js")
+          (hiccup/include-js "https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js")
+          (hiccup/include-js "/lib/js/toastr.min.js")
+          [:script {:type "text/javascript"}
+           (str "var user=" (json/generate-string user) ";"
+             "var ws_config=" (json/generate-string {:packer (:packer ws)}) ";")]
+          (if (= "dev" server-mode)
+            (list (hiccup/include-js "/js/cljs-runtime/goog.base.js")
+              (hiccup/include-js "/js/main.js"))
+            (list (hiccup/include-js (str "/js/main.js?v=" frontend-version))))])))))
 
 (defn reset-password-page
   [{db :system/db

@@ -68,16 +68,16 @@
     (non-game-toast "Failed to send announcement" "error" nil)))
 
 (defn- post-announce-item [msg]
-  (ws/ws-send! [:admin/announce {:message msg}]
-               8000
-               update-announce-response))
+  (ws/ws-send-cb! [:admin/announce {:message msg}]
+                  8000
+                  update-announce-response))
 
 (defn- update-pause-game-creation
   [paused]
-  (ws/ws-send! [:admin/block-game-creation paused]
-               8000
-               (fn [response]
-                 (swap! admin-state assoc :pause-game-creation response))))
+  (ws/ws-send-cb! [:admin/block-game-creation paused]
+    8000
+    (fn [response]
+      (swap! admin-state assoc :pause-game-creation response))))
 
 (defn admin-container []
   (r/with-let [news (r/cursor admin-state [:news])

@@ -2,6 +2,7 @@
   (:require
    [clojure.java.io :as io]
    [clojure.string :as str]
+   [integrant.core :as ig]
    [taoensso.timbre :as timbre]
    [taoensso.timbre.appenders.core :as tac]
    [taoensso.trove :as trove]
@@ -50,3 +51,6 @@
            :default (filtered-spit-appender default-args #(not (#{:mod-action :telemetry} (:type (:context %)))))
            :mod-action (filtered-spit-appender mod-action-args #(= :mod-action (:type (:context %))))
            :telemetry (filtered-spit-appender telemetry-args #(= :telemetry (:type (:context %))))})))))
+
+(defmethod ig/init-key :logging/timbre [_ config]
+  (timbre-init! config))

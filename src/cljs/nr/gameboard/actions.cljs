@@ -2,13 +2,13 @@
   (:require
    [differ.core :as differ]
    [goog.functions :as gfn]
-   [jinteki.i18n :refer [tr-span]]
    [nr.appstate :refer [app-state current-gameid]]
    [nr.gameboard.card-preview :refer [put-game-card-in-channel zoom-channel]]
    [nr.gameboard.replay :refer [init-replay]]
    [nr.gameboard.state :refer [check-lock? game-state get-side last-state
                                parse-state]]
    [nr.sounds :refer [play-sfx]]
+   [nr.translations :refer [tr-span]]
    [nr.utils :refer [toastr-options]]
    [nr.ws :as ws]
    [reagent.core :as r]

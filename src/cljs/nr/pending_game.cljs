@@ -27,12 +27,12 @@
   (not (is-constructed? current-game)))
 
 (defn select-deck [deck]
-  (ws/ws-send! [:lobby/deck {:gameid (current-gameid app-state)
-                             :deck-id (:_id deck)}]
-               1500
-               #(when (sente/cb-error? %)
-                  (tr-non-game-toast [:lobby_select-error "Cannot select that deck"] "error")))
-  (reagent-modals/close-modal!))
+  (ws/ws-send-cb! [:lobby/deck {:gameid (current-gameid app-state)
+                                :deck-id (:_id deck)}]
+    1500
+    #(if (sente/cb-error? %)
+       (tr-non-game-toast [:lobby_select-error "Cannot select that deck"] "error")
+       (reagent-modals/close-modal!))))
 
 (defn deck-valid-for-lobby?
   [deck {:keys [format singleton]} side]
@@ -94,10 +94,10 @@
    {:on-click
     (fn [e]
       (.preventDefault e)
-      (ws/ws-send! [:lobby/leave {:gameid @gameid}]
-                   8000
-                   #(when (sente/cb-success? %)
-                      (swap! app-state assoc :editing false :current-game nil))))}
+      (ws/ws-send-cb! [:lobby/leave {:gameid @gameid}]
+        8000
+        #(when (and (sente/cb-success? %) %)
+           (swap! app-state assoc :editing false :current-game nil))))}
    [tr-span [:lobby_leave "Leave"]]])
 
 (defn precon-info-box [current-game]
@@ -236,11 +236,11 @@
                messages (r/cursor current-game [:messages])
                create-game-deck (r/cursor app-state [:create-game-deck])]
     (when-let [cd @create-game-deck]
-      (ws/ws-send! [:lobby/deck {:gameid (current-gameid app-state)
-                                 :deck-id (:_id cd)}]
-                   8000
-                   #(when (sente/cb-error? %)
-                      (tr-non-game-toast [:lobby_cannot-select-deck "Cannot select that deck"] "error")))
+      (ws/ws-send-cb! [:lobby/deck {:gameid (current-gameid app-state)
+                                    :deck-id (:_id cd)}]
+        8000
+        #(when (sente/cb-error? %)
+           (tr-non-game-toast [:lobby_cannot-select-deck "Cannot select that deck"] "error")))
       (swap! app-state dissoc :create-game-deck))
     [:div
      [button-bar current-game user gameid players]

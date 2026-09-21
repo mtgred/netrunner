@@ -11,20 +11,20 @@
   [lobby-state state game action request-side]
   (authenticated
     (fn [_]
-      (ws/ws-send! [(case action
-                      "join" :lobby/join
-                      "watch" :lobby/watch
-                      "rejoin" :game/rejoin)
-                    (cond-> {:gameid (:gameid game)
-                             :password (:password @state)}
-                      request-side (conj {:request-side request-side}))]
-                   8000
-                   #(if (sente/cb-success? %)
-                      (case %
-                        403 (swap! state assoc :error-msg [:lobby_invalid-password "Invalid password"])
-                        404 (swap! state assoc :error-msg [:lobby_not-allowed "Not allowed"])
-                        200 (swap! lobby-state assoc :editing false :password-game nil))
-                      (swap! state assoc :error-msg [:lobby_aborted "Connection aborted"]))))))
+      (ws/ws-send-cb! [(case action
+                         "join" :lobby/join
+                         "watch" :lobby/watch
+                         "rejoin" :game/rejoin)
+                       (cond-> {:gameid (:gameid game)
+                                :password (:password @state)}
+                         request-side (conj {:request-side request-side}))]
+        8000
+        #(if (sente/cb-success? %)
+           (case %
+             403 (swap! state assoc :error-msg [:lobby_invalid-password "Invalid password"])
+             404 (swap! state assoc :error-msg [:lobby_not-allowed "Not allowed"])
+             200 (swap! lobby-state assoc :editing false :password-game nil))
+           (swap! state assoc :error-msg [:lobby_aborted "Connection aborted"]))))))
 
 (defn password-game [lobby-state]
   (r/with-let [game (r/cursor lobby-state [:password-game :game])

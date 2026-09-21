@@ -1,13 +1,9 @@
 (ns web.analytics
   (:require
-   [clojure.set :as set]
-   [monger.collection :as mc]
-   [clojure.java.io :as io]
-   [taoensso.encore :as enc]
    [clojure.core.async :refer [<! go timeout]]
-   [cljc.java-time.temporal.chrono-unit :as chrono]
-   [cljc.java-time.duration :as duration]
-   [cljc.java-time.instant :as inst]))
+   [clojure.java.io :as io]
+   [clojure.set :as set]
+   [taoensso.encore :as enc]))
 
 (defonce daily-analytics
   (atom {}))
