@@ -56,6 +56,34 @@
     @corp-prompt-state
     @runner-prompt-state))
 
+(defn- all-active-cards
+  ([]
+   (let [ids [(get-in @game-state [:corp :identity])
+              (get-in @game-state [:runner :identity])]
+         score-areas (concat (get-in @game-state [:corp :scored])
+                             (get-in @game-state [:runner :scored]))
+         servers (let [s (vals (get-in @game-state [:corp :servers]))]
+                   (concat (mapcat :ices s) (mapcat :content s)))
+         rig (concat (get-in @game-state [:runner :rig :program])
+                     (get-in @game-state [:runner :rig :resource])
+                     (get-in @game-state [:runner :rig :hardware])
+                     (get-in @game-state [:runner :rig :facedown]))
+         play-areas (concat (get-in @game-state [:corp :play-area])
+                            (get-in @game-state [:runner :play-area]))
+         currents (concat (get-in @game-state [:corp :current])
+                          (get-in @game-state [:runner :current]))]
+     (all-active-cards (concat ids score-areas servers rig play-areas currents))))
+  ([candidates]
+   (let [hosted-cards (apply concat (map :hosted candidates))]
+     (if (seq hosted-cards)
+       (concat candidates (all-active-cards hosted-cards))
+       candidates))))
+
+(defn- matching-cards [cids]
+  (let [active-cards (all-active-cards)
+        cids (into #{} cids)]
+    (filterv #(cids (:cid %)) (all-active-cards))))
+
 (defn- image-url
   ([card] (image-url card nil))
   ([{:keys [side code] :as card} {:keys [zoom?] :as opts}]
@@ -1871,7 +1899,7 @@
           [tr-span [:game_ok "OK"]]]]))))
 
 (defn prompt-div
-  [me {:keys [card msg prompt-type choices offer-bad-pub?] :as prompt-state}]
+  [me {:keys [card msg prompt-type choices offer-bad-pub? selectable] :as prompt-state}]
   (let [id (atom 0)]
     [:div.panel.blue-shade.prompt
      (when (and card (not= "Basic Action" (:type card)))
@@ -1952,7 +1980,16 @@
 
        ;; otherwise choice of all present choices
        :else
-       (concat [(when offer-bad-pub?
+       (concat [(when (and msg (s/starts-with? msg "Choose a credit providing card"))
+                  (doall (for [{:keys [cid title zone side]} (matching-cards selectable)]
+                           [:button {:on-click #(send-command "select"
+                                                              {:card {:cid cid :zone zone :side side}
+                                                               :eid (prompt-eid (:side @game-state))
+                                                               :shift-key-held (.-shiftKey %)})
+                                     :key cid}
+                            (render-message title)])))
+
+                (when offer-bad-pub?
                   ;; TODO - translate this
                   [:button {:key "Bad Pub"
                             :on-click #(send-command "bad-pub-choice" {:eid (prompt-eid (:side @game-state))
