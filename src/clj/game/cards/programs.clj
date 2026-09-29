@@ -65,6 +65,7 @@
    [game.core.virus :refer [get-virus-counters]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
+   [jinteki.i18n :refer [simple-msg]]
    [jinteki.utils :refer :all]))
 
 (defn- power-counter-break
@@ -1490,7 +1491,8 @@
                 :change-in-game-state {:req (req (pos? (get-virus-counters state card)))}
                 :cost [(->c :click 1) (->c :trash-can)]
                 :label "Gain 2 [Credits] for each hosted virus counter"
-                :msg (msg (str "gain " (* 2 (get-virus-counters state card)) " [Credits]"))
+                :msg (simple-msg {:effect/type :gain-credits
+                                  :effect/count (* 2 (get-virus-counters state card)) })
                 :async true
                 :effect (effect (play-tiered-sfx state side "click-credit" (* 2 (get-virus-counters state card)) 3)
                                 (gain-credits state side eid (* 2 (get-virus-counters state card))))}]})

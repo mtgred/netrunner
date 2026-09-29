@@ -64,6 +64,7 @@
    [game.core.winning :refer [win]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
+   [jinteki.i18n :refer [simple-msg]]
    [jinteki.utils :refer :all]
    [game.core.set-aside :refer [set-aside get-set-aside]]
    [game.core.sabotage :refer [sabotage-ability]]
@@ -553,7 +554,8 @@
                     (not (get-in @state [:per-turn (:cid card)]))
                     (<= 2 (count (:hand runner))))
      :cost [(->c :trash-from-hand 2)]
-     :msg (msg "trash " (:title target) " at no cost")
+     :msg (simple-msg {:effect/type :trash-card-at-no-cost
+                       :effect/card-str (assoc target :seen true)})
      :once :per-turn
      :async true
      :effect (effect (trash state side eid (assoc target :seen true) {:accessed true
@@ -828,7 +830,8 @@
              :hq 1
              {:req (req (= :hq (:server context))
                              (first-event? state side :breach-server #(= :hq (:server (first %)))))
-              :msg "access 1 additional card from HQ"})]})
+              :msg (simple-msg {:effect/type :access-additional-in-hq
+                                :effect/count 1})})]})
 
 (defcard "Doppelgänger"
   {:static-abilities [(mu+ 1)]
@@ -1823,7 +1826,8 @@
         gain-credit-ability
         {:interactive (effect true)
          :async true
-         :msg "gain 1 [Credits]"
+         :msg (simple-msg {:effect/type :gain-credits
+                           :effect/count 1})
          :effect (effect (wait-for (gain-credits state :runner 1)
                                 (continue-ability state side install-ability card nil)))}]
     {:static-abilities [(mu+ 1)]
@@ -1945,13 +1949,15 @@
    :events [{:event :successful-run
              :silent true
              :async true
-             :msg "place 1 [Credits]"
+             :msg (simple-msg {:effect/type :place-credits-on-self
+                               :effect/credits 1})
              :effect (effect (add-counter state :runner eid card :credit 1))}]
    :abilities [{:action true
                 :cost [(->c :click 1)]
                 :label "Gain 1 [Credits]. Take all hosted credits"
                 :async true
-                :msg (msg "gain " (inc (get-counters card :credit)) " [Credits]")
+                :msg (simple-msg {:effect/type :gain-credits
+                                  :effect/count (inc (get-counters card :credit))})
                 :effect (effect (let [credits (inc (get-counters card :credit))]
                                (play-tiered-sfx state side "click-credit" credits 3)
                                (wait-for
