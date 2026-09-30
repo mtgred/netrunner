@@ -100,6 +100,17 @@ trash-cards = trash {$count ->
     [one] 1 card ({$card-strs})
     *[other] {$count} cards ({$card-strs})
 }
+trash-n-cards-from-hq = trash {$count ->
+    [zero] no cards
+    [one] 1 card
+    *[other] {$count} cards
+} from HQ
+trash-cards-from-hq = trash {$count ->
+    [zero] no cards
+    [one] 1 card ({$card-strs})
+    *[other] {$count} cards ({$card-strs})
+} from HQ
+
 trash-accessed-card = trash the accessed card ({$title})
 trash-all-cards-in-grip = trash all cards in {-grip}
 trash-all-agendas-by-type = trash all {-agenda-plural}
@@ -141,6 +152,10 @@ lose-clicks = lose {$count ->
 # tags
 
 avoid-tags = avoid {$count ->
+    [one] 1 tag
+    *[other] {$count} tags
+}
+give-tags = give the {-runner} {$count ->
     [one] 1 tag
     *[other] {$count} tags
 }
@@ -266,6 +281,7 @@ swap-two-ice-positions = swap the positions of {$card-str} and {$card-str2}
 
 # advancement counters
 
+advance = advance {$card-str}
 place-n-advancement-counters = place {$count ->
     [zero] no advancement counters on {$card-str}
     [one] 1 advancement counter on {$card-str}
@@ -282,6 +298,8 @@ place-virus-counters = place {$count ->
     [one] 1 virus counter on {$title}
     *[other] {$count} virus counters on {$title}
 }
+
+purge-virus-counters = purge all virus counters
 
 charge-card = charge {$card-str} {$count ->
     [one] 1 time
@@ -340,6 +358,8 @@ force-runner-draw-cards = force {-runner(case: "nominative")} to draw {$count ->
 
 force-runner-gain-credits = force {-runner(case: "nominative")} to gain {$credits} {-credit}
 
+force-runner-lose-credits = force {-runner(case: "nominative")} to lose {$credits} {-credit}
+
 each-player-draws-cards = make each player draw {$count ->
     [one] 1 card
     *[other] {$count} cards
@@ -385,6 +405,10 @@ redirect-run-to-archives = change the attacked server to {-archives}
 redirect-run-to-hq = change the attacked server to {-hq}
 redirect-run-to-rd = change the attacked server to {-rd}
 
+# end run
+
+end-run = end the run
+
 # icebreaker strength
 
 give-strength-to-icebreaker-during-run = give +{$bonus} strength to {$title} during the run
@@ -413,6 +437,11 @@ prevent-net-damage = suffer {$count} net damage
 prevent-corp-advancing-cards-next-turn = prevent {-corp(case: "nominative")} from advancing cards during [their] next turn
 
 # Damage
+
+do-meat-damage = do {$value} meat damage
+do-net-damage = do {$value} net damage
+do-brain-damage = do {$value} core damage
+do-core-damage = do {$value} core damage
 
 suffer-meat-damage = suffer {$value} meat damage
 suffer-net-damage = suffer {$value} net damage
