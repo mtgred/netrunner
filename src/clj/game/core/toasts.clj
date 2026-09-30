@@ -18,9 +18,8 @@
      (swap! state update-in [side :toast] #(conj % {:msg message :type msg-type :options options :id (random-uuid)})))))
 
 (defn ack-toast
-  ([state side {:keys [id]}]
-   (when-let [id (when (string? id) (parse-uuid id))]
-     (swap! state update-in [side :toast] (fn [toasts] (remove #(= (:id %) id) toasts))))))
+  [state side {:keys [id]}]
+  (swap! state update-in [side :toast] (fn [toasts] (remove #(= (:id %) id) toasts))))
 
 (defn show-error-toast
   [state side]
