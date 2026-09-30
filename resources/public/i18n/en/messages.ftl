@@ -283,7 +283,7 @@ place-virus-counters = place {$count ->
     *[other] {$count} virus counters on {$title}
 }
 
-charge-card = trash {$card-str} {$count ->
+charge-card = charge {$card-str} {$count ->
     [one] 1 time
     *[other] {$count} times
 }
