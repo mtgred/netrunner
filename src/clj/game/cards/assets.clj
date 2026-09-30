@@ -645,7 +645,8 @@
                     {:prompt (msg "Trash this asset to do " (get-counters card :advancement) " meat damage?")
                      :yes-ability
                      {:async true
-                      :msg "do 1 meat damage for each hosted advancement counter"
+                      :msg (simple-msg {:effect/type :do-meat-damage
+                                        :effect/value (get-counters card :advancement)})
                       :effect (effect (wait-for
                                     (trash state side card {:cause-card card})
                                     (damage state side eid :meat (get-counters card :advancement) {:card card})))}}}
@@ -2266,7 +2267,8 @@
          :once :per-turn
          :automatic :draw-cards
          :label "Take 3 [Credits] (start of turn)"
-         :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
+         :msg (simple-msg {:effect/type :gain-credits
+                           :effect/count (min 3 (get-counters card :credit))})
          :req (req (:corp-phase-12 @state))
          :effect (effect (wait-for
                         (take-credits state side card :credit 3)
@@ -3055,7 +3057,8 @@
 
 (defcard "Spin Doctor"
   {:on-rez {:async true
-            :msg "draw 2 cards"
+            :msg (simple-msg {:effect/type :draw-cards
+                              :effect/count 2})
             :effect (effect (draw state side eid 2))}
    :abilities [{:label "Shuffle up to 2 cards from Archives into R&D"
                 :cost [(->c :remove-from-game)]
@@ -3387,7 +3390,8 @@
                               (effect-completed state side eid))))}]})
 
 (defcard "Urtica Cipher"
-  (advance-ambush 0 {:msg (msg "do " (+ 2 (get-counters (get-card state card) :advancement)) " net damage")
+  (advance-ambush 0 {:msg (simple-msg {:effect/type :do-net-damage
+                                       :effect/value (+ 2 (get-counters (get-card state card) :advancement))})
                      :async true
                      :effect (effect (damage state side eid :net (+ 2 (get-counters (get-card state card) :advancement)) {:card card}))}))
 
