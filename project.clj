@@ -16,7 +16,8 @@
 
   :repl-options {:timeout 180000
                  :nrepl-middleware [org.corfield.rephrase.nrepl/wrap-rephrase]
-                 :init-ns web.dev}
+                 :init-ns web.dev
+                 :init (go)}
 
   :dependencies [[org.clojure/clojure "1.12.5"]
                  [org.clojure/clojurescript "1.11.132"
