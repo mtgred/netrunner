@@ -6,19 +6,21 @@
    [game.core.card :refer [card?]]
    [malli.core :as m]
    [malli.error :as me]
-   [malli.util :as mu]))
+   [malli.util :as mu])
+  #?(:cljs (:require-macros [game.core.schemas])))
 
-(defmacro assert
-  "malli schema assert that throws an ex-info. schema comes last to allow for threading"
-  [value schema]
-  `(let [schema# ~schema
-         value# ~value]
-     (if (m/validate schema# value#)
-       value#
-       (let [msg# (->> (me/humanize (m/explain schema# value#))
-                       (str/join \newline))]
-         (throw (ex-info msg# {:schema '~(symbol (resolve schema))
-                               :value value#}))))))
+#?(:clj
+   (defmacro assert
+     "malli schema assert that throws an ex-info. schema comes last to allow for threading"
+     [value schema]
+     `(let [schema# ~schema
+            value# ~value]
+        (if (m/validate schema# value#)
+          value#
+          (let [msg# (->> (me/humanize (m/explain schema# value#))
+                          (str/join \newline))]
+            (throw (ex-info msg# {:schema '~(if (:ns &env) schema (symbol (resolve schema)))
+                                  :value value#})))))))
 
 ;; engine schemas
 
