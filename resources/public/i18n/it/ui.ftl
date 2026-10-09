@@ -960,16 +960,13 @@ lobby_game-count-filtered = {$cnt ->
     *[other] {$cnt} Partite (filtrate)
 }
 
-lobby_gateway-format = {$format ->
-    [Beginner] Principiante
-    [beginner-info] Questa lobby utilizza i mazzi per principianti di System Gateway per la Corporation e il Runner. Questi mazzi sono consigliati per le tue prime partite. Le partite si giocano fino a 6 punti obiettivo.
-    [beginner-ul] System Gateway - Mazzi Didattici Principianti
-    [Constructed] Costruito
-    [Intermediate] Intermedio
-    [intermediate-info] Questa lobby utilizza i mazzi intermedi di System Gateway per la Corporation e il Runner. Questi mazzi hanno una gamma leggermente più ampia rispetto a quelli per principianti. Le partite si giocano fino a 7 punti obiettivo.
-    [intermediate-ul] System Gateway - Mazzi Didattici Intermedi
-    *[unknown] Formato Gateway sconosciuto ({$format})
-}
+lobby_gateway-format-beginner = Principiante
+lobby_gateway-format-beginner-info = Questa lobby utilizza i mazzi per principianti di System Gateway per la Corporation e il Runner. Questi mazzi sono consigliati per le tue prime partite. Le partite si giocano fino a 6 punti obiettivo.
+lobby_gateway-format-beginner-ul = System Gateway - Mazzi Didattici Principianti
+lobby_gateway-format-constructed = Costruito
+lobby_gateway-format-intermediate = Intermedio
+lobby_gateway-format-intermediate-info = Questa lobby utilizza i mazzi intermedi di System Gateway per la Corporation e il Runner. Questi mazzi hanno una gamma leggermente più ampia rispetto a quelli per principianti. Le partite si giocano fino a 7 punti obiettivo.
+lobby_gateway-format-intermediate-ul = System Gateway - Mazzi Didattici Intermedi
 
 lobby_hidden = Rendi visibili le informazioni nascoste dei giocatori agli spettatori
 

@@ -483,16 +483,13 @@ lobby_game-count-filtered = {$cnt ->
     *[other] {$cnt} Amesgay (ilteredfay)
 }
 
-lobby_gateway-format = {$format ->
-    [Beginner] eginnerbay
-    [beginner-info] Isthay obbylay isyay usingyay ethay emsystay atewaygay eginnerbay ecksday orfay ethay orporationcay andyay unnerray . esethay ecksday areyay ecommendedray orfay ouryay irstfay amesgay . amesgay areyay ayedplay otay 6 agendayay ointspay.
-    [beginner-ul] Emsystay atewaygay - eginnerbay eachingtay decks
-    [Constructed] Onstructedcay
-    [Intermediate] Intermediateyay
-    [intermediate-info] Isthay obbylay isyay usingyay ethay emsystay atewaygay intermediateyay ecksday orfay ethay orporationcay andyay unnerray. esethay ecksday avehay ightlyslay oremay angeray anthay ethay eginnerbay ecksday. amesgay areyay ayedplay otay 7 agendayay ointspay.
-    [intermediate-ul] Emsystay atewaygay - intermediateyay eachingtay decks
-    *[unknown] undefined
-}
+lobby_gateway-format-beginner = eginnerbay
+lobby_gateway-format-beginner-info = Isthay obbylay isyay usingyay ethay emsystay atewaygay eginnerbay ecksday orfay ethay orporationcay andyay unnerray . esethay ecksday areyay ecommendedray orfay ouryay irstfay amesgay . amesgay areyay ayedplay otay 6 agendayay ointspay.
+lobby_gateway-format-beginner-ul = Emsystay atewaygay - eginnerbay eachingtay decks
+lobby_gateway-format-constructed = Onstructedcay
+lobby_gateway-format-intermediate = Intermediateyay
+lobby_gateway-format-intermediate-info = Isthay obbylay isyay usingyay ethay emsystay atewaygay intermediateyay ecksday orfay ethay orporationcay andyay unnerray. esethay ecksday avehay ightlyslay oremay angeray anthay ethay eginnerbay ecksday. amesgay areyay ayedplay otay 7 agendayay ointspay.
+lobby_gateway-format-intermediate-ul = Emsystay atewaygay - intermediateyay eachingtay decks
 
 lobby_hidden = Akemay ayersplay iddenhay informationyay isiblevay otay ectatorsspay
 

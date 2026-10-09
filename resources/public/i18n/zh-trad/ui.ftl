@@ -908,16 +908,13 @@ lobby_game-count-filtered = 牌局數量 {$cnt} (篩選過)
 
 lobby_game-description = 尋找怎樣的牌局
 
-lobby_gateway-format = {$format ->
-    [Beginner] 新手牌組
-    [beginner-info] 這個房間使用系統入門的新手公司與潛襲者牌組。建議初次遊玩使用這些牌組。這個牌局改為六分議案分數獲勝。
-    [beginner-ul] 系統入門 - 新手教學牌組
-    [Constructed] 自行組建牌組
-    [Intermediate] 進階牌組
-    [intermediate-info] 這個房間使用系統入門的進階公司與潛襲者牌組。這些牌組比新手牌組範圍多了一點點。這個牌局為七分議案分數獲勝。
-    [intermediate-ul] 系統入門 - 進階教學牌組
-    *[unknown] 未知的入門賽制 ({$format})
-}
+lobby_gateway-format-beginner = 新手牌組
+lobby_gateway-format-beginner-info = 這個房間使用系統入門的新手公司與潛襲者牌組。建議初次遊玩使用這些牌組。這個牌局改為六分議案分數獲勝。
+lobby_gateway-format-beginner-ul = 系統入門 - 新手教學牌組
+lobby_gateway-format-constructed = 自行組建牌組
+lobby_gateway-format-intermediate = 進階牌組
+lobby_gateway-format-intermediate-info = 這個房間使用系統入門的進階公司與潛襲者牌組。這些牌組比新手牌組範圍多了一點點。這個牌局為七分議案分數獲勝。
+lobby_gateway-format-intermediate-ul = 系統入門 - 進階教學牌組
 
 lobby_hidden = 讓觀戰者看玩家的隱藏資訊
 
