@@ -94,17 +94,30 @@
 (defn gateway-constructed-choice [fmt-state gateway-type]
   [:div
    {:style {:display (if (= @fmt-state "system-gateway") "block" "none")}}
-   (doall
-     (for [option ["Beginner" "Intermediate" "Constructed"]]
-       ^{:key option}
-       [:span [:label [:input
-                       {:type "radio"
-                        :name "gateway-type"
-                        :value option
-                        :on-change #(reset! gateway-type (.. % -target -value))
-                        :checked (= @gateway-type option)}]
-               [tr-span [:lobby_gateway-format option] {:format option}]
-               "    "]]))])
+   [:span [:label [:input
+                   {:type "radio"
+                    :name "gateway-type"
+                    :value "Beginner"
+                    :on-change #(reset! gateway-type (.. % -target -value))
+                    :checked (= @gateway-type "Beginner")}]
+           [tr-span [:lobby_gateway-format-beginner]]
+           "    "]]
+   [:span [:label [:input
+                   {:type "radio"
+                    :name "gateway-type"
+                    :value "Intermediate"
+                    :on-change #(reset! gateway-type (.. % -target -value))
+                    :checked (= @gateway-type "Intermediate")}]
+           [tr-span [:lobby_gateway-format-intermediate]]
+           "    "]]
+   [:span [:label [:input
+                   {:type "radio"
+                    :name "gateway-type"
+                    :value "Constructed"
+                    :on-change #(reset! gateway-type (.. % -target -value))
+                    :checked (= @gateway-type "Constructed")}]
+           [tr-span [:lobby_gateway-format-constructed]]
+           "    "]]])
 
 (defn precon-choice [fmt-state precon]
   [:div

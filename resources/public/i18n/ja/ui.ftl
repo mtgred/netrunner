@@ -603,16 +603,13 @@ lobby_game-count = ルーム数 {$cnt}
 
 lobby_game-count-filtered = ルーム数 {$cnt} (絞り込み)
 
-lobby_gateway-format = {$format ->
-    [Beginner] 初心
-    [beginner-info] undefined
-    [beginner-ul] システムゲートウェイ - 初心者向けチュートリアルデッキ
-    [Constructed] 構築戦
-    [Intermediate] 中級
-    [intermediate-info] undefined
-    [intermediate-ul] システムゲートウェイ - 中級者向けチュートリアルデッキ
-    *[unknown] undefined
-}
+lobby_gateway-format-beginner = 初心
+lobby_gateway-format-beginner-info = undefined
+lobby_gateway-format-beginner-ul = システムゲートウェイ - 初心者向けチュートリアルデッキ
+lobby_gateway-format-constructed = 構築戦
+lobby_gateway-format-intermediate = 中級
+lobby_gateway-format-intermediate-info = undefined
+lobby_gateway-format-intermediate-ul = システムゲートウェイ - 中級者向けチュートリアルデッキ
 
 lobby_hidden = 非公開情報を観戦者に公開
 

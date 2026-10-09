@@ -118,31 +118,31 @@
 
 (def system-gateway-beginner
   (matchup
-    [:lobby.gateway-format.beginner "Beginner"]
-    [:lobby.gateway-format.beginner "Beginner"]
-    [:lobby.gateway-format.beginner-info
+    [:lobby_gateway-format-beginner "Beginner"]
+    [:lobby_gateway-format-beginner "Beginner"]
+    [:lobby_gateway-format-beginner-info
      "This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points."]
-    [:lobby.gateway-format.beginner-ul "System Gateway - Beginner Teaching Decks"]
+    [:lobby_gateway-format-beginner-ul "System Gateway - Beginner Teaching Decks"]
     gateway-beginner-corp
     gateway-beginner-runner))
 
 (def system-gateway-intermediate
   (matchup
-    [:lobby.gateway-format.intermediate "Intermediate"]
-    [:lobby.gateway-format.intermediate "Intermediate"]
-    [:lobby.gateway-format.intermediate-info
+    [:lobby_gateway-format-intermediate "Intermediate"]
+    [:lobby_gateway-format-intermediate "Intermediate"]
+    [:lobby_gateway-format-intermediate-info
      "This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points."]
-    [:lobby.gateway-format.intermediate-ul "System Gateway - Intermediate Teaching Decks"]
+    [:lobby_gateway-format-intermediate-ul "System Gateway - Intermediate Teaching Decks"]
     gateway-intermediate-corp
     gateway-intermediate-runner))
 
 ;; Worlds 2012: Ben Marsh vs. Jeremy Z
 (def worlds-2012-ben-corps
   (matchup
-    [:preconstructed.worlds-2012-a "Worlds 2012: Ben Marsh (C) vs. Jeremy Zwirn (R)"]
-    [:preconstructed.worlds-2012-a-tag "Ben Marsh (C) vs. Jeremy Zwirn (R)"]
-    [:preconstructed.worlds-2012-info "Worlds 2012 was played with (up to 3 copies of) the Core Set as the only legal product. Jeremy Zwirn (Building a Better World, Gabriel Santiago) took first place against Ben Marsh (Engineering the Future, Gabriel Santiago) in the first ever Netrunner World Championship."]
-    [:preconstructed.worlds-2012-a-ul "Worlds 2012: Weyland vs. Criminal"]
+    [:preconstructed_worlds-2012-a "Worlds 2012: Ben Marsh (C) vs. Jeremy Zwirn (R)"]
+    [:preconstructed_worlds-2012-a-tag "Ben Marsh (C) vs. Jeremy Zwirn (R)"]
+    [:preconstructed_worlds-2012-info "Worlds 2012 was played with (up to 3 copies of) the Core Set as the only legal product. Jeremy Zwirn (Building a Better World, Gabriel Santiago) took first place against Ben Marsh (Engineering the Future, Gabriel Santiago) in the first ever Netrunner World Championship."]
+    [:preconstructed_worlds-2012-a-ul "Worlds 2012: Weyland vs. Criminal"]
     (precon "Ben Marsh - 2012: ETF"
             {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code "01054"}
             [{:qty 3 :card "Enigma"}
@@ -189,10 +189,10 @@
 
 (def worlds-2012-ben-runs
   (matchup
-    [:preconstructed.worlds-2012-b "Worlds 2012: Jeremy Z (C) vs. Ben Marsh (R)"]
-    [:preconstructed.worlds-2012-b-tag "Jeremy Z (C) vs. Ben Marsh (R)"]
-    [:preconstructed.worlds-2012-info "Worlds 2012 was played with (up to 3 copies of) the Core Set as the only legal product. Jeremy Zwirn (Building a Better World, Gabriel Santiago) took first place against Ben Marsh (Engineering the Future, Gabriel Santiago) in the first ever Netrunner World Championship."]
-    [:preconstructed.worlds-2012-b-ul "Worlds 2012: Haas-Bioroid vs. Criminal"]
+    [:preconstructed_worlds-2012-b "Worlds 2012: Jeremy Z (C) vs. Ben Marsh (R)"]
+    [:preconstructed_worlds-2012-b-tag "Jeremy Z (C) vs. Ben Marsh (R)"]
+    [:preconstructed_worlds-2012-info "Worlds 2012 was played with (up to 3 copies of) the Core Set as the only legal product. Jeremy Zwirn (Building a Better World, Gabriel Santiago) took first place against Ben Marsh (Engineering the Future, Gabriel Santiago) in the first ever Netrunner World Championship."]
+    [:preconstructed_worlds-2012-b-ul "Worlds 2012: Haas-Bioroid vs. Criminal"]
     (precon "Jeremy Z - 2012: Weyland"
             {:title "Weyland Consortium: Building a Better World" :side "Corp" :code "01093"}
             [{:qty 3 :card "Priority Requisition"}
@@ -240,10 +240,10 @@
 ;; worlds 2013: Jens Erickson (1) vs. Andrew Veen (2)
 (def worlds-2013-jens-corps
   (matchup
-    [:preconstructed.worlds-2013-a "Worlds 2013: Jens Erickson (C) vs. Andrew Veen (R)"]
-    [:preconstructed.worlds-2013-a-tag "Jens Erickson (C) vs. Andrew Veen (R)"]
-    [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves. Jens Erickson (Andromeda, ETR) took first place against Andrew Veen (Kate, NBN: Making News)"]
-    [:preconstructed.worlds-2013-a-ul "Worlds 2013: HB FastAdv vs. Shaper Katman"]
+    [:preconstructed_worlds-2013-a "Worlds 2013: Jens Erickson (C) vs. Andrew Veen (R)"]
+    [:preconstructed_worlds-2013-a-tag "Jens Erickson (C) vs. Andrew Veen (R)"]
+    [:preconstructed_worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves. Jens Erickson (Andromeda, ETR) took first place against Andrew Veen (Kate, NBN: Making News)"]
+    [:preconstructed_worlds-2013-a-ul "Worlds 2013: HB FastAdv vs. Shaper Katman"]
     (precon "Jens Erickson - 2013: Engineering the Future"
             {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code "01054"}
             [{:qty 3 :card "Accelerated Beta Test"}
@@ -292,10 +292,10 @@
 
 (def worlds-2013-jens-runs
   (matchup
-    [:preconstructed.worlds-2013-b "Worlds 2013: Andrew Veen (C) vs. Jens Erickson (R)"]
-    [:preconstructed.worlds-2013-b-tag "Andrew Veen (C) vs. Jens Erickson (R)"]
-    [:preconstructed.worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves. Jens Erickson (Andromeda, ETR) took first place against Andrew Veen (Kate, NBN: Making News)"]
-    [:preconstructed.worlds-2013-b-ul "Worlds 2013: NBN Fast Adv vs. Andy Sucker"]
+    [:preconstructed_worlds-2013-b "Worlds 2013: Andrew Veen (C) vs. Jens Erickson (R)"]
+    [:preconstructed_worlds-2013-b-tag "Andrew Veen (C) vs. Jens Erickson (R)"]
+    [:preconstructed_worlds-2013-info "166 players attended worlds in 2013. The tournament was held in Minneapolis, MN, USA, and consisted of 6 swiss rounds into a top 32 cut. The legal cardpool consisted of cards up to Opening Moves. Jens Erickson (Andromeda, ETR) took first place against Andrew Veen (Kate, NBN: Making News)"]
+    [:preconstructed_worlds-2013-b-ul "Worlds 2013: NBN Fast Adv vs. Andy Sucker"]
     (precon "Andrew Veen - 2013: Making News"
             {:title "NBN: Making News" :side "Corp" :code "25104"}
             [{:qty 3 :card "AstroScript Pilot Program"}
@@ -346,10 +346,10 @@
 ;; worlds 2014: Dan D'Argenio vs. Minh Tran
 (def worlds-2014-dan-d-corps
   (matchup
-    [:preconstructed.worlds-2014-a "Worlds 2014: Dan D'Argenio (C) vs. Minh Tran (R)"]
-    [:preconstructed.worlds-2014-a-tag "Dan D'Argenio (C) vs. Minh Tran (R)"]
-    [:preconstructed.worlds-2014-info "238 players attended worlds in 2014. The tournament was held in Minneapolis, MN, USA, and consisted of 7 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Up and Over."]
-    [:preconstructed.worlds-2014-a-ul "Worlds 2014: Honor and Perfection vs. Andromedium"]
+    [:preconstructed_worlds-2014-a "Worlds 2014: Dan D'Argenio (C) vs. Minh Tran (R)"]
+    [:preconstructed_worlds-2014-a-tag "Dan D'Argenio (C) vs. Minh Tran (R)"]
+    [:preconstructed_worlds-2014-info "238 players attended worlds in 2014. The tournament was held in Minneapolis, MN, USA, and consisted of 7 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Up and Over."]
+    [:preconstructed_worlds-2014-a-ul "Worlds 2014: Honor and Perfection vs. Andromedium"]
     (precon "Dan D'Argenio - 2014: Honor and Perfection"
             {:title "Jinteki: Replicating Perfection" :side "Corp" :code "02031"}
             [{:qty 3 :card "NAPD Contract"}
@@ -404,10 +404,10 @@
 
 (def worlds-2014-dan-d-runs
   (matchup
-    [:preconstructed.worlds-2014-b "Worlds 2014: Minh Tran (C) vs. Dan D'Argenio (R)"]
-    [:preconstructed.worlds-2014-b-tag "Minh Tran (C) vs. Dan D'Argenio (R)"]
-    [:preconstructed.worlds-2014-info "238 players attended worlds in 2014. The tournament was held in Minneapolis, MN, USA, and consisted of 7 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Up and Over."]
-    [:preconstructed.worlds-2014-b-ul "Worlds 2014: Personal Evolution vs. Daily QT Andy"]
+    [:preconstructed_worlds-2014-b "Worlds 2014: Minh Tran (C) vs. Dan D'Argenio (R)"]
+    [:preconstructed_worlds-2014-b-tag "Minh Tran (C) vs. Dan D'Argenio (R)"]
+    [:preconstructed_worlds-2014-info "238 players attended worlds in 2014. The tournament was held in Minneapolis, MN, USA, and consisted of 7 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Up and Over."]
+    [:preconstructed_worlds-2014-b-ul "Worlds 2014: Personal Evolution vs. Daily QT Andy"]
     (precon "Minh Tran - 2014: Personal Evolution"
             {:title "Jinteki: Personal Evolution" :side "Corp" :code "01067"}
             [{:qty 3 :card "Fetal AI"}
@@ -462,10 +462,10 @@
 ;; Worlds 2015: Dan D'Argenio vs. Timmy Wong
 (def worlds-2015-dan-d-corps
   (matchup
-    [:preconstructed.worlds-2015-a "Worlds 2015: Dan D'Argenio (C) vs. Timmy Wong (R)"]
-    [:preconstructed.worlds-2015-a-tag "Dan D'Argenio (C) vs. Timmy Wong (R)"]
-    [:preconstructed.worlds-2015-info "269 players attended worlds in 2015. The tournament was held in Minneapolis, MN, USA, and consisted of 8 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Data and Destiny."]
-    [:preconstructed.worlds-2015-a-ul "Worlds 2015: Foodcoatshop vs. The Morning After"]
+    [:preconstructed_worlds-2015-a "Worlds 2015: Dan D'Argenio (C) vs. Timmy Wong (R)"]
+    [:preconstructed_worlds-2015-a-tag "Dan D'Argenio (C) vs. Timmy Wong (R)"]
+    [:preconstructed_worlds-2015-info "269 players attended worlds in 2015. The tournament was held in Minneapolis, MN, USA, and consisted of 8 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Data and Destiny."]
+    [:preconstructed_worlds-2015-a-ul "Worlds 2015: Foodcoatshop vs. The Morning After"]
     (precon "Dan D'Argenio - 2015: Foodcoatshop"
             {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code "01054"}
             [{:qty 3 :card "Accelerated Beta Test"}
@@ -515,10 +515,10 @@
 
 (def worlds-2015-dan-d-runs
   (matchup
-    [:preconstructed.worlds-2015-b "Worlds 2015: Timmy Wong (C) vs. Dan D'Argenio (R)"]
-    [:preconstructed.worlds-2015-b-tag "Dan D'Argenio (C) vs. Timmy Wong (R)"]
-    [:preconstructed.worlds-2015-info "269 players attended worlds in 2015. The tournament was held in Minneapolis, MN, USA, and consisted of 8 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Data and Destiny."]
-    [:preconstructed.worlds-2015-b-ul "Worlds 2015: Yellow Shell vs. Radisson Cheese Plate"]
+    [:preconstructed_worlds-2015-b "Worlds 2015: Timmy Wong (C) vs. Dan D'Argenio (R)"]
+    [:preconstructed_worlds-2015-b-tag "Dan D'Argenio (C) vs. Timmy Wong (R)"]
+    [:preconstructed_worlds-2015-info "269 players attended worlds in 2015. The tournament was held in Minneapolis, MN, USA, and consisted of 8 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Data and Destiny."]
+    [:preconstructed_worlds-2015-b-ul "Worlds 2015: Yellow Shell vs. Radisson Cheese Plate"]
     (precon "Timmy Wong - 2015: Yellow Shell"
             {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code "06005"}
             [{:qty 3 :card "AstroScript Pilot Program"}
@@ -572,10 +572,10 @@
 ;; Worlds 2016: Chris Dyer vs. Ben Ni
 (def worlds-2016-chris-dyer-corps
   (matchup
-    [:preconstructed.worlds-2016-a "Worlds 2016: Chris Dyer (C) vs. Benjamin Ni (R)"]
-    [:preconstructed.worlds-2016-a-tag "Chris Dyer (C) vs. Benjamin Ni (R)"]
-    [:preconstructed.worlds-2016-info "278 players attended worlds in 2016. The tournament was held in Minneapolis, MN, USA, and consisted of 9 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Escalation."]
-    [:preconstructed.worlds-2016-a-ul "Worlds 2016: Snekbite vs. Minh MaxX++"]
+    [:preconstructed_worlds-2016-a "Worlds 2016: Chris Dyer (C) vs. Benjamin Ni (R)"]
+    [:preconstructed_worlds-2016-a-tag "Chris Dyer (C) vs. Benjamin Ni (R)"]
+    [:preconstructed_worlds-2016-info "278 players attended worlds in 2016. The tournament was held in Minneapolis, MN, USA, and consisted of 9 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Escalation."]
+    [:preconstructed_worlds-2016-a-ul "Worlds 2016: Snekbite vs. Minh MaxX++"]
     (precon "Chris Dyer - 2016: Snekbite"
             {:title "NBN: Controlling the Message" :side "Corp" :code "11017"}
             [{:qty 1 :card "AstroScript Pilot Program"}
@@ -627,10 +627,10 @@
 
 (def worlds-2016-chris-dyer-runs
   (matchup
-    [:preconstructed.worlds-2016-b "Worlds 2016: Benjamin Ni (R) vs. Chris Dyer (C)"]
-    [:preconstructed.worlds-2016-b-tag "Benjamin Ni (R) vs. Chris Dyer (C)"]
-    [:preconstructed.worlds-2016-info "278 players attended worlds in 2016. The tournament was held in Minneapolis, MN, USA, and consisted of 9 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Escalation."]
-    [:preconstructed.worlds-2016-b-ul "Worlds 2016: Fiery Info vs. Papa Smurf"]
+    [:preconstructed_worlds-2016-b "Worlds 2016: Benjamin Ni (R) vs. Chris Dyer (C)"]
+    [:preconstructed_worlds-2016-b-tag "Benjamin Ni (R) vs. Chris Dyer (C)"]
+    [:preconstructed_worlds-2016-info "278 players attended worlds in 2016. The tournament was held in Minneapolis, MN, USA, and consisted of 9 swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Escalation."]
+    [:preconstructed_worlds-2016-b-ul "Worlds 2016: Fiery Info vs. Papa Smurf"]
     (precon "Benjamin Ni - 2016: Fiery Info"
             {:title "SYNC: Everything, Everywhere" :side "Corp" :code "09001"}
             [{:qty 3 :card "Breaking News"}
@@ -683,10 +683,10 @@
 ;; Worlds 2017: ChaosJuggler vs. Grey Tongue
 (def worlds-2017-jess-corps
   (matchup
-    [:preconstructed.worlds-2017-a "Worlds 2017: Jess Horig (C) vs. Grey Tongue (R)"]
-    [:preconstructed.worlds-2017-a-tag "Jess Horig (C) vs. Grey Tongue (R)"]
-    [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
-    [:preconstructed.worlds-2017-a-ul "Worlds 2017: Stinson Reversed CI vs. Aesops Hayley"]
+    [:preconstructed_worlds-2017-a "Worlds 2017: Jess Horig (C) vs. Grey Tongue (R)"]
+    [:preconstructed_worlds-2017-a-tag "Jess Horig (C) vs. Grey Tongue (R)"]
+    [:preconstructed_worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
+    [:preconstructed_worlds-2017-a-ul "Worlds 2017: Stinson Reversed CI vs. Aesops Hayley"]
     (precon "ChaosJuggler - 2017: Sinson Reversed CI"
             {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code "03001"}
             [{:qty 1 :card "Corporate Sales Team"}
@@ -742,10 +742,10 @@
 
 (def worlds-2017-jess-runs
   (matchup
-    [:preconstructed.worlds-2017-b "Worlds 2017: Grey Tongue (C) vs. Jess Horig (R)"]
-    [:preconstructed.worlds-2017-b-tag "Grey Tongue (C) vs. Jess Horig (R)"]
-    [:preconstructed.worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
-    [:preconstructed.worlds-2017-b-ul "Worlds 2017: No-Show Rewiring CI vs. Laguna Lock Hayley"]
+    [:preconstructed_worlds-2017-b "Worlds 2017: Grey Tongue (C) vs. Jess Horig (R)"]
+    [:preconstructed_worlds-2017-b-tag "Grey Tongue (C) vs. Jess Horig (R)"]
+    [:preconstructed_worlds-2017-info "233 players attended worlds in 2017. The tournament was held in Minneapolis, MN, USA, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Revised Core set."]
+    [:preconstructed_worlds-2017-b-ul "Worlds 2017: No-Show Rewiring CI vs. Laguna Lock Hayley"]
     (precon "Grey Tongue - 2017: No-Show Rewiring CI"
             {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code "03001"}
             [{:qty 2 :card "Brain Rewiring"}
@@ -805,10 +805,10 @@
 ;; Worlds 2018: Joe Schupp vs. Chris Dyer
 (def worlds-2018-joe-corps
   (matchup
-    [:preconstructed.worlds-2018-a "Worlds 2018: Joe Schupp (C) vs. Chris Dyer (R)"]
-    [:preconstructed.worlds-2018-a-tag "Joe Schupp (C) vs. Chris Dyer (R)"]
-    [:preconstructed.worlds-2018-info "403(!) players attended worlds in 2018. This is the final worlds championship to be run by FFG. The tournament was held in Minneapolis, MN, USA, and consisted of 9(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Reign and Reverie"]
-    [:preconstructed.worlds-2018-a-ul "Worlds 2018: AMERICA CtM vs. Gooseberry MaxX"]
+    [:preconstructed_worlds-2018-a "Worlds 2018: Joe Schupp (C) vs. Chris Dyer (R)"]
+    [:preconstructed_worlds-2018-a-tag "Joe Schupp (C) vs. Chris Dyer (R)"]
+    [:preconstructed_worlds-2018-info "403(!) players attended worlds in 2018. This is the final worlds championship to be run by FFG. The tournament was held in Minneapolis, MN, USA, and consisted of 9(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Reign and Reverie"]
+    [:preconstructed_worlds-2018-a-ul "Worlds 2018: AMERICA CtM vs. Gooseberry MaxX"]
     (precon "Joe Schupp - 2018: AMERICA CtM"
             {:title "NBN: Controlling the Message" :side "Corp" :code "11017"}
             [{:qty 1 :card "15 Minutes"}
@@ -859,10 +859,10 @@
 
 (def worlds-2018-joe-runs
   (matchup
-    [:preconstructed.worlds-2018-b "Worlds 2018: Chris Dyer (C) vs. Joe Schupp (R)"]
-    [:preconstructed.worlds-2018-b-tag "Chris Dyer (C) vs. Joe Schupp (R)"]
-    [:preconstructed.worlds-2018-info "403(!) players attended worlds in 2018. This is the final worlds championship to be run by FFG. The tournament was held in Minneapolis, MN, USA, and consisted of 9(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Reign and Reverie"]
-    [:preconstructed.worlds-2018-b-ul "Worlds 2018: Trust the Process vs. Dan D'Argenio KoS Val"]
+    [:preconstructed_worlds-2018-b "Worlds 2018: Chris Dyer (C) vs. Joe Schupp (R)"]
+    [:preconstructed_worlds-2018-b-tag "Chris Dyer (C) vs. Joe Schupp (R)"]
+    [:preconstructed_worlds-2018-info "403(!) players attended worlds in 2018. This is the final worlds championship to be run by FFG. The tournament was held in Minneapolis, MN, USA, and consisted of 9(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to Reign and Reverie"]
+    [:preconstructed_worlds-2018-b-ul "Worlds 2018: Trust the Process vs. Dan D'Argenio KoS Val"]
     (precon "Chris Dyer - 2018: Trust the Process"
             {:title "NBN: Controlling the Message" :side "Corp" :code "11017"}
             [{:qty 1 :card "15 Minutes"}
@@ -916,10 +916,10 @@
 ;; Worlds 2019: Pinsel vs. Testrunning
 (def worlds-2019-pinsel-corps
   (matchup
-    [:preconstructed.worlds-2019-a "Worlds 2019: Pinsel (C) vs. Testrunning (R)"]
-    [:preconstructed.worlds-2019-a-tag "Pinsel (C) vs. Testrunning (R)"]
-    [:preconstructed.worlds-2019-info "256 players played in the first even Project NISEI Netrunner World Championship in 2019. This tournament was held in Rotterdam, NL, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Uprising Booster Pack"]
-    [:preconstructed.worlds-2019-a-ul "Worlds 2019: Fully dedicated to efficiency vs. Trash Panda"]
+    [:preconstructed_worlds-2019-a "Worlds 2019: Pinsel (C) vs. Testrunning (R)"]
+    [:preconstructed_worlds-2019-a-tag "Pinsel (C) vs. Testrunning (R)"]
+    [:preconstructed_worlds-2019-info "256 players played in the first even Project NISEI Netrunner World Championship in 2019. This tournament was held in Rotterdam, NL, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Uprising Booster Pack"]
+    [:preconstructed_worlds-2019-a-ul "Worlds 2019: Fully dedicated to efficiency vs. Trash Panda"]
     (precon "Pinsel - 2019: Fully dedicated to efficiency"
             {:title "Asa Group: Security Through Vigilance" :side "Corp" :code "21009"}
             [{:qty 3 :card "Efficiency Committee"}
@@ -968,10 +968,10 @@
 
 (def worlds-2019-pinsel-runs
   (matchup
-    [:preconstructed.worlds-2019-b "Worlds 2019: Testrunning (C) vs. Pinsel (R)"]
-    [:preconstructed.worlds-2019-b-tag "Testrunning (C) vs. Pinsel (R)"]
-    [:preconstructed.worlds-2019-info "256 players played in the first even Project NISEI Netrunner World Championship in 2019. This tournament was held in Rotterdam, NL, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Uprising Booster Pack"]
-    [:preconstructed.worlds-2019-b-ul "Worlds 2019: 2 Grid for 2 Place vs. Trash Panda"]
+    [:preconstructed_worlds-2019-b "Worlds 2019: Testrunning (C) vs. Pinsel (R)"]
+    [:preconstructed_worlds-2019-b-tag "Testrunning (C) vs. Pinsel (R)"]
+    [:preconstructed_worlds-2019-info "256 players played in the first even Project NISEI Netrunner World Championship in 2019. This tournament was held in Rotterdam, NL, and consisted of 8(?) swiss rounds into a top 16 cut. The legal cardpool consisted of cards up to the Uprising Booster Pack"]
+    [:preconstructed_worlds-2019-b-ul "Worlds 2019: 2 Grid for 2 Place vs. Trash Panda"]
     (precon "Testrunning - 2019: 2 Grid for 2 Place"
             {:title "Pālanā Foods: Sustainable Growth" :side "Corp" :code "10030"}
             [{:qty 3 :card "Nisei MK II"}
@@ -1021,10 +1021,10 @@
 ;; Worlds 2020: Limes vs. tf34
 (def worlds-2020-limes-corps
   (matchup
-    [:preconstructed.worlds-2020-a "Worlds 2020: Limes (C) vs. tf34 (R)"]
-    [:preconstructed.worlds-2020-a-tag "Limes (C) vs. tf34 (R)"]
-    [:preconstructed.worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to Uprising."]
-    [:preconstructed.worlds-2020-a-ul "Worlds 2020: I don't like this deck vs. Engolo Freedom"]
+    [:preconstructed_worlds-2020-a "Worlds 2020: Limes (C) vs. tf34 (R)"]
+    [:preconstructed_worlds-2020-a-tag "Limes (C) vs. tf34 (R)"]
+    [:preconstructed_worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to Uprising."]
+    [:preconstructed_worlds-2020-a-ul "Worlds 2020: I don't like this deck vs. Engolo Freedom"]
     (precon "Limes - 2020: I don't like this deck"
             {:title "Sportsmetal: Go Big or Go Home" :side "Corp" :code "22026"}
             [{:qty 2 :card "False Lead"}
@@ -1071,10 +1071,10 @@
 
 (def worlds-2020-limes-runs
   (matchup
-    [:preconstructed.worlds-2020-b "Worlds 2020: tf34 (R) vs. Limes (C)"]
-    [:preconstructed.worlds-2020-b-tag "tf34 (R) vs. Limes (C)"]
-    [:preconstructed.worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to Uprising."]
-    [:preconstructed.worlds-2020-b-ul "Worlds 2020: Malia CTM vs. Imp-pressive Hoshiko"]
+    [:preconstructed_worlds-2020-b "Worlds 2020: tf34 (R) vs. Limes (C)"]
+    [:preconstructed_worlds-2020-b-tag "tf34 (R) vs. Limes (C)"]
+    [:preconstructed_worlds-2020-info "294 players played in the first ever online world championship for Netrunner, run by Project NISEI 2020. Due to travel restrictions at the start of the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to Uprising."]
+    [:preconstructed_worlds-2020-b-ul "Worlds 2020: Malia CTM vs. Imp-pressive Hoshiko"]
     (precon "tf34 - 2020: Malia CTM"
             {:title "NBN: Controlling the Message" :side "Corp" :code "11017"}
             [{:qty 3 :card "Bellona"}
@@ -1124,10 +1124,10 @@
 ;; Worlds 2021: Patrick Gower vs. Jonas
 (def worlds-2021-patrick-corps
   (matchup
-    [:preconstructed.worlds-2021-a "Worlds 2021: Patrick Gower (C) vs. Jonas (R)"]
-    [:preconstructed.worlds-2021-a-tag "Patrick Gower (C) vs. Jonas (R)"]
-    [:preconstructed.worlds-2021-info "201 players played in the second online world championship for Netrunner, run by Project NISEI in 2021. Due to the ongoing disruption caused by the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
-    [:preconstructed.worlds-2021-a-ul "Worlds 2021: 44 Card PD vs. Watch Me Drip, Watch Me Maemi"]
+    [:preconstructed_worlds-2021-a "Worlds 2021: Patrick Gower (C) vs. Jonas (R)"]
+    [:preconstructed_worlds-2021-a-tag "Patrick Gower (C) vs. Jonas (R)"]
+    [:preconstructed_worlds-2021-info "201 players played in the second online world championship for Netrunner, run by Project NISEI in 2021. Due to the ongoing disruption caused by the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
+    [:preconstructed_worlds-2021-a-ul "Worlds 2021: 44 Card PD vs. Watch Me Drip, Watch Me Maemi"]
     (precon "Patrick Gower - 2021: 44 card PD"
             {:title "Haas-Bioroid: Precision Design" :side "Corp" :code "30035"}
             [{:qty 3 :card "Cyberdex Sandbox"}
@@ -1185,10 +1185,10 @@
 
 (def worlds-2021-patrick-runs
   (matchup
-    [:preconstructed.worlds-2021-b "Worlds 2021: Jonas (C) vs. Patrick Gower (R)"]
-    [:preconstructed.worlds-2021-b-tag "Jonas (C) vs. Patrick Gower (R)"]
-    [:preconstructed.worlds-2021-info "201 players played in the second online world championship for Netrunner, run by Project NISEI in 2021. Due to the ongoing disruption caused by the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
-    [:preconstructed.worlds-2021-b-ul "Worlds 2021: Is Gagarin Good? vs. Medium to Large Maxx"]
+    [:preconstructed_worlds-2021-b "Worlds 2021: Jonas (C) vs. Patrick Gower (R)"]
+    [:preconstructed_worlds-2021-b-tag "Jonas (C) vs. Patrick Gower (R)"]
+    [:preconstructed_worlds-2021-info "201 players played in the second online world championship for Netrunner, run by Project NISEI in 2021. Due to the ongoing disruption caused by the COVID-19 pandemic, this tournament was held online via Jinteki.net, and consisted of 8 swiss rounds on two distinct day-ones, into a top 16 cut. The legal cardpool consisted of cards up to System Gateway."]
+    [:preconstructed_worlds-2021-b-ul "Worlds 2021: Is Gagarin Good? vs. Medium to Large Maxx"]
     (precon "Jonas - 2021: Is Gagarin Good?"
             {:title "Gagarin Deep Space: Expanding the Horizon" :side "Corp" :code "07002"}
             [{:qty 1 :card "Above the Law"}
@@ -1244,10 +1244,10 @@
 ;; Worlds 2022: William Huang vs. skry
 (def worlds-2022-sokka-corps
   (matchup
-    [:preconstructed.worlds-2022-a "Worlds 2022: William Huang (C) vs. skry (R)"]
-    [:preconstructed.worlds-2022-a-tag "William Huang (C) vs. skry (R)"]
-    [:preconstructed.worlds-2022-info "158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 8(?) rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun."]
-    [:preconstructed.worlds-2022-a-ul "Worlds 2022: SNACS vs. Liberté, Égalité, Humidité"]
+    [:preconstructed_worlds-2022-a "Worlds 2022: William Huang (C) vs. skry (R)"]
+    [:preconstructed_worlds-2022-a-tag "William Huang (C) vs. skry (R)"]
+    [:preconstructed_worlds-2022-info "158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 8(?) rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun."]
+    [:preconstructed_worlds-2022-a-ul "Worlds 2022: SNACS vs. Liberté, Égalité, Humidité"]
     (precon "William Huang - 2022: SNACS"
             {:title "Sportsmetal: Go Big or Go Home" :side "Corp" :code "22026"}
             [{:qty 1 :card "Élivágar Bifurcation"}
@@ -1300,10 +1300,10 @@
 
 (def worlds-2022-sokka-runs
   (matchup
-    [:preconstructed.worlds-2022-b "Worlds 2022: skry (C) vs. William Huang (R)"]
-    [:preconstructed.worlds-2022-b-tag "skry (C) vs. William Huang (R)"]
-    [:preconstructed.worlds-2022-info "158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 8(?) rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun."]
-    [:preconstructed.worlds-2022-b-ul "Worlds 2022: Dies to Doom Blade vs. ApocoLat"]
+    [:preconstructed_worlds-2022-b "Worlds 2022: skry (C) vs. William Huang (R)"]
+    [:preconstructed_worlds-2022-b-tag "skry (C) vs. William Huang (R)"]
+    [:preconstructed_worlds-2022-info "158 players played in the first world championship run by Null Signal Games (formerly Project NISEI), which was the first Netrunner world championship to be run in-person since the start of the COVID-19 pandemic. The tournament was held in Toronto, Canada, and consisted of 8(?) rounds into a top 16 cut. The legal cardpool consisted of cards up to Midnight Sun."]
+    [:preconstructed_worlds-2022-b-ul "Worlds 2022: Dies to Doom Blade vs. ApocoLat"]
     (precon "skry - 2022: Dies to Doomblade"
             {:title "AgInfusion: New Miracles for a New World" :side "Corp" :code "12052"}
             [{:qty 1 :card "Longevity Serum"}
@@ -1355,10 +1355,10 @@
 ;; Worlds 2022: William Huang vs. cableCarnage
 (def worlds-2023-sokka-corps
   (matchup
-    [:preconstructed.worlds-2023-a "Worlds 2023: William Huang (C) vs. cableCarnage (R)"]
-    [:preconstructed.worlds-2023-a-tag "William Huang (C) vs. cableCarnage (R)"]
-    [:preconstructed.worlds-2023-info "254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 8 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative."]
-    [:preconstructed.worlds-2023-a-ul "Worlds 2023: The Worlds Grid vs. sableCarnage"]
+    [:preconstructed_worlds-2023-a "Worlds 2023: William Huang (C) vs. cableCarnage (R)"]
+    [:preconstructed_worlds-2023-a-tag "William Huang (C) vs. cableCarnage (R)"]
+    [:preconstructed_worlds-2023-info "254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 8 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative."]
+    [:preconstructed_worlds-2023-a-ul "Worlds 2023: The Worlds Grid vs. sableCarnage"]
     (precon "William Huang - 2023: The Worlds Grind"
             {:title "Weyland Consortium: Built to Last" :side "Corp" :code "30059"}
             [{:qty 1 :card "Above the Law"}
@@ -1414,10 +1414,10 @@
 
 (def worlds-2023-sokka-runs
   (matchup
-    [:preconstructed.worlds-2023-b "Worlds 2023: cableCarnage (C) vs. William Huang (R)"]
-    [:preconstructed.worlds-2023-b-tag "cableCarnage (C) vs. William Huang (R)"]
-    [:preconstructed.worlds-2023-info "254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 8 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative."]
-    [:preconstructed.worlds-2023-b-ul "Worlds 2023: tableCarnage vs. You *do* always come back!"]
+    [:preconstructed_worlds-2023-b "Worlds 2023: cableCarnage (C) vs. William Huang (R)"]
+    [:preconstructed_worlds-2023-b-tag "cableCarnage (C) vs. William Huang (R)"]
+    [:preconstructed_worlds-2023-info "254 players played in the second Netrunner world championship run by Null Signal Games. The tournament was held in Barcelona, Spain, and consisted of 8 rounds into a top 16 cut. The legal cardpool consisted of cards up to The Automata Initiative."]
+    [:preconstructed_worlds-2023-b-ul "Worlds 2023: tableCarnage vs. You *do* always come back!"]
     (precon "cableCarnage - 2023: tableCarnage"
             {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code "06005"}
             [{:qty 3 :card "Bellona"}
@@ -1470,10 +1470,10 @@
 
 (def worlds-2024-deer-runs
     (matchup
-      [:preconstructed.worlds-2024-a "Worlds 2024: Alex Boyd (C) vs. Dee Ruttenberg (R)"]
-      [:preconstructed.worlds-2024-a-tag "Alex Boyd (C) vs. Dee Ruttenberg (R)"]
-      [:preconstructed.worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Alex Boyd AKA Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against Dee Ruttenberg AKA DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
-      [:preconstructed.worlds-2024-a-ul "Worlds 2024: Kill R+ vs. Good Stuff Lat"]
+      [:preconstructed_worlds-2024-a "Worlds 2024: Alex Boyd (C) vs. Dee Ruttenberg (R)"]
+      [:preconstructed_worlds-2024-a-tag "Alex Boyd (C) vs. Dee Ruttenberg (R)"]
+      [:preconstructed_worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Alex Boyd AKA Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against Dee Ruttenberg AKA DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
+      [:preconstructed_worlds-2024-a-ul "Worlds 2024: Kill R+ vs. Good Stuff Lat"]
       (precon "Aruzan - 2024: Kill R+"
             {:title "NBN: Reality Plus" :side "Corp" :code "30051"}
             [{:qty 2 :card "Degree Mill"}
@@ -1530,10 +1530,10 @@
 
 (def worlds-2024-deer-corps
   (matchup
-    [:preconstructed.worlds-2024-b "Worlds 2024: Dee Ruttenberg (C) vs Alex Boyd (R)"]
-    [:preconstructed.worlds-2024-b-tag "Dee Ruttenberg (C) vs. Alex Boyd (R)"]
-    [:preconstructed.worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Alex Boyd AKA Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against Dee Ruttenberg AKA DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
-    [:preconstructed.worlds-2024-b-ul "Worlds 2024: Loud PE vs. Deep Dive Arissana"]
+    [:preconstructed_worlds-2024-b "Worlds 2024: Dee Ruttenberg (C) vs Alex Boyd (R)"]
+    [:preconstructed_worlds-2024-b-tag "Dee Ruttenberg (C) vs. Alex Boyd (R)"]
+    [:preconstructed_worlds-2024-info "204 players played in the third Netrunner world championship run by Null Signal Games. In this tournament, Alex Boyd AKA Aruzan (Arissana, Reality Plus) won the title of Netrunner World Champion in a final game Against Dee Ruttenberg AKA DeeR (Lat, PE), with Aruzan going entirely undefeated in the top cut. The tournament was held at the San Francisco Embarcadero Waterfront Hotel on 19th and 20th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Rebellion Without Rehearsal."]
+    [:preconstructed_worlds-2024-b-ul "Worlds 2024: Loud PE vs. Deep Dive Arissana"]
     (precon "DeeR - 2024: Loud PE"
             {:title "Jinteki: Personal Evolution" :side "Corp" :code "01067"}
             [{:qty 1 :card "Blood in the Water"}
@@ -1592,10 +1592,10 @@
 
 (def worlds-2025-zomzraft-runs
   (matchup
-    [:preconstructed.worlds-2025-a "Worlds 2025: davz131 (C) vs. ZomZraft (C)"]
-    [:preconstructed.worlds-2025-a-tag "davz131 (R) vs. ZomZraft (C)"]
-    [:preconstructed.worlds-2025-info "361 players played in the fourth Netrunner world championship run by Null Signal Games. In this tournament, ZomZraft (Epiphany, Hoshiko) won the title of Netrunner World Champion in a final game Against davz131 (Au Co, Esa). The tournament was held at Dovecot Studios in Edenburg on the 18th and 19th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Elevation."]
-    [:preconstructed.worlds-2025-a-ul "Worlds 2025: SBT Bytes vs. Vampire"]
+    [:preconstructed_worlds-2025-a "Worlds 2025: davz131 (C) vs. ZomZraft (C)"]
+    [:preconstructed_worlds-2025-a-tag "davz131 (R) vs. ZomZraft (C)"]
+    [:preconstructed_worlds-2025-info "361 players played in the fourth Netrunner world championship run by Null Signal Games. In this tournament, ZomZraft (Epiphany, Hoshiko) won the title of Netrunner World Champion in a final game Against davz131 (Au Co, Esa). The tournament was held at Dovecot Studios in Edenburg on the 18th and 19th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Elevation."]
+    [:preconstructed_worlds-2025-a-ul "Worlds 2025: SBT Bytes vs. Vampire"]
     (precon "davz131 - 2025: SBT Bytes"
             {:title "AU Co.: The Gold Standard in Clones" :side "Corp" :code "35046"}
             [{:qty 3 :card "Fujii Asset Retrieval"}
@@ -1646,10 +1646,10 @@
 
 (def worlds-2025-zomzraft-corps
   (matchup
-    [:preconstructed.worlds-2025-b "Worlds 2025: ZomZraft (C) vs davz131 (R)"]
-    [:preconstructed.worlds-2025-b-tag "ZomZraft (C) vs. davz131 (R)"]
-    [:preconstructed.worlds-2025-info "361 players played in the fourth Netrunner world championship run by Null Signal Games. In this tournament, ZomZraft (Epiphany, Hoshiko) won the title of Netrunner World Champion in a final game Against davz131 (Au Co, Esa). The tournament was held at Dovecot Studios in Edenburg on the 18th and 19th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Elevation."]
-    [:preconstructed.worlds-2025-b-ul "Worlds 2025: Constrictor vs. Esâ me, I'm back"]
+    [:preconstructed_worlds-2025-b "Worlds 2025: ZomZraft (C) vs davz131 (R)"]
+    [:preconstructed_worlds-2025-b-tag "ZomZraft (C) vs. davz131 (R)"]
+    [:preconstructed_worlds-2025-info "361 players played in the fourth Netrunner world championship run by Null Signal Games. In this tournament, ZomZraft (Epiphany, Hoshiko) won the title of Netrunner World Champion in a final game Against davz131 (Au Co, Esa). The tournament was held at Dovecot Studios in Edenburg on the 18th and 19th of October, and consisted of 14 rounds of Single-Sided Swiss into a top 16 cut. The legal cardpool consisted of cards up to Elevation."]
+    [:preconstructed_worlds-2025-b-ul "Worlds 2025: Constrictor vs. Esâ me, I'm back"]
     (precon "ZomZraft - 2025: Constrictor"
             {:title "Epiphany Analytica: Nations Undivided" :side "Corp" :code "34048"}
             [{:qty 3 :card "Artificial Cryptocrash"}
@@ -1707,10 +1707,10 @@
 ;; Classique 2022
 (def classique-2022-foodcoats-vs-book-of-kate
   (matchup
-    [:preconstructed.classique-2022-a "Classique 2022: Foodcoats (C) vs. Book of Kate (R)"]
-    [:preconstructed.classique-2022-a-tag "Foodcoats (C) vs. Book of Kate (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2022-a-ul "Classique 2022: Foodcoats vs. Book of Kate"]
+    [:preconstructed_classique-2022-a "Classique 2022: Foodcoats (C) vs. Book of Kate (R)"]
+    [:preconstructed_classique-2022-a-tag "Foodcoats (C) vs. Book of Kate (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2022-a-ul "Classique 2022: Foodcoats vs. Book of Kate"]
     (precon "Classique 2022: Foodcoats"
             {:title "Haas-Bioroid: Engineering the Future" :side "Corp" :code "01054"}
             [{:qty 3 :card "Accelerated Beta Test"}
@@ -1764,10 +1764,10 @@
 
 (def classique-2022-grail-neh-vs-endless-waltz
   (matchup
-    [:preconstructed.classique-2022-b "Classique 2022: Grail NEH (C) vs. Endless Waltz (R)"]
-    [:preconstructed.classique-2022-b-tag "Grail NEH (C) vs. Endless Waltz (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2022-b-ul "Classique 2022: Grail NEH vs. Endless Waltz"]
+    [:preconstructed_classique-2022-b "Classique 2022: Grail NEH (C) vs. Endless Waltz (R)"]
+    [:preconstructed_classique-2022-b-tag "Grail NEH (C) vs. Endless Waltz (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2022-b-ul "Classique 2022: Grail NEH vs. Endless Waltz"]
     (precon "Classique 2022: Grail NEH"
             {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code "06005"}
             [{:qty 1 :card "AstroScript Pilot Program"}
@@ -1820,10 +1820,10 @@
 
 (def classique-2022-ctm-vs-reg-whizz
   (matchup
-    [:preconstructed.classique-2022-c "Classique 2022: CtM (C) vs. Reg Whizz (R)"]
-    [:preconstructed.classique-2022-c-tag "CtM (C) vs. Reg Whizz (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2022-c-ul "Classique 2022: CtM vs. Reg Whizz"]
+    [:preconstructed_classique-2022-c "Classique 2022: CtM (C) vs. Reg Whizz (R)"]
+    [:preconstructed_classique-2022-c-tag "CtM (C) vs. Reg Whizz (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2022-c-ul "Classique 2022: CtM vs. Reg Whizz"]
     (precon "Classique 2022: CtM"
             {:title "NBN: Controlling the Message" :side "Corp" :code "11017"}
             [{:qty 1 :card "AstroScript Pilot Program"}
@@ -1878,10 +1878,10 @@
 
 (def classique-2022-supermodernism-argus-vs-crowdfunding-val
   (matchup
-    [:preconstructed.classique-2022-d "Classique 2022: Supermodernism Argus (C) vs. Crowdfunding Val (R)"]
-    [:preconstructed.classique-2022-d-tag "Supermodernism Argus (C) vs. Crowdfunding Val (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2022-d-ul "Classique 2022: Supermodernism Argus vs. Crowdfunding Val"]
+    [:preconstructed_classique-2022-d "Classique 2022: Supermodernism Argus (C) vs. Crowdfunding Val (R)"]
+    [:preconstructed_classique-2022-d-tag "Supermodernism Argus (C) vs. Crowdfunding Val (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2022-d-ul "Classique 2022: Supermodernism Argus vs. Crowdfunding Val"]
     (precon "Classique 2022: Supermodernism Argus"
             {:title "Argus Security: Protection Guaranteed" :side "Corp" :code "07001"}
             [{:qty 3 :card "Global Food Initiative"}
@@ -1934,10 +1934,10 @@
 ;; Classique 2023
 (def classique-2023-panic-palana-vs-noise-shop
   (matchup
-    [:preconstructed.classique-2023-a "Classique 2023: Panic Palana (C) vs. Noise Shop (R)"]
-    [:preconstructed.classique-2023-a-tag "Panic Palana (C) vs. Noise Shop (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2023-a-ul "Classique 2023: Panic Palana vs. Noise Shop"]
+    [:preconstructed_classique-2023-a "Classique 2023: Panic Palana (C) vs. Noise Shop (R)"]
+    [:preconstructed_classique-2023-a-tag "Panic Palana (C) vs. Noise Shop (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2023-a-ul "Classique 2023: Panic Palana vs. Noise Shop"]
     (precon "Classique 2023: Panic Palana"
             {:title "Pālanā Foods: Sustainable Growth" :side "Corp" :code "10030"}
             [{:qty 3 :card "Corporate Sales Team"}
@@ -1988,10 +1988,10 @@
 
 (def classique-2023-tablet-asa-vs-core-set-waltz
   (matchup
-    [:preconstructed.classique-2023-b "Classique 2023: Tablet Asa (C) vs. Core Set Waltz (R)"]
-    [:preconstructed.classique-2023-b-tag "Tablet Asa (C) vs. Core Set Waltz (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2023-b-ul "Classique 2023: Tablet Asa vs. Core Set Waltz"]
+    [:preconstructed_classique-2023-b "Classique 2023: Tablet Asa (C) vs. Core Set Waltz (R)"]
+    [:preconstructed_classique-2023-b-tag "Tablet Asa (C) vs. Core Set Waltz (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2023-b-ul "Classique 2023: Tablet Asa vs. Core Set Waltz"]
     (precon "Classique 2023: Tablet Asa"
             {:title "Asa Group: Security Through Vigilance" :side "Corp" :code "21009"}
             [{:qty 3 :card "Global Food Initiative"}
@@ -2043,10 +2043,10 @@
 
 (def classique-2023-fastrobiotics-vs-ppvp-kate
   (matchup
-    [:preconstructed.classique-2023-c "Classique 2023: Fastrobiotics (C) vs. PPVP Kate (R)"]
-    [:preconstructed.classique-2023-c-tag "Fastrobiotics (C) vs. PPVP Kate (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2023-c-ul "Classique 2023: Fastrobiotics vs. PPVP Kate"]
+    [:preconstructed_classique-2023-c "Classique 2023: Fastrobiotics (C) vs. PPVP Kate (R)"]
+    [:preconstructed_classique-2023-c-tag "Fastrobiotics (C) vs. PPVP Kate (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2023-c-ul "Classique 2023: Fastrobiotics vs. PPVP Kate"]
     (precon "Classique 2023: Fastrobiotics"
             {:title "Near-Earth Hub: Broadcast Center" :side "Corp" :code "06005"}
             [{:qty 1 :card "AstroScript Pilot Program"}
@@ -2104,10 +2104,10 @@
 
 (def classique-2023-supermodernism-argus-vs-crowdfunding-val
   (matchup
-    [:preconstructed.classique-2023-d "Classique 2023: Supermodernism Argus (C) vs. Crowdfunding Val (R)"]
-    [:preconstructed.classique-2023-d-tag "Supermodernism Argus (C) vs. Crowdfunding Val (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2023-d-ul "Classique 2023: Supermodernism Argus vs. Crowdfunding Val"]
+    [:preconstructed_classique-2023-d "Classique 2023: Supermodernism Argus (C) vs. Crowdfunding Val (R)"]
+    [:preconstructed_classique-2023-d-tag "Supermodernism Argus (C) vs. Crowdfunding Val (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2023-d-ul "Classique 2023: Supermodernism Argus vs. Crowdfunding Val"]
     (precon "Classique 2023: Supermodernism Argus"
             {:title "Argus Security: Protection Guaranteed" :side "Corp" :code "07001"}
             [{:qty 3 :card "Global Food Initiative"}
@@ -2160,10 +2160,10 @@
 ;; Classique 2025
 (def classique-2025-cambridge-pe-vs-classic-andy
   (matchup
-    [:preconstructed.classique-2025-a "Classique 2025: Cambridge PE (C) vs. Classic Andy (R)"]
-    [:preconstructed.classique-2025-a-tag "Cambridge PE (C) vs. Classic Andy (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2025-a-ul "Classique 2025: Cambridge PE vs. Classic Andy"]
+    [:preconstructed_classique-2025-a "Classique 2025: Cambridge PE (C) vs. Classic Andy (R)"]
+    [:preconstructed_classique-2025-a-tag "Cambridge PE (C) vs. Classic Andy (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2025-a-ul "Classique 2025: Cambridge PE vs. Classic Andy"]
     (precon "Classique 2025: Cambridge PE"
             {:title "Jinteki: Personal Evolution" :side "Corp" :code "01067"}
             [{:qty 3 :card "Fetal AI"}
@@ -2219,10 +2219,10 @@
 
 (def classique-2025-ctm-vs-reg-whizz
   (matchup
-    [:preconstructed.classique-2025-b "Classique 2025: CtM (C) vs. Reg Whizz (R)"]
-    [:preconstructed.classique-2025-b-tag "CtM (C) vs. Reg Whizz (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2025-b-ul "Classique 2025: CtM vs. Reg Whizz"]
+    [:preconstructed_classique-2025-b "Classique 2025: CtM (C) vs. Reg Whizz (R)"]
+    [:preconstructed_classique-2025-b-tag "CtM (C) vs. Reg Whizz (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2025-b-ul "Classique 2025: CtM vs. Reg Whizz"]
     (precon "Classique 2025: CtM"
             {:title "NBN: Controlling the Message" :side "Corp" :code "11017"}
             [{:qty 1 :card "AstroScript Pilot Program"}
@@ -2277,10 +2277,10 @@
 
 (def classique-2025-reversed-stinson-ci-vs-german-geist
   (matchup
-    [:preconstructed.classique-2025-c "Classique 2025: Reversed Stinson CI (C) vs. German Geist (R)"]
-    [:preconstructed.classique-2025-c-tag "Reversed Stinson CI (C) vs. German Geist (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2025-c-ul "Classique 2025: Reversed Stinson CI vs. German Geist"]
+    [:preconstructed_classique-2025-c "Classique 2025: Reversed Stinson CI (C) vs. German Geist (R)"]
+    [:preconstructed_classique-2025-c-tag "Reversed Stinson CI (C) vs. German Geist (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2025-c-ul "Classique 2025: Reversed Stinson CI vs. German Geist"]
     (precon "Classique 2025: Reversed Stinson CI"
             {:title "Cerebral Imaging: Infinite Frontiers" :side "Corp" :code "03001"}
             [{:qty 1 :card "Corporate Sales Team"}
@@ -2335,10 +2335,10 @@
 
 (def classique-2025-seamusmodernism-vs-pitchfork-hayley
   (matchup
-    [:preconstructed.classique-2025-d "Classique 2025: Seamusmodernism (C) vs. Pitchfork Hayley (R)"]
-    [:preconstructed.classique-2025-d-tag "Seamusmodernism (C) vs. Pitchfork Hayley (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2025-d-ul "Classique 2025: Seamusmodernism vs. Pitchfork Hayley"]
+    [:preconstructed_classique-2025-d "Classique 2025: Seamusmodernism (C) vs. Pitchfork Hayley (R)"]
+    [:preconstructed_classique-2025-d-tag "Seamusmodernism (C) vs. Pitchfork Hayley (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2025-d-ul "Classique 2025: Seamusmodernism vs. Pitchfork Hayley"]
     (precon "Classique 2025: Seamusmodernism"
             {:title "Argus Security: Protection Guaranteed" :side "Corp" :code "07001"}
             [{:qty 2 :card "Geothermal Fracking"}
@@ -2401,10 +2401,10 @@
 ;; Classique 2026
 (def classique-2026-come-on-and-slam-vs-clanaxx
   (matchup
-    [:preconstructed.classique-2026-a "Classique 2026: Come On And Slam (C) vs. ClanaxX (R)"]
-    [:preconstructed.classique-2026-a-tag "Come On And Slam (C) vs. ClanaxX (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2026-a-ul "Classique 2026: Come On And Slam vs. ClanaxX"]
+    [:preconstructed_classique-2026-a "Classique 2026: Come On And Slam (C) vs. ClanaxX (R)"]
+    [:preconstructed_classique-2026-a-tag "Come On And Slam (C) vs. ClanaxX (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2026-a-ul "Classique 2026: Come On And Slam vs. ClanaxX"]
     (precon "Classique 2026: Come On And Slam"
             {:title "Sportsmetal: Go Big or Go Home" :side "Corp" :code "22026"}
             [{:qty 1 :card "Corporate Sales Team"}
@@ -2455,10 +2455,10 @@
 
 (def classique-2026-battyshop-blue-sun-vs-trash-panda-freedom
   (matchup
-    [:preconstructed.classique-2026-b "Classique 2026: Battyshop Blue Sun (C) vs. Trash Panda Freedom (R)"]
-    [:preconstructed.classique-2026-b-tag "Battyshop Blue Sun (C) vs. Trash Panda Freedom (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2026-b-ul "Classique 2026: Battyshop Blue Sun vs. Trash Panda Freedom"]
+    [:preconstructed_classique-2026-b "Classique 2026: Battyshop Blue Sun (C) vs. Trash Panda Freedom (R)"]
+    [:preconstructed_classique-2026-b-tag "Battyshop Blue Sun (C) vs. Trash Panda Freedom (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2026-b-ul "Classique 2026: Battyshop Blue Sun vs. Trash Panda Freedom"]
     (precon "Classique 2026: Battyshop Blue Sun"
             {:title "Blue Sun: Powering the Future" :side "Corp" :code "25123"}
             [{:qty 2 :card "Hostile Takeover"}
@@ -2510,10 +2510,10 @@
 
 (def classique-2026-post-scarcity-palana-vs-whiteblade-liza
   (matchup
-    [:preconstructed.classique-2026-c "Classique 2026: Post-Scarcity Palana (C) vs. Whiteblade Liza (R)"]
-    [:preconstructed.classique-2026-c-tag "Post-Scarcity Palana (C) vs. Whiteblade Liza (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2026-c-ul "Classique 2026: Post-Scarcity Palana vs. Whiteblade Liza"]
+    [:preconstructed_classique-2026-c "Classique 2026: Post-Scarcity Palana (C) vs. Whiteblade Liza (R)"]
+    [:preconstructed_classique-2026-c-tag "Post-Scarcity Palana (C) vs. Whiteblade Liza (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2026-c-ul "Classique 2026: Post-Scarcity Palana vs. Whiteblade Liza"]
     (precon "Classique 2026: Post-Scarcity Palana"
             {:title "Pālanā Foods: Sustainable Growth" :side "Corp" :code "10030"}
             [{:qty 3 :card "Nisei MK II"}
@@ -2565,10 +2565,10 @@
 
 (def classique-2026-death-rattle-ctm-vs-internet-famous-smoke
   (matchup
-    [:preconstructed.classique-2026-d "Classique 2026: Death Rattle CtM (C) vs. Internet Famous Smoke (R)"]
-    [:preconstructed.classique-2026-d-tag "Death Rattle CtM (C) vs. Internet Famous Smoke (R)"]
-    [:preconstructed.classique-info classique-blurb]
-    [:preconstructed.classique-2026-d-ul "Classique 2026: Death Rattle CtM vs. Internet Famous Smoke"]
+    [:preconstructed_classique-2026-d "Classique 2026: Death Rattle CtM (C) vs. Internet Famous Smoke (R)"]
+    [:preconstructed_classique-2026-d-tag "Death Rattle CtM (C) vs. Internet Famous Smoke (R)"]
+    [:preconstructed_classique-info classique-blurb]
+    [:preconstructed_classique-2026-d-ul "Classique 2026: Death Rattle CtM vs. Internet Famous Smoke"]
     (precon "Classique 2026: Death Rattle CtM"
             {:title "NBN: Controlling the Message" :side "Corp" :code "11017"}
             [{:qty 1 :card "AstroScript Pilot Program"}

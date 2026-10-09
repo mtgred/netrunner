@@ -1008,16 +1008,13 @@ lobby_game-count-filtered = {$cnt ->
     *[other] {$cnt} 局对战（过滤后）
 }
 
-lobby_gateway-format = {$format ->
-    [Beginner] 初学者
-    [beginner-info] 此大厅为公司和潜袭者使用核心网关初学者牌组而准备。建议你在初次游戏中使用这些牌组。游戏按6点议案分数进行。
-    [beginner-ul] 核心网关 - 初学者教学牌组
-    [Constructed] 构筑
-    [Intermediate] 进阶
-    [intermediate-info] 此大厅为公司和潜袭者使用核心网关进阶牌组而准备。这些牌组比初学者牌组稍大。游戏按7点议案分数进行。
-    [intermediate-ul] 核心网关 - 进阶教学牌组
-    *[unknown] 未知网关赛制 ({$format})
-}
+lobby_gateway-format-beginner = 初学者
+lobby_gateway-format-beginner-info = 此大厅为公司和潜袭者使用核心网关初学者牌组而准备。建议你在初次游戏中使用这些牌组。游戏按6点议案分数进行。
+lobby_gateway-format-beginner-ul = 核心网关 - 初学者教学牌组
+lobby_gateway-format-constructed = 构筑
+lobby_gateway-format-intermediate = 进阶
+lobby_gateway-format-intermediate-info = 此大厅为公司和潜袭者使用核心网关进阶牌组而准备。这些牌组比初学者牌组稍大。游戏按7点议案分数进行。
+lobby_gateway-format-intermediate-ul = 核心网关 - 进阶教学牌组
 
 lobby_hidden = 允许旁观者查看玩家的隐藏信息
 

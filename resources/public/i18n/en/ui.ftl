@@ -989,16 +989,13 @@ lobby_game-count-filtered = {$cnt ->
     *[other] {$cnt} Games (filtered)
 }
 
-lobby_gateway-format = {$format ->
-    [Beginner] Beginner
-    [beginner-info] This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points.
-    [beginner-ul] System Gateway - Beginner Teaching Decks
-    [Constructed] Constructed
-    [Intermediate] Intermediate
-    [intermediate-info] This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points.
-    [intermediate-ul] System Gateway - Intermediate Teaching Decks
-    *[unknown] Unknown Gateway Format ({$format})
-}
+lobby_gateway-format-beginner = Beginner
+lobby_gateway-format-beginner-info = This lobby is using the System Gateway beginner decks for the Corporation and Runner. These decks are recommended for your first games. Games are played to 6 agenda points.
+lobby_gateway-format-beginner-ul = System Gateway - Beginner Teaching Decks
+lobby_gateway-format-constructed = Constructed
+lobby_gateway-format-intermediate = Intermediate
+lobby_gateway-format-intermediate-info = This lobby is using the System Gateway intermediate decks for the Corporation and Runner. These decks have slightly more range than the beginner decks. Games are played to 7 agenda points.
+lobby_gateway-format-intermediate-ul = System Gateway - Intermediate Teaching Decks
 
 lobby_hidden = Make players' hidden information visible to spectators
 
