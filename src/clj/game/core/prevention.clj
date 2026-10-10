@@ -409,7 +409,7 @@
                      :type type :unpreventable unpreventable :unboostable unboostable :uses {}})
   (wait-for (trigger-event-simult state side :pre-damage-flag nil {:card card :type type :count n})
             (wait-for (resolve-prevent-effects-with-priority state (:active-player @state) :pre-damage resolve-pre-damage-for-side)
-                      (swap! state assoc-in [:prevent :damage] async-result)
+                      (push-prevention! state :damage async-result)
                       (swap! state assoc-in [:prevent :damage :priority-passes] 0)
                       (resolve-prevent-effects-with-priority state (:active-player @state) eid :damage resolve-damage-for-side))))
 
