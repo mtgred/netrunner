@@ -232,7 +232,7 @@
     (let [code (set-password-reset-code! db email)
           msg (mail/send-message
                 email-settings
-                {:from    (get email-settings :from "support@jinteki.net")
+                {:from    (:from email-settings)
                  :to      email
                  :subject (get email-settings :reset-subject "Jinteki Password Reset")
                  :body    (str "You are receiving this because you (or someone else) have requested the reset of the password for your account " (user :username) ".\n\n"
@@ -261,7 +261,7 @@
                             :resetPasswordToken   nil}})
         (mail/send-message
           email-settings
-          {:from    (get email-settings :from "support@jinteki.net")
+          {:from    (:from email-settings)
            :to      email
            :subject (get email-settings :confirm-reset-subject "Your password has been changed")
            :body    (str "Hello,\n\n"
