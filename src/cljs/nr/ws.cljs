@@ -36,9 +36,8 @@
     (def ch-state state)
     (add-watch ch-state :watch-connection (fn [_ _ _ state]
                                             (swap! app-state assoc :connected (:open? state))))
-    (defn ws-send!
-      ([ev] (send-fn ev))
-      ([ev ?timeout ?cb] (send-fn ev ?timeout ?cb)))))
+    (defn ws-send! [ev] (send-fn ev))
+    (defn ws-send-cb! [ev ?timeout ?cb] (send-fn ev ?timeout ?cb))))
 
 (defn chsk-reconnect!
   []

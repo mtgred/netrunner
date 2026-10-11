@@ -7,6 +7,7 @@
    #?(:cljs [cljs.core.async :refer [take!] :refer-macros [go]])
    #?(:cljs [nr.ajax :refer [GET]])
    [clojure.string :as str]
+   [integrant.core :as ig]
    [game.core.card :refer [get-title]]
    [game.core.schemas :as schemas :refer [EffectMsg MsgMap]]
    [game.core.to-string :refer [card-str-edn]]
@@ -67,6 +68,14 @@
                   (fn [response]
                     (when (= 200 (:status response))
                       (insert-lang! "en" (:json response)))))))))
+
+#?(:clj
+    (defmethod ig/init-key :web/i18n [_ _opts]
+      (load-dictionary! "public/i18n")))
+
+#?(:clj
+    (defmethod ig/halt-key! :web/i18n [_ _opts]
+      (reset! fluent-dictionary nil)))
 
 (defn get-content
   [lang]

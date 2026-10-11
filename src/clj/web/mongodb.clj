@@ -5,16 +5,18 @@
    [cljc.java-time.zone-id :as zid]
    [cljc.java-time.zone-offset :as zoff]
    [cljc.java-time.zoned-date-time :as zdt]
+   [integrant.core :as ig]
    [monger.collection]
    [monger.conversion :refer [ConvertFromDBObject ConvertToDBObject
-                              from-db-object to-db-object]]
+                              to-db-object]]
+   [monger.core :as mg]
    [monger.cursor])
   (:import
    (java.time
-     Instant
-     LocalDate
-     LocalDateTime
-     ZonedDateTime)
+    Instant
+    LocalDate
+    LocalDateTime
+    ZonedDateTime)
    java.util.Date
    org.bson.types.ObjectId))
 
@@ -82,3 +84,11 @@
   (-> (monger.collection/find db coll query)
       (.setCollation (create-collation "en" 2))
       (monger.cursor/format-as :map)))
+
+(defmethod ig/init-key :mongodb/connection [_ opts]
+  (let [{:keys [address port name connection-string]} opts
+        connection (or connection-string (str "mongodb://" address ":" port "/" name))]
+    (mg/connect-via-uri connection)))
+
+(defmethod ig/halt-key! :mongodb/connection [_ {:keys [conn]}]
+  (mg/disconnect conn))

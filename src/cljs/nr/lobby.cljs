@@ -91,10 +91,10 @@
     (do
       (swap! app-state assoc :gameid nil)
       (leave-game!))
-    (ws/ws-send! [:game/leave {:gameid (current-gameid app-state)}]
-                 8000
-                 #(when (sente/cb-success? %)
-                    (leave-game!)))))
+    (ws/ws-send-cb! [:game/leave {:gameid (current-gameid app-state)}]
+      8000
+      #(when (sente/cb-success? %)
+         (leave-game!)))))
 
 (defn- hidden-formats
   "Remove games which the user has opted to hide"

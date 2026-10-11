@@ -11,6 +11,8 @@
                                            prompt-fmt])]}
   :unused-namespace {:exclude ["game.core.*"]}
   :refer-all {:level :off}
+  :unused-referred-var {:level :off}
+  :unresolved-var {:exclude [taoensso.carmine]}
   }
  :lint-as {game.test-framework/before-each clojure.core/let
            reagent.core/with-let clojure.core/let
@@ -24,6 +26,8 @@
            game.core/expose-vars potemkin/import-vars
            monger.operators/defoperator clojure.core/def
            monger.query/with-collection clojure.core/->
+           taoensso.msgpack.common/extend-packable clj-kondo.lint-as/def-catch-all
+           org.httpkit.client/defreq clj-kondo.lint-as/def-catch-all
            }
  :hooks {:analyze-call {jinteki.i18n/simple-msg hooks.netrunner/effect
                         jinteki.i18n/msg-with-cost hooks.netrunner/effect}}
