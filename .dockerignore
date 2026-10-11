@@ -7,6 +7,9 @@ andb-*.json
 
 node_modules/
 
+resources/prod.edn
+resources/prod.example.edn
+
 resources/public/css/
 !resources/public/css/carousel.css
 
