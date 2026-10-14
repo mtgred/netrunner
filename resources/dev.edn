@@ -1,3 +1,5 @@
+;; prod.edn is deep merged on top of these config items.
+;; When deploying, copy prod.example.edn to prod.edn and set the #env vars.
 {:server/mode "dev"
  :mongodb/connection {:address "localhost"
                       :port 27017
