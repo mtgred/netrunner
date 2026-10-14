@@ -229,7 +229,7 @@
     {:keys [email]} :params
     headers         :headers}]
   (if-let [user (find-non-banned-user db {:email email})]
-    (let [code (set-password-reset-code! db email)
+    (let [code (set-password-reset-code! db (:email user))
           msg (mail/send-message
                 email-settings
                 {:from    (get email-settings :from "support@jinteki.net")
