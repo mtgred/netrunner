@@ -4779,6 +4779,8 @@
         (play-from-hand state :corp "SEA Source")
         (click-prompt state :corp "0") ; default trace
         (click-prompt state :runner "0") ; Runner won't match
+        (is (= "Waiting for your opponent to prevent tags."
+               (get-msg-text (:msg (prompt-map :corp)))))
         (click-prompt state :runner "New Angeles City Hall")
         (click-prompt state :runner "Yes")
         (is (zero? (count-tags state)) "Avoided SEA Source tag")
