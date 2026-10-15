@@ -19,7 +19,7 @@
        (and title card) card
        (or (= title "Corp Basic Action Card") (= title "Runner Basic Action Card")) {}
        :else (when strict?
-               (throw (ex-info (str "Tried to select server-card for " title) {})))))))
+               (throw (ex-info (str "Tried to select server-card for " title) {:title title})))))))
 
 (defn server-cards
   []
@@ -52,10 +52,15 @@
 (defn string->num [s]
   #?(:clj (try
             (let [num (bigdec s)]
-              (if (and (> num Integer/MIN_VALUE) (< num Integer/MAX_VALUE)) (int num) num))
+              (if (and (> num Integer/MIN_VALUE)
+                       (< num Integer/MAX_VALUE))
+                (int num)
+                num))
             (catch Exception _ nil))
-     :cljs (cond (number? s) s
-                 (string? s) (parse-long s))))
+     :cljs (try (cond
+                  (number? s) s
+                  (string? s) (parse-long s))
+                (catch js/Error _ nil))))
 
 (def safe-split (fnil str/split ""))
 
