@@ -62,12 +62,11 @@
            {:eid (select-keys eid [:eid])
             :card card
             :prompt-type :waiting
-            :msg (let [msg (if (keyword? waiting-prompt)
-                             waiting-prompt
-                             (if (= :corp side)
-                               {:msg/type :waiting-corp-default}
-                               {:msg/type :waiting-runner-default}))]
-                   (->msg-map msg))}))
+            :msg (->msg-map (if (true? waiting-prompt)
+                              (if (= :corp side)
+                                :waiting-corp-default
+                                :waiting-runner-default)
+                              waiting-prompt))}))
        (add-to-prompt-queue state side newitem)))))
 
 (defn show-prompt-with-dice

@@ -839,8 +839,8 @@ extra-turns-remaining = {$username} will have {$turns ->
 
 ## Waiting Prompts
 
-waiting-corp-default = Waiting for {-corp} to make a decision.
-waiting-runner-default = Waiting for {-runner} to make a decision.
+waiting-corp-default = Waiting for {-corp(case: "nominative")} to make a decision.
+waiting-runner-default = Waiting for {-runner(case: "nominative")} to make a decision.
 waiting-trash-prevention-triggers = Waiting for your opponent to resolve trash prevention triggers.
 waiting-pre-damage-triggers = Waiting for your opponent to resolve pre-damage triggers.
 waiting-damage-triggers = Waiting for your opponent to resolve damage triggers.
