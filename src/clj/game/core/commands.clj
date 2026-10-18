@@ -38,6 +38,7 @@
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer [dissoc-in enumerate-str quantify safe-split
                        same-card? same-side? server-card string->num]]
+   [jinteki.i18n :refer [->msg-map]]
    [jinteki.utils :refer [other-side str->int]]))
 
 (defmulti lobby-command :command)
@@ -298,7 +299,7 @@
   (when (= side :corp)
     (resolve-ability
       state side
-      {:prompt "Choose a piece of ice to install"
+      {:prompt (->msg-map :prompt_choose-a-piece-of-ice-to-install)
        :waiting-prompt true
        :choices {:card #(and (ice? %)
                              (#{[:hand]} (:zone %)))}
@@ -306,7 +307,7 @@
        :effect (effect
                  (continue-ability
                    state side (let [chosen-ice target]
-                     {:prompt "Choose a server"
+                     {:prompt (->msg-map :prompt_choose-a-server)
                       :choices (effect servers)
                       :async true
                       :effect (effect
@@ -337,7 +338,7 @@
               (take n)
               (map :title)
               (enumerate-str)))
-    ["Done"]
+    [(->msg-map :choice_done)]
     identity))
 
 (defn command-score
@@ -425,7 +426,7 @@
   (when (= :corp side)
     (resolve-ability
      state side
-     {:prompt "Choose a card to derez"
+     {:prompt (->msg-map :prompt_choose-a-card-to-derez)
       :waiting-prompt true
       :choices {:card #(rezzed? %)}
       :async true
@@ -437,7 +438,7 @@
   (let [f (if (= :corp side) corp? runner?)]
     (resolve-ability
       state side
-      {:prompt "Choose a card to trash"
+      {:prompt (->msg-map :prompt_choose-a-card-to-trash)
        :waiting-prompt true
        :choices {:card #(f %)}
        :async true
@@ -498,7 +499,7 @@
                                              :choices {:card (fn [t] (same-side? (:side t) %2))}}
                                             (make-card {:title "/card-info command"}) nil)
             "/charge"     #(resolve-ability %1 %2
-                                            {:prompt "Choose an installed card"
+                                            {:prompt (->msg-map :prompt_choose-an-installed-card)
                                              :waiting-prompt true
                                              :async true
                                              :effect (effect (charge-card %1 %2 eid target))
@@ -597,7 +598,7 @@
                                                                (enable-card state side (get-card state target)))}
                                               (make-card {:title "/rez command"}) nil))
             "/rfg"        #(resolve-ability %1 %2
-                                            {:prompt "Choose a card"
+                                            {:prompt (->msg-map :prompt_choose-a-card)
                                              :waiting-prompt true
                                              :effect (effect (let [c (deactivate %1 %2 target)]
                                                             (move %1 %2 c :rfg)))

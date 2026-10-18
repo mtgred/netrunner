@@ -314,7 +314,7 @@
     (map? input)
     (if-let [raw (:raw-text input)]
       [:<> raw]
-      (render-fragment [:<> (build-msg input)] patterns))
+      (render-fragment [:<> (or (build-msg input) (some-> (:msg/type input) name))] patterns))
     (not (or (string? input) (vector? input)))
     [:<>]
     :else

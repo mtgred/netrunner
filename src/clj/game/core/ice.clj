@@ -12,6 +12,7 @@
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect msg req wait-for]]
     [game.utils :refer [same-card? pluralize quantify remove-once]]
+    [jinteki.i18n :refer [->msg-map msg-type?]]
     [jinteki.utils :refer [make-label]]
     [clojure.string :as string]
     [clojure.set :as set]
@@ -519,8 +520,8 @@
                           (when-not (and (:all args)
                                          (pos? (count (breakable-subroutines-choice state side eid card ice)))
                                          (< 1 target-count))
-                            '("Done"))))
-    :effect (effect (if (= "Done" target)
+                            [(->msg-map :choice_done)])))
+    :effect (effect (if (msg-type? target :choice_done)
                    (complete-with-result state side eid {:broken-subs broken-subs
                                                          :early-exit true})
                    (let [subroutines (filter #(and (not (:broken %))

@@ -27,7 +27,7 @@
    [game.macros :refer [continue-ability effect wait-for]]
    [game.utils :refer [dissoc-in distinct-by enumerate-str in-coll?
                        remove-once same-card? server-cards side-str to-keyword]]
-   [jinteki.i18n :refer [->effect-msg simple-msg]]
+   [jinteki.i18n :refer [->effect-msg ->msg-map msg-type? simple-msg]]
    [jinteki.utils :refer [other-side]]
    [taoensso.timbre :as timbre]))
 
@@ -86,13 +86,18 @@
 ;   This part of the engine is really dumb and complicated, so ask someone on slack about it.
 
 ; PROMPT KEYS
-; :prompt -- string or 5-fn
-;   Must return a string to display in the prompt menu.
+; :prompt -- string, msg map or 5-fn
+;   Must return a string or a msg map like (->msg-map :prompt_choose-one) or
+;   {:msg/type :prompt_draw-cards, :msg/count 2} to display in the prompt menu.
+;   Msg maps are registered in game.core.schemas and translated in
+;   resources/public/i18n/<lang>/messages.ftl.
 ; :choices -- 5-fn or :credit or :counter or map
 ;   This key signals a prompt of some kind. (It should be split into multiple keys, but that's a lot of work lol)
 ;   * 5-fn
-;       Must return a vector of card objects or strings.
-;       User chooses one. This is called a 'choice' prompt.
+;       Must return a vector of card objects, strings or msg maps
+;       (e.g. [(->msg-map :choice_end-the-run) {:msg/type :choice_take-tags, :msg/count 1}]).
+;       User chooses one. This is called a 'choice' prompt. `target` is the chosen value as given,
+;       compare msg maps with (msg-type? target :choice_end-the-run).
 ;   * :credit
 ;       User chooses an integer up to their current credit amount.
 ;   * :counter
@@ -131,7 +136,7 @@
 ;   By default, duplicate entries of the same string will be combined into a single button.
 ;   If set to true, duplicate entries of the same string will be shown as multiple buttons.
 ; :cancel -- ability-map
-;   If a prompt with the choice "Cancel" is clicked, the prompt exits without doing anything else
+;   If a prompt with the choice (->msg-map :choice_cancel) is clicked, the prompt exits without doing anything else
 ;   and this ability map will get resolved
 
 ; SIMULTANEOUS EFFECT RESOLUTION KEYS
@@ -826,7 +831,7 @@
                                     (assoc card :title abi-name)
                                     card))
                                 non-silent)
-                    titles (concat titles ["Done"])
+                    titles (concat titles [(->msg-map :choice_done)])
                     interactive (filter #(let [interactive-fn (:interactive (:ability %))
                                                card (card-for-ability state %)]
                                            (and interactive-fn
@@ -866,7 +871,7 @@
                    :choices titles
                    :async true
                    :effect (effect
-                             (if (= target "Done")
+                             (if (msg-type? target :choice_done)
                                (do
                                  (doseq [{:keys [handler]} (filter handler-skippable? handlers)]
                                    (when (:unregister-once-resolved handler)
@@ -1028,7 +1033,7 @@
           choices-map (map #(vector (or (:ability-name (:ability (:handler %)))
                                         (card-for-ability state (:handler %)))
                                     %) cards-with-titles)
-          choices-titles (concat (map first choices-map) ["Done"])
+          choices-titles (concat (map first choices-map) [(->msg-map :choice_done)])
           interactive (filter #(let [interactive-fn (:interactive (:ability (:handler %)))]
                                  (and interactive-fn
                                       (interactive-fn state side
@@ -1066,7 +1071,7 @@
             {:async true
              :prompt "Choose a trigger to resolve"
              :choices choices-titles
-             :effect (effect (if (= target "Done")
+             :effect (effect (if (msg-type? target :choice_done)
                             (do (doseq [{:keys [handler]} (filter handler-skippable? handlers)]
                                   (when (:unregister-once-resolved handler)
                                     (unregister-event-by-uuid state side (:uuid handler)))
@@ -1199,7 +1204,7 @@
     (wait-for (resolve-ability
                 state side (make-eid state eid)
                 {:prompt (str "The " (enumerate-str (map #(card-str state %) cards)) " will now be trashed.")
-                 :choices ["OK"]}
+                 :choices [(->msg-map :choice_ok)]}
                 nil nil)
               (notify-unique-trashes state nil eid (rest cards-by-side)))
     (effect-completed state nil eid)))

@@ -3103,7 +3103,7 @@
                           :hand ["Sure Gamble"]}})
       (card-ability state :runner (:identity (get-runner)) 0)
       (is (= [(find-card "Gordian Blade" (:deck (get-runner))) "Cancel"]
-             (map :value (:choices (prompt-map :runner))))
+             (prompt-buttons :runner))
           "Cache shouldn't be in the prompt")
       (click-prompt state :runner "Gordian Blade")
       (is (some? (get-program state 0)) "Gordian Blade should be installed")
@@ -5632,7 +5632,7 @@
     (is (no-prompt? state :corp))
     (play-from-hand state :corp "Predictive Planogram")
     (click-prompt state :corp "Gain 3 [Credits]")
-    (is (= "Draw 1 card?" (:msg (get-prompt state :corp))))
+    (is (= "Draw 1 card?" (:msg (prompt-map :corp))))
     (is (changed? [(count (:hand (get-corp))) 1]
           (click-prompt state :corp "Yes")))
     (play-from-hand state :corp "Predictive Planogram")
@@ -5647,7 +5647,7 @@
     (play-and-score state "Orbital Superiority")
     (is (no-prompt? state :corp))
     (play-and-score state "Offworld Office")
-    (is (= "Draw 1 card?" (:msg (get-prompt state :corp))))
+    (is (= "Draw 1 card?" (:msg (prompt-map :corp))))
     (is (changed? [(count (:hand (get-corp))) 1]
                   (click-prompt state :corp "Yes")))
     (play-and-score state "Offworld Office")
@@ -5668,7 +5668,7 @@
     (take-credits state :corp)
     (take-credits state :runner)
     (click-card state :corp "Hedge Fund")
-    (is (= "Draw 1 card?" (:msg (get-prompt state :corp))))))
+    (is (= "Draw 1 card?" (:msg (prompt-map :corp))))))
 
 (deftest titan-transnational-investing-in-your-future-add-a-counter-to-a-scored-agenda
     ;; Add a counter to a scored agenda
@@ -5776,6 +5776,7 @@
       (is (= 3 (count (:subroutines (refresh tithe)))) "Tithe has 3 subroutines")
       (card-subroutine state :corp tithe 2)
       (click-prompt state :runner "End the run")
+      (is (last-log-contains? state "Corp uses Tithe to end the run"))
       (run-on state :rd)
       (rez state :corp sw)
       (run-continue state)
@@ -5784,6 +5785,7 @@
       (card-subroutine state :corp sw 2)
       (click-prompt state :runner "Trash 1 installed card")
       (click-card state :runner "Smartware Distributor")
+      (is (last-log-contains? state "Runner trashes 1 installed card (Smartware Distributor) to satisfy Swordsman"))
       (is (:run @state) "Run continues"))))
 
 (deftest thunderbolt-vs-trick-shot

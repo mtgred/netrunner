@@ -389,3 +389,8 @@
            m)
          (merge args)
          (schemas/assert MsgMap)))))
+
+(defn msg-type?
+  [m msg-type]
+  (and (map? m) (= msg-type (:msg/type m))))
+

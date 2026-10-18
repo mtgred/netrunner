@@ -124,7 +124,8 @@
      (draw state side eid n args)
      (continue-ability
        state side
-       {:optional {:prompt (str "Draw " (quantify n "card") "?")
+       {:optional {:prompt {:msg/type :prompt_draw-cards
+                            :msg/count n}
                    :waiting-prompt true
                    :yes-ability {:async true
                                  :msg (msg "draw " (quantify n " card"))

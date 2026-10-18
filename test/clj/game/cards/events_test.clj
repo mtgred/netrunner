@@ -3299,7 +3299,7 @@
       (play-from-hand state :runner "Forged Activation Orders")
       (click-card state :runner "Chiyashi")
       (is (= ["Trash ice protecting HQ at position 0"]
-           (mapv :value (:choices (prompt-map :corp)))))))
+           (prompt-buttons :corp)))))
 
 (deftest forked
   ;; Forked
@@ -5607,7 +5607,7 @@
     (run-continue state)
     (run-continue state)
     (click-card state :runner "Project Beale")
-    (is (= ["No action"] (mapv :value (:choices (prompt-map :runner)))))))
+    (is (= ["No action"] (prompt-buttons :runner)))))
 
 (deftest planned-assault
   ;; Planned Assault

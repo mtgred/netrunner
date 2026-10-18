@@ -4,6 +4,7 @@
    [game.core.engine :refer [resolve-ability]]
    [game.core.payment :refer [build-cost-string can-pay?]]
    [game.core.eid :refer [effect-completed make-eid]]
+   [jinteki.i18n :refer [->msg-map msg-type?]]
    [clojure.string :as str]))
 
 (defn choose-one-helper
@@ -24,7 +25,7 @@
      ;; xs of the form {:option ... :req (req ...) :cost ... :ability ..}
      (let [next-optional (= optional :after-first)
            apply-optional (and optional (not next-optional))
-           xs (if-not apply-optional xs (conj xs {:option "Done"}))
+           xs (if-not apply-optional xs (conj xs {:option (->msg-map :choice_done)}))
            base-map (select-keys args [:action :player :once :unregister-once-resolved :event
                                        :label :change-in-game-state :location :additional-cost :duration])
            ;; is a choice payable
@@ -51,7 +52,7 @@
            ;; this lets us selectively skip the prompt if 'done' is the only choice
            meaningful-req? (when require-meaningful-choice
                              (effect (let [cs (keep #(choices-fn % state side eid card targets) xs)]
-                                    (and (not= cs ["Done"])
+                                    (and (not= cs [(->msg-map :choice_done)])
                                          (or (nil? (:req args))
                                              ((:req args) state side eid card targets))))))]
        ;; function for resolving choices: pick the matching choice, pay, resolve it, and continue
@@ -69,7 +70,7 @@
                            state ab-side (make-eid state eid)
                            ab
                            card nil) ;; below is maybe superflous
-                         (if (and count (> count 1) (not= target "Done"))
+                         (if (and count (> count 1) (not (msg-type? target :choice_done)))
                            ;; the 'Done' is already there, so can dissoc optional
                            (let [args (assoc args :count (dec count) :optional next-optional)
                                  xs (if no-prune full
@@ -81,9 +82,12 @@
            base-map
            {:choices (effect (into [] (map #(choices-fn % state side eid card targets) xs)))
             :waiting-prompt (or (:waiting-prompt args) (not no-wait-msg))
-            :prompt (str (or (:prompt args) "Choose one")
-                         ;; if we are resolving multiple
-                         (when (and count (pos? count)) (str " (" count " remaining)")))
+            :prompt (or (:prompt args)
+                        (if (and count (pos? count))
+                          ;; if we are resolving multiple
+                          {:msg/type :prompt_choose-one-remaining
+                           :msg/count count}
+                          (->msg-map :prompt_choose-one)))
             :req (or meaningful-req? (:req args))
             ;; resolve-choices demands async
             :async true

@@ -2540,6 +2540,25 @@
       (card-subroutine state :corp (refresh f2p) 0)
       (is (no-prompt? state :corp) "F2P doesn't fire if no installed cards"))))
 
+(deftest fairchild
+  (do-game
+    (new-game {:corp {:hand ["Fairchild"] :credits 20}})
+    (play-from-hand state :corp "Fairchild" "HQ")
+    (take-credits state :corp)
+    (let [fairchild (get-ice state :hq 0)]
+      (run-on state :hq)
+      (rez state :corp fairchild)
+      (run-continue state)
+      (card-subroutine state :corp fairchild 0)
+      (is (= ["End the run" "Pay 4 [Credits]"] (prompt-buttons :runner)))
+      (is (changed? [(:credit (get-runner)) -4]
+            (click-prompt state :runner "Pay 4 [Credits]")))
+      (is (last-log-contains? state "Runner pays 4 [Credit] to satisfy Fairchild"))
+      (card-subroutine state :corp fairchild 1)
+      (click-prompt state :runner "End the run")
+      (is (last-log-contains? state "Corp uses Fairchild to end the run"))
+      (is (not (:run @state)) "Run ended"))))
+
 (deftest fairchild-1-0
   ;; Fairchild 1.0
   (do-game
@@ -8626,7 +8645,12 @@
       (card-subroutine state :corp tsurugi 0)
       (is (not (no-prompt? state :corp)) "Corp is prompted to pay")
       (is (waiting? state :runner)
-          "Runner has prompt to wait for Corp to use Tsurugi"))))
+          "Runner has prompt to wait for Corp to use Tsurugi")
+      (is (= ["End the run" "Pay 1 [Credits]"] (prompt-buttons :corp)))
+      (is (changed? [(:credit (get-corp)) -1]
+            (click-prompt state :corp "Pay 1 [Credits]")))
+      (is (last-log-contains? state "Corp pays 1 [Credit] to satisfy Tsurugi"))
+      (is (:run @state) "Run continues"))))
 
 (deftest turing-strength-boosted-when-protecting-a-remote-server
   ;; Strength boosted when protecting a remote server

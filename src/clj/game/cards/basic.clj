@@ -24,6 +24,7 @@
    [game.core.to-string :refer [card-str]]
    [game.macros :refer [effect msg req wait-for]]
    [game.utils :refer :all]
+   [jinteki.i18n :refer [->msg-map msg-type?]]
    [jinteki.utils :refer :all]))
 ;; Card definitions
 
@@ -102,7 +103,7 @@
                 :cost [(->c :click 1) (->c :credit 2)]
                 :async true
                 :req (req tagged)
-                :prompt "Choose a resource to trash"
+                :prompt (->msg-map :prompt_choose-a-resource-to-trash)
                 :msg (msg "trash " (:title target))
                 ;; I hate that we need to modify the basic action card like this, but I don't think there's any way around it -nbkelly, '24
                 :choices {:req (req (if (and (untrashable-while-resources? target)
@@ -127,9 +128,9 @@
                                           state side
                                           (let [target-card target]
                                             {:prompt (str "Pay the additional cost to trash " (:title target-card) "?")
-                                             :choices [(when can-pay cost-strs) "No"]
+                                             :choices [(when can-pay cost-strs) (->msg-map :choice_no)]
                                              :async true
-                                             :effect (effect (if (= target "No")
+                                             :effect (effect (if (msg-type? target :choice_no)
                                                             (do (system-msg state side (str "declines to pay the additional cost to trash " (:title target-card)))
                                                                 (effect-completed state side eid))
                                                             (wait-for (pay state side (make-eid state

@@ -175,6 +175,14 @@
                (string? card)))
       (is' (true? (or (map? card) (string? card))) (expect-type "card string or map" card)))))
 
+(defn get-msg-text
+  [m]
+  (if (string? m) m (or (:raw-text m) (build-msg m))))
+
+(defn render-choice
+  [v]
+  (if (:msg/type v) (get-msg-text v) v))
+
 (defn click-prompt-impl
   [state side choice & args]
   (let [prompt (get-prompt state side)
@@ -217,11 +225,12 @@
       :else
       (let [choice-fn #(or (= choice (:value %))
                            (= choice (get-in % [:value :title]))
-                           (utils/same-card? choice (:value %)))
+                           (utils/same-card? choice (:value %))
+                           (= choice (render-choice (:value %))))
             idx (or (:idx (first args)) 0)
             chosen (nth (filter choice-fn choices) idx nil)]
         (when-not (and chosen (do-action "choice" state side {:choice {:uuid (:uuid chosen)} :eid (:eid (get-prompt state side))}))
-          (is' (= choice (mapv :value choices))
+          (is' (= choice (mapv (comp render-choice :value) choices))
                (str (utils/side-str side) " expected to click [ "
                     (pr-str (if (string? choice) choice (:title choice "")))
                     " ] but couldn't find it. Current prompt is: " (pr-str prompt))))))))
@@ -1104,10 +1113,6 @@
   [state base]
   (handle-message-and-send-diffs! {:state state} :corp {} (str "/trace " base)))
 
-(defn get-msg-text
-  [m]
-  (if (string? m) m (or (:raw-text m) (build-msg m))))
-
 (defn escape-log-string [s]
   (if (string? s) (Pattern/quote s) s))
 
@@ -1156,9 +1161,10 @@
                      (let [~'ret (get-card ~'state card#)]
                        ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
                        ~'ret))
-         ~'prompt-map (fn [side#] (-> @~'state side# :prompt first))
+         ~'prompt-map (fn [side#] (let [p# (-> @~'state side# :prompt first)]
+                                    (cond-> p# (:msg p#) (update :msg get-msg-text))))
          ~'prompt-type (fn [side#] (:prompt-type (~'prompt-map side#)))
-         ~'prompt-buttons (fn [side#] (->> (~'prompt-map side#) :choices (map :value)))
+         ~'prompt-buttons (fn [side#] (->> (~'prompt-map side#) :choices (map (comp render-choice :value))))
          ~'prompt-titles (fn [side#] (map #(or (:title %) %) (~'prompt-buttons side#)))
          ~'prompt-fmt (fn [side#]
                         (let [prompt# (~'prompt-map side#)
@@ -1173,7 +1179,7 @@
                                (when prompt-type# (str "Type: " prompt-type# "\n"))
                                (when card# (str "Card: " (:title card#) "\n"))
                                (str/join "\n" (map #(str "[ " (or (get-in % [:value :title])
-                                                                  (:value %)
+                                                                  (render-choice (:value %))
                                                                   %
                                                                   "nil") " ]") choices#))
                                "\n")))

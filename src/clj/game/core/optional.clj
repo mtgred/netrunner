@@ -8,7 +8,8 @@
     [game.core.toasts :refer [toast]]
     [game.core.update :refer [update!]]
     [game.macros :refer [effect wait-for]]
-    [clojure.string :as string]))
+    [clojure.string :as string]
+    [jinteki.i18n :refer [->msg-map msg-type?]]))
 
 (defn optional-ability
   "Shows a 'Yes/No' prompt and resolves the given ability's :yes-ability if Yes is chosen, and :no-ability otherwise.
@@ -20,7 +21,7 @@
                    no-ability (:no-ability ability)
                    end-effect (:end-effect ability)
                    new-eid (make-eid state eid)
-                   ability-to-do (if (and (= (:value prompt-choice) "Yes")
+                   ability-to-do (if (and (msg-type? (:value prompt-choice) :choice_yes)
                                           yes-ability
                                           (can-pay? state side eid card (:title card) (:cost yes-ability)))
                                    (assoc yes-ability :once (:once ability))
@@ -36,11 +37,11 @@
                                (if-let [yesreq (-> ability :yes-ability :req)]
                                  (yesreq state side eid card targets)
                                  true))
-                      "Yes")
-                    "No"]]
+                      (->msg-map :choice_yes))
+                    (->msg-map :choice_no)]]
        (case autoresolve-answer
-         "Yes" (prompt-fn {:value "Yes"})
-         "No" (prompt-fn {:value "No"})
+         "Yes" (prompt-fn {:value (->msg-map :choice_yes)})
+         "No" (prompt-fn {:value (->msg-map :choice_no)})
          (do (when autoresolve-fn
                (toast state side (str "This prompt can be skipped by clicking "
                                       (:title card) " and toggling autoresolve")))

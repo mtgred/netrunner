@@ -21,6 +21,7 @@
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
     [game.utils :refer [quantify same-card?]]
+    [jinteki.i18n :refer [->msg-map msg-type?]]
     [jinteki.utils :refer [add-cost-to-label]]
     [medley.core :refer [find-first]]))
 
@@ -90,7 +91,8 @@
             can-pay (when trash-cost
                       (can-pay? state :runner trash-eid card nil [(->c :credit trash-cost)]))
             trash-cost-str (when can-pay
-                             [(str "Pay " trash-cost " [Credits] to trash")])
+                             [{:msg/type :choice_pay-to-trash
+                               :msg/count trash-cost}])
             ; Is the runner is forced to trash this card with only credits? (NAT)
             must-trash-with-credits? (and can-pay
                                           (get-in @state [:runner :register :must-trash-with-credits]))
@@ -125,7 +127,7 @@
             ; if it is the only thing we can do
             forced-to-trash? (or must-trash? must-trash-with-credits?)
             no-action-str (when (or (not can-trash) (not forced-to-trash?))
-                            ["No action"])
+                            [(->msg-map :choice_no-action)])
             choices (vec (concat ability-strs (when can-trash trash-cost-str) no-action-str))]
         (continue-ability
           state :runner
@@ -236,10 +238,10 @@
         ;; strs
         steal-str (when (and can-steal can-pay)
                     (if (not (string/blank? cost-strs))
-                      ["Pay to steal"]
-                      ["Steal"]))
-        no-action-str (when-not (= steal-str ["Steal"])
-                        ["No action"])
+                      [(->msg-map :choice_pay-to-steal)]
+                      [(->msg-map :choice_steal)]))
+        no-action-str (when-not (= steal-str [(->msg-map :choice_steal)])
+                        [(->msg-map :choice_no-action)])
         prompt-str (if (not (string/blank? cost-strs))
                      (str " " cost-strs " to steal?")
                      "")
@@ -253,17 +255,17 @@
        :choices choices
        :effect (effect (cond
                       ;; Can't steal or pay, or won't pay additional costs to steal
-                      (= target "No action")
+                      (msg-type? target :choice_no-action)
                       (do (when-not (find-cid (:cid card) (:deck corp))
                             (system-msg state side (str "declines to pay to steal " (:title card))))
                           (access-end state side eid card))
 
                       ;; Steal normally
-                      (= target "Steal")
+                      (msg-type? target :choice_steal)
                       (steal-agenda state side eid card)
 
-                      ;; Pay additiional costs to steal
-                      (= target "Pay to steal")
+                      ;; Pay additional costs to steal
+                      (msg-type? target :choice_pay-to-steal)
                       (wait-for (pay state side
                                      (make-eid state
                                                (assoc eid :additional-costs cost
@@ -346,7 +348,9 @@
   ([cost ability]
    (let [ab (if (pos? cost) (assoc ability :cost [(->c :credit cost)]) ability)
          prompt (if (pos? cost)
-                  (effect (str "Pay " cost " [Credits] to use " (:title card) " ability?"))
+                  (effect {:msg/type :prompt_pay-credits-to-use-ability
+                           :msg/credits cost
+                           :msg/title (get-title card)})
                   (effect (str "Use " (:title card) " ability?")))]
      (installed-access-trigger cost ab prompt)))
   ([cost ability prompt]
@@ -416,8 +420,8 @@
                      (str cost-str " to access this card?")
                      "You can't pay the cost to access this card.")
         choices (if can-pay
-                  ["Pay to access" "No action"]
-                  ["OK"])]
+                  [(->msg-map :choice_pay-to-access) (->msg-map :choice_no-action)]
+                  [(->msg-map :choice_ok)])]
     (cond
       ;; Did a pre-access-card effect trash the card? (By Any Means)
       (not (get-card state card))
@@ -430,7 +434,7 @@
           {:async true
            :prompt prompt-str
            :choices choices
-           :effect (effect (if (#{"OK" "No action"} target)
+           :effect (effect (if (or (msg-type? target :choice_ok) (msg-type? target :choice_no-action))
                           (refused-access-cost state side eid)
                           (wait-for (pay state side accessed-card cost)
                                     (if-let [payment-str (:msg async-result)]
@@ -635,7 +639,7 @@
         deck (access-cards-from-rd state)
         card-to-access (first (drop-while already-accessed-fn deck))
 
-        card-from "Card from deck"
+        card-from (->msg-map :choice_card-from-deck)
         card-from-button (when (and (pos? random-access-limit)
                                     (not (any-effects state :runner :disable-random-accesses true?))
                                     card-to-access)
@@ -645,7 +649,7 @@
                           (->> root
                                (filter rezzed?)
                                (map :title)))
-        unrezzed-card "Unrezzed upgrade"
+        unrezzed-card (->msg-map :choice_unrezzed-upgrade)
         unrezzed-cards-button (when (and (not no-root)
                                          (seq (filter (complement rezzed?) root)))
                                 [unrezzed-card])
@@ -731,7 +735,7 @@
 
         :else
         {:async true
-         :prompt "Choose a card to access"
+         :prompt (->msg-map :prompt_choose-a-card-to-access)
          :choices choices
          :effect (effect (cond
 
@@ -822,7 +826,7 @@
 
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
-        card-from "Card from hand"
+        card-from (->msg-map :choice_card-from-hand)
         card-from-button (when (and (pos? random-access-limit)
                                     (seq (remove already-accessed-fn hand)))
                            [card-from])
@@ -831,7 +835,7 @@
                           (->> root
                                (filter rezzed?)
                                (map :title)))
-        unrezzed-card "Unrezzed upgrade"
+        unrezzed-card (->msg-map :choice_unrezzed-upgrade)
         unrezzed-cards-button (when (and (not no-root)
                                          (->> root
                                               (filter (complement rezzed?))
@@ -958,7 +962,7 @@
 
         :else
         {:async true
-         :prompt "Choose a card to access"
+         :prompt (->msg-map :prompt_choose-a-card-to-access)
          :choices choices
          :effect (effect (cond
 
@@ -1088,7 +1092,7 @@
         already-accessed-fn (fn [card] (contains? already-accessed (:cid card)))
 
         faceup-cards-buttons (map :title (faceup-accessible state already-accessed-fn))
-        unrezzed-card "Unrezzed upgrade"
+        unrezzed-card (->msg-map :choice_unrezzed-upgrade)
         root (root-content state :archives already-accessed-fn)
         unrezzed-cards-button (when (and (not no-root)
                                          (some (complement rezzed?) root))
@@ -1097,10 +1101,10 @@
                           (->> root
                                (filter rezzed?)
                                (map :title)))
-        facedown-card "Facedown card in Archives"
+        facedown-card (->msg-map :choice_facedown-card-in-archives)
         facedown-cards-button (when (pos? (count (facedown-cards state already-accessed-fn)))
                                 [facedown-card])
-        everything-else "Everything else"
+        everything-else (->msg-map :choice_everything-else)
         everything-else-button (when (seq (clj-set/difference (set (map :cid (get-archives-inactive state)))
                                                               already-accessed))
                                  [everything-else])
