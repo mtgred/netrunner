@@ -384,8 +384,7 @@
   ([m] (->msg-map m nil))
   ([m args]
    (when m
-     (if (keyword? m)
-       {:msg/type m}
-       (-> m
-           (merge args)
-           (schemas/assert MsgMap))))))
+     (-> (if (keyword? m)
+           {:msg/type m}
+           (merge m args))
+         (schemas/assert MsgMap)))))
