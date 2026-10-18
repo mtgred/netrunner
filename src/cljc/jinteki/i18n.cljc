@@ -386,5 +386,6 @@
    (when m
      (-> (if (keyword? m)
            {:msg/type m}
-           (merge m args))
+           m)
+         (merge args)
          (schemas/assert MsgMap)))))
