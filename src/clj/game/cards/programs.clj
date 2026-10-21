@@ -695,8 +695,9 @@
       (strength-pump (->c :credit 3 {:stealth 1}) 4 :end-of-run)]}))
 
 (defcard "Boi-tatá"
-  (let [was-a-runner-card? (fn [target] (runner? (:card (first target))))
-        discount-fn (effect (when (not (no-event? state side :runner-trash was-a-runner-card?))
+  (let [was-a-runner-installed-card? (fn [target] (and (runner? (:card (first target)))
+                                                       (installed? (:card (first target)))))
+        discount-fn (effect (when (not (no-event? state side :runner-trash was-a-runner-installed-card?))
                            [(->c :credit -1)]))]
     (auto-icebreaker
       {:abilities [(break-sub 2 2 "Sentry" {:break-cost-bonus discount-fn})

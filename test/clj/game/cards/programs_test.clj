@@ -1349,25 +1349,25 @@
   (do-game
     (new-game {:corp {:credits 6 :deck ["Ansel 1.0"] }
                :runner {:credits 15
-                        :hand ["Boi-tatá" "No Free Lunch"]}})
+                        :hand ["Boi-tatá" "Audrey v2" "No Free Lunch" "Sure Gamble"]}})
     (play-from-hand state :corp "Ansel 1.0" "HQ")
     (rez state :corp (get-ice state :hq 0))
     (take-credits state :corp)
     (play-from-hand state :runner "Boi-tatá")
+    (play-from-hand state :runner "Audrey v2")
     (play-from-hand state :runner "No Free Lunch")
     (run-on state "HQ")
     (run-continue state)
-    (let [boi (get-program state 0)]
-      (is (= [(->c :credit 3)] (card-ability-cost
-                                 state :runner
-                                 (second (:abilities (refresh boi)))
-                                 (refresh boi))))
+    (let [boi (get-program state 0)
+          check-boost-cost #(card-ability-cost state :runner (second (:abilities (refresh boi))) (refresh boi))]
+      (is (= [(->c :credit 3)] (check-boost-cost)) "Before trashing")
+      ;; use audrey to trash from hand
+      (card-ability state :runner (get-program state 1) 1)
+      (click-card state :runner "Sure Gamble")
+      (is (= [(->c :credit 3)] (check-boost-cost)) "No cost reduction from hand trash")
+      ;; use nfl to trash from board
       (card-ability state :runner (get-resource state 0) 0)
-      (is (= [(->c :credit 2)] (card-ability-cost
-                                 state :runner
-                                 (second (:abilities (refresh boi)))
-                                 (refresh boi)))
-          "Cost reduction from trash"))))
+      (is (= [(->c :credit 2)] (check-boost-cost)) "Cost reduction from installed trash"))))
 
 (deftest boi-tata-automated-test
   (basic-program-test {:name "Boi-tatá"
