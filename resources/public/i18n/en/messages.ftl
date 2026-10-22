@@ -65,6 +65,7 @@ server-name = {$server ->
 
 ## Logical templates
 
+msg-play-card = {$username} {$payment} to play {$title}.
 use-card = {$username} uses {$title} to {$do-ability}.
 pay-use-card = {$username} {$payment} to use {$title} to {$do-ability}.
 satisfy-card = {$username} {$payment} to satisfy {$title}.

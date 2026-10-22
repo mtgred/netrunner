@@ -589,6 +589,7 @@
     (swap! msg-registry assoc kw (mu/merge Msg schema)))
   kw)
 
+(register-msg :msg-play-card)
 (register-msg :use-card)
 (register-msg :pay-use-card)
 (register-msg :satisfy-card)
