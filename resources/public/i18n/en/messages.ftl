@@ -799,6 +799,20 @@ msg-rfg-n-cards-from-stack = {$username} removes {$count ->
     *[other] the top {$count} cards of {-stack} from the game.
 }
 
+## Runs
+
+# TODO payment may be empty, not sure what conditional is correct to check that. needed for make/makes wording choice
+msg-make-a-run-on = {$username} {$payment} to make a run on {$server}.
+msg-make-a-run-on-ignoring-costs = {$username} {$payment} to make a run on {$server}, ignoring all costs.
+msg-bypass-ice = {$username} bypasses {$title}.
+msg-approach-ice = {$username} approaches {$card-str}.
+msg-encounter-ice = {$username} encounters {$card-str}.
+msg-pass-ice = {$username} passes {$card-str}.
+msg-continue = {$username} will continue the run.
+msg-jack-out = {$username} jacks out.
+msg-approach-server = {$username} approaches {$server}.
+msg-breach-server = {$username} breaches {$server}.
+
 ## Traces
 
 increase-trace-strength = {$username} {$payment} to increase trace strength to {$value}.

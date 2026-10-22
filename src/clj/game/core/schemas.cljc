@@ -593,6 +593,17 @@
 (register-msg :pay-use-card)
 (register-msg :satisfy-card)
 
+(register-msg :msg-make-a-run-on)
+(register-msg :msg-make-a-run-on-ignoring-costs)
+(register-msg :msg-bypass-ice $username $title)
+(register-msg :msg-approach-ice $username $card-str)
+(register-msg :msg-encounter-ice $username $card-str)
+(register-msg :msg-pass-ice $username $card-str)
+(register-msg :msg-continue $username)
+(register-msg :msg-jack-out $username)
+(register-msg :msg-approach-server $username $server)
+(register-msg :msg-breach-server $username $server)
+
 (register-msg :increase-trace-strength $username $payment $value)
 (register-msg :corp-start-of-turn $username $turn $credits $cards)
 (register-msg :corp-end-of-turn $username $turn $credits $cards)

@@ -252,7 +252,7 @@
                            (#{:msg/payments
                               :effect/card-str :effect/card-strs
                               :msg/card-str :msg/card-strs} k) nil
-                           (= :effect/server k) (format-server-name v)
+                           (#{:effect/server :msg/server} k) (format-server-name v)
                            (= :effect/title k) (get-card-title v)
                            (sequential? v) (join-list v)
                            :else v)))
