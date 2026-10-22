@@ -605,6 +605,11 @@
 (register-msg :msg-approach-server $username $server)
 (register-msg :msg-breach-server $username $server)
 
+(register-msg :msg-access-card)
+(register-msg :msg-access-card-unseen)
+(register-msg :msg-access-archives)
+(register-msg :msg-steal-agenda $username $title $value)
+
 (register-msg :increase-trace-strength $username $payment $value)
 (register-msg :corp-start-of-turn $username $turn $credits $cards)
 (register-msg :corp-end-of-turn $username $turn $credits $cards)

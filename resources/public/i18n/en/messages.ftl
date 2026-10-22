@@ -811,6 +811,17 @@ msg-jack-out = {$username} jacks out.
 msg-approach-server = {$username} approaches {$server}.
 msg-breach-server = {$username} breaches {$server}.
 
+## Accesses
+
+## TODO payment form?
+msg-access-card = {$username} accesses {$title} from {$server}.
+msg-access-card-unseen = {$username} accesses an unseen card from {$server}.
+msg-access-archives = {$username} accesses everything else in {-archives}.
+msg-steal-agenda = {$username} steals {$title} and gains {$value ->
+    [one] 1 agenda point.
+    *[other] {value} agenda points.
+}
+
 ## Traces
 
 increase-trace-strength = {$username} {$payment} to increase trace strength to {$value}.
