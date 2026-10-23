@@ -232,6 +232,22 @@
   (let [m (card-str-edn card)]
     (tr (:card/str m) m)))
 
+(defonce damage-names (atom {}))
+(reset! damage-names {})
+
+(defn format-damage-name
+  [damage]
+  (let [lang @language-cursor]
+    (or (get-in @damage-names [lang damage])
+        (let [d (name damage)
+              dn (case d
+                   ("meat") "meat"
+                   ("net") "net"
+                   ("brain" "core") "core")
+              tr (tr :damage-name {:damage dn})]
+          (-> (swap! damage-names assoc-in [lang damage] tr)
+              (get-in [lang damage]))))))
+
 (defn format-payment-msg
   [m]
   (tr (:payment/type m) (update-keys m name)))
@@ -254,6 +270,7 @@
                               :msg/card-str :msg/card-strs} k) nil
                            (#{:effect/server :msg/server} k) (format-server-name v)
                            (= :effect/title k) (get-card-title v)
+                           (#{:msg/damage :effect/damage} k) (format-damage-name v)
                            (sequential? v) (join-list v)
                            :else v)))
                (transient {}) m)
