@@ -610,6 +610,10 @@
 (register-msg :msg-access-archives)
 (register-msg :msg-steal-agenda $username $title $value)
 
+(register-msg :msg-advance)
+(register-msg :msg-score-agenda $username $title $value)
+(register-msg :msg-pay-score-agenda)
+
 (register-msg :increase-trace-strength $username $payment $value)
 (register-msg :corp-start-of-turn $username $turn $credits $cards)
 (register-msg :corp-end-of-turn $username $turn $credits $cards)
