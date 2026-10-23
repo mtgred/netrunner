@@ -827,6 +827,15 @@ msg-steal-agenda = {$username} steals {$title} and gains {$value ->
     *[other] {$value} agenda points.
 }
 
+## Scoring
+
+msg-advance = {$username} {$payment} to advance {$card-str}.
+msg-score-agenda = {$username} scores {$title} and gains {$value ->
+    [one] 1 agenda point.
+    *[other] {$value} agenda points.
+}
+msg-pay-score-agenda = {$username} {$payment} to score {$title}.
+
 ## Traces
 
 increase-trace-strength = {$username} {$payment} to increase trace strength to {$value}.

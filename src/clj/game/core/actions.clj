@@ -30,6 +30,7 @@
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect wait-for]]
     [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]
+    [jinteki.i18n :refer [->effect-msg]]
     [taoensso.timbre :as timbre]))
 
 (defn- without-history
@@ -732,8 +733,10 @@
                       card
                       (->c :click (if-not no-cost 1 0))
                       (->c :credit (if-not no-cost 1 0)))
-                 (if-let [payment-str (:msg async-result)]
-                   (do (system-msg state side (str (build-spend-msg payment-str "advance") (card-str state card)))
+                 (if-let [payment-str (:cost-paid async-result)]
+                   (do (system-msg state side (->effect-msg {:msg/type :msg-advance
+                                                             :msg/payments (vals payment-str)
+                                                             :msg/card-str card}))
                        (update-advancement-requirement state card)
                        (wait-for
                          (add-prop state side (get-card state card) :advance-counter 1)
@@ -758,8 +761,9 @@
                                      :advancement-requirement advancement-requirement
                                      :advancement-tokens advancement-tokens
                                      :points points})
-              (system-msg state :corp (str "scores " (:title c)
-                                           " and gains " (quantify points "agenda point")))
+              (system-msg state :corp {:msg/type :msg-score-agenda
+                                       :msg/title (:title c)
+                                       :msg/value points})
               (implementation-msg state card)
               (set-prop state :corp (get-card state c) :advance-counter 0)
               (swap! state update-in [:corp :register :scored-agenda] #(+ (or % 0) points))
@@ -799,5 +803,7 @@
                            (if (string/blank? (:msg payment-result))
                              (effect-completed state side eid)
                              (do
-                               (system-msg state side (str (:msg payment-result) " to score " (:title card)))
+                               (system-msg state side (->effect-msg {:msg/type :msg-pay-score-agenda
+                                                                     :msg/payments (vals (:cost-paid payment-result))
+                                                                     :msg/title (:title card)}))
                                (resolve-score state side eid card {:advancement-requirement adv-cost :advancement-tokens adv-tokens}))))))))))
