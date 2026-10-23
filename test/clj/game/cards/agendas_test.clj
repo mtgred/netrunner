@@ -2941,6 +2941,20 @@
       (click-prompts state :corp "Yes" "Project Atlas" "Install Project Atlas" "New remote")
       (is (= "Project Atlas" (:title (get-content state :remote2 0)))))))
 
+(deftest off-the-books-operation
+  (do-game
+    (new-game {:corp {:hand ["Off the Books"] :deck ["Measured Response"]}})
+    (core/gain state :corp :click 10 :credit 10)
+    (play-from-hand state :corp "Off the Books" "New remote")
+    (let [pr (get-content state :remote1 0)]
+      (advance state pr 5)
+      (score state :corp (refresh pr)))
+    (take-credits state :corp)
+    (is (= 0 (count (:hand (get-corp)))))
+    ;; there should be no further prompt to install/add it, it just goes to hq automatically.
+    (click-prompts state :corp "Yes" "Measured Response")
+    (is (= 1 (count (:hand (get-corp)))))))
+
 (deftest off-the-books-ignores-cost
   (do-game
     (new-game {:corp {:hand ["Off the Books" "Vanilla"] :deck ["Ice Wall"]}})
