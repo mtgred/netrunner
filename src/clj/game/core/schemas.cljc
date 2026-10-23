@@ -222,6 +222,7 @@
 (def $choice [:effect/choice :string])
 (def $count [:effect/count :int])
 (def $credits [:effect/credits :int])
+(def $damage [:effect/damage [:or :string :keyword]])
 (def $discount [:effect/discount :int])
 (def $position [:effect/position :int])
 (def $seen [:effect/seen [:sequential Card]])
@@ -616,6 +617,8 @@
 (register-msg :msg-advance)
 (register-msg :msg-score-agenda $username $title $value)
 (register-msg :msg-pay-score-agenda)
+
+(register-msg :msg-trash-damage $username $titles $damage)
 
 (register-msg :increase-trace-strength $username $payment $value)
 (register-msg :corp-start-of-turn $username $turn $credits $cards)

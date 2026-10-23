@@ -54,6 +54,15 @@
 -upgrade = upgrade
 -upgrade-plural = upgrades
 
+## damage types
+
+damage-name = {$damage ->
+    [meat] meat damage
+    [net] net damage
+    [core] core damage
+    *[other] unknown damage
+}
+
 ## locations
 
 server-name = {$server ->
@@ -835,6 +844,10 @@ msg-score-agenda = {$username} scores {$title} and gains {$value ->
     *[other] {$value} agenda points.
 }
 msg-pay-score-agenda = {$username} {$payment} to score {$title}.
+
+## Damage
+
+msg-trash-damage = {$username} trashes {$titles} due to {$damage}.
 
 ## Traces
 
