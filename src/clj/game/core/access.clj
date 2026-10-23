@@ -192,7 +192,7 @@
         _ (update-all-agenda-points state)
         c (get-card state c)
         points (get-agenda-points c)]
-    (system-msg state :runner (str "steals " (:title c) " and gains " (quantify points "agenda point")))
+    (system-msg state :runner {:msg/type :msg-steal-agenda :msg/title (:title c) :msg/value points})
     (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c 0)))
     (play-sfx state side "agenda-steal")
     (when (:breach @state)
@@ -319,16 +319,18 @@
 (defn msg-handle-access
   "Generate the message from the access"
   [state side eid {:keys [zone] :as card} title {:keys [cost-msg no-msg]}]
-  (let [cost-str (join-cost-strs cost-msg)]
-    (when-not no-msg
-      (let [public-msg (str (if (seq cost-msg) (str cost-str " to access ") "accesses ")
-                            title (when card (str " from " (name-zone :corp zone))))
-            runner-msg (str (if (seq cost-msg) (str cost-str " to access ") "accesses ")
-                            (:title card) (when card (str " from " (name-zone :corp zone))))]
-        (if (= title "an unseen card")
-          (multi-msg state side {:public public-msg
-                                 :runner runner-msg})
-          (system-msg state side public-msg)))))
+  (when-not no-msg
+    (let [public-msg (merge (when-not (empty? cost-msg) {:msg/payments (vals cost-msg)})
+                            {:msg/type :msg-access-card-unseen
+                             :msg/server (name-zone :corp zone)})
+          runner-msg (merge (when-not (empty? cost-msg) {:msg/payments (vals cost-msg)})
+                            {:msg/type :msg-access-card
+                             :msg/title (:title card)
+                             :msg/server (name-zone :corp zone)})]
+      (if (= title "an unseen card")
+        (multi-msg state side {:public public-msg
+                               :runner runner-msg})
+        (system-msg state side public-msg))))
   (if (reveal-access? state side card)
     (do (system-msg state side (str "must reveal they accessed " (:title card)))
         (reveal state :runner eid card))
@@ -433,7 +435,7 @@
            :effect (effect (if (#{"OK" "No action"} target)
                           (refused-access-cost state side eid)
                           (wait-for (pay state side accessed-card cost)
-                                    (if-let [payment-str (:msg async-result)]
+                                    (if-let [payment-str (:cost-paid async-result)]
                                       (access-trigger-events state side eid accessed-card title (assoc args :cost-msg payment-str))
                                       (refused-access-cost state side eid)))))})
         nil nil)
@@ -1152,7 +1154,7 @@
 
         everything-else-fn
         (effect (let [accessed (get-archives-inactive state)]
-               (system-msg state side "accesses everything else in Archives")
+               (system-msg state side {:msg/type :msg-access-archives})
                (wait-for (access-inactive-archives-cards state side accessed access-amount)
                          (let [already-accessed (apply conj already-accessed (keep :cid async-result))
                                access-amount {:total-mod (access-bonus-count state side :total)
@@ -1377,7 +1379,7 @@
   "Starts the breach routines for the run's server."
   ([state side eid server] (breach-server state side eid server nil))
   ([state side eid server args]
-   (system-msg state side (str "breaches " (zone->name server)))
+   (system-msg state side {:msg/type :msg-breach-server :msg/server (zone->name server)})
    (wait-for (trigger-event-simult state side :breach-server nil {:server (first server)})
              (swap! state assoc :breach {:breach-server (first server) :from-server (first server)})
              (let [args (clean-access-args args)

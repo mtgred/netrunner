@@ -222,6 +222,7 @@
 (def $choice [:effect/choice :string])
 (def $count [:effect/count :int])
 (def $credits [:effect/credits :int])
+(def $damage [:effect/damage [:or :string :keyword]])
 (def $discount [:effect/discount :int])
 (def $position [:effect/position :int])
 (def $seen [:effect/seen [:sequential Card]])
@@ -589,9 +590,32 @@
     (swap! msg-registry assoc kw (mu/merge Msg schema)))
   kw)
 
+(register-msg :msg-play-card)
 (register-msg :use-card)
 (register-msg :pay-use-card)
 (register-msg :satisfy-card)
+
+(register-msg :msg-make-a-run-on)
+(register-msg :msg-make-a-run-on-ignoring-costs)
+(register-msg :msg-bypass-ice $username $title)
+(register-msg :msg-approach-ice $username $card-str)
+(register-msg :msg-encounter-ice $username $card-str)
+(register-msg :msg-pass-ice $username $card-str)
+(register-msg :msg-continue $username)
+(register-msg :msg-jack-out $username)
+(register-msg :msg-approach-server $username $server)
+(register-msg :msg-breach-server $username $server)
+
+(register-msg :msg-access-card)
+(register-msg :msg-access-card-unseen)
+(register-msg :msg-access-archives)
+(register-msg :msg-steal-agenda $username $title $value)
+
+(register-msg :msg-advance)
+(register-msg :msg-score-agenda $username $title $value)
+(register-msg :msg-pay-score-agenda)
+
+(register-msg :msg-trash-damage $username $titles $damage)
 
 (register-msg :increase-trace-strength $username $payment $value)
 (register-msg :corp-start-of-turn $username $turn $credits $cards)
