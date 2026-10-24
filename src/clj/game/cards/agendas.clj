@@ -1686,16 +1686,19 @@
                                       :effect (effect (shuffle! state side :deck)
                                                    (wait-for
                                                      (reveal state side target)
-                                                     (let [target-card target]
+                                                     (let [target-card target
+                                                           add-to-hq {:msg (msg "add " (:title target-card) " to HQ")
+                                                                      :effect (effect (move state side target-card :hand))}]
                                                        (continue-ability
                                                          state side
-                                                         (choose-one-helper
-                                                           [{:option (str "Install " (:title target-card))
-                                                             :ability {:async true
-                                                                       :effect (effect (corp-install state side eid target-card nil {:ignore-install-cost true :msg-args {:display-origin true :install-source card}}))}}
-                                                            {:option (str "Add " (:title target-card) " to HQ")
-                                                             :ability {:msg (msg "add " (:title target-card) " to HQ")
-                                                                       :effect (effect (move state side target-card :hand))}}])
+                                                         (if (corp-installable-type? target-card)
+                                                           (choose-one-helper
+                                                             [{:option (str "Install " (:title target-card))
+                                                               :ability {:async true
+                                                                         :effect (effect (corp-install state side eid target-card nil {:ignore-install-cost true :msg-args {:display-origin true :install-source card}}))}}
+                                                              {:option (str "Add " (:title target-card) " to HQ")
+                                                               :ability add-to-hq}])
+                                                           add-to-hq)
                                                          card nil))))}}}]})
 
 (defcard "Ontological Dependence"
