@@ -701,3 +701,23 @@
                  "Trickster Taka"
                  "Mystic Maemi"]))))
 
+(deftest lethe-vs-ganked-multiaccess
+  (do-game
+    (new-game {:corp {:deck ["Ganked!" "IPO"]
+                      :credits 10
+                      :hand ["Lethe" "Hedge Fund"]}
+               :runner {:hand ["The Maker's Eye"]}})
+    (play-cards state :corp "Hedge Fund" ["Lethe" "R&D" :rezzed])
+    (take-credits state :corp)
+    (stack-deck state :corp ["Ganked!"])
+    (play-cards state :runner "The Maker's Eye")
+    (run-continue-until state :success)
+    (click-prompts state :corp "Yes")
+    (click-card state :corp "Lethe")
+    (let [ice (:ice (core/get-current-encounter state))]
+      (fire-subs state ice))
+    (click-prompts state :corp "Ganked!" "Top of R&D")
+    (run-continue state)
+    (click-prompt state :corp "Yes")
+    (click-card state :corp "Lethe")
+    (is (:ice (core/get-current-encounter state)) "We did it")))
