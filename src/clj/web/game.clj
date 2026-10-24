@@ -205,7 +205,8 @@
           (app-state/set-last-update gameid)
           (stats/game-started db lobby?)
           (lobby/send-lobby-state lobby?)
-          (lobby/broadcast-lobby-list)
+          (lobby/broadcast-lobby-uids! (lobby/lobby->participant-uids lobby?))
+          (lobby/queue-lobby-updates!)
           (send-state-to-participants :game/start lobby? (diffs/public-states (:state lobby?))))))))
 
 (defmethod ws/-msg-handler :game/start
@@ -237,8 +238,8 @@
        (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
          (handle-message-and-send-diffs!
           lobby? nil nil (str (:username user) " has left the game.")))
-       (lobby/send-lobby-list uid)
-       (lobby/broadcast-lobby-list)
+       (lobby/broadcast-lobby-uids! (concat [uid] (lobby/lobby->participant-uids lobby)))
+       (lobby/queue-lobby-updates!)
        (when ?reply-fn (?reply-fn true))))
    (lobby/log-delay! timestamp id)))
 
@@ -375,7 +376,8 @@
              (app-state/set-last-update gameid)
              (lobby/send-lobby-state lobby?)
              (lobby/send-lobby-ting lobby?)
-             (lobby/broadcast-lobby-list)
+             (lobby/broadcast-lobby-uids! (lobby/lobby->participant-uids lobby?))
+             (lobby/queue-lobby-updates!)
              (main/handle-notification (:state lobby?) watch-str)
              (send-state-to-uid! uid :game/start lobby? (diffs/public-states (:state lobby?)))
              (when ?reply-fn (?reply-fn 200)))
@@ -433,15 +435,17 @@
     timestamp :timestamp}]
   (app-state/deregister-user! uid)
   (lobby/lobby-thread
-   (let [{:keys [started state] :as lobby} (app-state/uid->lobby uid)]
-     (when (and started state)
-       ;; The game will not exist if this is the last player to leave.
-       (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
-         (handle-message-and-send-diffs!
-          lobby? nil nil (str (:username user) " has left the game.")))))
-   (lobby/broadcast-lobby-list)
-   (when ?reply-fn (?reply-fn true))
-   (lobby/log-delay! timestamp id)))
+    (let [{:keys [started state] :as lobby} (app-state/uid->lobby uid)]
+      (when (and started state)
+        ;; The game will not exist if this is the last player to leave.
+        (when-let [lobby? (lobby/leave-lobby! db user uid nil lobby)]
+          (handle-message-and-send-diffs!
+            lobby? nil nil (str (:username user) " has left the game."))))
+      (when lobby
+        (lobby/broadcast-lobby-uids! (lobby/lobby->participant-uids lobby))
+        (lobby/queue-lobby-updates!)))
+    (when ?reply-fn (?reply-fn true))
+    (lobby/log-delay! timestamp id)))
 
 (defn switch-side
   "Returns a new player map with the player's :side set to a new side"
@@ -473,7 +477,8 @@
      (let [new-app-state (swap! app-state/app-state update :lobbies handle-swap-sides-in-prog gameid)
            lobby? (get-in new-app-state [:lobbies gameid])]
        (lobby/send-lobby-state lobby?)
-       (lobby/broadcast-lobby-list)))))
+       (lobby/broadcast-lobby-uids! (lobby/lobby->participant-uids lobby))
+       (lobby/queue-lobby-updates!)))))
 
 (defmethod commands/lobby-command :swap-sides [{:keys [gameid] :as args}]
   (switch-side-for-lobby gameid))
