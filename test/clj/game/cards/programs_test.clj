@@ -6219,6 +6219,17 @@
       (is (zero? (get-counters (refresh imp) :virus)) "Imp lost its final virus counter")
       (is (zero? (get-counters (refresh imp) :virus)) "Musaazi lost its virus counter"))))
 
+(deftest muse-cant-trash-when-host
+  (do-game
+    (new-game {:runner {:hand ["Muse" "Rezeki" "Rezeki" "Azimat"]
+                        :credits 15}
+               :corp {:hand ["IPO"]}})
+    (take-credits state :corp)
+    (play-cards state :runner "Rezeki" "Rezeki" ["Muse" "Grip" "Azimat" "Muse" "Done"])
+    (is (and (no-prompt? state :runner)
+             (= "Azimat" (:title (first (:hand (get-runner))))))
+        "Azimat in hand and prompt exited without trashing muse")))
+
 (deftest muse-install-from-the-stack
   (do-game
     (new-game {:runner {:deck ["Ika" "Fermenter" "Leprechaun"]
