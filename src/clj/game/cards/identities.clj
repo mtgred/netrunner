@@ -60,6 +60,7 @@
    [game.core.winning :refer [check-win-by-agenda]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
+   [jinteki.i18n :refer [simple-msg]]
    [jinteki.utils :refer :all]))
 
 ;;; Helper functions for Draft cards
@@ -1299,7 +1300,8 @@
   {:events [{:event :corp-turn-ends
              :automatic :gain-credits
              :req (req (pos? (count (remove :seen (:discard corp)))))
-             :msg "gain 1 [Credits]"
+             :msg (simple-msg {:effect/type :gain-credits
+                               :effect/count 1})
              :async true
              :effect (effect (gain-credits state :corp eid 1))}]})
 
@@ -1794,7 +1796,11 @@
              :waiting-prompt true
              :prompt "Choose one"
              :choices ["Gain 2 [Credits]" "Draw 2 cards"]
-             :msg (msg (decapitalize target))
+             :msg (simple-msg (if (= target "Gain 2 [Credits]")
+                                {:effect/type :gain-credits
+                                 :effect/count 2}
+                                {:effect/type :draw-cards
+                                 :effect/count 2}))
              :effect (effect
                        (if (= target "Gain 2 [Credits]")
                             (gain-credits state :corp eid 2)
@@ -2235,7 +2241,8 @@
                                           (fn [targets]
                                             (some #(:accessed %) targets))))
              :async true
-             :msg "gain 1 [Credits] and draw 1 card"
+             :msg (simple-msg [{:effect/type :gain-credits :effect/count 1}
+                               {:effect/type :draw-cards :effect/count 1}])
              :effect (effect (wait-for (draw state :runner 1 {:suppress-checkpoint true})
                                     (gain-credits state :runner eid 1)))}]})
 
@@ -2620,8 +2627,9 @@
                                     (ice? target))
                      :max 2
                      :all true}
-           :msg (msg "swap the positions of " (card-str state (first targets))
-                     " and " (card-str state (second targets)))
+           :msg (simple-msg {:effect/type :swap-two-ice-positions
+                             :effect/card-str (first targets)
+                             :effect/card-str2 (second targets)})
            :effect (effect (swap-ice state side (first targets) (second targets)))}
           :no-ability {:effect (effect (system-msg state side (str "declines to use " (:title card))))}}}]
     {:events [(assoc swap-ability :event :agenda-scored)
@@ -2872,7 +2880,8 @@
              :async true
              :req (req ((complement pos?)
                         (- (get-counters (:card context) :advancement) (:amount context 0))))
-             :msg "gain 2 [Credits]"
+             :msg (simple-msg {:effect/type :gain-credits
+                               :effect/count 2})
              :effect (effect (gain-credits state :corp eid 2))}]})
 
 (defcard "Whizzard: Master Gamer"
@@ -2898,7 +2907,8 @@
               :prompt "Gain 1 [Credits] for each card you accessed?"
               :once :per-turn
               :yes-ability
-              {:msg (msg "gain " (total-cards-accessed context) " [Credits]")
+              {:msg (simple-msg {:effect/type :gain-credits
+                                 :effect/count (total-cards-accessed context)})
                :once :per-turn
                :async true
                :effect (effect (gain-credits state :runner eid (total-cards-accessed context)))}}}]})

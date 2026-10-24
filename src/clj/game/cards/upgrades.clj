@@ -56,6 +56,7 @@
    [game.core.update :refer [update!]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
+   [jinteki.i18n :refer [simple-msg]]
    [jinteki.utils :refer :all]))
 
 ;; Helpers
@@ -164,7 +165,7 @@
                              this-server)
               :yes-ability
               {:async true
-               :msg "end the run"
+               :msg (simple-msg {:effect/type :end-run})
                :cost [(->c :credit 2) (->c :trash-from-hand 2)]
                :effect (effect (end-run state side eid card))}}}]})
 
