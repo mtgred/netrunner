@@ -173,9 +173,9 @@
     [:div.in-game-options
      [tr-element :h4 [:gameplay-options_gameplay-options "General Gameplay Options"]]
      [gameplay-boolean player nil :trash-like-cards :game_trash-like-cards "Offer to trash like cards"]
-     [gameplay-boolean player :corp :auto-purge :game_auto-purge-smart "CSV/Mavirus Auto-purge"]
+     [gameplay-boolean player :corp :auto-purge :game_auto-purge-smart "CVS/Mavirus Auto-purge"]
 
-     ;; Corp Side: auto-purge with mavirus/csv
+     ;; Corp Side: auto-purge with mavirus/cvs
      [tr-element :h4 [:gameplay-options_timing-windows "Timing Windows"]]
 
      ;; corp perspective window forcing
