@@ -2494,8 +2494,7 @@
                                  :prompt "Choose an install cost from among your installed cards"
                                  ;; We don't want to generate 99 prompt buttons, so only add 99 at the end
                                  :choices (mapv str (for [x (->> current-values keys last inc (range 1) (#(concat % [99])))]
-                                                      (str x " [Credit]: "
-                                                           (quantify (get current-values x 0) "card"))))
+                                                      (str x " [Credit]: " (quantify (get current-values x 0) "card"))))
                                  :effect (effect
                                           (complete-with-result
                                             state side eid
@@ -2505,28 +2504,25 @@
         {:async true
          :effect (effect
                   (wait-for
-                    [[install-cost reveals](resolve-ability state side (select-install-cost state) card nil)]
-                    (let [revealed (seq (take reveals (:deck corp)))]
+                    [[install-cost reveals] (resolve-ability state side (select-install-cost state) card nil)]
+                    (let [revealed (set-aside state :corp eid (take reveals (:deck corp)))]
                       (system-msg state :runner (str "uses " (:title card) " to choose an install cost of "
                                                      install-cost
-                                                     " [Credit] and reveals "
-                                                     (if revealed
+                                                     " [Credit] and set aside "
+                                                     (if (seq revealed)
                                                        (str (enumerate-cards revealed)
                                                             " from the top of R&D (top->bottom)")
                                                        "no cards")))
                       (wait-for
-                        (resolve-ability
-                          state side
-                          (when revealed
-                            {:async true
-                             :effect (effect (reveal state side eid revealed))})
-                          card nil)
-                        (wait-for
-                          (resolve-ability state side (when (and revealed (not (get-only-card-to-access state)))
-                                                        (access-revealed revealed))
-                            card nil)
+                        (resolve-ability state side (when (and (seq revealed)
+                                                               (not (get-only-card-to-access state)))
+                                                      (access-revealed revealed))
+                                         card nil)
+                        (let [remainder (filter #(get-card state %) revealed)]
+                          (doseq [c remainder]
+                            (move state :corp c :deck))
                           (shuffle! state :corp :deck)
-                          (system-msg state :runner "shuffles R&D")
+                          (system-msg state :corp (str "shuffles " (enumerate-cards remainder true) " into R&D"))
                           (effect-completed state side eid))))))}]
     {:makes-run true
      :on-play (run-server-ability :rd)
