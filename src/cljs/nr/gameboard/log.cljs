@@ -227,12 +227,12 @@
     (fn []
       (when (or (not-spectator?)
                 (not (:mutespectators @current-game)))
-        [:div.log-input
+        [:div.log-text-input
          [:div.form-container
           [:form {:on-submit #(do (.preventDefault %)
                                   (reset-completions state)
                                   (send-msg state))}
-           [:input#log-input
+           [:input#log-text-input
             {:placeholder (tr [:chat_placeholder "Say something..."])
              :data-i18n-key :chat_placeholder
              :type "text"
