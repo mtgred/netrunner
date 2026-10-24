@@ -646,7 +646,7 @@
       (click-prompt state :corp "No")
       (is (changed? [(:credit (get-runner)) -4]
             (auto-pump-and-break state unity)
-            (core/process-action "continue" state :corp nil))
+            (do-action "continue" state :corp nil))
           "spent 4 to break")
       (run-jack-out state)
       (run-on state :hq)
@@ -1084,7 +1084,7 @@
               (auto-pump-and-break state cor))
             "Gained 2c from the runner breaking")
         (is (last-n-log-contains? state 2 "Corp uses Bailiff to gain 1 [Credits]"))
-        (is (true? (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 [Credits]")))))))
+        (is (last-n-log-contains? state 3 "Corp uses Bailiff to gain 1 [Credits]"))))))
 
 (deftest ballista
   ;; Ballista
@@ -1660,7 +1660,7 @@
       (run-continue state)
       (is (changed? [(count (:discard (get-runner))) +4]
             (auto-pump-and-break state corroder)
-            (core/process-action "continue" state :corp nil)
+            (do-action "continue" state :corp nil)
             (click-prompt state :runner "Yes")
             (run-jack-out state))
           "milled 4 with Chiyashi (2 + 2, ice trashed before third mill)")
@@ -1668,14 +1668,14 @@
       (run-continue state)
       (is (changed? [(count (:discard (get-runner))) +7]
             (auto-pump-and-break state crypsis)
-            (core/process-action "continue" state :corp nil)
+            (do-action "continue" state :corp nil)
             (run-jack-out state))
           "milled 6 with Chiyashi, and trashed crypsis")
       (run-on state "R&D")
       (run-continue state)
       (is (changed? [(count (:discard (get-runner))) 0]
             (auto-pump-and-break state corroder)
-            (core/process-action "continue" state :corp nil)
+            (do-action "continue" state :corp nil)
             (run-jack-out state))
           "milled 0 with Chiyashi, no AI is installed"))))
 
@@ -1737,7 +1737,7 @@
       (is (= 3 (get-strength (refresh icewall))) "Ice Wall now at 3 strength")
       (is (= 2 (get-strength (refresh enigma))) "Enigma stays at 2 strength before encounter")
       (auto-pump-and-break state corroder)
-      (core/process-action "continue" state :corp nil)
+      (do-action "continue" state :corp nil)
       (run-continue-until state :encounter-ice enigma)
       (is (= 2 (get-strength (refresh enigma))) "Enigma stays at 2 strength during encounter")
       (run-continue state :movement)
@@ -1783,7 +1783,7 @@
       (run-continue state)
       (auto-pump-and-break state corroder)
       (is (changed? [(count (:hand (get-runner))) 0]
-            (core/process-action "continue" state :corp nil))
+            (do-action "continue" state :corp nil))
           "No Damage from Ice Wall ending the run"))))
 
 (deftest cloud-eater
@@ -3105,8 +3105,7 @@
         (take-credits state :corp)
         (let [hand    (:hand (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to reveal.+"
-                           " from HQ, and shuffle them into R&D")]
+              log-str #"Corp uses Gatekeeper to reveal.+ from HQ, and shuffle them into R&D"]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -3127,8 +3126,7 @@
         (take-credits state :corp)
         (let [discard    (:discard (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to reveal.+"
-                           " from Archives, and shuffle them into R&D")]
+              log-str #"Corp uses Gatekeeper to reveal.+ from Archives, and shuffle them into R&D"]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -3152,8 +3150,7 @@
         (let [hand    (:hand (get-corp))
               discard (:discard (get-corp))
               gate    (get-ice state :hq 0)
-              log-str (str "Corp uses Gatekeeper to reveal.+ from HQ "
-                           "and .+ from Archives, and shuffle them into R&D")]
+              log-str #"Corp uses Gatekeeper to reveal.+ from HQ and .+ from Archives, and shuffle them into R&D"]
           (run-on state "HQ")
           (rez state :corp gate)
           (run-continue state)
@@ -3272,7 +3269,7 @@
           "Paid 2c + 2c for breaking")
       (is (last-n-log-contains? state 2 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs")
           "Correct messages")
-      (is (true? (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs")) "Also correct messages"))))
+      (is (last-n-log-contains? state 3 "Corp uses Gold Farmer to force the runner to lose 1 [Credits] for breaking printed subs") "Also correct messages"))))
 
 (deftest gold-farmer-interaction-with-paperclip
   ;; Interaction with Paperclip
@@ -7189,7 +7186,7 @@
       (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ice")
       (play-from-hand state :corp "Ice Wall" "HQ")
       (is (= 5 (get-strength (refresh sab))) "+3 strength for 3 pieces of ice")
-      (core/process-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
+      (do-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (get-strength (refresh sab))) "+2 strength for 2 pieces of ice"))))
 
 (deftest self-adapting-code-wall
@@ -7557,7 +7554,7 @@
     (let [sm (get-ice state :hq 0)]
       (rez state :corp sm))
     (run-continue state)
-    (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal Sure Gamble \\(Event\\), Sure Gamble \\(Event\\), and Sure Gamble \\(Event\\) from the top of the stack.") "3 top cards revelaed")))
+    (is (last-log-contains? state "Corp uses Slot Machine to put the top card of the stack to the bottom, then reveal Sure Gamble (Event), Sure Gamble (Event), and Sure Gamble (Event) from the top of the stack.") "3 top cards revelaed")))
 
 (deftest slot-machine-subroutines
   ;; Subroutines
@@ -7820,7 +7817,7 @@
       (click-prompt state :corp "0")
       (click-prompt state :runner "6")
       (is (= 2 (count-tags state)) "Runner did not take tags from Surveyor Trace 6 with boost 6")
-      (core/process-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
+      (do-action "move" state :corp {:card (get-ice state :hq 1) :server "Archives"})
       (is (= 4 (get-strength (refresh surv))) "Surveyor has 4 strength for 2 pieces of ice"))))
 
 (deftest surveyor-x-fn-test
@@ -8407,6 +8404,16 @@
     (click-prompts state :corp "Ice Wall" "Guard" "I want to start over" "Ice Wall" "Cancel" "OK")
     (is-hand? state :corp ["Ice Wall"])))
 
+(deftest tollbooth
+  (do-game
+    (new-game {:corp {:deck [(qty "Hedge Fund" 5)]
+                      :hand ["Tollbooth"]
+                      :credits 20}})
+    (play-from-hand state :corp "Tollbooth" "HQ")
+    (rez state :corp (get-ice state :hq 0))
+    (take-credits state :corp)
+    (run-on state "HQ")
+    (run-continue state :encounter-ice)))
 
 (deftest tour-guide-rez-before-other-assets
   ;; Rez before other assets

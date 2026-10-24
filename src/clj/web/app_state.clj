@@ -1,25 +1,42 @@
 (ns web.app-state
   (:require
-   [clojure.core.async :refer [<! go timeout]]
-   [cljc.java-time.temporal.chrono-unit :as chrono]
    [cljc.java-time.instant :as inst]
-   [taoensso.encore :as enc]
-   [medley.core :refer [dissoc-in find-first]]))
+   [cljc.java-time.temporal.chrono-unit :as chrono]
+   [clojure.core.async :refer [<! go timeout]]
+   [medley.core :refer [dissoc-in find-first]]
+   [taoensso.encore :as enc])
+  (:import
+   [java.time Instant]
+   [java.util.concurrent ConcurrentHashMap]))
+
+(set! *warn-on-reflection* true)
+
+(def base-app-state
+  {:lobbies {}
+   :lobby-updates {}
+   :tournament nil
+   :block-game-creation false
+   :users {}})
 
 (defonce app-state
-  (atom {:lobbies {}
-         :lobby-updates {}
-         :tournament nil
-         :block-game-creation false
-         :users {}}))
+  (atom base-app-state))
+
+(defonce last-updates (ConcurrentHashMap/new))
+
+(defn get-last-update [gameid]
+  (ConcurrentHashMap/.get last-updates gameid))
+
+(defn set-last-update [gameid]
+  (ConcurrentHashMap/.put last-updates gameid (inst/now)))
+
+(defn remove-last-update [gameid]
+  (ConcurrentHashMap/.remove last-updates gameid))
 
 (defonce lobby-subs-timeout-hours 1)
 
 (defn register-user
   [app-state uid user]
-  (-> app-state
-      (assoc-in [:users uid] (assoc user :uid uid))
-      (assoc-in [:lobby-updates uid] (inst/now))))
+  (assoc-in app-state [:users uid] (assoc user :uid uid)))
 
 (defn uid->lobby
   ([uid] (uid->lobby (:lobbies @app-state) uid))
@@ -75,7 +92,7 @@
   "checks if a user receives lobby updates, and updates the state if they've timed out to amortize subsequent checks. Mutates"
   [uid]
   (if-let [last-ping (get-in @app-state [:lobby-updates uid])]
-    (if (.isBefore (inst/now) (inst/plus last-ping lobby-subs-timeout-hours chrono/hours))
+    (if (Instant/.isBefore (inst/now) (inst/plus last-ping lobby-subs-timeout-hours chrono/hours))
       true
       (do (pause-lobby-updates uid) nil))
     (do (pause-lobby-updates uid) nil)))

@@ -3,16 +3,16 @@
    [game.core.board :refer [all-installed]]
    [game.core.card :refer :all]
    [game.core.eid :refer [effect-completed]]
-   [game.core.say :refer [system-msg]]
-   [game.macros :refer [effect msg]]
-   [game.core.props :refer [add-counter]]))
+   [game.core.props :refer [add-counter]]
+   [game.macros :refer [effect]]
+   [jinteki.i18n :refer [simple-msg]]))
 
 (defn can-charge
   "A card can be charged if it has at least one power counter"
   ([state side]
    (let [cards (all-installed state side)]
      (some #(can-charge state side %) cards)))
-  ([state side card]
+  ([state _ card]
    (pos? (get-counters (get-card state card) :power))))
 
 (defn charge-card
@@ -34,5 +34,8 @@
       :prompt "Choose an installed card"
       :choices {:card #(can-charge state side %)}
       :async true
-      :msg (msg "charge " (:title target) (when (> n 1) (str n " times")))
+      :msg (simple-msg
+            {:effect/type :charge-card
+             :effect/count n
+             :effect/card-str target})
       :effect (effect (charge-card state side eid target n))})))

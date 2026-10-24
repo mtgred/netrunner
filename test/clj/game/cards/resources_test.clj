@@ -270,7 +270,7 @@
     (card-ability state :runner (get-resource state 0) 0)
     (click-prompt state :runner "Chatterjee University")
     (click-card state :runner "Vanity Project")
-    (is (last-log-contains? state "forfeits 1 agenda .* to use Artist Colony to install Chatterjee University"))
+    (is (last-log-contains? state #"forfeits 1 agenda .* to use Artist Colony to install Chatterjee University"))
     (is (= "Chatterjee University" (:title (get-resource state 1))))
     (is (empty? (:scored (get-runner))))))
 
@@ -311,6 +311,7 @@
     (click-prompt state :runner "Fermenter")
     (click-prompt state :runner "Unregistered S&W '35")
     (play-from-hand state :runner "Asmund Pudlat")
+    (click-prompt state :runner "OK")
     (is (is-discard? state :runner ["Fermenter" "Unregistered S&W '35" "Asmund Pudlat"])
         "Didn't duplicate asmund")))
 
@@ -376,6 +377,7 @@
       (play-from-hand state :runner "Assimilator")
       (card-ability state :runner (get-resource state 1) 0)
       (click-card state :runner (get-runner-facedown state 0))
+      (click-prompt state :runner "OK")
       (is (= 2 (count (:discard (get-runner)))) "trashed the already installed kati")
       (is (= "Kati Jones" (:title (get-resource state 1))) "New kati installed")
       (is (not (refresh kat1)) "old kati trashed")
@@ -1523,7 +1525,7 @@
       (take-credits state :corp)
       (play-from-hand state :runner "Dadiana Chacon")
       (play-from-hand state :runner "Corroder")
-      (is (true? (last-n-log-contains? state 3 "Runner spends [Click] and pays 0 [Credits] to install Dadiana Chacon.")))
+      (is (last-n-log-contains? state 3 "Runner spends [Click] and pays 0 [Credits] to install Dadiana Chacon."))
       (is (last-n-log-contains? state 2 "Runner uses Dadiana Chacon to suffer 3 meat damage."))
       (is (second-last-log-contains? state "Runner trashes Corroder, Corroder, and Corroder due to meat damage."))
       (is (last-log-contains? state "Runner spends [Click] and pays 2 [Credits] to install Corroder."))))
@@ -3152,6 +3154,7 @@
     (take-credits state :corp)
     (play-from-hand state :runner "The Class Act")
     (click-prompt state :runner "Hackerspace")
+    (click-prompt state :runner "OK")
     (take-credits state :runner)
     (is (not (no-prompt? state :runner)) "TCA Prompt")))
 
@@ -4591,7 +4594,7 @@
         (take-credits state :runner)
         (is (changed? [(count (:hand (get-runner))) -1]
               (click-prompt state :runner "Trash a random card from the grip")
-              (is (last-log-contains? state "Runner trashes 1 card \\(Sure Gamble\\) randomly from the grip to satisfy Mystic Maemi.")))
+              (is (last-log-contains? state "randomly trashes 1 card (Sure Gamble) from the grip to satisfy Mystic Maemi.")))
             "Trashed one card from grip")
         (take-credits state :corp)
         (play-from-hand state :runner "Sure Gamble")
@@ -4776,6 +4779,8 @@
         (play-from-hand state :corp "SEA Source")
         (click-prompt state :corp "0") ; default trace
         (click-prompt state :runner "0") ; Runner won't match
+        (is (= "Waiting for your opponent to prevent tags."
+               (get-msg-text (:msg (prompt-map :corp)))))
         (click-prompt state :runner "New Angeles City Hall")
         (click-prompt state :runner "Yes")
         (is (zero? (count-tags state)) "Avoided SEA Source tag")
@@ -5397,7 +5402,7 @@
           (is (changed? [(:credit (get-runner)) -4]
                 (click-card state :runner mo))
               "Pay 4 for MOpus install (1+5-2)")
-          (is (last-log-contains? state "Runner pays 1 [Credits], and then pays 3 [Credits], to use Paule's Café to install hosted Magnum Opus.") "Correct message for Mopus install")
+          (is (last-log-contains? state "Runner pays 1 [Credits], and then pays 3 [Credits], to use Paule's Café to install hosted Magnum Opus") "Correct message for Mopus install")
           (card-ability state :runner pau 1)
           (is (changed? [(:credit (get-runner)) -4]
                 (click-card state :runner des))
@@ -8175,6 +8180,17 @@
      (is (not (no-prompt? state :runner)) "There is an open prompt, as Leela triggers")
      (is (= "Leela Patel: Trained Pragmatist" (:title (:card (prompt-map :runner))))
          "Leela triggers, as Whistleblower does not eat steal trigger")))
+
+(deftest whistleblower-v-pinhole-threading
+  (do-game
+    (new-game {:corp {:hand ["Project Atlas"]}
+               :runner {:hand ["Whistleblower" "Pinhole Threading"]}})
+    (play-from-hand state :corp "Project Atlas" "New remote")
+    (take-credits state :corp)
+    (play-cards state :runner "Whistleblower" ["Pinhole Threading" "HQ"])
+    (run-continue-until state :success)
+    (click-prompts state :runner "Yes" "Project Atlas" "Project Atlas" "No action")
+    (is (= "Project Atlas" (:title (get-content state :remote1 0))) "couldn't steal")))
 
 (deftest xanadu
   ;; Xanadu - Increase all ice rez cost by 1 credit

@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+echo "(web.dev/reset)" | lein repl :connect nrepl://localhost:44867

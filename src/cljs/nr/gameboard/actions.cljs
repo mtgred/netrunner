@@ -2,16 +2,17 @@
   (:require
    [differ.core :as differ]
    [goog.functions :as gfn]
-   [nr.angel-arena.lobby :as angel-arena]
+   [jinteki.i18n :refer [tr-span]]
    [nr.appstate :refer [app-state current-gameid]]
+   [nr.gameboard.card-preview :refer [put-game-card-in-channel zoom-channel]]
    [nr.gameboard.replay :refer [init-replay]]
    [nr.gameboard.state :refer [check-lock? game-state get-side last-state
                                parse-state]]
-   [nr.translations :refer [tr-span]]
-   [nr.utils :refer [toastr-options]]
    [nr.sounds :refer [play-sfx]]
+   [nr.utils :refer [toastr-options]]
    [nr.ws :as ws]
    [reagent.core :as r]
+   [reagent.dom.server :as rdom-server]
    [reagent.ratom :as ratom]))
 
 (defn reset-game! [state]
@@ -47,24 +48,35 @@
   (prn "resynchronising game state due to out of order data")
   (ws/resync))
 
+(def ^:private throttled-sequence-resync
+  (gfn/throttle sequence-resync 1500))
+
 (defn handle-diff! [{:keys [gameid diff]}]
   (when (= gameid (str (current-gameid app-state)))
     (let [old-sequence (:sequence @game-state)
+          old-last-played-or-rezzed (:last-played-or-rezzed @game-state)
           patch (differ/patch @last-state diff)]
       (reset! game-state patch)
+      (let [new-last-played-or-rezzed (:last-played-or-rezzed @game-state)]
+        (when (and new-last-played-or-rezzed
+                   (not= old-last-played-or-rezzed new-last-played-or-rezzed)
+                   (get-in @app-state [:options :zoom-last-played-or-rezzed]))
+          (put-game-card-in-channel (:card new-last-played-or-rezzed) zoom-channel)))
       (check-lock?)
       (let [gs @game-state]
         (reset! last-state gs))
-      ;; Note: Although websockets gaurantee in-order delivery, they do not gaurantee
+      ;; Note: Although websockets guarantee in-order delivery, they do not guarantee
       ;; delivery of every message. If we miss a message, we need to trigger a re-sync.
+      ;; Chat messages don't increase the sequence, so they will always look like the
+      ;; previous state.
       (let [new-sequence (:sequence @game-state)]
-        (when (not= new-sequence (inc old-sequence))
-          (gfn/throttle sequence-resync 1500))))))
+        (when (> new-sequence (inc old-sequence))
+          (throttled-sequence-resync))))))
 
 (declare toast)
 (defn handle-timeout [gameid]
   (when (= gameid (current-gameid app-state))
-    (toast [:game_inactivity "Game closed due to inactivity"]) "error" {:time-out 0 :close-button true}
+    (toast [:game_inactivity "Game closed due to inactivity"] "error" {:time-out 0 :close-button true})
     (leave-game!)))
 
 (defn handle-timeout-soon [gameid]
@@ -83,7 +95,6 @@
   (reset! ws/lock false))
 
 (defmethod ws/event-msg-handler :game/start [{data :?data}]
-  (reset! angel-arena/queueing false)
   (launch-game! (parse-state data)))
 (defmethod ws/event-msg-handler :game/resync [{data :?data}] (reset-game! (parse-state data)))
 (defmethod ws/event-msg-handler :game/diff [{data :?data}] (handle-diff! (parse-state data)))
@@ -123,7 +134,7 @@
             (js/escape (str "Please describe the circumstances of your error here.\n\n\nStack Trace:\n```clojure\n"
                          error
                          "\n```")))]
-    (reagent.dom.server/render-to-string
+    (rdom-server/render-to-string
       [:div msg [:br]
        [:a.button
         {:type "button"
@@ -143,7 +154,7 @@
   (let [msg (if (vector? msg) [tr-span msg] msg)]
     (when-let [f (aget js/toastr (if (= "exception" toast-type) "error" toast-type))]
       (f (if (= "exception" toast-type) (build-exception-msg msg (:last-error @game-state))
-             (if (vector? msg) (reagent.dom.server/render-to-string msg) msg))))))
+             (if (vector? msg) (rdom-server/render-to-string msg) msg))))))
 
 (defonce side (r/cursor game-state [:side]))
 (defonce me-toasts (ratom/reaction (get-in @game-state [@side :toast])))

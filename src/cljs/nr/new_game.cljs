@@ -4,8 +4,8 @@
     [jinteki.preconstructed :refer [all-matchups matchup-by-key]]
     [nr.appstate :refer [app-state]]
     [nr.auth :refer [authenticated] :as auth]
-    [nr.translations :refer [tr tr-format tr-side tr-element tr-span]]
-    [nr.utils :refer [cond-button focus-on-mount slug->format]]
+    [jinteki.i18n :refer [tr tr-format tr-side tr-element tr-span]]
+    [nr.utils :refer [cond-button focus-on-mount precon-decklist-links slug->format]]
     [nr.ws :as ws]
     [reagent.core :as r]))
 
@@ -94,22 +94,37 @@
 (defn gateway-constructed-choice [fmt-state gateway-type]
   [:div
    {:style {:display (if (= @fmt-state "system-gateway") "block" "none")}}
-   (doall
-     (for [option ["Beginner" "Intermediate" "Constructed"]]
-       ^{:key option}
-       [:span [:label [:input
-                       {:type "radio"
-                        :name "gateway-type"
-                        :value option
-                        :on-change #(reset! gateway-type (.. % -target -value))
-                        :checked (= @gateway-type option)}]
-               [tr-span [:lobby_gateway-format option] {:format option}]
-               "    "]]))])
+   [:span [:label [:input
+                   {:type "radio"
+                    :name "gateway-type"
+                    :value "Beginner"
+                    :on-change #(reset! gateway-type (.. % -target -value))
+                    :checked (= @gateway-type "Beginner")}]
+           [tr-span [:lobby_gateway-format-beginner]]
+           "    "]]
+   [:span [:label [:input
+                   {:type "radio"
+                    :name "gateway-type"
+                    :value "Intermediate"
+                    :on-change #(reset! gateway-type (.. % -target -value))
+                    :checked (= @gateway-type "Intermediate")}]
+           [tr-span [:lobby_gateway-format-intermediate]]
+           "    "]]
+   [:span [:label [:input
+                   {:type "radio"
+                    :name "gateway-type"
+                    :value "Constructed"
+                    :on-change #(reset! gateway-type (.. % -target -value))
+                    :checked (= @gateway-type "Constructed")}]
+           [tr-span [:lobby_gateway-format-constructed]]
+           "    "]]])
 
 (defn precon-choice [fmt-state precon]
   [:div
    {:style {:display (if (= @fmt-state "preconstructed") "block" "none")}}
-   [:span (str "Decks:     " (tr (:tr-underline (matchup-by-key (keyword @precon)))))]
+   (let [matchup (matchup-by-key (keyword @precon))]
+     [:span "Decks:     " (or (precon-decklist-links matchup)
+                              (tr (:tr-underline matchup)))])
    [:div
     [:label "Match:    "]
     [:select.precon

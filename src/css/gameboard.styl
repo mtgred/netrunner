@@ -372,6 +372,26 @@ glow-spin(prop, pct)
             &:hover, &:focus
                 border-color: white-solid
 
+    .command-matches-container
+        position: absolute !important
+        z-index: 30
+
+        ::-webkit-scrollbar
+            width 0
+
+        ul.command-matches
+            list-style-type: none
+            overflow-x: clip
+            overflow-y: auto
+            max-height: 300px
+            white-space: nowrap
+            width: max-content
+            scrollbar-width: none
+
+            li.command-match.highlight span
+                color: gold-base
+                cursor: pointer
+
     .popup
         display: none
         position: absolute
@@ -707,6 +727,14 @@ glow-spin(prop, pct)
                 flex-direction(column)
                 row-gap: 5px
 
+                // Scroll instead of letting other panels crowd out the prompt,
+                // but only while a prompt is up, so the rfg popups and the run
+                // servers menu can still overlay the board the rest of the time.
+                // Scrolling clips the card title autocomplete though, so don't
+                // add scrolling if there.
+                &:has(.prompt):not(:has(.card-title-select .command-matches-container))
+                    overflow-y: auto
+
                 > div
                     width: 100%
                     display-flex()
@@ -741,15 +769,9 @@ glow-spin(prop, pct)
                             color: orange-dark
 
                 .button-pane
-                    min-height: 0
-
                     .panel
                         padding: 8px
                         z-index: 20
-
-                        // scroll oversized prompts (e.g. long install choice lists)
-                        &.prompt
-                            overflow-y: auto
 
                         .prompt-card-preview
                             text-align: center
@@ -806,6 +828,19 @@ glow-spin(prop, pct)
 
                         select
                             margin-right: 5px
+
+                    .card-title-select
+                        position: relative
+                        margin-bottom: 10px
+
+                        input
+                            width: 100%
+                            box-sizing: border-box
+
+                        .command-matches-container
+                            bottom: 0
+                            left: 100%
+                            margin-left: 14px
 
                     .encounter-info
                         width: 100%
@@ -1130,6 +1165,32 @@ glow-spin(prop, pct)
             position:absolute
             bottom: 0px
 
+            .resize-handle
+                position: absolute
+                z-index: 30
+                touch-action: none
+
+            .resize-handle-w
+                left: -4px
+                top: 0
+                bottom: 0
+                width: 8px
+                cursor: ew-resize
+
+            .resize-handle-n
+                top: -4px
+                left: 0
+                right: 0
+                height: 8px
+                cursor: ns-resize
+
+            .resize-handle-nw
+                top: -6px
+                left: -6px
+                width: 14px
+                height: 14px
+                cursor: nwse-resize
+
             .selector
                 position: absolute
                 top: 0px
@@ -1182,26 +1243,73 @@ glow-spin(prop, pct)
                         div
                             animation: fadein 0.5s
 
+                    .log-scroll-to-bottom-wrapper
+                        flex(1)
+                        display-flex()
+                        flex-direction(column)
+                        position: relative
+                        min-height: 0
+
+                    .log-scroll-to-bottom
+                        position: absolute
+                        bottom: 8px
+                        right: 16px
+                        margin: 0
+
                     .log-input form input, .indicate-action, .show-decklists
                         width: 100%
 
+                    .log-actions
+                        display: flex
+                        gap: 4px
+
+                        button
+                            margin: 0
+
+                        .command-menu-button, .message-menu-button
+                            flex: 0 0 auto
+
+                        .indicate-action
+                            flex: 1
+
                     .command-matches-container
-                        position: absolute !important
                         bottom: 24px
                         right: 100%
 
-                        ::-webkit-scrollbar
-                            width 0
+.gameboard.card-unplayable-fade-out
 
-                        ul.command-matches
-                            list-style-type: none
-                            overflow-x: clip
-                            overflow-y: auto
-                            max-height: 300px
-                            white-space: nowrap
-                            width: max-content
-                            scrollbar-width: none
+    .hand-container .card
+        transition: all 0.15s
 
-                            li.command-match.highlight span
-                                color: gold-base
-                                cursor: pointer
+    .hand-container .card:not(.playable, .selectable, .bg)
+        filter: contrast(0.8)
+
+    .hand-container .card:not(.playable, .selectable, .bg, :hover)
+        filter: contrast(0.7)
+
+.gameboard.card-hover-movement
+
+    .hand-container .card
+        transition: all 0.15s
+
+    .hand-container .card.selected
+        transform: translateY(-5px) scale(1.02)
+
+    .hand-container .card-wrapper:has(.active-menu)
+        z-index: 99999 !important
+
+    .hand-container .card.selected:hover
+        transform: translateY(-10px) scale(1.02)
+
+    .hand-container .card.playable:hover:not(:has(+ .active-menu)),
+    .hand-container .card.selectable:hover:not(:has(+ .active-menu))
+        transform: translateY(-7.5px) scale(1.02)
+
+    .hand-container .card:has(+ .active-menu)
+        transform: translateY(-5px) scale(1.1)
+
+    .hand-container .card:has(+ .active-menu):hover
+        transform: translateY(-5.2px) scale(1.11)
+
+    .hand-container .active-menu
+        transform: translateY(-10px)

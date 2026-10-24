@@ -59,7 +59,7 @@
 (defn cancel-tasks-for-lobby!
   "Cancel tasks for a given lobby"
   [{:keys [gameid] :as lobby}]
-  (doseq [k (keys (get tasks gameid []))]
+  (doseq [k (keys (get @tasks gameid []))]
     (cancel-task! [gameid k])))
 
 (defn cancel-all-tasks!
@@ -100,10 +100,10 @@
           (let [timestamp (inst/now)
                 message (core/make-message {:user {:username "TOURNAMENT SCHEDULER" :uid "TOURNAMENT SCHEDULER"} :text msg})
                 new-app-state (swap! app-state/app-state
-                                     update :lobbies #(-> %
-                                                          (lobby/handle-send-message gameid message)
-                                                          (lobby/handle-set-last-update gameid "TOURNAMENT SCHEDULER")))
+                                     update :lobbies lobby/handle-send-message gameid message)
                 lobby? (get-in new-app-state [:lobbies gameid])]
+            (when lobby?
+              (app-state/set-last-update gameid))
             (lobby/send-lobby-state lobby?)
             (lobby/log-delay! timestamp :tournament-alert-lobby)))))))
 

@@ -8,9 +8,6 @@
 (defonce game-state (r/atom {}))
 (defonce last-state (atom {}))
 
-(defmethod ws/event-msg-handler :game/typing [{typing :?data}]
-  (swap! game-state assoc :typing typing))
-
 (defonce replay-side (r/atom :spectator))
 
 (defn parse-state [state]

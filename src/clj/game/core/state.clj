@@ -1,8 +1,7 @@
 (ns game.core.state)
 
 (defrecord State
-  [;; angel-arena-info
-   active-player
+  [active-player
    bonus
    click-state
    corp
@@ -46,7 +45,6 @@
    turn
    turn-events
    turn-state
-   typing
    winner
    winning-deck-id
    winning-user])

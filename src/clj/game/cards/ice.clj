@@ -783,15 +783,16 @@
 (defcard "Aimor"
   {:subroutines [{:async true
                   :label "Trash the top 3 cards of the stack"
-                  :effect (effect (system-msg
-                                 state :corp
-                                 (str "uses " (:title card) " to trash "
-                                      (enumerate-cards (take 3 (:deck runner)))
-                                      " from the top of the stack and trash itself"))
-                               (wait-for
-                                 (mill state :corp (make-eid state eid) :runner 3)
-                                 (wait-for (trash state :corp (make-eid state eid) card {:cause :subroutine})
-                                           (encounter-ends state side eid))))}]})
+                  :effect (effect (when-let [top3 (seq (take 3 (:deck runner)))]
+                                    (system-msg
+                                     state :corp
+                                     (str "uses " (:title card) " to trash "
+                                          (enumerate-cards top3)
+                                          " from the top of the stack and trash itself")))
+                                  (wait-for
+                                    (mill state :corp (make-eid state eid) :runner 3)
+                                    (wait-for (trash state :corp (make-eid state eid) card {:cause :subroutine})
+                                      (encounter-ends state side eid))))}]})
 
 (defcard "Akhet"
   (let [breakable-fn (effect (if (and (<= 3 (get-counters card :advancement))

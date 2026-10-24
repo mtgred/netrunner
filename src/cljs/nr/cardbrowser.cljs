@@ -11,8 +11,8 @@
    [nr.ajax :refer [GET]]
    [nr.appstate :refer [app-state]]
    [nr.local-storage :as ls]
-   [nr.translations :refer [clean-input tr tr-data tr-faction tr-format tr-set
-                            tr-side tr-type]]
+   [jinteki.i18n :refer [clean-input tr tr-data tr-faction tr-format tr-set
+                         tr-side tr-type]]
    [nr.utils :refer [banned-span deck-points-card-span faction-icon
                      buildable-format->slug get-image-path image-or-face influence-dots
                      non-game-toast render-safe-html restricted-span rotated-span
@@ -35,15 +35,14 @@
                   (fn [m k v] (assoc m (name k) v))
                   {} (:cards format))))
 
-(go (let [server-version (get-in (<! (GET "/data/cards/version")) [:json :version])
-          lang (get-in @app-state [:options :card-language] "en")
-          local-cards (ls/load "cards" {})
-          need-update? (or (not local-cards)
-                           (not= server-version (:version local-cards))
-                           (not= lang (:lang local-cards)))
-          latest-cards (if need-update?
-                           (:json (<! (GET "/data/cards")))
-                           (:cards local-cards))
+;; Card data used to be cached in localStorage, but it outgrew Safari's 5MB quota.
+;; The browser HTTP cache holds it instead now with version in the ETag headers.
+;; Remove the old entry to free the quota it still occupies.
+;; This line can be removed after v169 release.
+(ls/remove! "cards")
+
+(go (let [lang (get-in @app-state [:options :card-language] "en")
+          latest-cards (:json (<! (GET "/data/cards")))
           localized-data (when (not= lang "en")
                            (:json (<! (GET (str "/data/cards/lang/" lang)))))
           cards (->> latest-cards
@@ -68,8 +67,6 @@
       (reset! cards/sets sets)
       (reset! cards/cycles cycles)
       (swap! app-state assoc :sets sets :cycles cycles)
-      (when need-update?
-        (ls/save! "cards" {:cards cards :version server-version :lang lang}))
       (reset! all-cards (into {} (map (juxt :title identity) (sort-by :code cards))))
       (swap! app-state assoc
              :cards-loaded true

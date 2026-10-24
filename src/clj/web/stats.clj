@@ -11,7 +11,6 @@
    [monger.result :refer [acknowledged?]]
    [ring.util.request :refer [request-url]]
    [web.analytics :refer [update-analytics]]
-   ;;[web.angel-arena.stats :as angel-arena-stats]
    [web.mongodb :refer [->object-id]]
    [web.pages :as pages]
    [web.user :refer [active-user?]]
@@ -84,16 +83,20 @@
       (let [ident (-> deck :identity :title)
             cards (->> deck :cards (mapv (fn [{:keys [qty card]}] [(:title card) qty card])))
             cards (concat cards [[ident 3 (-> deck :identity)]])
-            point-mult (if (= (:_id deck) (:winning-deck-id @state))
+            winner? (= (:_id deck) (:winning-deck-id @state))
+            win-points (if winner? 1 0)
+            point-mult (if winner?
                          3.5
                          (- (or (:losing-score @state) 0) 3.5))
             ;; the winner has 3.5 points
             ;; the loser has however many points they had, -3.5
-            ;; relevant data: in faction, id {used*qty used?}, score
+            ;; relevant data: in faction, id {used*qty used?}, score, wins, losses
             card-data (fn [qty card]
                         [(if (= (:faction card) (-> deck :identity :faction)) qty 0)
-                         {ident [qty 1]}
-                         (* qty point-mult)])
+                         {ident {qty [1 win-points (- 1 win-points)]}}
+                         (* qty point-mult)
+                         win-points
+                         (- 1 win-points)])
             mapped (map (fn [[title qty card]]
                           [title (card-data qty card)])
                         cards)
@@ -194,10 +197,14 @@
 (defn delete-old-replay
   [db {:keys [username]}]
   (let [games (mq/with-collection db game-log-coll
-                (mq/find {$and [{$or [{:corp.player.username username}
-                                      {:runner.player.username username}]}
-                                {:replay {$exists true}}
-                                {:replay-shared false}]})
+                ;; :has-replay and :replay-shared are repeated in each $or branch
+                ;; so both branches match the partial indexes on game-logs
+                (mq/find {$or [{:corp.player.username username
+                                :has-replay true
+                                :replay-shared false}
+                               {:runner.player.username username
+                                :has-replay true
+                                :replay-shared false}]})
                 (mq/fields [:gameid])
                 (mq/sort (array-map :start-date -1))
                 (mq/skip 15))]
@@ -245,10 +252,7 @@
                           :log (:log @state)}})
         (when (and should-save-replay (not should-share-replay))
           (delete-old-replay db (get-in @state [:corp :user]))
-          (delete-old-replay db (get-in @state [:corp :runner])))
-        ;; (when (and (= "angel-arena" room)
-        ;;            (:winner @state))
-        ;;   (angel-arena-stats/game-finished db game))
+          (delete-old-replay db (get-in @state [:runner :user])))
         (catch Exception e
           (timbre/error e (str "Caught exception saving game stats: " (:stats @state))))))))
 

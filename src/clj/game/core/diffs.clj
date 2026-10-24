@@ -1,6 +1,6 @@
 (ns game.core.diffs
   (:require
-   [cond-plus.core :refer [cond+]]
+   [com.noahbogart.cond-plus :refer [cond+]]
    [differ.core :as differ]
    [game.core.board :refer [installable-servers]]
    [game.core.card :refer :all]
@@ -59,7 +59,7 @@
     card))
 
 (defn flashback-playable? [card state side]
-  (if-let [flashback-cost (when (in-discard? card) (:flashback (card-def card)))]
+  (if (and (in-discard? card) (:flashback (card-def card)))
     (let [adjusted-card (assoc card :as-flashback true)]
       (assoc card :flashback-playable (:playable (playable? adjusted-card state side))))
     card))
@@ -107,13 +107,13 @@
       (select-non-nil-keys ability-keys)))
 
 (defn abilities-summary [abilities card state side]
-  (some->> (seq abilities)
-           (map-indexed (fn [ab-idx ab] (ability-summary state side card ab-idx ab)))
-           (into [])))
+  (when (seq abilities)
+    (into [] (map-indexed (fn [ab-idx ab] (ability-summary state side card ab-idx ab)))
+          abilities)))
 
 (defn icon-summary [card state]
-  (if-let [icons (seq (get-effects state nil :icon card))]
-    (assoc card :icon (vec icons))
+  (if-let [icons (not-empty (get-effects state nil :icon card))]
+    (assoc card :icon icons)
     card))
 
 (def subroutine-keys
@@ -247,7 +247,7 @@
    :runner-credits])
 
 (defn prompt-summary
-  [prompt state side same-side?]
+  [prompt same-side?]
   (when same-side?
     (-> prompt
         (update :eid #(when (:eid %) (select-keys % [:eid])))
@@ -297,7 +297,7 @@
    :agenda-point-req])
 
 (defn player-summary
-  [player state side same-side? additional-keys]
+  [player state side same-side? player-keys]
   (-> player
       (update :identity card-summary state side)
       (update :basic-action-card card-summary state side)
@@ -306,24 +306,26 @@
       (update :rfg cards-summary state side)
       (update :scored cards-summary state side)
       (update :set-aside cards-summary state side)
-      (update :prompt-state prompt-summary state side same-side?)
+      (update :prompt-state prompt-summary same-side?)
       (update :toast toast-summary same-side?)
-      (select-non-nil-keys (into player-keys additional-keys))))
+      (select-non-nil-keys player-keys)))
 
 (def corp-keys
-  [:servers
-   :bad-publicity])
+  (into player-keys
+        [:servers
+         :bad-publicity]))
 
 (defn servers-summary
   [state side]
-  (reduce-kv
-    (fn [servers current-server-kw current-server]
-      (assoc servers
-             current-server-kw
-             {:content (cards-summary (:content current-server) state side)
-              :ices (cards-summary (:ices current-server) state side)}))
-    {}
-    (:servers (:corp @state))))
+  (->> (:servers (:corp @state))
+       (reduce-kv
+        (fn [servers current-server-kw current-server]
+          (assoc! servers
+                  current-server-kw
+                  {:content (cards-summary (:content current-server) state side)
+                   :ices (cards-summary (:ices current-server) state side)}))
+        (transient {}))
+       (persistent!)))
 
 (defn prune-cards [cards]
   (mapv #(select-non-nil-keys % card-keys) cards))
@@ -367,13 +369,14 @@
                 (assoc-in [:identity :melies-target] melies-target)))))
 
 (def runner-keys
-  [:rig
-   :run-credit
-   :bad-pub-credit
-   :link
-   :tag
-   :memory
-   :brain-damage])
+  (into player-keys
+        [:rig
+         :run-credit
+         :bad-pub-credit
+         :link
+         :tag
+         :memory
+         :brain-damage]))
 
 (defn rig-summary
   [state side]
@@ -469,7 +472,6 @@
 
 (def state-keys
   [:active-player
-   ;; :angel-arena-info
    :corp
    :corp-phase-12
    :corp-post-discard
@@ -478,6 +480,7 @@
    :end-turn
    :forced-encounter
    :gameid
+   :last-played-or-rezzed
    :last-revealed
    :log
    :mark
@@ -496,7 +499,6 @@
    :stats
    :trace
    :turn
-   :typing
    :winning-user
    :winner])
 
@@ -518,9 +520,9 @@
 
 (defn strip-for-replay
   [stripped-state corp-player runner-player]
-  (assoc stripped-state
-         :corp (:corp corp-player)
-         :runner (:runner runner-player)))
+  (-> stripped-state
+      (assoc :corp (:corp corp-player))
+      (assoc :runner (:runner runner-player))))
 
 (defn strip-for-spectators
   [stripped-state corp-state runner-state]
@@ -530,11 +532,11 @@
         (assoc :runner (if spectator-hands? (:runner runner-state) (:runner corp-state))))))
 
 (defn strip-for-corp-spect
-  [stripped-state corp-state runner-state]
+  [stripped-state corp-state]
   (assoc stripped-state :corp (:corp corp-state) :runner (:runner corp-state)))
 
 (defn strip-for-runner-spect
-  [stripped-state corp-state runner-state]
+  [stripped-state runner-state]
   (assoc stripped-state :corp (:corp runner-state) :runner (:runner runner-state)))
 
 (defn- pick-side-log
@@ -556,9 +558,20 @@
      {:corp-state corp-state
       :runner-state runner-state
       :spect-state (when spectators? (strip-for-spectators replay-state corp-state runner-state))
-      :corp-spect-state (when corp-spectators? (strip-for-corp-spect replay-state corp-state runner-state))
-      :runner-spect-state (when runner-spectators? (strip-for-runner-spect replay-state corp-state runner-state))
+      :corp-spect-state (when corp-spectators? (strip-for-corp-spect replay-state corp-state))
+      :runner-spect-state (when runner-spectators? (strip-for-runner-spect replay-state runner-state))
       :hist-state replay-state})))
+
+(defn- update-spect-states
+  [{:keys [corp-state runner-state hist-state spect-state corp-spect-state runner-spect-state] :as states}
+   spectators? corp-spectators? runner-spectators?]
+  (assoc states
+         :spect-state (when spectators?
+                        (or spect-state (strip-for-spectators hist-state corp-state runner-state)))
+         :corp-spect-state (when corp-spectators?
+                             (or corp-spect-state (strip-for-corp-spect hist-state corp-state)))
+         :runner-spect-state (when runner-spectators?
+                               (or runner-spect-state (strip-for-runner-spect hist-state runner-state)))))
 
 (defn- fake-log-diff [old new]
   (let [old (:log old)
@@ -569,8 +582,8 @@
       [{} {}])))
 
 (defn- get-message-diff [old-state new-state side]
-  (let [old-messages {:log (into [] (keep #(or (side %) (:public %)) (:log old-state)))}
-        new-messages {:log (into [] (keep #(or (side %) (:public %)) (:log @new-state)))}]
+  (let [old-messages {:log (into [] (keep #(or (side %) (:public %))) (:log old-state))}
+        new-messages {:log (into [] (keep #(or (side %) (:public %))) (:log @new-state))}]
     (fake-log-diff old-messages new-messages)))
 
 (defn- diff-and-patch-log [old-state new-state message-diff]
@@ -584,11 +597,17 @@
   (let [{old-corp :corp-state old-runner :runner-state
          old-spect :spect-state old-hist :hist-state
          old-corp-spect :corp-spect-state
-         old-runner-spect :runner-spect-state} (when old-state (public-states (atom old-state) spectators? corp-spectators? runner-spectators?))
+         old-runner-spect :runner-spect-state}
+        (when old-state
+          (if-let [old-public-states (:public-states old-state)]
+            ;; reuse cache if available, computing public-states is expensive
+            (update-spect-states old-public-states spectators? corp-spectators? runner-spectators?)
+            (public-states (atom old-state) spectators? corp-spectators? runner-spectators?)))
         {new-corp :corp-state new-runner :runner-state
          new-spect :spect-state new-hist :hist-state
          new-corp-spect :corp-spect-state
-         new-runner-spect :runner-spect-state} (public-states new-state spectators? corp-spectators? runner-spectators?)
+         new-runner-spect :runner-spect-state
+         :as new-public-states} (public-states new-state spectators? corp-spectators? runner-spectators?)
         runner-message-diff (get-message-diff old-state new-state :runner)
         corp-message-diff (get-message-diff old-state new-state :corp)
         public-message-diff (get-message-diff old-state new-state :public)]
@@ -599,7 +618,8 @@
                           (diff-and-patch-log old-runner-spect new-runner-spect runner-message-diff))
      :corp-spect-diff (when corp-spectators?
                         (diff-and-patch-log old-corp-spect new-corp-spect corp-message-diff))
-     :hist-diff (diff-and-patch-log old-hist new-hist public-message-diff)}))
+     :hist-diff (diff-and-patch-log old-hist new-hist public-message-diff)
+     :public-states new-public-states}))
 
 (defn message-diffs [old-state new-state]
   (let [runner-diff (get-message-diff old-state new-state :runner)

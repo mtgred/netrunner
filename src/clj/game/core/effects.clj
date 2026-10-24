@@ -53,9 +53,12 @@
   ([state side eid] (get-effect-value state side eid nil))
   ([state side eid targets]
    (fn [{:keys [value card]}]
-     (if (fn? value)
-       (value state side eid card targets)
-       value))))
+     (let [ret (if (fn? value)
+                 (value state side eid card targets)
+                 value)]
+       (if (sequential? ret)
+         (seq ret)
+         ret)))))
 
 (defn get-effects
   "Filters and then 'executes' the effects of a given type."
@@ -65,7 +68,7 @@
    (let [eid (make-eid state)
          targets (cons target targets)]
      (->> (get-effect-maps state side eid effect-type targets)
-          (mapv (get-effect-value state side eid targets))))))
+          (keep (get-effect-value state side eid targets))))))
 
 (defn get-tagged-effect-value
   "Returns a function that returns the value of a given effect. If the :value is an fn,

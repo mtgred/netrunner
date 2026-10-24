@@ -29,10 +29,14 @@
    [web.app-state :as app-state]
    [web.game]
    [web.lobby :as lobby]
+   [web.logs :refer [timbre-init!]]
    [web.telemetry]
    [web.utils :refer [tick]]
-   [web.versions :refer [banned-msg frontend-version]]
-   [web.ws :refer [ch-chsk event-msg-handler]]))
+   [web.versions :refer [banned-msg cards-version frontend-version]]
+   [web.ws :as ws]) 
+  (:import
+   [clojure.lang ExceptionInfo]
+   [org.httpkit.server HttpServer]))
 
 (read-write/print-time-literals-clj!)
 
@@ -58,23 +62,27 @@
 (defmethod ig/halt-key! :mongodb/connection [_ {:keys [conn]}]
   (mg/disconnect conn))
 
+(defmethod ig/init-key :logging/timbre [_ config]
+  (timbre-init! config))
+
 (defmethod ig/init-key :web/app [_ opts]
   (if (:server-mode opts)
     (make-app opts)
     (make-dev-app opts)))
 
 (defmethod ig/init-key :web/app-state [_ _]
-  ;; (reset! angel-arena/arena-queue [])
-  (reset! app-state/app-state
-          {:lobbies {}
-           :lobby-updates {}
-           :users {}}))
+  (reset! app-state/app-state app-state/base-app-state))
+
+(defmethod ig/halt-key! :web/app-state [_ _]
+  (reset! app-state/app-state app-state/base-app-state))
 
 (defmethod ig/init-key :web/server [_ {:keys [app port]}]
-  (run-server app {:port port
-                   :legacy-return-value? false}))
+  (let [^HttpServer s (run-server app {:port port
+                                       :legacy-return-value? false})]
+    {:server s
+     :port (.getPort s)}))
 
-(defmethod ig/halt-key! :web/server [_ server]
+(defmethod ig/halt-key! :web/server [_ {server :server}]
   (when server
     (server-stop! server nil)))
 
@@ -83,8 +91,7 @@
 
 (defmethod ig/init-key :web/lobby [_ {:keys [interval mongo time-inactive]}]
   (let [db (:db mongo)]
-    [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)
-     #_(tick #(angel-arena/check-for-inactivity db) interval)]))
+    [(tick #(lobby/clear-inactive-lobbies db time-inactive) interval)]))
 
 (defmethod ig/halt-key! :web/lobby [_ futures]
   (run! future-cancel futures))
@@ -97,29 +104,29 @@
 
 (defmethod ig/init-key :web/banned-msg [_ {initial :initial
                                            {:keys [db]} :mongo}]
-  (if-let [config (mc/find-one-as-map db "config" nil)]
-    (do (reset! banned-msg (:banned-msg config))
-        config)
-    (do (doto db
-          (mc/create "config" nil)
-          (mc/insert-and-return "config" {:banned-msg initial}))
+  (if-let [msg (:banned-msg (mc/find-one-as-map db "config" nil))]
+    (reset! banned-msg msg)
+    (do (mc/insert-and-return db "config" {:banned-msg initial})
         (reset! banned-msg initial))))
 
 (defmethod ig/init-key :frontend/version [_ {initial :initial
                                              {:keys [db]} :mongo}]
-  (if-let [config (mc/find-one-as-map db "config" nil)]
-    (do (reset! frontend-version (:version config))
-        config)
-    (do (doto db
-          (mc/create "config" nil)
-          (mc/insert-and-return "config" {:version initial
-                                          :cards-version 0}))
+  (if-let [version (:version (mc/find-one-as-map db "config" nil))]
+    (reset! frontend-version version)
+    (do (mc/insert-and-return db "config" {:version initial})
         (reset! frontend-version initial))))
+
+(defmethod ig/init-key :web/ws [_ opts]
+  (ws/start-server! opts)
+  opts)
+
+(defmethod ig/halt-key! :web/ws [_ _]
+  (ws/stop-server!))
 
 (defmethod ig/init-key :sente/router [_ _opts]
   (sente/start-server-chsk-router!
-    ch-chsk
-    event-msg-handler))
+    (ws/ch-chsk)
+    ws/event-msg-handler))
 
 (defmethod ig/halt-key! :sente/router [_ stop-fn]
   (when (fn? stop-fn)
@@ -143,6 +150,13 @@
                  (assoc! m (name k) v))
                (transient {}))
               (persistent!))))
+
+(defmethod ig/init-key :jinteki/cards-version [_ {initial :initial
+                                                  {:keys [db]} :mongo}]
+  (if-let [version (:cards-version (mc/find-one-as-map db "config" nil))]
+    (reset! cards-version version)
+    (do (mc/insert-and-return db "config" {:cards-version initial})
+        (reset! cards-version initial))))
 
 (defmethod ig/init-key :jinteki/cards [_ {{:keys [db]} :mongo}]
   (let [cards (mc/find-maps db "cards" nil)
@@ -174,19 +188,21 @@
   (reset! cards/cycles nil)
   (reset! cards/mwl nil))
 
-(defn start
-  [& [{:keys [only]}]]
-  (let [config (server-config)]
-    (if only
-      (ig/init config only)
-      (ig/init config))))
-
-(defn stop [system & [{:keys [only]}]]
+(defn stop [system & {:keys [only]}]
   (when system
     (if only
       (ig/halt! system only)
       (ig/halt! system)))
   nil)
+
+(defn start
+  [& {:keys [only]}]
+  (let [config (server-config)]
+    (try (if only
+           (ig/init config only)
+           (ig/init config))
+         (catch ExceptionInfo ex
+           (stop (:system (ex-data ex)))))))
 
 (comment
   (def system (start))

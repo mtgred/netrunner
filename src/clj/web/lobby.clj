@@ -32,13 +32,13 @@
   [timestamp id]
   (let [now (inst/now)
         start timestamp
-        key (or id :unknown)
+        k (or id :unknown)
         diff (duration/between start now)
         total-ms (quot (duration/get diff chrono/nanos) 1000000)
         create-or-update (fn [map]
-                           (if (contains? map key)
-                             (assoc map key (conj (key map) total-ms))
-                             (assoc map key (seq [total-ms]))))]
+                           (if (contains? map k)
+                             (assoc map k (conj (get map k) total-ms))
+                             (assoc map k (seq [total-ms]))))]
     (send telemetry-buckets create-or-update)))
 (defn fetch-delay-log!
   []
@@ -82,7 +82,7 @@
                 (swap! cleaned! + (count stale))
                 (swap! (:occupants pool) set/difference stale))))
           (if (pos? @cleaned!)
-            (timbre/info (str "cleaned up" @cleaned! "stale pool occupants!"))
+            (timbre/info "cleaned up" @cleaned! "stale pool occupants!")
             (timbre/info "all pools are tidy!"))))))
 
 (defonce lobby-pool (cp/threadpool 1 {:name "lobbies-thread"}))
@@ -118,8 +118,8 @@
                 :side side}]
     {:gameid gameid
      :date now
-     :last-update now
      :players [player]
+     :original-players [player]
      :spectators []
      :corp-spectators []
      :runner-spectators []
@@ -165,40 +165,51 @@
         (select-keys [:_id :username :emailhash])
         (assoc :stats stats))))
 
-(defn strip-deck [player lobby]
-  (if-let [{:keys [_id] :as deck} (:deck player)]
-    (let [fmt (:format lobby)
-          fmt-kw (keyword fmt)
-          legal (get-in deck [:status fmt-kw :legal])
-          status {:format fmt
-                  fmt-kw {:legal legal}}
-          deck (-> deck
-                   (select-keys
-                     (if (:started lobby)
-                       [:name :date :identity]
-                       [:name :date]))
-                   (assoc :_id (str _id) :status status))]
-      (assoc player :deck deck))
-    player))
+(defn visible-decks?
+  "Deck info in password games and games without spectators is hidden from the
+  lobby list, so only send it to those in the game."
+  [lobby participating?]
+  (boolean
+    (or participating?
+        (and (not (:password lobby))
+             (:allow-spectator lobby)))))
+
+(defn strip-deck [player lobby participating?]
+  (if-not (visible-decks? lobby participating?)
+    (dissoc player :deck)
+    (if-let [{:keys [_id] :as deck} (:deck player)]
+      (let [fmt (:format lobby)
+            fmt-kw (keyword fmt)
+            legal (get-in deck [:status fmt-kw :legal])
+            status {:format fmt
+                    fmt-kw {:legal legal}}
+            deck (-> deck
+                     (select-keys
+                       (if (:started lobby)
+                         [:name :date :identity]
+                         [:name :date]))
+                     (assoc :_id (str _id) :status status))]
+        (assoc player :deck deck))
+      player)))
 
 (defn user-public-view
   "Strips private server information from a player map."
-  [lobby player]
+  [lobby participating? player]
   (-> player
       (dissoc :uid)
       (update :user filter-lobby-user)
-      (strip-deck lobby)))
+      (strip-deck lobby participating?)))
 
-(defn prepare-players [lobby players]
+(defn prepare-players [lobby participating? players]
   (->> players
-       (mapv #(user-public-view lobby %))
+       (mapv #(user-public-view lobby participating? %))
        (not-empty)))
 
 (defn prepare-original-players [players]
-  (map (fn [p] (-> p
-                   (update :user select-keys [:username :emailhash])
-                   (select-keys [:user])))
-       players))
+  (mapv (fn [p] (-> p
+                    (update :user select-keys [:username :emailhash])
+                    (select-keys [:user])))
+        players))
 
 (def lobby-keys
   [:allow-spectator
@@ -245,10 +256,10 @@
    (-> lobby
        (assoc :old (> (count (or (:messages lobby) [])) 10))
        (update :password boolean)
-       (update :players #(prepare-players lobby %))
-       (update :spectators #(prepare-players lobby %))
-       (update :corp-spectators #(prepare-players lobby %))
-       (update :runner-spectators #(prepare-players lobby %))
+       (update :players #(prepare-players lobby participating? %))
+       (update :spectators #(prepare-players lobby participating? %))
+       (update :corp-spectators #(prepare-players lobby participating? %))
+       (update :runner-spectators #(prepare-players lobby participating? %))
        (update :original-players prepare-original-players)
        (update :messages #(when participating? %))
        ;; if there's a current tournament, insert the end time for the round
@@ -380,6 +391,7 @@
                              register-lobby lobby uid)
         lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
     (when lobby?
+      (app-state/set-last-update (:gameid lobby?))
       (assign-tournament-properties lobby?)
       (send-lobby-state lobby?)
       (broadcast-lobby-uids! [uid])
@@ -452,12 +464,6 @@
   (or (player? uid lobby)
       (spectator? uid lobby)))
 
-(defn handle-set-last-update [lobbies gameid uid]
-  (let [lobby (get lobbies gameid)]
-    (if (and lobby (in-lobby? uid lobby))
-      (assoc-in lobbies [gameid :last-update] (inst/now))
-      lobbies)))
-
 (defn handle-leave-lobby [lobbies uid leave-message]
   (if-let [lobby (app-state/uid->lobby lobbies uid)]
     (let [gameid (:gameid lobby)
@@ -485,6 +491,7 @@
      (stats/update-game-stats db lobby)
      (stats/push-stats-update db lobby))
    (swap! app-state/app-state update :lobbies dissoc gameid)
+   (app-state/remove-last-update gameid)
    (doseq [uid (keep :uid (get-players-and-spectators lobby))]
      (clear-lobby-state uid))
    (leave-pool! pool gameid)
@@ -605,10 +612,10 @@
               processed-deck (process-deck raw-deck)
               new-app-state
               (swap! app-state/app-state
-                     update :lobbies #(-> %
-                                          (handle-select-deck uid processed-deck)
-                                          (handle-set-last-update (:gameid lobby) uid)))
+                     update :lobbies handle-select-deck uid processed-deck)
               lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
+          (when lobby?
+            (app-state/set-last-update gameid))
           (send-lobby-state lobby?)
           ;;(broadcast-lobby-list! [uid])
           (queue-lobby-updates!)
@@ -636,10 +643,10 @@
       (when (and lobby (in-lobby? uid lobby))
         (let [message (core/make-message {:user user :text text})
               new-app-state (swap! app-state/app-state
-                                   update :lobbies #(-> %
-                                                        (handle-send-message gameid message)
-                                                        (handle-set-last-update gameid uid)))
+                                   update :lobbies handle-send-message gameid message)
               lobby? (get-in new-app-state [:lobbies gameid])]
+          (when lobby?
+            (app-state/set-last-update (:gameid lobby?)))
           (send-lobby-state lobby?))))
     (log-delay! timestamp id)))
 
@@ -790,9 +797,10 @@
                                                :text (swap-text (:players lobby) side)})
               new-app-state (swap! app-state/app-state
                                    update :lobbies
-                                   #(-> (handle-swap-sides db % gameid uid side swap-message)
-                                        (handle-set-last-update gameid uid)))
+                                   #(handle-swap-sides db % gameid uid side swap-message))
               lobby? (get-in new-app-state [:lobbies gameid])]
+          (when lobby?
+            (app-state/set-last-update (:gameid lobby?)))
           (send-lobby-state lobby?)
           (queue-lobby-updates!)
           (broadcast-lobby-uids! (lobby->participant-uids lobby?)))))
@@ -835,16 +843,22 @@
       (when (superuser? user)
         (let [player-name (-> lobby :original-players first :user :username)
               bad-name (:title lobby)
-              new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :title] (str player-name "'s game"))]
-          (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
-          (queue-lobby-updates!)
-          (broadcast-lobby-uids! (concat [uid] (lobby->participant-uids lobby)))
-          (mc/insert db "moderator_actions"
-                     {:moderator (:username user)
-                      :action :rename-game
-                      :game-name bad-name
-                      :first-player player-name
-                      :date (inst/now)}))))
+              new-name (str player-name "'s game")]
+          (when (not= bad-name new-name)
+            (let [new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :title] new-name)]
+              (timbre/info {:type :mod-action
+                            :player-name player-name
+                            :lobby-name bad-name}
+                           (:username user) "renamed lobby:" bad-name "->" new-name)
+              (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
+              (broadcast-lobby-list)
+              (broadcast-lobby-list [id])
+              (mc/insert db "moderator_actions"
+                         {:moderator (:username user)
+                          :action :rename-game
+                          :game-name bad-name
+                          :first-player player-name
+                          :date (inst/now)}))))))
     (log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :lobby/delete-game
@@ -874,7 +888,8 @@
   "Called by a background thread to close lobbies that are inactive for some number of seconds."
   [db time-inactive]
   (let [changed? (volatile! false)]
-    (doseq [{:keys [gameid last-update started] :as lobby} (app-state/get-lobbies)]
+    (doseq [{:keys [gameid started] :as lobby} (app-state/get-lobbies)
+            :let [last-update (app-state/get-last-update gameid)]]
       (when (and gameid
                  (inst/is-after (inst/now) (inst/plus-seconds last-update (- time-inactive 30)))
                  (not (inst/is-after (inst/now) (inst/plus-seconds last-update (- time-inactive 29)))))
@@ -929,13 +944,12 @@
         (let [correct-password? (check-password lobby user password)
               watch-message (core/make-system-message (str (:username user) " joined the game as a spectator" (when request-side (str " (" request-side " perspective)")) "."))
               new-app-state (swap! app-state/app-state
-                                   update :lobbies #(-> %
-                                                        (handle-watch-lobby gameid uid user correct-password? watch-message request-side)
-                                                        (handle-set-last-update gameid uid)))
+                                   update :lobbies handle-watch-lobby gameid uid user correct-password? watch-message request-side)
               lobby? (get-in new-app-state [:lobbies gameid])]
           (cond
             (and lobby? correct-password? (allowed-in-lobby user lobby?))
-            (do (send-lobby-state lobby?)
+            (do (app-state/set-last-update gameid)
+                (send-lobby-state lobby?)
                 (send-lobby-ting lobby?)
                 (broadcast-lobby-uids! (lobby->participant-uids lobby?))
                 (queue-lobby-updates!)
