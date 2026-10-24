@@ -851,7 +851,6 @@
                             :lobby-name bad-name}
                            (:username user) "renamed lobby:" bad-name "->" new-name)
               (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
-              (broadcast-lobby-list)
               (broadcast-lobby-uids! (concat [uid] (lobby->participant-uids lobby)))
               (mc/insert db "moderator_actions"
                          {:moderator (:username user)
