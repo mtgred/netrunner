@@ -2951,7 +2951,8 @@
       (score state :corp (refresh pr)))
     (take-credits state :corp)
     ;; there should be no further prompt to install/add it, it just goes to hq automatically.
-    (is (changed? [(count (:hand (get-corp))) 1] (click-prompts state :corp "Yes" "Measured Response")))))
+    (is (changed? [(count (:hand (get-corp))) 1]
+          (click-prompts state :corp "Yes" "Measured Response")))))
 
 (deftest off-the-books-ignores-cost
   (do-game
