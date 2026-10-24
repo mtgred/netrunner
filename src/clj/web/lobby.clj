@@ -309,20 +309,44 @@
   []
   (filter #(app-state/receive-lobby-updates? %) (ws/connected-uids)))
 
-(defn broadcast-lobby-list
+(defn broadcast-lobby-list!
   "Sends the lobby list to all users or a given list of users.
   Filters the list per each users block list."
   ([]
    (let [user-cache (:users @app-state/app-state)
          uids (lobby-update-uids)
          users (map #(get user-cache %) uids)]
-     (broadcast-lobby-list users)))
+     (broadcast-lobby-list! users)))
   ([users]
    (assert (or (sequential? users) (nil? users)) (str "Users must be a sequence: " (pr-str users)))
    (let [lobbies (app-state/get-lobbies)]
      (doseq [[uid ev] (prepare-lobby-list lobbies users)]
        (when uid
          (ws/chsk-send! uid ev))))))
+
+(defn lobby->participant-uids [{:keys [players spectators] :as lobby}]
+  (vec (set (concat (map :uid players) (map :uid spectators)))))
+
+(defn broadcast-lobby-uids!
+  "sends the lobby list only to a set of uids"
+  [uids]
+  (let [user-cache (:users @app-state/app-state)
+        users (map #(get user-cache %) uids)]
+    (broadcast-lobby-list! users)))
+
+(defonce lobby-updates-pending? (atom nil))
+(defn queue-lobby-updates! []
+  (reset! lobby-updates-pending? true))
+
+(go (while true
+      ;; note: 25ms should "feel" instant, but I'm still worried about cases with 150 or so lobbies,
+      ;; so I want this to scale (within reason) based on the lobby count. 100 lobbies should be 75ms
+      ;; which I hope is reasonable in production - we'll see how it goes when this gets a demo.
+      ;;  --nbkelly, Oct '26
+      (<! (timeout (min 150 (+ 25 (int (/ 2 (inc (count (:lobbies @app-state/app-state)))))))))
+      (when @lobby-updates-pending?
+        (broadcast-lobby-list!)
+        (reset! lobby-updates-pending? nil))))
 
 (defn prepare-lobby-state [lobby]
   (let [lobby-state (lobby-summary lobby true)]
@@ -358,7 +382,8 @@
     (when lobby?
       (assign-tournament-properties lobby?)
       (send-lobby-state lobby?)
-      (broadcast-lobby-list))))
+      (broadcast-lobby-uids! [uid])
+      (queue-lobby-updates!))))
 
 (defmethod ws/-msg-handler :lobby/create
   lobby--create
@@ -477,7 +502,8 @@
           (swap! state update side dissoc :user)))
       (close-lobby! db lobby))
     (send-lobby-state lobby?)
-    (broadcast-lobby-list)
+    (queue-lobby-updates!)
+    (broadcast-lobby-uids! (lobby->participant-uids lobby?))
     (when ?reply-fn (?reply-fn true))
     lobby?))
 
@@ -584,7 +610,8 @@
                                           (handle-set-last-update (:gameid lobby) uid)))
               lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
           (send-lobby-state lobby?)
-          ;;(broadcast-lobby-list)
+          ;;(broadcast-lobby-list! [uid])
+          (queue-lobby-updates!)
           (?reply-fn (some #(= processed-deck (:deck %)) (:players lobby?))))
         (?reply-fn false))
       (log-delay! timestamp id))))
@@ -681,7 +708,8 @@
                 (swap! state assoc-in [side :user] user))))
           (send-lobby-state lobby?)
           (send-lobby-ting lobby?)
-          (broadcast-lobby-list)
+          (broadcast-lobby-uids! (concat [uid] (lobby->participant-uids lobby?)))
+          (queue-lobby-updates!)
           (when ?reply-fn (?reply-fn 200))
           lobby?)
       (false? correct-password?)
@@ -766,12 +794,14 @@
                                         (handle-set-last-update gameid uid)))
               lobby? (get-in new-app-state [:lobbies gameid])]
           (send-lobby-state lobby?)
-          (broadcast-lobby-list))))
+          (queue-lobby-updates!)
+          (broadcast-lobby-uids! (lobby->participant-uids lobby?)))))
     (log-delay! timestamp id)))
 
 (defmethod ws/-msg-handler :lobby/shift-game
   lobby--shift-game
   [{{db :system/db user :user} :ring-req
+    uid :uid
     {:keys [gameid room]} :?data
     id :id
     timestamp :timestamp}]
@@ -782,8 +812,8 @@
               game-name (:title lobby)
               new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :room] room)]
           (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
-          (broadcast-lobby-list)
-          (broadcast-lobby-list [id])
+          (queue-lobby-updates!)
+          (broadcast-lobby-uids! (concat [uid] (lobby->participant-uids lobby)))
           (mc/insert db "moderator_actions"
                      {:moderator (:username user)
                       :action :shift-game
@@ -796,6 +826,7 @@
 (defmethod ws/-msg-handler :lobby/rename-game
   lobby--rename-game
   [{{db :system/db user :user} :ring-req
+    uid :uid
     {:keys [gameid]} :?data
     id :id
     timestamp :timestamp}]
@@ -806,8 +837,8 @@
               bad-name (:title lobby)
               new-app-state (swap! app-state/app-state assoc-in [:lobbies gameid :title] (str player-name "'s game"))]
           (send-lobby-state (get-in new-app-state [:lobbies (:gameid lobby)]))
-          (broadcast-lobby-list)
-          (broadcast-lobby-list [id])
+          (queue-lobby-updates!)
+          (broadcast-lobby-uids! (concat [uid] (lobby->participant-uids lobby)))
           (mc/insert db "moderator_actions"
                      {:moderator (:username user)
                       :action :rename-game
@@ -821,6 +852,7 @@
   [{{db :system/db user :user} :ring-req
     {:keys [gameid]} :?data
     id :id
+    uid :uid
     timestamp :timestamp}]
   (lobby-thread
     (let [lobby (app-state/get-lobby gameid)
@@ -828,8 +860,8 @@
           bad-name (:title lobby)]
       (when (and (superuser? user) lobby)
         (close-lobby! db lobby)
-        (broadcast-lobby-list)
-        (broadcast-lobby-list [id])
+        (queue-lobby-updates!)
+        (broadcast-lobby-uids! (concat [uid] (lobby->participant-uids lobby)))
         (mc/insert db "moderator_actions"
                    {:moderator (:username user)
                     :action :delete-game
@@ -860,8 +892,7 @@
           (close-lobby! db lobby)
           (doseq [uid uids]
             (send-lobby-list uid)))))
-    (when @changed?
-      (broadcast-lobby-list))))
+    (when @changed? (queue-lobby-updates!))))
 
 (defn watch-lobby [lobby uid user request-side]
   (if (already-in-game? user lobby)
@@ -906,7 +937,8 @@
             (and lobby? correct-password? (allowed-in-lobby user lobby?))
             (do (send-lobby-state lobby?)
                 (send-lobby-ting lobby?)
-                (broadcast-lobby-list)
+                (broadcast-lobby-uids! (lobby->participant-uids lobby?))
+                (queue-lobby-updates!)
                 (when ?reply-fn (?reply-fn 200)))
             (false? correct-password?)
             (when ?reply-fn (?reply-fn 403))
