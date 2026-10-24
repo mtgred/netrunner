@@ -4279,6 +4279,22 @@
     (click-prompt state :runner "No action")
     (is (find-card "Sure Gamble" (:hand (get-runner))) "Sure Gamble is in hand")))
 
+(deftest khusyuk-uses-set-aside
+  ;; Basic functionality
+  (do-game
+    (new-game {:corp {:deck [(qty "Tomorrow's Headline" 2) "IPO"]
+                      :hand ["IPO"]
+                      :id "NBN: Reality Plus"}
+               :runner {:hand [(qty "Rezeki" 2) "Khusyuk"]
+                        :credits 10}})
+    (take-credits state :corp)
+    (play-cards state :runner "Rezeki" "Rezeki" "Khusyuk")
+    (run-continue-until state :success)
+    (click-prompts state :runner "2 [Credit]: 2 cards" "Tomorrow's Headline" "Steal")
+    (is (changed? [(count (:hand (get-corp))) 1]
+          (click-prompt state :corp "Draw 2 cards"))
+        "Only drew 1 beacuse the cards were set aside")))
+
 (deftest khusyuk-basic-functionality
     ;; Basic functionality
     (do-game
