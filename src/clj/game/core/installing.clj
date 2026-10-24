@@ -654,7 +654,7 @@
           {:prompt (if (and runner-wants-to-trash? (or no-mu (sufficient-mu? state card)))
                      (format "Trash installed programs before installing %s?" (:title card))
                      (format "Insufficient MU to install %s. Trash installed programs?" (:title card)))
-           :choices {:max (count (filter #(and (program? %) (not (has-ancestor? % host-card))) (all-installed state :runner)))
+           :choices {:max (count (filter #(and (program? %) (not (has-ancestor? % host-card)) (not (same-card? % host-card))) (all-installed state :runner)))
                      :card #(and (installed? %)
                                  ;; note: rules team says we can't create illegal gamestates by
                                  ;; trashing a host when installing a card. If they ever change it,
