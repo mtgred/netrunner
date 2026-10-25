@@ -2256,7 +2256,7 @@
       (.blur element))))
 
 (defn- focus-log-input [clear-input?]
-  (when-let [log-input (-> js/document (.getElementById "log-input"))]
+  (when-let [log-input (-> js/document (.getElementById "log-text-input"))]
     (.focus log-input)
     (when clear-input?
       (set! (.-value log-input) ""))))
