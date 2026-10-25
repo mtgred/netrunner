@@ -38,6 +38,7 @@
    [game.core.ice :refer [update-all-ice update-ice-strength]]
    [game.core.initializing :refer [card-init]]
    [game.core.installing :refer [corp-install corp-install-msg]]
+   [jinteki.i18n :refer [simple-msg]]
    [game.core.moving :refer [as-agenda mill move remove-from-currently-drawing
                              swap-agendas swap-cards swap-installed trash trash-cards]]
    [game.core.optional :refer [get-autoresolve set-autoresolve]]
@@ -1220,7 +1221,7 @@
 (defcard "Front Company"
   {:static-abilities [{:type :cannot-run-on-server
                        :req (req (not (pos? (count (turn-events state side :run)))))
-                       :value (effect (map first (get-remotes state)))}]
+                       :value (effect (mapv first (get-remotes state)))}]
    :rez-req (effect (= (:active-player @state) :corp))
    :events [{:event :run
              :req (req (= :archives (target-server context))
@@ -1749,9 +1750,9 @@
                                        (:hand corp))))
                 :label "Reveal an agenda worth X points from HQ"
                 :async true
-                :cost [(->c :x-power)]
+                :cost [(->c :x-power-counter)]
                 :keep-menu-open :while-power-tokens-left
-                :effect (effect (let [paid-amt (cost-value eid :x-power)]
+                :effect (effect (let [paid-amt (cost-value eid :power-counter)]
                                (continue-ability
                                  state side
                                  {:prompt "Choose an agenda in HQ to reveal"
@@ -1872,12 +1873,20 @@
              :change-in-game-state {:req (req (pos? (count-bad-pub state))) :silent true}
              :optional {:interactive (effect true)
                         :prompt "Host a bad publicity counter to gain 3 [Credits] and draw a card?"
-                        :yes-ability {:msg (msg "gain 3 [Credits] and draw 1 card")
-                                      :cost [(->c :host-bad-pub 1)]
+                        :yes-ability {:msg (simple-msg
+                                             {:effect/type :gain-credits
+                                              :effect/count 3}
+                                             {:effect/type :draw-cards
+                                              :effect/count 1})
                                       :async true
-                                      :effect (effect (wait-for
-                                                     (gain-credits state side 3 {:suppress-checkpoint true})
-                                                     (draw state side eid 1)))}}}]})
+                                      :effect (effect
+                                                (wait-for
+                                                  (lose-bad-publicity state side 1 nil)
+                                                  (wait-for
+                                                    (add-counter state side card :bad-publicity 1 {:suppress-checkpoint true})
+                                                    (wait-for
+                                                      (gain-credits state side 3 {:suppress-checkpoint true})
+                                                      (draw state side eid 1)))))}}}]})
 
 (defcard "Magistrate Revontulet"
   {:static-abilities [{:type :steal-additional-cost

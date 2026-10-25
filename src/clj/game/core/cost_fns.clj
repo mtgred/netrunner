@@ -38,7 +38,7 @@
         ;;   minus the applicable discount. The number of power counters placed on Bug Out Bag
         ;;   is equal to the initial value chosen for X, not the discounted total paid.
         ;; This means that the X-cost needs to track it's modifiers,
-        ;; rather than have them as a seperate cost.
+        ;; rather than have them as a separate cost.
         (cond
           (some #(= :x-credits (:cost/type %)) special-cost)
           (mapv #(if (= :x-credits (:cost/type %))
@@ -151,22 +151,18 @@
   "Returns a list of all costs (printed and additional) required to use a given ability"
   ([state side ability card] (card-ability-cost state side ability card nil))
   ([state side ability card targets]
-   (let [base-cost [(:cost ability)
-                    (when-let [cost-bonus-fn (:cost-bonus ability)]
-                      (cost-bonus-fn state side (make-eid state) card targets))
-                    (get-effects state side :card-ability-cost
-                                 {:card card
-                                  :ability ability
-                                  :targets targets})]
-         additional-cost (->> [(:additional-cost ability)
-                               (get-effects state side :card-ability-additional-cost
-                                            {:card card
-                                             :ability ability
-                                             :targets targets})]
-                              (flatten)
-                              ; TODO: uncomment when implementing additional costs
-                              #_(keep #(when % (assoc % :cost/additional true))))]
-     (merge-costs (into base-cost additional-cost)))))
+   (merge-costs [(:cost ability)
+                 (when-let [cost-bonus-fn (:cost-bonus ability)]
+                   (cost-bonus-fn state side (make-eid state) card targets))
+                 (get-effects state side :card-ability-cost
+                              {:card card
+                               :ability ability
+                               :targets targets})
+                 (:additional-cost ability)
+                 (get-effects state side :card-ability-additional-cost
+                              {:card card
+                               :ability ability
+                               :targets targets})])))
 
 (defn break-sub-ability-cost
   ([state side ability card] (break-sub-ability-cost state side ability card nil))

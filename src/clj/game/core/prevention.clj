@@ -184,10 +184,9 @@
              :effect (effect (trigger-prevention state side eid key prevention))}})
 
 (defn- resolve-keyed-prevention-for-side
-  [state side eid key {:keys [prompt waiting option data-type] :as args}]
+  [state side eid key {:keys [prompt waiting-prompt option data-type] :as args}]
   (let [remainder (get-in @state [:prevent key :remaining])
         prompt  (if (string? prompt)  prompt  (prompt state remainder))
-        waiting (if (string? waiting) waiting (waiting state remainder))
         option  (if (string? option)  option  (option state remainder))]
     (if (or (if (= data-type :sequential)
               (not (seq remainder))
@@ -208,7 +207,7 @@
                         state side
                         (choose-one-helper
                           {:prompt prompt
-                           :waiting-prompt waiting}
+                           :waiting-prompt waiting-prompt}
                           (concat (mapv #(build-prevention-option % key) preventions)
                                   [(when-not (some :mandatory preventions)
                                      {:option option
@@ -284,7 +283,7 @@
                    :else
                    (str "Prevent any of " (count (get-in @state [:prevent :trash :remaining])) " cards from being trashed?"))
                  "Choose an interrupt")) ;; note - for corp, this is only marilyn campaign
-     :waiting "your opponent to resolve trash prevention triggers"
+     :waiting-prompt {:msg/type :waiting-trash-prevention-triggers}
      :option (fn [state remainder] (str "Continue trashing " (quantify (count (get-in @state [:prevent :trash :remaining])) "card")))}))
 
 (defn resolve-trash-prevention
@@ -350,10 +349,8 @@
   [state]
   (case (damage-type state)
     :meat "meat"
-    :brain "core"
-    :core "core"
-    :net "net"
-    "neat"))
+    (:brain :core) "core"
+    :net "net"))
 
 (defn prevent-damage
   [state side eid n]
@@ -388,7 +385,7 @@
                (if (= side :runner)
                  (str "Prevent " (damage-pending state) " " (damage-name state) " damage?")
                  (str "There is " (damage-pending state) " pending " (damage-name state) " damage")))
-     :waiting "your opponent to resolve pre-damage triggers"
+     :waiting-prompt {:msg/type :waiting-pre-damage-triggers}
      :option "Pass priority"}))
 
 ;; NOTE - PRE-DAMAGE EFFECTS HAPPEN BEFORE DAMAGE EFFECTS, AND ARE THE CONSTANT ABILITIES (IE GURU DAVINDER, MURESH BODYSUIT, THE CLEANERS, ETC)
@@ -402,7 +399,7 @@
                (if (= side :runner)
                  (str "Prevent " (damage-pending state) " " (damage-name state) " damage?")
                  (str "There is " (damage-pending state) " pending " (damage-name state) " damage")))
-     :waiting "your opponent to resolve damage triggers"
+     :waiting-prompt {:msg/type :waiting-damage-triggers}
      :option "Pass priority"}))
 
 (defn resolve-damage-prevention
@@ -412,7 +409,7 @@
                      :type type :unpreventable unpreventable :unboostable unboostable :uses {}})
   (wait-for (trigger-event-simult state side :pre-damage-flag nil {:card card :type type :count n})
             (wait-for (resolve-prevent-effects-with-priority state (:active-player @state) :pre-damage resolve-pre-damage-for-side)
-                      (swap! state assoc-in [:prevent :damage] async-result)
+                      (push-prevention! state :damage async-result)
                       (swap! state assoc-in [:prevent :damage :priority-passes] 0)
                       (resolve-prevent-effects-with-priority state (:active-player @state) eid :damage resolve-damage-for-side))))
 
@@ -425,7 +422,7 @@
   (resolve-keyed-prevention-for-side
     state side eid :encounter
     {:prompt (fn [state remainder] (str "Prevent " (get-in @state [:prevent :encounter :title]) " ability?"))
-     :waiting "your opponent to prevent a \"when encountered\" ability"
+     :waiting-prompt {:msg/type :waiting-prevent-when-encountered}
      :option (fn [state remainder] (str "Allow " (get-in @state [:prevent :encounter :title])))}))
 
 (defn resolve-encounter-prevention
@@ -445,7 +442,7 @@
   (resolve-keyed-prevention-for-side
     state side eid :end-run
     {:prompt "Prevent the run from ending"
-     :waiting "your opponent to prevent the run from ending"
+     :waiting-prompt {:msg/type :waiting-prevent-run-ending}
      :option "Allow the run to end"}))
 
 (defn resolve-end-run-prevention
@@ -473,7 +470,7 @@
   (resolve-keyed-prevention-for-side
     state side eid :jack-out
     {:prompt "Prevent the runner from jacking out"
-     :waiting "your opponent to prevent you from jacking out"
+     :waiting-prompt {:msg/type :waiting-prevent-jacking-out}
      :option "Allow the Runner to jack out"}))
 
 (defn resolve-jack-out-prevention
@@ -512,7 +509,7 @@
     state side eid :expose
     {:data-type :sequential
      :prompt (fn [state remainder] (str "Prevent " (enumerate-str (map #(card-str state % {:visible (= side :corp)}) remainder) "or") " from being exposed?"))
-     :waiting "your opponent to prevent an Expose"
+     :waiting-prompt {:msg/type :waiting-prevent-expose}
      :option (fn [state remainder] (str "Allow " (quantify (count remainder) "card") " to be exposed"))}))
 
 (defn resolve-expose-prevention
@@ -545,7 +542,7 @@
     {:prompt (fn [state remainder] (str "Prevent any of the " (get-in @state [:prevent :bad-publicity :count]) " bad publicity?"
                                         (when-not (= (get-in @state [:prevent :bad-publicity :count]) remainder)
                                           (str "(" remainder " remaining)"))))
-     :waiting "your opponent to prevent bad publicity"
+     :waiting-prompt {:msg/type :waiting-prevent-bad-publicity}
      :option (fn [state remainder] (str "Allow " remainder " bad publicity"))}))
 
 (defn resolve-bad-pub-prevention
@@ -581,7 +578,7 @@
     {:prompt (fn [state remainder] (str "Prevent any of the " (get-in @state [:prevent :tag :count]) " tags?"
                                         (when-not (= (get-in @state [:prevent :tag :count]) remainder)
                                           (str "(" remainder " remaining)"))))
-     :waiting "your opponent to prevent tags"
+     :waiting-prompt {:msg/type :waiting-prevent-tags}
      :option (fn [state remainder] (str "Allow " (quantify remainder "remaining tag")))}))
 
 (defn resolve-tag-prevention

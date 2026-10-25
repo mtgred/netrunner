@@ -74,7 +74,7 @@
     (response 200 {:message "ok" :banned banned})))
 
 (defn banned-message-update-handler [{db :system/db
-                               {banned :banned} :body}]
+                                      {banned :banned} :body}]
   (if-not (empty? banned)
     (do
       (reset! banned-msg banned)

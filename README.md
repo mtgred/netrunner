@@ -77,6 +77,7 @@ While coding clojure it's important to have a REPL connection going. The server'
 Now, let's populate the database and create indexes with `bin/database-seed`. This will download card images, which can be slow. When its done the server will be restarted. If you ever need to drop the database, run `bin/database-drop`. This will keep the card images you downloaded previously, but you'll need to do `bin/up` and `bin/database-seed` again.
 
 You can access the servers' bash and lein commands individually using `bin/bash` and `bin/lein`.
+When you change backend code you'll need to eval it so it's loaded, or alternatively call `bin/reset` to reload the code and system.
 
 ### Tests
 

@@ -11,6 +11,7 @@
                            get-counters get-title has-subtype? ice? program? rezzed?
                            same-card? operation? condition-counter?]]
    [jinteki.cards :refer [all-cards]]
+   [jinteki.preconstructed :refer [matchup-by-key]]
    [jinteki.utils :refer [add-cost-to-label is-tagged? select-non-nil-keys
                           str->int] :as utils]
    [nr.appstate :refer [app-state current-gameid]]
@@ -20,15 +21,17 @@
    [nr.gameboard.card-preview :refer [card-highlight-mouse-out
                                       card-highlight-mouse-over card-preview-mouse-out
                                       card-preview-mouse-over put-game-card-in-channel zoom-channel]]
+   [nr.gameboard.log :as game-log :refer [find-matches reset-completions]]
    [nr.gameboard.player-stats :refer [stat-controls stats-view]]
    [nr.gameboard.replay :refer [replay-panel]]
    [nr.gameboard.right-pane :refer [content-pane]]
    [nr.gameboard.state :refer [game-state not-spectator? replay-side]]
    [nr.sounds :refer [update-audio]]
-   [nr.translations :refer [tr tr-data tr-game-prompt tr-side tr-element tr-span]]
+   [jinteki.i18n :refer [tr tr-data tr-game-prompt tr-side tr-element tr-span]]
    [nr.utils :refer [banned-span card-colors-class card-colors-custom-style
                      checkbox-button cond-button get-image-path
-                     image-or-face map-longest render-icons render-message]]
+                     image-or-face map-longest precon-decklist-links
+                     render-icons render-message]]
    [nr.ws :as ws]
    [jinteki.card-backs :as card-backs]
    [reagent.core :as r]))
@@ -899,16 +902,25 @@
     (= (get-in @game-state [@replay-side :user :_id]) (:_id user))
     (= (:_id user) (-> @app-state :user :_id))))
 
+(defn replay-opponent-hand?
+  "Returns true when a hand belongs to the opponent in a player-side replay view."
+  [replay? view-side hand-side]
+  (and replay?
+       (contains? #{:corp :runner} view-side)
+       (not= view-side hand-side)))
+
 (defn build-hand-card-view
-  [hand size wrapper-class]
+  [hand size wrapper-class hide-cards?]
   [:div
    (doall
      (map-indexed
        (fn [i card]
          [:div {:key (or (:cid card) i)
                 :class (str wrapper-class)
-                :style {:left (when (< 1 size) (* (/ 320 (dec size)) i))}}
+                :style {:left (when (< 1 size) (* (/ 320 (dec size)) i)) :z-index i}}
           (cond
+            hide-cards?
+            [facedown-card (:side card)]
             (spectator-view-hidden?)
             [card-view (dissoc card :new :selected)]
             (:cid card)
@@ -936,7 +948,8 @@
          [:div.hand-controls
           [:div.panel.blue-shade.hand
            (drop-area (if (= :corp side) "HQ" "the Grip") {:class (when (> size 6) "squeeze")})
-           [build-hand-card-view filled-hand size "card-wrapper"]
+           [build-hand-card-view filled-hand size "card-wrapper"
+            (replay-opponent-hand? (:replay @game-state) @replay-side side)]
            [label filled-hand {:name (if (= :corp side)
                                        [tr-span [:game_hq "HQ"]]
                                        [tr-span [:game_grip "Grip"]])
@@ -959,7 +972,8 @@
              [tr-element :label [:game_card-count] {:cnt size}]
              (let [{:keys [total]} @hand-size]
                (stat-controls :hand-size [tr-element :div.hand-size [:game_max-hand "Max hand size"] {:total total}]))
-             [build-hand-card-view filled-hand size "card-popup-wrapper"]]])]))))
+             [build-hand-card-view filled-hand size "card-popup-wrapper"
+              (replay-opponent-hand? (:replay @game-state) @replay-side side)]]])]))))
 
 (defn show-deck [event ref]
   (-> ((keyword (str ref "-content")) @board-dom) js/$ .fadeIn)
@@ -990,7 +1004,7 @@
           tr-vec (if is-runner
                    [:game_stack-count (str "Stack (" deck-count-number ")")]
                    [:game_rnd-count (str "R&D (" deck-count-number ")")])
-          title (tr (if is-runner [:game_stack "Stack"] [:game_rnd "R&D"]))
+          title (tr (if is-runner [:game_stack "Stack"] [:game_rnd "R&D"]) {:cnt deck-count-number})
           ref (if is-runner "stack" "rd")
           menu-ref (keyword (str ref "-menu"))
           content-ref (keyword (str ref "-content"))]
@@ -1217,7 +1231,7 @@
     [label full-server-names (assoc opts
                                         :classes "server-label"
                                         :name (str "Servers " (join ", " numbers))
-                                        :tr-vec [:game_server "Server"] 
+                                        :tr-vec [:game_server "Server"]
                                         :tr-params {:num (join ", " numbers)}
                                         :hide-cursor true)]))
 
@@ -1441,9 +1455,12 @@
       (when (and @show-decklists
                  (get-in @game-state [:decklists]))
         (let [corp-list (or (get-in @game-state [:decklists :corp]) {:- 1})
-              runner-list (or (get-in @game-state [:decklists :runner]) {:- 1})]
+              runner-list (or (get-in @game-state [:decklists :runner]) {:- 1})
+              precon (get-in @app-state [:current-game :precon])]
           [:div.decklists.blue-shade
            [:br]
+           (when-let [links (when precon (precon-decklist-links (matchup-by-key precon)))]
+             [:p links])
            [build-in-game-decklists corp-list runner-list]])))))
 
 (defn build-start-box
@@ -1795,6 +1812,64 @@
      [:button#trace-submit {:on-click #(send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice (-> "#credit" js/$ .val str->int)})}
       [tr-span [:game_ok "OK"]]]]))
 
+(defn- card-title-prompt
+  [choices]
+  (let [state (r/atom {:value ""})
+        !input-ref (atom nil)
+        fill! (fn [match]
+                (swap! state assoc :value match)
+                (reset-completions state)
+                (when-let [input @!input-ref] (.focus input)))
+        submit! (fn []
+                  (send-command "choice" {:eid (prompt-eid (:side @game-state))
+                                          :choice (:value @state)}))]
+    (fn [choices]
+      (let [{:keys [value completions completion-highlight]} @state]
+        [:div
+         [:div.card-title-select
+          [:input#card-title
+           {:placeholder "Enter a card title"
+            :autoComplete "off"
+            :auto-focus true
+            :value value
+            :ref #(reset! !input-ref %)
+            :on-change #(let [input-value (.. % -target -value)
+                              matches (if (s/blank? input-value)
+                                        []
+                                        (find-matches (:autocomplete choices) input-value))]
+                          (swap! state assoc
+                                 :value input-value
+                                 :completion-highlight nil
+                                 :completions (mapv (fn [match]
+                                                      {:display-text match
+                                                       :on-select (fn [] (fill! match))})
+                                                    matches)))
+            :on-key-down
+            (fn [e]
+              (let [n (count completions)
+                    chosen (cond
+                             completion-highlight (nth completions completion-highlight)
+                             (= 1 n) (first completions))]
+                (case (.-key e)
+                  "ArrowDown" (when (pos? n)
+                                (.preventDefault e)
+                                (swap! state update :completion-highlight #(if % (mod (inc %) n) 0)))
+                  "ArrowUp" (when (pos? n)
+                              (.preventDefault e)
+                              (swap! state update :completion-highlight #(if % (mod (dec %) n) (dec n))))
+                  ("Tab" "ArrowRight") (when chosen
+                                         (.preventDefault e)
+                                         ((:on-select chosen)))
+                  "Enter" (do (.preventDefault e)
+                              (.stopPropagation e)
+                              (when chosen ((:on-select chosen)))
+                              (when-not completion-highlight (submit!)))
+                  "Escape" (reset-completions state)
+                  nil)))}]
+          [game-log/completions !input-ref state]]
+         [:button#card-submit {:on-click #(submit!)}
+          [tr-span [:game_ok "OK"]]]]))))
+
 (defn prompt-div
   [me {:keys [card msg prompt-type choices offer-bad-pub?] :as prompt-state}]
   (let [id (atom 0)]
@@ -1857,14 +1932,7 @@
 
        ;; auto-complete text box
        (:card-title choices)
-       [:div
-        [:div.credit-select
-         [:input#card-title {:placeholder "Enter a card title"
-                             :onKeyUp #(when (= "Enter" (.-key %))
-                                         (-> "#card-submit" js/$ .click)
-                                         (.stopPropagation %))}]]
-        [:button#card-submit {:on-click #(send-command "choice" {:eid (prompt-eid (:side @game-state)) :choice (-> "#card-title" js/$ .val)})}
-         [tr-span [:game_ok "OK"]]]]
+       [card-title-prompt choices]
 
        ;; choice of specified counters on card
        (:counter choices)
@@ -1993,8 +2061,7 @@
       #(send-command "credit")]]))
 
 (defn button-pane [{:keys [side prompt-state]}]
-  (let [autocomp (r/track (fn [] (get-in @prompt-state [:choices :autocomplete])))
-        show-discard? (r/track (fn [] (get-in @prompt-state [:show-discard])))
+  (let [show-discard? (r/track (fn [] (get-in @prompt-state [:show-discard])))
         prompt-type (r/track (fn [] (get-in @prompt-state [:prompt-type])))
         discard-opened-by-system (r/atom false)
         show-opponent-discard? (r/track (fn [] (get-in @prompt-state [:show-opponent-discard])))
@@ -2004,8 +2071,6 @@
 
        :component-did-update
        (fn []
-         (when (pos? (count @autocomp))
-           (-> "#card-title" js/$ (.autocomplete (clj->js {"source" @autocomp}))))
          (cond @show-discard? (do (-> ".me .discard-container .popup" js/$ .fadeIn)
                                   (reset! discard-opened-by-system true))
                @discard-opened-by-system (do (-> ".me .discard-container .popup" js/$ .fadeOut)
@@ -2017,9 +2082,7 @@
 
          (if (= "select" @prompt-type)
            (set! (.-cursor (.-style (.-body js/document))) "url('/img/gold_crosshair.png') 12 12, crosshair")
-           (set! (.-cursor (.-style (.-body js/document))) "default"))
-         (when (= "card-title" @prompt-type)
-           (-> "#card-title" js/$ .focus)))
+           (set! (.-cursor (.-style (.-body js/document))) "default")))
 
        :reagent-render
        (fn [{:keys [side run encounters prompt-state me] :as button-pane-args}]
@@ -2297,7 +2360,9 @@
         card-colors (r/cursor app-state [:options :card-colors])
         card-custom-colors (r/cursor app-state [:options :card-custom-colors])
         labeled-unrezzed-cards (r/cursor app-state [:options :labeled-unrezzed-cards])
-        labeled-cards (r/cursor app-state [:options :labeled-cards])]
+        labeled-cards (r/cursor app-state [:options :labeled-cards])
+        card-unplayable-fade-out (r/cursor app-state [:options :card-unplayable-fade-out])
+        card-hover-movement (r/cursor app-state [:options :card-hover-movement])]
 
     (go (while true
           (let [zoom (<! zoom-channel)]
@@ -2387,6 +2452,8 @@
              [:div.gameview
               [:div {:class [:gameboard
                              (card-colors-class @card-colors)
+                             (when (and (not= @side :spectator) @card-unplayable-fade-out) :card-unplayable-fade-out)
+                             (when (and (not= @side :spectator) @card-hover-movement) :card-hover-movement)
                              (when @labeled-unrezzed-cards :show-unrezzed-card-labels)
                              (when @labeled-cards :show-card-labels)]
                      :style (card-colors-custom-style {:card-colors @card-colors

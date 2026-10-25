@@ -1,13 +1,23 @@
 (ns nr.ws
   (:require
+   [jinteki.msgpack-ext]
    [nr.ajax :refer [?csrf-token]]
    [nr.appstate :refer [app-state current-gameid]]
-   [nr.translations :refer [tr]]
+   [jinteki.i18n :refer [tr]]
    [nr.utils :refer [non-game-toast]]
    [reagent.core :as r]
-   [taoensso.sente  :as sente :refer [start-client-chsk-router!]]))
+   [taoensso.sente  :as sente :refer [start-client-chsk-router!]]
+   [taoensso.sente.packers.msgpack :as msgpack]
+   [taoensso.trove :as trove]
+   [taoensso.trove.console :as trove-console]))
+
+;; Sente logs via trove.
+(trove/set-log-fn! (trove-console/get-log-fn {:min-level :warn}))
 
 (defonce lock (atom false))
+
+(def ws-config
+  (js->clj (or (.-ws_config js/window) #js {}) :keywordize-keys true))
 
 (if-not ?csrf-token
   (println "CSRF token NOT detected in HTML, default Sente config will reject requests")
@@ -17,6 +27,9 @@
           ?csrf-token
           {:type (if (get-in @app-state [:options :disable-websockets]) :ajax :auto)
            :ws-kalive-ms 2500 ;; note - supposedly this will help SEA/LATAM connections
+           :packer (if (= (:packer ws-config) "edn")
+                     :edn
+                     (msgpack/get-packer))
            :wrap-recv-evs? false})]
     (def chsk chsk)
     (def ch-chsk ch-recv)
@@ -48,7 +61,7 @@
                 "\nid: " (:id event)
                 "\nevent:" event)))
 
-(defmethod event-msg-handler :chsk/handshake [_] (ws-send! [:lobby/list]))
+(defmethod event-msg-handler :chsk/handshake [_])
 (defmethod event-msg-handler :chsk/ws-ping [_])
 
 (defmethod event-msg-handler :system/force-disconnect [_]
@@ -57,8 +70,25 @@
 (defn resync []
   (ws-send! [:game/resync {:gameid (current-gameid app-state)}]))
 
+(def lobby-updates-state (r/atom false))
+
+(defn lobby-updates-pause! []
+  (reset! lobby-updates-state false)
+  (when (:open? @ch-state)
+    (ws-send! [:lobby/pause-updates])))
+
+(defn lobby-updates-continue! []
+  (reset! lobby-updates-state true)
+  (when (:open? @ch-state)
+    (ws-send! [:lobby/continue-updates])))
+
 (defmethod event-msg-handler :chsk/state
   [{[old-state new-state] :?data}]
+  (when (and (not (:open? old-state))
+             (:open? new-state))
+    (if @lobby-updates-state
+      (ws-send! [:lobby/continue-updates])
+      (ws-send! [:lobby/list])))
   (when (not (:first-open? new-state))
     (when (and (:open? old-state)
                (not (:open? new-state)))
@@ -67,7 +97,6 @@
     (when (and (not (:open? old-state))
                (:open? new-state))
       (.clear js/toastr)
-      (ws-send! [:lobby/list])
       (when (get-in @app-state [:current-game :started])
         (resync))
       (non-game-toast (tr [:game_reconnected-to-server "Reconnected to server"]) "success" nil))))
@@ -80,12 +109,3 @@
           (start-client-chsk-router!
             ch-chsk
             event-msg-handler-wrapper)))
-
-(def lobby-updates-state (r/atom true))
-(defn lobby-updates-pause! []
-  (ws-send! [:lobby/pause-updates])
-  (reset! lobby-updates-state false))
-
-(defn lobby-updates-continue! []
-  (ws-send! [:lobby/continue-updates])
-  (reset! lobby-updates-state true))

@@ -60,7 +60,6 @@
      ["/data" {:middleware [::forgery]}
       ["/cards"
        ["" {:get #'data/cards-handler}]
-       ["/version" {:get #'data/cards-version-handler}]
        ["/altarts" {:get #'data/alt-arts-handler}]
        ["/lang/:lang" {:get #'data/card-lang-handler}]]
       ["/news" {:get #'data/news-handler}]
@@ -181,6 +180,7 @@
                    (assoc :system/auth (:web/auth system))
                    (assoc :system/chat (:web/chat system))
                    (assoc :system/email (:web/email system))
+                   (assoc :system/ws-config (:web/ws system))
                    (handler))))}))
 
 (defn make-middleware [system]

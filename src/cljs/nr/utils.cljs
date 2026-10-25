@@ -5,11 +5,11 @@
    [cljc.java-time.zoned-date-time :as zdt]
    [cljc.java-time.zone-id :as zone]
    [clojure.string :refer [join] :as s]
+   [jinteki.i18n :refer [build-msg tr tr-span tr-data]]
    [goog.object :as gobject]
    [goog.string :as gstring]
    [goog.string.format]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr tr-span tr-data]]
    [flatland.ordered.map :refer [ordered-map]]
    [reagent.dom :as rd]
    [reagent.dom.server :as rdom-server]))
@@ -121,6 +121,12 @@
    (let [f (aget js/toastr toast-type)
          msg (rdom-server/render-to-string (tr-span tr-vec tr-params))]
      (f msg))))
+
+(defn scroll-to-bottom!
+  "Scrolls an element to the bottom of its content. Does nothing when el is nil."
+  [el]
+  (when el
+    (set! (.-scrollTop el) (.-scrollHeight el))))
 
 (defn map-longest
   [f default & colls]
@@ -304,8 +310,14 @@
 (defn render-input
   "Sanitize inputs into fragments before processing them with render-fragment"
   [input patterns]
-  (if (not (or (string? input) (vector? input)))
+  (cond
+    (map? input)
+    (if-let [raw (:raw-text input)]
+      [:<> raw]
+      (render-fragment [:<> (build-msg input)] patterns))
+    (not (or (string? input) (vector? input)))
     [:<>]
+    :else
     (let [fragment (if (string? input) [:<> input] input)]
       (render-fragment fragment patterns))))
 
@@ -409,6 +421,15 @@
    (if cond
      [:button (merge {:on-click f :key text} attrs) text]
      [:button.disabled (merge {:key text} attrs) text])))
+
+(defn precon-decklist-links
+  "Links to the published decklists of a precon matchup, when it has them"
+  [{:keys [corp runner]}]
+  (when (and (:decklist corp) (:decklist runner))
+    [:span
+     [:a {:href (:decklist corp) :target "_blank"} (:name corp)]
+     " vs. "
+     [:a {:href (:decklist runner) :target "_blank"} (:name runner)]]))
 
 (defn checkbox-button [on-text off-text on-cond f]
   (if on-cond
