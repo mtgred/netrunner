@@ -1134,7 +1134,7 @@
    (take-credits state :corp)
    (let [iw (get-ice state :hq 0)]
      (rez state :corp iw)
-     (core/process-action "subroutine" state :corp {:card (refresh iw) :subroutine 0}))
+     (do-action "subroutine" state :corp {:card (refresh iw) :subroutine 0}))
    (run-on state :rd)
    (is (get-run) "There is a run in progress")))
 

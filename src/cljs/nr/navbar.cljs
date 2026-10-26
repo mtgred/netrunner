@@ -4,7 +4,7 @@
    [goog.history.EventType :as EventType]
    [nr.appstate :refer [app-state]]
    [nr.routes :as routes]
-   [nr.translations :refer [tr tr-span]])
+   [jinteki.i18n :refer [tr tr-span]])
   (:import
    goog.history.Html5History))
 

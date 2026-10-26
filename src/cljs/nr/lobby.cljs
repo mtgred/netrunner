@@ -6,18 +6,18 @@
     [clojure.string :as str]
     [game.replay :as game-replay]
     [nr.ajax :refer [GET]]
-    [nr.angel-arena.lobby :as angel-arena]
     [nr.appstate :refer [app-state current-gameid]]
     [nr.auth :refer [authenticated] :as auth]
     [nr.game-row :refer [game-row]]
     [nr.local-storage :as ls]
     [nr.gameboard.actions :refer [leave-game!]]
+    [nr.gameboard.state :refer [game-state]]
     [nr.new-game :refer [create-new-game]]
     [nr.password-game :refer [password-game]]
     [nr.pending-game :refer [pending-game]]
     [nr.replay-game :refer [start-replay-div]]
     [nr.sounds :refer [play-sound resume-sound]]
-    [nr.translations :refer [tr tr-span tr-element tr-format]]
+    [jinteki.i18n :refer [tr tr-span tr-element tr-format]]
     [nr.utils :refer [cond-button non-game-toast tr-non-game-toast slug->format]]
     [nr.ws :as ws]
     [reagent.core :as r]
@@ -29,7 +29,7 @@
 (defmethod ws/event-msg-handler :lobby/state [{data :?data}]
   (when-not (= "local-replay" (:gameid @app-state))
     (swap! app-state assoc :current-game data)
-    (when (:started data)
+    (when (and (:started data) (not= (str (:gameid data)) (str (:gameid @game-state))))
       (ws/ws-send! [:game/resync {:gameid (:gameid data)}]))))
 
 (defmethod ws/event-msg-handler :lobby/notification [{data :?data}]
@@ -217,49 +217,50 @@
                [format-toggle k (contains? visible-formats k)]))]]
     [room-tab user s games "casual" "casual"]
     [room-tab user s games "competitive" "tournament"]]
-   (when-not (= "angel-arena" (:room @s))
-     [:div.lobby-buttons
-      [new-game-button s games current-game user]
-      [reload-lobby-button]
-      [load-replay-button s games current-game user]])])
+   [:div.lobby-buttons
+    [new-game-button s games current-game user]
+    [reload-lobby-button]
+    [load-replay-button s games current-game user]]])
 
 (defn games-list-panel [state games current-game user visible-formats]
-  (r/create-class
-    {:display-name "games-list"
-     :component-did-mount
-     (fn []
-       (ws/lobby-updates-continue!))
-     :component-will-unmount
-     (fn []
-       (ws/lobby-updates-pause!))
+  (let [visibilitychange-fn
+        (fn []
+          (if (identical? (.-visibilityState js/document) "visible")
+            (ws/lobby-updates-continue!)
+            (ws/lobby-updates-pause!)))]
+    (r/create-class
+      {:display-name "games-list"
+       :component-did-mount
+       (fn []
+         (.addEventListener js/document "visibilitychange" visibilitychange-fn)
+         (ws/lobby-updates-continue!))
+       :component-will-unmount
+       (fn []
+         (.removeEventListener js/document "visibilitychange" visibilitychange-fn)
+         (ws/lobby-updates-pause!))
 
      :reagent-render
      (fn []
        [:div.games
         [button-bar state games current-game user visible-formats]
         (if @ws/lobby-updates-state
-          (if (= "angel-arena" (:room @state))
-            [angel-arena/game-list state {:games games
-                                          :current-game current-game}]
-            [game-list state user games current-game])
+          [game-list state user games current-game]
           [:div
            "Lobby updates halted." ; this should never be visible
-           [:button {:on-click #(ws/lobby-updates-continue!)} "Reenable lobby updates"]])])}))
+           [:button {:on-click #(ws/lobby-updates-continue!)} "Reenable lobby updates"]])])})))
 
 (defn right-panel
-  [state decks current-game user]
-  (if (= "angel-arena" (:room @state))
-    [angel-arena/game-panel decks]
-    [:div.game-panel
-     (cond
-       (:replay @state)
-       [start-replay-div state]
-       (:editing @state)
-       [create-new-game state user]
-       (:password-game @state)
-       [password-game state]
-       (and @current-game (not (:started @current-game)))
-       [pending-game current-game user])]))
+  [state current-game user]
+  [:div.game-panel
+   (cond
+     (:replay @state)
+     [start-replay-div state]
+     (:editing @state)
+     [create-new-game state user]
+     (:password-game @state)
+     [password-game state]
+     (and @current-game (not (:started @current-game)))
+     [pending-game current-game user])])
 
 (defn load-replay-from-params [s params]
   (swap! app-state dissoc :replay-id)
@@ -285,7 +286,6 @@
 
 (defn game-lobby []
   (r/with-let [state (r/atom {:room "casual"})
-               decks (r/cursor app-state [:decks])
                games (r/cursor app-state [:games])
                current-game (r/cursor app-state [:current-game])
                user (r/cursor app-state [:user])
@@ -302,4 +302,4 @@
        (load-replay-from-params state params)
        [:div.lobby.panel.blue-shade
         [games-list-panel state games current-game user visible-formats]
-        [right-panel state decks current-game user]])]))
+        [right-panel state current-game user]])]))

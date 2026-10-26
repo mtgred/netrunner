@@ -113,7 +113,7 @@
         :choices {:card #(and (installed? %)
                               (f %))
                   :max (effect (min max-targets (count (valid-targets? state))))
-                  :all all?}
+                  :all (boolean all?)}
         :msg (msg "trash " (enumerate-cards targets))
         :effect (effect (trash-cards state side eid targets {:cause-card card}))}
        ab))))

@@ -88,6 +88,7 @@
         (run-on state "R&D")
         (click-prompt state :runner "Yes")
         (click-card state :runner (find-card "Boomerang" (:hand (get-runner))))
+        (click-prompt state :runner "OK")
         (if (= order 0)
           (do (click-prompt state :runner "Boomerang")
               (click-card state :runner "Tree Line")
@@ -287,6 +288,7 @@
       (play-from-hand state :runner "Carmen")
       (dotimes [_ 2] (click-card state :runner "Paladin Poemu"))
       (play-from-hand state :runner "The Class Act")
+      (click-prompt state :runner "OK")
       (end-turn state :runner)
       (is (= 1 (:credit (get-runner))) "Runner Turn 5: 1 cred")
       (is-hand? state :runner ["Pinhole Threading" "Pinhole Threading" "Miss Bones"
@@ -441,6 +443,7 @@
       (play-from-hand state :runner "Boomerang")
       ;; here is where the bug occurs - if this doesn't throw an error, we're good
       (click-card state :runner "Paladin Poemu")
+      (click-prompt state :runner "OK")
       (click-card state :runner (get-ice state :remote2 0)))))
 
 (deftest maxx-annicam-buffer-drive-one-card-in-stack

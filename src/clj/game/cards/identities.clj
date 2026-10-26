@@ -1,6 +1,5 @@
 (ns game.cards.identities
   (:require
-   [clojure.pprint :as pprint]
    [game.core.access :refer [access-bonus access-cost-bonus access-non-agenda]]
    [game.core.bad-publicity :refer [gain-bad-publicity]]
    [game.core.board :refer [all-active-installed all-installed card->server
@@ -44,7 +43,7 @@
    [game.core.play-instants :refer [play-instant]]
    [game.core.prompts :refer [cancellable clear-wait-prompt]]
    [game.core.props :refer [add-counter add-prop]]
-   [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud reveal-and-queue-event]]
+   [game.core.revealing :refer [conceal-hand reveal reveal-hand reveal-loud reveal-and-queue-event set-last-played-or-rezzed]]
    [game.core.rezzing :refer [can-pay-to-rez? rez]]
    [game.core.runs :refer [end-run get-current-encounter make-run redirect-run
                            set-next-phase start-next-phase total-cards-accessed]]
@@ -538,7 +537,8 @@
 	        :choices {:req (req (agenda? target)
                                          (installed? target))}
 		:msg (msg "turn " (card-str state target {:visible true}) " faceup")
-                :effect (effect (update! state side (assoc target :seen true)))}]
+                :effect (req (->> (update! state side (assoc target :seen true))
+                                  (set-last-played-or-rezzed state)))}]
    :events [{:event :access
              :req (req ((every-pred faceup? installed? agenda? :was-seen) (:accessed-card context)))
              :interactive (effect true)
@@ -571,7 +571,8 @@
                                  {:prompt (str "Turn " (:title tcard) " faceup?")
                                   :waiting-prompt true
                                   :yes-ability {:msg (str "turn " (card-str state tcard {:visible true}) " faceup")
-                                                :effect (effect (update! state side (assoc tcard :seen true)))}}}
+                                                :effect (req (->> (update! state side (assoc tcard :seen true))
+                                                                  (set-last-played-or-rezzed state)))}}}
                                 {:prompt "Nothing to see here"
                                  :waiting-prompt true
                                  :choices ["OK"]})
@@ -1292,7 +1293,7 @@
 (defcard "Jinteki: Replicating Perfection"
   {:static-abilities [{:type :cannot-run-on-server
                        :req (req (no-event? state side :run #(is-central? (:server (first %)))))
-                       :value (effect (map first (get-remotes state)))}]})
+                       :value (effect (mapv first (get-remotes state)))}]})
 
 (defcard "Jinteki: Restoring Humanity"
   {:events [{:event :corp-turn-ends
@@ -1659,7 +1660,7 @@
   {:events [{:event :approach-server
              :async true
              :interactive (effect true)
-             :waiting "Corp to make a decision"
+             :waiting-prompt true
              :req (req (pos? (count (:hand corp)))
                             (not (used-this-turn? (:cid card) state)))
              :effect (effect (if (some ice? (:hand corp))
@@ -2162,7 +2163,7 @@
                                (opts-fn top-3))
                              card nil)))}
         score-ev {:event :agenda-scored
-                  :skippabe true
+                  :skippable true
                   :interactive (effect true)
                   :optional {:prompt "Look at the top 3 cards of R&D?"
                              :req (req (seq (:deck corp)))
@@ -2576,7 +2577,7 @@
                                     (corp-install state side eid target nil {:ignore-install-cost true
                                                                              :msg-keys {:install-source card}})))}]
    :abilities [{:label "Gain 2 [Credits]"
-                :action :true
+                :action true
                 :async true
                 :cost [(->c :tag 1) (->c :click 1)]
                 :effect (effect (gain-credits state side eid 2))}]})
@@ -2627,8 +2628,8 @@
               (assoc swap-ability :event :agenda-stolen)]}))
 
 (defcard "Tennin Institute: The Secrets Within"
-  {:events [{:msg (msg "place 1 advancement token on " (card-str state target))
-             :label "Place 1 advancement token on a card if the Runner did not make a successful run last turn"
+  {:events [{:msg (msg "place 1 advancement counter on " (card-str state target))
+             :label "Place 1 advancement counter on a card if the Runner did not make a successful run last turn"
              :choices {:card installed?}
              :event :corp-turn-begins
              :req (req (not-last-turn? state :runner :successful-run))

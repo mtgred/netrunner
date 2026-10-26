@@ -1,28 +1,35 @@
 (ns game.core.engine
   (:require
-    [clj-uuid :as uuid]
-    [clojure.stacktrace :refer [print-stack-trace]]
-    [clojure.string :as string]
-    [cond-plus.core :refer [cond+]]
-    [game.core.board :refer [clear-empty-remotes get-all-cards all-installed all-installed-runner
-                             all-installed-runner-type all-active-installed]]
-    [game.core.card :refer [active? facedown? faceup? get-card get-cid get-title ice? in-discard? in-hand? in-rfg? in-set-aside? installed? rezzed? program? console? unique?]]
-    [game.core.card-defs :refer [card-def]]
-    [game.core.effects :refer [get-effect-maps unregister-lingering-effects is-disabled? is-disabled-reg? update-disabled-cards]]
-    [game.core.eid :refer [complete-with-result effect-completed make-eid]]
-    [game.core.finding :refer [find-cid]]
-    [game.core.payment :refer [build-spend-msg can-pay? handler]]
-    [game.core.prompt-state :refer [add-to-prompt-queue]]
-    [game.core.prompts :refer [clear-wait-prompt show-prompt show-select show-wait-prompt]]
-    [game.core.say :refer [system-msg multi-msg system-say n-last-logs]]
-    [game.core.update :refer [update!]]
-    [game.core.winning :refer [check-win-by-agenda]]
-    [game.macros :refer [continue-ability effect wait-for]]
-    [game.utils :refer [dissoc-in distinct-by enumerate-str in-coll? remove-once same-card? server-cards side-str to-keyword]]
-    [jinteki.utils :refer [other-side]]
-    [game.core.memory :refer [update-mu]]
-    [game.core.to-string :refer [card-str]]
-    [taoensso.timbre :as timbre]))
+   [clj-uuid :as uuid]
+   [clojure.string :as string]
+   [com.noahbogart.cond-plus :refer [cond+]]
+   [game.core.board :refer [all-active-installed all-installed
+                            all-installed-runner-type clear-empty-remotes]]
+   [game.core.card :refer [active? console? facedown? faceup? get-card get-cid
+                           get-title in-discard? in-hand? in-rfg?
+                           in-set-aside? installed? program? rezzed? unique?]]
+   [game.core.card-defs :refer [card-def]]
+   [game.core.effects :refer [get-effect-maps is-disabled-reg? is-disabled?
+                              unregister-lingering-effects
+                              update-disabled-cards]]
+   [game.core.eid :refer [complete-with-result effect-completed make-eid]]
+   [game.core.finding :refer [find-cid]]
+   [game.core.memory :refer [update-mu]]
+   [game.core.payment :refer [build-spend-msg can-pay? handler]]
+   [game.core.prompt-state :refer [add-to-prompt-queue]]
+   [game.core.prompts :refer [clear-wait-prompt show-prompt show-select
+                              show-wait-prompt]]
+   [game.core.say :refer [multi-msg n-last-logs system-msg system-say]]
+   [game.core.schemas :as schemas]
+   [game.core.to-string :refer [card-str]]
+   [game.core.update :refer [update!]]
+   [game.core.winning :refer [check-win-by-agenda]]
+   [game.macros :refer [continue-ability effect wait-for]]
+   [game.utils :refer [dissoc-in distinct-by enumerate-str in-coll?
+                       remove-once same-card? server-cards side-str to-keyword]]
+   [jinteki.i18n :refer [->effect-msg simple-msg]]
+   [jinteki.utils :refer [other-side]]
+   [taoensso.timbre :as timbre]))
 
 ;; resolve-ability docs
 
@@ -280,6 +287,10 @@
       (let [ability (assoc-in ability [:eid :source] card)
             ab (select-ability-kw ability)
             ability-fn (get @ability-types ab)]
+        ; NOTE (noah, 2026-09):
+        ; i don't think we want to actually validate all ability maps, that'll lead to weird bugs and we don't have good
+        ; observability right now. but during dev, please turn this one.
+        ; (schemas/assert ability schemas/Ability)
         (cond
           ab (ability-fn state side ability card targets)
           choices (check-choices state side ability card targets)
@@ -305,13 +316,17 @@
 (defn- get-side-message
   [state side {:keys [eid] :as ability} card targets payment-str]
   (when-let [message (:msg ability)]
-    (let [desc (if (or (= :cost message) (string? message))
-                 message
-                 (message state side eid card targets))
-          cost-spend-msg (build-spend-msg payment-str "use")]
+    (let [side (or (:player ability) side)
+          desc (cond
+                 (string? message) message
+                 (= :cost message) (->effect-msg {:msg/type :satisfy-card
+                                                  :msg/payments (vals (:cost-paid eid))
+                                                  :msg/title (get-title card)})
+                 :else (message state side eid card targets))]
       (cond
-        (= :cost desc) (str payment-str " to satisfy " (get-title card))
-        desc (str cost-spend-msg (get-title card) " to " desc)))))
+        (map? desc) (assoc desc :side side)
+        desc (str (build-spend-msg payment-str "use")
+                  (get-title card) " to " desc)))))
 
 (defn print-msg
   "Prints the ability message"
@@ -334,14 +349,14 @@
   ([state side eid ability card] (do-nothing state side eid ability card nil))
   ([state side eid ability card payment-str]
    (when-not (get-in ability [:change-in-game-state :silent])
-     (print-msg state side (assoc ability :msg "do nothing") card [] payment-str))
+     (print-msg state side (assoc ability :msg (simple-msg :do-nothing)) card [] payment-str))
    (effect-completed state side eid)))
 
 (defn- change-in-game-state?
   "Concession for NCIGS going - uses a 'change-in-game-state' key to check when a card
   has no potential to do anything through resolving (different to req)"
   [state side {:keys [eid] :as ability} card targets]
-  (or (= nil (get-in ability [:change-in-game-state :req]))
+  (or (nil? (get-in ability [:change-in-game-state :req]))
       ((get-in ability [:change-in-game-state :req]) state side eid card targets)))
 
 (defn- do-effect
@@ -359,15 +374,17 @@
   ([cost-paid] cost-paid)
   ([cost-paid1 cost-paid2]
    (let [costs-paid (concat (vals cost-paid1) (vals cost-paid2))]
-     (reduce (fn [acc cur]
-               (let [existing (get acc (:paid/type cur))
-                     cost-obj {:paid/type (:paid/type cur)
-                               :paid/value (+ (:paid/value existing 0) (:paid/value cur 0))
-                               :paid/x-value (+ (:paid/x-value existing 0) (:paid/x-value cur 0))
-                               :paid/targets (seq (concat (:paid/targets existing) (:paid/targets cur)))}]
-                 (assoc acc (:paid/type cur) cost-obj)))
-             {}
-             costs-paid)))
+     (->> costs-paid
+          (reduce (fn [acc cur]
+                    (let [existing (get acc (:paid/type cur))
+                          cost-obj {:paid/type (:paid/type cur)
+                                    :paid/side (:paid/side cur)
+                                    :paid/value (+ (:paid/value existing 0) (:paid/value cur 0))
+                                    :paid/x-value (+ (:paid/x-value existing 0) (:paid/x-value cur 0))
+                                    :paid/targets (seq (concat (:paid/targets existing) (:paid/targets cur)))}]
+                      (assoc! acc (:paid/type cur) cost-obj)))
+                  (transient {}))
+          (persistent!))))
   ([cost-paid1 cost-paid2 & costs-paid]
    (reduce merge-costs-paid (merge-costs-paid cost-paid1 cost-paid2) costs-paid)))
 
@@ -1176,6 +1193,17 @@
            seq
            (apply concat)))
 
+(defn- notify-unique-trashes
+  [state _ eid cards-by-side]
+  (if-let [[side cards] (first cards-by-side)]
+    (wait-for (resolve-ability
+                state side (make-eid state eid)
+                {:prompt (str "The " (enumerate-str (map #(card-str state %) cards)) " will now be trashed.")
+                 :choices ["OK"]}
+                nil nil)
+              (notify-unique-trashes state nil eid (rest cards-by-side)))
+    (effect-completed state nil eid)))
+
 (defn check-unique-and-consoles
   "d. If 2 or more unique (◆) cards with the same name are active, for each such name,
   all of those cards except the one that became active most recently are trashed. If 2
@@ -1193,14 +1221,16 @@
                            distinct
                            seq)]
     (if cards-to-trash
-      (wait-for (move* state nil (make-eid state eid)
-                       :trash-cards cards-to-trash
-                       {:game-trash true
-                        :unpreventable true})
-                (doseq [card cards-to-trash]
-                  (system-say state (to-keyword (:side card))
-                              (str (card-str state card) " is trashed.")))
-                (effect-completed state nil eid))
+      (wait-for (notify-unique-trashes state nil (make-eid state eid)
+                                       (group-by #(to-keyword (:side %)) cards-to-trash))
+                (wait-for (move* state nil (make-eid state eid)
+                                 :trash-cards cards-to-trash
+                                 {:game-trash true
+                                  :unpreventable true})
+                          (doseq [card cards-to-trash]
+                            (system-say state (to-keyword (:side card))
+                                        (str (card-str state card) " is trashed.")))
+                          (effect-completed state nil eid)))
       (effect-completed state nil eid))))
 
 (defn- enforce-conditions-impl

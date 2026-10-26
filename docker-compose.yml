@@ -3,6 +3,8 @@ services:
     entrypoint: lein repl :headless :host 0.0.0.0 :port 44867
     ports:
       - 127.0.0.1:1042:1042
+      # to test on local network (e.g. mobile), comment above and uncomment below
+      # - 0.0.0.0:1042:1042
       - 127.0.0.1:44867:44867
     volumes:
       - "./data:/usr/src/app/data"
@@ -43,6 +45,7 @@ services:
       - "./src:/usr/src/app/src"
       - "./test:/usr/src/app/test"
       - "./shadow-cljs.edn:/usr/src/app/shadow-cljs.edn"
+      - "./project.clj:/usr/src/app/project.clj"
     ports:
       - 127.0.0.1:9630:9630
       - 127.0.0.1:39039:39039

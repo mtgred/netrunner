@@ -10,7 +10,7 @@
    [nr.auth :refer [authenticated] :as auth]
    [nr.player-view :refer [player-view]]
    [nr.sounds :refer [resume-sound]]
-   [nr.translations :refer [tr tr-format tr-span]]
+   [jinteki.i18n :refer [tr tr-format tr-span]]
    [nr.utils :refer [slug->format]]
    [nr.ws :as ws]
    [reagent.core :as r]))
@@ -249,12 +249,7 @@
     minutes))
 
 (defn game-time [game]
-  ;; NOTE: while running locally (repl), the :date field ends up being
-  ;; native code, rather than Instant type. I don't understand this,
-  ;; but when running via uberjar (or after reloading web/lobby.clj)
-  ;; it is of the correct type. IDK how to fix the problem, but this
-  ;; is a workable temporary fix - NBKelly, Jul 2024
-  (when (and (:started game) (= (type (:date game)) (type (inst/now))))
+  (when (:started game)
     [:div.game-time [:span.game-time-emoji "⏰"] (str " " (time-since (:date game)) "m")]))
 
 (defn players-row [{players :players :as game}]

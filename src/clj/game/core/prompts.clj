@@ -1,13 +1,14 @@
 (ns game.core.prompts
   (:require
    [clj-uuid :as uuid]
-   [clojure.string :as str]
    [game.core.board :refer [get-all-cards]]
    [game.core.eid :refer [effect-completed make-eid]]
-   [game.core.prompt-state :refer [add-to-prompt-queue remove-from-prompt-queue]]
+   [game.core.prompt-state :refer [add-to-prompt-queue
+                                   remove-from-prompt-queue]]
    [game.core.toasts :refer [toast]]
    [game.macros :refer [when-let*]]
    [game.utils :refer [pluralize side-str]]
+   [jinteki.i18n :refer [->msg-map]]
    [medley.core :refer [find-first]]))
 
 (defn choice-parser
@@ -61,10 +62,11 @@
            {:eid (select-keys eid [:eid])
             :card card
             :prompt-type :waiting
-            :msg (str "Waiting for "
-                      (if (true? waiting-prompt)
-                        (str (side-str side) " to make a decision")
-                        waiting-prompt))}))
+            :msg (->msg-map (if (true? waiting-prompt)
+                              (if (= :corp side)
+                                :waiting-corp-default
+                                :waiting-runner-default)
+                              waiting-prompt))}))
        (add-to-prompt-queue state side newitem)))))
 
 (defn show-prompt-with-dice

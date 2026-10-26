@@ -1,7 +1,6 @@
 (ns game.core.payment
   (:require
     [clojure.string :as string]
-    [game.core.board :refer [all-active-installed]]
     [game.core.card :refer [ice?]]
     [game.core.eid :refer [make-eid]]
     [game.core.effects :refer [any-effects]]
@@ -38,7 +37,8 @@
                     (if (= :x-credits cost-name)
                       (gensym)
                       cost-name)))
-       (vals)))
+       (vals)
+       (vec)))
 
 (defn merge-cost-impl
   "Reducing function for merging costs of the same type, respecting stealth requirements."
@@ -82,20 +82,21 @@
 
 (defn merge-costs
   "Combines disparate costs into a single cost per type."
-  ([costs] (merge-costs costs false))
-  ([costs remove-zero-credit-cost]
-   (let [costs (filterv some? (flatten [costs]))
-         {real false additional true} (group-by :cost/additional costs)
-         real (group-costs real)
-         additional (group-costs additional)]
-     (->> (concat real additional)
-          (keep #(reduce merge-cost-impl nil %))
-          (remove #(if remove-zero-credit-cost
-                     (and (= :credit (:cost/type %))
-                          (zero? (:cost/amount %)))
-                     false))
-          (sort-by impl-cost-ranks)
-          (into [])))))
+  [costs]
+  (let [costs (if (sequential? costs) (flatten costs) [costs])
+        ;; no need to remove non-costs because only valid costs will have :cost/additional
+        {real false additional true} (group-by :cost/additional costs)
+        real (group-costs real)
+        additional (group-costs additional)
+        costs (into real additional)]
+    (if (seq costs)
+      (->> costs
+           (into []
+            (keep (fn [costs]
+                    (reduce merge-cost-impl nil costs))))
+           (sort-by impl-cost-ranks)
+           (vec))
+      [])))
 
 (comment
   (= [(->c :click 4) (->c :credit 2)] (merge-costs [[(->c :click 1)] [(->c :click 3)] [(->c :credit 1)] [(->c :credit 1)]]))
@@ -114,9 +115,15 @@
   ([state side title args] (can-pay? state side (make-eid state) nil title args))
   ([state side eid card arg & args]
    (let [[title args] (if (string? arg) [arg args] [nil (cons arg args)])
+         costs (merge-costs args)
          remove-zero-credit-cost (and (= (:source-type eid) :corp-install)
                                       (not (ice? card)))
-         costs (merge-costs (filter some? args) remove-zero-credit-cost)]
+         costs (if remove-zero-credit-cost
+                 (filterv (fn [c]
+                            (not (and (= :credit (:cost/type c))
+                                      (zero? (:cost/amount c)))))
+                          costs)
+                 costs)]
      (if (every? #(and (not (any-effect-stops-pay? state side %))
                        (payable? % state side eid card))
                  costs)
@@ -161,7 +168,7 @@
   ([ability cost]
    (assoc ability :cost-label
           (build-cost-label (if-let [fake-cost (:fake-cost ability)]
-                              (merge-costs cost fake-cost)
+                              (merge-costs [cost fake-cost])
                               cost)))))
 
 (comment

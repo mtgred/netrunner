@@ -1,7 +1,10 @@
 (ns game.main
-  (:require [cheshire.generate :refer [add-encoder encode-str]]
-            [game.core :as core]
-            [game.core.toasts :refer [toast]]))
+  (:require
+   [cheshire.generate :refer [add-encoder encode-str]]
+   [game.core.process-actions :refer [command-parser process-action]]
+   [game.core.say :refer [system-say]]
+   [game.core.toasts :refer [toast]]
+   [game.core.winning :refer [concede]]))
 
 (add-encoder java.lang.Object encode-str)
 
@@ -13,26 +16,27 @@
 (defn handle-action
   "Ensures the user is allowed to do command they are trying to do"
   [state side command args]
-  (when (core/process-action command state side args)
-    (set-action-id state side)))
+  (when-let [ret (process-action command state side args)]
+    (set-action-id state side)
+    ret))
 
 (defn handle-concede
   "Concedes victory from the given player."
   [state side]
   (when (and state side)
-    (core/concede state side)))
+    (concede state side)))
 
 (defn handle-say
   "Adds a message from a user to the chat log."
   [state side user message]
   (when (and state side)
-    (core/command-parser state side {:user (select-keys user [:username :emailhash])
-                                     :text message})))
+    (command-parser state side {:user (select-keys user [:username :emailhash])
+                                :text message})))
 
 (defn handle-notification
   ([state text]
    (when state
-     (core/system-say state nil text)))
+     (system-say state nil text)))
   ([state _ text] (handle-notification state text))
   ([state _ _ text] (handle-notification state text)))
 

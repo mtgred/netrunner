@@ -8,6 +8,9 @@
     padding-top: 31px
     margin-top: -31px
 
+    html.app-zoomed &
+        height: unquote("calc(100vh / var(--app-zoom, 1))")
+
     .heading, .type
         font-weight: bold
 

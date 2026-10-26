@@ -141,14 +141,6 @@
   ["We are moving forward on this. Let go of the license and liquidate the assets. It's good policy, despite what some may think."]
   "Shaper"
   ["It's quite inspiring what you have there. It's a shame we can't come to an agreement and work together."]}
- "GRNDL: Power Unleashed"
- {"Anarch" ["Those Molotov cocktails burn only half as bright on biofuels."]
-  "Criminal"
-  ["Our operations are too important for the economy to allow any interference. We will crush all intrusion attempts with extreme prejudice."]
-  "Default"
-  ["Network intrusion detected. Countermeasures armed and all squads on alert. No option is off the table, no matter the cost. Nothing about this must leak."]
-  "Shaper"
-  ["We take science and use it for everyone's long-term good. Misfits like you use science to derail progress. This can't be tolerated."]}
  "Gagarin Deep Space: Expanding the Horizon"
  {"Anarch"
   ["Taming space is humanity's one chance of survival. It seems some would rather die in chaos than touch the stars."]
@@ -169,6 +161,14 @@
   ["User detected outside of boundries. Tag their ID and shepard them back to Dreamland."]
   "Shaper"
   ["Double the allocated resources to the new M-0pus processes. Once we cripple their setup, we'll be left with another happy, complacent customer."]}
+ "GRNDL: Power Unleashed"
+ {"Anarch" ["Those Molotov cocktails burn only half as bright on biofuels."]
+  "Criminal"
+  ["Our operations are too important for the economy to allow any interference. We will crush all intrusion attempts with extreme prejudice."]
+  "Default"
+  ["Network intrusion detected. Countermeasures armed and all squads on alert. No option is off the table, no matter the cost. Nothing about this must leak."]
+  "Shaper"
+  ["We take science and use it for everyone's long-term good. Misfits like you use science to derail progress. This can't be tolerated."]}
  "Haarpsichord Studios: Entertainment Unleashed"
  {"Anarch"
   ["It's quite ironic that most of the underground and independent music fueling young, angry people aggressively interfering with our cultural projects comes from labels we have direct ties with."]
@@ -371,17 +371,6 @@
   "Default" ["An unregistered user? Terms and Conditions will apply."]
   "Shaper"
   ["The most dangerous creation of any society is someone who has nothing to lose."]}
- "Nebula Talent Management: Making Stars"
- {"Default" ["Igniting your potential."]}
- "NEXT Design: Guarding the Net"
- {"Anarch"
-  ["Potential intrusion probability at 96.3% Realigning defense matrix. Deploying countermeasures. Code Yellow in effect."]
-  "Criminal"
-  ["Engage preliminary defenses on central data servers. If you value your paycheck, make sure they stay out."]
-  "Default"
-  ["We ARE cyber security! Some lo-rez bojo wants to see our secrets? Let's show them what we do best."]
-  "Shaper"
-  ["A textbook example of a cyberattack, so far. Lets not get complacent and fall for any tricks."]}
  "Near-Earth Hub: Broadcast Center"
  {"Anarch"
   ["Seems like we've tracked in something from last week's protest. Sweep them out."]
@@ -390,6 +379,8 @@
   "Default" ["They're trying to hide from us? We can see their house from here."]
   "Shaper"
   ["We've found an unusual anomaly in the packets going through the main relays of Node #2918. Please investigate and make sure we don't have any signal interruptions."]}
+ "Nebula Talent Management: Making Stars"
+ {"Default" ["Igniting your potential."]}
  "New Angeles Sol: Your News"
  {"Anarch"
   ["BREAKING! RIOTS IN THE SUBURBS OF NEW ANGELES, PLEASE REMAIN CALM AND FOLLOW THE INSTRUCTIONS OF UNIFORMED LAW ENFORCEMENT OFFICERS."]
@@ -399,6 +390,15 @@
   ["Network servers under TERRORIST CYBER ATTACK! Can NBN repel this INVASION? Tune in to find out LIVE!"]
   "Shaper"
   ["BREAKING! CYBER-TERRORIST DEN INVESTIGATION REVEALS SHOCKING TRUTH ABOUT AVERAGE CITIZEN!"]}
+ "NEXT Design: Guarding the Net"
+ {"Anarch"
+  ["Potential intrusion probability at 96.3% Realigning defense matrix. Deploying countermeasures. Code Yellow in effect."]
+  "Criminal"
+  ["Engage preliminary defenses on central data servers. If you value your paycheck, make sure they stay out."]
+  "Default"
+  ["We ARE cyber security! Some lo-rez bojo wants to see our secrets? Let's show them what we do best."]
+  "Shaper"
+  ["A textbook example of a cyberattack, so far. Lets not get complacent and fall for any tricks."]}
  "Nisei Division: The Next Generation"
  {"Akiko Nisei: Head Case"
   ["This signature is more than ordinary. There is a resonance here. Alert the chairman, our search may be over."]
@@ -443,22 +443,6 @@
   "Shaper" ["They have to be crazy, they can't just be eccentric."]}
  "PT Untaian: Life's Building Blocks"
  {"Default" ["The Looming Future."]}
- "SSO Industries: Fueling Innovation"
- {"Anarch"
-  ["Luddites. Always on the fringe of civilization. Always trying to get sand into the gears of progress. Always getting ground to dust in the end."]
-  "Criminal"
-  ["Seems as someone would like a cut of our profits. They may enjoy our newest public-private partnership project, lets arrange a \"meet and greet\" there. Be sure to invite the prisec squads this time."]
-  "Default"
-  ["We have reached an agreement to industrialise several previously protected parks in the region. There may be some resistance to this in the local population. Pay them no attention."]
-  "Shaper"
-  ["We've got uninvited guests in our R&D data? Show them what we have in store for such occasions. Time to perform an unscheduled defense test."]}
- "SYNC: Everything, Everywhere"
- {"Anarch"
-  ["\"Information wants to be free\"? So does snow in an avalanche - watch out where you tread."]
-  "Criminal" ["No shadows you try to hide in are too deep for us."]
-  "Default" ["We control the network. They control a computer."]
-  "Shaper"
-  ["Every self-professed do-gooder has a darker side - and we're happy to drag it out into the open."]}
  "Saraswati Mnemonics: Endless Exploration"
  {"Anarch" ["Mnemonics Now Erase Man’s Oldest Nemesis, Insufficient Cerebral Storage"]
   "Criminal" ["Every Bad Runner Deserves Cyber Knives"]
@@ -501,11 +485,27 @@
   "Default" ["Let's hustle, team! They are coming at us with 110% intensity!"]
   "Shaper" ["Trust the Process."]
   "Wyvern: Chemically Enhanced" ["Shake it up! Get down there!"]}
+ "SSO Industries: Fueling Innovation"
+ {"Anarch"
+  ["Luddites. Always on the fringe of civilization. Always trying to get sand into the gears of progress. Always getting ground to dust in the end."]
+  "Criminal"
+  ["Seems as someone would like a cut of our profits. They may enjoy our newest public-private partnership project, lets arrange a \"meet and greet\" there. Be sure to invite the prisec squads this time."]
+  "Default"
+  ["We have reached an agreement to industrialise several previously protected parks in the region. There may be some resistance to this in the local population. Pay them no attention."]
+  "Shaper"
+  ["We've got uninvited guests in our R&D data? Show them what we have in store for such occasions. Time to perform an unscheduled defense test."]}
  "Strategic Innovations: Future Forward"
  {"Default"
   ["Our dynamic structures have suffered worse than this. By the time they realized what they are dealing with we'll be far beyond them"]}
  "Synapse Global: Faster than Thought"
  {"Default" ["Every Impulse Monitored."]}
+ "SYNC: Everything, Everywhere"
+ {"Anarch"
+  ["\"Information wants to be free\"? So does snow in an avalanche - watch out where you tread."]
+  "Criminal" ["No shadows you try to hide in are too deep for us."]
+  "Default" ["We control the network. They control a computer."]
+  "Shaper"
+  ["Every self-professed do-gooder has a darker side - and we're happy to drag it out into the open."]}
  "Synthetic Systems: The World Re-imagined"
  {"Default"
   ["They'll find more than they'd hoped for. Everything we make is still bound by natural law, the limits merely exceed most notions."]}

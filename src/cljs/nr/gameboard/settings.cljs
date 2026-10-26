@@ -2,12 +2,15 @@
   (:require
    [nr.account :refer [post-options]]
    [nr.appstate :refer [app-state]]
-   [nr.translations :refer [tr-element tr-span]]))
+   [nr.gameboard.pane-size :refer [reset-pane-size!]]
+   [jinteki.i18n :refer [tr-element tr-span]]))
 
 (defn settings-pane []
   (fn []
     [:div.settings
-     [:section [:button {:on-click #(post-options (constantly nil))} [tr-span [:ingame-settings_save "Save"]]]]
+     [:section
+      [:button {:on-click #(post-options (constantly nil))} [tr-span [:ingame-settings_save "Save"]]]
+      [:button {:on-click #(reset-pane-size!)} [tr-span [:ingame-settings_reset-log-size "Reset log size"]]]]
      [:section
       [tr-element :h4 [:ingame-settings_card-stacking "Card settings"]]
       [:div
@@ -111,7 +114,13 @@
                         :name "pin-zoom"
                         :checked (get-in @app-state [:options :pin-zoom])
                         :on-change #(swap! app-state assoc-in [:options :pin-zoom] (.. % -target -checked))}]
-        [tr-span [:settings_pin-zoom "Keep zoomed cards on screen"]]]]]
+        [tr-span [:settings_pin-zoom "Keep zoomed cards on screen"]]]]
+      [:div
+       [:label [:input {:type "checkbox"
+                        :name "zoom-last-played-or-rezzed"
+                        :checked (get-in @app-state [:options :zoom-last-played-or-rezzed])
+                        :on-change #(swap! app-state assoc-in [:options :zoom-last-played-or-rezzed] (.. % -target -checked))}]
+        [tr-span [:settings_zoom-last-played-or-rezzed "Zoom the most recently rezzed or played card"]]]]]
 
 
      [:section

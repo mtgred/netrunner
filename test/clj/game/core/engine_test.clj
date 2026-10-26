@@ -64,51 +64,66 @@
 
 (deftest merge-costs-paid
   (let [eid1 {:cost-paid {:click {:paid/type :click
+                                  :paid/side :corp
                                   :paid/value 3}
                           :credit {:paid/type :credit
+                                   :paid/side :corp
                                    :paid/value 1}
                           :forfeit {:paid/type :forfeit
+                                    :paid/side :corp
                                     :paid/targets [{:title "NAPD Contract"}]
                                     :paid/value 1}}}
         eid2 {:cost-paid {:click {:paid/type :click
+                                  :paid/side :corp
                                   :paid/value 1}}}
         eid3 {:cost-paid {:trash {:paid/type :trash
+                                  :paid/side :corp
                                   :paid/value 1
                                   :paid/targets [{:title "C.I. Fund"}]}}}]
     (is (= {:click {:paid/type :click
+                    :paid/side :corp
                     :paid/value 3}
             :credit {:paid/type :credit
+                     :paid/side :corp
                      :paid/value 1}
             :forfeit {:paid/type :forfeit
+                      :paid/side :corp
                       :paid/targets [{:title "NAPD Contract"}]
                       :paid/value 1}}
            (e/merge-costs-paid (:cost-paid eid1))))
     (is (= {:click {:paid/type :click
+                    :paid/side :corp
                     :paid/targets nil
                     :paid/x-value 0
                     :paid/value 4}
             :credit {:paid/type :credit
+                     :paid/side :corp
                      :paid/targets nil
                      :paid/x-value 0
                      :paid/value 1}
             :forfeit {:paid/type :forfeit
+                      :paid/side :corp
                       :paid/targets [{:title "NAPD Contract"}]
                       :paid/x-value 0
                       :paid/value 1}}
            (e/merge-costs-paid (:cost-paid eid1) (:cost-paid eid2))))
     (is (= {:click {:paid/type :click
+                    :paid/side :corp
                     :paid/targets nil
                     :paid/x-value 0
                     :paid/value 4}
             :credit {:paid/type :credit
+                     :paid/side :corp
                      :paid/targets nil
                      :paid/x-value 0
                      :paid/value 1}
             :forfeit {:paid/type :forfeit
+                      :paid/side :corp
                       :paid/targets [{:title "NAPD Contract"}]
                       :paid/x-value 0
                       :paid/value 1}
             :trash {:paid/type :trash
+                    :paid/side :corp
                     :paid/targets [{:title "C.I. Fund"}]
                     :paid/x-value 0
                     :paid/value 1}}
@@ -230,6 +245,7 @@
     (card-ability state :runner (get-resource state 0) 0)
     (is (= "Choose a facedown installed card" (:msg (prompt-map :runner))))
     (click-card state :runner (get-runner-facedown state 0))
+    (click-prompt state :runner "OK")
     (is (last-log-contains? state "Mirror is trashed."))
     (is (find-card "Mirror" (:discard (get-runner))))))
 
@@ -242,5 +258,6 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Mirror")
     (play-from-hand state :runner "Box-E")
+    (click-prompt state :runner "OK")
     (is (= "Box-E" (:title (get-hardware state 0))))
     (is (last-log-contains? state "Mirror is trashed."))))

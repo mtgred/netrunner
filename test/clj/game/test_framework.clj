@@ -8,17 +8,22 @@
    [game.core.board :refer [server-list]]
    [game.core.card :refer [active? get-card get-counters get-title installed?
                            rezzed?]]
+   [game.core.change-vals :as change-vals]
    [game.core.diffs :refer [icon-summary]]
    [game.core.eid :as eid]
    [game.core.events :refer [turn-events]]
    [game.core.ice :refer [active-ice?]]
-   [game.core.initializing :refer [make-card]]
    [game.core.threat :refer [threat-level]]
+   [game.main :as main]
    [game.test-framework.asserts]
    [game.utils :as utils]
    [game.utils-test :refer [error-wrapper is']]
    [jinteki.cards :refer [all-cards]]
-   [jinteki.utils :as jutils]))
+   [jinteki.i18n :refer [build-msg load-dictionary!]]
+   [jinteki.utils :as jutils]
+   [web.game :refer [handle-message-and-send-diffs! update-and-send-diffs!]])
+  (:import
+   (java.util.regex Pattern)))
 
 ;; Card information and definitions
 (defn load-cards []
@@ -28,6 +33,7 @@
        merge))
 
 (defn load-all-cards []
+  (load-dictionary! "public/i18n")
   (when (empty? @all-cards)
     (->> (load-cards)
          (map (juxt :title identity))
@@ -45,6 +51,40 @@
              '[game.cards.resources]
              '[game.cards.upgrades])))
 (load-all-cards)
+
+(comment
+  (do
+    (require '[clj-async-profiler.core :as prof]
+             '[clojure.tools.namespace.file :refer [read-file-ns-decl]]
+             '[clojure.tools.namespace.find :refer [find-sources-in-dir]])
+    (defn find-ns-decls [dirs]
+      (into []
+            (comp (mapcat find-sources-in-dir)
+                  (keep read-file-ns-decl)
+                  (keep second))
+            dirs))
+    (defn require-dirs [dirs]
+      (let [dirs (mapv io/file (or dirs #{"test"}))
+            nses (find-ns-decls dirs)]
+        (when (empty? nses)
+          (throw (ex-info "No namespaces to run" {:dirs dirs})))
+        (apply require nses)
+        nses))
+    (require-dirs nil))
+  (prn :hello)
+  (prof/profile
+   (dotimes [_ 10]
+     (test-var #'game.core.scenarios-test/masterwork-overinstall-boomerang-complex-case-full-game)))
+  #_(prof/profile (clojure.test/run-all-tests))
+  (prof/serve-ui 8080))
+;;; action-wrapper to better mimic real-world usage
+
+
+(defn do-action
+  [command state side args]
+  (update-and-send-diffs! main/handle-action {:state state} side command args))
+;; generic test helpers
+
 
 (defn is-zone-impl
   "Is the zone exactly equal to a given set of cards?"
@@ -116,11 +156,11 @@
            (or (map? card)
                (string? card)))
       (if (map? card)
-        (core/process-action "select" state side {:card card :eid (:eid (get-prompt state side))})
+        (do-action "select" state side {:card card :eid (:eid (get-prompt state side))})
         (let [all-cards (core/get-all-cards state)
               matching-cards (filter #(= card (core/get-title %)) all-cards)]
           (if (= (count matching-cards) 1)
-            (core/process-action "select" state side {:card (first matching-cards) :eid (:eid (get-prompt state side))})
+            (do-action "select" state side {:card (first matching-cards) :eid (:eid (get-prompt state side))})
             (is' (= 1 (count matching-cards))
                  (str "Expected to click card [ " card
                       " ] but found " (count matching-cards)
@@ -146,27 +186,31 @@
           (:number choices))
       (try
         (let [parsed-number (Integer/parseInt choice)]
-          (when-not (core/process-action "choice" state side {:choice parsed-number :eid (:eid (get-prompt state side))})
+          (when-not (do-action "choice" state side {:choice parsed-number :eid (:eid (get-prompt state side))})
             (is' (not true) (str "Parsed number " parsed-number " is incorrect somehow"))))
-        (catch Exception _
-          (is' (number? (Integer/parseInt choice)) (expect-type "number string" choice))))
+        (catch Exception ex
+          (if (number? (Integer/parseInt choice))
+            (throw ex)
+            (is' (number? (Integer/parseInt choice)) (expect-type "number string" choice)))))
 
       (= :trace (:prompt-type prompt))
       (try
         (let [int-choice (Integer/parseInt choice)
               under (<= int-choice (:choices prompt))]
           (when-not (and under
-                         (core/process-action "choice" state side {:choice int-choice :eid (:eid (get-prompt state side))}))
+                         (do-action "choice" state side {:choice int-choice :eid (:eid (get-prompt state side))}))
             (is' (<= int-choice (:choices prompt))
                  (str (utils/side-str side) " expected to pay [ "
                       int-choice " ] to trace but couldn't afford it."))))
-        (catch Exception _
-          (is' (number? (Integer/parseInt choice))
-               (expect-type "number string" choice))))
+        (catch Exception ex
+          (if (number? (Integer/parseInt choice))
+            (throw ex)
+            (is' (number? (Integer/parseInt choice))
+                 (expect-type "number string" choice)))))
 
       ;; List of card titles for auto-completion
       (:card-title choices)
-      (when-not (core/process-action "choice" state side {:choice choice :eid (:eid (get-prompt state side))})
+      (when-not (do-action "choice" state side {:choice choice :eid (:eid (get-prompt state side))})
         (is' (true? (or (map? choice) (string? choice))) (expect-type "card string or map" choice)))
 
       ;; Default text prompt
@@ -176,7 +220,7 @@
                            (utils/same-card? choice (:value %)))
             idx (or (:idx (first args)) 0)
             chosen (nth (filter choice-fn choices) idx nil)]
-        (when-not (and chosen (core/process-action "choice" state side {:choice {:uuid (:uuid chosen)} :eid (:eid (get-prompt state side))}))
+        (when-not (and chosen (do-action "choice" state side {:choice {:uuid (:uuid chosen)} :eid (:eid (get-prompt state side))}))
           (is' (= choice (mapv :value choices))
                (str (utils/side-str side) " expected to click [ "
                     (pr-str (if (string? choice) choice (:title choice "")))
@@ -202,7 +246,7 @@
             :else prompt)]
       (cond
         (and (not prompt) (not (seq prompts))) true
-        (not prompt) (is` nil "attempt to resolve nil prompt option")
+        (not prompt) (is' nil "attempt to resolve nil prompt option")
         ;; it's a select prompt - we want to click on a card
         (prompt-is-type? state side :select)
         (do (if (or (:cid prompt) (string? prompt))
@@ -222,9 +266,8 @@
   "click an arbitrary number of prompts, one after the other.
   You can tag a prompt like {:side :runner :choice ...}, feed in raw cards,
   or feed in cards like {:choice ...}"
-  ([state side] true)
-  ([state side & prompts]
-   `(error-wrapper (click-prompts-impl ~state ~side ~(vec prompts)))))
+  [state side prompt & prompts]
+  `(error-wrapper (click-prompts-impl ~state ~side ~(vec (cons prompt prompts)))))
 
 (defn do-trash-prompt
   [state cost]
@@ -232,7 +275,7 @@
 
 (defn select-bad-pub
   [state shift-held?]
-  (core/process-action "bad-pub-choice" state :runner {:eid (:eid (get-prompt state :runner))
+  (do-action "bad-pub-choice" state :runner {:eid (:eid (get-prompt state :runner))
                                                        :shift-key-held shift-held?}))
 
 ;; General utilities necessary for starting a new game
@@ -271,10 +314,10 @@
 
 (defn start-turn
   [state side]
-  (core/process-action "start-turn" state side nil))
+  (do-action "start-turn" state side nil))
 
 (defn end-turn [state side]
-  (core/process-action "end-turn" state side nil))
+  (do-action "end-turn" state side nil))
 
 (defmacro take-credits
   "Take credits for n clicks, or if no n given, for all remaining clicks of a side.
@@ -284,7 +327,7 @@
    `(let [other# (if (= ~side :corp) :runner :corp)]
       (error-wrapper (ensure-no-prompts ~state))
       (dotimes [_# (or ~n (get-in @~state [~side :click]))]
-        (core/process-action "credit" ~state ~side nil))
+        (do-action "credit" ~state ~side nil))
       (when (zero? (get-in @~state [~side :click]))
         (end-turn ~state ~side)
         (start-turn ~state other#)))))
@@ -380,11 +423,11 @@
                  {:gameid 1
                   :format format
                   :players [{:side "Corp"
-                             :user {:username "Corp"}
+                             :user {:username "Test Corp"}
                              :deck {:identity (:identity corp)
                                     :cards (:deck corp)}}
                             {:side "Runner"
-                             :user {:username "Runner"}
+                             :user {:username "Test Runner"}
                              :deck {:identity (:identity runner)
                                     :cards (:deck runner)}}]})]
      (when-not dont-start-game
@@ -451,7 +494,7 @@
     (is' has-ability? (str (:title card) " has ability #" ability))
     (is' playable? (str (:title card) " is active or ability #" ability " is an auto resolve toggle"))
     (when (and has-ability? playable?)
-      (core/process-action "ability" state side {:card card
+      (do-action "ability" state side {:card card
                                                  :ability ability
                                                  :targets (first targets)})
       true)))
@@ -467,7 +510,7 @@
   (let [card (get-card state card)]
     (is' (some? card) (str (:title card) " exists"))
     (when (some? card)
-      (is' (core/process-action "expend" state side {:card card}))
+      (is' (do-action "expend" state side {:card card}))
       true)))
 
 (defmacro expend
@@ -482,7 +525,7 @@
     (is' (core/get-current-encounter state) "Subroutines can be resolved")
     (when (and (active-ice? state ice)
                (core/get-current-encounter state))
-      (core/process-action "subroutine" state :corp {:card ice :subroutine ability})
+      (do-action "subroutine" state :corp {:card ice :subroutine ability})
       true)))
 
 (defmacro card-subroutine
@@ -496,8 +539,8 @@
             :ability ability
             :targets (first targets)}]
     (if (= :corp side)
-      (core/process-action "corp-ability" state side ab)
-      (core/process-action "runner-ability" state side ab))))
+      (do-action "corp-ability" state side ab)
+      (do-action "runner-ability" state side ab))))
 
 (defn change-impl
   [state side value-key delta]
@@ -505,7 +548,7 @@
                 :delta delta}]
     (is' (and (keyword? value-key) (number? delta)) "Passed in value-key and delta" )
     (when (and (keyword? value-key) (number? delta))
-      (core/process-action "change" state side target))))
+      (do-action "change" state side target))))
 
 (defmacro change
   [state side value-key delta]
@@ -525,7 +568,7 @@
 
 (defn remove-tag
   [state side]
-  (core/process-action "remove-tag" state side nil))
+  (do-action "remove-tag" state side nil))
 
 (defn get-ice
   "Get installed ice protecting server by position. If no pos, get all ice on the server."
@@ -601,7 +644,7 @@
       (is' (some #{server} (concat (server-list state) ["New remote"]))
            (str server " is not a valid server.")))
     (when (some? card)
-      (is' (core/process-action "play" state side {:card card :server server}))
+      (is' (do-action "play" state side {:card card :server server}))
       true)))
 
 (defn flashback-impl
@@ -609,7 +652,7 @@
   (let [card (find-card title (get-in @state [side :discard]))]
     (ensure-no-prompts state)
     (is' (some? card) (str title " is in discard"))
-    (is' (core/process-action "flashback" state side {:card card :server nil}))))
+    (is' (do-action "flashback" state side {:card card :server nil}))))
 
 (defmacro flashback
   "Play a card as a flashback based on its title"
@@ -640,23 +683,24 @@
     (ensure-no-prompts state)
     (is' (some? card) (str title "is in hand"))
     (if-not (some? card)
-      (do (let [other-side (if (= side :runner) :corp :runner)]
-            (when (some? (find-card title (get-in @state [other-side :hand])))
-              (println title " was instead found in the opposing hand - was the wrong side used?")))
-          true)
-      (when-let [played (core/process-action "play" state side {:card card})]
+      (let [other-side (if (= side :runner) :corp :runner)]
+        (when (some? (find-card title (get-in @state [other-side :hand])))
+          (println title " was instead found in the opposing hand - was the wrong side used?"))
+        true)
+      (when (do-action "play" state side {:card card})
         (let [choice-sets (split-on-keywords choices)]
           (doseq [cs choice-sets]
             (cond
               (vector? cs) (click-prompts-impl state side cs)
               (#{:rez :rezzed} cs)
-              (if-let [tgt (->> (turn-events state side :corp-install)
-                                (apply concat)
-                                (map :card)
-                                (filter #(= (:title %) title))
-                                (filter (complement rezzed?))
-                                last)]
-                (core/process-action "rez" state :corp {:card tgt})
+              (if-let [tgt (last (into []
+                                       (comp
+                                        cat
+                                        (map :card)
+                                        (filter #(= (:title %) title))
+                                        (filter (complement rezzed?)))
+                                       (turn-events state side :corp-install)))]
+                (do-action "rez" state :corp {:card tgt})
                 (throw (Exception. (str title " not found in an unrezzed state to be rezzed")))))))))))
 
 
@@ -675,9 +719,8 @@
        (play-from-hand-with-prompts-impl state side (first play) (rest play))))))
 
 (defmacro play-cards
-  ([state side] `nil)
-  ([state side & plays]
-   `(error-wrapper (play-cards-impl ~state ~side ~(vec plays)))))
+  [state side play & plays]
+  `(error-wrapper (play-cards-impl ~state ~side ~(vec (cons play plays)))))
 
 ;;; Run functions
 (defn run-on-impl
@@ -687,11 +730,11 @@
     (is' (not run) "There is no existing run")
     (is' (pos? (get-in @state [:runner :click])) "Runner can make a run")
     (when (and (not run) (pos? (get-in @state [:runner :click])))
-      (core/process-action "run" state :runner {:server server})
+      (do-action "run" state :runner {:server server})
       (when-not wait-at-initiation
-        (core/process-action "continue" state :corp nil)
+        (do-action "continue" state :corp nil)
         (when-not (:no-action run)
-          (core/process-action "continue" state :runner nil)))
+          (do-action "continue" state :runner nil)))
       true)))
 
 (defmacro run-on
@@ -706,7 +749,7 @@
     (is' (some? run) "There is a run happening")
     (is' (:next-phase run) "The next phase has been set")
     (when (and (some? run) (:next-phase run))
-      (core/process-action "start-next-phase" state :runner nil)
+      (do-action "start-next-phase" state :runner nil)
       true)))
 
 (defmacro run-next-phase
@@ -722,9 +765,9 @@
      (when (and (some? encounter)
                 (no-prompt? state :runner)
                 (no-prompt? state :corp))
-       (core/process-action "continue" state :corp nil)
+       (do-action "continue" state :corp nil)
        (when-not (:no-action encounter)
-         (core/process-action "continue" state :runner nil))
+         (do-action "continue" state :runner nil))
        (when-not (= :any phase)
          (is' (= phase (:phase (:run @state))) "Run is in the correct phase"))))))
 
@@ -747,9 +790,9 @@
                   (no-prompt? state :runner)
                   (no-prompt? state :corp)
                   (not= :success (:phase run)))
-         (core/process-action "continue" state :corp nil)
+         (do-action "continue" state :corp nil)
          (when-not (:no-action run)
-           (core/process-action "continue" state :runner nil))
+           (do-action "continue" state :runner nil))
          (when-not (= :any phase)
            (is' (= phase (:phase (:run @state))) "Run is in the correct phase")))))))
 
@@ -764,7 +807,7 @@
     (is' (some? run) "There is a run happening")
     (is' (= :movement (:phase run)) "Runner is allowed to jack out")
     (when (and (some? run) (= :movement (:phase run)))
-      (core/process-action "jack-out" state :runner nil)
+      (do-action "jack-out" state :runner nil)
       true)))
 
 (defmacro run-jack-out
@@ -798,8 +841,8 @@
               (not= :success (:phase (:run @state))))
     (run-continue-impl state))
   (when (and (= :success phase)
-             (and (= :movement (:phase (:run @state)))
-                  (zero? (:position (:run @state)))))
+             (= :movement (:phase (:run @state)))
+             (zero? (:position (:run @state))))
     (run-continue-impl state))
   (when ice
     (is' (utils/same-card? ice (core/get-current-ice state))) "Current ice reached"))
@@ -816,7 +859,7 @@
     (is' (core/get-current-encounter state) "Subroutines can be resolved")
     (when (and (active-ice? state ice)
                (core/get-current-encounter state))
-      (core/process-action "unbroken-subroutines" state :corp {:card ice}))))
+      (do-action "unbroken-subroutines" state :corp {:card ice}))))
 
 (defmacro fire-subs
   [state card]
@@ -824,7 +867,7 @@
 
 (defmacro auto-pump
   [state card]
-  `(core/process-action "dynamic-ability" ~state :runner {:dynamic "auto-pump"
+  `(do-action "dynamic-ability" ~state :runner {:dynamic "auto-pump"
                                                           :card (get-card ~state ~card)}))
 
 (defn auto-pump-and-break-impl
@@ -834,7 +877,7 @@
     (is' (core/get-current-encounter state) "Subroutines can be resolved")
     (when (and (active-ice? state)
                (core/get-current-encounter state))
-      (core/process-action "dynamic-ability" state :runner {:dynamic "auto-pump-and-break"
+      (do-action "dynamic-ability" state :runner {:dynamic "auto-pump-and-break"
                                                             :card breaker}))))
 
 (defmacro auto-pump-and-break
@@ -859,11 +902,6 @@
   [state card server]
   `(error-wrapper (play-run-event-impl ~state ~card ~server)))
 
-(defn get-run-event
-  ([state] (get-in @state [:runner :play-area]))
-  ([state pos]
-   (get-in @state [:runner :play-area pos])))
-
 (defn rez-impl
   ([state side card] (rez-impl state side card nil))
   ([state _side card {:keys [expect-rez] :or {expect-rez true}}]
@@ -872,7 +910,7 @@
      (is' (not (rezzed? card)) (str (:title card) " is unrezzed"))
      (when (and (installed? card)
                 (not (rezzed? card)))
-       (core/process-action "rez" state :corp {:card card})
+       (do-action "rez" state :corp {:card card})
        (if expect-rez
          (is' (rezzed? (get-card state card)) (str (:title card) " is rezzed"))
          (is' (not (rezzed? (get-card state card))) (str (:title card) " is still unrezzed")))))))
@@ -888,7 +926,7 @@
     (is' (rezzed? card) (str (:title card) " is rezzed"))
     (when (and (installed? card)
                (rezzed? card))
-      (core/process-action "derez" state side {:card card}))))
+      (do-action "derez" state side {:card card}))))
 
 (defmacro derez
   [state side card]
@@ -899,7 +937,7 @@
   (let [phase (keyword (str (name side) "-phase-12"))]
     (is' (phase @state) (str (jutils/capitalize (name side)) " in Step 1.2"))
     (when (phase @state)
-      (core/process-action "end-phase-12" state side nil))))
+      (do-action "end-phase-12" state side nil))))
 
 (defmacro end-phase-12
   [state side]
@@ -908,7 +946,7 @@
 (defn click-draw-impl
   [state side]
   (ensure-no-prompts state)
-  (core/process-action "draw" state side nil))
+  (do-action "draw" state side nil))
 
 (defmacro click-draw
   [state side]
@@ -917,7 +955,7 @@
 (defn click-credit-impl
   [state side]
   (ensure-no-prompts state)
-  (core/process-action "credit" state side nil))
+  (do-action "credit" state side nil))
 
 (defmacro click-credit
   [state side]
@@ -930,7 +968,7 @@
     (is' (some? card) (str (:title card) " exists"))
     (is' (installed? card) (str (:title card) " is installed"))
     (when (and (some? card) (installed? card))
-      (is' (core/process-action "advance" state side {:card card}))
+      (is' (do-action "advance" state side {:card card}))
       true)))
 
 (defmacro click-advance
@@ -942,7 +980,7 @@
   (let [card (get-card state card)]
     (is' (some? card) (str (:title card) " exists"))
     (when (some? card)
-      (is' (core/process-action "trash" state side {:card card}))
+      (is' (do-action "trash" state side {:card card}))
       true)))
 
 (defmacro trash
@@ -960,10 +998,10 @@
       (core/gain state :corp :click advancementcost :credit advancementcost)
       (core/fake-checkpoint state)
       (dotimes [_ advancementcost]
-        (core/process-action "advance" state :corp {:card card}))
+        (do-action "advance" state :corp {:card card}))
       (is' (= advancementcost (get-counters (get-card state card) :advancement)))
       (when (= advancementcost (get-counters (get-card state card) :advancement))
-        (core/process-action "score" state :corp {:card card})
+        (do-action "score" state :corp {:card card})
         (is' (find-card (:title card) (get-scored state :corp)))
         true))))
 
@@ -974,8 +1012,8 @@
 
 (defn score
   "Needed for calling the internal function directly"
-  ([state _ card] (core/process-action "score" state :corp {:card card}))
-  ([state _ card args] (core/process-action "score" state :corp (merge args {:card card}))))
+  ([state _ card] (do-action "score" state :corp {:card card}))
+  ([state _ card args] (do-action "score" state :corp (merge args {:card card}))))
 
 (defn advance
   "Advance the given card."
@@ -1016,7 +1054,7 @@
         ab (nth abilities 5)
         cost (core/card-ability-cost state :corp ab card nil)]
     (is' (core/can-pay? state :corp nil cost)))
-  (is' (core/process-action "trash-resource" state :corp nil))
+  (is' (do-action "trash-resource" state :corp nil))
   true)
 
 (defmacro trash-resource
@@ -1064,18 +1102,47 @@
 
 (defn trace
   [state base]
-  (core/init-trace state :corp
-                   (make-card {:title "/trace command" :side "Corp"})
-                   {:base base}))
+  (handle-message-and-send-diffs! {:state state} :corp {} (str "/trace " base)))
+
+(defn get-msg-text
+  [m]
+  (if (string? m) m (or (:raw-text m) (build-msg m))))
+
+(defn escape-log-string [s]
+  (if (string? s) (Pattern/quote s) s))
+
+(defn side-log
+  [side log]
+  (into [] (keep #(or (side %) (:public %)) log)))
+
+(defn last-log-contains?
+  ([state content] (last-log-contains? state content :public))
+  ([state content side]
+   (->> (->> @state :log (side-log side) last :text get-msg-text)
+        (re-find (re-pattern (escape-log-string content))))))
+
+(defn second-last-log-contains?
+  ([state content] (second-last-log-contains? state content :public))
+  ([state content side]
+   (->> (->> @state :log (side-log side) butlast last :text get-msg-text)
+        (re-find (re-pattern (escape-log-string content))))))
+
+(defn last-n-log-contains?
+  ([state n content]
+   (last-n-log-contains? state n content :public))
+  ([state n content side]
+   (->> (-> @state :log reverse (->> (side-log side)) (nth n) :text get-msg-text)
+        (re-find (re-pattern (escape-log-string content))))))
 
 (defn log-str [state]
   (->> (:log @state)
        (keep :public)
-       (map :text)
+       (map (comp get-msg-text :text))
        (str/join " ")))
 
-(defn print-log [state]
-  (prn (log-str state)))
+(defn print-logs [state]
+  (prn (log-str state))
+  (newline))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s
@@ -1113,44 +1180,15 @@
          ~'print-prompts (fn []
                            (print (~'prompt-fmt :corp))
                            (println (~'prompt-fmt :runner)))]
-     ~@body))
+     (let [ret# (do ~@body)]
+       (log-str ~'state)
+       ret#)))
 
 (defmacro before-each
   [let-bindings & testing-blocks]
   (assert (every? #(= 'testing (first %)) testing-blocks))
   (let [bundles (for [block testing-blocks] `(let [~@let-bindings] ~block))]
     `(do ~@bundles)))
-
-(defn escape-log-string [s]
-  (str/escape s {\[ "\\[" \] "\\]"}))
-
-(defn- side-log
-  [side log]
-  (into [] (keep #(or (side %) (:public %)) log)))
-
-(defn last-log-contains?
-  ([state content] (last-log-contains? state content :public))
-  ([state content side]
-   (->> (->> @state :log (side-log side) last :text)
-        (re-find (re-pattern (escape-log-string content)))
-        some?)))
-
-(defn second-last-log-contains?
-  ([state content] (second-last-log-contains? state content :public))
-  ([state content side]
-   (->> (->> @state :log (side-log side) butlast last :text)
-        (re-find (re-pattern (escape-log-string content)))
-        some?)))
-
-(defn last-n-log-contains?
-  ([state n content]
-   (last-n-log-contains? state n content :public))
-  ([state n content side]
-   (let [log (->> @state :log (side-log side) (mapv :text))
-         index (- (count log) 1 n)
-         log-entry (nth log index "")
-         res (re-find (re-pattern (escape-log-string content)) log-entry)]
-     (some? res))))
 
 (defn- make-zone
   [zone replacement]
@@ -1201,7 +1239,7 @@
                       (= server "Archives") :archives)]
      ;; adjust the threat level for threat: ... subs
      (when threat
-       (game.core.change-vals/change
+       (change-vals/change
          ;; theoretically, either side is fine!
          state (first (shuffle [:corp :runner])) {:key :agenda-point :delta threat})
        (is (threat-level threat state) "Threat set")
@@ -1304,18 +1342,6 @@
 (defmacro is-deck-stacked?
   [state side expected-deck]
   `(error-wrapper (is-deck-stacked-impl ~state ~side ~expected-deck)))
-
-(defn provides-mu-impl
-  [cname x]
-  (let [state (new-game {:runner {:hand [cname] :credits 15}})] ;; todo - install-free
-    (take-credits state :corp)
-    (play-from-hand state :runner cname)
-    (is' (= (+ 4 x) (core/available-mu state)) (str cname " provided " x " memory"))
-    state))
-
-(defmacro provides-mu
-  [cname x]
-  `(error-wrapper (provides-mu-impl ~cname ~x)))
 
 (defn bad-usage [n]
   `(throw (new IllegalArgumentException (str ~n " should only be used inside 'is'"))))

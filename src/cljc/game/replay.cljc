@@ -3,6 +3,13 @@
     [clojure.string :refer [ends-with? join]]
     [differ.core :as differ]))
 
+(defn typing-log?
+  "The typing indicator feature was removed, but games recorded before the
+  removal can still have typing system messages in their log."
+  [msg]
+  (and (= "__system__" (:user msg))
+       (= "typing" (:text msg))))
+
 (defn replay-prepare-state
   [state replay-side]
   (-> state
@@ -89,7 +96,7 @@
   (let [prev-log (:log @(:game-state replay-deps))]
     (while (and
              (or (= prev-log (:log @(:game-state replay-deps)))
-                 (= "typing" (-> @(:game-state replay-deps) :log last :text)))
+                 (typing-log? (-> @(:game-state replay-deps) :log last)))
              (not (replay-reached-end? @(:replay-status replay-deps) @(:replay-timeline replay-deps))))
       (replay-forward! replay-deps))))
 
@@ -116,7 +123,7 @@
   (let [prev-log (:log @(:game-state replay-deps))]
     (while (and
              (or (= prev-log (:log @(:game-state replay-deps)))
-                 (= "typing" (-> @(:game-state replay-deps) :log last :text)))
+                 (typing-log? (-> @(:game-state replay-deps) :log last)))
              (not (replay-reached-start? @(:replay-status replay-deps) @(:replay-timeline replay-deps))))
       (replay-backward! replay-deps))))
 

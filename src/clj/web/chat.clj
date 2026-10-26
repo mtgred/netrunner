@@ -2,15 +2,16 @@
   (:require
    [cljc.java-time.instant :as inst]
    [clojure.string :as s]
+   [jinteki.utils :refer [superuser?]]
    [monger.collection :as mc]
    [monger.query :as q]
+   [taoensso.timbre :as timbre]
    [web.app-state :as app-state]
    [web.lobby :as lobby]
    [web.mongodb :refer [->object-id]]
    [web.user :refer [active-user? visible-to-user]]
-   [web.utils :refer [response mongo-time-to-utc-string]]
-   [web.ws :as ws]
-   [taoensso.timbre :as timbre]))
+   [web.utils :refer [mongo-time-to-utc-string response]]
+   [web.ws :as ws]))
 
 (def msg-collection "messages")
 (def log-collection "moderator_actions")
@@ -98,12 +99,12 @@
 (defmethod ws/-msg-handler :chat/delete-msg
   chat--delete-msg
   [{{db :system/db
-     {:keys [username isadmin ismoderator] :as user} :user} :ring-req
+     {:keys [username] :as user} :user} :ring-req
     {:keys [msg]} :?data
     id :id
     timestamp :timestamp}]
   (when-let [id (:_id msg)]
-    (when (or isadmin ismoderator)
+    (when (superuser? user)
       (timbre/info {:type :mod-action} (str username "deleted message" msg "\n"))
       (mc/remove-by-id db msg-collection (->object-id id))
       (mc/insert db log-collection
@@ -118,12 +119,11 @@
 (defmethod ws/-msg-handler :chat/delete-all
   chat--delete-all
   [{{db :system/db
-     {:keys [username isadmin ismoderator]} :user :as user} :ring-req
+     {:keys [username]} :user :as user} :ring-req
     {:keys [sender]} :?data
     id :id
     timestamp :timestamp}]
-  (when (and sender
-             (or isadmin ismoderator))
+  (when (and sender (superuser? user))
     (timbre/info {:type :mod-action} (str username "deleted all messages from user" sender "\n"))
     (mc/remove db msg-collection {:username sender})
     (mc/insert db log-collection

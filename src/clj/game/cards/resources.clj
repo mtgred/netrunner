@@ -36,13 +36,14 @@
                              first-successful-run-on-server? get-turn-damage no-event? no-run-event?  second-event? turn-events]]
    [game.core.expose :refer [expose]]
    [game.core.finding :refer [find-cid]]
-   [game.core.flags :refer [card-flag? clear-persistent-flag!
+   [game.core.flags :refer [card-flag? clear-persistent-flag! can-steal?
                             has-flag? in-corp-scored?
                             register-persistent-flag! register-turn-flag! zone-locked?]]
    [game.core.gaining :refer [gain gain-clicks gain-credits lose lose-clicks
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size runner-hand-size+]]
    [game.core.hosting :refer [host]]
+   [jinteki.i18n :refer [msg-with-cost]]
    [game.core.ice :refer [break-sub break-subroutine! get-strength ice-strength pump pump-ice
                           unbroken-subroutines-choice update-all-ice
                           update-all-icebreakers update-breaker-strength]]
@@ -178,7 +179,7 @@
                                  (rezzed? current-ice)
                                  (not (:broken (selector (:subroutines current-ice)))))
                   :break 1
-                  :breaks "All"
+                  :breaks #{"All"}
                   :break-cost [(->c :trash-can)]
                   :cost [(->c :trash-can)]
                   :label (str "Break the " descriptor " subroutine")
@@ -926,16 +927,21 @@
                    :yes-ability
                    {:cost [(->c :credit (rez-cost state :corp (:card context))) (->c :trash-self)]
                     :async true
-                    :effect (effect (wait-for
-                                   (derez state :runner (:card context) {:msg-keys {:source-card card :and-then " and prevent the Corp from rezzing it for the remainder of this turn."}})
-                                   (register-turn-flag!
-                                     state side card :can-rez
-                                     (fn [state _ card]
-                                       (if (same-card? card (:card context))
-                                         ((constantly false)
-                                          (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
-                                         true)))
-                                   (effect-completed state side eid)))}}}
+                    :effect (effect
+                              (wait-for (derez state :runner (:card context)
+                                          {:msg-keys
+                                           {:source-card card
+                                            #_#_:and-then
+                                            {:effect/type :prevent-corp-rezzing-remainder-of-run
+                                             :effect/card-str (:card context)}}})
+                                (register-turn-flag!
+                                  state side card :can-rez
+                                  (fn [state _ card]
+                                    (if (same-card? card (:card context))
+                                      ((constantly false)
+                                        (toast state :corp "Cannot rez the rest of this turn due to Councilman"))
+                                      true)))
+                                (effect-completed state side eid)))}}}
                  card targets))}]})
 
 (defcard "Counter Surveillance"
@@ -2086,9 +2092,9 @@
                                        (first-event? state side :corp-install #(and (not (ice? (:card (first %))))
                                                                                     (not (condition-counter? (:card (first %)))))))
                         :yes-ability {:msg (msg (if (seq (:deck runner))
-                                                  (str "trash "
+                                                  (str "trash the top card ("
                                                        (:title (first (:deck runner)))
-                                                       " from the stack and draw 1 card")
+                                                       ") from the stack and draw 1 card")
                                                   "trash no cards from the stack (it is empty)"))
                                       :async true
                                       :effect (effect (wait-for (mill state :runner :runner 1)
@@ -2450,10 +2456,10 @@
                          (and (empty? (filter :trash cards))
                               (number? (:trash (:accessed-card context))))))
              :once :per-turn
-             :msg (msg "reveal " (card-str state target {:visible true}))
+             :msg (msg "reveal " (card-str state (:accessed-card context) {:visible true}))
              :async true
              :effect (effect (swap! state assoc-in [:runner :register :must-trash-with-credits] true)
-                          (reveal state side eid target))}
+                          (reveal state side eid (:accessed-card context)))}
             {:event :post-access-card
              :req (req (get-in @state [:runner :register :must-trash-with-credits]))
              :effect (effect (swap! state assoc-in [:runner :register :must-trash-with-credits] false))}]})
@@ -2466,7 +2472,9 @@
               :prompt (msg "Pay 2 [Credits] to avoid another tag? (" (get-in @state [:prevent :tag :remaining]) " remaining)")
               :yes-ability {:async true
                             :cost [(->c :credit 2)]
-                            :msg "avoid 1 tag"
+                            :msg (msg-with-cost
+                                  {:effect/type :avoid-tags
+                                   :effect/count 1})
                             :effect (effect (wait-for (prevent-tag state :runner 1)
                                                    (continue-ability
                                                      state side
@@ -2478,7 +2486,9 @@
                  :prompt "Pay 2 [Credits] to avoid a tag?"
                  :ability {:async true
                            :cost [(->c :credit 2)]
-                           :msg "avoid 1 tag"
+                           :msg (msg-with-cost
+                                  {:effect/type :avoid-tags
+                                   :effect/count 1})
                            :req (req (preventable? context))
                            :effect (effect (wait-for (prevent-tag state :runner 1)
                                                   (continue-ability state side (prevent-another-tag) card nil)))}}]
@@ -3104,7 +3114,7 @@
                                     card (move state :corp target :rfg)]
                                 (system-msg state side
                                             (str payment-str
-                                                 " and remove " (:title target)
+                                                 " to remove " (:title target)
                                                  " from the game"))
                                 (complete-with-result state side eid card)))))}}})
 
@@ -3301,7 +3311,7 @@
   {:events [{:event :runner-turn-begins
              :async true
              :msg (msg (if (>= (get-counters card :power) 2)
-                         "takes 1 core damage"
+                         "take 1 core damage"
                          "gain [Click]"))
              :effect (effect (if (>= (get-counters card :power) 2)
                             (wait-for (add-counter state side card :power (- (get-counters card :power)))
@@ -3950,8 +3960,7 @@
                             :async true
                             :effect (effect (trash state side eid card))}
                            (choose-one-helper
-                             {:event :runner-action-phase-ends
-                              :interactive (effect true)}
+                             {:interactive (effect true)}
                              [{:option "Draw 2 cards"
                                :ability {:change-in-game-state {:silent true :req (req (seq (get-in @state [:runner :deck])))}
                                          :msg "draw 2 cards"
@@ -4089,7 +4098,9 @@
                                      :duration :end-of-run
                                      :unregister-once-resolved true
                                      :async true
-                                     :req (req (= (:title (:accessed-card context)) named-agenda))
+                                     :req (req (and
+                                                 (= (:title (:accessed-card context)) named-agenda)
+                                                 (can-steal? state side (:accessed-card context))))
                                      :effect (effect (steal state side eid (:accessed-card context)))}]))
                                (trash state side eid card {:unpreventable true :cause-card card}))}}}]
    :abilities [(set-autoresolve :auto-fire "Whistleblower")]})
