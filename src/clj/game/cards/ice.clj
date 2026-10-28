@@ -65,7 +65,7 @@
    [game.core.update :refer [update!]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
-   [jinteki.i18n :refer [->msg-map msg-type?]]
+   [jinteki.i18n :refer [->msg-map msg-type? simple-msg]]
    [jinteki.utils :refer :all]))
 
 ;;;; Helper functions specific for ice
@@ -102,7 +102,7 @@
 (def end-the-run
   "Basic ETR subroutine"
   {:label "End the run"
-   :msg "end the run"
+   :msg (simple-msg {:effect/type :end-run})
    :async true
    :effect (effect (end-run state :corp eid card))})
 
@@ -242,7 +242,8 @@
   "Gain specified amount of credits"
   [credits]
   {:label (str "Gain " credits " [Credits]")
-   :msg (str "gain " credits " [Credits]")
+   :msg (simple-msg {:effect/type :gain-credits
+                     :effect/count credits})
    :async true
    :effect (effect (gain-credits state side eid credits))})
 
@@ -282,7 +283,8 @@
   "Runner loses credits effect"
   [credits]
   {:label (str "Make the Runner lose " credits " [Credits]")
-   :msg (str "force the Runner to lose " credits " [Credits]")
+   :msg (simple-msg {:effect/type :force-runner-lose-credits
+                     :effect/credits credits})
    :change-in-game-state {:silent true :req (req (pos? (:credit runner)))}
    :async true
    :effect (effect (lose-credits state :runner eid credits))})
@@ -314,7 +316,8 @@
 (def trash-program-sub
   {:prompt (->msg-map :prompt_choose-a-program-to-trash)
    :label "Trash a program"
-   :msg (msg "trash " (:title target))
+   :msg (simple-msg {:effect/type :trash-card
+                     :effect/card-str target})
    :waiting-prompt true
    :change-in-game-state {:silent true :req (req (seq (filter program? (all-installed state :runner))))}
    :choices {:card #(and (installed? %)
@@ -362,7 +365,8 @@
   {:async true
    :prompt (->msg-map :prompt_choose-an-installed-card-to-trash)
    :label "Trash an installed Runner card"
-   :msg (msg "trash " (:title target))
+   :msg (simple-msg {:effect/type :trash-card
+                     :effect/card-str target})
    :waiting-prompt true
    :change-in-game-state {:silent true :req (req (seq (all-installed state :runner)))}
    :choices {:card #(and (installed? %)
@@ -1510,7 +1514,8 @@
   {:subroutines
    [{:label "Do 1 net damage"
      :async true
-     :msg "do 1 net damage"
+     :msg (simple-msg {:effect/type :do-net-damage
+                       :effect/value 1})
      :effect (effect (wait-for
                     (damage state :corp (make-eid state eid) :net 1 {:card card})
                     (let [[trashed-card] async-result]
@@ -1746,10 +1751,10 @@
   {:subroutines [(choose-one-helper
                    {:label "Trash 1 program unless runner pays 3 [Credits]"
                     :player :runner}
-                   [(cost-option [(->c :credit 3)] :runner)
-                    {:option "The Corp trashes a Program"
+                   [{:option "The Corp trashes a Program"
                      :ability {:async true
-                               :effect (effect (continue-ability state :corp trash-program-sub card nil))}}])
+                               :effect (effect (continue-ability state :corp trash-program-sub card nil))}}
+                    (cost-option [(->c :credit 3)] :runner)])
                  (end-the-run-unless-runner-pays (->c :credit 3))]
    :abilities [{:label "End the run"
                 :msg "end the run"
@@ -4776,7 +4781,7 @@
   {:subroutines [(runner-loses-credits 3)
                  {:label "End the run if the Runner has 6 [Credits] or less"
                   :change-in-game-state {:req (req (< (:credit runner) 7)) :silent true}
-                  :msg "end the run"
+                  :msg (simple-msg {:effect/type :end-run})
                   :async true
                   :effect (effect (end-run state :corp eid card))}]})
 

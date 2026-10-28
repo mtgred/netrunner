@@ -24,7 +24,7 @@
    [game.core.to-string :refer [card-str]]
    [game.macros :refer [effect msg req wait-for]]
    [game.utils :refer :all]
-   [jinteki.i18n :refer [->msg-map msg-type?]]
+   [jinteki.i18n :refer [->msg-map msg-type? msg-with-cost simple-msg]]
    [jinteki.utils :refer :all]))
 ;; Card definitions
 
@@ -32,7 +32,7 @@
   {:abilities [{:action true
                 :label "Gain 1 [Credits]"
                 :cost [(->c :click)]
-                :msg "gain 1 [Credits]"
+                :msg (simple-msg {:effect/type :gain-credits :effect/count 1})
                 :async true
                 :effect (effect (wait-for (gain-credits state side 1 {:action :corp-click-credit})
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
@@ -42,7 +42,7 @@
                 :label "Draw 1 card"
                 :req (req (not-empty (:deck corp)))
                 :cost [(->c :click)]
-                :msg "draw 1 card"
+                :msg (simple-msg {:effect/type :draw-cards :effect/count 1})
                 :async true
                 :effect (effect (trigger-event state side :corp-click-draw {:card (-> @state side :deck (nth 0))})
                              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
@@ -94,7 +94,7 @@
                 :label "Advance 1 installed card"
                 :cost [(->c :click 1) (->c :credit 1)]
                 :async true
-                :msg (msg "advance " (card-str state (:card context)))
+                :msg (simple-msg {:effect/type :advance :effect/card-str (:card context)})
                 :effect (effect (update-advancement-requirement state side (:card context))
                                 (play-sfx state side "click-advance")
                                 (add-prop state side eid (get-card state (:card context)) :advance-counter 1))}
@@ -104,7 +104,7 @@
                 :async true
                 :req (req tagged)
                 :prompt (->msg-map :prompt_choose-a-resource-to-trash)
-                :msg (msg "trash " (:title target))
+                :msg (simple-msg {:effect/type :trash-card :effect/card-str target})
                 ;; I hate that we need to modify the basic action card like this, but I don't think there's any way around it -nbkelly, '24
                 :choices {:req (req (if (and (untrashable-while-resources? target)
                                                   (< (count (filter resource? (all-active-installed state :runner))) 2))
@@ -147,7 +147,7 @@
                {:action true
                 :label "Purge virus counters"
                 :cost [(->c :click 3)]
-                :msg "purge all virus counters"
+                :msg (simple-msg {:effect/type :purge-virus-counters})
                 :async true
                 :effect (effect (play-sfx state side "virus-purge")
                              (purge state side eid))}]})
@@ -156,7 +156,7 @@
   {:abilities [{:action true
                 :label "Gain 1 [Credits]"
                 :cost [(->c :click)]
-                :msg "gain 1 [Credits]"
+                :msg (simple-msg {:effect/type :gain-credits :effect/count 1})
                 :async true
                 :effect (effect (wait-for (gain-credits state side 1 {:action :runner-click-credit})
                                        (swap! state update-in [:stats side :click :credit] (fnil inc 0))
@@ -166,7 +166,7 @@
                 :label "Draw 1 card"
                 :req (req (not-empty (:deck runner)))
                 :cost [(->c :click)]
-                :msg "draw 1 card"
+                :msg (simple-msg {:effect/type :draw-cards :effect/count 1})
                 :async true
                 :effect (effect (trigger-event state side :runner-click-draw {:card (-> @state side :deck (nth 0))})
                              (swap! state update-in [:stats side :click :draw] (fnil inc 0))
@@ -204,7 +204,7 @@
                {:action true
                 :label "Remove 1 tag"
                 :cost [(->c :click 1) (->c :credit 2)]
-                :msg "remove 1 tag"
+                :msg (simple-msg {:effect/type :remove-tags :effect/count 1})
                 :req (req tagged)
                 :async true
                 :effect (effect (play-sfx state side "click-remove-tag")

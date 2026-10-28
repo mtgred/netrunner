@@ -58,7 +58,7 @@
    [game.core.winning :refer [check-win-by-agenda]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
-   [jinteki.i18n :refer [->msg-map msg-type?]]
+   [jinteki.i18n :refer [->msg-map msg-type? simple-msg]]
    [jinteki.utils :refer :all]))
 
 (defn- add-agenda-point-counters
@@ -140,7 +140,8 @@
                     (all-active-installed state :runner)))
     :choices {:card #(and (installed? %)
                           (resource? %))}
-    :msg (msg "trash " (card-str state target))
+    :msg (simple-msg {:effect/type :trash-card
+                      :effect/card-str target})
     :async true
     :effect (effect (trash state side eid target {:cause-card card}))}})
 
@@ -1729,7 +1730,11 @@
 
 (defcard "Orbital Superiority"
   {:on-score
-   {:msg (msg (if (is-tagged? state) "do 4 meat damage" "give the Runner 1 tag"))
+   {:msg (simple-msg (if (is-tagged? state)
+                       {:effect/type :do-meat-damage
+                        :effect/value 4}
+                       {:effect/type :give-tags
+                        :effect/count 1}))
     :async true
     :effect (effect (if (is-tagged? state)
                    (damage state :corp eid :meat 4 {:card card})
@@ -2496,7 +2501,8 @@
    {:optional
     {:prompt {:msg/type :prompt_draw-cards
               :msg/count 2}
-     :yes-ability {:msg "draw 2 cards"
+     :yes-ability {:msg (simple-msg {:effect/type :draw-cards
+                                     :effect/count 2})
                    :async true
                    :effect (effect (draw state :corp eid 2))}}}})
 

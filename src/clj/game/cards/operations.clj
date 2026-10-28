@@ -59,7 +59,7 @@
    [game.core.virus :refer [number-of-virus-counters]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
-   [jinteki.i18n :refer [->msg-map msg-type?]]
+   [jinteki.i18n :refer [->msg-map msg-type? simple-msg]]
    [jinteki.utils :refer :all]))
 
 (defn- lockdown
@@ -115,7 +115,9 @@
                               (f %))
                   :max (effect (min max-targets (count (valid-targets? state))))
                   :all (boolean all?)}
-        :msg (msg "trash " (enumerate-cards targets))
+        :msg (simple-msg {:effect/type :trash-cards
+                          :effect/card-strs targets
+                          :effect/count (count targets)})
         :effect (effect (trash-cards state side eid targets {:cause-card card}))}
        ab))))
 
@@ -1401,7 +1403,8 @@
 (defcard "Hansei Review"
   {:on-play
    {:async true
-    :msg "gain 10 [Credits]"
+    :msg (simple-msg {:effect/type :gain-credits
+                      :effect/count 10})
     :effect (effect (wait-for (gain-credits state :corp 10)
                            (continue-ability
                              state :corp
@@ -1410,8 +1413,11 @@
                                 :choices {:max 1
                                           :all true
                                           :card #(and (corp? %) (in-hand? %))}
-                                :msg {:public "trash a card from HQ"
-                                      :corp (msg "trash " (card-str state target {:maybe-visible true}) " from HQ")}
+                                :msg {:public (simple-msg {:effect/type :trash-n-cards-from-hq
+                                                           :effect/count 1})
+                                      :corp (simple-msg {:effect/type :trash-cards-from-hq
+                                                         :effect/count 1
+                                                         :effect/card-strs [(assoc target :maybe-visible true)]})}
                                 :async true
                                 :effect (effect (trash-cards state side eid targets {:cause-card card}))})
                              card nil)))}})
@@ -2034,7 +2040,8 @@
 
 (defcard "Neurospike"
   {:on-play
-   {:msg (msg "do " (:scored-agenda corp-reg 0) " net damage")
+   {:msg (simple-msg {:effect/type :do-net-damage
+                      :effect/value (:scored-agenda corp-reg 0)})
     :change-in-game-state {:req (req (pos? (:scored-agenda corp-reg 0)))}
     :async true
     :effect (effect (damage state side eid :net (:scored-agenda corp-reg 0) {:card card}))}})
@@ -2298,17 +2305,22 @@
    (choose-one-helper
      [{:option {:msg/type :choice_gain-credits
                 :msg/credits 3}
-       :ability {:msg "gain 3 [Credits]"
+       :ability {:msg (simple-msg {:effect/type :gain-credits
+                                    :effect/count 3})
                  :async true
                  :effect (effect (gain-credits state :corp eid 3))}}
       {:option {:msg/type :choice_draw-cards
                 :msg/count 3}
-       :ability {:msg "draw 3 cards"
+       :ability {:msg (simple-msg {:effect/type :draw-cards
+                                    :effect/count 3})
                  :async true
                  :effect (effect (draw state :corp eid 3))}}
       {:option "Gain 3 [Credits] and draw 3 cards"
        :req (req tagged)
-       :ability {:msg "gain 3 [Credits] and draw 3 cards"
+       :ability {:msg (simple-msg {:effect/type :gain-credits
+                                    :effect/count 3}
+                                   {:effect/type :draw-cards
+                                    :effect/count 3})
                  :async true
                  :effect (effect (wait-for (gain-credits state :corp 3)
                                            (draw state :corp eid 3)))}}])})
@@ -2408,7 +2420,8 @@
                          :msg/count 1}
                 :ability {:async true
                           :display-side :corp
-                          :msg "give the runner 1 tag"
+                          :msg (simple-msg {:effect/type :give-tags
+                                            :effect/count 1})
                           :effect (effect (gain-tags state :corp eid 1))}}
                (cost-option [(->c :credit 8)] :runner)])})
 
@@ -3030,7 +3043,8 @@
 (defcard "Sprint"
   {:on-play
    {:async true
-    :msg "draw 3 cards"
+    :msg (simple-msg {:effect/type :draw-cards
+                      :effect/count 3})
     :effect (effect (wait-for
                    (draw state side 3)
                    (continue-ability

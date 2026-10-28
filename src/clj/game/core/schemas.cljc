@@ -223,6 +223,7 @@
 (def $choice [:effect/choice :string])
 (def $count [:effect/count :int])
 (def $credits [:effect/credits :int])
+(def $damage [:effect/damage [:or :string :keyword]])
 (def $discount [:effect/discount :int])
 (def $position [:effect/position :int])
 (def $seen [:effect/seen [:sequential Card]])
@@ -262,6 +263,8 @@
 (register-effect :trash-card $card-str)
 (register-effect :trash-card-at-no-cost $card-str)
 (register-effect :trash-n-cards $count)
+(register-effect :trash-n-cards-from-hq $count)
+(register-effect :trash-cards-from-hq $count $card-strs)
 (register-effect :trash-cards $count $card-strs)
 (register-effect :trash-accessed-card $title)
 (register-effect :trash-all-cards-in-grip)
@@ -293,6 +296,7 @@
 ;; tags
 
 (register-effect :avoid-tags $count)
+(register-effect :give-tags $count)
 (register-effect :take-tags $count)
 (register-effect :remove-tags $count)
 (register-effect :remove-all-tags $count)
@@ -365,9 +369,11 @@
 
 ;; advancement counters
 
+(register-effect :advance $card-str)
 (register-effect :place-n-advancement-counters $count $card-str)
 (register-effect :remove-advancement-counters $count $card-str)
 (register-effect :place-virus-counters $count $title)
+(register-effect :purge-virus-counters)
 (register-effect :charge-card $card-str $count)
 
 (register-effect :place-credits-on-self $credits)
@@ -395,6 +401,7 @@
 
 (register-effect :force-runner-draw-cards $count)
 (register-effect :force-runner-gain-credits $credits)
+(register-effect :force-runner-lose-credits $credits)
 
 (register-effect :each-player-draws-cards $count)
 
@@ -439,6 +446,10 @@
 (register-effect :redirect-run-to-hq)
 (register-effect :redirect-run-to-rd)
 
+;; end run
+
+(register-effect :end-run)
+
 ;; icebreaker strength
 
 (register-effect :give-strength-to-icebreaker-during-run $bonus $title)
@@ -467,6 +478,10 @@
 
 ;; damage
 
+(register-effect :do-meat-damage $value)
+(register-effect :do-net-damage $value)
+(register-effect :do-brain-damage $value)
+(register-effect :do-core-damage $value)
 (register-effect :suffer-meat-damage $value)
 (register-effect :suffer-net-damage $value)
 (register-effect :suffer-brain-damage $value)
@@ -599,9 +614,35 @@
     (swap! msg-registry assoc kw (mu/merge Msg schema)))
   kw)
 
+(register-msg :msg-play-card)
+(register-msg :msg-pay-play-card)
 (register-msg :use-card)
 (register-msg :pay-use-card)
 (register-msg :satisfy-card)
+
+(register-msg :msg-make-a-run-on)
+(register-msg :msg-make-a-run-on-ignoring-costs)
+(register-msg :msg-bypass-ice $username $title)
+(register-msg :msg-approach-ice $username $card-str)
+(register-msg :msg-encounter-ice $username $card-str)
+(register-msg :msg-pass-ice $username $card-str)
+(register-msg :msg-continue $username)
+(register-msg :msg-jack-out $username)
+(register-msg :msg-approach-server $username $server)
+(register-msg :msg-breach-server $username $server)
+
+(register-msg :msg-access-card)
+(register-msg :msg-access-card-unseen)
+(register-msg :msg-pay-access-card)
+(register-msg :msg-pay-access-card-unseen)
+(register-msg :msg-access-archives)
+(register-msg :msg-steal-agenda $username $title $value)
+
+(register-msg :msg-advance)
+(register-msg :msg-score-agenda $username $title $value)
+(register-msg :msg-pay-score-agenda)
+
+(register-msg :msg-trash-damage $username $titles $damage)
 
 (register-msg :increase-trace-strength $username $payment $value)
 (register-msg :corp-start-of-turn $username $turn $credits $cards)

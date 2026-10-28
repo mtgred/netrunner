@@ -136,7 +136,8 @@
   [dmg]
   {:label (str "Do " dmg " net damage")
    :async true
-   :msg (str "do " dmg " net damage")
+   :msg (simple-msg {:effect/type :do-net-damage
+                     :effect/value dmg})
    :effect (effect (damage state side eid :net dmg {:card card}))})
 
 (defn do-meat-damage
@@ -144,7 +145,8 @@
   [dmg]
   {:label (str "Do " dmg " meat damage")
    :async true
-   :msg (str "do " dmg " meat damage")
+   :msg (simple-msg {:effect/type :do-meat-damage
+                     :effect/value dmg})
    :effect (effect (damage state side eid :meat dmg {:card card}))})
 
 (defn do-brain-damage
@@ -152,7 +154,8 @@
   [dmg]
   {:label (str "Do " dmg " core damage")
    :async true
-   :msg (str "do " dmg " core damage")
+   :msg (simple-msg {:effect/type :do-core-damage
+                     :effect/value dmg})
    :effect (effect (damage state side eid :brain dmg {:card card}))})
 
 (defn rfg-on-empty
@@ -214,7 +217,8 @@
   "Basic give runner n tags ability."
   [n]
   {:label (str "Give the Runner " (quantify n "tag"))
-   :msg (str "give the Runner " (quantify n "tag"))
+   :msg (simple-msg {:effect/type :give-tags
+                     :effect/count n})
    :interactive (effect true)
    :async true
    :effect (effect (gain-tags state :corp eid n))})
@@ -311,7 +315,8 @@
    (merge
      {:label (str "Take " n " [Credits] from this " t)
       :change-in-game-state {:req (req (pos? (get-counters card :credit))) :silent (effect (not (:action ab-base)))}
-      :msg (msg "gain " (min n (get-counters card :credit)) " [Credits]")
+      :msg (simple-msg {:effect/type :gain-credits
+                        :effect/count (min n (get-counters card :credit))})
       :async true
       :effect (effect (when (:action ab-base) (play-tiered-sfx state side "click-credit" 3 n))
                    (take-credits state side eid card :credit n))}
@@ -478,7 +483,8 @@
                      (effect-completed state side eid))))}))
 
 (defn gain-credits-ability [x]
-  {:msg (str "gain " x " [Credits]")
+  {:msg (simple-msg {:effect/type :gain-credits
+                     :effect/count x})
    :label (str "gain " x " [Credits]")
    :async true
    :effect (effect (gain-credits state side eid x))})
@@ -520,8 +526,10 @@
     :choices {:card #(and (corp? %)
                        (in-discard? %)
                        (pred %))}
-    :msg {:public (msg "add " (card-str state target {:visible (faceup? target)}) " to HQ")
-          :corp (msg "add " (card-str state target {:maybe-visible true}) " to HQ")}
+    :msg {:public (simple-msg {:effect/type :add-card-to-hq
+                               :effect/card-str (assoc target :visible (faceup? target))})
+          :corp (simple-msg {:effect/type :add-card-to-hq
+                             :effect/card-str (assoc target :maybe-visible true)})}
     :effect (effect (move state :corp target :hand))}))
 
 (defn tutor-abi
@@ -635,8 +643,12 @@
                                (or (not pred)
                                    (pred target))
                                (or (not advanceable-only) (can-be-advanced? state target)))}
-      :msg {:public (msg "place " (quantify qty "advancement counter") " on " (card-str state target))
-            :corp (msg "place " (quantify qty "advancement counter") " on " (card-str state target {:maybe-visible true}))}
+      :msg {:public (simple-msg {:effect/type :place-n-advancement-counters
+                                 :effect/count qty
+                                 :effect/card-str target})
+            :corp (simple-msg {:effect/type :place-n-advancement-counters
+                               :effect/count qty
+                               :effect/card-str (assoc target :maybe-visible true)})}
       :async true
       :effect (effect (add-prop state side eid target :advance-counter qty {:placed true}))})))
 
