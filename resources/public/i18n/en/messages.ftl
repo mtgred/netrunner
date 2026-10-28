@@ -23,7 +23,7 @@
 -heap = the heap
 -stack = the stack
 
--credit = [Credit]
+-credit = [Credits]
 -click = [Click]
 -bad-publicity = bad publicity
 -tag = tag
@@ -54,6 +54,15 @@
 -upgrade = upgrade
 -upgrade-plural = upgrades
 
+## damage types
+
+damage-name = {$damage ->
+    [meat] meat damage
+    [net] net damage
+    [core] core damage
+    *[other] unknown damage
+}
+
 ## locations
 
 server-name = {$server ->
@@ -65,6 +74,8 @@ server-name = {$server ->
 
 ## Logical templates
 
+msg-play-card = {$username} plays {$title}.
+msg-pay-play-card = {$username} {$payment} to play {$title}.
 use-card = {$username} uses {$title} to {$do-ability}.
 pay-use-card = {$username} {$payment} to use {$title} to {$do-ability}.
 satisfy-card = {$username} {$payment} to satisfy {$title}.
@@ -453,9 +464,12 @@ turn-all-installed-runner-facedown = turn all installed { -runner(case: "genitiv
 
 change-identity = change identity to {$title}
 
-## Payments 
+## Payments
 
-payment-click = spends {$value} {-click}
+payment-click = spends {$value ->
+    [one] {-click}
+    *[other] {$value} {-click}
+}
 payment-credit = pays {$value} {-credit}
 payment-x-credit = pays {$value} {-credit}
 payment-credit-pool = pays {$value} {-credit} from [their] {-credit-pool}
@@ -796,6 +810,45 @@ msg-rfg-n-cards-from-stack = {$username} removes {$count ->
     *[other] the top {$count} cards of {-stack} from the game.
 }
 
+## Runs
+
+# TODO payment may be empty, not sure what conditional is correct to check that. needed for make/makes wording choice
+msg-make-a-run-on = {$username} {$payment} to make a run on {$server}.
+msg-make-a-run-on-ignoring-costs = {$username} {$payment} to make a run on {$server}, ignoring all costs.
+msg-bypass-ice = {$username} bypasses {$title}.
+msg-approach-ice = {$username} approaches {$card-str}.
+msg-encounter-ice = {$username} encounters {$card-str}.
+msg-pass-ice = {$username} passes {$card-str}.
+msg-continue = {$username} will continue the run.
+msg-jack-out = {$username} jacks out.
+msg-approach-server = {$username} approaches {$server}.
+msg-breach-server = {$username} breaches {$server}.
+
+## Accesses
+
+msg-access-card = {$username} accesses {$title} from {$server}.
+msg-access-card-unseen = {$username} accesses an unseen card from {$server}.
+msg-pay-access-card = {$username} {$payment} to access {$title} from {$server}.
+msg-pay-access-card-unseen = {$username} {$payment} to access an unseen card from {$server}.
+msg-access-archives = {$username} accesses everything else in {-archives}.
+msg-steal-agenda = {$username} steals {$title} and gains {$value ->
+    [one] 1 agenda point.
+    *[other] {$value} agenda points.
+}
+
+## Scoring
+
+msg-advance = {$username} {$payment} to advance {$card-str}.
+msg-score-agenda = {$username} scores {$title} and gains {$value ->
+    [one] 1 agenda point.
+    *[other] {$value} agenda points.
+}
+msg-pay-score-agenda = {$username} {$payment} to score {$title}.
+
+## Damage
+
+msg-trash-damage = {$username} trashes {$titles} due to {$damage}.
+
 ## Traces
 
 increase-trace-strength = {$username} {$payment} to increase trace strength to {$value}.
@@ -822,7 +875,7 @@ runner-end-of-turn = {$username} is ending [their] turn {$turn} with {$credits} 
 
 mandatory-start-of-turn-draw = {$username} makes [their] mandatory start of turn draw.
 
-no-further-actions = {$username} has no further actions.
+no-further-actions = {$username} has no further action.
 
 skip-discard-step = {$username} skips [their] discard step this turn.
 

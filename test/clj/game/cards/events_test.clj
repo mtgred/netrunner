@@ -8003,7 +8003,7 @@
     (play-run-event state "Vamp" :hq)
     (click-prompt state :runner "Vamp")
     (click-prompt state :runner "8")
-    (is (second-last-log-contains? state "uses Vamp to force the Corp to lose 8 [Credit]"))
+    (is (second-last-log-contains? state "uses Vamp to force the Corp to lose 8 [Credits]"))
     (is (= 1 (count-tags state)) "Took 1 tag")
     (is (= 5 (:credit (get-runner))) "Paid 8 credits")
     (is (zero? (:credit (get-corp))) "Corp lost all 8 credits")))
