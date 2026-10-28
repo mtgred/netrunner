@@ -23,7 +23,7 @@
 -heap = the heap
 -stack = the stack
 
--credit = [Credit]
+-credit = [Credits]
 -click = [Click]
 -bad-publicity = bad publicity
 -tag = tag
@@ -453,9 +453,12 @@ turn-all-installed-runner-facedown = turn all installed { -runner(case: "genitiv
 
 change-identity = change identity to {$title}
 
-## Payments 
+## Payments
 
-payment-click = spends {$value} {-click}
+payment-click = spends {$value ->
+    [one] {-click}
+    *[other] {$value} {-click}
+}
 payment-credit = pays {$value} {-credit}
 payment-x-credit = pays {$value} {-credit}
 payment-credit-pool = pays {$value} {-credit} from [their] {-credit-pool}
@@ -822,7 +825,7 @@ runner-end-of-turn = {$username} is ending [their] turn {$turn} with {$credits} 
 
 mandatory-start-of-turn-draw = {$username} makes [their] mandatory start of turn draw.
 
-no-further-actions = {$username} has no further actions.
+no-further-actions = {$username} has no further action.
 
 skip-discard-step = {$username} skips [their] discard step this turn.
 
