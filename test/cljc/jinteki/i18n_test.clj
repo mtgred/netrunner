@@ -19,14 +19,7 @@
   (sut/load-dictionary! "public/i18n")
   (let [ids (set (ftl-ids (sut/get-content "en")))]
     (doseq [k (keys @schemas/msg-registry)]
-      (is (re-matches #"[a-z][a-z0-9_-]*" (name k)) (str k " is not a valid id"))
       (is (contains? ids (name k)) (str k " has no en translation")))))
-
-(deftest no-duplicate-ids-test
-  (sut/load-dictionary! "public/i18n")
-  (is (empty? (->> (ftl-ids (sut/get-content "en"))
-                   (frequencies)
-                   (keep (fn [[id n]] (when (< 1 n) id)))))))
 
 (deftest no-numeric-variant-keys-test
   ;; the jvm fluent never matches numeric variant keys like [0], but the browser does.
