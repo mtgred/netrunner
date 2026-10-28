@@ -43,7 +43,6 @@
                               lose-credits]]
    [game.core.hand-size :refer [corp-hand-size+ hand-size runner-hand-size+]]
    [game.core.hosting :refer [host]]
-   [jinteki.i18n :refer [msg-with-cost]]
    [game.core.ice :refer [break-sub break-subroutine! get-strength ice-strength pump pump-ice
                           unbroken-subroutines-choice update-all-ice
                           update-all-icebreakers update-breaker-strength]]
@@ -86,6 +85,7 @@
    [game.core.winning :refer [check-win-by-agenda]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
    [game.utils :refer :all]
+   [jinteki.i18n :refer [msg-with-cost simple-msg]]
    [jinteki.utils :refer :all]
    [jinteki.validator :refer [legal?]]
    [medley.core :refer [find-first]]))
@@ -2957,7 +2957,8 @@
             {:event :successful-run
              :automatic :gain-credits
              :req (req this-card-run)
-             :msg (msg "gain " (min 3 (get-counters card :credit)) " [Credits]")
+             :msg (simple-msg {:effect/type :gain-credits
+                               :effect/count (min 3 (get-counters card :credit))})
              :interactive (effect true)
              :async true
              :effect (effect (take-credits state side eid card :credit 3))}]
@@ -2976,7 +2977,8 @@
                                      (remove (into #{} (:made-run runner-reg)))
                                      (map central->name))))
                 :label "make a run on a central server"
-                :msg (msg "make a run on " target)
+                :msg (simple-msg {:effect/type :make-a-run-on
+                                  :effect/server target})
                 :makes-run true
                 :async true
                 :effect (effect (make-run state side eid target card))}]})
@@ -3223,7 +3225,8 @@
                                :label "Take 1 [Credits] (start of turn)"
                                :req (req (:runner-phase-12 @state)
                                               (pos? (get-counters card :credit)))
-                               :msg "gain 1 [Credits]"
+                               :msg (simple-msg {:effect/type :gain-credits
+                                                 :effect/count 1})
                                :async true
                                :effect (effect (take-credits state side eid card :credit 1))}]
     {:flags {:drip-economy (effect (pos? (get-counters card :credit)))}
