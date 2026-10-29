@@ -217,9 +217,9 @@
                                 :effect/card-strs cards}]
                         (map? and-then) (conj and-then))
                       (when prepend-cost-str (seq (vals (:cost-paid eid)))))
-        (= 1 (count cards)) {:msg/type :msg-derez-card
+        (= 1 (count cards)) {:msg/type :msg_derez-card
                              :msg/card-str (first cards)}
-        :else {:msg/type :msg-derez-cards
+        :else {:msg/type :msg_derez-cards
                :msg/card-strs cards}))))
 
 (defn derez

@@ -373,7 +373,7 @@
   ([card effect-msgs payments] (->use-card-msg card effect-msgs payments nil))
   ([card effect-msgs payments args]
    (let [effect-msgs (flatten effect-msgs)]
-     (cond-> (->effect-msg {:msg/type (if (seq payments) :pay-use-card :use-card)
+     (cond-> (->effect-msg {:msg/type (if (seq payments) :msg_pay-use-card :msg_use-card)
                             :msg/effect-msgs (vec (keep msg-map->effect-msg effect-msgs))
                             :msg/payments payments
                             :msg/title (get-title card)})

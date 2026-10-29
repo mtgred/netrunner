@@ -35,7 +35,7 @@
   "Completes the play of the event / operation that the player can play for"
   [state side eid {:keys [title] :as card} payment-str ignore-cost as-flashback]
   (system-msg state side (->effect-msg (merge (when-not ignore-cost {:msg/payments (vals payment-str)})
-                                              {:msg/type (if ignore-cost :msg-play-card :msg-pay-play-card) :msg/title title})))
+                                              {:msg/type (if ignore-cost :msg_play-card :msg_pay-play-card) :msg/title title})))
   (implementation-msg state card)
   (set-last-played-or-rezzed state card)
   (if-let [sfx (:play-sound (card-def card))]

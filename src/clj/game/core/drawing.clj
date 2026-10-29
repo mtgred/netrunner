@@ -92,7 +92,7 @@
                  (doseq [c (get-set-aside state side set-aside-eid)]
                    (move state side c :hand))
                  (when loud
-                   (system-msg state side {:msg/type :msg-draw-cards
+                   (system-msg state side {:msg/type :msg_draw-cards
                                            :msg/count drawn-count}))
                  (effect-completed state side eid))
                (let [draw-event (if (= side :corp) :corp-draw :runner-draw)]
@@ -108,7 +108,7 @@
                    (doseq [c (get-set-aside state side set-aside-eid)]
                      (move state side c :hand))
                    (when loud
-                     (system-msg state side {:msg/type :msg-draw-cards
+                     (system-msg state side {:msg/type :msg_draw-cards
                                              :msg/count drawn-count}))
                    (wait-for (trigger-event-sync state side (make-eid state eid) (if (= side :corp) :post-corp-draw :post-runner-draw) {:count drawn-count})
                      (let [eid (make-result eid (-> @state side :register :currently-drawing (peek)))]

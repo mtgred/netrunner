@@ -324,7 +324,7 @@
     (let [side (or (:player ability) side)
           desc (cond
                  (string? message) message
-                 (= :cost message) (->effect-msg {:msg/type :satisfy-card
+                 (= :cost message) (->effect-msg {:msg/type :msg_satisfy-card
                                                   :msg/payments (vals (:cost-paid eid))
                                                   :msg/title (get-title card)})
                  :else (message state side eid card targets))]
