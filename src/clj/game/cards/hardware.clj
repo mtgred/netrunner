@@ -2049,7 +2049,7 @@
                                              (hardware? top-card))
                                          (runner-can-pay-and-install? state side (assoc eid :source-type :runner-install) top-card))
                           :prompt (effect {:msg/type :prompt_install
-                                           :msg/title (get-title top-card)})
+                                           :msg/title top-card})
                           :yes-ability
                           {:async true
                            :effect (effect (runner-install state side (assoc eid :source-type :runner-install) top-card {:msg-keys {:display-origin true
@@ -2599,7 +2599,7 @@
 (defcard "The Wizard's Chest"
   (letfn [(install-option [to-install]
             {:option {:msg/type :choice_install
-                      :msg/title (get-title to-install)}
+                      :msg/title to-install}
              :ability {:async true
                        :effect (effect (wait-for (runner-install
                                                    state side

@@ -4,7 +4,7 @@
     [clojure.string :as string]
     [game.core.agendas :refer [update-advancement-requirement]]
     [game.core.board :refer [all-installed get-remotes installable-servers server->zone all-installed-runner-type]]
-    [game.core.card :refer [agenda? asset? card-index condition-counter? convert-to-condition-counter  corp? event? get-card get-title get-zone has-subtype? ice? installed? operation? program? resource? rezzed? upgrade?]]
+    [game.core.card :refer [agenda? asset? card-index condition-counter? convert-to-condition-counter  corp? event? get-card get-zone has-subtype? ice? installed? operation? program? resource? rezzed? upgrade?]]
     [game.core.card-defs :refer [card-def]]
     [game.core.cost-fns :refer [ignore-install-cost? install-additional-cost-bonus install-cost]]
     [game.core.costs :refer [total-available-credits]]
@@ -429,7 +429,7 @@
        (not server)
        (continue-ability state side
                          {:prompt {:msg/type :prompt_choose-a-location-to-install
-                                   :msg/title (get-title card)}
+                                   :msg/title card}
                           :choices (installable-servers state card)
                           :async true
                           :effect (effect (corp-install state side (assoc eid :source source) card target args))}

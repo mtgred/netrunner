@@ -359,7 +359,7 @@
          prompt (if (pos? cost)
                   (effect {:msg/type :prompt_pay-credits-to-use-ability
                            :msg/credits cost
-                           :msg/title (get-title card)})
+                           :msg/title card})
                   (effect (str "Use " (:title card) " ability?")))]
      (installed-access-trigger cost ab prompt)))
   ([cost ability prompt]

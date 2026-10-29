@@ -624,7 +624,7 @@
                          state side (let [chosen-ice target]
                            {:async true
                             :prompt {:msg/type :prompt_choose-a-server-to-install-on
-                                     :msg/title (get-title chosen-ice)}
+                                     :msg/title chosen-ice}
                             :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
                                              (installable-servers state chosen-ice))
                             :effect (effect (shuffle! state side :deck)
@@ -658,7 +658,7 @@
                          state side (let [chosen-ice target]
                            {:async true
                             :prompt {:msg/type :prompt_choose-a-server-to-install-on
-                                     :msg/title (get-title chosen-ice)}
+                                     :msg/title chosen-ice}
                             :choices (filter #(#{"HQ" "Archives" "R&D"} %)
                                              (installable-servers state chosen-ice))
                             :effect (effect (shuffle! state side :deck)
@@ -1706,7 +1706,7 @@
                                                          (if (corp-installable-type? target-card)
                                                            (choose-one-helper
                                                              [{:option {:msg/type :choice_install
-                                                                        :msg/title (get-title target-card)}
+                                                                        :msg/title target-card}
                                                                :ability {:async true
                                                                          :effect (effect (corp-install state side eid target-card nil {:ignore-install-cost true :msg-args {:display-origin true :install-source card}}))}}
                                                               {:option (str "Add " (:title target-card) " to HQ")
@@ -2155,7 +2155,7 @@
                                  state side (let [chosen-ice target]
                                    {:async true
                                     :prompt {:msg/type :prompt_choose-a-server-to-install-on
-                                             :msg/title (get-title chosen-ice)}
+                                             :msg/title chosen-ice}
                                     :choices (filter #(not (#{"HQ" "Archives" "R&D"} %))
                                                      (installable-servers state chosen-ice))
                                     :effect (effect (shuffle! state side :deck)

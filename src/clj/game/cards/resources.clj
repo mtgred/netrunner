@@ -1042,7 +1042,7 @@
   {:events [{:event :successful-run
              :silent true
              :optional {:prompt (effect {:msg/type :prompt_place-virus-counter-on
-                                         :msg/title (get-title card)})
+                                         :msg/title card})
                         :req (req (= :archives (target-server context)))
                         :autoresolve (get-autoresolve :auto-place-counter)
                         :yes-ability {:msg "place 1 virus counter on itself"
@@ -1564,7 +1564,7 @@
                         :prompt {:msg/type :prompt_look-at-the-top-cards-of-rd
                                  :msg/count 1}
                         :yes-ability {:prompt (effect {:msg/type :prompt_the-top-card-of-rd-is
-                                                       :msg/title (-> corp :deck first get-title)})
+                                                       :msg/title (-> corp :deck first)})
                                       :msg "look at the top card of R&D"
                                       :choices [(->msg-map :choice_ok)]}}}]
    :abilities [(set-autoresolve :auto-peek "Find the Truth looking at the top card of R&D")]})
@@ -1923,7 +1923,7 @@
                              (= :runner (:scored-side (:moved-card context))))
               :waiting-prompt true
               :prompt (effect {:msg/type :prompt_trash
-                               :msg/title (get-title card)})
+                               :msg/title card})
               :yes-ability
               {:prompt (->msg-map :prompt_how-many-hosted-credits-do-you-want-to-take)
                :choices {:number (effect (get-counters card :credit))}
@@ -2033,7 +2033,7 @@
               :autoresolve (get-autoresolve :auto-place-counter)
               :waiting-prompt true
               :prompt (effect {:msg/type :prompt_place-power-counter-on
-                               :msg/title (get-title card)})
+                               :msg/title card})
               :yes-ability {:msg "place 1 power counter on itself"
                             :async true
                             :effect (effect (add-counter state side eid card :power 1 {:placed true}))}

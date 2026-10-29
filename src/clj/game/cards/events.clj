@@ -1565,7 +1565,7 @@
                        state side
                        {:optional
                         {:prompt {:msg/type :prompt_install
-                                  :msg/title (get-title topcard)}
+                                  :msg/title topcard}
                          :yes-ability {:async true
                                        :effect (effect (runner-install state side eid topcard {:msg-keys {:display-origin true
                                                                                                :install-source card}
@@ -2052,7 +2052,7 @@
                       state side (let [connection target]
                         (if (runner-can-pay-and-install? state side (assoc eid :source card) connection)
                           {:optional {:prompt {:msg/type :prompt_install
-                                               :msg/title (get-title connection)}
+                                               :msg/title connection}
                                       :yes-ability {:async true
                                                     :effect (effect (runner-install state side (assoc eid :source card :source-type :runner-install) connection nil)
                                                                     (shuffle! state side :deck))}
@@ -3039,7 +3039,7 @@
                                  (runner-can-pay-and-install? state side (assoc eid :source card :source-type :runner-install) icebreaker))
                           {:optional
                            {:prompt {:msg/type :prompt_install
-                                     :msg/title (get-title icebreaker)}
+                                     :msg/title icebreaker}
                             :yes-ability
                             {:async true
                              :msg (simple-msg
@@ -3336,7 +3336,7 @@
                         :effect (effect (trash state side eid ice {:cause-card card}))}}}
                      {:optional
                       {:prompt {:msg/type :prompt_trash
-                                :msg/title (get-title ice)}
+                                :msg/title ice}
                        :once :per-run
                        :yes-ability
                        {:async true

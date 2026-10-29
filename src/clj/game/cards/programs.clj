@@ -901,7 +901,7 @@
               :waiting-prompt true
               :autoresolve (get-autoresolve :auto-place-counter)
               :prompt (effect {:msg/type :prompt_place-virus-counter-on
-                               :msg/title (get-title card)})
+                               :msg/title card})
               :yes-ability {:msg "place 1 virus counter on itself"
                             :async true
                             :effect (effect (add-counter state side eid card :virus 1 nil))}
@@ -922,7 +922,7 @@
              :req (req (some #(corp? (:card %)) targets))
              :effect (effect (let [amt-trashed (count (filter #(corp? (:card %)) targets))
                                 sing-ab {:optional {:prompt (effect {:msg/type :prompt_place-virus-counter-on
-                                                                     :msg/title (get-title card)})
+                                                                     :msg/title card})
                                                     :autoresolve (get-autoresolve :auto-place-counter)
                                                     :yes-ability {:effect (effect (add-counter state :runner eid card :virus 1 nil))
                                                                   :async true
@@ -3357,7 +3357,7 @@
    :events [{:event :subroutines-broken
              :optional {:req (req (:all-subs-broken target))
                         :prompt (effect {:msg/type :prompt_place-power-counter-on
-                                         :msg/title (get-title card)})
+                                         :msg/title card})
                         :autoresolve (get-autoresolve :auto-place-counter)
                         :yes-ability
                         {:msg "place 1 power counter on itself"
@@ -3486,7 +3486,7 @@
      :events [{:event :runner-turn-begins
                :optional
                {:prompt (effect {:msg/type :prompt_place-virus-counter-on
-                                 :msg/title (get-title card)})
+                                 :msg/title card})
                 :autoresolve (get-autoresolve :auto-place-counter)
                 :yes-ability {:msg "place 1 virus counter on itself"
                               :async true
@@ -3571,7 +3571,7 @@
               :waiting-prompt true
               :autoresolve (get-autoresolve :auto-place-counters)
               :prompt (effect {:msg/type :prompt_place-power-counter-on
-                               :msg/title (get-title card)})
+                               :msg/title card})
               :yes-ability {:async true
                             :effect (effect (add-counter state side eid card :power 1 nil))}}}]
    :abilities [{:action true

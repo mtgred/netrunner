@@ -8,7 +8,7 @@
                             get-all-cards get-all-installed server->zone]]
    [game.core.card :refer [active? agenda? asset? card-index can-be-advanced?
                            corp? corp-installable-type? faceup?
-                           get-card get-counters get-title get-zone hardware?
+                           get-card get-counters get-zone hardware?
                            has-any-subtype? has-subtype? ice? in-discard? in-hand? installed? is-type? operation?
                            program? protecting-a-central? protecting-archives? protecting-hq? protecting-rd?
                            resource? rezzed? runner?]]
@@ -1017,7 +1017,7 @@
                         nice target]
                     (continue-ability state side
                                       {:prompt {:msg/type :prompt_choose-a-location-to-install
-                                                :msg/title (get-title target)}
+                                                :msg/title target}
                                        :choices (effect (remove #(= this %) (installable-servers state nice)))
                                        :async true
                                        :effect (effect (corp-install state side eid nice target {:ignore-all-cost true
@@ -1774,7 +1774,7 @@
                   :change-in-game-state {:silent true :req (req (seq (:deck corp)))}
                   :waiting-prompt true
                   :prompt (effect {:msg/type :prompt_the-top-card-of-rd-is
-                                   :msg/title (get-title (get-in @state [:corp :deck 0]))})
+                                   :msg/title (get-in @state [:corp :deck 0])})
                   :choices (effect [(when (not= (count (:deck corp)) 1)
                                    "Place it on the bottom of R&D")
                                  (->msg-map :choice_done)])
@@ -4459,7 +4459,7 @@
                                                        nice target]
                                                    (continue-ability state side
                                                                      {:prompt {:msg/type :prompt_choose-a-location-to-install
-                                                                               :msg/title (get-title target)}
+                                                                               :msg/title target}
                                                                       :choices (effect (remove #(= this %) (installable-servers state nice)))
                                                                       :async true
                                                                       :effect (effect (corp-install state side eid nice target {:ignore-install-cost true

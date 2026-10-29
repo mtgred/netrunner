@@ -5240,6 +5240,7 @@
         (run-empty-server state :archives)
         (play-from-hand state :runner "Mutual Favor")
         (click-prompt state :runner "Aumakua")
+        (is (= "Install Aumakua?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "No")
         (is (= 5 (:credit (get-runner))) "Spent 0 credits")
         (is (= 0 (count (get-program state))) "Pulled card was not installed")

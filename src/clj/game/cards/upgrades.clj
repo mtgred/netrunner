@@ -10,7 +10,7 @@
                             get-remotes server->zone server-list server-list-exclude]]
    [game.core.card :refer [agenda? asset? can-be-advanced?
                            corp-installable-type? corp? get-card get-counters get-zone
-                           get-title has-subtype? ice? in-discard? in-hand? installed? operation? program? resource? rezzed?
+                           has-subtype? ice? in-discard? in-hand? installed? operation? program? resource? rezzed?
                            runner? upgrade?]]
    [game.core.choose-one :refer [choose-one-helper]]
    [game.core.cost-fns :refer [install-cost rez-cost]]
@@ -152,7 +152,7 @@
                 :waiting-prompt true
                 :prompt (effect {:msg/type :prompt_pay-credits-to-use-ability
                                  :msg/credits 2
-                                 :msg/title (get-title card)})
+                                 :msg/title card})
                 :no-ability {:effect (effect (system-msg state side (str "declines to use " (:title card))))}
                 :yes-ability {:async true
                               :cost [(->c :credit 2)]

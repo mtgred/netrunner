@@ -411,7 +411,7 @@
                 :waiting-prompt true
                 :prompt (effect {:msg/type :prompt_pay-credits-to-use-ability
                                  :msg/credits 4
-                                 :msg/title (get-title card)})
+                                 :msg/title card})
                 :no-ability {:effect (effect (system-msg state side (str "declines to use " (:title card))))}
                 :yes-ability (assoc (give-tags 2) :cost [(->c :credit 4)])}}})
 
@@ -501,7 +501,7 @@
                 :waiting-prompt true
                 :prompt (effect {:msg/type :prompt_pay-credits-to-use-ability
                                  :msg/credits 4
-                                 :msg/title (get-title card)})
+                                 :msg/title card})
                 :no-ability {:effect (effect (system-msg state side (str "declines to use " (:title card))))}
                 :yes-ability {:async true
                               :cost [(->c :credit 4)]
@@ -1493,7 +1493,7 @@
                :skippable true
                :label "Trash Idiosyncresis"
                :optional {:prompt (effect {:msg/type :prompt_trash
-                                           :msg/title (get-title card)})
+                                           :msg/title card})
                           :req (req (:corp-phase-12 @state))
                           :yes-ability {:async true
                                         :msg (msg "force the runner to lose " (lose card runner) " [Credits], and then gain " (gain card) " [Credits]")
@@ -1694,7 +1694,7 @@
                 :async true
                 :effect (effect (continue-ability
                                   state side {:prompt (effect {:msg/type :prompt_the-top-card-of-the-stack-is
-                                                               :msg/title (-> runner :deck first get-title)})
+                                                               :msg/title (-> runner :deck first)})
                                    :waiting-prompt true
                                    :choices [(->msg-map :choice_ok)]}
                                   card nil))}
@@ -3050,7 +3050,7 @@
                 :waiting-prompt true
                 :prompt (effect {:msg/type :prompt_pay-credits-to-use-ability
                                  :msg/credits 4
-                                 :msg/title (get-title card)})
+                                 :msg/title card})
                 :no-ability {:effect (effect (system-msg state side (str "declines to use " (:title card))))}
                 :yes-ability {:async true
                               :cost [(->c :credit 4)]

@@ -1726,7 +1726,7 @@
                                                                (move state side top-card :hand)
                                                                (effect-completed state side eid)))}}}
                                 {:prompt {:msg/type :prompt_the-top-card-of-the-stack-is
-                                          :msg/title (get-title top-card)}
+                                          :msg/title top-card}
                                  :choices [(->msg-map :choice_ok)]
                                  :waiting-prompt true
                                  :async true})
@@ -1970,7 +1970,7 @@
               (effect (continue-ability
                         state side {:optional
                          {:prompt {:msg/type :prompt_trash
-                                   :msg/title (get-title (first (:deck corp)))}
+                                   :msg/title (first (:deck corp))}
                           :yes-ability
                           {:msg "trash the top card of R&D"
                            :async true
@@ -2163,7 +2163,7 @@
                   (mapv #(when (and (not (operation? %))
                                     (not (agenda? %)))
                            {:option {:msg/type :choice_install
-                                     :msg/title (get-title %)}
+                                     :msg/title %}
                             :ability (remote-choice %)})
                         cards))
         ev {:prompt (msg "The top of R&D is (in order): "
