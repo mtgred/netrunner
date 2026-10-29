@@ -2,6 +2,7 @@
   (:require
    [clj-uuid :as uuid]
    [game.core.board :refer [get-all-cards]]
+   [game.core.card :refer [get-title]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.prompt-state :refer [add-to-prompt-queue
                                    remove-from-prompt-queue]]
@@ -14,8 +15,9 @@
 (defn- validate-choice
   [choice]
   (cond (keyword? choice) (throw (ex-info "Wrap keyword choices in ->msg-map" {:choice choice}))
-        (:msg/type choice) (->msg-map choice)
-        :else choice))
+        (string? choice) choice
+        (get-title choice) choice
+        :else (->msg-map choice)))
 
 (defn choice-parser
   [choices]
@@ -32,8 +34,8 @@
   [message state side eid card targets]
   (let [m (if (fn? message) (message state side eid card targets) message)]
     (cond (keyword? m) (throw (ex-info "Wrap keyword prompts in ->msg-map" {:prompt m}))
-          (map? m) (->msg-map m)
-          :else m)))
+          (string? m) m
+          :else (->msg-map m))))
 
 (defn update-selectable
   [prev-selectable choices]
