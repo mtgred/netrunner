@@ -722,11 +722,13 @@
     (take-credits state :corp)
     (play-from-hand state :runner "Cache")
     (take-credits state :runner)
+    (play-from-hand state :corp "Business As Usual")
+    (is (= "Choose one (2 remaining)" (:msg (prompt-map :corp))))
     (is (changed? [(get-counters (get-program state 0) :virus) -3]
-                  (play-from-hand state :corp "Business As Usual")
                   (click-prompt state :corp "Remove all virus counters from 1 installed card")
                   (click-card state :corp "Cache"))
         "Cache was purged")
+    (is (= "Choose one (1 remaining)" (:msg (prompt-map :corp))))
     (is (changed? [(get-counters (get-content state :remote1 0) :advancement) 1
                    (get-counters (get-content state :remote2 0) :advancement) 1]
                   (click-prompt state :corp "Place 1 advancement counter on up to two cards you can advance")
@@ -2066,6 +2068,7 @@
       (starting-hand state :corp ["Fully Operational"])
       (play-from-hand state :corp "Fully Operational")
       (click-prompt state :corp "Draw 2 cards")
+      (is (last-log-contains? state "Corp uses Fully Operational to draw 2 cards"))
       (is (= 2 (count (:hand (get-corp)))) "Corp drew 2 cards")
       (is (no-prompt? state :corp) "No lingering prompt after making single choice")))
 
@@ -2080,8 +2083,10 @@
       (play-from-hand state :corp "Breaker Bay Grid" "Server 1")
       (play-from-hand state :corp "Breaker Bay Grid" "Server 2")
       (play-from-hand state :corp "Fully Operational")
-      (dotimes [_ 3]
-        (click-prompt state :corp "Gain 2 [Credits]"))
+      (doseq [i [1 2 3]]
+        (is (= (str "Choose one. Choice " i " of 3") (:msg (prompt-map :corp))))
+        (click-prompt state :corp "Gain 2 [Credits]")
+        (is (last-log-contains? state "Corp uses Fully Operational to gain 2 [Credits]")))
       (is (= 10 (:credit (get-corp))) "Corp gained 6 credits")
       (is (no-prompt? state :corp) "No lingering prompt after making repeated choices")))
 

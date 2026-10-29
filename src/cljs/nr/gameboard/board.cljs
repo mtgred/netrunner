@@ -1980,7 +1980,7 @@
 
        ;; otherwise choice of all present choices
        :else
-       (concat [(when (and msg (s/starts-with? msg "Choose a credit providing card"))
+       (concat [(when (and (string? msg) (s/starts-with? msg "Choose a credit providing card"))
                   (doall (for [{:keys [cid title zone side]} (matching-cards selectable)]
                            [:button {:on-click #(send-command "select"
                                                               {:card {:cid cid :zone zone :side side}

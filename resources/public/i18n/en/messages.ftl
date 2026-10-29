@@ -406,6 +406,8 @@ derez-cards = derez {$card-strs}
 
 make-a-run = make a run
 make-a-run-on = make a run on {$server}
+target-server = target {$server}
+target-no-server = choose no server
 make-a-run-on-preventing-all-damage = make a run on {$server}, preventing all damage
 run-on-with-no-rezzed-ice = make a run on {$server} during which no ice can be rezzed
 rfg-to-make-a-run-on = remove {$title} from the game to make a run on {$server}
@@ -833,6 +835,7 @@ msg-trash-cards = {$username} trashes {$count ->
 }
 
 msg-derez-card = {$username} derezzes {$card-str}.
+msg-derez-cards = {$username} derezzes {$card-strs}.
 
 msg-rfg-n-cards-from-stack = {$username} removes {$count ->
     [one] the top 1 card of {-stack} from the game.
@@ -932,3 +935,233 @@ waiting-prevent-jacking-out = Waiting for your opponent to prevent you from jack
 waiting-prevent-expose = Waiting for your opponent to prevent an expose.
 waiting-prevent-bad-publicity = Waiting for your opponent to prevent {-bad-publicity}.
 waiting-prevent-tags = Waiting for your opponent to prevent tags.
+
+## Prompts
+
+prompt_choose-a-card = Choose a card
+
+prompt_choose-a-card-in-hq-to-install = Choose a card in {-hq} to install
+
+prompt_choose-a-card-to-access = Choose a card to access
+
+prompt_choose-a-card-to-add-to-hq = Choose a card to add to {-hq}
+
+prompt_choose-a-card-to-derez = Choose a card to derez
+
+prompt_choose-a-card-to-install = Choose a card to install
+
+prompt_choose-a-card-to-install-from-hq = Choose a card to install from {-hq}
+
+prompt_choose-a-card-to-trash = Choose a card to trash
+
+prompt_choose-a-card-type = Choose a card type
+
+prompt_choose-a-location-to-install = Choose a location to install {$title}
+
+prompt_choose-a-piece-of-hardware-to-trash = Choose a piece of hardware to trash
+
+prompt_choose-a-piece-of-ice = Choose a piece of ice
+
+prompt_choose-a-piece-of-ice-protecting-this-server = Choose a piece of ice protecting this server
+
+prompt_choose-a-piece-of-ice-to-install = Choose a piece of ice to install
+
+prompt_choose-a-program-or-piece-of-hardware-to-install = Choose a program or piece of hardware to install
+
+prompt_choose-a-program-to-install = Choose a program to install
+
+prompt_choose-a-program-to-trash = Choose a program to trash
+
+prompt_choose-a-remote-server = Choose a remote server
+
+prompt_choose-a-resource-to-trash = Choose a resource to trash
+
+prompt_choose-a-server = Choose a server
+
+prompt_choose-a-server-to-install-on = Choose a server to install {$title} on
+
+prompt_choose-a-subroutine-to-resolve = Choose a subroutine to resolve
+
+prompt_choose-an-ability-to-resolve = Choose an ability to resolve
+
+prompt_choose-an-agenda = Choose an agenda
+
+prompt_choose-an-agenda-to-forfeit = Choose an agenda to forfeit
+
+prompt_choose-an-ice-subtype = Choose an ice subtype
+
+prompt_choose-an-icebreaker = Choose an icebreaker
+
+prompt_choose-an-installed-card = Choose an installed card
+
+prompt_choose-an-installed-card-to-trash = Choose an installed card to trash
+
+prompt_choose-installed-card-to-trash = Choose {$count ->
+    [one] {$count} installed card
+    *[other] {$count} installed cards
+} to trash
+
+prompt_choose-one = Choose one
+
+prompt_choose-one-choice-of = Choose one. Choice {$current} of {$total}
+
+prompt_choose-one-remaining = Choose one ({$count} remaining)
+
+prompt_choose-target = Choose a target for {$title}
+
+prompt_choose-targets-at-least = {$count ->
+    [one] Choose at least {$count} target for {$title}
+    *[other] Choose at least {$count} targets for {$title}
+}
+
+prompt_choose-targets-between = Choose at least {$min} and up to {$max} targets for {$title}
+
+prompt_choose-targets-exactly = {$count ->
+    [one] Choose {$count} target for {$title}
+    *[other] Choose {$count} targets for {$title}
+}
+
+prompt_choose-targets-up-to = {$count ->
+    [one] Choose up to {$count} target for {$title}
+    *[other] Choose up to {$count} targets for {$title}
+}
+
+prompt_choose-up-to-cards-in-hq-to-trash = Choose up to {$count} {$count ->
+    [one] card
+    *[other] cards
+} in {-hq} to trash
+
+prompt_draw-cards = Draw {$count ->
+    [one] {$count} card?
+    *[other] {$count} cards?
+}
+
+prompt_gain-credits = Gain {$credits} [Credits]?
+
+prompt_how-many-advancement-counters-do-you-want-to-place = How many advancement counters do you want to place?
+
+prompt_how-many-credits-do-you-want-to-move = How many credits do you want to move?
+
+prompt_how-many-credits-do-you-want-to-pay = How many credits do you want to pay?
+
+prompt_how-many-credits-do-you-want-to-spend = How many credits do you want to spend?
+
+prompt_how-many-hosted-credits-do-you-want-to-take = How many hosted credits do you want to take?
+
+prompt_install = Install {$title}?
+
+prompt_look-at-the-top-cards-of-rd = {$count ->
+    [one] Look at the top card of {-rd}?
+    *[other] Look at the top {$count} cards of {-rd}?
+}
+
+prompt_pay-credits-to-use-ability = Pay {$credits} [Credits] to use {$title} ability?
+
+prompt_place-power-counter-on = Place 1 power counter on {$title}?
+
+prompt_place-virus-counter-on = Place 1 virus counter on {$title}?
+
+prompt_purge-virus-counters = Purge virus counters?
+
+prompt_swap-with-another-ice = Swap {$card} with another ice?
+
+prompt_take-bad-publicity = Take {$count} {-bad-publicity}?
+
+prompt_the-top-card-of-rd-is = The top card of {-rd} is {$title}
+
+prompt_the-top-card-of-the-stack-is = The top card of {-stack} is {$title}
+
+prompt_top-cards-of-rd = {$count ->
+    [one] The top card of {-rd} is {$titles}
+    *[other] The top cards of {-rd} are (top->bottom): {$titles}
+}
+
+prompt_top-cards-of-stack = {$count ->
+    [one] The top card of {-stack} is {$titles}
+    *[other] The top cards of {-stack} are (top->bottom): {$titles}
+}
+
+prompt_trash = Trash {$title}?
+
+prompt_you-have-no-ice-in-rd = You have no ice in {-rd}
+
+## Prompt Choices
+
+choice_add-to-score-area = Add {$title} to score area
+
+choice_cancel = Cancel
+
+choice_card-from-deck = Card from deck
+
+choice_card-from-hand = Card from hand
+
+choice_carry-on = Carry on!
+
+choice_done = Done
+
+choice_draw-cards = Draw {$count ->
+    [one] {$count} card
+    *[other] {$count} cards
+}
+
+choice_end-the-run = End the run
+
+choice_everything-else = Everything else
+
+choice_facedown-card-in-archives = Facedown card in {-archives}
+
+choice_gain-credits = Gain {$credits} [Credits]
+
+choice_i-want-to-start-over = I want to start over
+
+choice_install = Install {$title}
+
+choice_no = No
+
+choice_no-action = No action
+
+choice_no-server = No server
+
+choice_none = None
+
+choice_ok = OK
+
+choice_pay-credits = Pay {$credits} [Credits]
+
+choice_pay-to-access = Pay to access
+
+choice_pay-to-steal = Pay to steal
+
+choice_pay-to-trash = Pay {$count} [Credits] to trash
+
+choice_remove-tags = {$count ->
+    [one] Remove 1 tag
+    *[other] Remove {$count} tags
+}
+
+choice_roll-d6 = Roll a d6
+
+choice_start-over = Start over
+
+choice_steal = Steal
+
+choice_suffer-core-damage = Suffer {$count} core damage
+
+choice_suffer-meat-damage = Suffer {$count} meat damage
+
+choice_suffer-net-damage = Suffer {$count} net damage
+
+choice_take-net-damage = Take {$count} net damage
+
+choice_take-tags = Take {$count ->
+    [one] {$count} tag
+    *[other] {$count} tags
+}
+
+choice_trash = Trash {$card}
+
+choice_trash-an-installed-card = Trash an installed card
+
+choice_unrezzed-upgrade = Unrezzed upgrade
+
+choice_yes = Yes

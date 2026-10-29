@@ -1,7 +1,6 @@
 (ns game.core.costs
   {:clj-kondo/ignore [:unused-binding]}
   (:require
-   [clojure.string :as str]
    [game.core.bad-publicity :refer [bad-publicity-available gain-bad-publicity lose-bad-publicity]]
    [game.core.board :refer [all-active all-active-installed all-installed all-installed-runner-type]]
    [game.core.card :refer [active? agenda? corp? facedown? get-card get-counters get-zone hardware? has-subtype? ice? in-hand? installed? program? resource? rezzed? runner?]]
@@ -24,7 +23,8 @@
    [game.core.to-string :refer [card-str]]
    [game.core.virus :refer [number-of-virus-counters]]
    [game.macros :refer [continue-ability effect req wait-for]]
-   [game.utils :refer [enumerate-cards enumerate-str quantify same-card?]]))
+   [game.utils :refer [enumerate-cards enumerate-str quantify same-card?]]
+   [jinteki.i18n :refer [->msg-map msg-type?]]))
 
 (defn- complete-payment [state side eid result]
   (let [payment (assoc result :paid/side side)]
@@ -240,7 +240,7 @@
     (continue-ability
       state side
       {:async true
-       :prompt "How many credits do you want to spend?"
+       :prompt (->msg-map :prompt_how-many-credits-do-you-want-to-spend)
        :choices {:minimum (if (pos? offset) offset 0)
                  ;; note: maximum is the max X value, rather than the max credit spend
                  ;; so max + offset is the max credit spend
@@ -441,7 +441,7 @@
         (zero? (count (get-in @state [side :scored]))) trash-x-cards
         (> 0 (- (count (get-in @state [side :hand])) (value cost))) forfeit-an-agenda
         :else {:async true
-               :prompt "Choose one"
+               :prompt (->msg-map :prompt_choose-one)
                :choices ["Forfeit an Agenda"
                          (str "Reveal and trash " (value cost) " cards from " hand)]
                :effect (effect (continue-ability
@@ -532,11 +532,12 @@
                                  :paid/value (value cost)}))
     (continue-ability
       state side
-      {:prompt "Choose one"
-       :choices [(str "Remove " (quantify (value cost) "tag"))
+      {:prompt (->msg-map :prompt_choose-one)
+       :choices [{:msg/type :choice_remove-tags
+                  :msg/count (value cost)}
                  (str "Gain " (value cost) " bad publicity")]
        :async true
-       :effect (effect (if (str/includes? target "bad publicity")
+       :effect (effect (if (not (msg-type? target :choice_remove-tags))
                       (wait-for (gain-bad-publicity state side (make-eid state eid) (value cost) {:suppress-checkpoint true})
                                 (complete-payment state side eid
                                                   {:paid/msg (str "gains " (value cost) " bad publicity")
@@ -623,7 +624,8 @@
   [cost state side eid card]
   (continue-ability
     state side
-    {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
+    {:prompt {:msg/type :prompt_choose-installed-card-to-trash
+              :msg/count (value cost)}
      :choices {:all true
                :max (value cost)
                :card #(and (installed? %)
@@ -655,7 +657,8 @@
   [cost state side eid card]
   (continue-ability
     state side
-    {:prompt (str "Choose " (quantify (value cost) "installed card") " to trash")
+    {:prompt {:msg/type :prompt_choose-installed-card-to-trash
+              :msg/count (value cost)}
      :choices {:all true
                :max (value cost)
                :card #(and (installed? %)

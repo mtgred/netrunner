@@ -3299,7 +3299,7 @@
       (play-from-hand state :runner "Forged Activation Orders")
       (click-card state :runner "Chiyashi")
       (is (= ["Trash ice protecting HQ at position 0"]
-           (mapv :value (:choices (prompt-map :corp)))))))
+           (prompt-buttons :corp)))))
 
 (deftest forked
   ;; Forked
@@ -5240,6 +5240,7 @@
         (run-empty-server state :archives)
         (play-from-hand state :runner "Mutual Favor")
         (click-prompt state :runner "Aumakua")
+        (is (= "Install Aumakua?" (:msg (prompt-map :runner))))
         (click-prompt state :runner "No")
         (is (= 5 (:credit (get-runner))) "Spent 0 credits")
         (is (= 0 (count (get-program state))) "Pulled card was not installed")
@@ -5607,7 +5608,7 @@
     (run-continue state)
     (run-continue state)
     (click-card state :runner "Project Beale")
-    (is (= ["No action"] (mapv :value (:choices (prompt-map :runner)))))))
+    (is (= ["No action"] (prompt-buttons :runner)))))
 
 (deftest planned-assault
   ;; Planned Assault

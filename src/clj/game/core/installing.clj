@@ -29,6 +29,7 @@
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
     [game.utils :refer [dissoc-in enumerate-str in-coll? same-card? to-keyword quantify]]
+    [jinteki.i18n :refer [->msg-map]]
     [medley.core :refer [find-first]]))
 
 (defn install-locked?
@@ -99,7 +100,7 @@
   (continue-ability
     state side
     {:prompt (str "The " (:title prev-card) " in " server " will now be trashed.")
-     :choices ["OK"]
+     :choices [(->msg-map :choice_ok)]
      :async true
      :effect (effect (system-msg state :corp (str "trashes " (card-str state prev-card)))
                   (if (get-card state prev-card) ; make sure they didn't trash the card themselves
@@ -427,7 +428,8 @@
        ;; No server selected; show prompt to select an install site (Interns, Lateral Growth, etc.)
        (not server)
        (continue-ability state side
-                         {:prompt (str "Choose a location to install " (:title card))
+                         {:prompt {:msg/type :prompt_choose-a-location-to-install
+                                   :msg/title card}
                           :choices (installable-servers state card)
                           :async true
                           :effect (effect (corp-install state side (assoc eid :source source) card target args))}

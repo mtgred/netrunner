@@ -5342,6 +5342,7 @@
       (take-credits state :runner 3)
       (take-credits state :corp)
       (click-prompt state :runner "Server 1")
+      (is (last-log-contains? state "uses Patron to target Server 1"))
       (is (= 4 (count (:hand (get-runner)))) "Starts with 4 cards")
       (run-empty-server state "Server 1")
       (is (= 6 (count (:hand (get-runner)))) "Drew 2 cards")
@@ -5354,6 +5355,16 @@
       (click-prompt state :runner "Server 1")
       (run-empty-server state "Archives")
       (is (= 5 (count (:hand (get-runner)))) "Did not draw cards when running other server")))
+
+(deftest patron-no-server
+  (do-game
+    (new-game {:runner {:hand ["Patron"]}})
+    (take-credits state :corp)
+    (play-from-hand state :runner "Patron")
+    (take-credits state :runner)
+    (take-credits state :corp)
+    (click-prompt state :runner "No server")
+    (is (last-log-contains? state "uses Patron to choose no server"))))
 
 (deftest patron-manually-selecting-during-step-1-2-does-not-show-a-second-prompt-at-start-of-turn-issue-1744
     ;; Manually selecting during Step 1.2 does not show a second prompt at start of turn. Issue #1744.

@@ -87,7 +87,7 @@
                        [:pay-cost {:optional true} [:maybe :boolean]]]]
               ::choices [:or fn?
                          [:enum :credit :counter]
-                         [:sequential [:or Card :string :nil]]
+                         [:sequential [:or Card :string [:map [:msg/type :keyword]] :nil]]
                          [:map
                           [:number fn?]
                           [:default {:optional true} fn?]]
@@ -99,6 +99,7 @@
                           [:max {:optional true} [:or :int fn?]]
                           [:not-self {:optional true} :boolean]]]
               ::waiting-prompt [:maybe [:or :boolean [:map [:msg/type :keyword]]]]
+              ::prompt [:or :string [:map [:msg/type :keyword]] fn?]
               ::once [:maybe [:enum :per-turn :per-run :per-encounter]]
               ::ability
               [:map {:closed true}
@@ -149,7 +150,7 @@
                [:label {:optional true} [:maybe [:or :string fn?]]]
                [:async {:optional true} true?]
                [:player {:optional true} [:enum :corp :runner]]
-               [:prompt {:optional true} [:or :string fn?]]
+               [:prompt {:optional true} [:ref ::prompt]]
                [:prompt-type {:optional true} :keyword]
                [:waiting-prompt {:optional true} [:ref ::waiting-prompt]]
                [:card {:optional true} [:maybe Card]]
@@ -193,7 +194,7 @@
               ::optional
               [:map {:closed true}
                [:req {:optional true} fn?]
-               [:prompt [:or :string fn?]]
+               [:prompt [:ref ::prompt]]
                [:waiting-prompt {:optional true} [:ref ::waiting-prompt]]
                [:once {:optional true} [:ref ::once]]
                [:change-in-game-state {:optional true} [:ref ::cigs]]
@@ -235,6 +236,13 @@
 (def $turns [:effect/turns :int])
 (def $unseen-cnt [:effect/unseen-cnt :int])
 (def $value [:effect/value :int])
+
+;; prompts
+(def $card [:effect/card :string])
+(def $current [:effect/current :int])
+(def $max [:effect/max :int])
+(def $min [:effect/min :int])
+(def $total [:effect/total :int])
 
 (def effect-registry (atom {}))
 (defn register-effect
@@ -426,6 +434,8 @@
 
 (register-effect :make-a-run)
 (register-effect :make-a-run-on $server)
+(register-effect :target-server $server)
+(register-effect :target-no-server)
 (register-effect :make-a-run-on-preventing-all-damage $server)
 (register-effect :run-on-with-no-rezzed-ice $server)
 (register-effect :rfg-to-make-a-run-on $title $server)
@@ -680,6 +690,105 @@
 (register-msg :waiting-prevent-expose)
 (register-msg :waiting-prevent-bad-publicity)
 (register-msg :waiting-prevent-tags)
+
+;; prompts
+(register-msg :prompt_choose-a-card)
+(register-msg :prompt_choose-a-card-in-hq-to-install)
+(register-msg :prompt_choose-a-card-to-access)
+(register-msg :prompt_choose-a-card-to-add-to-hq)
+(register-msg :prompt_choose-a-card-to-derez)
+(register-msg :prompt_choose-a-card-to-install)
+(register-msg :prompt_choose-a-card-to-install-from-hq)
+(register-msg :prompt_choose-a-card-to-trash)
+(register-msg :prompt_choose-a-card-type)
+(register-msg :prompt_choose-a-location-to-install $title)
+(register-msg :prompt_choose-a-piece-of-hardware-to-trash)
+(register-msg :prompt_choose-a-piece-of-ice)
+(register-msg :prompt_choose-a-piece-of-ice-protecting-this-server)
+(register-msg :prompt_choose-a-piece-of-ice-to-install)
+(register-msg :prompt_choose-a-program-or-piece-of-hardware-to-install)
+(register-msg :prompt_choose-a-program-to-install)
+(register-msg :prompt_choose-a-program-to-trash)
+(register-msg :prompt_choose-a-remote-server)
+(register-msg :prompt_choose-a-resource-to-trash)
+(register-msg :prompt_choose-a-server)
+(register-msg :prompt_choose-a-server-to-install-on $title)
+(register-msg :prompt_choose-a-subroutine-to-resolve)
+(register-msg :prompt_choose-an-ability-to-resolve)
+(register-msg :prompt_choose-an-agenda)
+(register-msg :prompt_choose-an-agenda-to-forfeit)
+(register-msg :prompt_choose-an-ice-subtype)
+(register-msg :prompt_choose-an-icebreaker)
+(register-msg :prompt_choose-an-installed-card)
+(register-msg :prompt_choose-an-installed-card-to-trash)
+(register-msg :prompt_choose-installed-card-to-trash $count)
+(register-msg :prompt_choose-one)
+(register-msg :prompt_choose-one-choice-of $current $total)
+(register-msg :prompt_choose-one-remaining $count)
+(register-msg :prompt_choose-target $title)
+(register-msg :prompt_choose-targets-at-least $count $title)
+(register-msg :prompt_choose-targets-between $min $max $title)
+(register-msg :prompt_choose-targets-exactly $count $title)
+(register-msg :prompt_choose-targets-up-to $count $title)
+(register-msg :prompt_choose-up-to-cards-in-hq-to-trash $count)
+(register-msg :prompt_draw-cards $count)
+(register-msg :prompt_gain-credits $credits)
+(register-msg :prompt_how-many-advancement-counters-do-you-want-to-place)
+(register-msg :prompt_how-many-credits-do-you-want-to-move)
+(register-msg :prompt_how-many-credits-do-you-want-to-pay)
+(register-msg :prompt_how-many-credits-do-you-want-to-spend)
+(register-msg :prompt_how-many-hosted-credits-do-you-want-to-take)
+(register-msg :prompt_install $title)
+(register-msg :prompt_look-at-the-top-cards-of-rd $count)
+(register-msg :prompt_pay-credits-to-use-ability $credits $title)
+(register-msg :prompt_place-power-counter-on $title)
+(register-msg :prompt_place-virus-counter-on $title)
+(register-msg :prompt_purge-virus-counters)
+(register-msg :prompt_swap-with-another-ice $card)
+(register-msg :prompt_take-bad-publicity $count)
+(register-msg :prompt_the-top-card-of-rd-is $title)
+(register-msg :prompt_the-top-card-of-the-stack-is $title)
+(register-msg :prompt_top-cards-of-rd $count $titles)
+(register-msg :prompt_top-cards-of-stack $count $titles)
+(register-msg :prompt_trash $title)
+(register-msg :prompt_you-have-no-ice-in-rd)
+
+;; prompt choices
+(register-msg :choice_add-to-score-area $title)
+(register-msg :choice_cancel)
+(register-msg :choice_card-from-deck)
+(register-msg :choice_card-from-hand)
+(register-msg :choice_carry-on)
+(register-msg :choice_done)
+(register-msg :choice_draw-cards $count)
+(register-msg :choice_end-the-run)
+(register-msg :choice_everything-else)
+(register-msg :choice_facedown-card-in-archives)
+(register-msg :choice_gain-credits $credits)
+(register-msg :choice_i-want-to-start-over)
+(register-msg :choice_install $title)
+(register-msg :choice_no)
+(register-msg :choice_no-action)
+(register-msg :choice_no-server)
+(register-msg :choice_none)
+(register-msg :choice_ok)
+(register-msg :choice_pay-credits $credits)
+(register-msg :choice_pay-to-access)
+(register-msg :choice_pay-to-steal)
+(register-msg :choice_pay-to-trash $count)
+(register-msg :choice_remove-tags $count)
+(register-msg :choice_roll-d6)
+(register-msg :choice_start-over)
+(register-msg :choice_steal)
+(register-msg :choice_suffer-core-damage $count)
+(register-msg :choice_suffer-meat-damage $count)
+(register-msg :choice_suffer-net-damage $count)
+(register-msg :choice_take-net-damage $count)
+(register-msg :choice_take-tags $count)
+(register-msg :choice_trash $card)
+(register-msg :choice_trash-an-installed-card)
+(register-msg :choice_unrezzed-upgrade)
+(register-msg :choice_yes)
 
 (def MsgMap
   (m/schema

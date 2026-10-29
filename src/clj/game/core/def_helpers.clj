@@ -12,7 +12,7 @@
     [game.core.engine :refer [queue-event register-events resolve-ability trigger-event unregister-event-by-uuid]]
     [game.core.effects :refer [any-effects is-disabled-reg?]]
     [game.core.gaining :refer [gain-credits lose-credits]]
-    [jinteki.i18n :refer [simple-msg]]
+    [jinteki.i18n :refer [->msg-map msg-type? simple-msg]]
     [game.core.installing :refer [corp-install]]
     [game.core.moving :refer [move trash]]
     [game.core.play-instants :refer [async-rfg]]
@@ -88,11 +88,11 @@
                    " will be " (enumerate-cards (reverse chosen)) ".")
               (str "The top cards of " (if (= reorder-side :corp) "R&D" "the stack")
                    " will be " (enumerate-cards chosen) "."))
-   :choices ["Done" "Start over"]
+   :choices [(->msg-map :choice_done) (->msg-map :choice_start-over)]
    :async true
    :effect (effect
              (cond
-               (and (= dest "bottom") (= target "Done"))
+               (and (= dest "bottom") (msg-type? target :choice_done))
                (do (swap! state update-in [reorder-side :deck]
                           #(vec (concat (drop (count chosen) %) (reverse chosen))))
                    (when (and (= :corp reorder-side)
@@ -102,7 +102,7 @@
                    (clear-wait-prompt state wait-side)
                    (effect-completed state side eid))
 
-               (= target "Done")
+               (msg-type? target :choice_done)
                (do (swap! state update-in [reorder-side :deck]
                           #(vec (concat chosen (drop (count chosen) %))))
                    (system-msg state side (str "The top cards of "
@@ -245,7 +245,7 @@
   ([] (run-any-server-ability nil))
   ([{:keys [events] :as ab-base}]
    (merge {:async true
-           :prompt "Choose a server"
+           :prompt (->msg-map :prompt_choose-a-server)
            :choices (effect runnable-servers)
            :req (req (seq runnable-servers))
            :label "Run a server"
@@ -262,7 +262,7 @@
 
 (def run-remote-server-ability
   {:async true
-   :prompt "Choose a remote server"
+   :prompt (->msg-map :prompt_choose-a-remote-server)
    :change-in-game-state {:req (req (seq (filter #(can-run-server? state %) remotes)))}
    :choices (effect (filter #(can-run-server? state %) remotes))
    :label "Run a remote server"
@@ -282,7 +282,7 @@
   ([choices] (run-server-from-choices-ability choices nil))
   ([choices {:keys [events] :as ab-base}]
    (merge
-     {:prompt "Choose a server"
+     {:prompt (->msg-map :prompt_choose-a-server)
       :choices (effect (filter #(can-run-server? state %) choices))
       :change-in-game-state {:req (req (seq (filter (set choices) runnable-servers)))}
       :async true
@@ -520,7 +520,7 @@
   ([] (corp-recur (constantly true)))
   ([pred]
    {:label "add card from Archives to HQ"
-    :prompt "Choose a card to add to HQ"
+    :prompt (->msg-map :prompt_choose-a-card-to-add-to-hq)
     :waiting-prompt true
     :show-discard true
     :choices {:card #(and (corp? %)
@@ -537,7 +537,7 @@
   ([reveal?] (tutor-abi reveal? nil))
   ([reveal? restriction]
    {:change-in-game-state {:req (req (seq (get-in @state [side :deck])))}
-    :prompt "Choose a card"
+    :prompt (->msg-map :prompt_choose-a-card)
     :label (effect (if (= side :corp)
                   "Search R&D and add 1 card to HQ"
                   "Search the Stack and add 1 card to the Grip"))
@@ -587,7 +587,7 @@
       {:player side
        :waiting-prompt true
        :req (req (seq target-cards))
-       :choices ["OK"]
+       :choices [(->msg-map :choice_ok)]
        :msg {scry-side scry-fn}
        :prompt scry-fn}
       card nil)))
@@ -664,9 +664,11 @@
                             :req (req (seq (get-in @state [deck-side :deck])))}
      :effect (effect (resolve-ability
                     state side eid
-                    {:prompt (msg "The top cards of " zone " are (top->bottom): "
-                                 (enumerate-cards (take qty (get-in @state [deck-side :deck]))))
-                     :choices ["OK"]}
+                    {:prompt (effect (let [cards (take qty (get-in @state [deck-side :deck]))]
+                                       {:msg/type (if (= looking-side :corp) :prompt_top-cards-of-rd :prompt_top-cards-of-stack)
+                                        :msg/count (count cards)
+                                        :msg/titles cards}))
+                     :choices [(->msg-map :choice_ok)]}
                     card nil))}))
 
 (defn make-icon

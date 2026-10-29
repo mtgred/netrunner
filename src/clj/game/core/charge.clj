@@ -5,7 +5,7 @@
    [game.core.eid :refer [effect-completed]]
    [game.core.props :refer [add-counter]]
    [game.macros :refer [effect]]
-   [jinteki.i18n :refer [simple-msg]]))
+   [jinteki.i18n :refer [->msg-map simple-msg]]))
 
 (defn can-charge
   "A card can be charged if it has at least one power counter"
@@ -31,7 +31,7 @@
   ([state side n]
    (when (can-charge state side)
      {:waiting-prompt true
-      :prompt "Choose an installed card"
+      :prompt (->msg-map :prompt_choose-an-installed-card)
       :choices {:card #(can-charge state side %)}
       :async true
       :msg (simple-msg

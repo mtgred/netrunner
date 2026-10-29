@@ -2,6 +2,7 @@
   (:require
    [clj-uuid :as uuid]
    [game.core.board :refer [get-all-cards]]
+   [game.core.card :refer [get-title]]
    [game.core.eid :refer [effect-completed make-eid]]
    [game.core.prompt-state :refer [add-to-prompt-queue
                                    remove-from-prompt-queue]]
@@ -11,6 +12,13 @@
    [jinteki.i18n :refer [->msg-map]]
    [medley.core :refer [find-first]]))
 
+(defn- validate-choice
+  [choice]
+  (cond (keyword? choice) (throw (ex-info "Wrap keyword choices in ->msg-map" {:choice choice}))
+        (string? choice) choice
+        (get-title choice) choice
+        :else (->msg-map choice)))
+
 (defn choice-parser
   [choices]
   (if (or (map? choices) (keyword? choices))
@@ -18,9 +26,16 @@
     (into
       []
       (for [[idx choice] (map-indexed vector (keep identity choices))]
-        {:value choice
+        {:value (validate-choice choice)
          :uuid (uuid/v4)
          :idx idx}))))
+
+(defn- prompt-msg
+  [message state side eid card targets]
+  (let [m (if (fn? message) (message state side eid card targets) message)]
+    (cond (keyword? m) (throw (ex-info "Wrap keyword prompts in ->msg-map" {:prompt m}))
+          (string? m) m
+          :else (->msg-map m))))
 
 (defn update-selectable
   [prev-selectable choices]
@@ -35,7 +50,7 @@
   ([state side card message choices f args] (show-prompt state side (make-eid state) card message choices f args))
   ([state side eid card message choices f
     {:keys [waiting-prompt prompt-type show-discard show-opponent-discard cancel end-effect targets selectable offer-bad-pub?]}]
-   (let [prompt (if (string? message) message (message state side eid card targets))
+   (let [prompt (prompt-msg message state side eid card targets)
          choices (choice-parser choices)
          selectable (update-selectable selectable choices)
          newitem ^:ignore-async-check
@@ -76,7 +91,7 @@
   ([state side card message other-choices f]
    (show-prompt-with-dice state side card message other-choices f nil))
   ([state side card message other-choices f args]
-   (let [dice-msg "Roll a d6",
+   (let [dice-msg (->msg-map :choice_roll-d6)
          choices (conj other-choices dice-msg)]
      (show-prompt state side card message choices
                   #(if (not= (:value %) dice-msg)
@@ -91,7 +106,7 @@
    Always uses `:credit` as the `choices` variable, and passes on some extra properties, such as base and bonus."
   ([state side card message f args] (show-trace-prompt state side (make-eid state) card message f args))
   ([state side eid card message f {:keys [corp-credits runner-credits player other base bonus strength link targets unbeatable beat-trace]}]
-   (let [prompt (if (string? message) message (message state side eid card targets))
+   (let [prompt (prompt-msg message state side eid card targets)
          corp-credits (corp-credits eid)
          runner-credits (runner-credits eid)
          newitem {:eid eid
@@ -191,24 +206,20 @@
                               :all all}))
        (show-prompt state side (:eid ability)
                     card
-                    (if-let [message (:prompt ability)]
-                      message
-                      (str
-                        "Choose"
-                        (when min-choices
-                          (str " at least " min-choices))
-                        (when (and min-choices max-choices)
-                          " and")
-                        (when max-choices
-                          (str (if all "" " up to")
-                               " " max-choices))
-                        (if max-choices
-                          (str " " (pluralize "target" max-choices))
-                          (if min-choices
-                            (str " " (pluralize "target" min-choices))
-                            " a target"))
-                        " for " (:title card)))
-                    (if all ["Hide"] ["Done"])
+                    (or (:prompt ability)
+                        (assoc (cond
+                                 (and min-choices max-choices) {:msg/type :prompt_choose-targets-between
+                                                                :msg/min min-choices
+                                                                :msg/max max-choices}
+                                 (and max-choices all) {:msg/type :prompt_choose-targets-exactly
+                                                        :msg/count max-choices}
+                                 max-choices {:msg/type :prompt_choose-targets-up-to
+                                              :msg/count max-choices}
+                                 min-choices {:msg/type :prompt_choose-targets-at-least
+                                              :msg/count min-choices}
+                                 :else {:msg/type :prompt_choose-target})
+                               :msg/title card))
+                    (if all ["Hide"] [(->msg-map :choice_done)])
                     (if all
                       (fn [_]
                         ; "Hide" was selected. Show toast and reapply select prompt. This allows players to access
@@ -271,5 +282,5 @@
   ([choices] (cancellable choices false))
   ([choices sorted]
    (if sorted
-     (conj (vec (sort-by :title choices)) "Cancel")
-     (conj (vec choices) "Cancel"))))
+     (conj (vec (sort-by :title choices)) (->msg-map :choice_cancel))
+     (conj (vec choices) (->msg-map :choice_cancel)))))

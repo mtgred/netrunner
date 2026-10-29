@@ -30,7 +30,7 @@
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect wait-for]]
     [game.utils :refer [dissoc-in quantify remove-once same-card? same-side? server-cards to-keyword]]
-    [jinteki.i18n :refer [->effect-msg]]
+    [jinteki.i18n :refer [->effect-msg msg-type?]]
     [taoensso.timbre :as timbre]))
 
 (defn- without-history
@@ -310,7 +310,7 @@
             match (first (filter #(= uuid (:uuid %)) choices))]
         (when match
           (remove-from-prompt-queue state side prompt)
-          (if (= (:value match) "Cancel")
+          (if (msg-type? (:value match) :choice_cancel)
             (do (if-let [cancel (:cancel prompt)]
                   ;; trigger the cancel effect
                   (cancel choice)

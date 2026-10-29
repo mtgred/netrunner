@@ -80,7 +80,7 @@
       (is (waiting? state :runner))
       (is (empty? (:discard (get-corp))) "Archives is empty")
       (is (= "Choose at least 2 cards and up to 3 cards to trash from HQ. Remainder will be trashed from top of R&D." (:msg (prompt-map :corp))))
-      (is (= "Done" (-> (prompt-map :corp) :choices first :value)) "Got Done choice in prompt")
+      (is (= "Done" (first (prompt-buttons :corp))) "Got Done choice in prompt")
       (is (empty? (-> @state :corp :toast)) "Got no toasts")
       (click-prompt state :corp "Done")
       (is (= 1 (count (-> @state :corp :toast))) "Got a message to select more cards")

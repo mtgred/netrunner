@@ -7,6 +7,7 @@
    [game.core.say :refer [system-msg]]
    [game.core.toasts :refer [toast]]
    [jinteki.cards :refer [all-cards]]
+   [jinteki.i18n :refer [->msg-map]]
    [jinteki.utils :refer [other-side]]
    [jinteki.chimera :refer [corp-bans]]
    [game.core.eid :refer [effect-completed]]
@@ -453,7 +454,7 @@
 (defn- info-prompt
   [{:keys [cards prompt]} remaining]
   {:prompt (picks-remaining prompt remaining)
-   :choices ["OK"]
+   :choices [(->msg-map :choice_ok)]
    :async true
    :effect (effect (add-cards state side cards)
                 (effect-completed state side eid))})

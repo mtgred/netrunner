@@ -22,7 +22,7 @@
     [game.core.update :refer [update!]]
     [game.macros :refer [continue-ability effect req wait-for]]
     [game.utils :refer [dissoc-in same-card?]]
-    [jinteki.i18n :refer [->effect-msg]]
+    [jinteki.i18n :refer [->effect-msg ->msg-map]]
     [jinteki.utils :refer [count-bad-pub other-side]]
     [clojure.stacktrace :refer [print-stack-trace]]
     [clojure.string :as string]
@@ -669,7 +669,7 @@
           (resolve-ability
             state :runner eid
             {:prompt (str "You are prevented from breaching " (zone->name server) " this run.")
-             :choices ["OK"]
+             :choices [(->msg-map :choice_ok)]
              :async true
              :effect (effect (system-msg state :runner (str "is prevented from breaching " (zone->name server) " this run"))
                              (handle-end-run state side eid))}
