@@ -183,6 +183,11 @@
   [v]
   (if (:msg/type v) (get-msg-text v) v))
 
+(defn get-prompt-map
+  [state side]
+  (let [p (-> @state side :prompt first)]
+    (cond-> p (:msg p) (update :msg get-msg-text))))
+
 (defn click-prompt-impl
   [state side choice & args]
   (let [prompt (get-prompt state side)
@@ -1161,8 +1166,7 @@
                      (let [~'ret (get-card ~'state card#)]
                        ;; (is ~'ret "(refresh card) is nil - if this is intended, use (core/get-card state card)")
                        ~'ret))
-         ~'prompt-map (fn [side#] (let [p# (-> @~'state side# :prompt first)]
-                                    (cond-> p# (:msg p#) (update :msg get-msg-text))))
+         ~'prompt-map (fn [side#] (get-prompt-map ~'state side#))
          ~'prompt-type (fn [side#] (:prompt-type (~'prompt-map side#)))
          ~'prompt-buttons (fn [side#] (->> (~'prompt-map side#) :choices (map (comp render-choice :value))))
          ~'prompt-titles (fn [side#] (map #(or (:title %) %) (~'prompt-buttons side#)))
