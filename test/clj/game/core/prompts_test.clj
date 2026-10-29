@@ -3,6 +3,7 @@
    [cheshire.core :as json]
    [clojure.test :refer :all]
    [game.core :as core]
+   [game.core.card :refer [in-hand?]]
    [game.core.diffs :as diffs]
    [game.core.initializing :refer [make-card]]
    [game.macros :refer [effect]]
@@ -86,3 +87,14 @@
              [(build-msg (get-in parsed [:corp :prompt-state :choices 0 :value]))
               (build-msg (get-in parsed [:corp :prompt-state :msg]))])
           "Msg types that arrive as strings still render"))))
+
+(deftest default-select-prompt-text
+  (doseq [[choices text] [[{} "Choose a target for test"]
+                          [{:min 2} "Choose at least 2 targets for test"]
+                          [{:max 1} "Choose up to 1 target for test"]
+                          [{:max 2 :all true} "Choose 2 targets for test"]
+                          [{:min 1 :max 2} "Choose at least 1 and up to 2 targets for test"]]]
+    (do-game (new-game {:corp {:hand ["Hedge Fund" "Ice Wall"]}})
+      (resolve-test-ability state {:choices (assoc choices :card in-hand?)
+                                   :effect (fn [& _])})
+      (is (= text (:msg (prompt-map :corp)))))))

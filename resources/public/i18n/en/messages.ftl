@@ -1007,6 +1007,25 @@ prompt_choose-one-choice-of = Choose one. Choice {$current} of {$total}
 
 prompt_choose-one-remaining = Choose one ({$count} remaining)
 
+prompt_choose-target = Choose a target for {$title}
+
+prompt_choose-targets-at-least = {$count ->
+    [one] Choose at least {$count} target for {$title}
+    *[other] Choose at least {$count} targets for {$title}
+}
+
+prompt_choose-targets-between = Choose at least {$min} and up to {$max} targets for {$title}
+
+prompt_choose-targets-exactly = {$count ->
+    [one] Choose {$count} target for {$title}
+    *[other] Choose {$count} targets for {$title}
+}
+
+prompt_choose-targets-up-to = {$count ->
+    [one] Choose up to {$count} target for {$title}
+    *[other] Choose up to {$count} targets for {$title}
+}
+
 prompt_choose-up-to-cards-in-hq-to-trash = Choose up to {$count} {$count ->
     [one] card
     *[other] cards

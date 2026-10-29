@@ -204,23 +204,19 @@
                               :all all}))
        (show-prompt state side (:eid ability)
                     card
-                    (if-let [message (:prompt ability)]
-                      message
-                      (str
-                        "Choose"
-                        (when min-choices
-                          (str " at least " min-choices))
-                        (when (and min-choices max-choices)
-                          " and")
-                        (when max-choices
-                          (str (if all "" " up to")
-                               " " max-choices))
-                        (if max-choices
-                          (str " " (pluralize "target" max-choices))
-                          (if min-choices
-                            (str " " (pluralize "target" min-choices))
-                            " a target"))
-                        " for " (:title card)))
+                    (or (:prompt ability)
+                        (assoc (cond
+                                 (and min-choices max-choices) {:msg/type :prompt_choose-targets-between
+                                                                :msg/min min-choices
+                                                                :msg/max max-choices}
+                                 (and max-choices all) {:msg/type :prompt_choose-targets-exactly
+                                                        :msg/count max-choices}
+                                 max-choices {:msg/type :prompt_choose-targets-up-to
+                                              :msg/count max-choices}
+                                 min-choices {:msg/type :prompt_choose-targets-at-least
+                                              :msg/count min-choices}
+                                 :else {:msg/type :prompt_choose-target})
+                               :msg/title card))
                     (if all ["Hide"] [(->msg-map :choice_done)])
                     (if all
                       (fn [_]

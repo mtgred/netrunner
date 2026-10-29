@@ -240,6 +240,8 @@
 ;; prompts
 (def $card [:effect/card :string])
 (def $current [:effect/current :int])
+(def $max [:effect/max :int])
+(def $min [:effect/min :int])
 (def $total [:effect/total :int])
 
 (def effect-registry (atom {}))
@@ -723,6 +725,11 @@
 (register-msg :prompt_choose-one)
 (register-msg :prompt_choose-one-choice-of $current $total)
 (register-msg :prompt_choose-one-remaining $count)
+(register-msg :prompt_choose-target $title)
+(register-msg :prompt_choose-targets-at-least $count $title)
+(register-msg :prompt_choose-targets-between $min $max $title)
+(register-msg :prompt_choose-targets-exactly $count $title)
+(register-msg :prompt_choose-targets-up-to $count $title)
 (register-msg :prompt_choose-up-to-cards-in-hq-to-trash $count)
 (register-msg :prompt_draw-cards $count)
 (register-msg :prompt_gain-credits $credits)
