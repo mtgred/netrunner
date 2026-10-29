@@ -21,8 +21,8 @@
 
 ## Logical templates
 
-use-card = {$username} utilise {$title} pour {$do-ability}.
-pay-use-card = {$username} {$payment} pour utiliser {$title} pour {$do-ability}.
+msg_use-card = {$username} utilise {$title} pour {$do-ability}.
+msg_pay-use-card = {$username} {$payment} pour utiliser {$title} pour {$do-ability}.
 
 # join ability framents together naturally
 # for example, "$player uses $card to do x and do y and do z" will use [join-with-and]
@@ -69,7 +69,7 @@ turn-all-installed-runner-facedown = retourner toutes les cartes { -runner(case:
 
 ## Standalone messages
 
-increase-trace-strength = {$username} {$payment} pour augmenter la force de la trace à {$value}.
+msg_increase-trace-strength = {$username} {$payment} pour augmenter la force de la trace à {$value}.
 
 ## Payments 
 

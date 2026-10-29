@@ -138,8 +138,8 @@
                  (when (not-empty payment-str)
                    (system-msg state :runner (->effect-msg {:msg/payments (vals cost-paid)
                                                             :msg/type (if ignore-costs
-                                                                        :msg-make-a-run-on-ignoring-costs
-                                                                        :msg-make-a-run-on)
+                                                                        :msg_make-a-run-on-ignoring-costs
+                                                                        :msg_make-a-run-on)
                                                             :msg/server server})))
                  ;; s is a keyword for the server, like :hq or :remote1
                  (let [run-id (make-eid state)]
@@ -175,7 +175,7 @@
   (if-not (get-in @state [:run :no-action])
     (do (swap! state assoc-in [:run :no-action] side)
         (when (= :corp side)
-          (system-msg state side {:msg/type :no-further-actions})))
+          (system-msg state side {:msg/type :msg_no-further-actions})))
     (if (pos? (get-in @state [:run :position] 0))
       (do (set-next-phase state :approach-ice)
           (start-next-phase state side nil))
@@ -218,7 +218,7 @@
     (update-current-encounter state :ending true)
     (when (:bypass encounter)
       (queue-event state :bypassed-ice ice)
-      (system-msg state :runner {:msg/type :msg-bypass-ice :msg/title (:title ice)}))
+      (system-msg state :runner {:msg/type :msg_bypass-ice :msg/title (:title ice)}))
     (wait-for (end-of-phase-checkpoint state nil (make-eid state eid)
                                        :end-of-encounter
                                        {:ice ice})
@@ -268,7 +268,7 @@
   (let [eid (make-phase-eid state eid)
         ice (get-current-ice state)
         on-approach (:on-approach (card-def ice))]
-    (system-msg state :runner {:msg/type :msg-approach-ice :msg/card-str ice})
+    (system-msg state :runner {:msg/type :msg_approach-ice :msg/card-str ice})
     (when on-approach
       (register-pending-event state :approach-ice ice on-approach))
     (queue-event state :approach-ice {:ice ice})
@@ -290,7 +290,7 @@
   (if-not (get-in @state [:run :no-action])
     (do (swap! state assoc-in [:run :no-action] side)
         (when (= :corp side)
-          (system-msg state side {:msg/type :no-further-actions})))
+          (system-msg state side {:msg/type :msg_no-further-actions})))
     (let [eid (make-phase-eid state nil)
           approached-ice (get-card state (get-current-ice state))]
       (wait-for (end-of-phase-checkpoint state nil (make-eid state eid) :end-of-approach-ice)
@@ -359,7 +359,7 @@
   (let [on-encounter (:on-encounter (card-def ice))
         applied-encounters (get-effects state nil :gain-encounter-ability ice)
         all-encounters (map #(preventable-encounter-abi % ice) (remove nil? (conj applied-encounters on-encounter)))]
-    (system-msg state :runner {:msg/type :msg-encounter-ice :msg/card-str (assoc ice :visible (active-ice? state ice))})
+    (system-msg state :runner {:msg/type :msg_encounter-ice :msg/card-str (assoc ice :visible (active-ice? state ice))})
     (doseq [on-encounter all-encounters]
       (register-pending-event state :encounter-ice ice on-encounter))
     (queue-event state :encounter-ice {:ice ice})
@@ -424,7 +424,7 @@
       (encounter-ends state side (make-phase-eid state nil))
       (do (update-current-encounter state :no-action side)
           (when (= :runner side)
-            (system-msg state side {:msg/type :no-further-actions}))))))
+            (system-msg state side {:msg/type :msg_no-further-actions}))))))
 
 (defmethod start-next-phase :movement
   [state side eid]
@@ -443,7 +443,7 @@
     (set-phase state :movement)
     (swap! state assoc-in [:run :no-action] false)
     (when pass-ice?
-      (system-msg state :runner {:msg/type :msg-pass-ice :msg/card-str ice})
+      (system-msg state :runner {:msg/type :msg_pass-ice :msg/card-str ice})
       (let [nice (get-card state ice)]
         (queue-event state :pass-ice
                      {:ice nice
@@ -484,7 +484,7 @@
   (wait-for
     (trigger-event-simult state side :pre-approach-server nil
                           {:server (first (:server (:run @state)))})
-    (system-msg state :runner {:msg/type :msg-approach-server :msg/server (zone->name (:server (:run @state)))})
+    (system-msg state :runner {:msg/type :msg_approach-server :msg/server (zone->name (:server (:run @state)))})
     (queue-event state :approach-server)
     (wait-for (checkpoint state side
                           (make-eid state)
@@ -513,7 +513,7 @@
   (if-not (get-in @state [:run :no-action])
     (do (swap! state assoc-in [:run :no-action] side)
         (when (= :runner side)
-          (system-msg state side {:msg/type :msg-continue})))
+          (system-msg state side {:msg/type :msg_continue})))
     (let [eid (make-phase-eid state nil)]
       (cond (or (check-for-empty-server state)
                 (:ended (:end-run @state)))
@@ -741,7 +741,7 @@
 (defn- resolve-jack-out
   [state side eid]
   (queue-event state :jack-out nil)
-  (system-msg state side {:msg/type :msg-jack-out})
+  (system-msg state side {:msg/type :msg_jack-out})
   (end-run state side eid nil {:unpreventable true}))
 
 (defn jack-out

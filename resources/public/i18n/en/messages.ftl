@@ -74,11 +74,11 @@ server-name = {$server ->
 
 ## Logical templates
 
-msg-play-card = {$username} plays {$title}.
-msg-pay-play-card = {$username} {$payment} to play {$title}.
-use-card = {$username} uses {$title} to {$do-ability}.
-pay-use-card = {$username} {$payment} to use {$title} to {$do-ability}.
-satisfy-card = {$username} {$payment} to satisfy {$title}.
+msg_play-card = {$username} plays {$title}.
+msg_pay-play-card = {$username} {$payment} to play {$title}.
+msg_use-card = {$username} uses {$title} to {$do-ability}.
+msg_pay-use-card = {$username} {$payment} to use {$title} to {$do-ability}.
+msg_satisfy-card = {$username} {$payment} to satisfy {$title}.
 
 # join ability framents together naturally
 # for example, "$player uses $card to do x and do y and do z" will use [join-with-and]
@@ -804,40 +804,40 @@ card-str-corp-installed-ice-unknown = {-ice-type} protecting {$server ->
 
 ## Game End
 
-tie = The game has ended in a tie.
-win = {$username} wins the game.
-concede = {$username} concedes.
-win-decked = {$username} is decked.
-win-flatline = {$username} is flatlined.
-clear-win = {$username} cleared the win condition.
+msg_tie = The game has ended in a tie.
+msg_win = {$username} wins the game.
+msg_concede = {$username} concedes.
+msg_win-decked = {$username} is decked.
+msg_win-flatline = {$username} is flatlined.
+msg_clear-win = {$username} cleared the win condition.
 
 ## Mulligan
 
-mulligan-take = {$username} takes a mulligan.
-mulligan-keep = {$username} keeps [their] hand.
+msg_mulligan-take = {$username} takes a mulligan.
+msg_mulligan-keep = {$username} keeps [their] hand.
 
 ## Moving
 
-msg-draw-cards = {$username} draws {$count ->
+msg_draw-cards = {$username} draws {$count ->
     [zero] no cards.
     [one] 1 card.
     *[other] {$count} cards.
 }
 
-msg-forfeit-agenda = {$username} forfeits {$title}.
+msg_forfeit-agenda = {$username} forfeits {$title}.
 
-msg-trash-card = {$username} trashes {$card-str}.
+msg_trash-card = {$username} trashes {$card-str}.
 
-msg-trash-cards = {$username} trashes {$count ->
+msg_trash-cards = {$username} trashes {$count ->
     [zero] no cards.
     [one] 1 card ({$titles}).
     *[other] {$count} cards ({$titles}).
 }
 
-msg-derez-card = {$username} derezzes {$card-str}.
-msg-derez-cards = {$username} derezzes {$card-strs}.
+msg_derez-card = {$username} derezzes {$card-str}.
+msg_derez-cards = {$username} derezzes {$card-strs}.
 
-msg-rfg-n-cards-from-stack = {$username} removes {$count ->
+msg_rfg-n-cards-from-stack = {$username} removes {$count ->
     [one] the top 1 card of {-stack} from the game.
     *[other] the top {$count} cards of {-stack} from the game.
 }
@@ -845,79 +845,79 @@ msg-rfg-n-cards-from-stack = {$username} removes {$count ->
 ## Runs
 
 # TODO payment may be empty, not sure what conditional is correct to check that. needed for make/makes wording choice
-msg-make-a-run-on = {$username} {$payment} to make a run on {$server}.
-msg-make-a-run-on-ignoring-costs = {$username} {$payment} to make a run on {$server}, ignoring all costs.
-msg-bypass-ice = {$username} bypasses {$title}.
-msg-approach-ice = {$username} approaches {$card-str}.
-msg-encounter-ice = {$username} encounters {$card-str}.
-msg-pass-ice = {$username} passes {$card-str}.
-msg-continue = {$username} will continue the run.
-msg-jack-out = {$username} jacks out.
-msg-approach-server = {$username} approaches {$server}.
-msg-breach-server = {$username} breaches {$server}.
+msg_make-a-run-on = {$username} {$payment} to make a run on {$server}.
+msg_make-a-run-on-ignoring-costs = {$username} {$payment} to make a run on {$server}, ignoring all costs.
+msg_bypass-ice = {$username} bypasses {$title}.
+msg_approach-ice = {$username} approaches {$card-str}.
+msg_encounter-ice = {$username} encounters {$card-str}.
+msg_pass-ice = {$username} passes {$card-str}.
+msg_continue = {$username} will continue the run.
+msg_jack-out = {$username} jacks out.
+msg_approach-server = {$username} approaches {$server}.
+msg_breach-server = {$username} breaches {$server}.
 
 ## Accesses
 
-msg-access-card = {$username} accesses {$title} from {$server}.
-msg-access-card-unseen = {$username} accesses an unseen card from {$server}.
-msg-pay-access-card = {$username} {$payment} to access {$title} from {$server}.
-msg-pay-access-card-unseen = {$username} {$payment} to access an unseen card from {$server}.
-msg-access-archives = {$username} accesses everything else in {-archives}.
-msg-steal-agenda = {$username} steals {$title} and gains {$value ->
+msg_access-card = {$username} accesses {$title} from {$server}.
+msg_access-card-unseen = {$username} accesses an unseen card from {$server}.
+msg_pay-access-card = {$username} {$payment} to access {$title} from {$server}.
+msg_pay-access-card-unseen = {$username} {$payment} to access an unseen card from {$server}.
+msg_access-archives = {$username} accesses everything else in {-archives}.
+msg_steal-agenda = {$username} steals {$title} and gains {$value ->
     [one] 1 agenda point.
     *[other] {$value} agenda points.
 }
 
 ## Scoring
 
-msg-advance = {$username} {$payment} to advance {$card-str}.
-msg-score-agenda = {$username} scores {$title} and gains {$value ->
+msg_advance = {$username} {$payment} to advance {$card-str}.
+msg_score-agenda = {$username} scores {$title} and gains {$value ->
     [one] 1 agenda point.
     *[other] {$value} agenda points.
 }
-msg-pay-score-agenda = {$username} {$payment} to score {$title}.
+msg_pay-score-agenda = {$username} {$payment} to score {$title}.
 
 ## Damage
 
-msg-trash-damage = {$username} trashes {$titles} due to {$damage}.
+msg_trash-damage = {$username} trashes {$titles} due to {$damage}.
 
 ## Traces
 
-increase-trace-strength = {$username} {$payment} to increase trace strength to {$value}.
+msg_increase-trace-strength = {$username} {$payment} to increase trace strength to {$value}.
 
 ## Turn messages
 
-corp-start-of-turn = {$username} started [their] turn {$turn} with {$credits} {-credit} and {$cards ->
+msg_corp-start-of-turn = {$username} started [their] turn {$turn} with {$credits} {-credit} and {$cards ->
     [one] 1 card in { -hq }.
     *[other] {$cards} cards in { -hq }.
 }
-corp-end-of-turn = {$username} is ending [their] turn {$turn} with {$credits} {-credit} and {$cards ->
+msg_corp-end-of-turn = {$username} is ending [their] turn {$turn} with {$credits} {-credit} and {$cards ->
     [one] 1 card in { -hq }.
     *[other] {$cards} cards in { -hq }.
 }
 
-runner-start-of-turn = {$username} started [their] turn {$turn} with {$credits} {-credit} and {$cards ->
+msg_runner-start-of-turn = {$username} started [their] turn {$turn} with {$credits} {-credit} and {$cards ->
     [one] 1 card in { -grip }.
     *[other] {$cards} cards in { -grip }.
 }
-runner-end-of-turn = {$username} is ending [their] turn {$turn} with {$credits} {-credit} and {$cards ->
+msg_runner-end-of-turn = {$username} is ending [their] turn {$turn} with {$credits} {-credit} and {$cards ->
     [one] 1 card in { -grip }.
     *[other] {$cards} cards in { -grip }.
 }
 
-mandatory-start-of-turn-draw = {$username} makes [their] mandatory start of turn draw.
+msg_mandatory-start-of-turn-draw = {$username} makes [their] mandatory start of turn draw.
 
-no-further-actions = {$username} has no further action.
+msg_no-further-actions = {$username} has no further action.
 
-skip-discard-step = {$username} skips [their] discard step this turn.
+msg_skip-discard-step = {$username} skips [their] discard step this turn.
 
-corp-discard-cards-from-hand-eot = {$username} discards {$cards ->
+msg_corp-discard-cards-from-hand-eot = {$username} discards {$cards ->
     [one] 1 card from { -hq } at end of turn.
     *[other] {$cards} from { -hq } at end of turn.
 }
-runner-discard-cards-from-hand-eot = {$username} discards {$cards} from {-stack} at end of turn.
+msg_runner-discard-cards-from-hand-eot = {$username} discards {$cards} from {-stack} at end of turn.
 
-extra-turns-remaining = {$username} will have {$turns ->
+msg_extra-turns-remaining = {$username} will have {$turns ->
     [one] 1 extra turn remaining.
     *[other] {$turns} extra turns remaning.
 }

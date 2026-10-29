@@ -77,7 +77,7 @@
                 (when (= dmg-type :brain)
                   (swap! state update-in [:runner :brain-damage] #(+ % n)))
                 (when-let [trashed-msg (enumerate-cards cards-trashed :sorted)]
-                  (system-msg state side {:msg/type :msg-trash-damage
+                  (system-msg state side {:msg/type :msg_trash-damage
                                           :msg/titles (map get-title cards-trashed)
                                           :msg/damage dmg-type})
                   (swap! state update-in [:stats :corp :damage :all] (fnil + 0) n)

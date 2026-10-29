@@ -1,7 +1,7 @@
 ## Logical templates
 
-use-card = {$username} usa {$title} para {$do-ability}.
-pay-use-card = {$username} {$payment} para usar {$title} para {$do-ability}.
+msg_use-card = {$username} usa {$title} para {$do-ability}.
+msg_pay-use-card = {$username} {$payment} para usar {$title} para {$do-ability}.
 
 # join ability framents together naturally
 # for example, "$player uses $card to do x and do y and do z" will use [join-with-and]

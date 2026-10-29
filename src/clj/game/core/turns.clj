@@ -28,10 +28,10 @@
   "Prints a message for the start or end of a turn, summarizing credits and cards in hand."
   [state side start-of-turn]
   (let [msg-type (case [(= :corp side) (boolean start-of-turn)]
-                   [true true] :corp-start-of-turn
-                   [true false] :corp-end-of-turn
-                   [false true] :runner-start-of-turn
-                   [false false] :runner-end-of-turn)
+                   [true true] :msg_corp-start-of-turn
+                   [true false] :msg_corp-end-of-turn
+                   [false true] :msg_runner-start-of-turn
+                   [false false] :msg_runner-end-of-turn)
         m {:msg/type msg-type
            :msg/turn (:turn @state)
            :msg/cards (count (get-in @state [side :hand]))
@@ -52,7 +52,7 @@
                  (do (update-lingering-effect-durations state side :until-next-runner-turn-begins :until-runner-turn-begins)
                      (update-floating-event-durations state side :until-next-runner-turn-begins :until-runner-turn-begins)))
                (if (= side :corp)
-                 (do (system-msg state side {:msg/type :mandatory-start-of-turn-draw})
+                 (do (system-msg state side {:msg/type :msg_mandatory-start-of-turn-draw})
                      (wait-for (draw state side 1 nil)
                                (trigger-event-simult state side eid :corp-mandatory-draw nil nil)))
                  (effect-completed state nil eid))
@@ -71,14 +71,14 @@
          (if (and (get-in @state [:corp-phase-12 :corp])
                   (get-in @state [:corp-phase-12 :runner]))
            (end-phase-12 state :corp eid _)
-           (do (system-msg state side {:msg/type :no-further-actions})
+           (do (system-msg state side {:msg/type :msg_no-further-actions})
                (effect-completed state side eid))))
      (:runner-phase-12 @state)
      (do (swap! state assoc-in [:runner-phase-12 side] true)
          (if (and (get-in @state [:runner-phase-12 :corp])
                   (get-in @state [:runner-phase-12 :runner]))
            (end-phase-12 state :runner eid _)
-           (do (system-msg state side {:msg/type :no-further-actions})
+           (do (system-msg state side {:msg/type :msg_no-further-actions})
                (effect-completed state side eid))))
      :else nil)))
 
@@ -150,7 +150,7 @@
               (effect-completed state side eid))
           (any-effects state side :skip-discard)
           (do
-            (system-msg state side {:msg/type :skip-discard-step})
+            (system-msg state side {:msg/type :msg_skip-discard-step})
             (effect-completed state side eid))
           (> cur-hand-size max-hand-size)
           (continue-ability
@@ -163,9 +163,9 @@
              :async true
              :effect (effect
                       (let [m (if (= :corp side)
-                                {:msg/type :corp-discard-cards-from-hand-eot
+                                {:msg/type :msg_corp-discard-cards-from-hand-eot
                                  :msg/cards (count targets)}
-                                {:msg/type :runner-discard-cards-from-hand-eot
+                                {:msg/type :msg_runner-discard-cards-from-hand-eot
                                  :msg/cards (count targets)})]
                         (system-msg state side m))
                       (let [discard (mapv #(move state side % :discard) targets)
@@ -218,7 +218,7 @@
                  (when (pos? extra-turns)
                    (start-turn state side nil)
                    (swap! state update-in [side :extra-turns] dec)
-                   (system-msg state side {:msg/type :extra-turns-remaining
+                   (system-msg state side {:msg/type :msg_extra-turns-remaining
                                            :msg/turns extra-turns})))
                (effect-completed state side eid)))))
 
@@ -231,14 +231,14 @@
          (if (and (get-in @state [:corp-post-discard :corp])
                   (get-in @state [:corp-post-discard :runner]))
            (end-turn-continue state :corp eid _)
-           (do (system-msg state side {:msg/type :no-further-actions})
+           (do (system-msg state side {:msg/type :msg_no-further-actions})
                (effect-completed state side eid))))
      (:runner-post-discard @state)
      (do (swap! state assoc-in [:runner-post-discard side] true)
          (if (and (get-in @state [:runner-post-discard :corp])
                   (get-in @state [:runner-post-discard :runner]))
            (end-turn-continue state :runner eid _)
-           (do (system-msg state side {:msg/type :no-further-actions})
+           (do (system-msg state side {:msg/type :msg_no-further-actions})
                (effect-completed state side eid))))
      :else nil)))
 

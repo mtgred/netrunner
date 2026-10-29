@@ -734,7 +734,7 @@
                       (->c :click (if-not no-cost 1 0))
                       (->c :credit (if-not no-cost 1 0)))
                  (if-let [payment-str (:cost-paid async-result)]
-                   (do (system-msg state side (->effect-msg {:msg/type :msg-advance
+                   (do (system-msg state side (->effect-msg {:msg/type :msg_advance
                                                              :msg/payments (vals payment-str)
                                                              :msg/card-str card}))
                        (update-advancement-requirement state card)
@@ -761,7 +761,7 @@
                                      :advancement-requirement advancement-requirement
                                      :advancement-tokens advancement-tokens
                                      :points points})
-              (system-msg state :corp {:msg/type :msg-score-agenda
+              (system-msg state :corp {:msg/type :msg_score-agenda
                                        :msg/title (:title c)
                                        :msg/value points})
               (implementation-msg state card)
@@ -803,7 +803,7 @@
                            (if (string/blank? (:msg payment-result))
                              (effect-completed state side eid)
                              (do
-                               (system-msg state side (->effect-msg {:msg/type :msg-pay-score-agenda
+                               (system-msg state side (->effect-msg {:msg/type :msg_pay-score-agenda
                                                                      :msg/payments (vals (:cost-paid payment-result))
                                                                      :msg/title (:title card)}))
                                (resolve-score state side eid card {:advancement-requirement adv-cost :advancement-tokens adv-tokens}))))))))))

@@ -254,7 +254,7 @@
                    (doseq [c top-5]
                      (move state side c :rfg))
                    (system-msg state side
-                               {:msg/type :msg-rfg-n-cards-from-stack
+                               {:msg/type :msg_rfg-n-cards-from-stack
                                 :msg/count (count top-5)
                                 :msg/card-strs top-5})
                    (draw state :runner eid 5 {:loud true})))}})
@@ -2607,7 +2607,7 @@
                    :prompt (msg "Choose a piece of ice in " target " to trash")
                    :choices {:card #(and (ice? %)
                                          (= serv (second (get-zone %))))}
-                   :effect (effect (system-msg state side {:msg/type :msg-trash-card
+                   :effect (effect (system-msg state side {:msg/type :msg_trash-card
                                                            :msg/card-str target})
                                    (trash state :corp eid target {:cause-card cause}))})
                 nil nil))}})

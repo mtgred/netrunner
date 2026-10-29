@@ -194,7 +194,7 @@
         _ (update-all-agenda-points state)
         c (get-card state c)
         points (get-agenda-points c)]
-    (system-msg state :runner {:msg/type :msg-steal-agenda :msg/title (:title c) :msg/value points})
+    (system-msg state :runner {:msg/type :msg_steal-agenda :msg/title (:title c) :msg/value points})
     (swap! state update-in [:runner :register :stole-agenda] #(+ (or % 0) (:agendapoints c 0)))
     (play-sfx state side "agenda-steal")
     (when (:breach @state)
@@ -326,9 +326,9 @@
           zone (get-zone card)
           unseen (= title "an unseen card")
           public-msg-type (if unseen
-                            (if payments :msg-pay-access-card-unseen :msg-access-card-unseen)
-                            (if payments :msg-pay-access-card :msg-access-card))
-          runner-msg-type (if payments :msg-pay-access-card :msg-access-card)
+                            (if payments :msg_pay-access-card-unseen :msg_access-card-unseen)
+                            (if payments :msg_pay-access-card :msg_access-card))
+          runner-msg-type (if payments :msg_pay-access-card :msg_access-card)
           public-msg (merge payments
                             {:msg/type public-msg-type
                              :msg/server (name-zone :corp zone)})
@@ -1165,7 +1165,7 @@
 
         everything-else-fn
         (effect (let [accessed (get-archives-inactive state)]
-               (system-msg state side {:msg/type :msg-access-archives})
+               (system-msg state side {:msg/type :msg_access-archives})
                (wait-for (access-inactive-archives-cards state side accessed access-amount)
                          (let [already-accessed (apply conj already-accessed (keep :cid async-result))
                                access-amount {:total-mod (access-bonus-count state side :total)
@@ -1390,7 +1390,7 @@
   "Starts the breach routines for the run's server."
   ([state side eid server] (breach-server state side eid server nil))
   ([state side eid server args]
-   (system-msg state side {:msg/type :msg-breach-server :msg/server (zone->name server)})
+   (system-msg state side {:msg/type :msg_breach-server :msg/server (zone->name server)})
    (wait-for (trigger-event-simult state side :breach-server nil {:server (first server)})
              (swap! state assoc :breach {:breach-server (first server) :from-server (first server)})
              (let [args (clean-access-args args)
