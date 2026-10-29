@@ -1,3 +1,9 @@
+;; prod.edn is deep merged on top of these config items.
+;; When deploying, copy prod.example.edn to prod.edn and set the #env vars.
+;; `lein uberjar` will bundle both dev.edn and prod.edn if there, then when
+;; you run `java -jar target/netrunner-standalone.jar` it'll be picked up.
+;; When using `docker/Dockerfile.prod` you need to mount it as a volume in
+;; `/app/config/prod.edn`.
 {:server/mode "dev"
  :mongodb/connection {:address "localhost"
                       :port 27017

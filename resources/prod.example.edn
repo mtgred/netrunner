@@ -1,0 +1,16 @@
+{:server/mode "prod"
+ :mongodb/connection {:connection-string #env MONGO_CONNECTION_URI}
+ :logging/timbre {:appenders
+                  {:println {:enabled? false}
+                   :default {:enabled? true}
+                   :mod-action {:enabled? true}
+                   :telemetry {:enabled? true}}}
+ :web/server {:port #env WEB_SERVER_PORT}
+ :web/auth {:secret #env WEB_AUTH_SECRET
+            :cookie {:secure true}}
+ :web/email {:host #or [#env WEB_EMAIL_HOST nil]
+             :user #or [#env WEB_EMAIL_USER nil]
+             :pass #or [#env WEB_EMAIL_PASS nil]
+             :ssl  true
+             :from #env WEB_EMAIL_FROM}
+ :web/ws {:packer :msgpack}}
