@@ -4371,7 +4371,7 @@
       (play-from-hand state :runner "Prognostic Q-Loop")
       (run-on state :hq)
       (click-prompt state :runner "Yes")
-      (is (= "The top cards of the stack are (top->bottom): Au Revoir and Bankroll" (:msg (prompt-map :runner))))
+      (is (= "The top cards of the stack are (top->bottom): Au Revoir, Bankroll" (:msg (prompt-map :runner))))
       (click-prompt state :runner "OK")
       (card-ability state :runner (get-hardware state 0) 1)
       (click-prompt state :runner "Yes")
@@ -4472,7 +4472,7 @@
       (is (= "Choose a trigger to resolve" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Prognostic Q-Loop")
       (click-prompt state :runner "Yes")
-      (is (= "The top cards of the stack are (top->bottom): Au Revoir and Bankroll" (:msg (prompt-map :runner))))))
+      (is (= "The top cards of the stack are (top->bottom): Au Revoir, Bankroll" (:msg (prompt-map :runner))))))
 
 (deftest prognostic-q-loop-are-the-correct-cards-shown-if-another-start-of-run-trigger-draws-a-card-issue-4973
     ;; Are the correct cards shown if another start of run trigger draws a card. Issue #4973
@@ -4497,7 +4497,7 @@
       (is (= "Look at top 2 cards of the stack?" (:msg (prompt-map :runner))))
       (click-prompt state :runner "Yes")
       ; Au Revoir drawn by Masterwork off it's own install, Q Loop prompt shows accurate info
-      (is (= "The top cards of the stack are (top->bottom): Bankroll and Clone Chip" (:msg (prompt-map :runner))))))
+      (is (= "The top cards of the stack are (top->bottom): Bankroll, Clone Chip" (:msg (prompt-map :runner))))))
 
 (deftest prognostic-q-loop-works-with-paladin-poemu-5304
     ;; Works with Paladin Poemu #5304

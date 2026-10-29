@@ -178,9 +178,10 @@
                  :async true
                  :msg (msg "trash " (quantify (count remaining-cards) "card") " from the top of R&D")
                  :effect (effect (trash-cards state side eid remaining-cards {:unpreventable true :cause-card card}))})))]
-   {:prompt (effect {:msg/type :prompt_the-top-cards-of-are-top-bottom
-                     :msg/side "corp"
-                     :msg/card-list (enumerate-cards (take 3 (:deck corp)))})
+   {:prompt (effect (let [cards (take 3 (:deck corp))]
+                      {:msg/type :prompt_top-cards-of-rd
+                       :msg/count (count cards)
+                       :msg/titles cards}))
     :change-in-game-state {:req (req (seq (:deck corp)))}
     :choices [(->msg-map :choice_ok)]
     :async true
@@ -685,9 +686,9 @@
                                   set-aside-eid eid]
                               (continue-ability
                                 state side
-                                {:prompt {:msg/type :prompt_the-top-cards-of-are-top-bottom
-                                          :msg/side "corp"
-                                          :msg/card-list (enumerate-cards set-aside-cards)}
+                                {:prompt {:msg/type :prompt_top-cards-of-rd
+                                          :msg/count (count set-aside-cards)
+                                          :msg/titles set-aside-cards}
                                  :waiting-prompt true
                                  :choices [(->msg-map :choice_ok)]
                                  :async true
@@ -2391,9 +2392,9 @@
       (effect
         (continue-ability
           state side (let [top-five (take 5 (:deck corp))]
-            {:prompt {:msg/type :prompt_the-top-cards-of-are-top-bottom
-                      :msg/side "corp"
-                      :msg/card-list (enumerate-cards top-five)}
+            {:prompt {:msg/type :prompt_top-cards-of-rd
+                      :msg/count (count top-five)
+                      :msg/titles top-five}
              :waiting-prompt true
              :choices [(->msg-map :choice_ok)]
              :async true

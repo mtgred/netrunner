@@ -239,9 +239,7 @@
 
 ;; prompts
 (def $card [:effect/card :string])
-(def $card-list [:effect/card-list :string])
 (def $current [:effect/current :int])
-(def $side [:effect/side :string])
 (def $total [:effect/total :int])
 
 (def effect-registry (atom {}))
@@ -743,7 +741,8 @@
 (register-msg :prompt_take-bad-publicity $count)
 (register-msg :prompt_the-top-card-of-rd-is $title)
 (register-msg :prompt_the-top-card-of-the-stack-is $title)
-(register-msg :prompt_the-top-cards-of-are-top-bottom $side $card-list)
+(register-msg :prompt_top-cards-of-rd $count $titles)
+(register-msg :prompt_top-cards-of-stack $count $titles)
 (register-msg :prompt_trash $title)
 (register-msg :prompt_you-have-no-ice-in-rd)
 

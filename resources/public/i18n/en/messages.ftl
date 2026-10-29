@@ -1052,10 +1052,15 @@ prompt_the-top-card-of-rd-is = The top card of {-rd} is {$title}
 
 prompt_the-top-card-of-the-stack-is = The top card of {-stack} is {$title}
 
-prompt_the-top-cards-of-are-top-bottom = The top cards of {$side ->
-    [corp] {-rd}
-    *[other] {-stack}
-} are (top->bottom): {$card-list}
+prompt_top-cards-of-rd = {$count ->
+    [one] The top card of {-rd} is {$titles}
+    *[other] The top cards of {-rd} are (top->bottom): {$titles}
+}
+
+prompt_top-cards-of-stack = {$count ->
+    [one] The top card of {-stack} is {$titles}
+    *[other] The top cards of {-stack} are (top->bottom): {$titles}
+}
 
 prompt_trash = Trash {$title}?
 

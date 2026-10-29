@@ -664,9 +664,10 @@
                             :req (req (seq (get-in @state [deck-side :deck])))}
      :effect (effect (resolve-ability
                     state side eid
-                    {:prompt (effect {:msg/type :prompt_the-top-cards-of-are-top-bottom
-                                      :msg/side (name looking-side)
-                                      :msg/card-list (enumerate-cards (take qty (get-in @state [deck-side :deck])))})
+                    {:prompt (effect (let [cards (take qty (get-in @state [deck-side :deck]))]
+                                       {:msg/type (if (= looking-side :corp) :prompt_top-cards-of-rd :prompt_top-cards-of-stack)
+                                        :msg/count (count cards)
+                                        :msg/titles cards}))
                      :choices [(->msg-map :choice_ok)]}
                     card nil))}))
 

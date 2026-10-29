@@ -3758,9 +3758,9 @@
                   (effect (continue-ability
                             state side (let [top-cards (take 3 (:deck corp))]
                               {:waiting-prompt true
-                               :prompt {:msg/type :prompt_the-top-cards-of-are-top-bottom
-                                        :msg/side "corp"
-                                        :msg/card-list (enumerate-cards top-cards)}
+                               :prompt {:msg/type :prompt_top-cards-of-rd
+                                        :msg/count (count top-cards)
+                                        :msg/titles top-cards}
                                :choices ["Arrange cards" "Shuffle R&D"]
                                :async true
                                :effect

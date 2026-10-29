@@ -188,9 +188,9 @@
                     (wait-for
                       (resolve-ability state side
                                        {:async true
-                                        :prompt {:msg/type :prompt_the-top-cards-of-are-top-bottom
-                                                 :msg/side "corp"
-                                                 :msg/card-list (enumerate-cards choices)}
+                                        :prompt {:msg/type :prompt_top-cards-of-rd
+                                                 :msg/count (count choices)
+                                                 :msg/titles choices}
                                         :choices [(->msg-map :choice_ok)]}
                                        card nil)
                       (continue-ability state side (abt choices) card nil))))}}}}))
@@ -418,9 +418,10 @@
                                :msg/count 7}
                       :yes-ability {:async true
                                     :msg "look at the top 7 cards of R&D"
-                                    :prompt (effect {:msg/type :prompt_the-top-cards-of-are-top-bottom
-                                                     :msg/side "corp"
-                                                     :msg/card-list (enumerate-cards (take 7 (:deck corp)))})
+                                    :prompt (effect (let [cards (take 7 (:deck corp))]
+                                                      {:msg/type :prompt_top-cards-of-rd
+                                                       :msg/count (count cards)
+                                                       :msg/titles cards}))
                                     :choices [(->msg-map :choice_ok)]
                                     :effect (effect (let [set-aside-cards (set-aside-for-me state side eid (take 7 (:deck corp)))]
                                                    (when (and

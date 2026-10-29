@@ -1838,9 +1838,9 @@
     (effect
       (continue-ability
         state side (let [top-ten (take 10 (:deck runner))]
-          {:prompt {:msg/type :prompt_the-top-cards-of-are-top-bottom
-                    :msg/side "runner"
-                    :msg/card-list (enumerate-cards top-ten)}
+          {:prompt {:msg/type :prompt_top-cards-of-stack
+                    :msg/count (count top-ten)
+                    :msg/titles top-ten}
            :choices [(->msg-map :choice_ok)]
            :async true
            :effect
