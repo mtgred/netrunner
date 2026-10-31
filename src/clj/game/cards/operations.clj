@@ -671,7 +671,7 @@
               ;; causes (player) memory issues that clicking on the card does not, so I have chosen to do it this way
               ;;  -nbkelly, 2026.02
               :else
-              {:prompt (->msg-map :prompt_add-a-card-to-the-top-of-rd)
+              {:prompt (->msg-map :prompt_choose-a-card-to-add-to-the-top-of-rd)
                :choices remaining
                :async true
                :effect (effect (continue-ability state side (interact cards (remove-card remaining target) to-trash to-add (conj to-top target)) card nil))}))]
@@ -2896,7 +2896,8 @@
 (defcard "Self-Growth Program"
   {:on-play
    {:req (req tagged)
-    :prompt (->msg-map :prompt_choose-installed-runner-cards)
+    :prompt {:msg/type :prompt_choose-installed-runner-cards
+             :msg/count 2}
     :change-in-game-state {:req (req (seq (all-installed state :runner)))}
     :choices {:card #(and (installed? %)
                           (runner? %))
@@ -3289,7 +3290,8 @@
 (defcard "Threat Assessment"
   {:on-play
    {:req (req (last-turn? state :runner :trashed-card))
-    :prompt (->msg-map :prompt_choose-an-installed-runner-card)
+    :prompt {:msg/type :prompt_choose-installed-runner-cards
+             :msg/count 1}
     :choices {:card #(and (runner? %)
                           (installed? %))}
     :rfg-instead-of-trashing true
@@ -3373,7 +3375,7 @@
 
 (defcard "Trick of Light"
   {:on-play
-   {:prompt (->msg-map :prompt_choose-an-installed-card-you-can-advance)
+   {:prompt (->msg-map :prompt_choose-a-card-that-can-be-advanced)
     :choices {:req (req (can-be-advanced? state target)
                              (installed? target))}
     :change-in-game-state {:req (req (something-can-be-advanced? state))}

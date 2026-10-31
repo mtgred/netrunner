@@ -240,7 +240,7 @@
     (rez state :corp (get-ice state :hq 0))
     (run-continue-until state :encounter-ice)
     (card-subroutine state :corp (get-ice state :hq 0) 0)
-    (click-prompt state :runner "Take 1 net damage")
+    (click-prompt state :runner "Suffer 1 net damage")
     (is (= 1 (get-counters (:identity (get-corp)) :power)))))
 
 (deftest au-co-works-with-start-of-turn

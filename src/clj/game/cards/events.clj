@@ -1532,7 +1532,7 @@
 
 (defcard "Escher"
   (letfn [(es [] {:async true
-                  :prompt (->msg-map :prompt_choose-pieces-of-ice-to-swap-positions)
+                  :prompt (->msg-map :prompt_choose-pieces-of-ice-to-swap)
                   :choices {:card #(and (installed? %)
                                         (ice? %))
                             :max 2}

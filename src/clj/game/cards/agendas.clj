@@ -406,7 +406,7 @@
               ;; causes (player) memory issues that clicking on the card does not, so I have chosen to do it this way
               ;;  -nbkelly, 2026.02
               :else
-              {:prompt (->msg-map :prompt_add-a-card-to-the-top-of-rd)
+              {:prompt (->msg-map :prompt_choose-a-card-to-add-to-the-top-of-rd)
                :choices remaining
                :async true
                :effect (effect (continue-ability state side (interact cards (remove-card remaining target) to-trash to-add (conj to-top target) stage) card nil))}))]
@@ -997,7 +997,7 @@
                                  (continue-ability
                                    state side
                                    {:req (req (pos? (count (:hand corp))))
-                                    :prompt (->msg-map :prompt_choose-a-card-in-hq-to-move-to-the-top-of-rd)
+                                    :prompt (->msg-map :prompt_choose-a-card-in-hq-to-add-to-the-top-of-rd)
                                     :msg {:public "add 1 card in HQ to the top of R&D"
                                           :corp (msg "add facedown " (:title target) " to the top of R&D")}
                                     :choices {:card #(and (in-hand? %)

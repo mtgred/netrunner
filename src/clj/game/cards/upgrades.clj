@@ -314,7 +314,7 @@
                :interactive true
                :player :runner
                :req (req this-server)}
-              [{:option {:msg/type :choice_take-core-damage
+              [{:option {:msg/type :choice_suffer-core-damage
                          :msg/count 1}
                 :ability {:msg "force the Runner to take 1 core damage"
                           :async true

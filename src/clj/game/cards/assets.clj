@@ -1372,7 +1372,7 @@
                  :effect (effect
                            (continue-ability
                              state side (let [from-ice target]
-                               {:prompt (->msg-map :prompt_choose-an-installed-card-you-can-advance)
+                               {:prompt (->msg-map :prompt_choose-a-card-that-can-be-advanced)
                                 :choices {:req (req (installed? target)
                                                          (can-be-advanced? state target)
                                                          (not (same-card? from-ice target)))}
@@ -3011,7 +3011,7 @@
                   state side (let [dmg target]
                     (choose-one-helper
                       {:player :runner}
-                      [{:option {:msg/type :choice_take-net-damage
+                      [{:option {:msg/type :choice_suffer-net-damage
                                  :msg/count dmg}
                         :ability {:async true
                                   :effect (effect (system-msg state :runner (str "takes " dmg " net damage from " (:title card)))
@@ -3236,7 +3236,7 @@
                 :label "Swap 2 installed pieces of ice"
                 :cost [(->c :click)]
                 :keep-menu-open :while-clicks-left
-                :prompt (->msg-map :prompt_choose-pieces-of-ice-to-swap-positions)
+                :prompt (->msg-map :prompt_choose-pieces-of-ice-to-swap)
                 :req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
                 :choices {:card #(and (installed? %)
                                       (ice? %))

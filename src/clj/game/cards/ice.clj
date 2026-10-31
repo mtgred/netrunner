@@ -888,7 +888,7 @@
                               state side
                               (choose-one-helper
                                 {:player :runner}
-                                [{:option {:msg/type :choice_take-net-damage
+                                [{:option {:msg/type :choice_suffer-net-damage
                                            :msg/count 1}
                                   :ability {:msg "do 1 net damage"
                                             :async true
@@ -2105,7 +2105,8 @@
                 :effect
                 (effect (continue-ability
                           state side {:waiting-prompt true
-                           :prompt (->msg-map :prompt_choose-an-installed-runner-card)
+                           :prompt {:msg/type :prompt_choose-installed-runner-cards
+                                    :msg/count 1}
                            :async true
                            :choices {:card #(and (installed? %)
                                                  (runner? %))}
@@ -2592,7 +2593,8 @@
    :subroutines [{:label "Choose 2 installed Runner cards, if able. The Runner must add 1 of those to the top of the Stack"
                   :change-in-game-state {:silent true :req (req (>= (count (all-installed state :runner)) 2))}
                   :async true
-                  :prompt (->msg-map :prompt_choose-installed-runner-cards)
+                  :prompt {:msg/type :prompt_choose-installed-runner-cards
+                           :msg/count 2}
                   :choices {:card #(and (runner? %)
                                         (installed? %))
                             :max 2
@@ -2623,7 +2625,7 @@
             (choose-one-helper
               {:player :runner
                :label (str "Do 1 core damage unless the Runner trashes 1 installed " text)}
-              [{:option {:msg/type :choice_take-core-damage
+              [{:option {:msg/type :choice_suffer-core-damage
                          :msg/count 1}
                 :ability {:msg "do 1 core damage"
                           :async true
@@ -3298,7 +3300,7 @@
             (choose-one-helper
               {:label (str "Do " net-dmg " net damage")
                :player :runner}
-              [{:option {:msg/type :choice_take-net-damage
+              [{:option {:msg/type :choice_suffer-net-damage
                          :msg/count net-dmg}
                 :ability {:msg (str "do " net-dmg " net damage")
                           :async true
@@ -4252,7 +4254,7 @@
   {:subroutines [runner-loses-click
                  (maybe-draw-sub 1)
                  {:req (req (pos? (count (:hand corp))))
-                  :prompt (->msg-map :prompt_choose-a-card-in-hq-to-move-to-the-top-of-rd)
+                  :prompt (->msg-map :prompt_choose-a-card-in-hq-to-add-to-the-top-of-rd)
                   :choices {:card #(and (in-hand? %)
                                         (corp? %))}
                   :msg "add 1 card in HQ to the top of R&D"

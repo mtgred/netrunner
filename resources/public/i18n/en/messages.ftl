@@ -940,8 +940,6 @@ waiting-prevent-tags = Waiting for your opponent to prevent tags.
 
 prompt_access-additional-card = Access 1 additional card?
 
-prompt_add-a-card-to-the-top-of-rd = Add a card to the top of {-rd}
-
 prompt_choose-a-card = Choose a card
 
 prompt_choose-a-card-in-archives = Choose a card in {-archives}
@@ -957,8 +955,6 @@ prompt_choose-a-card-in-hq-to-add-to-the-bottom-of-rd = Choose a card in {-hq} t
 prompt_choose-a-card-in-hq-to-add-to-the-top-of-rd = Choose a card in {-hq} to add to the top of {-rd}
 
 prompt_choose-a-card-in-hq-to-install = Choose a card in {-hq} to install
-
-prompt_choose-a-card-in-hq-to-move-to-the-top-of-rd = Choose a card in {-hq} to move to the top of {-rd}
 
 prompt_choose-a-card-in-hq-to-trash = Choose a card in {-hq} to trash
 
@@ -1064,10 +1060,6 @@ prompt_choose-an-installed-card-to-place-advancement-counters-on-remaining = Cho
 
 prompt_choose-an-installed-card-to-trash = Choose an installed card to trash
 
-prompt_choose-an-installed-card-you-can-advance = Choose an installed card you can advance
-
-prompt_choose-an-installed-runner-card = Choose an installed {-runner(case: "genitive")} card
-
 prompt_choose-another-server-and-redirect-the-run = Choose another server and redirect the run to its outermost position
 
 prompt_choose-any-number-of-cards-in-hq-to-trash = Choose any number of cards in {-hq} to trash
@@ -1079,7 +1071,10 @@ prompt_choose-installed-card-to-trash = Choose {$count ->
     *[other] {$count} installed cards
 } to trash
 
-prompt_choose-installed-runner-cards = Choose 2 installed {-runner(case: "genitive")} cards
+prompt_choose-installed-runner-cards = {$count ->
+    [one] Choose an installed {-runner(case: "genitive")} card
+    *[other] Choose {$count} installed {-runner(case: "genitive")} cards
+}
 
 prompt_choose-one = Choose one
 
@@ -1088,8 +1083,6 @@ prompt_choose-one-choice-of = Choose one. Choice {$current} of {$total}
 prompt_choose-one-remaining = Choose one ({$count} remaining)
 
 prompt_choose-pieces-of-ice-to-swap = Choose 2 pieces of ice to swap
-
-prompt_choose-pieces-of-ice-to-swap-positions = Choose 2 pieces of ice to swap positions
 
 prompt_choose-target = Choose a target for {$title}
 
@@ -1307,10 +1300,6 @@ choice_suffer-core-damage = Suffer {$count} core damage
 choice_suffer-meat-damage = Suffer {$count} meat damage
 
 choice_suffer-net-damage = Suffer {$count} net damage
-
-choice_take-core-damage = Take {$count} core damage
-
-choice_take-net-damage = Take {$count} net damage
 
 choice_take-tags = Take {$count ->
     [one] {$count} tag
