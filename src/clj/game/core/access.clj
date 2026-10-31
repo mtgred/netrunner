@@ -1218,7 +1218,7 @@
         ;; Present the normal options
         :else
         {:async true
-         :prompt (str "Choose a card to access. You must access all cards")
+         :prompt (->msg-map :prompt_choose-a-card-to-access-you-must-access-all-cards)
          :choices choices
          :effect (effect (cond
 

@@ -303,7 +303,7 @@
                 :req (req run
                                (= :approach-ice (:phase run))
                                (not (rezzed? current-ice)))
-                :prompt "Choose another server and redirect the run to its outermost position"
+                :prompt (->msg-map :prompt_choose-another-server-and-redirect-the-run)
                 :choices (effect (cancellable (remove #{(-> @state :run :server central->name)} servers)))
                 :msg (msg "trash the approached piece of ice. The Runner is now running on " target)
                 :effect (effect (let [dest (server->zone state target)
@@ -353,7 +353,7 @@
    :mulligan (effect (draw state side eid 4 {:suppress-event true}))})
 
 (defcard "Apex: Invasive Predator"
-  (let [ability {:prompt "Choose a card to install facedown"
+  (let [ability {:prompt (->msg-map :prompt_choose-a-card-to-install-facedown)
                  :label "Install a card facedown (start of turn)"
                  :once :per-turn
                  :choices {:max 1
@@ -457,7 +457,7 @@
                 :label "Add 1 hosted card to the grip"
                 :cost [(->c :click 1)]
                 :async true
-                :prompt "Choose a hosted card"
+                :prompt (->msg-map :prompt_choose-a-hosted-card)
                 :choices (effect (cancellable (:hosted card)))
                 :msg "add a hosted card to the grip"
                 :effect (effect (move state side target :hand)
@@ -658,7 +658,7 @@
               :waiting-prompt true
               :prompt "Choose the first card to trash?"
               :yes-ability (with-revealed-hand :runner {:no-event true}
-                             {:prompt "Choose 1 card to trash"
+                             {:prompt (->msg-map :prompt_choose-a-card-to-trash)
                               :choices {:card (every-pred runner? in-hand?)}
                               :msg (msg "choose " (:title target) " to trash")
                               :effect (effect (chosen-damage state :corp target))})
@@ -766,7 +766,7 @@
              :optional {:req (req (let [valid-ctx? (fn [[ctx]] (pos? (:amount ctx)))]
                                     (and (valid-ctx? targets)
                                          (first-event? state side :corp-gain-bad-publicity valid-ctx?))))
-                        :prompt "Search for a card?"
+                        :prompt (->msg-map :prompt_search-for-a-card)
                         :waiting-prompt true
                         :yes-ability {:prompt (->msg-map :prompt_choose-a-card)
                                       :msg (msg "add " (:title target) " to HQ from R&D") ;; TODO - once the illicit->liability change is through, we can adjust this (or just leave it)
@@ -901,7 +901,7 @@
                             (has-most-faction? state :corp "Weyland Consortium"))
              :change-in-game-state {:silent true
                                     :req (req (seq (filter ice? (all-installed state :corp))))}
-             :prompt "Choose a piece of ice to place 1 advancement counter on"
+             :prompt (->msg-map :prompt_choose-a-piece-of-ice-to-place-advancement-counter-on)
              :choices {:card #(and (installed? %)
                                    (ice? %))}
              :msg (msg "place 1 advancement counter on " (card-str state target))
@@ -1271,7 +1271,7 @@
                                      (update! state side (assoc card :code "greenhouse" :face :greenhouse))
                                      (continue-ability
                                        state side
-                                       {:prompt "Choose a card that can be advanced"
+                                       {:prompt (->msg-map :prompt_choose-a-card-that-can-be-advanced)
                                         :choices {:req (req (can-be-advanced? state target))}
                                         :async true
                                         :effect (effect (add-prop state side eid target :advance-counter 4 {:placed true}))}
@@ -1599,7 +1599,7 @@
                             (continue-ability
                               state side
                               {:optional
-                               {:prompt "Access 1 additional card?"
+                               {:prompt (->msg-map :prompt_access-additional-card)
                                 :waiting-prompt true
                                 :once :per-turn
                                 :yes-ability
@@ -1680,7 +1680,7 @@
                               {:prompt "Install a piece of ice?"
                                :once :per-turn
                                :yes-ability
-                               {:prompt "Choose a piece of ice to install from HQ"
+                               {:prompt (->msg-map :prompt_choose-a-piece-of-ice-to-install-from-hq)
                                 :choices {:card #(and (ice? %)
                                                       (in-hand? %))}
                                 :async true
@@ -1961,7 +1961,8 @@
               :msg "gain 2 [Credits]"
               :async true
               :effect (effect (gain-credits state :corp eid 2))}
-        abi1 {:prompt (msg "The top card of R&D is: " (:title (first (:deck corp))))
+        abi1 {:prompt (effect {:msg/type :prompt_the-top-card-of-rd-is
+                               :msg/title (first (:deck corp))})
               :async true
               :msg "look at the top card of R&D"
               :choices [(->msg-map :choice_ok)]
@@ -2166,16 +2167,19 @@
                                      :msg/title %}
                             :ability (remote-choice %)})
                         cards))
-        ev {:prompt (msg "The top of R&D is (in order): "
-                         (enumerate-cards (take 3 (:deck corp))))
+        ev {:prompt (effect (let [cards (take 3 (:deck corp))]
+                              {:msg/type :prompt_top-cards-of-rd
+                               :msg/count (count cards)
+                               :msg/titles cards}))
             :async true
             :msg (msg "look at the top 3 cards of R&D")
             :effect (effect (let [top-3 (take 3 (:deck corp))]
                            (continue-ability
                              state side
                              (choose-one-helper
-                               {:prompt (str "The top of R&D is (in order): "
-                                             (enumerate-cards top-3))
+                               {:prompt {:msg/type :prompt_top-cards-of-rd
+                                         :msg/count (count top-3)
+                                         :msg/titles top-3}
                                 :optional true}
                                (opts-fn top-3))
                              card nil)))}
@@ -2204,7 +2208,7 @@
              :interactive (effect true)
              :async true
              :waiting-prompt true
-             :prompt "Choose a card that can be advanced to place 1 advancement counter on"
+             :prompt (->msg-map :prompt_choose-a-card-that-can-be-advanced-to-place-advancement-counter-on)
              :choices {:req (req (installed? target) (can-be-advanced? state target))}
              :msg {:public (msg "place 1 advancement counter on " (card-str state target))
                    :corp (msg "place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
@@ -2358,7 +2362,7 @@
    :abilities [{:req (req run (seq (:discard corp)))
                 :label "add card from Archives to R&D during a run"
                 :once :per-turn
-                :prompt "Choose a card to add to the top of R&D"
+                :prompt (->msg-map :prompt_choose-a-card-to-add-to-the-top-of-rd)
                 :show-discard true
                 :choices {:card #(and (corp? %)
                                       (in-discard? %))}
@@ -2634,7 +2638,7 @@
         {:interactive (effect true)
          :change-in-game-state {:silent true :req (req (<= 2 (count (filter ice? (all-installed state :corp)))))}
          :optional
-         {:prompt "Swap 2 pieces of ice?"
+         {:prompt (->msg-map :prompt_swap-pieces-of-ice)
           :waiting-prompt true
           :yes-ability
           {:prompt "Choose 2 pieces of ice"

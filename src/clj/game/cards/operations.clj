@@ -476,7 +476,7 @@
                 :ability (give-tags 1)}
                {:option "Remove any number of tags"
                 :ability {:req (req tagged)
-                          :prompt "Remove how many tags?"
+                          :prompt (->msg-map :prompt_remove-how-many-tags)
                           :choices {:number (effect (count-tags state))}
                           :async true
                           :effect (effect (continue-ability
@@ -671,7 +671,7 @@
               ;; causes (player) memory issues that clicking on the card does not, so I have chosen to do it this way
               ;;  -nbkelly, 2026.02
               :else
-              {:prompt "Add a card to the top of R&D"
+              {:prompt (->msg-map :prompt_add-a-card-to-the-top-of-rd)
                :choices remaining
                :async true
                :effect (effect (continue-ability state side (interact cards (remove-card remaining target) to-trash to-add (conj to-top target)) card nil))}))]
@@ -758,7 +758,7 @@
 (defcard "Complete Image"
   (letfn [(name-a-card []
             {:async true
-             :prompt "Name a Runner card"
+             :prompt (->msg-map :prompt_name-a-runner-card)
              :choices {:card-title (effect (and (runner? target)
                                              (not (identity? target))))}
              :msg (msg "name " target)
@@ -828,7 +828,7 @@
 
 (defcard "Dedication Ceremony"
   {:on-play
-   {:prompt "Choose a faceup card"
+   {:prompt (->msg-map :prompt_choose-a-faceup-card)
     :choices {:card #(or (and (corp? %)
                               (installed? %)
                               (faceup? %))
@@ -868,7 +868,7 @@
   {:on-play
    {:req (req (< 1 (:turn @state))
                    (not (some #{:hq} (:successful-run runner-reg-last))))
-    :prompt "Choose an Agenda"
+    :prompt (->msg-map :prompt_choose-an-agenda)
     :change-in-game-state {:req (req (or (seq (:deck corp))
                                          (seq (:hand corp))))}
     :choices (effect (conj (vec (filter agenda? (:deck corp))) (->msg-map :choice_none)))
@@ -1110,7 +1110,7 @@
     :msg (msg "gain " ((get-x-fn) state side eid card targets) " [Credits]")
     :effect
     (effect (let [draw {:async true
-                     :prompt "How many cards do you want to draw?"
+                     :prompt (->msg-map :prompt_how-many-cards-do-you-want-to-draw)
                      :waiting-prompt true
                      :choices {:number (get-x-fn)
                                :max (get-x-fn)
@@ -1143,7 +1143,7 @@
 
 (defcard "Fast Track"
   {:on-play
-   {:prompt "Choose an Agenda"
+   {:prompt (->msg-map :prompt_choose-an-agenda)
     :change-in-game-state {:req (req (seq (:deck corp)))}
     :choices (effect (cancellable (filter agenda? (:deck corp)) :sorted))
     :async true
@@ -1410,7 +1410,7 @@
                            (continue-ability
                              state :corp
                              (when (seq (:hand corp))
-                               {:prompt "Choose a card in HQ to trash"
+                               {:prompt (->msg-map :prompt_choose-a-card-in-hq-to-trash)
                                 :choices {:max 1
                                           :all true
                                           :card #(and (corp? %) (in-hand? %))}
@@ -1442,7 +1442,7 @@
                             (continue-ability state side (hr-choice original '() 3 original)
                                               card nil)))})
           (hr-choice [remaining chosen n original]
-            {:prompt "Choose a card to move next onto R&D"
+            {:prompt (->msg-map :prompt_choose-a-card-to-move-next-onto-rd)
              :choices remaining
              :async true
              :effect (effect (let [chosen (cons target chosen)]
@@ -1502,7 +1502,7 @@
     :effect (effect (wait-for (draw state side 3)
                            (continue-ability
                              state side
-                             {:prompt "Choose a card in HQ to add to the top of R&D"
+                             {:prompt (->msg-map :prompt_choose-a-card-in-hq-to-add-to-the-top-of-rd)
                               :choices {:card #(and (corp? %)
                                                     (in-hand? %))}
                               :msg "draw 3 cards and add 1 card from HQ to the top of R&D"
@@ -1622,7 +1622,7 @@
                 {:cost [(->c :tag x) (->c :credit x)]
                  :change-in-game-state {:req (req false)}})
               card nil))]
-    {:on-play {:prompt "Remove how many tags?"
+    {:on-play {:prompt (->msg-map :prompt_remove-how-many-tags)
                :choices {:number (effect (min (count-tags state)
                                            (total-available-credits state side
                                                                     (assoc eid :source-type :play)
@@ -1651,7 +1651,7 @@
                                                             :msg-keys {:install-source card
                                                                        :display-origin true}}))}]
     {:on-play
-     {:prompt "Choose any number of cards in HQ to trash"
+     {:prompt (->msg-map :prompt_choose-any-number-of-cards-in-hq-to-trash)
       :rfg-instead-of-trashing true
       :choices {:max (effect (count (:hand corp)))
                 :card #(and (corp? %)
@@ -1675,7 +1675,8 @@
   {:on-play (choose-one-helper
               {:count 2
                :optional true}
-              [{:option "Gain 2 [Credit]"
+              [{:option {:msg/type :choice_gain-credits
+                         :msg/credits 2}
                 :ability (gain-credits-ability 2)}
                {:option "Install 1 piece of ice from HQ, ignoring all costs"
                 :req (req (some ice? (:hand corp)))
@@ -1748,7 +1749,7 @@
 
 (defcard "Liquidation"
   {:on-play
-   {:prompt "Choose any number of rezzed cards to trash"
+   {:prompt (->msg-map :prompt_choose-any-number-of-rezzed-cards-to-trash)
     :choices {:max (effect (count (filter #(not (agenda? %)) (all-active-installed state :corp))))
               :card #(and (rezzed? %)
                           (not (agenda? %)))}
@@ -1868,7 +1869,9 @@
 (defcard "Mindscaping"
   {:on-play
    (choose-one-helper
-     [{:option "Gain 4 [Credits] and draw 2 cards"
+     [{:option {:msg/type :choice_gain-credits-and-draw-cards
+                :msg/credits 4
+                :msg/count 2}
        :ability {:msg "gain 4 [Credits] and draw 2 cards"
                  :async true
                  :effect (effect (wait-for (gain-credits state side 4 {:suppress-checkpoint true})
@@ -1877,7 +1880,7 @@
                                           (continue-ability
                                             state side
                                             {:req (req (pos? (count (:hand corp))))
-                                             :prompt "Choose 1 card to add to the top of R&D"
+                                             :prompt (->msg-map :prompt_choose-a-card-to-add-to-the-top-of-rd)
                                              :waiting-prompt true
                                              :msg {:public "add 1 card from HQ to the top of R&D"
                                                    :corp (msg "add facedown " (:title target) " from HQ to the top of R&D")}
@@ -1996,7 +1999,7 @@
 
 (defcard "Mutually Assured Destruction"
   {:on-play
-   {:prompt "Choose any number of rezzed cards to trash"
+   {:prompt (->msg-map :prompt_choose-any-number-of-rezzed-cards-to-trash)
     :interactive (effect true)
     :change-in-game-state {:req (req (some rezzed? (all-installed state :corp)))}
     :choices {:max (effect (count (filter #(not (agenda? %)) (all-active-installed state :corp))))
@@ -2316,7 +2319,9 @@
                                     :effect/count 3})
                  :async true
                  :effect (effect (draw state :corp eid 3))}}
-      {:option "Gain 3 [Credits] and draw 3 cards"
+      {:option {:msg/type :choice_gain-credits-and-draw-cards
+                :msg/credits 3
+                :msg/count 3}
        :req (req tagged)
        :ability {:msg (simple-msg {:effect/type :gain-credits
                                     :effect/count 3}
@@ -2497,8 +2502,8 @@
                        n (count cards)]
                    (continue-ability
                      state side
-                     {:prompt (str "How many copies of "
-                                   title " do you want to reveal?")
+                     {:prompt {:msg/type :prompt_how-many-copies-do-you-want-to-reveal
+                               :msg/title title}
                       :choices {:number (effect n)}
                       :msg (msg "reveal "
                                 (quantify target "cop" "y" "ies")
@@ -2788,7 +2793,7 @@
 
 (defcard "Salem's Hospitality"
   {:on-play
-   {:prompt "Name a Runner card"
+   {:prompt (->msg-map :prompt_name-a-runner-card)
     :choices {:card-title (effect (and (runner? target)
                                     (not (identity? target))))}
     :async true
@@ -2891,7 +2896,7 @@
 (defcard "Self-Growth Program"
   {:on-play
    {:req (req tagged)
-    :prompt "Choose 2 installed Runner cards"
+    :prompt (->msg-map :prompt_choose-installed-runner-cards)
     :change-in-game-state {:req (req (seq (all-installed state :runner)))}
     :choices {:card #(and (installed? %)
                           (runner? %))
@@ -2941,7 +2946,8 @@
 
 (defcard "Shipment from Vladisibirsk"
   (letfn [(ability [x]
-            {:prompt (msg "Choose an installed card to place advancement counters on (" x " remaining)")
+            {:prompt {:msg/type :prompt_choose-an-installed-card-to-place-advancement-counters-on-remaining
+                      :msg/count x}
              :async true
              :waiting-prompt true
              :choices {:card #(and (corp? %)
@@ -3085,7 +3091,8 @@
 
 (defcard "Sudden Commandment"
   (let [play-instant-second {:optional
-                             {:prompt "Pay 3 [Credits] to gain [Click]?"
+                             {:prompt {:msg/type :prompt_pay-credits-to-gain-click
+                                       :msg/credits 3}
                               :waiting-prompt true
                               :req (req (threat-level 3 state))
                               :yes-ability {:cost [(->c :credit 3)]
@@ -3194,7 +3201,7 @@
 
 (defcard "Sunset"
   (letfn [(sun [serv]
-            {:prompt "Choose 2 pieces of ice to swap"
+            {:prompt (->msg-map :prompt_choose-pieces-of-ice-to-swap)
              :choices {:card #(and (= serv (get-zone %))
                                    (ice? %))
                        :max 2}
@@ -3248,7 +3255,7 @@
                 :async true
                 :msg "gain 10 [Credits]"
                 :effect (effect (gain-credits state :corp eid 10))}]
-    {:on-play {:prompt "Name a Runner card"
+    {:on-play {:prompt (->msg-map :prompt_name-a-runner-card)
                :choices {:card-title (effect (and (runner? target)
                                                (not (identity? target))))}
                :effect (effect (update! state side (assoc card :card-target target))
@@ -3282,7 +3289,7 @@
 (defcard "Threat Assessment"
   {:on-play
    {:req (req (last-turn? state :runner :trashed-card))
-    :prompt "Choose an installed Runner card"
+    :prompt (->msg-map :prompt_choose-an-installed-runner-card)
     :choices {:card #(and (runner? %)
                           (installed? %))}
     :rfg-instead-of-trashing true
@@ -3366,7 +3373,7 @@
 
 (defcard "Trick of Light"
   {:on-play
-   {:prompt "Choose an installed card you can advance"
+   {:prompt (->msg-map :prompt_choose-an-installed-card-you-can-advance)
     :choices {:req (req (can-be-advanced? state target)
                              (installed? target))}
     :change-in-game-state {:req (req (something-can-be-advanced? state))}
@@ -3381,7 +3388,7 @@
                    :effect (effect
                              (continue-ability
                                state side (let [source target]
-                                 {:prompt "How many advancement counters do you want to move?"
+                                 {:prompt (->msg-map :prompt_how-many-advancement-counters-do-you-want-to-move)
                                   :choices (take (inc (get-counters source :advancement)) ["0" "1" "2"])
                                   :msg (msg "move " target " advancement counters from "
                                             (card-str state source) " to " (card-str state card-to-advance))
@@ -3414,7 +3421,7 @@
                        card nil)))}}}})
 
 (defcard "Trust Operation"
-  (let [ability {:prompt "Choose a card to install from Archives"
+  (let [ability {:prompt (->msg-map :prompt_choose-a-card-to-install-from-archives)
                  :show-discard true
                  :choices {:card #(and (corp? %)
                                        (in-discard? %))}

@@ -423,10 +423,11 @@
       {:eid (select-keys eid [:eid])
        :card card
        :prompt-type :waiting
-       :msg (str "Waiting for " 
-                 (if (true? waiting-prompt)
-                   (str (side-str side) " to make a decision")
-                   waiting-prompt))}))
+       :msg (->msg-map (if (true? waiting-prompt)
+                         (if (= :corp side)
+                           :waiting-corp-default
+                           :waiting-runner-default)
+                         waiting-prompt))}))
   (if (seq cost)
     ;; Ensure that any costs can be paid
     (wait-for [payment (pay state side (make-eid state (assoc eid :action (:cid card))) card cost)]
@@ -867,7 +868,7 @@
                        :effect (effect (if (should-continue state handlers)
                                       (continue-ability state side (choose-handler (rest handlers) done?) nil event-targets)
                                       (effect-completed state side eid)))}))
-                  {:prompt "Choose a trigger to resolve"
+                  {:prompt (->msg-map :prompt_choose-a-trigger-to-resolve)
                    :choices titles
                    :async true
                    :effect (effect
@@ -1069,7 +1070,7 @@
           state side
           (when (pos? (count handlers))
             {:async true
-             :prompt "Choose a trigger to resolve"
+             :prompt (->msg-map :prompt_choose-a-trigger-to-resolve)
              :choices choices-titles
              :effect (effect (if (msg-type? target :choice_done)
                             (do (doseq [{:keys [handler]} (filter handler-skippable? handlers)]

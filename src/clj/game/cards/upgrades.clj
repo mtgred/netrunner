@@ -314,11 +314,12 @@
                :interactive true
                :player :runner
                :req (req this-server)}
-              [{:option "Take 1 core damage"
+              [{:option {:msg/type :choice_take-core-damage
+                         :msg/count 1}
                 :ability {:msg "force the Runner to take 1 core damage"
                           :async true
                           :effect (effect (damage state :runner eid :brain 1 {:card card}))}}
-               {:option "Jack out"
+               {:option (->msg-map :choice_jack-out)
                 :ability {:msg "force the Runner to jack out"
                           :async true
                           :effect (effect (wait-for
@@ -395,7 +396,7 @@
                 :async true
                 :fake-cost [(->c :trash-can)]
                 :effect (effect (continue-ability
-                                  state side {:prompt "Choose a card in this server"
+                                  state side {:prompt (->msg-map :prompt_choose-a-card-in-this-server)
                                    :choices {:card #(in-same-server? % card)}
                                    :async true
                                    :msg (msg "place an advancement counter on " (card-str state target))
@@ -641,7 +642,7 @@
 (defcard "Disposable HQ"
   (letfn [(dhq [i n]
             {:req (req (pos? n))
-             :prompt "Choose a card in HQ to add to the bottom of R&D"
+             :prompt (->msg-map :prompt_choose-a-card-in-hq-to-add-to-the-bottom-of-rd)
              :choices {:card #(and (corp? %)
                                    (in-hand? %))}
              :async true
@@ -941,7 +942,7 @@
                           0))
    :abilities [{:label "Place 1 advancement counter on a card in this server"
                 :async true
-                :prompt "Choose a card in this server"
+                :prompt (->msg-map :prompt_choose-a-card-in-this-server)
                 :choices {:req (req (in-same-server? card target))}
                 :msg (msg "place an advancement counter on " (card-str state target))
                 :cost [(->c :trash-can)]
@@ -1533,7 +1534,7 @@
                     :effect (effect
                               (continue-ability
                                 state side (when-let [rdc target]
-                                  {:prompt "Choose a card in HQ"
+                                  {:prompt (->msg-map :prompt_choose-a-card-in-hq)
                                    :choices {:card in-hand?}
                                    :msg "swap a card from the top 5 cards of R&D with a card in HQ"
                                    :effect (effect (move state side rdc :hand)
@@ -1788,7 +1789,8 @@
 
 (defcard "Shackleton Grid"
   (let [ev {:optional
-            {:prompt "Do 4 meat damage?"
+            {:prompt {:msg/type :prompt_do-meat-damage
+                      :msg/count 4}
              :waiting-prompt true
              :once :per-turn
              :req (req run this-server
@@ -1993,7 +1995,7 @@
 (defcard "Tucana"
   (let [ability {:interactive (effect true)
                  :optional
-                 {:prompt "Search R&D for an ice?"
+                 {:prompt (->msg-map :prompt_search-rd-for-a-piece-of-ice)
                   :waiting-prompt true
                   :req (req (= (:previous-zone (:card context)) (get-zone card)))
                   :yes-ability {:async true

@@ -2431,7 +2431,7 @@
     (do-game
       (subroutine-test "Event Horizon" 0 nil {:rig ["Rezeki"]})
       (case opt
-        :resolve (do (click-prompt state :runner "The Corp trashes a Program")
+        :resolve (do (click-prompt state :runner "The Corp trashes a program")
                      (click-card state :corp "Rezeki")
                      (is (= 1 (count (:discard (get-runner))))))
         :pay (click-prompt state :runner "Pay 3 [Credits]")))

@@ -256,7 +256,7 @@
 (defcard "Architect Deployment Test"
   {:on-score (combine-abilities
                (look-at-the-top :corp :corp 5)
-               {:prompt "Choose a card to install"
+               {:prompt (->msg-map :prompt_choose-a-card-to-install)
                 :choices (effect (cancellable (filter corp-installable-type? (take 5 (:deck corp)))))
                 :async true
                 :change-in-game-state {:silent true
@@ -406,7 +406,7 @@
               ;; causes (player) memory issues that clicking on the card does not, so I have chosen to do it this way
               ;;  -nbkelly, 2026.02
               :else
-              {:prompt "Add a card to the top of R&D"
+              {:prompt (->msg-map :prompt_add-a-card-to-the-top-of-rd)
                :choices remaining
                :async true
                :effect (effect (continue-ability state side (interact cards (remove-card remaining target) to-trash to-add (conj to-top target) stage) card nil))}))]
@@ -458,7 +458,7 @@
                              (first-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run"))
                              (no-event? state :runner :runner-install #(has-subtype? (:card (first %)) "Icebreaker")))
               :waiting-prompt true
-              :prompt "Give the runner 1 tag?"
+              :prompt (->msg-map :prompt_give-the-runner-tag)
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
               {:async true
@@ -472,7 +472,7 @@
                              (first-event? state :runner :runner-install #(has-subtype? (:card (first %)) "Icebreaker"))
                              (no-event? state :runner :play-event #(has-subtype? (:card (first %)) "Run")))
               :waiting-prompt true
-              :prompt "Give the runner 1 tag?"
+              :prompt (->msg-map :prompt_give-the-runner-tag)
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability
               {:async true
@@ -609,7 +609,7 @@
   {:on-score
    {:interactive (effect true)
     :optional
-    {:prompt "Search R&D for a piece of ice to install protecting a remote server?"
+    {:prompt (->msg-map :prompt_search-rd-for-ice-to-install-protecting-a-remote-server)
      :yes-ability
      {:async true
       :effect (effect
@@ -997,7 +997,7 @@
                                  (continue-ability
                                    state side
                                    {:req (req (pos? (count (:hand corp))))
-                                    :prompt "Choose a card in HQ to move to the top of R&D"
+                                    :prompt (->msg-map :prompt_choose-a-card-in-hq-to-move-to-the-top-of-rd)
                                     :msg {:public "add 1 card in HQ to the top of R&D"
                                           :corp (msg "add facedown " (:title target) " to the top of R&D")}
                                     :choices {:card #(and (in-hand? %)
@@ -1061,7 +1061,7 @@
                 :change-in-game-state {:req (req (not-empty (filter corp? (:hosted card))))}
                 :cost [(->c :click 1)]
                 :msg "add a hosted card to HQ"
-                :prompt "Choose a hosted card"
+                :prompt (->msg-map :prompt_choose-a-hosted-card)
                 :choices {:all true
                           :req (req (let [hosted-corp-cards
                                           (->> (:hosted card)
@@ -1136,7 +1136,7 @@
   {:on-score
    {:async true
     :interactive (effect true)
-    :prompt "How many power counters do you want to place?"
+    :prompt (->msg-map :prompt_how-many-power-counters-do-you-want-to-place)
     :choices ["0" "1" "2"]
     :effect (effect (let [c (str->int target)]
                    (continue-ability
@@ -1330,13 +1330,14 @@
   (letfn [(move-to [c from]
             (choose-one-helper
               (let [and-then (fn [s] (str (if (= from :rd) ", shuffle R&D, and then " " and ") s))]
-                {:prompt (str "Move " (:title c) " where?")}
+                {:prompt {:msg/type :prompt_move-where
+                          :msg/title c}}
                 [{:option "HQ"
                   :ability {:async true
                             :effect (effect (when (= from :rd) (shuffle! state side :deck))
                                          (move state side c :hand)
                                          (reveal-loud state side eid card {:and-then (and-then "add it to HQ")} c))}}
-                 {:option "Bottom of R&D"
+                 {:option (->msg-map :choice_bottom-of-rd)
                   :ability {:async true
                             :effect (effect (when (= from :rd) (shuffle! state side :deck))
                                          (move state side c :deck)
@@ -1418,7 +1419,7 @@
 
 (defcard "Longevity Serum"
   {:on-score
-   {:prompt "Choose any number of cards in HQ to trash"
+   {:prompt (->msg-map :prompt_choose-any-number-of-cards-in-hq-to-trash)
     :choices {:max (effect (count (:hand corp)))
               :card #(and (corp? %)
                           (in-hand? %))}
@@ -1653,7 +1654,8 @@
                           (has-subtype? % "NEXT"))
                     (all-installed state :corp))
           {:optional
-           {:prompt "Do 1 core damage?"
+           {:prompt {:msg/type :prompt_do-core-damage
+                     :msg/count 1}
             :yes-ability {:msg "do 1 core damage"
                           :async true
                           :effect (effect (damage state side eid :brain 1 {:card card}))}}})
@@ -1995,7 +1997,7 @@
              :skippable true
              :interactive (effect true)
              :waiting-prompt true
-             :prompt "Choose a card that can be advanced to place 1 advancement counter on"
+             :prompt (->msg-map :prompt_choose-a-card-that-can-be-advanced-to-place-advancement-counter-on)
              :choices {:req (req (can-be-advanced? state card))}
              :msg (msg "place 1 advancement counter on " (card-str state target))
              :async true
@@ -2140,7 +2142,7 @@
   {:on-score
    {:interactive (effect true)
     :optional
-    {:prompt "Search R&D for a piece of ice to install protecting a remote server?"
+    {:prompt (->msg-map :prompt_search-rd-for-ice-to-install-protecting-a-remote-server)
      :yes-ability
      {:async true
       :effect (effect
@@ -2204,7 +2206,8 @@
              :effect (effect (gain-credits state side eid 3))}
             {:event :successful-run
              :condition :faceup
-             :optional {:prompt "Do 1 meat damage?"
+             :optional {:prompt {:msg/type :prompt_do-meat-damage
+                                 :msg/count 1}
                         :once :per-turn
                         :req (req (installed? card)
                                        (not= (target-server context) (second (get-zone card)))
@@ -2218,7 +2221,8 @@
   {:events [{:event :agenda-scored
              :interactive (effect true)
              :optional
-             {:prompt "Do 1 core damage?"
+             {:prompt {:msg/type :prompt_do-core-damage
+                       :msg/count 1}
               :waiting-prompt true
               :yes-ability
               {:msg "do 1 core damage"
@@ -2332,7 +2336,8 @@
                                 state side
                                 {:prompt (msg "Make the runner encounter " (:title (:ice context)) " again?")
                                  :choices (effect [(when (can-pay? state :corp eid card nil (->c :credit 1))
-                                                  "Pay 1 [Credit]")
+                                                  {:msg/type :choice_pay-credits
+                                                   :msg/credits 1})
                                                 (when (can-pay? state :corp eid card nil (->c :trash-from-hand 1))
                                                   "Trash 1 card from HQ")
                                                 (->msg-map :choice_done)])
@@ -2341,7 +2346,7 @@
                                                 (effect-completed state side eid)
                                                 (continue-ability
                                                   state side
-                                                  {:cost [(if (= target "Pay 1 [Credit]")
+                                                  {:cost [(if (msg-type? target :choice_pay-credits)
                                                             (->c :credit 1)
                                                             (->c :trash-from-hand 1))]
                                                    :change-in-game-state {:req (req enc-ice (rezzed? enc-ice))}
@@ -2573,7 +2578,7 @@
                                            state side (let [chosen-server target
                                                  num-ice (count (get-in (:corp @state)
                                                                         (conj (server->zone state target) :ices)))]
-                                             {:prompt "Which position to install in? (0 is innermost)"
+                                             {:prompt (->msg-map :prompt_which-position-to-install-in)
                                               :choices (vec (reverse (map str (range (inc num-ice)))))
                                               :async true
                                               :effect (effect (let [target (Integer/parseInt target)]

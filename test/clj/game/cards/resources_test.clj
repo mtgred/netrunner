@@ -6551,7 +6551,7 @@
         (is (= "The Class Act" (:title (get-resource state 0))) "The Class Act was installed on Corp's turn")
         (take-credits state :corp)
         (is (not (no-prompt? state :runner)) "Runner should have The Class Act prompt")
-        (is (= "Choose 1 card to add to the bottom of the stack" (-> (prompt-map :runner) :msg))
+        (is (= "Choose a card to add to the bottom of the stack" (-> (prompt-map :runner) :msg))
             "Runner gets The Class Act's power on Corp's turn")
         (click-card state :runner (find-card "Diesel" (:set-aside (get-runner))))
         (play-from-hand state :runner "Diesel")

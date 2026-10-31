@@ -135,7 +135,7 @@
                                         this-card-run
                                         (or (= [:hq] (:server context))
                                             (= [:rd] (:server context))))
-                         :prompt "Choose a remote server to run"
+                         :prompt (->msg-map :prompt_choose-a-remote-server-to-run)
                          :choices (effect (cancellable
                                          (->> runnable-servers
                                               (map unknown->kw)
@@ -302,7 +302,8 @@
               :async true
               :effect (effect (add-counter state side eid (get-card state card) :credit 4 nil))}]
         choice (fn choice [abis rem]
-                 {:prompt (str "Choose an ability to resolve (" rem " remaining)")
+                 {:prompt {:msg/type :prompt_choose-an-ability-to-resolve-remaining
+                           :msg/count rem}
                   :waiting-prompt true
                   :choices (mapv #(capitalize (:label %)) abis)
                   :async true
@@ -428,7 +429,7 @@
     {:makes-run true
      :on-play {:async true
                :change-in-game-state {:req (req (seq (iced-servers state side eid card)))}
-               :prompt "Choose an iced server"
+               :prompt (->msg-map :prompt_choose-an-iced-server)
                :choices (effect (iced-servers state side eid card))
                :effect (effect (register-events
                                  state side card
@@ -525,16 +526,16 @@
                             (continue-ability
                               state side
                               {:prompt (str "Choose where to put " (:title target-card))
-                               :choices ["Top of R&D" "Bottom of R&D"]
+                               :choices [(->msg-map :choice_top-of-rd) (->msg-map :choice_bottom-of-rd)]
                                :async true
                                :msg (simple-msg
-                                      (if (= "Top of R&D" target)
+                                      (if (msg-type? target :choice_top-of-rd)
                                         {:effect/type :add-card-to-top-of-rd
                                          :effect/title (get-title target-card)}
                                         {:effect/type :add-card-to-bottom-of-rd
                                          :effect/title (get-title target-card)}))
                                :effect (effect
-                                         (if (= target "Top of R&D")
+                                         (if (msg-type? target :choice_top-of-rd)
                                            (move state :corp target-card :deck {:front true})
                                            (move state :corp target-card :deck {:front false}))
                                          (if (= 1 n)
@@ -674,7 +675,7 @@
                                  card nil)))})
           (cbi-choice [remaining chosen n original]
             {:player :corp
-             :prompt "Choose a card to move next onto R&D"
+             :prompt (->msg-map :prompt_choose-a-card-to-move-next-onto-rd)
              :choices remaining
              :async true
              :effect (effect
@@ -907,7 +908,7 @@
      :events [{:event :encounter-ice
                :skippable true
                :optional
-               {:prompt "Install a program?"
+               {:prompt (->msg-map :prompt_install-a-program)
                 :req (req (first-run-event? state side :encounter-ice))
                 :yes-ability
                 {:async true
@@ -1117,7 +1118,7 @@
                                        this-card-run
                                        (not (:run-again card))
                                        (= [:rd] (:server target)))
-                        :prompt "Make another run on R&D?"
+                        :prompt (->msg-map :prompt_make-another-run-on-rd)
                         :yes-ability (run-server-ability :rd)}}]})
 
 (defcard "Day Job"
@@ -1208,7 +1209,7 @@
   {:on-play
    {:change-in-game-state {:req (req (seq (:discard runner))
                                           (not (zone-locked? state :runner :discard)))}
-    :prompt "Choose a card to add to Grip"
+    :prompt (->msg-map :prompt_choose-a-card-to-add-to-grip)
     :choices (effect (cancellable (:discard runner) :sorted))
     :msg (simple-msg
           {:effect/type :add-card-to-grip
@@ -1531,7 +1532,7 @@
 
 (defcard "Escher"
   (letfn [(es [] {:async true
-                  :prompt "Choose 2 pieces of ice to swap positions"
+                  :prompt (->msg-map :prompt_choose-pieces-of-ice-to-swap-positions)
                   :choices {:card #(and (installed? %)
                                         (ice? %))
                             :max 2}
@@ -1648,7 +1649,7 @@
 
 (defcard "Express Delivery"
   {:on-play
-   {:prompt "Choose a card to add to the grip"
+   {:prompt (->msg-map :prompt_choose-a-card-to-add-to-grip)
     :change-in-game-state {:req (req (seq (:deck runner)))}
     :choices (effect (take 4 (:deck runner)))
     :msg (simple-msg
@@ -1735,7 +1736,8 @@
                                  state side
                                  (let [n (count (filter #(same-card? :title card %) (:hand runner)))]
                                    {:async true
-                                    :prompt (msg "How many copies of " (:title card) " do you want to reveal?")
+                                    :prompt {:msg/type :prompt_how-many-copies-do-you-want-to-reveal
+                                             :msg/title card}
                                     :choices {:card #(and (in-hand? %)
                                                           (same-card? :title card %))
                                               :max n}
@@ -1846,7 +1848,7 @@
            :effect
            (effect
              (continue-ability
-               state side {:prompt "Install a program?"
+               state side {:prompt (->msg-map :prompt_install-a-program)
                 :choices (concat
                            (->> top-ten
                                 (filter #(and (program? %)
@@ -2222,7 +2224,7 @@
 
 (defcard "Information Sifting"
   (letfn [(access-pile [cards pile pile-size]
-            {:prompt "Choose a card to access. You must access all cards"
+            {:prompt (->msg-map :prompt_choose-a-card-to-access-you-must-access-all-cards)
              :choices [(str "Card from pile " pile)]
              :async true
              :req (req (if (:max-access run)
@@ -2397,7 +2399,8 @@
               :async true
               :effect (effect (continue-ability state side (charge-ability state side) card nil))}]
         choice (fn choice [abis rem]
-                 {:prompt (str "Choose an ability to resolve (" rem " remaining)")
+                 {:prompt {:msg/type :prompt_choose-an-ability-to-resolve-remaining
+                           :msg/count rem}
                   :waiting-prompt true
                   :choices (mapv #(capitalize (:label %)) abis)
                   :async true
@@ -2472,7 +2475,7 @@
              :automatic :draw-cards
              :req (req this-card-run
                             (not (zone-locked? state :runner :discard)))
-             :prompt "Choose 1 card to add to the grip"
+             :prompt (->msg-map :prompt_choose-a-card-to-add-to-grip)
              :waiting-prompt true
              :choices (effect (cancellable (:discard runner) :sorted))
              :msg (simple-msg
@@ -2550,7 +2553,7 @@
      :on-play {:async true
                :rfg-instead-of-trashing true
                :change-in-game-state {:req (req (seq (iced-servers state side eid card)))}
-               :prompt "Choose an iced server"
+               :prompt (->msg-map :prompt_choose-an-iced-server)
                :choices (effect (iced-servers state side eid card))
                :effect (effect (make-run state side eid target card))}
      :events [{:event :run-ends
@@ -2992,7 +2995,7 @@
              :optional {:req (req (:successful target)
                                        (not (get-in card [:special :run-again]))
                                        (= [:rd] (:server target)))
-                        :prompt "Make another run on R&D?"
+                        :prompt (->msg-map :prompt_make-another-run-on-rd)
                         :yes-ability {:effect (effect (clear-wait-prompt state :corp)
                                                       (update! state side (assoc-in card [:special :run-again] true)))}}}]})
 
@@ -3023,7 +3026,7 @@
 
 (defcard "Mutual Favor"
   {:on-play
-   {:prompt "Choose an Icebreaker"
+   {:prompt (->msg-map :prompt_choose-an-icebreaker)
     :change-in-game-state {:req (req (seq (:deck runner)))}
     :choices (effect (cancellable (filter #(has-subtype? % "Icebreaker") (:deck runner)) :sorted))
     :cancel fail-to-find!
@@ -3869,7 +3872,7 @@
                                 state :runner
                                 (when (seq diff)
                                   {:async true
-                                   :prompt "Choose an ice to trash"
+                                   :prompt (->msg-map :prompt_choose-a-piece-of-ice-to-trash)
                                    :choices {:card #(some (partial same-card? %) diff)
                                              :all true}
                                    :effect (effect (trash state side eid target {:cause-card card}))})
@@ -4659,7 +4662,7 @@
             {:event :run-ends
              :unregister-once-resolved true
              :req (req this-card-run)
-             :prompt "Choose a remote server to run"
+             :prompt (->msg-map :prompt_choose-a-remote-server-to-run)
              :choices (effect (cancellable
                              (->> runnable-servers
                                   (map unknown->kw)
@@ -4821,7 +4824,7 @@
 
 (defcard "Window of Opportunity"
   (let [install-abi
-        {:prompt "Choose 1 program or piece of hardware to install"
+        {:prompt (->msg-map :prompt_choose-a-program-or-piece-of-hardware-to-install)
          :waiting-prompt true
          :change-in-game-state {:silent true :req (req (seq (all-cards-in-hand* state :runner)))}
          :choices {:req (req (in-hand*? state target)
