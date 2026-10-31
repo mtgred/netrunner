@@ -273,7 +273,7 @@
 (defcard "Algo Trading"
   {:flags {:runner-phase-12 (effect (pos? (:credit runner)))}
    :abilities [{:label "Store up to 3 [Credit]"
-                :prompt "How many credits do you want to store?"
+                :prompt (->msg-map :prompt_how-many-credits-do-you-want-to-store)
                 :once :per-turn
                 :choices {:number (effect (min 3 (total-available-credits state :runner eid card)))}
                 :async true
@@ -531,7 +531,8 @@
                                  state side (let [hw (:title (:card context))]
                                    {:optional
                                     {:req (req (some #(when (= (:title %) hw) %) (all-cards-in-hand* state :runner)))
-                                     :prompt (msg "Install another copy of " hw "?")
+                                     :prompt {:msg/type :prompt_install-another-copy
+                                              :msg/title hw}
                                      :yes-ability
                                      {:async true
                                       :effect (effect (if-let [c (some #(when (= (:title %) hw) %) (:hand runner))]
@@ -645,7 +646,7 @@
   (let [ability {:req (req (not (zone-locked? state :runner :discard)))
                  :label "Remove a card in the Heap from the game to gain 2 [Credits]"
                  :once :per-turn
-                 :prompt "Choose a card in the Heap"
+                 :prompt (->msg-map :prompt_choose-a-card-in-heap)
                  :show-discard true
                  :choices {:card #(and (in-discard? %)
                                        (runner? %))}
@@ -842,7 +843,7 @@
           (trash-or-bonus [chosen-server]
             {:player :corp
              :waiting-prompt true
-             :prompt "Choose a piece of ice to trash"
+             :prompt (->msg-map :prompt_choose-a-piece-of-ice-to-trash)
              :choices {:card #(and (= (last (get-zone %)) :ices)
                                    (= chosen-server (rest (butlast (get-zone %)))))}
              :async true
@@ -894,7 +895,7 @@
   {:special {:auto-fire :always}
    :events [{:event :runner-install
              :interactive (effect true)
-             :optional {:prompt "Place 1 virus counter?"
+             :optional {:prompt (->msg-map :prompt_place-virus-counter)
                         :req (req (has-subtype? (:card context) "Virus"))
                         :waiting-prompt true
                         :autoresolve (get-autoresolve :auto-fire)
@@ -1229,7 +1230,7 @@
                   :change-in-game-state {:req (req (seq (eligible-cards runner))
                                                         (not (zone-locked? state :runner :discard)))}
                   :cost [(->c :click 1) (->c :power 3)]
-                  :prompt "Choose a card to add to grip"
+                  :prompt (->msg-map :prompt_choose-a-card-to-add-to-grip)
                   :choices (effect (eligible-cards runner))
                   :effect (effect (move state side target :hand))
                   :msg (msg "add " (:title target) " from the heap to the grip")}
@@ -1997,7 +1998,7 @@
     {:flags {:runner-phase-12 (effect true)}
      :events [{:event :runner-turn-begins
                :skippable true
-               :optional {:prompt "Gain [Click]?"
+               :optional {:prompt (->msg-map :prompt_gain-click)
                           :once :per-turn
                           :yes-ability ability
                           :no-ability
@@ -2291,7 +2292,7 @@
                            state side
                            (when (and num-access (>= num-access 2))
                              {:optional
-                              {:prompt "Access 1 additional card?"
+                              {:prompt (->msg-map :prompt_access-additional-card)
                                :yes-ability
                                {:msg "access 1 additional card"
                                 :effect (effect (access-bonus state side :rd 1))}}})
@@ -2358,7 +2359,7 @@
                                  :unregister-once-resolved true
                                  :duration :end-of-turn
                                  :waiting-prompt true
-                                 :prompt "Choose 1 card to add to the bottom of the Stack"
+                                 :prompt (->msg-map :prompt_choose-a-card-to-add-to-the-bottom-of-stack)
                                  :choices {:req (req (some #(same-card? target %) runner-currently-drawing))}
                                  :msg "add 1 card to the bottom of the Stack"
                                  :effect (effect (move state side target :deck))}])
@@ -2526,7 +2527,8 @@
 (defcard "No One Home"
   {:prevention [{:prevents :damage
                  :type :event
-                 :prompt "Trash No One Home to force the Corp to trace"
+                 :prompt (effect {:msg/type :prompt_trash-to-force-the-corp-to-trace
+                                  :msg/title card})
                  :ability {:async true
                            :msg "force the Corp to trace"
                            :req (req (= :net (:type context))
@@ -2545,7 +2547,8 @@
                                             card nil)))}}
                 {:prevents :tag
                  :type :event
-                 :prompt "Trash No One Home to force the Corp to trace"
+                 :prompt (effect {:msg/type :prompt_trash-to-force-the-corp-to-trace
+                                  :msg/title card})
                  :ability {:async true
                            :msg "force the Corp to trace"
                            :req (req (first-event? state side :tag-interrupt)
@@ -2635,7 +2638,8 @@
 (defcard "PAD Tap"
   {:special {:auto-fire :always}
    :events [{:event :corp-credit-gain
-             :optional {:prompt "Gain 1 [Credit]?"
+             :optional {:prompt {:msg/type :prompt_gain-credits
+                                 :msg/credits 1}
                         :req (req (not= (:action context) :corp-click-credit)
                                        (= 1 (->> (turn-events state :corp :corp-credit-gain)
                                                  (remove (fn [[context]]
@@ -3613,7 +3617,7 @@
                       (continue-ability
                         state side
                         {:waiting-prompt true
-                         :prompt "Choose 1 card to add to the bottom of the stack"
+                         :prompt (->msg-map :prompt_choose-a-card-to-add-to-the-bottom-of-stack)
                          :choices {:card #(some (fn [c] (same-card? c %)) cards)
                                    :all true}
                          :msg {:public (msg "add the " (verbal-card-index state target) " card on the top of the stack to the bottom")
@@ -3707,7 +3711,7 @@
                   :req (req (pos? (count (events runner)))
                                  (not (zone-locked? state :runner :discard)))
                   :label "Play an event from the heap, ignoring all costs"
-                  :prompt "Choose an event to play"
+                  :prompt (->msg-map :prompt_choose-an-event-to-play)
                   :msg (msg "play " (:title target) " from the heap, ignoring all costs")
                   :choices (effect (cancellable (events runner) :sorted))
                   :effect (effect (play-instant state side eid target {:ignore-cost true}))}]}))
@@ -3756,7 +3760,7 @@
                   :label "Host a resource or piece of hardware"
                   :cost [(->c :click 1)]
                   :keep-menu-open :while-clicks-left
-                  :prompt "Choose a card in the grip"
+                  :prompt (->msg-map :prompt_choose-a-card-in-grip)
                   :choices {:card #(and (or (hardware? %)
                                             (resource? %))
                                         (in-hand? %))}
@@ -3847,7 +3851,7 @@
                             (and (fn1 state :runner :runner-lose-tag (fn [[context]] (= :runner (:side context))))
                                  (fn2 state :runner :runner-prevent (fn [[context]] (= :tag (:type context))))))
         ability {:async true
-                 :prompt "Choose a card in the grip"
+                 :prompt (->msg-map :prompt_choose-a-card-in-grip)
                  :waiting-prompt true
                  :choices {:req (req (runner? target)
                                           (in-hand? target)
@@ -3951,7 +3955,7 @@
 
 (defcard "Tyson Observatory"
   {:abilities [{:action true
-                :prompt "Choose a piece of Hardware"
+                :prompt (->msg-map :prompt_choose-a-piece-of-hardware)
                 :msg (msg "add " (:title target) " to [their] Grip")
                 :label "Search stack for a piece of hardware"
                 :choices (effect (cancellable (filter hardware? (:deck runner)) :sorted))

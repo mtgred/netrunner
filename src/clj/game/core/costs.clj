@@ -420,7 +420,7 @@
                                              :paid/type (if (= :corp side) :reveal-trash-from-hq :reveal-trash-from-grip)
                                              :paid/value (count trashed-cards)
                                              :paid/targets trashed-cards}))))}
-                forfeit-an-agenda {:prompt "Choose an Agenda to forfeit"
+                forfeit-an-agenda {:prompt (->msg-map :prompt_choose-an-agenda-to-forfeit)
                                    :async true
                                    :choices {:max 1
                                              :all true

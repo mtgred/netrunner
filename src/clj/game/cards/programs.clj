@@ -430,7 +430,8 @@
    [{:event :runner-turn-begins
      :skippable true
      :optional
-     {:prompt (msg "Pay 2 [Credits] to gain [Click]?")
+     {:prompt {:msg/type :prompt_pay-credits-to-gain-click
+               :msg/credits 2}
       :req (req (can-pay? state :runner (assoc eid :source card :source-type :ability) card nil [(->c :credit 2)]))
       :yes-ability {:cost [(->c :credit 2)]
                     :msg "gain [Click]"
@@ -983,7 +984,7 @@
                              (not-empty run-ices)
                              (<= 2 (count (filter ice? (all-installed state :corp)))))
               :once :per-turn
-              :prompt "Swap 2 pieces of ice?"
+              :prompt (->msg-map :prompt_swap-pieces-of-ice)
               :yes-ability
               {:prompt (->msg-map :prompt_choose-a-piece-of-ice-protecting-this-server)
                :choices {:req (req (installed? target)
@@ -1122,7 +1123,7 @@
   (letfn [(custsec-host [cards]
             (if (empty? (filter program? cards))
               shuffle-my-deck!
-              {:prompt "Choose a program to host"
+              {:prompt (->msg-map :prompt_choose-a-program-to-host)
                :choices (concat (filterv program? cards) [(->msg-map :choice_done)])
                :async true
                :effect (effect (if (msg-type? target :choice_done)
@@ -1276,7 +1277,7 @@
              {:req (req (pos? (get-counters card :power))
                              (= :rd (:server context)))
               :waiting-prompt true
-              :prompt "Spend 1 hosted power counter to access 1 additional card?"
+              :prompt (->msg-map :prompt_spend-hosted-power-counter-to-access-additional-card)
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability {:msg "access 1 additional card from R&D"
                             :cost [(->c :power 1)]
@@ -1297,7 +1298,8 @@
      :fake-cost [(->c :trash-can)]
      :optional
      {:waiting-prompt true
-      :prompt "Trash Disrupter to reduce the base trace strength to 0?"
+      :prompt (effect {:msg/type :prompt_trash-to-reduce-the-base-trace-strength
+                       :msg/title card})
       :yes-ability
       {:cost [(->c :trash-can)]
        :effect (effect (force-base state 0))}}}]})
@@ -1674,7 +1676,7 @@
                               state side
                               {:optional
                                {:prompt "Host a card on this program instead of accessing it?"
-                                :yes-ability {:prompt "Choose a card in Archives"
+                                :yes-ability {:prompt (->msg-map :prompt_choose-a-card-in-archives)
                                               :choices (effect (cancellable (:discard corp) :sorted))
                                               :msg (msg "host " (:title target) " on itself instead of accessing it")
                                               :effect (effect
@@ -2463,7 +2465,7 @@
              {:req (req (pos? (get-counters card :power))
                              (= :rd (:server context)))
               :waiting-prompt true
-              :prompt "Spend 1 hosted power counter to access 1 additional card?"
+              :prompt (->msg-map :prompt_spend-hosted-power-counter-to-access-additional-card)
               :autoresolve (get-autoresolve :auto-fire)
               :yes-ability {:msg "access 1 additional card from R&D"
                             :cost [(->c :power 1)]
@@ -2765,7 +2767,7 @@
   trojan
   {:events [{:event :pass-ice
              :optional {:interactive (effect true)
-                        :prompt "Gain [Click]?"
+                        :prompt (->msg-map :prompt_gain-click)
                         :waiting-prompt true
                         :req (req (same-card? (:ice context) (:host card)))
 

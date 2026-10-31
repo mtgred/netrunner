@@ -198,7 +198,7 @@
                       state side
                       {:optional
                        {:prompt "Remove a card from the game instead of accessing it?"
-                        :yes-ability {:prompt "Choose a card in Archives"
+                        :yes-ability {:prompt (->msg-map :prompt_choose-a-card-in-archives)
                                       :choices (effect (:discard corp))
                                       :msg (msg "remove " (:title target) " from the game")
                                       :effect (effect (move state :corp target :rfg))}}} card nil)))}]})
@@ -413,7 +413,8 @@
                                                         (not (zone-locked? state :runner :discard))
                                                         (some #(= (:title card) (:title %)) (:discard runner)))
                                          :once :per-run
-                                         :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
+                                         :prompt (effect {:msg/type :prompt_shuffle-a-copy-back-into-stack
+                                                          :msg/title card})
                                          :yes-ability
                                          {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
                                           :effect (effect (move state side (some #(when (= (:title card) (:title %)) %)
@@ -440,7 +441,8 @@
                                                      (not (zone-locked? state :runner :discard))
                                                      (some #(= (:title card) (:title %)) (:discard runner)))
                                       :once :per-run
-                                      :prompt (msg "Shuffle a copy of " (:title card) " back into the Stack?")
+                                      :prompt (effect {:msg/type :prompt_shuffle-a-copy-back-into-stack
+                                                       :msg/title card})
                                       :yes-ability
                                       {:msg (msg "shuffle a copy of " (:title card) " back into the Stack")
                                        :effect (effect (move state side (some #(when (= (:title card) (:title %)) %)
@@ -652,7 +654,7 @@
    :abilities [{:async true
                 :label "Play an event in the grip twice"
                 :req (req (:comet-event card))
-                :prompt "Choose an event to play"
+                :prompt (->msg-map :prompt_choose-an-event-to-play)
                 :choices {:card #(and (event? %)
                                       (in-hand? %))}
                 :msg (msg "play " (:title target))
@@ -1003,7 +1005,8 @@
              :optional
              {:req (req (= :runner (:active-player @state)))
               :waiting-prompt true
-              :prompt "Trash Flip Switch to reduce the base trace strength to 0?"
+              :prompt (effect {:msg/type :prompt_trash-to-reduce-the-base-trace-strength
+                               :msg/title card})
               :yes-ability {:msg "reduce the base trace strength to 0"
                             :cost [(->c :trash-can)]
                             :effect (effect (swap! state assoc-in [:trace :force-base] 0))}}}]
@@ -1413,7 +1416,7 @@
              :interactive (effect true)
              :optional {:req (req (first-event? state :runner :successful-run)
                                        (pos? (count-virus-programs state)))
-                        :prompt "Place 1 virus counter?"
+                        :prompt (->msg-map :prompt_place-virus-counter)
                         :autoresolve (get-autoresolve :auto-fire)
                         :yes-ability {:prompt "Choose an installed virus program to place 1 virus counter on"
                                       :choices {:card #(and (installed? %)
@@ -1470,7 +1473,7 @@
    :events [{:event :agenda-scored
              :change-in-game-state {:silent true
                                     :req (req (seq (:deck runner)))}
-             :optional {:prompt "Search for a card?"
+             :optional {:prompt (->msg-map :prompt_search-for-a-card)
                         :waiting-prompt true
                         :yes-ability {:prompt (->msg-map :prompt_choose-a-card)
                                       :msg "add 1 card from the stack to the grip"
@@ -1562,7 +1565,7 @@
              :optional
              {:prompt "Pay 1 [Credit] to install a piece of hardware?"
               :yes-ability {:async true
-                            :prompt "Choose a piece of hardware"
+                            :prompt (->msg-map :prompt_choose-a-piece-of-hardware)
                             :req (req (some #(and (hardware? %)
                                                   (runner-can-pay-and-install? state side (assoc eid :source card) % {:cost-bonus 1}))
                                             (all-cards-in-hand* state :runner)))
@@ -1613,7 +1616,8 @@
              :optional
              {:req (req (in-deck? (:accessed-card-snapshot context)))
               :once :per-turn
-              :prompt (msg "Move " (:title (:accessed-card context)) " to the bottom of R&D?")
+              :prompt (effect {:msg/type :prompt_move-to-the-bottom-of-rd
+                               :msg/title (:accessed-card context)})
               :yes-ability
               {:msg "move the card just accessed to the bottom of R&D"
                :async true
@@ -1698,7 +1702,8 @@
              {:req (req (= :hq (target-server context))
                              (some #(has-subtype? % "Stealth")
                                    (all-active state :runner)))
-              :prompt "Pay 1 [Credits] to access 1 additional card?"
+              :prompt {:msg/type :prompt_pay-credits-to-access-additional-card
+                       :msg/credits 1}
               :yes-ability
               {:cost [(->c :credit 1 {:stealth 1})]
                :msg "access 1 additional card from HQ"
@@ -1710,7 +1715,8 @@
              {:req (req (= :rd (target-server context))
                              (some #(has-subtype? % "Stealth")
                                    (all-active state :runner)))
-              :prompt "Pay 2 [Credits] to access 1 additional card?"
+              :prompt {:msg/type :prompt_pay-credits-to-access-additional-card
+                       :msg/credits 2}
               :yes-ability
               {:cost [(->c :credit 2 {:stealth :all-stealth})]
                :msg "access 1 additional card from R&D"
@@ -2106,7 +2112,8 @@
    :on-install
    {:optional
     {:req (req (some #(when (= (:title %) (:title card)) %) (:deck runner)))
-     :prompt (msg "Install another copy of " (:title card) "?")
+     :prompt (effect {:msg/type :prompt_install-another-copy
+                      :msg/title card})
      :yes-ability {:async true
                    :effect (effect (trigger-event state side :searched-stack)
                                 (shuffle! state :runner :deck)

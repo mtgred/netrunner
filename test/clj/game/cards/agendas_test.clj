@@ -1798,7 +1798,7 @@
         (card-ability state :corp (refresh gs-scored) 0)
         (click-card state :corp "Enigma")
         (card-ability state :corp (refresh gs-scored) 1)
-        (is (= "Choose a hosted card" (:msg (get-prompt state :corp))))
+        (is (= "Choose a hosted card" (:msg (prompt-map :corp))))
         (click-card state :corp "Enigma")
         (is (find-card "Enigma" (:hand (get-corp))))))))
 
@@ -4443,7 +4443,7 @@
        (run-continue state)
        (is (= 0 (:position (get-in @state [:run]))) "Passed Whitespace")
        (is (changed? [(:credit (get-corp)) -1]
-                     (click-prompt state :corp "Pay 1 [Credit]"))
+                     (click-prompt state :corp "Pay 1 [Credits]"))
            "Corp spent 1 Credit")
        (is (= 0 (:position (get-run))) "Run should still be at position 0")
        (is (same-card? ws (core/get-current-ice state))))))

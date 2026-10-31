@@ -17,6 +17,7 @@
    [game.core.to-string :refer [card-str]]
    [game.utils :refer [dissoc-in enumerate-str quantify]]
    [game.macros :refer [effect msg req wait-for]]
+   [jinteki.i18n :refer [->msg-map]]
    [jinteki.utils :refer [other-side]]
    [taoensso.timbre :as timbre]))
 
@@ -187,7 +188,7 @@
   [state side eid key {:keys [prompt waiting-prompt option data-type] :as args}]
   (let [remainder (get-in @state [:prevent key :remaining])
         prompt  (if (string? prompt)  prompt  (prompt state remainder))
-        option  (if (string? option)  option  (option state remainder))]
+        option  (if (fn? option)  (option state remainder)  option)]
     (if (or (if (= data-type :sequential)
               (not (seq remainder))
               ;; only relevant for damage -> the CR says these numbers can go to (or below) 0 withoutout actually closing the interrupt,
@@ -386,7 +387,7 @@
                  (str "Prevent " (damage-pending state) " " (damage-name state) " damage?")
                  (str "There is " (damage-pending state) " pending " (damage-name state) " damage")))
      :waiting-prompt {:msg/type :waiting-pre-damage-triggers}
-     :option "Pass priority"}))
+     :option (->msg-map :choice_pass-priority)}))
 
 ;; NOTE - PRE-DAMAGE EFFECTS HAPPEN BEFORE DAMAGE EFFECTS, AND ARE THE CONSTANT ABILITIES (IE GURU DAVINDER, MURESH BODYSUIT, THE CLEANERS, ETC)
 ;; AND MAY JUST CLOSE THE WINDOW ALL TOGETHER IF ALL DAMAGE IS PREVENTED
@@ -400,7 +401,7 @@
                  (str "Prevent " (damage-pending state) " " (damage-name state) " damage?")
                  (str "There is " (damage-pending state) " pending " (damage-name state) " damage")))
      :waiting-prompt {:msg/type :waiting-damage-triggers}
-     :option "Pass priority"}))
+     :option (->msg-map :choice_pass-priority)}))
 
 (defn resolve-damage-prevention
   [state side eid type n {:keys [unpreventable unboostable card] :as args}]

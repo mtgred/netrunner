@@ -115,7 +115,7 @@
 
 (defn command-facedown [state side]
   (resolve-ability state side
-                   {:prompt "Choose a card to install facedown"
+                   {:prompt (->msg-map :prompt_choose-a-card-to-install-facedown)
                     :waiting-prompt true
                     :choices {:card #(and (runner? %)
                                           (in-hand? %))}
@@ -315,7 +315,7 @@
                                   state side (let [chosen-server target
                                         num-ice (count (get-in (:corp @state)
                                                                (conj (server->zone state target) :ices)))]
-                                    {:prompt "Which position to install in? (0 is innermost)"
+                                    {:prompt (->msg-map :prompt_which-position-to-install-in)
                                      :choices (vec (reverse (map str (range (inc num-ice)))))
                                      :async true
                                      :effect (effect (corp-install
