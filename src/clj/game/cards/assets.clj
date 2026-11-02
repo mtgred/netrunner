@@ -294,7 +294,7 @@
                                  {:waiting-prompt true
                                   :prompt (str "Move advancement counters to " icename "?")
                                   :yes-ability
-                                  {:prompt "How many advancement counters do you want to move?"
+                                  {:prompt (->msg-map :prompt_how-many-advancement-counters-do-you-want-to-move)
                                    :choices {:number (effect (get-counters card :advancement))}
                                    :async true
                                    :effect (effect (wait-for
@@ -367,7 +367,8 @@
                             top-card (first (:deck corp))]
                         (wait-for (resolve-ability state side
                                                    {:async true
-                                                    :prompt (msg "The top card of R&D is: " (:title top-card))
+                                                    :prompt {:msg/type :prompt_the-top-card-of-rd-is
+                                                             :msg/title top-card}
                                                     :waiting-prompt true
                                                     :choices [(->msg-map :choice_ok)]}
                                                    card nil)
@@ -513,7 +514,7 @@
   {:derezzed-events [corp-rez-toast]
    :flags {:corp-phase-12 (effect (pos? (:credit corp)))}
    :abilities [{:label "Store up to 3 [Credit] (start of turn)"
-                :prompt "How many credits do you want to store?"
+                :prompt (->msg-map :prompt_how-many-credits-do-you-want-to-store)
                 :once :per-turn
                 :choices {:number (effect (min (:credit corp) 3))}
                 :async true
@@ -1371,7 +1372,7 @@
                  :effect (effect
                            (continue-ability
                              state side (let [from-ice target]
-                               {:prompt "Choose an installed card you can advance"
+                               {:prompt (->msg-map :prompt_choose-a-card-that-can-be-advanced)
                                 :choices {:req (req (installed? target)
                                                          (can-be-advanced? state target)
                                                          (not (same-card? from-ice target)))}
@@ -1650,7 +1651,7 @@
                                          (continue-ability
                                            state side
                                            {:async true
-                                            :prompt "Choose 1 card to install"
+                                            :prompt (->msg-map :prompt_choose-a-card-to-install)
                                             :choices {:card #(and (corp-installable-type? %)
                                                                   (in-hand? %))}
                                             :effect (effect (corp-install state side eid target nil {:msg-keys {:install-source card
@@ -2017,7 +2018,8 @@
 (defcard "Moon Pool"
   (letfn [(moon-pool-place-advancements [x]
             {:async true
-             :prompt (msg "Choose an installed card to place advancement counters on (" x " remaining)")
+             :prompt {:msg/type :prompt_choose-an-installed-card-to-place-advancement-counters-on-remaining
+                      :msg/count x}
              :choices {:card #(installed? %)}
              :msg {:public (msg "place 1 advancement counter on " (card-str state target))
                    :corp (msg "place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
@@ -2124,7 +2126,7 @@
                 :req (req (pos? (get-counters card :advancement))
                                (not-empty (all-active-installed state :corp)))
                 :label "Move an advancement counter to a faceup card"
-                :prompt "Choose a faceup card"
+                :prompt (->msg-map :prompt_choose-a-faceup-card)
                 :choices {:card faceup?}
                 :msg (msg "move an advancement counter to " (card-str state target))
                 :async true
@@ -2344,7 +2346,7 @@
                             (move state :corp (-> corp :deck first) :hand)
                             (continue-ability
                               state side
-                              {:prompt "Choose a card in HQ to add to the top of R&D"
+                              {:prompt (->msg-map :prompt_choose-a-card-in-hq-to-add-to-the-top-of-rd)
                                :async true
                                :choices {:card #(and (in-hand? %)
                                                      (corp? %))}
@@ -2783,7 +2785,7 @@
                                (continue-ability
                                  state side
                                  {:async true
-                                  :prompt "Choose a card that can be advanced"
+                                  :prompt (->msg-map :prompt_choose-a-card-that-can-be-advanced)
                                   :choices {:req (req (can-be-advanced? state target))}
                                   :effect (effect (system-msg state side (str "uses " (:title card) " to move " (quantify num-counters "hosted advancement counter") " to " (card-str state target)))
                                                   (add-counter state side eid target :advancement num-counters {:placed true}))}
@@ -2925,7 +2927,7 @@
                 :effect (effect (wait-for (draw state side 3)
                                        (continue-ability
                                          state side
-                                         {:prompt "Choose a card in HQ to add to the bottom of R&D"
+                                         {:prompt (->msg-map :prompt_choose-a-card-in-hq-to-add-to-the-bottom-of-rd)
                                           :choices {:card #(and (corp? %)
                                                                 (in-hand? %))}
                                           :msg "add 1 card from HQ to the bottom of R&D"
@@ -2957,7 +2959,7 @@
                 :effect (effect (play-sfx state side "click-card")
                                 (move state side (last (:deck corp)) :hand))}
                {:label "Search R&D for an agenda"
-                :prompt "Choose an agenda to add to the bottom of R&D"
+                :prompt (->msg-map :prompt_choose-an-agenda-to-add-to-the-bottom-of-rd)
                 :msg (msg "reveal " (:title target) " from R&D and add it to the bottom of R&D")
                 :choices (effect (cancellable (filter agenda? (:deck corp)) :sorted))
                 :cost [(->c :trash-can)]
@@ -2969,7 +2971,7 @@
                                (move state side target :deck)
                                (effect-completed state side eid)))}
                {:label "Search Archives for an agenda"
-                :prompt "Choose an agenda to add to the bottom of R&D"
+                :prompt (->msg-map :prompt_choose-an-agenda-to-add-to-the-bottom-of-rd)
                 :msg (msg "reveal " (:title target) " from Archives and add it to the bottom of R&D")
                 :choices (effect (cancellable (filter agenda? (:discard corp)) :sorted))
                 :cancel {:msg "do nothing"
@@ -3009,7 +3011,7 @@
                   state side (let [dmg target]
                     (choose-one-helper
                       {:player :runner}
-                      [{:option {:msg/type :choice_take-net-damage
+                      [{:option {:msg/type :choice_suffer-net-damage
                                  :msg/count dmg}
                         :ability {:async true
                                   :effect (effect (system-msg state :runner (str "takes " dmg " net damage from " (:title card)))
@@ -3221,7 +3223,8 @@
      :events [{:event :runner-install
                :optional {:req (req (is-techno-target (:card context))
                                          (not (:facedown context)))
-                          :prompt "Gain 1 [Credit]?"
+                          :prompt {:msg/type :prompt_gain-credits
+                                   :msg/credits 1}
                           :waiting-prompt true
                           :autoresolve (get-autoresolve :auto-fire)
                           :yes-ability {:msg "gain 1 [Credits]"
@@ -3233,7 +3236,7 @@
                 :label "Swap 2 installed pieces of ice"
                 :cost [(->c :click)]
                 :keep-menu-open :while-clicks-left
-                :prompt "Choose 2 pieces of ice to swap positions"
+                :prompt (->msg-map :prompt_choose-pieces-of-ice-to-swap)
                 :req (req (<= 2 (count (filter ice? (all-installed state :corp)))))
                 :choices {:card #(and (installed? %)
                                       (ice? %))
@@ -3490,7 +3493,7 @@
              {:label "place 1 advancement counter on a piece of ice"
               :msg {:public (msg "place 1 advancement counter on " (card-str state target))
                     :corp (msg "place 1 advancement counter on " (card-str state target {:maybe-visible true}))}
-              :prompt "Choose a piece of ice to place 1 advancement counter on"
+              :prompt (->msg-map :prompt_choose-a-piece-of-ice-to-place-advancement-counter-on)
               :async true
               :choices {:card #(and (ice? %)
                                     (installed? %))}

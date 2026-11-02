@@ -240,7 +240,7 @@
     (rez state :corp (get-ice state :hq 0))
     (run-continue-until state :encounter-ice)
     (card-subroutine state :corp (get-ice state :hq 0) 0)
-    (click-prompt state :runner "Take 1 net damage")
+    (click-prompt state :runner "Suffer 1 net damage")
     (is (= 1 (get-counters (:identity (get-corp)) :power)))))
 
 (deftest au-co-works-with-start-of-turn
@@ -4415,7 +4415,7 @@
                       :deck [(qty "Hedge Fund" 20)]
                       :hand [(qty "Hedge Fund" 2) "Ice Wall" "Tree Line" "Hasty Relocation"]}})
     (play-from-hand state :corp "Hedge Fund")
-    (is (= "The top card of R&D is: Hedge Fund" (:msg (get-prompt state :corp))))
+    (is (= "The top card of R&D is Hedge Fund" (:msg (prompt-map :corp))))
     (click-prompt state :corp "OK")
     (is (changed? [(:credit (get-corp)) 2
                    (count (:deck (get-corp))) -1
@@ -4425,7 +4425,7 @@
     (play-from-hand state :corp "Ice Wall" "HQ")
     (expend state :corp (find-card "Tree Line" (:hand (get-corp))))
     (click-card state :corp (get-ice state :hq 0))
-    (is (= "The top card of R&D is: Hedge Fund" (:msg (get-prompt state :corp))))
+    (is (= "The top card of R&D is Hedge Fund" (:msg (prompt-map :corp))))
     (click-prompt state :corp "OK")
     (is (changed? [(:credit (get-corp)) 0
                    (count (:deck (get-corp))) -1
@@ -4435,7 +4435,7 @@
     (take-credits state :corp)
     (take-credits state :runner)
     (play-from-hand state :corp "Hedge Fund")
-    (is (= "The top card of R&D is: Hedge Fund" (:msg (get-prompt state :corp))))
+    (is (= "The top card of R&D is Hedge Fund" (:msg (prompt-map :corp))))
     (click-prompt state :corp "OK")
     (is (changed? [(:credit (get-corp)) 0
                    (count (:deck (get-corp))) 0

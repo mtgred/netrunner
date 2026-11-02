@@ -598,7 +598,7 @@
       (take-credits state :corp)
       (run-empty-server state "Server 1")
       (is (changed? [(:credit (get-corp)) 0]
-            (click-prompt state :runner "Take 1 core damage"))
+            (click-prompt state :runner "Suffer 1 core damage"))
           "Corp gains 0 credits")
       (is (get-run) "Run has ended")
       (is (get-content state :remote1) "Black Level Clearance has not been trashed")))

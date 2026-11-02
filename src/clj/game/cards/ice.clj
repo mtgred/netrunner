@@ -394,7 +394,7 @@
   ([] (install-from-archives-sub nil))
   ([args]
    {:label "Install a card from Archives"
-    :prompt "Choose a card to install from Archives"
+    :prompt (->msg-map :prompt_choose-a-card-to-install-from-archives)
     :show-discard true
     :waiting-prompt true
     :choices {:card #(and (corp-installable-type? %)
@@ -888,7 +888,7 @@
                               state side
                               (choose-one-helper
                                 {:player :runner}
-                                [{:option {:msg/type :choice_take-net-damage
+                                [{:option {:msg/type :choice_suffer-net-damage
                                            :msg/count 1}
                                   :ability {:msg "do 1 net damage"
                                             :async true
@@ -1544,7 +1544,7 @@
                                                :req (req (>= (count-tags state) 2))})]})
 
 (defcard "Dracō"
-  {:on-rez {:prompt "How many power counters do you want to place?"
+  {:on-rez {:prompt (->msg-map :prompt_how-many-power-counters-do-you-want-to-place)
             :choices :credit
             :msg (msg "place " (quantify target "power counter"))
             :async true
@@ -1751,7 +1751,7 @@
   {:subroutines [(choose-one-helper
                    {:label "Trash 1 program unless runner pays 3 [Credits]"
                     :player :runner}
-                   [{:option "The Corp trashes a Program"
+                   [{:option (->msg-map :choice_the-corp-trashes-a-program)
                      :ability {:async true
                                :effect (effect (continue-ability state :corp trash-program-sub card nil))}}
                     (cost-option [(->c :credit 3)] :runner)])
@@ -2105,7 +2105,8 @@
                 :effect
                 (effect (continue-ability
                           state side {:waiting-prompt true
-                           :prompt "Choose an installed Runner card"
+                           :prompt {:msg/type :prompt_choose-installed-runner-cards
+                                    :msg/count 1}
                            :async true
                            :choices {:card #(and (installed? %)
                                                  (runner? %))}
@@ -2170,7 +2171,7 @@
                   :change-in-game-state {:silent true
                                          :req (req (not (zone-locked? state :runner :discard))
                                                         (seq (:discard runner)))}
-                  :prompt  "Choose a card in the Heap"
+                  :prompt  (->msg-map :prompt_choose-a-card-in-heap)
                   :choices (effect (cancellable (:discard runner) :sorted))
                   :msg     (msg "remove " (:title target) " from the game")
                   :effect  (effect (move state :runner target :rfg))}
@@ -2564,7 +2565,7 @@
                                   :ability {:msg "give the Runner 1 tag"
                                             :async true
                                             :effect (effect (gain-tags state :runner eid 1))}}
-                                 {:option "Spend [Click]"
+                                 {:option (->msg-map :choice_spend-click)
                                   :req (req (can-pay? state :runner nil card nil [(->c :click 1)]))
                                   :ability {:msg "force the runner to spend [Click] on encountering it"
                                             :async true
@@ -2592,7 +2593,8 @@
    :subroutines [{:label "Choose 2 installed Runner cards, if able. The Runner must add 1 of those to the top of the Stack"
                   :change-in-game-state {:silent true :req (req (>= (count (all-installed state :runner)) 2))}
                   :async true
-                  :prompt "Choose 2 installed Runner cards"
+                  :prompt {:msg/type :prompt_choose-installed-runner-cards
+                           :msg/count 2}
                   :choices {:card #(and (runner? %)
                                         (installed? %))
                             :max 2
@@ -2623,7 +2625,8 @@
             (choose-one-helper
               {:player :runner
                :label (str "Do 1 core damage unless the Runner trashes 1 installed " text)}
-              [{:option "Take 1 core damage"
+              [{:option {:msg/type :choice_suffer-core-damage
+                         :msg/count 1}
                 :ability {:msg "do 1 core damage"
                           :async true
                           :effect (effect (damage state side eid :brain 1 {:card card}))}}
@@ -2657,7 +2660,7 @@
                    :prompt "Force the Runner to access a card in HQ?"
                    :yes-ability
                    {:async true
-                    :prompt "Choose a card in HQ"
+                    :prompt (->msg-map :prompt_choose-a-card-in-hq)
                     :choices {:card (every-pred in-hand? corp?)
                               :all true}
                     :label "Force the Runner to breach HQ and access a card"
@@ -2691,7 +2694,7 @@
                                                  (effect-completed state side eid))))}]
     {:subroutines [end-the-run]
      :on-rez {:optional
-              {:prompt "Let the Runner gain 2 [Credits]?"
+              {:prompt (->msg-map :prompt_let-the-runner-gain-credits)
                :waiting-prompt true
                :req (req run this-server
                               (seq (all-installed-runner-type state :resource)))
@@ -2814,7 +2817,7 @@
                    (choose-one-helper
                      {:label "Do 2 net damage unless the Runner jacks out"
                       :player :runner}
-                     [{:option "Jack out"
+                     [{:option (->msg-map :choice_jack-out)
                        :ability {:msg "jack out"
                                  :display-side :runner
                                  :async true
@@ -2895,7 +2898,7 @@
                                          (continue-ability
                                            state side
                                            {:waiting-prompt true
-                                            :prompt "Choose a card to add to the Grip"
+                                            :prompt (->msg-map :prompt_choose-a-card-to-add-to-grip)
                                             :choices (effect (top-3 state))
                                             :msg (msg "add " (:title target) " to the Grip, gain " (:cost target)
                                                       " [Credits], shuffle the Stack and trash itself")
@@ -3057,7 +3060,7 @@
   {:on-rez {:req (req (some #(some program? (:hosted %))
                             (remove-once #(same-card? % card)
                                          (filter ice? (all-installed state corp)))))
-            :prompt "Choose a Program to host"
+            :prompt (->msg-map :prompt_choose-a-program-to-host)
             :msg (msg "host " (card-str state target))
             :choices {:req (req (program? target)
                                      (ice? (:host target))
@@ -3175,7 +3178,7 @@
                   :effect (effect
                             (continue-ability
                               state side (if (= target "Swap 2 pieces of ice")
-                                {:prompt "Choose 2 pieces of ice to swap"
+                                {:prompt (->msg-map :prompt_choose-pieces-of-ice-to-swap)
                                  :choices {:card #(and (installed? %)
                                                        (ice? %))
                                            :not-self true
@@ -3249,7 +3252,7 @@
   {:subroutines [{:async true
                   :choices {:card #(and (ice? %)
                                         (in-hand? %))}
-                  :prompt "Choose a piece of ice to install from HQ"
+                  :prompt (->msg-map :prompt_choose-a-piece-of-ice-to-install-from-hq)
                   :change-in-game-state {:req (req (seq (:hand corp))) :silent true}
                   :label "install ice from HQ, ignoring all costs"
                   :effect (effect (corp-install state side eid target (zone->name (target-server run)) {:ignore-all-cost true
@@ -3297,7 +3300,7 @@
             (choose-one-helper
               {:label (str "Do " net-dmg " net damage")
                :player :runner}
-              [{:option {:msg/type :choice_take-net-damage
+              [{:option {:msg/type :choice_suffer-net-damage
                          :msg/count net-dmg}
                 :ability {:msg (str "do " net-dmg " net damage")
                           :async true
@@ -3443,7 +3446,7 @@
 (defcard "NEXT Sapphire"
   {:x-fn (effect (next-ice-count corp))
    :subroutines [{:label "Draw up to X cards"
-                  :prompt "How many cards do you want to draw?"
+                  :prompt (->msg-map :prompt_how-many-cards-do-you-want-to-draw)
                   :waiting-prompt true
                   :msg (msg "draw " (quantify target "card"))
                   :choices {:number (get-x-fn)
@@ -3783,7 +3786,7 @@
                          (resolve-ability
                            state side
                            {:waiting-prompt true
-                            :prompt "Choose a card in HQ to trash"
+                            :prompt (->msg-map :prompt_choose-a-card-in-hq-to-trash)
                             :choices (effect (cancellable (:hand corp) :sorted))
                             :async true
                             :effect (effect (wait-for
@@ -3841,7 +3844,7 @@
 (defcard "Sand Storm"
   {:subroutines [{:async true
                   :label "Move this ice and the run to another server"
-                  :prompt "Choose another server and redirect the run to its outermost position"
+                  :prompt (->msg-map :prompt_choose-another-server-and-redirect-the-run)
                   :choices (effect (remove #{(zone->name (:server (:run @state)))} (cancellable servers)))
                   :msg (msg "move itself and the run on " target " and trash itself")
                   :change-in-game-state {:silent true :req (req (installed? card))}
@@ -4197,7 +4200,7 @@
   (let [sub (choose-one-helper
               {:label "Trash a program"
                :player :runner}
-              [{:option "The Corp trashes a program"
+              [{:option (->msg-map :choice_the-corp-trashes-a-program)
                 :player :corp
                 :ability trash-program-sub}
                {:option {:msg/type :choice_pay-credits
@@ -4251,7 +4254,7 @@
   {:subroutines [runner-loses-click
                  (maybe-draw-sub 1)
                  {:req (req (pos? (count (:hand corp))))
-                  :prompt "Choose a card in HQ to move to the top of R&D"
+                  :prompt (->msg-map :prompt_choose-a-card-in-hq-to-add-to-the-top-of-rd)
                   :choices {:card #(and (in-hand? %)
                                         (corp? %))}
                   :msg "add 1 card in HQ to the top of R&D"
@@ -4502,7 +4505,7 @@
   {:on-encounter
    (trace-ability 2 (choose-one-helper
                       {:player :runner}
-                      [{:option "Spend [Click]"
+                      [{:option (->msg-map :choice_spend-click)
                         :req (req (can-pay? state :runner eid card nil [(->c :click 1)]))
                         :ability {:msg "force the runner to spend [Click]"
                                   :async true
@@ -4577,7 +4580,7 @@
                    (assoc (do-net-damage 2)  :breakable breakable-fn)
                    (assoc (maybe-draw-sub 2) :breakable breakable-fn)]
      :on-rez {:optional
-              {:prompt "Let the Runner gain 2 [Credits]?"
+              {:prompt (->msg-map :prompt_let-the-runner-gain-credits)
                :waiting-prompt true
                :req (req run this-server)
                :yes-ability {:async true
@@ -4728,7 +4731,7 @@
 
 (defcard "Wave"
   {:on-rez
-   {:optional {:prompt "Search R&D for a piece of ice?"
+   {:optional {:prompt (->msg-map :prompt_search-rd-for-a-piece-of-ice)
                :req (req run this-server)
                :yes-ability {:prompt (->msg-map :prompt_choose-a-piece-of-ice)
                              :async true
@@ -4814,7 +4817,8 @@
 (defcard "Yagura"
   {:subroutines [{:label "Look at the top card of R&D"
                   :change-in-game-state {:silent true :req (req (seq (:deck corp)))}
-                  :optional {:prompt (msg "Move " (:title (first (:deck corp))) " to the bottom of R&D?")
+                  :optional {:prompt (effect {:msg/type :prompt_move-to-the-bottom-of-rd
+                                              :msg/title (first (:deck corp))})
                              :yes-ability {:msg "move the top card of R&D to the bottom"
                                            :effect (effect (move state side (first (:deck corp)) :deck))}
                              :no-ability {:effect (effect (system-msg state :corp (str "declines to use " (:title card) " to move the top card of R&D to the bottom")))}}}

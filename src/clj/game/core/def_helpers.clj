@@ -397,12 +397,13 @@
 (defn move-card-to-top-or-bottom
   "Ability to move a card to the top or bottom of the deck"
   [target-card acting-side]
-  (let [zone (if (runner? target-card) "the Stack" "R&D")]
+  (let [stack? (runner? target-card)]
     (choose-one-helper
-      {:prompt (str "Move " (:title target-card) " where?")}
-      [{:option (str "Top of " zone)
+      {:prompt {:msg/type :prompt_move-where
+                :msg/title target-card}}
+      [{:option (->msg-map (if stack? :choice_top-of-stack :choice_top-of-rd))
         :ability (move-to-top target-card acting-side)}
-       {:option (str "Bottom of " zone)
+       {:option (->msg-map (if stack? :choice_bottom-of-stack :choice_bottom-of-rd))
         :ability (move-to-bottom target-card acting-side)}])))
 
 (defn trash-or-rfg

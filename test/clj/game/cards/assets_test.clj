@@ -5331,15 +5331,15 @@
     (run-empty-server state "Server 1")
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "5")
-    (is (= ["Take 5 net damage" "Add Shi.Kyū to score area"]
+    (is (= ["Suffer 5 net damage" "Add Shi.Kyū to score area"]
            (prompt-buttons :runner)))
-    (click-prompt state :runner "Take 5 net damage")
+    (click-prompt state :runner "Suffer 5 net damage")
     (click-prompt state :runner "No action")
     (is (zero? (count (:hand (get-runner)))) "Runner took 5 net damage from Shi.Kyū")
     (run-empty-server state "Server 1")
     (click-prompt state :corp "Yes")
     (click-prompt state :corp "2")
-    (is (= ["Take 2 net damage" "Add Shi.Kyū to score area"]
+    (is (= ["Suffer 2 net damage" "Add Shi.Kyū to score area"]
            (prompt-buttons :runner)))
     (click-prompt state :runner "Add Shi.Kyū to score area")
     (is (empty? (prompt-map :runner)) "Runner shouldn't get the option to trash Shi.Kyū as it was added to agenda area")

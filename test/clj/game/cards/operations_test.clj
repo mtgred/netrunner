@@ -2717,7 +2717,7 @@
       (doseq [action (take 2 (shuffle [:cred :install :advance :shuffle]))]
         (case action
           :cred (is (changed? [(:credit (get-corp)) 2]
-                      (click-prompt state :corp "Gain 2 [Credit]"))
+                      (click-prompt state :corp "Gain 2 [Credits]"))
                     "Gained 2 creds")
           :install (is (changed? [(:credit (get-corp)) 0]
                          (click-prompt state :corp "Install 1 piece of ice from HQ, ignoring all costs")

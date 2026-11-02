@@ -938,25 +938,67 @@ waiting-prevent-tags = Waiting for your opponent to prevent tags.
 
 ## Prompts
 
+prompt_access-additional-card = Access 1 additional card?
+
 prompt_choose-a-card = Choose a card
+
+prompt_choose-a-card-in-archives = Choose a card in {-archives}
+
+prompt_choose-a-card-in-grip = Choose a card in {-grip}
+
+prompt_choose-a-card-in-heap = Choose a card in {-heap}
+
+prompt_choose-a-card-in-hq = Choose a card in {-hq}
+
+prompt_choose-a-card-in-hq-to-add-to-the-bottom-of-rd = Choose a card in {-hq} to add to the bottom of {-rd}
+
+prompt_choose-a-card-in-hq-to-add-to-the-top-of-rd = Choose a card in {-hq} to add to the top of {-rd}
 
 prompt_choose-a-card-in-hq-to-install = Choose a card in {-hq} to install
 
+prompt_choose-a-card-in-hq-to-trash = Choose a card in {-hq} to trash
+
+prompt_choose-a-card-in-this-server = Choose a card in this server
+
+prompt_choose-a-card-that-can-be-advanced = Choose a card that can be advanced
+
+prompt_choose-a-card-that-can-be-advanced-to-place-advancement-counter-on = Choose a card that can be advanced to place 1 advancement counter on
+
 prompt_choose-a-card-to-access = Choose a card to access
 
+prompt_choose-a-card-to-access-you-must-access-all-cards = Choose a card to access. You must access all cards
+
+prompt_choose-a-card-to-add-to-grip = Choose a card to add to {-grip}
+
 prompt_choose-a-card-to-add-to-hq = Choose a card to add to {-hq}
+
+prompt_choose-a-card-to-add-to-the-bottom-of-stack = Choose a card to add to the bottom of {-stack}
+
+prompt_choose-a-card-to-add-to-the-top-of-rd = Choose a card to add to the top of {-rd}
 
 prompt_choose-a-card-to-derez = Choose a card to derez
 
 prompt_choose-a-card-to-install = Choose a card to install
 
+prompt_choose-a-card-to-install-facedown = Choose a card to install facedown
+
+prompt_choose-a-card-to-install-from-archives = Choose a card to install from {-archives}
+
 prompt_choose-a-card-to-install-from-hq = Choose a card to install from {-hq}
+
+prompt_choose-a-card-to-move-next-onto-rd = Choose a card to move next onto {-rd}
 
 prompt_choose-a-card-to-trash = Choose a card to trash
 
 prompt_choose-a-card-type = Choose a card type
 
+prompt_choose-a-faceup-card = Choose a faceup card
+
+prompt_choose-a-hosted-card = Choose a hosted card
+
 prompt_choose-a-location-to-install = Choose a location to install {$title}
+
+prompt_choose-a-piece-of-hardware = Choose a piece of hardware
 
 prompt_choose-a-piece-of-hardware-to-trash = Choose a piece of hardware to trash
 
@@ -966,13 +1008,23 @@ prompt_choose-a-piece-of-ice-protecting-this-server = Choose a piece of ice prot
 
 prompt_choose-a-piece-of-ice-to-install = Choose a piece of ice to install
 
+prompt_choose-a-piece-of-ice-to-install-from-hq = Choose a piece of ice to install from {-hq}
+
+prompt_choose-a-piece-of-ice-to-place-advancement-counter-on = Choose a piece of ice to place 1 advancement counter on
+
+prompt_choose-a-piece-of-ice-to-trash = Choose a piece of ice to trash
+
 prompt_choose-a-program-or-piece-of-hardware-to-install = Choose a program or piece of hardware to install
+
+prompt_choose-a-program-to-host = Choose a program to host
 
 prompt_choose-a-program-to-install = Choose a program to install
 
 prompt_choose-a-program-to-trash = Choose a program to trash
 
 prompt_choose-a-remote-server = Choose a remote server
+
+prompt_choose-a-remote-server-to-run = Choose a remote server to run
 
 prompt_choose-a-resource-to-trash = Choose a resource to trash
 
@@ -982,30 +1034,55 @@ prompt_choose-a-server-to-install-on = Choose a server to install {$title} on
 
 prompt_choose-a-subroutine-to-resolve = Choose a subroutine to resolve
 
+prompt_choose-a-trigger-to-resolve = Choose a trigger to resolve
+
 prompt_choose-an-ability-to-resolve = Choose an ability to resolve
+
+prompt_choose-an-ability-to-resolve-remaining = Choose an ability to resolve ({$count} remaining)
 
 prompt_choose-an-agenda = Choose an agenda
 
+prompt_choose-an-agenda-to-add-to-the-bottom-of-rd = Choose an agenda to add to the bottom of {-rd}
+
 prompt_choose-an-agenda-to-forfeit = Choose an agenda to forfeit
+
+prompt_choose-an-event-to-play = Choose an event to play
 
 prompt_choose-an-ice-subtype = Choose an ice subtype
 
 prompt_choose-an-icebreaker = Choose an icebreaker
 
+prompt_choose-an-iced-server = Choose an iced server
+
 prompt_choose-an-installed-card = Choose an installed card
 
+prompt_choose-an-installed-card-to-place-advancement-counters-on-remaining = Choose an installed card to place advancement counters on ({$count} remaining)
+
 prompt_choose-an-installed-card-to-trash = Choose an installed card to trash
+
+prompt_choose-another-server-and-redirect-the-run = Choose another server and redirect the run to its outermost position
+
+prompt_choose-any-number-of-cards-in-hq-to-trash = Choose any number of cards in {-hq} to trash
+
+prompt_choose-any-number-of-rezzed-cards-to-trash = Choose any number of rezzed cards to trash
 
 prompt_choose-installed-card-to-trash = Choose {$count ->
     [one] {$count} installed card
     *[other] {$count} installed cards
 } to trash
 
+prompt_choose-installed-runner-cards = {$count ->
+    [one] Choose an installed {-runner(case: "genitive")} card
+    *[other] Choose {$count} installed {-runner(case: "genitive")} cards
+}
+
 prompt_choose-one = Choose one
 
 prompt_choose-one-choice-of = Choose one. Choice {$current} of {$total}
 
 prompt_choose-one-remaining = Choose one ({$count} remaining)
+
+prompt_choose-pieces-of-ice-to-swap = Choose 2 pieces of ice to swap
 
 prompt_choose-target = Choose a target for {$title}
 
@@ -1031,14 +1108,28 @@ prompt_choose-up-to-cards-in-hq-to-trash = Choose up to {$count} {$count ->
     *[other] cards
 } in {-hq} to trash
 
+prompt_do-core-damage = Do {$count} core damage?
+
+prompt_do-meat-damage = Do {$count} meat damage?
+
 prompt_draw-cards = Draw {$count ->
     [one] {$count} card?
     *[other] {$count} cards?
 }
 
+prompt_gain-click = Gain [Click]?
+
 prompt_gain-credits = Gain {$credits} [Credits]?
 
+prompt_give-the-runner-tag = Give {-runner(case: "accusative")} 1 tag?
+
+prompt_how-many-advancement-counters-do-you-want-to-move = How many advancement counters do you want to move?
+
 prompt_how-many-advancement-counters-do-you-want-to-place = How many advancement counters do you want to place?
+
+prompt_how-many-cards-do-you-want-to-draw = How many cards do you want to draw?
+
+prompt_how-many-copies-do-you-want-to-reveal = How many copies of {$title} do you want to reveal?
 
 prompt_how-many-credits-do-you-want-to-move = How many credits do you want to move?
 
@@ -1046,22 +1137,60 @@ prompt_how-many-credits-do-you-want-to-pay = How many credits do you want to pay
 
 prompt_how-many-credits-do-you-want-to-spend = How many credits do you want to spend?
 
+prompt_how-many-credits-do-you-want-to-store = How many credits do you want to store?
+
 prompt_how-many-hosted-credits-do-you-want-to-take = How many hosted credits do you want to take?
 
+prompt_how-many-power-counters-do-you-want-to-place = How many power counters do you want to place?
+
 prompt_install = Install {$title}?
+
+prompt_install-a-program = Install a program?
+
+prompt_install-another-copy = Install another copy of {$title}?
+
+prompt_let-the-runner-gain-credits = Let {-runner(case: "accusative")} gain 2 [Credits]?
 
 prompt_look-at-the-top-cards-of-rd = {$count ->
     [one] Look at the top card of {-rd}?
     *[other] Look at the top {$count} cards of {-rd}?
 }
 
+prompt_make-another-run-on-rd = Make another run on {-rd}?
+
+prompt_move-to-the-bottom-of-rd = Move {$title} to the bottom of {-rd}?
+
+prompt_move-where = Move {$title} where?
+
+prompt_name-a-runner-card = Name a {-runner(case: "genitive")} card
+
+prompt_pay-credits-to-access-additional-card = Pay {$credits} [Credits] to access 1 additional card?
+
+prompt_pay-credits-to-gain-click = Pay {$credits} [Credits] to gain [Click]?
+
 prompt_pay-credits-to-use-ability = Pay {$credits} [Credits] to use {$title} ability?
 
 prompt_place-power-counter-on = Place 1 power counter on {$title}?
 
+prompt_place-virus-counter = Place 1 virus counter?
+
 prompt_place-virus-counter-on = Place 1 virus counter on {$title}?
 
 prompt_purge-virus-counters = Purge virus counters?
+
+prompt_remove-how-many-tags = Remove how many tags?
+
+prompt_search-for-a-card = Search for a card?
+
+prompt_search-rd-for-a-piece-of-ice = Search {-rd} for a piece of ice?
+
+prompt_search-rd-for-ice-to-install-protecting-a-remote-server = Search {-rd} for a piece of ice to install protecting a remote server?
+
+prompt_shuffle-a-copy-back-into-stack = Shuffle a copy of {$title} back into {-stack}?
+
+prompt_spend-hosted-power-counter-to-access-additional-card = Spend 1 hosted power counter to access 1 additional card?
+
+prompt_swap-pieces-of-ice = Swap 2 pieces of ice?
 
 prompt_swap-with-another-ice = Swap {$card} with another ice?
 
@@ -1083,11 +1212,21 @@ prompt_top-cards-of-stack = {$count ->
 
 prompt_trash = Trash {$title}?
 
+prompt_trash-to-force-the-corp-to-trace = Trash {$title} to force {-corp(case: "accusative")} to trace
+
+prompt_trash-to-reduce-the-base-trace-strength = Trash {$title} to reduce the base trace strength to 0?
+
+prompt_which-position-to-install-in = Which position to install in? (0 is innermost)
+
 prompt_you-have-no-ice-in-rd = You have no ice in {-rd}
 
 ## Prompt Choices
 
 choice_add-to-score-area = Add {$title} to score area
+
+choice_bottom-of-rd = Bottom of {-rd}
+
+choice_bottom-of-stack = Bottom of {-stack}
 
 choice_cancel = Cancel
 
@@ -1112,9 +1251,16 @@ choice_facedown-card-in-archives = Facedown card in {-archives}
 
 choice_gain-credits = Gain {$credits} [Credits]
 
+choice_gain-credits-and-draw-cards = Gain {$credits} [Credits] and draw {$count ->
+    [one] {$count} card
+    *[other] {$count} cards
+}
+
 choice_i-want-to-start-over = I want to start over
 
 choice_install = Install {$title}
+
+choice_jack-out = Jack out
 
 choice_no = No
 
@@ -1125,6 +1271,8 @@ choice_no-server = No server
 choice_none = None
 
 choice_ok = OK
+
+choice_pass-priority = Pass priority
 
 choice_pay-credits = Pay {$credits} [Credits]
 
@@ -1141,6 +1289,8 @@ choice_remove-tags = {$count ->
 
 choice_roll-d6 = Roll a d6
 
+choice_spend-click = Spend [Click]
+
 choice_start-over = Start over
 
 choice_steal = Steal
@@ -1151,12 +1301,16 @@ choice_suffer-meat-damage = Suffer {$count} meat damage
 
 choice_suffer-net-damage = Suffer {$count} net damage
 
-choice_take-net-damage = Take {$count} net damage
-
 choice_take-tags = Take {$count ->
     [one] {$count} tag
     *[other] {$count} tags
 }
+
+choice_the-corp-trashes-a-program = The Corp trashes a program
+
+choice_top-of-rd = Top of {-rd}
+
+choice_top-of-stack = Top of {-stack}
 
 choice_trash = Trash {$card}
 
