@@ -23,6 +23,7 @@
    [monger.core :as mg]
    [org.httpkit.server :refer [run-server server-stop!]]
    [taoensso.sente :as sente]
+   [taoensso.timbre :as timbre]
    [time-literals.data-readers]
    [time-literals.read-write :as read-write]
    [web.api :refer [make-app make-dev-app]]
@@ -202,6 +203,7 @@
            (ig/init config only)
            (ig/init config))
          (catch ExceptionInfo ex
+           (timbre/error ex "Failed to start system")
            (stop (:system (ex-data ex)))))))
 
 (comment
