@@ -30,27 +30,25 @@
 #?(:clj
    (defn load-dictionary!
      [dir]
-     (when-let [dir (io/file (io/resource dir))]
-       ;; List of supported language files (based on what we support in the frontend)
-       (let [langs (->> ["ca" "en" "es" "fr" "it" "ja" "ko" "la-pig" "pl" "pt" "ru" "zh-simp" "zh-trad"]
-                        (keep (fn [lang]
-                                (let [lang-dir (io/file dir lang)]
-                                  (when (.exists lang-dir)
-                                    (let [content (->> (file-seq lang-dir)
-                                                       (filter #(str/ends-with? (str %) ".ftl"))
-                                                       (map slurp)
-                                                       (str/join "\n"))]
-                                      ;; Skip empty placeholder files
-                                      (when-not (str/blank? content)
-                                        [lang content])))))))
-             errors (volatile! [])]
-         (doseq [[lang content] langs]
-           (try (insert-lang! lang content)
-                (catch Throwable t
-                  (println "Error inserting i18n data for" lang)
-                  (println (ex-message t))
-                  (vswap! errors conj lang))))
-         @errors))))
+     ;; List of supported language files (based on what we support in the frontend)
+     (let [langs (->> ["ca" "en" "es" "fr" "it" "ja" "ko" "la-pig" "pl" "pt" "ru" "zh-simp" "zh-trad"]
+                      (keep (fn [lang]
+                              ;; io/resource rather than io/file so this works from the uberjar
+                              (let [content (->> ["ui.ftl" "messages.ftl"]
+                                                 (keep #(io/resource (str dir "/" lang "/" %)))
+                                                 (map slurp)
+                                                 (str/join "\n"))]
+                                ;; Skip empty placeholder files
+                                (when-not (str/blank? content)
+                                  [lang content])))))
+           errors (volatile! [])]
+       (doseq [[lang content] langs]
+         (try (insert-lang! lang content)
+              (catch Throwable t
+                (println "Error inserting i18n data for" lang)
+                (println (ex-message t))
+                (vswap! errors conj lang))))
+       @errors)))
 
 #?(:clj
    (comment
