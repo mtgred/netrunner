@@ -628,6 +628,8 @@ game_reconnected-to-server = 伺服器重新連線
 
 game_remove-tag = 移除鎖定標記
 
+game_rematch = 再來一局
+
 game_reveal-my-hand = 展示我的手牌
 
 game_rez = 啟動
@@ -721,6 +723,8 @@ game_win-flatlined = {$winner} ({$side}) 在第{$turn}回合因潛襲者陣亡�
 game_win-other = {$winner} ({$side}) 在第{$turn}回合因 {$reason} 而獲勝。
 
 game_win-points = {$winner} ({$side}) 在第{$turn}回合因獲取議案分數而獲勝。
+
+game_win-tie = 在第{$turn}回合以平局結束。
 
 ingame-settings_alt-art = 異畫牌
 

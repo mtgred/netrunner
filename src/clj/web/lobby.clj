@@ -225,6 +225,7 @@
    :password
    :players
    :room
+   :rematch-requests
    :save-replay
    :singleton
    :spectators
@@ -357,20 +358,27 @@
 (defn send-message [lobby message]
   (update lobby :messages conj message))
 
-(defn try-create-lobby
-  [db uid user ?data]
-  (let [lobby (-> (create-new-lobby {:uid uid :user user :options ?data})
-                  (->> (auto-select-decks db))
-                  (send-message
-                    (core/make-system-message (str (:username user) " has created the game."))))
-        new-app-state (swap! app-state/app-state update :lobbies
+(defn register-new-lobby!
+  "Registers `lobby` unless `uid` is already a player elsewhere, then notifies everyone.
+  Returns the registered lobby or nil."
+  [lobby uid]
+  (let [new-app-state (swap! app-state/app-state update :lobbies
                              register-lobby lobby uid)
         lobby? (get-in new-app-state [:lobbies (:gameid lobby)])]
     (when lobby?
       (app-state/set-last-update (:gameid lobby?))
       (assign-tournament-properties lobby?)
       (send-lobby-state lobby?)
-      (broadcast-lobby-list))))
+      (broadcast-lobby-list))
+    lobby?))
+
+(defn try-create-lobby
+  [db uid user ?data]
+  (-> (create-new-lobby {:uid uid :user user :options ?data})
+      (->> (auto-select-decks db))
+      (send-message
+        (core/make-system-message (str (:username user) " has created the game.")))
+      (register-new-lobby! uid)))
 
 (defmethod ws/-msg-handler :lobby/create
   lobby--create
@@ -442,6 +450,7 @@
 (defn handle-leave-lobby [lobbies uid leave-message]
   (if-let [lobby (app-state/uid->lobby lobbies uid)]
     (let [gameid (:gameid lobby)
+          leaver-side (:side (player? uid lobby))
           players (remove #(= uid (:uid %)) (:players lobby))
           spectators (remove #(= uid (:uid %)) (:spectators lobby))
           corp-spectators (remove #(= uid (:uid %)) (:corp-spectators lobby))
@@ -449,6 +458,7 @@
       (if (pos? (count players))
         (-> lobbies
             (update gameid send-message leave-message)
+            (update-in [gameid :rematch-requests] disj leaver-side)
             (assoc-in [gameid :players] players)
             (assoc-in [gameid :spectators] spectators)
             (assoc-in [gameid :runner-spectators] runner-spectators)
@@ -563,6 +573,31 @@
     lobby
     (update lobby :players
             (partial mapv #(if (:deck %) % (maybe-auto-select-deck db lobby %))))))
+
+(def ^:private rematch-option-keys
+  [:allow-spectator :api-access :description :format :mute-spectators :open-decklists
+   :room :save-replay :singleton :spectatorhands :timer :title])
+
+(defn rematch-lobby
+  "A fresh, unstarted lobby with the players, sides, spectators and options of the started
+  lobby `old`. Started games only keep a stripped deck, so decks are reloaded from the db;
+  missing or no longer legal decks are left for the player to pick again."
+  [db {:keys [players] :as old}]
+  (let [reload (fn [{:keys [deck user] :as p}]
+                 (let [d (when (and (constructed-game? old) (:_id deck))
+                           (some-> (find-deck-for-user db (:_id deck) user) process-deck))]
+                   (cond-> (select-keys p [:uid :user :side])
+                     (and d (valid-deck-for-lobby? old d)) (assoc :deck d))))
+        new-players (mapv reload players)
+        host (first new-players)]
+    (-> (create-new-lobby {:uid (:uid host) :user (:user host)
+                           :options (select-keys old rematch-option-keys)})
+        ;; copied raw: :password is already hashed, :precon was validated on creation
+        (merge (select-keys old [:password :precon :spectators :corp-spectators :runner-spectators
+                                 :time-extension :excluded?]))
+        (assoc :players new-players
+               :original-players new-players)
+        (send-message (core/make-system-message "Rematch! Pick your decks and start when ready.")))))
 
 (defn handle-select-deck [lobbies uid deck]
   (let [lobby (app-state/uid-player->lobby lobbies uid)

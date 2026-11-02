@@ -717,6 +717,8 @@ game_reconnected-to-server = Вы переподключены к серверу
 
 game_remove-tag = Снять метку
 
+game_rematch = Реванш
+
 game_reveal-my-hand = Раскрыть мою руку
 
 game_rez = Развернуть
@@ -833,6 +835,8 @@ game_win-points = {$winner} ({$side}) побеждает, {$side ->
     [runner] украв
     *[other] засчитав
 } победные очки на {$turn} ходу
+
+game_win-tie = Игра завершилась вничью на {$turn} ходу
 
 ingame-settings_alt-art = Альтернативные изображения
 

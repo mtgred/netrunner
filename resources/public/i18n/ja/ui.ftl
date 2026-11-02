@@ -459,6 +459,8 @@ game_reconnected-to-server = サーバーに再接続した
 
 game_remove-tag = タグを除去
 
+game_rematch = 再戦
+
 game_rez = レゾ
 
 game_rfg = 除外
@@ -532,6 +534,8 @@ game_win-flatlined = {$winner} ({$side}) フラットラインによる勝利 {$
 game_win-other = {$winner} ({$side}) {$reason}による勝利 {$turn} ターン
 
 game_win-points = {$winner} ({$side}) 計画ポイントによる勝利 {$turn} ターン
+
+game_win-tie = {$turn} ターンで引き分け
 
 ingame-settings_card-image = カード画像
 

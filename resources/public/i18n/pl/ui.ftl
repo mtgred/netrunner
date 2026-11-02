@@ -332,6 +332,8 @@ game_purge = Usunięcie wirusów
 
 game_remove-tag = Usunięcie 1 namiaru
 
+game_rematch = Rewanż
+
 game_rez = Aktywacja
 
 game_rfg = Usunięte z gry
@@ -401,6 +403,8 @@ game_win-flatlined = {$winner} ({$side}) wygrywa przez wypłaszczenie w {$turn} 
 game_win-other = {$winner} ({$side}) wygrywa przez {$reason} w {$turn} turze
 
 game_win-points = {$winner} ({$side}) wygrywa przez zdobycie punktów zwycięstwa w {$turn} turze
+
+game_win-tie = Gra zakończyła się remisem w {$turn} turze
 
 lobby_aborted = Połączenie przerwane
 

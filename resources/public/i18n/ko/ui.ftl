@@ -318,6 +318,8 @@ game_purge = 퇴치
 
 game_remove-tag = 태그 제거
 
+game_rematch = 재대결
+
 game_rez = 레즈하기
 
 game_rfg = 게임에서 제거됨

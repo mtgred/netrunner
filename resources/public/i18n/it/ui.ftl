@@ -664,6 +664,8 @@ game_reconnected-to-server = Riconnettiti al server
 
 game_remove-tag = Rimuovi tag
 
+game_rematch = Rivincita
+
 game_reveal-my-hand = Rivela la mia mano
 
 game_rez = Rivela
@@ -769,6 +771,8 @@ game_win-flatlined = {$winner} ({$side}) vince per flatline al turno {$turn}
 game_win-other = {$winner} ({$side}) vince per {$reason} al turno {$turn}
 
 game_win-points = {$winner} ({$side}) vince per punti obiettivo al turno {$turn}
+
+game_win-tie = La partita termina in parità al turno {$turn}
 
 ingame-settings_alt-art = Illustrazione alternative
 

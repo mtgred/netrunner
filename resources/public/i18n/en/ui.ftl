@@ -688,6 +688,8 @@ game_reconnected-to-server = Reconnected to server
 
 game_remove-tag = Remove Tag
 
+game_rematch = Rematch
+
 game_reveal-my-hand = Reveal My Hand
 
 game_rez = Rez
@@ -796,6 +798,8 @@ game_win-points = {$winner} ({$side}) wins by {$side ->
     [runner] stealing
     *[other] scoring
 } agenda points on turn {$turn}
+
+game_win-tie = The game ended in a tie on turn {$turn}
 
 ingame-settings_alt-art = Alt arts
 

@@ -380,6 +380,8 @@ game_purge = Urgepay
 
 game_remove-tag = Emoveray Agtay
 
+game_rematch = Ematchray
+
 game_rez = Ezray
 
 game_rfg = Emovedray omfray ethay amegay
@@ -452,6 +454,8 @@ game_win-flatlined = {$winner} ({$side}) insway ybay atlineflay onyay urntay {$t
 game_win-other = {$winner} ({$side}) insway ybay {$reason} onyay urntay {$turn}
 
 game_win-points = {$winner} ({$side}) insway ybay oringcay agendayay ointspay onyay urntay {$turn}
+
+game_win-tie = Ethay amegay endedyay inyay ayay ietay onyay urntay {$turn}
 
 lobby_aborted = Onnectioncay abortedyay
 

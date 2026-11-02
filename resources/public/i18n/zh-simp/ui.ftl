@@ -688,6 +688,8 @@ game_reconnected-to-server = 已重新连接到服务器
 
 game_remove-tag = 移除锁定标记
 
+game_rematch = 再来一局
+
 game_reveal-my-hand = 展示我的手牌
 
 game_rez = 激活
@@ -817,6 +819,8 @@ game_win-points = {$winner} ({$side ->
     [corp] 公司
     *[other] {$side}
 })于第{$turn}回合因议案分数而获胜
+
+game_win-tie = 于第{$turn}回合以平局结束
 
 ingame-settings_alt-art = 异画卡
 

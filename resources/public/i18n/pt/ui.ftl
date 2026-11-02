@@ -356,6 +356,8 @@ game_purge = Expurgar
 
 game_remove-tag = Remover Marca
 
+game_rematch = Revanche
+
 game_rez = Ativar
 
 game_rfg = Removido do jogo
@@ -434,6 +436,8 @@ game_win-flatlined = {$winner} ({$side}) venceu por linha reta no turno {$turn}
 game_win-other = {$winner} ({$side}) venceu por {$reason} no turno {$turn}
 
 game_win-points = {$winner} ({$side}) venceu por pontos de agenda no turno {$turn}
+
+game_win-tie = O jogo terminou empatado no turno {$turn}
 
 lobby_aborted = Conecção abortada
 

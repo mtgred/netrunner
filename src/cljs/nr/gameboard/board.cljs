@@ -1408,9 +1408,11 @@
   [game-state]
   (let [win-shown (r/atom false)
         corp-stats (r/cursor game-state [:stats :corp])
-        runner-stats (r/cursor game-state [:stats :runner])]
+        runner-stats (r/cursor game-state [:stats :runner])
+        current-game (r/cursor app-state [:current-game])]
     (fn [game-state]
-      (when (and (:winner @game-state)
+      ;; :reason is set by both win and tie
+      (when (and (:reason @game-state)
                  (not @win-shown))
         (let [winner (or (:winner @game-state) "-")
               winning-user (or (:winning-user @game-state) "-")
@@ -1429,6 +1431,7 @@
               "Concede" [tr-span [:game_win-conceded] args]
               "Claim" [tr-span [:game_win-claimed] args]
               "Agenda" [tr-span [:game_win-points] args]
+              "Tie" [tr-span [:game_win-tie] args]
               #_:else [tr-span [:game_win-other] args])]
            [tr-element :div [:game_time-taken] {:time time}]
            [:br]
@@ -1445,7 +1448,16 @@
                [:button#reveal-hand
                 {:on-click #(ws/ws-send! [:game/say {:gameid (current-gameid app-state)
                                                      :msg "/show-hand"}])}
-                [tr-span [:game_reveal-my-hand "Reveal My Hand"]]]]])
+                [tr-span [:game_reveal-my-hand "Reveal My Hand"]]]
+               (let [me (if (= :corp (:side @game-state)) "Corp" "Runner")
+                     opp (if (= me "Corp") "Runner" "Corp")
+                     requests (set (:rematch-requests @current-game))
+                     opp-in? (some #(= opp (:side %)) (:players @current-game))]
+                 [:button#rematch
+                  {:disabled (or (not opp-in?) (contains? requests me))
+                   :on-click #(ws/ws-send! [:game/rematch {:gameid (current-gameid app-state)}])}
+                  (cond (not opp-in?) "✘ " (contains? requests opp) "✓ " :else "? ")
+                  [tr-span [:game_rematch "Rematch"]]])]])
            [:button.win-right {:on-click #(reset! win-shown true) :type "button"} "✘"]])))))
 
 (defn- build-in-game-decklists

@@ -283,6 +283,46 @@
          (update-and-send-diffs! main/handle-concede lobby side)))
      (lobby/log-delay! timestamp id))))
 
+(defn- handle-rematch-request [lobbies gameid side]
+  (if (get lobbies gameid)
+    (update-in lobbies [gameid :rematch-requests] (fnil conj #{}) side)
+    lobbies))
+
+(defn- rematch-agreed? [{:keys [players rematch-requests]}]
+  (and (= 2 (count players))
+       (every? #(contains? rematch-requests (:side %)) players)))
+
+(defmethod ws/-msg-handler :game/rematch
+  game--rematch
+  [{{db :system/db user :user} :ring-req
+    uid :uid
+    {gameid :gameid} :?data
+    id :id
+    timestamp :timestamp}]
+  (lobby/lobby-thread
+   (let [{:keys [state players] :as lobby} (app-state/get-lobby gameid)
+         player (lobby/player? uid lobby)]
+     (cond
+       ;; the old lobby is gone once a rematch happened, so late clicks land here
+       (not (and player state (:end-time @state) (= 2 (count players))))
+       nil
+       (:block-game-creation @app-state/app-state)
+       (ws/chsk-send! uid [:lobby/toast {:message :lobby_creation-paused
+                                         :type "error"}])
+       :else
+       (let [new-app-state (swap! app-state/app-state
+                                  update :lobbies handle-rematch-request gameid (:side player))
+             lobby? (get-in new-app-state [:lobbies gameid])]
+         (if (rematch-agreed? lobby?)
+           (let [new-lobby (lobby/rematch-lobby db lobby?)]
+             (lobby/close-lobby! db lobby?)
+             (lobby/register-new-lobby! new-lobby (:uid (first (:players new-lobby)))))
+           (do (lobby/send-lobby-state lobby?)
+               (lobby/send-lobby-ting lobby?)
+               (handle-message-and-send-diffs!
+                lobby? nil nil (str (:username user) " wants a rematch.")))))))
+   (lobby/log-delay! timestamp id)))
+
 (defmethod ws/-msg-handler :game/action
   game--action
   [{uid :uid

@@ -367,6 +367,8 @@ game_purge = Nettoyer les pions virus
 
 game_remove-tag = Retirer des tags
 
+game_rematch = Revanche
+
 game_rez = Activer
 
 game_rfg = Retiré du jeu
@@ -446,6 +448,8 @@ game_win-flatlined = {$winner} ({$side}) gagne par mort clinique au tour {$turn}
 game_win-other = {$winner} ({$side}) gagne par {$reason} au tour {$turn}
 
 game_win-points = {$winner} ({$side}) gagne aux points de projet au tour {$turn}
+
+game_win-tie = La partie se termine par une égalité au tour {$turn}
 
 lobby_aborted = Connexion interrompue
 

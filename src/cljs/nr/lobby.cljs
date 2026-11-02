@@ -28,6 +28,9 @@
 
 (defmethod ws/event-msg-handler :lobby/state [{data :?data}]
   (when-not (= "local-replay" (:gameid @app-state))
+    ;; a rematch moves us from a finished game into a fresh, unstarted lobby
+    (when (and data (not (:started data)) @game-state)
+      (leave-game!))
     (swap! app-state assoc :current-game data)
     (when (and (:started data) (not= (str (:gameid data)) (str (:gameid @game-state))))
       (ws/ws-send! [:game/resync {:gameid (:gameid data)}]))))
