@@ -2,12 +2,19 @@
   "this must not pull in any game.core namespaces, it's gotta be standalone"
   (:refer-clojure :exclude [assert])
   (:require
-   [clojure.string :as str]
-   [game.core.card :refer [card?]]
+   #?(:clj [clojure.string :as str])
+   [clojure.test.check.generators :as gen]
+   [jinteki.cards :as cards]
    [malli.core :as m]
    [malli.error :as me]
+   [malli.registry :as mr]
    [malli.util :as mu])
   #?(:cljs (:require-macros [game.core.schemas])))
+
+(mr/set-default-registry!
+  (merge
+    (m/default-schemas)
+    (mu/schemas)))
 
 #?(:clj
    (defmacro assert
@@ -23,51 +30,241 @@
                                   :value value#})))))))
 
 ;; engine schemas
+(def non-neg-int
+  (m/schema [:int {:min 0}]))
+
+(def BaseCard
+  (m/schema
+   [:map
+    [:abilities {:optional true} [:maybe [:sequential :map]]]
+    [:cid [:or :string :int]]
+    [:code :string]
+    [:cycle_code :string]
+    [:implementation {:optional true} [:maybe [:or :string [:= :full]]]]
+    [:normalizedtitle :string]
+    [:printed-title {:optional true} :string]
+    [:set_code :string]
+    [:side [:enum "Corp" "Runner"]]
+    [:subtype [:maybe :string]]
+    [:subtypes [:sequential :string]]
+    [:title :string]
+    [:type [:enum "Agenda" "Asset" "Event" "Hardware" "Identity" "Operation" "Program" "Resource" "Upgrade"]]]))
+
+(def AgendaCard
+  (m/schema
+    [:merge BaseCard
+     [:map
+      [:type [:= "Agenda"]]
+      [:agendapoints non-neg-int]]]))
+
+(def AssetCard
+  (m/schema
+    [:merge BaseCard
+     [:map
+      [:type [:= "Asset"]]
+      [:cost non-neg-int]
+      [:trash non-neg-int]]]))
+
+(def EventCard
+  (m/schema
+    [:merge BaseCard
+     [:map
+      [:type [:= "Event"]]
+      [:cost non-neg-int]]]))
+
+(def HardwareCard
+  (m/schema
+    [:merge BaseCard
+     [:map
+      [:type [:= "Hardware"]]
+      [:cost non-neg-int]]]))
+
+(def IceCard
+  (m/schema
+    [:merge BaseCard
+     [:map
+      [:type [:= "ICE"]]
+      [:cost non-neg-int]
+      [:strength non-neg-int]
+      [:subtype :string]]]))
+
+(def IdentityCard
+  (m/schema
+    [:merge BaseCard
+     [:map
+      [:type [:= "Identity"]]
+      [:minimumdecksize non-neg-int]
+      [:subtype :string]]]))
+
+(def OperationCard
+  (m/schema
+    [:merge BaseCard
+     [:map
+      [:type [:= "Operation"]]
+      [:cost non-neg-int]]]))
+
+(def ProgramCard
+  (m/schema
+    [:merge BaseCard
+     [:map
+      [:type [:= "Program"]]
+      [:cost non-neg-int]
+      [:memoryunits non-neg-int]
+      [:strength non-neg-int]]]))
+
+(def ResourceCard
+  (m/schema
+    [:merge BaseCard
+     [:map
+      [:type [:= "Resource"]]
+      [:cost non-neg-int]]]))
+
+(def UpgradeCard
+  (m/schema
+    [:merge BaseCard
+     [:map
+      [:type [:= "Upgrade"]]
+      [:cost non-neg-int]
+      [:trash non-neg-int]]]))
+
+(def CounterCard
+  (m/schema
+    [:map
+     [:type [:= "Counter"]]
+     [:cid [:or :string :int]]
+     [:code :string]
+     [:implementation {:optional true} [:maybe [:or :string [:= :full]]]]
+     [:printed-title {:optional true} :string]
+     [:side [:enum "Corp" "Runner"]]]))
 
 (def Card
-  [:fn {:error/message "should be a card"} card?])
+  (m/schema
+    [:multi {:dispatch :type}
+     ["Agenda" AgendaCard]
+     ["Asset" AssetCard]
+     ["Event" EventCard]
+     ["Hardware" HardwareCard]
+     ["ICE" IceCard]
+     ["Identity" IdentityCard]
+     ["Operation" OperationCard]
+     ["Program" ProgramCard]
+     ["Resource" ResourceCard]
+     ["Upgrade" UpgradeCard]
+     ["Counter" CounterCard]]))
+
+(defn optional-or-nil-keys
+  [?schema]
+  (let [mapper (fn [e] (-> e
+                         (update 1 assoc :optional true)
+                         (update 2 #(if (= :maybe (m/type %)) % (m/schema [:maybe %])))))]
+    (mu/transform-entries ?schema #(map mapper %) nil)))
+
+(def RawCard
+  (m/schema
+    (optional-or-nil-keys BaseCard)))
 
 (def Cost
   (m/schema
    [:map {:closed true}
     [:cost/type :keyword]
-    [:cost/amount :int]
+    [:cost/amount non-neg-int]
     [:cost/additional :boolean]
-    [:cost/stealth [:maybe [:or :int [:enum :all-stealth]]]]
-    [:cost/maximum [:maybe [:or :int fn?]]]
-    [:cost/offset [:maybe :int]]
+    [:cost/stealth [:maybe [:or non-neg-int [:enum :all-stealth]]]]
+    [:cost/maximum [:maybe [:or non-neg-int fn?]]]
+    [:cost/offset [:maybe non-neg-int]]
     [:cost/args [:maybe :map]]]))
 
 (def PickCounters
   (m/schema
    [:map {:closed true}
-    [:pick-counters/type :keyword]
-    [:value :int]
+    [:pick-counters/type [:enum :credit-pool :bad-publicity :card]]
+    [:value non-neg-int]
     [:title {:optional true} :string]]))
+
+(def payment-types
+  [:add-installed-to-bottom-of-deck
+   :add-random-from-hand-to-bottom-of-deck
+   :advancement
+   :agenda
+   :any-agenda-counter
+   :any-virus-counter
+   :bioroid-run-server
+   :brain
+   :click
+   :connection
+   :credit
+   :default
+   :derez-other-harmonic
+   :expend
+   :forfeit
+   :forfeit-or-trash-x-from-hand
+   :forfeit-self
+   :gain-tag
+   :hardware
+   :hosted-to-hq
+   :ice
+   :lose-click
+   :meat
+   :net
+   :power
+   :program
+   :randomly-trash-from-hand
+   :remove-from-game
+   :resource
+   :return-to-hand
+   :reveal-and-randomly-trash-from-hand
+   :rfg-program
+   :shuffle-installed-to-stack
+   :tag
+   :tag-or-bad-pub
+   :trash-can
+   :trash-entire-hand
+   :trash-from-deck
+   :trash-from-hand
+   :trash-hardware-from-hand
+   :trash-installed
+   :trash-other-installed
+   :trash-program-from-hand
+   :trash-resource-from-hand
+   :trash-self
+   :turn-hosted-matryoshka-facedown
+   :virus
+   :x-credits
+   :x-power-counter
+   :x-tags])
+
+(def Paid
+  (m/schema
+   [:map {:closed true}
+    [:paid/type [:keyword {:gen/elements payment-types}]]
+    [:paid/side [:enum :corp :runner]]
+    [:paid/msg {:optional true} :string]
+    [:paid/value non-neg-int]
+    [:paid/x-value {:optional true} non-neg-int]
+    [:paid/targets {:optional true} [:maybe [:sequential [:or PickCounters Card RawCard]]]]]))
 
 (def Payment
   (m/schema
    [:map {:closed true}
-    [:paid/type :keyword]
-    [:paid/side [:enum :corp :runner]]
-    [:paid/msg {:optional true} :string]
-    [:paid/value :int]
-    [:paid/x-value {:optional true} :int]
-    [:paid/targets {:optional true} [:maybe [:sequential [:or Card PickCounters]]]]]))
+    [:payment/type [:string {:gen/gen (gen/fmap #(str "payment-" %) (gen/elements payment-types))}]]
+    [:payment/value non-neg-int]
+    [:payment/count {:optional true} [:maybe non-neg-int]]
+    [:payment/title {:optional true} [:maybe :string]]
+    [:payment/titles {:optional true} [:maybe [:sequential :string]]]]))
 
 (def Eid
   (m/schema
    [:map {:closed true}
-    [:eid :int]
+    [:eid non-neg-int]
     [:source {:optional true} [:maybe Card]]
     [:source-type {:optional true} :keyword]
     [:source-info {:optional true}
      [:maybe [:map {:closed true}
-              [:ability-idx {:optional true} :int]
+              [:ability-idx {:optional true} non-neg-int]
               [:ability-targets [:maybe [:sequential :any]]]]]]
     [:action {:optional true} [:maybe [:or :keyword :string]]]
     [:additional-costs {:optional true} [:maybe [:sequential Cost]]]
-    [:cost-paid {:optional true} [:maybe [:map-of :keyword Payment]]]
+    [:cost-paid {:optional true} [:maybe [:map-of :keyword Paid]]]
     [:latest-payment-str {:optional true} [:maybe :string]]
     [:result {:optional true} :any]]))
 
@@ -95,8 +292,8 @@
                           [:card {:optional true} fn?]
                           [:req {:optional true} fn?]
                           [:all {:optional true} [:or :boolean fn?]]
-                          [:min {:optional true} [:or :int fn?]]
-                          [:max {:optional true} [:or :int fn?]]
+                          [:min {:optional true} [:or non-neg-int fn?]]
+                          [:max {:optional true} [:or non-neg-int fn?]]
                           [:not-self {:optional true} :boolean]]]
               ::waiting-prompt [:maybe [:or :boolean [:map [:msg/type :keyword]]]]
               ::prompt [:or :string [:map [:msg/type :keyword]] fn?]
@@ -117,22 +314,22 @@
                [:cost-label {:optional true} [:maybe [:or :string fn?]]]
                ;; icebreakers
                [:break-req {:optional true} fn?]
-               [:break {:optional true} [:or :int fn?]]
+               [:break {:optional true} [:or non-neg-int fn?]]
                [:breaks {:optional true} [:set :string]]
-               [:break-cost {:optional true} [:maybe [:or :int Cost [:sequential Cost]]]]
-               [:auto-break-sort {:optional true} [:maybe :int]]
+               [:break-cost {:optional true} [:maybe [:or non-neg-int Cost [:sequential Cost]]]]
+               [:auto-break-sort {:optional true} [:maybe non-neg-int]]
                [:break-cost-bonus {:optional true} [:maybe fn?]]
-               [:pump {:optional true} :int]
+               [:pump {:optional true} non-neg-int]
                [:pump-bonus {:optional true} [:maybe fn?]]
-               [:auto-pump-sort {:optional true} [:maybe :int]]
+               [:auto-pump-sort {:optional true} [:maybe non-neg-int]]
                [:auto-pump-ignore {:optional true} [:maybe :boolean]]
-               [:heap-breaker-pump {:optional true} [:or :int :keyword]]
-               [:heap-breaker-break {:optional true} [:or :int :keyword]]
-               [:auto-break-creds-per-sub {:optional true} [:maybe :int]]
+               [:heap-breaker-pump {:optional true} [:or non-neg-int :keyword]]
+               [:heap-breaker-break {:optional true} [:or non-neg-int :keyword]]
+               [:auto-break-creds-per-sub {:optional true} [:maybe non-neg-int]]
                ;; subroutine
                [:dynamic {:optional true} [:maybe :keyword]]
                [:fired {:optional true} [:maybe :boolean]]
-               [:cost-bonus {:optional true} [:maybe [:or :int fn?]]]
+               [:cost-bonus {:optional true} [:maybe [:or non-neg-int fn?]]]
                [:base-play-cost {:optional true} [:maybe [:or Cost [:sequential Cost]]]]
                [:play-cost-bonus {:optional true} [:maybe fn?]]
                [:condition {:optional true} :keyword]
@@ -143,7 +340,7 @@
                [:trash-after-resolving {:optional true} :boolean]
                [:unregister-once-resolved {:optional true} :boolean]
                [:once-per-instance {:optional true} :boolean]
-               [:offer-bad-pub? {:optional true} [:maybe :int]]
+               [:offer-bad-pub? {:optional true} [:maybe non-neg-int]]
                [:keep-menu-open {:optional true} [:or :keyword :boolean]]
                [:cost {:optional true} [:maybe [:sequential Cost]]]
                [:fake-cost {:optional true} [:maybe [:sequential Cost]]]
@@ -186,11 +383,11 @@
                [:req {:optional true} fn?]
                [:label {:optional true} [:maybe :string]]
                [:msg {:optional true} [:ref ::msg]]
-               [:base [:or :int fn?]]
+               [:base [:or non-neg-int fn?]]
                [:successful {:optional true} [:ref ::ability]]
                [:unsuccessful {:optional true} [:ref ::ability]]
                [:kicker {:optional true} [:ref ::ability]]
-               [:kicker-min {:optional true} :int]]
+               [:kicker-min {:optional true} non-neg-int]]
               ::optional
               [:map {:closed true}
                [:req {:optional true} fn?]
@@ -207,6 +404,16 @@
     [:ref ::ability]]))
 
 ;; i18n schemas
+(def title
+  (m/schema [:string #_{:gen/gen (gen/elements (keys @cards/all-cards))}]))
+
+(def server
+  (m/schema
+    [:or
+     [:string {:gen/gen (gen/one-of [(gen/elements ["Archives" "HQ" "R&D"])
+                                     (gen/fmap #(str "Server " %) (gen/fmap inc gen/nat))])}]
+     [:keyword {:gen/gen (gen/one-of [(gen/elements [:archives :hq :rd])
+                                      (gen/fmap #(keyword (str "remote" %)) gen/nat)])}]]))
 
 ;; standalone
 (def $username [:username :string])
@@ -214,35 +421,35 @@
 (def $payment [:payment :string])
 
 ;; :effect
-(def $add-count [:effect/add-count :int])
-(def $bonus [:effect/bonus :int])
+(def $add-count [:effect/add-count non-neg-int])
+(def $bonus [:effect/bonus non-neg-int])
 (def $card-str [:effect/card-str Card])
 (def $card-str2 [:effect/card-str2 Card])
 (def $card-strs [:effect/card-strs [:sequential Card]])
-(def $cards [:effect/cards :int])
+(def $cards [:effect/cards non-neg-int])
 (def $choice [:effect/choice :string])
-(def $count [:effect/count :int])
-(def $credits [:effect/credits :int])
+(def $count [:effect/count non-neg-int])
+(def $credits [:effect/credits non-neg-int])
 (def $damage [:effect/damage [:or :string :keyword]])
-(def $discount [:effect/discount :int])
-(def $position [:effect/position :int])
-(def $seen [:effect/seen [:sequential Card]])
-(def $server [:effect/server [:or :string :keyword]])
-(def $server-n [:effect/server-n :int])
-(def $title [:effect/title [:or :string Card]])
-(def $titles [:effect/titles [:sequential [:or :string Card]]])
-(def $top-count [:effect/top-count :int])
-(def $turn [:effect/turn :int])
-(def $turns [:effect/turns :int])
-(def $unseen-cnt [:effect/unseen-cnt :int])
-(def $value [:effect/value :int])
+(def $discount [:effect/discount non-neg-int])
+(def $position [:effect/position non-neg-int])
+(def $seen [:effect/seen [:sequential [:or Card RawCard]]])
+(def $server [:effect/server server])
+(def $server-n [:effect/server-n non-neg-int])
+(def $title [:effect/title [:or title Card RawCard]])
+(def $titles [:effect/titles [:sequential [:or title Card RawCard]]])
+(def $top-count [:effect/top-count non-neg-int])
+(def $turn [:effect/turn non-neg-int])
+(def $turns [:effect/turns non-neg-int])
+(def $unseen-cnt [:effect/unseen-cnt non-neg-int])
+(def $value [:effect/value non-neg-int])
 
 ;; prompts
 (def $card [:effect/card :string])
-(def $current [:effect/current :int])
-(def $max [:effect/max :int])
-(def $min [:effect/min :int])
-(def $total [:effect/total :int])
+(def $current [:effect/current non-neg-int])
+(def $max [:effect/max non-neg-int])
+(def $min [:effect/min non-neg-int])
+(def $total [:effect/total non-neg-int])
 
 (def effect-registry (atom {}))
 (defn register-effect
@@ -592,11 +799,6 @@
   (m/schema
    `[:multi {:dispatch :effect/type}
      ~@@effect-registry]))
-
-(comment
-  (me/humanize (m/explain EffectMsg {:effect/type :add-card-to-hq
-                                     :effect/title {:title "hello"}}))
-  ,)
 
 (def Msg
   (m/schema

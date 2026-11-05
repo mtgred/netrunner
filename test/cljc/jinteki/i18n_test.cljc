@@ -9,7 +9,7 @@
 
 (deftest msg-map-validates-keywords-test
   (is (= {:msg/type :msg_tie} (sut/->msg-map :msg_tie)))
-  (is (thrown? Exception (sut/->msg-map :not-a-registered-msg))))
+  (is (thrown? #?(:clj Exception :cljs :default) (sut/->msg-map :not-a-registered-msg))))
 
 (defn- ftl-ids
   [content]

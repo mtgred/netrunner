@@ -25,14 +25,17 @@
     (->> (:subroutines cdef)
          (reduce (fn [ice sub] (add-sub ice sub (:cid ice) {:printed true})) no-subs-card)
          :subroutines
-         (into []))))
+         (into [])
+         (not-empty))))
 
 (defn ability-init
   "Gets abilities associated with the card"
   [cdef]
-  (into [] (for [ab (:abilities cdef)
-                 :let [ab (assoc ab :label (make-label ab))]]
-             (add-cost-label-to-ability ab))))
+  (->> (for [ab (:abilities cdef)
+             :let [ab (assoc ab :label (make-label ab))]]
+         (add-cost-label-to-ability ab))
+       (into [])
+       (not-empty)))
 
 (defn- dissoc-card
   "Dissoc relevant keys in card"

@@ -8,8 +8,9 @@
    #?(:cljs [nr.ajax :refer [GET]])
    [clojure.string :as str]
    [game.core.card :refer [get-title]]
-   [game.core.schemas :as schemas :refer [EffectMsg MsgMap]]
+   [game.core.schemas :as schemas :refer [EffectMsg MsgMap Paid Payment]]
    [game.core.to-string :refer [card-str-edn]]
+   [malli.core :as m]
    [noahtheduke.fluent :as fluent]))
 
 #?(:clj (set! *warn-on-reflection* true))
@@ -315,7 +316,7 @@
 
 (defn payment->msg
   [{:paid/keys [type value targets side] :as payment}]
-  (schemas/assert payment schemas/Payment)
+  (schemas/assert payment Paid)
   (case type
     :credit
     (if-let [picks (seq (filter #(contains? % :pick-counters/type) targets))]
@@ -332,7 +333,7 @@
         :payment/value value}])
     :x-credits
     [{:payment/type "payment-x-credit"
-      :payment/value (:x-value payment)}]
+      :payment/value (:paid/x-value payment)}]
     :trash-from-hand
     [{:payment/type (if (= :corp side)
                       "payment-trash-from-hq"
@@ -366,6 +367,20 @@
       {:effect/type m}
       (schemas/assert m EffectMsg))))
 
+(def UseCard
+  (m/schema
+   [:multi {:dispatch :msg/type}
+    [:msg_pay-use-card [:map
+                        [:msg/type [:= :msg_pay-use-card]]
+                        [:msg/effect-msgs [:sequential {:min 1 :max 5} EffectMsg]]
+                        [:msg/payments [:sequential {:max 5} Payment]]
+                        [:msg/title [:or schemas/title schemas/Card]]]]
+    [:msg_use-card [:map
+                    [:msg/type [:= :msg_use-card]]
+                    [:msg/effect-msgs [:sequential {:min 1 :max 5} EffectMsg]]
+                    [:msg/payments {:optional true} [:maybe [:sequential {:max 0} Payment]]]
+                    [:msg/title [:or schemas/title schemas/Card]]]]]))
+
 (defn ->use-card-msg
   ([card effect-msgs] (->use-card-msg card effect-msgs nil nil))
   ([card effect-msgs payments] (->use-card-msg card effect-msgs payments nil))
@@ -375,7 +390,8 @@
                             :msg/effect-msgs (vec (keep msg-map->effect-msg effect-msgs))
                             :msg/payments payments
                             :msg/title (get-title card)})
-       (map? args) (merge args)))))
+       (map? args) (merge args)
+       true (schemas/assert UseCard)))))
 
 #?(:clj
    (defmacro simple-msg
@@ -408,4 +424,3 @@
 (defn msg-type?
   [m msg-type]
   (and (map? m) (= msg-type (:msg/type m))))
-

@@ -1182,13 +1182,13 @@
     (subroutine-test "Biawak" 0 nil {:rig ["Fermenter"] :disable true})
     (click-prompt state :corp "Trash a program")
     (click-card state :corp "Fermenter")
-    (is (= 1 (count (:discard (get-runner)))) (str "Trashed prog")))
+    (is (= 1 (count (:discard (get-runner)))) "Trashed prog"))
   ;; trash hardware or etr
   (do-game
     (subroutine-test "Biawak" 1 nil {:rig ["Kati Jones"] :disable true})
     (click-prompt state :corp "Trash a resource")
     (click-card state :corp "Kati Jones")
-    (is (= 1 (count (:discard (get-runner)))) (str "Trashed kati")))
+    (is (= 1 (count (:discard (get-runner)))) "Trashed kati"))
   ;; etr
   (do-game (etr-sub "Biawak" 2)))
 
@@ -2268,7 +2268,7 @@
 (deftest empiricist-subs-test
   (do-game
     (subroutine-test "Empiricist" 0 {:corp {:hand ["Restructure"] :deck ["IPO" "Hedge Fund"]}})
-    (is (= (+ 1 1) (count (:hand (get-corp)))) (str "drew 1 card"))
+    (is (= (+ 1 1) (count (:hand (get-corp)))) "drew 1 card")
     (click-card state :corp "Restructure")
     (is (= "Restructure" (get-in @state [:corp :deck 0 :title])) "Restructure ontop"))
   (do-game (does-damage-sub "Empiricist" 1 1)
@@ -3386,20 +3386,6 @@
             (card-ability state :runner gh 0)
             (click-prompt state :runner "End the run unless the Runner pays 3 [Credits]"))
           "Get taxed 1c for breaking with Grappling Hook"))))
-
-(deftest grubber-subroutine-test
-  (doseq [sub [0 1]
-          option ["Pay 3 [Credits]" "End the run"]]
-    (do-game
-      (subroutine-test "Grubber" sub)
-      (click-prompt state :runner option)
-      (case option
-        "End the run" (is (not (:run @state)) "Run ended")
-        "Pay 3 [Credits]" (is (changed? [(:credit (get-runner)) -3]
-                                (click-prompt state :runner "Done")
-                                (is (:run @state) "still running")
-                                (is (no-prompt? state :runner) "No prompt"))
-                              "Paid 3 (not using bad pub)")))))
 
 (deftest grubber-subroutine-test
   (doseq [sub [0 1]
@@ -5866,7 +5852,6 @@
     (play-from-hand state :runner "Buzzsaw")
     (let [hq-ice (get-ice state :hq 0)
           arc-ice (get-ice state :archives 0)
-          buzz (get-program state 0)
           sub "Draw 1 card, then shuffle 1 card from HQ into R&D"]
       (rez state :corp hq-ice)
       (run-on state "HQ")
@@ -5877,7 +5862,7 @@
       (is (= [:archives] (:server (get-run))) "Run is redirected to Archives")
       (click-prompt state :runner "No")
       (is (not (rezzed? (refresh hq-ice))) "HQ Ice derezzed")
-      (dotimes [n 10]
+      (dotimes [_ 10]
         (is (= 1 (:position (get-in @state [:run]))) "Outside of miraju")
         (rez state :corp (refresh arc-ice))
         (run-continue state :encounter-ice)
@@ -6988,8 +6973,7 @@
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "Caldera")
     (run-on state "HQ")
-    (let [sai (get-ice state :hq 0)
-          cal (get-resource state 0)]
+    (let [sai (get-ice state :hq 0)]
       (rez state :corp sai)
       (run-continue state)
       (click-prompt state :corp "Event")
@@ -8174,7 +8158,6 @@
     (play-from-hand state :runner "Sure Gamble")
     (play-from-hand state :runner "Inversificator")
     (let [thimble (get-ice state :hq 0)
-          vanilla (get-ice state :remote1 0)
           inv (get-program state 0)]
       (run-on state "HQ")
       (rez state :corp thimble)
@@ -8598,8 +8581,7 @@
     (is (= 2 (:position (get-run))) "Runner position was adjusted")
     (run-continue state)
     (let [enigma (get-ice state :archives 0)
-          trib (get-ice state :archives 1)
-          rime (get-ice state :remote1 1)]
+          trib (get-ice state :archives 1)]
       (is (changed? [(count (:deck (get-corp))) -1
                       (count (:hand (get-corp))) 0
                       (count (get-in @state [:corp :servers :remote1 :ices])) 1]
