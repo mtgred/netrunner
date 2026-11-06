@@ -80,6 +80,7 @@
                                   [integrant/repl "0.3.2"]
                                   [lambdaisland/kaocha "1.68.1059"]
                                   [org.corfield/rephrase "1.0.2"]
+                                  [babashka/fs "0.5.34"]
                                   [thheller/shadow-cljs "2.28.21"]]
                    :plugins [[lein-eftest "0.6.0"]
                              [jonase/eastwood "1.4.3"]
@@ -114,6 +115,7 @@
             "get-game-stats" ["run" "-m" "tasks.game-stats/all-games"]
             "get-user-stats" ["run" "-m" "tasks.user-stats/all-users"]
             "get-background-stats" ["run" "-m" "tasks.user-stats/all-backgrounds"]
-            "missing-translations" ^{:doc "Print translations in 'en' that aren't in other languages. Can be passed a language (fr, ko, ...) to filter to that language."} ["run" "-m" "tasks.translations/missing-translations"]
-            "undefined-translations" ^{:doc "Find usages of (tr [...]) in code that don't exist in 'en' translation."} ["run" "-m" "tasks.translations/undefined-translations"]
+            "missing-translations" ^{:doc "Print translations in 'en' that aren't in other languages. Requires initial arg 'ui' or 'messages' to choose between frontend or game message translations. Can be passed a language (fr, ko, ...) to filter to that language."} ["run" "-m" "tasks.translations/missing-translations"]
+            "undefined-trs" ^{:doc "Find usages of (tr [...]) in code that don't exist in 'en' translation."} ["run" "-m" "tasks.translations/undefined-translations" "ui"]
+            "undefined-translations" ^{:doc "Find game messages (:msg/type, :effect/type, etc) that don't exist in 'en' translation."} ["run" "-m" "tasks.translations/undefined-translations" "messages"]
             "unused-translations" ^{:doc "Find entries in 'en' translation that aren't used in code."} ["run" "-m" "tasks.translations/unused-translations"]})

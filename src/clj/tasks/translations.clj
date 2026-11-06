@@ -1,7 +1,7 @@
 (ns tasks.translations
   "Find missing translations"
   (:require
-   [clojure.java.io :as io]
+   [babashka.fs :as fs]
    [clojure.pprint :as pp]
    [clojure.set :as set]
    [clojure.string :as str])
@@ -14,13 +14,11 @@
     Pattern
     PatternElement$TextElement)
    (fluent.syntax.parser FTLParser FTLStream)
-   (java.io File)
    (java.util Locale Optional)))
 
 (set! *warn-on-reflection* true)
 
-(def fluent-dictionary
-  (atom {}))
+(def fluent-dictionary (atom {}))
 
 (defn get-id
   [entry]
@@ -52,35 +50,43 @@
 
 (defn load-dictionary!
   []
-  (let [langs (->> (io/file "resources/public/i18n")
-                   (file-seq)
-                   (filter #(.isFile ^java.io.File %))
-                   (filter #(str/ends-with? (str %) ".ftl"))
-                   (keep (fn [^java.io.File f]
-                           (let [n (str/replace (.getName f) ".ftl" "")
-                                 content (slurp f)]
-                             ;; Skip empty placeholder files
-                             (when (not-empty content)
-                               [n content])))))]
+  (let [dir "resources/public/i18n"
+        langs (->> ["ca" "de" "en" "es" "fr" "it" "ja" "ko" "la-pig" "pl" "pt" "ru" "zh-simp" "zh-trad"]
+                   (keep (fn [lang]
+                           (let [ui (let [f (fs/file dir lang "ui.ftl")]
+                                      (when (fs/exists? f)
+                                        (slurp f)))
+                                 msgs (let [f (fs/file dir lang "messages.ftl")]
+                                        (when (fs/exists? f)
+                                          (slurp f)))]
+                             (when (or ui msgs)
+                               (cond-> [lang]
+                                 (not (str/blank? ui)) (conj [:ui ui])
+                                 (not (str/blank? msgs)) (conj [:messages msgs])))))))
+        errors (volatile! [])]
     (reset! fluent-dictionary {})
-    (doseq [[lang content] langs]
-      (swap! fluent-dictionary assoc lang (build lang content))))
-  (println "Loaded"))
+    (doseq [[lang & contents] langs
+            [kind content] contents
+            :when content]
+      (swap! fluent-dictionary assoc-in [lang kind] (build lang content)))
+    @errors))
 
-(defn get-messages [lang]
-  (into {} (get @fluent-dictionary lang)))
+(defn get-messages
+  ([lang] (into {} (mapcat val (get @fluent-dictionary lang))))
+  ([lang kind] (into {} (get-in @fluent-dictionary [lang (keyword (name kind))]))))
 
 (defn missing-translations
   "Treat :en as the single source of truth. Compare each other language against it.
   Print when the other language is missing entries, and also print when the other
   language has defined entries not in :en."
-  [& args]
+  [kind & args]
+  (assert (#{"ui" "messages"} (name kind)) (str "Must be 'ui' or 'messages': " (pr-str kind)))
   (load-dictionary!)
-  (let [en-keys (keys (get-messages "en"))
+  (let [en-keys (keys (get-messages "en" kind))
         langs (or (seq (map name args))
                   (keys (dissoc @fluent-dictionary "en")))]
     (doseq [lang (sort langs)
-            :let [lang-keys (keys (get-messages lang))]]
+            :let [lang-keys (keys (get-messages lang kind))]]
       (println "Checking" lang)
       (when-let [diff (seq (set/difference
                             (->> en-keys
@@ -99,7 +105,7 @@
     (println "Finished!")))
 
 (comment
-  (missing-translations))
+  (missing-translations :messages))
 
 (defn get-value
   [message]
@@ -114,13 +120,45 @@
            (map PatternElement$TextElement/.value)
            (str/join " ")))))
 
-(defn undefined-translations
-  [& _args]
+(defn undefined-clj-translations []
   (load-dictionary!)
-  (let [en-map (get-messages "en")
-        files (->> (concat (file-seq (io/file "src/cljs"))
-                           (file-seq (io/file "src/cljc")))
-                   (filter #(.isFile ^File %))
+  (let [en-map (get-messages "en" :messages)
+        files (->> (concat (file-seq (fs/file "src/clj"))
+                           (file-seq (fs/file "src/cljc")))
+                   (filter fs/regular-file?)
+                   (remove #(str/includes? (str %) ".cljs"))
+                   (map (juxt str slurp)))
+        finds
+        (for [[file-name contents] files
+              [kind k] (->> contents
+                            (re-seq #"(?:(:msg/type|->msg-map)|(:effect/type)) :([a-zA-Z0-9_-]*)")
+                            (keep (fn [[all msg? effect? msg-name]]
+                                    (when-not (#{"as" "keyword"} msg-name)
+                                      [(cond msg? :msg effect? :effect :else all) msg-name])))
+                            (sort))
+              :let [entry (get en-map (name k))
+                    message (get-value entry)]
+              :when (not entry)]
+          {:file-name file-name
+           :kind kind
+           :entry k
+           :msg message})
+        grouped-finds (group-by :file-name finds)]
+    (doseq [file-name (keys grouped-finds)
+            {:keys [entry msg]} (get grouped-finds file-name)]
+      (println file-name)
+      (pp/pprint [entry msg]))
+    (println "Finished!")))
+
+(comment
+  (undefined-clj-translations))
+
+(defn undefined-cljs-translations []
+  (load-dictionary!)
+  (let [en-map (get-messages "en" :ui)
+        files (->> (concat (file-seq (fs/file "src/cljs"))
+                           (file-seq (fs/file "src/cljc")))
+                   (filter fs/regular-file?)
                    (filter #(str/includes? (str %) ".clj"))
                    (map (juxt str slurp)))
         finds
@@ -152,7 +190,13 @@
     (println "Finished!")))
 
 (comment
-  (undefined-translations))
+  (undefined-cljs-translations))
+
+(defn undefined-translations
+  [kind]
+  (if (#{"frontend" "cljs" "ui"} kind)
+    (undefined-cljs-translations)
+    (undefined-clj-translations)))
 
 (def keys-to-dissoc
   #{"card-type_" ; handled by tr-type
@@ -166,10 +210,10 @@
     "preconstructed_"
     })
 
-(defn unused-translations
+(defn unused-cljs-translations
   [& _args]
   (load-dictionary!)
-  (let [regexen (->> (get-messages "en")
+  (let [regexen (->> (get-messages "en" :ui)
                      (keys)
                      (remove (fn [k]
                                (some #(str/starts-with? k %)
@@ -177,9 +221,9 @@
                      (map #(let [patt (str "tr \\[:" % "(( \\\"(.*?)\\\")| [a-zA-Z0-9_-]*?)?\\]")]
                              [% (re-pattern patt)]))
                      (into #{}))
-        files (->> (concat (file-seq (io/file "src/cljs"))
-                           (file-seq (io/file "src/cljc")))
-                   (filter #(.isFile ^File %))
+        files (->> (concat (file-seq (fs/file "src/cljs"))
+                           (file-seq (fs/file "src/cljc")))
+                   (filter fs/regular-file?)
                    (filter #(str/includes? (str %) ".clj"))
                    (map (juxt str slurp)))]
     (doseq [[path regex] (sort regexen)
@@ -191,4 +235,4 @@
     (println "Finished!")))
 
 (comment
-  (unused-translations))
+  (unused-cljs-translations))
