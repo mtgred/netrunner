@@ -527,6 +527,11 @@ payment-tag = removes {$count ->
     [one] 1 tag
     *[other] {$count} tags
 }
+payment-x-tags = removes {$count ->
+    [zero] no tags
+    [one] 1 tag
+    *[other] {$count} tags
+}
 payment-gain-bad-publicity = gains {$count} bad publicity
 payment-return-to-grip = returns {$title} to {-grip}
 payment-return-to-hq = returns {$title} to {-hq}
@@ -541,6 +546,11 @@ payment-trash-installed = trashes {$count ->
     [zero] no installed cards
     [one] 1 installed card ({$titles})
     *[other] {$count} installed cards ({$titles})
+}
+payment-trash-other-installed = {$count ->
+    [zero] trashes no installed cards
+    [one] trashes 1 installed card ({$titles})
+    *[other] trashes {$count} installed cards ({$titles})
 }
 payment-trash-hardware = trashes {$count ->
     [zero] no installed pieces of hardwares
@@ -695,6 +705,14 @@ payment-virus-counter = spends {$count ->
     [one] 1 hosted virus counter from {$title}
     *[one] {$count} hosted virus counters from {$title}
 }
+payment-any-agenda-counter = {$count ->
+    [one] spends 1 hosted agenda counter from {$title}
+    *[other] spends {$count} hosted agenda counters from {$title}
+}
+payment-any-virus-counter = {$count ->
+    [one] spends 1 hosted virus counter from {$title}
+    *[other] spends {$count} hosted virus counters from {$title}
+}
 
 payment-derez-harmonic = derezzes {$count} Harmonic {-ice-type} ({$titles})
 
@@ -702,6 +720,9 @@ payment-derez-harmonic = derezzes {$count} Harmonic {-ice-type} ({$titles})
 
 # it's one thing to say "uses Corroder", it's another to say "this specific Ice
 # Wall on the table".
+
+# "Argus"
+card-str-identity = {$title}
 
 # "Corroder"
 card-str-runner-seen = {$title}

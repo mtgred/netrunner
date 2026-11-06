@@ -3,10 +3,9 @@
   (:refer-clojure :exclude [assert])
   (:require
    #?(:clj [clojure.string :as str])
+   #?(:clj [malli.error :as me])
    [clojure.test.check.generators :as gen]
-   [jinteki.cards :as cards]
    [malli.core :as m]
-   [malli.error :as me]
    [malli.registry :as mr]
    [malli.util :as mu])
   #?(:cljs (:require-macros [game.core.schemas])))
@@ -33,11 +32,32 @@
 (def non-neg-int
   (m/schema [:int {:min 0}]))
 
+(def common-zones
+  (m/schema
+    [:cat {:gen/fmap vec}
+     [:enum {:error/message "Invalid zone"}
+      :deck :hand :discard
+      :set-aside :play-area :scored :rfg :destroyed :host :onhost]]))
+
+(def runner-zones
+  (m/schema
+    [:or common-zones
+     [:cat {:gen/fmap vec}
+      [:= :rig] [:enum :facedown :hardware :program :resource]]]))
+
+(def corp-zones
+  (m/schema
+    [:or common-zones
+     [:cat {:gen/fmap vec
+            :registry {::central [:enum :archives :rd :hq]
+                       ::remote [:keyword {:gen/gen (gen/fmap #(keyword (str "remote" %)) gen/nat)}]}}
+      [:= :servers] [:or ::central ::remote] [:enum :content :ices]]]))
+
 (def BaseCard
   (m/schema
    [:map
     [:abilities {:optional true} [:maybe [:sequential :map]]]
-    [:cid [:or :string :int]]
+    [:cid [:or :string [:int {:min -1}]]]
     [:code :string]
     [:cycle_code :string]
     [:implementation {:optional true} [:maybe [:or :string [:= :full]]]]
@@ -47,15 +67,27 @@
     [:side [:enum "Corp" "Runner"]]
     [:subtype [:maybe :string]]
     [:subtypes [:sequential :string]]
-    [:title :string]
-    [:type [:enum "Agenda" "Asset" "Event" "Hardware" "Identity" "Operation" "Program" "Resource" "Upgrade"]]]))
+    [:title :string]]))
+
+(defn optional-or-nil-keys
+  [?schema]
+  (let [mapper (fn [e] (-> e
+                         (update 1 assoc :optional true)
+                         (update 2 #(if (= :maybe (m/type %)) % (m/schema [:maybe %])))))]
+    (mu/transform-entries ?schema #(map mapper %) nil)))
+
+(def RawCard
+  (m/schema
+    (optional-or-nil-keys BaseCard)))
 
 (def AgendaCard
   (m/schema
     [:merge BaseCard
      [:map
       [:type [:= "Agenda"]]
-      [:agendapoints non-neg-int]]]))
+      [:agendapoints non-neg-int]
+      [:side [:= "Corp"]]
+      [:zone corp-zones]]]))
 
 (def AssetCard
   (m/schema
@@ -63,21 +95,27 @@
      [:map
       [:type [:= "Asset"]]
       [:cost non-neg-int]
-      [:trash non-neg-int]]]))
+      [:side [:= "Corp"]]
+      [:trash non-neg-int]
+      [:zone corp-zones]]]))
 
 (def EventCard
   (m/schema
     [:merge BaseCard
      [:map
       [:type [:= "Event"]]
-      [:cost non-neg-int]]]))
+      [:cost non-neg-int]
+      [:side [:= "Runner"]]
+      [:zone runner-zones]]]))
 
 (def HardwareCard
   (m/schema
     [:merge BaseCard
      [:map
       [:type [:= "Hardware"]]
-      [:cost non-neg-int]]]))
+      [:cost non-neg-int]
+      [:side [:= "Runner"]]
+      [:zone runner-zones]]]))
 
 (def IceCard
   (m/schema
@@ -85,8 +123,10 @@
      [:map
       [:type [:= "ICE"]]
       [:cost non-neg-int]
+      [:side [:= "Corp"]]
       [:strength non-neg-int]
-      [:subtype :string]]]))
+      [:subtype :string]
+      [:zone corp-zones]]]))
 
 (def IdentityCard
   (m/schema
@@ -101,7 +141,9 @@
     [:merge BaseCard
      [:map
       [:type [:= "Operation"]]
-      [:cost non-neg-int]]]))
+      [:cost non-neg-int]
+      [:side [:= "Corp"]]
+      [:zone corp-zones]]]))
 
 (def ProgramCard
   (m/schema
@@ -110,14 +152,18 @@
       [:type [:= "Program"]]
       [:cost non-neg-int]
       [:memoryunits non-neg-int]
-      [:strength non-neg-int]]]))
+      [:side [:= "Runner"]]
+      [:strength non-neg-int]
+      [:zone runner-zones]]]))
 
 (def ResourceCard
   (m/schema
     [:merge BaseCard
      [:map
       [:type [:= "Resource"]]
-      [:cost non-neg-int]]]))
+      [:cost non-neg-int]
+      [:side [:= "Runner"]]
+      [:zone runner-zones]]]))
 
 (def UpgradeCard
   (m/schema
@@ -125,7 +171,9 @@
      [:map
       [:type [:= "Upgrade"]]
       [:cost non-neg-int]
-      [:trash non-neg-int]]]))
+      [:side [:= "Corp"]]
+      [:trash non-neg-int]
+      [:zone corp-zones]]]))
 
 (def CounterCard
   (m/schema
@@ -151,17 +199,6 @@
      ["Resource" ResourceCard]
      ["Upgrade" UpgradeCard]
      ["Counter" CounterCard]]))
-
-(defn optional-or-nil-keys
-  [?schema]
-  (let [mapper (fn [e] (-> e
-                         (update 1 assoc :optional true)
-                         (update 2 #(if (= :maybe (m/type %)) % (m/schema [:maybe %])))))]
-    (mu/transform-entries ?schema #(map mapper %) nil)))
-
-(def RawCard
-  (m/schema
-    (optional-or-nil-keys BaseCard)))
 
 (def Cost
   (m/schema
@@ -219,8 +256,10 @@
    :tag-or-bad-pub
    :trash-can
    :trash-entire-hand
-   :trash-from-deck
-   :trash-from-hand
+   :trash-from-stack
+   :trash-from-grip
+   :trash-from-rd
+   :trash-from-hq
    :trash-hardware-from-hand
    :trash-installed
    :trash-other-installed
@@ -236,21 +275,12 @@
 (def Paid
   (m/schema
    [:map {:closed true}
-    [:paid/type [:keyword {:gen/elements payment-types}]]
+    [:paid/type [:keyword #_{:gen/elements payment-types}]]
     [:paid/side [:enum :corp :runner]]
     [:paid/msg {:optional true} :string]
     [:paid/value non-neg-int]
     [:paid/x-value {:optional true} non-neg-int]
     [:paid/targets {:optional true} [:maybe [:sequential [:or PickCounters Card RawCard]]]]]))
-
-(def Payment
-  (m/schema
-   [:map {:closed true}
-    [:payment/type [:string {:gen/gen (gen/fmap #(str "payment-" %) (gen/elements payment-types))}]]
-    [:payment/value non-neg-int]
-    [:payment/count {:optional true} [:maybe non-neg-int]]
-    [:payment/title {:optional true} [:maybe :string]]
-    [:payment/titles {:optional true} [:maybe [:sequential :string]]]]))
 
 (def Eid
   (m/schema
@@ -420,41 +450,46 @@
 (def $do-ability [:do-ability :string])
 (def $payment [:payment :string])
 
-;; :effect
-(def $add-count [:effect/add-count non-neg-int])
-(def $bonus [:effect/bonus non-neg-int])
-(def $card-str [:effect/card-str Card])
-(def $card-str2 [:effect/card-str2 Card])
-(def $card-strs [:effect/card-strs [:sequential Card]])
-(def $cards [:effect/cards non-neg-int])
-(def $choice [:effect/choice :string])
-(def $count [:effect/count non-neg-int])
-(def $credits [:effect/credits non-neg-int])
-(def $damage [:effect/damage [:or :string :keyword]])
-(def $discount [:effect/discount non-neg-int])
-(def $position [:effect/position non-neg-int])
-(def $seen [:effect/seen [:sequential [:or Card RawCard]]])
-(def $server [:effect/server server])
-(def $server-n [:effect/server-n non-neg-int])
-(def $title [:effect/title [:or title Card RawCard]])
-(def $titles [:effect/titles [:sequential [:or title Card RawCard]]])
-(def $top-count [:effect/top-count non-neg-int])
-(def $turn [:effect/turn non-neg-int])
-(def $turns [:effect/turns non-neg-int])
-(def $unseen-cnt [:effect/unseen-cnt non-neg-int])
-(def $value [:effect/value non-neg-int])
+;; map entry
+
+(def $add-count [:add-count non-neg-int])
+(def $bonus [:bonus non-neg-int])
+(def $card-str [:card-str Card])
+(def $card-str2 [:card-str2 Card])
+(def $card-strs [:card-strs [:sequential {:gen/min 1} Card]])
+(def $cards [:cards non-neg-int])
+(def $choice [:choice :string])
+(def $count [:count non-neg-int])
+(def $credits [:credits non-neg-int])
+(def $damage [:damage [:or :string :keyword]])
+(def $discount [:discount non-neg-int])
+(def $position [:position non-neg-int])
+(def $seen [:seen [:sequential {:gen/min 1} [:or Card RawCard]]])
+(def $server [:server server])
+(def $server-n [:server-n non-neg-int])
+(def $title [:title [:or title Card RawCard]])
+(def $titles [:titles [:sequential {:gen/min 1} [:or title Card RawCard]]])
+(def $top-count [:top-count non-neg-int])
+(def $turn [:turn non-neg-int])
+(def $turns [:turns non-neg-int])
+(def $unseen-cnt [:unseen-cnt non-neg-int])
+(def $value [:value non-neg-int])
 
 ;; prompts
-(def $card [:effect/card :string])
-(def $current [:effect/current non-neg-int])
-(def $max [:effect/max non-neg-int])
-(def $min [:effect/min non-neg-int])
-(def $total [:effect/total non-neg-int])
+(def $card [:card :string])
+(def $current [:current non-neg-int])
+(def $max [:max non-neg-int])
+(def $min [:min non-neg-int])
+(def $total [:total non-neg-int])
 
 (def effect-registry (atom {}))
+(defn set-effect-ns
+  [[k & args]]
+  (into [(keyword "effect" (name k))] args))
 (defn register-effect
   [kw & kvs]
-  (swap! effect-registry assoc kw (m/schema (into [:map] kvs)))
+  (let [schema (into [:map] (mapv set-effect-ns kvs))]
+    (swap! effect-registry assoc kw (m/schema schema)))
   kw)
 
 ;; generic
@@ -715,61 +750,6 @@
 (register-effect :turn-all-installed-runner-facedown)
 (register-effect :change-identity $title)
 
-;; payments
-
-(register-effect :payment-click $value)
-(register-effect :payment-credit $value)
-(register-effect :payment-x-credit $value)
-(register-effect :payment-credit-pool $value)
-(register-effect :payment-hosted-credit $value $title)
-(register-effect :payment-bad-publicity $value)
-(register-effect :payment-extend $title)
-(register-effect :payment-trash-can)
-(register-effect :payment-trash-self $title)
-(register-effect :payment-forfeit $count $titles)
-(register-effect :payment-gain-tags $count)
-(register-effect :payment-tag $count)
-(register-effect :payment-bad-publicity $count)
-(register-effect :payment-return-to-grip $title)
-(register-effect :payment-return-to-hq $title)
-(register-effect :payment-return-from-game $title)
-(register-effect :payment-rfg-program $count $titles)
-(register-effect :payment-trash-installed $count $titles)
-(register-effect :payment-trash-hardware $count $titles)
-(register-effect :payment-trash-program $count $titles)
-(register-effect :payment-trash-resource $count $titles)
-(register-effect :payment-trash-connection $count $titles)
-(register-effect :payment-trash-ice $count $titles)
-(register-effect :payment-trash-bioroid $count $titles)
-(register-effect :payment-trash-from-stack $count)
-(register-effect :payment-trash-from-rd $count)
-(register-effect :payment-trash-from-grip $count $titles)
-(register-effect :payment-trash-from-hq $count)
-(register-effect :payment-reveal-trash-from-grip $count $titles)
-(register-effect :payment-reveal-trash-from-hq $count $titles)
-(register-effect :payment-random-trash-from-grip $count $titles)
-(register-effect :payment-random-trash-from-hq $count)
-(register-effect :payment-random-reveal-trash-from-grip $count $titles)
-(register-effect :payment-random-reveal-trash-from-hq $count $titles)
-(register-effect :payment-trash-all-cards-in-hq $count)
-(register-effect :payment-trash-all-cards-in-grip $count $titles)
-(register-effect :payment-trash-hardware-in-grip $count $titles)
-(register-effect :payment-trash-program-in-grip $count $titles)
-(register-effect :payment-trash-resource-in-grip $count $titles)
-(register-effect :payment-meat $value)
-(register-effect :payment-net $value)
-(register-effect :payment-core $value)
-(register-effect :payment-shuffle-installed-into-stack $count $titles)
-(register-effect :payment-shuffle-installed-into-rd $count)
-(register-effect :payment-add-installed-bottom-stack $count $titles)
-(register-effect :payment-add-installed-bottom-rd $count $titles)
-(register-effect :payment-add-random-from-hand-to-bottom-of-stack $count)
-(register-effect :payment-add-random-from-hand-to-bottom-of-rd $count)
-(register-effect :payment-hosted-to-hq $count $titles)
-(register-effect :payment-any-agenda-counter $count $title)
-(register-effect :payment-any-virus-counter $count $title)
-(register-effect :payment-derez-harmonic $count $titles)
-
 ;; card strs
 
 (register-effect :card-str-runner-seen $title)
@@ -800,19 +780,88 @@
    `[:multi {:dispatch :effect/type}
      ~@@effect-registry]))
 
+;; payments
+(def payment-registry (atom {}))
+(defn set-payment-ns
+  [[k & args]]
+  (into [(keyword "payment" (name k))] args))
+
+(defn register-payment
+  [kw & kvs]
+  (let [schema (into [:map] (mapv set-payment-ns kvs))]
+    (swap! payment-registry assoc (name kw) (m/schema schema)))
+  kw)
+
+(register-payment :payment-click $value)
+(register-payment :payment-credit $value)
+(register-payment :payment-x-credit $value)
+(register-payment :payment-credit-pool $value)
+(register-payment :payment-hosted-credit $value $title)
+(register-payment :payment-bad-publicity $value)
+(register-payment :payment-extend $title)
+(register-payment :payment-trash-can)
+(register-payment :payment-trash-self $title)
+(register-payment :payment-forfeit $count $titles)
+(register-payment :payment-gain-tags $count)
+(register-payment :payment-tag $count)
+(register-payment :payment-return-to-grip $title)
+(register-payment :payment-return-to-hq $title)
+(register-payment :payment-remove-from-game $title)
+(register-payment :payment-rfg-program $count $titles)
+(register-payment :payment-rfg-program $count $titles)
+(register-payment :payment-trash-installed $count $titles)
+(register-payment :payment-trash-hardware $count $titles)
+(register-payment :payment-trash-program $count $titles)
+(register-payment :payment-trash-resource $count $titles)
+(register-payment :payment-trash-connection $count $titles)
+(register-payment :payment-trash-ice $count $titles)
+(register-payment :payment-trash-bioroid $count $titles)
+(register-payment :payment-trash-from-stack $count)
+(register-payment :payment-trash-from-rd $count)
+(register-payment :payment-trash-from-grip $count $titles)
+(register-payment :payment-trash-from-hq $count)
+(register-payment :payment-reveal-trash-from-grip $count $titles)
+(register-payment :payment-reveal-trash-from-hq $count $titles)
+(register-payment :payment-randomly-trash-from-grip $count $titles)
+(register-payment :payment-randomly-trash-from-hq $count)
+(register-payment :payment-randomly-reveal-trash-from-grip $count $titles)
+(register-payment :payment-randomly-reveal-trash-from-hq $count $titles)
+(register-payment :payment-trash-all-cards-in-hq $count)
+(register-payment :payment-trash-all-cards-in-grip $count $titles)
+(register-payment :payment-trash-hardware-in-grip $count $titles)
+(register-payment :payment-trash-program-in-grip $count $titles)
+(register-payment :payment-trash-resource-in-grip $count $titles)
+(register-payment :payment-meat $value)
+(register-payment :payment-net $value)
+(register-payment :payment-core $value)
+(register-payment :payment-shuffle-installed-into-stack $count $titles)
+(register-payment :payment-shuffle-installed-into-rd $count)
+(register-payment :payment-add-installed-bottom-stack $count $titles)
+(register-payment :payment-add-installed-bottom-rd $count $titles)
+(register-payment :payment-add-random-from-hand-to-bottom-of-stack $count)
+(register-payment :payment-add-random-from-hand-to-bottom-of-rd $count)
+(register-payment :payment-hosted-to-hq $count $titles)
+(register-payment :payment-any-agenda-counter $count $title)
+(register-payment :payment-any-virus-counter $count $title)
+(register-payment :payment-derez-harmonic $count $titles)
+
+(def Payment
+  (m/schema
+      `[:multi {:dispatch :payment/type}
+        ~@@payment-registry]))
+
 (def Msg
   (m/schema
     [:map
      [:msg/type :keyword]]))
 
 (def msg-registry (atom {}))
-(defn strip-effect-ns
+(defn set-msg-ns
   [[k & args]]
   (into [(keyword "msg" (name k))] args))
-
 (defn register-msg
   [kw & kvs]
-  (let [schema (into [:map] (mapv strip-effect-ns kvs))]
+  (let [schema (into [:map] (mapv set-msg-ns kvs))]
     (swap! msg-registry assoc kw (mu/merge Msg schema)))
   kw)
 

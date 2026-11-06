@@ -24,6 +24,7 @@
            game.core/expose-vars potemkin/import-vars
            monger.operators/defoperator clojure.core/def
            monger.query/with-collection clojure.core/->
+           clojure.test.check.clojure-test/defspec clojure.test/deftest
            }
  :hooks {:analyze-call {jinteki.i18n/simple-msg hooks.netrunner/effect
                         jinteki.i18n/msg-with-cost hooks.netrunner/effect}}

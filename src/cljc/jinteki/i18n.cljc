@@ -34,7 +34,7 @@
      ;; List of supported language files (based on what we support in the frontend)
      (let [langs (->> ["ca" "en" "es" "fr" "it" "ja" "ko" "la-pig" "pl" "pt" "ru" "zh-simp" "zh-trad"]
                       (keep (fn [lang]
-                              ;; io/resource rather than io/file so this works from the uberjar
+                              ;; io/resource rather than fs/file so this works from the uberjar
                               (let [content (->> ["ui.ftl" "messages.ftl"]
                                                  (keep #(io/resource (str dir "/" lang "/" %)))
                                                  (map slurp)
@@ -299,12 +299,17 @@
          (mapv format-effect-msgs)
          (join-with-and))))
 
-(defn build-msg
-  [{msg-type :msg/type :as m}]
+(defn prep-build-msg
+  "Exists to ease generative testing"
+  [m]
   (let [m (if (:msg/effect-msgs m)
             (assoc m :do-ability (build-ability-msg (:msg/effect-msgs m)))
             m)]
-    (tr msg-type (format-msg-args m))))
+    (format-msg-args m)))
+
+(defn build-msg
+  [{msg-type :msg/type :as m}]
+  (tr msg-type (prep-build-msg m)))
 
 ;; definitions
 
@@ -372,12 +377,12 @@
    [:multi {:dispatch :msg/type}
     [:msg_pay-use-card [:map
                         [:msg/type [:= :msg_pay-use-card]]
-                        [:msg/effect-msgs [:sequential {:min 1 :max 5} EffectMsg]]
-                        [:msg/payments [:sequential {:max 5} Payment]]
+                        [:msg/effect-msgs [:sequential {:gen/min 1 :gen/max 5} EffectMsg]]
+                        [:msg/payments [:sequential Payment]]
                         [:msg/title [:or schemas/title schemas/Card]]]]
     [:msg_use-card [:map
                     [:msg/type [:= :msg_use-card]]
-                    [:msg/effect-msgs [:sequential {:min 1 :max 5} EffectMsg]]
+                    [:msg/effect-msgs [:sequential {:gen/min 1 :gen/max 5} EffectMsg]]
                     [:msg/payments {:optional true} [:maybe [:sequential {:max 0} Payment]]]
                     [:msg/title [:or schemas/title schemas/Card]]]]]))
 
