@@ -31,7 +31,7 @@
    (defn load-dictionary!
      [dir]
      ;; List of supported language files (based on what we support in the frontend)
-     (let [langs (->> ["ca" "en" "es" "fr" "it" "ja" "ko" "la-pig" "pl" "pt" "ru" "zh-simp" "zh-trad"]
+     (let [langs (->> ["ca" "de" "en" "es" "fr" "it" "ja" "ko" "la-pig" "pl" "pt" "ru" "zh-simp" "zh-trad"]
                       (keep (fn [lang]
                               ;; io/resource rather than io/file so this works from the uberjar
                               (let [content (->> ["ui.ftl" "messages.ftl"]
