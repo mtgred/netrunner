@@ -3191,22 +3191,36 @@
                                                                       :display-origin true}}))}]})
 
 (defcard "Tech Startup"
-  {:derezzed-events [corp-rez-toast]
-   :flags {:corp-phase-12 (effect true)}
-   :abilities [{:label "Search R&D for an asset to install"
-                :prompt "Choose an asset"
-                :msg (msg "reveal " (:title target) " from R&D and install it")
-                :req (req (seq (filter asset? (:deck corp))))
-                :choices (effect (filter asset? (:deck corp)))
-                :async true
-                :effect (effect (wait-for
-                               (trash state side card {:cause-card card})
-                               (wait-for
-                                 (reveal state side target)
-                                 (shuffle! state side :deck)
-                                 (corp-install state side eid target nil {:msg-keys {:install-source card
-                                                                                     :known true
-                                                                                     :display-origin true}}))))}]})
+  (let [search-for-asset {:prompt "Choose an asset to install"
+                          :waiting-prompt true
+                          :msg (msg (if (= target "Done") "shuffle R&D" (str "install " (get-title target))))
+                          :choices (effect (conj (vec (sort-by :title (filter asset? (:deck corp)))) "Done"))
+                          :async true
+                          :effect (effect (if (= target "Done")
+                                            (do (shuffle! state :corp :deck)
+                                                (effect-completed state side eid))
+                                            (wait-for
+                                              (reveal state side target)
+                                              (shuffle! state :corp :deck)
+                                              (corp-install state side eid target nil
+                                                            {:msg-keys {:install-source card :known true :display-origin true}}))))}
+        trash-ability {:async true
+                       :effect (effect (wait-for (trash state side card {:cause-card card})
+                                                 (continue-ability state side search-for-asset card nil)))}
+        ability {:once :per-turn
+                 :skippable true
+                 :async true
+                 :label "Search R&D for an asset (start of turn)"
+                 :interactive (effect true)
+                 :req (req (:corp-phase-12 @state))
+                 :effect
+                 (effect (continue-ability state side
+                           {:optional {:prompt "Trash to search R&D for an asset?" :yes-ability trash-ability}}
+                           card nil))}]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (effect true)}
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
 
 (defcard "TechnoCo"
   (letfn [(is-techno-target [card]

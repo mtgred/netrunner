@@ -5999,11 +5999,28 @@
       (take-credits state :runner)
       (is (zero? (-> (get-corp) :discard count)) "Corp should start with 0 cards in Archives")
       (card-ability state :corp tech 0)
+      (click-prompt state :corp "Yes")
       (click-prompt state :corp (find-card "TechnoCo" (:deck (get-corp))))
       (click-prompt state :corp "New remote")
       (is (= "TechnoCo" (:title (get-content state :remote2 0)))
           "TechnoCo should be installed in a new remote from Tech Startup's ability")
       (is (= 1 (-> (get-corp) :discard count)) "Tech Startup should now be in discard"))))
+
+(deftest tech-startup-install-nothing
+  ;; Tech Startup
+  (do-game
+    (new-game {:corp {:deck ["Tech Startup" (qty "Ice Wall" 10)]}})
+    (starting-hand state :corp ["Tech Startup"])
+    (play-from-hand state :corp "Tech Startup" "New remote")
+    (let [tech (get-content state :remote1 0)]
+      (rez state :corp (refresh tech))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp tech 0)
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Done")
+      (is (nil? (get-content state :remote2 0)) "No new remote installed")
+      (is (nil? (refresh tech)) "Tech startup should be trashed"))))
 
 (deftest technoco
   ;; TechnoCo - Increase program / hardware / virtual cost by 1 and gain 1 when they are installed
