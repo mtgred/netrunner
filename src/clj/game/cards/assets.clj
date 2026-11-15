@@ -663,15 +663,18 @@
      :abilities [ability]}))
 
 (defcard "Clone Suffrage Movement"
-  {:derezzed-events [corp-rez-toast]
-   :flags {:corp-phase-12 (effect (and (some operation? (:discard corp))
-                                 unprotected))}
-   :abilities [(into
-                 (corp-recur operation?)
-                 {:label "Add 1 operation from Archives to HQ"
-                  :waiting-prompt true
-                  :prompt "Choose an operation in Archives to add to HQ"
-                  :once :per-turn})]})
+  (let [ability (into
+                  (corp-recur operation?)
+                  {:label "Add 1 operation from Archives to HQ (start of turn)"
+                   :waiting-prompt true
+                   :prompt "Choose an operation in Archives to add to HQ"
+                   :req (req (:corp-phase-12 @state) unprotected (some operation? (:discard corp)))
+                   :interactive (effect true)
+                   :once :per-turn})]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (effect (and (some operation? (:discard corp)) unprotected))}
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
 
 (defcard "Clyde Van Rite"
   (let [ability (choose-one-helper
