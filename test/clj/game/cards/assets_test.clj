@@ -1356,6 +1356,7 @@
         ;; Use first Sensie
         (is (= 1 (count (:hand (get-corp)))))
         (card-ability state :corp sensie1 0)
+        (click-prompt state :corp "Yes")
         (is (= 4 (count (:set-aside (get-corp)))) "Drew 3 cards with Sensie, +1 with DBS")
         (click-card state :corp (find-card "Resistor" (:set-aside (get-corp)))) ; DBS target
         (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp)))) ; Sensie target
@@ -1371,6 +1372,7 @@
         (starting-hand state :corp ["Hedge Fund" "Jackson Howard"])
         (is (= 2 (count (:hand (get-corp)))))
         (card-ability state :corp sensie2 0)
+        (click-prompt state :corp "Yes")
         (is (= 5 (count (:hand (get-corp)))) "Drew 3 cards with Sensie, DBS didn't activate")
         (click-card state :corp (find-card "Breaking News" (:hand (get-corp)))) ; Sensie target
         (is (= "Breaking News" (:title (last (:deck (get-corp))))) "Breaking News last card in deck"))))
@@ -5237,6 +5239,7 @@
       (take-credits state :runner)
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
       (card-ability state :corp sau 0)
+      (click-prompt state :corp "Yes")
       (is (= 3 (count (:hand (get-corp)))) "Corp should draw 3 cards from Sensie Actors Union's ability")
       (click-card state :corp (find-card "Ronin" (:hand (get-corp))))
       (is (= "Ronin" (-> (get-corp) :deck last :title)) "Ronin should be on bottom of deck")

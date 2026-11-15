@@ -2918,21 +2918,29 @@
                        :keep-menu-open :while-clicks-left})]})
 
 (defcard "Sensie Actors Union"
-  {:derezzed-events [corp-rez-toast]
-   :flags {:corp-phase-12 (effect unprotected)}
-   :abilities [{:label "Draw 3 cards and add 1 card in HQ to the bottom of R&D"
-                :once :per-turn
-                :msg "draw 3 cards"
-                :async true
-                :effect (effect (wait-for (draw state side 3)
-                                       (continue-ability
-                                         state side
-                                         {:prompt (->msg-map :prompt_choose-a-card-in-hq-to-add-to-the-bottom-of-rd)
-                                          :choices {:card #(and (corp? %)
-                                                                (in-hand? %))}
-                                          :msg "add 1 card from HQ to the bottom of R&D"
-                                          :effect (effect (move state side target :deck))}
-                                         card nil)))}]})
+  (let [draw-ability {:msg "draw 3 cards"
+                      :async true
+                      :effect (effect (wait-for (draw state side 3)
+                                                (continue-ability state side
+                                                  {:prompt (->msg-map :prompt_choose-a-card-in-hq-to-add-to-the-bottom-of-rd)
+                                                   :choices {:card #(and (corp? %) (in-hand? %))}
+                                                   :msg "add 1 card from HQ to the bottom of R&D"
+                                                   :effect (effect (move state side target :deck))}
+                                                  card nil)))}
+        ability {:label "Draw 3 cards and add 1 card in HQ to the bottom of R&D (start of turn)"
+                 :once :per-turn
+                 :async true
+                 :interactive (effect true)
+                 :req (req (:corp-phase-12 @state) unprotected)
+                 :effect (effect (continue-ability state side
+                                   {:optional {:prompt "Draw 3 cards?" :yes-ability draw-ability}}
+                                   card nil))
+                 }
+        ]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (effect unprotected)}
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
 
 (defcard "Server Diagnostics"
   (let [ability {:effect (effect (gain-credits state side eid 2))
