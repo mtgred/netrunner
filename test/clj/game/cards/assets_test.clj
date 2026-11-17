@@ -1356,6 +1356,7 @@
         ;; Use first Sensie
         (is (= 1 (count (:hand (get-corp)))))
         (card-ability state :corp sensie1 0)
+        (click-prompt state :corp "Yes")
         (is (= 4 (count (:set-aside (get-corp)))) "Drew 3 cards with Sensie, +1 with DBS")
         (click-card state :corp (find-card "Resistor" (:set-aside (get-corp)))) ; DBS target
         (click-card state :corp (find-card "Hedge Fund" (:hand (get-corp)))) ; Sensie target
@@ -1371,6 +1372,7 @@
         (starting-hand state :corp ["Hedge Fund" "Jackson Howard"])
         (is (= 2 (count (:hand (get-corp)))))
         (card-ability state :corp sensie2 0)
+        (click-prompt state :corp "Yes")
         (is (= 5 (count (:hand (get-corp)))) "Drew 3 cards with Sensie, DBS didn't activate")
         (click-card state :corp (find-card "Breaking News" (:hand (get-corp)))) ; Sensie target
         (is (= "Breaking News" (:title (last (:deck (get-corp))))) "Breaking News last card in deck"))))
@@ -5237,6 +5239,7 @@
       (take-credits state :runner)
       (is (:corp-phase-12 @state) "Corp is in Step 1.2")
       (card-ability state :corp sau 0)
+      (click-prompt state :corp "Yes")
       (is (= 3 (count (:hand (get-corp)))) "Corp should draw 3 cards from Sensie Actors Union's ability")
       (click-card state :corp (find-card "Ronin" (:hand (get-corp))))
       (is (= "Ronin" (-> (get-corp) :deck last :title)) "Ronin should be on bottom of deck")
@@ -5999,11 +6002,28 @@
       (take-credits state :runner)
       (is (zero? (-> (get-corp) :discard count)) "Corp should start with 0 cards in Archives")
       (card-ability state :corp tech 0)
+      (click-prompt state :corp "Yes")
       (click-prompt state :corp (find-card "TechnoCo" (:deck (get-corp))))
       (click-prompt state :corp "New remote")
       (is (= "TechnoCo" (:title (get-content state :remote2 0)))
           "TechnoCo should be installed in a new remote from Tech Startup's ability")
       (is (= 1 (-> (get-corp) :discard count)) "Tech Startup should now be in discard"))))
+
+(deftest tech-startup-install-nothing
+  ;; Tech Startup
+  (do-game
+    (new-game {:corp {:deck ["Tech Startup" (qty "Ice Wall" 10)]}})
+    (starting-hand state :corp ["Tech Startup"])
+    (play-from-hand state :corp "Tech Startup" "New remote")
+    (let [tech (get-content state :remote1 0)]
+      (rez state :corp (refresh tech))
+      (take-credits state :corp)
+      (take-credits state :runner)
+      (card-ability state :corp tech 0)
+      (click-prompt state :corp "Yes")
+      (click-prompt state :corp "Done")
+      (is (nil? (get-content state :remote2 0)) "No new remote installed")
+      (is (nil? (refresh tech)) "Tech startup should be trashed"))))
 
 (deftest technoco
   ;; TechnoCo - Increase program / hardware / virtual cost by 1 and gain 1 when they are installed

@@ -663,15 +663,18 @@
      :abilities [ability]}))
 
 (defcard "Clone Suffrage Movement"
-  {:derezzed-events [corp-rez-toast]
-   :flags {:corp-phase-12 (effect (and (some operation? (:discard corp))
-                                 unprotected))}
-   :abilities [(into
-                 (corp-recur operation?)
-                 {:label "Add 1 operation from Archives to HQ"
-                  :waiting-prompt true
-                  :prompt "Choose an operation in Archives to add to HQ"
-                  :once :per-turn})]})
+  (let [ability (into
+                  (corp-recur operation?)
+                  {:label "Add 1 operation from Archives to HQ (start of turn)"
+                   :waiting-prompt true
+                   :prompt "Choose an operation in Archives to add to HQ"
+                   :req (req (:corp-phase-12 @state) unprotected (some operation? (:discard corp)))
+                   :interactive (effect true)
+                   :once :per-turn})]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (effect (and (some operation? (:discard corp)) unprotected))}
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
 
 (defcard "Clyde Van Rite"
   (let [ability (choose-one-helper
@@ -2918,21 +2921,31 @@
                        :keep-menu-open :while-clicks-left})]})
 
 (defcard "Sensie Actors Union"
-  {:derezzed-events [corp-rez-toast]
-   :flags {:corp-phase-12 (effect unprotected)}
-   :abilities [{:label "Draw 3 cards and add 1 card in HQ to the bottom of R&D"
-                :once :per-turn
-                :msg "draw 3 cards"
-                :async true
-                :effect (effect (wait-for (draw state side 3)
-                                       (continue-ability
-                                         state side
-                                         {:prompt (->msg-map :prompt_choose-a-card-in-hq-to-add-to-the-bottom-of-rd)
-                                          :choices {:card #(and (corp? %)
-                                                                (in-hand? %))}
-                                          :msg "add 1 card from HQ to the bottom of R&D"
-                                          :effect (effect (move state side target :deck))}
-                                         card nil)))}]})
+  (let [draw-ability {:msg "draw 3 cards"
+                      :async true
+                      :effect (effect (wait-for (draw state side 3)
+                                                (continue-ability state side
+                                                  {:prompt (->msg-map :prompt_choose-a-card-in-hq-to-add-to-the-bottom-of-rd)
+                                                   :choices {:card #(and (corp? %) (in-hand? %))}
+                                                   :msg "add 1 card from HQ to the bottom of R&D"
+                                                   :effect (effect (move state side target :deck))}
+                                                  card nil)))}
+        ability {:label "Draw 3 cards and add 1 card in HQ to the bottom of R&D (start of turn)"
+                 :once :per-turn
+                 :async true
+                 :interactive (effect true)
+                 :req (req (:corp-phase-12 @state) unprotected)
+                 :effect (effect (continue-ability state side
+                                   {:optional {:prompt "Draw 3 cards?"
+                                               :yes-ability draw-ability
+                                               :waiting-prompt true}}
+                                   card nil))
+                 }
+        ]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (effect unprotected)}
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
 
 (defcard "Server Diagnostics"
   (let [ability {:effect (effect (gain-credits state side eid 2))
@@ -3191,22 +3204,38 @@
                                                                       :display-origin true}}))}]})
 
 (defcard "Tech Startup"
-  {:derezzed-events [corp-rez-toast]
-   :flags {:corp-phase-12 (effect true)}
-   :abilities [{:label "Search R&D for an asset to install"
-                :prompt "Choose an asset"
-                :msg (msg "reveal " (:title target) " from R&D and install it")
-                :req (req (seq (filter asset? (:deck corp))))
-                :choices (effect (filter asset? (:deck corp)))
-                :async true
-                :effect (effect (wait-for
-                               (trash state side card {:cause-card card})
-                               (wait-for
-                                 (reveal state side target)
-                                 (shuffle! state side :deck)
-                                 (corp-install state side eid target nil {:msg-keys {:install-source card
-                                                                                     :known true
-                                                                                     :display-origin true}}))))}]})
+  (let [search-for-asset {:prompt "Choose an asset to install"
+                          :waiting-prompt true
+                          :msg (msg (if (= target "Done") "shuffle R&D" (str "install " (get-title target))))
+                          :choices (effect (conj (vec (sort-by :title (filter asset? (:deck corp)))) "Done"))
+                          :async true
+                          :effect (effect (if (= target "Done")
+                                            (do (shuffle! state :corp :deck)
+                                                (effect-completed state side eid))
+                                            (wait-for
+                                              (reveal state side target)
+                                              (shuffle! state :corp :deck)
+                                              (corp-install state side eid target nil
+                                                            {:msg-keys {:install-source card :known true :display-origin true}}))))}
+        trash-ability {:async true
+                       :effect (effect (wait-for (trash state side card {:cause-card card})
+                                                 (continue-ability state side search-for-asset card nil)))}
+        ability {:once :per-turn
+                 :skippable true
+                 :async true
+                 :label "Search R&D for an asset (start of turn)"
+                 :interactive (effect true)
+                 :req (req (:corp-phase-12 @state))
+                 :effect
+                 (effect (continue-ability state side
+                           {:optional {:prompt "Trash to search R&D for an asset?"
+                                       :yes-ability trash-ability
+                                       :waiting-prompt true}}
+                           card nil))}]
+    {:derezzed-events [corp-rez-toast]
+     :flags {:corp-phase-12 (effect true)}
+     :events [(assoc ability :event :corp-turn-begins)]
+     :abilities [ability]}))
 
 (defcard "TechnoCo"
   (letfn [(is-techno-target [card]
