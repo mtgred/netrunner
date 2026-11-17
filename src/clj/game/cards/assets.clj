@@ -2936,7 +2936,9 @@
                  :interactive (effect true)
                  :req (req (:corp-phase-12 @state) unprotected)
                  :effect (effect (continue-ability state side
-                                   {:optional {:prompt "Draw 3 cards?" :yes-ability draw-ability}}
+                                   {:optional {:prompt "Draw 3 cards?"
+                                               :yes-ability draw-ability
+                                               :waiting-prompt true}}
                                    card nil))
                  }
         ]
@@ -3226,7 +3228,9 @@
                  :req (req (:corp-phase-12 @state))
                  :effect
                  (effect (continue-ability state side
-                           {:optional {:prompt "Trash to search R&D for an asset?" :yes-ability trash-ability}}
+                           {:optional {:prompt "Trash to search R&D for an asset?"
+                                       :yes-ability trash-ability
+                                       :waiting-prompt true}}
                            card nil))}]
     {:derezzed-events [corp-rez-toast]
      :flags {:corp-phase-12 (effect true)}
