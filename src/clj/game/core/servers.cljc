@@ -89,7 +89,9 @@
 (defn is-central?
   "Returns true if the zone is for a central server"
   [zone]
-  (not (is-remote? zone)))
+  (if (keyword? zone)
+    (#{:archives :rd :hq} zone)
+    (some #{:archives :rd :hq} zone)))
 
 (defn is-root?
   "Returns true if the zone is root a central server"

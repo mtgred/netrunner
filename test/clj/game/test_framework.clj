@@ -9,7 +9,7 @@
    [game.core.card :refer [active? get-card get-counters get-title installed?
                            rezzed?]]
    [game.core.change-vals :as change-vals]
-   [game.core.diffs :refer [icon-summary]]
+   [game.core.diffs :refer [icon-summary trim-all-cards]]
    [game.core.eid :as eid]
    [game.core.events :refer [turn-events]]
    [game.core.ice :refer [active-ice?]]
@@ -72,7 +72,7 @@
         nses))
     (require-dirs nil))
   (prn :hello)
-  (prof/profile
+  #_(prof/profile
    (dotimes [_ 10]
      (test-var #'game.core.scenarios-test/masterwork-overinstall-boomerang-complex-case-full-game)))
   #_(prof/profile (clojure.test/run-all-tests))
@@ -176,8 +176,11 @@
       (is' (true? (or (map? card) (string? card))) (expect-type "card string or map" card)))))
 
 (defn get-msg-text
-  [m]
-  (if (string? m) m (or (:raw-text m) (build-msg m))))
+  ([m] (get-msg-text m :public))
+  ([m side]
+    (if (string? m) m
+      (or (:raw-text m)
+        (build-msg (trim-all-cards m side))))))
 
 (defn render-choice
   [v]
@@ -1144,15 +1147,19 @@
    (->> (-> @state :log reverse (->> (side-log side)) (nth n) :text get-msg-text)
         (re-find (re-pattern (escape-log-string content))))))
 
-(defn log-str [state]
-  (->> (:log @state)
-       (keep :public)
-       (map (comp get-msg-text :text))
-       (str/join " ")))
+(defn log-str
+  ([state] (log-str state :public))
+  ([state side]
+    (->> (:log @state)
+      (keep :public)
+      (map (comp #(get-msg-text % side) :text))
+      (str/join " "))))
 
-(defn print-logs [state]
-  (prn (log-str state))
-  (newline))
+(defn print-logs
+  ([state] (print-logs state :public))
+  ([state side]
+    (prn (log-str state side))
+    (newline)))
 
 (defmacro do-game [s & body]
   `(let [~'state ~s
@@ -1191,7 +1198,9 @@
                            (print (~'prompt-fmt :corp))
                            (println (~'prompt-fmt :runner)))]
      (let [ret# (do ~@body)]
-       (log-str ~'state)
+       (log-str ~'state :public)
+       (log-str ~'state :runner)
+       (log-str ~'state :corp)
        ret#)))
 
 (defmacro before-each

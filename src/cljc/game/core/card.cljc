@@ -162,6 +162,19 @@
       (protecting-hq? card)
       (protecting-rd? card)))
 
+(defn protecting-a-remote?
+  [card]
+  (let [zone-vec (get-zone card)]
+    (when (sequential? zone-vec)
+      (let [[servers zone kind] zone-vec]
+        #?(:clj (and (= :servers servers)
+                  (= :ices kind)
+                  (not (#{:archives :rd :hq} zone)))
+           :cljs (and (= "servers" servers)
+                  (= "ices" kind)
+                  (not (#{"archives" "rd" "hq"} zone))))))))
+
+
 (defn in-play-area?
   "Checks if the specified card is in the play area."
   [card]
@@ -501,13 +514,14 @@
 
 (defn is-public?
   "Returns if a given card should be visible to the opponent"
-  ([card] (is-public? (to-keyword (:side card))))
+  ([card] (is-public? card nil))
   ([card side]
-   ;; public cards for both sides:
-   ;; * basic action
-   ;; * identity
-   ;; * in a public zone: score area, current, play area, remove from game
-   (or (basic-action? card)
+   (let [side (or side (to-keyword (:side card)))]
+     ;; public cards for both sides:
+     ;; * basic action
+     ;; * identity
+     ;; * in a public zone: score area, current, play area, remove from game
+     (or (basic-action? card)
        (identity? card)
        (in-scored? card)
        (in-current? card)
@@ -537,7 +551,7 @@
                       (condition-counter? card)
                       (faceup? card)))
              (and (in-discard? card)
-                  (faceup? card)))))))
+                  (faceup? card))))))))
 
 ;; CR 1.8
 ;; 10.1.3. Some abilities add a card to a player’s score area “as an agenda”. When this
