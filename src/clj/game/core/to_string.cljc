@@ -3,7 +3,7 @@
    [clojure.string :as str]
    [game.core.card :refer [#?(:clj card-index)
                            #?(:clj get-card)
-                           condition-counter? corp? get-title ice? in-current?
+                           condition-counter? corp? get-title ice? identity? in-current?
                            in-discard? in-hand? in-play-area? in-scored?
                            installed? rezzed?]]
    [game.core.servers :refer [#?(:clj auxiliary->name)
@@ -18,11 +18,11 @@
                   (let [installed-ice (and (ice? card) (installed? card))]
                     ;; Corp card messages
                     (str (cond
-                           (or (rezzed? card) (:seen card) visible) (get-title card)
+                           (or (rezzed? card) (:seen card) visible (identity? card)) (get-title card)
                            maybe-visible (str "facedown " (get-title card))
                            :else (if installed-ice "ice" "a card"))
                          ;; Hosted cards do not need "in server 1" messages, host has them
-                         (when-not host
+                         (when-not (or host (identity? card))
                            (str (cond
                                   installed-ice " protecting "
                                   (is-root? zone) " in the root of "
@@ -53,13 +53,14 @@
   (if (corp? card)
     ;; Corp card messages
     (let [location (cond
+                     (identity? card) :identity
                      host :host
                      (and (ice? card) (installed? card)) :ice
                      (is-root? zone) :central
                      (is-auxiliary? zone) :auxiliary
                      :else :remote)
           visibility (cond
-                       (= location :auxiliary) :known
+                       (#{:auxiliary :identity} location) :known
                        (or (rezzed? card) (:seen card) visible) :seen
                        maybe-visible :known
                        :else :unknown)
@@ -68,11 +69,15 @@
                   (let [h (first (remove #(= [:onhost] (or (second (:zone %)) (:zone %))) (iterate :host card)))]
                     (or (second (:zone h)) (:zone h)))
                   (or (second zone) zone))
-          server-name (str/lower-case (zone->name zone'))
+          server-name (when-not (= :identity location)
+                        (when-let [zone-str (zone->name zone')]
+                          (str/lower-case zone-str)))
           server-name (if (= "r&d" server-name) "rd" server-name)
           server-n (remote-num zone')
           position (:index card)]
       (case #{location visibility}
+        #{:identity :known} {:card/str :card-str-identity
+                             :title title}
         #{:auxiliary :known}
         (case (first zone')
           :scored {:card/str :card-str-corp-scored

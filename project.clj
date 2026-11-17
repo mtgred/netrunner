@@ -66,6 +66,7 @@
                  [com.widdindustries/cljc.java-time "0.1.21"]
                  [time-literals "0.1.5"]
                  [metosin/reitit "0.7.2"]
+                 [metosin/malli "0.20.3"]
                  [org.flatland/ordered "1.15.12"]
                  [io.github.noahtheduke/fluent-clj "0.3.0"]]
 

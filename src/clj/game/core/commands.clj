@@ -5,7 +5,8 @@
    [game.core.actions :refer [score]]
    [game.core.board :refer [all-installed server->zone]]
    [game.core.card :refer [agenda? can-be-advanced? corp? get-card
-                           has-subtype? ice? in-hand? installed? rezzed? runner?]]
+                           has-subtype? ice? in-hand? installed? rezzed?
+                           runner?]]
    [game.core.change-vals :refer [change]]
    [game.core.charge :refer [charge-card]]
    [game.core.damage :refer [damage]]
@@ -15,7 +16,7 @@
    [game.core.engine :refer [resolve-ability trigger-event]]
    [game.core.flags :refer [is-scored?]]
    [game.core.hosting :refer [host]]
-   [game.core.identities :refer [disable-identity disable-card enable-card]]
+   [game.core.identities :refer [disable-card disable-identity enable-card]]
    [game.core.initializing :refer [card-init deactivate make-card]]
    [game.core.installing :refer [corp-install runner-install]]
    [game.core.mark :refer [identify-mark set-mark]]
@@ -24,7 +25,7 @@
    [game.core.prompts :refer [show-prompt]]
    [game.core.props :refer [set-prop]]
    [game.core.psi :refer [psi-game]]
-   [game.core.rezzing :refer [rez derez]]
+   [game.core.rezzing :refer [derez rez]]
    [game.core.runs :refer [end-run get-current-encounter jack-out]]
    [game.core.sabotage :refer [sabotage-ability]]
    [game.core.say :refer [system-msg system-say unsafe-say]]
@@ -36,8 +37,8 @@
    [game.core.update :refer [update!]]
    [game.core.winning :refer [clear-win]]
    [game.macros :refer [continue-ability effect msg req wait-for]]
-   [game.utils :refer [dissoc-in enumerate-str quantify safe-split
-                       same-card? same-side? server-card string->num]]
+   [game.utils :refer [dissoc-in enumerate-str quantify safe-split same-card?
+                       same-side? server-card side-str string->num]]
    [jinteki.i18n :refer [->msg-map]]
    [jinteki.utils :refer [other-side str->int]]))
 
@@ -262,7 +263,7 @@
                               (when (:uniqueness target) " not") ;it was unique before
                               " unique")
                     :choices {:card (fn [t] (same-side? (:side t) side))}}
-                   (make-card {:title "/unique command" :side side}) nil))
+                   (make-card {:title "/unique command" :side (side-str side)}) nil))
 
 (defn command-close-prompt [state side]
   (when-let [prompt (-> @state side :prompt first)]
@@ -577,7 +578,7 @@
                                             (make-card {:title "/move-hand command"}) nil)
             "/peek"       #(command-peek %1 %2 value)
             "/psi"        #(when (= %2 :corp) (psi-game %1 %2
-                                                        (make-card {:title "/psi command" :side %2})
+                                                        (make-card {:title "/psi command" :side (side-str %2)})
                                                         {:equal  {:msg "resolve equal bets effect"}
                                                          :not-equal {:msg "resolve unequal bets effect"}}))
             "/reload-id"  command-reload-id
@@ -643,13 +644,13 @@
             "/swap-sides" #(command-swap-sides %1 %2)
             "/tag"        #(swap! %1 assoc-in [%2 :tag :base] (constrain-value value 0 1000))
             "/take-core" #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :brain (constrain-value value 0 1000)
-                                                       {:card (make-card {:title "/damage command" :side %2})}))
+                                                       {:card (make-card {:title "/damage command" :side (side-str %2)})}))
             "/take-meat"  #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :meat  (constrain-value value 0 1000)
-                                                        {:card (make-card {:title "/damage command" :side %2})}))
+                                                        {:card (make-card {:title "/damage command" :side (side-str %2)})}))
             "/take-net"   #(when (= %2 :runner) (damage %1 %2 (make-eid %1) :net   (constrain-value value 0 1000)
-                                                        {:card (make-card {:title "/damage command" :side %2})}))
+                                                        {:card (make-card {:title "/damage command" :side (side-str %2)})}))
             "/trace"      #(when (= %2 :corp) (init-trace %1 %2
-                                                          (make-card {:title "/trace command" :side %2})
+                                                          (make-card {:title "/trace command" :side (side-str %2)})
                                                           {:base (constrain-value value -1000 1000)
                                                            :msg "resolve successful trace effect"}))
             "/trash"      command-trash

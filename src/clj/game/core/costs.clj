@@ -28,7 +28,7 @@
 
 (defn- complete-payment [state side eid result]
   (let [payment (assoc result :paid/side side)]
-    (schemas/assert payment schemas/Payment)
+    (schemas/assert payment schemas/Paid)
     (complete-with-result state side eid payment)))
 
 (defn- can-forfeit? [card] (not (get-in card [:flags :cannot-forfeit])))
