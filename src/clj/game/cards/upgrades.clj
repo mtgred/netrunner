@@ -1106,6 +1106,7 @@
 (defcard "La Costa Grid"
   (let [ability {:prompt (msg "Choose a card in " (zone->name (second (get-zone card))))
                  :label "Place 1 advancement counter (start of turn)"
+                 :interactive (effect true)
                  :msg (msg-with-cost
                         {:effect/type :place-n-advancement-counters
                          :effect/count 1
