@@ -255,18 +255,21 @@
                :effect (effect
                          (wait-for (resolve-ability
                                      state side
-                                     (if (can-pay? state side eid card nil cost)
-                                       (if (= 1 (count (relevant state card)))
+                                     (let [can-pay (can-pay? state side eid card nil cost)]
+                                       (cond
+                                         (and can-pay (= 1 (count (relevant state card))))
                                          {:msg (msg "prevent " (->> (relevant state card) first :title) " from being trashed")
                                           :cost cost
                                           :effect (effect (swap! state assoc-in [:prevent :trash :remaining] []))}
+                                         can-pay
                                          {:prompt (str "Choose a " (enumerate-str (map str/lower-case types) "or") " to save from being trashed")
                                           :cost cost
                                           :choices (effect (relevant state card))
                                           :msg (msg "prevent " (:title target) " from being trashed")
-                                          :effect (effect (swap! state update-in [:prevent :trash :remaining] (fn [s] (filterv #(not (same-card? (:card %) target)) s))))})
-                                       {:prompt "You can't prevent this"
-                                        :choices [(->msg-map :choice_ok)]})
+                                          :effect (effect (swap! state update-in [:prevent :trash :remaining] (fn [s] (filterv #(not (same-card? (:card %) target)) s))))}
+                                         :else
+                                         {:prompt "You can't prevent this"
+                                          :choices [(->msg-map :choice_ok)]}))
                                      card nil)
                                    (swap! state update-in [:prevent :trash :remaining] (fn [ctx] (filterv #(get-card state (:card %)) ctx)))
                                    (effect-completed state side eid)))}}))
