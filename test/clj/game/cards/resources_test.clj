@@ -2285,6 +2285,23 @@
       (click-card state :corp "Cache")
       (is (no-prompt? state :runner) "Dummy Box not prompting to prevent trashing from hand")))
 
+(deftest dummy-box-pretend-even-when-unable
+  ;; when no matching cards, give a prompt anyway to avoid leaking info about hand contents
+  (do-game
+      (new-game {:runner {:deck [(qty "Dummy Box" 1) (qty "Cache" 1)]}})
+      (take-credits state :corp)
+      (play-from-hand state :runner "Dummy Box")
+      (play-from-hand state :runner "Cache")
+      (take-credits state :runner)
+      (core/trash state :corp (core/make-eid state) (get-program state 0))
+      (is (not (no-prompt? state :runner)) "Dummy Box prompting to prevent program trash")
+      (click-prompt state :runner "Dummy Box (Program)")
+      (click-prompt state :runner "OK")
+      (click-prompt state :runner "Continue trashing 1 card")
+      (is (no-prompt? state :runner) "Done prompting")
+      (is (= 0 (count (get-program state))) "Cache trashed")
+      (is (= 1 (count (:discard (get-runner)))) "Cache trashed")))
+
 (deftest earthrise-hotel
   ;; Earthrise Hotel
   (do-game
