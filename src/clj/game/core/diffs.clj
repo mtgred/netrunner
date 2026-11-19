@@ -1,16 +1,17 @@
 (ns game.core.diffs
   (:require
+   [clojure.walk :refer [postwalk]]
    [com.noahbogart.cond-plus :refer [cond+]]
    [differ.core :as differ]
    [game.core.board :refer [installable-servers]]
    [game.core.card :refer :all]
    [game.core.card-defs :refer [card-def]]
    [game.core.cost-fns :refer [card-ability-cost]]
+   [game.core.effects :refer [any-effects get-effects is-disabled-reg?]]
    [game.core.engine :refer [can-trigger?]]
-   [game.core.effects :refer [any-effects is-disabled-reg? get-effects]]
    [game.core.installing :refer [corp-can-pay-and-install?
                                  runner-can-pay-and-install?]]
-   [game.core.payment :refer [can-pay? ->c]]
+   [game.core.payment :refer [->c can-pay?]]
    [game.core.play-instants :refer [can-play-instant?]]
    [game.core.winning :refer [agenda-points-required-to-win]]
    [game.utils :refer [dissoc-in]]
@@ -160,6 +161,7 @@
    :icon
    :images
    :implementation
+   :index
    :installed
    :new
    :normalizedtitle
@@ -189,6 +191,7 @@
    :host
    :hosted
    :icon
+   :index
    :new
    :side
    :zone])
@@ -573,18 +576,44 @@
          :runner-spect-state (when runner-spectators?
                                (or runner-spect-state (strip-for-runner-spect hist-state runner-state)))))
 
-(defn- fake-log-diff [old new]
-  (let [old (:log old)
-        new (:log new)
-        changes (take-last (- (count new) (count old)) new)]
+(defn select-msg-card-keys [card side]
+  (if (is-public? card side)
+    (select-non-nil-keys card card-keys)
+    (private-card card)))
+
+(defn trim-card-in-msg [obj side k]
+  (if-let [v (obj k)]
+    (let [new-v (if (sequential? v)
+                  (mapv #(select-msg-card-keys % side) v)
+                  (select-msg-card-keys v side))]
+      (assoc obj k new-v))
+    obj))
+
+(defn trim-all-cards [coll side]
+  (postwalk
+    (fn [obj]
+      (if (map? obj)
+        (cond-> obj
+          (:msg/card-str obj) (trim-card-in-msg side :msg/card-str)
+          (:msg/card-strs obj) (trim-card-in-msg side :msg/card-strs)
+          (:effect/card-str obj) (trim-card-in-msg side :effect/card-str)
+          (:effect/card-strs obj) (trim-card-in-msg side :effect/card-strs))
+        obj))
+    coll))
+
+(defn- fake-log-diff [old new side]
+  (let [changes (take-last (- (count new) (count old)) new)]
     (if (seq changes)
-      [{:log (mapcat (fn [change] [:+ change]) changes)} {}]
+      [{:log (mapcat (fn [change] [:+ change]) (trim-all-cards changes side))} {}]
       [{} {}])))
 
+(defn filter-messages [side log]
+  (into [] (keep #(or (side %) (:public %))) log))
+
 (defn- get-message-diff [old-state new-state side]
-  (let [old-messages {:log (into [] (keep #(or (side %) (:public %))) (:log old-state))}
-        new-messages {:log (into [] (keep #(or (side %) (:public %))) (:log @new-state))}]
-    (fake-log-diff old-messages new-messages)))
+  (let [old-messages (filter-messages side (:log old-state))
+        new-messages (filter-messages side (:log @new-state))]
+    (fake-log-diff old-messages new-messages side)))
 
 (defn- diff-and-patch-log [old-state new-state message-diff]
   (let [base-diff (differ/diff (dissoc old-state :log) (dissoc new-state :log))]

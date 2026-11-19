@@ -3,9 +3,12 @@
    [clojure.string :as str]
    [game.core.card :refer [#?(:clj card-index)
                            #?(:clj get-card)
-                           condition-counter? corp? get-title ice? identity? in-current?
+                           condition-counter? corp? get-title #?(:clj ice?) identity? in-current?
                            in-discard? in-hand? in-play-area? in-scored?
-                           installed? rezzed?]]
+                           installed?
+                           protecting-a-central?
+                           protecting-a-remote?
+                           rezzed?]]
    [game.core.servers :refer [#?(:clj auxiliary->name)
                               is-auxiliary? is-root? zone->name]]))
 
@@ -55,7 +58,8 @@
     (let [location (cond
                      (identity? card) :identity
                      host :host
-                     (and (ice? card) (installed? card)) :ice
+                     (or (protecting-a-central? card)
+                       (protecting-a-remote? card)) :ice
                      (is-root? zone) :central
                      (is-auxiliary? zone) :auxiliary
                      :else :remote)
