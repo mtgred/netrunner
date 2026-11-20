@@ -10,7 +10,11 @@
                       :name "netrunner"
                       ; Monger requires a db name in the URI string, be sure to specify
                       :connection-string #or [#env MONGO_CONNECTION_URI nil]}
- :logging/timbre {:appenders
+ :logging/timbre {;; Sente logs every server->client send at :debug, on the single
+                  ;; thread that flushes all websocket sends, so keep taoensso.* at
+                  ;; :warn or every send waits on a log write.
+                  :min-level [["taoensso.*" :warn] ["*" :info]]
+                  :appenders
                   ;; set appender args:
                   ;; `:enabled?` sets whether an appender should run
                   ;; `:log-path` defaults to `~/logs/jinteki-*.log`
