@@ -3442,7 +3442,10 @@
     (run-empty-server state :remote1)
     (is (changed? [(count-bad-pub state) 1]
           (click-prompt state :runner "[Cupellation] 1 [Credits]: Host card"))
-        "Hosting Luana on Cupellation returns the bad publicity")))
+        "Hosting Luana on Cupellation returns the bad publicity")
+    (is (changed? [(count-bad-pub state) 0]
+          (core/trash state :corp (core/make-eid state) (get-program state 0)))
+        "Trashing cupellation doesn't give the bad publicity again")))
 
 (deftest magistrate-revontuler
   (do-game
