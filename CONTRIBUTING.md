@@ -1,6 +1,16 @@
 # Contributing 
 
-All contributions to the project (bug/feature reports, pull requests) are very welcome and appreciated! To make sure your work will be as useful as possible, make sure you follow these guidelines:
+All contributions to the project (bug/feature reports, pull requests) are very welcome and appreciated! To make sure your work will be as useful as possible, make sure you follow these guidelines.
+
+## AI/LLM stance
+
+This is important so it must go up front.
+
+Jinteki.net is built by humans for humans. We are not interested in drive-by PRs, thousand-word issues, or slop of any kind. If you are willing and interested to put in the work to learn the code base, to speak human to human with others, to share and be shared with, we welcome you. If you only wish to pad your stats, or to sit back while a program writes your issues, your comments, your code, or your slack messages, then we are not interested in your contributions.
+
+As a dev team, we understand that it is increasingly hard to avoid using these tools and don't outright reject them, but we have no interest in accepting purely llm-based works from anyone, new dev or old. We volunteer our time and our energy to jnet because we enjoy it, because the work is the work. If you wish to use an llm to help answer a question or to craft a change, then we ask that you limit it to what is necessary, not what is possible.
+
+To be clear, if you are a new contributor and use these tools to generate your issues or PRs, then we will close and/or reject your contributions. If you do not put in the effort to write it, then we will not put in the effort to read and understand it.
 
 ## Issues - Bug Reports & Feature Requests
 
